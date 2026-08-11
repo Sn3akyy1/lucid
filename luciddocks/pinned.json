@@ -1,0 +1,46 @@
+{
+    "pinnedApps": [
+        {
+            "appId": "Spotify",
+            "appKey": "pinned-spotify-1785240730311",
+            "command": "spotify --uri=%u",
+            "iconName": "spotify-client",
+            "name": "Spotify"
+        },
+        {
+            "appId": "zen",
+            "appKey": "pinned-zen-1785411203203",
+            "command": "/opt/zen-browser-bin/zen-bin",
+            "iconName": "zen-browser",
+            "name": "Zen Browser"
+        },
+        {
+            "appId": "kitty",
+            "appKey": "pinned-kitty-1785407467774",
+            "command": "kitty",
+            "iconName": "kitty",
+            "name": "Kitty"
+        },
+        {
+            "appId": "codium",
+            "appKey": "pinned-codium-1785664256131",
+            "command": "/usr/bin/codium",
+            "iconName": "vscodium",
+            "name": "VSCodium"
+        },
+        {
+            "appId": "org.gnome.Nautilus",
+            "appKey": "pinned-org.gnome.nautilus-1785492101161",
+            "command": "nautilus --new-window",
+            "iconName": "org.gnome.Nautilus",
+            "name": "Files"
+        },
+        {
+            "appId": "steam",
+            "appKey": "pinned-steam-1786291575423",
+            "command": "/usr/bin/steam",
+            "iconName": "steam",
+            "name": "Steam"
+        }
+    ]
+}
