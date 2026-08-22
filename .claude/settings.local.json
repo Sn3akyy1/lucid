@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(timeout 3 wf-recorder -x yuv420p -f test_sw.mp4)",
+      "Bash(ffprobe -v error -show_entries stream=color_range,color_space,color_transfer,color_primaries -of default=noprint_wrappers=0 test_sw.mp4)",
+      "Bash(rm -f test_sw.mp4)"
+    ]
+  }
+}

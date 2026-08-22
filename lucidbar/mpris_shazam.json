@@ -1,0 +1,43 @@
+{
+    "items": [
+        {
+            "album": "Lo-fi Sunday",
+            "art": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/ad/19/88/ad19885a-7b9c-371e-432a-e31627385633/5059460432574.jpg/400x400cc.jpg",
+            "artist": "Nafeesisboujee & 10X",
+            "at": 1787427924955,
+            "genre": "Alternative",
+            "key": "825518964",
+            "label": "Warner Music Group - X5 Music Group",
+            "spotify": "spotify:search:Stephanie%20%28Slowed%29%20Nafeesisboujee",
+            "title": "Stephanie (Slowed)",
+            "url": "https://www.shazam.com/track/825518964/stephanie-slowed",
+            "year": "2025"
+        },
+        {
+            "album": "Found You - Single",
+            "art": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/da/cb/01/dacb0110-428a-b453-c252-92abacbbf2bb/5063766732177_cover.jpg/400x400cc.jpg",
+            "artist": "Dipr Impact",
+            "at": 1787351741705,
+            "genre": "Instrumental",
+            "key": "828804330",
+            "label": "Dipr Impact",
+            "spotify": "spotify:search:Found%20You%20%289D%20Audio%29%20Dipr%20Impact",
+            "title": "Found You (9D Audio)",
+            "url": "https://www.shazam.com/track/828804330/found-you-9d-audio",
+            "year": "2025"
+        },
+        {
+            "album": "Invitation to Her's",
+            "art": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/0a/e0/08/0ae008d5-35bc-5aa6-a4cb-a13db8f0c46a/5065002066916.jpg/400x400cc.jpg",
+            "artist": "Her's",
+            "at": 1787318366091,
+            "genre": "Indie Rock",
+            "key": "421655194",
+            "label": "Heist Or Hit Records",
+            "spotify": "spotify:search:Harvey%20Her%27s",
+            "title": "Harvey",
+            "url": "https://www.shazam.com/track/421655194/harvey",
+            "year": "2017"
+        }
+    ]
+}
