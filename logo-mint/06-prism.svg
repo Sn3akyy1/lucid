@@ -1,4 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="264" height="264">
-  <!-- Prism - light bending around a form -->
-  <rect width="24" height="24" rx="6.4" fill="#232b38"/><path d="M12,4.6 L19.4,18.0 L4.6,18.0 Z" fill="none" stroke="#eef5f3" stroke-width="2.6" stroke-linejoin="round"/><path d="M16.7,20.74 A9.4,9.4 0 0 1 2.74,14.23" fill="none" stroke="#4fddb6" stroke-width="2.8" stroke-linecap="round" opacity="1.0"/><path d="M12,9.8 C12.34,11.62 12.78,12.06 14.6,12.4 C12.78,12.74 12.34,13.18 12,15 C11.66,13.18 11.22,12.74 9.4,12.4 C11.22,12.06 11.66,11.62 12,9.8 Z" fill="#4fddb6" opacity="1.0"/>
-</svg>

@@ -1,4 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="264" height="264">
-  <!-- Beam - light passing clean through -->
-  <rect width="24" height="24" rx="6.4" fill="#232b38"/><path d="M3.4,18.4 L20.6,5.6" stroke="#4fddb6" stroke-width="3.2" stroke-linecap="round"/><circle cx="12" cy="12" r="6.6" fill="none" stroke="#eef5f3" stroke-width="2.5"/><circle cx="12" cy="12" r="1.7" fill="#4fddb6" opacity="1.0"/><path d="M19.6,15.9 C19.85,17.23 20.17,17.55 21.5,17.8 C20.17,18.05 19.85,18.37 19.6,19.7 C19.35,18.37 19.03,18.05 17.7,17.8 C19.03,17.55 19.35,17.23 19.6,15.9 Z" fill="#eef5f3" opacity="1.0"/>
-</svg>
