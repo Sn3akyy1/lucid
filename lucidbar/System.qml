@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Bluetooth
-import Quickshell.Hyprland._FocusGrab
 import Quickshell.Io
 import Quickshell.Networking
 import Quickshell.Services.Pipewire
@@ -10,40 +9,89 @@ import Quickshell.Services.UPower
 import Quickshell.Widgets
 import qs
 
-Item {
+// The control centre - and, since this pass, the only place network and
+// bluetooth live.
+//
+// Both used to be bar pills of their own, each with its own copy of the pill
+// shell and each opening a panel that duplicated status this panel already
+// showed. Their two tiles here could only hand off: close System, open the
+// other module. Now the panel *becomes* them - the same surface morphs from
+// the control centre into the Wi-Fi or Bluetooth view and back, so the bar
+// carries two fewer pills and the connection state sits with the rest of the
+// system state it belongs with.
+//
+// The shell around all of this (morph/pop-up geometry, radii, motion, the
+// hover affordance) now comes from BarPill, which replaced the copy of it
+// every module used to carry.
+BarPill {
     id: root
 
     // sibling modules, wired from shell.qml so we can hand off to the real panels
-    property var hostWindow: null
-    property var networkMod: null
-    property var bluetoothMod: null
     property var notifMod: null
     property var mprisMod: null
-    property bool expanded: false
-    // mirrors shell's own radius below - see the same note in Workspaces.qml
-    // In pop-up mode the radius rides the panel's animated height, so the
-    // surface leaves the pill wearing the pill's own round end and settles
-    // into the panel's flatter corner as it grows - and shell.qml's blur
-    // region, which reads this, keeps the same shape the whole way. The
-    // collapsed 60 belongs to the morphing pill: left in the expression it
-    // snapped the detached panel into a blob on the first frame of the exit.
-    readonly property int cornerRadius: root.popupMode ? Math.min(20, Math.round(shell.height / 2)) : (root.expanded ? 20 : Prefs.barPillRadius)
-    property bool panelTransitioning: false
+
+    // ---------------- view stack ----------------
+    // "main" is the control centre; the other two are the panels that used to
+    // be separate modules. One property drives the slide, the cross-fade and
+    // the panel's own height.
+    property string view: "main"
+    readonly property bool inSubView: root.view !== "main"
+
+    // True only while a real view change is in flight. The slide Behaviors
+    // below are gated on it, because `x` is derived from the panel's width:
+    // when the panel first lays out that width goes 0 -> 400, the binding
+    // re-evaluates, and an ungated Behavior *animates* that, sweeping the
+    // sub-view across the panel every time the panel opened.
+    property bool viewSwitching: false
+
+    Timer {
+        id: viewSwitchTimer
+
+        interval: Theme.barMs(600)
+        onTriggered: root.viewSwitching = false
+    }
+
+    function showView(v) {
+        if (root.view === v)
+            return ;
+
+        root.viewSwitching = true;
+        viewSwitchTimer.restart();
+
+        // Arm the height Behavior BEFORE switching, never after. Assigning
+        // `view` re-evaluates viewContentHeight -> panelHeight -> the pill's
+        // implicitHeight synchronously, and a Behavior is consulted at the
+        // moment the property is written - so with these two lines the other
+        // way round the panel had already snapped to its new height by the
+        // time the gate opened, and all that was left to see was the two
+        // views cross-fading. That is the "it fades instead of morphing" bug.
+        root.beginTransition();
+        root.view = v;
+    }
+
     readonly property int horizontalPadding: 16
     // logical px shrink as the compositor scale goes up (a 1920 panel at 1.2
     // is only 1600 wide to lay out in), so every fixed panel dimension is
-    // clamped against the screen rather than trusted as an absolute. The old
-    // flat 820 was already unreachable - the bar window itself was only 800.
+    // clamped against the screen rather than trusted as an absolute.
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
-    // resting size, held by this widget's slot in the bar's Row so that
-    // expanding never reflows its neighbours - see shell.qml
-    readonly property int compactWidth: content.implicitWidth + root.horizontalPadding * 2
-    readonly property int compactHeight: Prefs.barHeight
-    readonly property bool panelOpen: root.expanded
-    readonly property int panelWidth: Math.min(400, root.screenW - 34)
     readonly property int maxPanelHeight: Math.min(820, Math.max(200, root.screenH - 40))
     readonly property int contentWidth: root.panelWidth - 28
+    readonly property int subHeaderHeight: 38
+    // How tall the view currently showing wants to be. The panel follows
+    // whichever one is on screen, so switching views resizes the surface the
+    // same way opening it does rather than cropping the new view to the old
+    // one's height.
+    readonly property real viewContentHeight: {
+        if (root.view === "wifi")
+            return wifiPanel.implicitHeight + root.subHeaderHeight + 10;
+
+        if (root.view === "bluetooth")
+            return btPanel.implicitHeight + root.subHeaderHeight + 10;
+
+        return expandedColumn.implicitHeight;
+    }
+
     property string backlightDevice: ""
     property int maxBrightness: 0
     readonly property int brightnessPercent: root.maxBrightness > 0 ? Math.round((parseInt(brightnessFile.text()) / root.maxBrightness) * 100) : 0
@@ -52,7 +100,7 @@ Item {
     readonly property bool micMuted: (source && source.audio) ? source.audio.muted : true
     readonly property bool volMuted: (sink && sink.audio) ? sink.audio.muted : true
     readonly property int volumePercent: (sink && sink.audio) ? Math.round(sink.audio.volume * 100) : 0
-    // icon per slider level, morphs as the sun/speaker shape gains detail
+
     readonly property var brightnessIconLevels: [
         { "max": 33, "path": "M12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z" },
         { "max": 66, "path": "M12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM12 1a1 1 0 0 1 1 1v1.5a1 1 0 1 1-2 0V2a1 1 0 0 1 1-1Zm0 18.5a1 1 0 0 1 1 1V22a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1ZM1 12a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H2a1 1 0 0 1-1-1Zm18.5 0a1 1 0 0 1 1-1H22a1 1 0 1 1 0 2h-1.5a1 1 0 0 1-1-1Z" },
@@ -79,11 +127,11 @@ Item {
     readonly property bool batteryPresent: battery ? battery.isPresent : false
     readonly property int batteryPercent: batteryPresent ? Math.round(battery.percentage * 100) : 0
     readonly property bool batteryCharging: root.batteryPresent && !UPower.onBattery
+    readonly property bool dndOn: root.notifMod ? root.notifMod.dnd : false
     readonly property var btAdapter: Bluetooth.defaultAdapter
     readonly property bool btEnabled: btAdapter ? btAdapter.enabled : false
     property bool airplaneMode: false
     property bool nightLight: false
-    readonly property bool dndOn: root.notifMod ? root.notifMod.dnd : false
     property int pendingBrightness: -1
     property var _lsblkDisks: []
     property var diskList: []
@@ -132,154 +180,32 @@ Item {
         return true;
     }
 
-    // ---------------- settings-driven behaviour ----------------
-    // A hidden module collapses to zero size as well as going invisible, so
-    // the bar's input mask and blur region collapse with it instead of
-    // leaving a dead rectangle behind at its last position.
-    readonly property bool shown: Prefs.showSystem
-    // Pop-up mode: the pill stops morphing into the panel and stays put in
-    // the bar, with the panel becoming a detached surface below it. Inline
-    // mode additionally drops the pill's own background, because in that mode
-    // the bar behind it draws one continuous surface instead.
-    readonly property bool popupMode: Prefs.barPopupMode
-    // Reported up to shell.qml, which draws inline mode's hover for the whole
-    // bar at once rather than letting each module light its own patch.
-    readonly property bool compactHovered: compactFace.hovered
-    // True in either mode that takes this module's own pill away and draws
-    // a shared surface behind it instead: inline, which is one bar for the
-    // whole shell, or connected rows, which is one per group.
-    // the size this module takes when open - the original implicit sizes,
-    // kept whole so morph mode behaves exactly as it did before
-    readonly property int openWidth: expanded ? root.panelWidth : root.compactWidth
-    readonly property int openHeight: expanded ? Math.min(root.maxPanelHeight, expandedColumn.implicitHeight + 28) : root.compactHeight
-    // a notch squares off only the edge that actually meets the screen; a
-    // detached pop-up panel touches nothing and stays rounded all round
-    readonly property int topRadius: Prefs.barNotch && !root.popupMode ? 0 : root.cornerRadius
-    readonly property int pillTopRadius: Prefs.barNotch ? 0 : Prefs.barPillRadius
-    // handed to shell.qml so the detached panel gets its own entry in the
-    // window's input mask and blur region - the root item's own bounds stop
-    // at the pill in pop-up mode
-    // True only while the detached panel is actually on screen. shell.qml's
-    // mask and blur regions key off this rather than popupItem alone: a Region
-    // takes its item's geometry regardless of visibility, so the closed
-    // panel's rectangle went on blurring the desktop under every pill - and,
-    // less visibly, went on swallowing clicks there too.
-    // Which edge of the pill the detached panel lines up with, set from
-    // shell.qml - the only thing that knows whether this module sits in the
-    // left group, the centre, or the right group. Left unset the panel grew
-    // rightward from the pill's left edge, so every right-hand module's panel
-    // ran straight off the side of the screen.
-    property string popupAlign: "left"
-    readonly property real popupX: {
-        if (!root.popupMode)
-            return 0;
+    // ---------------- pill shell configuration ----------------
+    shown: Prefs.showSystem
 
-        // popupWidth, not openWidth: openWidth folds back to the pill's width
-        // the instant the panel closes, which slid the panel sideways mid-exit
-        // - a 75px lurch on a centred module like the clock.
-        if (root.popupAlign === "right")
-            return root.compactWidth - root.popupWidth;
+    compactWidth: content.implicitWidth + root.horizontalPadding * 2
+    panelWidth: Math.min(400, root.screenW - 34)
+    panelHeight: Math.min(root.maxPanelHeight, root.viewContentHeight + 28)
+    expandedRadius: 20
+    compactCollapseScale: 0.94
+    surfaceLayered: true
 
-        if (root.popupAlign === "center")
-            return (root.compactWidth - root.popupWidth) / 2;
-
-        return 0;
-    }
-    // Intent: true from the moment the panel is asked to open. The enter
-    // and exit animations read this to pick their duration and curve.
-    readonly property bool popupExpanding: root.popupMode && root.expanded
-    // Painted: true for as long as the panel actually has extent on
-    // screen, which includes the whole of the exit animation. shell.qml's
-    // input mask and blur region key off this, and it is read off the
-    // drop rather than the size, because a closed pop-up still carries
-    // the pill's footprint. Keyed off the intent flag instead, the blur
-    // rectangle switched off on the first frame of the exit and left the
-    // panel see-through the whole way out.
-    // `shown` first: a switched-off module is not painted at all, but a blur
-    // region is pure geometry and does not care - left ungated, a module that
-    // was off still published its panel's rectangle the moment anything asked
-    // it to open, and the compositor frosted a pane of desktop with nothing
-    // drawn on top of it.
-    readonly property bool popupOpen: root.shown && root.popupMode && shell.y > 0.5
-    // The radii this module's own bounds are actually drawn with, so
-    // shell.qml's mask and blur regions can mirror them exactly. A Region
-    // supports per-corner radii just like a Rectangle; setting only `radius`
-    // left the blurred backdrop a different shape from the surface on top of
-    // it, which shows up as a hard edge peeking out around the corners.
-    readonly property int barRadius: root.popupMode ? Prefs.barPillRadius : root.cornerRadius
-    readonly property int barTopRadius: root.popupMode ? root.pillTopRadius : root.topRadius
-    // The panel's own size, with no collapsed branch. openWidth/openHeight
-    // fold back to the pill the instant the panel closes, so anything derived
-    // from them raced that change - the panel snapped to a 35px stub and only
-    // then faded, which is why closing read as vanishing rather than
-    // retreating. These never collapse, so the panel holds its shape all the
-    // way out and only opacity, scale and position animate.
-    readonly property int popupWidth: root.panelWidth
-    readonly property int popupHeight: Math.min(root.maxPanelHeight, expandedColumn.implicitHeight + 28)
-    readonly property Item popupItem: shell
-
-    implicitWidth: !root.shown ? 0 : (root.popupMode ? root.compactWidth : root.openWidth)
-    implicitHeight: !root.shown ? 0 : (root.popupMode ? root.compactHeight : root.openHeight)
-    // Switching a module off used to take it out of the bar between frames.
-    // It now scales down and fades while its width collapses, so the row
-    // closes the gap behind something that is visibly leaving rather than
-    // something that was simply deleted. `visible` follows the fade rather
-    // than the setting - read straight from `shown` the module would be gone
-    // before the animation had a single frame to run in, which is exactly what
-    // made it disappear instantly.
-    opacity: root.shown ? 1 : 0
-    scale: root.shown ? 1 : 0.82
-    transformOrigin: Item.Center
-    visible: root.opacity > 0.01
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Theme.ms(180)
-            easing.type: Easing.OutCubic
-        }
-
-    }
-
-    Behavior on scale {
-        NumberAnimation {
-            duration: Theme.ms(260)
-            // a little overshoot on the way in, so it reads as popping into
-            // place rather than inflating
-            easing.type: root.shown ? Easing.OutBack : Easing.InCubic
-        }
-
-    }
-    // the pop-up has to be allowed out of the root's bounds; in morph mode
-    // the root is the panel and still clips as before
-    clip: !root.popupMode
-    z: root.popupOpen ? 100 : 1
     Component.onCompleted: findDeviceProc.running = true
     onBacklightDeviceChanged: {
         if (backlightDevice !== "")
             readMaxProc.running = true;
 
     }
-    onBatteryChargingChanged: console.log("battery charging changed:", root.batteryCharging, "raw state:", root.battery ? root.battery.state : "n/a")
     onExpandedChanged: {
-        panelTransitionTimer.restart();
         if (expanded) {
             statsTimer.restart();
             lsblkProc.running = true;
         } else {
             statsTimer.stop();
             diskDropdownOpen = false;
-        }
-    }
-
-    Timer {
-        id: panelTransitionTimer
-
-        interval: 400
-        onTriggered: root.panelTransitioning = false
-        onRunningChanged: {
-            if (running)
-                root.panelTransitioning = true;
-
+            // a reopened panel always starts at the control centre rather
+            // than wherever it was left
+            view = "main";
         }
     }
 
@@ -512,1133 +438,812 @@ Item {
         onFileChanged: reload()
     }
 
+    compactContent: [
+        Row {
+            id: content
 
+            anchors.centerIn: parent
+            spacing: 8
 
+            // Network and Bluetooth state, which used to be two pills of
+            // their own out in the bar. Folding the panels in here without
+            // bringing their glyphs along would have meant losing the
+            // at-a-glance status entirely.
+            Item {
+                width: 16
+                height: 16
+                anchors.verticalCenter: parent.verticalCenter
 
-    // In pop-up mode this is the pill that stays in the bar, and the compact
-    // face reparents into it. In morph mode it is unused - the rectangle
-    // below is both pill and panel, exactly as before.
-    Rectangle {
-        id: pillRect
+                Text {
+                    anchors.centerIn: parent
+                    visible: !wifiPanel.primaryIsEthernet
+                    text: {
+                        // the same ramp WifiPanel's own glyph uses, so the
+                        // pill and the list can never disagree
+                        const glyphs = ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"];
+                        if (!Networking.wifiEnabled)
+                            return "󰤮";
 
-        visible: root.popupMode
-        width: root.compactWidth
-        height: root.compactHeight
-        // Fades out as shell.qml's united bar fades in, over the same
-        // duration. Switched outright, the islands lost their backs in the
-        // same frame the shared surface appeared behind them.
-        color: Theme.bg
-
-        Behavior on color {
-            // not before the bar has laid out: inline mode reads false for the
-            // frame before the config file lands, so at startup this would
-            // always cross-fade in from an island that was never really there
-            enabled: root.hostWindow ? root.hostWindow.laidOut : false
-
-            ColorAnimation {
-                duration: Theme.ms(260)
-                easing.type: Easing.OutCubic
-            }
-
-        }
-
-        clip: true
-        radius: Prefs.barPillRadius
-        topLeftRadius: root.pillTopRadius
-        topRightRadius: root.pillTopRadius
-    }
-
-
-    Rectangle {
-        id: shell
-
-        // morph mode: fills the root, which is the thing that morphs.
-        // pop-up mode: a detached panel hanging below the pill.
-        // Pop-up mode expands the panel out of the pill the same way morph
-        // mode expands the pill itself - small to big. It starts on the
-        // pill's exact footprint and grows down and out to the panel's
-        // size; the only difference from morph is that the pill stays
-        // behind while the panel detaches from it.
-        //
-        // The growth has to be real geometry rather than opacity or scale.
-        // The frosted backing behind a panel is a compositor blur region
-        // (see shell.qml): a hard-edged rectangle that tracks this item's
-        // bounds and cannot fade along with it. A cross-fade therefore
-        // flashed a blurred empty pane for a frame before the panel had
-        // drawn anything, and on the way out dropped the backing on the
-        // very first frame, leaving the panel see-through for the rest of
-        // the exit. Geometry is what the blur region follows, so growing
-        // keeps the surface and its backing the same shape every frame.
-        width: root.popupMode ? (root.expanded ? root.popupWidth : root.compactWidth) : root.width
-        height: root.popupMode ? (root.expanded ? root.popupHeight : root.compactHeight) : root.height
-        x: root.popupMode && root.expanded ? root.popupX : 0
-        y: root.popupMode && root.expanded ? root.compactHeight + Prefs.barPopupGap : 0
-
-        // popupExpanding rather than popupOpen: popupOpen now follows the
-        // very geometry these animations drive, so reading it here would
-        // have picked the exit duration for every enter. All four share one
-        // duration and curve so the panel expands as a single movement.
-        Behavior on x {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on y {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on width {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on height {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-        visible: !root.popupMode || shell.y > 0.5
-
-        color: Theme.bg
-        radius: root.cornerRadius
-        topLeftRadius: root.topRadius
-        topRightRadius: root.topRadius
-        clip: true
-        layer.enabled: true
-        layer.samples: 4
-
-        // COMPACT FACE
-        Item {
-            id: compactFace
-
-            property bool hovered: false
-
-            // in pop-up mode the compact face belongs to the pill that stays
-            // in the bar, not to the panel that drops away below it
-            parent: root.popupMode ? pillRect : shell
-
-            width: root.compactWidth
-            height: root.compactHeight
-            anchors.left: parent.left
-            anchors.top: parent.top
-            // in pop-up mode the pill is not the thing that opens, so its
-            // face stays put and lit instead of fading out into a panel
-            opacity: root.popupMode || !root.expanded ? 1 : 0
-            scale: root.popupMode || !root.expanded ? 1 : 0.94
-            visible: opacity > 0.01
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onEntered: compactFace.hovered = true
-                onExited: compactFace.hovered = false
-                onClicked: root.expanded = true
-            }
-
-            Row {
-                id: content
-
-                anchors.centerIn: parent
-                spacing: 8
-
-                // volume - was a hardcoded full-volume glyph regardless of
-                // level; now morphs the same way the expanded slider does
-                StatusIndicator {
-                    svgPath: root.volumeIconFor(root.volumePercent)
-                    labelText: root.volMuted ? "Muted" : root.volumePercent
-                    isMuted: root.volMuted
+                        const s = wifiPanel.signalStrength;
+                        return wifiPanel.wifiConnected ? glyphs[Math.max(0, Math.min(4, Math.floor(s / 20)))] : glyphs[0];
+                    }
+                    color: wifiPanel.wifiConnected ? Theme.accent : Theme.subtext
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(15)
                 }
 
-                // microphone
-                StatusIndicator {
-                    svgPath: "M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
-                    labelText: root.micMuted ? "Off" : "On"
-                    isMuted: root.micMuted
-                }
+                // The same glyph the Network pill drew, redrawn here rather
+                // than shared: an inline `component` is visible only inside
+                // the file that declares it, and this one belongs to
+                // WifiPanel. qmllint does not catch the cross-file reference -
+                // only the running shell does.
+                Item {
+                    anchors.centerIn: parent
+                    width: 16
+                    height: 16
+                    visible: wifiPanel.primaryIsEthernet
 
-                // battery - color shifts with charge state
-                Row {
-                    id: batteryRow
+                    Rectangle {
+                        width: 10
+                        height: 7
+                        radius: 2
+                        anchors.centerIn: parent
+                        anchors.verticalCenterOffset: 2
+                        color: Theme.accent
+                    }
 
-                    readonly property color battColor: root.batteryCharging ? Theme.accent : (root.batteryPercent <= 20 ? Theme.error : Theme.subtext)
-
-                    spacing: 6
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: root.batteryPresent
-
-                    Item {
-                        id: batteryIcon
-
-                        width: 24
-                        height: 15
-                        anchors.verticalCenter: parent.verticalCenter
+                    Row {
+                        anchors.top: parent.top
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: 2
 
                         Rectangle {
-                            id: body
-
-                            anchors.left: parent.left
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 20
-                            height: 15
-                            radius: 5
-                            color: "transparent"
-                            border.width: 1.5
-                            border.color: batteryRow.battColor
-
-                            Rectangle {
-                                anchors.left: parent.left
-                                anchors.top: parent.top
-                                anchors.bottom: parent.bottom
-                                anchors.margins: 1
-                                width: Math.max(0, (parent.width - 2) * (root.batteryPercent / 100))
-                                radius: 2
-                                color: batteryRow.battColor
-
-                                Behavior on width {
-                                    NumberAnimation {
-                                        duration: Theme.ms(300)
-                                    }
-
-                                }
-
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: Theme.ms(200)
-                                    }
-
-                                }
-
-                            }
-
-                            Shape {
-                                visible: root.batteryCharging
-                                anchors.centerIn: parent
-                                width: 24
-                                height: 25
-                                scale: 12 / 24
-                                preferredRendererType: Shape.CurveRenderer
-
-                                ShapePath {
-                                    fillColor: Theme.bgOpaque
-                                    strokeWidth: 0
-
-                                    PathSvg {
-                                        path: "M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z"
-                                    }
-
-                                }
-
-                            }
-
-                            Behavior on border.color {
-                                ColorAnimation {
-                                    duration: Theme.ms(200)
-                                }
-
-                            }
-
+                            width: 2
+                            height: 5
+                            color: Theme.accent
                         }
 
                         Rectangle {
-                            anchors.left: body.right
-                            anchors.leftMargin: 1
-                            anchors.verticalCenter: parent.verticalCenter
                             width: 2
-                            height: 7
-                            radius: 1
+                            height: 5
+                            color: Theme.accent
+                        }
+
+                    }
+
+                }
+
+            }
+
+            SvgIcon {
+                visible: root.btEnabled
+                anchors.verticalCenter: parent.verticalCenter
+                path: "M17.71,7.71L12,2H11V9.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L11,14.41V22H12L17.71,16.29L13.41,12L17.71,7.71M13,5.83L15.17,8L13,10.17V5.83M13,13.83L15.17,16L13,18.17V13.83Z"
+                tint: btPanel.connectedDevices.length > 0 ? Theme.accent : Theme.subtext
+                iconSize: 15
+            }
+
+            // volume - was a hardcoded full-volume glyph regardless of
+            // level; now morphs the same way the expanded slider does
+            StatusIndicator {
+                svgPath: root.volumeIconFor(root.volumePercent)
+                labelText: root.volMuted ? "Muted" : root.volumePercent
+                isMuted: root.volMuted
+            }
+
+            // microphone
+            StatusIndicator {
+                svgPath: "M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
+                labelText: root.micMuted ? "Off" : "On"
+                isMuted: root.micMuted
+            }
+
+            // battery - color shifts with charge state
+            Row {
+                id: batteryRow
+
+                readonly property color battColor: root.batteryCharging ? Theme.accent : (root.batteryPercent <= 20 ? Theme.error : Theme.subtext)
+
+                spacing: 6
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.batteryPresent
+
+                Item {
+                    id: batteryIcon
+
+                    width: 24
+                    height: 15
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Rectangle {
+                        id: body
+
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 20
+                        height: 15
+                        radius: 5
+                        color: "transparent"
+                        border.width: 1.5
+                        border.color: batteryRow.battColor
+
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.margins: 1
+                            width: Math.max(0, (parent.width - 2) * (root.batteryPercent / 100))
+                            radius: 2
                             color: batteryRow.battColor
+
+                            Behavior on width {
+                                NumberAnimation {
+                                    duration: Theme.barMs(300)
+                                }
+
+                            }
 
                             Behavior on color {
                                 ColorAnimation {
-                                    duration: Theme.ms(200)
+                                    duration: Theme.barMs(200)
                                 }
 
                             }
 
                         }
 
+                        Shape {
+                            visible: root.batteryCharging
+                            anchors.centerIn: parent
+                            width: 24
+                            height: 25
+                            scale: 12 / 24
+                            preferredRendererType: Shape.CurveRenderer
+
+                            ShapePath {
+                                fillColor: Theme.bgOpaque
+                                strokeWidth: 0
+
+                                PathSvg {
+                                    path: "M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z"
+                                }
+
+                            }
+
+                        }
+
+                        Behavior on border.color {
+                            ColorAnimation {
+                                duration: Theme.barMs(200)
+                            }
+
+                        }
+
                     }
 
-                    Text {
+                    Rectangle {
+                        anchors.left: body.right
+                        anchors.leftMargin: 1
                         anchors.verticalCenter: parent.verticalCenter
-                        text: root.batteryPercent + "%"
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        font.pixelSize: Theme.fs(13)
+                        width: 2
+                        height: 7
+                        radius: 1
+                        color: batteryRow.battColor
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.barMs(200)
+                            }
+
+                        }
+
                     }
 
                 }
 
-            }
-
-            Rectangle {
-                // Islands and notches only. The fill follows whatever surface
-                // the compact face currently lives in - the shell in morph mode,
-                // the pill in pop-up mode - corner overrides included. Copying
-                // only `radius` left this fully rounded inside a squared-off
-                // pill, so hovering a notch showed an island-shaped highlight
-                // with dark wedges in the top corners. Inline does not use it at
-                // all; see the rule below.
-                anchors.fill: parent
-                radius: parent.parent.radius
-                topLeftRadius: parent.parent.topLeftRadius
-                topRightRadius: parent.parent.topRightRadius
-                color: Theme.text
-                opacity: compactFace.hovered ? 0.08 : 0
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.ms(150)
-                        easing.type: Easing.OutCubic
-                    }
-
-                }
-
-            }
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.ms(220)
-                    easing.type: Easing.OutCubic
-                }
-
-            }
-
-            Behavior on scale {
-                NumberAnimation {
-                    duration: Theme.ms(220)
-                    easing.type: Easing.OutCubic
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.batteryPercent + "%"
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                    font.pixelSize: Theme.fs(13)
                 }
 
             }
 
         }
+    ]
 
-        // EXPANDED FACE (CONTROL CENTER)
+    panelContent: [
         Item {
-            id: expandedFace
+            id: panelStack
 
             anchors.fill: parent
-            opacity: root.expanded ? 1 : 0
-            scale: root.expanded ? 1 : 1.04
-            visible: opacity > 0.01
 
-            HyprlandFocusGrab {
-                active: root.expanded
-                windows: root.hostWindow ? [root.hostWindow] : []
-                onCleared: root.expanded = false
-            }
+            // The control centre. Slides a little to the left and fades as a
+            // sub-view takes over, so the two read as one surface moving
+            // rather than two panels swapping.
+            Item {
+                id: mainView
 
-            Flickable {
-                id: scrollArea
+                // A push, not a cross-fade. The two views never dissolve
+                // through each other and never both sit at part opacity: the
+                // control centre leaves to the left exactly as the sub-view
+                // arrives from the right, one page displacing the other. The
+                // panel clips (shell.clip), so whatever is off its edge is
+                // simply not drawn.
+                //
+                // x is animated, so these cannot use anchors.fill - an anchor
+                // would own x and the slide would never move.
+                y: 0
+                width: panelStack.width
+                height: panelStack.height
+                // panelWidth, not `width`: panelWidth is computed from the
+                // screen and is stable from the first frame, where the laid-out
+                // width starts at 0.
+                x: root.inSubView ? -root.panelWidth : 0
+                // fully off to the left once the sub-view has taken over
+                visible: x > -root.panelWidth + 0.5
 
-                anchors.fill: parent
-                anchors.margins: 14
-                contentWidth: width
-                contentHeight: expandedColumn.implicitHeight
-                clip: true
-                boundsBehavior: Flickable.StopAtBounds
+                Behavior on x {
+                    enabled: root.viewSwitching
 
-                Column {
-                    id: expandedColumn
+                    NumberAnimation {
+                        duration: root.morphDuration
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: root.morphEasing
+                    }
 
-                    width: scrollArea.width
-                    spacing: 14
+                }
 
-                    // toggle grid
-                    Grid {
-                        width: root.contentWidth
-                        columns: 2
-                        columnSpacing: 8
-                        rowSpacing: 8
+                Flickable {
+                    id: scrollArea
 
-                        ToggleTile {
-                            iconGlyph: "󰤯"
-                            name: "Wi-Fi"
-                            sub: root.networkMod ? root.networkMod.statusText : (Networking.wifiEnabled ? "On" : "Off")
-                            checked: Networking.wifiEnabled
-                            showArrow: true
-                            onToggled: Networking.wifiEnabled = !Networking.wifiEnabled
-                            onExpandRequested: {
-                                root.expanded = false;
-                                if (root.networkMod)
-                                    root.networkMod.expanded = true;
+                    anchors.fill: parent
+                    anchors.margins: 14
+                    contentWidth: width
+                    contentHeight: expandedColumn.implicitHeight
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
 
+                    Column {
+                        id: expandedColumn
+
+                        width: scrollArea.width
+                        spacing: 14
+
+                        // toggle grid
+                        Grid {
+                            width: root.contentWidth
+                            columns: 2
+                            columnSpacing: 8
+                            rowSpacing: 8
+
+                            ToggleTile {
+                                iconGlyph: "󰤯"
+                                name: "Wi-Fi"
+                                sub: wifiPanel.statusText
+                                checked: Networking.wifiEnabled
+                                showArrow: true
+                                onToggled: Networking.wifiEnabled = !Networking.wifiEnabled
+                                onExpandRequested: root.showView("wifi")
                             }
-                        }
 
-                        ToggleTile {
-                            iconPath: "M17.71,7.71L12,2H11V9.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L11,14.41V22H12L17.71,16.29L13.41,12L17.71,7.71M13,5.83L15.17,8L13,10.17V5.83M13,13.83L15.17,16L13,18.17V13.83Z"
-                            name: "Bluetooth"
-                            sub: root.bluetoothMod ? root.bluetoothMod.label : (root.btEnabled ? "On" : "Off")
-                            checked: root.btEnabled
-                            showArrow: true
-                            onToggled: {
-                                if (root.btAdapter)
-                                    root.btAdapter.enabled = !root.btAdapter.enabled;
-
-                            }
-                            onExpandRequested: {
-                                root.expanded = false;
-                                if (root.bluetoothMod)
-                                    root.bluetoothMod.expanded = true;
-
-                            }
-                        }
-
-                        ToggleTile {
-                            iconPath: "M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
-                            name: "Microphone"
-                            sub: root.micMuted ? "Disabled" : "Active"
-                            checked: !root.micMuted
-                            onToggled: {
-                                if (root.source && root.source.audio)
-                                    root.source.audio.muted = !root.source.audio.muted;
-
-                            }
-                        }
-
-                        ToggleTile {
-                            iconPath: "M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2.5 1.5V22l4-1 4 1v-1.5L11 19v-5.5L21 16Z"
-                            name: "Airplane Mode"
-                            checked: root.airplaneMode
-                            onToggled: {
-                                root.airplaneMode = !root.airplaneMode;
-                                if (root.airplaneMode) {
-                                    Networking.wifiEnabled = false;
+                            ToggleTile {
+                                iconPath: "M17.71,7.71L12,2H11V9.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L11,14.41V22H12L17.71,16.29L13.41,12L17.71,7.71M13,5.83L15.17,8L13,10.17V5.83M13,13.83L15.17,16L13,18.17V13.83Z"
+                                name: "Bluetooth"
+                                sub: btPanel.label
+                                checked: root.btEnabled
+                                showArrow: true
+                                onToggled: {
                                     if (root.btAdapter)
-                                        root.btAdapter.enabled = false;
+                                        root.btAdapter.enabled = !root.btAdapter.enabled;
+
+                                }
+                                onExpandRequested: root.showView("bluetooth")
+                            }
+
+                            ToggleTile {
+                                iconPath: "M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
+                                name: "Microphone"
+                                sub: root.micMuted ? "Disabled" : "Active"
+                                checked: !root.micMuted
+                                onToggled: {
+                                    if (root.source && root.source.audio)
+                                        root.source.audio.muted = !root.source.audio.muted;
 
                                 }
                             }
-                        }
 
-                        ToggleTile {
-                            iconPath: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm5 11H7v-2h10v2Z"
-                            name: "Do Not Disturb"
-                            checked: root.dndOn
-                            onToggled: {
-                                if (root.notifMod)
-                                    root.notifMod.dnd = !root.notifMod.dnd;
+                            ToggleTile {
+                                iconPath: "M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2.5 1.5V22l4-1 4 1v-1.5L11 19v-5.5L21 16Z"
+                                name: "Airplane Mode"
+                                checked: root.airplaneMode
+                                onToggled: {
+                                    root.airplaneMode = !root.airplaneMode;
+                                    if (root.airplaneMode) {
+                                        Networking.wifiEnabled = false;
+                                        if (root.btAdapter)
+                                            root.btAdapter.enabled = false;
 
+                                    }
+                                }
                             }
-                        }
 
-                        ToggleTile {
-                            iconPath: "M12 3a9 9 0 1 0 8.94 10.06.5.5 0 0 0-.66-.54A7 7 0 1 1 11.48 3.72a.5.5 0 0 0-.54-.66A9.06 9.06 0 0 0 12 3Z"
-                            name: "Night Light"
-                            checked: root.nightLight
-                            onToggled: root.nightLight = !root.nightLight
-                        }
+                            ToggleTile {
+                                iconPath: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm5 11H7v-2h10v2Z"
+                                name: "Do Not Disturb"
+                                checked: root.dndOn
+                                onToggled: {
+                                    if (root.notifMod)
+                                        root.notifMod.dnd = !root.notifMod.dnd;
 
-                    }
-
-                    Rectangle {
-                        width: parent.width
-                        height: 1
-                        color: Theme.outline
-                    }
-
-                    // sliders
-                    Column {
-                        width: root.contentWidth
-                        spacing: 12
-
-                        SliderRow {
-                            iconLevels: root.brightnessIconLevels
-                            value: root.brightnessPercent
-                            onCommitted: (v) => {
-                                return root.setBrightness(v);
+                                }
                             }
-                        }
 
-                        SliderRow {
-                            iconLevels: root.volumeIconLevels
-                            value: root.volumePercent
-                            onCommitted: (v) => {
-                                if (root.sink && root.sink.audio)
-                                    root.sink.audio.volume = v / 100;
-
+                            ToggleTile {
+                                iconPath: "M12 3a9 9 0 1 0 8.94 10.06.5.5 0 0 0-.66-.54A7 7 0 1 1 11.48 3.72a.5.5 0 0 0-.54-.66A9.06 9.06 0 0 0 12 3Z"
+                                name: "Night Light"
+                                checked: root.nightLight
+                                onToggled: root.nightLight = !root.nightLight
                             }
-                        }
 
-                    }
-
-                    Rectangle {
-                        width: parent.width
-                        height: 1
-                        color: Theme.outline
-                    }
-
-                    // now playing shortcut - background click opens Mpris,
-                    // transport buttons have their own MouseAreas on top
-                    Rectangle {
-                        id: mprisSection
-
-                        readonly property var mprisPlayer: root.mprisMod ? root.mprisMod.player : null
-
-                        width: root.contentWidth
-                        height: 62
-                        radius: 12
-                        color: mprisArea.containsMouse ? Theme.withBlur(Theme.bgHover) : Theme.withBlur(Theme.bgTile)
-
-                        MouseArea {
-                            id: mprisArea
-
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.expanded = false;
-                                if (root.mprisMod)
-                                    root.mprisMod.expanded = true;
-
-                            }
                         }
 
                         Rectangle {
-                            id: mprisArt
+                            width: parent.width
+                            height: 1
+                            color: Theme.outline
+                        }
 
-                            anchors.left: parent.left
-                            anchors.leftMargin: 10
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 42
-                            height: 42
-                            radius: 10
-                            color: Theme.withBlur(Theme.bgActive)
-                            clip: true
+                        // sliders
+                        Column {
+                            width: root.contentWidth
+                            spacing: 12
 
-                            Image {
-                                id: mprisArtImg
+                            SliderRow {
+                                iconLevels: root.brightnessIconLevels
+                                value: root.brightnessPercent
+                                onCommitted: (v) => {
+                                    return root.setBrightness(v);
+                                }
+                            }
+
+                            SliderRow {
+                                iconLevels: root.volumeIconLevels
+                                value: root.volumePercent
+                                onCommitted: (v) => {
+                                    if (root.sink && root.sink.audio)
+                                        root.sink.audio.volume = v / 100;
+
+                                }
+                            }
+
+                        }
+
+                        Rectangle {
+                            width: parent.width
+                            height: 1
+                            color: Theme.outline
+                        }
+
+                        // now playing shortcut - background click opens Mpris,
+                        // transport buttons have their own MouseAreas on top
+                        Rectangle {
+                            id: mprisSection
+
+                            readonly property var mprisPlayer: root.mprisMod ? root.mprisMod.player : null
+
+                            width: root.contentWidth
+                            height: 62
+                            radius: 12
+                            color: mprisArea.containsMouse ? Theme.withBlur(Theme.bgHover) : Theme.withBlur(Theme.bgTile)
+
+                            MouseArea {
+                                id: mprisArea
 
                                 anchors.fill: parent
-                                source: mprisSection.mprisPlayer ? mprisSection.mprisPlayer.trackArtUrl : ""
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                visible: status === Image.Ready
-                            }
-
-                            SvgIcon {
-                                anchors.centerIn: parent
-                                visible: !mprisArtImg.visible
-                                path: "M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6Z"
-                                tint: Theme.subtext
-                                iconSize: 18
-                            }
-
-                        }
-
-                        Column {
-                            anchors.left: mprisArt.right
-                            anchors.leftMargin: 10
-                            anchors.right: mprisControls.left
-                            anchors.rightMargin: 10
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 2
-
-                            Text {
-                                width: parent.width
-                                text: root.mprisMod ? root.mprisMod.title : "Nothing playing"
-                                color: Theme.text
-                                font.family: Theme.fontFamily
-                                font.bold: true
-                                font.pixelSize: Theme.fs(12)
-                                elide: Text.ElideRight
-                            }
-
-                            Text {
-                                width: parent.width
-                                visible: text !== ""
-                                text: root.mprisMod ? root.mprisMod.artist : ""
-                                color: Theme.subtext
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(10)
-                                elide: Text.ElideRight
-                            }
-
-                        }
-
-                        Row {
-                            id: mprisControls
-
-                            anchors.right: parent.right
-                            anchors.rightMargin: 10
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 6
-
-                            Item {
-                                width: 15
-                                height: 15
-                                anchors.verticalCenter: parent.verticalCenter
-                                opacity: mprisPrevArea.containsMouse ? 0.7 : 1
-
-                                SvgIcon {
-                                    anchors.fill: parent
-                                    path: "M6 6h2v12H6V6Zm3.5 6 8.5-6v12l-8.5-6Z"
-                                    tint: Theme.text
-                                    iconSize: 15
-                                }
-
-                                MouseArea {
-                                    id: mprisPrevArea
-
-                                    anchors.fill: parent
-                                    anchors.margins: -5
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        if (mprisSection.mprisPlayer && mprisSection.mprisPlayer.canGoPrevious)
-                                            mprisSection.mprisPlayer.previous();
-
-                                    }
-                                }
-
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: Theme.ms(120)
-                                    }
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    root.expanded = false;
+                                    if (root.mprisMod)
+                                        root.mprisMod.expanded = true;
 
                                 }
-
                             }
 
                             Rectangle {
-                                width: 24
-                                height: 24
-                                radius: 999
-                                color: Theme.accent
+                                id: mprisArt
+
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
+                                width: 42
+                                height: 42
+                                radius: 10
+                                color: Theme.withBlur(Theme.bgActive)
+                                clip: true
+
+                                Image {
+                                    id: mprisArtImg
+
+                                    anchors.fill: parent
+                                    source: mprisSection.mprisPlayer ? mprisSection.mprisPlayer.trackArtUrl : ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    visible: status === Image.Ready
+                                }
 
                                 SvgIcon {
                                     anchors.centerIn: parent
-                                    path: (root.mprisMod && root.mprisMod.isPlaying) ? "M8 6h3v12H8V6Zm5 0h3v12h-3V6Z" : "M8 5v14l11-7L8 5Z"
-                                    tint: Theme.onAccent
-                                    iconSize: 14
-                                }
-
-                                MouseArea {
-                                    id: mprisPlayArea
-
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        if (mprisSection.mprisPlayer && mprisSection.mprisPlayer.canTogglePlaying)
-                                            mprisSection.mprisPlayer.togglePlaying();
-
-                                    }
-                                }
-
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: Theme.ms(120)
-                                    }
-
+                                    visible: !mprisArtImg.visible
+                                    path: "M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6Z"
+                                    tint: Theme.subtext
+                                    iconSize: 18
                                 }
 
                             }
-
-                            Item {
-                                width: 15
-                                height: 15
-                                anchors.verticalCenter: parent.verticalCenter
-                                opacity: mprisNextArea.containsMouse ? 0.7 : 1
-
-                                SvgIcon {
-                                    anchors.fill: parent
-                                    path: "M18 6h-2v12h2V6Zm-3.5 6L6 6v12l8.5-6Z"
-                                    tint: Theme.text
-                                    iconSize: 15
-                                }
-
-                                MouseArea {
-                                    id: mprisNextArea
-
-                                    anchors.fill: parent
-                                    anchors.margins: -5
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        if (mprisSection.mprisPlayer && mprisSection.mprisPlayer.canGoNext)
-                                            mprisSection.mprisPlayer.next();
-
-                                    }
-                                }
-
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: Theme.ms(120)
-                                    }
-
-                                }
-
-                            }
-
-                        }
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.ms(120)
-                            }
-
-                        }
-
-                    }
-
-                    Rectangle {
-                        width: parent.width
-                        height: 1
-                        color: Theme.outline
-                    }
-
-                    // stats
-                    Column {
-                        width: root.contentWidth
-                        spacing: 8
-
-                        Row {
-                            width: parent.width
-                            spacing: 8
-
-                            StatCard {
-                                width: (root.contentWidth - 16) / 3
-                                label: "BATTERY"
-                                valueText: root.batteryPresent ? root.batteryPercent + "%" : "N/A"
-                                showBar: root.batteryPresent
-                                barPct: root.batteryPercent
-                            }
-
-                            StatCard {
-                                width: (root.contentWidth - 16) / 3
-                                label: "RAM"
-                                valueText: root.ramHistory.length > 0 ? Math.round(root.ramPercent) + "%" : "—"
-                                showChart: true
-                                chartHistory: root.ramHistory
-                            }
-
-                            StatCard {
-                                width: (root.contentWidth - 16) / 3
-                                label: "CPU"
-                                valueText: root.cpuHistory.length > 0 ? Math.round(root.cpuPercent) + "%" : "—"
-                                showChart: true
-                                chartHistory: root.cpuHistory
-                            }
-
-                        }
-
-                        // disk card
-                        Rectangle {
-                            id: diskCard
-
-                            readonly property var selectedDiskInfo: {
-                                for (const d of root.diskList) {
-                                    if (d.name === root.selectedDisk)
-                                        return d;
-
-                                }
-                                return root.diskList.length > 0 ? root.diskList[0] : null;
-                            }
-                            readonly property real usedGB: selectedDiskInfo ? selectedDiskInfo.used / 1.07374e+09 : 0
-                            readonly property real totalGB: selectedDiskInfo ? selectedDiskInfo.size / 1.07374e+09 : 0
-                            readonly property real usedPct: (selectedDiskInfo && selectedDiskInfo.size > 0) ? (selectedDiskInfo.used / selectedDiskInfo.size * 100) : 0
-
-                            width: root.contentWidth
-                            height: diskColumn.implicitHeight + 20
-                            radius: 12
-                            color: Theme.withBlur(Theme.bgTile)
 
                             Column {
-                                id: diskColumn
+                                anchors.left: mprisArt.right
+                                anchors.leftMargin: 10
+                                anchors.right: mprisControls.left
+                                anchors.rightMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 2
 
-                                anchors.left: parent.left
+                                Text {
+                                    width: parent.width
+                                    text: root.mprisMod ? root.mprisMod.title : "Nothing playing"
+                                    color: Theme.text
+                                    font.family: Theme.fontFamily
+                                    font.bold: true
+                                    font.pixelSize: Theme.fs(12)
+                                    elide: Text.ElideRight
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    visible: text !== ""
+                                    text: root.mprisMod ? root.mprisMod.artist : ""
+                                    color: Theme.subtext
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fs(10)
+                                    elide: Text.ElideRight
+                                }
+
+                            }
+
+                            Row {
+                                id: mprisControls
+
                                 anchors.right: parent.right
-                                anchors.top: parent.top
-                                anchors.margins: 10
+                                anchors.rightMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
                                 spacing: 6
 
                                 Item {
-                                    width: parent.width
-                                    height: 22
+                                    width: 15
+                                    height: 15
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    opacity: mprisPrevArea.containsMouse ? 0.7 : 1
 
-                                    Text {
-                                        anchors.left: parent.left
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "DISK"
-                                        color: Theme.subtext
-                                        font.family: Theme.fontFamily
-                                        font.bold: true
-                                        font.pixelSize: Theme.fs(10)
+                                    SvgIcon {
+                                        anchors.fill: parent
+                                        path: "M6 6h2v12H6V6Zm3.5 6 8.5-6v12l-8.5-6Z"
+                                        tint: Theme.text
+                                        iconSize: 15
                                     }
 
-                                    Rectangle {
-                                        id: diskTrigger
+                                    MouseArea {
+                                        id: mprisPrevArea
 
-                                        anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.fill: parent
+                                        anchors.margins: -5
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (mprisSection.mprisPlayer && mprisSection.mprisPlayer.canGoPrevious)
+                                                mprisSection.mprisPlayer.previous();
+
+                                        }
+                                    }
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: Theme.barMs(120)
+                                        }
+
+                                    }
+
+                                }
+
+                                Rectangle {
+                                    width: 24
+                                    height: 24
+                                    radius: 999
+                                    color: Theme.accent
+                                    anchors.verticalCenter: parent.verticalCenter
+
+                                    SvgIcon {
+                                        anchors.centerIn: parent
+                                        path: (root.mprisMod && root.mprisMod.isPlaying) ? "M8 6h3v12H8V6Zm5 0h3v12h-3V6Z" : "M8 5v14l11-7L8 5Z"
+                                        tint: Theme.onAccent
+                                        iconSize: 14
+                                    }
+
+                                    MouseArea {
+                                        id: mprisPlayArea
+
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (mprisSection.mprisPlayer && mprisSection.mprisPlayer.canTogglePlaying)
+                                                mprisSection.mprisPlayer.togglePlaying();
+
+                                        }
+                                    }
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: Theme.barMs(120)
+                                        }
+
+                                    }
+
+                                }
+
+                                Item {
+                                    width: 15
+                                    height: 15
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    opacity: mprisNextArea.containsMouse ? 0.7 : 1
+
+                                    SvgIcon {
+                                        anchors.fill: parent
+                                        path: "M18 6h-2v12h2V6Zm-3.5 6L6 6v12l8.5-6Z"
+                                        tint: Theme.text
+                                        iconSize: 15
+                                    }
+
+                                    MouseArea {
+                                        id: mprisNextArea
+
+                                        anchors.fill: parent
+                                        anchors.margins: -5
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (mprisSection.mprisPlayer && mprisSection.mprisPlayer.canGoNext)
+                                                mprisSection.mprisPlayer.next();
+
+                                        }
+                                    }
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: Theme.barMs(120)
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: Theme.barMs(120)
+                                }
+
+                            }
+
+                        }
+
+                        Rectangle {
+                            width: parent.width
+                            height: 1
+                            color: Theme.outline
+                        }
+
+                        // stats
+                        Column {
+                            width: root.contentWidth
+                            spacing: 8
+
+                            Row {
+                                width: parent.width
+                                spacing: 8
+
+                                StatCard {
+                                    width: (root.contentWidth - 16) / 3
+                                    label: "BATTERY"
+                                    valueText: root.batteryPresent ? root.batteryPercent + "%" : "N/A"
+                                    showBar: root.batteryPresent
+                                    barPct: root.batteryPercent
+                                }
+
+                                StatCard {
+                                    width: (root.contentWidth - 16) / 3
+                                    label: "RAM"
+                                    valueText: root.ramHistory.length > 0 ? Math.round(root.ramPercent) + "%" : "—"
+                                    showChart: true
+                                    chartHistory: root.ramHistory
+                                }
+
+                                StatCard {
+                                    width: (root.contentWidth - 16) / 3
+                                    label: "CPU"
+                                    valueText: root.cpuHistory.length > 0 ? Math.round(root.cpuPercent) + "%" : "—"
+                                    showChart: true
+                                    chartHistory: root.cpuHistory
+                                }
+
+                            }
+
+                            // disk card
+                            Rectangle {
+                                id: diskCard
+
+                                readonly property var selectedDiskInfo: {
+                                    for (const d of root.diskList) {
+                                        if (d.name === root.selectedDisk)
+                                            return d;
+
+                                    }
+                                    return root.diskList.length > 0 ? root.diskList[0] : null;
+                                }
+                                readonly property real usedGB: selectedDiskInfo ? selectedDiskInfo.used / 1.07374e+09 : 0
+                                readonly property real totalGB: selectedDiskInfo ? selectedDiskInfo.size / 1.07374e+09 : 0
+                                readonly property real usedPct: (selectedDiskInfo && selectedDiskInfo.size > 0) ? (selectedDiskInfo.used / selectedDiskInfo.size * 100) : 0
+
+                                width: root.contentWidth
+                                height: diskColumn.implicitHeight + 20
+                                radius: 12
+                                color: Theme.withBlur(Theme.bgTile)
+
+                                Column {
+                                    id: diskColumn
+
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    anchors.margins: 10
+                                    spacing: 6
+
+                                    Item {
+                                        width: parent.width
                                         height: 22
-                                        width: diskTriggerRow.implicitWidth + 18
-                                        radius: 999
-                                        color: diskTriggerArea.containsMouse ? Theme.accentHover : Theme.accent
-                                        visible: root.diskList.length > 0
-                                        scale: diskTriggerArea.pressed ? 0.96 : 1
 
-                                        Row {
-                                            id: diskTriggerRow
+                                        Text {
+                                            anchors.left: parent.left
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: "DISK"
+                                            color: Theme.subtext
+                                            font.family: Theme.fontFamily
+                                            font.bold: true
+                                            font.pixelSize: Theme.fs(10)
+                                        }
 
-                                            anchors.centerIn: parent
-                                            spacing: 4
+                                        Rectangle {
+                                            id: diskTrigger
 
-                                            Text {
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                text: root.selectedDisk || "—"
-                                                color: Theme.onAccent
-                                                font.family: Theme.fontFamily
-                                                font.bold: true
-                                                font.pixelSize: Theme.fs(10)
-                                            }
+                                            anchors.right: parent.right
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            height: 22
+                                            width: diskTriggerRow.implicitWidth + 18
+                                            radius: 999
+                                            color: diskTriggerArea.containsMouse ? Theme.accentHover : Theme.accent
+                                            visible: root.diskList.length > 0
+                                            scale: diskTriggerArea.pressed ? 0.96 : 1
 
-                                            SvgIcon {
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                path: "M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6Z"
-                                                tint: Theme.onAccent
-                                                iconSize: 10
-                                                rotation: root.diskDropdownOpen ? 180 : 0
+                                            Row {
+                                                id: diskTriggerRow
 
-                                                Behavior on rotation {
-                                                    NumberAnimation {
-                                                        duration: Theme.ms(180)
+                                                anchors.centerIn: parent
+                                                spacing: 4
+
+                                                Text {
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: root.selectedDisk || "—"
+                                                    color: Theme.onAccent
+                                                    font.family: Theme.fontFamily
+                                                    font.bold: true
+                                                    font.pixelSize: Theme.fs(10)
+                                                }
+
+                                                SvgIcon {
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    path: "M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6Z"
+                                                    tint: Theme.onAccent
+                                                    iconSize: 10
+                                                    rotation: root.diskDropdownOpen ? 180 : 0
+
+                                                    Behavior on rotation {
+                                                        NumberAnimation {
+                                                            duration: Theme.barMs(180)
+                                                        }
+
                                                     }
 
                                                 }
 
                                             }
 
-                                        }
+                                            MouseArea {
+                                                id: diskTriggerArea
 
-                                        MouseArea {
-                                            id: diskTriggerArea
-
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                if (!root.diskDropdownOpen) {
-                                                    const pos = diskTrigger.mapToItem(expandedFace, 0, diskTrigger.height);
-                                                    diskPopup.x = pos.x + diskTrigger.width - diskPopup.width;
-                                                    diskPopup.y = pos.y + 6;
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    if (!root.diskDropdownOpen) {
+                                                        const pos = diskTrigger.mapToItem(expandedFace, 0, diskTrigger.height);
+                                                        diskPopup.x = pos.x + diskTrigger.width - diskPopup.width;
+                                                        diskPopup.y = pos.y + 6;
+                                                    }
+                                                    root.diskDropdownOpen = !root.diskDropdownOpen;
                                                 }
-                                                root.diskDropdownOpen = !root.diskDropdownOpen;
-                                            }
-                                        }
-
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: Theme.ms(120)
                                             }
 
-                                        }
+                                            Behavior on color {
+                                                ColorAnimation {
+                                                    duration: Theme.barMs(120)
+                                                }
 
-                                        Behavior on scale {
-                                            NumberAnimation {
-                                                duration: Theme.ms(90)
-                                                easing.type: Easing.OutQuad
+                                            }
+
+                                            Behavior on scale {
+                                                NumberAnimation {
+                                                    duration: Theme.barMs(90)
+                                                    easing.type: Easing.OutQuad
+                                                }
+
                                             }
 
                                         }
 
                                     }
 
-                                }
+                                    Text {
+                                        width: parent.width
+                                        text: {
+                                            if (!diskCard.selectedDiskInfo)
+                                                return "No disks found";
 
-                                Text {
-                                    width: parent.width
-                                    text: {
-                                        if (!diskCard.selectedDiskInfo)
-                                            return "No disks found";
+                                            if (!diskCard.selectedDiskInfo.mounted)
+                                                return "Not mounted · " + Math.round(diskCard.totalGB) + " GB";
 
-                                        if (!diskCard.selectedDiskInfo.mounted)
-                                            return "Not mounted · " + Math.round(diskCard.totalGB) + " GB";
-
-                                        return Math.round(diskCard.usedGB) + " GB / " + Math.round(diskCard.totalGB) + " GB";
+                                            return Math.round(diskCard.usedGB) + " GB / " + Math.round(diskCard.totalGB) + " GB";
+                                        }
+                                        color: (diskCard.selectedDiskInfo && !diskCard.selectedDiskInfo.mounted) ? Theme.subtext : Theme.text
+                                        font.family: Theme.fontFamily
+                                        font.bold: true
+                                        font.pixelSize: Theme.fs(15)
                                     }
-                                    color: (diskCard.selectedDiskInfo && !diskCard.selectedDiskInfo.mounted) ? Theme.subtext : Theme.text
-                                    font.family: Theme.fontFamily
-                                    font.bold: true
-                                    font.pixelSize: Theme.fs(15)
-                                }
-
-                                Rectangle {
-                                    width: parent.width
-                                    height: 5
-                                    radius: 999
-                                    color: Theme.withBlur(Theme.bgHigh)
-                                    opacity: (diskCard.selectedDiskInfo && !diskCard.selectedDiskInfo.mounted) ? 0.4 : 1
-                                    visible: diskCard.selectedDiskInfo !== null
 
                                     Rectangle {
-                                        width: parent.width * (diskCard.usedPct / 100)
-                                        height: parent.height
+                                        width: parent.width
+                                        height: 5
                                         radius: 999
-                                        color: Theme.accent
-
-                                        Behavior on width {
-                                            NumberAnimation {
-                                                duration: Theme.ms(300)
-                                            }
-
-                                        }
-
-                                    }
-
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                    Rectangle {
-                        width: parent.width
-                        height: 1
-                        color: Theme.outline
-                    }
-
-                    // notifications shortcut
-                    Rectangle {
-                        id: notifSection
-
-                        width: root.contentWidth
-                        height: notifCol.implicitHeight + 25
-                        radius: 12
-                        color: notifSectionArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent"
-
-                        MouseArea {
-                            id: notifSectionArea
-
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.expanded = false;
-                                if (root.notifMod)
-                                    root.notifMod.expanded = true;
-
-                            }
-                        }
-
-                        Column {
-                            id: notifCol
-
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.top: parent.top
-                            anchors.margins: 15
-                            spacing: 8
-
-                            Item {
-                                width: parent.width
-                                height: 18
-
-                                Text {
-                                    anchors.left: parent.left
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: "Notifications"
-                                    color: Theme.subtext
-                                    font.family: Theme.fontFamily
-                                    font.bold: true
-                                    font.pixelSize: Theme.fs(10)
-                                }
-
-                                Text {
-                                    anchors.right: parent.right
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: "Clear"
-                                    color: clearArea.containsMouse ? Theme.accentHover : Theme.accent
-                                    opacity: (root.notifMod && root.notifMod.notifCount > 0) ? 1 : 0.35
-                                    font.family: Theme.fontFamily
-                                    font.bold: true
-                                    font.pixelSize: Theme.fs(10)
-
-                                    MouseArea {
-                                        id: clearArea
-
-                                        anchors.fill: parent
-                                        anchors.margins: -6
-                                        enabled: root.notifMod && root.notifMod.notifCount > 0
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: (mouse) => {
-                                            mouse.accepted = true;
-                                            if (root.notifMod)
-                                                root.notifMod.clearAll();
-
-                                        }
-                                    }
-
-                                }
-
-                            }
-
-                            // These cards are a fixed 44 tall, so the view
-                            // knows their size the moment they are inserted and
-                            // its own add/displaced transitions are safe here -
-                            // unlike the full list in Notifications.qml, whose
-                            // text-sized cards have to animate their height from
-                            // outside any view transition. Only two cards ever
-                            // show, so an arrival is a shuffle: the new one
-                            // drops into the top slot, the one that was there
-                            // slides down, and the one it displaces fades out.
-                            ListView {
-                                id: miniList
-
-                                width: parent.width
-                                height: contentHeight
-                                visible: root.notifMod && root.notifMod.notifCount > 0
-                                spacing: 8
-                                interactive: false
-                                model: miniNotifModel
-
-                                delegate: Rectangle {
-                                    id: miniCard
-
-                                    required property var modelData
-                                    readonly property var notification: modelData
-                                    // mirrors, not direct bindings: the remove
-                                    // transition outlives a dismissed card's
-                                    // Notification object, and reading a freed
-                                    // one logs a TypeError per field. See the
-                                    // same note in Notifications.qml.
-                                    property string notifAppName: ""
-                                    property string notifSummary: ""
-                                    property string notifImage: ""
-                                    property string notifAppIcon: ""
-                                    readonly property string themeIconName: miniCard.notifAppIcon || (miniCard.notifImage.indexOf("image://icon/") === 0 ? miniCard.notifImage.slice(13) : "")
-                                    readonly property string directImage: miniCard.notifImage.indexOf("image://icon/") === 0 ? "" : miniCard.notifImage
-                                    readonly property string iconSrc: directImage || (themeIconName ? Quickshell.iconPath(themeIconName) : "")
-                                    // 1 the moment the card lands, decayed back
-                                    // to 0 by the add transition
-                                    property real arrivalGlow: 0
-
-                                    function syncNotification() {
-                                        const n = miniCard.notification;
-                                        if (!n)
-                                            return ;
-
-                                        miniCard.notifAppName = n.appName;
-                                        miniCard.notifSummary = n.summary;
-                                        miniCard.notifImage = n.image;
-                                        miniCard.notifAppIcon = n.appIcon;
-                                    }
-
-                                    onNotificationChanged: miniCard.syncNotification()
-                                    Component.onCompleted: {
-                                        miniCard.syncNotification();
-                                        // a card the view merely rebuilt should
-                                        // not replay the arrival - the add
-                                        // transition is skipped for it by
-                                        // starting it out already arrived
-                                        if (!miniCard.notification || !root.markNotifShown(miniCard.notification.id)) {
-                                            miniCard.opacity = 1;
-                                            miniCard.scale = 1;
-                                        }
-                                    }
-                                    width: parent ? parent.width : 0
-                                    height: 44
-                                    radius: 10
-                                    color: Theme.withBlur(miniCard.arrivalGlow > 0 ? Theme._mix(Theme.bgSunken, Theme.accent, miniCard.arrivalGlow * 0.32) : Theme.bgSunken)
-
-                                    Connections {
-                                        function onAppNameChanged() {
-                                            miniCard.syncNotification();
-                                        }
-
-                                        function onAppIconChanged() {
-                                            miniCard.syncNotification();
-                                        }
-
-                                        function onSummaryChanged() {
-                                            miniCard.syncNotification();
-                                        }
-
-                                        function onImageChanged() {
-                                            miniCard.syncNotification();
-                                        }
-
-                                        target: miniCard.notification
-                                    }
-
-                                    Row {
-                                        anchors.fill: parent
-                                        anchors.margins: 8
-                                        spacing: 8
+                                        color: Theme.withBlur(Theme.bgHigh)
+                                        opacity: (diskCard.selectedDiskInfo && !diskCard.selectedDiskInfo.mounted) ? 0.4 : 1
+                                        visible: diskCard.selectedDiskInfo !== null
 
                                         Rectangle {
-                                            width: 24
-                                            height: 24
-                                            radius: 7
-                                            color: Theme.bgTrack
-                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: parent.width * (diskCard.usedPct / 100)
+                                            height: parent.height
+                                            radius: 999
+                                            color: Theme.accent
 
-                                            IconImage {
-                                                anchors.fill: parent
-                                                anchors.margins: 1
-                                                source: miniCard.iconSrc
-                                                asynchronous: true
-                                                visible: status === Image.Ready
-                                            }
+                                            Behavior on width {
+                                                NumberAnimation {
+                                                    duration: Theme.barMs(300)
+                                                }
 
-                                        }
-
-                                        Column {
-                                            width: parent.width - 24 - 8
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            spacing: 1
-
-                                            Text {
-                                                width: parent.width
-                                                visible: miniCard.notifAppName !== ""
-                                                text: miniCard.notifAppName
-                                                color: Theme.subtextDim
-                                                font.family: Theme.fontFamily
-                                                font.pixelSize: Theme.fs(9)
-                                                elide: Text.ElideRight
-                                            }
-
-                                            Text {
-                                                width: parent.width
-                                                text: miniCard.notifSummary
-                                                color: Theme.text
-                                                font.family: Theme.fontFamily
-                                                font.bold: true
-                                                font.pixelSize: Theme.fs(11)
-                                                elide: Text.ElideRight
                                             }
 
                                         }
@@ -1647,90 +1252,357 @@ Item {
 
                                 }
 
-                                // the new card waits out a short pause first, so
-                                // the shuffle below it is already under way when
-                                // it appears rather than landing on top of a
-                                // card that has not moved yet. PropertyAction
-                                // holds the start state through that pause - a
-                                // plain "from:" would only apply once its own
-                                // animation began
-                                add: Transition {
-                                    id: miniAdd
+                            }
 
-                                    SequentialAnimation {
-                                        PropertyAction {
-                                            property: "opacity"
-                                            value: 0
+                        }
+
+                        Rectangle {
+                            width: parent.width
+                            height: 1
+                            color: Theme.outline
+                        }
+
+                        // notifications shortcut
+                        Rectangle {
+                            id: notifSection
+
+                            width: root.contentWidth
+                            height: notifCol.implicitHeight + 25
+                            radius: 12
+                            color: notifSectionArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent"
+
+                            MouseArea {
+                                id: notifSectionArea
+
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    root.expanded = false;
+                                    if (root.notifMod)
+                                        root.notifMod.expanded = true;
+
+                                }
+                            }
+
+                            Column {
+                                id: notifCol
+
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.margins: 15
+                                spacing: 8
+
+                                Item {
+                                    width: parent.width
+                                    height: 18
+
+                                    Text {
+                                        anchors.left: parent.left
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "Notifications"
+                                        color: Theme.subtext
+                                        font.family: Theme.fontFamily
+                                        font.bold: true
+                                        font.pixelSize: Theme.fs(10)
+                                    }
+
+                                    Text {
+                                        anchors.right: parent.right
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "Clear"
+                                        color: clearArea.containsMouse ? Theme.accentHover : Theme.accent
+                                        opacity: (root.notifMod && root.notifMod.notifCount > 0) ? 1 : 0.35
+                                        font.family: Theme.fontFamily
+                                        font.bold: true
+                                        font.pixelSize: Theme.fs(10)
+
+                                        MouseArea {
+                                            id: clearArea
+
+                                            anchors.fill: parent
+                                            anchors.margins: -6
+                                            enabled: root.notifMod && root.notifMod.notifCount > 0
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: (mouse) => {
+                                                mouse.accepted = true;
+                                                if (root.notifMod)
+                                                    root.notifMod.clearAll();
+
+                                            }
                                         }
 
-                                        PauseAnimation {
-                                            duration: Theme.ms(70)
+                                    }
+
+                                }
+
+                                // These cards are a fixed 44 tall, so the view
+                                // knows their size the moment they are inserted and
+                                // its own add/displaced transitions are safe here -
+                                // unlike the full list in Notifications.qml, whose
+                                // text-sized cards have to animate their height from
+                                // outside any view transition. Only two cards ever
+                                // show, so an arrival is a shuffle: the new one
+                                // drops into the top slot, the one that was there
+                                // slides down, and the one it displaces fades out.
+                                ListView {
+                                    id: miniList
+
+                                    width: parent.width
+                                    height: contentHeight
+                                    visible: root.notifMod && root.notifMod.notifCount > 0
+                                    spacing: 8
+                                    interactive: false
+                                    model: miniNotifModel
+
+                                    delegate: Rectangle {
+                                        id: miniCard
+
+                                        required property var modelData
+                                        readonly property var notification: modelData
+                                        // mirrors, not direct bindings: the remove
+                                        // transition outlives a dismissed card's
+                                        // Notification object, and reading a freed
+                                        // one logs a TypeError per field. See the
+                                        // same note in Notifications.qml.
+                                        property string notifAppName: ""
+                                        property string notifSummary: ""
+                                        property string notifImage: ""
+                                        property string notifAppIcon: ""
+                                        readonly property string themeIconName: miniCard.notifAppIcon || (miniCard.notifImage.indexOf("image://icon/") === 0 ? miniCard.notifImage.slice(13) : "")
+                                        readonly property string directImage: miniCard.notifImage.indexOf("image://icon/") === 0 ? "" : miniCard.notifImage
+                                        readonly property string iconSrc: directImage || (themeIconName ? Quickshell.iconPath(themeIconName) : "")
+                                        // 1 the moment the card lands, decayed back
+                                        // to 0 by the add transition
+                                        property real arrivalGlow: 0
+
+                                        function syncNotification() {
+                                            const n = miniCard.notification;
+                                            if (!n)
+                                                return ;
+
+                                            miniCard.notifAppName = n.appName;
+                                            miniCard.notifSummary = n.summary;
+                                            miniCard.notifImage = n.image;
+                                            miniCard.notifAppIcon = n.appIcon;
+                                        }
+
+                                        onNotificationChanged: miniCard.syncNotification()
+                                        Component.onCompleted: {
+                                            miniCard.syncNotification();
+                                            // a card the view merely rebuilt should
+                                            // not replay the arrival - the add
+                                            // transition is skipped for it by
+                                            // starting it out already arrived
+                                            if (!miniCard.notification || !root.markNotifShown(miniCard.notification.id)) {
+                                                miniCard.opacity = 1;
+                                                miniCard.scale = 1;
+                                            }
+                                        }
+                                        width: parent ? parent.width : 0
+                                        height: 44
+                                        radius: 10
+                                        color: Theme.withBlur(miniCard.arrivalGlow > 0 ? Theme._mix(Theme.bgSunken, Theme.accent, miniCard.arrivalGlow * 0.32) : Theme.bgSunken)
+
+                                        Connections {
+                                            function onAppNameChanged() {
+                                                miniCard.syncNotification();
+                                            }
+
+                                            function onAppIconChanged() {
+                                                miniCard.syncNotification();
+                                            }
+
+                                            function onSummaryChanged() {
+                                                miniCard.syncNotification();
+                                            }
+
+                                            function onImageChanged() {
+                                                miniCard.syncNotification();
+                                            }
+
+                                            target: miniCard.notification
+                                        }
+
+                                        Row {
+                                            anchors.fill: parent
+                                            anchors.margins: 8
+                                            spacing: 8
+
+                                            Rectangle {
+                                                width: 24
+                                                height: 24
+                                                radius: 7
+                                                color: Theme.bgTrack
+                                                anchors.verticalCenter: parent.verticalCenter
+
+                                                IconImage {
+                                                    anchors.fill: parent
+                                                    anchors.margins: 1
+                                                    source: miniCard.iconSrc
+                                                    asynchronous: true
+                                                    visible: status === Image.Ready
+                                                }
+
+                                            }
+
+                                            Column {
+                                                width: parent.width - 24 - 8
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                spacing: 1
+
+                                                Text {
+                                                    width: parent.width
+                                                    visible: miniCard.notifAppName !== ""
+                                                    text: miniCard.notifAppName
+                                                    color: Theme.subtextDim
+                                                    font.family: Theme.fontFamily
+                                                    font.pixelSize: Theme.fs(9)
+                                                    elide: Text.ElideRight
+                                                }
+
+                                                Text {
+                                                    width: parent.width
+                                                    text: miniCard.notifSummary
+                                                    color: Theme.text
+                                                    font.family: Theme.fontFamily
+                                                    font.bold: true
+                                                    font.pixelSize: Theme.fs(11)
+                                                    elide: Text.ElideRight
+                                                }
+
+                                            }
+
+                                        }
+
+                                    }
+
+                                    // the new card waits out a short pause first, so
+                                    // the shuffle below it is already under way when
+                                    // it appears rather than landing on top of a
+                                    // card that has not moved yet. PropertyAction
+                                    // holds the start state through that pause - a
+                                    // plain "from:" would only apply once its own
+                                    // animation began
+                                    add: Transition {
+                                        id: miniAdd
+
+                                        SequentialAnimation {
+                                            PropertyAction {
+                                                property: "opacity"
+                                                value: 0
+                                            }
+
+                                            PauseAnimation {
+                                                duration: Theme.barMs(70)
+                                            }
+
+                                            NumberAnimation {
+                                                property: "opacity"
+                                                to: 1
+                                                duration: Theme.barMs(220)
+                                                easing.type: Easing.OutCubic
+                                            }
+
+                                        }
+
+                                        SequentialAnimation {
+                                            PropertyAction {
+                                                property: "y"
+                                                value: miniAdd.ViewTransition.destination.y - 14
+                                            }
+
+                                            PauseAnimation {
+                                                duration: Theme.barMs(70)
+                                            }
+
+                                            NumberAnimation {
+                                                property: "y"
+                                                to: miniAdd.ViewTransition.destination.y
+                                                duration: Theme.barMs(340)
+                                                easing.type: Easing.OutCubic
+                                            }
+
+                                        }
+
+                                        SequentialAnimation {
+                                            PropertyAction {
+                                                property: "scale"
+                                                value: 0.92
+                                            }
+
+                                            PauseAnimation {
+                                                duration: Theme.barMs(70)
+                                            }
+
+                                            NumberAnimation {
+                                                property: "scale"
+                                                to: 1
+                                                duration: Theme.barMs(360)
+                                                easing.type: Easing.OutBack
+                                                easing.overshoot: 1.6
+                                            }
+
+                                        }
+
+                                        // decays on its own, so the card reads as new
+                                        // for a beat and then looks like the other
+                                        SequentialAnimation {
+                                            PropertyAction {
+                                                property: "arrivalGlow"
+                                                value: 1
+                                            }
+
+                                            PauseAnimation {
+                                                duration: Theme.barMs(70)
+                                            }
+
+                                            NumberAnimation {
+                                                property: "arrivalGlow"
+                                                to: 0
+                                                duration: Theme.barMs(850)
+                                                easing.type: Easing.InCubic
+                                            }
+
+                                        }
+
+                                    }
+
+                                    displaced: Transition {
+                                        NumberAnimation {
+                                            properties: "x,y"
+                                            duration: Theme.barMs(300)
+                                            easing.type: Easing.OutCubic
                                         }
 
                                         NumberAnimation {
                                             property: "opacity"
                                             to: 1
-                                            duration: Theme.ms(220)
-                                            easing.type: Easing.OutCubic
-                                        }
-
-                                    }
-
-                                    SequentialAnimation {
-                                        PropertyAction {
-                                            property: "y"
-                                            value: miniAdd.ViewTransition.destination.y - 14
-                                        }
-
-                                        PauseAnimation {
-                                            duration: Theme.ms(70)
-                                        }
-
-                                        NumberAnimation {
-                                            property: "y"
-                                            to: miniAdd.ViewTransition.destination.y
-                                            duration: Theme.ms(340)
-                                            easing.type: Easing.OutCubic
-                                        }
-
-                                    }
-
-                                    SequentialAnimation {
-                                        PropertyAction {
-                                            property: "scale"
-                                            value: 0.92
-                                        }
-
-                                        PauseAnimation {
-                                            duration: Theme.ms(70)
+                                            duration: Theme.barMs(200)
                                         }
 
                                         NumberAnimation {
                                             property: "scale"
                                             to: 1
-                                            duration: Theme.ms(360)
-                                            easing.type: Easing.OutBack
-                                            easing.overshoot: 1.6
+                                            duration: Theme.barMs(200)
                                         }
 
                                     }
 
-                                    // decays on its own, so the card reads as new
-                                    // for a beat and then looks like the other
-                                    SequentialAnimation {
-                                        PropertyAction {
-                                            property: "arrivalGlow"
-                                            value: 1
-                                        }
-
-                                        PauseAnimation {
-                                            duration: Theme.ms(70)
-                                        }
-
+                                    remove: Transition {
                                         NumberAnimation {
-                                            property: "arrivalGlow"
+                                            property: "opacity"
                                             to: 0
-                                            duration: Theme.ms(850)
+                                            duration: Theme.barMs(200)
+                                            easing.type: Easing.InCubic
+                                        }
+
+                                        NumberAnimation {
+                                            property: "scale"
+                                            to: 0.9
+                                            duration: Theme.barMs(200)
                                             easing.type: Easing.InCubic
                                         }
 
@@ -1738,164 +1610,126 @@ Item {
 
                                 }
 
-                                displaced: Transition {
-                                    NumberAnimation {
-                                        properties: "x,y"
-                                        duration: Theme.ms(300)
-                                        easing.type: Easing.OutCubic
-                                    }
-
-                                    NumberAnimation {
-                                        property: "opacity"
-                                        to: 1
-                                        duration: Theme.ms(200)
-                                    }
-
-                                    NumberAnimation {
-                                        property: "scale"
-                                        to: 1
-                                        duration: Theme.ms(200)
-                                    }
-
+                                Text {
+                                    width: parent.width
+                                    visible: !root.notifMod || root.notifMod.notifCount === 0
+                                    horizontalAlignment: Text.AlignHCenter
+                                    text: "No notifications"
+                                    color: Theme.subtext
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fs(11)
+                                    topPadding: 4
+                                    bottomPadding: 4
                                 }
 
-                                remove: Transition {
-                                    NumberAnimation {
-                                        property: "opacity"
-                                        to: 0
-                                        duration: Theme.ms(200)
-                                        easing.type: Easing.InCubic
-                                    }
-
-                                    NumberAnimation {
-                                        property: "scale"
-                                        to: 0.9
-                                        duration: Theme.ms(200)
-                                        easing.type: Easing.InCubic
-                                    }
-
-                                }
-
-                            }
-
-                            Text {
-                                width: parent.width
-                                visible: !root.notifMod || root.notifMod.notifCount === 0
-                                horizontalAlignment: Text.AlignHCenter
-                                text: "No notifications"
-                                color: Theme.subtext
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(11)
-                                topPadding: 4
-                                bottomPadding: 4
                             }
 
                         }
 
                     }
 
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.NoButton
+                        onWheel: (wheel) => {
+                            const maxY = Math.max(0, scrollArea.contentHeight - scrollArea.height);
+                            scrollArea.contentY = Math.max(0, Math.min(maxY, scrollArea.contentY - (wheel.angleDelta.y / 120) * 90));
+                            wheel.accepted = true;
+                        }
+                    }
+
                 }
 
+                // click-outside-to-close for the disk dropdown below
                 MouseArea {
                     anchors.fill: parent
-                    acceptedButtons: Qt.NoButton
-                    onWheel: (wheel) => {
-                        const maxY = Math.max(0, scrollArea.contentHeight - scrollArea.height);
-                        scrollArea.contentY = Math.max(0, Math.min(maxY, scrollArea.contentY - (wheel.angleDelta.y / 120) * 90));
-                        wheel.accepted = true;
-                    }
+                    visible: root.diskDropdownOpen
+                    enabled: root.diskDropdownOpen
+                    onClicked: root.diskDropdownOpen = false
                 }
 
-            }
+                // floating disk dropdown popup - declared last so it paints on top
+                Rectangle {
+                    id: diskPopup
 
-            // click-outside-to-close for the disk dropdown below
-            MouseArea {
-                anchors.fill: parent
-                visible: root.diskDropdownOpen
-                enabled: root.diskDropdownOpen
-                onClicked: root.diskDropdownOpen = false
-            }
+                    visible: opacity > 0.01
+                    opacity: root.diskDropdownOpen ? 1 : 0
+                    scale: root.diskDropdownOpen ? 1 : 0.94
+                    transformOrigin: Item.Top
+                    width: 140
+                    height: diskPopupColumn.implicitHeight + 8
+                    radius: 12
+                    color: Theme.withBlur(Theme.bgTile)
+                    border.width: 0
+                    z: 100
 
-            // floating disk dropdown popup - declared last so it paints on top
-            Rectangle {
-                id: diskPopup
+                    Column {
+                        id: diskPopupColumn
 
-                visible: opacity > 0.01
-                opacity: root.diskDropdownOpen ? 1 : 0
-                scale: root.diskDropdownOpen ? 1 : 0.94
-                transformOrigin: Item.Top
-                width: 140
-                height: diskPopupColumn.implicitHeight + 8
-                radius: 12
-                color: Theme.withBlur(Theme.bgTile)
-                border.width: 0
-                z: 100
+                        anchors.fill: parent
+                        anchors.margins: 4
+                        spacing: 2
 
-                Column {
-                    id: diskPopupColumn
+                        Repeater {
+                            model: root.diskList
 
-                    anchors.fill: parent
-                    anchors.margins: 4
-                    spacing: 2
-
-                    Repeater {
-                        model: root.diskList
-
-                        Rectangle {
-                            id: optRow
-
-                            required property var modelData
-                            readonly property bool isSelected: optRow.modelData.name === root.selectedDisk
-
-                            width: parent.width
-                            height: 26
-                            radius: 8
-                            color: optRow.isSelected ? Theme.accent : "transparent"
-
-                            Text {
-                                anchors.left: parent.left
-                                anchors.leftMargin: 8
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: optRow.modelData.name
-                                color: optRow.isSelected ? Theme.onAccent : Theme.text
-                                opacity: (!optRow.modelData.mounted && !optRow.isSelected) ? 0.45 : 1
-                                font.family: Theme.fontFamily
-                                font.bold: true
-                                font.pixelSize: Theme.fs(11)
-                            }
-
-                            // same hover wash used across the rest of the bar
                             Rectangle {
-                                anchors.fill: parent
-                                radius: parent.radius
-                                color: Theme.text
-                                opacity: (optArea.containsMouse && !optRow.isSelected) ? 0.08 : 0
+                                id: optRow
 
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: Theme.ms(150)
-                                        easing.type: Easing.OutCubic
+                                required property var modelData
+                                readonly property bool isSelected: optRow.modelData.name === root.selectedDisk
+
+                                width: parent.width
+                                height: 26
+                                radius: 8
+                                color: optRow.isSelected ? Theme.accent : "transparent"
+
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 8
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: optRow.modelData.name
+                                    color: optRow.isSelected ? Theme.onAccent : Theme.text
+                                    opacity: (!optRow.modelData.mounted && !optRow.isSelected) ? 0.45 : 1
+                                    font.family: Theme.fontFamily
+                                    font.bold: true
+                                    font.pixelSize: Theme.fs(11)
+                                }
+
+                                // same hover wash used across the rest of the bar
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: parent.radius
+                                    color: Theme.text
+                                    opacity: (optArea.containsMouse && !optRow.isSelected) ? 0.08 : 0
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: Theme.barMs(150)
+                                            easing.type: Easing.OutCubic
+                                        }
+
                                     }
 
                                 }
 
-                            }
+                                MouseArea {
+                                    id: optArea
 
-                            MouseArea {
-                                id: optArea
-
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.selectedDisk = optRow.modelData.name;
-                                    root.diskDropdownOpen = false;
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.selectedDisk = optRow.modelData.name;
+                                        root.diskDropdownOpen = false;
+                                    }
                                 }
-                            }
 
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Theme.ms(120)
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Theme.barMs(120)
+                                    }
+
                                 }
 
                             }
@@ -1904,49 +1738,204 @@ Item {
 
                     }
 
-                }
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Theme.barMs(180)
+                        }
 
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.ms(180)
+                    }
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: Theme.barMs(180)
+                            easing.type: Easing.OutCubic
+                        }
+
                     }
 
                 }
-
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: Theme.ms(180)
-                        easing.type: Easing.OutCubic
-                    }
-
-                }
-
             }
 
-            Behavior on opacity {
-                SequentialAnimation {
-                    PauseAnimation {
-                        duration: Theme.ms(root.expanded ? 140 : 0)
-                    }
+            // Wi-Fi and Bluetooth, in the same surface. Both are built
+            // whatever the current view is - the compact pill reads their
+            // state for its glyphs, and their scans and polls have to keep
+            // running whether or not anyone is looking at the list.
+            Item {
+                id: subView
+
+                y: 0
+                width: panelStack.width
+                height: panelStack.height
+                x: root.inSubView ? 0 : root.panelWidth
+                // waits off the right edge until it is asked for
+                visible: x < root.panelWidth - 0.5
+
+                Behavior on x {
+                    enabled: root.viewSwitching
 
                     NumberAnimation {
-                        duration: Theme.ms(220)
-                        easing.type: Easing.OutCubic
+                        duration: root.morphDuration
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: root.morphEasing
                     }
 
                 }
 
-            }
+                // Back to the control centre, plus whatever trailing control
+                // the view wants. Bluetooth's enable switch lives here rather
+                // than in the panel, which is why BluetoothPanel no longer
+                // draws a header of its own.
+                Item {
+                    id: subHeader
 
-            Behavior on scale {
-                SequentialAnimation {
-                    PauseAnimation {
-                        duration: Theme.ms(root.expanded ? 140 : 0)
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.topMargin: 14
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 14
+                    height: root.subHeaderHeight
+
+                    Rectangle {
+                        id: backChip
+
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 26
+                        height: 26
+                        radius: 999
+                        color: backArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent"
+
+                        SvgIcon {
+                            anchors.centerIn: parent
+                            path: "M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12l4.58-4.59Z"
+                            tint: Theme.text
+                            iconSize: 16
+                        }
+
+                        MouseArea {
+                            id: backArea
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.showView("main")
+                        }
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.barMs(120)
+                            }
+
+                        }
+
                     }
 
-                    NumberAnimation {
-                        duration: Theme.ms(220)
-                        easing.type: Easing.OutCubic
+                    Text {
+                        anchors.left: backChip.right
+                        anchors.leftMargin: 8
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.view === "wifi" ? "Network" : "Bluetooth"
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.bold: true
+                        font.pixelSize: Theme.fs(13)
+                    }
+
+                    Rectangle {
+                        visible: root.view === "bluetooth"
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 32
+                        height: 18
+                        radius: 999
+                        color: root.btEnabled ? Theme.accent : Theme.outlineStrong
+
+                        Rectangle {
+                            width: 14
+                            height: 14
+                            radius: 7
+                            color: Theme.bg
+                            anchors.verticalCenter: parent.verticalCenter
+                            x: root.btEnabled ? parent.width - width - 2 : 2
+
+                            Behavior on x {
+                                NumberAnimation {
+                                    duration: Theme.barMs(200)
+                                    easing.type: Easing.OutCubic
+                                }
+
+                            }
+
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if (root.btAdapter)
+                                    root.btAdapter.enabled = !root.btAdapter.enabled;
+
+                            }
+                        }
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.barMs(200)
+                            }
+
+                        }
+
+                    }
+
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: 1
+                        color: Theme.outline
+                    }
+
+                }
+
+                Flickable {
+                    id: subScroll
+
+                    anchors.top: subHeader.bottom
+                    anchors.topMargin: 10
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 14
+                    anchors.bottomMargin: 14
+                    contentWidth: width
+                    contentHeight: root.view === "bluetooth" ? btPanel.implicitHeight : wifiPanel.implicitHeight
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    WifiPanel {
+                        id: wifiPanel
+
+                        width: subScroll.width
+                        active: root.expanded && root.view === "wifi"
+                        visible: root.view === "wifi"
+                    }
+
+                    BluetoothPanel {
+                        id: btPanel
+
+                        width: subScroll.width
+                        active: root.expanded && root.view === "bluetooth"
+                        visible: root.view === "bluetooth"
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.NoButton
+                        onWheel: (wheel) => {
+                            const maxY = Math.max(0, subScroll.contentHeight - subScroll.height);
+                            subScroll.contentY = Math.max(0, Math.min(maxY, subScroll.contentY - (wheel.angleDelta.y / 120) * 90));
+                            wheel.accepted = true;
+                        }
                     }
 
                 }
@@ -1954,36 +1943,8 @@ Item {
             }
 
         }
+    ]
 
-        Behavior on radius {
-            NumberAnimation {
-                duration: Theme.ms(380)
-                easing.type: Easing.OutCubic
-            }
-
-        }
-
-    }
-
-    Behavior on implicitWidth {
-        NumberAnimation {
-            duration: Theme.ms(380)
-            easing.type: Easing.OutCubic
-        }
-
-    }
-
-    Behavior on implicitHeight {
-        enabled: root.panelTransitioning
-
-        NumberAnimation {
-            duration: Theme.ms(380)
-            easing.type: Easing.OutCubic
-        }
-
-    }
-
-    // reusable indicator component (compact pill)
     component StatusIndicator: Row {
         property string svgPath: ""
         property string labelText: ""
@@ -2109,7 +2070,7 @@ Item {
 
                 Behavior on opacity {
                     NumberAnimation {
-                        duration: Theme.ms(180)
+                        duration: Theme.barMs(180)
                         easing.type: Easing.OutCubic
                     }
 
@@ -2253,7 +2214,7 @@ Item {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Theme.ms(150)
+                    duration: Theme.barMs(150)
                     easing.type: Easing.OutCubic
                 }
 
@@ -2263,7 +2224,7 @@ Item {
 
         Behavior on color {
             ColorAnimation {
-                duration: Theme.ms(150)
+                duration: Theme.barMs(150)
             }
 
         }
@@ -2326,7 +2287,7 @@ Item {
                     enabled: !sliderRow.dragging
 
                     NumberAnimation {
-                        duration: Theme.ms(220)
+                        duration: Theme.barMs(220)
                         easing.type: Easing.OutCubic
                     }
 
@@ -2347,7 +2308,7 @@ Item {
 
                     Behavior on opacity {
                         NumberAnimation {
-                            duration: Theme.ms(120)
+                            duration: Theme.barMs(120)
                         }
 
                     }
@@ -2371,7 +2332,7 @@ Item {
                         enabled: !sliderRow.dragging
 
                         NumberAnimation {
-                            duration: Theme.ms(220)
+                            duration: Theme.barMs(220)
                             easing.type: Easing.OutCubic
                         }
 
@@ -2450,7 +2411,7 @@ Item {
 
                     Behavior on width {
                         NumberAnimation {
-                            duration: Theme.ms(300)
+                            duration: Theme.barMs(300)
                         }
 
                     }

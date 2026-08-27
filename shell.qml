@@ -17,7 +17,10 @@ ShellRoot {
         // with the layer surface, so mapping a frame early pinned the bar at
         // the default style's 22px margin for the rest of the session even
         // though the binding read 0 the whole time.
-        visible: Prefs.loaded
+        // Prefs.loaded gates the *first* map - margins.top is committed with
+        // the layer surface, so mapping early pins the wrong margin for the
+        // session. barEnabled is the user switching the bar off outright.
+        visible: Prefs.loaded && Prefs.barEnabled
         // set a tick after construction, once the Rows have positioned their
         // children - see blurRegion below
         property bool laidOut: false
@@ -62,7 +65,13 @@ ShellRoot {
         // second animation on top of that lagged the pill behind the gap.
         property real wsCollapse: (workspacesMod.expanded && !Prefs.barPopupMode) ? 0 : 1
         readonly property var leftWidths: [workspacesMod.width * bar.wsCollapse, mprisMod.width, sysTrayMod.width]
-        readonly property var rightWidths: [bluetoothMod.width, networkMod.width, notifMod.width, systemMod.width]
+        readonly property var rightWidths: [notifMod.width, systemMod.width]
+        // One list, named once. The flare repeater, the input mask and the
+        // blur region all walked their own hardcoded copy of this, so adding
+        // or removing a module meant remembering four places - which is
+        // exactly how Bluetooth and Network came to be listed in some of them
+        // and not others.
+        readonly property var modules: [workspacesMod, mprisMod, sysTrayMod, clockMod, notifMod, systemMod]
         readonly property real leftGroupWidth: bar.placeGroup(bar.leftWidths, 0)[bar.leftWidths.length]
         readonly property real rightGroupWidth: bar.placeGroup(bar.rightWidths, 0)[bar.rightWidths.length]
         readonly property real leftOriginX: bar.sideMargin
@@ -72,7 +81,7 @@ ShellRoot {
 
         Behavior on wsCollapse {
             NumberAnimation {
-                duration: Theme.ms(380)
+                duration: Theme.barMs(380)
                 easing.type: Easing.OutCubic
             }
 
@@ -98,7 +107,9 @@ ShellRoot {
         // Nothing left in the bar means nothing to reserve room for either -
         // otherwise an empty bar goes on holding a strip of the screen that
         // windows cannot use and that has nothing drawn in it.
-        exclusiveZone: bar.anyModuleShown ? Prefs.barHeight : 0
+        // A bar that is switched off reserves nothing, or it goes on holding a
+        // strip of screen that windows cannot use and that draws nothing.
+        exclusiveZone: (Prefs.barEnabled && bar.anyModuleShown) ? Prefs.barHeight : 0
 
         anchors {
             top: true
@@ -151,35 +162,13 @@ ShellRoot {
 
         }
 
-        BluetoothWidget {
-            id: bluetoothMod
-
-            popupAlign: "right"
-
-            hostWindow: bar
-            x: bar.rightPlaces[0]
-            anchors.top: parent.top
-
-        }
-
-        Network {
-            id: networkMod
-
-            popupAlign: "right"
-
-            hostWindow: bar
-            x: bar.rightPlaces[1]
-            anchors.top: parent.top
-
-        }
-
         Notifications {
             id: notifMod
 
             popupAlign: "right"
 
             hostWindow: bar
-            x: bar.rightPlaces[2]
+            x: bar.rightPlaces[0]
             anchors.top: parent.top
 
         }
@@ -190,12 +179,111 @@ ShellRoot {
             popupAlign: "right"
 
             hostWindow: bar
-            networkMod: networkMod
-            bluetoothMod: bluetoothMod
             notifMod: notifMod
             mprisMod: mprisMod
-            x: bar.rightPlaces[3]
+            x: bar.rightPlaces[1]
             anchors.top: parent.top
+
+        }
+
+        // ---- notched corners ----
+        // Drawn here rather than inside each module because this is the only
+        // place that knows where they all sit, and a corner has to be painted
+        // *outside* its module's own rectangle. Same window as the modules, so
+        // the two share one surface rather than being two stacked ones that can
+        // never be made to match.
+        //
+        // Each flare is capped at half the clear space beside its edge, so two
+        // growing toward each other across a gap meet exactly instead of
+        // overlapping - an overlap would double-darken the seam once Glass is
+        // on. Measured per edge rather than from barSpacing, because the clock
+        // has most of the bar to either side of it and can afford a full-size
+        // corner where two neighbours in a group cannot.
+        Repeater {
+            model: Prefs.barNotch ? bar.modules : []
+
+            Item {
+                id: flares
+
+                required property var modelData
+
+                readonly property bool present: flares.modelData && flares.modelData.width > 0.5 && flares.modelData.visible
+                // A corner is the same material as the pill it grows out of,
+                // so it has to light up with it - otherwise hovering a module
+                // leaves its corners sitting dark beside a lit pill.
+                //
+                // Workspaces is deliberately left out: it reports hover like
+                // everyone else, but lights individual workspace slots rather
+                // than tinting its pill, so a lit corner there would be the
+                // very mismatch this is fixing.
+                readonly property bool modHovered: flares.modelData ? (flares.modelData.compactHovered === true && flares.modelData !== workspacesMod) : false
+
+                // How big a corner this edge can carry.
+                //
+                // Against a *neighbour* it may take half the gap, so the one
+                // growing back from the other side meets it exactly rather than
+                // overlapping.
+                //
+                // Small gaps get small corners rather than none: two curving
+                // into an 8px gap meet at 4px each and leave a shallow scallop
+                // between the modules, which is wanted - the blend is supposed
+                // to run the length of the bar, not only where it is roomy.
+                function flareFor(toTheLeft) {
+                    if (!flares.present)
+                        return 0;
+
+                    var mods = bar.modules;
+                    var edge = toTheLeft ? flares.modelData.x : flares.modelData.x + flares.modelData.width;
+                    var toEdge = toTheLeft ? edge : bar.width - edge;
+                    var toNeighbour = 100000;
+                    for (var i = 0; i < mods.length; i++) {
+                        var o = mods[i];
+                        if (!o || o === flares.modelData || o.width <= 0.5 || !o.visible)
+                            continue;
+
+                        var d = toTheLeft ? edge - (o.x + o.width) : o.x - edge;
+                        if (d >= 0)
+                            toNeighbour = Math.min(toNeighbour, d);
+
+                    }
+                    // The two outermost edges face the side margin rather
+                    // than a neighbour, so nothing is growing back at them and
+                    // the half-the-gap rule does not apply - they fall through
+                    // to the blend setting, capped only by the margin itself.
+                    return Math.max(0, Math.min(Prefs.barNotchFlare, Math.floor(toNeighbour / 2), Math.floor(toEdge)));
+                }
+
+                anchors.fill: parent
+                z: -1
+                visible: Prefs.barNotch && flares.present
+
+                // Half a pixel *into* the module rather than exactly up to
+                // it. Module positions are routinely fractional - the clock is
+                // centred, and every module's x goes fractional while a
+                // neighbour's width animates - so the join lands mid-pixel.
+                // Two antialiased edges sharing a pixel each cover about half
+                // of it and sum to less than one, which shows as a light
+                // hairline splitting the flare from its module. Overlapping by
+                // less than a pixel closes it, and stays well inside the gap,
+                // so two flares reaching across it still never touch.
+                readonly property real bite: 0.5
+
+                BarFlare {
+                    hovered: flares.modHovered
+                    size: flares.flareFor(true)
+                    x: flares.modelData ? flares.modelData.x - width + flares.bite : 0
+                    y: 0
+                }
+
+                BarFlare {
+                    hovered: flares.modHovered
+                    mirrored: true
+                    size: flares.flareFor(false)
+                    x: flares.modelData ? flares.modelData.x + flares.modelData.width - flares.bite : 0
+                    y: 0
+                }
+
+            }
 
         }
 
@@ -236,68 +324,29 @@ ShellRoot {
         // which sits outside the module's own bounds and would otherwise be
         // visible but unclickable. The inline bar joins in when it exists.
         mask: Region {
-            Region {
-                item: workspacesMod
+
+            ModuleRegion {
+                mod: workspacesMod
             }
 
-            Region {
-                item: workspacesMod.popupOpen ? workspacesMod.popupItem : null
+            ModuleRegion {
+                mod: mprisMod
             }
 
-            Region {
-                item: mprisMod
+            ModuleRegion {
+                mod: sysTrayMod
             }
 
-            Region {
-                item: mprisMod.popupOpen ? mprisMod.popupItem : null
+            ModuleRegion {
+                mod: clockMod
             }
 
-            Region {
-                item: sysTrayMod
+            ModuleRegion {
+                mod: notifMod
             }
 
-            Region {
-                item: sysTrayMod.popupOpen ? sysTrayMod.popupItem : null
-            }
-
-            Region {
-                item: clockMod
-            }
-
-            Region {
-                item: clockMod.popupOpen ? clockMod.popupItem : null
-            }
-
-            Region {
-                item: bluetoothMod
-            }
-
-            Region {
-                item: bluetoothMod.popupOpen ? bluetoothMod.popupItem : null
-            }
-
-            Region {
-                item: networkMod
-            }
-
-            Region {
-                item: networkMod.popupOpen ? networkMod.popupItem : null
-            }
-
-            Region {
-                item: notifMod
-            }
-
-            Region {
-                item: notifMod.popupOpen ? notifMod.popupItem : null
-            }
-
-            Region {
-                item: systemMod
-            }
-
-            Region {
-                item: systemMod.popupOpen ? systemMod.popupItem : null
+            ModuleRegion {
+                mod: systemMod
             }
 
         }
@@ -317,122 +366,59 @@ ShellRoot {
         // which is what the stray panes at launch were.
         BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && bar.laidOut) ? barBlurRegion : null
 
+        // A blur region is a hard-edged pixel mask; a rounded corner is not.
+        // Laid on a module's exact bounds the mask keeps every pixel the curve
+        // touches at all, so the outermost pixels of the surface's own
+        // antialiased edge sit over fully frosted desktop that the surface has
+        // barely begun to paint over. That reads as a pale hairline tracing
+        // the curve - the border that showed around the pills.
+        // Only the *curved* part of an outline has the problem. A flat edge is
+        // hard on both sides and already lines up exactly, so pulling one in
+        // leaves a pixel of surface over unblurred desktop and draws a far
+        // louder dark line - which matters here because in morph mode every
+        // module grows into a card in place (a toast, an open panel), and a
+        // pill's caps and a card's long flat sides are the same edges.
+        // So each module's region is a union of three: its bounds eroded by a
+        // pixel, then the two middle bands that put the flat edges back at
+        // full extent. Only the corner arcs end up pulled in. Written as plain
+        // geometry rather than `item`, which would override x/y/width/height.
+
         Region {
             id: barBlurRegion
 
-            // the joined rows, on the same half-way rule. Without these the
-            // stretch of surface filling the gaps between modules would sit over
-            // unblurred desktop while the modules themselves stayed frosted.
-            Region {
-                item: workspacesMod
-                radius: workspacesMod.barRadius
-                topLeftRadius: workspacesMod.barTopRadius
-                topRightRadius: workspacesMod.barTopRadius
+            // Each module contributes its pill and, in pop-up mode, the
+            // detached panel below it. The per-corner erosion that keeps a
+            // blurred backing from peeking out around a curve lives in
+            // ModuleRegion, which is where the comment explaining it went too.
+
+            ModuleRegion {
+                blur: true
+                mod: workspacesMod
             }
 
-            Region {
-                item: workspacesMod.popupOpen ? workspacesMod.popupItem : null
-                radius: workspacesMod.cornerRadius
-                topLeftRadius: workspacesMod.topRadius
-                topRightRadius: workspacesMod.topRadius
+            ModuleRegion {
+                blur: true
+                mod: mprisMod
             }
 
-            Region {
-                item: mprisMod
-                radius: mprisMod.barRadius
-                topLeftRadius: mprisMod.barTopRadius
-                topRightRadius: mprisMod.barTopRadius
+            ModuleRegion {
+                blur: true
+                mod: sysTrayMod
             }
 
-            Region {
-                item: mprisMod.popupOpen ? mprisMod.popupItem : null
-                radius: mprisMod.cornerRadius
-                topLeftRadius: mprisMod.topRadius
-                topRightRadius: mprisMod.topRadius
+            ModuleRegion {
+                blur: true
+                mod: clockMod
             }
 
-            Region {
-                item: sysTrayMod
-                radius: sysTrayMod.barRadius
-                topLeftRadius: sysTrayMod.barTopRadius
-                topRightRadius: sysTrayMod.barTopRadius
+            ModuleRegion {
+                blur: true
+                mod: notifMod
             }
 
-            Region {
-                item: sysTrayMod.popupOpen ? sysTrayMod.popupItem : null
-                radius: sysTrayMod.cornerRadius
-                topLeftRadius: sysTrayMod.topRadius
-                topRightRadius: sysTrayMod.topRadius
-            }
-
-            Region {
-                item: clockMod
-                radius: clockMod.barRadius
-                topLeftRadius: clockMod.barTopRadius
-                topRightRadius: clockMod.barTopRadius
-            }
-
-            Region {
-                item: clockMod.popupOpen ? clockMod.popupItem : null
-                radius: clockMod.cornerRadius
-                topLeftRadius: clockMod.topRadius
-                topRightRadius: clockMod.topRadius
-            }
-
-            Region {
-                item: bluetoothMod
-                radius: bluetoothMod.barRadius
-                topLeftRadius: bluetoothMod.barTopRadius
-                topRightRadius: bluetoothMod.barTopRadius
-            }
-
-            Region {
-                item: bluetoothMod.popupOpen ? bluetoothMod.popupItem : null
-                radius: bluetoothMod.cornerRadius
-                topLeftRadius: bluetoothMod.topRadius
-                topRightRadius: bluetoothMod.topRadius
-            }
-
-            Region {
-                item: networkMod
-                radius: networkMod.barRadius
-                topLeftRadius: networkMod.barTopRadius
-                topRightRadius: networkMod.barTopRadius
-            }
-
-            Region {
-                item: networkMod.popupOpen ? networkMod.popupItem : null
-                radius: networkMod.cornerRadius
-                topLeftRadius: networkMod.topRadius
-                topRightRadius: networkMod.topRadius
-            }
-
-            Region {
-                item: notifMod
-                radius: notifMod.barRadius
-                topLeftRadius: notifMod.barTopRadius
-                topRightRadius: notifMod.barTopRadius
-            }
-
-            Region {
-                item: notifMod.popupOpen ? notifMod.popupItem : null
-                radius: notifMod.cornerRadius
-                topLeftRadius: notifMod.topRadius
-                topRightRadius: notifMod.topRadius
-            }
-
-            Region {
-                item: systemMod
-                radius: systemMod.barRadius
-                topLeftRadius: systemMod.barTopRadius
-                topRightRadius: systemMod.barTopRadius
-            }
-
-            Region {
-                item: systemMod.popupOpen ? systemMod.popupItem : null
-                radius: systemMod.cornerRadius
-                topLeftRadius: systemMod.topRadius
-                topRightRadius: systemMod.topRadius
+            ModuleRegion {
+                blur: true
+                mod: systemMod
             }
 
         }

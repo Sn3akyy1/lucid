@@ -95,12 +95,46 @@ Item {
     // counts key off this so "frequently used" reflects dock launches too
     signal launched()
 
-    width: 46
-    height: 46
+    // The dock's icon-size setting. This was hardcoded to 46, so the slot in
+    // Dock.qml grew with the setting while the icon inside it stayed put -
+    // the dock got taller and the icons did not.
+    //
+    // Every other size in this file was authored against that 46px slot, so
+    // rather than re-tuning each one they are all expressed as a fraction of
+    // it. The icon keeps its proportions at any setting, and there is one
+    // number to change if the baseline ever moves.
+    readonly property int slot: Prefs.dockIconSize
+    readonly property real slotScale: dockItem.slot / 46
+
+    // Everything derived from slotScale is rounded to whole pixels. The factor
+    // is almost never a round number - at a 72px slot it is 72/46 = 1.5652 -
+    // so an unrounded inset of 6 became 9.391, which put the icon at a
+    // fractional offset inside a 53.22px box. Qt then rasterised the SVG at 53
+    // and resampled it onto that fractional geometry, which is what made the
+    // icons look soft at larger sizes. At the stock 46px slot the factor is
+    // exactly 1, every value was already whole, and nothing looked wrong -
+    // which is why this only showed up once the size was turned up.
+    function sc(v) {
+        return Math.round(v * dockItem.slotScale);
+    }
+
+    width: dockItem.slot
+    height: dockItem.slot
     // active apps get a bigger lift/scale on hover than a regular icon -
     // reads as "click to jump back to me" rather than the generic pop
-    scale: pressed ? 0.96 : (highlighted ? (dockItem.active ? 1.12 : 1.08) : 1 + dockItem.magnifyBoost)
-    y: pressed ? -2 : (highlighted ? (dockItem.active ? -9 : -6) : 0)
+    // The swell and the lift are the hover effect, scaled together by the
+    // Dock page's slider. Expressed as "shipped amount x setting" rather than
+    // as absolute numbers so the two stay in proportion at any strength - a
+    // lift without the matching swell reads as the icon jumping rather than
+    // rising. Active apps get the larger of each, as before.
+    //
+    // The press feedback below is deliberately not scaled: it answers a click,
+    // not a hover, and should still respond at a hover strength of 0.
+    readonly property real hoverSwell: (dockItem.active ? 0.12 : 0.08) * Prefs.dockHoverEffect
+    readonly property real hoverLift: (dockItem.active ? 9 : 6) * Prefs.dockHoverEffect
+
+    scale: pressed ? 0.96 : (highlighted ? 1 + dockItem.hoverSwell : 1 + dockItem.magnifyBoost)
+    y: pressed ? -2 : (highlighted ? -dockItem.hoverLift : 0)
     onHoveredChanged: {
         if (hovered) {
             tooltipDelay.restart();
@@ -120,11 +154,11 @@ Item {
     Rectangle {
         id: stackLayer
 
-        width: 46
-        height: 46
-        x: 4
-        y: 4
-        radius: 9
+        width: dockItem.slot
+        height: dockItem.slot
+        x: dockItem.sc(4)
+        y: dockItem.sc(4)
+        radius: dockItem.sc(9)
         color: Theme.withBlur(Theme.bgTile)
         z: -1
         visible: dockItem.windowCount >= 2
@@ -134,14 +168,14 @@ Item {
         id: countBadge
 
         visible: dockItem.windowCount >= 3
-        width: 16
-        height: 16
-        radius: 8
+        width: dockItem.sc(16)
+        height: dockItem.sc(16)
+        radius: dockItem.sc(8)
         color: Theme.accent
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.rightMargin: -4
-        anchors.topMargin: -4
+        anchors.rightMargin: -dockItem.sc(4)
+        anchors.topMargin: -dockItem.sc(4)
         z: 20
 
         Text {
@@ -164,7 +198,7 @@ Item {
             id: iconBox
 
             anchors.fill: parent
-            radius: 9
+            radius: dockItem.sc(9)
             color: Theme.withBlur(Theme.bgTile)
         }
 
@@ -172,7 +206,7 @@ Item {
             id: iconImg
 
             anchors.fill: parent
-            anchors.margins: 6
+            anchors.margins: dockItem.sc(6)
             visible: dockItem.svgPath === "" && dockItem.iconContent === null
             source: dockItem.svgPath === "" && dockItem.iconName !== "" ? Quickshell.iconPath(dockItem.iconName, "") : ""
         }
@@ -181,7 +215,7 @@ Item {
             id: iconShape
 
             anchors.fill: parent
-            anchors.margins: 6
+            anchors.margins: dockItem.sc(6)
             visible: dockItem.svgPath !== ""
             preferredRendererType: Shape.CurveRenderer
 
@@ -255,7 +289,7 @@ Item {
             id: iconLoader
 
             anchors.fill: parent
-            anchors.margins: 6
+            anchors.margins: dockItem.sc(6)
             active: dockItem.iconContent !== null
             sourceComponent: dockItem.iconContent
         }
@@ -302,9 +336,9 @@ Item {
     Rectangle {
         id: indicatorDot
 
-        width: dockItem.hovered ? 18 : 14
-        height: 3
-        radius: 1.5
+        width: dockItem.sc(dockItem.hovered ? 18 : 14)
+        height: dockItem.sc(3)
+        radius: 1.5 * dockItem.slotScale
         color: dockItem.urgent ? Theme.error : Theme.accent
         anchors.horizontalCenter: parent.horizontalCenter
         y: dockItem.height + 3 + (dockItem.hovered ? 3 : 0)
@@ -391,8 +425,36 @@ Item {
 
     }
 
-    HoverHandler {
-        id: hoverHandler
+    // Hover is detected on this, not on the root, because the root moves: it
+    // lifts 6-9px whenever it is highlighted. With the handler on the root,
+    // the pointer resting in the icon's lowest few pixels ended up *below* the
+    // item the instant it rose - hover dropped, the icon fell back under the
+    // pointer, hover returned, and the two states oscillated. That is why the
+    // flicker only happened in one narrow band rather than anywhere on the
+    // icon: the lift (9) outruns what the hover scale adds at the bottom edge
+    // (0.12 / 2 * slot), so only that difference is left uncovered.
+    //
+    // Extending this area downward by exactly the current lift keeps the
+    // icon's *resting* footprint covered at all times, so rising can never
+    // pull the target out from under the pointer. It cannot oscillate in turn,
+    // because the compensation cancels the lift exactly: the covered area is
+    // identical whether the icon is up or down.
+    Item {
+        id: hitArea
+
+        readonly property real lift: -Math.min(0, dockItem.y)
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        height: parent.height + hitArea.lift
+
+        HoverHandler {
+            id: hoverHandler
+        }
+
+
+
     }
 
     TapHandler {

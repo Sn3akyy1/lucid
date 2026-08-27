@@ -14,6 +14,21 @@ Item {
     property real stableHeight: height
     readonly property real rowHeight: itemH + 30
 
+    // ---- preview debouncing ----
+    // A matugen/pywal color-generation run reliably takes longer than a
+    // short throttle window - so firing on a fixed cadence *during* a hold
+    // (as a throttle does) still launches overlapping generation processes
+    // that fight each other for CPU. That overlap, not the UI, is what was
+    // actually causing the lag.
+    //
+    // This is a pure debounce instead: nothing fires while the selection is
+    // still moving. Only once the scrub goes quiet for `previewInterval` ms
+    // does a single generation run kick off, for whichever wallpaper the
+    // strip is on at that moment. Visual scrubbing below is completely
+    // unaffected - only the expensive backend call is gated.
+    property int previewInterval: 300
+    property string _pendingPreviewPath: ""
+
     signal chosen(string path)
     signal previewed(string path)
 
@@ -34,11 +49,29 @@ Item {
         restoreAnim.restart();
     }
 
+    function _emitPreview() {
+        if (strip._pendingPreviewPath === "")
+            return ;
+
+        strip.previewed(strip._pendingPreviewPath);
+        strip._pendingPreviewPath = "";
+    }
+
     Timer {
         id: restoreAnim
 
         interval: 60
         onTriggered: view.highlightMoveDuration = 220
+    }
+
+    // fires once, `previewInterval` ms after the LAST index change - every
+    // new step during a hold restarts it, so it never fires mid-scrub, only
+    // after things go quiet
+    Timer {
+        id: previewThrottle
+
+        interval: strip.previewInterval
+        onTriggered: strip._emitPreview()
     }
 
     ListView {
@@ -69,15 +102,26 @@ Item {
         // moves, the neighbours keep the positions computed for the previous
         // widths and the cards visibly overlap. forceLayout is the documented
         // answer for a delegate that changes size after creation.
+        //
+        // The visual step here (forceLayout + highlight slide) always runs
+        // immediately, every time - that's what keeps arrow-key scrubbing
+        // feeling instant. Only the expensive `previewed` emission below is
+        // throttled.
         onCurrentIndexChanged: {
             view.forceLayout();
             if (currentIndex < 0 || !strip.model)
                 return ;
 
             var item = strip.model.get(currentIndex);
-            if (item)
-                strip.previewed(item.path);
+            if (!item)
+                return ;
 
+            // every step - fast or slow - just restarts the quiet-period
+            // timer. A single deliberate tap ends up with a ~300ms delay
+            // before colors update; a long hold generates colors exactly
+            // once, for the wallpaper you land on, with zero overlap.
+            strip._pendingPreviewPath = item.path;
+            previewThrottle.restart();
         }
 
         add: Transition {

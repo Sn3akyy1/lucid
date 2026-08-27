@@ -559,7 +559,7 @@ Item {
     Timer {
         id: showTimer
 
-        interval: Theme.ms(420)
+        interval: Theme.barMs(420)
         onTriggered: root.showTransition = false
     }
 
@@ -567,7 +567,22 @@ Item {
         enabled: root.showTransition
 
         NumberAnimation {
-            duration: Theme.ms(380)
+            duration: Theme.barMs(380)
+            easing.type: Easing.OutCubic
+        }
+
+    }
+
+    // There was no height Behavior here at all, so hiding the module snapped
+    // implicitHeight to 0 in one frame - the pill had no height left to draw
+    // and vanished while its width was still collapsing. Gated on the same
+    // latch as the width above: the compact height also moves as the dots grow
+    // under the pointer, and animating that would chase the other animation.
+    Behavior on implicitHeight {
+        enabled: root.showTransition
+
+        NumberAnimation {
+            duration: Theme.barMs(380)
             easing.type: Easing.OutCubic
         }
 
@@ -635,7 +650,7 @@ Item {
 
     Behavior on opacity {
         NumberAnimation {
-            duration: Theme.ms(180)
+            duration: Theme.barMs(180)
             easing.type: Easing.OutCubic
         }
 
@@ -643,7 +658,7 @@ Item {
 
     Behavior on scale {
         NumberAnimation {
-            duration: Theme.ms(260)
+            duration: Theme.barMs(260)
             // a little overshoot on the way in, so it reads as popping into
             // place rather than inflating
             easing.type: root.shown ? Easing.OutBack : Easing.InCubic
@@ -721,7 +736,7 @@ Item {
 
     Behavior on dotsWidthAnim {
         NumberAnimation {
-            duration: Theme.ms(300)
+            duration: Theme.barMs(300)
             easing.type: Easing.OutCubic
         }
 
@@ -729,7 +744,7 @@ Item {
 
     Behavior on dotHeightAnim {
         NumberAnimation {
-            duration: Theme.ms(300)
+            duration: Theme.barMs(300)
             easing.type: Easing.OutCubic
         }
 
@@ -737,7 +752,7 @@ Item {
 
     Behavior on reveal {
         NumberAnimation {
-            duration: Theme.ms(root.expanded ? 420 : 200)
+            duration: Theme.barMs(root.expanded ? 420 : 200)
             easing.type: Easing.Linear
         }
 
@@ -764,7 +779,7 @@ Item {
             enabled: root.hostWindow ? root.hostWindow.laidOut : false
 
             ColorAnimation {
-                duration: Theme.ms(260)
+                duration: Theme.barMs(260)
                 easing.type: Easing.OutCubic
             }
 
@@ -815,7 +830,7 @@ Item {
             enabled: root.popupMode
 
             NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
+                duration: root.popupExpanding ? Theme.barDurEnter : Theme.barDurExit
                 easing.type: Easing.Bezier
                 easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
             }
@@ -826,7 +841,7 @@ Item {
             enabled: root.popupMode
 
             NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
+                duration: root.popupExpanding ? Theme.barDurEnter : Theme.barDurExit
                 easing.type: Easing.Bezier
                 easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
             }
@@ -837,7 +852,7 @@ Item {
             enabled: root.popupMode
 
             NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
+                duration: root.popupExpanding ? Theme.barDurEnter : Theme.barDurExit
                 easing.type: Easing.Bezier
                 easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
             }
@@ -848,7 +863,7 @@ Item {
             enabled: root.popupMode
 
             NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
+                duration: root.popupExpanding ? Theme.barDurEnter : Theme.barDurExit
                 easing.type: Easing.Bezier
                 easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
             }
@@ -918,7 +933,7 @@ Item {
 
                     Behavior on x {
                         NumberAnimation {
-                            duration: Theme.ms(300)
+                            duration: Theme.barMs(300)
                             easing.type: Easing.OutCubic
                         }
 
@@ -926,7 +941,7 @@ Item {
 
                     Behavior on width {
                         NumberAnimation {
-                            duration: Theme.ms(300)
+                            duration: Theme.barMs(300)
                             easing.type: Easing.OutCubic
                         }
 
@@ -934,7 +949,7 @@ Item {
 
                     Behavior on color {
                         ColorAnimation {
-                            duration: Theme.ms(200)
+                            duration: Theme.barMs(200)
                             easing.type: Easing.OutCubic
                         }
 
@@ -974,7 +989,7 @@ Item {
 
                             Behavior on opacity {
                                 NumberAnimation {
-                                    duration: Theme.ms(300)
+                                    duration: Theme.barMs(300)
                                     easing.type: Easing.OutCubic
                                 }
 
@@ -1003,7 +1018,7 @@ Item {
 
                         Behavior on x {
                             NumberAnimation {
-                                duration: Theme.ms(300)
+                                duration: Theme.barMs(300)
                                 easing.type: Easing.OutCubic
                             }
 
@@ -1011,7 +1026,7 @@ Item {
 
                         Behavior on width {
                             NumberAnimation {
-                                duration: Theme.ms(300)
+                                duration: Theme.barMs(300)
                                 easing.type: Easing.OutCubic
                             }
 
@@ -1019,7 +1034,7 @@ Item {
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Theme.ms(200)
+                                duration: Theme.barMs(200)
                                 easing.type: Easing.OutCubic
                             }
 
@@ -1036,11 +1051,11 @@ Item {
                     // on the way back the dots wait for the card to be most of
                     // the way home instead of appearing inside a large panel.
                     PauseAnimation {
-                        duration: Theme.ms(root.expanded ? 0 : 200)
+                        duration: Theme.barMs(root.expanded ? 0 : 200)
                     }
 
                     NumberAnimation {
-                        duration: Theme.ms(200)
+                        duration: Theme.barMs(200)
                         easing.type: Easing.OutCubic
                     }
 
@@ -1050,7 +1065,7 @@ Item {
 
             Behavior on scale {
                 NumberAnimation {
-                    duration: Theme.ms(220)
+                    duration: Theme.barMs(220)
                     easing.type: Easing.OutCubic
                 }
 
@@ -1154,21 +1169,21 @@ Item {
 
                             Behavior on color {
                                 ColorAnimation {
-                                    duration: Theme.ms(150)
+                                    duration: Theme.barMs(150)
                                 }
 
                             }
 
                             Behavior on border.color {
                                 ColorAnimation {
-                                    duration: Theme.ms(150)
+                                    duration: Theme.barMs(150)
                                 }
 
                             }
 
                             Behavior on scale {
                                 NumberAnimation {
-                                    duration: Theme.ms(150)
+                                    duration: Theme.barMs(150)
                                     easing.type: Easing.OutCubic
                                 }
 
@@ -1199,7 +1214,7 @@ Item {
 
                             Behavior on color {
                                 ColorAnimation {
-                                    duration: Theme.ms(150)
+                                    duration: Theme.barMs(150)
                                 }
 
                             }
@@ -1445,7 +1460,7 @@ Item {
                             enabled: !dragHandler.active
 
                             NumberAnimation {
-                                duration: Theme.ms(root.trackEase)
+                                duration: Theme.barMs(root.trackEase)
                                 easing.type: Easing.OutCubic
                             }
 
@@ -1455,7 +1470,7 @@ Item {
                             enabled: !dragHandler.active
 
                             NumberAnimation {
-                                duration: Theme.ms(root.trackEase)
+                                duration: Theme.barMs(root.trackEase)
                                 easing.type: Easing.OutCubic
                             }
 
@@ -1465,7 +1480,7 @@ Item {
                             enabled: !dragHandler.active
 
                             NumberAnimation {
-                                duration: Theme.ms(root.trackEase)
+                                duration: Theme.barMs(root.trackEase)
                                 easing.type: Easing.OutCubic
                             }
 
@@ -1475,7 +1490,7 @@ Item {
                             enabled: !dragHandler.active
 
                             NumberAnimation {
-                                duration: Theme.ms(root.trackEase)
+                                duration: Theme.barMs(root.trackEase)
                                 easing.type: Easing.OutCubic
                             }
 
@@ -1483,7 +1498,7 @@ Item {
 
                         Behavior on scale {
                             NumberAnimation {
-                                duration: Theme.ms(150)
+                                duration: Theme.barMs(150)
                                 easing.type: Easing.OutCubic
                             }
 
@@ -1491,7 +1506,7 @@ Item {
 
                         Behavior on border.color {
                             ColorAnimation {
-                                duration: Theme.ms(150)
+                                duration: Theme.barMs(150)
                             }
 
                         }
@@ -1506,7 +1521,7 @@ Item {
 
         Behavior on radius {
             NumberAnimation {
-                duration: Theme.ms(340)
+                duration: Theme.barMs(340)
                 easing.type: Easing.OutCubic
             }
 
@@ -1534,13 +1549,13 @@ Item {
 
             NumberAnimation {
                 properties: "x,y"
-                duration: Theme.ms(380)
+                duration: Theme.barMs(380)
                 easing.type: Easing.OutCubic
             }
 
             NumberAnimation {
                 properties: "implicitWidth,implicitHeight"
-                duration: Theme.ms(420)
+                duration: Theme.barMs(420)
                 easing.type: Easing.OutBack
                 easing.overshoot: 0.22
             }
@@ -1551,7 +1566,7 @@ Item {
 
             NumberAnimation {
                 properties: "x,y,implicitWidth,implicitHeight"
-                duration: Theme.ms(380)
+                duration: Theme.barMs(380)
                 easing.type: Easing.OutCubic
             }
 

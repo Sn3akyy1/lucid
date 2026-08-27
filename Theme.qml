@@ -16,7 +16,15 @@ Singleton {
     // Scales every duration token below. Reading it here rather than in each
     // module is the whole point: one setting reaches every Behavior in the
     // shell that animates off a Theme duration, with no per-module wiring.
-    readonly property real motionScale: pf.motionScale
+    // What the slider's 1.00 actually means. The shipped speed has been rebased
+    // twice now, both times because the shell was running faster than it wanted
+    // to: first to what the slider called 1.50, and now to what it called 0.75
+    // of that. The setting still reads 1.00 by default and the timing it
+    // produces is unchanged - only the number on the slider moved, so the whole
+    // range re-centres on the speed actually being used. 0 still means no
+    // animation at all.
+    readonly property real motionBaseline: 1.125
+    readonly property real motionScale: pf.motionScale * root.motionBaseline
     // stepped 0..1 glass amount set from the launcher's >blur slider -
     // 0 keeps pills fully opaque, 1 is the most transparent/darkened glass
     // look. Persisted via blurAdapter below so it survives restarts.
@@ -199,6 +207,19 @@ Singleton {
     readonly property int radiusLg: 20
     readonly property int radiusXl: 28
     // ---------------- motion ----------------
+    // The bar runs on its own multiplier stacked on top of the global one, so
+    // its motion can be slowed without dragging the dock, launcher and lock
+    // screen along with it. Everything under lucidbar/ animates off barMs and
+    // the barDur* tokens rather than the shell-wide ones, so one setting moves
+    // the whole bar at once and nothing else.
+    readonly property real barMotionScale: root.motionScale * pf.barMotionScale
+    readonly property int barDurQuick: Math.round(120 * root.barMotionScale)
+    readonly property int barDurShort: Math.round(180 * root.barMotionScale)
+    readonly property int barDurMedium: Math.round(280 * root.barMotionScale)
+    readonly property int barDurLong: Math.round(400 * root.barMotionScale)
+    readonly property int barDurEnter: Math.round(320 * root.barMotionScale)
+    readonly property int barDurExit: Math.round(190 * root.barMotionScale)
+
     readonly property int durQuick: Math.round(120 * root.motionScale)
     readonly property int durShort: Math.round(180 * root.motionScale)
     readonly property int durMedium: Math.round(280 * root.motionScale)
@@ -245,7 +266,11 @@ Singleton {
     // argument unchanged; at 0 every duration collapses to 0, which is the
     // "no animation at all" end of the slider.
     function ms(d) {
-        return Math.round(d * pf.motionScale);
+        return Math.round(d * root.motionScale);
+    }
+
+    function barMs(d) {
+        return Math.round(d * root.barMotionScale);
     }
 
     // ---------------- tone engine ----------------
@@ -455,6 +480,7 @@ Singleton {
             property real accentPunch: 1
             property real surfaceDarkness: -1
             property real motionScale: 1
+            property real barMotionScale: 1.35
             property string fontFamily: "Google Sans"
             property real fontScale: 1
         }

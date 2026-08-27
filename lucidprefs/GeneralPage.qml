@@ -321,7 +321,7 @@ Column {
         SettingRow {
             title: "Animation speed"
             resetKey: "motionScale"
-            description: "Scales every transition in the shell. Drag to 0 for no animation at all."
+            description: "Scales every transition in the shell. 1.00x is the shipped speed; drag to 0 for no animation at all."
             stacked: true
 
             M3Slider {

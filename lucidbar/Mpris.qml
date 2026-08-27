@@ -7,37 +7,27 @@ import Quickshell.Io
 import Quickshell.Services.Mpris
 import qs
 
-Item {
+
+// Now playing. The expanded card is deliberately untouched by this pass - it
+// is two pages that slide past each other and it stays exactly that.
+//
+// What changed is only the shell around it, which is BarPill's now. Two things
+// this module needs that the default shell does not give it: its compact face
+// is a real remote (middle/right click skip, wheel rides volume), so it keeps
+// its own MouseArea and opts out of BarPill's; and its pages already fade
+// themselves on `expanded`, so the panel holder must not fade them again.
+BarPill {
     id: root
 
-    // ---------------- public surface (System.qml reads these) ----------------
-    property var hostWindow: null
-    property bool expanded: false
     // the expanded card is two pages that slide past each other:
     // "player" (transport) and "shazam" (identify what's in the air)
     property string page: "player"
-    // mirrors shell's own radius below - see the same note in Workspaces.qml.
-    // expanded is m3's extra-large shape token, collapsed stays a full pill
-    // In pop-up mode the radius rides the panel's animated height, so the
-    // surface leaves the pill wearing the pill's own round end and settles
-    // into the panel's flatter corner as it grows - and shell.qml's blur
-    // region, which reads this, keeps the same shape the whole way. The
-    // collapsed 60 belongs to the morphing pill: left in the expression it
-    // snapped the detached panel into a blob on the first frame of the exit.
-    readonly property int cornerRadius: root.popupMode ? Math.min(Theme.radiusXl, Math.round(shell.height / 2)) : (root.expanded ? Theme.radiusXl : Prefs.barPillRadius)
-    // resting pill height, set from the settings app's bar height
-    readonly property int compactHeight: Prefs.barHeight
-    // this module sized its resting pill inline in implicitWidth rather than
-    // naming it, which left pop-up mode with no width to give the pill that
-    // stays behind in the bar
-    readonly property int compactWidth: compactRow.implicitWidth + 20
     // material 3 easing sets, as real cubic-beziers rather than the nearest
     // qt easing curve: standard for anything that just moves, emphasized for
     // container transforms (the card growing, a page sliding, a shape morph)
     readonly property var easeStandard: [0.2, 0, 0, 1, 1, 1]
     readonly property var easeEmphasized: [0.05, 0.7, 0.1, 1, 1, 1]
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
-    readonly property int panelWidth: Math.min(400, root.screenW - 34)
     readonly property int contentWidth: root.panelWidth - 28
     // ---------------- players ----------------
     readonly property var mprisPlayers: {
@@ -493,133 +483,16 @@ Item {
         root.page = "player";
         root.cancelListening();
     }
-    // ---------------- settings-driven behaviour ----------------
-    // A hidden module collapses to zero size as well as going invisible, so
-    // the bar's input mask and blur region collapse with it instead of
-    // leaving a dead rectangle behind at its last position.
-    readonly property bool shown: Prefs.showMedia
-    // Pop-up mode: the pill stops morphing into the panel and stays put in
-    // the bar, with the panel becoming a detached surface below it. Inline
-    // mode additionally drops the pill's own background, because in that mode
-    // the bar behind it draws one continuous surface instead.
-    readonly property bool popupMode: Prefs.barPopupMode
-    // Reported up to shell.qml, which draws inline mode's hover for the whole
-    // bar at once rather than letting each module light its own patch.
-    readonly property bool compactHovered: compactFace.hovered
-    // True in either mode that takes this module's own pill away and draws
-    // a shared surface behind it instead: inline, which is one bar for the
-    // whole shell, or connected rows, which is one per group.
-    // the size this module takes when open - the original implicit sizes,
-    // kept whole so morph mode behaves exactly as it did before
-    readonly property int openWidth: root.expanded ? root.panelWidth : root.compactWidth
-    readonly property int openHeight: root.expanded ? (28 + (root.page === "player" ? playerColumn.implicitHeight : shazamColumn.implicitHeight)) : root.compactHeight
-    // a notch squares off only the edge that actually meets the screen; a
-    // detached pop-up panel touches nothing and stays rounded all round
-    readonly property int topRadius: Prefs.barNotch && !root.popupMode ? 0 : root.cornerRadius
-    readonly property int pillTopRadius: Prefs.barNotch ? 0 : Prefs.barPillRadius
-    // handed to shell.qml so the detached panel gets its own entry in the
-    // window's input mask and blur region - the root item's own bounds stop
-    // at the pill in pop-up mode
-    // True only while the detached panel is actually on screen. shell.qml's
-    // mask and blur regions key off this rather than popupItem alone: a Region
-    // takes its item's geometry regardless of visibility, so the closed
-    // panel's rectangle went on blurring the desktop under every pill - and,
-    // less visibly, went on swallowing clicks there too.
-    // Which edge of the pill the detached panel lines up with, set from
-    // shell.qml - the only thing that knows whether this module sits in the
-    // left group, the centre, or the right group. Left unset the panel grew
-    // rightward from the pill's left edge, so every right-hand module's panel
-    // ran straight off the side of the screen.
-    property string popupAlign: "left"
-    readonly property real popupX: {
-        if (!root.popupMode)
-            return 0;
 
-        // popupWidth, not openWidth: openWidth folds back to the pill's width
-        // the instant the panel closes, which slid the panel sideways mid-exit
-        // - a 75px lurch on a centred module like the clock.
-        if (root.popupAlign === "right")
-            return root.compactWidth - root.popupWidth;
-
-        if (root.popupAlign === "center")
-            return (root.compactWidth - root.popupWidth) / 2;
-
-        return 0;
-    }
-    // Intent: true from the moment the panel is asked to open. The enter
-    // and exit animations read this to pick their duration and curve.
-    readonly property bool popupExpanding: root.popupMode && root.expanded
-    // Painted: true for as long as the panel actually has extent on
-    // screen, which includes the whole of the exit animation. shell.qml's
-    // input mask and blur region key off this, and it is read off the
-    // drop rather than the size, because a closed pop-up still carries
-    // the pill's footprint. Keyed off the intent flag instead, the blur
-    // rectangle switched off on the first frame of the exit and left the
-    // panel see-through the whole way out.
-    // `shown` first: a switched-off module is not painted at all, but a blur
-    // region is pure geometry and does not care - left ungated, a module that
-    // was off still published its panel's rectangle the moment anything asked
-    // it to open, and the compositor frosted a pane of desktop with nothing
-    // drawn on top of it.
-    readonly property bool popupOpen: root.shown && root.popupMode && shell.y > 0.5
-    // The radii this module's own bounds are actually drawn with, so
-    // shell.qml's mask and blur regions can mirror them exactly. A Region
-    // supports per-corner radii just like a Rectangle; setting only `radius`
-    // left the blurred backdrop a different shape from the surface on top of
-    // it, which shows up as a hard edge peeking out around the corners.
-    readonly property int barRadius: root.popupMode ? Prefs.barPillRadius : root.cornerRadius
-    readonly property int barTopRadius: root.popupMode ? root.pillTopRadius : root.topRadius
-    // The panel's own size, with no collapsed branch. openWidth/openHeight
-    // fold back to the pill the instant the panel closes, so anything derived
-    // from them raced that change - the panel snapped to a 35px stub and only
-    // then faded, which is why closing read as vanishing rather than
-    // retreating. These never collapse, so the panel holds its shape all the
-    // way out and only opacity, scale and position animate.
-    readonly property int popupWidth: root.panelWidth
-    readonly property int popupHeight: 28 + (root.page === "player" ? playerColumn.implicitHeight : shazamColumn.implicitHeight)
-    readonly property Item popupItem: shell
-
-    implicitWidth: !root.shown ? 0 : (root.popupMode ? root.compactWidth : root.openWidth)
-    implicitHeight: !root.shown ? 0 : (root.popupMode ? root.compactHeight : root.openHeight)
-    // Switching a module off used to take it out of the bar between frames.
-    // It now scales down and fades while its width collapses, so the row
-    // closes the gap behind something that is visibly leaving rather than
-    // something that was simply deleted. `visible` follows the fade rather
-    // than the setting - read straight from `shown` the module would be gone
-    // before the animation had a single frame to run in, which is exactly what
-    // made it disappear instantly.
-    opacity: root.shown ? 1 : 0
-    scale: root.shown ? 1 : 0.82
-    transformOrigin: Item.Center
-    visible: root.opacity > 0.01
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Theme.ms(180)
-            easing.type: Easing.OutCubic
-        }
-
-    }
-
-    Behavior on scale {
-        NumberAnimation {
-            duration: Theme.ms(260)
-            // a little overshoot on the way in, so it reads as popping into
-            // place rather than inflating
-            easing.type: root.shown ? Easing.OutBack : Easing.InCubic
-        }
-
-    }
-    // the pop-up has to be allowed out of the root's bounds; in morph mode
-    // the root is the panel and still clips as before
-    clip: !root.popupMode
-    z: root.popupOpen ? 100 : 1
-
-    HyprlandFocusGrab {
-        active: root.expanded
-        windows: root.hostWindow ? [root.hostWindow] : []
-        onCleared: root.expanded = false
-    }
+    // ---------------- pill shell configuration ----------------
+    shown: Prefs.showMedia
+    compactWidth: compactRow.implicitWidth + 20
+    panelWidth: Math.min(400, root.screenW - 34)
+    panelHeight: 28 + (root.page === "player" ? playerColumn.implicitHeight : shazamColumn.implicitHeight)
+    expandedRadius: Theme.radiusXl
+    compactCollapseScale: 0.94
+    compactInteractive: false
+    panelFades: false
 
     // so media keys / hyprland binds can reach the same actions the pill
     // offers, e.g. `qs ipc call media identify`
@@ -839,203 +712,221 @@ Item {
         }
     }
 
-
-
-
-
-    // In pop-up mode this is the pill that stays in the bar, and the compact
-    // face reparents into it. In morph mode it is unused - the rectangle
-    // below is both pill and panel, exactly as before.
-    Rectangle {
-        id: pillRect
-
-        visible: root.popupMode
-        width: root.compactWidth
-        height: root.compactHeight
-        // Fades out as shell.qml's united bar fades in, over the same
-        // duration. Switched outright, the islands lost their backs in the
-        // same frame the shared surface appeared behind them.
-        color: Theme.bg
-
-        Behavior on color {
-            // not before the bar has laid out: inline mode reads false for the
-            // frame before the config file lands, so at startup this would
-            // always cross-fade in from an island that was never really there
-            enabled: root.hostWindow ? root.hostWindow.laidOut : false
-
-            ColorAnimation {
-                duration: Theme.ms(260)
-                easing.type: Easing.OutCubic
-            }
-
-        }
-
-        clip: true
-        radius: Prefs.barPillRadius
-        topLeftRadius: root.pillTopRadius
-        topRightRadius: root.pillTopRadius
-    }
-
-
-    Rectangle {
-        id: shell
-
-        // morph mode: fills the root, which is the thing that morphs.
-        // pop-up mode: a detached panel hanging below the pill.
-        // Pop-up mode expands the panel out of the pill the same way morph
-        // mode expands the pill itself - small to big. It starts on the
-        // pill's exact footprint and grows down and out to the panel's
-        // size; the only difference from morph is that the pill stays
-        // behind while the panel detaches from it.
-        //
-        // The growth has to be real geometry rather than opacity or scale.
-        // The frosted backing behind a panel is a compositor blur region
-        // (see shell.qml): a hard-edged rectangle that tracks this item's
-        // bounds and cannot fade along with it. A cross-fade therefore
-        // flashed a blurred empty pane for a frame before the panel had
-        // drawn anything, and on the way out dropped the backing on the
-        // very first frame, leaving the panel see-through for the rest of
-        // the exit. Geometry is what the blur region follows, so growing
-        // keeps the surface and its backing the same shape every frame.
-        width: root.popupMode ? (root.expanded ? root.popupWidth : root.compactWidth) : root.width
-        height: root.popupMode ? (root.expanded ? root.popupHeight : root.compactHeight) : root.height
-        x: root.popupMode && root.expanded ? root.popupX : 0
-        y: root.popupMode && root.expanded ? root.compactHeight + Prefs.barPopupGap : 0
-
-        // popupExpanding rather than popupOpen: popupOpen now follows the
-        // very geometry these animations drive, so reading it here would
-        // have picked the exit duration for every enter. All four share one
-        // duration and curve so the panel expands as a single movement.
-        Behavior on x {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on y {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on width {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on height {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-        visible: !root.popupMode || shell.y > 0.5
-
-        color: Theme.bg
-        clip: true
-        radius: root.cornerRadius
-        topLeftRadius: root.topRadius
-        topRightRadius: root.topRadius
-
-        // ---------------- COMPACT FACE ----------------
-        Item {
-            id: compactFace
-
-            property bool hovered: false
-
-            // in pop-up mode the compact face belongs to the pill that stays
-            // in the bar, not to the panel that drops away below it
-            parent: root.popupMode ? pillRect : shell
-
+    compactContent: [
+        // catches clicks not eaten by the play button's own MouseArea.
+        // middle/right skip tracks and the wheel rides the player's own
+        // volume, so the pill is a full remote without growing wider
+        MouseArea {
             anchors.fill: parent
-            // in pop-up mode the pill is not the thing that opens, so its
-            // face stays put and lit instead of fading out into a panel
-            opacity: root.popupMode || !root.expanded ? 1 : 0
-            scale: root.popupMode || !root.expanded ? 1 : 0.94
-            visible: opacity > 0.01
-
-            // catches clicks not eaten by the play button's own MouseArea.
-            // middle/right skip tracks and the wheel rides the player's own
-            // volume, so the pill is a full remote without growing wider
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-                onEntered: compactFace.hovered = true
-                onExited: compactFace.hovered = false
-                onClicked: (mouse) => {
-                    if (mouse.button === Qt.MiddleButton)
-                        root.skip(1);
-                    else if (mouse.button === Qt.RightButton)
-                        root.skip(-1);
-                    else
-                        root.openPanel("player");
-                }
-                onWheel: (wheel) => {
-                    return root.nudgeVolume(wheel.angleDelta.y > 0 ? 0.05 : -0.05);
-                }
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+            onEntered: root.compactHovered = true
+            onExited: root.compactHovered = false
+            onClicked: (mouse) => {
+                if (mouse.button === Qt.MiddleButton)
+                    root.skip(1);
+                else if (mouse.button === Qt.RightButton)
+                    root.skip(-1);
+                else
+                    root.openPanel("player");
             }
+            onWheel: (wheel) => {
+                return root.nudgeVolume(wheel.angleDelta.y > 0 ? 0.05 : -0.05);
+            }
+        },
 
-            Row {
-                id: compactRow
+        Row {
+            id: compactRow
 
-                anchors.centerIn: parent
-                spacing: 8
+            anchors.centerIn: parent
+            spacing: 8
 
-                // a live meter whenever there's something loaded - it flattens
-                // to three dots when paused, so the pill shows state without
-                // spending width on it. Art belongs to the expanded card
-                Item {
-                    width: 14
-                    height: 18
-                    anchors.verticalCenter: parent.verticalCenter
+            // a live meter whenever there's something loaded - it flattens
+            // to three dots when paused, so the pill shows state without
+            // spending width on it. Art belongs to the expanded card
+            Item {
+                width: 14
+                height: 18
+                anchors.verticalCenter: parent.verticalCenter
 
-                    Row {
-                        anchors.centerIn: parent
-                        spacing: 2.5
-                        visible: root.player !== null
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 2.5
+                    visible: root.player !== null
 
-                        Repeater {
-                            model: 3
+                    Repeater {
+                        model: 3
 
-                            Rectangle {
-                                required property int index
+                        Rectangle {
+                            required property int index
 
-                                width: 2.5
-                                radius: 999
-                                color: Theme.accent
-                                anchors.verticalCenter: parent.verticalCenter
-                                height: root.isPlaying ? Math.max(3, root.bandLevel(1 + index * 11, 10 + index * 11) * 16) : 3
+                            width: 2.5
+                            radius: 999
+                            color: Theme.accent
+                            anchors.verticalCenter: parent.verticalCenter
+                            height: root.isPlaying ? Math.max(3, root.bandLevel(1 + index * 11, 10 + index * 11) * 16) : 3
 
-                                Behavior on height {
-                                    NumberAnimation {
-                                        duration: Theme.ms(90)
-                                        easing.type: Easing.OutCubic
-                                    }
-
+                            Behavior on height {
+                                NumberAnimation {
+                                    duration: Theme.barMs(90)
+                                    easing.type: Easing.OutCubic
                                 }
 
+                            }
+
+                        }
+
+                    }
+
+                }
+
+                SvgIcon {
+                    anchors.centerIn: parent
+                    visible: root.player === null
+                    path: root.noteGlyph
+                    tint: Theme.accent
+                    glyphSize: 14
+                }
+
+            }
+
+            Item {
+                id: compactTitleSlot
+
+                width: root.volumeFlash ? volumeFlashRow.implicitWidth : Math.min(160, Math.max(60, compactTitle.naturalWidth))
+                height: 18
+                anchors.verticalCenter: parent.verticalCenter
+
+                Marquee {
+                    id: compactTitle
+
+                    width: parent.width
+                    anchors.verticalCenter: parent.verticalCenter
+                    content: root.displayTitle
+                    scrolling: root.isPlaying
+                    bold: true
+                    pixelSize: Theme.fs(13)
+                    opacity: root.volumeFlash ? 0 : 1
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Theme.barMs(140)
+                        }
+
+                    }
+
+                }
+
+                // the wheel readout borrows the title's slot for a moment
+                // instead of adding a control nobody needs at rest
+                Row {
+                    id: volumeFlashRow
+
+                    anchors.centerIn: parent
+                    spacing: 5
+                    opacity: root.volumeFlash ? 1 : 0
+
+                    SvgIcon {
+                        anchors.verticalCenter: parent.verticalCenter
+                        path: root.volumeGlyphFor(root.playerVolume)
+                        tint: Theme.accent
+                        glyphSize: 13
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Math.round(root.playerVolume * 100) + "%"
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.bold: true
+                        font.pixelSize: Theme.fs(13)
+                    }
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Theme.barMs(140)
+                        }
+
+                    }
+
+                }
+
+            }
+
+            IconBtn {
+                anchors.verticalCenter: parent.verticalCenter
+                diameter: 22
+                glyphSize: 13
+                filled: true
+                path: root.isPlaying ? root.pauseGlyph : root.playGlyph
+                tint: Theme.onAccent
+                enabledAction: root.player !== null && root.player.canTogglePlaying
+                onActivated: root.togglePlay()
+            }
+
+        }
+    ]
+
+    panelContent: [
+    Item {
+        id: playerPage
+
+        anchors.fill: parent
+        anchors.margins: 14
+        opacity: (root.expanded && root.page === "player") ? 1 : 0
+        visible: opacity > 0.01
+
+        transform: Translate {
+            x: root.page === "player" ? 0 : -26
+
+            Behavior on x {
+                NumberAnimation {
+                    duration: Theme.barDurLong
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: root.easeEmphasized
+                }
+
+            }
+
+        }
+
+        Column {
+            id: playerColumn
+
+            width: root.contentWidth
+            spacing: 12
+
+            Row {
+                width: root.contentWidth
+                height: 96
+                spacing: 14
+
+                Item {
+                    id: artwork
+
+                    width: 96
+                    height: 96
+
+                    RoundedArt {
+                        anchors.fill: parent
+                        source: root.artUrl
+                        shapeRadius: Theme.radiusLg
+                        fallbackGlyph: 34
+                    }
+
+                    // the art is the primary play surface - hovering it
+                    // says so, so the big button below is a convenience
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Theme.radiusLg
+                        color: "black"
+                        opacity: artArea.containsMouse ? 0.4 : 0
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.barMs(150)
+                                easing.type: Easing.OutCubic
                             }
 
                         }
@@ -1044,600 +935,154 @@ Item {
 
                     SvgIcon {
                         anchors.centerIn: parent
-                        visible: root.player === null
-                        path: root.noteGlyph
-                        tint: Theme.accent
-                        glyphSize: 14
-                    }
-
-                }
-
-                Item {
-                    id: compactTitleSlot
-
-                    width: root.volumeFlash ? volumeFlashRow.implicitWidth : Math.min(160, Math.max(60, compactTitle.naturalWidth))
-                    height: 18
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    Marquee {
-                        id: compactTitle
-
-                        width: parent.width
-                        anchors.verticalCenter: parent.verticalCenter
-                        content: root.displayTitle
-                        scrolling: root.isPlaying
-                        bold: true
-                        pixelSize: Theme.fs(13)
-                        opacity: root.volumeFlash ? 0 : 1
+                        opacity: artArea.containsMouse ? 1 : 0
+                        path: root.isPlaying ? root.pauseGlyph : root.playGlyph
+                        tint: "white"
+                        glyphSize: 32
 
                         Behavior on opacity {
                             NumberAnimation {
-                                duration: Theme.ms(140)
+                                duration: Theme.barMs(150)
+                                easing.type: Easing.OutCubic
                             }
 
                         }
 
                     }
 
-                    // the wheel readout borrows the title's slot for a moment
-                    // instead of adding a control nobody needs at rest
-                    Row {
-                        id: volumeFlashRow
+                    MouseArea {
+                        id: artArea
 
-                        anchors.centerIn: parent
-                        spacing: 5
-                        opacity: root.volumeFlash ? 1 : 0
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.togglePlay()
+                    }
+
+                }
+
+                Item {
+                    width: root.contentWidth - 96 - 14
+                    height: 96
+
+                    // m3 type roles: title-medium over body-medium over
+                    // label-small, each on its own on-surface tone
+                    Column {
+                        anchors.top: parent.top
+                        width: parent.width
+                        spacing: 1
+
+                        Marquee {
+                            width: parent.width
+                            content: root.title
+                            scrolling: root.isPlaying
+                            bold: true
+                            pixelSize: Theme.fontHeadline
+                        }
+
+                        Marquee {
+                            width: parent.width
+                            visible: root.artist !== ""
+                            content: root.artist
+                            scrolling: root.isPlaying
+                            textColor: Theme.subtext
+                            pixelSize: Theme.fontBody
+                        }
+
+                        Text {
+                            width: parent.width
+                            visible: root.metaLine !== ""
+                            text: root.metaLine
+                            color: Theme.subtextDim
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontLabel
+                            elide: Text.ElideRight
+                        }
+
+                    }
+
+                    // m3 slider, scaled to this density: a thick rounded
+                    // track split by a 4px bar handle with a 6px gap on
+                    // each side, plus the stop indicator that marks the
+                    // track's end. Sits on the art's baseline, and only
+                    // exists for players that expose their own volume
+                    Row {
+                        id: volumeRow
+
+                        readonly property real fraction: Math.max(0, Math.min(1, root.playerVolume))
+                        readonly property int handleWidth: 4
+                        readonly property int handleGap: 6
+
+                        anchors.bottom: parent.bottom
+                        anchors.left: parent.left
+                        width: parent.width
+                        height: 22
+                        spacing: 8
+                        visible: root.volumeSupported
 
                         SvgIcon {
                             anchors.verticalCenter: parent.verticalCenter
                             path: root.volumeGlyphFor(root.playerVolume)
-                            tint: Theme.accent
-                            glyphSize: 13
+                            tint: volArea.containsMouse ? Theme.accent : Theme.subtext
+                            glyphSize: 14
                         }
 
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: Math.round(root.playerVolume * 100) + "%"
-                            color: Theme.text
-                            font.family: Theme.fontFamily
-                            font.bold: true
-                            font.pixelSize: Theme.fs(13)
-                        }
+                        Item {
+                            id: volTrack
 
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Theme.ms(140)
-                            }
+                            readonly property real handleX: volumeRow.fraction * (volTrack.width - volumeRow.handleWidth)
 
-                        }
-
-                    }
-
-                }
-
-                IconBtn {
-                    anchors.verticalCenter: parent.verticalCenter
-                    diameter: 22
-                    glyphSize: 13
-                    filled: true
-                    path: root.isPlaying ? root.pauseGlyph : root.playGlyph
-                    tint: Theme.onAccent
-                    enabledAction: root.player !== null && root.player.canTogglePlaying
-                    onActivated: root.togglePlay()
-                }
-
-            }
-
-            Rectangle {
-                // Islands and notches only. The fill follows whatever surface
-                // the compact face currently lives in - the shell in morph mode,
-                // the pill in pop-up mode - corner overrides included. Copying
-                // only `radius` left this fully rounded inside a squared-off
-                // pill, so hovering a notch showed an island-shaped highlight
-                // with dark wedges in the top corners. Inline does not use it at
-                // all; see the rule below.
-                anchors.fill: parent
-                radius: parent.parent.radius
-                topLeftRadius: parent.parent.topLeftRadius
-                topRightRadius: parent.parent.topRightRadius
-                color: Theme.text
-                opacity: compactFace.hovered ? 0.08 : 0
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.ms(150)
-                        easing.type: Easing.OutCubic
-                    }
-
-                }
-
-            }
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.ms(220)
-                    easing.type: Easing.OutCubic
-                }
-
-            }
-
-            Behavior on scale {
-                NumberAnimation {
-                    duration: Theme.ms(220)
-                    easing.type: Easing.OutCubic
-                }
-
-            }
-
-        }
-
-        // ---------------- EXPANDED: PLAYER PAGE ----------------
-        Item {
-            id: playerPage
-
-            anchors.fill: parent
-            anchors.margins: 14
-            opacity: (root.expanded && root.page === "player") ? 1 : 0
-            visible: opacity > 0.01
-
-            transform: Translate {
-                x: root.page === "player" ? 0 : -26
-
-                Behavior on x {
-                    NumberAnimation {
-                        duration: Theme.durLong
-                        easing.type: Easing.Bezier
-                        easing.bezierCurve: root.easeEmphasized
-                    }
-
-                }
-
-            }
-
-            Column {
-                id: playerColumn
-
-                width: root.contentWidth
-                spacing: 12
-
-                Row {
-                    width: root.contentWidth
-                    height: 96
-                    spacing: 14
-
-                    Item {
-                        id: artwork
-
-                        width: 96
-                        height: 96
-
-                        RoundedArt {
-                            anchors.fill: parent
-                            source: root.artUrl
-                            shapeRadius: Theme.radiusLg
-                            fallbackGlyph: 34
-                        }
-
-                        // the art is the primary play surface - hovering it
-                        // says so, so the big button below is a convenience
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: Theme.radiusLg
-                            color: "black"
-                            opacity: artArea.containsMouse ? 0.4 : 0
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Theme.ms(150)
-                                    easing.type: Easing.OutCubic
-                                }
-
-                            }
-
-                        }
-
-                        SvgIcon {
-                            anchors.centerIn: parent
-                            opacity: artArea.containsMouse ? 1 : 0
-                            path: root.isPlaying ? root.pauseGlyph : root.playGlyph
-                            tint: "white"
-                            glyphSize: 32
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Theme.ms(150)
-                                    easing.type: Easing.OutCubic
-                                }
-
-                            }
-
-                        }
-
-                        MouseArea {
-                            id: artArea
-
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.togglePlay()
-                        }
-
-                    }
-
-                    Item {
-                        width: root.contentWidth - 96 - 14
-                        height: 96
-
-                        // m3 type roles: title-medium over body-medium over
-                        // label-small, each on its own on-surface tone
-                        Column {
-                            anchors.top: parent.top
-                            width: parent.width
-                            spacing: 1
-
-                            Marquee {
-                                width: parent.width
-                                content: root.title
-                                scrolling: root.isPlaying
-                                bold: true
-                                pixelSize: Theme.fontHeadline
-                            }
-
-                            Marquee {
-                                width: parent.width
-                                visible: root.artist !== ""
-                                content: root.artist
-                                scrolling: root.isPlaying
-                                textColor: Theme.subtext
-                                pixelSize: Theme.fontBody
-                            }
-
-                            Text {
-                                width: parent.width
-                                visible: root.metaLine !== ""
-                                text: root.metaLine
-                                color: Theme.subtextDim
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontLabel
-                                elide: Text.ElideRight
-                            }
-
-                        }
-
-                        // m3 slider, scaled to this density: a thick rounded
-                        // track split by a 4px bar handle with a 6px gap on
-                        // each side, plus the stop indicator that marks the
-                        // track's end. Sits on the art's baseline, and only
-                        // exists for players that expose their own volume
-                        Row {
-                            id: volumeRow
-
-                            readonly property real fraction: Math.max(0, Math.min(1, root.playerVolume))
-                            readonly property int handleWidth: 4
-                            readonly property int handleGap: 6
-
-                            anchors.bottom: parent.bottom
-                            anchors.left: parent.left
-                            width: parent.width
+                            width: parent.width - 14 - volPct.width - 16
                             height: 22
-                            spacing: 8
-                            visible: root.volumeSupported
-
-                            SvgIcon {
-                                anchors.verticalCenter: parent.verticalCenter
-                                path: root.volumeGlyphFor(root.playerVolume)
-                                tint: volArea.containsMouse ? Theme.accent : Theme.subtext
-                                glyphSize: 14
-                            }
-
-                            Item {
-                                id: volTrack
-
-                                readonly property real handleX: volumeRow.fraction * (volTrack.width - volumeRow.handleWidth)
-
-                                width: parent.width - 14 - volPct.width - 16
-                                height: 22
-                                anchors.verticalCenter: parent.verticalCenter
-
-                                Rectangle {
-                                    id: volInactive
-
-                                    anchors.right: parent.right
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    x: volTrack.handleX + volumeRow.handleWidth + volumeRow.handleGap
-                                    height: 10
-                                    radius: height / 2
-                                    color: Theme.withBlur(Theme.bgHigh)
-                                }
-
-                                Rectangle {
-                                    id: volActive
-
-                                    anchors.left: parent.left
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: Math.max(0, volTrack.handleX - volumeRow.handleGap)
-                                    height: 10
-                                    radius: height / 2
-                                    color: Theme.accent
-                                }
-
-                                // stop indicator at the far end of the track
-                                Rectangle {
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: 3
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: 4
-                                    height: 4
-                                    radius: 999
-                                    color: Theme.accent
-                                    opacity: volumeRow.fraction > 0.94 ? 0 : 0.55
-                                }
-
-                                Rectangle {
-                                    id: volHandle
-
-                                    x: volTrack.handleX
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: volumeRow.handleWidth
-                                    height: volArea.pressed ? 14 : 20
-                                    radius: 999
-                                    color: Theme.accent
-
-                                    Behavior on height {
-                                        NumberAnimation {
-                                            duration: Theme.durQuick
-                                            easing.type: Theme.easeStandard
-                                        }
-
-                                    }
-
-                                }
-
-                                MouseArea {
-                                    id: volArea
-
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    preventStealing: true
-                                    onPressed: (mouse) => {
-                                        if (root.player)
-                                            root.player.volume = Math.max(0, Math.min(1, mouse.x / volTrack.width));
-
-                                    }
-                                    onPositionChanged: (mouse) => {
-                                        if (pressed && root.player)
-                                            root.player.volume = Math.max(0, Math.min(1, mouse.x / volTrack.width));
-
-                                    }
-                                    onWheel: (wheel) => {
-                                        return root.nudgeVolume(wheel.angleDelta.y > 0 ? 0.05 : -0.05);
-                                    }
-                                }
-
-                            }
-
-                            Text {
-                                id: volPct
-
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 30
-                                horizontalAlignment: Text.AlignRight
-                                text: Math.round(root.playerVolume * 100) + "%"
-                                color: Theme.subtextDim
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontLabel
-                            }
-
-                        }
-
-                    }
-
-                }
-
-                // cava strip - dims rather than disappears when paused so the
-                // panel keeps its shape
-                Item {
-                    id: vizStrip
-
-                    width: root.contentWidth
-                    height: 28
-                    // idle is a dimmer strip, not a ghost of one
-                    opacity: root.isPlaying ? 1 : 0.75
-
-                    Row {
-                        anchors.fill: parent
-                        spacing: 3
-
-                        Repeater {
-                            model: root.barCount
+                            anchors.verticalCenter: parent.verticalCenter
 
                             Rectangle {
-                                required property int index
+                                id: volInactive
 
-                                readonly property real level: root.barLevel(index)
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                x: volTrack.handleX + volumeRow.handleWidth + volumeRow.handleGap
+                                height: 10
+                                radius: height / 2
+                                color: Theme.withBlur(Theme.bgHigh)
+                            }
 
-                                width: (vizStrip.width - (root.barCount - 1) * 3) / root.barCount
-                                height: Math.max(width, level * vizStrip.height)
-                                anchors.bottom: parent.bottom
+                            Rectangle {
+                                id: volActive
+
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.max(0, volTrack.handleX - volumeRow.handleGap)
+                                height: 10
+                                radius: height / 2
+                                color: Theme.accent
+                            }
+
+                            // stop indicator at the far end of the track
+                            Rectangle {
+                                anchors.right: parent.right
+                                anchors.rightMargin: 3
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 4
+                                height: 4
                                 radius: 999
-                                color: root.barColor(level)
+                                color: Theme.accent
+                                opacity: volumeRow.fraction > 0.94 ? 0 : 0.55
+                            }
+
+                            Rectangle {
+                                id: volHandle
+
+                                x: volTrack.handleX
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: volumeRow.handleWidth
+                                height: volArea.pressed ? 14 : 20
+                                radius: 999
+                                color: Theme.accent
 
                                 Behavior on height {
                                     NumberAnimation {
-                                        duration: Theme.ms(70)
-                                        easing.type: Easing.OutCubic
-                                    }
-
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Theme.ms(220)
-                            easing.type: Easing.OutCubic
-                        }
-
-                    }
-
-                }
-
-                Item {
-                    width: root.contentWidth
-                    height: 40
-
-                    Column {
-                        width: parent.width
-                        spacing: 4
-                        visible: root.hasDuration
-
-                        Item {
-                            id: trackHitArea
-
-                            property bool hovering: false
-                            property bool dragging: false
-                            property real dragProgress: root.progress
-                            readonly property real displayProgress: dragging ? dragProgress : root.progress
-                            // room for the handle dot so it doesn't clip at the edge
-                            readonly property real trackInset: 8
-
-                            width: parent.width
-                            height: 22
-
-                            // m3 progress indicator, wavy: 4dp active and
-                            // inactive tracks with round caps, a 4dp-wide bar
-                            // handle with a gap either side, and a stop
-                            // indicator at the track's end. The wave is a fixed
-                            // shape - it doesn't scroll and doesn't react to
-                            // the music, so the only thing that moves is the
-                            // playhead
-                            Canvas {
-                                id: waveCanvas
-
-                                property real animatedProgress: trackHitArea.displayProgress
-                                readonly property real trackThickness: 4
-                                readonly property real handleWidth: 4
-                                // not readonly: these carry Behaviors, and an
-                                // interceptor counts as a write
-                                property real handleHeight: trackHitArea.hovering || trackHitArea.dragging ? 18 : 14
-                                property real amplitude: trackHitArea.hovering || trackHitArea.dragging ? 4.5 : 3.5
-                                readonly property real trackGap: 6
-                                readonly property real stopIndicator: 4
-                                readonly property real wavelength: 26
-
-                                function smoothstep(t) {
-                                    t = Math.max(0, Math.min(1, t));
-                                    return t * t * (3 - 2 * t);
-                                }
-
-                                function envelope(x, inset, rampLen, endX) {
-                                    const fromStart = smoothstep((x - inset) / rampLen);
-                                    const fromEnd = smoothstep((endX - x) / rampLen);
-                                    return Math.min(fromStart, fromEnd);
-                                }
-
-                                function roundedBar(ctx, x, y, w, h, color) {
-                                    ctx.fillStyle = color;
-                                    ctx.beginPath();
-                                    ctx.roundedRect(x, y, w, h, w / 2, w / 2);
-                                    ctx.fill();
-                                }
-
-                                anchors.fill: parent
-                                antialiasing: true
-                                onAnimatedProgressChanged: requestPaint()
-                                onHandleHeightChanged: requestPaint()
-                                onAmplitudeChanged: requestPaint()
-                                onWidthChanged: requestPaint()
-                                onPaint: {
-                                    const ctx = getContext("2d");
-                                    ctx.clearRect(0, 0, width, height);
-                                    const midY = height / 2;
-                                    const inset = trackHitArea.trackInset;
-                                    const usableWidth = width - inset * 2;
-                                    const handleX = inset + Math.max(0, Math.min(usableWidth, usableWidth * animatedProgress));
-                                    const activeEnd = handleX - trackGap - handleWidth / 2;
-                                    const inactiveStart = handleX + trackGap + handleWidth / 2;
-                                    // eases the wave in/out so both ends meet the
-                                    // caps flat instead of mid-crest
-                                    const rampLen = wavelength * 1.4;
-                                    ctx.lineCap = "round";
-                                    ctx.lineJoin = "round";
-                                    // active track
-                                    if (activeEnd - inset > trackThickness) {
-                                        ctx.strokeStyle = Theme.accent;
-                                        ctx.lineWidth = trackThickness;
-                                        ctx.beginPath();
-                                        for (let x = inset; x <= activeEnd; x++) {
-                                            const y = midY + Math.sin((x / wavelength) * Math.PI * 2) * amplitude * envelope(x, inset, rampLen, activeEnd);
-                                            if (x === inset)
-                                                ctx.moveTo(x, y);
-                                            else
-                                                ctx.lineTo(x, y);
-                                        }
-                                        ctx.stroke();
-                                    }
-                                    // inactive track, stopping short of the stop indicator
-                                    const trackEnd = width - inset - stopIndicator * 2;
-                                    if (trackEnd - inactiveStart > trackThickness) {
-                                        ctx.strokeStyle = Theme.withBlur(Theme.bgHigh);
-                                        ctx.lineWidth = trackThickness;
-                                        ctx.beginPath();
-                                        ctx.moveTo(inactiveStart, midY);
-                                        ctx.lineTo(trackEnd, midY);
-                                        ctx.stroke();
-                                    }
-                                    // stop indicator
-                                    ctx.fillStyle = Theme.accent;
-                                    ctx.globalAlpha = animatedProgress > 0.97 ? 0 : 0.55;
-                                    ctx.beginPath();
-                                    ctx.arc(width - inset - stopIndicator / 2, midY, stopIndicator / 2, 0, Math.PI * 2);
-                                    ctx.fill();
-                                    ctx.globalAlpha = 1;
-                                    // handle
-                                    roundedBar(ctx, handleX - handleWidth / 2, midY - handleHeight / 2, handleWidth, handleHeight, Theme.accent);
-                                }
-
-                                Connections {
-                                    function onAccentChanged() {
-                                        waveCanvas.requestPaint();
-                                    }
-
-                                    function onBgHighChanged() {
-                                        waveCanvas.requestPaint();
-                                    }
-
-                                    target: Theme
-                                }
-
-                                Behavior on animatedProgress {
-                                    enabled: !trackHitArea.dragging
-
-                                    NumberAnimation {
-                                        duration: Theme.ms(root.jumpDuration)
-                                        easing.type: Easing.Bezier
-                                        easing.bezierCurve: root.easeEmphasized
-                                    }
-
-                                }
-
-                                Behavior on handleHeight {
-                                    NumberAnimation {
-                                        duration: Theme.durShort
-                                        easing.type: Easing.Bezier
-                                        easing.bezierCurve: root.easeEmphasized
-                                    }
-
-                                }
-
-                                Behavior on amplitude {
-                                    NumberAnimation {
-                                        duration: Theme.durMedium
+                                        duration: Theme.barDurQuick
                                         easing.type: Theme.easeStandard
                                     }
 
@@ -1646,269 +1091,92 @@ Item {
                             }
 
                             MouseArea {
+                                id: volArea
+
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onEntered: trackHitArea.hovering = true
-                                onExited: trackHitArea.hovering = false
+                                preventStealing: true
                                 onPressed: (mouse) => {
-                                    trackHitArea.dragging = true;
-                                    trackHitArea.dragProgress = Math.max(0, Math.min(1, (mouse.x - trackHitArea.trackInset) / (width - trackHitArea.trackInset * 2)));
+                                    if (root.player)
+                                        root.player.volume = Math.max(0, Math.min(1, mouse.x / volTrack.width));
+
                                 }
                                 onPositionChanged: (mouse) => {
-                                    if (trackHitArea.dragging)
-                                        trackHitArea.dragProgress = Math.max(0, Math.min(1, (mouse.x - trackHitArea.trackInset) / (width - trackHitArea.trackInset * 2)));
+                                    if (pressed && root.player)
+                                        root.player.volume = Math.max(0, Math.min(1, mouse.x / volTrack.width));
 
-                                }
-                                onReleased: (mouse) => {
-                                    root.seekTo(trackHitArea.dragProgress * root.lenSec, false);
-                                    trackHitArea.dragging = false;
                                 }
                                 onWheel: (wheel) => {
-                                    return root.seekTo(root.livePosSec + (wheel.angleDelta.y > 0 ? 5 : -5), true);
+                                    return root.nudgeVolume(wheel.angleDelta.y > 0 ? 0.05 : -0.05);
                                 }
-                            }
-
-                        }
-
-                        Item {
-                            width: parent.width
-                            height: posLabel.implicitHeight
-
-                            Text {
-                                id: posLabel
-
-                                anchors.left: parent.left
-                                anchors.leftMargin: trackHitArea.trackInset
-                                text: root.fmt(root.livePosSec)
-                                color: Theme.subtext
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontLabel
-                            }
-
-                            Text {
-                                id: lenLabel
-
-                                anchors.right: parent.right
-                                anchors.rightMargin: trackHitArea.trackInset
-                                text: root.showRemaining ? "-" + root.fmt(root.lenSec - root.livePosSec) : root.fmt(root.lenSec)
-                                color: lenArea.containsMouse ? Theme.text : Theme.subtext
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontLabel
-
-                                MouseArea {
-                                    id: lenArea
-
-                                    anchors.fill: parent
-                                    anchors.margins: -6
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.showRemaining = !root.showRemaining
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                    // no length reported: a live stream. Show that instead of
-                    // a seek bar that can't seek
-                    Row {
-                        anchors.centerIn: parent
-                        spacing: 7
-                        visible: !root.hasDuration
-
-                        Rectangle {
-                            width: 6
-                            height: 6
-                            radius: 999
-                            color: Theme.accent
-                            anchors.verticalCenter: parent.verticalCenter
-
-                            SequentialAnimation on opacity {
-                                running: root.isPlaying
-                                loops: Animation.Infinite
-
-                                NumberAnimation {
-                                    to: 0.25
-                                    duration: Theme.ms(900)
-                                    easing.type: Easing.InOutSine
-                                }
-
-                                NumberAnimation {
-                                    to: 1
-                                    duration: Theme.ms(900)
-                                    easing.type: Easing.InOutSine
-                                }
-
                             }
 
                         }
 
                         Text {
+                            id: volPct
+
                             anchors.verticalCenter: parent.verticalCenter
-                            text: root.player ? "LIVE  ·  " + root.fmt(root.livePosSec) : "NOTHING QUEUED"
-                            color: Theme.subtext
+                            width: 30
+                            horizontalAlignment: Text.AlignRight
+                            text: Math.round(root.playerVolume * 100) + "%"
+                            color: Theme.subtextDim
                             font.family: Theme.fontFamily
-                            font.bold: true
                             font.pixelSize: Theme.fontLabel
-                            font.letterSpacing: 0.5
                         }
 
-                    }
-
-                }
-
-                // the transport keeps the centre; the panel's own actions take
-                // the space either side of it, which is otherwise dead
-                Item {
-                    width: root.contentWidth
-                    height: 40
-
-                    Row {
-                        anchors.left: parent.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
-
-                        // only earns its place when there's somewhere to switch to
-                        IconBtn {
-                            ghost: true
-                            diameter: 28
-                            glyphSize: 15
-                            visible: root.mprisPlayers.length > 1
-                            path: root.swapGlyph
-                            tint: Theme.subtextDim
-                            onActivated: root.cyclePlayer()
-                        }
-
-                        IconBtn {
-                            ghost: true
-                            diameter: 28
-                            glyphSize: 16
-                            path: root.identifyGlyph
-                            tint: Theme.subtextDim
-                            onActivated: root.openPanel("shazam")
-                        }
-
-                    }
-
-                    Row {
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
-
-                        IconBtn {
-                            ghost: true
-                            diameter: 28
-                            glyphSize: 14
-                            visible: root.player !== null && root.player.canRaise
-                            path: root.openGlyph
-                            tint: Theme.subtextDim
-                            onActivated: {
-                                if (root.player)
-                                    root.player.raise();
-
-                            }
-                        }
-
-                        IconBtn {
-                            ghost: true
-                            diameter: 28
-                            glyphSize: 16
-                            path: root.collapseGlyph
-                            tint: Theme.subtextDim
-                            onActivated: root.expanded = false
-                        }
-
-                    }
-
-                    Row {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 10
-                        visible: root.player !== null
-
-                        IconBtn {
-                            ghost: true
-                            diameter: 26
-                            glyphSize: 14
-                            anchors.verticalCenter: parent.verticalCenter
-                            visible: root.player !== null && root.player.shuffleSupported
-                            path: root.shuffleGlyph
-                            tint: (root.player && root.player.shuffle) ? Theme.accent : Theme.subtextDim
-                            onActivated: {
-                                if (root.player)
-                                    root.player.shuffle = !root.player.shuffle;
-
-                            }
-                        }
-
-                        IconBtn {
-                            diameter: 30
-                            glyphSize: 15
-                            anchors.verticalCenter: parent.verticalCenter
-                            path: root.prevGlyph
-                            enabledAction: root.player !== null && root.player.canGoPrevious
-                            onActivated: root.skip(-1)
-                        }
-
-                        IconBtn {
-                            diameter: 40
-                            glyphSize: 19
-                            filled: true
-                            anchors.verticalCenter: parent.verticalCenter
-                            path: root.isPlaying ? root.pauseGlyph : root.playGlyph
-                            tint: Theme.onAccent
-                            enabledAction: root.player !== null && root.player.canTogglePlaying
-                            onActivated: root.togglePlay()
-                        }
-
-                        IconBtn {
-                            diameter: 30
-                            glyphSize: 15
-                            anchors.verticalCenter: parent.verticalCenter
-                            path: root.nextGlyph
-                            enabledAction: root.player !== null && root.player.canGoNext
-                            onActivated: root.skip(1)
-                        }
-
-                        IconBtn {
-                            ghost: true
-                            diameter: 26
-                            glyphSize: 14
-                            anchors.verticalCenter: parent.verticalCenter
-                            visible: root.player !== null && root.player.loopSupported
-                            path: (root.player && root.player.loopState === MprisLoopState.Track) ? root.repeatOneGlyph : root.repeatGlyph
-                            tint: (root.player && root.player.loopState !== MprisLoopState.None) ? Theme.accent : Theme.subtextDim
-                            onActivated: root.cycleLoop()
-                        }
-
-                    }
-
-                    // with nothing to control, the centre offers the one thing
-                    // that still works instead of a row of dead buttons
-                    PillBtn {
-                        anchors.centerIn: parent
-                        visible: root.player === null
-                        label: "Identify what's playing"
-                        path: root.identifyGlyph
-                        accented: true
-                        onActivated: root.openPanel("shazam")
                     }
 
                 }
 
             }
 
-            Behavior on opacity {
-                SequentialAnimation {
-                    PauseAnimation {
-                        duration: Theme.ms(root.expanded ? 140 : 0)
+            // cava strip - dims rather than disappears when paused so the
+            // panel keeps its shape
+            Item {
+                id: vizStrip
+
+                width: root.contentWidth
+                height: 28
+                // idle is a dimmer strip, not a ghost of one
+                opacity: root.isPlaying ? 1 : 0.75
+
+                Row {
+                    anchors.fill: parent
+                    spacing: 3
+
+                    Repeater {
+                        model: root.barCount
+
+                        Rectangle {
+                            required property int index
+
+                            readonly property real level: root.barLevel(index)
+
+                            width: (vizStrip.width - (root.barCount - 1) * 3) / root.barCount
+                            height: Math.max(width, level * vizStrip.height)
+                            anchors.bottom: parent.bottom
+                            radius: 999
+                            color: root.barColor(level)
+
+                            Behavior on height {
+                                NumberAnimation {
+                                    duration: Theme.barMs(70)
+                                    easing.type: Easing.OutCubic
+                                }
+
+                            }
+
+                        }
+
                     }
 
+                }
+
+                Behavior on opacity {
                     NumberAnimation {
-                        duration: Theme.ms(220)
+                        duration: Theme.barMs(220)
                         easing.type: Easing.OutCubic
                     }
 
@@ -1916,314 +1184,808 @@ Item {
 
             }
 
-        }
+            Item {
+                width: root.contentWidth
+                height: 40
 
-        // ---------------- EXPANDED: SHAZAM PAGE ----------------
-        Item {
-            id: shazamPage
+                Column {
+                    width: parent.width
+                    spacing: 4
+                    visible: root.hasDuration
 
-            anchors.fill: parent
-            anchors.margins: 14
-            opacity: (root.expanded && root.page === "shazam") ? 1 : 0
-            visible: opacity > 0.01
+                    Item {
+                        id: trackHitArea
 
-            transform: Translate {
-                x: root.page === "shazam" ? 0 : 26
+                        property bool hovering: false
+                        property bool dragging: false
+                        property real dragProgress: root.progress
+                        readonly property real displayProgress: dragging ? dragProgress : root.progress
+                        // room for the handle dot so it doesn't clip at the edge
+                        readonly property real trackInset: 8
 
-                Behavior on x {
-                    NumberAnimation {
-                        duration: Theme.durLong
-                        easing.type: Easing.Bezier
-                        easing.bezierCurve: root.easeEmphasized
+                        width: parent.width
+                        height: 22
+
+                        // m3 progress indicator, wavy: 4dp active and
+                        // inactive tracks with round caps, a 4dp-wide bar
+                        // handle with a gap either side, and a stop
+                        // indicator at the track's end. The wave is a fixed
+                        // shape - it doesn't scroll and doesn't react to
+                        // the music, so the only thing that moves is the
+                        // playhead
+                        Canvas {
+                            id: waveCanvas
+
+                            property real animatedProgress: trackHitArea.displayProgress
+                            readonly property real trackThickness: 4
+                            readonly property real handleWidth: 4
+                            // not readonly: these carry Behaviors, and an
+                            // interceptor counts as a write
+                            property real handleHeight: trackHitArea.hovering || trackHitArea.dragging ? 18 : 14
+                            property real amplitude: trackHitArea.hovering || trackHitArea.dragging ? 4.5 : 3.5
+                            readonly property real trackGap: 6
+                            readonly property real stopIndicator: 4
+                            readonly property real wavelength: 26
+
+                            function smoothstep(t) {
+                                t = Math.max(0, Math.min(1, t));
+                                return t * t * (3 - 2 * t);
+                            }
+
+                            function envelope(x, inset, rampLen, endX) {
+                                const fromStart = smoothstep((x - inset) / rampLen);
+                                const fromEnd = smoothstep((endX - x) / rampLen);
+                                return Math.min(fromStart, fromEnd);
+                            }
+
+                            function roundedBar(ctx, x, y, w, h, color) {
+                                ctx.fillStyle = color;
+                                ctx.beginPath();
+                                ctx.roundedRect(x, y, w, h, w / 2, w / 2);
+                                ctx.fill();
+                            }
+
+                            anchors.fill: parent
+                            antialiasing: true
+                            onAnimatedProgressChanged: requestPaint()
+                            onHandleHeightChanged: requestPaint()
+                            onAmplitudeChanged: requestPaint()
+                            onWidthChanged: requestPaint()
+                            onPaint: {
+                                const ctx = getContext("2d");
+                                ctx.clearRect(0, 0, width, height);
+                                const midY = height / 2;
+                                const inset = trackHitArea.trackInset;
+                                const usableWidth = width - inset * 2;
+                                const handleX = inset + Math.max(0, Math.min(usableWidth, usableWidth * animatedProgress));
+                                const activeEnd = handleX - trackGap - handleWidth / 2;
+                                const inactiveStart = handleX + trackGap + handleWidth / 2;
+                                // eases the wave in/out so both ends meet the
+                                // caps flat instead of mid-crest
+                                const rampLen = wavelength * 1.4;
+                                ctx.lineCap = "round";
+                                ctx.lineJoin = "round";
+                                // active track
+                                if (activeEnd - inset > trackThickness) {
+                                    ctx.strokeStyle = Theme.accent;
+                                    ctx.lineWidth = trackThickness;
+                                    ctx.beginPath();
+                                    for (let x = inset; x <= activeEnd; x++) {
+                                        const y = midY + Math.sin((x / wavelength) * Math.PI * 2) * amplitude * envelope(x, inset, rampLen, activeEnd);
+                                        if (x === inset)
+                                            ctx.moveTo(x, y);
+                                        else
+                                            ctx.lineTo(x, y);
+                                    }
+                                    ctx.stroke();
+                                }
+                                // inactive track, stopping short of the stop indicator
+                                const trackEnd = width - inset - stopIndicator * 2;
+                                if (trackEnd - inactiveStart > trackThickness) {
+                                    ctx.strokeStyle = Theme.withBlur(Theme.bgHigh);
+                                    ctx.lineWidth = trackThickness;
+                                    ctx.beginPath();
+                                    ctx.moveTo(inactiveStart, midY);
+                                    ctx.lineTo(trackEnd, midY);
+                                    ctx.stroke();
+                                }
+                                // stop indicator
+                                ctx.fillStyle = Theme.accent;
+                                ctx.globalAlpha = animatedProgress > 0.97 ? 0 : 0.55;
+                                ctx.beginPath();
+                                ctx.arc(width - inset - stopIndicator / 2, midY, stopIndicator / 2, 0, Math.PI * 2);
+                                ctx.fill();
+                                ctx.globalAlpha = 1;
+                                // handle
+                                roundedBar(ctx, handleX - handleWidth / 2, midY - handleHeight / 2, handleWidth, handleHeight, Theme.accent);
+                            }
+
+                            Connections {
+                                function onAccentChanged() {
+                                    waveCanvas.requestPaint();
+                                }
+
+                                function onBgHighChanged() {
+                                    waveCanvas.requestPaint();
+                                }
+
+                                target: Theme
+                            }
+
+                            Behavior on animatedProgress {
+                                enabled: !trackHitArea.dragging
+
+                                NumberAnimation {
+                                    duration: Theme.barMs(root.jumpDuration)
+                                    easing.type: Easing.Bezier
+                                    easing.bezierCurve: root.easeEmphasized
+                                }
+
+                            }
+
+                            Behavior on handleHeight {
+                                NumberAnimation {
+                                    duration: Theme.barDurShort
+                                    easing.type: Easing.Bezier
+                                    easing.bezierCurve: root.easeEmphasized
+                                }
+
+                            }
+
+                            Behavior on amplitude {
+                                NumberAnimation {
+                                    duration: Theme.barDurMedium
+                                    easing.type: Theme.easeStandard
+                                }
+
+                            }
+
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onEntered: trackHitArea.hovering = true
+                            onExited: trackHitArea.hovering = false
+                            onPressed: (mouse) => {
+                                trackHitArea.dragging = true;
+                                trackHitArea.dragProgress = Math.max(0, Math.min(1, (mouse.x - trackHitArea.trackInset) / (width - trackHitArea.trackInset * 2)));
+                            }
+                            onPositionChanged: (mouse) => {
+                                if (trackHitArea.dragging)
+                                    trackHitArea.dragProgress = Math.max(0, Math.min(1, (mouse.x - trackHitArea.trackInset) / (width - trackHitArea.trackInset * 2)));
+
+                            }
+                            onReleased: (mouse) => {
+                                root.seekTo(trackHitArea.dragProgress * root.lenSec, false);
+                                trackHitArea.dragging = false;
+                            }
+                            onWheel: (wheel) => {
+                                return root.seekTo(root.livePosSec + (wheel.angleDelta.y > 0 ? 5 : -5), true);
+                            }
+                        }
+
+                    }
+
+                    Item {
+                        width: parent.width
+                        height: posLabel.implicitHeight
+
+                        Text {
+                            id: posLabel
+
+                            anchors.left: parent.left
+                            anchors.leftMargin: trackHitArea.trackInset
+                            text: root.fmt(root.livePosSec)
+                            color: Theme.subtext
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontLabel
+                        }
+
+                        Text {
+                            id: lenLabel
+
+                            anchors.right: parent.right
+                            anchors.rightMargin: trackHitArea.trackInset
+                            text: root.showRemaining ? "-" + root.fmt(root.lenSec - root.livePosSec) : root.fmt(root.lenSec)
+                            color: lenArea.containsMouse ? Theme.text : Theme.subtext
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontLabel
+
+                            MouseArea {
+                                id: lenArea
+
+                                anchors.fill: parent
+                                anchors.margins: -6
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.showRemaining = !root.showRemaining
+                            }
+
+                        }
+
+                    }
+
+                }
+
+                // no length reported: a live stream. Show that instead of
+                // a seek bar that can't seek
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 7
+                    visible: !root.hasDuration
+
+                    Rectangle {
+                        width: 6
+                        height: 6
+                        radius: 999
+                        color: Theme.accent
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        SequentialAnimation on opacity {
+                            running: root.isPlaying
+                            loops: Animation.Infinite
+
+                            NumberAnimation {
+                                to: 0.25
+                                duration: Theme.barMs(900)
+                                easing.type: Easing.InOutSine
+                            }
+
+                            NumberAnimation {
+                                to: 1
+                                duration: Theme.barMs(900)
+                                easing.type: Easing.InOutSine
+                            }
+
+                        }
+
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.player ? "LIVE  ·  " + root.fmt(root.livePosSec) : "NOTHING QUEUED"
+                        color: Theme.subtext
+                        font.family: Theme.fontFamily
+                        font.bold: true
+                        font.pixelSize: Theme.fontLabel
+                        font.letterSpacing: 0.5
                     }
 
                 }
 
             }
 
-            Column {
-                id: shazamColumn
+            // the transport keeps the centre; the panel's own actions take
+            // the space either side of it, which is otherwise dead
+            Item {
+                width: root.contentWidth
+                height: 40
+
+                Row {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 2
+
+                    // only earns its place when there's somewhere to switch to
+                    IconBtn {
+                        ghost: true
+                        diameter: 28
+                        glyphSize: 15
+                        visible: root.mprisPlayers.length > 1
+                        path: root.swapGlyph
+                        tint: Theme.subtextDim
+                        onActivated: root.cyclePlayer()
+                    }
+
+                    IconBtn {
+                        ghost: true
+                        diameter: 28
+                        glyphSize: 16
+                        path: root.identifyGlyph
+                        tint: Theme.subtextDim
+                        onActivated: root.openPanel("shazam")
+                    }
+
+                }
+
+                Row {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 2
+
+                    IconBtn {
+                        ghost: true
+                        diameter: 28
+                        glyphSize: 14
+                        visible: root.player !== null && root.player.canRaise
+                        path: root.openGlyph
+                        tint: Theme.subtextDim
+                        onActivated: {
+                            if (root.player)
+                                root.player.raise();
+
+                        }
+                    }
+
+                    IconBtn {
+                        ghost: true
+                        diameter: 28
+                        glyphSize: 16
+                        path: root.collapseGlyph
+                        tint: Theme.subtextDim
+                        onActivated: root.expanded = false
+                    }
+
+                }
+
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 10
+                    visible: root.player !== null
+
+                    IconBtn {
+                        ghost: true
+                        diameter: 26
+                        glyphSize: 14
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: root.player !== null && root.player.shuffleSupported
+                        path: root.shuffleGlyph
+                        tint: (root.player && root.player.shuffle) ? Theme.accent : Theme.subtextDim
+                        onActivated: {
+                            if (root.player)
+                                root.player.shuffle = !root.player.shuffle;
+
+                        }
+                    }
+
+                    IconBtn {
+                        diameter: 30
+                        glyphSize: 15
+                        anchors.verticalCenter: parent.verticalCenter
+                        path: root.prevGlyph
+                        enabledAction: root.player !== null && root.player.canGoPrevious
+                        onActivated: root.skip(-1)
+                    }
+
+                    IconBtn {
+                        diameter: 40
+                        glyphSize: 19
+                        filled: true
+                        anchors.verticalCenter: parent.verticalCenter
+                        path: root.isPlaying ? root.pauseGlyph : root.playGlyph
+                        tint: Theme.onAccent
+                        enabledAction: root.player !== null && root.player.canTogglePlaying
+                        onActivated: root.togglePlay()
+                    }
+
+                    IconBtn {
+                        diameter: 30
+                        glyphSize: 15
+                        anchors.verticalCenter: parent.verticalCenter
+                        path: root.nextGlyph
+                        enabledAction: root.player !== null && root.player.canGoNext
+                        onActivated: root.skip(1)
+                    }
+
+                    IconBtn {
+                        ghost: true
+                        diameter: 26
+                        glyphSize: 14
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: root.player !== null && root.player.loopSupported
+                        path: (root.player && root.player.loopState === MprisLoopState.Track) ? root.repeatOneGlyph : root.repeatGlyph
+                        tint: (root.player && root.player.loopState !== MprisLoopState.None) ? Theme.accent : Theme.subtextDim
+                        onActivated: root.cycleLoop()
+                    }
+
+                }
+
+                // with nothing to control, the centre offers the one thing
+                // that still works instead of a row of dead buttons
+                PillBtn {
+                    anchors.centerIn: parent
+                    visible: root.player === null
+                    label: "Identify what's playing"
+                    path: root.identifyGlyph
+                    accented: true
+                    onActivated: root.openPanel("shazam")
+                }
+
+            }
+
+        }
+
+        Behavior on opacity {
+            SequentialAnimation {
+                PauseAnimation {
+                    duration: Theme.barMs(root.expanded ? 140 : 0)
+                }
+
+                NumberAnimation {
+                    duration: Theme.barMs(220)
+                    easing.type: Easing.OutCubic
+                }
+
+            }
+
+        }
+
+    }
+,
+    Item {
+        id: shazamPage
+
+        anchors.fill: parent
+        anchors.margins: 14
+        opacity: (root.expanded && root.page === "shazam") ? 1 : 0
+        visible: opacity > 0.01
+
+        transform: Translate {
+            x: root.page === "shazam" ? 0 : 26
+
+            Behavior on x {
+                NumberAnimation {
+                    duration: Theme.barDurLong
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: root.easeEmphasized
+                }
+
+            }
+
+        }
+
+        Column {
+            id: shazamColumn
+
+            width: root.contentWidth
+            spacing: 12
+
+            Item {
+                width: root.contentWidth
+                height: 30
+
+                Row {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 4
+
+                    IconBtn {
+                        ghost: true
+                        diameter: 26
+                        glyphSize: 15
+                        anchors.verticalCenter: parent.verticalCenter
+                        path: root.backGlyph
+                        tint: Theme.subtext
+                        onActivated: root.page = "player"
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "IDENTIFY"
+                        color: Theme.subtextDim
+                        font.family: Theme.fontFamily
+                        font.bold: true
+                        font.pixelSize: Theme.fontLabel
+                        font.letterSpacing: 0.5
+                    }
+
+                }
+
+                // which ear to listen with: the speakers (names the track
+                // in a browser tab that reports nothing) or the room. The
+                // caption under the button says which is picked in words,
+                // so these only have to carry the choice
+                Row {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 2
+
+                    IconBtn {
+                        ghost: true
+                        diameter: 28
+                        glyphSize: 16
+                        path: root.volumeGlyphs[root.volumeGlyphs.length - 1].path
+                        tint: root.listenSource === "system" ? Theme.accent : Theme.subtextDim
+                        onActivated: {
+                            root.listenSource = "system";
+                            root.cancelListening();
+                        }
+                    }
+
+                    IconBtn {
+                        ghost: true
+                        diameter: 28
+                        glyphSize: 16
+                        path: root.micGlyph
+                        tint: root.listenSource === "mic" ? Theme.accent : Theme.subtextDim
+                        onActivated: {
+                            root.listenSource = "mic";
+                            root.cancelListening();
+                        }
+                    }
+
+                }
+
+            }
+
+            Item {
+                id: shazamHero
 
                 width: root.contentWidth
-                spacing: 12
+                height: root.shazamState === "match" ? 84 : 136
 
-                Item {
-                    width: root.contentWidth
-                    height: 30
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 14
+                    visible: root.shazamState !== "match"
 
-                    Row {
-                        anchors.left: parent.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 4
+                    Item {
+                        width: 116
+                        height: 74
+                        anchors.horizontalCenter: parent.horizontalCenter
 
-                        IconBtn {
-                            ghost: true
-                            diameter: 26
-                            glyphSize: 15
-                            anchors.verticalCenter: parent.verticalCenter
-                            path: root.backGlyph
-                            tint: Theme.subtext
-                            onActivated: root.page = "player"
+                        // sonar: one ring per beat, staggered once at the
+                        // start so they stay evenly spaced forever after
+                        Repeater {
+                            model: 3
+
+                            Rectangle {
+                                id: ring
+
+                                required property int index
+
+                                anchors.centerIn: parent
+                                width: 64
+                                height: 64
+                                radius: 999
+                                color: "transparent"
+                                border.width: 2
+                                border.color: Theme.accent
+                                opacity: 0
+                                visible: root.shazamState === "listening"
+
+                                SequentialAnimation {
+                                    running: root.shazamState === "listening"
+
+                                    PauseAnimation {
+                                        duration: Theme.barMs(ring.index * 620)
+                                    }
+
+                                    SequentialAnimation {
+                                        loops: Animation.Infinite
+
+                                        ParallelAnimation {
+                                            NumberAnimation {
+                                                target: ring
+                                                property: "scale"
+                                                from: 0.75
+                                                to: 1.9
+                                                duration: Theme.barMs(1860)
+                                                easing.type: Easing.OutCubic
+                                            }
+
+                                            NumberAnimation {
+                                                target: ring
+                                                property: "opacity"
+                                                from: 0.5
+                                                to: 0
+                                                duration: Theme.barMs(1860)
+                                                easing.type: Easing.OutCubic
+                                            }
+
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
                         }
 
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "IDENTIFY"
-                            color: Theme.subtextDim
-                            font.family: Theme.fontFamily
-                            font.bold: true
-                            font.pixelSize: Theme.fontLabel
-                            font.letterSpacing: 0.5
+                        Rectangle {
+                            id: listenBtn
+
+                            anchors.centerIn: parent
+                            width: 64
+                            height: 64
+                            radius: 999
+                            color: Theme.accent
+                            scale: listenArea.pressed ? 0.94 : (listenArea.containsMouse ? 1.05 : 1)
+
+                            // while listening the button itself breathes
+                            // with whatever the speakers are putting out
+                            SequentialAnimation on opacity {
+                                running: root.shazamState === "listening"
+                                loops: Animation.Infinite
+
+                                NumberAnimation {
+                                    to: 0.75
+                                    duration: Theme.barMs(780)
+                                    easing.type: Easing.InOutSine
+                                }
+
+                                NumberAnimation {
+                                    to: 1
+                                    duration: Theme.barMs(780)
+                                    easing.type: Easing.InOutSine
+                                }
+
+                            }
+
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 3
+                                visible: root.shazamState === "listening"
+
+                                Repeater {
+                                    model: 5
+
+                                    Rectangle {
+                                        required property int index
+
+                                        width: 3
+                                        radius: 999
+                                        color: Theme.onAccent
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        height: Math.max(4, root.bandLevel(1 + index * 7, 7 + index * 7) * 26)
+
+                                        Behavior on height {
+                                            NumberAnimation {
+                                                duration: Theme.barMs(90)
+                                                easing.type: Easing.OutCubic
+                                            }
+
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                            SvgIcon {
+                                anchors.centerIn: parent
+                                visible: root.shazamState !== "listening"
+                                path: root.shazamState === "idle" ? root.identifyGlyph : root.retryGlyph
+                                tint: Theme.onAccent
+                                glyphSize: 26
+                            }
+
+                            MouseArea {
+                                id: listenArea
+
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (root.shazamState === "listening")
+                                        root.cancelListening();
+                                    else
+                                        root.startListening();
+                                }
+                            }
+
+                            Behavior on scale {
+                                NumberAnimation {
+                                    duration: Theme.barMs(140)
+                                    easing.type: Easing.OutCubic
+                                }
+
+                            }
+
                         }
 
                     }
 
-                    // which ear to listen with: the speakers (names the track
-                    // in a browser tab that reports nothing) or the room. The
-                    // caption under the button says which is picked in words,
-                    // so these only have to carry the choice
-                    Row {
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
+                    Column {
+                        width: root.contentWidth
+                        spacing: 3
 
-                        IconBtn {
-                            ghost: true
-                            diameter: 28
-                            glyphSize: 16
-                            path: root.volumeGlyphs[root.volumeGlyphs.length - 1].path
-                            tint: root.listenSource === "system" ? Theme.accent : Theme.subtextDim
-                            onActivated: {
-                                root.listenSource = "system";
-                                root.cancelListening();
+                        Text {
+                            width: parent.width
+                            horizontalAlignment: Text.AlignHCenter
+                            text: {
+                                switch (root.shazamState) {
+                                case "listening":
+                                    return "Listening…";
+                                case "nomatch":
+                                    return "No match";
+                                case "error":
+                                    return "Couldn't listen";
+                                default:
+                                    return root.listenSource === "mic" ? "Identify what's in the room" : "Identify what's playing here";
+                                }
                             }
+                            color: Theme.text
+                            font.family: Theme.fontFamily
+                            font.bold: true
+                            font.pixelSize: Theme.fontTitle
                         }
 
-                        IconBtn {
-                            ghost: true
-                            diameter: 28
-                            glyphSize: 16
-                            path: root.micGlyph
-                            tint: root.listenSource === "mic" ? Theme.accent : Theme.subtextDim
-                            onActivated: {
-                                root.listenSource = "mic";
-                                root.cancelListening();
+                        Text {
+                            width: parent.width
+                            horizontalAlignment: Text.AlignHCenter
+                            text: {
+                                switch (root.shazamState) {
+                                case "listening":
+                                    return root.listenElapsed + "s  ·  tap to stop";
+                                case "nomatch":
+                                    return "Nothing recognisable in the last " + root.listenLimit + "s — tap to try again";
+                                case "error":
+                                    return "songrec couldn't reach the mic, the device or Shazam";
+                                default:
+                                    return "via songrec  ·  " + (root.listenDevice === "" ? "default device" : "takes about 10s");
+                                }
                             }
+                            color: Theme.subtextDim
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontLabel
+                            elide: Text.ElideRight
                         }
 
                     }
 
                 }
 
-                Item {
-                    id: shazamHero
-
+                // result
+                Row {
+                    anchors.verticalCenter: parent.verticalCenter
                     width: root.contentWidth
-                    height: root.shazamState === "match" ? 84 : 136
+                    spacing: 14
+                    visible: root.shazamState === "match"
 
-                    Column {
-                        anchors.centerIn: parent
-                        spacing: 14
-                        visible: root.shazamState !== "match"
+                    RoundedArt {
+                        width: 76
+                        height: 76
+                        source: root.shazamResult ? root.shazamResult.art : ""
+                        shapeRadius: Theme.radiusMd
+                        fallbackGlyph: 28
+                    }
 
-                        Item {
-                            width: 116
-                            height: 74
-                            anchors.horizontalCenter: parent.horizontalCenter
-
-                            // sonar: one ring per beat, staggered once at the
-                            // start so they stay evenly spaced forever after
-                            Repeater {
-                                model: 3
-
-                                Rectangle {
-                                    id: ring
-
-                                    required property int index
-
-                                    anchors.centerIn: parent
-                                    width: 64
-                                    height: 64
-                                    radius: 999
-                                    color: "transparent"
-                                    border.width: 2
-                                    border.color: Theme.accent
-                                    opacity: 0
-                                    visible: root.shazamState === "listening"
-
-                                    SequentialAnimation {
-                                        running: root.shazamState === "listening"
-
-                                        PauseAnimation {
-                                            duration: Theme.ms(ring.index * 620)
-                                        }
-
-                                        SequentialAnimation {
-                                            loops: Animation.Infinite
-
-                                            ParallelAnimation {
-                                                NumberAnimation {
-                                                    target: ring
-                                                    property: "scale"
-                                                    from: 0.75
-                                                    to: 1.9
-                                                    duration: Theme.ms(1860)
-                                                    easing.type: Easing.OutCubic
-                                                }
-
-                                                NumberAnimation {
-                                                    target: ring
-                                                    property: "opacity"
-                                                    from: 0.5
-                                                    to: 0
-                                                    duration: Theme.ms(1860)
-                                                    easing.type: Easing.OutCubic
-                                                }
-
-                                            }
-
-                                        }
-
-                                    }
-
-                                }
-
-                            }
-
-                            Rectangle {
-                                id: listenBtn
-
-                                anchors.centerIn: parent
-                                width: 64
-                                height: 64
-                                radius: 999
-                                color: Theme.accent
-                                scale: listenArea.pressed ? 0.94 : (listenArea.containsMouse ? 1.05 : 1)
-
-                                // while listening the button itself breathes
-                                // with whatever the speakers are putting out
-                                SequentialAnimation on opacity {
-                                    running: root.shazamState === "listening"
-                                    loops: Animation.Infinite
-
-                                    NumberAnimation {
-                                        to: 0.75
-                                        duration: Theme.ms(780)
-                                        easing.type: Easing.InOutSine
-                                    }
-
-                                    NumberAnimation {
-                                        to: 1
-                                        duration: Theme.ms(780)
-                                        easing.type: Easing.InOutSine
-                                    }
-
-                                }
-
-                                Row {
-                                    anchors.centerIn: parent
-                                    spacing: 3
-                                    visible: root.shazamState === "listening"
-
-                                    Repeater {
-                                        model: 5
-
-                                        Rectangle {
-                                            required property int index
-
-                                            width: 3
-                                            radius: 999
-                                            color: Theme.onAccent
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            height: Math.max(4, root.bandLevel(1 + index * 7, 7 + index * 7) * 26)
-
-                                            Behavior on height {
-                                                NumberAnimation {
-                                                    duration: Theme.ms(90)
-                                                    easing.type: Easing.OutCubic
-                                                }
-
-                                            }
-
-                                        }
-
-                                    }
-
-                                }
-
-                                SvgIcon {
-                                    anchors.centerIn: parent
-                                    visible: root.shazamState !== "listening"
-                                    path: root.shazamState === "idle" ? root.identifyGlyph : root.retryGlyph
-                                    tint: Theme.onAccent
-                                    glyphSize: 26
-                                }
-
-                                MouseArea {
-                                    id: listenArea
-
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        if (root.shazamState === "listening")
-                                            root.cancelListening();
-                                        else
-                                            root.startListening();
-                                    }
-                                }
-
-                                Behavior on scale {
-                                    NumberAnimation {
-                                        duration: Theme.ms(140)
-                                        easing.type: Easing.OutCubic
-                                    }
-
-                                }
-
-                            }
-
-                        }
+                    Item {
+                        width: root.contentWidth - 76 - 14
+                        height: 76
 
                         Column {
-                            width: root.contentWidth
-                            spacing: 3
+                            anchors.top: parent.top
+                            width: parent.width
+                            spacing: 1
 
-                            Text {
+                            Marquee {
                                 width: parent.width
-                                horizontalAlignment: Text.AlignHCenter
-                                text: {
-                                    switch (root.shazamState) {
-                                    case "listening":
-                                        return "Listening…";
-                                    case "nomatch":
-                                        return "No match";
-                                    case "error":
-                                        return "Couldn't listen";
-                                    default:
-                                        return root.listenSource === "mic" ? "Identify what's in the room" : "Identify what's playing here";
-                                    }
-                                }
-                                color: Theme.text
-                                font.family: Theme.fontFamily
-                                font.bold: true
-                                font.pixelSize: Theme.fontTitle
+                                content: root.shazamResult ? root.shazamResult.title : ""
+                                bold: true
+                                pixelSize: Theme.fontHeadline
+                            }
+
+                            Marquee {
+                                width: parent.width
+                                content: root.shazamResult ? root.shazamResult.artist : ""
+                                textColor: Theme.subtext
+                                pixelSize: Theme.fontBody
                             }
 
                             Text {
                                 width: parent.width
-                                horizontalAlignment: Text.AlignHCenter
                                 text: {
-                                    switch (root.shazamState) {
-                                    case "listening":
-                                        return root.listenElapsed + "s  ·  tap to stop";
-                                    case "nomatch":
-                                        return "Nothing recognisable in the last " + root.listenLimit + "s — tap to try again";
-                                    case "error":
-                                        return "songrec couldn't reach the mic, the device or Shazam";
-                                    default:
-                                        return "via songrec  ·  " + (root.listenDevice === "" ? "default device" : "takes about 10s");
-                                    }
+                                    if (!root.shazamResult)
+                                        return "";
+
+                                    const parts = [];
+                                    if (root.shazamResult.album !== "")
+                                        parts.push(root.shazamResult.album);
+
+                                    if (root.shazamResult.year !== "")
+                                        parts.push(root.shazamResult.year);
+
+                                    if (root.shazamResult.genre !== "")
+                                        parts.push(root.shazamResult.genre);
+
+                                    return parts.join("  ·  ");
                                 }
                                 color: Theme.subtextDim
                                 font.family: Theme.fontFamily
@@ -2233,262 +1995,179 @@ Item {
 
                         }
 
-                    }
+                        Row {
+                            anchors.bottom: parent.bottom
+                            anchors.left: parent.left
+                            spacing: 6
 
-                    // result
-                    Row {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: root.contentWidth
-                        spacing: 14
-                        visible: root.shazamState === "match"
-
-                        RoundedArt {
-                            width: 76
-                            height: 76
-                            source: root.shazamResult ? root.shazamResult.art : ""
-                            shapeRadius: Theme.radiusMd
-                            fallbackGlyph: 28
-                        }
-
-                        Item {
-                            width: root.contentWidth - 76 - 14
-                            height: 76
-
-                            Column {
-                                anchors.top: parent.top
-                                width: parent.width
-                                spacing: 1
-
-                                Marquee {
-                                    width: parent.width
-                                    content: root.shazamResult ? root.shazamResult.title : ""
-                                    bold: true
-                                    pixelSize: Theme.fontHeadline
-                                }
-
-                                Marquee {
-                                    width: parent.width
-                                    content: root.shazamResult ? root.shazamResult.artist : ""
-                                    textColor: Theme.subtext
-                                    pixelSize: Theme.fontBody
-                                }
-
-                                Text {
-                                    width: parent.width
-                                    text: {
-                                        if (!root.shazamResult)
-                                            return "";
-
-                                        const parts = [];
-                                        if (root.shazamResult.album !== "")
-                                            parts.push(root.shazamResult.album);
-
-                                        if (root.shazamResult.year !== "")
-                                            parts.push(root.shazamResult.year);
-
-                                        if (root.shazamResult.genre !== "")
-                                            parts.push(root.shazamResult.genre);
-
-                                        return parts.join("  ·  ");
-                                    }
-                                    color: Theme.subtextDim
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fontLabel
-                                    elide: Text.ElideRight
-                                }
-
+                            PillBtn {
+                                label: "Shazam"
+                                path: root.openGlyph
+                                onActivated: root.openUrl(root.shazamResult ? root.shazamResult.url : "")
                             }
 
-                            Row {
-                                anchors.bottom: parent.bottom
-                                anchors.left: parent.left
-                                spacing: 6
-
-                                PillBtn {
-                                    label: "Shazam"
-                                    path: root.openGlyph
-                                    onActivated: root.openUrl(root.shazamResult ? root.shazamResult.url : "")
-                                }
-
-                                IconBtn {
-                                    diameter: 28
-                                    glyphSize: 14
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    path: root.searchGlyph
-                                    onActivated: root.searchOnline(root.shazamResult)
-                                }
-
-                                IconBtn {
-                                    diameter: 28
-                                    glyphSize: 14
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    path: root.copyGlyph
-                                    onActivated: root.copyText(root.shazamResult ? root.shazamResult.title + " — " + root.shazamResult.artist : "")
-                                }
-
-                                IconBtn {
-                                    diameter: 28
-                                    glyphSize: 14
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    path: root.retryGlyph
-                                    onActivated: root.startListening()
-                                }
-
+                            IconBtn {
+                                diameter: 28
+                                glyphSize: 14
+                                anchors.verticalCenter: parent.verticalCenter
+                                path: root.searchGlyph
+                                onActivated: root.searchOnline(root.shazamResult)
                             }
 
-                        }
+                            IconBtn {
+                                diameter: 28
+                                glyphSize: 14
+                                anchors.verticalCenter: parent.verticalCenter
+                                path: root.copyGlyph
+                                onActivated: root.copyText(root.shazamResult ? root.shazamResult.title + " — " + root.shazamResult.artist : "")
+                            }
 
-                    }
+                            IconBtn {
+                                diameter: 28
+                                glyphSize: 14
+                                anchors.verticalCenter: parent.verticalCenter
+                                path: root.retryGlyph
+                                onActivated: root.startListening()
+                            }
 
-                    Behavior on height {
-                        NumberAnimation {
-                            duration: Theme.durLong
-                            easing.type: Easing.Bezier
-                            easing.bezierCurve: root.easeEmphasized
                         }
 
                     }
 
                 }
 
-                Column {
-                    width: root.contentWidth
-                    spacing: 6
-                    visible: historyAdapter.items.length > 0
-
-                    Item {
-                        width: parent.width
-                        height: 14
-
-                        Text {
-                            anchors.left: parent.left
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "RECENT"
-                            color: Theme.subtextDim
-                            font.family: Theme.fontFamily
-                            font.bold: true
-                            font.pixelSize: Theme.fontLabel
-                            font.letterSpacing: 0.5
-                        }
-
-                        IconBtn {
-                            ghost: true
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            diameter: 22
-                            glyphSize: 13
-                            path: root.trashGlyph
-                            tint: Theme.subtextDim
-                            onActivated: root.clearHistory()
-                        }
-
-                    }
-
-                    Repeater {
-                        model: historyAdapter.items.slice(0, 3)
-
-                        Item {
-                            id: histRow
-
-                            required property var modelData
-
-                            width: root.contentWidth
-                            height: 38
-
-                            Rectangle {
-                                anchors.fill: parent
-                                anchors.margins: -4
-                                radius: Theme.radiusSm
-                                color: Theme.text
-                                opacity: histArea.pressed ? Theme.statePressed : (histArea.containsMouse ? Theme.stateHover : 0)
-
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: Theme.durQuick
-                                    }
-
-                                }
-
-                            }
-
-                            RoundedArt {
-                                id: histArt
-
-                                anchors.left: parent.left
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 32
-                                height: 32
-                                source: histRow.modelData.art
-                                shapeRadius: Theme.radiusXs
-                                fallbackGlyph: 16
-                            }
-
-                            Column {
-                                anchors.left: histArt.right
-                                anchors.leftMargin: 10
-                                anchors.right: histAgo.left
-                                anchors.rightMargin: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 1
-
-                                Text {
-                                    width: parent.width
-                                    text: histRow.modelData.title
-                                    color: Theme.text
-                                    font.family: Theme.fontFamily
-                                    font.bold: true
-                                    font.pixelSize: Theme.fontBody
-                                    elide: Text.ElideRight
-                                }
-
-                                Text {
-                                    width: parent.width
-                                    text: histRow.modelData.artist
-                                    color: Theme.subtext
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fontLabel
-                                    elide: Text.ElideRight
-                                }
-
-                            }
-
-                            Text {
-                                id: histAgo
-
-                                anchors.right: parent.right
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: root.agoText(histRow.modelData.at, root.nowMs)
-                                color: Theme.subtextDim
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontLabel
-                            }
-
-                            MouseArea {
-                                id: histArea
-
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.openUrl(histRow.modelData.url)
-                            }
-
-                        }
-
+                Behavior on height {
+                    NumberAnimation {
+                        duration: Theme.barDurLong
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: root.easeEmphasized
                     }
 
                 }
 
             }
 
-            Behavior on opacity {
-                SequentialAnimation {
-                    PauseAnimation {
-                        duration: Theme.ms(root.expanded ? 140 : 0)
+            Column {
+                width: root.contentWidth
+                spacing: 6
+                visible: historyAdapter.items.length > 0
+
+                Item {
+                    width: parent.width
+                    height: 14
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "RECENT"
+                        color: Theme.subtextDim
+                        font.family: Theme.fontFamily
+                        font.bold: true
+                        font.pixelSize: Theme.fontLabel
+                        font.letterSpacing: 0.5
                     }
 
-                    NumberAnimation {
-                        duration: Theme.ms(220)
-                        easing.type: Easing.OutCubic
+                    IconBtn {
+                        ghost: true
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        diameter: 22
+                        glyphSize: 13
+                        path: root.trashGlyph
+                        tint: Theme.subtextDim
+                        onActivated: root.clearHistory()
+                    }
+
+                }
+
+                Repeater {
+                    model: historyAdapter.items.slice(0, 3)
+
+                    Item {
+                        id: histRow
+
+                        required property var modelData
+
+                        width: root.contentWidth
+                        height: 38
+
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: -4
+                            radius: Theme.radiusSm
+                            color: Theme.text
+                            opacity: histArea.pressed ? Theme.statePressed : (histArea.containsMouse ? Theme.stateHover : 0)
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Theme.barDurQuick
+                                }
+
+                            }
+
+                        }
+
+                        RoundedArt {
+                            id: histArt
+
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 32
+                            height: 32
+                            source: histRow.modelData.art
+                            shapeRadius: Theme.radiusXs
+                            fallbackGlyph: 16
+                        }
+
+                        Column {
+                            anchors.left: histArt.right
+                            anchors.leftMargin: 10
+                            anchors.right: histAgo.left
+                            anchors.rightMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 1
+
+                            Text {
+                                width: parent.width
+                                text: histRow.modelData.title
+                                color: Theme.text
+                                font.family: Theme.fontFamily
+                                font.bold: true
+                                font.pixelSize: Theme.fontBody
+                                elide: Text.ElideRight
+                            }
+
+                            Text {
+                                width: parent.width
+                                text: histRow.modelData.artist
+                                color: Theme.subtext
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontLabel
+                                elide: Text.ElideRight
+                            }
+
+                        }
+
+                        Text {
+                            id: histAgo
+
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.agoText(histRow.modelData.at, root.nowMs)
+                            color: Theme.subtextDim
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontLabel
+                        }
+
+                        MouseArea {
+                            id: histArea
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.openUrl(histRow.modelData.url)
+                        }
+
                     }
 
                 }
@@ -2497,22 +2176,24 @@ Item {
 
         }
 
-        Behavior on radius {
-            NumberAnimation {
-                duration: Theme.durLong
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.easeEmphasized
+        Behavior on opacity {
+            SequentialAnimation {
+                PauseAnimation {
+                    duration: Theme.barMs(root.expanded ? 140 : 0)
+                }
+
+                NumberAnimation {
+                    duration: Theme.barMs(220)
+                    easing.type: Easing.OutCubic
+                }
+
             }
 
         }
 
     }
+    ]
 
-    // ---------------- building blocks ----------------
-    // Album art in an m3 shape. `clip` can't do this: Qt clips to the bounding
-    // rectangle, so a radius on the clipping Rectangle never reaches the image
-    // inside it and the corners come out square. Masking the image against a
-    // rounded rectangle is what actually gives the artwork its shape
     component RoundedArt: Item {
         id: art
 
@@ -2680,7 +2361,7 @@ Item {
 
             // let a new title be readable before it starts moving
             PauseAnimation {
-                duration: Theme.ms(900)
+                duration: Theme.barMs(900)
             }
 
             ScriptAction {
@@ -2696,7 +2377,7 @@ Item {
             property: "currentX"
             from: 0
             to: -mq.segmentWidth
-            duration: Theme.ms(Math.max(4000, mq.segmentWidth * 35))
+            duration: Theme.barMs(Math.max(4000, mq.segmentWidth * 35))
             loops: Animation.Infinite
             running: false
         }
@@ -2755,7 +2436,7 @@ Item {
             enabled: !entryAnim.running && !loopAnim.running
 
             NumberAnimation {
-                duration: Theme.durLong
+                duration: Theme.barDurLong
                 easing.type: Easing.Bezier
                 easing.bezierCurve: root.easeStandard
             }
@@ -2803,7 +2484,7 @@ Item {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Theme.durQuick
+                    duration: Theme.barDurQuick
                     easing.type: Theme.easeStandard
                 }
 
@@ -2823,7 +2504,7 @@ Item {
 
         Behavior on scale {
             NumberAnimation {
-                duration: Theme.durQuick
+                duration: Theme.barDurQuick
                 easing.type: Theme.easeStandard
             }
 
@@ -2831,14 +2512,14 @@ Item {
 
         Behavior on color {
             ColorAnimation {
-                duration: Theme.durShort
+                duration: Theme.barDurShort
             }
 
         }
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Theme.durQuick
+                duration: Theme.barDurQuick
             }
 
         }
@@ -2896,7 +2577,7 @@ Item {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Theme.durQuick
+                    duration: Theme.barDurQuick
                     easing.type: Theme.easeStandard
                 }
 
@@ -2915,7 +2596,7 @@ Item {
 
         Behavior on scale {
             NumberAnimation {
-                duration: Theme.durQuick
+                duration: Theme.barDurQuick
                 easing.type: Theme.easeStandard
             }
 
@@ -2925,7 +2606,7 @@ Item {
 
     Behavior on implicitWidth {
         NumberAnimation {
-            duration: Theme.durLong
+            duration: Theme.barDurLong
             easing.type: Easing.Bezier
             easing.bezierCurve: root.easeEmphasized
         }
@@ -2934,7 +2615,7 @@ Item {
 
     Behavior on implicitHeight {
         NumberAnimation {
-            duration: Theme.durLong
+            duration: Theme.barDurLong
             easing.type: Easing.Bezier
             easing.bezierCurve: root.easeEmphasized
         }

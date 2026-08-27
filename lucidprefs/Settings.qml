@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls.Basic
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 import qs
 
 // LucidShell's settings app. A real toplevel window rather than a layer-shell
@@ -34,8 +35,8 @@ FloatingWindow {
     property string page: "general"
     readonly property var pages: [
         { "key": "general", "label": "General", "title": "General", "blurb": "Shape, colour and motion across the whole shell" },
-        { "key": "bar", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open" },
-        { "key": "dock", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves" },
+        { "key": "bar", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
+        { "key": "dock", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
         { "key": "about", "label": "About", "title": "About", "blurb": "LucidShell" }
     ]
 
@@ -65,6 +66,24 @@ FloatingWindow {
     visible: false
     title: "Lucid Settings"
     color: Theme.bg
+
+    // Every other surface in the shell frosts what is behind it through
+    // BackgroundEffect. This window only ever set a translucent colour, so at
+    // any Glass level above Off it went see-through with nothing blurring
+    // behind it - transparent rather than frosted, which is why it read as
+    // "the blur is missing here" next to the bar and dock.
+    //
+    // The window is a real toplevel rather than a layer surface, but the
+    // effect attaches to any window, so the same protocol serves both.
+    BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && win.visible) ? settingsBlurRegion : null
+
+    Region {
+        id: settingsBlurRegion
+
+        // the whole window - the compositor rounds this window's corners
+        // itself and clips the blur to the same shape
+        item: surface
+    }
     // sized once rather than clamped against the screen every frame - it is a
     // real window now, so the compositor is what decides where it goes and
     // how big it is allowed to be
@@ -434,6 +453,31 @@ FloatingWindow {
 
                 // close affordance - clicking away and Esc both work too, but a
                 // visible control is what people reach for first
+                // Whether this page's surface is shown at all. It lives in the
+                // header rather than in a card of its own because it governs
+                // everything below it - a page whose switch is off has nothing
+                // for its settings to apply to, so the switch belongs above
+                // them, not in the list among them.
+                M3Switch {
+                    id: surfaceToggle
+
+                    readonly property string key: {
+                        var p = win.pages.find((x) => {
+                            return x.key === win.page;
+                        });
+                        return (p && p.toggle) ? p.toggle : "";
+                    }
+
+                    anchors.right: closeBtn.left
+                    anchors.rightMargin: 18
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: surfaceToggle.key !== ""
+                    checked: surfaceToggle.key !== "" ? Prefs[surfaceToggle.key] : false
+                    onToggled: (v) => {
+                        return Prefs.setSurface(surfaceToggle.key, v);
+                    }
+                }
+
                 Rectangle {
                     id: closeBtn
 

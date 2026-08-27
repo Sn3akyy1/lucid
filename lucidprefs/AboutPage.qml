@@ -89,7 +89,7 @@ Column {
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: "LucidShell"
+                        text: "Lucid"
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(30)

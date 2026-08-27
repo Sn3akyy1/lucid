@@ -16,16 +16,139 @@ PanelWindow {
     // one-pixel-tall reveal strip along the screen edge for the pointer to
     // find. The launcher being open, a drag in progress, or a context menu
     // all count as "in use" and hold it up regardless of hover.
-    readonly property bool dockBusy: dockWindow.menuOpen || dockWindow.dragging || dockWindow.morphing
-    readonly property bool dockRevealed: !Prefs.dockAutoHide || dockWindow.dockBusy || revealArea.containsMouse || shellHover.hovered
+    // `morphing` is a 400ms pulse raised on every menu change, including the
+    // close. Counting it as "busy" holds the dock revealed for that whole
+    // pulse - so a launcher closing over a hidden dock brought the dock to its
+    // resting position, icons and all, and only then let it hide. That is the
+    // dock appearing before it fades away. It still counts while the dock was
+    // genuinely on screen, where holding it up through the morph is the point.
+    readonly property bool dockBusy: dockWindow.menuOpen || dockWindow.dragging || (dockWindow.morphing && !dockWindow.launcherFromHidden)
+    // `shellHover` is deliberately ignored while the dock is sliding away.
+    //
+    // The dock hides by travelling downward, and on the way it passes
+    // underneath wherever the pointer happens to be. shellHover then fires
+    // because *the dock moved*, not because the user went anywhere - so the
+    // dock summoned itself back, missed the pointer again on the way up, and
+    // oscillated. Widening the reveal strip closed the one band where that
+    // could happen at the default margin, but the mechanism is general: any
+    // time the dock crosses a stationary pointer it can retrigger itself.
+    //
+    // Latching it out for the length of the slide fixes the whole class at
+    // once. The stationary strip is untouched, so the dock can always still be
+    // called back deliberately - it just can no longer call itself.
+    property bool slidingAway: false
+
+    // Whether the pointer is what is holding the dock up. Kept separate from
+    // dockRevealed because opening the launcher marks the dock busy, which
+    // makes dockRevealed true instantly - so by the time anything reacts to
+    // menuOpen, dockRevealed can no longer tell you whether the dock had been
+    // on screen a moment earlier. This can, because it never looks at the menu.
+    readonly property bool heldByPointer: revealArea.containsMouse || (shellHover.hovered && !dockWindow.slidingAway)
+
+    readonly property bool dockRevealed: !Prefs.dockAutoHide || dockWindow.dockBusy || dockWindow.heldByPointer
+
+    // Summoned while the dock was tucked away: with no dock on screen there is
+    // nothing for the panel to float above, so it docks to the screen edge
+    // instead - flush, squared off - the way a notch does. Latched when the
+    // launcher opens and held for as long as it stays open, so hovering while
+    // it is up cannot change the shape underneath it.
+    property bool launcherFromHidden: false
+
+    readonly property bool renderAsNotch: Prefs.dockNotch || dockWindow.launcherFromHidden
+    readonly property int placementMargin: dockWindow.launcherFromHidden ? 0 : Prefs.effectiveDockBottomMargin
     readonly property real hiddenOffset: dockWindow.dockRevealed ? 0 : -(shell.implicitHeight + Prefs.dockBottomMargin - 1)
+
+    onDockRevealedChanged: {
+        if (dockWindow.dockRevealed) {
+            dockWindow.slidingAway = false;
+            slideAwayTimer.stop();
+        } else {
+            dockWindow.slidingAway = true;
+            slideAwayTimer.restart();
+        }
+    }
+
+    Timer {
+        id: slideAwayTimer
+
+        // matches the slide itself, below - once the dock has finished
+        // travelling it is no longer moving under anything, so hover means
+        // what it says again
+        interval: Theme.durLong
+        onTriggered: dockWindow.slidingAway = false
+    }
 
     function pulseMorph() {
         morphing = true;
         morphTimer.restart();
     }
 
-    onMenuOpenChanged: pulseMorph()
+    // Opening the launcher from a hidden dock used to grow the panel upward
+    // from a bottom edge that was still off-screen: the dock was only just
+    // starting its 400ms rise, so the panel came up visibly truncated - the
+    // notched look - with the icon row cutting across it until the slide
+    // finished. Opening while the dock was already up never showed it,
+    // because there was no rise left to wait for.
+    //
+    // The placement is snapped rather than animated for that one transition.
+    // The morph is already animating the panel's size; a second animation
+    // moving it at the same time is what produced the clipped frames. Only
+    // opening snaps - closing still slides away normally.
+    property bool snapPlacement: false
+    // How long launcherFace's fade waits before it starts. Opening, the
+    // content should hold off until the panel has begun growing; closing, it
+    // must not wait for anything.
+    //
+    // Set from the handler below rather than bound to menuOpen directly.
+    // A binding here re-evaluates *after* launcherFace's own opacity binding
+    // does (that one is declared first), so by the time the Behavior starts
+    // its animation this still holds the previous state's delay - closing
+    // sat out a 150ms pause meant for opening, and the content was still
+    // fading long after the panel had finished shrinking.
+    property int contentFadeDelay: 0
+
+    onMenuOpenChanged: {
+        dockWindow.contentFadeDelay = dockWindow.menuOpen ? 150 : 0;
+        if (dockWindow.menuOpen) {
+            dockWindow.launcherFromHidden = Prefs.dockAutoHide && !dockWindow.heldByPointer;
+            dockWindow.snapPlacement = true;
+            snapClear.restart();
+        } else if (dockWindow.launcherFromHidden) {
+            // Deliberately not conditioned on the pointer. While the launcher
+            // is open `shell` *is* the launcher, so shellHover reports true
+            // merely because the pointer is over the panel it is about to
+            // dismiss - which is not the same as the pointer being on the
+            // dock, and reading it that way let the icon row back in.
+            // Closing with nothing holding the dock up: it is about to slide
+            // away, so the icon row stays suppressed until it has gone.
+            // Letting it back first showed the dock returning for a moment
+            // before it left - the same flash as opening, in reverse.
+            hideAfterClose.restart();
+        } else {
+            // The pointer is on the dock, so it is staying: hand it back its
+            // normal island shape and let the icons fade in as they always did.
+            dockWindow.launcherFromHidden = false;
+        }
+        dockWindow.pulseMorph();
+    }
+
+    Timer {
+        id: hideAfterClose
+
+        // matches the slide, so the flag only clears once the dock is off
+        // screen and the icon row coming back cannot be seen
+        interval: Theme.durLong
+        onTriggered: dockWindow.launcherFromHidden = false
+    }
+
+    Timer {
+        id: snapClear
+
+        // one frame is enough: with the Behavior bypassed the margin lands
+        // immediately, so this only has to outlast that single assignment
+        interval: 16
+        onTriggered: dockWindow.snapPlacement = false
+    }
     // resizes while the menu is open need the same smooth morph as opening
     onMenuWidthChanged: if (menuOpen)
         pulseMorph()
@@ -35,7 +158,10 @@ PanelWindow {
     Timer {
         id: morphTimer
 
-        interval: 400
+        // Theme.ms, not a bare 400: the Behaviors this flag gates are
+        // Theme.ms(400) long, so an unscaled interval dropped `morphing` -
+        // and with it shell's clip - while the panel was still shrinking.
+        interval: Theme.ms(400)
         onTriggered: dockWindow.morphing = false
     }
     property string fallbackWallpaper: Qt.resolvedUrl("./fallback.jpg").toString().replace("file://", "")
@@ -101,7 +227,16 @@ PanelWindow {
     readonly property int slotPitch: dockWindow.iconSlot + dockWindow.iconGap
     property var clientsData: []
     property real dragHeadroom: 220
-    property real maxDockWidth: 800
+    // The window spans the screen and never changes size. It was pinned at 800,
+    // which clipped the dock's ends once the icons or spacing were turned up;
+    // sizing it to the dock instead fixed the clipping but resized the Wayland
+    // surface on every frame of the stretch animation, which was far worse.
+    //
+    // A surface this wide costs nothing here - it is transparent, and input is
+    // limited to the dock and its reveal strip by the mask below, exactly as
+    // the bar's own full-width surface is. Nothing has to be recomputed when
+    // apps come and go, so the stretch is free to animate on its own.
+    readonly property real maxDockWidth: dockWindow.screen ? dockWindow.screen.width : 1920
     property var iconCache: ({})
     property var execCache: ({})
     property var nameCache: ({})
@@ -435,8 +570,10 @@ PanelWindow {
     function pinRunningApp(cls) {
         pinLookup.pendingClass = cls;
         pinLookup.command = ["sh", "-c",
-            "f=$(grep -li \"StartupWMClass=" + cls + "\" /usr/share/applications/*.desktop 2>/dev/null | head -n1); " +
-            "[ -z \"$f\" ] && f=\"/usr/share/applications/" + cls + ".desktop\"; " +
+            "dirs=\"$HOME/.local/share/applications /usr/share/applications /var/lib/snapd/desktop/applications /var/lib/flatpak/exports/share/applications\"; " +
+            "f=''; " +
+            "for d in $dirs; do m=$(grep -lis \"StartupWMClass=" + cls + "\" \"$d\"/*.desktop 2>/dev/null | head -n1); [ -n \"$m\" ] && f=\"$m\" && break; done; " +
+            "if [ -z \"$f\" ]; then for d in $dirs; do [ -f \"$d/" + cls + ".desktop\" ] && f=\"$d/" + cls + ".desktop\" && break; done; fi; " +
             "if [ -f \"$f\" ]; then grep '^Exec=' \"$f\" | head -n1 | cut -d= -f2- | sed 's/ %[a-zA-Z]//g'; fi"];
         pinLookup.running = true;
     }
@@ -620,7 +757,7 @@ PanelWindow {
         }
     }
     margins.bottom: 0
-    exclusiveZone: Prefs.dockAutoHide ? 0 : (shell.implicitHeight + Prefs.effectiveDockBottomMargin)
+    exclusiveZone: (!Prefs.dockEnabled || Prefs.dockAutoHide) ? 0 : (shell.implicitHeight + Prefs.effectiveDockBottomMargin)
     WlrLayershell.keyboardFocus: dockWindow.menuOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     WlrLayershell.layer: dockWindow.menuOpen ? WlrLayer.Overlay : WlrLayer.Top
     color: "transparent"
@@ -795,10 +932,26 @@ HyprlandFocusGrab {
     MouseArea {
         id: revealArea
 
-        anchors.left: parent.left
-        anchors.right: parent.right
+        // Kept to the dock's own span rather than the window's, which is now
+        // the whole screen - bumping the far corner of the display should not
+        // summon the dock.
+        x: shell.x
+        width: shell.width
         anchors.bottom: parent.bottom
-        height: 3
+        // While the dock is up it sits its bottom margin above the screen
+        // edge, which used to leave a band between this strip and the dock
+        // that neither of them covered - 17px at the default margin. A pointer
+        // resting there held nothing up, so the dock slid down, passed under
+        // the pointer on its way, picked up shellHover, came back up, and
+        // oscillated.
+        //
+        // Growing the strip to meet the dock's underside closes that band.
+        // It cannot oscillate in turn: the strip only grows once the dock is
+        // already revealed, and a pointer inside the grown strip keeps it
+        // revealed, so the state is self-consistent rather than self-cancelling.
+        // While hidden it stays a thin edge trigger, so the dock is not
+        // summoned by a pointer merely passing near the bottom of the screen.
+        height: dockWindow.dockRevealed ? dockWindow.placementMargin + 3 : 3
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
         enabled: Prefs.dockAutoHide
@@ -1233,8 +1386,10 @@ HyprlandFocusGrab {
         function lookupClass(cls) {
             iconLookup.pendingClass = cls;
             iconLookup.command = ["sh", "-c",
-                "f=$(grep -li \"StartupWMClass=" + cls + "\" /usr/share/applications/*.desktop 2>/dev/null | head -n1); " +
-                "[ -z \"$f\" ] && f=\"/usr/share/applications/" + cls + ".desktop\"; " +
+                "dirs=\"$HOME/.local/share/applications /usr/share/applications /var/lib/snapd/desktop/applications /var/lib/flatpak/exports/share/applications\"; " +
+                "f=''; " +
+                "for d in $dirs; do m=$(grep -lis \"StartupWMClass=" + cls + "\" \"$d\"/*.desktop 2>/dev/null | head -n1); [ -n \"$m\" ] && f=\"$m\" && break; done; " +
+                "if [ -z \"$f\" ]; then for d in $dirs; do [ -f \"$d/" + cls + ".desktop\" ] && f=\"$d/" + cls + ".desktop\" && break; done; fi; " +
                 "if [ -f \"$f\" ]; then grep '^Icon=' \"$f\" | head -n1 | cut -d= -f2; grep '^Exec=' \"$f\" | head -n1 | cut -d= -f2- | sed 's/ %[a-zA-Z]//g'; grep '^Name=' \"$f\" | head -n1 | cut -d= -f2; else echo '" + cls + "'; echo ''; echo '" + cls + "'; fi"];
             iconLookup.running = true;
         }
@@ -1281,9 +1436,14 @@ HyprlandFocusGrab {
         property bool dropActive: false
         property bool shellReady: false
 
+        // Switching the dock off hides the dock, not the window: this same
+        // Rectangle is what morphs into the launcher, and the launcher opens
+        // from a keybind rather than from the dock. Hiding the PanelWindow
+        // instead would take Super+Super down with it.
+        visible: Prefs.dockEnabled || dockWindow.menuOpen
         clip: dockWindow.menuOpen || dockWindow.morphing
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: dockWindow.hiddenOffset + Prefs.effectiveDockBottomMargin
+        anchors.bottomMargin: dockWindow.hiddenOffset + dockWindow.placementMargin
         anchors.horizontalCenter: parent.horizontalCenter
         implicitWidth: row.implicitWidth + 20
         // 16px of chrome around the icon slot - the original 62 around a 46
@@ -1299,8 +1459,8 @@ HyprlandFocusGrab {
         // draws only what stands on it.
         color: Theme.bg
         // bottom corners square off against the screen edge in notch mode
-        bottomLeftRadius: Prefs.dockNotch ? 0 : shell.radius
-        bottomRightRadius: Prefs.dockNotch ? 0 : shell.radius
+        bottomLeftRadius: dockWindow.renderAsNotch ? 0 : shell.radius
+        bottomRightRadius: dockWindow.renderAsNotch ? 0 : shell.radius
         Component.onCompleted: readyTimer.start()
 
         // keeps the dock up while the pointer is anywhere on it, so it does
@@ -1310,6 +1470,8 @@ HyprlandFocusGrab {
         }
 
         Behavior on anchors.bottomMargin {
+            enabled: !dockWindow.snapPlacement
+
             NumberAnimation {
                 duration: Theme.durLong
                 easing.type: Theme.easeStandard
@@ -1318,11 +1480,15 @@ HyprlandFocusGrab {
         }
 
 
+        // Only for the morph. Outside it the width comes from the icon row,
+        // which animates itself over 220ms when an app appears or leaves - so a
+        // Behavior here would be a second animation chasing the first, and the
+        // dock lagged visibly behind its own contents while stretching.
         Behavior on width {
-            enabled: shell.shellReady
+            enabled: shell.shellReady && dockWindow.morphing
             NumberAnimation {
-                duration: Theme.ms(dockWindow.morphing ? 400 : 60)
-                easing.type: dockWindow.morphing ? Easing.BezierSpline : Easing.OutCubic
+                duration: Theme.ms(400)
+                easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.4, 0, 0.2, 1, 1, 1]
             }
         }
@@ -1391,10 +1557,18 @@ HyprlandFocusGrab {
             height: shell.implicitHeight
             anchors.left: parent.left
             anchors.bottom: parent.bottom
-            opacity: dockWindow.menuOpen ? 0 : 1
+            opacity: (dockWindow.menuOpen || dockWindow.launcherFromHidden) ? 0 : 1
             visible: opacity > 0
 
             Behavior on opacity {
+                // Cross-fading the icon row out makes sense when the dock was
+                // already on screen - you watch it become the launcher. Summoned
+                // from hidden there is nothing to cross-fade *from*: the row
+                // would have to appear first just to fade away again, which read
+                // as the dock coming back before the launcher arrived. In that
+                // case it is simply never drawn.
+                enabled: !dockWindow.launcherFromHidden
+
                 NumberAnimation {
                     duration: Theme.ms(200)
                 }
@@ -1535,9 +1709,9 @@ HyprlandFocusGrab {
                                     return 0;
                                 var dist = Math.abs(slot.index - dragArea.hoveredSlot);
                                 if (dist === 1)
-                                    return 0.06;
+                                    return 0.06 * Prefs.dockHoverEffect;
                                 if (dist === 2)
-                                    return 0.025;
+                                    return 0.025 * Prefs.dockHoverEffect;
                                 return 0;
                             }
 
@@ -1784,9 +1958,9 @@ HyprlandFocusGrab {
                                     return 0;
                                 var dist = Math.abs(runSlot.index - runningArea.hoveredSlot);
                                 if (dist === 1)
-                                    return 0.06;
+                                    return 0.06 * Prefs.dockHoverEffect;
                                 if (dist === 2)
-                                    return 0.025;
+                                    return 0.025 * Prefs.dockHoverEffect;
                                 return 0;
                             }
 
@@ -1955,7 +2129,7 @@ HyprlandFocusGrab {
             Behavior on opacity {
                 SequentialAnimation {
                     PauseAnimation {
-                        duration: Theme.ms(dockWindow.menuOpen ? 150 : 0)
+                        duration: Theme.ms(dockWindow.contentFadeDelay)
                     }
 
                     NumberAnimation {
@@ -2025,6 +2199,31 @@ HyprlandFocusGrab {
     // note on bar in shell.qml.
     // same reasoning as the bar's in shell.qml - shellReady already marks the
     // point where this window has settled, so the blur region rides on it
+    // ---- notched corners ----
+    // Only a notched dock has an edge to blend into; an island floats clear of
+    // it. Drawn beside the dock rather than inside it so the two never overlap
+    // - see DockFlare for why that matters once Glass is on.
+    Repeater {
+        model: dockWindow.renderAsNotch ? 2 : 0
+
+        DockFlare {
+            required property int index
+
+            // not `right` - that is a FINAL property on Item and shadowing
+            // it fails the whole config load, with only "Cannot override FINAL
+            // property" to go on
+            readonly property bool isRight: index === 1
+
+            size: Prefs.dockNotchFlare
+            mirrored: isRight
+            x: isRight ? shell.x + shell.width : shell.x - width
+            y: shell.y + shell.height - height
+            z: shell.z
+            visible: dockWindow.renderAsNotch && shell.visible
+        }
+
+    }
+
     BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && shell.shellReady) ? dockBlurRegion : null
 
     Region {
@@ -2042,3 +2241,4 @@ HyprlandFocusGrab {
     }
 
 }
+

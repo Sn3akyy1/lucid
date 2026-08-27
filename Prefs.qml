@@ -51,6 +51,11 @@ Singleton {
     // so the rows animate to it instead of jumping, which a plain derived
     // value cannot do.
     readonly property int effectiveDockBottomMargin: root.dockNotch ? 0 : root.dockBottomMargin
+    // Whether the bar has anything left to show. With every module switched
+    // off it is an empty strip, so turning it on or off changes nothing you
+    // can see - which is what the settings app greys the bar switch on.
+    readonly property bool anyBarModuleEnabled: root.showWorkspaces || root.showMedia || root.showTray || root.showClock || root.showNotifications || root.showSystem
+    readonly property var barModuleKeys: ["showWorkspaces", "showMedia", "showTray", "showClock", "showNotifications", "showSystem"]
 
     // ---------------- General ----------------
     property alias barStyle: s.barStyle
@@ -63,18 +68,18 @@ Singleton {
     property alias wallpaperFolder: s.wallpaperFolder
 
     // ---------------- Bar ----------------
+    property alias barEnabled: s.barEnabled
     property alias barPopupMode: s.barPopupMode
     property alias barPopupGap: s.barPopupGap
     property alias barHeight: s.barHeight
     property alias barTopMargin: s.barTopMargin
     property alias barSideMargin: s.barSideMargin
     property alias barSpacing: s.barSpacing
+    property alias barHoverGrow: s.barHoverGrow
     property alias showWorkspaces: s.showWorkspaces
     property alias showMedia: s.showMedia
     property alias showTray: s.showTray
     property alias showClock: s.showClock
-    property alias showBluetooth: s.showBluetooth
-    property alias showNetwork: s.showNetwork
     property alias showNotifications: s.showNotifications
     property alias showSystem: s.showSystem
     property alias clock24h: s.clock24h
@@ -83,10 +88,15 @@ Singleton {
     property alias toastTimeout: s.toastTimeout
 
     // ---------------- Dock ----------------
+    property alias dockEnabled: s.dockEnabled
     property alias dockIconSize: s.dockIconSize
     property alias dockSpacing: s.dockSpacing
     property alias dockBottomMargin: s.dockBottomMargin
     property alias dockMagnify: s.dockMagnify
+    property alias dockHoverEffect: s.dockHoverEffect
+    property alias barMotionScale: s.barMotionScale
+    property alias barNotchFlare: s.barNotchFlare
+    property alias dockNotchFlare: s.dockNotchFlare
     property alias dockAutoHide: s.dockAutoHide
     property alias dockShowIndicators: s.dockShowIndicators
     property alias dockShowTooltips: s.dockShowTooltips
@@ -117,28 +127,33 @@ Singleton {
         "fontFamily": "Google Sans",
         "fontScale": 1,
         "wallpaperFolder": "",
+        "barEnabled": true,
         "barPopupMode": false,
         "barPopupGap": 10,
         "barHeight": 35,
         "barTopMargin": 22,
         "barSideMargin": 17,
         "barSpacing": 8,
+        "barHoverGrow": 3,
         "showWorkspaces": true,
         "showMedia": true,
         "showTray": true,
         "showClock": true,
-        "showBluetooth": true,
-        "showNetwork": true,
         "showNotifications": true,
         "showSystem": true,
         "clock24h": false,
         "clockShowDate": true,
         "doNotDisturb": false,
         "toastTimeout": 5,
+        "dockEnabled": true,
         "dockIconSize": 46,
         "dockSpacing": 10,
         "dockBottomMargin": 20,
         "dockMagnify": true,
+        "dockHoverEffect": 1,
+        "barMotionScale": 1.35,
+        "barNotchFlare": 14,
+        "dockNotchFlare": 14,
         "dockAutoHide": false,
         "dockShowIndicators": true,
         "dockShowTooltips": true,
@@ -184,6 +199,42 @@ Singleton {
     // way the reset buttons ask for their dialog
     signal fontPickerRequested()
 
+    // Switching every module off leaves an empty strip, so the bar switch
+    // follows it down rather than sitting on claiming to be on. Turning it
+    // back on is then the way to get the modules back - see setSurface().
+    onAnyBarModuleEnabledChanged: {
+        if (!root.anyBarModuleEnabled && root.barEnabled)
+            root.barEnabled = false;
+
+    }
+
+    // Written out one alias at a time rather than through set(): a
+    // bracket-notation write to a JsonAdapter property is accepted and then
+    // silently dropped, and set() writes `s[key]`. Assigning the singleton's
+    // own alias is what actually lands.
+    function setAllBarModules(v) {
+        root.showWorkspaces = v;
+        root.showMedia = v;
+        root.showTray = v;
+        root.showClock = v;
+        root.showNotifications = v;
+        root.showSystem = v;
+    }
+
+    // What the header switch calls. Turning the bar on while every module is
+    // off would otherwise show an empty strip and immediately switch itself
+    // back off, so the modules come back with it.
+    function setSurface(key, v) {
+        if (key === "barEnabled") {
+            if (v && !root.anyBarModuleEnabled)
+                root.setAllBarModules(true);
+
+            root.barEnabled = v;
+        } else if (key === "dockEnabled") {
+            root.dockEnabled = v;
+        }
+    }
+
     function askReset(title, body, action) {
         root.resetConfirmRequested(title, body, "Reset", action);
     }
@@ -212,12 +263,28 @@ Singleton {
             s[key] = value;
     }
 
+    Timer {
+        id: writeDebounce
+
+        interval: 120
+        repeat: false
+        onTriggered: prefsFile.writeAdapter()
+    }
+
     FileView {
+        id: prefsFile
+
         path: Quickshell.env("HOME") + "/.config/quickshell/lucidprefs/prefs.json"
         blockLoading: true
         watchChanges: true
         onFileChanged: reload()
-        onAdapterUpdated: writeAdapter()
+        // One flush per burst of writes, never one per key. Writing several
+        // keys in a pass - which "show the bar again" does, turning all eight
+        // modules back on - put a write and its sync-back in flight per key,
+        // and a snapshot taken partway through landed last and assigned itself
+        // over everything set after it. The symptom was prefs.json ending up
+        // with a partial mix and the UI disagreeing with the file.
+        onAdapterUpdated: writeDebounce.restart()
         onLoaded: root.loaded = true
         // a missing or unreadable file is still an answer - the defaults are
         // what the shell will run on, so let it map rather than stranding it
@@ -240,18 +307,26 @@ Singleton {
             // the launcher's >wallpaper strip already scans
             property string wallpaperFolder: ""
             // ---- bar ----
+            property bool barEnabled: true
             property bool barPopupMode: false
             property int barPopupGap: 10
             property int barHeight: 35
             property int barTopMargin: 22
             property int barSideMargin: 17
             property int barSpacing: 8
+            // How far a pill swells out of itself under the pointer, in
+            // logical px, as its "this opens" affordance. Capped at half the
+            // module spacing at use, so two neighbours can never touch. This
+            // is the only hover feedback the pills have now that the tint is
+            // gone, so it carries a little more than it used to.
+            property int barHoverGrow: 3
+            // How far each notched module's upper corners sweep out into the
+            // top of the screen. Only means anything for a notched bar - an
+            // island floats clear of the edge, with nothing to blend into.
             property bool showWorkspaces: true
             property bool showMedia: true
             property bool showTray: true
             property bool showClock: true
-            property bool showBluetooth: true
-            property bool showNetwork: true
             property bool showNotifications: true
             property bool showSystem: true
             property bool clock24h: false
@@ -259,10 +334,21 @@ Singleton {
             property bool doNotDisturb: false
             property int toastTimeout: 5
             // ---- dock ----
+            property bool dockEnabled: true
             property int dockIconSize: 46
             property int dockSpacing: 10
             property int dockBottomMargin: 20
             property bool dockMagnify: true
+            // How far an icon swells and lifts under the pointer, as a
+            // multiple of the shipped amount. 0 removes the motion entirely
+            // without disabling hover itself - the highlight still tracks.
+            property real dockHoverEffect: 1
+            // How far the dock's lower corners sweep out into the screen edge.
+            // Only means anything for a notched dock - an island floats clear
+            // of the edge, so it has nothing to blend into.
+            property real barMotionScale: 1.35
+            property int barNotchFlare: 14
+            property int dockNotchFlare: 14
             property bool dockAutoHide: false
             property bool dockShowIndicators: true
             property bool dockShowTooltips: true

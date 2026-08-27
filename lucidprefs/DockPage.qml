@@ -13,7 +13,6 @@ Column {
         width: parent.width
     }
 
-    // ---------------- size ----------------
     SettingCard {
         title: "SIZE & PLACEMENT"
 
@@ -86,6 +85,49 @@ Column {
     // ---------------- behaviour ----------------
     SettingCard {
         title: "BEHAVIOUR"
+
+        SettingRow {
+            title: "Edge blend"
+            resetKey: "dockNotchFlare"
+            description: "How far the dock's lower corners sweep out into the bottom of the screen, so it reads as carved out of the edge rather than resting on it."
+            enabled: Prefs.dockNotch
+            disabledReason: "Islands float clear of the screen edge, so there is nothing to blend into - switch the dock to Notches on the General page."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: Prefs.dockNotch
+                from: 0
+                to: 40
+                stepSize: 1
+                suffix: " px"
+                value: Prefs.dockNotchFlare
+                onMoved: (v) => {
+                    return Prefs.dockNotchFlare = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Hover strength"
+            resetKey: "dockHoverEffect"
+            description: "How far an icon swells and lifts under the pointer. At 0 the icons stay put - hovering still highlights them, it just stops moving them."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 0
+                to: 2
+                stepSize: 0.1
+                suffix: "x"
+                value: Prefs.dockHoverEffect
+                onMoved: (v) => {
+                    return Prefs.dockHoverEffect = v;
+                }
+            }
+
+        }
 
         SettingRow {
             title: "Magnify on hover"

@@ -5,13 +5,19 @@ import Quickshell.Hyprland._FocusGrab
 import Quickshell.Io
 import qs
 
-Item {
+// The clock, calendar and reminders.
+//
+// The expanded face used to be a 300x480 portrait column - hero card, weather,
+// calendar, stacked. It reads as a landscape panel now: the hero, the weather
+// and an "up next" card hold a left rail while the calendar takes the room it
+// always wanted on the right. Nothing about the cards themselves changed, they
+// sit side by side instead of end to end.
+//
+// The pill shell around it comes from BarPill; the reminder toast rides
+// BarPill's alt surface, which is the same third state this module always had.
+BarPill {
     id: root
 
-    property var hostWindow: null
-    property bool expanded: false
-    readonly property int cornerRadius: root.popupMode ? Math.min(20, Math.round(shell.height / 2)) : ((root.expanded || root.showingNotify) ? 20 : Prefs.barPillRadius)
-    readonly property int compactHeight: Prefs.barHeight
     readonly property string hourFormat: Prefs.clock24h ? "HH" : "hh AP"
     readonly property string minuteFormat: Prefs.clock24h ? "mm" : "mm AP"
     readonly property string fullTimeFormat: Prefs.clock24h ? "H:mm:ss" : "h:mm:ss AP"
@@ -59,36 +65,51 @@ Item {
         }
         return false;
     }
-    readonly property int compactWidth: compactRow.implicitWidth + root.horizontalPadding * 2
-    // ---------------- settings-driven behaviour ----------------
-    readonly property bool shown: Prefs.showClock
-    readonly property bool popupMode: Prefs.barPopupMode
-    readonly property bool compactHovered: compactFace.hovered
-    readonly property int openWidth: showingNotify ? 270 : (expanded ? 300 : compactWidth)
-    readonly property int openHeight: showingNotify ? 78 : (expanded ? 480 : root.compactHeight)
-    readonly property int topRadius: Prefs.barNotch && !root.popupMode ? 0 : root.cornerRadius
-    readonly property int pillTopRadius: Prefs.barNotch ? 0 : Prefs.barPillRadius
-    property string popupAlign: "left"
-    readonly property real popupX: {
-        if (!root.popupMode)
-            return 0;
 
-        if (root.popupAlign === "right")
-            return root.compactWidth - root.popupWidth;
+    // ---------------- up next ----------------
+    // The nearest reminder still ahead of now, for the left rail's third card.
+    // Re-evaluates on the same tick the rest of the panel does.
+    readonly property var nextReminder: {
+        root.clockTick;
+        const now = new Date();
+        let best = null;
+        let bestAt = null;
+        for (const r of remindersAdapter.items) {
+            const at = new Date(r.year, r.month, r.day, r.hour, r.minute, 0, 0);
+            if (at < now)
+                continue;
 
-        if (root.popupAlign === "center")
-            return (root.compactWidth - root.popupWidth) / 2;
-
-        return 0;
+            if (bestAt === null || at < bestAt) {
+                best = r;
+                bestAt = at;
+            }
+        }
+        return best ? {
+            "item": best,
+            "at": bestAt
+        } : null;
     }
-    readonly property bool popupExpanding: root.popupMode && (root.expanded || root.showingNotify)
-    readonly property bool popupOpen: root.shown && root.popupMode && shell.y > 0.5
-    readonly property int barRadius: root.popupMode ? Prefs.barPillRadius : root.cornerRadius
-    readonly property int barTopRadius: root.popupMode ? root.pillTopRadius : root.topRadius
-    property bool popupIsNotify: false
-    readonly property int popupWidth: root.popupIsNotify ? 270 : 300
-    readonly property int popupHeight: root.popupIsNotify ? 78 : 480
-    readonly property Item popupItem: shell
+
+    // "in 20 minutes", "tomorrow", "in 3 days" - a relative distance rather
+    // than a second timestamp next to the one already shown.
+    function untilText(at) {
+        if (!at)
+            return "";
+
+        const mins = Math.round((at - new Date()) / 60000);
+        if (mins < 1)
+            return "now";
+
+        if (mins < 60)
+            return "in " + mins + " min";
+
+        const hrs = Math.round(mins / 60);
+        if (hrs < 24)
+            return "in " + hrs + (hrs === 1 ? " hour" : " hours");
+
+        const days = Math.round(hrs / 24);
+        return days === 1 ? "tomorrow" : "in " + days + " days";
+    }
 
     function weatherIconCategory(code, night) {
         if (code === 0)
@@ -379,14 +400,29 @@ Item {
         root.transitionToMonth(newYear, newMonth, dir);
     }
 
-    onShowingNotifyChanged: {
-        if (root.showingNotify)
-            root.popupIsNotify = true;
+    // ---------------- pill shell configuration ----------------
+    shown: Prefs.showClock
+    compactWidth: compactRow.implicitWidth + root.horizontalPadding * 2
+    // landscape: the calendar sets the height, the rail fills it
+    panelWidth: Math.min(620, root.screenW - 34)
+    panelHeight: Math.min(root.maxPanelHeight, expandedRow.implicitHeight + 32)
+    // the reminder toast, on BarPill's alt surface
+    altOpen: root.showingNotify
+    altWidth: 270
+    altHeight: 78
+    expandedRadius: 20
 
-    }
+    readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
+    readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
+    readonly property int maxPanelHeight: Math.min(560, Math.max(240, root.screenH - 40))
+
+    // The two calendar grids are filled imperatively rather than bound (they
+    // cross-slide, so each has to hold its own month while the other animates
+    // in), which left them empty until the first expand fired. Seeding them at
+    // construction means the panel is correct however it is first shown.
+    Component.onCompleted: root.resyncCalendarGrids()
     onExpandedChanged: {
         if (expanded) {
-            root.popupIsNotify = false;
             const now = new Date();
             root.viewYear = now.getFullYear();
             root.viewMonth = now.getMonth();
@@ -396,15 +432,6 @@ Item {
             root.editingDate = null;
         }
     }
-    Component.onCompleted: root.popupIsNotify = root.showingNotify
-    implicitWidth: !root.shown ? 0 : (root.popupMode ? root.compactWidth : root.openWidth)
-    implicitHeight: !root.shown ? 0 : (root.popupMode ? root.compactHeight : root.openHeight)
-    opacity: root.shown ? 1 : 0
-    scale: root.shown ? 1 : 0.82
-    transformOrigin: Item.Center
-    visible: root.opacity > 0.01
-    clip: !root.popupMode
-    z: root.popupOpen ? 100 : 1
 
     FileView {
         id: remindersFile
@@ -421,12 +448,6 @@ Item {
             property var items: []
         }
 
-    }
-
-    HyprlandFocusGrab {
-        active: root.expanded
-        windows: root.hostWindow ? [root.hostWindow] : []
-        onCleared: root.expanded = false
     }
 
     Timer {
@@ -473,165 +494,186 @@ Item {
 
     }
 
-    Rectangle {
-        id: pillRect
+    compactContent: [
+        Row {
+            id: compactRow
 
-        visible: root.popupMode
-        width: root.compactWidth
-        height: root.compactHeight
-        color: Theme.bg
-        clip: true
-        radius: Prefs.barPillRadius
-        topLeftRadius: root.pillTopRadius
-        topRightRadius: root.pillTopRadius
-
-        Behavior on color {
-            enabled: root.hostWindow ? root.hostWindow.laidOut : false
-
-            ColorAnimation {
-                duration: Theme.ms(260)
-                easing.type: Easing.OutCubic
-            }
-
-        }
-
-    }
-
-    Rectangle {
-        id: shell
-
-        width: root.popupMode ? ((root.expanded || root.showingNotify) ? root.popupWidth : root.compactWidth) : root.width
-        height: root.popupMode ? ((root.expanded || root.showingNotify) ? root.popupHeight : root.compactHeight) : root.height
-        x: root.popupMode && (root.expanded || root.showingNotify) ? root.popupX : 0
-        y: root.popupMode && (root.expanded || root.showingNotify) ? root.compactHeight + Prefs.barPopupGap : 0
-        visible: !root.popupMode || shell.y > 0.5
-        color: Theme.bg
-        radius: (root.expanded || root.showingNotify) ? 20 : Prefs.barPillRadius
-        topLeftRadius: root.topRadius
-        topRightRadius: root.topRadius
-        clip: true
-
-        // COMPACT FACE
-        Item {
-            id: compactFace
-
-            property bool hovered: false
-
-            parent: root.popupMode ? pillRect : shell
-            width: root.compactWidth
-            height: root.compactHeight
-            anchors.left: parent.left
-            anchors.top: parent.top
-            opacity: root.popupMode || !(root.expanded || root.showingNotify) ? 1 : 0
-            scale: root.popupMode || !(root.expanded || root.showingNotify) ? 1 : 0.82
-            visible: opacity > 0.01
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onEntered: compactFace.hovered = true
-                onExited: compactFace.hovered = false
-                onClicked: root.expanded = true
-            }
+            anchors.centerIn: parent
+            spacing: 8
 
             Row {
-                id: compactRow
-
-                anchors.centerIn: parent
-                spacing: 8
-
-                Row {
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 1
-
-                    Text {
-                        id: clockHourText
-
-                        text: new Date().toLocaleTimeString(Qt.locale(), root.hourFormat).replace(/\s*[AP]M/i, "")
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        font.pixelSize: Theme.fs(13)
-                    }
-
-                    Text {
-                        id: clockColonText
-
-                        text: ":"
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        font.pixelSize: Theme.fs(13)
-
-                        SequentialAnimation on opacity {
-                            loops: Animation.Infinite
-                            running: true
-
-                            NumberAnimation {
-                                from: 1
-                                to: 0.45
-                                duration: Theme.ms(500)
-                                easing.type: Easing.InOutQuad
-                            }
-
-                            NumberAnimation {
-                                from: 0.45
-                                to: 1
-                                duration: Theme.ms(500)
-                                easing.type: Easing.InOutQuad
-                            }
-
-                        }
-
-                    }
-
-                    Text {
-                        id: clockMinuteText
-
-                        text: new Date().toLocaleTimeString(Qt.locale(), root.minuteFormat)
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        font.pixelSize: Theme.fs(13)
-                    }
-
-                }
-
-                Rectangle {
-                    width: 3
-                    height: 3
-                    radius: 1.5
-                    color: Theme.subtextDim
-                    anchors.verticalCenter: parent.verticalCenter
-                }
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 1
 
                 Text {
-                    id: dateText
+                    id: clockHourText
 
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: new Date().toLocaleDateString(Qt.locale(), "ddd d")
-                    visible: Prefs.clockShowDate
-                    color: Theme.subtextDim
+                    text: new Date().toLocaleTimeString(Qt.locale(), root.hourFormat).replace(/\s*[AP]M/i, "")
+                    color: Theme.text
                     font.family: Theme.fontFamily
                     font.bold: true
                     font.pixelSize: Theme.fs(13)
                 }
 
-                Item {
-                    id: bellIcon
+                Text {
+                    id: clockColonText
 
-                    visible: root.hasUpcomingReminder
-                    width: 12
-                    height: 12
+                    text: ":"
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                    font.pixelSize: Theme.fs(13)
+
+                    SequentialAnimation on opacity {
+                        loops: Animation.Infinite
+                        running: true
+
+                        NumberAnimation {
+                            from: 1
+                            to: 0.45
+                            duration: Theme.barMs(500)
+                            easing.type: Easing.InOutQuad
+                        }
+
+                        NumberAnimation {
+                            from: 0.45
+                            to: 1
+                            duration: Theme.barMs(500)
+                            easing.type: Easing.InOutQuad
+                        }
+
+                    }
+
+                }
+
+                Text {
+                    id: clockMinuteText
+
+                    text: new Date().toLocaleTimeString(Qt.locale(), root.minuteFormat)
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                    font.pixelSize: Theme.fs(13)
+                }
+
+            }
+
+            Rectangle {
+                // follows the date it separates - on its own it was a dot
+                // hanging off the end of the time with nothing after it
+                visible: Prefs.clockShowDate
+                width: 3
+                height: 3
+                radius: 1.5
+                color: Theme.subtextDim
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text {
+                id: dateText
+
+                anchors.verticalCenter: parent.verticalCenter
+                text: new Date().toLocaleDateString(Qt.locale(), "ddd d")
+                visible: Prefs.clockShowDate
+                color: Theme.subtextDim
+                font.family: Theme.fontFamily
+                font.bold: true
+                font.pixelSize: Theme.fs(13)
+            }
+
+            Item {
+                id: bellIcon
+
+                visible: root.hasUpcomingReminder
+                width: 12
+                height: 12
+                anchors.verticalCenter: parent.verticalCenter
+
+                Shape {
+                    id: bellShape
+
+                    width: 24
+                    height: 24
+                    scale: 12 / 24
+                    anchors.centerIn: parent
+                    preferredRendererType: Shape.CurveRenderer
+
+                    ShapePath {
+                        fillColor: Theme.accent
+                        strokeWidth: 0
+
+                        PathSvg {
+                            path: "M8 10A4 6 0 0 1 16 10L18 17H6Z M12 17.7a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Z"
+                        }
+
+                    }
+
+                    SequentialAnimation on rotation {
+                        loops: Animation.Infinite
+                        running: root.hasUpcomingReminder
+
+                        NumberAnimation {
+                            from: 0
+                            to: -12
+                            duration: Theme.barMs(100)
+                            easing.type: Easing.OutQuad
+                        }
+
+                        NumberAnimation {
+                            from: -12
+                            to: 12
+                            duration: Theme.barMs(160)
+                            easing.type: Easing.InOutQuad
+                        }
+
+                        NumberAnimation {
+                            from: 12
+                            to: -8
+                            duration: Theme.barMs(140)
+                            easing.type: Easing.InOutQuad
+                        }
+
+                        NumberAnimation {
+                            from: -8
+                            to: 0
+                            duration: Theme.barMs(100)
+                            easing.type: Easing.OutQuad
+                        }
+
+                        PauseAnimation {
+                            duration: Theme.barMs(2600)
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+    ]
+
+    altContent: [
+        Column {
+            anchors.fill: parent
+            anchors.margins: 10
+            spacing: 6
+
+            Row {
+                width: parent.width
+                spacing: 8
+
+                Item {
+                    id: ringingBellBox
+
+                    width: 22
+                    height: 22
                     anchors.verticalCenter: parent.verticalCenter
 
                     Shape {
-                        id: bellShape
-
                         width: 24
                         height: 24
-                        scale: 12 / 24
+                        scale: 20 / 24
                         anchors.centerIn: parent
                         preferredRendererType: Shape.CurveRenderer
 
@@ -647,38 +689,45 @@ Item {
 
                         SequentialAnimation on rotation {
                             loops: Animation.Infinite
-                            running: root.hasUpcomingReminder
+                            running: root.showingNotify
 
                             NumberAnimation {
                                 from: 0
-                                to: -12
-                                duration: Theme.ms(100)
-                                easing.type: Easing.OutQuad
-                            }
-
-                            NumberAnimation {
-                                from: -12
-                                to: 12
-                                duration: Theme.ms(160)
+                                to: -16
+                                duration: Theme.barMs(110)
                                 easing.type: Easing.InOutQuad
                             }
 
                             NumberAnimation {
-                                from: 12
-                                to: -8
-                                duration: Theme.ms(140)
+                                from: -16
+                                to: 16
+                                duration: Theme.barMs(180)
                                 easing.type: Easing.InOutQuad
                             }
 
                             NumberAnimation {
-                                from: -8
+                                from: 16
+                                to: -14
+                                duration: Theme.barMs(170)
+                                easing.type: Easing.InOutQuad
+                            }
+
+                            NumberAnimation {
+                                from: -14
+                                to: 10
+                                duration: Theme.barMs(150)
+                                easing.type: Easing.InOutQuad
+                            }
+
+                            NumberAnimation {
+                                from: 10
                                 to: 0
-                                duration: Theme.ms(100)
+                                duration: Theme.barMs(120)
                                 easing.type: Easing.OutQuad
                             }
 
                             PauseAnimation {
-                                duration: Theme.ms(2600)
+                                duration: Theme.barMs(500)
                             }
 
                         }
@@ -687,467 +736,167 @@ Item {
 
                 }
 
+                Text {
+                    width: parent.width - 22 - 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.firingReminder ? root.firingReminder.name : ""
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                    font.pixelSize: Theme.fontTitle
+                    elide: Text.ElideRight
+                }
+
             }
 
-            Rectangle {
-                anchors.fill: parent
-                radius: parent.parent.radius
-                topLeftRadius: parent.parent.topLeftRadius
-                topRightRadius: parent.parent.topRightRadius
-                color: Theme.text
-                opacity: compactFace.hovered ? 0.08 : 0
+            Item {
+                width: parent.width
+                height: 26
 
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.ms(150)
-                        easing.type: Easing.OutCubic
+                Text {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.fmtReminderTime(root.firingReminder)
+                    color: Theme.subtext
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontLabel
+                }
+
+                Row {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 6
+
+                    Rectangle {
+                        id: snoozeBtn
+
+                        height: 24
+                        width: snoozeLabel.implicitWidth + 16
+                        radius: 999
+                        color: snoozeArea.containsMouse ? Theme.withBlur(Theme.bgHigh) : Theme.withBlur(Theme.cContainer)
+                        scale: snoozeArea.pressed ? 0.92 : 1
+
+                        Text {
+                            id: snoozeLabel
+
+                            anchors.centerIn: parent
+                            text: "Snooze"
+                            color: Theme.text
+                            font.family: Theme.fontFamily
+                            font.bold: true
+                            font.pixelSize: Theme.fontLabel
+                        }
+
+                        MouseArea {
+                            id: snoozeArea
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (root.firingReminder)
+                                    root.snoozeReminder(root.firingReminder.id, 10);
+
+                            }
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: Theme.barDurQuick
+                                easing.type: Theme.easeStandard
+                            }
+
+                        }
+
                     }
 
-                }
+                    Rectangle {
+                        id: closeBtn
 
-            }
+                        height: 24
+                        width: closeLabel.implicitWidth + 16
+                        radius: 999
+                        color: closeArea.containsMouse ? Theme.accentHover : Theme.accent
+                        scale: closeArea.pressed ? 0.92 : 1
 
-            Behavior on width {
-                NumberAnimation {
-                    duration: Theme.ms(380)
-                    easing.type: Easing.OutCubic
-                }
+                        Text {
+                            id: closeLabel
 
-            }
+                            anchors.centerIn: parent
+                            text: "Close"
+                            color: Theme.onAccent
+                            font.family: Theme.fontFamily
+                            font.bold: true
+                            font.pixelSize: Theme.fontLabel
+                        }
 
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.ms(220)
-                    easing.type: Easing.OutCubic
-                }
+                        MouseArea {
+                            id: closeArea
 
-            }
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (root.firingReminder)
+                                    root.dismissReminder(root.firingReminder.id);
 
-            Behavior on scale {
-                NumberAnimation {
-                    duration: Theme.ms(220)
-                    easing.type: Easing.OutCubic
+                            }
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: Theme.barDurQuick
+                                easing.type: Theme.easeStandard
+                            }
+
+                        }
+
+                    }
+
                 }
 
             }
 
         }
+    ]
 
-        // EXPANDED FACE
+    panelContent: [
         Item {
-            id: expandedFace
-
             anchors.fill: parent
-            opacity: (root.expanded && !root.showingNotify) ? 1 : 0
-            scale: root.expanded ? 1 : 1.04
-            visible: opacity > 0.01
 
-            Column {
+            Row {
+                id: expandedRow
+
                 anchors.fill: parent
                 anchors.margins: 16
                 spacing: 14
 
-                Rectangle {
-                    id: heroCard
+                // left rail - hero, weather, and what is coming up
+                Column {
+                    id: leftRail
 
-                    width: parent.width
-                    height: 96
-                    radius: Theme.radiusXl
-                    color: Theme.withBlur(Theme.accentContainer)
-                    scale: heroArea.containsMouse ? 1.015 : 1
+                    width: 250
+                    spacing: 14
 
                     Rectangle {
-                        anchors.fill: parent
-                        radius: parent.radius
-                        color: Theme.text
-                        opacity: heroArea.containsMouse ? Theme.stateHover : 0
+                        id: heroCard
 
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Theme.durQuick
-                                easing.type: Theme.easeStandard
-                            }
-
-                        }
-
-                    }
-
-                    MouseArea {
-                        id: heroArea
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                    }
-
-                    Column {
-                        anchors.centerIn: parent
-                        spacing: 2
-
-                        Text {
-                            id: expandedTimeText
-
-                            width: heroCard.width
-                            text: new Date().toLocaleTimeString(Qt.locale(), root.fullTimeFormat)
-                            color: Theme.text
-                            font.family: Theme.fontFamily
-                            font.bold: true
-                            font.pixelSize: Theme.fs(30)
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-
-                        Text {
-                            id: expandedDateText
-
-                            width: heroCard.width
-                            text: new Date().toLocaleDateString(Qt.locale(), "dddd, MMMM d")
-                            color: Theme.accent
-                            font.family: Theme.fontFamily
-                            font.bold: true
-                            font.pixelSize: Theme.fontBody
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-
-                    }
-
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: Theme.durShort
-                            easing.type: Theme.easeEmphasized
-                            easing.overshoot: Theme.emphasizedOvershoot * 0.4
-                        }
-
-                    }
-
-                }
-
-                Rectangle {
-                    id: weatherCard
-
-                    width: parent.width
-                    height: 76
-                    radius: Theme.radiusLg
-                    color: Theme.withBlur(Theme.cContainer)
-                    scale: weatherArea.containsMouse ? 1.015 : 1
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: parent.radius
-                        color: Theme.text
-                        opacity: weatherArea.containsMouse ? Theme.stateHover : 0
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Theme.durQuick
-                                easing.type: Theme.easeStandard
-                            }
-
-                        }
-
-                    }
-
-                    MouseArea {
-                        id: weatherArea
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                    }
-
-                    Row {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: 14
-                        spacing: 12
+                        width: parent.width
+                        height: 96
+                        radius: Theme.radiusXl
+                        color: Theme.withBlur(Theme.accentContainer)
+                        scale: heroArea.containsMouse ? 1.015 : 1
 
                         Rectangle {
-                            width: 40
-                            height: 40
-                            radius: 999
-                            color: Theme.accentContainer
-                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.fill: parent
+                            radius: parent.radius
+                            color: Theme.text
+                            opacity: heroArea.containsMouse ? Theme.stateHover : 0
 
-                            Item {
-                                id: weatherIconBox
-
-                                readonly property string category: root.weatherIconCategory(root.weatherCode, root.isNight)
-                                readonly property bool isPartly: category === "partly" || category === "partly-night"
-
-                                width: 22
-                                height: 22
-                                anchors.centerIn: parent
-
-                                WeatherGlyph {
-                                    svgPath: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z M12 6L12 4 M12 18L12 20 M18 12L20 12 M6 12L4 12 M16.24 7.76L17.66 6.34 M7.76 7.76L6.34 6.34 M16.24 16.24L17.66 17.66 M7.76 16.24L6.34 17.66"
-                                    anchors.horizontalCenterOffset: weatherIconBox.isPartly ? 4 : 0
-                                    anchors.verticalCenterOffset: weatherIconBox.isPartly ? -4 : 0
-                                    scale: (weatherIconBox.category === "sunny" ? 22 : 13) / 24
-                                    opacity: (weatherIconBox.category === "sunny" || weatherIconBox.category === "partly") ? 1 : 0
-
-                                    RotationAnimation on rotation {
-                                        from: 0
-                                        to: 360
-                                        duration: Theme.ms(14000)
-                                        loops: Animation.Infinite
-                                        running: weatherIconBox.category === "sunny" || weatherIconBox.category === "partly"
-                                    }
-
-                                }
-
-                                WeatherGlyph {
-                                    svgPath: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z M17.5 5.5v3M16 7h3 M20.5 10.5v2M19.5 11.5h2 M6 6.5v2M5 7.5h2"
-                                    anchors.horizontalCenterOffset: weatherIconBox.isPartly ? 4 : 0
-                                    anchors.verticalCenterOffset: weatherIconBox.isPartly ? -4 : 0
-                                    scale: (weatherIconBox.category === "clear-night" ? 22 : 13) / 24
-                                    opacity: (weatherIconBox.category === "clear-night" || weatherIconBox.category === "partly-night") ? 1 : 0
-
-                                    RotationAnimation on rotation {
-                                        from: 0
-                                        to: 360
-                                        duration: Theme.ms(40000)
-                                        loops: Animation.Infinite
-                                        running: weatherIconBox.category === "clear-night" || weatherIconBox.category === "partly-night"
-                                    }
-
-                                }
-
-                                WeatherGlyph {
-                                    svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"
-                                    anchors.horizontalCenterOffset: weatherIconBox.isPartly ? -3 : 0
-                                    anchors.verticalCenterOffset: weatherIconBox.isPartly ? 3 : 0
-                                    scale: (weatherIconBox.category === "cloudy" ? 22 : 15) / 24
-                                    opacity: (weatherIconBox.category === "cloudy" || weatherIconBox.isPartly) ? 1 : 0
-                                }
-
-                                // cloud + rain
-                                WeatherGlyph {
-                                    id: rainGlyph
-
-                                    svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z M8 20L6.5 23.5 M12.5 20L11 23.5 M17 20L15.5 23.5"
-                                    scale: 22 / 24
-                                    opacity: weatherIconBox.category === "rain" ? 1 : 0
-
-                                    transform: Translate {
-
-                                        SequentialAnimation on y {
-                                            loops: Animation.Infinite
-                                            running: weatherIconBox.category === "rain"
-
-                                            NumberAnimation {
-                                                from: 0
-                                                to: 1.6
-                                                duration: Theme.ms(450)
-                                                easing.type: Easing.InQuad
-                                            }
-
-                                            NumberAnimation {
-                                                from: 1.6
-                                                to: 0
-                                                duration: Theme.ms(0)
-                                            }
-
-                                        }
-
-                                    }
-
-                                }
-
-                                // cloud + snow
-                                WeatherGlyph {
-                                    svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z M8 20.4v2.6M6.7 21.7h2.6 M12.5 20.4v2.6M11.2 21.7h2.6 M17 20.4v2.6M15.7 21.7h2.6"
-                                    scale: 22 / 24
-                                    opacity: weatherIconBox.category === "snow" ? 1 : 0
-
-                                    transform: Translate {
-
-                                        SequentialAnimation on x {
-                                            loops: Animation.Infinite
-                                            running: weatherIconBox.category === "snow"
-
-                                            NumberAnimation {
-                                                from: 0
-                                                to: 1.4
-                                                duration: Theme.ms(900)
-                                                easing.type: Easing.InOutSine
-                                            }
-
-                                            NumberAnimation {
-                                                from: 1.4
-                                                to: -1.4
-                                                duration: Theme.ms(1800)
-                                                easing.type: Easing.InOutSine
-                                            }
-
-                                            NumberAnimation {
-                                                from: -1.4
-                                                to: 0
-                                                duration: Theme.ms(900)
-                                                easing.type: Easing.InOutSine
-                                            }
-
-                                        }
-
-                                    }
-
-                                }
-
-                                // cloud + fog
-                                WeatherGlyph {
-                                    svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z M6 20H11M13 20H19 M5.5 21.7H10.5M12.5 21.7H19 M6 23.4H11M13 23.4H18.5"
-                                    scale: 22 / 24
-                                    opacity: weatherIconBox.category === "fog" ? 1 : 0
-
-                                    transform: Translate {
-
-                                        SequentialAnimation on x {
-                                            loops: Animation.Infinite
-                                            running: weatherIconBox.category === "fog"
-
-                                            NumberAnimation {
-                                                from: 0
-                                                to: 1.8
-                                                duration: Theme.ms(1800)
-                                                easing.type: Easing.InOutSine
-                                            }
-
-                                            NumberAnimation {
-                                                from: 1.8
-                                                to: -1.8
-                                                duration: Theme.ms(3600)
-                                                easing.type: Easing.InOutSine
-                                            }
-
-                                            NumberAnimation {
-                                                from: -1.8
-                                                to: 0
-                                                duration: Theme.ms(1800)
-                                                easing.type: Easing.InOutSine
-                                            }
-
-                                        }
-
-                                    }
-
-                                }
-
-                                // cloud + storm (rumbles periodically)
-                                WeatherGlyph {
-                                    svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z M13.5 19L11.2 21.8L13 21.8L10.5 24"
-                                    scale: 22 / 24
-                                    opacity: weatherIconBox.category === "storm" ? 1 : 0
-
-                                    SequentialAnimation on rotation {
-                                        loops: Animation.Infinite
-                                        running: weatherIconBox.category === "storm"
-
-                                        NumberAnimation {
-                                            from: 0
-                                            to: -4
-                                            duration: Theme.ms(80)
-                                            easing.type: Easing.OutQuad
-                                        }
-
-                                        NumberAnimation {
-                                            from: -4
-                                            to: 4
-                                            duration: Theme.ms(120)
-                                            easing.type: Easing.InOutQuad
-                                        }
-
-                                        NumberAnimation {
-                                            from: 4
-                                            to: 0
-                                            duration: Theme.ms(80)
-                                            easing.type: Easing.OutQuad
-                                        }
-
-                                        PauseAnimation {
-                                            duration: Theme.ms(2200)
-                                        }
-
-                                    }
-
-                                }
-
-                            }
-
-                        }
-
-                        Column {
-                            spacing: 2
-                            anchors.verticalCenter: parent.verticalCenter
-
-                            Text {
-                                text: root.temp + "°C"
-                                color: Theme.text
-                                font.family: Theme.fontFamily
-                                font.bold: true
-                                font.pixelSize: Theme.fontHeadline
-                            }
-
-                            Text {
-                                text: root.weatherDesc(root.weatherCode) + " • " + root.humidity + "% Hum"
-                                color: Theme.subtext
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontLabel
-                            }
-
-                            Text {
-                                text: "Feels like " + root.feelsLike + "°C"
-                                color: Theme.subtextDim
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontLabel
-                            }
-
-                        }
-
-                    }
-
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: Theme.durShort
-                            easing.type: Theme.easeEmphasized
-                            easing.overshoot: Theme.emphasizedOvershoot * 0.4
-                        }
-
-                    }
-
-                }
-
-                // calendar
-                Column {
-                    width: parent.width
-                    spacing: 10
-
-                    Item {
-                        width: parent.width
-                        height: 26
-
-                        NavButton {
-                            anchors.left: parent.left
-                            anchors.verticalCenter: parent.verticalCenter
-                            iconPath: "M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12Z"
-                            onClicked: root.goPrevMonth()
-                        }
-
-                        NavButton {
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            iconPath: "M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41Z"
-                            onClicked: root.goNextMonth()
-                        }
-
-                        Text {
-                            id: monthText
-
-                            anchors.centerIn: parent
-                            text: new Date(root.viewYear, root.viewMonth, 1).toLocaleDateString(Qt.locale(), "MMMM yyyy") + (root.isViewingCurrentMonth ? "  •  Today" : "")
-                            color: root.isViewingCurrentMonth ? Theme.accent : Theme.text
-                            font.family: Theme.fontFamily
-                            font.bold: true
-                            font.pixelSize: Theme.fontTitle
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Theme.durQuick
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Theme.barDurQuick
+                                    easing.type: Theme.easeStandard
                                 }
 
                             }
@@ -1155,55 +904,494 @@ Item {
                         }
 
                         MouseArea {
-                            anchors.fill: monthText
-                            enabled: !root.isViewingCurrentMonth
-                            hoverEnabled: enabled
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.goToday()
+                            id: heroArea
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                        }
+
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: 2
+
+                            Text {
+                                id: expandedTimeText
+
+                                width: heroCard.width
+                                text: new Date().toLocaleTimeString(Qt.locale(), root.fullTimeFormat)
+                                color: Theme.text
+                                font.family: Theme.fontFamily
+                                font.bold: true
+                                font.pixelSize: Theme.fs(30)
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                id: expandedDateText
+
+                                width: heroCard.width
+                                text: new Date().toLocaleDateString(Qt.locale(), "dddd, MMMM d")
+                                color: Theme.accent
+                                font.family: Theme.fontFamily
+                                font.bold: true
+                                font.pixelSize: Theme.fontBody
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: Theme.barDurShort
+                                easing.type: Theme.easeEmphasized
+                                easing.overshoot: Theme.emphasizedOvershoot * 0.4
+                            }
+
                         }
 
                     }
 
-                    // two grids ping-ponged so month changes slide instead
-                    // of popping — see root.transitionToMonth()
-                    Item {
-                        id: calViewport
+                    Rectangle {
+                        id: weatherCard
 
                         width: parent.width
-                        height: 212
-                        clip: true
+                        height: 76
+                        radius: Theme.radiusLg
+                        color: Theme.withBlur(Theme.cContainer)
+                        scale: weatherArea.containsMouse ? 1.015 : 1
 
-                        MonthGrid {
-                            id: calGridA
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: parent.radius
+                            color: Theme.text
+                            opacity: weatherArea.containsMouse ? Theme.stateHover : 0
 
-                            anchors.top: parent.top
-                            width: parent.width
-                            // filled in by resyncCalendarGrids(), not bound directly
-                            cells: []
-                            x: 0
-                            opacity: 1
-                            z: 1
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Theme.barDurQuick
+                                    easing.type: Theme.easeStandard
+                                }
+
+                            }
+
                         }
 
-                        MonthGrid {
-                            id: calGridB
+                        MouseArea {
+                            id: weatherArea
 
-                            anchors.top: parent.top
-                            width: parent.width
-                            cells: []
-                            x: parent.width
-                            opacity: 0
-                            z: 0
+                            anchors.fill: parent
+                            hoverEnabled: true
+                        }
+
+                        Row {
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.left: parent.left
+                            anchors.leftMargin: 14
+                            spacing: 12
+
+                            Rectangle {
+                                width: 40
+                                height: 40
+                                radius: 999
+                                color: Theme.accentContainer
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Item {
+                                    id: weatherIconBox
+
+                                    readonly property string category: root.weatherIconCategory(root.weatherCode, root.isNight)
+                                    readonly property bool isPartly: category === "partly" || category === "partly-night"
+
+                                    width: 22
+                                    height: 22
+                                    anchors.centerIn: parent
+
+                                    WeatherGlyph {
+                                        svgPath: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z M12 6L12 4 M12 18L12 20 M18 12L20 12 M6 12L4 12 M16.24 7.76L17.66 6.34 M7.76 7.76L6.34 6.34 M16.24 16.24L17.66 17.66 M7.76 16.24L6.34 17.66"
+                                        anchors.horizontalCenterOffset: weatherIconBox.isPartly ? 4 : 0
+                                        anchors.verticalCenterOffset: weatherIconBox.isPartly ? -4 : 0
+                                        scale: (weatherIconBox.category === "sunny" ? 22 : 13) / 24
+                                        opacity: (weatherIconBox.category === "sunny" || weatherIconBox.category === "partly") ? 1 : 0
+
+                                        RotationAnimation on rotation {
+                                            from: 0
+                                            to: 360
+                                            duration: Theme.barMs(14000)
+                                            loops: Animation.Infinite
+                                            running: weatherIconBox.category === "sunny" || weatherIconBox.category === "partly"
+                                        }
+
+                                    }
+
+                                    WeatherGlyph {
+                                        svgPath: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z M17.5 5.5v3M16 7h3 M20.5 10.5v2M19.5 11.5h2 M6 6.5v2M5 7.5h2"
+                                        anchors.horizontalCenterOffset: weatherIconBox.isPartly ? 4 : 0
+                                        anchors.verticalCenterOffset: weatherIconBox.isPartly ? -4 : 0
+                                        scale: (weatherIconBox.category === "clear-night" ? 22 : 13) / 24
+                                        opacity: (weatherIconBox.category === "clear-night" || weatherIconBox.category === "partly-night") ? 1 : 0
+
+                                        RotationAnimation on rotation {
+                                            from: 0
+                                            to: 360
+                                            duration: Theme.barMs(40000)
+                                            loops: Animation.Infinite
+                                            running: weatherIconBox.category === "clear-night" || weatherIconBox.category === "partly-night"
+                                        }
+
+                                    }
+
+                                    WeatherGlyph {
+                                        svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"
+                                        anchors.horizontalCenterOffset: weatherIconBox.isPartly ? -3 : 0
+                                        anchors.verticalCenterOffset: weatherIconBox.isPartly ? 3 : 0
+                                        scale: (weatherIconBox.category === "cloudy" ? 22 : 15) / 24
+                                        opacity: (weatherIconBox.category === "cloudy" || weatherIconBox.isPartly) ? 1 : 0
+                                    }
+
+                                    // cloud + rain
+                                    WeatherGlyph {
+                                        id: rainGlyph
+
+                                        svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z M8 20L6.5 23.5 M12.5 20L11 23.5 M17 20L15.5 23.5"
+                                        scale: 22 / 24
+                                        opacity: weatherIconBox.category === "rain" ? 1 : 0
+
+                                        transform: Translate {
+
+                                            SequentialAnimation on y {
+                                                loops: Animation.Infinite
+                                                running: weatherIconBox.category === "rain"
+
+                                                NumberAnimation {
+                                                    from: 0
+                                                    to: 1.6
+                                                    duration: Theme.barMs(450)
+                                                    easing.type: Easing.InQuad
+                                                }
+
+                                                NumberAnimation {
+                                                    from: 1.6
+                                                    to: 0
+                                                    duration: Theme.barMs(0)
+                                                }
+
+                                            }
+
+                                        }
+
+                                    }
+
+                                    // cloud + snow
+                                    WeatherGlyph {
+                                        svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z M8 20.4v2.6M6.7 21.7h2.6 M12.5 20.4v2.6M11.2 21.7h2.6 M17 20.4v2.6M15.7 21.7h2.6"
+                                        scale: 22 / 24
+                                        opacity: weatherIconBox.category === "snow" ? 1 : 0
+
+                                        transform: Translate {
+
+                                            SequentialAnimation on x {
+                                                loops: Animation.Infinite
+                                                running: weatherIconBox.category === "snow"
+
+                                                NumberAnimation {
+                                                    from: 0
+                                                    to: 1.4
+                                                    duration: Theme.barMs(900)
+                                                    easing.type: Easing.InOutSine
+                                                }
+
+                                                NumberAnimation {
+                                                    from: 1.4
+                                                    to: -1.4
+                                                    duration: Theme.barMs(1800)
+                                                    easing.type: Easing.InOutSine
+                                                }
+
+                                                NumberAnimation {
+                                                    from: -1.4
+                                                    to: 0
+                                                    duration: Theme.barMs(900)
+                                                    easing.type: Easing.InOutSine
+                                                }
+
+                                            }
+
+                                        }
+
+                                    }
+
+                                    // cloud + fog
+                                    WeatherGlyph {
+                                        svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z M6 20H11M13 20H19 M5.5 21.7H10.5M12.5 21.7H19 M6 23.4H11M13 23.4H18.5"
+                                        scale: 22 / 24
+                                        opacity: weatherIconBox.category === "fog" ? 1 : 0
+
+                                        transform: Translate {
+
+                                            SequentialAnimation on x {
+                                                loops: Animation.Infinite
+                                                running: weatherIconBox.category === "fog"
+
+                                                NumberAnimation {
+                                                    from: 0
+                                                    to: 1.8
+                                                    duration: Theme.barMs(1800)
+                                                    easing.type: Easing.InOutSine
+                                                }
+
+                                                NumberAnimation {
+                                                    from: 1.8
+                                                    to: -1.8
+                                                    duration: Theme.barMs(3600)
+                                                    easing.type: Easing.InOutSine
+                                                }
+
+                                                NumberAnimation {
+                                                    from: -1.8
+                                                    to: 0
+                                                    duration: Theme.barMs(1800)
+                                                    easing.type: Easing.InOutSine
+                                                }
+
+                                            }
+
+                                        }
+
+                                    }
+
+                                    // cloud + storm (rumbles periodically)
+                                    WeatherGlyph {
+                                        svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z M13.5 19L11.2 21.8L13 21.8L10.5 24"
+                                        scale: 22 / 24
+                                        opacity: weatherIconBox.category === "storm" ? 1 : 0
+
+                                        SequentialAnimation on rotation {
+                                            loops: Animation.Infinite
+                                            running: weatherIconBox.category === "storm"
+
+                                            NumberAnimation {
+                                                from: 0
+                                                to: -4
+                                                duration: Theme.barMs(80)
+                                                easing.type: Easing.OutQuad
+                                            }
+
+                                            NumberAnimation {
+                                                from: -4
+                                                to: 4
+                                                duration: Theme.barMs(120)
+                                                easing.type: Easing.InOutQuad
+                                            }
+
+                                            NumberAnimation {
+                                                from: 4
+                                                to: 0
+                                                duration: Theme.barMs(80)
+                                                easing.type: Easing.OutQuad
+                                            }
+
+                                            PauseAnimation {
+                                                duration: Theme.barMs(2200)
+                                            }
+
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                            Column {
+                                spacing: 2
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Text {
+                                    text: root.temp + "°C"
+                                    color: Theme.text
+                                    font.family: Theme.fontFamily
+                                    font.bold: true
+                                    font.pixelSize: Theme.fontHeadline
+                                }
+
+                                Text {
+                                    text: root.weatherDesc(root.weatherCode) + " • " + root.humidity + "% Hum"
+                                    color: Theme.subtext
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontLabel
+                                }
+
+                                Text {
+                                    text: "Feels like " + root.feelsLike + "°C"
+                                    color: Theme.subtextDim
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontLabel
+                                }
+
+                            }
+
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: Theme.barDurShort
+                                easing.type: Theme.easeEmphasized
+                                easing.overshoot: Theme.emphasizedOvershoot * 0.4
+                            }
+
+                        }
+
+                    }
+
+                    // UP NEXT - new here. The calendar could always show that a
+                    // day had a reminder on it, but nothing said which one was
+                    // actually next without opening the day.
+                    Rectangle {
+                        id: upNextCard
+
+                        width: parent.width
+                        height: 74
+                        radius: Theme.radiusLg
+                        color: Theme.withBlur(Theme.cContainer)
+
+                        Column {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 14
+                            spacing: 3
+
+                            Text {
+                                text: "UP NEXT"
+                                color: Theme.subtextDim
+                                font.family: Theme.fontFamily
+                                font.bold: true
+                                font.pixelSize: Theme.fs(9)
+                                font.letterSpacing: 1.2
+                            }
+
+                            Text {
+                                width: parent.width
+                                text: root.nextReminder ? root.nextReminder.item.name : "Nothing scheduled"
+                                color: root.nextReminder ? Theme.text : Theme.subtext
+                                font.family: Theme.fontFamily
+                                font.bold: true
+                                font.pixelSize: Theme.fs(13)
+                                elide: Text.ElideRight
+                            }
+
+                            Text {
+                                visible: root.nextReminder !== null
+                                width: parent.width
+                                text: root.nextReminder ? root.fmtReminderTime(root.nextReminder.item) + " \u00b7 " + root.untilText(root.nextReminder.at) : ""
+                                color: Theme.accent
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(11)
+                                elide: Text.ElideRight
+                            }
+
                         }
 
                     }
 
                 }
 
+                // the calendar, in the width it always wanted
+                Column {
+                    width: parent.width - leftRail.width - parent.spacing
+                    spacing: 10
+
+                    Column {
+                        width: parent.width
+                        spacing: 10
+
+                        Item {
+                            width: parent.width
+                            height: 26
+
+                            NavButton {
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                iconPath: "M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12Z"
+                                onClicked: root.goPrevMonth()
+                            }
+
+                            NavButton {
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                iconPath: "M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41Z"
+                                onClicked: root.goNextMonth()
+                            }
+
+                            Text {
+                                id: monthText
+
+                                anchors.centerIn: parent
+                                text: new Date(root.viewYear, root.viewMonth, 1).toLocaleDateString(Qt.locale(), "MMMM yyyy") + (root.isViewingCurrentMonth ? "  •  Today" : "")
+                                color: root.isViewingCurrentMonth ? Theme.accent : Theme.text
+                                font.family: Theme.fontFamily
+                                font.bold: true
+                                font.pixelSize: Theme.fontTitle
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Theme.barDurQuick
+                                    }
+
+                                }
+
+                            }
+
+                            MouseArea {
+                                anchors.fill: monthText
+                                enabled: !root.isViewingCurrentMonth
+                                hoverEnabled: enabled
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.goToday()
+                            }
+
+                        }
+
+                        // two grids ping-ponged so month changes slide instead
+                        // of popping — see root.transitionToMonth()
+                        Item {
+                            id: calViewport
+
+                            width: parent.width
+                            height: 212
+                            clip: true
+
+                            MonthGrid {
+                                id: calGridA
+
+                                anchors.top: parent.top
+                                width: parent.width
+                                // filled in by resyncCalendarGrids(), not bound directly
+                                cells: []
+                                x: 0
+                                opacity: 1
+                                z: 1
+                            }
+
+                            MonthGrid {
+                                id: calGridB
+
+                                anchors.top: parent.top
+                                width: parent.width
+                                cells: []
+                                x: parent.width
+                                opacity: 0
+                                z: 0
+                            }
+
+                        }
+
+                    }
+                }
+
             }
 
-            // REMINDER EDITOR
-            // opened by clicking a day cell, view/add/remove reminders here
             Item {
                 id: reminderOverlay
 
@@ -1426,7 +1614,7 @@ Item {
 
                                     Behavior on x {
                                         NumberAnimation {
-                                            duration: Theme.durQuick
+                                            duration: Theme.barDurQuick
                                             easing.type: Theme.easeStandard
                                         }
 
@@ -1451,7 +1639,7 @@ Item {
 
                                             Behavior on color {
                                                 ColorAnimation {
-                                                    duration: Theme.durQuick
+                                                    duration: Theme.barDurQuick
                                                 }
 
                                             }
@@ -1480,7 +1668,7 @@ Item {
 
                                             Behavior on color {
                                                 ColorAnimation {
-                                                    duration: Theme.durQuick
+                                                    duration: Theme.barDurQuick
                                                 }
 
                                             }
@@ -1537,7 +1725,7 @@ Item {
 
                                 Behavior on scale {
                                     NumberAnimation {
-                                        duration: Theme.durQuick
+                                        duration: Theme.barDurQuick
                                         easing.type: Theme.easeStandard
                                     }
 
@@ -1551,7 +1739,7 @@ Item {
 
                     Behavior on scale {
                         NumberAnimation {
-                            duration: Theme.durShort
+                            duration: Theme.barDurShort
                             easing.type: Theme.easeEmphasized
                             easing.overshoot: Theme.emphasizedOvershoot
                         }
@@ -1560,7 +1748,7 @@ Item {
 
                     Behavior on height {
                         NumberAnimation {
-                            duration: Theme.durShort
+                            duration: Theme.barDurShort
                             easing.type: Theme.easeStandard
                         }
 
@@ -1569,351 +1757,9 @@ Item {
                 }
 
             }
-
-            Behavior on opacity {
-                SequentialAnimation {
-                    PauseAnimation {
-                        duration: Theme.ms(root.expanded ? 140 : 0)
-                    }
-
-                    NumberAnimation {
-                        duration: Theme.ms(220)
-                        easing.type: Easing.OutCubic
-                    }
-
-                }
-
-            }
-
-            Behavior on scale {
-                SequentialAnimation {
-                    PauseAnimation {
-                        duration: Theme.ms(root.expanded ? 140 : 0)
-                    }
-
-                    NumberAnimation {
-                        duration: Theme.ms(220)
-                        easing.type: Easing.OutCubic
-                    }
-
-                }
-
-            }
-
         }
+    ]
 
-        // NOTIFICATION FACE
-        // takes over when a reminder comes due, offers snooze/close
-        Item {
-            id: notifyFace
-
-            anchors.fill: parent
-            opacity: root.showingNotify ? 1 : 0
-            scale: root.showingNotify ? 1 : 0.94
-            visible: opacity > 0.01
-
-            Column {
-                anchors.fill: parent
-                anchors.margins: 10
-                spacing: 6
-
-                Row {
-                    width: parent.width
-                    spacing: 8
-
-                    Item {
-                        id: ringingBellBox
-
-                        width: 22
-                        height: 22
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        Shape {
-                            width: 24
-                            height: 24
-                            scale: 20 / 24
-                            anchors.centerIn: parent
-                            preferredRendererType: Shape.CurveRenderer
-
-                            ShapePath {
-                                fillColor: Theme.accent
-                                strokeWidth: 0
-
-                                PathSvg {
-                                    path: "M8 10A4 6 0 0 1 16 10L18 17H6Z M12 17.7a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Z"
-                                }
-
-                            }
-
-                            SequentialAnimation on rotation {
-                                loops: Animation.Infinite
-                                running: root.showingNotify
-
-                                NumberAnimation {
-                                    from: 0
-                                    to: -16
-                                    duration: Theme.ms(110)
-                                    easing.type: Easing.InOutQuad
-                                }
-
-                                NumberAnimation {
-                                    from: -16
-                                    to: 16
-                                    duration: Theme.ms(180)
-                                    easing.type: Easing.InOutQuad
-                                }
-
-                                NumberAnimation {
-                                    from: 16
-                                    to: -14
-                                    duration: Theme.ms(170)
-                                    easing.type: Easing.InOutQuad
-                                }
-
-                                NumberAnimation {
-                                    from: -14
-                                    to: 10
-                                    duration: Theme.ms(150)
-                                    easing.type: Easing.InOutQuad
-                                }
-
-                                NumberAnimation {
-                                    from: 10
-                                    to: 0
-                                    duration: Theme.ms(120)
-                                    easing.type: Easing.OutQuad
-                                }
-
-                                PauseAnimation {
-                                    duration: Theme.ms(500)
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                    Text {
-                        width: parent.width - 22 - 8
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: root.firingReminder ? root.firingReminder.name : ""
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        font.pixelSize: Theme.fontTitle
-                        elide: Text.ElideRight
-                    }
-
-                }
-
-                Item {
-                    width: parent.width
-                    height: 26
-
-                    Text {
-                        anchors.left: parent.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: root.fmtReminderTime(root.firingReminder)
-                        color: Theme.subtext
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontLabel
-                    }
-
-                    Row {
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 6
-
-                        Rectangle {
-                            id: snoozeBtn
-
-                            height: 24
-                            width: snoozeLabel.implicitWidth + 16
-                            radius: 999
-                            color: snoozeArea.containsMouse ? Theme.withBlur(Theme.bgHigh) : Theme.withBlur(Theme.cContainer)
-                            scale: snoozeArea.pressed ? 0.92 : 1
-
-                            Text {
-                                id: snoozeLabel
-
-                                anchors.centerIn: parent
-                                text: "Snooze"
-                                color: Theme.text
-                                font.family: Theme.fontFamily
-                                font.bold: true
-                                font.pixelSize: Theme.fontLabel
-                            }
-
-                            MouseArea {
-                                id: snoozeArea
-
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    if (root.firingReminder)
-                                        root.snoozeReminder(root.firingReminder.id, 10);
-
-                                }
-                            }
-
-                            Behavior on scale {
-                                NumberAnimation {
-                                    duration: Theme.durQuick
-                                    easing.type: Theme.easeStandard
-                                }
-
-                            }
-
-                        }
-
-                        Rectangle {
-                            id: closeBtn
-
-                            height: 24
-                            width: closeLabel.implicitWidth + 16
-                            radius: 999
-                            color: closeArea.containsMouse ? Theme.accentHover : Theme.accent
-                            scale: closeArea.pressed ? 0.92 : 1
-
-                            Text {
-                                id: closeLabel
-
-                                anchors.centerIn: parent
-                                text: "Close"
-                                color: Theme.onAccent
-                                font.family: Theme.fontFamily
-                                font.bold: true
-                                font.pixelSize: Theme.fontLabel
-                            }
-
-                            MouseArea {
-                                id: closeArea
-
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    if (root.firingReminder)
-                                        root.dismissReminder(root.firingReminder.id);
-
-                                }
-                            }
-
-                            Behavior on scale {
-                                NumberAnimation {
-                                    duration: Theme.durQuick
-                                    easing.type: Theme.easeStandard
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.durMedium
-                    easing.type: Theme.easeStandard
-                }
-
-            }
-
-            Behavior on scale {
-                NumberAnimation {
-                    duration: Theme.durMedium
-                    easing.type: Theme.easeEmphasized
-                    easing.overshoot: Theme.emphasizedOvershoot
-                }
-
-            }
-
-        }
-
-        // popupExpanding rather than popupOpen: popupOpen now follows the
-        // very geometry these animations drive, so reading it here would
-        // have picked the exit duration for every enter. All four share one
-        // duration and curve so the panel expands as a single movement.
-        Behavior on x {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on y {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on width {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on height {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on radius {
-            NumberAnimation {
-                duration: Theme.ms(380)
-                easing.type: Easing.OutCubic
-            }
-
-        }
-
-    }
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Theme.ms(180)
-            easing.type: Easing.OutCubic
-        }
-
-    }
-
-    Behavior on scale {
-        NumberAnimation {
-            duration: Theme.ms(260)
-            // a little overshoot on the way in, so it reads as popping into
-            // place rather than inflating
-            easing.type: root.shown ? Easing.OutBack : Easing.InCubic
-        }
-
-    }
-    // the pop-up has to be allowed out of the root's bounds; in morph mode
-
-    // small reusable glyph, filled-path material symbols convention
     component SvgIcon: Item {
         id: iconRoot
 
@@ -1964,7 +1810,7 @@ Item {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: Theme.durQuick
+                    duration: Theme.barDurQuick
                     easing.type: Theme.easeStandard
                 }
 
@@ -1981,7 +1827,7 @@ Item {
 
             Behavior on scale {
                 NumberAnimation {
-                    duration: Theme.durQuick
+                    duration: Theme.barDurQuick
                     easing.type: Theme.easeStandard
                 }
 
@@ -2071,7 +1917,7 @@ Item {
 
                         Behavior on scale {
                             NumberAnimation {
-                                duration: Theme.durShort
+                                duration: Theme.barDurShort
                                 easing.type: Theme.easeEmphasized
                                 easing.overshoot: Theme.emphasizedOvershoot
                             }
@@ -2080,7 +1926,7 @@ Item {
 
                         Behavior on rotation {
                             NumberAnimation {
-                                duration: Theme.durShort
+                                duration: Theme.barDurShort
                                 easing.type: Theme.easeEmphasized
                                 easing.overshoot: Theme.emphasizedOvershoot
                             }
@@ -2123,7 +1969,7 @@ Item {
 
                             Behavior on scale {
                                 NumberAnimation {
-                                    duration: Theme.durShort
+                                    duration: Theme.barDurShort
                                     easing.type: Theme.easeEmphasized
                                     easing.overshoot: Theme.emphasizedOvershoot
                                 }
@@ -2134,21 +1980,21 @@ Item {
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Theme.durQuick
+                                duration: Theme.barDurQuick
                             }
 
                         }
 
                         Behavior on opacity {
                             NumberAnimation {
-                                duration: Theme.durQuick
+                                duration: Theme.barDurQuick
                             }
 
                         }
 
                         Behavior on scale {
                             NumberAnimation {
-                                duration: Theme.durQuick
+                                duration: Theme.barDurQuick
                                 easing.type: Theme.easeStandard
                             }
 
@@ -2179,7 +2025,7 @@ Item {
             enabled: !monthGrid.suppressMotion
 
             NumberAnimation {
-                duration: Theme.durMedium
+                duration: Theme.barDurMedium
                 easing.type: Theme.easeEmphasized
                 easing.overshoot: Theme.emphasizedOvershoot * 0.3
             }
@@ -2190,7 +2036,7 @@ Item {
             enabled: !monthGrid.suppressMotion
 
             NumberAnimation {
-                duration: Theme.durMedium
+                duration: Theme.barDurMedium
                 easing.type: Theme.easeStandard
             }
 
@@ -2224,7 +2070,7 @@ Item {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Theme.durMedium
+                duration: Theme.barDurMedium
                 easing.type: Theme.easeStandard
             }
 
@@ -2232,7 +2078,7 @@ Item {
 
         Behavior on scale {
             NumberAnimation {
-                duration: Theme.durMedium
+                duration: Theme.barDurMedium
                 easing.type: Theme.easeEmphasized
                 easing.overshoot: Theme.emphasizedOvershoot
             }
@@ -2241,7 +2087,7 @@ Item {
 
         Behavior on anchors.horizontalCenterOffset {
             NumberAnimation {
-                duration: Theme.durMedium
+                duration: Theme.barDurMedium
                 easing.type: Theme.easeStandard
             }
 
@@ -2249,28 +2095,11 @@ Item {
 
         Behavior on anchors.verticalCenterOffset {
             NumberAnimation {
-                duration: Theme.durMedium
+                duration: Theme.barDurMedium
                 easing.type: Theme.easeStandard
             }
 
         }
 
     }
-
-    Behavior on implicitWidth {
-        NumberAnimation {
-            duration: Theme.ms(380)
-            easing.type: Easing.OutCubic
-        }
-
-    }
-
-    Behavior on implicitHeight {
-        NumberAnimation {
-            duration: Theme.ms(380)
-            easing.type: Easing.OutCubic
-        }
-
-    }
-
 }

@@ -12,8 +12,6 @@ Column {
         { "key": "showMedia", "name": "Media", "desc": "Now-playing pill and player controls" },
         { "key": "showTray", "name": "System tray", "desc": "Status icons from running applications" },
         { "key": "showClock", "name": "Clock", "desc": "Time, date and the calendar panel" },
-        { "key": "showBluetooth", "name": "Bluetooth", "desc": "Adapter state and paired devices" },
-        { "key": "showNetwork", "name": "Network", "desc": "Wi-Fi, ethernet and throughput" },
         { "key": "showNotifications", "name": "Notifications", "desc": "Toasts and the notification list" },
         { "key": "showSystem", "name": "System", "desc": "Battery, volume, brightness and quick settings" }
     ]
@@ -24,7 +22,6 @@ Column {
         width: parent.width
     }
 
-    // ---------------- how modules open ----------------
     SettingCard {
         title: "OPENING BEHAVIOUR"
 
@@ -135,10 +132,53 @@ Column {
         }
 
         SettingRow {
+            title: "Edge blend"
+            resetKey: "barNotchFlare"
+            description: "How far a notched module's upper corners sweep out into the top of the screen. Only drawn where there is room for it - modules packed close together keep their square corners rather than leaving a spike of wallpaper between them."
+            enabled: Prefs.barNotch
+            disabledReason: "Islands float clear of the screen edge, so there is nothing to blend into - switch the bar to Notches on the General page."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: Prefs.barNotch
+                from: 0
+                to: 32
+                stepSize: 1
+                suffix: " px"
+                value: Prefs.barNotchFlare
+                onMoved: (v) => {
+                    return Prefs.barNotchFlare = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Animation speed"
+            resetKey: "barMotionScale"
+            description: "Scales every transition in the bar - hovers, pills growing and shrinking, modules appearing and leaving - on top of the shell-wide Animation speed on the General page. Above 1.00x the bar moves more slowly than the rest of the shell."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 0
+                to: 2.5
+                stepSize: 0.05
+                decimals: 2
+                suffix: "x"
+                value: Prefs.barMotionScale
+                onMoved: (v) => {
+                    return Prefs.barMotionScale = v;
+                }
+            }
+
+        }
+
+        SettingRow {
             title: "Module spacing"
             resetKey: "barSpacing"
             description: "The gap between neighbouring pills."
-            showDivider: false
             stacked: true
 
             M3Slider {
@@ -150,6 +190,27 @@ Column {
                 value: Prefs.barSpacing
                 onMoved: (v) => {
                     return Prefs.barSpacing = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Hover growth"
+            resetKey: "barHoverGrow"
+            description: "How far a pill swells under the pointer to show it opens. Capped at half the module spacing."
+            showDivider: false
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 0
+                to: 6
+                stepSize: 1
+                suffix: " px"
+                value: Prefs.barHoverGrow
+                onMoved: (v) => {
+                    return Prefs.barHoverGrow = v;
                 }
             }
 
@@ -172,10 +233,14 @@ Column {
 
                 title: modRow.modelData.name
                 description: modRow.modelData.desc
+                // nothing here can show while the bar itself is off
+                enabled: Prefs.barEnabled
+                disabledReason: "The bar is switched off, so this module has nothing to appear in."
                 showDivider: modRow.index < page.moduleList.length - 1
 
                 M3Switch {
                     checked: Prefs[modRow.modelData.key]
+                    enabled: Prefs.barEnabled
                     onToggled: (v) => {
                         return Prefs[modRow.modelData.key] = v;
                     }

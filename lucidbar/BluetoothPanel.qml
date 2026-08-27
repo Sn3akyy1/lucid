@@ -1,28 +1,21 @@
 import QtQuick
 import QtQuick.Shapes
-import Quickshell
 import Quickshell.Bluetooth
-import Quickshell.Hyprland._FocusGrab
 import qs
 
+// The Bluetooth control surface, as plain content with no pill of its own.
+// Was BluetoothWidget.qml, a bar module in its own right; now one of the views
+// the System panel morphs into. Its title and enable switch moved up into the
+// System panel's sub-view header, which is why the block that drew them here
+// is gone - everything else is the same logic and the same layout.
+//
+// The host sets `width` and `active` and reads `implicitHeight`.
 Item {
-    // ---------------- settings-driven behaviour ----------------
-
     id: root
 
-    property var hostWindow: null
-    property bool expanded: false
-    readonly property int cornerRadius: root.popupMode ? Math.min(20, Math.round(shell.height / 2)) : (root.expanded ? 20 : Prefs.barPillRadius)
+    property bool active: false
     property string expandedKey: ""
-    readonly property int horizontalPadding: 10
-    readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
-    readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
-    readonly property int compactWidth: compactRow.implicitWidth + root.horizontalPadding * 3
-    readonly property int compactHeight: Prefs.barHeight
-    readonly property bool panelOpen: root.expanded
-    readonly property int panelWidth: Math.min(320, root.screenW - 34)
-    readonly property int maxPanelHeight: Math.max(200, root.screenH - 40)
-    property bool showLabel: true
+
     readonly property var adapter: Bluetooth.defaultAdapter
     readonly property bool btEnabled: adapter ? adapter.enabled : false
     readonly property var deviceGroups: root.computeGroups()
@@ -32,6 +25,8 @@ Item {
     readonly property bool anyConnecting: (adapter && adapter.devices) ? adapter.devices.values.some((d) => {
         return d.state === BluetoothDeviceState.Connecting;
     }) : false
+    readonly property bool discovering: !!(root.adapter && root.adapter.discovering)
+
     readonly property string label: {
         if (!root.btEnabled)
             return "Off";
@@ -52,35 +47,6 @@ Item {
 
         return "Not connected";
     }
-    readonly property bool discovering: !!(root.adapter && root.adapter.discovering)
-    property bool panelTransitioning: false
-    readonly property bool shown: Prefs.showBluetooth
-    readonly property bool popupMode: Prefs.barPopupMode
-    readonly property bool compactHovered: compactFace.hovered
-    readonly property int openWidth: expanded ? root.panelWidth : root.compactWidth
-    readonly property int openHeight: expanded ? Math.min(root.maxPanelHeight, Math.max(120, listCol.implicitHeight + 150)) : root.compactHeight
-    readonly property int topRadius: Prefs.barNotch && !root.popupMode ? 0 : root.cornerRadius
-    readonly property int pillTopRadius: Prefs.barNotch ? 0 : Prefs.barPillRadius
-    property string popupAlign: "left"
-    readonly property real popupX: {
-        if (!root.popupMode)
-            return 0;
-
-        if (root.popupAlign === "right")
-            return root.compactWidth - root.popupWidth;
-
-        if (root.popupAlign === "center")
-            return (root.compactWidth - root.popupWidth) / 2;
-
-        return 0;
-    }
-    readonly property bool popupExpanding: root.popupMode && root.expanded
-    readonly property bool popupOpen: root.shown && root.popupMode && shell.y > 0.5
-    readonly property int barRadius: root.popupMode ? Prefs.barPillRadius : root.cornerRadius
-    readonly property int barTopRadius: root.popupMode ? root.pillTopRadius : root.topRadius
-    readonly property int popupWidth: root.panelWidth
-    readonly property int popupHeight: Math.min(root.maxPanelHeight, Math.max(120, listCol.implicitHeight + 150))
-    readonly property Item popupItem: shell
 
     function getBatteryText(dev) {
         if (!dev || !dev.batteryAvailable)
@@ -150,651 +116,315 @@ Item {
         };
     }
 
-    onExpandedChanged: {
-        panelTransitionTimer.restart();
-        if (!expanded)
-            expandedKey = "";
+
+    implicitHeight: col.implicitHeight
+
+    onActiveChanged: {
+        if (!root.active)
+            root.expandedKey = "";
 
     }
-    implicitWidth: !root.shown ? 0 : (root.popupMode ? root.compactWidth : root.openWidth)
-    implicitHeight: !root.shown ? 0 : (root.popupMode ? root.compactHeight : root.openHeight)
-    opacity: root.shown ? 1 : 0
-    scale: root.shown ? 1 : 0.82
-    transformOrigin: Item.Center
-    visible: root.opacity > 0.01
-    clip: !root.popupMode
-    z: root.popupOpen ? 100 : 1
 
-    Timer {
-        id: panelTransitionTimer
+    Column {
+        id: col
 
-        interval: 400
-        onTriggered: root.panelTransitioning = false
-        onRunningChanged: {
-            if (running)
-                root.panelTransitioning = true;
+        width: root.width
+        spacing: 10
 
-        }
-    }
+        // SCAN ROW
+        Item {
+            id: scanButton
 
-    Rectangle {
-        id: pillRect
+            property int dotCount: 0
 
-        visible: root.popupMode
-        width: root.compactWidth
-        height: root.compactHeight
-        color: Theme.bg
-        clip: true
-        radius: Prefs.barPillRadius
-        topLeftRadius: root.pillTopRadius
-        topRightRadius: root.pillTopRadius
+            visible: root.btEnabled
+            width: parent.width
+            height: 28
 
-        Behavior on color {
-            enabled: root.hostWindow ? root.hostWindow.laidOut : false
-
-            ColorAnimation {
-                duration: Theme.ms(260)
-                easing.type: Easing.OutCubic
+            Timer {
+                interval: 400
+                running: root.discovering
+                repeat: true
+                onTriggered: scanButton.dotCount = (scanButton.dotCount + 1) % 4
             }
 
-        }
+            Timer {
+                interval: 20000
+                running: root.discovering
+                onTriggered: {
+                    if (root.adapter)
+                        root.adapter.discovering = false;
 
-    }
-
-    Rectangle {
-        id: shell
-
-        width: root.popupMode ? (root.expanded ? root.popupWidth : root.compactWidth) : root.width
-        height: root.popupMode ? (root.expanded ? root.popupHeight : root.compactHeight) : root.height
-        x: root.popupMode && root.expanded ? root.popupX : 0
-        y: root.popupMode && root.expanded ? root.compactHeight + Prefs.barPopupGap : 0
-        visible: !root.popupMode || shell.y > 0.5
-        color: Theme.bg
-        radius: root.cornerRadius
-        topLeftRadius: root.topRadius
-        topRightRadius: root.topRadius
-        clip: true
-
-        // COMPACT FACE
-        Item {
-            id: compactFace
-
-            property bool hovered: false
-
-            parent: root.popupMode ? pillRect : shell
-            width: root.compactWidth
-            height: root.compactHeight
-            anchors.left: parent.left
-            anchors.top: parent.top
-            opacity: root.popupMode || !root.expanded ? 1 : 0
-            scale: root.popupMode || !root.expanded ? 1 : 0.82
-            visible: opacity > 0.01
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onEntered: compactFace.hovered = true
-                onExited: compactFace.hovered = false
-                onClicked: root.expanded = true
+                }
             }
 
             Row {
-                id: compactRow
+                anchors.left: parent.left
+                anchors.leftMargin: 4
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 8
 
-                anchors.centerIn: parent
-                spacing: 6
-
-                Item {
-                    id: btIcon
-
-                    width: 14
-                    height: 14
+                Text {
+                    text: ""
                     anchors.verticalCenter: parent.verticalCenter
+                    color: root.discovering ? Theme.accent : (scanArea.containsMouse ? Theme.text : Theme.subtext)
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(12)
 
-                    BluetoothGlyph {
-                        anchors.centerIn: parent
-                        scale: 14 / 24
-                        glyphColor: root.btEnabled ? Theme.accent : Theme.subtext
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Theme.barMs(150)
+                        }
+
                     }
 
                 }
 
                 Text {
-                    visible: root.showLabel
-                    text: root.label
-                    height: btIcon.height
-                    verticalAlignment: Text.AlignVCenter
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.text
+                    text: root.discovering ? "Searching" + ".".repeat(scanButton.dotCount) : "Search for devices"
+                    color: root.discovering ? Theme.accent : (scanArea.containsMouse ? Theme.text : Theme.subtext)
                     font.family: Theme.fontFamily
-                    font.bold: true
-                    font.pixelSize: Theme.fs(13)
+                    font.pixelSize: Theme.fs(12)
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Theme.barMs(150)
+                        }
+
+                    }
+
                 }
 
+            }
+
+            Text {
+                anchors.right: parent.right
+                anchors.rightMargin: 4
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.discovering
+                text: "tap to stop"
+                color: Theme.accentMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fs(10)
+            }
+
+            MouseArea {
+                id: scanArea
+
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (root.adapter)
+                        root.adapter.discovering = !root.adapter.discovering;
+
+                }
+            }
+
+        }
+
+        // DISCOVERABLE ROW
+        Item {
+            visible: root.btEnabled
+            width: parent.width
+            height: 22
+
+            Text {
+                anchors.left: parent.left
+                anchors.leftMargin: 4
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Visible to other devices"
+                color: Theme.subtext
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fs(11)
             }
 
             Rectangle {
-                anchors.fill: parent
-                radius: parent.parent.radius
-                topLeftRadius: parent.parent.topLeftRadius
-                topRightRadius: parent.parent.topRightRadius
-                color: Theme.text
-                opacity: compactFace.hovered ? 0.08 : 0
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: 28
+                height: 16
+                radius: 999
+                color: (root.adapter && root.adapter.discoverable) ? Theme.accent : Theme.outlineStrong
 
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.ms(150)
-                        easing.type: Easing.OutCubic
+                Rectangle {
+                    width: 12
+                    height: 12
+                    radius: 6
+                    color: Theme.bg
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: (root.adapter && root.adapter.discoverable) ? parent.width - width - 2 : 2
+
+                    Behavior on x {
+                        NumberAnimation {
+                            duration: Theme.barMs(200)
+                            easing.type: Easing.OutCubic
+                        }
+
+                    }
+
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (root.adapter)
+                            root.adapter.discoverable = !root.adapter.discoverable;
+
+                    }
+                }
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Theme.barMs(200)
                     }
 
                 }
 
             }
 
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.ms(220)
-                    easing.type: Easing.OutCubic
-                }
+        }
 
+        Column {
+            visible: !root.btEnabled
+            width: parent.width
+            topPadding: 20
+            spacing: 4
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Bluetooth is off"
+                color: Theme.subtext
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fs(12)
             }
 
-            Behavior on scale {
-                NumberAnimation {
-                    duration: Theme.ms(220)
-                    easing.type: Easing.OutCubic
-                }
-
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Turn it on to see nearby devices"
+                color: Theme.outlineStrong
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fs(10)
             }
 
         }
 
-        // EXPANDED FACE
-        Item {
-            id: expandedFace
+        Column {
+            id: listCol
 
-            anchors.fill: parent
-            opacity: root.expanded ? 1 : 0
-            scale: root.expanded ? 1 : 1.04
-            visible: opacity > 0.01
+            visible: root.btEnabled
+            width: parent.width
+            spacing: 14
 
-            HyprlandFocusGrab {
-                active: root.expanded
-                windows: root.hostWindow ? [root.hostWindow] : []
-                onCleared: root.expanded = false
+            Column {
+                width: parent.width
+                spacing: 3
+                visible: root.connectedDevices.length > 0
+
+                Text {
+                    text: "CONNECTED"
+                    color: Theme.subtextDim
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                    font.pixelSize: Theme.fs(10)
+                    font.letterSpacing: 1.2
+                    leftPadding: 4
+                    bottomPadding: 3
+                }
+
+                Repeater {
+                    model: root.connectedDevices
+
+                    BtDeviceRow {
+                        group: "connected"
+                    }
+
+                }
+
             }
 
             Column {
-                anchors.fill: parent
-                anchors.margins: 14
-                spacing: 10
+                width: parent.width
+                spacing: 3
+                visible: root.pairedDevices.length > 0
 
-                Item {
-                    width: parent.width
-                    height: 28
-
-                    Rectangle {
-                        anchors.bottom: parent.bottom
-                        width: parent.width
-                        height: 1
-                        color: Theme.outline
-                    }
-
-                    Text {
-                        anchors.left: parent.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "Bluetooth"
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        font.pixelSize: Theme.fs(13)
-                    }
-
-                    Rectangle {
-                        id: btSwitch
-
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 32
-                        height: 18
-                        radius: 999
-                        color: root.btEnabled ? Theme.accent : Theme.outlineStrong
-
-                        Rectangle {
-                            width: 14
-                            height: 14
-                            radius: 7
-                            color: Theme.bg
-                            anchors.verticalCenter: parent.verticalCenter
-                            x: root.btEnabled ? parent.width - width - 2 : 2
-
-                            Behavior on x {
-                                NumberAnimation {
-                                    duration: Theme.ms(200)
-                                    easing.type: Easing.OutCubic
-                                }
-
-                            }
-
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                if (root.adapter)
-                                    root.adapter.enabled = !root.adapter.enabled;
-
-                            }
-                        }
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.ms(200)
-                            }
-
-                        }
-
-                    }
-
+                Text {
+                    text: "PAIRED"
+                    color: Theme.subtextDim
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                    font.pixelSize: Theme.fs(10)
+                    font.letterSpacing: 1.2
+                    leftPadding: 4
+                    bottomPadding: 3
                 }
 
-                // SCAN ROW
-                Item {
-                    id: scanButton
+                Repeater {
+                    model: root.pairedDevices
 
-                    property int dotCount: 0
-
-                    visible: root.btEnabled
-                    width: parent.width
-                    height: 28
-
-                    Timer {
-                        interval: 400
-                        running: root.discovering
-                        repeat: true
-                        onTriggered: scanButton.dotCount = (scanButton.dotCount + 1) % 4
-                    }
-
-                    Timer {
-                        interval: 20000
-                        running: root.discovering
-                        onTriggered: {
-                            if (root.adapter)
-                                root.adapter.discovering = false;
-
-                        }
-                    }
-
-                    Row {
-                        anchors.left: parent.left
-                        anchors.leftMargin: 4
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 8
-
-                        Text {
-                            text: ""
-                            anchors.verticalCenter: parent.verticalCenter
-                            color: root.discovering ? Theme.accent : (scanArea.containsMouse ? Theme.text : Theme.subtext)
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(12)
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Theme.ms(150)
-                                }
-
-                            }
-
-                        }
-
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: root.discovering ? "Searching" + ".".repeat(scanButton.dotCount) : "Search for devices"
-                            color: root.discovering ? Theme.accent : (scanArea.containsMouse ? Theme.text : Theme.subtext)
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(12)
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Theme.ms(150)
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                    Text {
-                        anchors.right: parent.right
-                        anchors.rightMargin: 4
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: root.discovering
-                        text: "tap to stop"
-                        color: Theme.accentMuted
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fs(10)
-                    }
-
-                    MouseArea {
-                        id: scanArea
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (root.adapter)
-                                root.adapter.discovering = !root.adapter.discovering;
-
-                        }
-                    }
-
-                }
-
-                // DISCOVERABLE ROW
-                Item {
-                    visible: root.btEnabled
-                    width: parent.width
-                    height: 22
-
-                    Text {
-                        anchors.left: parent.left
-                        anchors.leftMargin: 4
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "Visible to other devices"
-                        color: Theme.subtext
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fs(11)
-                    }
-
-                    Rectangle {
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 28
-                        height: 16
-                        radius: 999
-                        color: (root.adapter && root.adapter.discoverable) ? Theme.accent : Theme.outlineStrong
-
-                        Rectangle {
-                            width: 12
-                            height: 12
-                            radius: 6
-                            color: Theme.bg
-                            anchors.verticalCenter: parent.verticalCenter
-                            x: (root.adapter && root.adapter.discoverable) ? parent.width - width - 2 : 2
-
-                            Behavior on x {
-                                NumberAnimation {
-                                    duration: Theme.ms(200)
-                                    easing.type: Easing.OutCubic
-                                }
-
-                            }
-
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (root.adapter)
-                                    root.adapter.discoverable = !root.adapter.discoverable;
-
-                            }
-                        }
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.ms(200)
-                            }
-
-                        }
-
-                    }
-
-                }
-
-                Column {
-                    visible: !root.btEnabled
-                    width: parent.width
-                    topPadding: 20
-                    spacing: 4
-
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: "Bluetooth is off"
-                        color: Theme.subtext
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fs(12)
-                    }
-
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: "Turn it on to see nearby devices"
-                        color: Theme.outlineStrong
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fs(10)
-                    }
-
-                }
-
-                Column {
-                    id: listCol
-
-                    visible: root.btEnabled
-                    width: parent.width
-                    spacing: 14
-
-                    Column {
-                        width: parent.width
-                        spacing: 3
-                        visible: root.connectedDevices.length > 0
-
-                        Text {
-                            text: "CONNECTED"
-                            color: Theme.subtextDim
-                            font.family: Theme.fontFamily
-                            font.bold: true
-                            font.pixelSize: Theme.fs(10)
-                            font.letterSpacing: 1.2
-                            leftPadding: 4
-                            bottomPadding: 3
-                        }
-
-                        Repeater {
-                            model: root.connectedDevices
-
-                            BtDeviceRow {
-                                group: "connected"
-                            }
-
-                        }
-
-                    }
-
-                    Column {
-                        width: parent.width
-                        spacing: 3
-                        visible: root.pairedDevices.length > 0
-
-                        Text {
-                            text: "PAIRED"
-                            color: Theme.subtextDim
-                            font.family: Theme.fontFamily
-                            font.bold: true
-                            font.pixelSize: Theme.fs(10)
-                            font.letterSpacing: 1.2
-                            leftPadding: 4
-                            bottomPadding: 3
-                        }
-
-                        Repeater {
-                            model: root.pairedDevices
-
-                            BtDeviceRow {
-                                group: "paired"
-                            }
-
-                        }
-
-                    }
-
-                    Column {
-                        width: parent.width
-                        spacing: 3
-                        visible: root.nearbyDevices.length > 0
-
-                        Text {
-                            text: "NEARBY"
-                            color: Theme.subtextDim
-                            font.family: Theme.fontFamily
-                            font.bold: true
-                            font.pixelSize: Theme.fs(10)
-                            font.letterSpacing: 1.2
-                            leftPadding: 4
-                            bottomPadding: 3
-                        }
-
-                        Repeater {
-                            model: root.nearbyDevices
-
-                            BtDeviceRow {
-                                group: "nearby"
-                            }
-
-                        }
-
-                    }
-
-                    Column {
-                        width: parent.width
-                        visible: root.connectedDevices.length === 0 && root.pairedDevices.length === 0 && root.nearbyDevices.length === 0
-                        topPadding: 18
-                        bottomPadding: 6
-                        spacing: 4
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: root.discovering ? "Looking for devices…" : "No devices found"
-                            color: Theme.subtext
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(12)
-                        }
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            visible: !root.discovering
-                            text: "Tap “Search for devices” to scan"
-                            color: Theme.outlineStrong
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(10)
-                        }
-
+                    BtDeviceRow {
+                        group: "paired"
                     }
 
                 }
 
             }
 
-            Behavior on opacity {
-                SequentialAnimation {
-                    PauseAnimation {
-                        duration: Theme.ms(root.expanded ? 140 : 0)
-                    }
+            Column {
+                width: parent.width
+                spacing: 3
+                visible: root.nearbyDevices.length > 0
 
-                    NumberAnimation {
-                        duration: Theme.ms(220)
-                        easing.type: Easing.OutCubic
+                Text {
+                    text: "NEARBY"
+                    color: Theme.subtextDim
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                    font.pixelSize: Theme.fs(10)
+                    font.letterSpacing: 1.2
+                    leftPadding: 4
+                    bottomPadding: 3
+                }
+
+                Repeater {
+                    model: root.nearbyDevices
+
+                    BtDeviceRow {
+                        group: "nearby"
                     }
 
                 }
 
             }
 
-            Behavior on scale {
-                SequentialAnimation {
-                    PauseAnimation {
-                        duration: Theme.ms(root.expanded ? 140 : 0)
-                    }
+            Column {
+                width: parent.width
+                visible: root.connectedDevices.length === 0 && root.pairedDevices.length === 0 && root.nearbyDevices.length === 0
+                topPadding: 18
+                bottomPadding: 6
+                spacing: 4
 
-                    NumberAnimation {
-                        duration: Theme.ms(220)
-                        easing.type: Easing.OutCubic
-                    }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: root.discovering ? "Looking for devices…" : "No devices found"
+                    color: Theme.subtext
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(12)
+                }
 
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    visible: !root.discovering
+                    text: "Tap “Search for devices” to scan"
+                    color: Theme.outlineStrong
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(10)
                 }
 
             }
 
-        }
-
-        Behavior on x {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on y {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on width {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on height {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.durEnter : Theme.durExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on radius {
-            NumberAnimation {
-                duration: Theme.ms(380)
-                easing.type: Easing.OutCubic
-            }
-
-        }
-
-    }
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Theme.ms(180)
-            easing.type: Easing.OutCubic
-        }
-
-    }
-
-    Behavior on scale {
-        NumberAnimation {
-            duration: Theme.ms(260)
-            easing.type: root.shown ? Easing.OutBack : Easing.InCubic
         }
 
     }
@@ -1045,7 +675,7 @@ Item {
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Theme.ms(150)
+                                duration: Theme.barMs(150)
                             }
 
                         }
@@ -1117,13 +747,13 @@ Item {
 
                             NumberAnimation {
                                 to: 0.35
-                                duration: Theme.ms(700)
+                                duration: Theme.barMs(700)
                                 easing.type: Easing.InOutQuad
                             }
 
                             NumberAnimation {
                                 to: 1
-                                duration: Theme.ms(700)
+                                duration: Theme.barMs(700)
                                 easing.type: Easing.InOutQuad
                             }
 
@@ -1210,7 +840,7 @@ Item {
 
                     Behavior on rotation {
                         NumberAnimation {
-                            duration: Theme.ms(200)
+                            duration: Theme.barMs(200)
                             easing.type: Easing.OutCubic
                         }
 
@@ -1234,7 +864,7 @@ Item {
 
             Behavior on color {
                 ColorAnimation {
-                    duration: Theme.ms(150)
+                    duration: Theme.barMs(150)
                 }
 
             }
@@ -1318,14 +948,14 @@ Item {
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Theme.ms(120)
+                                duration: Theme.barMs(120)
                             }
 
                         }
 
                         Behavior on scale {
                             NumberAnimation {
-                                duration: Theme.ms(90)
+                                duration: Theme.barMs(90)
                                 easing.type: Easing.OutQuad
                             }
 
@@ -1368,14 +998,14 @@ Item {
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Theme.ms(120)
+                                duration: Theme.barMs(120)
                             }
 
                         }
 
                         Behavior on scale {
                             NumberAnimation {
-                                duration: Theme.ms(90)
+                                duration: Theme.barMs(90)
                                 easing.type: Easing.OutQuad
                             }
 
@@ -1439,7 +1069,7 @@ Item {
 
                             Behavior on color {
                                 ColorAnimation {
-                                    duration: Theme.ms(120)
+                                    duration: Theme.barMs(120)
                                 }
 
                             }
@@ -1485,7 +1115,7 @@ Item {
 
                             Behavior on color {
                                 ColorAnimation {
-                                    duration: Theme.ms(120)
+                                    duration: Theme.barMs(120)
                                 }
 
                             }
@@ -1530,7 +1160,7 @@ Item {
 
                             Behavior on color {
                                 ColorAnimation {
-                                    duration: Theme.ms(120)
+                                    duration: Theme.barMs(120)
                                 }
 
                             }
@@ -1623,7 +1253,7 @@ Item {
 
                     Behavior on border.color {
                         ColorAnimation {
-                            duration: Theme.ms(150)
+                            duration: Theme.barMs(150)
                         }
 
                     }
@@ -1634,7 +1264,7 @@ Item {
 
             Behavior on height {
                 NumberAnimation {
-                    duration: Theme.ms(240)
+                    duration: Theme.barMs(240)
                     easing.type: Easing.OutCubic
                 }
 
@@ -1644,22 +1274,5 @@ Item {
 
     }
 
-    Behavior on implicitWidth {
-        NumberAnimation {
-            duration: Theme.ms(380)
-            easing.type: Easing.OutCubic
-        }
-
-    }
-
-    Behavior on implicitHeight {
-        enabled: root.panelTransitioning
-
-        NumberAnimation {
-            duration: Theme.ms(380)
-            easing.type: Easing.OutCubic
-        }
-
-    }
 
 }
