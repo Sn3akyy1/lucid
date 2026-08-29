@@ -91,49 +91,60 @@ PKG_FEATURES=(
     networkmanager bluez bluez-utils
     libpulse wireplumber brightnessctl upower
     grim wf-recorder ffmpeg wl-clipboard wtype
-    cava songrec curl libnotify
-    python-pywal ttf-noto-color-emoji
+    cava songrec curl libnotify awww
+    python-pywal noto-fonts-emoji
 )
-PKG_AUR=(awww)
 
-missing_repo=()
-missing_aur=()
+missing=()
+DEPS_OK=1
 
 step "Resolving dependencies"
 
 for p in "${PKG_REQUIRED[@]}" "${PKG_FEATURES[@]}"; do
-    pacman -Qq "$p" &>/dev/null || missing_repo+=("$p")
-done
-for p in "${PKG_AUR[@]}"; do
-    pacman -Qq "$p" &>/dev/null || missing_aur+=("$p")
+    pacman -Qq "$p" &>/dev/null || missing+=("$p")
 done
 
-if [[ ${#missing_repo[@]} -eq 0 && ${#missing_aur[@]} -eq 0 ]]; then
+if [[ ${#missing[@]} -eq 0 ]]; then
     say "  everything is already installed"
 elif [[ $SKIP_DEPS -eq 1 ]]; then
+    DEPS_OK=0
     say "  ${ylw}missing (--skip-deps, not installing):${r}"
-    printf '    %s\n' "${missing_repo[@]}" "${missing_aur[@]}"
+    printf '    %s\n' "${missing[@]}"
 else
-    [[ ${#missing_repo[@]} -gt 0 ]] && say "  to install: ${missing_repo[*]}"
-    [[ ${#missing_aur[@]} -gt 0 ]] && say "  from the aur: ${missing_aur[*]}"
+    # split by what the configured repos actually carry, so one unresolvable
+    # name can never take the whole batch down with it
+    from_repo=(); from_aur=()
+    for p in "${missing[@]}"; do
+        if pacman -Si "$p" &>/dev/null; then from_repo+=("$p"); else from_aur+=("$p"); fi
+    done
+
+    [[ ${#from_repo[@]} -gt 0 ]] && say "  from the repos: ${from_repo[*]}"
+    [[ ${#from_aur[@]}  -gt 0 ]] && say "  not in your repos, will try the aur: ${from_aur[*]}"
 
     if ask "  install these now?"; then
-        if [[ ${#missing_repo[@]} -gt 0 ]]; then
-            if [[ -n "$AUR" ]]; then
-                "$AUR" -S --needed --noconfirm "${missing_repo[@]}"
+        if [[ ${#from_repo[@]} -gt 0 ]]; then
+            if sudo pacman -S --needed --noconfirm "${from_repo[@]}"; then
+                say "  repo packages installed"
             else
-                sudo pacman -S --needed --noconfirm "${missing_repo[@]}"
+                DEPS_OK=0
+                warn "some repo packages failed to install — continuing anyway"
             fi
         fi
-        if [[ ${#missing_aur[@]} -gt 0 ]]; then
+        if [[ ${#from_aur[@]} -gt 0 ]]; then
             if [[ -n "$AUR" ]]; then
-                "$AUR" -S --needed --noconfirm "${missing_aur[@]}"
+                # one at a time: a single bad name shouldn't block the rest
+                for p in "${from_aur[@]}"; do
+                    "$AUR" -S --needed --noconfirm "$p" || {
+                        DEPS_OK=0; warn "could not install $p"
+                    }
+                done
             else
-                warn "no AUR helper — install manually: ${missing_aur[*]}"
-                warn "without a wallpaper daemon the wallpaper picker will not work"
+                DEPS_OK=0
+                warn "no AUR helper (paru/yay) — install manually: ${from_aur[*]}"
             fi
         fi
     else
+        DEPS_OK=0
         warn "skipping. features backed by the missing packages will not work."
     fi
 fi
@@ -276,6 +287,7 @@ cat <<EOF
 
 EOF
 
-if [[ ${#missing_repo[@]} -gt 0 || ${#missing_aur[@]} -gt 0 ]] && [[ $SKIP_DEPS -eq 1 ]]; then
-    warn "dependencies were not installed — see the list above"
+if [[ $DEPS_OK -eq 0 ]]; then
+    warn "some dependencies are missing — the shell is installed, but the"
+    warn "features they back will not work until you install them."
 fi
