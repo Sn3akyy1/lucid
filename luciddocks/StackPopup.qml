@@ -17,13 +17,24 @@ PopupWindow {
     property var hostWindow: null
     property real anchorLocalX: 0
     property real anchorLocalY: 0
-    property bool showOpenHere: {
-        for (var i = 0; i < groups.length; i++) {
-            if (groups[i].workspaceId === activeWorkspaceId)
+
+    readonly property int cardW: 172
+    readonly property int cardH: 106
+    readonly property bool showOpenHere: {
+        for (var i = 0; i < popup.groups.length; i++) {
+            if (popup.groups[i].workspaceId === popup.activeWorkspaceId)
                 return false;
 
         }
         return true;
+    }
+
+    property int fadeDuration: Theme.durEnter
+    property var fadeEasing: Theme.easeEmphasizedDecel
+
+    onPopupVisibleChanged: {
+        popup.fadeDuration = popup.popupVisible ? Theme.durEnter : Theme.durExit;
+        popup.fadeEasing = popup.popupVisible ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
     }
 
     function normalizeAddress(a) {
@@ -31,13 +42,13 @@ PopupWindow {
         return a.indexOf("0x") === 0 ? a : "0x" + a;
     }
 
-    anchor.window: hostWindow
-    anchor.rect.x: anchorLocalX - width / 2
-    anchor.rect.y: anchorLocalY - height - 10
+    anchor.window: popup.hostWindow
+    anchor.rect.x: popup.anchorLocalX - popup.width / 2
+    anchor.rect.y: popup.anchorLocalY - popup.height - 12
     color: "transparent"
-    width: row.implicitWidth + 20
-    height: 152
-    visible: popupVisible || fadeAnim.running
+    implicitWidth: row.implicitWidth + 24
+    implicitHeight: popup.cardH + 66
+    visible: popup.popupVisible || fadeAnim.running
 
     HyprlandFocusGrab {
         id: focusGrab
@@ -55,15 +66,17 @@ PopupWindow {
         id: contentRoot
 
         anchors.fill: parent
-        radius: 14
+        radius: Theme.radiusXl
         color: Theme.bg
         opacity: popup.popupVisible ? 1 : 0
+        scale: popup.popupVisible ? 1 : 0.92
+        transformOrigin: Item.Bottom
 
         Row {
             id: row
 
             anchors.centerIn: parent
-            spacing: 16
+            spacing: 14
 
             Repeater {
                 model: popup.groups
@@ -71,9 +84,11 @@ PopupWindow {
                 delegate: Item {
                     id: entry
 
-                    property bool hovered: hoverHandler.hovered
-                    property var toplevel: {
-                        var want = popup.normalizeAddress(modelData.address);
+                    required property var modelData
+
+                    readonly property bool hovered: hoverHandler.hovered
+                    readonly property var toplevel: {
+                        var want = popup.normalizeAddress(entry.modelData.address);
                         for (var i = 0; i < Hyprland.toplevels.values.length; i++) {
                             var t = Hyprland.toplevels.values[i];
                             if (popup.normalizeAddress(t.address) === want)
@@ -82,37 +97,26 @@ PopupWindow {
                         }
                         return null;
                     }
+                    readonly property string windowTitle: {
+                        var t = entry.toplevel;
+                        var o = t && t.lastIpcObject ? t.lastIpcObject : null;
+                        return o && o.title ? o.title : ("Workspace " + entry.modelData.workspaceId);
+                    }
 
-                    width: 160
-                    height: 122
+                    width: popup.cardW
+                    height: popup.cardH + 40
 
                     HoverHandler {
                         id: hoverHandler
                     }
 
-                    Rectangle {
-                        id: stackCard
-
-                        width: 160
-                        height: 100
-                        radius: 10
-                        color: "transparent"
-                        border.color: Theme.alpha(Theme.text, 0.25)
-                        border.width: 1
-                        visible: modelData.count >= 2
-                        x: -6
-                        y: -6
-                    }
-
                     ClippingRectangle {
                         id: mainCard
 
-                        width: 160
-                        height: 100
-                        radius: 10
-                        color: entry.hovered ? Theme.withBlur(Theme.bgHover) : "transparent"
-                        border.color: Theme.accent
-                        border.width: entry.hovered ? 2 : 1
+                        width: popup.cardW
+                        height: popup.cardH
+                        radius: Theme.radiusLg
+                        color: Theme.bgTile
                         scale: entry.hovered ? 1.03 : 1
 
                         ScreencopyView {
@@ -123,7 +127,7 @@ PopupWindow {
                             constraintSize.height: mainCard.height
                             captureSource: entry.toplevel ? entry.toplevel.wayland : null
                             live: popup.popupVisible
-                            visible: hasContent
+                            visible: preview.hasContent
 
                             transform: Scale {
                                 id: coverScale
@@ -140,40 +144,27 @@ PopupWindow {
                             width: 40
                             height: 40
                             anchors.centerIn: parent
-                            source: popup.iconName !== "" ? Quickshell.iconPath(popup.iconName, "") : ""
+                            source: popup.iconName !== "" ? Quickshell.iconPath(popup.iconName, true) : ""
                             visible: !preview.hasContent
                         }
 
                         Rectangle {
-                            id: iconBadge
+                            anchors.fill: parent
+                            color: Theme.text
+                            opacity: entry.hovered ? Theme.stateHover : 0
 
-                            visible: preview.hasContent
-                            width: 26
-                            height: 26
-                            radius: 7
-                            color: Theme.alpha(Theme.bg, 0.85)
-                            anchors.left: parent.left
-                            anchors.bottom: parent.bottom
-                            anchors.margins: 6
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Theme.durQuick
+                                }
 
-                            IconImage {
-                                anchors.fill: parent
-                                anchors.margins: 4
-                                source: popup.iconName !== "" ? Quickshell.iconPath(popup.iconName, "") : ""
-                            }
-
-                        }
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.ms(150)
                             }
 
                         }
 
                         Behavior on scale {
                             NumberAnimation {
-                                duration: Theme.ms(150)
+                                duration: Theme.durShort
                                 easing.type: Easing.OutCubic
                             }
 
@@ -182,42 +173,80 @@ PopupWindow {
                     }
 
                     Rectangle {
-                        visible: modelData.count >= 2
-                        width: 20
-                        height: 20
-                        radius: 10
-                        color: Theme.accent
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        anchors.leftMargin: -8
-                        anchors.topMargin: -8
-                        z: 20
+                        anchors.fill: mainCard
+                        radius: mainCard.radius
+                        color: "transparent"
+                        border.color: Theme.accent
+                        border.width: 2
+                        scale: mainCard.scale
+                        opacity: entry.hovered ? 1 : 0
+                        visible: opacity > 0
 
-                        Text {
-                            anchors.centerIn: parent
-                            text: modelData.count
-                            color: Theme.onAccent
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(10)
-                            font.bold: true
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.durQuick
+                            }
+
                         }
 
                     }
 
-                    Text {
-                        anchors.top: mainCard.bottom
-                        anchors.horizontalCenter: mainCard.horizontalCenter
-                        anchors.topMargin: 6
-                        text: "Workspace " + modelData.workspaceId
-                        color: entry.hovered ? Theme.text : Theme.subtext
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fs(12)
+                    Rectangle {
+                        visible: entry.modelData.count >= 2
+                        width: 22
+                        height: 22
+                        radius: 11
+                        color: Theme.accent
+                        anchors.left: mainCard.left
+                        anchors.top: mainCard.top
+                        anchors.leftMargin: -6
+                        anchors.topMargin: -6
+                        z: 20
 
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.ms(150)
+                        Text {
+                            anchors.centerIn: parent
+                            text: entry.modelData.count
+                            color: Theme.onAccent
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(10)
+                            font.weight: Font.DemiBold
+                        }
+
+                    }
+
+                    Column {
+                        anchors.top: mainCard.bottom
+                        anchors.topMargin: 7
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        spacing: 1
+
+                        Text {
+                            width: parent.width
+                            text: entry.windowTitle
+                            color: entry.hovered ? Theme.text : Theme.subtext
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontLabel
+                            font.weight: Font.Medium
+                            elide: Text.ElideRight
+                            horizontalAlignment: Text.AlignHCenter
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: Theme.durQuick
+                                }
+
                             }
 
+                        }
+
+                        Text {
+                            width: parent.width
+                            text: "Workspace " + entry.modelData.workspaceId
+                            color: Theme.subtextDim
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontLabel
+                            horizontalAlignment: Text.AlignHCenter
                         }
 
                     }
@@ -225,12 +254,7 @@ PopupWindow {
                     TapHandler {
                         onTapped: {
                             popup.popupVisible = false;
-                            if (modelData.workspaceId !== popup.activeWorkspaceId) {
-                                var lua = "local w=nil for i,win in pairs(hl.get_windows()) do if win.address=='" + modelData.address + "' then w=win end end if w then hl.dispatch(hl.dsp.focus({window=w})) end";
-                                Quickshell.execDetached(["hyprctl", "eval", lua]);
-                            } else if (popup.launchCommand !== "") {
-                                Quickshell.execDetached(["sh", "-c", popup.launchCommand]);
-                            }
+                            Hyprland.dispatch("hl.dsp.focus({window='address:" + entry.modelData.address + "'})");
                         }
                     }
 
@@ -241,11 +265,11 @@ PopupWindow {
             Item {
                 id: openHereEntry
 
-                property bool hovered: openHereHover.hovered
+                readonly property bool hovered: openHereHover.hovered
 
                 visible: popup.showOpenHere
-                width: 160
-                height: 122
+                width: popup.cardW
+                height: popup.cardH + 40
 
                 HoverHandler {
                     id: openHereHover
@@ -254,33 +278,38 @@ PopupWindow {
                 Rectangle {
                     id: openHereCard
 
-                    width: 160
-                    height: 100
-                    radius: 10
-                    color: openHereEntry.hovered ? Theme.withBlur(Theme.bgHover) : "transparent"
-                    border.color: Theme.alpha(Theme.text, 0.25)
-                    border.width: openHereEntry.hovered ? 2 : 1
+                    width: popup.cardW
+                    height: popup.cardH
+                    radius: Theme.radiusLg
+                    color: Theme.bgTile
                     scale: openHereEntry.hovered ? 1.03 : 1
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: "+"
-                        color: Theme.accent
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fs(28)
-                        font.bold: true
-                    }
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: parent.radius
+                        color: Theme.text
+                        opacity: openHereEntry.hovered ? Theme.stateHover : 0
 
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Theme.ms(150)
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.durQuick
+                            }
+
                         }
 
                     }
 
+                    DockGlyph {
+                        anchors.centerIn: parent
+                        width: 30
+                        height: 30
+                        pathData: DockIcons.newWindow
+                        glyphColor: Theme.accent
+                    }
+
                     Behavior on scale {
                         NumberAnimation {
-                            duration: Theme.ms(150)
+                            duration: Theme.durShort
                             easing.type: Easing.OutCubic
                         }
 
@@ -290,16 +319,17 @@ PopupWindow {
 
                 Text {
                     anchors.top: openHereCard.bottom
+                    anchors.topMargin: 7
                     anchors.horizontalCenter: openHereCard.horizontalCenter
-                    anchors.topMargin: 6
                     text: "Open here"
                     color: openHereEntry.hovered ? Theme.text : Theme.subtext
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(12)
+                    font.pixelSize: Theme.fontLabel
+                    font.weight: Font.Medium
 
                     Behavior on color {
                         ColorAnimation {
-                            duration: Theme.ms(150)
+                            duration: Theme.durQuick
                         }
 
                     }
@@ -323,8 +353,18 @@ PopupWindow {
             NumberAnimation {
                 id: fadeAnim
 
-                duration: Theme.ms(180)
-                easing.type: Easing.OutCubic
+                duration: popup.fadeDuration
+                easing.type: Easing.Bezier
+                easing.bezierCurve: popup.fadeEasing
+            }
+
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: popup.fadeDuration
+                easing.type: Easing.Bezier
+                easing.bezierCurve: popup.fadeEasing
             }
 
         }

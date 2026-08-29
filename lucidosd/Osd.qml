@@ -6,9 +6,6 @@ import Quickshell.Services.Pipewire
 import Quickshell.Wayland
 import qs
 
-// Transient on-screen-display popup for volume, brightness, mic mute,
-// caps lock and num lock. Floats above the dock, auto-hides after a beat,
-// and never takes keyboard/pointer focus.
 PanelWindow {
     id: osdWindow
 
@@ -29,9 +26,6 @@ PanelWindow {
     property bool capsLock: false
     property bool numLock: false
     property bool kbInitialized: false
-    // Material Design "volume_mute"/"volume_down"/"volume_up" - sourced
-    // from google/material-design-icons, matching the icons used in
-    // System.qml's bar pill and control-center slider
     readonly property var volumeIconLevels: [{
         "max": 0,
         "path": "M7 9v6h4l5 5V4l-5 5H7z"
@@ -56,8 +50,6 @@ PanelWindow {
     readonly property string capsLockIconPath: "M12 4 6 11 18 11Z M6 15h12v2H6Z"
     readonly property string numLockIconPath: "M7 4h4v4H7Z M13 4h4v4h-4Z M7 10h4v4H7Z M13 10h4v4h-4Z M7 16h4v4H7Z M13 16h4v4h-4Z"
     readonly property bool isLevelType: osdWindow.oscType === "volume" || osdWindow.oscType === "brightness"
-    // both only ever apply within innerRow, which is toggle-type-only now
-    // that volume/brightness render through levelSlider instead
     readonly property bool badgeActive: osdWindow.toggleState
     readonly property bool showMuteSlash: osdWindow.oscType === "mic" && !osdWindow.toggleState
     readonly property string currentIconPath: {
@@ -122,8 +114,19 @@ PanelWindow {
         return osdWindow.brightnessIconLevels[osdWindow.brightnessIconLevels.length - 1].path;
     }
 
+    readonly property int enterMs: Theme.ms(200)
+    readonly property int exitMs: Theme.ms(160)
+
+    function setCardVisible(v) {
+        cardFade.duration = v ? osdWindow.enterMs : osdWindow.exitMs;
+        cardFade.easing.type = v ? Easing.OutCubic : Easing.InCubic;
+        cardPop.duration = v ? osdWindow.enterMs : osdWindow.exitMs;
+        cardPop.easing.type = v ? Easing.OutBack : Easing.InCubic;
+        osdWindow.cardVisible = v;
+    }
+
     function trigger() {
-        osdWindow.cardVisible = true;
+        osdWindow.setCardVisible(true);
         hideTimer.restart();
         pulseAnim.restart();
         levelPulseAnim.restart();
@@ -163,9 +166,6 @@ PanelWindow {
 
     color: "transparent"
     exclusiveZone: 0
-    // Overlay, not Top - Hyprland hides Top-layer surfaces behind fullscreen
-    // clients, and an OSD needs to stay visible over a fullscreen video same
-    // as it would on any other desktop
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     implicitWidth: 420
@@ -201,13 +201,6 @@ PanelWindow {
 
         osdWindow.showMic();
     }
-    // real compositor blur, scoped to just the OSD card - see the matching
-    // note on bar in shell.qml.
-    // card.visible (not osdWindow.cardVisible) so the blur region tracks
-    // the card's actual fade-out, not just the moment its hide was
-    // requested - Region.item only follows geometry, not opacity/visible,
-    // so without this the blur kept reporting the card's last position
-    // forever after it faded out, showing as a permanent blurred blob.
     BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && card.visible) ? osdBlurRegion : null
 
     anchors {
@@ -228,7 +221,7 @@ PanelWindow {
         id: hideTimer
 
         interval: 1600
-        onTriggered: osdWindow.cardVisible = false
+        onTriggered: osdWindow.setCardVisible(false)
     }
 
     Process {
@@ -319,8 +312,16 @@ PanelWindow {
     Region {
         id: osdBlurRegion
 
-        item: card
-        radius: card.radius
+        readonly property real paintedX: card.x + card.width * (1 - card.scale) / 2
+        readonly property real paintedY: card.y + card.height * (1 - card.scale) / 2
+        readonly property real paintedWidth: card.width * card.scale
+        readonly property real paintedHeight: card.height * card.scale
+
+        x: Math.ceil(osdBlurRegion.paintedX - 0.002)
+        y: Math.ceil(osdBlurRegion.paintedY - 0.002)
+        width: Math.max(0, Math.floor(osdBlurRegion.paintedX + osdBlurRegion.paintedWidth + 0.002) - Math.ceil(osdBlurRegion.paintedX - 0.002))
+        height: Math.max(0, Math.floor(osdBlurRegion.paintedY + osdBlurRegion.paintedHeight + 0.002) - Math.ceil(osdBlurRegion.paintedY - 0.002))
+        radius: Math.round(card.radius * card.scale)
     }
 
     Rectangle {
@@ -332,12 +333,8 @@ PanelWindow {
         radius: 32
         color: Theme.bg
         opacity: osdWindow.cardVisible ? 1 : 0
-        // no scale-pop here (was 0.9 -> 1) - the real compositor blur
-        // region below tracks card's layout bounds, not its rendered
-        // (scaled) bounds, so animating scale made the blur snap to full
-        // size immediately while the pill was still visually scaling up,
-        // showing as a briefly oversized/mismatched blur on every show.
-        visible: opacity > 0.01
+        scale: osdWindow.cardVisible ? 1 : 0.82
+        visible: opacity > 0.15
 
         Row {
             id: innerRow
@@ -353,9 +350,6 @@ PanelWindow {
                 height: 40
                 radius: 20
                 anchors.verticalCenter: parent.verticalCenter
-                // bgHigh instead of bgTile - bgTile sits right next to the
-                // card's own Theme.bg on the tonal ladder, so the inactive
-                // badge all but disappeared against the card
                 color: osdWindow.badgeActive ? Theme.accent : Theme.withBlur(Theme.bgHigh)
 
                 Item {
@@ -429,10 +423,6 @@ PanelWindow {
 
         }
 
-        // pill-style slider for volume/brightness - a growing accent fill
-        // carries the percentage and morphing icon at its own edge, matching
-        // the shape of System.qml's control-center SliderRow rather than the
-        // badge layout used by the toggle OSD types
         Item {
             id: levelSlider
 
@@ -457,15 +447,8 @@ PanelWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 height: parent.height
                 radius: height / 2
-                // same bgHigh swap as iconBadge - bgTile was nearly
-                // indistinguishable from the card's own background, making
-                // the muted fill look like it wasn't rendering at all
                 color: osdWindow.levelMuted ? Theme.withBlur(Theme.bgHigh) : Theme.accent
                 clip: true
-                // collapses to the bare circular minimum instead of
-                // tracking the pre-mute level - muting reads as "volume is
-                // now zero", not "volume is still wherever it was, just
-                // grayed out"
                 width: osdWindow.levelMuted ? height : Math.max(height, parent.width * (osdWindow.levelValue / 100))
 
                 Text {
@@ -531,6 +514,8 @@ PanelWindow {
                 }
 
                 Behavior on width {
+                    enabled: card.visible
+
                     NumberAnimation {
                         duration: Theme.ms(200)
                         easing.type: Easing.OutCubic
@@ -592,6 +577,8 @@ PanelWindow {
         }
 
         Behavior on width {
+            enabled: card.visible
+
             NumberAnimation {
                 duration: Theme.ms(220)
                 easing.type: Easing.OutCubic
@@ -599,19 +586,23 @@ PanelWindow {
 
         }
 
-        // Directional on purpose. A blur region is a hard on/off - it cannot
-        // fade with the surface - and it is dropped when card.visible goes
-        // false at opacity 0.01. Decelerating out (OutCubic) crawls through
-        // the last few percent of opacity, so the card was already invisible
-        // for ~34ms while the blur was still at full strength: the ghost of
-        // frosted glass left hanging after the OSD had gone. Accelerating out
-        // holds the card visible and then drops it, so the card and its blur
-        // end together. Theme's own note says as much - decelerate for
-        // something entering, accelerate for something leaving.
         Behavior on opacity {
             NumberAnimation {
-                duration: osdWindow.cardVisible ? Theme.ms(200) : Theme.ms(160)
-                easing.type: osdWindow.cardVisible ? Easing.OutCubic : Easing.InCubic
+                id: cardFade
+
+                duration: osdWindow.enterMs
+                easing.type: Easing.OutCubic
+            }
+
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                id: cardPop
+
+                duration: osdWindow.enterMs
+                easing.type: Easing.OutBack
+                easing.overshoot: 1.6
             }
 
         }
@@ -619,7 +610,6 @@ PanelWindow {
     }
 
     mask: Region {
-        item: card
     }
 
 }

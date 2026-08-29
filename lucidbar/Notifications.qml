@@ -8,11 +8,6 @@ import Quickshell.Widgets
 import qs
 
 
-// Notifications: the pill, its arrival toast, and the list.
-//
-// The toast is the same "second surface" the clock's reminder alert is, so it
-// rides BarPill's alt face rather than each module hand-rolling a third state
-// alongside compact and expanded.
 BarPill {
     id: root
 
@@ -39,8 +34,6 @@ BarPill {
         root.refreshSorted();
     }
 
-    // ids whose card has already been built once, so only a notification
-    // nobody has seen plays the arrival animation
     property var shownIds: ({})
     property bool shownIdsSeeded: false
 
@@ -56,12 +49,10 @@ BarPill {
         return true;
     }
 
-    // ---------------- pill shell configuration ----------------
     shown: Prefs.showNotifications
     compactWidth: compactRow.implicitWidth + root.horizontalPadding * 2
     panelWidth: Math.min(320, root.screenW - 34)
     panelHeight: Math.min(root.maxPanelHeight, mainColumn.implicitHeight + 28)
-    // the arrival toast
     altOpen: root.shown && root.toastNotification !== null && !root.expanded
     altWidth: Math.min(300, root.screenW - 34)
     altHeight: Math.min(root.maxPanelHeight, toastBody.implicitHeight + 20)
@@ -100,10 +91,6 @@ BarPill {
             if (root.dnd)
                 return ;
 
-            // a never-expiring toast (expireTimeout 0, eg. "recording hidden")
-            // holds its spot until it's actually closed - newer notifications
-            // still get tracked (visible in the notification list) but don't
-            // silently bump it off screen
             if (root.toastNotification && root.toastNotification.expireTimeout === 0)
                 return ;
 
@@ -115,7 +102,6 @@ BarPill {
         }
     }
 
-    // short delay before toasts are allowed, see root.ready above
     Timer {
         interval: 300
         running: true
@@ -158,11 +144,6 @@ BarPill {
         target: notifServer.trackedNotifications
     }
 
-    // handing the ListView a plain JS array means every refresh reads as a
-    // full model reset - every delegate torn down and rebuilt - so add/remove
-    // transitions never fire and a notification arriving into the open panel
-    // just blinks into existence. This diffs the sorted list into real
-    // insert/remove signals so the view can actually animate the change.
     ScriptModel {
         id: notifModel
 
@@ -171,10 +152,6 @@ BarPill {
 
 
 
-
-    // In pop-up mode this is the pill that stays in the bar, and the compact
-    // face reparents into it. In morph mode it is unused - the rectangle
-    // below is both pill and panel, exactly as before.
 
     compactContent: [
         Row {
@@ -188,11 +165,6 @@ BarPill {
                 height: 16
                 anchors.verticalCenter: parent.verticalCenter
 
-                // Bell and moon cross-fade through each other rather than
-                // swapping between frames: each one shrinks and turns away as
-                // it leaves and unwinds back to true as it arrives, so the
-                // toggle reads as one icon rotating into the other. The base
-                // 16/24 is the glyph's own down-scale and stays factored in.
                 Shape {
                     visible: opacity > 0.01
                     opacity: root.dnd ? 0 : 1
@@ -302,8 +274,6 @@ BarPill {
                 Text {
                     id: badgeText
 
-                    // set from badgeMorph's ScriptAction, not a live binding,
-                    // so the old digit holds through the fade-out half
                     property string displayedText: ""
                     property real morphOffset: 0
 
@@ -376,7 +346,7 @@ BarPill {
 
                 }
 
-                // no bounce here, or it fights the scale/opacity pop below
+                // no bounce here, it fights the pop below
                 Behavior on width {
                     NumberAnimation {
                         duration: Theme.barMs(160)
@@ -409,9 +379,6 @@ BarPill {
         Item {
             id: toastFace
 
-        // Fills the alt surface BarPill sizes to altWidth/altHeight. Without
-        // this the Item is 0x0, and toastContent's `width: parent.width`
-        // collapses with it - which is why the toast drew as an empty box.
         anchors.fill: parent
 
         readonly property var notif: root.toastNotification
@@ -422,7 +389,6 @@ BarPill {
         readonly property bool hovered: toastHover.hovered
 
         clip: true
-        // reset any leftover drag offset from a prior swipe-to-dismiss
         onNotifChanged: {
             if (notif)
                 toastContent.y = 0;
@@ -433,7 +399,7 @@ BarPill {
             id: toastHover
         }
 
-        // y is driven by the drag or one of the two anims below, never both
+        // y is driven by the drag or the anims below, never both
         Item {
             id: toastContent
 
@@ -608,10 +574,6 @@ BarPill {
 
                             anchors.centerIn: parent
                             text: toastActionChip.modelData.text
-                            // bgOpaque, not bg: this is a label sitting on
-                            // the accent chip, so it has to stay solid -
-                            // bg carries the >blur slider's alpha and made
-                            // the text itself see-through
                             color: Theme.bgOpaque
                             font.family: Theme.fontFamily
                             font.bold: true
@@ -703,7 +665,6 @@ BarPill {
             anchors.margins: 14
             spacing: 10
 
-            // header: title + dnd
             Item {
                 width: parent.width
                 height: 28
@@ -784,7 +745,6 @@ BarPill {
 
             }
 
-            // toolbar: count + clear all
             Item {
                 width: parent.width
                 height: 26
@@ -858,8 +818,6 @@ BarPill {
             ListView {
                 id: notifList
 
-                // new cards land at index 0, so a scrolled-down list would
-                // otherwise animate them in somewhere off screen
                 property int prevCount: 0
 
                 width: parent.width
@@ -900,20 +858,6 @@ BarPill {
                 delegate: NotifCard {
                 }
 
-                // There is deliberately no add transition here - the
-                // arrival animation lives on the card itself (see NotifCard
-                // below). The view ignores geometry changes of an item that
-                // is in a transition, so a card whose height animated from
-                // an add transition would never push the cards under it
-                // down: they would be placed once, from the height the
-                // delegate happened to report before Qt had laid it out,
-                // and stay there flush against the new card until the panel
-                // was reopened. Animating the height from outside any view
-                // transition keeps the view's own layout in charge, so the
-                // spacing is right on every frame.
-                // only for removals: closing the gap over a dismissed card
-                // is safe to capture up front, since every card involved has
-                // long since settled at its real height
                 removeDisplaced: Transition {
                     NumberAnimation {
                         properties: "x,y"
@@ -978,35 +922,19 @@ BarPill {
 
         required property var modelData
         readonly property var notification: modelData
-        // Everything drawn below reads these mirrors rather than the
-        // Notification itself: the remove transition keeps this delegate alive
-        // for a moment after the card is dismissed, but the object behind it is
-        // destroyed immediately, so direct bindings would re-evaluate against
-        // nothing and log a TypeError per field on every dismissal. Mirrored
-        // (not snapshotted once) because a notification can be updated in place
-        // by the app that sent it; once the object is gone they simply freeze
-        // at their last values, which is exactly what the card should fade out
-        // showing.
         property string notifAppName: ""
         property string notifSummary: ""
         property string notifBody: ""
         property string notifImage: ""
         property string notifAppIcon: ""
         property int notifUrgency: NotificationUrgency.Normal
-        // plain {text, invoke} objects, so a chip still renders its label while
-        // the card animates away with its NotificationActions already freed
         property var notifActions: []
         readonly property string themeIconName: card.notifAppIcon || (card.notifImage.indexOf("image://icon/") === 0 ? card.notifImage.slice(13) : "")
         readonly property string directImage: card.notifImage.indexOf("image://icon/") === 0 ? "" : card.notifImage
         readonly property string iconSource: directImage || (themeIconName ? Quickshell.iconPath(themeIconName) : "")
-        // urgency reads out as a thin accent bar instead of just another line of text
         readonly property color accentColor: card.notifUrgency === NotificationUrgency.Critical ? Theme.error : (card.notifUrgency === NotificationUrgency.Low ? Theme.subtextDim : Theme.accent)
         readonly property bool isHovered: cardHover.hovered
-        // 1 the moment the card lands, decayed back to 0 by the arrival
-        // animation below - a temporary tint, never permanent chrome
         property real arrivalGlow: 0
-        // 0 while the card is unfolding into the list, 1 once it has arrived -
-        // the card's height, its slide and its fade all hang off it
         readonly property real fullHeight: cardColumn.implicitHeight + 20
         property real enterProgress: 0
 
@@ -1034,47 +962,28 @@ BarPill {
         onNotificationChanged: card.syncNotification()
         Component.onCompleted: {
             card.syncNotification();
-            // only a notification nobody has seen yet gets the arrival
-            // animation; any other delegate the view builds just appears
             if (card.notification && root.markShown(card.notification.id))
                 cardEnter.start();
             else
                 card.enterProgress = 1;
         }
-        // The view measures a delegate once per insert and caches that number,
-        // so it has to be told when the number stops being true - which happens
-        // twice here. Qt reports a text-sized delegate's height a layout pass
-        // late (this card reads 20, then 122, then its real 130), and the unfold
-        // below animates the height on purpose. Re-laying out on every change
-        // covers both: it corrects the stale measurement before anything is
-        // drawn - without it the cards below keep the stale spacing and sit
-        // flush against the new one until the panel is reopened - and then it
-        // walks them down in step with the unfold.
-        onHeightChanged: {
+        // deferred — straight from a delegate handler this crashes mid-incubation
+        function relayout() {
             if (card.ListView.view)
                 card.ListView.view.forceLayout();
 
         }
-        // leave a small gutter on the right so the list's scrollbar floats
-        // clear of the card instead of running flush against its edge
+
+        onHeightChanged: Qt.callLater(card.relayout)
         width: ListView.view.width - 12
         height: card.fullHeight * card.enterProgress
         radius: 14
         color: Theme.withBlur(card.arrivalGlow > 0 ? Theme._mix(Theme.bgHover, card.accentColor, card.arrivalGlow * 0.32) : Theme.bgHover)
         clip: true
-        // slides in from the right as it unfolds - a transform rather than an x
-        // binding, so the view's layout never sees it move
         transform: Translate {
             x: (1 - card.enterProgress) * 22
         }
 
-        // The arrival: the card unfolds from nothing to its full height while
-        // sliding in from the right and fading up, with a wash of its urgency
-        // accent that decays on its own - so it reads as new for a beat and
-        // then looks like every other card. Deliberately animated here instead
-        // of from the list's add transition, so the view keeps treating this as
-        // an ordinary item and walks the cards below it down as the height
-        // grows; see the note on the list.
         ParallelAnimation {
             id: cardEnter
 
@@ -1107,8 +1016,6 @@ BarPill {
 
         }
 
-        // an app can update a notification in place, so the mirrors above
-        // track it for as long as it exists
         Connections {
             function onAppNameChanged() {
                 card.syncNotification();
@@ -1192,15 +1099,6 @@ BarPill {
                 }
 
                 Column {
-                    // height is stated rather than derived: a nested positioner
-                    // only reports its implicit height on the *next* layout
-                    // pass, and the view measures this delegate before that
-                    // lands (the card reads 122 tall, then 130). It positions
-                    // the cards an arrival pushes down exactly once, from that
-                    // stale number, which left them 8px too high - sitting
-                    // flush against the new card until the panel was reopened.
-                    // Text heights are known immediately, so summing them keeps
-                    // the card honest from its first frame.
                     width: parent.width - 20 - 20 - 16
                     spacing: 1
                     height: (cardAppNameText.visible ? cardAppNameText.height + spacing : 0) + cardSummaryText.height
@@ -1317,7 +1215,6 @@ BarPill {
 
                             anchors.centerIn: parent
                             text: actionChip.modelData.text
-                            // solid label on the accent chip, see toastActionLabel
                             color: Theme.bgOpaque
                             font.family: Theme.fontFamily
                             font.bold: true

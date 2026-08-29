@@ -5,13 +5,6 @@ import Quickshell
 import Quickshell.Io
 import qs
 
-// General settings: the shape of the shell's surfaces, its colour and motion
-// tokens, and the theme/wallpaper pair that drives everything else.
-//
-// Theme and wallpaper deliberately go through the exact same scripts and
-// state files the launcher's >theme / >wallpaper strips already use
-// (~/.cache/current_theme, apply-theme.sh, set-wallpaper.sh), so the two
-// surfaces are two views of one setting rather than two settings.
 Column {
     id: page
 
@@ -31,18 +24,12 @@ Column {
     }
     property string currentTheme: "matugen"
     property string appliedWallpaper: ""
-    // where wallpapers are read from and copied into - the theme's own folder
-    // unless the user has pointed it somewhere else
     readonly property string wallpaperDir: Prefs.wallpaperFolder !== "" ? Prefs.wallpaperFolder : (page.home + "/Pictures/wallpapers/" + page.currentTheme)
 
     function applyTheme(id) {
         if (id === page.currentTheme)
             return ;
 
-        // The dock owns this. Writing ~/.cache/current_theme here instead
-        // switched the palette but left the wallpaper on the old theme's,
-        // because picking a wallpaper out of the new theme's folder is part of
-        // the dock's switchTheme() and was never part of this copy.
         Prefs.themeChangeRequested(id);
     }
 
@@ -55,8 +42,6 @@ Column {
 
     spacing: 26
 
-    // theme id is the same file the dock watches, so switching from either
-    // surface updates both
     FileView {
         path: page.home + "/.cache/current_theme"
         blockLoading: true
@@ -100,9 +85,6 @@ Column {
 
     }
 
-    // zenity is the system's own GTK file chooser - a settings app that made
-    // the user type an absolute path to add a wallpaper would be a worse
-    // version of the file manager they already have
     Process {
         id: wallpaperPicker
 
@@ -127,8 +109,6 @@ Column {
                 var added = text.trim();
                 wallpaperScan.restart();
                 Prefs.wallpapersChanged();
-                // a wallpaper the user just went and found is one they want
-                // to see, so it is applied rather than merely filed
                 if (added !== "")
                     page.applyWallpaper(added);
 
@@ -137,9 +117,6 @@ Column {
 
     }
 
-    // watched rather than read once at startup: the wallpaper can change from
-    // the launcher's strip, from a theme switch, or from the script directly,
-    // and the highlighted tile has to follow all three
     FileView {
         path: page.home + "/.cache/current_wallpaper"
         blockLoading: true
@@ -148,9 +125,6 @@ Column {
         onLoaded: page.appliedWallpaper = text().trim()
     }
 
-    // gio trash rather than rm: these are the user's own image files, and a
-    // settings app is the last place that should be deleting them
-    // irrecoverably over a single confirmation.
     Process {
         id: wallpaperDelete
 
@@ -179,7 +153,6 @@ Column {
 
     Component.onCompleted: wallpaperScan.restart()
 
-    // ---------------- shape ----------------
     SettingCard {
         title: "SHAPE"
 
@@ -228,17 +201,15 @@ Column {
 
     }
 
-    // ---------------- surfaces ----------------
     SettingCard {
         title: "SURFACES"
 
         SettingRow {
             title: "Glass"
-            // the blur amount is Theme's, not a Prefs key, so this row cannot
-            // work out on its own whether it has drifted from the default
             resetAction: Prefs.resetBlurToken
             resetVisible: Theme.blurAmount !== 0
             description: "How far the compositor blurs the desktop through the shell's surfaces. This replaced the launcher's old >blur strip, which now opens this page instead."
+            warning: "Frosting is handled by the compositor, not the shell, and is buggy \u2014 expect visual artefacts. Set this to Off to avoid them."
             stacked: true
 
             M3Slider {
@@ -314,7 +285,6 @@ Column {
 
     }
 
-    // ---------------- motion and type ----------------
     SettingCard {
         title: "MOTION & TYPE"
 
@@ -376,7 +346,6 @@ Column {
 
     }
 
-    // ---------------- theme ----------------
     SettingCard {
         title: "THEME"
 
@@ -467,7 +436,6 @@ Column {
 
     }
 
-    // ---------------- wallpaper ----------------
     SettingCard {
         title: "WALLPAPER"
 
@@ -500,13 +468,6 @@ Column {
                             radius: Theme.radiusSm
                             color: Theme.bgSunken
 
-                            // OpacityMask rather than the obvious
-                            // `radius` + `clip: true`: Qt clips to the
-                            // bounding rectangle, not the rounded shape, so
-                            // that combination leaves the thumbnail's corners
-                            // square inside a rounded tile. Same construction
-                            // as RoundedArt in lucidbar/Mpris.qml, which is
-                            // the one masking route that works here.
                             Image {
                                 id: thumb
 
@@ -515,9 +476,6 @@ Column {
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
                                 cache: true
-                                // thumbnails, not wallpapers - decoding a 4K
-                                // jpeg per tile at full size would stall the
-                                // whole shell while this page builds
                                 sourceSize.width: 300
                                 sourceSize.height: 176
                                 visible: false
@@ -564,9 +522,6 @@ Column {
                                 onClicked: page.applyWallpaper(tile.path)
                             }
 
-                            // Declared after tileArea so it sits on top of it -
-                            // otherwise the tile's own click would fire first
-                            // and set the wallpaper you were trying to delete.
                             Rectangle {
                                 id: delBtn
 
@@ -606,25 +561,13 @@ Column {
 
                                 }
 
-                                // Lucide's trash-2 (ISC), split into a static can
-                                // and a hinged lid. Chosen over Material's delete
-                                // glyph because it is stroked rather than filled and
-                                // its lid is a full-width bar that overhangs the can
-                                // - a filled 2px lid is too thin to read as anything
-                                // but a smudge once it rotates at this size.
                                 Item {
                                     id: bin
 
                                     readonly property color glyph: delArea.containsMouse ? Theme.onError : "white"
                                     // authored on a 24x24 grid, drawn at 16
                                     readonly property real unit: 16 / 24
-                                    // a touch bolder than Lucide's own 2, so the
-                                    // strokes hold up over a photograph
                                     readonly property real stroke: 2.4
-                                    // positive is clockwise in Qt, and the hinge is
-                                    // the lid's right-hand end - so a positive angle
-                                    // is what swings the free (left) end upward. A
-                                    // negative one rotates it down into the can.
                                     property real lidAngle: delArea.containsMouse ? 32 : 0
                                     property real lidLift: delArea.containsMouse ? -1.4 : 0
 
@@ -635,8 +578,6 @@ Column {
                                     Behavior on lidAngle {
                                         NumberAnimation {
                                             duration: Theme.durMedium
-                                            // overshoots, so the lid flips open
-                                            // rather than easing politely
                                             easing.type: Theme.easeEmphasized
                                             easing.overshoot: 1.5
                                         }
@@ -652,7 +593,6 @@ Column {
 
                                     }
 
-                                    // the can and its two slots - these never move
                                     Shape {
                                         anchors.fill: parent
                                         preferredRendererType: Shape.CurveRenderer
@@ -701,11 +641,6 @@ Column {
 
                                     }
 
-                                    // lid bar + handle, hinged together at the bar's
-                                    // right-hand end. The rotation sits on this
-                                    // wrapper alone: sharing a transform list with
-                                    // the Scale below leaves the origin ambiguous
-                                    // about which space it is measured in.
                                     Item {
                                         anchors.fill: parent
 

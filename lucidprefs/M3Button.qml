@@ -2,10 +2,6 @@ import QtQuick
 import QtQuick.Shapes
 import qs
 
-// Material 3 button in the three variants this app actually needs: filled
-// (the one primary action on a page), tonal (secondary actions), and text
-// (destructive or low-stakes ones). M3's own outlined/elevated variants are
-// left out rather than shipped unused.
 Item {
     id: btn
 
@@ -13,19 +9,12 @@ Item {
     property string variant: "tonal" // "filled" | "tonal" | "text"
     property bool enabled: true
     property bool destructive: false
-    // optional 24x24 Material path drawn ahead of the label
     property string iconPath: ""
 
     readonly property color baseColor: {
         if (btn.variant === "filled")
             return btn.destructive ? Theme.error : Theme.accent;
 
-        // M3's filled-tonal button is a *tinted* surface - secondary
-        // container - not a neutral one. This reached for bgHigh only
-        // because the palette had no container token to reach for; with
-        // secondary_container now coming through, it can be what the spec
-        // actually asks for, and a tonal button reads as a button rather
-        // than as a slightly lighter patch of the panel behind it.
         if (btn.variant === "tonal")
             return btn.destructive ? Theme.errorContainer : Theme.secondaryContainer;
 
@@ -66,9 +55,6 @@ Item {
 
         }
 
-        // state layer sits on top of the base fill rather than replacing it,
-        // so hover reads the same on every variant including the transparent
-        // one
         Rectangle {
             anchors.fill: parent
             radius: parent.radius
@@ -92,9 +78,6 @@ Item {
         anchors.centerIn: parent
         spacing: 8
 
-        // Shape rather than Canvas: the fill colour is a live binding on the
-        // button's variant/state, and a Canvas would need an explicit
-        // repaint on every one of those changes
         Shape {
             width: btn.iconPath === "" ? 0 : 18
             height: 18
@@ -112,7 +95,7 @@ Item {
 
             }
 
-            // Material paths are authored on a 24x24 grid
+            // authored on a 24x24 grid
             transform: Scale {
                 xScale: 18 / 24
                 yScale: 18 / 24

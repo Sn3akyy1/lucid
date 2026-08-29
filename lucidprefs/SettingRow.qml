@@ -2,39 +2,21 @@ import QtQuick
 import QtQuick.Shapes
 import qs
 
-// A single setting: label and explanation on the left, control on the right.
-// Sliders get `stacked` instead, which drops the control onto its own
-// full-width line underneath - a slider squeezed into the right-hand column
-// is too short to aim at.
-//
-// `enabled` here is the real mechanism behind the greyed-out dependent
-// settings (inline mode under pop-up mode): the row dims, its control stops
-// accepting input, and a reason can be shown in place of the description.
 Item {
     id: row
 
     property string title: ""
     property string description: ""
     property bool enabled: true
-    // shown instead of `description` while disabled, to say *why* rather than
-    // leaving a dead control with no explanation
     property string disabledReason: ""
     property bool stacked: false
     property bool showDivider: true
-    // command lines are set in monospace with ligatures off - Google Sans
-    // renders a literal "--" as an em dash, which is actively wrong when the
-    // text is something the reader is meant to type
     property bool monoTitle: false
-    // ---- reset affordance ----
-    // Naming the settings key is enough: the row can read both the live value
-    // and the shipped default off Prefs, so it knows on its own whether it has
-    // anything to offer and what resetting would mean. `resetAction` only
-    // needs setting for the handful of resets that are not a plain key (the
-    // blur amount lives in Theme, not Prefs).
     property string resetKey: ""
     property string resetAction: row.resetKey
     property bool resetVisible: row.resetKey !== "" && Prefs.isModified(row.resetKey)
     property string resetTitle: row.title
+    property string warning: ""
     default property alias control: holder.data
 
     readonly property string activeDescription: (!row.enabled && row.disabledReason !== "") ? row.disabledReason : row.description
@@ -84,9 +66,6 @@ Item {
 
             }
 
-            // only appears once the setting has actually been moved off its
-            // default - a reset button on an already-default row is a control
-            // that cannot do anything
             Rectangle {
                 id: resetBtn
 
@@ -175,6 +154,18 @@ Item {
 
             }
 
+        }
+
+        Text {
+            width: parent.width
+            text: row.warning
+            color: Theme.error
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontLabel
+            opacity: row.enabled ? 1 : 0.5
+            wrapMode: Text.WordWrap
+            visible: row.warning !== ""
+            topPadding: 4
         }
 
     }

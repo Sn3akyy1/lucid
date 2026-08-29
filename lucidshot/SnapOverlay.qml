@@ -26,10 +26,6 @@ PanelWindow {
     property var segmentFiles: []
     property string currentCrop: ""
     property bool toolbarHidden: false
-    // true whenever a recording is running that the currently-visible toolbar
-    // (if any) isn't showing - either fully hidden, or a fresh Photo session
-    // was opened on top of it. Only the notification's "show" action, or the
-    // recording actually stopping, can clear it.
     property bool hiddenRecording: false
 
 
@@ -40,18 +36,11 @@ PanelWindow {
     property real selW: 0
     property real selH: 0
 
-    // freeze frame is in physical pixels, the selection is in the window's
-    // logical ones - equal at scale 1, but keep the ratio so a scaled output
-    // still crops the rectangle the user actually drew
     readonly property real freezeScale: (freezeImg.implicitWidth > 0 && snapWindow.width > 0) ? (freezeImg.implicitWidth / snapWindow.width) : 1
 
     readonly property color shadeColor: Theme.alpha(Theme.shadow, 0.55)
     readonly property bool shadeVisible: contentVisible && activeTool !== "fullscreen"
 
-    // single source of truth: true whenever the real desktop should be
-    // both visible (through the punched hole / everywhere the shade isn't)
-    // AND clickable. Freeze-visibility and input-mask both derive from
-    // this ONE property so they can never drift out of sync again.
     readonly property bool desktopExposed: captureMode === "video" && (activeTool === "fullscreen" || recordingState !== "idle")
 
     signal fullscreenRequested()
@@ -78,7 +67,6 @@ PanelWindow {
         }
     }
 
-    // no item at all: every click passes straight through to the desktop
     Region {
         id: emptyMask
     }
@@ -89,8 +77,6 @@ PanelWindow {
             maskApplyTimer.restart();
     }
 
-    // safety net: if a hidden recording ever stops through some path other
-    // than showToolbar() -> Stop, don't leave the toolbar stuck unreachable
     onRecordingStateChanged: {
         if (snapWindow.recordingState !== "idle")
             return;
@@ -156,9 +142,6 @@ function stopRecordingBackend() {
             mergedFile = segs[0];
             mergeCmd = "";
         }
-        // cropping needs actual pixel work, so it still has to re-encode - but
-        // the common case (no crop) only needs its color tags fixed, which a
-        // bitstream filter can do as a stream copy instead of a full re-encode
         var finalCmd;
         if (crop) {
             finalCmd = "ffmpeg -y -i '" + mergedFile + "' -vf crop=" + crop + " -color_range pc -colorspace bt709 -color_primaries bt709 -color_trc bt709 -pix_fmt yuv420p -c:v libx264 -crf 18 -preset veryfast -c:a copy '" + file + "'";
@@ -183,9 +166,6 @@ function stopRecordingBackend() {
         ]);
     }
 
-    // hardware-encodes via VAAPI when a GPU render node is available (near-zero
-    // CPU cost, since the compositor's buffers go straight to the encoder) and
-    // only falls back to software libx264 if no such device is found
     function recorderLaunchCmd(segFile) {
         return "DRI=$(ls /dev/dri/renderD* 2>/dev/null | head -1); " +
             "if [ -n \"$DRI\" ]; then " +
@@ -287,15 +267,9 @@ function stopRecordingBackend() {
         snapWindow.mask = emptyMask;
     }
 
-    // brings the toolbar back showing the actual recording controls, even if
-    // a fresh Photo session had been opened on top of the hidden recording.
-    // Reached by switching to Video mode - there is no other way back in
     function showToolbar() {
         if (!snapWindow.hiddenRecording)
             return;
-        // Esc or "snap close" may have set open=false while it was hidden
-        // (or after a fresh session was opened on top of it) - the window
-        // itself has to be remapped, or nothing below will ever be seen
         snapWindow.open = true;
         snapWindow.hiddenRecording = false;
         snapWindow.toolbarHidden = false;
@@ -349,18 +323,11 @@ function stopRecordingBackend() {
     function beginOpen() {
         if (freezeProcess.running)
             return;
-        // already open and visible: nothing to do. But if it's open and
-        // hidden (a backgrounded recording), fall through and open a fresh
-        // session on top of it instead of no-op'ing
         if (snapWindow.open && !snapWindow.toolbarHidden)
             return;
         freezeProcess.running = true;
     }
 
-    // resets everything needed for a fresh Photo-mode session. If a recording
-    // is currently hidden in the background, its bookkeeping (recordingState,
-    // segmentFiles, mic/headphone, etc.) is left completely untouched so it
-    // keeps recording correctly and can still be stopped later via showToolbar()
     function resetToFreshSession() {
         snapWindow.contentVisible = true;
         snapWindow.animateContent = true;
@@ -385,10 +352,6 @@ function stopRecordingBackend() {
     Process {
         id: freezeProcess
 
-        // -l 0: skip PNG compression entirely. It's a throwaway cache file
-        // overwritten every capture, and compression (not disk I/O) was most
-        // of the delay between pressing the key and the screen freezing -
-        // level 6 (grim's default) took ~220ms here, level 0 takes ~40ms
         command: ["sh", "-c", "grim -l 0 '" + snapWindow.freezePath + "'"]
 
         onExited: (code) => {
@@ -525,9 +488,6 @@ function stopRecordingBackend() {
         color: "transparent"
         border.color: Theme.accent
         border.width: 1
-        // hidden while a video crop is actually locked in and recording - but
-        // that only applies to the video session itself, not a fresh Photo
-        // session opened on top of some other, unrelated hidden recording
         visible: snapWindow.contentVisible && snapWindow.activeTool === "select" && snapWindow.selW > 0 && snapWindow.selH > 0 && !(snapWindow.captureMode === "video" && snapWindow.recordingState !== "idle")
         x: snapWindow.selX
         y: snapWindow.selY
@@ -763,7 +723,6 @@ function stopRecordingBackend() {
             }
         }
 
-        // thin vertical separator used to group toolbar sections
         component SnapDivider: Rectangle {
             width: 1
             height: 22
@@ -771,7 +730,6 @@ function stopRecordingBackend() {
             color: Theme.alpha(Theme.outline, 0.6)
         }
 
-        // single icon button: state-layer highlight, disabled dimming, hover tooltip
         component IconAction: Item {
             id: action
 
@@ -916,7 +874,6 @@ function stopRecordingBackend() {
             }
         }
 
-        // one half of the Photo/Video segmented switch
         component ModeSegment: Item {
             id: seg
 
@@ -1014,7 +971,6 @@ function stopRecordingBackend() {
             }
         }
 
-        // Photo/Video segmented switch with a sliding solid-accent thumb
         component ModeSwitch: Rectangle {
             id: modeSwitch
 
@@ -1078,7 +1034,6 @@ function stopRecordingBackend() {
             }
         }
 
-        // elapsed-time chip with a pulsing dot while actively recording
         component TimerChip: Rectangle {
             id: chip
 
@@ -1143,7 +1098,6 @@ function stopRecordingBackend() {
             }
         }
 
-        // labeled audio toggle pill (mic / system audio) - solid accent when on
         component ToggleChip: Item {
             id: chip
 
@@ -1239,7 +1193,6 @@ function stopRecordingBackend() {
             }
         }
 
-        // drag affordance that repositions the toolbar
         component DragHandle: Item {
             width: 32
             height: 38
@@ -1325,9 +1278,6 @@ function stopRecordingBackend() {
         target: "snap"
 
         function toggle(): void {
-            // open-but-hidden isn't "open" from the user's perspective -
-            // route through beginOpen() so it starts a fresh session instead
-            // of just flipping straight back to closed
             if (snapWindow.open && !snapWindow.toolbarHidden) {
                 snapWindow.open = false;
             } else {

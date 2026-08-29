@@ -1,9 +1,6 @@
 import QtQuick
 import qs
 
-// Bar settings. The two that matter most - pop-up mode and the inline mode it
-// unlocks - are also the two hardest to picture, so they sit directly under a
-// live miniature of the result.
 Column {
     id: page
 
@@ -64,7 +61,6 @@ Column {
 
     }
 
-    // ---------------- layout ----------------
     SettingCard {
         title: "LAYOUT"
 
@@ -218,7 +214,6 @@ Column {
 
     }
 
-    // ---------------- modules ----------------
     SettingCard {
         title: "MODULES"
 
@@ -233,7 +228,6 @@ Column {
 
                 title: modRow.modelData.name
                 description: modRow.modelData.desc
-                // nothing here can show while the bar itself is off
                 enabled: Prefs.barEnabled
                 disabledReason: "The bar is switched off, so this module has nothing to appear in."
                 showDivider: modRow.index < page.moduleList.length - 1
@@ -252,7 +246,6 @@ Column {
 
     }
 
-    // ---------------- per-module options ----------------
     SettingCard {
         title: "CLOCK"
 

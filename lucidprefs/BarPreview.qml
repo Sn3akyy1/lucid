@@ -1,13 +1,6 @@
 import QtQuick
 import qs
 
-// A miniature of the bar in whatever configuration is currently selected.
-// Inline mode and notches are both hard to picture from a switch label alone,
-// and applying a shell-wide layout change just to see what it looks like is a
-// poor way to find out - so the choice is shown before it is made.
-//
-// Everything is sized as a fraction of the mock screen rather than in fixed
-// pixels, so the miniature stays in proportion at any card width.
 Rectangle {
     id: preview
 
@@ -18,8 +11,6 @@ Rectangle {
     Rectangle {
         id: screen
 
-        // stand-in for the desktop, so a notch reads as flush against a real
-        // edge rather than floating on the card
         readonly property real unit: screen.height / 100
         readonly property real modH: screen.unit * 11
         readonly property real barY: Prefs.barNotch ? 0 : screen.unit * 7
@@ -32,7 +23,6 @@ Rectangle {
         color: Theme.bgSunken
         clip: true
 
-        // a hint of "wallpaper" so the bar has something to sit on top of
         Rectangle {
             anchors.fill: parent
             gradient: Gradient {
@@ -57,7 +47,6 @@ Rectangle {
 
         }
 
-        // ---- the modules themselves ----
         Row {
             id: leftRow
 
@@ -100,8 +89,6 @@ Rectangle {
 
         }
 
-        // the clock sits centred, the way the real bar places it - unless free
-        // width has closed the groups up, when it simply follows the left one
         Rectangle {
             id: centreMod
 
@@ -172,10 +159,6 @@ Rectangle {
 
             }
 
-            // the one module shown open, so morph and pop-up have something
-            // to differ about. In morph mode it is the pill itself grown
-            // downward and still joined to the bar; in pop-up mode the pill
-            // stays its own size and the panel is a separate surface below.
             Item {
                 width: screen.width * 0.13
                 height: screen.modH

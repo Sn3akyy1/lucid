@@ -2,16 +2,10 @@ import QtQuick
 import Quickshell
 import qs
 
-// About: what this shell is made of, and the command line that reaches it.
-// The IPC list is here rather than in a README because a settings app opened
-// from a terminal is exactly where someone goes looking for the next command.
 Column {
     id: page
 
-    // one place to bump when the shell is released - the window title stays
-    // clean of it on purpose, since that is what the compositor and the dock
-    // show, and a version there would just be noise
-    readonly property string version: "v0.91"
+    readonly property string version: "v0.57"
     readonly property bool beta: true
     readonly property var components: [{
         "name": "lucidbar",
@@ -96,9 +90,6 @@ Column {
                         font.bold: true
                     }
 
-                    // outlined rather than filled: this is a status marker
-                    // sitting beside the name, not an action, and a solid
-                    // accent chip here would read as something to press
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: page.beta

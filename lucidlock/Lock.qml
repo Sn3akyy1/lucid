@@ -18,12 +18,7 @@ Scope {
     id: root
 
     property bool locked: false
-    // true while the collapse-and-unlock animation is playing, so the
-    // corner tap target can't be triggered again mid-animation
     property bool unlocking: false
-    // set from shell.qml to the bar's Notifications instance, so the lock
-    // screen reads the same tracked-notification list instead of standing
-    // up a second NotificationServer (only one can own the DBus service)
     property var notifMod: null
     readonly property var battery: UPower.displayDevice
     readonly property bool batteryPresent: battery ? battery.isPresent : false
@@ -180,19 +175,10 @@ Scope {
         return next;
     }
 
-    // ids whose notification card has already been built, so only a
-    // notification nobody has seen plays the arrival animation - the view
-    // rebuilds delegates freely, and the whole lock surface is recreated on
-    // every lock. Lives on root rather than beside the list because an inline
-    // component (LockNotifCard) can only reach the file's root id.
     property var notifShownIds: ({})
     property bool notifShownSeeded: false
 
     function markNotifShown(id) {
-        // whatever is already pending when the lock screen appears predates it
-        // and counts as seen; only notifications that arrive while locked
-        // animate in. Seeded on first use, not in Component.onCompleted, since
-        // the cards complete before their parents do.
         if (!root.notifShownSeeded) {
             const pending = root.notifMod ? root.notifMod.sortedNotifications : [];
             for (const n of pending) root.notifShownIds[n.id] = true
@@ -206,8 +192,6 @@ Scope {
     }
 
     onLockedChanged: {
-        // re-seed per lock cycle: anything that arrived while unlocked was
-        // never on the lock screen, but it is still not new to it
         if (root.locked) {
             root.notifShownIds = ({});
             root.notifShownSeeded = false;
@@ -469,16 +453,6 @@ Scope {
         return p.length > 0 ? p : (Quickshell.env("HOME") + "/.config/quickshell/luciddocks/fallback.jpg");
     }
 
-    // ext-session-lock-v1 (the real Wayland session-lock protocol, same as
-    // swaylock/hyprlock) instead of a layer-shell PanelWindow - the surface
-    // being on top was only ever cosmetic, Hyprland's own keybinds (launcher,
-    // wallpaper switcher) still fired underneath it. This actually tells the
-    // compositor input is locked. The surface Component is destroyed and
-    // recreated by Quickshell every lock/unlock cycle (the protocol only
-    // allows one lock session per wl_session_lock object), so nothing in
-    // here can assume state survives between lock cycles - see
-    // Component.onCompleted below for the reset that used to live in a
-    // Connections{onLockedChanged} block.
     WlSessionLock {
         id: sessionLock
 
@@ -504,11 +478,6 @@ Scope {
             source: bgImage
             autoPaddingEnabled: false
             blurEnabled: true
-            // deliberately a fixed ceiling, NOT scaled by Theme.blurAmount -
-            // the lock wallpaper stays blurred even with the >blur slider at
-            // 0, so a locked screen never leaves a readable desktop sitting
-            // behind the panel. The appear/collapse animations below still
-            // drive "blur" itself (0 -> 1) for the lock/unlock choreography.
             blurMax: 64
             blur: 0
         }
@@ -535,16 +504,6 @@ Scope {
             width: 80
             height: 80
             radius: Theme.radiusLg
-            // plain translucent fill, no client-side blur backdrop of its own:
-            // bgBlur above already blurs the entire wallpaper behind this card,
-            // so a translucent pane over it *is* the frosted-glass result. The
-            // old BlurBackdrop child cropped and blurred the raw bgImage
-            // instead, which sampled a different neighbourhood than the
-            // fullscreen blur and skipped the scrim - so the card never matched
-            // what sat behind it, and its MultiEffect mask (threshold 0 /
-            // spread 0 hard-steps every antialiased edge pixel to fully opaque)
-            // dilated ~1px past this fill and left that mismatch showing as a
-            // bright rim around the rounded edge for the whole lock animation.
             color: Theme.withBlur(Theme.bgOpaque)
             anchors.centerIn: parent
             scale: 0
@@ -564,9 +523,6 @@ Scope {
                 }
             }
 
-            // lock icon, split into a static body+keyhole and a shackle
-            // that swings shut on its own - lets the icon actually animate
-            // from unlocked to locked instead of just flashing color
             Item {
                 id: lockIcon
                 anchors.centerIn: parent
@@ -616,7 +572,6 @@ Scope {
                 }
             }
 
-            // ---- corner clock, styled like the bar's expanded hero card ----
             Rectangle {
                 id: lockClock
 
@@ -670,12 +625,9 @@ Scope {
                 }
             }
 
-            // ---- weather card, styled like the bar's expanded weather tile ----
             Rectangle {
                 id: weatherCard
 
-                // static model (see sysInfoCard.infoFields) so the grid's
-                // delegates are built once and just update their values
                 readonly property var infoFields: [
                     {
                         "label": "WIND",
@@ -1007,14 +959,9 @@ Scope {
                 }
             }
 
-            // ---- identity / sign-in card ----
             Rectangle {
                 id: sysInfoCard
 
-                // a static model (never recreated) so the Repeater below
-                // builds its delegates once and each value just updates in
-                // place as fastfetchData/sysHostname change, instead of a
-                // reactive array-of-values forcing a full rebuild every time
                 readonly property var infoFields: [
                     {
                         "label": "OS",
@@ -1068,7 +1015,6 @@ Scope {
                     anchors.margins: 16
                     spacing: 14
 
-                    // identity
                     Row {
                         width: parent.width
                         spacing: 14
@@ -1132,10 +1078,6 @@ Scope {
                         }
                     }
 
-                    // password bar - authenticates against the actual
-                    // account password via `sudo -v`, which goes through
-                    // PAM the same way a real login would, instead of
-                    // comparing against a hardcoded string
                     Rectangle {
                         id: passwordBar
 
@@ -1154,11 +1096,7 @@ Scope {
                             x: passwordBar.shakeOffset
                         }
 
-                        // smooth focus "lift" - the bar eases up a touch and
-                        // grows a soft accent glow while the field is active,
-                        // settling back the instant focus leaves
                         property real focusLift: passwordInput.activeFocus ? 1 : 0
-                        // quick tactile bump on every keystroke
                         property real typePulse: 0
 
                         Behavior on color {
@@ -1214,13 +1152,6 @@ Scope {
                             shakeAnim.restart();
                         }
 
-                        // consecutive failures: sudo/PAM (pam_faillock) locks
-                        // the whole account out for 10 minutes after 3 failed
-                        // attempts, system-wide, not just from this screen -
-                        // pacing repeated tries here doesn't remove that risk
-                        // (a genuinely forgotten password will still trip it
-                        // eventually) but it stops a quick flurry of retries
-                        // from burning through the threshold in a few seconds
                         property int failCount: 0
                         property bool cooldown: false
 
@@ -1233,17 +1164,6 @@ Scope {
                             authProc.checkPassword(passwordInput.text);
                         }
 
-                        // hard ceiling: no matter what sudo/PAM does (a slow
-                        // fail-delay, a hang, anything) the UI unconditionally
-                        // recovers after this - it must never be possible for
-                        // a stuck auth check to permanently disable the only
-                        // way to unlock the screen.
-                        // This only *requests* termination - it deliberately
-                        // does NOT touch authenticating/wrong/shake itself.
-                        // Those are only ever set from onExited, so a new
-                        // attempt can never start while a killed-but-not-yet-
-                        // actually-dead process is still going to fire its
-                        // own (stale) onExited later and stomp on it
                         Timer {
                             id: authTimeoutTimer
 
@@ -1261,12 +1181,6 @@ Scope {
                             onTriggered: passwordBar.cooldown = false
                         }
 
-                        // -S reads the password from stdin (never a command
-                        // line argument, so it can't leak via `ps`); -k
-                        // forces a fresh check instead of reusing a sudo
-                        // ticket cached from an earlier terminal session;
-                        // -v only validates credentials, it doesn't run
-                        // anything privileged
                         Process {
                             id: authProc
 
@@ -1282,13 +1196,6 @@ Scope {
                             onStarted: {
                                 write(pendingPassword + "\n");
                                 pendingPassword = "";
-                                // don't close stdin synchronously here - write()
-                                // is async (queues the data, doesn't send it
-                                // immediately), so closing in the same tick
-                                // can race the actual flush and truncate the
-                                // password before sudo ever sees all of it.
-                                // Give the event loop a beat to actually push
-                                // the write through the pipe first.
                                 closeStdinTimer.start();
                             }
                             onExited: (exitCode) => {
@@ -1320,9 +1227,6 @@ Scope {
                             id: closeStdinTimer
 
                             interval: 100
-                            // closes stdin (EOF) so sudo fails after its one
-                            // fail-delay instead of blocking forever waiting
-                            // for a retry attempt that never comes
                             onTriggered: authProc.stdinEnabled = false
                         }
 
@@ -1410,21 +1314,9 @@ Scope {
                             anchors.rightMargin: 8
                             anchors.verticalCenter: parent.verticalCenter
                             enabled: !passwordBar.authenticating && !passwordBar.cooldown
-                            // the real characters stay invisible - dotsRow
-                            // below draws the actual censored dots so each
-                            // one can pop in individually as it's typed.
-                            // color alone doesn't cover selection (Ctrl+A
-                            // renders selected chars via selectedTextColor/
-                            // selectionColor instead, a separate property) -
-                            // without these the native "●" dots reappear,
-                            // fatter and misaligned, stacked on dotsRow
                             color: "transparent"
                             selectionColor: "transparent"
                             selectedTextColor: "transparent"
-                            // the built-in caret ignores color/cursorVisible
-                            // tricks (renders black regardless once
-                            // focused) - a real cursorDelegate replaces it
-                            // outright instead of fighting it
                             cursorDelegate: Rectangle {
                                 width: 2
                                 color: Theme.accent
@@ -1434,8 +1326,6 @@ Scope {
                             font.letterSpacing: 2
                             echoMode: TextInput.Password
                             passwordCharacter: "●"
-                            // no reason to allow selection in a field whose
-                            // real characters are never visible
                             selectByMouse: false
                             clip: true
                             Keys.onReturnPressed: passwordBar.tryUnlock()
@@ -1468,12 +1358,6 @@ Scope {
                             Repeater {
                                 model: passwordInput.text.length
 
-                                // native selection is invisible (its
-                                // color/selectionColor are transparent so
-                                // the real password chars never show), so
-                                // this is a custom stand-in: dots covered by
-                                // the input's actual selectionStart/End get
-                                // a soft accent halo behind them
                                 Item {
                                     id: dotDelegate
 
@@ -1539,10 +1423,6 @@ Scope {
                                 }
                             }
 
-                            // spins while sudo/PAM is checking the password -
-                            // that check has a deliberate multi-second delay
-                            // on a wrong attempt (PAM's own anti-brute-force
-                            // fail-delay), so without this it just looks hung
                             Shape {
                                 width: 24
                                 height: 24
@@ -1595,8 +1475,6 @@ Scope {
                         color: Theme.outline
                     }
 
-                    // system info, laid out like the stat tiles in column A
-                    // so the whole lock screen shares one label/value idiom
                     Grid {
                         width: parent.width
                         columns: 2
@@ -1635,7 +1513,6 @@ Scope {
                 }
             }
 
-            // ---- connectivity card: wifi + bluetooth status, replaces the old floating pills ----
             Rectangle {
                 id: connectivityCard
 
@@ -1722,11 +1599,6 @@ Scope {
                         visible: !mprisArtBg.visible
                     }
 
-                    // readability scrim, INSIDE the art layer so it's part
-                    // of the same masked/layered composite as the artwork -
-                    // as a separate sibling this had no visible effect,
-                    // dark only where content actually sits so the art
-                    // still shows through in the middle
                     Rectangle {
                         anchors.top: parent.top
                         anchors.left: parent.left
@@ -1770,8 +1642,6 @@ Scope {
                     }
                 }
 
-                // mask for the art layer above, kept as a sibling since a
-                // layer.effect can't reference an id inside itself
                 Item {
                     id: mprisMask
                     anchors.fill: parent
@@ -1839,7 +1709,6 @@ Scope {
                     anchors.bottomMargin: 14
                     spacing: 10
 
-                    // previous
                     Item {
                         width: 32
                         height: 32
@@ -1890,7 +1759,6 @@ Scope {
                         }
                     }
 
-                    // play / pause
                     Rectangle {
                         width: 34
                         height: 34
@@ -1932,7 +1800,6 @@ Scope {
                         }
                     }
 
-                    // next
                     Item {
                         width: 32
                         height: 32
@@ -1985,7 +1852,6 @@ Scope {
                 }
             }
 
-            // ---- notifications, content-sized, mirrors lucidbar/Notifications.qml's header ----
             Rectangle {
                 id: lockNotifications
 
@@ -2003,12 +1869,6 @@ Scope {
                 opacity: 0
                 visible: opacity > 0.01
 
-                // a plain JS array reads as a full model reset on every change,
-                // which tears down and rebuilds every delegate - so the list's
-                // add/remove transitions never fire and a notification arriving
-                // while the screen is locked just blinks into place. This diffs
-                // the list into real insert/remove signals instead. Mirrors
-                // lucidbar/Notifications.qml.
                 ScriptModel {
                     id: lockNotifModel
 
@@ -2024,7 +1884,6 @@ Scope {
                     anchors.margins: 16
                     spacing: 10
 
-                    // title row: name + do-not-disturb toggle
                     Item {
                         width: parent.width
                         height: 20
@@ -2065,9 +1924,6 @@ Scope {
                                     width: 12
                                     height: 12
                                     radius: 6
-                                    // opaque knob, matching the bar's own DND
-                                    // switch - bg let the accent track show
-                                    // straight through it
                                     color: Theme.bgOpaque
                                     anchors.verticalCenter: parent.verticalCenter
                                     x: (root.notifMod && root.notifMod.dnd) ? parent.width - width - 2 : 2
@@ -2098,7 +1954,6 @@ Scope {
                         }
                     }
 
-                    // toolbar row: count + clear all
                     Item {
                         width: parent.width
                         height: 16
@@ -2140,11 +1995,6 @@ Scope {
                         }
                     }
 
-                    // fixed-height wrapper (always maxListHeight) so this
-                    // card's overall height stays constant regardless of
-                    // notification count - otherwise column C shrinks with
-                    // 0 notifications and the box shrinks with it, letting
-                    // columns A/B overflow past the now-too-short bottom edge
                     Item {
                         width: parent.width
                         height: lockNotifications.maxListHeight
@@ -2162,8 +2012,6 @@ Scope {
                         ListView {
                             id: notifList
 
-                            // new cards land at index 0, so a scrolled-down
-                            // list would otherwise animate them in off screen
                             property int prevCount: 0
 
                             anchors.top: parent.top
@@ -2193,22 +2041,6 @@ Scope {
                                 easing.type: Easing.OutCubic
                             }
 
-                            // There is deliberately no add transition here -
-                            // the arrival animation lives on the card itself
-                            // (see LockNotifCard). The view ignores geometry
-                            // changes of an item that is in a transition, so a
-                            // card whose height animated from an add transition
-                            // would never push the cards under it down: they
-                            // would be placed once, from the height the
-                            // delegate reported before Qt had laid it out, and
-                            // stay there flush against the new card. Animating
-                            // from outside any view transition keeps the view's
-                            // own layout in charge. Mirrors lucidbar's list.
-
-                            // only for removals: closing the gap over a
-                            // dismissed card is safe to capture up front, since
-                            // every card involved has long since settled at its
-                            // real height
                             removeDisplaced: Transition {
                                 NumberAnimation {
                                     properties: "x,y"
@@ -2247,7 +2079,6 @@ Scope {
                 }
             }
 
-            // ---- power actions, PowerRow-style tiles for logout/suspend/reboot/etc ----
             Rectangle {
                 id: lockPower
 
@@ -2334,7 +2165,6 @@ Scope {
                 }
             }
 
-            // ---- system stats, placed below the weather card ----
             Column {
                 id: systemStats
 
@@ -2459,7 +2289,6 @@ Scope {
             SequentialAnimation {
                 id: appearAnim
 
-                // pop in - shackle starts popped open, reading as "unlocked"
                 ParallelAnimation {
                     NumberAnimation {
                         target: box
@@ -2477,12 +2306,10 @@ Scope {
                     }
                 }
 
-                // holds the unlocked state for a beat before it locks
                 PauseAnimation {
                     duration: Theme.ms(320)
                 }
 
-                // click: shackle snaps shut, box squishes, icon flashes accent
                 ParallelAnimation {
                     SequentialAnimation {
                         NumberAnimation {
@@ -2538,7 +2365,6 @@ Scope {
                     }
                 }
 
-                // holds the locked state for a beat before the panel expands
                 PauseAnimation {
                     duration: Theme.ms(200)
                 }
@@ -2554,9 +2380,6 @@ Scope {
                     passwordInput.forceActiveFocus();
                 }
 
-                // the morph itself - slower and a smooth decelerate with no
-                // overshoot/bounce, reads as a deliberate "unfold" instead
-                // of a springy pop
                 NumberAnimation {
                     target: box
                     property: "width"
@@ -2579,11 +2402,6 @@ Scope {
                     easing.type: Theme.easeStandard
                 }
 
-                // cards hold at opacity/scale 0 until the box has grown
-                // most of the way, then cascade in with a gentle pop -
-                // previously all of these faded in immediately alongside
-                // the morph, so they sat fully visible and got visibly
-                // dragged/resized for the last ~400ms of box still growing
                 SequentialAnimation {
                     PauseAnimation {
                         duration: Theme.ms(350)
@@ -2754,16 +2572,9 @@ Scope {
                 }
             }
 
-            // reverse of appearAnim+expandAnim: cards fade out, the panel
-            // collapses back down to the icon, plays the click-pulse, the
-            // shackle pops back open, then the whole thing shrinks away to
-            // reveal the desktop - only then does root.locked flip false
             SequentialAnimation {
                 id: collapseAnim
 
-                // cards go first, while the box is still full size - avoids
-                // the same "visible card getting dragged along" problem the
-                // entrance animation had, just mirrored
                 ParallelAnimation {
                     NumberAnimation {
                         target: lockClock
@@ -2823,8 +2634,6 @@ Scope {
                     }
                 }
 
-                // the panel morphs back down to the icon box, which fades
-                // back in still showing the closed/locked shackle
                 ParallelAnimation {
                     NumberAnimation {
                         target: box
@@ -2853,8 +2662,6 @@ Scope {
                     duration: Theme.ms(180)
                 }
 
-                // click pulse - the same squish+flash treatment as locking,
-                // so it reads as the same mechanism running in reverse
                 ParallelAnimation {
                     SequentialAnimation {
                         NumberAnimation {
@@ -2902,7 +2709,6 @@ Scope {
                     }
                 }
 
-                // the actual "unlock" moment - shackle pops back open
                 NumberAnimation {
                     target: box
                     property: "shackleAngle"
@@ -2911,14 +2717,10 @@ Scope {
                     easing.type: Easing.OutCubic
                 }
 
-                // holds the unlocked state for a beat so it actually reads
-                // before the panel disappears
                 PauseAnimation {
                     duration: Theme.ms(260)
                 }
 
-                // pop out - the box shrinks away and the blur lifts,
-                // revealing the desktop underneath
                 ParallelAnimation {
                     NumberAnimation {
                         target: box
@@ -2941,11 +2743,6 @@ Scope {
         }
 
         Component.onCompleted: {
-            // this surface is freshly created by Quickshell for every lock
-            // cycle (ext-session-lock-v1 only allows one session per lock
-            // object), so this replaces the old onLockedChanged(true) reset -
-            // there's no stale state to clean up, but keeping explicit resets
-            // here is cheap insurance against the defaults ever drifting.
             box.fullyExpanded = false;
             box.width = 80;
             box.height = 80;
@@ -2977,9 +2774,6 @@ Scope {
         }
     }
 
-    // statsTimer/weatherTimer/sysInfoTimer/lsblkProc live at Scope level
-    // (outside the session-lock surface), so they're driven from root.locked
-    // directly rather than from the surface's lifecycle.
     Connections {
         target: root
         function onLockedChanged() {
@@ -2997,7 +2791,6 @@ Scope {
         }
     }
 
-    // one row of the connectivity card — icon badge, label, trailing status text
     component ConnRow: Item {
         id: connRow
 
@@ -3059,11 +2852,6 @@ Scope {
         }
     }
 
-    // one row of the power card — icon badge, label, tap to run the action.
-    // a plain full-width row instead of a hover-lift tile grid: grid-style
-    // items need to own their own y for the lift, which fights a Grid's
-    // own positioning and made rows overlap - a Column only manages y for
-    // layout spacing, never touches a row's own properties, so it's safe
     component PowerActionRow: Item {
         id: actionRow
 
@@ -3145,40 +2933,24 @@ Scope {
         }
     }
 
-    // notification card for the lock screen's ListView delegate
     component LockNotifCard: Rectangle {
         id: card
 
         required property var modelData
         readonly property var notification: modelData
-        // Everything drawn below reads these mirrors rather than the
-        // Notification itself: the remove transition keeps this delegate alive
-        // for a moment after the card is dismissed, but the object behind it is
-        // destroyed immediately, so direct bindings would re-evaluate against
-        // nothing and log a TypeError per field on every dismissal. Mirrored
-        // (not snapshotted once) because a notification can be updated in place
-        // by the app that sent it; once the object is gone they simply freeze
-        // at their last values, which is exactly what the card should fade out
-        // showing.
         property string notifAppName: ""
         property string notifSummary: ""
         property string notifBody: ""
         property string notifImage: ""
         property string notifAppIcon: ""
         property int notifUrgency: NotificationUrgency.Normal
-        // plain {text, invoke} objects, so a chip still renders its label while
-        // the card animates away with its NotificationActions already freed
         property var notifActions: []
         readonly property string themeIconName: card.notifAppIcon || (card.notifImage.indexOf("image://icon/") === 0 ? card.notifImage.slice(13) : "")
         readonly property string directImage: card.notifImage.indexOf("image://icon/") === 0 ? "" : card.notifImage
         readonly property string iconSource: directImage || (themeIconName ? Quickshell.iconPath(themeIconName) : "")
         readonly property color accentColor: card.notifUrgency === NotificationUrgency.Critical ? Theme.error : (card.notifUrgency === NotificationUrgency.Low ? Theme.subtextDim : Theme.accent)
         readonly property bool isHovered: cardHover.hovered
-        // 1 the moment the card lands, decayed back to 0 by the arrival
-        // animation below - a temporary tint, never permanent chrome
         property real arrivalGlow: 0
-        // 0 while the card is unfolding into the list, 1 once it has arrived -
-        // the card's height, its slide and its fade all hang off it
         readonly property real fullHeight: cardColumn.implicitHeight + 20
         property real enterProgress: 0
 
@@ -3202,40 +2974,28 @@ Scope {
         onNotificationChanged: card.syncNotification()
         Component.onCompleted: {
             card.syncNotification();
-            // only a notification nobody has seen yet gets the arrival
-            // animation; any other delegate the view builds just appears
             if (card.notification && root.markNotifShown(card.notification.id))
                 cardEnter.start();
             else
                 card.enterProgress = 1;
         }
-        // The view measures a delegate once per insert and caches that number,
-        // so it has to be told when the number stops being true - which happens
-        // twice here. Qt reports a text-sized delegate's height a layout pass
-        // late, and the unfold below animates the height on purpose.
-        onHeightChanged: {
+        // deferred — straight from a delegate handler this crashes mid-incubation
+        function relayout() {
             if (card.ListView.view)
                 card.ListView.view.forceLayout();
         }
+
+        onHeightChanged: Qt.callLater(card.relayout)
 
         width: ListView.view.width
         height: card.fullHeight * card.enterProgress
         radius: 14
         color: Theme.withBlur(card.arrivalGlow > 0 ? Theme._mix(Theme.bgHover, card.accentColor, card.arrivalGlow * 0.32) : Theme.bgHover)
         clip: true
-        // slides in from the right as it unfolds - a transform rather than an x
-        // binding, so the view's layout never sees it move
         transform: Translate {
             x: (1 - card.enterProgress) * 22
         }
 
-        // The arrival: the card unfolds from nothing to its full height while
-        // sliding in from the right and fading up, with a wash of its urgency
-        // accent that decays on its own - so it reads as new for a beat and then
-        // looks like every other card. Deliberately animated here instead of
-        // from the list's add transition, so the view keeps treating this as an
-        // ordinary item and walks the cards below it down as the height grows;
-        // see the note on the list.
         ParallelAnimation {
             id: cardEnter
 
@@ -3265,8 +3025,6 @@ Scope {
             }
         }
 
-        // an app can update a notification in place, so the mirrors above
-        // track it for as long as it exists
         Connections {
             function onAppNameChanged() {
                 card.syncNotification();
@@ -3451,9 +3209,6 @@ Scope {
 
                             anchors.centerIn: parent
                             text: actionChip.modelData.text
-                            // solid label on the accent chip - bg carries the
-                            // >blur slider's alpha and made the text itself
-                            // see-through, same as the bar's action chips
                             color: Theme.bgOpaque
                             font.family: Theme.fontFamily
                             font.bold: true
@@ -3474,7 +3229,6 @@ Scope {
         }
     }
 
-    // reusable stat tile — small label, big value, either a progress bar or a mini bar chart
     component StatCard: Rectangle {
         id: card
 
@@ -3553,7 +3307,7 @@ Scope {
         }
     }
 
-    // one stroked weather icon layer, crossfades when conditions change
+    // one weather icon layer, crossfades on change
     component WeatherGlyph: Shape {
         id: glyph
 

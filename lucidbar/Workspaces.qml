@@ -11,26 +11,12 @@ import qs
 Item {
     id: root
 
-    // mirrors shell's own radius below - exposed so shell.qml can shape
-    // this widget's real compositor blur region to match its rounded
-    // pill/card shape instead of a plain rectangle.
-    // In pop-up mode the radius rides the card's animated height, so the card
-    // leaves the pill wearing the pill's own round end and settles into the
-    // card's flatter corner as it grows - and shell.qml's blur region, which
-    // reads this, keeps the same shape the whole way. The collapsed 60 belongs
-    // to the morphing pill: left in the expression it snapped the detached
-    // card into a blob on the first frame of every exit.
     readonly property int cornerRadius: root.popupMode ? Math.min(Theme.radiusLg, Math.round(shell.height / 2)) : (root.expanded ? Theme.radiusLg : Prefs.barPillRadius)
     property var hostWindow: null
     property bool expanded: false
     property real restX: 0
     property real restY: 0
     property bool everExpanded: false
-    // ---------------- workspace indexes ----------------
-    // one pass over Hyprland's model per change instead of a linear scan
-    // per dot/tile per binding evaluation. The map holds the live
-    // HyprlandWorkspace objects, so reading .active/.urgent off a looked-up
-    // entry still tracks reactively.
     readonly property var wsById: {
         const m = ({});
         for (const w of Hyprland.workspaces.values) {
@@ -74,7 +60,6 @@ Item {
     }
     readonly property int maxWorkspaces: 6
     readonly property int slotCount: Math.max(root.maxWorkspaces, root.highestWorkspaceId)
-    // ---------------- compact face metrics ----------------
     readonly property int horizontalPadding: 10
     readonly property int dotGap: 6
     readonly property int dotSize: 10
@@ -84,20 +69,13 @@ Item {
     readonly property int compactHeight: Prefs.barHeight
     property int hoveredWsId: -1
     readonly property bool rowHovered: rowHover.hovered && !root.expanded
-    // whichever slot currently carries the accent fill: the hovered one
-    // while the pointer is over the row, the active one otherwise.
     readonly property int litWsId: root.rowHovered ? (root.hoveredWsId === -1 ? root.activeWsId : root.hoveredWsId) : root.activeWsId
     readonly property bool litIndexValid: root.litWsId >= 1 && root.litWsId <= root.slotCount
     readonly property real dotsWidth: root.slotCount > 0 ? root.slotX(root.slotCount) - root.dotGap : 0
-    // the dots are laid out analytically rather than by a Row so the sliding
-    // accent indicator can sit at exactly the same coordinates they do.
-    // Everything animates off the same curve, so the result is identical to
-    // a Row reflowing around animated children.
     property real dotsWidthAnim: root.dotsWidth
     property real dotHeightAnim: root.rowHovered ? root.hoverDotSize : root.dotSize
     readonly property int compactWidth: Math.round(root.dotsWidthAnim) + root.horizontalPadding * 2
     property real wheelAccum: 0
-    // ---------------- expanded face metrics ----------------
     readonly property var refMonitor: {
         if (root.hostWindow && root.hostWindow.screen) {
             const m = Hyprland.monitorFor(root.hostWindow.screen);
@@ -109,9 +87,6 @@ Item {
     }
     readonly property real screenW: root.hostWindow && root.hostWindow.screen ? root.hostWindow.screen.width : 1920
     readonly property real screenH: root.hostWindow && root.hostWindow.screen ? root.hostWindow.screen.height : 1080
-    // tiles take the shape of the real usable desktop (monitor minus the
-    // bar/dock reservations) so a window's rectangle inside a preview has
-    // the same proportions it has on screen.
     readonly property real tileAspect: {
         const m = root.refMonitor;
         if (!m || !m.width || !m.height)
@@ -131,9 +106,6 @@ Item {
     readonly property int baseCardPadding: 22
     readonly property int baseLabelGap: 6
     readonly property int baseLabelHeight: 16
-    // picks the column count that keeps tiles biggest, breaking ties toward
-    // the grid whose overall shape best echoes the monitor's - so 6
-    // workspaces land on 3x2 rather than 6x1 or 2x3.
     readonly property var gridPlan: {
         const n = Math.max(1, root.slotCount);
         const availW = root.screenW * 0.86 - root.baseCardPadding * 2;
@@ -192,27 +164,16 @@ Item {
     readonly property int cardHeight: root.gridHeight + root.cardPadding * 2
     readonly property real labelFontSize: Math.max(9, 12 * root.gridScale)
     readonly property real plusFontSize: Math.max(16, 28 * root.gridScale)
-    // ---------------- overview state ----------------
-    // -1 means "the pointer owns the highlight"; any hover clears it back to
-    // -1 so keyboard selection can never go stale against a changed grid.
     property int selectedIndex: -1
     property bool dragging: false
     property int dropSlot: -1
     property string swapTarget: ""
-    // single linear driver for the whole open/close choreography - each tile
-    // and thumbnail derives its own eased slice of it via stagger() below.
     property real reveal: root.expanded ? 1 : 0
-    // ---------------- optimistic window overrides ----------------
-    // a dropped thumbnail jumps to its new slot immediately and Hyprland
-    // catches up a moment later; these expire on their own if it never does.
     property var pendingMoves: ({
     })
     property var pendingSwaps: ({
     })
     readonly property int pendingCount: Object.keys(root.pendingMoves).length + Object.keys(root.pendingSwaps).length
-    // ---------------- window list ----------------
-    // sourced from Quickshell's own Hyprland toplevel model (event driven)
-    // rather than a polled hyprctl dump owned by another widget.
     readonly property var windowList: {
         const out = [];
         for (const t of Hyprland.toplevels.values) {
@@ -243,19 +204,13 @@ Item {
                 "floating": o.floating === true
             });
         }
-        // floating windows sit above tiled ones on screen, so draw them last
+        // floating sit above tiled, so draw them last
         out.sort((a, b) => {
             return (a.floating ? 1 : 0) - (b.floating ? 1 : 0);
         });
         return out;
     }
     property string modelSignature: ""
-    // Hyprland emits no event while a window is being dragged around, so a
-    // floating window's at/size only reach us when we ask. Sampling this fast
-    // costs a socket round trip per tick and only runs while the overview is
-    // on screen. trackEase is deliberately kept near trackInterval: the easing
-    // then smooths the gaps *between* samples instead of trailing behind every
-    // one of them, which is what made dragging a floating window look laggy.
     readonly property int trackInterval: 90
     readonly property int trackEase: 130
 
@@ -263,7 +218,6 @@ Item {
         return root.wsById[index + 1] || null;
     }
 
-    // ---------------- compact layout math ----------------
     function slotWidth(index) {
         if (root.rowHovered)
             return root.litWsId === index + 1 ? root.hoverActiveDotWidth : root.hoverDotSize;
@@ -278,7 +232,6 @@ Item {
         return x;
     }
 
-    // ---------------- expanded layout math ----------------
     function slotPosX(index) {
         return index % root.gridColumns * (root.tileW + root.tileSpacing);
     }
@@ -287,9 +240,6 @@ Item {
         return Math.floor(index / root.gridColumns) * (root.tileH + root.tileSpacing);
     }
 
-    // nearest slot centre rather than a floor division, so the gutters
-    // between tiles and anything dragged past the grid edge still resolve to
-    // the slot a person would expect.
     function slotAt(px, py) {
         let best = -1;
         let bestDist = Infinity;
@@ -305,8 +255,6 @@ Item {
         return best;
     }
 
-    // eased 0..1 slice of `reveal` for slot `index`; `extra` pushes a layer
-    // (thumbnails) to land just after the frame it belongs to.
     function stagger(index, extra) {
         const start = 0.18 + index / Math.max(1, root.slotCount) * 0.4 + extra;
         const t = (root.reveal - start) / 0.3;
@@ -314,7 +262,6 @@ Item {
         return 1 - (1 - c) * (1 - c) * (1 - c);
     }
 
-    // ---------------- hyprland actions ----------------
     function focusWorkspace(wsId) {
         Hyprland.dispatch("hl.dsp.focus({workspace=" + wsId + "})");
     }
@@ -343,20 +290,11 @@ Item {
         Hyprland.dispatch("hl.dsp.window.swap({target='address:" + addressB + "', window='address:" + addressA + "'})");
     }
 
-    // resolves the window object itself before closing rather than passing an
-    // address string - a destructive dispatch should never be able to fall
-    // through to whatever happens to be focused.
     function closeWindow(address) {
         const lua = "local w=nil for i,win in pairs(hl.get_windows()) do if win.address=='" + address + "' then w=win end end if w then hl.dispatch(hl.dsp.window.close({window=w})) end";
         Quickshell.execDetached(["hyprctl", "eval", lua]);
     }
 
-    // ---------------- model plumbing ----------------
-    // Every writer below copies into a fresh object first. Mutating the map in
-    // place and assigning the same reference back emits no change signal at
-    // all - the binding on windowList would never re-run, the drop would not
-    // apply until hyprland's own refresh landed, and the thumbnail would snap
-    // back to its old workspace in the meantime.
     function setPendingMove(address, wsId) {
         const pm = Object.assign({
         }, root.pendingMoves);
@@ -435,9 +373,6 @@ Item {
 
     }
 
-    // diffs into the ListModel so a delegate (and the screencopy capture it
-    // owns) survives a window merely moving. The signature short-circuit
-    // keeps an unchanged refresh from touching the model at all.
     function syncWindowModel() {
         const wanted = root.windowList;
         let sig = "";
@@ -500,7 +435,6 @@ Item {
         return "";
     }
 
-    // ---------------- keyboard ----------------
     function moveSelection(dx, dy) {
         const cols = root.gridColumns;
         let cur = root.selectedIndex;
@@ -532,7 +466,12 @@ Item {
     }
 
     onWindowListChanged: root.syncWindowModel()
+    property int revealDuration: Theme.barMs(200)
+    property int compactFadePause: 0
+
     onExpandedChanged: {
+        root.revealDuration = Theme.barMs(root.expanded ? 420 : 200);
+        root.compactFadePause = Theme.barMs(root.expanded ? 0 : 200);
         root.selectedIndex = -1;
         root.hoveredWsId = -1;
         if (root.expanded) {
@@ -542,13 +481,7 @@ Item {
         }
     }
     Component.onCompleted: root.syncWindowModel()
-    // ---------------- settings-driven behaviour ----------------
     readonly property bool shown: Prefs.showWorkspaces
-    // The width collapse is armed only while `shown` is actually changing.
-    // compactWidth is already animated by dotsWidthAnim as the dots grow under
-    // the pointer, so a Behavior left on permanently would animate that too -
-    // a second animation chasing the first, which is what once left the pill
-    // lagging behind the slot holding room for it.
     property bool showTransition: false
 
     onShownChanged: {
@@ -573,11 +506,6 @@ Item {
 
     }
 
-    // There was no height Behavior here at all, so hiding the module snapped
-    // implicitHeight to 0 in one frame - the pill had no height left to draw
-    // and vanished while its width was still collapsing. Gated on the same
-    // latch as the width above: the compact height also moves as the dots grow
-    // under the pointer, and animating that would chase the other animation.
     Behavior on implicitHeight {
         enabled: root.showTransition
 
@@ -587,62 +515,18 @@ Item {
         }
 
     }
-    // This module already opens into a screen-centred overview rather than a
-    // panel hanging off its own pill, so "pop-up" here means the pill stops
-    // flying to the centre and growing into the card: it stays in the bar and
-    // the card appears on its own. The state/transition below is what does
-    // the flying, so pop-up mode simply declines to enter that state.
     readonly property bool popupMode: Prefs.barPopupMode
-    // Reported up to shell.qml, which draws inline mode's hover for the whole
-    // bar at once rather than letting each module light its own patch.
     readonly property bool compactHovered: root.rowHovered
-    // True in either mode that takes this module's own pill away and draws
-    // a shared surface behind it instead: inline, which is one bar for the
-    // whole shell, or connected rows, which is one per group.
     readonly property int topRadius: Prefs.barNotch && !root.popupMode ? 0 : root.cornerRadius
     readonly property int pillTopRadius: Prefs.barNotch ? 0 : Prefs.barPillRadius
-    // True only while the detached panel is actually on screen. shell.qml's
-    // mask and blur regions key off this rather than popupItem alone: a Region
-    // takes its item's geometry regardless of visibility, so the closed
-    // panel's rectangle went on blurring the desktop under every pill - and,
-    // less visibly, went on swallowing clicks there too.
-    // Intent: true from the moment the card is asked to open. The enter and
-    // exit animations read this to pick their duration and curve.
     readonly property bool popupExpanding: root.popupMode && root.expanded
-    // Painted: true for as long as the card actually has extent on screen,
-    // which includes the whole of the exit animation. shell.qml's input mask
-    // and blur region key off this, and it is read off the flight to the
-    // centre rather than the size. Sizes are the wrong thing to test: the
-    // closed card sits at compactWidth, compactWidth itself animates as the
-    // dots grow under the pointer, and the card's own width Behavior lags it -
-    // so `width > compactWidth` went true on every hover-out and painted the
-    // closed card straight over the dots and the module beside it. Keyed off
-    // the intent flag instead, the blur rectangle switched off on the first
-    // frame of the exit and left the card see-through on its way.
-    // `shown` first: a switched-off module is not painted at all, but a blur
-    // region is pure geometry and does not care - left ungated, a module that
-    // was off still published its panel's rectangle the moment anything asked
-    // it to open, and the compositor frosted a pane of desktop with nothing
-    // drawn on top of it.
     readonly property bool popupOpen: root.shown && root.popupMode && shell.y > 0.5
-    // The radii this module's own bounds are actually drawn with, so
-    // shell.qml's mask and blur regions can mirror them exactly. A Region
-    // supports per-corner radii just like a Rectangle; setting only `radius`
-    // left the blurred backdrop a different shape from the surface on top of
-    // it, which shows up as a hard edge peeking out around the corners.
     readonly property int barRadius: root.popupMode ? Prefs.barPillRadius : root.cornerRadius
     readonly property int barTopRadius: root.popupMode ? root.pillTopRadius : root.topRadius
     readonly property Item popupItem: shell
 
     implicitWidth: root.shown ? root.compactWidth : 0
     implicitHeight: root.shown ? root.compactHeight : 0
-    // Switching a module off used to take it out of the bar between frames.
-    // It now scales down and fades while its width collapses, so the row
-    // closes the gap behind something that is visibly leaving rather than
-    // something that was simply deleted. `visible` follows the fade rather
-    // than the setting - read straight from `shown` the module would be gone
-    // before the animation had a single frame to run in, which is exactly what
-    // made it disappear instantly.
     opacity: root.shown ? 1 : 0
     scale: root.shown ? 1 : 0.82
     transformOrigin: Item.Center
@@ -659,8 +543,6 @@ Item {
     Behavior on scale {
         NumberAnimation {
             duration: Theme.barMs(260)
-            // a little overshoot on the way in, so it reads as popping into
-            // place rather than inflating
             easing.type: root.shown ? Easing.OutBack : Easing.InCubic
         }
 
@@ -674,8 +556,6 @@ Item {
         id: windowModel
     }
 
-    // lets the overview be reached from a hyprland bind rather than only by
-    // clicking the active dot - mirrors luciddocks' "launcher" handler.
     IpcHandler {
         target: "workspaces"
 
@@ -693,9 +573,6 @@ Item {
 
     }
 
-    // window geometry only reaches Quickshell's model on hyprland events, so
-    // top it up while the overview is actually on screen - and never while it
-    // is closed.
     Timer {
         interval: root.trackInterval
         repeat: true
@@ -752,30 +629,21 @@ Item {
 
     Behavior on reveal {
         NumberAnimation {
-            duration: Theme.barMs(root.expanded ? 420 : 200)
+            duration: root.revealDuration
             easing.type: Easing.Linear
         }
 
     }
 
-    // In pop-up mode this is the pill left behind in the bar; the compact face
-    // reparents into it while the overview card detaches. Unused in morph
-    // mode, where the rectangle below is the pill and grows into the card.
     Rectangle {
         id: pillRect
 
         visible: root.popupMode
         width: root.compactWidth
         height: root.compactHeight
-        // Fades out as shell.qml's united bar fades in, over the same
-        // duration. Switched outright, the islands lost their backs in the
-        // same frame the shared surface appeared behind them.
         color: Theme.bg
 
         Behavior on color {
-            // not before the bar has laid out: inline mode reads false for the
-            // frame before the config file lands, so at startup this would
-            // always cross-fade in from an island that was never really there
             enabled: root.hostWindow ? root.hostWindow.laidOut : false
 
             ColorAnimation {
@@ -794,23 +662,9 @@ Item {
     Rectangle {
         id: shell
 
-        // morph mode: fills the root, which flies to the centre and grows.
-        // pop-up mode: the root stays put, so the card positions itself
-        // against the screen and is drawn back into the root's coordinates.
         readonly property real cardX: root.hostWindow ? (root.hostWindow.screen.width - root.cardWidth) / 2 - root.hostWindow.margins.left : 0
         readonly property real cardY: root.hostWindow ? (root.hostWindow.screen.height - root.cardHeight) / 2 - root.hostWindow.margins.top : 0
 
-        // Pop-up mode expands the card out of the pill the same way morph mode
-        // expands the pill itself - small to big, starting on the pill's exact
-        // footprint - and then flies it to the centre. The only difference from
-        // morph is that the pill stays behind while the card detaches.
-        //
-        // The growth has to be real geometry rather than opacity. The frosted
-        // backing behind the card is a compositor blur region (see shell.qml):
-        // a hard-edged rectangle that tracks this item's bounds and cannot fade
-        // along with it. A cross-fade therefore painted a blurred empty pane in
-        // the middle of the screen for a frame before the card had drawn
-        // anything, and dropped that backing again on the first frame of the exit.
         width: root.popupMode ? (root.expanded ? root.cardWidth : root.compactWidth) : root.width
         height: root.popupMode ? (root.expanded ? root.cardHeight : root.compactHeight) : root.height
         x: root.popupMode && root.expanded ? shell.cardX - root.x : 0
@@ -822,10 +676,6 @@ Item {
         topRightRadius: root.topRadius
         clip: !root.dragging
 
-        // popupExpanding rather than popupOpen: popupOpen now follows the
-        // very geometry these animations drive, so reading it there would
-        // have picked the exit duration for every enter. All four run on one
-        // duration and curve so the card arrives as a single movement.
         Behavior on x {
             enabled: root.popupMode
 
@@ -873,26 +723,18 @@ Item {
         Item {
             id: compactFace
 
-            // in pop-up mode the compact face belongs to the pill left in the
-            // bar, not to the card that detaches to the centre of the screen
             parent: root.popupMode ? pillRect : shell
             anchors.fill: parent
-            // in pop-up mode the pill is not the thing that opens, so its
-            // face stays put and lit instead of fading out into a panel
             opacity: root.popupMode || !root.expanded ? 1 : 0
             scale: root.popupMode || !root.expanded ? 1 : 0.94
             visible: opacity > 0.01
 
-            // middle click anywhere on the pill toggles the overview; sits
-            // under the per-dot areas so left clicks still reach them.
             MouseArea {
                 anchors.fill: parent
                 acceptedButtons: Qt.MiddleButton
                 onClicked: root.expanded = !root.expanded
             }
 
-            // wheel notches are accumulated so a touchpad's fine-grained
-            // deltas advance one workspace at a time rather than a dozen.
             WheelHandler {
                 enabled: !root.expanded
                 onWheel: (event) => {
@@ -916,8 +758,6 @@ Item {
                 width: root.dotsWidthAnim
                 height: root.dotHeightAnim
 
-                // the accent fill is a single element that slides between
-                // slots instead of one dot lighting up as another goes dark.
                 Rectangle {
                     id: activePill
 
@@ -974,8 +814,6 @@ Item {
                         width: root.slotWidth(dot.index)
                         height: parent.height
                         radius: 999
-                        // the lit slot is left clear so the sliding pill behind
-                        // it shows through; urgent always paints its own colour.
                         color: dot.isUrgent ? Theme.error : (root.rowHovered ? "transparent" : (dot.isActive ? "transparent" : Theme.withBlur(Theme._darken(Theme.subtext, 0.45))))
 
                         Text {
@@ -1048,10 +886,8 @@ Item {
 
             Behavior on opacity {
                 SequentialAnimation {
-                    // on the way back the dots wait for the card to be most of
-                    // the way home instead of appearing inside a large panel.
                     PauseAnimation {
-                        duration: Theme.barMs(root.expanded ? 0 : 200)
+                        duration: root.compactFadePause
                     }
 
                     NumberAnimation {
@@ -1194,8 +1030,6 @@ Item {
                         HoverHandler {
                             id: tileHover
 
-                            // any pointer movement hands the highlight back to
-                            // the mouse, so keyboard selection cannot linger.
                             onHoveredChanged: {
                                 if (hovered)
                                     root.selectedIndex = -1;
@@ -1279,12 +1113,6 @@ Item {
                         readonly property real restW: Math.max(2, thumb.clampedW - thumb.thumbGap)
                         readonly property real restH: Math.max(2, thumb.clampedH - thumb.thumbGap)
                         readonly property var toplevel: root.tlByAddress[thumb.address] || null
-                        // resolves org.gnome.Nautilus -> nautilus and friends
-                        // instead of relying on a hand-maintained class map.
-                        // The second argument must be the bool "check" overload -
-                        // iconPath(name, "") hands back an image://icon/ url even
-                        // for names the theme has never heard of, which renders as
-                        // Qt's magenta broken-image tile rather than nothing.
                         readonly property string iconSource: {
                             const c = thumb.appClass;
                             if (c === "")
@@ -1321,10 +1149,6 @@ Item {
                         z: dragHandler.active ? 10 : 1
                         opacity: dragHandler.active ? 0.94 : root.stagger(thumb.slotIndex, 0.08)
 
-                        // target:null keeps this handler purely a reporter -
-                        // letting it write x/y itself would clobber the
-                        // bindings above and strand the thumbnail after the
-                        // first drag.
                         DragHandler {
                             id: dragHandler
 
@@ -1337,12 +1161,6 @@ Item {
                                     thumb.dragOriginY = thumb.y;
                                     return ;
                                 }
-                                // take the slot onCentroidChanged already
-                                // resolved rather than re-measuring thumb.x:
-                                // by the time this handler runs the x/y
-                                // bindings have flipped off the drag position,
-                                // so measuring here can read the old tile and
-                                // turn the drop into a no-op.
                                 const targetSlot = root.dropSlot >= 0 ? root.dropSlot : thumb.dragOriginSlot;
                                 const swapAddress = root.swapTarget;
                                 root.dragging = false;
@@ -1376,8 +1194,6 @@ Item {
 
                         TapHandler {
                             acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-                            // a tap that turns into a drag must not also count
-                            // as a click on the window.
                             gesturePolicy: TapHandler.DragThreshold
                             onSingleTapped: (eventPoint, button) => {
                                 if (button === Qt.MiddleButton) {
@@ -1395,9 +1211,6 @@ Item {
                             anchors.centerIn: parent
                             constraintSize.width: thumb.width
                             constraintSize.height: thumb.height
-                            // nothing is captured until the overview has been
-                            // opened at least once; afterwards the last frame
-                            // is kept so reopening is instant.
                             captureSource: root.everExpanded && thumb.toplevel ? thumb.toplevel.wayland : null
                             live: root.expanded
                             visible: thumb.everHadContent || hasContent
@@ -1436,8 +1249,6 @@ Item {
 
                             readonly property real iconSize: Math.max(10, Math.min(22, Math.min(thumb.restW, thumb.restH) * 0.35))
 
-                            // identity stand-in for a window that has no capture
-                            // yet - never drawn on top of a live preview.
                             visible: !thumb.hasPreview && thumb.iconSource !== "" && badgeIcon.status === Image.Ready
                             anchors.centerIn: parent
                             width: appBadge.iconSize

@@ -1,11 +1,6 @@
 import QtQuick
 import qs
 
-// Nav icons drawn from primitives rather than looked up in an icon theme -
-// the same approach Network.qml's EthernetGlyph and the tray use. Three
-// marks that say what they are by echoing the thing they configure: a tune
-// glyph for the general page, a surface with pills along its top edge for the
-// bar, and one with a row of dots along its bottom for the dock.
 Item {
     id: glyph
 
@@ -15,7 +10,6 @@ Item {
     implicitWidth: 22
     implicitHeight: 22
 
-    // ---- general: M3's "tune" - two tracks, each with a knob ----
     Item {
         anchors.fill: parent
         visible: glyph.kind === "general"
@@ -58,7 +52,6 @@ Item {
 
     }
 
-    // ---- bar: a screen with modules sitting along its top edge ----
     Item {
         anchors.fill: parent
         visible: glyph.kind === "bar"
@@ -103,7 +96,6 @@ Item {
 
     }
 
-    // ---- dock: a screen with a row of icons along its bottom edge ----
     Item {
         anchors.fill: parent
         visible: glyph.kind === "dock"

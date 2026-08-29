@@ -1,9 +1,6 @@
 import QtQuick
 import qs
 
-// Dock settings. Everything here maps onto something the dock already does -
-// the magnification ripple, the running-app dot, the hover tooltip and the
-// unpinned-but-running icons all exist; this just exposes them.
 Column {
     id: page
 
@@ -82,7 +79,6 @@ Column {
 
     }
 
-    // ---------------- behaviour ----------------
     SettingCard {
         title: "BEHAVIOUR"
 
@@ -158,7 +154,6 @@ Column {
         SettingRow {
             title: "Show running applications"
             description: "Applications that are running but not pinned appear in the dock beside the pinned ones."
-            showDivider: false
 
             M3Switch {
                 checked: Prefs.dockShowRunning
@@ -169,15 +164,28 @@ Column {
 
         }
 
+        SettingRow {
+            title: "Icon tiles"
+            description: "Draws a filled tile behind every icon. Material 3 leaves the container empty and lets hover and press do the talking, which is how the dock looks with this off."
+            showDivider: false
+
+            M3Switch {
+                checked: Prefs.dockIconTiles
+                onToggled: (v) => {
+                    return Prefs.dockIconTiles = v;
+                }
+            }
+
+        }
+
     }
 
-    // ---------------- indicators ----------------
     SettingCard {
         title: "INDICATORS"
 
         SettingRow {
             title: "Running indicator"
-            description: "A dot beneath any icon whose application is actually running."
+            description: "A mark beneath any icon whose application is running - one segment per window, widening into a single bar for the window you are focused on."
 
             M3Switch {
                 checked: Prefs.dockShowIndicators
@@ -204,7 +212,6 @@ Column {
 
     }
 
-    // ---------------- pinned apps ----------------
     SettingCard {
         title: "PINNED APPLICATIONS"
 

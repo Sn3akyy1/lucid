@@ -8,35 +8,19 @@ import Quickshell.Services.Mpris
 import qs
 
 
-// Now playing. The expanded card is deliberately untouched by this pass - it
-// is two pages that slide past each other and it stays exactly that.
-//
-// What changed is only the shell around it, which is BarPill's now. Two things
-// this module needs that the default shell does not give it: its compact face
-// is a real remote (middle/right click skip, wheel rides volume), so it keeps
-// its own MouseArea and opts out of BarPill's; and its pages already fade
-// themselves on `expanded`, so the panel holder must not fade them again.
 BarPill {
     id: root
 
-    // the expanded card is two pages that slide past each other:
-    // "player" (transport) and "shazam" (identify what's in the air)
     property string page: "player"
-    // material 3 easing sets, as real cubic-beziers rather than the nearest
-    // qt easing curve: standard for anything that just moves, emphasized for
-    // container transforms (the card growing, a page sliding, a shape morph)
     readonly property var easeStandard: [0.2, 0, 0, 1, 1, 1]
     readonly property var easeEmphasized: [0.05, 0.7, 0.1, 1, 1, 1]
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property int contentWidth: root.panelWidth - 28
-    // ---------------- players ----------------
     readonly property var mprisPlayers: {
         const out = [];
         const list = Mpris.players.values;
         for (let i = 0; i < list.length; i++) {
             const p = list[i];
-            // playerctld proxies whichever player is active, so leaving it in
-            // would show every track twice - once real, once as a phantom
             if (p.dbusName && p.dbusName.indexOf("playerctld") !== -1)
                 continue;
 
@@ -44,8 +28,6 @@ BarPill {
         }
         return out;
     }
-    // dbus name of the source the user picked from the header; empty means
-    // "follow the interesting one", which is what you want 99% of the time
     property string pinnedName: ""
     readonly property var player: {
         const list = root.mprisPlayers;
@@ -69,7 +51,6 @@ BarPill {
         }
         return list.length > 0 ? list[0] : null;
     }
-    // ---------------- track ----------------
     readonly property bool isPlaying: root.player ? root.player.isPlaying : false
     readonly property string title: root.player ? (root.player.trackTitle || "Unknown") : "Nothing playing"
     readonly property string artist: root.player ? root.player.trackArtist : ""
@@ -77,8 +58,6 @@ BarPill {
     readonly property string artUrl: root.player ? root.player.trackArtUrl : ""
     readonly property string displayTitle: (root.player && root.artist) ? root.artist + "  -  " + root.title : root.title
     readonly property string sourceName: root.player ? (root.player.identity || "Media") : ""
-    // the source sits with the track's own metadata rather than in a switcher
-    // of its own - it's just another fact about what's playing
     readonly property string metaLine: {
         if (!root.player)
             return "";
@@ -88,45 +67,29 @@ BarPill {
     }
     readonly property real posSec: root.player ? root.player.position : 0
     readonly property real lenSec: root.player ? root.player.length : 0
-    // streams and radio report no length - the whole seek row is meaningless
-    // there, so it gets replaced rather than shown as a dead 0:00 bar
     readonly property bool hasDuration: root.lenSec > 0
-    // interpolated between the player's own updates so the playhead creeps
-    // instead of stepping once a second. posBase is the last position anyone
-    // was sure of - the player's report, or a seek we just performed - and
-    // everything on screen is that plus the time elapsed since
     property real livePosSec: root.posSec
     property real posBase: root.posSec
     property double posTimestamp: Date.now()
-    // how long the playhead takes to travel to a new spot: instant for the
-    // frame-by-frame creep of normal playback, a real glide for a jump
     property int jumpDuration: 0
-    // set when the next position report is a fresh start rather than a jump
     property bool snapNext: false
     readonly property real progress: root.hasDuration ? Math.min(1, root.livePosSec / root.lenSec) : 0
     property bool showRemaining: false
     readonly property bool volumeSupported: root.player ? root.player.volumeSupported : false
     readonly property real playerVolume: root.player ? root.player.volume : 0
     property bool volumeFlash: false
-    // ---------------- cava ----------------
     property var bars: []
     readonly property int barCount: root.bars.length > 0 ? root.bars.length : 24
-    // ---------------- shazam / songrec ----------------
-    // "idle" | "listening" | "match" | "nomatch" | "error"
     property string shazamState: "idle"
     property var shazamResult: null
     property string shazamError: ""
     property int listenElapsed: 0
     readonly property int listenLimit: 30
-    // "system" listens to what the speakers are playing (so it can name a
-    // track from a browser tab that reports nothing), "mic" to the room
     property string listenSource: "system"
     property string monitorDevice: ""
     property string micDevice: ""
     readonly property string listenDevice: root.listenSource === "mic" ? root.micDevice : root.monitorDevice
-    // re-read on every tick so "2m ago" in the history list stays honest
     property double nowMs: Date.now()
-    // ---------------- glyphs (material design, 24x24 filled) ----------------
     readonly property string noteGlyph: "M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6Z"
     readonly property string playGlyph: "M8 5v14l11-7L8 5Z"
     readonly property string pauseGlyph: "M8 6h3v12H8V6Zm5 0h3v12h-3V6Z"
@@ -146,7 +109,6 @@ BarPill {
     readonly property string micGlyph: "M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
     readonly property string checkGlyph: "M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17Z"
     readonly property string swapGlyph: "M6.99 11 3 15l3.99 4v-3H14v-2H6.99v-3ZM21 9l-3.99-4v3H10v2h7.01v3L21 9Z"
-    // material design volume_mute / volume_down / volume_up
     readonly property var volumeGlyphs: [
         {
             "max": 0,
@@ -193,30 +155,18 @@ BarPill {
         return root.volumeGlyphs[root.volumeGlyphs.length - 1].path;
     }
 
-    // 0 when cava hasn't spoken yet, otherwise 0..1 with a little headroom
-    // clipped off the top so loud passages actually peg the bars
     function barLevel(index) {
         const v = root.bars[index];
         return v === undefined ? 0 : Math.min(1, v / 70);
     }
 
-    // peak across a slice of the spectrum. A meter with only a few bars has to
-    // sample this way: any single band is quiet most of the time even while the
-    // mix is loud, so picking three of them by index reads as dead
     function bandLevel(from, to) {
         let peak = 0;
         for (let i = from; i <= to && i < root.bars.length; i++) peak = Math.max(peak, root.bars[i]);
-        // a band's peak runs hotter than a single bar's, so this needs more
-        // headroom than barLevel or the loud middle of the spectrum just pins
         return Math.min(1, peak / 72);
     }
 
-    // A quiet bar is a darker accent, not a see-through one. Alpha washes the
-    // strip out against the pill - and once the blur slider makes the pill
-    // translucent too, a half-transparent bar is barely there at all
     function barColor(level) {
-        // the floor sits high on purpose: a resting bar should still read as
-        // part of the accent, not as a smudge of it
         const floor = 0.62;
         const k = floor + (1 - floor) * Math.min(1, level * 1.25);
         return Qt.rgba(Theme.accent.r * k, Theme.accent.g * k, Theme.accent.b * k, 1);
@@ -244,17 +194,12 @@ BarPill {
 
     }
 
-    // `glide` is for jumps the playhead has to travel to (a wheel nudge); a
-    // drag release passes false because the handle is already sitting there
     function seekTo(sec, glide) {
         if (!root.player || !root.player.canSeek)
             return ;
 
         const target = Math.max(0, Math.min(root.lenSec, sec));
         root.player.position = target;
-        // adopt the new spot immediately. The player only reports it a beat
-        // later, and until then the interpolator above would keep dragging the
-        // playhead back to where it started
         root.jumpDuration = glide ? 320 : 0;
         root.posBase = target;
         root.posTimestamp = Date.now();
@@ -270,8 +215,6 @@ BarPill {
         volumeFlashTimer.restart();
     }
 
-    // walks to the next mpris source and pins it, so the panel stops
-    // following whatever happens to be playing until the user unpins
     function cyclePlayer() {
         const list = root.mprisPlayers;
         if (list.length < 2)
@@ -314,8 +257,6 @@ BarPill {
         Quickshell.execDetached(["wl-copy", "--", text]);
     }
 
-    // shazam hands us a ready-made deep link per streaming service; falling
-    // back to a web search keeps the button useful when it doesn't
     function searchOnline(result) {
         if (!result)
             return ;
@@ -327,7 +268,7 @@ BarPill {
         root.openUrl("https://open.spotify.com/search/" + encodeURIComponent(result.title + " " + result.artist));
     }
 
-    // album / label / released live in a generic metadata list, not as fields
+    // album/label/released live in a generic metadata list
     function metaValue(track, key) {
         const sections = (track && track.sections) || [];
         for (let i = 0; i < sections.length; i++) {
@@ -357,7 +298,7 @@ BarPill {
 
     function handleShazamLine(line) {
         const text = line.trim();
-        // songrec prints one compact json object per match and nothing else
+        // songrec prints one json object per match
         if (text === "" || text.charAt(0) !== "{")
             return ;
 
@@ -392,8 +333,6 @@ BarPill {
     }
 
     function handleShazamStderr(line) {
-        // songrec narrates every device it sees at INFO level, so only real
-        // failures are worth keeping
         if (line.indexOf("ERROR") === -1)
             return ;
 
@@ -406,10 +345,6 @@ BarPill {
         root.shazamResult = null;
         root.listenElapsed = 0;
         root.shazamState = "listening";
-        // headphones and usb mics come and go, so the default device is
-        // re-read here rather than trusted from startup. songrec is handed
-        // the name once that answer lands - a capture started before it would
-        // listen to whatever was default last time
         sinkProc.running = true;
         sourceProc.running = true;
         captureStartTimer.restart();
@@ -417,8 +352,6 @@ BarPill {
         listenTickTimer.restart();
     }
 
-    // only tears down the machinery - the caller owns what the state becomes,
-    // so a match isn't overwritten by the exit that follows it
     function stopListening() {
         captureStartTimer.stop();
         listenLimitTimer.stop();
@@ -435,7 +368,6 @@ BarPill {
 
     function rememberMatch(result) {
         const items = (historyAdapter.items || []).slice();
-        // re-identifying the same track refreshes it instead of stacking
         if (items.length > 0 && items[0].key === result.key)
             items[0] = result;
         else
@@ -448,8 +380,6 @@ BarPill {
     }
 
     onPosSecChanged: {
-        // anything bigger than a tick is a jump - somebody seeked, here or in
-        // the player itself - and gets glided to rather than snapped to
         const delta = Math.abs(root.posSec - root.livePosSec);
         root.jumpDuration = (root.snapNext || delta < 1.5) ? 0 : 320;
         root.snapNext = false;
@@ -457,13 +387,8 @@ BarPill {
         root.posTimestamp = Date.now();
         root.livePosSec = root.posSec;
     }
-    // a new track, or a different player, starts from scratch: sliding the
-    // playhead back across the whole bar would read as a seek nobody made
     onPlayerChanged: root.snapNext = true
     onIsPlayingChanged: {
-        // re-base on resume. The elapsed time since posTimestamp includes
-        // however long the track sat paused, so without this the playhead
-        // would leap forward by that much on the first frame back
         root.posBase = root.livePosSec;
         root.posTimestamp = Date.now();
     }
@@ -471,12 +396,13 @@ BarPill {
         if (root.page !== "shazam")
             return ;
 
-        // devices can change between openings (headphones, a usb mic), so the
-        // defaults are re-read every time rather than once at startup
         sinkProc.running = true;
         sourceProc.running = true;
     }
+    property int pageFadePause: 0
+
     onExpandedChanged: {
+        root.pageFadePause = Theme.barMs(root.expanded ? 140 : 0);
         if (root.expanded)
             return ;
 
@@ -484,7 +410,6 @@ BarPill {
         root.cancelListening();
     }
 
-    // ---------------- pill shell configuration ----------------
     shown: Prefs.showMedia
     compactWidth: compactRow.implicitWidth + 20
     panelWidth: Math.min(400, root.screenW - 34)
@@ -494,8 +419,6 @@ BarPill {
     compactInteractive: false
     panelFades: false
 
-    // so media keys / hyprland binds can reach the same actions the pill
-    // offers, e.g. `qs ipc call media identify`
     IpcHandler {
         target: "media"
 
@@ -533,8 +456,6 @@ BarPill {
 
     }
 
-    // last dozen identifications, kept next to the shell so they survive a
-    // restart - written by us only, so no external-edit reload to worry about
     FileView {
         id: historyFile
 
@@ -553,7 +474,7 @@ BarPill {
 
     }
 
-    // live position ticker (mpris doesn't auto-tick position for you)
+    // mpris doesn't auto-tick position
     Timer {
         interval: 1000
         running: root.isPlaying
@@ -565,8 +486,6 @@ BarPill {
         }
     }
 
-    // frame-synced rather than a fixed 33ms tick: the playhead advances once
-    // per displayed frame, so it moves as smoothly as the screen allows
     FrameAnimation {
         running: root.isPlaying && !trackHitArea.dragging
         onTriggered: root.livePosSec = Math.min(root.lenSec, root.posBase + (Date.now() - root.posTimestamp) / 1000)
@@ -595,8 +514,6 @@ BarPill {
         onTriggered: root.listenElapsed++
     }
 
-    // long enough for the two pactl queries above to answer, short enough
-    // that the sonar has barely finished its first ring
     Timer {
         id: captureStartTimer
 
@@ -640,8 +557,6 @@ BarPill {
                 for (let i = 0; i < raw.length; i++) {
                     const v = parseInt(raw[i]) || 0;
                     const p = prev[i];
-                    // fast attack, slow release - a meter should jump to a
-                    // peak and fall away from it, not mirror the raw signal
                     out.push((p === undefined || v >= p) ? v : p * 0.82 + v * 0.18);
                 }
                 root.bars = out;
@@ -681,7 +596,6 @@ BarPill {
 
     }
 
-    // songrec exits on its own the moment it recognises something
     Process {
         id: songrecProc
 
@@ -705,17 +619,11 @@ BarPill {
             if (!wasListening)
                 return ;
 
-            // a clean exit while we were still waiting means it gave up on a
-            // fingerprint; anything else means it never got off the ground
-            // (no songrec, bad device, no network)
             root.shazamState = (exitCode === 0 && root.shazamError === "") ? "nomatch" : "error";
         }
     }
 
     compactContent: [
-        // catches clicks not eaten by the play button's own MouseArea.
-        // middle/right skip tracks and the wheel rides the player's own
-        // volume, so the pill is a full remote without growing wider
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
@@ -742,9 +650,6 @@ BarPill {
             anchors.centerIn: parent
             spacing: 8
 
-            // a live meter whenever there's something loaded - it flattens
-            // to three dots when paused, so the pill shows state without
-            // spending width on it. Art belongs to the expanded card
             Item {
                 width: 14
                 height: 18
@@ -818,8 +723,6 @@ BarPill {
 
                 }
 
-                // the wheel readout borrows the title's slot for a moment
-                // instead of adding a control nobody needs at rest
                 Row {
                     id: volumeFlashRow
 
@@ -915,8 +818,6 @@ BarPill {
                         fallbackGlyph: 34
                     }
 
-                    // the art is the primary play surface - hovering it
-                    // says so, so the big button below is a convenience
                     Rectangle {
                         anchors.fill: parent
                         radius: Theme.radiusLg
@@ -965,8 +866,6 @@ BarPill {
                     width: root.contentWidth - 96 - 14
                     height: 96
 
-                    // m3 type roles: title-medium over body-medium over
-                    // label-small, each on its own on-surface tone
                     Column {
                         anchors.top: parent.top
                         width: parent.width
@@ -1001,11 +900,6 @@ BarPill {
 
                     }
 
-                    // m3 slider, scaled to this density: a thick rounded
-                    // track split by a 4px bar handle with a 6px gap on
-                    // each side, plus the stop indicator that marks the
-                    // track's end. Sits on the art's baseline, and only
-                    // exists for players that expose their own volume
                     Row {
                         id: volumeRow
 
@@ -1058,7 +952,6 @@ BarPill {
                                 color: Theme.accent
                             }
 
-                            // stop indicator at the far end of the track
                             Rectangle {
                                 anchors.right: parent.right
                                 anchors.rightMargin: 3
@@ -1132,14 +1025,11 @@ BarPill {
 
             }
 
-            // cava strip - dims rather than disappears when paused so the
-            // panel keeps its shape
             Item {
                 id: vizStrip
 
                 width: root.contentWidth
                 height: 28
-                // idle is a dimmer strip, not a ghost of one
                 opacity: root.isPlaying ? 1 : 0.75
 
                 Row {
@@ -1200,27 +1090,17 @@ BarPill {
                         property bool dragging: false
                         property real dragProgress: root.progress
                         readonly property real displayProgress: dragging ? dragProgress : root.progress
-                        // room for the handle dot so it doesn't clip at the edge
                         readonly property real trackInset: 8
 
                         width: parent.width
                         height: 22
 
-                        // m3 progress indicator, wavy: 4dp active and
-                        // inactive tracks with round caps, a 4dp-wide bar
-                        // handle with a gap either side, and a stop
-                        // indicator at the track's end. The wave is a fixed
-                        // shape - it doesn't scroll and doesn't react to
-                        // the music, so the only thing that moves is the
-                        // playhead
                         Canvas {
                             id: waveCanvas
 
                             property real animatedProgress: trackHitArea.displayProgress
                             readonly property real trackThickness: 4
                             readonly property real handleWidth: 4
-                            // not readonly: these carry Behaviors, and an
-                            // interceptor counts as a write
                             property real handleHeight: trackHitArea.hovering || trackHitArea.dragging ? 18 : 14
                             property real amplitude: trackHitArea.hovering || trackHitArea.dragging ? 4.5 : 3.5
                             readonly property real trackGap: 6
@@ -1260,12 +1140,9 @@ BarPill {
                                 const handleX = inset + Math.max(0, Math.min(usableWidth, usableWidth * animatedProgress));
                                 const activeEnd = handleX - trackGap - handleWidth / 2;
                                 const inactiveStart = handleX + trackGap + handleWidth / 2;
-                                // eases the wave in/out so both ends meet the
-                                // caps flat instead of mid-crest
                                 const rampLen = wavelength * 1.4;
                                 ctx.lineCap = "round";
                                 ctx.lineJoin = "round";
-                                // active track
                                 if (activeEnd - inset > trackThickness) {
                                     ctx.strokeStyle = Theme.accent;
                                     ctx.lineWidth = trackThickness;
@@ -1279,7 +1156,6 @@ BarPill {
                                     }
                                     ctx.stroke();
                                 }
-                                // inactive track, stopping short of the stop indicator
                                 const trackEnd = width - inset - stopIndicator * 2;
                                 if (trackEnd - inactiveStart > trackThickness) {
                                     ctx.strokeStyle = Theme.withBlur(Theme.bgHigh);
@@ -1289,14 +1165,12 @@ BarPill {
                                     ctx.lineTo(trackEnd, midY);
                                     ctx.stroke();
                                 }
-                                // stop indicator
                                 ctx.fillStyle = Theme.accent;
                                 ctx.globalAlpha = animatedProgress > 0.97 ? 0 : 0.55;
                                 ctx.beginPath();
                                 ctx.arc(width - inset - stopIndicator / 2, midY, stopIndicator / 2, 0, Math.PI * 2);
                                 ctx.fill();
                                 ctx.globalAlpha = 1;
-                                // handle
                                 roundedBar(ctx, handleX - handleWidth / 2, midY - handleHeight / 2, handleWidth, handleHeight, Theme.accent);
                             }
 
@@ -1409,8 +1283,6 @@ BarPill {
 
                 }
 
-                // no length reported: a live stream. Show that instead of
-                // a seek bar that can't seek
                 Row {
                     anchors.centerIn: parent
                     spacing: 7
@@ -1457,8 +1329,6 @@ BarPill {
 
             }
 
-            // the transport keeps the centre; the panel's own actions take
-            // the space either side of it, which is otherwise dead
             Item {
                 width: root.contentWidth
                 height: 40
@@ -1468,7 +1338,6 @@ BarPill {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
 
-                    // only earns its place when there's somewhere to switch to
                     IconBtn {
                         ghost: true
                         diameter: 28
@@ -1583,8 +1452,6 @@ BarPill {
 
                 }
 
-                // with nothing to control, the centre offers the one thing
-                // that still works instead of a row of dead buttons
                 PillBtn {
                     anchors.centerIn: parent
                     visible: root.player === null
@@ -1601,7 +1468,7 @@ BarPill {
         Behavior on opacity {
             SequentialAnimation {
                 PauseAnimation {
-                    duration: Theme.barMs(root.expanded ? 140 : 0)
+                    duration: root.pageFadePause
                 }
 
                 NumberAnimation {
@@ -1674,10 +1541,6 @@ BarPill {
 
                 }
 
-                // which ear to listen with: the speakers (names the track
-                // in a browser tab that reports nothing) or the room. The
-                // caption under the button says which is picked in words,
-                // so these only have to carry the choice
                 Row {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
@@ -1727,8 +1590,6 @@ BarPill {
                         height: 74
                         anchors.horizontalCenter: parent.horizontalCenter
 
-                        // sonar: one ring per beat, staggered once at the
-                        // start so they stay evenly spaced forever after
                         Repeater {
                             model: 3
 
@@ -1796,8 +1657,6 @@ BarPill {
                             color: Theme.accent
                             scale: listenArea.pressed ? 0.94 : (listenArea.containsMouse ? 1.05 : 1)
 
-                            // while listening the button itself breathes
-                            // with whatever the speakers are putting out
                             SequentialAnimation on opacity {
                                 running: root.shazamState === "listening"
                                 loops: Animation.Infinite
@@ -1931,7 +1790,6 @@ BarPill {
 
                 }
 
-                // result
                 Row {
                     anchors.verticalCenter: parent.verticalCenter
                     width: root.contentWidth
@@ -2179,7 +2037,7 @@ BarPill {
         Behavior on opacity {
             SequentialAnimation {
                 PauseAnimation {
-                    duration: Theme.barMs(root.expanded ? 140 : 0)
+                    duration: root.pageFadePause
                 }
 
                 NumberAnimation {
@@ -2277,40 +2135,19 @@ BarPill {
 
     }
 
-    // One line of text that scrolls itself when it doesn't fit, with both
-    // edges fading out.
-    //
-    // The fade is a real alpha fade of the text, not an overlay: MultiEffect's
-    // masking doesn't function in this environment (confirmed by testing
-    // maskSource against an always-visible item - see git history), and
-    // painting a same-colored rectangle over the text can't be seamless on a
-    // translucent/blurred background (stacking two partly-transparent layers
-    // of the same color is always MORE opaque than either alone, so it shows
-    // as a patch once blur is on). Instead each edge is cut into narrow
-    // clipped strips, each showing the correctly-offset text at its own
-    // opacity - built entirely from `opacity`, the one mechanism proven
-    // reliable here.
     component Marquee: Item {
         id: mq
 
         property string content: ""
         property color textColor: Theme.text
         property bool bold: false
-        // Theme.fs, not a bare number: this is a text size like any other, and
-        // callers that leave it alone should still track the text-size
-        // setting. It was missed by the shell-wide sweep because that matched
-        // `font.pixelSize:`, and this is a custom property of the same kind.
         property int pixelSize: Theme.fs(13)
-        // opt-in per instance, so a paused track sits still
         property bool scrolling: true
         readonly property int sliceCount: 7
         readonly property int sliceWidth: 2
-        // one loop of the text plus the gap that separates it from its repeat
+        // one loop of text plus the gap before its repeat
         readonly property real segmentWidth: measure.implicitWidth
-        // the text on its own, for callers that size themselves to fit it
         readonly property real naturalWidth: bare.implicitWidth
-        // measured against the bare text: the separator only exists to space
-        // the loop's two copies apart, so it must not decide whether to loop
         readonly property bool overflowing: mq.naturalWidth > mq.width
         readonly property bool animating: mq.scrolling && mq.overflowing
         property real currentX: 0
@@ -2359,7 +2196,6 @@ BarPill {
                 script: mq.currentX = 0
             }
 
-            // let a new title be readable before it starts moving
             PauseAnimation {
                 duration: Theme.barMs(900)
             }
@@ -2398,10 +2234,6 @@ BarPill {
                 width: (slice.isLeft || slice.isRight) ? mq.sliceWidth : Math.max(0, mq.width - mq.sliceCount * mq.sliceWidth * 2)
                 height: mq.height
                 clip: true
-                // the left edge only fades while text is actually scrolling
-                // past it - at rest the string's own start sits there and
-                // isn't being cut off. The right edge fades whenever the text
-                // overflows, scrolling or not, because it genuinely is cut
                 opacity: slice.isLeft ? (mq.animating ? (slice.index + 1) / (mq.sliceCount + 1) : 1) : (slice.isRight ? (mq.overflowing ? (mq.sliceCount - slice.rightIndex) / (mq.sliceCount + 1) : 1) : 1)
 
                 Row {
@@ -2445,9 +2277,6 @@ BarPill {
 
     }
 
-    // round icon button: accent-filled for the primary action, a flat dark
-    // surface container for the rest, ghost (no container at all) for the
-    // quiet ones. Hover lifts it and lays down an m3 state layer
     component IconBtn: Rectangle {
         id: btn
 
@@ -2475,7 +2304,6 @@ BarPill {
             glyphSize: btn.glyphSize
         }
 
-        // state layer: the on-color at m3's hover / pressed opacities
         Rectangle {
             anchors.fill: parent
             radius: parent.radius
@@ -2526,7 +2354,6 @@ BarPill {
 
     }
 
-    // labelled sibling of IconBtn, for actions that need a word
     component PillBtn: Rectangle {
         id: pill
 

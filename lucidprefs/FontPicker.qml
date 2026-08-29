@@ -2,18 +2,6 @@ import QtQuick
 import QtQuick.Controls.Basic
 import qs
 
-// Picks the shell's interface font from the families actually installed on
-// this machine.
-//
-// This replaced a free-text field, which could not work: the family string has
-// to match exactly what fontconfig calls the font, and the obvious spelling
-// usually isn't it - "JetBrains Mono" is installed here as "JetBrainsMono Nerd
-// Font". Qt silently falls back to a default when the name misses, so a typo
-// and a correct-but-unavailable font look identical to the user: nothing
-// happens. Choosing from the real list makes both cases impossible.
-//
-// Every row renders its own name in its own family, which is the whole reason
-// to show a list rather than ask someone to type.
 Item {
     id: picker
 
@@ -37,8 +25,6 @@ Item {
         picker.filter = "";
         picker.shown = true;
         searchInput.forceActiveFocus();
-        // start on whatever is in use, so the current choice is the first
-        // thing you see rather than something 900 families away
         var idx = picker.matches.indexOf(Theme.fontFamily);
         list.positionViewAtIndex(idx < 0 ? 0 : idx, ListView.Center);
     }
@@ -53,11 +39,6 @@ Item {
     }
 
     anchors.fill: parent
-    // `shown` is included rather than deriving visibility from opacity alone:
-    // opacity animates up from 0, so on the frame open() runs the item is
-    // still invisible - and forceActiveFocus() on an invisible item silently
-    // does nothing, which left the search box unfocused and every keystroke
-    // going to whatever was behind the window.
     visible: picker.shown || picker.opacity > 0.01
     opacity: picker.shown ? 1 : 0
 
@@ -148,8 +129,6 @@ Item {
                 clip: true
                 onTextChanged: picker.filter = searchInput.text
                 Keys.onEscapePressed: picker.dismiss()
-                // Return takes the top match, so typing "jetbrains" and
-                // pressing enter lands on it without reaching for the mouse
                 Keys.onReturnPressed: {
                     if (picker.matches.length > 0)
                         picker.choose(picker.matches[0]);
@@ -182,7 +161,6 @@ Item {
             clip: true
             model: picker.matches
             boundsBehavior: Flickable.StopAtBounds
-            // a picker over ~2000 families needs the list to stay light
             cacheBuffer: 400
 
             ScrollBar.vertical: ScrollBar {
@@ -237,7 +215,6 @@ Item {
                     anchors.rightMargin: 14
                     anchors.verticalCenter: parent.verticalCenter
                     text: fontRow.modelData
-                    // the point of the list: each name shown in its own face
                     font.family: fontRow.modelData
                     font.pixelSize: Theme.fontTitle
                     color: fontRow.current ? Theme.text : Theme.subtext

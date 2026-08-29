@@ -1,13 +1,6 @@
 import QtQuick
 import qs
 
-// The one confirmation step in the app. Every reset button raises
-// Prefs.resetConfirmRequested rather than acting, and this answers it - so
-// there is a single dialog to style and a single place where "are you sure"
-// is decided, instead of one per button.
-//
-// Deliberately scoped to the settings surface rather than being its own
-// window: it dims the app it belongs to, not the desktop.
 Item {
     id: dialog
 
@@ -31,8 +24,6 @@ Item {
         dialog.shown = false;
     }
 
-    // shared by the Reset button and the Return key, so the two can never
-    // drift apart
     function confirm() {
         if (!dialog.shown)
             return ;
@@ -54,8 +45,6 @@ Item {
 
     }
 
-    // dims the app behind the dialog, and swallows every click that misses
-    // the card so nothing underneath can be operated while it is up
     Rectangle {
         anchors.fill: parent
         color: Theme.alpha(Theme.cShadow, 0.55)
@@ -86,7 +75,7 @@ Item {
 
         }
 
-        // clicks on the card itself must not reach the dimmer behind it
+        // clicks on the card must not reach the dimmer
         MouseArea {
             anchors.fill: parent
         }
@@ -124,7 +113,6 @@ Item {
                 height: 8
             }
 
-            // M3 puts the confirming action last, at the trailing edge
             Row {
                 anchors.right: parent.right
                 spacing: 8

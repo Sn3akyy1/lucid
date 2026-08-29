@@ -1,48 +1,60 @@
 import QtQuick
-import QtQuick.Shapes
 import qs
 
 Item {
     id: powerRow
 
-    property var actions: [{
+    readonly property var actions: [{
         "id": "lock",
         "label": "Lock",
-        "iconPath": "M6 10V8a6 6 0 1 1 12 0v2h1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V11a1 1 0 0 1 1-1h1Zm2 0h8V8a4 4 0 1 0-8 0v2Zm4 4a1.5 1.5 0 0 1 1 2.63V18a1 1 0 1 1-2 0v-1.37A1.5 1.5 0 0 1 12 14Z"
+        "glyph": DockIcons.lock
     }, {
         "id": "logout",
         "label": "Log Out",
-        "iconPath": "M10 17v-2H3v-6h7V7l5 5-5 5Zm9 3H12v-2h7V6h-7V4h7a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2Z"
+        "glyph": DockIcons.logout
     }, {
         "id": "suspend",
         "label": "Suspend",
-        "iconPath": "M12 3a9 9 0 1 0 8.94 10.06.5.5 0 0 0-.66-.54A7 7 0 1 1 11.48 3.72a.5.5 0 0 0-.54-.66A9.06 9.06 0 0 0 12 3Z"
-    }, {
-        "id": "shutdown",
-        "label": "Shutdown",
-        "iconPath": "M13 3h-2v10h2V3Zm4.83 2.17-1.42 1.42A6.98 6.98 0 0 1 19 12a7 7 0 1 1-11.66-5.24L5.92 5.34A9 9 0 1 0 21 12a8.97 8.97 0 0 0-3.17-6.83Z"
+        "glyph": DockIcons.suspend
     }, {
         "id": "hibernate",
         "label": "Hibernate",
-        "iconPath": "M9.37 5.51A7.5 7.5 0 0 0 9.1 20.94a7.5 7.5 0 0 0 9.32-5.05.5.5 0 0 0-.58-.65 6 6 0 0 1-7.4-7.4.5.5 0 0 0-.07-.33.5.5 0 0 0-.62-.22 7.53 7.53 0 0 0-.38.22Z"
+        "glyph": DockIcons.hibernate
     }, {
         "id": "reboot",
         "label": "Reboot",
-        "iconPath": "M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8Z"
+        "glyph": DockIcons.reboot
+    }, {
+        "id": "shutdown",
+        "label": "Shutdown",
+        "glyph": DockIcons.power
     }]
-    // settled height once resize finishes, see WallpaperStrip.qml
+    // settled height once the panel resize finishes
     property real stableHeight: height
+    property int currentIndex: 0
 
     signal actionChosen(string id)
 
+    function step(delta) {
+        powerRow.currentIndex = Math.max(0, Math.min(powerRow.actions.length - 1, powerRow.currentIndex + delta));
+    }
+
+    function activateCurrent() {
+        var a = powerRow.actions[powerRow.currentIndex];
+        if (a)
+            powerRow.actionChosen(a.id);
+
+    }
+
     Row {
-        id: actionsRow
+        id: cards
 
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        height: powerRow.stableHeight
-        spacing: 12
+        anchors.topMargin: Math.max(0, (powerRow.stableHeight - cards.height) / 2)
+        height: Math.min(powerRow.stableHeight, 132)
+        spacing: 10
 
         Repeater {
             model: powerRow.actions
@@ -51,69 +63,74 @@ Item {
                 id: card
 
                 required property var modelData
-                property bool hovered: hoverHandler.hovered
-                property bool pressed: tapHandler.pressed
+                required property int index
 
-                width: (powerRow.width - 12 * 5) / 6
+                readonly property bool hovered: hoverHandler.hovered
+                readonly property bool pressed: tapHandler.pressed
+                readonly property bool selected: powerRow.currentIndex === card.index
+                readonly property bool destructive: card.modelData.id === "shutdown" || card.modelData.id === "reboot"
+                readonly property color tone: card.destructive ? Theme.error : Theme.accent
+
+                width: (powerRow.width - 10 * (powerRow.actions.length - 1)) / powerRow.actions.length
                 height: parent.height
                 y: card.hovered ? -4 : 0
 
                 Rectangle {
-                    id: cardBg
+                    id: container
 
                     anchors.fill: parent
-                    radius: 16
-                    color: card.hovered ? Theme.alpha(Theme.accent, 0.14) : Theme.alpha(Theme.text, 0.04)
+                    radius: Theme.radiusLg
+                    color: "transparent"
                     scale: card.pressed ? 0.96 : 1
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: parent.radius
+                        color: card.selected ? card.tone : Theme.text
+                        opacity: card.pressed ? Theme.statePressed : (card.selected ? (card.hovered ? 0.16 : Theme.stateFocus) : (card.hovered ? Theme.stateHover : 0))
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.durShort
+                            }
+
+                        }
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.durShort
+                            }
+
+                        }
+
+                    }
 
                     Column {
                         anchors.centerIn: parent
                         spacing: 10
 
-                        Shape {
+                        DockGlyph {
                             width: 26
                             height: 26
                             anchors.horizontalCenter: parent.horizontalCenter
-                            preferredRendererType: Shape.CurveRenderer
-
-                            ShapePath {
-                                fillColor: Theme.accent
-                                strokeWidth: 0
-
-                                PathSvg {
-                                    path: card.modelData.iconPath
-                                }
-
-                            }
-
-                            transform: Scale {
-                                xScale: 26 / 24
-                                yScale: 26 / 24
-                            }
-
+                            pathData: card.modelData.glyph
+                            glyphColor: (card.selected || card.hovered) ? card.tone : Theme.subtext
                         }
 
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: card.modelData.label
-                            color: Theme.text
+                            color: (card.selected || card.hovered) ? Theme.text : Theme.subtext
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(11)
-                            font.bold: true
-                        }
-
-                    }
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Theme.ms(180)
+                            font.pixelSize: Theme.fontLabel
+                            font.weight: Font.Medium
                         }
 
                     }
 
                     Behavior on scale {
                         NumberAnimation {
-                            duration: Theme.ms(120)
+                            duration: Theme.durQuick
                             easing.type: Easing.OutCubic
                         }
 
@@ -125,6 +142,12 @@ Item {
                     id: hoverHandler
                 }
 
+                onHoveredChanged: {
+                    if (card.hovered)
+                        powerRow.currentIndex = card.index;
+
+                }
+
                 TapHandler {
                     id: tapHandler
 
@@ -133,7 +156,7 @@ Item {
 
                 Behavior on y {
                     NumberAnimation {
-                        duration: Theme.ms(180)
+                        duration: Theme.durShort
                         easing.type: Easing.OutCubic
                     }
 

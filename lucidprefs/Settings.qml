@@ -5,29 +5,9 @@ import Quickshell.Io
 import Quickshell.Wayland
 import qs
 
-// LucidShell's settings app. A real toplevel window rather than a layer-shell
-// surface like the rest of this config - which is the point: the compositor
-// then treats it as an ordinary window, so it drags with Super+drag, closes
-// with the same Super+C bind as anything else, tiles or floats by window rule,
-// and can be alt-tabbed to. A layer surface can do none of that.
-//
-// Opened from the command line:
-//     qs ipc call settings open
-//     qs ipc call settings toggle
-//     qs ipc call settings bar
-//
-// Nothing in here owns any state. Every control reads and writes Prefs, which
-// is also what the rest of the shell reads - so a setting changed here and the
-// same setting changed anywhere else are one value, not two copies of it.
 FloatingWindow {
     id: win
 
-    // ---- scroll feel ----
-    // Both of these are the knobs to turn if the scrolling feels wrong.
-    // wheelStep is how far one notch of the wheel travels, in pixels;
-    // flickDecel is how hard a touchpad flick is braked (higher = stops
-    // sooner). Qt's defaults are roughly a 60px step and 1500 deceleration,
-    // which read as sluggish in a list this short.
     readonly property int wheelStep: 190
     readonly property int flickDecel: 6000
     readonly property int maxFlick: 9000
@@ -37,16 +17,13 @@ FloatingWindow {
         { "key": "general", "label": "General", "title": "General", "blurb": "Shape, colour and motion across the whole shell" },
         { "key": "bar", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
         { "key": "dock", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
-        { "key": "about", "label": "About", "title": "About", "blurb": "LucidShell" }
+        { "key": "about", "label": "About", "title": "About", "blurb": "Lucid" }
     ]
 
     function show(p) {
         if (p !== "")
             win.page = p;
 
-        // assigned rather than bound: the compositor owns this too (Super+C
-        // sets it false itself), and a binding would be destroyed the first
-        // time that happened, leaving the window unable to reopen
         win.visible = true;
     }
 
@@ -56,44 +33,27 @@ FloatingWindow {
         else
             confirmDialog.dismiss();
     }
-    // The compositor can close this window without going through `visible`
-    // (Super+C, or any other close request), which leaves the property
-    // reading true while the window is gone - after that, assigning true
-    // again is a no-op and the app can never be reopened. Resyncing here is
-    // what keeps `qs ipc call settings open` working afterwards.
     onClosed: win.visible = false
 
     visible: false
     title: "Lucid Settings"
     color: Theme.bg
 
-    // Every other surface in the shell frosts what is behind it through
-    // BackgroundEffect. This window only ever set a translucent colour, so at
-    // any Glass level above Off it went see-through with nothing blurring
-    // behind it - transparent rather than frosted, which is why it read as
-    // "the blur is missing here" next to the bar and dock.
-    //
-    // The window is a real toplevel rather than a layer surface, but the
-    // effect attaches to any window, so the same protocol serves both.
     BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && win.visible) ? settingsBlurRegion : null
 
     Region {
         id: settingsBlurRegion
 
-        // the whole window - the compositor rounds this window's corners
-        // itself and clips the blur to the same shape
-        item: surface
+        x: Math.ceil(surface.x - 0.002)
+        y: Math.ceil(surface.y - 0.002)
+        width: Math.max(0, Math.floor(surface.x + surface.width + 0.002) - Math.ceil(surface.x - 0.002))
+        height: Math.max(0, Math.floor(surface.y + surface.height + 0.002) - Math.ceil(surface.y - 0.002))
     }
-    // sized once rather than clamped against the screen every frame - it is a
-    // real window now, so the compositor is what decides where it goes and
-    // how big it is allowed to be
     implicitWidth: 1020
     implicitHeight: 700
     minimumSize.width: 720
     minimumSize.height: 480
 
-    // the launcher's >settings command reaches the app through Prefs rather
-    // than either file importing the other
     Connections {
         function onSettingsRequested(page) {
             win.show(page);
@@ -120,7 +80,7 @@ FloatingWindow {
             win.visible = false;
         }
 
-        // `qs ipc call settings show bar` - jumps straight to one page
+        // qs ipc call settings show bar
         function show(page: string): void {
             win.show(page);
         }
@@ -137,15 +97,11 @@ FloatingWindow {
             win.show("dock");
         }
 
-        // straight to the font list - the one setting most likely to be
-        // changed on a whim, and the slowest to reach by scrolling
         function font(): void {
             win.show("general");
             Prefs.fontPickerRequested();
         }
 
-        // deliberately asks rather than acting: a command line that silently
-        // wipes every setting is a worse version of the button that confirms
         function reset(): void {
             win.show("");
             Prefs.askReset("Reset every setting?", "Every setting on all three pages goes back to the value it ships with. Your theme, wallpaper and pinned applications are not touched.", Prefs.resetAllToken);
@@ -153,9 +109,6 @@ FloatingWindow {
 
     }
 
-    // Every reset button in the app raises Prefs.resetConfirmRequested rather
-    // than acting on its own; this is the single place that asks, and the
-    // single place that carries the answer out.
     ConfirmDialog {
         id: confirmDialog
 
@@ -197,8 +150,6 @@ FloatingWindow {
 
         anchors.fill: parent
         focus: true
-        // with a dialog up, Escape dismisses it rather than closing the whole
-        // app out from under the question it just asked
         Keys.onEscapePressed: {
             if (fontPicker.shown)
                 fontPicker.dismiss();
@@ -211,14 +162,10 @@ FloatingWindow {
         Keys.onEnterPressed: confirmDialog.confirm()
     }
 
-    // fills the window edge to edge and stays square: the compositor draws
-    // this window's rounded corners now, and a second radius inside them only
-    // shows as a dark seam in each corner
     Item {
         id: surface
 
         anchors.fill: parent
-        // ---------------- navigation ----------------
         Item {
             id: nav
 
@@ -247,7 +194,7 @@ FloatingWindow {
                     spacing: 0
 
                     Text {
-                        text: "LucidShell"
+                        text: "Lucid"
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontHeadline
@@ -277,8 +224,6 @@ FloatingWindow {
                 Repeater {
                     model: win.pages
 
-                    // M3 navigation drawer item: 56dp tall, fully rounded
-                    // active indicator filled with the accent container
                     Item {
                         id: navItem
 
@@ -368,8 +313,6 @@ FloatingWindow {
 
             }
 
-            // reset lives at the bottom of the nav rather than on any one
-            // page, because it resets all of them
             M3Button {
                 anchors.left: parent.left
                 anchors.leftMargin: 18
@@ -383,7 +326,6 @@ FloatingWindow {
 
         }
 
-        // ---------------- content ----------------
         Rectangle {
             id: content
 
@@ -391,16 +333,7 @@ FloatingWindow {
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            // withBlur, not the bare token: bgSunken has no alpha of its own,
-            // so at any Glass level above Off this pane stayed solid while the
-            // window behind it went translucent - which is why the nav rail
-            // showed the desktop through it and the content did not.
             color: Theme.withBlur(Theme.bgSunken)
-            // all four: the left pair is the inner curve away from the nav,
-            // and the right pair has to match the window's own corner radius.
-            // Without them this pane paints square corners over the surface's
-            // rounded ones - `clip: true` on the surface clips to its
-            // bounding rectangle, not to its rounded shape.
             topLeftRadius: Theme.radiusXl
             bottomLeftRadius: Theme.radiusXl
             topRightRadius: Theme.radiusXl
@@ -415,10 +348,6 @@ FloatingWindow {
                 anchors.top: parent.top
                 height: 84
 
-                // The header doubles as a titlebar: this hands the drag to
-                // the compositor via the real xdg_toplevel move request, so
-                // it behaves exactly like dragging any other window rather
-                // than being a home-made move that fights the window manager.
                 MouseArea {
                     anchors.fill: parent
                     onPressed: win.startSystemMove()
@@ -451,13 +380,6 @@ FloatingWindow {
 
                 }
 
-                // close affordance - clicking away and Esc both work too, but a
-                // visible control is what people reach for first
-                // Whether this page's surface is shown at all. It lives in the
-                // header rather than in a card of its own because it governs
-                // everything below it - a page whose switch is off has nothing
-                // for its settings to apply to, so the switch belongs above
-                // them, not in the list among them.
                 M3Switch {
                     id: surfaceToggle
 
@@ -527,9 +449,6 @@ FloatingWindow {
 
             }
 
-            // M3 fade-through between pages: the outgoing page leaves before
-            // the incoming one arrives, and the incoming one rises slightly
-            // as it fades in
             Repeater {
                 model: win.pages
 
@@ -554,11 +473,6 @@ FloatingWindow {
                     flickDeceleration: win.flickDecel
                     maximumFlickVelocity: win.maxFlick
 
-                    // Qt's built-in wheel handling moves a fixed ~60px per
-                    // notch with no easing, which is what makes the default
-                    // feel slow. This replaces it with a larger step that is
-                    // animated, so a fast scroll covers ground without the
-                    // jump reading as a teleport.
                     WheelHandler {
                         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                         onWheel: (event) => {
@@ -630,8 +544,6 @@ FloatingWindow {
                     Loader {
                         id: paneLoader
 
-                        // pages stay alive once built so scroll position and
-                        // any scan results survive switching away and back
                         property bool everActive: false
 
                         width: pane.width - 74

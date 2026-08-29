@@ -1,0 +1,18 @@
+# runtime state — written by the shell, personal to each install
+lucidbar/blur.json
+lucidbar/clock_reminders.json
+lucidbar/mpris_shazam.json
+luciddocks/pinned.json
+luciddocks/usage.json
+luciddocks/wallpaper.json
+lucidmoji/config.json
+lucidmoji/state.json
+lucidprefs/prefs.json
+
+# editor / tooling
+.claude/
+*.qmlc
+*.jsc
+
+# screenshot originals — the committed .webp versions are what the README uses
+assets/*.png

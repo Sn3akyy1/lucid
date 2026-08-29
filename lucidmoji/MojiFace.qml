@@ -6,12 +6,10 @@ Item {
     id: face
 
     property var host
-    // live while the window is up - drives focus, not the Item's own visible,
-    // which stays true regardless of whether the PanelWindow is shown
     readonly property bool active: face.host ? face.host.open : false
     readonly property string tab: face.host ? face.host.tab : "emoji"
     property string query: ""
-    // index into the current tab's rail (0 = Recent, 1 = Favourites, 2+ groups)
+    // rail index: 0 recent, 1 favourites, 2+ groups
     property int catIndex: 0
     property int selIndex: 0
     property int hoverIndex: -1
@@ -22,8 +20,6 @@ Item {
     readonly property bool isKaomoji: face.tab === "kaomoji"
     readonly property bool isGif: face.tab === "gif"
 
-    // char -> source entry, so a recent/favourite (stored as the literal
-    // string that was copied, tone included) can still resolve its name
     readonly property var emojiByChar: {
         var m = {};
         var data = face.host ? face.host.emojiData : [];
@@ -47,15 +43,11 @@ Item {
         return m;
     }
 
-    // one icon per group, in emoji.json / kaomoji.json group order
+    // one icon per group, in json group order
     readonly property var emojiGroupIcons: ["😀", "🧑", "🐻", "🍔", "✈️", "⚽", "💡", "❤️", "🏁"]
-    // the kaomoji rail is built from kaomoji parts rather than emoji - an
-    // emoji rail over a grid of text faces read as two different alphabets.
-    // Kept to ~3 narrow glyphs so they still fit a 34px rail cell.
     readonly property var kaomojiGroupIcons: ["^▽^", "♡‿♡", "T_T", "ಠ_ಠ", "・_・", "⊙_⊙", "^-^ﾉ", "･ᴥ･", "ᕕᐛᕗ", "◕‿◕", "°ʖ°", "【】"]
 
     readonly property var rail: {
-        // Recent/Favourites follow the same alphabet as the rest of the rail
         var out = [{
             "icon": face.isKaomoji ? "↺" : "🕘",
             "name": "Recent"
@@ -77,7 +69,7 @@ Item {
         return out;
     }
 
-    // the grid's model: {d: string to copy/show, n: name, k: keywords}
+    // grid model: {d: glyph, n: name, k: keywords}
     readonly property var entries: {
         if (!face.host || face.isGif)
             return [];
@@ -137,8 +129,6 @@ Item {
         };
     }
 
-    // recents/favourites are stored as the literal string that was copied, so
-    // their names come back through the char->entry map rather than the model
     function listEntries(list) {
         var map = face.isKaomoji ? face.kaomojiByChar : face.emojiByChar;
         var out = [];
@@ -153,10 +143,6 @@ Item {
         return out;
     }
 
-    // name-prefix beats name-word-start beats keyword hit, so "smile" leads
-    // with the smiling faces instead of whatever happens to list first.
-    // every tier anchors at a word start: a bare substring test drags in
-    // "communication"/"location"/"duplicate" for a query as short as "cat"
     function searchEntries(data, q) {
         if (q === "")
             return [];
@@ -216,9 +202,6 @@ Item {
         grid.positionViewAtIndex(face.selIndex, GridView.Contain);
     }
 
-    // Recent is the right landing spot once there's history, but opening onto
-    // an empty panel is a bad first impression - fall through to the first
-    // real group until something has actually been used
     function defaultCat() {
         if (!face.host)
             return 2;
@@ -268,17 +251,12 @@ Item {
         radius: Theme.radiusXl
         color: Theme.bg
 
-        // a plain Rectangle doesn't accept clicks, so without this a press on
-        // bare panel chrome (grid gutters, the caption strip, rail gaps) would
-        // fall straight through to the window-wide dismiss handler and close
-        // the panel. First child, so every interactive element still sits
-        // above it and gets the event first.
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.AllButtons
         }
 
-        // header: tabs, and everywhere else in this row is the drag grip
+        // everywhere but the tabs is the drag grip
         Item {
             id: header
 
@@ -302,8 +280,6 @@ Item {
                     dragZone.grabX = m.x;
                     dragZone.grabY = m.y;
                 }
-                // the panel moves under the cursor as it goes, so the grab
-                // point stays valid and never needs re-seeding
                 onPositionChanged: (m) => {
                     return face.dragged(m.x - dragZone.grabX, m.y - dragZone.grabY);
                 }
@@ -450,9 +426,6 @@ Item {
                     clip: true
                     focus: true
                     onTextChanged: face.query = text
-                    // left/right drive the grid, not the text cursor: queries
-                    // here are a word or two and grid navigation is what the
-                    // arrow keys are actually wanted for
                     Keys.onLeftPressed: face.moveSel(-1)
                     Keys.onRightPressed: face.moveSel(1)
                     Keys.onUpPressed: face.moveSel(-face.cols)
@@ -489,7 +462,6 @@ Item {
 
         }
 
-        // category rail - hidden on the GIF tab, which brings its own
         ListView {
             id: railView
 
@@ -499,9 +471,6 @@ Item {
             anchors.topMargin: face.isGif ? 0 : 12
             anchors.leftMargin: face.pad - 4
             anchors.rightMargin: face.pad - 4
-            // collapsed rather than merely hidden on the GIF tab, which brings
-            // its own rail - `visible: false` alone still reserves the height
-            // and leaves a dead band under the search bar
             height: face.isGif ? 0 : 30
             visible: !face.isGif
             orientation: ListView.Horizontal
@@ -571,8 +540,6 @@ Item {
                     }
                 }
 
-                // right-click the clock to wipe history, matching right-click
-                // meaning "unset this" on the grid tiles
                 TapHandler {
                     acceptedButtons: Qt.RightButton
                     enabled: railItem.index === 0
@@ -671,8 +638,6 @@ Item {
                         elide: Text.ElideRight
                     }
 
-                    // favourite marker: a dot, not a badge - keeps the grid
-                    // reading as one flat field of glyphs
                     Rectangle {
                         anchors.top: parent.top
                         anchors.right: parent.right
@@ -741,9 +706,6 @@ Item {
                     id: scrollBar
 
                     policy: ScrollBar.AsNeeded
-                    // AsNeeded keys off `size`, which is 0 - not 1 - for an
-                    // empty view, so an empty grid otherwise shows a
-                    // full-height handle
                     visible: grid.contentHeight > grid.height
                     width: 8
 
@@ -818,9 +780,6 @@ Item {
                 visible: face.isGif
                 host: face.host
                 query: face.query
-                // category tiles drive the shared search field rather than
-                // holding their own private query, so the box always shows
-                // what you're browsing and clearing it walks back
                 onQueryRequested: (q) => {
                     face.query = q;
                     searchInput.text = q;
@@ -838,9 +797,6 @@ Item {
             anchors.bottomMargin: face.isGif ? 0 : face.pad - 4
             anchors.leftMargin: face.pad
             anchors.rightMargin: face.pad
-            // nothing in the footer applies to the GIF tab (no glyph preview,
-            // no skin tone, no star), so it collapses instead of leaving a
-            // dead band that eats a row of tiles
             height: face.isGif ? 0 : 40
 
             MouseArea {
@@ -905,7 +861,6 @@ Item {
 
             }
 
-            // skin tone picker: default plus the five Fitzpatrick modifiers
             Row {
                 id: tonePicker
 

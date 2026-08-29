@@ -9,10 +9,8 @@ Item {
 
     property var host
     property string query: ""
-    // "browse" shows the category tiles, "results" shows actual GIFs. Mirrors
-    // the reference picker: tiles until you pick a lane, then a masonry wall.
     property string mode: "browse"
-    // which lane the results grid is showing: search | trending | fav | recent | local
+    // search | trending | fav | recent | local
     property string resultsKind: "search"
     property string resultsTitle: ""
     property var categories: []
@@ -23,7 +21,7 @@ Item {
     property string errorText: ""
     property int hoverIndex: -1
 
-    // "giphy" | "tenor" | "" - whichever key is configured, Giphy first
+    // "giphy" | "tenor" | ""
     readonly property string provider: {
         if (!pane.host)
             return "";
@@ -58,9 +56,6 @@ Item {
         return pane.searchResults;
     }
 
-    // Favourites and Trending lead, exactly like the reference; Recents and
-    // Local follow as the same kind of tile rather than as a separate rail.
-    // Everything after that is Tenor's own featured categories.
     readonly property var tiles: {
         if (!pane.host)
             return [];
@@ -101,9 +96,6 @@ Item {
         return out;
     }
 
-    // two-column masonry: each GIF keeps its real aspect ratio and lands in
-    // whichever column is currently shorter, which is what makes a wall of
-    // GIFs read as a wall instead of a grid of identical crops
     readonly property var columns: {
         var a = [];
         var b = [];
@@ -125,9 +117,6 @@ Item {
         return [a, b];
     }
 
-    // the masonry columns live inside a Repeater, so their height can't be
-    // read back for the Flickable's contentHeight - it's summed here from the
-    // same ratios the delegates use
     readonly property real wallHeight: {
         var totals = [0, 0];
         for (var c = 0; c < pane.columns.length; c++) {
@@ -146,8 +135,6 @@ Item {
 
     function openLane(tile) {
         if (tile.kind === "search") {
-            // routes through the shared search field so the box shows the term
-            // you're browsing, and clearing it walks back to the tiles
             pane.queryRequested(tile.label);
             return ;
         }
@@ -167,7 +154,7 @@ Item {
         pane.mode = "browse";
     }
 
-    // endpoint builders per provider. "search" | "trending" | "categories"
+    // "search" | "trending" | "categories"
     function apiUrl(kind, query) {
         if (pane.provider === "giphy") {
             var g = "https://api.giphy.com/v1/gifs/" + (kind === "trending" ? "trending" : kind) + "?api_key=" + encodeURIComponent(pane.host.giphyKey) + "&rating=pg-13";
@@ -282,7 +269,7 @@ Item {
             }
             var tags = d.tags || [];
             for (i = 0; i < tags.length; i++) {
-                // searchterm is the clean query ("lol"); name is decorated ("#lol")
+                // searchterm is clean ("lol"), name is decorated ("#lol")
                 out.push({
                     "term": tags[i].searchterm || (tags[i].name || "").replace("#", ""),
                     "image": tags[i].image || ""
@@ -316,9 +303,6 @@ Item {
         if (!entry)
             return ;
 
-        // a local gif goes on the clipboard as image data - there's nothing
-        // typeable about it. A Tenor gif is a URL, which is exactly what a
-        // chat box wants typed into it.
         if (entry.local)
             pane.host.copyGifFile(entry.path);
         else
@@ -392,7 +376,6 @@ Item {
 
     }
 
-    // ---------------- header ----------------
     Item {
         id: header
 
@@ -440,7 +423,6 @@ Item {
 
     }
 
-    // ---------------- category tiles ----------------
     GridView {
         id: browseGrid
 
@@ -490,8 +472,6 @@ Item {
 
                 }
 
-                // scrim: the label has to stay readable over an arbitrary
-                // frame of an arbitrary GIF, so this is legibility, not decor
                 Rectangle {
                     anchors.fill: parent
                     color: Theme.alpha(Theme.cShadow, tileHover.hovered ? 0.3 : 0.45)
@@ -552,7 +532,6 @@ Item {
 
     }
 
-    // ---------------- results (masonry) ----------------
     Flickable {
         id: wall
 
@@ -681,8 +660,6 @@ Item {
 
     }
 
-    // no key: the Favourites/Recents/Local lanes still work, so this is a
-    // footnote under them rather than an overlay covering them
     Column {
         id: keyNotice
 
@@ -711,7 +688,6 @@ Item {
 
     }
 
-    // ---------------- empty states ----------------
     Column {
         anchors.centerIn: parent
         width: parent.width - 60

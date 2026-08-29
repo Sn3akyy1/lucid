@@ -3,13 +3,6 @@ import QtQuick.Shapes
 import Quickshell.Bluetooth
 import qs
 
-// The Bluetooth control surface, as plain content with no pill of its own.
-// Was BluetoothWidget.qml, a bar module in its own right; now one of the views
-// the System panel morphs into. Its title and enable switch moved up into the
-// System panel's sub-view header, which is why the block that drew them here
-// is gone - everything else is the same logic and the same layout.
-//
-// The host sets `width` and `active` and reads `implicitHeight`.
 Item {
     id: root
 
@@ -131,7 +124,6 @@ Item {
         width: root.width
         spacing: 10
 
-        // SCAN ROW
         Item {
             id: scanButton
 
@@ -224,7 +216,6 @@ Item {
 
         }
 
-        // DISCOVERABLE ROW
         Item {
             visible: root.btEnabled
             width: parent.width
@@ -651,7 +642,6 @@ Item {
             target: devItem.modelData
         }
 
-        // row face
         Rectangle {
             width: parent.width
             height: 42
@@ -871,7 +861,6 @@ Item {
 
         }
 
-        // expand content
         Item {
             id: expandArea
 

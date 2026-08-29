@@ -1,0 +1,25 @@
+{
+    "pinnedApps": [
+        {
+            "appId": "org.gnome.Nautilus",
+            "appKey": "nautilus",
+            "command": "nautilus --new-window",
+            "iconName": "org.gnome.Nautilus",
+            "name": "Files"
+        },
+        {
+            "appId": "firefox",
+            "appKey": "firefox",
+            "command": "firefox",
+            "iconName": "firefox",
+            "name": "Firefox"
+        },
+        {
+            "appId": "kitty",
+            "appKey": "kitty",
+            "command": "kitty",
+            "iconName": "kitty",
+            "name": "Kitty"
+        }
+    ]
+}

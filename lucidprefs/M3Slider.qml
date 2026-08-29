@@ -1,32 +1,16 @@
 import QtQuick
 import qs
 
-// Material 3 slider: a 16dp track split around a 4x44dp bar handle with a 6dp
-// gap either side, outer ends fully rounded and inner ends squared back to
-// 2dp. These are the metrics the launcher's old >blur strip (luciddocks/
-// BlurRow.qml) used before that strip was removed in favour of the Glass
-// slider on this app's General page, so the control kept its feel.
-//
-// Handles both continuous and stepped values. Stop indicators only render for
-// stepped sliders with few enough steps to stay legible - a 1..100 slider
-// dotted every step is noise, not information.
 Item {
     id: slider
 
     property real from: 0
     property real to: 1
     property real stepSize: 0
-    // driven by its binding, never self-assigned - see the note in M3Switch.
-    // `moved` fires continuously during a drag, so whatever this is bound to
-    // has already caught up by the time the drag ends.
     property real value: 0
     property bool enabled: true
-    // optional per-step names, e.g. ["Off", "Light", "Heavy"] - when set,
-    // these replace the numeric readout entirely
     property var stepLabels: null
     property string suffix: ""
-    // how many decimals the numeric readout keeps; steps of 1 or more never
-    // want any
     property int decimals: slider.stepSize >= 1 ? 0 : 2
     property bool dragging: false
     property real dragValue: 0
@@ -46,8 +30,6 @@ Item {
         return slider.displayValue.toFixed(slider.decimals) + slider.suffix;
     }
 
-    // emitted continuously while dragging, not just on release - a shell
-    // setting with no live preview is guesswork
     signal moved(real v)
 
     function snap(v) {
@@ -60,9 +42,6 @@ Item {
     }
 
     function updateFromX(px) {
-        // the handle travels inside the track's bounds rather than over its
-        // full width, so the click has to be mapped through the same inset
-        // or the top value is unreachable
         var travel = track.width - track.handleWidth;
         var pct = travel > 0 ? Math.max(0, Math.min(1, (px - track.handleWidth / 2) / travel)) : 0;
         var next = slider.snap(slider.from + pct * slider.span);
@@ -84,9 +63,6 @@ Item {
     }
 
 
-    // M3's value indicator, kept visible at rest rather than only while
-    // dragging - in a settings list the current value is the whole point, and
-    // a slider you have to grab to read is a slider you have to guess at
     Item {
         id: indicator
 
@@ -220,9 +196,6 @@ Item {
 
         }
 
-        // one dot per step, contrast flipping as the active track sweeps past
-        // it, and the one currently under the handle dropping out rather than
-        // showing through the gap
         Repeater {
             model: slider.showStops ? slider.stepCount : 0
 

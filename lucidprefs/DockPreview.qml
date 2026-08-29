@@ -1,9 +1,6 @@
 import QtQuick
 import qs
 
-// The dock at its currently chosen size, spacing and edge treatment. Icon
-// size and spacing in particular are the kind of setting where a number means
-// nothing until you see it.
 Rectangle {
     id: preview
 
@@ -22,19 +19,17 @@ Rectangle {
         Rectangle {
             id: bar
 
-            // the real dock is 62 tall around a 46 icon slot, so the mock
-            // keeps that same 16px of chrome as the icon size moves
             readonly property real scaleFactor: 0.5
 
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: Prefs.dockNotch ? 0 : Math.max(2, Prefs.dockBottomMargin * bar.scaleFactor * 0.5)
             width: icons.width + 12
-            height: icons.height + 8
+            height: icons.height + 20 * bar.scaleFactor
             color: Theme.bgOpaque
-            radius: 5
-            bottomLeftRadius: Prefs.dockNotch ? 0 : 5
-            bottomRightRadius: Prefs.dockNotch ? 0 : 5
+            radius: Math.min(Theme.radiusXl * bar.scaleFactor, bar.height / 2)
+            bottomLeftRadius: Prefs.dockNotch ? 0 : bar.radius
+            bottomRightRadius: Prefs.dockNotch ? 0 : bar.radius
 
             Behavior on anchors.bottomMargin {
                 NumberAnimation {
@@ -63,8 +58,6 @@ Rectangle {
                             anchors.fill: parent
                             anchors.margins: 1
                             radius: width * 0.24
-                            // the middle icon stands in for a hovered one, so
-                            // the magnification setting has something to show
                             scale: Prefs.dockMagnify && parent.index === 2 ? 1.35 : 1
                             color: Theme.alpha(Theme.text, parent.index === 2 ? 0.5 : 0.28)
 
@@ -80,7 +73,7 @@ Rectangle {
                         }
 
                         Rectangle {
-                            width: 3
+                            width: parent.index === 2 ? 9 : 3
                             height: 3
                             radius: 1.5
                             anchors.horizontalCenter: parent.horizontalCenter

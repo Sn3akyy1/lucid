@@ -2,11 +2,6 @@ import QtQuick
 import QtQuick.Shapes
 import qs
 
-// The Lucida - the astronomical term for the brightest star in a
-// constellation. Same construction as the launcher's dock icon (a broken
-// orbit, the bright one at its centre, one lesser body outside the gap),
-// re-authored here so the settings app doesn't have to reach into Dock.qml
-// for it. Authored on a 24x24 grid and scaled to whatever size it is given.
 Item {
     id: mark
 
@@ -69,7 +64,7 @@ Item {
 
         }
 
-        // authored on a 24x24 grid; this maps it onto the real size
+        // authored on a 24x24 grid
         transform: Scale {
             xScale: mark.width / 24
             yScale: mark.height / 24

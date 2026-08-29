@@ -5,16 +5,6 @@ import Quickshell.Hyprland._FocusGrab
 import Quickshell.Io
 import qs
 
-// The clock, calendar and reminders.
-//
-// The expanded face used to be a 300x480 portrait column - hero card, weather,
-// calendar, stacked. It reads as a landscape panel now: the hero, the weather
-// and an "up next" card hold a left rail while the calendar takes the room it
-// always wanted on the right. Nothing about the cards themselves changed, they
-// sit side by side instead of end to end.
-//
-// The pill shell around it comes from BarPill; the reminder toast rides
-// BarPill's alt surface, which is the same third state this module always had.
 BarPill {
     id: root
 
@@ -66,9 +56,6 @@ BarPill {
         return false;
     }
 
-    // ---------------- up next ----------------
-    // The nearest reminder still ahead of now, for the left rail's third card.
-    // Re-evaluates on the same tick the rest of the panel does.
     readonly property var nextReminder: {
         root.clockTick;
         const now = new Date();
@@ -90,8 +77,6 @@ BarPill {
         } : null;
     }
 
-    // "in 20 minutes", "tomorrow", "in 3 days" - a relative distance rather
-    // than a second timestamp next to the one already shown.
     function untilText(at) {
         if (!at)
             return "";
@@ -400,13 +385,11 @@ BarPill {
         root.transitionToMonth(newYear, newMonth, dir);
     }
 
-    // ---------------- pill shell configuration ----------------
     shown: Prefs.showClock
     compactWidth: compactRow.implicitWidth + root.horizontalPadding * 2
-    // landscape: the calendar sets the height, the rail fills it
     panelWidth: Math.min(620, root.screenW - 34)
     panelHeight: Math.min(root.maxPanelHeight, expandedRow.implicitHeight + 32)
-    // the reminder toast, on BarPill's alt surface
+    // reminder toast, on BarPill's alt surface
     altOpen: root.showingNotify
     altWidth: 270
     altHeight: 78
@@ -416,10 +399,6 @@ BarPill {
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
     readonly property int maxPanelHeight: Math.min(560, Math.max(240, root.screenH - 40))
 
-    // The two calendar grids are filled imperatively rather than bound (they
-    // cross-slide, so each has to hold its own month while the other animates
-    // in), which left them empty until the first expand fired. Seeding them at
-    // construction means the panel is correct however it is first shown.
     Component.onCompleted: root.resyncCalendarGrids()
     onExpandedChanged: {
         if (expanded) {
@@ -559,8 +538,6 @@ BarPill {
             }
 
             Rectangle {
-                // follows the date it separates - on its own it was a dot
-                // hanging off the end of the time with nothing after it
                 visible: Prefs.clockShowDate
                 width: 3
                 height: 3
@@ -871,7 +848,6 @@ BarPill {
                 anchors.margins: 16
                 spacing: 14
 
-                // left rail - hero, weather, and what is coming up
                 Column {
                     id: leftRail
 
@@ -1243,9 +1219,6 @@ BarPill {
 
                     }
 
-                    // UP NEXT - new here. The calendar could always show that a
-                    // day had a reminder on it, but nothing said which one was
-                    // actually next without opening the day.
                     Rectangle {
                         id: upNextCard
 
@@ -1297,7 +1270,6 @@ BarPill {
 
                 }
 
-                // the calendar, in the width it always wanted
                 Column {
                     width: parent.width - leftRail.width - parent.spacing
                     spacing: 10
@@ -1353,8 +1325,6 @@ BarPill {
 
                         }
 
-                        // two grids ping-ponged so month changes slide instead
-                        // of popping — see root.transitionToMonth()
                         Item {
                             id: calViewport
 
@@ -1596,7 +1566,6 @@ BarPill {
 
                             }
 
-                            // AM/PM segmented toggle
                             Rectangle {
                                 id: meridiemToggle
 
@@ -1791,7 +1760,6 @@ BarPill {
 
     }
 
-    // circular tonal icon button, used for calendar month nav
     component NavButton: Item {
         id: navBtn
 
@@ -1846,7 +1814,7 @@ BarPill {
 
     }
 
-    // two of these get ping-ponged so month changes slide instead of pop
+    // two of these ping-pong so month changes slide
     component MonthGrid: Column {
         id: monthGrid
 
@@ -1955,7 +1923,6 @@ BarPill {
                             font.pixelSize: Theme.fs(12)
                         }
 
-                        // reminder indicator dot
                         Rectangle {
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.bottom: parent.bottom
@@ -2044,7 +2011,7 @@ BarPill {
 
     }
 
-    // one stroked weather icon layer, crossfades when conditions change
+    // one weather icon layer, crossfades on change
     component WeatherGlyph: Shape {
         id: glyph
 

@@ -1,10 +1,6 @@
 import QtQuick
 import qs
 
-// One group of related settings: a small section label sitting outside the
-// surface, then a tonal container holding the rows. Grouping is done with
-// whitespace and a single surface step rather than borders or shadows, which
-// is how the rest of this shell separates things.
 Item {
     id: card
 
@@ -41,8 +37,6 @@ Item {
         width: parent.width
         implicitHeight: inner.implicitHeight + 8
         radius: Theme.radiusXl
-        // tracks Glass like the pane under it, so the two stay a consistent
-        // stack of glass rather than a solid card floating on a clear one
         color: Theme.withBlur(Theme.bgTile)
 
         Column {

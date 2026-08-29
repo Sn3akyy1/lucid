@@ -1,21 +1,12 @@
 import QtQuick
 import qs
 
-// Segmented button: a rounded track split into equal segments, the selected
-// one filled with the accent container and carrying a check glyph. The track
-// itself is sunk a step below the card it sits on, which is what separates the
-// two halves - there is no outline, so the contrast between the filled half
-// and the sunken one is doing all the work.
-//
-// Used for the either/or shape choices (islands vs notches) where a switch
-// would force one option to be the unlabelled "off" state - both options here
-// are real, named choices and deserve to be shown as such.
 Item {
     id: seg
 
     // [{ "key": "island", "label": "Islands" }, ...]
     property var options: []
-    // driven by its binding, never self-assigned - see the note in M3Switch
+    // driven by its binding, never self-assigned
     property string current: ""
     property bool enabled: true
 
@@ -59,11 +50,6 @@ Item {
                 width: seg.options.length > 0 ? seg.width / seg.options.length : 0
                 height: seg.height
 
-                // Sits flush against the track - with the outline gone there
-                // is no border to inset away from. Unselected stays
-                // transparent so the track's own darker fill shows through,
-                // rather than painting a second copy of it that would square
-                // off the rounded ends.
                 Rectangle {
                     anchors.fill: parent
                     topLeftRadius: cell.isFirst ? seg.height / 2 : 0
@@ -81,9 +67,6 @@ Item {
 
                 }
 
-                // divider on the leading edge, hidden whenever either side of
-                // it is filled - M3 drops the divider next to a selected
-                // segment rather than drawing a line through the fill
                 Rectangle {
                     width: 1
                     height: parent.height

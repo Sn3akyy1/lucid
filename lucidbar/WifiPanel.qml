@@ -3,23 +3,10 @@ import Quickshell.Io
 import Quickshell.Networking
 import qs
 
-// The Wi-Fi / Ethernet control surface, as plain content with no pill of its
-// own. It used to be a bar module in its own right (Network.qml, ~2000 lines,
-// of which the outer ~400 were a copy of everybody else's pill shell); it is
-// now one of the views the System panel morphs into, so the bar carries one
-// fewer pill and the network state lives next to the rest of the system state
-// it belongs with.
-//
-// The host sets `width` and `active` and reads `implicitHeight`. Everything
-// below the component/function block is the same logic and the same layout
-// Network.qml had - nothing about how this looks was changed in the move.
 Item {
     id: root
 
-    // true while this view is the one the System panel is showing. Drives the
-    // per-row reset that used to hang off the module's own `expanded`.
     property bool active: false
-    // which row in the list is opened out into its detail form
     property string expandedKey: ""
 
     component EthernetGlyph: Item {
@@ -57,7 +44,7 @@ Item {
 
     }
 
-    // shared so the compact pill and the expanded list can never drift apart
+    // shared so the pill and the list can't drift apart
     component WifiStrengthGlyph: Text {
         id: wsg
 
@@ -583,7 +570,6 @@ Item {
         const raw = activeNetwork.signalStrength;
         return raw <= 1 ? raw * 100 : raw;
     }
-    // what the System pill and its Wi-Fi tile read for a one-line summary
     readonly property string statusText: {
         if (root.primaryIsEthernet)
             return "Ethernet";
@@ -824,7 +810,7 @@ Item {
         }
     }
 
-    // Trigger auto-connect on interface when Wi-Fi is re-enabled
+    // auto-connect when wi-fi is re-enabled
     Process {
         id: triggerDeviceAutoconnectProc
 
@@ -940,7 +926,6 @@ Item {
         width: root.width
         spacing: 10
 
-        // connectivity banner
         Item {
             visible: Networking.connectivity === NetworkConnectivity.None || Networking.connectivity === NetworkConnectivity.Portal || Networking.connectivity === NetworkConnectivity.Limited
             width: parent.width
@@ -978,7 +963,6 @@ Item {
 
         }
 
-        // ethernet
         Item {
             visible: root.wiredDevice !== null
             width: parent.width
@@ -1072,7 +1056,6 @@ Item {
 
         }
 
-        // wi-fi subheader
         Item {
             width: parent.width
             height: 24
@@ -1235,7 +1218,6 @@ Item {
 
         }
 
-        // network list
         Column {
             id: listCol
 
@@ -1338,7 +1320,6 @@ Item {
 
             }
 
-            // hidden network
             Column {
                 width: parent.width
                 spacing: 8

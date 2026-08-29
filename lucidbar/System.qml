@@ -9,40 +9,28 @@ import Quickshell.Services.UPower
 import Quickshell.Widgets
 import qs
 
-// The control centre - and, since this pass, the only place network and
-// bluetooth live.
-//
-// Both used to be bar pills of their own, each with its own copy of the pill
-// shell and each opening a panel that duplicated status this panel already
-// showed. Their two tiles here could only hand off: close System, open the
-// other module. Now the panel *becomes* them - the same surface morphs from
-// the control centre into the Wi-Fi or Bluetooth view and back, so the bar
-// carries two fewer pills and the connection state sits with the rest of the
-// system state it belongs with.
-//
-// The shell around all of this (morph/pop-up geometry, radii, motion, the
-// hover affordance) now comes from BarPill, which replaced the copy of it
-// every module used to carry.
 BarPill {
     id: root
 
-    // sibling modules, wired from shell.qml so we can hand off to the real panels
+    // wired from shell.qml, for handing off to the real panels
     property var notifMod: null
     property var mprisMod: null
 
-    // ---------------- view stack ----------------
-    // "main" is the control centre; the other two are the panels that used to
-    // be separate modules. One property drives the slide, the cross-fade and
-    // the panel's own height.
     property string view: "main"
     readonly property bool inSubView: root.view !== "main"
 
-    // True only while a real view change is in flight. The slide Behaviors
-    // below are gated on it, because `x` is derived from the panel's width:
-    // when the panel first lays out that width goes 0 -> 400, the binding
-    // re-evaluates, and an ungated Behavior *animates* that, sweeping the
-    // sub-view across the panel every time the panel opened.
     property bool viewSwitching: false
+
+    Timer {
+        id: viewResetTimer
+
+        interval: Theme.barMs(700)
+        onTriggered: {
+            if (!root.expanded)
+                root.view = "main";
+
+        }
+    }
 
     Timer {
         id: viewSwitchTimer
@@ -58,30 +46,16 @@ BarPill {
         root.viewSwitching = true;
         viewSwitchTimer.restart();
 
-        // Arm the height Behavior BEFORE switching, never after. Assigning
-        // `view` re-evaluates viewContentHeight -> panelHeight -> the pill's
-        // implicitHeight synchronously, and a Behavior is consulted at the
-        // moment the property is written - so with these two lines the other
-        // way round the panel had already snapped to its new height by the
-        // time the gate opened, and all that was left to see was the two
-        // views cross-fading. That is the "it fades instead of morphing" bug.
         root.beginTransition();
         root.view = v;
     }
 
     readonly property int horizontalPadding: 16
-    // logical px shrink as the compositor scale goes up (a 1920 panel at 1.2
-    // is only 1600 wide to lay out in), so every fixed panel dimension is
-    // clamped against the screen rather than trusted as an absolute.
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
     readonly property int maxPanelHeight: Math.min(820, Math.max(200, root.screenH - 40))
     readonly property int contentWidth: root.panelWidth - 28
     readonly property int subHeaderHeight: 38
-    // How tall the view currently showing wants to be. The panel follows
-    // whichever one is on screen, so switching views resizes the surface the
-    // same way opening it does rather than cropping the new view to the old
-    // one's height.
     readonly property real viewContentHeight: {
         if (root.view === "wifi")
             return wifiPanel.implicitHeight + root.subHeaderHeight + 10;
@@ -106,9 +80,6 @@ BarPill {
         { "max": 66, "path": "M12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM12 1a1 1 0 0 1 1 1v1.5a1 1 0 1 1-2 0V2a1 1 0 0 1 1-1Zm0 18.5a1 1 0 0 1 1 1V22a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1ZM1 12a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H2a1 1 0 0 1-1-1Zm18.5 0a1 1 0 0 1 1-1H22a1 1 0 1 1 0 2h-1.5a1 1 0 0 1-1-1Z" },
         { "max": 100, "path": "M12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM12 1a1 1 0 0 1 1 1v1.5a1 1 0 1 1-2 0V2a1 1 0 0 1 1-1Zm0 18.5a1 1 0 0 1 1 1V22a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1ZM4.22 4.22a1 1 0 0 1 1.41 0l1.06 1.06a1 1 0 1 1-1.41 1.41L4.22 5.63a1 1 0 0 1 0-1.41Zm12.6 12.6a1 1 0 0 1 1.41 0l1.06 1.06a1 1 0 0 1-1.41 1.41l-1.06-1.06a1 1 0 0 1 0-1.41ZM1 12a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H2a1 1 0 0 1-1-1Zm18.5 0a1 1 0 0 1 1-1H22a1 1 0 1 1 0 2h-1.5a1 1 0 0 1-1-1ZM4.22 19.78a1 1 0 0 1 0-1.41l1.06-1.06a1 1 0 1 1 1.41 1.41l-1.06 1.06a1 1 0 0 1-1.41 0Zm12.6-12.6a1 1 0 0 1 0-1.41l1.06-1.06a1 1 0 1 1 1.41 1.41l-1.06 1.06a1 1 0 0 1-1.41 0Z" }
     ]
-    // Material Design "volume_mute"/"volume_down"/"volume_up" - sourced
-    // from google/material-design-icons so the level glyphs are the real
-    // authored icons instead of a hand-approximated speaker shape
     readonly property var volumeIconLevels: [
         { "max": 0, "path": "M7 9v6h4l5 5V4l-5 5H7z" },
         { "max": 49, "path": "M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z" },
@@ -158,16 +129,10 @@ BarPill {
         brightnessDebounce.restart();
     }
 
-    // ids whose mini card has already been built once, so only a notification
-    // nobody has seen plays the arrival animation - the view rebuilds delegates
-    // freely, and the two-card window means cards come and go constantly. Same
-    // registry idea as lucidbar/Notifications.qml.
     property var notifShownIds: ({})
     property bool notifShownSeeded: false
 
     function markNotifShown(id) {
-        // everything already pending the first time a card is built predates
-        // this panel, so it counts as seen
         if (!root.notifShownSeeded) {
             const pending = root.notifMod ? root.notifMod.sortedNotifications : [];
             for (const n of pending) root.notifShownIds[n.id] = true
@@ -180,7 +145,6 @@ BarPill {
         return true;
     }
 
-    // ---------------- pill shell configuration ----------------
     shown: Prefs.showSystem
 
     compactWidth: content.implicitWidth + root.horizontalPadding * 2
@@ -196,6 +160,7 @@ BarPill {
             readMaxProc.running = true;
 
     }
+    onCompactClicked: root.view = "main"
     onExpandedChanged: {
         if (expanded) {
             statsTimer.restart();
@@ -203,9 +168,7 @@ BarPill {
         } else {
             statsTimer.stop();
             diskDropdownOpen = false;
-            // a reopened panel always starts at the control centre rather
-            // than wherever it was left
-            view = "main";
+            viewResetTimer.restart();
         }
     }
 
@@ -421,9 +384,6 @@ BarPill {
         objects: [root.sink, root.source]
     }
 
-    // a Repeater over a fresh JS array rebuilds every delegate on every change,
-    // so nothing could ever animate; this diffs the two-card window into real
-    // insert/remove signals for the list below
     ScriptModel {
         id: miniNotifModel
 
@@ -445,10 +405,6 @@ BarPill {
             anchors.centerIn: parent
             spacing: 8
 
-            // Network and Bluetooth state, which used to be two pills of
-            // their own out in the bar. Folding the panels in here without
-            // bringing their glyphs along would have meant losing the
-            // at-a-glance status entirely.
             Item {
                 width: 16
                 height: 16
@@ -458,8 +414,6 @@ BarPill {
                     anchors.centerIn: parent
                     visible: !wifiPanel.primaryIsEthernet
                     text: {
-                        // the same ramp WifiPanel's own glyph uses, so the
-                        // pill and the list can never disagree
                         const glyphs = ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"];
                         if (!Networking.wifiEnabled)
                             return "󰤮";
@@ -472,11 +426,6 @@ BarPill {
                     font.pixelSize: Theme.fs(15)
                 }
 
-                // The same glyph the Network pill drew, redrawn here rather
-                // than shared: an inline `component` is visible only inside
-                // the file that declares it, and this one belongs to
-                // WifiPanel. qmllint does not catch the cross-file reference -
-                // only the running shell does.
                 Item {
                     anchors.centerIn: parent
                     width: 16
@@ -523,22 +472,18 @@ BarPill {
                 iconSize: 15
             }
 
-            // volume - was a hardcoded full-volume glyph regardless of
-            // level; now morphs the same way the expanded slider does
             StatusIndicator {
                 svgPath: root.volumeIconFor(root.volumePercent)
                 labelText: root.volMuted ? "Muted" : root.volumePercent
                 isMuted: root.volMuted
             }
 
-            // microphone
             StatusIndicator {
                 svgPath: "M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
                 labelText: root.micMuted ? "Off" : "On"
                 isMuted: root.micMuted
             }
 
-            // battery - color shifts with charge state
             Row {
                 id: batteryRow
 
@@ -661,29 +606,13 @@ BarPill {
 
             anchors.fill: parent
 
-            // The control centre. Slides a little to the left and fades as a
-            // sub-view takes over, so the two read as one surface moving
-            // rather than two panels swapping.
             Item {
                 id: mainView
 
-                // A push, not a cross-fade. The two views never dissolve
-                // through each other and never both sit at part opacity: the
-                // control centre leaves to the left exactly as the sub-view
-                // arrives from the right, one page displacing the other. The
-                // panel clips (shell.clip), so whatever is off its edge is
-                // simply not drawn.
-                //
-                // x is animated, so these cannot use anchors.fill - an anchor
-                // would own x and the slide would never move.
                 y: 0
                 width: panelStack.width
                 height: panelStack.height
-                // panelWidth, not `width`: panelWidth is computed from the
-                // screen and is stable from the first frame, where the laid-out
-                // width starts at 0.
                 x: root.inSubView ? -root.panelWidth : 0
-                // fully off to the left once the sub-view has taken over
                 visible: x > -root.panelWidth + 0.5
 
                 Behavior on x {
@@ -713,7 +642,6 @@ BarPill {
                         width: scrollArea.width
                         spacing: 14
 
-                        // toggle grid
                         Grid {
                             width: root.contentWidth
                             columns: 2
@@ -797,7 +725,6 @@ BarPill {
                             color: Theme.outline
                         }
 
-                        // sliders
                         Column {
                             width: root.contentWidth
                             spacing: 12
@@ -828,8 +755,6 @@ BarPill {
                             color: Theme.outline
                         }
 
-                        // now playing shortcut - background click opens Mpris,
-                        // transport buttons have their own MouseAreas on top
                         Rectangle {
                             id: mprisSection
 
@@ -1049,7 +974,6 @@ BarPill {
                             color: Theme.outline
                         }
 
-                        // stats
                         Column {
                             width: root.contentWidth
                             spacing: 8
@@ -1084,7 +1008,6 @@ BarPill {
 
                             }
 
-                            // disk card
                             Rectangle {
                                 id: diskCard
 
@@ -1262,7 +1185,6 @@ BarPill {
                             color: Theme.outline
                         }
 
-                        // notifications shortcut
                         Rectangle {
                             id: notifSection
 
@@ -1338,15 +1260,6 @@ BarPill {
 
                                 }
 
-                                // These cards are a fixed 44 tall, so the view
-                                // knows their size the moment they are inserted and
-                                // its own add/displaced transitions are safe here -
-                                // unlike the full list in Notifications.qml, whose
-                                // text-sized cards have to animate their height from
-                                // outside any view transition. Only two cards ever
-                                // show, so an arrival is a shuffle: the new one
-                                // drops into the top slot, the one that was there
-                                // slides down, and the one it displaces fades out.
                                 ListView {
                                     id: miniList
 
@@ -1362,11 +1275,6 @@ BarPill {
 
                                         required property var modelData
                                         readonly property var notification: modelData
-                                        // mirrors, not direct bindings: the remove
-                                        // transition outlives a dismissed card's
-                                        // Notification object, and reading a freed
-                                        // one logs a TypeError per field. See the
-                                        // same note in Notifications.qml.
                                         property string notifAppName: ""
                                         property string notifSummary: ""
                                         property string notifImage: ""
@@ -1374,8 +1282,6 @@ BarPill {
                                         readonly property string themeIconName: miniCard.notifAppIcon || (miniCard.notifImage.indexOf("image://icon/") === 0 ? miniCard.notifImage.slice(13) : "")
                                         readonly property string directImage: miniCard.notifImage.indexOf("image://icon/") === 0 ? "" : miniCard.notifImage
                                         readonly property string iconSrc: directImage || (themeIconName ? Quickshell.iconPath(themeIconName) : "")
-                                        // 1 the moment the card lands, decayed back
-                                        // to 0 by the add transition
                                         property real arrivalGlow: 0
 
                                         function syncNotification() {
@@ -1392,10 +1298,6 @@ BarPill {
                                         onNotificationChanged: miniCard.syncNotification()
                                         Component.onCompleted: {
                                             miniCard.syncNotification();
-                                            // a card the view merely rebuilt should
-                                            // not replay the arrival - the add
-                                            // transition is skipped for it by
-                                            // starting it out already arrived
                                             if (!miniCard.notification || !root.markNotifShown(miniCard.notification.id)) {
                                                 miniCard.opacity = 1;
                                                 miniCard.scale = 1;
@@ -1479,13 +1381,6 @@ BarPill {
 
                                     }
 
-                                    // the new card waits out a short pause first, so
-                                    // the shuffle below it is already under way when
-                                    // it appears rather than landing on top of a
-                                    // card that has not moved yet. PropertyAction
-                                    // holds the start state through that pause - a
-                                    // plain "from:" would only apply once its own
-                                    // animation began
                                     add: Transition {
                                         id: miniAdd
 
@@ -1547,8 +1442,6 @@ BarPill {
 
                                         }
 
-                                        // decays on its own, so the card reads as new
-                                        // for a beat and then looks like the other
                                         SequentialAnimation {
                                             PropertyAction {
                                                 property: "arrivalGlow"
@@ -1640,7 +1533,6 @@ BarPill {
 
                 }
 
-                // click-outside-to-close for the disk dropdown below
                 MouseArea {
                     anchors.fill: parent
                     visible: root.diskDropdownOpen
@@ -1648,7 +1540,7 @@ BarPill {
                     onClicked: root.diskDropdownOpen = false
                 }
 
-                // floating disk dropdown popup - declared last so it paints on top
+                // declared last so it paints on top
                 Rectangle {
                     id: diskPopup
 
@@ -1696,7 +1588,6 @@ BarPill {
                                     font.pixelSize: Theme.fs(11)
                                 }
 
-                                // same hover wash used across the rest of the bar
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: parent.radius
@@ -1756,10 +1647,6 @@ BarPill {
                 }
             }
 
-            // Wi-Fi and Bluetooth, in the same surface. Both are built
-            // whatever the current view is - the compact pill reads their
-            // state for its glyphs, and their scans and polls have to keep
-            // running whether or not anyone is looking at the list.
             Item {
                 id: subView
 
@@ -1767,7 +1654,6 @@ BarPill {
                 width: panelStack.width
                 height: panelStack.height
                 x: root.inSubView ? 0 : root.panelWidth
-                // waits off the right edge until it is asked for
                 visible: x < root.panelWidth - 0.5
 
                 Behavior on x {
@@ -1781,10 +1667,6 @@ BarPill {
 
                 }
 
-                // Back to the control centre, plus whatever trailing control
-                // the view wants. Bluetooth's enable switch lives here rather
-                // than in the panel, which is why BluetoothPanel no longer
-                // draws a header of its own.
                 Item {
                     id: subHeader
 
@@ -1999,7 +1881,6 @@ BarPill {
 
     }
 
-    // small reusable svg icon
     component SvgIcon: Item {
         id: iconRoot
 
@@ -2031,8 +1912,6 @@ BarPill {
 
     }
 
-    // level-crossfading svg icon - fakes morphing by stacking a Shape per
-    // level and crossfading opacity, since QML can't tween path strings
     component MorphIcon: Item {
         id: morphIcon
 
@@ -2092,12 +1971,10 @@ BarPill {
 
     }
 
-    // control-center toggle tile
     component ToggleTile: Rectangle {
         id: tile
 
         property string iconPath: ""
-        // when set, renders instead of iconPath - matches the compact pill's glyph
         property string iconGlyph: ""
         property string name: ""
         property string sub: ""
@@ -2205,7 +2082,6 @@ BarPill {
 
         }
 
-        // same hover wash the bar's own pills use
         Rectangle {
             anchors.fill: parent
             radius: parent.radius
@@ -2231,8 +2107,6 @@ BarPill {
 
     }
 
-    // control-center slider row - a pill fill carries the icon at its edge,
-    // growing/shrinking as one shape rather than an icon-plus-track pair
     component SliderRow: Item {
         id: sliderRow
 
@@ -2360,7 +2234,6 @@ BarPill {
 
     }
 
-    // control-center stat card
     component StatCard: Rectangle {
         id: card
 

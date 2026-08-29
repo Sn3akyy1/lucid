@@ -33,17 +33,6 @@ PanelWindow {
         return flashWindow.saveDir + "/" + name;
     }
 
-    // When `source` is given (the snap overlay's freeze frame) the shot is cut
-    // out of that file instead of being re-taken with grim.
-    //
-    // Re-grimming here raced Hyprland's layersOut fade animation: the overlay
-    // is unmapped in the same tick that launches grim, so grim samples the
-    // screen while the layer is still fading and its frozen - fully opaque -
-    // copy of the desktop lands blended over the live desktop underneath.
-    // Wherever the two differ (most visibly a bar popup that closed when the
-    // overlay took focus) the result looks semi-transparent, even though the
-    // captured module never was. Reading the freeze file has no such race, and
-    // it is also what the user actually selected against.
     readonly property string imSetup: "command -v magick >/dev/null 2>&1 && IM=magick || IM=convert; "
 
     function captureFull(showFlash, source) {
@@ -57,8 +46,6 @@ PanelWindow {
         grimProcess.command = ["sh", "-c", "mkdir -p '" + flashWindow.saveDir + "' && " + (source ? flashWindow.imSetup + "$IM '" + source + "' '" + file + "'" : "grim '" + file + "'")];
         grimProcess.running = true;
     }
-    // `scale` converts the overlay's logical coordinates into freeze-frame
-    // pixels; it is 1 on an unscaled output and only matters when `source` is set
     function captureRegion(x, y, w, h, showFlash, source, scale) {
         if (showFlash === undefined)
             showFlash = true;
