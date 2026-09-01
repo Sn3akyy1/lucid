@@ -1104,7 +1104,7 @@ BarPill {
                                                 cursorShape: Qt.PointingHandCursor
                                                 onClicked: {
                                                     if (!root.diskDropdownOpen) {
-                                                        const pos = diskTrigger.mapToItem(expandedFace, 0, diskTrigger.height);
+                                                        const pos = diskTrigger.mapToItem(mainView, 0, diskTrigger.height);
                                                         diskPopup.x = pos.x + diskTrigger.width - diskPopup.width;
                                                         diskPopup.y = pos.y + 6;
                                                     }

@@ -1,10 +1,10 @@
-import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Hyprland._FocusGrab
 import Quickshell.Io
 import Quickshell.Services.Mpris
+import Quickshell.Widgets
 import qs
 
 
@@ -2052,6 +2052,8 @@ BarPill {
     }
     ]
 
+    // clipped, not shader-masked: a mask renders blank or as one huge blob
+    // on machines without a real gpu
     component RoundedArt: Item {
         id: art
 
@@ -2060,38 +2062,24 @@ BarPill {
         property int fallbackGlyph: 28
         readonly property bool ready: artSource.status === Image.Ready
 
-        Rectangle {
+        ClippingRectangle {
             anchors.fill: parent
             radius: art.shapeRadius
             color: Theme.withBlur(Theme.bgActive)
-        }
 
-        Image {
-            id: artSource
+            Image {
+                id: artSource
 
-            anchors.fill: parent
-            source: art.source
-            fillMode: Image.PreserveAspectCrop
-            asynchronous: true
-            sourceSize.width: 256
-            sourceSize.height: 256
-            visible: false
-        }
+                anchors.fill: parent
+                source: art.source
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                cache: true
+                sourceSize.width: 256
+                sourceSize.height: 256
+                visible: art.ready
+            }
 
-        Rectangle {
-            id: artMask
-
-            anchors.fill: parent
-            radius: art.shapeRadius
-            visible: false
-            layer.enabled: true
-        }
-
-        OpacityMask {
-            anchors.fill: parent
-            source: artSource
-            maskSource: artMask
-            visible: art.ready
         }
 
         SvgIcon {

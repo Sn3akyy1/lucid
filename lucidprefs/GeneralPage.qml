@@ -1,8 +1,8 @@
-import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
+import Quickshell.Widgets
 import qs
 
 Column {
@@ -468,33 +468,24 @@ Column {
                             radius: Theme.radiusSm
                             color: Theme.bgSunken
 
-                            Image {
-                                id: thumb
-
-                                anchors.fill: parent
-                                source: "file://" + tile.path
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                cache: true
-                                sourceSize.width: 300
-                                sourceSize.height: 176
-                                visible: false
-                            }
-
-                            Rectangle {
-                                id: thumbMask
-
+                            ClippingRectangle {
                                 anchors.fill: parent
                                 radius: tile.radius
-                                visible: false
-                                layer.enabled: true
-                            }
+                                color: "transparent"
 
-                            OpacityMask {
-                                anchors.fill: parent
-                                source: thumb
-                                maskSource: thumbMask
-                                visible: thumb.status === Image.Ready
+                                Image {
+                                    id: thumb
+
+                                    anchors.fill: parent
+                                    source: "file://" + tile.path
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    cache: true
+                                    sourceSize.width: 300
+                                    sourceSize.height: 176
+                                    visible: thumb.status === Image.Ready
+                                }
+
                             }
 
                             Rectangle {

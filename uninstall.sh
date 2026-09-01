@@ -37,5 +37,6 @@ if [[ -d "$LUCID_DIR" ]] && ask "Remove the theming layer at $LUCID_DIR?"; then
 fi
 
 printf '\n%sDone.%s Left in place: installed packages, and the\n' "$b" "$r"
-printf '[templates.quickshell] block in ~/.config/matugen/config.toml.\n'
-printf '%sRemove that block by hand if you no longer want it.%s\n' "$ylw" "$r"
+printf '[templates.*] blocks Lucid added to ~/.config/matugen/config.toml\n'
+printf '(a timestamped backup of that file sits next to it).\n'
+printf '%sRemove those blocks by hand if you no longer want them.%s\n' "$ylw" "$r"

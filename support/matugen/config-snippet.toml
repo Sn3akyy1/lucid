@@ -1,3 +1,0 @@
-[templates.quickshell]
-input_path = "~/.config/matugen/templates/quickshell-colors.json"
-output_path = "~/.cache/quickshell/matugen.json"

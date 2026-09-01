@@ -9,7 +9,20 @@
 A bar, a dock that morphs into a launcher, a lock screen, an emoji picker,
 a screenshot tool and a settings app — themed together from your wallpaper.
 
-`v0.57` · beta · Arch Linux + Hyprland · MIT
+<p>
+  <a href="https://github.com/Sn3akyy1/lucid-shell/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Sn3akyy1/lucid-shell?style=for-the-badge&label=LAST%20COMMIT&labelColor=14100E&color=FF7F50"></a>
+  <a href="https://github.com/Sn3akyy1/lucid-shell/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Sn3akyy1/lucid-shell?style=for-the-badge&label=STARS&labelColor=14100E&color=FFC46B"></a>
+  <a href="https://github.com/Sn3akyy1/lucid-shell/releases"><img alt="Release" src="https://img.shields.io/github/v/tag/Sn3akyy1/lucid-shell?style=for-the-badge&label=RELEASE&labelColor=14100E&color=FFAB91"></a>
+  <img alt="Repo size" src="https://img.shields.io/github/repo-size/Sn3akyy1/lucid-shell?style=for-the-badge&label=REPO%20SIZE&labelColor=14100E&color=E8A87C">
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-80CBC4?style=for-the-badge&labelColor=14100E"></a>
+</p>
+
+<p>
+  <img alt="Version" src="https://img.shields.io/badge/VERSION-v0.57%20beta-FF7F50?style=for-the-badge&labelColor=14100E">
+  <img alt="Platform" src="https://img.shields.io/badge/PLATFORM-ARCH%20LINUX-FFAB91?style=for-the-badge&logo=archlinux&logoColor=FFAB91&labelColor=14100E">
+  <img alt="Compositor" src="https://img.shields.io/badge/COMPOSITOR-HYPRLAND-80CBC4?style=for-the-badge&labelColor=14100E">
+  <a href="https://quickshell.org"><img alt="Built on Quickshell" src="https://img.shields.io/badge/BUILT%20ON-QUICKSHELL-FFC46B?style=for-the-badge&labelColor=14100E"></a>
+</p>
 
 <img src="assets/prev1.webp" alt="The Lucid desktop: bar at the top, dock at the bottom">
 
@@ -205,7 +218,7 @@ you know what's being pulled in.
 | Package | Backs |
 | --- | --- |
 | `matugen`, `jq` | Wallpaper-derived colours, theme switching |
-| `awww` (AUR) | Setting the wallpaper |
+| `awww` | Setting the wallpaper |
 | `python-pywal` | The Pywal theme |
 | `networkmanager` | Wi-Fi panel |
 | `bluez`, `bluez-utils` | Bluetooth panel |
@@ -217,7 +230,7 @@ you know what's being pulled in.
 | `songrec` | Song identification |
 | `curl` | Weather and GIF search |
 | `libnotify` | Notification actions |
-| `ttf-noto-color-emoji` | Emoji rendering |
+| `noto-fonts-emoji` | Emoji rendering |
 
 Lucid uses Hyprland-specific APIs for workspaces and window management. It
 will not work on other compositors.

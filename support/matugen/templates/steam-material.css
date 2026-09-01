@@ -1,0 +1,27 @@
+:root {
+    --theme-color: "Matugen";
+    --hue-rotate: 220deg;
+    <* for name, value in colors *>
+    --md-sys-color-{{name | replace: "_", "-" }}: {{value.default.rgb}};
+    <* endfor *>
+}
+
+/* 
+
+Add this to your Matugen config:
+
+[config]
+[templates.millennium]
+input_path = '/matugen/template/path/here'
+output_path = '~/.steam/steam/millennium/themes/Material-Theme/css/main/colors/matugen.css'
+
+PS: the input path MUST include the "/home/<USER>/" or it won't work,
+also make sure to copy THIS template to EXACTLY the matugen folder
+not inside a sub-folder like "/matugen/templates" it won't work. and
+make sure to rename it to "millennium.css" also for any dank dms user,
+yes you can simply make a matugen folder inside of your config
+and it'll work perfectly fine. Also the config file should be "config.toml".
+If you using older version of Millenium (<3.0.0) use this output_path:
+'~/.steam/steam/steamui/skins/Material-Theme/css/main/colors/matugen.css'
+
+*/

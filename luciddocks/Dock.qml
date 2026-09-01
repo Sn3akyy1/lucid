@@ -1180,36 +1180,21 @@ PanelWindow {
         adapter: JsonAdapter {
             id: pinnedAdapter
 
+            // last-resort fallback only — the installer writes pinned.json from
+            // what is actually installed. keep this generic: no absolute paths,
+            // nothing that is not on a stock system.
             property var pinnedApps: [{
-                "appKey": "nautilus",
-                "iconName": "org.gnome.Nautilus",
-                "command": "nautilus --new-window",
-                "appId": "org.gnome.Nautilus",
+                "appKey": "files",
+                "iconName": "system-file-manager",
+                "command": "xdg-open " + Quickshell.env("HOME"),
+                "appId": "files",
                 "name": "Files"
             }, {
-                "appKey": "codium",
-                "iconName": "vscodium",
-                "command": "/usr/bin/codium",
-                "appId": "codium",
-                "name": "VSCodium"
-            }, {
-                "appKey": "zen",
-                "iconName": "zen-browser",
-                "command": "/opt/zen-browser-bin/zen-bin",
-                "appId": "zen",
-                "name": "Zen Browser"
-            }, {
-                "appKey": "kitty",
-                "iconName": "kitty",
-                "command": "kitty",
-                "appId": "kitty",
-                "name": "Kitty"
-            }, {
-                "appKey": "spotify",
-                "iconName": "spotify-client",
-                "command": "spotify",
-                "appId": "Spotify",
-                "name": "Spotify"
+                "appKey": "terminal",
+                "iconName": "utilities-terminal",
+                "command": "xdg-terminal-exec",
+                "appId": "terminal",
+                "name": "Terminal"
             }]
         }
 

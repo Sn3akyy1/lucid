@@ -1,0 +1,16 @@
+:root {
+  --toolbar-bgcolor: {{colors.surface.default.hex}} !important;
+  --toolbar-color: {{colors.on_surface.default.hex}} !important;
+  --toolbar-field-background-color: {{colors.surface_container.default.hex}} !important;
+  --toolbar-field-color: {{colors.on_surface.default.hex}} !important;
+  --toolbar-field-border-color: {{colors.outline.default.hex}} !important;
+  --toolbar-field-focus-background-color: {{colors.surface_container_high.default.hex}} !important;
+  --lwt-toolbar-field-background-color: {{colors.surface_container.default.hex}} !important;
+  --lwt-toolbar-field-color: {{colors.on_surface.default.hex}} !important;
+}
+
+#urlbar-background,
+#urlbar {
+  background-color: {{colors.surface_container.default.hex}} !important;
+  color: {{colors.on_surface.default.hex}} !important;
+}

@@ -1,25 +1,67 @@
 {
-    "pinnedApps": [
-        {
-            "appId": "org.gnome.Nautilus",
-            "appKey": "nautilus",
-            "command": "nautilus --new-window",
-            "iconName": "org.gnome.Nautilus",
-            "name": "Files"
-        },
-        {
-            "appId": "firefox",
-            "appKey": "firefox",
-            "command": "firefox",
-            "iconName": "firefox",
-            "name": "Firefox"
-        },
-        {
-            "appId": "kitty",
-            "appKey": "kitty",
-            "command": "kitty",
-            "iconName": "kitty",
-            "name": "Kitty"
-        }
-    ]
+  "pinnedApps": [
+    {
+      "appId": "Spotify",
+      "appKey": "spotify",
+      "command": "spotify",
+      "iconName": "spotify-client",
+      "name": "Spotify"
+    },
+    {
+      "appId": "codium",
+      "appKey": "codium",
+      "command": "/usr/bin/codium",
+      "iconName": "vscodium",
+      "name": "VSCodium"
+    },
+    {
+      "appId": "zen",
+      "appKey": "zen",
+      "command": "/opt/zen-browser-bin/zen-bin",
+      "iconName": "zen-browser",
+      "name": "Zen Browser"
+    },
+    {
+      "appId": "vesktop",
+      "appKey": "vesktop",
+      "command": "/usr/bin/vesktop",
+      "iconName": "vesktop",
+      "name": "Vesktop"
+    },
+    {
+      "appId": "org.gnome.Nautilus",
+      "appKey": "nautilus",
+      "command": "nautilus --new-window",
+      "iconName": "org.gnome.Nautilus",
+      "name": "Files"
+    },
+    {
+      "appId": "steam",
+      "appKey": "steam",
+      "command": "/usr/bin/steam",
+      "iconName": "steam",
+      "name": "Steam"
+    },
+    {
+      "appId": "proton.vpn.app.gtk",
+      "appKey": "protonvpn",
+      "command": "protonvpn-app",
+      "iconName": "proton-vpn-logo",
+      "name": "Proton VPN"
+    },
+    {
+      "appId": "firefox",
+      "appKey": "firefox",
+      "command": "firefox",
+      "iconName": "firefox",
+      "name": "Firefox"
+    },
+    {
+      "appId": "kitty",
+      "appKey": "kitty",
+      "command": "kitty",
+      "iconName": "kitty",
+      "name": "Kitty"
+    }
+  ]
 }
