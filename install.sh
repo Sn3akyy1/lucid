@@ -406,7 +406,18 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     HAS_HYPR_CFG=0
     [[ -f "$HYPR_DIR/hyprland.lua" || -f "$HYPR_DIR/hyprland.conf" ]] && HAS_HYPR_CFG=1
 
-    if [[ $HAS_HYPR_CFG -eq 1 && $WITH_HYPR -eq 0 ]]; then
+    # a config we installed on an earlier run is not "someone else's config":
+    # without telling them apart, a re-run asks to replace Lucid's own setup and
+    # then tells you to add binds you already have
+    HYPR_IS_LUCID=0
+    if [[ -f "$HYPR_DIR/modules/binds.lua" ]] && grep -q 'qs ipc call' "$HYPR_DIR/modules/binds.lua" 2>/dev/null; then
+        HYPR_IS_LUCID=1
+    fi
+
+    if [[ $HYPR_IS_LUCID -eq 1 && $WITH_HYPR -eq 0 ]]; then
+        HYPR_LUA_INSTALLED=1
+        say "  ${dim}Hyprland already set up for Lucid — pass --with-hypr to refresh it${r}"
+    elif [[ $HAS_HYPR_CFG -eq 1 && $WITH_HYPR -eq 0 ]]; then
         say "  ${dim}existing Hyprland config kept — pass --with-hypr to replace it${r}"
     elif [[ $HAS_HYPR_CFG -eq 1 ]] && ! ask "  Replace your Hyprland config with Lucid's? (yours is backed up)"; then
         say "  ${dim}Hyprland config left alone${r}"
