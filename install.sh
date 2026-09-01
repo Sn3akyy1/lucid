@@ -110,6 +110,18 @@ DEPS_OK=1
 
 step "Resolving dependencies"
 
+# a never-synced pacman database makes every -Si lookup fail, so real repo
+# packages get misread as AUR and nothing installs. check against a package
+# that is guaranteed present rather than trusting the db exists.
+if ! pacman -Si bash &>/dev/null; then
+    warn "your pacman database is empty or stale — package lookups will fail."
+    warn "run this first, then re-run the installer:"
+    warn "    sudo pacman -Syu"
+    if ! ask "  Continue anyway (dependencies will likely be skipped)?"; then
+        die "stopped. run 'sudo pacman -Syu' and try again."
+    fi
+fi
+
 for p in "${PKG_REQUIRED[@]}" "${PKG_FEATURES[@]}"; do
     pacman -Qq "$p" &>/dev/null || missing+=("$p")
 done
