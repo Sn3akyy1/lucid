@@ -118,6 +118,7 @@ Item {
             visible: face.listVisible
             model: face.model
             query: face.highlightQuery
+            stableHeight: face.stableContentHeight
             emptyLabel: face.displayMode === "commands" ? "No commands found" : (face.displayMode === "theme" ? "No themes found" : "No apps found")
             onActivated: (index) => face.activated(index)
         }

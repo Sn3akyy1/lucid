@@ -12,13 +12,16 @@ Item {
     // what to embolden in each title
     property string query: ""
     property string emptyLabel: "No results"
+    // the settled view height; view.height is mid-animation while the panel resizes
+    property real stableHeight: 0
 
     signal activated(int index)
 
     onCurrentIndexChanged: view.currentIndex = list.currentIndex
 
-    readonly property bool needsScrollbar: view.contentHeight > view.height
-    readonly property int rowWidth: Math.max(0, view.width - 14)
+    readonly property bool needsScrollbar: view.contentHeight > (list.stableHeight > 0 ? list.stableHeight : view.height)
+    // only give up the gutter when the scrollbar is actually there
+    readonly property int rowWidth: Math.max(0, view.width - (list.needsScrollbar ? 14 : 0))
     readonly property Item currentItem: view.currentItem
 
     function rowAt(index) {

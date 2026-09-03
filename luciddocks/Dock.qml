@@ -171,7 +171,11 @@ PanelWindow {
     readonly property string mode: dockWindow.modeFor(dockWindow.rawQuery)
     readonly property string filterQuery: dockWindow.queryFor(dockWindow.rawQuery)
 
-    onRawQueryChanged: dockWindow.rebuildResults()
+    onRawQueryChanged: {
+        dockWindow.rebuildResults();
+        // the face already reset itself, but against the pre-rebuild rows
+        launcherFace.resetSelection();
+    }
     onModeChanged: {
         if (dockWindow.mode === "wallpaper") {
             wallpaperScanner.scan();
@@ -483,12 +487,15 @@ PanelWindow {
     }
 
     function syncResults(rows) {
+        // a key can repeat: frequent apps show up again in the full list
         var wanted = {};
-        for (var j = 0; j < rows.length; j++) wanted[rows[j].key] = true;
+        for (var j = 0; j < rows.length; j++) wanted[rows[j].key] = (wanted[rows[j].key] || 0) + 1;
         for (var i = resultsModel.count - 1; i >= 0; i--) {
-            if (!wanted[resultsModel.get(i).key])
+            var key = resultsModel.get(i).key;
+            if (!wanted[key])
                 resultsModel.remove(i, 1);
-
+            else
+                wanted[key]--;
         }
         for (var k = 0; k < rows.length; k++) {
             var existing = -1;
@@ -507,12 +514,19 @@ PanelWindow {
                 resultsModel.set(k, rows[k]);
             }
         }
+        if (resultsModel.count > rows.length)
+            resultsModel.remove(rows.length, resultsModel.count - rows.length);
+
         dockWindow.resultsHeight = dockWindow.measure(rows);
         launcherFace.resultsChanged();
     }
 
     function measure(rows) {
-        var h = 8;
+        if (rows.length === 0)
+            return 0;
+
+        // the loop adds one spacing too many; 8 is the view's bottom margin
+        var h = 8 - 2;
         for (var i = 0; i < rows.length; i++) {
             h += rows[i].kind === "header" ? 30 : (rows[i].subtitle !== "" ? 58 : 48);
             h += 2;

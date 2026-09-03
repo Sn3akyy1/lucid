@@ -36,7 +36,11 @@ if [[ -d "$LUCID_DIR" ]] && ask "Remove the theming layer at $LUCID_DIR?"; then
     echo "  removed"
 fi
 
-printf '\n%sDone.%s Left in place: installed packages, and the\n' "$b" "$r"
-printf '[templates.*] blocks Lucid added to ~/.config/matugen/config.toml\n'
-printf '(a timestamped backup of that file sits next to it).\n'
-printf '%sRemove those blocks by hand if you no longer want them.%s\n' "$ylw" "$r"
+printf '\n%sDone.%s Left in place, each with a timestamped backup beside it:\n' "$b" "$r"
+printf '  ~/.config/matugen/config.toml   the [templates.*] blocks Lucid added\n'
+printf '  ~/.config/hypr                  the lua config, binds and rules\n'
+printf '  ~/.config/starship.toml         the prompt, and its init line in\n'
+printf '                                  .bashrc / .zshrc / config.fish\n'
+printf '  ~/.config/kitty/kitty.conf      the matugen-colors.conf include\n'
+printf 'Installed packages are left alone too.\n'
+printf '%sRestore from a .backup-* file, or undo these by hand.%s\n' "$ylw" "$r"

@@ -51,23 +51,31 @@ That's it — the installer does the rest:
 2. **Installs dependencies** — finds `paru` or `yay` and uses it, falling back
    to `pacman` for repo packages. It lists everything and asks before touching
    your system. Say no and it carries on, telling you which features won't work.
+   This includes the apps Lucid ships pinned to the dock — several GB, mostly
+   from the AUR. `--no-apps` skips them.
 3. **Copies the shell** to `~/.config/quickshell`, moving any existing config to
    `~/.config/quickshell.backup-<timestamp>` first.
-4. **Sets up theming** — the palettes, the wallpaper hook, and the matugen
+4. **Sets up Hyprland** — `hyprland.lua` and its modules: the keybinds, the
+   window and layer rules, blur, animations, and an autostart that launches the
+   shell on login. If you already have a config it is backed up and you are
+   asked first; `--no-hypr` keeps yours untouched.
+5. **Sets up theming** — the palettes, the wallpaper hook, and the matugen
    template. An existing `matugen/config.toml` is appended to, never replaced.
-5. **Offers to restart** a running instance onto the new files.
+6. **Applies the look** — kitty's colours, the starship prompt (wired into
+   `.bashrc`, `.zshrc` and `config.fish`), and the VSCode/VSCodium Matugen
+   theme. `--no-look` skips this.
+7. **Pins the dock** — reads your installed `.desktop` files and pins the real
+   apps, so the dock is never a row of blank letter tiles.
+8. **Offers to restart** a running instance onto the new files.
 
-Then start it:
+Then reload Hyprland so the new binds and rules take effect:
 
 ```sh
-qs
+hyprctl reload
 ```
 
-To launch it with your session, add to `~/.config/hypr/hyprland.conf`:
-
-```
-exec-once = qs
-```
+Or log out and back in, which picks up the autostart too. To start the shell by
+hand in the meantime, run `qs`.
 
 Set a wallpaper from **Settings → General** on first run — that's what generates
 your colour palette.
@@ -86,7 +94,11 @@ git pull
 
 | Flag | What it does |
 | --- | --- |
-| `--no-theming` | Shell only. Leaves `~/.config/lucid`, `~/.config/matugen` and `~/.config/hypr` alone. Use this if you already have a matugen setup you don't want touched. |
+| `--no-theming` | Skips the palette layer. Leaves `~/.config/lucid` and `~/.config/matugen` alone — use this if you already have a matugen setup you don't want touched. |
+| `--no-hypr` | Keeps your Hyprland config. Lucid's binds, window rules, blur and autostart are not installed. |
+| `--no-apps` | Doesn't install the apps the dock ships pinned (Zen, VSCodium, Spotify, Vesktop, Files, Steam, Proton VPN). The dock then pins whatever equivalents you already have. |
+| `--no-look` | Doesn't touch `kitty.conf`, `starship.toml`, your shell rc files or VSCode settings. |
+| `--with-hypr` | Reinstalls Lucid's Hyprland config even when one is already in place. |
 | `--skip-deps` | Never installs packages, just reports what's missing. |
 | `-y`, `--yes` | Accept every prompt. |
 
@@ -98,8 +110,34 @@ backup stays where it is until you remove it.
 
 ## Keybinds
 
-Nothing is bound for you — Lucid exposes everything over IPC so you pick your
-own. A reasonable starting set for `hyprland.conf`:
+The installer ships these in `~/.config/hypr/modules/binds.lua`, along with the
+window rules, blur, animations and the autostart. Run `hyprctl reload` after
+installing to pick them up.
+
+| Key | Does |
+| --- | --- |
+| `SUPER` (tap) | Launcher |
+| `SUPER` + `P` | Command palette |
+| `SUPER` + `T` | Theme picker |
+| `SUPER` + `B` | Wallpaper picker |
+| `SUPER` + `S` | Settings |
+| `SUPER` + `.` | Emoji picker |
+| `SUPER` + `W` | Workspace overview (also: three-finger swipe) |
+| `SUPER` + `D` / `Print` | Region screenshot |
+| `SUPER` + `Print` | Full screenshot |
+| `SUPER` + `E` | Files |
+| `SUPER` + `C` | Close window |
+| `SUPER` + `V` | Toggle float |
+| `SUPER` + `1`–`0` | Switch workspace (`+SHIFT` moves the window) |
+| `SUPER` + arrows | Move focus |
+| `SUPER` + `R` | Reload Hyprland |
+| `F1`–`F6` | Volume, mic, brightness |
+| `F9` | Terminal |
+| `F10` | Lock |
+| `F12` | Calculator |
+
+Ran with `--no-hypr`, or want to bind things yourself? Everything is exposed
+over IPC:
 
 ```
 bind = SUPER, SPACE,  exec, qs ipc call -- launcher toggle
@@ -231,6 +269,29 @@ you know what's being pulled in.
 | `curl` | Weather and GIF search |
 | `libnotify` | Notification actions |
 | `noto-fonts-emoji` | Emoji rendering |
+
+**The Hyprland config and the look** — installed unless you pass `--no-hypr`
+or `--no-look`. The binds shell out to these, so a missing one is a dead key:
+
+| Package | Backs |
+| --- | --- |
+| `kitty` | Terminal (`F9`), and the themed terminal colours |
+| `nautilus` | Files (`SUPER`+`E`) |
+| `playerctl` | The media keys |
+| `gnome-calculator` | Calculator (`F12`) |
+| `starship` | The prompt |
+| `ttf-jetbrains-mono-nerd` | The glyphs the prompt and kitty are drawn with |
+| `adw-gtk-theme` | The dark GTK theme the autostart selects |
+
+**The dock's default pins** — installed unless you pass `--no-apps`. Several
+GB, mostly from the AUR:
+
+`zen-browser-bin` · `vscodium-bin` · `spotify` · `vesktop` · `nautilus` ·
+`steam` · `proton-vpn-gtk-app`
+
+Anything you already have an equivalent of is left alone — `vscodium` counts
+for `vscodium-bin`, `discord` for `vesktop`, and so on. `steam` is skipped
+unless the `multilib` repo is enabled.
 
 Lucid uses Hyprland-specific APIs for workspaces and window management. It
 will not work on other compositors.

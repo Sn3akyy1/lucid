@@ -2,8 +2,10 @@
 # Lucid installer — Arch Linux + Hyprland
 #
 # installs dependencies, places the shell at ~/.config/quickshell, and sets up
-# the theming support layer. safe to re-run: existing config and personal state
-# are backed up, never overwritten in place.
+# the full bundle: the Hyprland config (binds, window rules, blur, autostart),
+# the theming layer, the Lucid look, and the apps the dock ships pinned.
+# safe to re-run: existing config and personal state are backed up, never
+# overwritten in place.
 
 set -euo pipefail
 
@@ -18,7 +20,9 @@ BACKUP=""
 
 WITH_THEMING=1
 WITH_LOOK=1
-WITH_HYPR=0
+WITH_HYPR=1
+WITH_APPS=1
+HYPR_FORCE=0
 HYPR_LUA_INSTALLED=0
 ASSUME_YES=0
 SKIP_DEPS=0
@@ -35,13 +39,16 @@ ${b}Lucid $VERSION installer${r}
 
   ./install.sh [options]
 
-  --no-theming   install the shell only; leave ~/.config/lucid,
-                 ~/.config/matugen and ~/.config/hypr untouched
-  --no-look      don't touch kitty.conf, starship.toml, VSCode
-                 settings or the Hyprland blur snippet
-  --with-hypr    replace an existing Hyprland config with Lucid's
-                 lua config (binds, blur, animations, rules).
-                 Installed automatically when there is none.
+  --no-theming   skip the palette layer; leave ~/.config/lucid
+                 and ~/.config/matugen untouched
+  --no-look      don't touch kitty.conf, starship.toml or VSCode
+                 settings
+  --no-hypr      keep your Hyprland config; Lucid's binds, window
+                 rules and blur are not installed
+  --no-apps      don't install the apps pinned to the dock by
+                 default (Zen, VSCodium, Spotify, Steam, ...)
+  --with-hypr    reinstall Lucid's Hyprland config even when one
+                 is already in place
   --skip-deps    don't install packages, only check for them
   -y, --yes      don't prompt, accept every default
   -h, --help     this message
@@ -53,7 +60,9 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --no-theming) WITH_THEMING=0 ;;
         --no-look)    WITH_LOOK=0 ;;
-        --with-hypr)  WITH_HYPR=1 ;;
+        --no-hypr)    WITH_HYPR=0 ;;
+        --no-apps)    WITH_APPS=0 ;;
+        --with-hypr)  WITH_HYPR=1; HYPR_FORCE=1 ;;
         --skip-deps)  SKIP_DEPS=1 ;;
         -y|--yes)     ASSUME_YES=1 ;;
         -h|--help)    usage ;;
@@ -90,6 +99,8 @@ say "  arch linux      ${grn}ok${r}"
 say "  aur helper      ${AUR:-${ylw}none${r}}"
 say "  install target  $SHELL_DIR"
 say "  theming layer   $([[ $WITH_THEMING -eq 1 ]] && echo yes || echo 'no (--no-theming)')"
+say "  hyprland config $([[ $WITH_HYPR   -eq 1 ]] && echo yes || echo 'no (--no-hypr)')"
+say "  dock apps       $([[ $WITH_APPS   -eq 1 ]] && echo yes || echo 'no (--no-apps)')"
 
 # ------------------------------------------------------------- dependencies
 
@@ -104,6 +115,39 @@ PKG_FEATURES=(
     cava songrec curl libnotify awww
     python-pywal noto-fonts-emoji
 )
+# invoked by the shipped Hyprland binds and the Lucid look. without these the
+# config installs fine but its keys do nothing and the prompt renders as boxes
+PKG_HYPR=(
+    kitty nautilus playerctl gnome-calculator
+    starship ttf-jetbrains-mono-nerd adw-gtk-theme
+)
+# the dock's default pins. these are the apps Lucid ships pinned, so the dock
+# is not a row of blank letter tiles on a fresh install. --no-apps skips them.
+# order matches the dock; steam is filtered out below unless multilib is on
+PKG_DOCK=(
+    zen-browser-bin vscodium-bin vesktop
+    spotify proton-vpn-gtk-app steam
+)
+# a package already covered by an equivalent one the user chose themselves.
+# without this a re-run keeps trying to install vscodium-bin over vscodium
+declare -A PKG_ALTS=(
+    [vscodium-bin]="vscodium vscodium-git visual-studio-code-bin code"
+    [zen-browser-bin]="zen-browser zen-browser-avx2-bin"
+    [vesktop]="vesktop-bin discord"
+    [spotify]="spotify-launcher"
+    [ttf-jetbrains-mono-nerd]="nerd-fonts ttf-jetbrains-mono"
+    [adw-gtk-theme]="adw-gtk3 adw-gtk3-git"
+)
+
+# true when the package, or anything standing in for it, is installed
+have_pkg() {
+    pacman -Qq "$1" &>/dev/null && return 0
+    local alt
+    for alt in ${PKG_ALTS[$1]:-}; do
+        pacman -Qq "$alt" &>/dev/null && return 0
+    done
+    return 1
+}
 
 missing=()
 DEPS_OK=1
@@ -122,8 +166,23 @@ if ! pacman -Si bash &>/dev/null; then
     fi
 fi
 
-for p in "${PKG_REQUIRED[@]}" "${PKG_FEATURES[@]}"; do
-    pacman -Qq "$p" &>/dev/null || missing+=("$p")
+WANTED=("${PKG_REQUIRED[@]}" "${PKG_FEATURES[@]}")
+[[ $WITH_HYPR -eq 1 || $WITH_LOOK -eq 1 ]] && WANTED+=("${PKG_HYPR[@]}")
+
+if [[ $WITH_APPS -eq 1 ]]; then
+    for p in "${PKG_DOCK[@]}"; do
+        # steam lives in multilib. with that repo off the lookup fails, the
+        # name gets misread as an AUR package and the build fails much later
+        if [[ "$p" == steam ]] && ! grep -q '^\[multilib\]' /etc/pacman.conf 2>/dev/null; then
+            say "  ${dim}skipping steam — the multilib repo is not enabled${r}"
+            continue
+        fi
+        WANTED+=("$p")
+    done
+fi
+
+for p in "${WANTED[@]}"; do
+    have_pkg "$p" || missing+=("$p")
 done
 
 if [[ ${#missing[@]} -eq 0 ]]; then
@@ -142,6 +201,17 @@ else
 
     [[ ${#from_repo[@]} -gt 0 ]] && say "  from the repos: ${from_repo[*]}"
     [[ ${#from_aur[@]}  -gt 0 ]] && say "  not in your repos, will try the aur: ${from_aur[*]}"
+
+    # the dock apps are the bulk of the download and the part people are most
+    # likely to want out of, so name them rather than burying them in the list
+    dock_missing=()
+    for p in "${PKG_DOCK[@]}"; do
+        for m in "${missing[@]}"; do [[ "$m" == "$p" ]] && dock_missing+=("$p") && break; done
+    done
+    if (( ${#dock_missing[@]} )); then
+        say "  ${dim}of those, the dock's default apps: ${dock_missing[*]}${r}"
+        say "  ${dim}(several GB, mostly from the aur — pass --no-apps to skip them)${r}"
+    fi
 
     if ask "  install these now?"; then
         if [[ ${#from_repo[@]} -gt 0 ]]; then
@@ -231,13 +301,18 @@ detect_pinned() {
         /var/lib/flatpak/exports/share/applications
         "$HOME/.local/share/flatpak/exports/share/applications"
     )
-    # one entry per slot, first match wins, so the dock gets variety not five browsers
+    # the shipped dock lineup, in dock order. one entry per slot and first
+    # match wins, so a machine without Lucid's default app still gets that
+    # slot filled by whatever equivalent it does have
     local slots=(
-        "org.gnome.Nautilus nautilus dolphin thunar nemo pcmanfm-qt pcmanfm"
-        "firefox zen-browser zen chromium brave-browser google-chrome-stable librewolf"
+        "zen zen-browser app.zen_browser.zen firefox librewolf chromium brave-browser google-chrome-stable"
+        "vscodium codium code code-oss com.visualstudio.code zed dev.zed.Zed"
+        "spotify com.spotify.Client spotify-launcher"
+        "vesktop dev.vencord.Vesktop discord com.discordapp.Discord webcord"
+        "org.gnome.Nautilus nautilus org.kde.dolphin dolphin thunar nemo pcmanfm-qt pcmanfm"
+        "steam com.valvesoftware.Steam"
+        "proton.vpn.app.gtk protonvpn-app"
         "kitty alacritty foot org.wezfurlong.wezterm Alacritty com.mitchellh.ghostty"
-        "code codium code-oss zed dev.zed.Zed"
-        "spotify com.spotify.Client vesktop discord"
     )
     local out="" found=0
     for slot in "${slots[@]}"; do
@@ -251,10 +326,20 @@ detect_pinned() {
             local name icon exec wm
             name=$(sed -n 's/^Name=//p'           "$f" | head -n1)
             icon=$(sed -n 's/^Icon=//p'           "$f" | head -n1)
-            exec=$(sed -n 's/^Exec=//p'           "$f" | head -n1 | sed 's/ *%[a-zA-Z]//g')
+            # strip desktop field codes, then drop any option left holding
+            # nothing (Exec=spotify --uri=%u would otherwise pin "--uri=")
+            exec=$(sed -n 's/^Exec=//p' "$f" | head -n1 \
+                | sed -E 's/%[fFuUdDnNickvm]//g; s/ +-[^ ]*=( |$)/\1/g; s/  +/ /g; s/ +$//')
             wm=$(  sed -n 's/^StartupWMClass=//p' "$f" | head -n1)
             [[ -n "$name" && -n "$exec" ]] || continue
-            [[ -n "$wm" ]] || wm="$cand"
+            # StartupWMClass is an X11 hint. a wayland-native app reports its
+            # application-id instead, which is the reverse-dns desktop name -
+            # trusting the hint there pins an id no window ever matches
+            if [[ "$cand" == *.*.* ]]; then
+                wm="$cand"
+            else
+                [[ -n "$wm" ]] || wm="$cand"
+            fi
             [[ -n "$icon" ]] || icon="$cand"
             # escape for json
             esc() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
@@ -296,6 +381,80 @@ seed usage.json            luciddocks/usage.json
 seed wallpaper.json        luciddocks/wallpaper.json
 seed moji-config.json      lucidmoji/config.json
 seed moji-state.json       lucidmoji/state.json
+
+# ------------------------------------------------------------------ hyprland
+
+# binds, window rules, blur, animations and autostart. this is a whole session
+# config, so an existing one is always backed up first and replacing it is a
+# question - except when it is Lucid's own from an earlier run, which is just
+# refreshed. kept out of the theming step: the modules read no palette, so
+# --no-theming should not cost you the binds.
+HYPR_DIR="$HOME/.config/hypr"
+HYPR_LUA_INSTALLED=0
+
+if [[ $WITH_HYPR -eq 1 ]]; then
+    step "Setting up Hyprland"
+
+    HAS_HYPR_CFG=0
+    [[ -f "$HYPR_DIR/hyprland.lua" || -f "$HYPR_DIR/hyprland.conf" ]] && HAS_HYPR_CFG=1
+
+    # a config we installed on an earlier run is not "someone else's config":
+    # without telling them apart, a re-run asks to replace Lucid's own setup and
+    # then tells you to add binds you already have
+    HYPR_IS_LUCID=0
+    if [[ -f "$HYPR_DIR/modules/binds.lua" ]] && grep -q 'qs ipc call' "$HYPR_DIR/modules/binds.lua" 2>/dev/null; then
+        HYPR_IS_LUCID=1
+    fi
+
+    DO_HYPR=1
+    if [[ $HYPR_IS_LUCID -eq 1 ]]; then
+        say "  ${dim}already Lucid's — refreshing it${r}"
+    elif [[ $HAS_HYPR_CFG -eq 1 && $HYPR_FORCE -eq 0 ]]; then
+        say "  you already have a Hyprland config. Lucid's brings the binds,"
+        say "  window rules, blur and animations, and yours is backed up first."
+        if ! ask "  Replace it with Lucid's?"; then
+            DO_HYPR=0
+            say "  ${dim}left alone — re-run with --with-hypr to change your mind${r}"
+        fi
+    fi
+
+    if [[ $DO_HYPR -eq 1 ]]; then
+        if [[ $HAS_HYPR_CFG -eq 1 ]]; then
+            cp -r "$HYPR_DIR" "$HYPR_DIR.backup-$STAMP"
+            say "  your hypr config -> $HYPR_DIR.backup-$STAMP"
+        fi
+        mkdir -p "$HYPR_DIR/modules" "$HYPR_DIR/scripts"
+        cp "$SRC/support/hypr/hyprland.lua" "$HYPR_DIR/hyprland.lua"
+        cp "$SRC/support/hypr/modules/"*.lua "$HYPR_DIR/modules/"
+        install -m755 "$SRC/support/hypr/scripts/reload.sh" "$HYPR_DIR/scripts/reload.sh"
+        # a hyprland.conf left beside hyprland.lua is ambiguous - Hyprland
+        # reads one of them and you cannot tell which, so the install looks
+        # like it did nothing. the full directory is already backed up above
+        if [[ -f "$HYPR_DIR/hyprland.conf" ]]; then
+            mv "$HYPR_DIR/hyprland.conf" "$HYPR_DIR/hyprland.conf.replaced-$STAMP"
+            say "  hyprland.conf -> hyprland.conf.replaced-$STAMP (lua config wins now)"
+        fi
+        HYPR_LUA_INSTALLED=1
+        say "  hyprland.lua + $(ls "$SRC/support/hypr/modules" | wc -l) modules -> $HYPR_DIR"
+        say "  ${dim}binds, window rules, blur, animations and autostart come with it${r}"
+
+        # the binds shell out to these, so a missing one is a dead key rather
+        # than a visible error. worth saying now, not after the first F-key
+        for c in kitty nautilus playerctl gnome-calculator wpctl brightnessctl; do
+            command -v "$c" &>/dev/null || warn "  $c is missing — the binds that use it will do nothing"
+        done
+
+        if command -v hyprctl &>/dev/null; then
+            HYPR_VER=$(hyprctl version 2>/dev/null | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
+            case "$HYPR_VER" in
+                v0.4*|v0.3*|v0.2*|v0.1*) warn "  Hyprland $HYPR_VER predates the lua config format — expect errors" ;;
+            esac
+        fi
+    fi
+else
+    step "Skipping the Hyprland config (--no-hypr)"
+    say "  ${dim}the Lucid binds and window rules are not installed${r}"
+fi
 
 # ------------------------------------------------------------------ theming
 
@@ -398,53 +557,10 @@ if [[ $WITH_THEMING -eq 1 ]]; then
         fi
     done
 
-    # --- hyprland config --------------------------------------------------
-    # the lua config format needs a recent Hyprland. replacing an existing
-    # config is opt-in, because it is the user's whole session.
-    HYPR_DIR="$HOME/.config/hypr"
-    HYPR_LUA_INSTALLED=0
-    HAS_HYPR_CFG=0
-    [[ -f "$HYPR_DIR/hyprland.lua" || -f "$HYPR_DIR/hyprland.conf" ]] && HAS_HYPR_CFG=1
-
-    # a config we installed on an earlier run is not "someone else's config":
-    # without telling them apart, a re-run asks to replace Lucid's own setup and
-    # then tells you to add binds you already have
-    HYPR_IS_LUCID=0
-    if [[ -f "$HYPR_DIR/modules/binds.lua" ]] && grep -q 'qs ipc call' "$HYPR_DIR/modules/binds.lua" 2>/dev/null; then
-        HYPR_IS_LUCID=1
-    fi
-
-    if [[ $HYPR_IS_LUCID -eq 1 && $WITH_HYPR -eq 0 ]]; then
-        HYPR_LUA_INSTALLED=1
-        say "  ${dim}Hyprland already set up for Lucid — pass --with-hypr to refresh it${r}"
-    elif [[ $HAS_HYPR_CFG -eq 1 && $WITH_HYPR -eq 0 ]]; then
-        say "  ${dim}existing Hyprland config kept — pass --with-hypr to replace it${r}"
-    elif [[ $HAS_HYPR_CFG -eq 1 ]] && ! ask "  Replace your Hyprland config with Lucid's? (yours is backed up)"; then
-        say "  ${dim}Hyprland config left alone${r}"
-    else
-        if [[ $HAS_HYPR_CFG -eq 1 ]]; then
-            cp -r "$HYPR_DIR" "$HYPR_DIR.backup-$STAMP"
-            say "  your hypr config -> $HYPR_DIR.backup-$STAMP"
-        fi
-        mkdir -p "$HYPR_DIR/modules" "$HYPR_DIR/scripts"
-        cp "$SRC/support/hypr/hyprland.lua" "$HYPR_DIR/hyprland.lua"
-        cp "$SRC/support/hypr/modules/"*.lua "$HYPR_DIR/modules/"
-        install -m755 "$SRC/support/hypr/scripts/reload.sh" "$HYPR_DIR/scripts/reload.sh"
-        HYPR_LUA_INSTALLED=1
-        say "  hyprland.lua + $(ls "$SRC/support/hypr/modules" | wc -l) modules -> $HYPR_DIR"
-        say "  ${dim}binds, blur, animations and the Lucid window rules come with it${r}"
-        if command -v hyprctl &>/dev/null; then
-            HYPR_VER=$(hyprctl version 2>/dev/null | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
-            case "$HYPR_VER" in
-                v0.4*|v0.3*|v0.2*|v0.1*) warn "  Hyprland $HYPR_VER predates the lua config format — expect errors" ;;
-            esac
-        fi
-    fi
-
     # --- the look: terminal + prompt + blur -------------------------------
     # each piece is additive and backed up first, because these are files the
     # user owns and may already have tuned
-    if [[ $WITH_LOOK -eq 1 ]] && ask "  Apply the Lucid look (kitty, starship, VSCode, Hyprland blur)?"; then
+    if [[ $WITH_LOOK -eq 1 ]] && ask "  Apply the Lucid look (kitty, starship prompt, VSCode theme)?"; then
 
         # kitty - the include is what makes matugen's colours apply at all
         if [[ -f "$HOME/.config/kitty/kitty.conf" ]]; then
@@ -469,7 +585,7 @@ if [[ $WITH_THEMING -eq 1 ]]; then
         vscode_wire() {
             local cli=$1 cfg=$2
             command -v "$cli" &>/dev/null || return 0
-            if "$cli" --list-extensions 2>/dev/null | grep -qi "matugen-theme"; then
+            if "$cli" --list-extensions 2>/dev/null | grep -i "matugen-theme" >/dev/null; then
                 say "  ${dim}$cli already has the Matugen theme${r}"
             elif "$cli" --install-extension haikalllp.matugen-theme &>/dev/null; then
                 say "  installed the Matugen theme extension for $cli"
@@ -502,15 +618,56 @@ if [[ $WITH_THEMING -eq 1 ]]; then
         vscode_wire code     "$HOME/.config/Code/User/settings.json"
         vscode_wire code-oss "$HOME/.config/Code - OSS/User/settings.json"
 
-        # starship - matugen and apply-theme.sh both rewrite its palette later
-        if [[ -f "$HOME/.config/starship.toml" ]]; then
-            say "  ${dim}keeping your starship.toml${r}"
-        elif command -v starship &>/dev/null; then
-            cp "$SRC/support/look/starship.toml" "$HOME/.config/starship.toml"
+        # starship - the prompt shape ships here; matugen and apply-theme.sh
+        # rewrite only its [palettes.colors] block on every theme change, so
+        # this file is what makes the prompt look like Lucid's
+        STARSHIP_CFG="$HOME/.config/starship.toml"
+        if [[ ! -f "$STARSHIP_CFG" ]]; then
+            cp "$SRC/support/look/starship.toml" "$STARSHIP_CFG"
             say "  starship.toml -> ~/.config/starship.toml"
+        elif grep -q '^\[palettes.colors\]' "$STARSHIP_CFG"; then
+            # already the Lucid prompt. its colours are whatever the current
+            # theme painted, so re-copying would only reset them to the seed
+            say "  ${dim}keeping your starship.toml (already the Lucid prompt)${r}"
         else
-            say "  ${dim}starship not installed, skipping its config${r}"
+            cp "$STARSHIP_CFG" "$STARSHIP_CFG.backup-$STAMP"
+            cp "$SRC/support/look/starship.toml" "$STARSHIP_CFG"
+            say "  your starship.toml -> starship.toml.backup-$STAMP"
+            say "  starship.toml -> ~/.config/starship.toml"
         fi
+        command -v starship &>/dev/null \
+            || warn "  starship is not installed — the prompt config is in place but unused"
+
+        # the config does nothing until the shell actually calls starship, and
+        # the init line differs per shell. only ever appended, never rewritten.
+        # a missing rc is created for your login shell only - writing a .zshrc
+        # for someone who does not use zsh is just litter
+        LOGIN_SH=$(basename "${SHELL:-}")
+        starship_init() {
+            local rc=$1 line=$2 shname=$3
+            if [[ ! -f "$rc" ]]; then
+                [[ "$shname" == "$LOGIN_SH" ]] || return 0
+                mkdir -p "$(dirname "$rc")"
+                printf '# added by Lucid\n%s\n' "$line" > "$rc"
+                say "  created $(basename "$rc") to start starship"
+                return 0
+            fi
+            if grep -F 'starship init' "$rc" >/dev/null; then
+                say "  ${dim}$(basename "$rc") already starts starship${r}"
+            else
+                cp "$rc" "$rc.backup-$STAMP"
+                printf '\n# added by Lucid\n%s\n' "$line" >> "$rc"
+                say "  $(basename "$rc") now starts starship"
+            fi
+        }
+        starship_init "$HOME/.bashrc"                  'eval "$(starship init bash)"'   bash
+        starship_init "$HOME/.zshrc"                   'eval "$(starship init zsh)"'    zsh
+        starship_init "$HOME/.config/fish/config.fish" 'starship init fish | source'    fish
+
+        # the prompt and kitty.conf are drawn with nerd font glyphs; without
+        # the font every segment renders as a replacement box
+        fc-list 2>/dev/null | grep -i 'JetBrainsMono Nerd Font' >/dev/null \
+            || warn "  JetBrainsMono Nerd Font is missing — the prompt will show boxes"
 
         # hyprland blur - skipped when the lua config went in above, since its
         # decorations module already carries the same blur
@@ -559,7 +716,9 @@ step "Done"
 
 # a running instance is still on the old files, so offer the restart that
 # actually puts the new version on screen
-if qs list 2>/dev/null | grep -q "$SHELL_DIR/shell.qml"; then
+# no grep -q here: it would close the pipe, and pipefail would then read the
+# producer's SIGPIPE as "not running"
+if qs list 2>/dev/null | grep -F "$SHELL_DIR/shell.qml" >/dev/null; then
     if ask "  Lucid is running on the old files. Restart it now?"; then
         qs kill -p "$SHELL_DIR" 2>/dev/null || true
         sleep 1
@@ -579,13 +738,20 @@ EOF
 
 if [[ $HYPR_LUA_INSTALLED -eq 1 ]]; then
     cat <<EOF
-  Hyprland is configured: modules/binds.lua has the Lucid binds and
-  modules/autostart.lua already launches the shell on login.
+  Hyprland is configured: modules/binds.lua carries the binds, the window
+  and layer rules are in place, and modules/autostart.lua starts the shell
+  on login.
 
     SUPER            launcher        SUPER+W      workspaces
     SUPER+S          settings        SUPER+T      theme picker
     SUPER+period     emoji           SUPER+B      wallpaper
+    SUPER+P          commands        SUPER+E      files
+    SUPER+C          close window    SUPER+V      float
     SUPER+D / Print  screenshot      F10          lock
+    SUPER+R          reload hypr     F9           terminal
+
+  ${b}The new binds are not live yet${r} — run ${b}hyprctl reload${r}, or log out
+  and back in to pick up the autostart too.
 
 EOF
 else
@@ -601,6 +767,7 @@ else
     bind = SUPER, comma,  exec, qs ipc call -- settings open
 
   Keep the double dash: it is required whenever a call takes an argument.
+  Or run ${b}./install.sh --with-hypr${r} to take Lucid's config wholesale.
 
 EOF
 fi
