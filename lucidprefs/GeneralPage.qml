@@ -22,9 +22,10 @@ Column {
         }
         return best;
     }
-    property string currentTheme: "matugen"
+    readonly property string currentTheme: Prefs.currentTheme
     property string appliedWallpaper: ""
-    readonly property string wallpaperDir: Prefs.wallpaperFolder !== "" ? Prefs.wallpaperFolder : (page.home + "/Pictures/wallpapers/" + page.currentTheme)
+    // same folder the dock's wallpaper strip browses
+    readonly property string wallpaperDir: Prefs.wallpaperDir
 
     function applyTheme(id) {
         if (id === page.currentTheme)
@@ -41,17 +42,6 @@ Column {
     }
 
     spacing: 26
-
-    FileView {
-        path: page.home + "/.cache/current_theme"
-        blockLoading: true
-        watchChanges: true
-        onFileChanged: reload()
-        onLoaded: {
-            var t = text().trim();
-            page.currentTheme = t !== "" ? t : "matugen";
-        }
-    }
 
     onWallpaperDirChanged: wallpaperScan.restart()
 

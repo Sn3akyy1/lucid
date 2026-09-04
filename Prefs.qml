@@ -44,6 +44,8 @@ Singleton {
     property alias fontFamily: s.fontFamily
     property alias fontScale: s.fontScale
     property alias wallpaperFolder: s.wallpaperFolder
+    property string currentTheme: "matugen"
+    readonly property string wallpaperDir: root.wallpaperDirFor(root.currentTheme)
 
     property alias barEnabled: s.barEnabled
     property alias barPopupMode: s.barPopupMode
@@ -193,9 +195,22 @@ Singleton {
         for (var i = 0; i < keys.length; i++) root.set(keys[i], root.defaults[keys[i]])
     }
 
+    // a custom folder overrides every theme's own
+    function wallpaperDirFor(themeId) {
+        return root.wallpaperFolder !== "" ? root.wallpaperFolder : (Quickshell.env("HOME") + "/Pictures/wallpapers/" + themeId);
+    }
+
     function set(key, value) {
         if (s[key] !== undefined && s[key] !== value)
             s[key] = value;
+    }
+
+    FileView {
+        path: Quickshell.env("HOME") + "/.cache/current_theme"
+        blockLoading: true
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: root.currentTheme = text().trim() || "matugen"
     }
 
     Timer {

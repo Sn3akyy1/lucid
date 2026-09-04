@@ -62,8 +62,10 @@ That's it — the installer does the rest:
 5. **Sets up theming** — the palettes, the wallpaper hook, and the matugen
    template. An existing `matugen/config.toml` is appended to, never replaced.
 6. **Applies the look** — kitty's colours, the starship prompt (wired into
-   `.bashrc`, `.zshrc` and `config.fish`), and the VSCode/VSCodium Matugen
-   theme. `--no-look` skips this.
+   `.bashrc`, `.zshrc` and `config.fish`), the VSCode/VSCodium Matugen theme,
+   and the GTK theme: `adw-gtk3-dark` with the FairyWren icons, written to
+   `gsettings` and to both `gtk-3.0` and `gtk-4.0` `settings.ini`.
+   `--no-look` skips this.
 7. **Pins the dock** — reads your installed `.desktop` files and pins the real
    apps, so the dock is never a row of blank letter tiles.
 8. **Offers to restart** a running instance onto the new files.
@@ -97,7 +99,7 @@ git pull
 | `--no-theming` | Skips the palette layer. Leaves `~/.config/lucid` and `~/.config/matugen` alone — use this if you already have a matugen setup you don't want touched. |
 | `--no-hypr` | Keeps your Hyprland config. Lucid's binds, window rules, blur and autostart are not installed. |
 | `--no-apps` | Doesn't install the apps the dock ships pinned (Zen, VSCodium, Spotify, Vesktop, Files, Steam, Proton VPN). The dock then pins whatever equivalents you already have. |
-| `--no-look` | Doesn't touch `kitty.conf`, `starship.toml`, your shell rc files or VSCode settings. |
+| `--no-look` | Doesn't touch `kitty.conf`, `starship.toml`, your shell rc files, VSCode settings, or the GTK theme and icons. |
 | `--with-hypr` | Reinstalls Lucid's Hyprland config even when one is already in place. |
 | `--skip-deps` | Never installs packages, just reports what's missing. |
 | `-y`, `--yes` | Accept every prompt. |
@@ -264,10 +266,12 @@ you know what's being pulled in.
 | `brightnessctl`, `upower` | Brightness, battery |
 | `grim`, `wf-recorder`, `ffmpeg`, `imagemagick` | Screenshots and recording |
 | `wl-clipboard`, `wtype` | Emoji and GIF pasting |
-| `cava` | Audio visualiser in the media panel |
+| `cava` | Audio visualiser in the media panel (its config is installed to `~/.config/cava/quickshell.conf`; the strip needs that file's raw-ascii output settings) |
 | `songrec` | Song identification |
 | `curl` | Weather and GIF search |
 | `libnotify` | Notification actions |
+| `swappy` | The "Open" action on a screenshot notification |
+| `xdg-utils` | Opening links and files from the shell |
 | `noto-fonts-emoji` | Emoji rendering |
 
 **The Hyprland config and the look** — installed unless you pass `--no-hypr`
@@ -281,7 +285,8 @@ or `--no-look`. The binds shell out to these, so a missing one is a dead key:
 | `gnome-calculator` | Calculator (`F12`) |
 | `starship` | The prompt |
 | `ttf-jetbrains-mono-nerd` | The glyphs the prompt and kitty are drawn with |
-| `adw-gtk-theme` | The dark GTK theme the autostart selects |
+| `adw-gtk-theme` | Provides `adw-gtk3-dark`, the GTK theme Lucid selects |
+| `papirus-icon-theme` | Fallback icons — FairyWren declares `Inherits=Papirus` |
 
 **The dock's default pins** — installed unless you pass `--no-apps`. Several
 GB, mostly from the AUR:
@@ -343,6 +348,49 @@ Moves `~/.config/quickshell` aside rather than deleting it, so your settings
 survive. Packages installed by `install.sh` are left alone.
 
 ## Troubleshooting
+
+**A big coloured circle covers the media popup.**
+The visualiser strip is reading one enormous bar. That happens when cava is
+running without `~/.config/cava/quickshell.conf` — its own defaults emit
+ncurses output rather than the raw ascii frames the strip parses. Re-run the
+installer, or copy `support/cava/quickshell.conf` there yourself.
+
+**Another app's notifications show instead of Lucid's.**
+`org.freedesktop.Notifications` is a single-owner D-Bus name. Lucid's bar
+serves it, but any other notification daemon that is merely *installed* —
+swaync, dunst, mako — gets D-Bus-activated by the first notification and then
+keeps the name for the whole session. It does not need to be autostarted to
+win. Check who holds it:
+
+```sh
+busctl --user status org.freedesktop.Notifications | grep PID
+```
+
+If that is not `quickshell`, mask the daemon and log back in:
+
+```sh
+systemctl --user mask swaync.service   # or dunst.service, mako.service
+pkill swaync
+```
+
+The installer offers to do this for you.
+
+
+**GTK apps are light, or their icons are wrong.**
+Under Hyprland there is no xsettings daemon, so GTK3/GTK4 read
+`~/.config/gtk-{3,4}.0/settings.ini` while GNOME apps and portals read
+`gsettings`. The installer writes both. If only some apps changed, check they
+agree:
+
+```sh
+gsettings get org.gnome.desktop.interface gtk-theme    # adw-gtk3-dark
+gsettings get org.gnome.desktop.interface icon-theme   # FairyWren_Dark
+grep -E 'theme-name' ~/.config/gtk-3.0/settings.ini ~/.config/gtk-4.0/settings.ini
+```
+
+The icons live in `~/.local/share/icons/FairyWren_Dark`. If that directory is
+missing the installer could not reach GitLab — clone it by hand from
+`https://gitlab.com/FreshDoctor/FairyWren-Icons`.
 
 **Nothing appears when I run `qs`.** Check `qs log` for QML errors, and
 confirm you're on Hyprland — Lucid needs its Wayland protocols.

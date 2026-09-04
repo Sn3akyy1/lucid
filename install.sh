@@ -114,12 +114,13 @@ PKG_FEATURES=(
     grim wf-recorder ffmpeg wl-clipboard wtype
     cava songrec curl libnotify awww
     python-pywal noto-fonts-emoji
+    xdg-utils swappy
 )
 # invoked by the shipped Hyprland binds and the Lucid look. without these the
 # config installs fine but its keys do nothing and the prompt renders as boxes
 PKG_HYPR=(
     kitty nautilus playerctl gnome-calculator
-    starship ttf-jetbrains-mono-nerd adw-gtk-theme
+    starship ttf-jetbrains-mono-nerd adw-gtk-theme papirus-icon-theme
 )
 # the dock's default pins. these are the apps Lucid ships pinned, so the dock
 # is not a row of blank letter tiles on a fresh install. --no-apps skips them.
@@ -138,6 +139,26 @@ declare -A PKG_ALTS=(
     [ttf-jetbrains-mono-nerd]="nerd-fonts ttf-jetbrains-mono"
     [adw-gtk-theme]="adw-gtk3 adw-gtk3-git"
 )
+
+# a couple of the dock's AUR packages need something in place before the build
+# will even start. without this the package silently drops out of the install
+# with a warning, and the dock is left drawing a blank letter tile for it.
+SPOTIFY_KEY=E1096BCBFF6D418796DE78515384CE82BA52C83A
+aur_prepare() {
+    # the spotify PKGBUILD verifies its .deb against Spotify's own signing
+    # key. that key ships in nobody's keyring, so a fresh machine fails with
+    # "unknown public key" every time. import it first; the download server is
+    # the PKGBUILD's own, with a keyserver as the fallback
+    [[ "$1" == spotify ]] || return 0
+    gpg --list-keys "$SPOTIFY_KEY" &>/dev/null && return 0
+    say "  importing Spotify's package signing key"
+    if curl -sS https://download.spotify.com/debian/pubkey_5384CE82BA52C83A.gpg 2>/dev/null \
+         | gpg --import - &>/dev/null; then
+        return 0
+    fi
+    gpg --keyserver keyserver.ubuntu.com --recv-keys "$SPOTIFY_KEY" &>/dev/null \
+        || warn "  could not import Spotify's signing key — the build may fail"
+}
 
 # true when the package, or anything standing in for it, is installed
 have_pkg() {
@@ -226,6 +247,7 @@ else
             if [[ -n "$AUR" ]]; then
                 # one at a time: a single bad name shouldn't block the rest
                 for p in "${from_aur[@]}"; do
+                    aur_prepare "$p"
                     "$AUR" -S --needed --noconfirm "$p" || {
                         DEPS_OK=0; warn "could not install $p"
                     }
@@ -381,6 +403,80 @@ seed usage.json            luciddocks/usage.json
 seed wallpaper.json        luciddocks/wallpaper.json
 seed moji-config.json      lucidmoji/config.json
 seed moji-state.json       lucidmoji/state.json
+
+# the media visualiser runs `cava -p ~/.config/cava/quickshell.conf`. without
+# that file cava falls back to its own defaults, which emit ncurses output
+# instead of the raw ascii frames the bar strip parses - the strip then reads
+# one enormous bar and draws it as a circle across the whole popup. not part of
+# --no-look: this backs a shell feature, it is not a taste preference.
+CAVA_CFG="$HOME/.config/cava/quickshell.conf"
+mkdir -p "$(dirname "$CAVA_CFG")"
+if [[ ! -f "$CAVA_CFG" ]]; then
+    cp "$SRC/support/cava/quickshell.conf" "$CAVA_CFG"
+    say "  cava visualiser config -> ~/.config/cava/quickshell.conf"
+elif cmp -s "$SRC/support/cava/quickshell.conf" "$CAVA_CFG"; then
+    say "  ${dim}keeping cava/quickshell.conf${r}"
+else
+    cp "$CAVA_CFG" "$CAVA_CFG.backup-$STAMP"
+    cp "$SRC/support/cava/quickshell.conf" "$CAVA_CFG"
+    say "  cava/quickshell.conf refreshed (yours -> quickshell.conf.backup-$STAMP)"
+fi
+
+# --------------------------------------------------- notification ownership
+
+# org.freedesktop.Notifications is a single-owner D-Bus name and Lucid's bar
+# serves it. Any other notification daemon that is merely *installed* can be
+# D-Bus-activated the moment something posts a notification - it does not have
+# to be autostarted - and whoever claims the name first keeps it for the whole
+# session. Lose that race and Lucid's toasts silently never appear: you get the
+# other daemon's notification instead, while the bar looks perfectly fine.
+
+step "Checking who serves notifications"
+
+NOTIFY_RIVALS=()
+for f in /usr/share/dbus-1/services/*.service "$HOME/.local/share/dbus-1/services/"*.service; do
+    [[ -f "$f" ]] || continue
+    grep -q '^Name=org.freedesktop.Notifications' "$f" || continue
+    grep -qi 'quickshell' "$f" && continue
+    NOTIFY_RIVALS+=("$f")
+done
+
+if [[ ${#NOTIFY_RIVALS[@]} -eq 0 ]]; then
+    say "  ${dim}nothing else claims the name — Lucid's notifications win${r}"
+else
+    for f in "${NOTIFY_RIVALS[@]}"; do
+        unit=$(sed -n 's/^SystemdService=//p' "$f" | head -n1)
+        exe=$(sed -n 's/^Exec=//p' "$f" | head -n1 | awk '{print $1}')
+        say "  ${ylw}$(basename "$exe")${r} also claims org.freedesktop.Notifications"
+        say "  ${dim}($f)${r}"
+    done
+    say "  D-Bus starts it on the first notification, and it then keeps the"
+    say "  name for the session — Lucid's own notifications never show."
+
+    if ask "  Stop it taking over?"; then
+        for f in "${NOTIFY_RIVALS[@]}"; do
+            unit=$(sed -n 's/^SystemdService=//p' "$f" | head -n1)
+            exe=$(sed -n 's/^Exec=//p' "$f" | head -n1 | awk '{print $1}')
+            base=$(basename "$exe")
+            if [[ -n "$unit" ]] && command -v systemctl &>/dev/null; then
+                systemctl --user mask "$unit" &>/dev/null \
+                    && say "  masked $unit (undo: systemctl --user unmask $unit)" \
+                    || warn "  could not mask $unit — uninstall $base instead"
+            else
+                warn "  $base has no systemd unit to mask — uninstall it to be rid of it"
+            fi
+            # it may already hold the name in this session; the mask only
+            # stops the next activation, so drop the running one too
+            if pgrep -x "$base" &>/dev/null; then
+                pkill -x "$base" &>/dev/null || true
+                say "  stopped the running $base"
+            fi
+        done
+        say "  ${dim}restart Lucid (or log back in) so it claims the name${r}"
+    else
+        warn "  left alone — expect its notifications instead of Lucid's"
+    fi
+fi
 
 # ------------------------------------------------------------------ hyprland
 
@@ -560,7 +656,91 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     # --- the look: terminal + prompt + blur -------------------------------
     # each piece is additive and backed up first, because these are files the
     # user owns and may already have tuned
-    if [[ $WITH_LOOK -eq 1 ]] && ask "  Apply the Lucid look (kitty, starship prompt, VSCode theme)?"; then
+    if [[ $WITH_LOOK -eq 1 ]] && ask "  Apply the Lucid look (kitty, starship prompt, VSCode theme, GTK theme + icons)?"; then
+
+        # --- gtk theme + icons --------------------------------------------
+        # gtk reads three places and they disagree happily. under hyprland
+        # there is no xsettings daemon, so gtk3/gtk4 take settings.ini as the
+        # source of truth while gnome apps and portals read gsettings - set
+        # both or half your apps stay light. settings.ini is merged key by
+        # key: it also carries the user's font, cursor and hinting choices.
+        GTK_THEME_NAME=adw-gtk3-dark
+        ICON_THEME_NAME=FairyWren_Dark
+
+        # replace the key if it is there, insert it under [Settings] if not
+        ini_set() {
+            local f=$1 k=$2 v=$3
+            mkdir -p "$(dirname "$f")"
+            if [[ ! -f "$f" ]]; then
+                printf '[Settings]\n%s=%s\n' "$k" "$v" > "$f"
+                return 0
+            fi
+            grep -q '^\[Settings\]' "$f" || printf '\n[Settings]\n' >> "$f"
+            if grep -q "^$k=" "$f"; then
+                sed -i "s|^$k=.*|$k=$v|" "$f"
+            else
+                sed -i "0,/^\[Settings\]/s|^\[Settings\]|[Settings]\n$k=$v|" "$f"
+            fi
+        }
+
+        # FairyWren is not in the repos and the AUR build slices it into 52
+        # per-colour themes with different names, so take it from upstream:
+        # the two directories there are exactly the theme names set below
+        ICONS_DIR="$HOME/.local/share/icons"
+        if [[ -d "$ICONS_DIR/$ICON_THEME_NAME" ]]; then
+            say "  ${dim}keeping the FairyWren icons already in $ICONS_DIR${r}"
+        elif ! command -v git &>/dev/null; then
+            warn "  git is not installed — skipping the FairyWren icon theme"
+            ICON_THEME_NAME=""
+        else
+            say "  fetching the FairyWren icon theme (~140MB, one-time)"
+            FW_TMP=$(mktemp -d)
+            if git clone --depth 1 https://gitlab.com/FreshDoctor/FairyWren-Icons.git \
+                 "$FW_TMP/fw" &>/dev/null \
+               && [[ -d "$FW_TMP/fw/FairyWren_Dark" && -d "$FW_TMP/fw/FairyWren_Light" ]]; then
+                mkdir -p "$ICONS_DIR"
+                cp -r "$FW_TMP/fw/FairyWren_Dark" "$FW_TMP/fw/FairyWren_Light" "$ICONS_DIR/"
+                say "  FairyWren icons -> $ICONS_DIR"
+            else
+                warn "  could not fetch the FairyWren icons — leaving the icon theme alone"
+                ICON_THEME_NAME=""
+            fi
+            rm -rf "$FW_TMP"
+        fi
+
+        # the loader only rescans a theme once its cache is rebuilt
+        if [[ -n "$ICON_THEME_NAME" ]] && command -v gtk-update-icon-cache &>/dev/null; then
+            for v in Dark Light; do
+                [[ -d "$ICONS_DIR/FairyWren_$v" ]] || continue
+                gtk-update-icon-cache -qtf "$ICONS_DIR/FairyWren_$v" &>/dev/null || true
+            done
+        fi
+
+        # adw-gtk3-dark ships inside adw-gtk-theme rather than as its own
+        # package, so check the theme directory, not the package name
+        if [[ ! -d /usr/share/themes/$GTK_THEME_NAME && ! -d "$HOME/.themes/$GTK_THEME_NAME" ]]; then
+            warn "  $GTK_THEME_NAME is not installed — install adw-gtk-theme"
+        fi
+
+        for gtkver in 3.0 4.0; do
+            gtkini="$HOME/.config/gtk-$gtkver/settings.ini"
+            [[ -f "$gtkini" ]] && cp "$gtkini" "$gtkini.backup-$STAMP"
+            ini_set "$gtkini" gtk-theme-name "$GTK_THEME_NAME"
+            ini_set "$gtkini" gtk-application-prefer-dark-theme 1
+            [[ -n "$ICON_THEME_NAME" ]] && ini_set "$gtkini" gtk-icon-theme-name "$ICON_THEME_NAME"
+        done
+        say "  gtk-3.0 and gtk-4.0 settings.ini -> $GTK_THEME_NAME${ICON_THEME_NAME:+ + $ICON_THEME_NAME}"
+
+        # gnome apps, portals and anything reading dconf take these instead
+        if command -v gsettings &>/dev/null; then
+            gsettings set org.gnome.desktop.interface gtk-theme "$GTK_THEME_NAME" 2>/dev/null || true
+            gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
+            [[ -n "$ICON_THEME_NAME" ]] && \
+                gsettings set org.gnome.desktop.interface icon-theme "$ICON_THEME_NAME" 2>/dev/null || true
+            say "  gsettings -> $GTK_THEME_NAME, prefer-dark${ICON_THEME_NAME:+, $ICON_THEME_NAME}"
+        else
+            warn "  gsettings not found — GNOME apps may ignore the theme"
+        fi
 
         # kitty - the include is what makes matugen's colours apply at all
         if [[ -f "$HOME/.config/kitty/kitty.conf" ]]; then

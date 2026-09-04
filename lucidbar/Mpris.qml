@@ -79,7 +79,9 @@ BarPill {
     readonly property real playerVolume: root.player ? root.player.volume : 0
     property bool volumeFlash: false
     property var bars: []
-    readonly property int barCount: root.bars.length > 0 ? root.bars.length : 24
+    // a single value means cava is not emitting raw ascii frames; fall back
+    // rather than stretch one bar across the whole strip
+    readonly property int barCount: root.bars.length > 1 ? root.bars.length : 24
     property string shazamState: "idle"
     property var shazamResult: null
     property string shazamError: ""
@@ -1045,7 +1047,9 @@ BarPill {
                             readonly property real level: root.barLevel(index)
 
                             width: (vizStrip.width - (root.barCount - 1) * 3) / root.barCount
-                            height: Math.max(width, level * vizStrip.height)
+                            // width is only the dot-minimum for a thin bar, so cap it:
+                            // a wide bar must not drag the height up with it
+                            height: Math.min(vizStrip.height, Math.max(width, level * vizStrip.height))
                             anchors.bottom: parent.bottom
                             radius: 999
                             color: root.barColor(level)

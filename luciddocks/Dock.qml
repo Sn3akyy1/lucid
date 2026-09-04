@@ -97,7 +97,7 @@ PanelWindow {
 
     property string fallbackWallpaper: Qt.resolvedUrl("./fallback.jpg").toString().replace("file://", "")
     property var scannedApps: []
-    property string currentTheme: "matugen"
+    readonly property string currentTheme: Prefs.currentTheme
     property string pendingWallpaper: ""
     property string appliedWallpaper: ""
     property bool wallpaperArmed: false
@@ -612,23 +612,21 @@ PanelWindow {
     }
 
     function scanThemeWallpapers() {
-        var home = Quickshell.env("HOME");
         var script = "";
         for (var i = 0; i < dockWindow.allThemes.length; i++) {
             var id = dockWindow.allThemes[i].id;
             if (id === "matugen")
                 continue;
 
-            script += "d=\"" + home + "/Pictures/wallpapers/" + id + "\"; " + "if [ -d \"$d\" ] && [ -n \"$(find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) -print -quit)\" ]; " + "then echo \"" + id + ":1\"; else echo \"" + id + ":0\"; fi; ";
+            script += "d=\"" + Prefs.wallpaperDirFor(id) + "\"; " + "if [ -d \"$d\" ] && [ -n \"$(find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) -print -quit)\" ]; " + "then echo \"" + id + ":1\"; else echo \"" + id + ":0\"; fi; ";
         }
         themeWallpaperScan.command = ["sh", "-c", script];
         themeWallpaperScan.running = true;
     }
 
     function switchTheme(id) {
-        var home = Quickshell.env("HOME");
         themeSwitchProbe.pendingId = id;
-        themeSwitchProbe.command = ["sh", "-c", "d=\"" + home + "/Pictures/wallpapers/" + id + "\"; " + "[ -d \"$d\" ] && find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | sort | head -n1; true"];
+        themeSwitchProbe.command = ["sh", "-c", "d=\"" + Prefs.wallpaperDirFor(id) + "\"; " + "[ -d \"$d\" ] && find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | sort | head -n1; true"];
         themeSwitchProbe.running = true;
         dockWindow.menuOpen = false;
     }
@@ -965,6 +963,10 @@ PanelWindow {
             wallpaperScanner.scan();
         }
 
+        function onWallpaperDirChanged() {
+            wallpaperScanner.scan(false);
+        }
+
         function onDockShowRunningChanged() {
             dockWindow.syncRunningApps();
         }
@@ -1116,23 +1118,8 @@ PanelWindow {
         id: wallpapersModel
     }
 
-    FileView {
-        id: themeFile
-
-        path: Quickshell.env("HOME") + "/.cache/current_theme"
-        blockLoading: true
-        watchChanges: true
-        onFileChanged: reload()
-        onLoaded: {
-            var t = text().trim();
-            dockWindow.currentTheme = t !== "" ? t : "matugen";
-        }
-    }
-
-    onCurrentThemeChanged: {
-        wallpaperScanner.scan();
-        dockWindow.rebuildResults();
-    }
+    // the strip rescan rides on wallpaperDir, which follows the theme
+    onCurrentThemeChanged: dockWindow.rebuildResults()
 
     FileView {
         id: currentWallFile
@@ -1304,7 +1291,7 @@ PanelWindow {
 
         function pick() {
             wallpaperShuffle.running = false;
-            wallpaperShuffle.command = ["sh", "-c", "d=\"$HOME/Pictures/wallpapers/" + dockWindow.currentTheme + "\"; " + "[ -d \"$d\" ] || exit 0; " + "find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | shuf -n1"];
+            wallpaperShuffle.command = ["sh", "-c", "d=\"" + Prefs.wallpaperDir + "\"; " + "[ -d \"$d\" ] || exit 0; " + "find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | shuf -n1"];
             wallpaperShuffle.running = true;
         }
 
@@ -1333,6 +1320,10 @@ PanelWindow {
 
                 if (wallpaper === "")
                     return;
+
+                // already browsing that folder, so keep the picture and just re-derive the theme
+                if (dockWindow.appliedWallpaper.indexOf(Prefs.wallpaperDirFor(id) + "/") === 0)
+                    wallpaper = dockWindow.appliedWallpaper;
 
                 var home = Quickshell.env("HOME");
                 if (id === "matugen" || id === "pywal") {
@@ -1369,9 +1360,13 @@ PanelWindow {
     Process {
         id: wallpaperScanner
 
-        function scan() {
+        // typing a folder that turns up empty shouldn't swap the desktop out
+        property bool applyFallbackIfEmpty: true
+
+        function scan(applyFallback) {
+            wallpaperScanner.applyFallbackIfEmpty = applyFallback !== false;
             wallpaperScanner.running = false;
-            wallpaperScanner.command = ["sh", "-c", "d=\"$HOME/Pictures/wallpapers/" + dockWindow.currentTheme + "\"; " + "[ -d \"$d\" ] || exit 0; " + "find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | sort"];
+            wallpaperScanner.command = ["sh", "-c", "d=\"" + Prefs.wallpaperDir + "\"; " + "[ -d \"$d\" ] || exit 0; " + "find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | sort"];
             wallpaperScanner.running = true;
         }
 
@@ -1392,7 +1387,7 @@ PanelWindow {
                     });
                 }
                 if (wallpapersModel.count === 0) {
-                    if (dockWindow.appliedWallpaper !== dockWindow.fallbackWallpaper)
+                    if (wallpaperScanner.applyFallbackIfEmpty && dockWindow.appliedWallpaper !== dockWindow.fallbackWallpaper)
                         dockWindow.applyWallpaper(dockWindow.fallbackWallpaper);
 
                     return;
@@ -1444,7 +1439,7 @@ PanelWindow {
             if (dockWindow.mode === "wallpaper")
                 return;
 
-            wallpaperWatch.command = ["sh", "-c", "d=\"$HOME/Pictures/wallpapers/" + dockWindow.currentTheme + "\"; " + "cur=\"$1\"; " + "if [ -n \"$cur\" ] && [ ! -f \"$cur\" ]; then echo MISSING; fi; " + "if [ -d \"$d\" ]; then " + "f=$(find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | sort | head -n1); " + "if [ -n \"$f\" ]; then echo \"FIRST:$f\"; fi; " + "fi; exit 0", "sh", dockWindow.appliedWallpaper];
+            wallpaperWatch.command = ["sh", "-c", "d=\"" + Prefs.wallpaperDir + "\"; " + "cur=\"$1\"; " + "if [ -n \"$cur\" ] && [ ! -f \"$cur\" ]; then echo MISSING; fi; " + "if [ -d \"$d\" ]; then " + "f=$(find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | sort | head -n1); " + "if [ -n \"$f\" ]; then echo \"FIRST:$f\"; fi; " + "fi; exit 0", "sh", dockWindow.appliedWallpaper];
             wallpaperWatch.running = true;
         }
     }
