@@ -144,7 +144,7 @@ PopupWindow {
                             width: 40
                             height: 40
                             anchors.centerIn: parent
-                            source: popup.iconName !== "" ? Quickshell.iconPath(popup.iconName, true) : ""
+                            source: popup.iconName === "" ? "" : (IconTheme.generation >= 0 && IconTheme.pathFor(popup.iconName) !== "" ? IconTheme.pathFor(popup.iconName) : Quickshell.iconPath(popup.iconName, true))
                             visible: !preview.hasContent
                         }
 

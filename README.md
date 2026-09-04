@@ -61,8 +61,9 @@ That's it — the installer does the rest:
    asked first; `--no-hypr` keeps yours untouched.
 5. **Sets up theming** — the palettes, the wallpaper hook, and the matugen
    template. An existing `matugen/config.toml` is appended to, never replaced.
-6. **Applies the look** — kitty's colours, the starship prompt (wired into
-   `.bashrc`, `.zshrc` and `config.fish`), the VSCode/VSCodium Matugen theme,
+6. **Applies the look** — kitty's colours and its fish shell, the starship
+   prompt (wired into `.bashrc`, `.zshrc` and `config.fish`), the
+   VSCode/VSCodium Matugen theme,
    and the GTK theme: `adw-gtk3-dark` with the FairyWren icons, written to
    `gsettings` and to both `gtk-3.0` and `gtk-4.0` `settings.ini`.
    `--no-look` skips this.
@@ -280,6 +281,7 @@ or `--no-look`. The binds shell out to these, so a missing one is a dead key:
 | Package | Backs |
 | --- | --- |
 | `kitty` | Terminal (`F9`), and the themed terminal colours |
+| `fish` | The shell kitty opens |
 | `nautilus` | Files (`SUPER`+`E`) |
 | `playerctl` | The media keys |
 | `gnome-calculator` | Calculator (`F12`) |

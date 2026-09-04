@@ -120,7 +120,7 @@ PKG_FEATURES=(
 # config installs fine but its keys do nothing and the prompt renders as boxes
 PKG_HYPR=(
     kitty nautilus playerctl gnome-calculator
-    starship ttf-jetbrains-mono-nerd adw-gtk-theme papirus-icon-theme
+    starship fish ttf-jetbrains-mono-nerd adw-gtk-theme papirus-icon-theme
 )
 # the dock's default pins. these are the apps Lucid ships pinned, so the dock
 # is not a row of blank letter tiles on a fresh install. --no-apps skips them.
@@ -747,6 +747,8 @@ if [[ $WITH_THEMING -eq 1 ]]; then
         fi
 
         # kitty - the include is what makes matugen's colours apply at all
+        KITTY_CFG="$HOME/.config/kitty/kitty.conf"
+        KITTY_EXISTED=0; [[ -f "$KITTY_CFG" ]] && KITTY_EXISTED=1
         if [[ -f "$HOME/.config/kitty/kitty.conf" ]]; then
             if grep -q "matugen-colors.conf" "$HOME/.config/kitty/kitty.conf"; then
                 say "  ${dim}kitty.conf already includes matugen-colors.conf${r}"
@@ -762,6 +764,23 @@ if [[ $WITH_THEMING -eq 1 ]]; then
             mkdir -p "$HOME/.config/kitty"
             cp "$SRC/support/look/kitty.conf" "$HOME/.config/kitty/kitty.conf"
             say "  kitty.conf -> ~/.config/kitty/kitty.conf"
+        fi
+
+        # kitty opens fish rather than the login shell. only wired when fish is
+        # really there: kitty fails to open a window at all on a shell it cannot
+        # exec, and that reads as "the terminal keybind is broken"
+        if command -v fish &>/dev/null; then
+            if grep -qE '^[[:space:]]*shell[[:space:]]+' "$KITTY_CFG"; then
+                say "  ${dim}kitty.conf already sets a shell${r}"
+            else
+                [[ $KITTY_EXISTED -eq 1 && ! -f "$KITTY_CFG.backup-$STAMP" ]] \
+                    && cp "$KITTY_CFG" "$KITTY_CFG.backup-$STAMP"
+                printf '\n# added by Lucid\nshell fish\n' >> "$KITTY_CFG"
+                say "  kitty.conf now opens fish"
+            fi
+        else
+            sed -i '/^# kitty opens fish rather than the login shell$/d; /^shell fish$/d' "$KITTY_CFG"
+            warn "  fish is not installed — kitty will use your login shell"
         fi
 
         # vscode / vscodium - matugen writes the colour files, but they do
@@ -828,9 +847,9 @@ if [[ $WITH_THEMING -eq 1 ]]; then
         # for someone who does not use zsh is just litter
         LOGIN_SH=$(basename "${SHELL:-}")
         starship_init() {
-            local rc=$1 line=$2 shname=$3
+            local rc=$1 line=$2 shname=$3 always=${4:-0}
             if [[ ! -f "$rc" ]]; then
-                [[ "$shname" == "$LOGIN_SH" ]] || return 0
+                [[ "$shname" == "$LOGIN_SH" || $always -eq 1 ]] || return 0
                 mkdir -p "$(dirname "$rc")"
                 printf '# added by Lucid\n%s\n' "$line" > "$rc"
                 say "  created $(basename "$rc") to start starship"
@@ -845,8 +864,13 @@ if [[ $WITH_THEMING -eq 1 ]]; then
             fi
         }
         starship_init "$HOME/.bashrc"                  'eval "$(starship init bash)"'   bash
-        starship_init "$HOME/.zshrc"                   'eval "$(starship init zsh)"'    zsh
-        starship_init "$HOME/.config/fish/config.fish" 'starship init fish | source'    fish
+        # zsh redraws on SIGWINCH but does not re-run precmd, so the prompt keeps
+        # the old colours until you press enter. reset-prompt re-runs starship.
+        # bash has no equivalent - its prompt updates on the next prompt instead
+        starship_init "$HOME/.zshrc" 'eval "$(starship init zsh)"
+TRAPWINCH() { zle && { zle reset-prompt; zle -R } }'    zsh
+        # always for fish, whatever the login shell is - kitty opens it
+        starship_init "$HOME/.config/fish/config.fish" 'starship init fish | source'    fish 1
 
         # the prompt and kitty.conf are drawn with nerd font glyphs; without
         # the font every segment renders as a replacement box

@@ -85,6 +85,12 @@ Item {
         if (name.charAt(0) === "/")
             return "file://" + name;
 
+        // our own lookup first: it follows the live icon theme, which
+        // Quickshell.iconPath cannot once qt has started
+        var own = IconTheme.pathFor(name);
+        if (own !== "")
+            return own;
+
         var tries = [name, name.toLowerCase()];
         var dot = name.lastIndexOf(".");
         if (dot > 0 && dot < name.length - 1) {
@@ -99,7 +105,8 @@ Item {
         return "";
     }
 
-    readonly property string iconSource: dockItem.resolveIcon(dockItem.iconName)
+    // generation is read so the binding re-runs when the icon theme changes
+    readonly property string iconSource: IconTheme.generation >= 0 ? dockItem.resolveIcon(dockItem.iconName) : ""
     readonly property string monogram: dockItem.displayName !== "" ? dockItem.displayName.charAt(0).toUpperCase() : "?"
 
     readonly property real hoverSwell: (dockItem.active ? 0.12 : 0.08) * Prefs.dockHoverEffect

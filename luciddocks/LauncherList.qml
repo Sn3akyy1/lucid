@@ -346,7 +346,7 @@ Item {
                     height: 28
                     anchors.verticalCenter: parent.verticalCenter
                     visible: rowItem.iconName !== ""
-                    source: rowItem.iconName !== "" ? Quickshell.iconPath(rowItem.iconName, true) : ""
+                    source: rowItem.iconName === "" ? "" : (IconTheme.generation >= 0 && IconTheme.pathFor(rowItem.iconName) !== "" ? IconTheme.pathFor(rowItem.iconName) : Quickshell.iconPath(rowItem.iconName, true))
                 }
 
                 DockGlyph {
