@@ -609,8 +609,12 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     add_template hyprland       "$TPL/hyprland-colors.lua"     '~/.config/hypr/colors.conf'    "dir:$HOME/.config/hypr"
     add_template kitty          "$TPL/kitty.conf"              '~/.config/kitty/matugen-colors.conf' "cmd:kitty" 'killall -SIGUSR1 kitty 2>/dev/null || true'
     add_template starship       "$TPL/starship-colors.toml"    '~/.config/starship.toml'       "cmd:starship" "$STARSHIP_HOOK"
-    add_template gtk3           "$TPL/gtk-colors.css"          '~/.config/gtk-3.0/colors.css'  "dir:$HOME/.config/gtk-3.0"
-    add_template gtk4           "$TPL/gtk-colors.css"          '~/.config/gtk-4.0/colors.css'  "dir:$HOME/.config/gtk-4.0"
+    # no dir: guard on these two. gtk only creates ~/.config/gtk-{3,4}.0 once
+    # an app writes a setting there, so on a fresh machine the guard skipped
+    # both templates, matugen never wrote colors.css, and nautilus kept its
+    # stock colours forever. add_template creates the directory itself.
+    add_template gtk3           "$TPL/gtk-colors.css"          '~/.config/gtk-3.0/colors.css'
+    add_template gtk4           "$TPL/gtk-colors.css"          '~/.config/gtk-4.0/colors.css'
     add_template rofi           "$TPL/rofi-colors.rasi"        '~/.config/rofi/colors.rasi'    "dir:$HOME/.config/rofi"
     add_template waybar         "$TPL/colors.css"              '~/.config/waybar/colors.css'   "dir:$HOME/.config/waybar"
     add_template swaync         "$TPL/colors.css"              '~/.config/swaync/colors.css'   "dir:$HOME/.config/swaync"
@@ -643,7 +647,7 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     # GTK apps - Nautilus included - only read colors.css if gtk.css imports it
     for gtkver in 3.0 4.0; do
         gtkdir="$HOME/.config/gtk-$gtkver"
-        [[ -d "$gtkdir" ]] || continue
+        mkdir -p "$gtkdir"
         if [[ -f "$gtkdir/gtk.css" ]] && grep -q "colors.css" "$gtkdir/gtk.css"; then
             say "  ${dim}gtk-$gtkver already imports colors.css${r}"
         else

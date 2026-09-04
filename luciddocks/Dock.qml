@@ -1315,16 +1315,17 @@ PanelWindow {
             onStreamFinished: {
                 var id = themeSwitchProbe.pendingId;
                 var wallpaper = text.trim();
-                if (wallpaper === "" && id === "matugen")
-                    wallpaper = dockWindow.fallbackWallpaper;
-
+                // an empty theme folder is the normal state on a fresh install.
+                // every theme falls back to the shipped picture, not just matugen
                 if (wallpaper === "")
-                    return;
+                    wallpaper = dockWindow.fallbackWallpaper;
 
                 // already browsing that folder, so keep the picture and just re-derive the theme
                 if (dockWindow.appliedWallpaper.indexOf(Prefs.wallpaperDirFor(id) + "/") === 0)
                     wallpaper = dockWindow.appliedWallpaper;
 
+                // the theme is switched before the wallpaper and never gated on
+                // it: bailing out here used to leave the palette on the old theme
                 var home = Quickshell.env("HOME");
                 if (id === "matugen" || id === "pywal") {
                     Quickshell.execDetached(["sh", "-c", "echo " + id + " > " + home + "/.cache/current_theme"]);
