@@ -1314,15 +1314,21 @@ PanelWindow {
         stdout: StdioCollector {
             onStreamFinished: {
                 var id = themeSwitchProbe.pendingId;
-                var wallpaper = text.trim();
+                var found = text.trim();
+                var wallpaper = found;
+
+                // already browsing that folder, so keep the picture and just
+                // re-derive the theme. only while the folder still has one:
+                // otherwise this re-applies a path that no longer exists,
+                // set-wallpaper.sh bails on the missing file, and the fallback
+                // below never gets its turn
+                if (found !== "" && dockWindow.appliedWallpaper.indexOf(Prefs.wallpaperDirFor(id) + "/") === 0)
+                    wallpaper = dockWindow.appliedWallpaper;
+
                 // an empty theme folder is the normal state on a fresh install.
-                // every theme falls back to the shipped picture, not just matugen
+                // last word, so nothing above can override it back to a dead path
                 if (wallpaper === "")
                     wallpaper = dockWindow.fallbackWallpaper;
-
-                // already browsing that folder, so keep the picture and just re-derive the theme
-                if (dockWindow.appliedWallpaper.indexOf(Prefs.wallpaperDirFor(id) + "/") === 0)
-                    wallpaper = dockWindow.appliedWallpaper;
 
                 // the theme is switched before the wallpaper and never gated on
                 // it: bailing out here used to leave the palette on the old theme
