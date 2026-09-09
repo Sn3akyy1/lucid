@@ -336,6 +336,49 @@ Item {
 
     Item {
         anchors.fill: parent
+        visible: glyph.kind === "environment"
+
+        Rectangle {
+            x: 2
+            y: 2
+            width: 13.5
+            height: 11
+            radius: 3
+            color: "transparent"
+            border.width: 1.6
+            border.color: glyph.color
+        }
+
+        Shape {
+            x: 8.5
+            y: 7.5
+            width: 13.5
+            height: 13.5
+            preferredRendererType: Shape.CurveRenderer
+
+            ShapePath {
+                strokeWidth: 1.5
+                strokeColor: glyph.color
+                fillColor: glyph.color
+                joinStyle: ShapePath.RoundJoin
+
+                PathSvg {
+                    path: "M4 3 L4 17 L7.8 13.6 L10.1 18.6 L12.4 17.5 L10.1 12.6 L15 12.6 Z"
+                }
+
+            }
+
+            transform: Scale {
+                xScale: 13.5 / 20
+                yScale: 13.5 / 20
+            }
+
+        }
+
+    }
+
+    Item {
+        anchors.fill: parent
         visible: glyph.kind === "theme"
 
         Rectangle {

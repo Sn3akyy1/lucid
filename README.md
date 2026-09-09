@@ -343,6 +343,20 @@ both are switches on the Widgets page if you would rather they float on top.
   hypridle.conf first is read into the page once and copied to
   `hypridle.conf.pre-lucid`, so nothing is lost. Scriptable with
   `qs ipc call idle status | keepawake | on | off | restart`
+- **Environment** — an *Environment* page that owns the desktop's appearance
+  outside the shell. Cursor theme and size, icon theme, GTK theme, light or
+  dark, the Qt style, and the interface, application, document and monospace
+  fonts. The point is that one choice reaches everywhere: each change is
+  written to GTK 2, 3 and 4, to `gsettings`, to the XCursor fallback theme, to
+  qt5ct and qt6ct, and to Hyprland's env module, and `hyprctl setcursor` runs
+  so the pointer changes under your hand rather than at the next login. Only
+  the keys Lucid owns are touched — every comment and every other setting in
+  those files stays where it was, and a toolkit this machine does not use is
+  skipped rather than conjured. It starts by reading what the machine already
+  says, so opening the page changes nothing; **Re-read from the system** picks
+  those values up again after you have changed appearance with another tool.
+  Turn GTK, Qt or Hyprland off individually if you would rather keep one of
+  them by hand. Scriptable with `qs ipc call settings environment`
 - **Settings** — a GUI for all of the above, no config file editing
 
 <img src="assets/prev3.webp" alt="The Lucid settings app on the Dock page">

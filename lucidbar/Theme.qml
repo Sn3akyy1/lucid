@@ -11,6 +11,9 @@ Singleton {
     property real accentPunch: pf.accentPunch
     readonly property real motionBaseline: 1.125
     readonly property real motionScale: pf.motionScale * root.motionBaseline
+    // the ramp below is authored a step large; 1.00x renders it at 0.9
+    readonly property real typeBaseline: 0.9
+    readonly property real fontScale: pf.fontScale * root.typeBaseline
     readonly property real blurAmount: blurAdapter.value || 0
 
     function setBlurAmount(v) {
@@ -144,28 +147,28 @@ Singleton {
     readonly property int easeEmphasized: Easing.OutBack
     readonly property real emphasizedOvershoot: 0.7
     readonly property string fontFamily: pf.fontFamily
-    readonly property int fontLabel: Math.round(11 * pf.fontScale)
-    readonly property int fontBody: Math.round(12 * pf.fontScale)
-    readonly property int fontTitle: Math.round(13 * pf.fontScale)
-    readonly property int fontHeadline: Math.round(15 * pf.fontScale)
+    readonly property int fontLabel: Math.round(11 * root.fontScale)
+    readonly property int fontBody: Math.round(12 * root.fontScale)
+    readonly property int fontTitle: Math.round(13 * root.fontScale)
+    readonly property int fontHeadline: Math.round(15 * root.fontScale)
 
     // m3 type scale, trimmed one step for desktop density
-    readonly property int fontDisplaySm: Math.round(32 * pf.fontScale)
-    readonly property int fontHeadlineLg: Math.round(30 * pf.fontScale)
-    readonly property int fontHeadlineMd: Math.round(26 * pf.fontScale)
-    readonly property int fontHeadlineSm: Math.round(22 * pf.fontScale)
-    readonly property int fontTitleLg: Math.round(19 * pf.fontScale)
-    readonly property int fontTitleMd: Math.round(16 * pf.fontScale)
-    readonly property int fontTitleSm: Math.round(14 * pf.fontScale)
-    readonly property int fontBodyLg: Math.round(15 * pf.fontScale)
-    readonly property int fontBodyMd: Math.round(13 * pf.fontScale)
-    readonly property int fontBodySm: Math.round(12 * pf.fontScale)
-    readonly property int fontLabelLg: Math.round(13 * pf.fontScale)
-    readonly property int fontLabelMd: Math.round(12 * pf.fontScale)
-    readonly property int fontLabelSm: Math.round(11 * pf.fontScale)
+    readonly property int fontDisplaySm: Math.round(32 * root.fontScale)
+    readonly property int fontHeadlineLg: Math.round(30 * root.fontScale)
+    readonly property int fontHeadlineMd: Math.round(26 * root.fontScale)
+    readonly property int fontHeadlineSm: Math.round(22 * root.fontScale)
+    readonly property int fontTitleLg: Math.round(19 * root.fontScale)
+    readonly property int fontTitleMd: Math.round(16 * root.fontScale)
+    readonly property int fontTitleSm: Math.round(14 * root.fontScale)
+    readonly property int fontBodyLg: Math.round(15 * root.fontScale)
+    readonly property int fontBodyMd: Math.round(13 * root.fontScale)
+    readonly property int fontBodySm: Math.round(12 * root.fontScale)
+    readonly property int fontLabelLg: Math.round(13 * root.fontScale)
+    readonly property int fontLabelMd: Math.round(12 * root.fontScale)
+    readonly property int fontLabelSm: Math.round(11 * root.fontScale)
 
     function fs(px) {
-        return Math.round(px * pf.fontScale);
+        return Math.round(px * root.fontScale);
     }
 
     function ms(d) {

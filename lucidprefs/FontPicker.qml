@@ -5,6 +5,7 @@ import qs
 Item {
     id: picker
 
+    readonly property int wheelStep: 190
     property bool shown: false
     readonly property var families: Qt.fontFamilies()
     property string filter: ""
@@ -50,6 +51,14 @@ Item {
         MouseArea {
             anchors.fill: parent
             onClicked: picker.dismiss()
+        }
+
+        // the pane behind is still scrollable, so the dimmer has to eat these
+        WheelHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onWheel: (event) => {
+                return event.accepted = true;
+            }
         }
 
     }
@@ -145,7 +154,35 @@ Item {
             clip: true
             model: picker.matches
             boundsBehavior: Flickable.StopAtBounds
+            flickDeceleration: 6000
+            maximumFlickVelocity: 9000
             cacheBuffer: 400
+
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: (event) => {
+                    event.accepted = true;
+                    var maxY = Math.max(0, list.contentHeight - list.height);
+                    var base = listScroll.running ? listScroll.to : list.contentY;
+                    var target = Math.max(0, Math.min(maxY, base - (event.angleDelta.y / 120) * picker.wheelStep));
+                    if (target === base)
+                        return ;
+
+                    listScroll.stop();
+                    listScroll.from = list.contentY;
+                    listScroll.to = target;
+                    listScroll.start();
+                }
+            }
+
+            NumberAnimation {
+                id: listScroll
+
+                target: list
+                property: "contentY"
+                duration: Theme.ms(170)
+                easing.type: Easing.OutCubic
+            }
 
             ScrollBar.vertical: ScrollBar {
                 id: listBar

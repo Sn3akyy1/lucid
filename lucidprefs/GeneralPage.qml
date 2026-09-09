@@ -154,12 +154,13 @@ Column {
     }
 
     SettingCard {
-        title: "MOTION & TYPE"
+        title: "MOTION"
 
         SettingRow {
             title: "Animation speed"
             resetKey: "motionScale"
             description: "Scales every transition in the shell. 1.00x is the shipped speed; drag to 0 for no animation at all."
+            showDivider: false
             stacked: true
 
             M3Slider {
@@ -172,41 +173,6 @@ Column {
                 value: Prefs.motionScale
                 onMoved: (v) => {
                     return Prefs.motionScale = v;
-                }
-            }
-
-        }
-
-        SettingRow {
-            title: "Interface font"
-            resetKey: "fontFamily"
-            description: "Applied everywhere the shell draws text. Chosen from the fonts installed on this machine."
-
-            M3Button {
-                text: Prefs.fontFamily
-                variant: "tonal"
-                onClicked: Prefs.fontPickerRequested()
-            }
-
-        }
-
-        SettingRow {
-            title: "Text size"
-            resetKey: "fontScale"
-            description: "Scales the shell's whole type ramp at once."
-            showDivider: false
-            stacked: true
-
-            M3Slider {
-                width: parent.width
-                from: 0.8
-                to: 1.4
-                stepSize: 0.05
-                decimals: 2
-                suffix: "x"
-                value: Prefs.fontScale
-                onMoved: (v) => {
-                    return Prefs.fontScale = v;
                 }
             }
 

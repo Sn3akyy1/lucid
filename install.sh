@@ -115,9 +115,12 @@ PKG_FEATURES=(
     grim wf-recorder ffmpeg wl-clipboard wtype
     tesseract tesseract-data-eng hyprpicker
     python-pillow python-numpy python-fonttools
-    cava songrec curl libnotify awww
+    cava songrec curl libnotify awww fastfetch
     python-pywal noto-fonts-emoji
-    xdg-utils swappy polkit-kde-agent
+    xdg-utils zenity swappy polkit-kde-agent
+    # the environment page writes the desktop's appearance through these, and
+    # the file chooser kde connect sends files with comes from the gtk portal
+    gsettings-desktop-schemas qt6ct xdg-desktop-portal-gtk
 )
 # invoked by the shipped Hyprland binds and the Lucid look. without these the
 # config installs fine but its keys do nothing and the prompt renders as boxes
@@ -141,6 +144,8 @@ declare -A PKG_ALTS=(
     [spotify]="spotify-launcher"
     [ttf-jetbrains-mono-nerd]="nerd-fonts ttf-jetbrains-mono"
     [adw-gtk-theme]="adw-gtk3 adw-gtk3-git"
+    [qt6ct]="qt6ct-kde"
+    [xdg-desktop-portal-gtk]="xdg-desktop-portal-gnome xdg-desktop-portal-kde"
 )
 
 # a couple of the dock's AUR packages need something in place before the build
@@ -284,7 +289,7 @@ else
     # api keys — those come from defaults/ in the seed step below
     tar -C "$SRC" -cf - \
         --exclude='.git' --exclude='.github' --exclude='.claude' \
-        --exclude='support' --exclude='defaults' \
+        --exclude='support' --exclude='defaults' --exclude='__pycache__' \
         --exclude='install.sh' --exclude='uninstall.sh' \
         --exclude='README.md' --exclude='LICENSE' --exclude='.gitignore' \
         --exclude='./lucidprefs/prefs.json' \
@@ -425,6 +430,24 @@ else
     cp "$CAVA_CFG" "$CAVA_CFG.backup-$STAMP"
     cp "$SRC/support/cava/quickshell.conf" "$CAVA_CFG"
     say "  cava/quickshell.conf refreshed (yours -> quickshell.conf.backup-$STAMP)"
+fi
+
+# the Environment page writes the Qt half of the appearance - style, icon theme
+# and fonts - into qt6ct.conf, and the shipped modules/env.lua exports
+# QT_QPA_PLATFORMTHEME=qt6ct so Qt apps read it. envtool.py deliberately never
+# creates that file: it refuses to conjure a config for a toolkit the machine
+# does not use. so on a fresh machine the page's Qt switch is a silent no-op
+# until something writes one. minimal on purpose - the page fills in the style,
+# icons and fonts itself on the first apply.
+QT6CT_CFG="$HOME/.config/qt6ct/qt6ct.conf"
+if ! command -v qt6ct &>/dev/null; then
+    say "  ${dim}qt6ct is not installed - the Environment page will skip Qt${r}"
+elif [[ -f "$QT6CT_CFG" ]]; then
+    say "  ${dim}keeping qt6ct/qt6ct.conf${r}"
+else
+    mkdir -p "$(dirname "$QT6CT_CFG")"
+    printf '[Appearance]\nstyle=Fusion\n' > "$QT6CT_CFG"
+    say "  qt6ct.conf -> ~/.config/qt6ct/qt6ct.conf"
 fi
 
 # --------------------------------------------------- notification ownership

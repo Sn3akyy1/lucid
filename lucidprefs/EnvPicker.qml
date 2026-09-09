@@ -1,42 +1,49 @@
 import QtQuick
 import QtQuick.Controls.Basic
-import Quickshell.Io
 import qs
 
+// the shared list behind every picker on the Environment page
 Item {
     id: picker
 
     readonly property int wheelStep: 190
     property bool shown: false
-    property var zones: []
+    property string heading: ""
+    property string noun: "themes"
+    property var items: []
+    property string current: ""
+    // name -> icon path, only filled for the icon theme list
+    property var previews: ({
+    })
+    property bool showPreviews: false
     property string filter: ""
     readonly property var matches: {
-        var q = picker.filter.trim().toLowerCase().replace(/ /g, "_");
+        var q = picker.filter.trim().toLowerCase();
         if (q === "")
-            return picker.zones;
+            return picker.items;
 
         var out = [];
-        for (var i = 0; i < picker.zones.length; i++) {
-            if (picker.zones[i].toLowerCase().indexOf(q) !== -1)
-                out.push(picker.zones[i]);
+        for (var i = 0; i < picker.items.length; i++) {
+            if (String(picker.items[i]).toLowerCase().indexOf(q) !== -1)
+                out.push(picker.items[i]);
 
         }
         return out;
     }
 
-    function open() {
-        picker.filter = "";
-        picker.shown = true;
-        searchInput.text = "";
-        searchInput.forceActiveFocus();
-        if (picker.zones.length === 0)
-            zoneScan.running = true;
-        else
-            picker.scrollToCurrent();
-    }
+    signal chosen(string name)
 
-    function scrollToCurrent() {
-        var idx = picker.matches.indexOf(Loc.zone);
+    function open(heading, noun, items, current, withPreviews) {
+        picker.heading = heading;
+        picker.noun = noun;
+        picker.items = items;
+        picker.current = current;
+        picker.showPreviews = withPreviews === true;
+        picker.filter = "";
+        searchInput.text = "";
+        picker.shown = true;
+        searchInput.forceActiveFocus();
+        var idx = picker.matches.indexOf(current);
         list.positionViewAtIndex(idx < 0 ? 0 : idx, ListView.Center);
     }
 
@@ -44,32 +51,14 @@ Item {
         picker.shown = false;
     }
 
-    function choose(zone) {
-        Loc.setZone(zone);
+    function choose(name) {
+        picker.chosen(name);
         picker.dismiss();
     }
 
     anchors.fill: parent
     visible: picker.shown || picker.opacity > 0.01
     opacity: picker.shown ? 1 : 0
-
-    Process {
-        id: zoneScan
-
-        command: ["sh", "-c", "timedatectl list-timezones 2>/dev/null || find /usr/share/zoneinfo -type f -printf '%P\\n' | grep -E '^[A-Z][A-Za-z_]+/' | sort"]
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                picker.zones = this.text.trim().split("\n").filter((z) => {
-                    return z !== "";
-                });
-                if (picker.shown)
-                    picker.scrollToCurrent();
-
-            }
-        }
-
-    }
 
     Rectangle {
         anchors.fill: parent
@@ -111,7 +100,7 @@ Item {
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.margins: 22
-            text: "Time zone"
+            text: picker.heading
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontHeadlineSm
@@ -160,13 +149,25 @@ Item {
                 anchors.left: parent.left
                 anchors.leftMargin: 12
                 anchors.verticalCenter: parent.verticalCenter
-                text: picker.zones.length > 0 ? "Search " + picker.zones.length + " zones" : "Reading the zone database…"
+                text: "Search " + picker.items.length + " installed " + picker.noun
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyLg
                 visible: searchInput.text === ""
             }
 
+        }
+
+        Text {
+            anchors.centerIn: parent
+            width: card.width - 60
+            text: picker.items.length === 0 ? "Nothing installed to choose from" : "No " + picker.noun + " match “" + picker.filter + "”"
+            color: Theme.subtextDim
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontBodyLg
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            visible: picker.matches.length === 0
         }
 
         ListView {
@@ -238,26 +239,44 @@ Item {
             }
 
             delegate: Rectangle {
-                id: zoneRow
+                id: themeRow
 
                 required property string modelData
-                readonly property bool current: zoneRow.modelData === Loc.zone
+                readonly property bool isCurrent: themeRow.modelData === picker.current
+                readonly property string preview: picker.showPreviews ? (picker.previews[themeRow.modelData] || "") : ""
 
                 width: list.width - 14
-                height: 48
+                height: 50
                 radius: height / 2
-                color: zoneRow.current ? Theme.accentContainer : (rowArea.containsMouse ? Theme.bgHover : "transparent")
+                color: themeRow.isCurrent ? Theme.accentContainer : (rowArea.containsMouse ? Theme.bgHover : "transparent")
+
+                Image {
+                    id: swatch
+
+                    anchors.left: parent.left
+                    anchors.leftMargin: 13
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 26
+                    height: 26
+                    visible: themeRow.preview !== ""
+                    source: themeRow.preview === "" ? "" : "file://" + themeRow.preview
+                    sourceSize.width: 52
+                    sourceSize.height: 52
+                    fillMode: Image.PreserveAspectFit
+                    asynchronous: true
+                    smooth: true
+                }
 
                 Text {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 14
+                    anchors.left: swatch.visible ? swatch.right : parent.left
+                    anchors.leftMargin: swatch.visible ? 12 : 14
                     anchors.right: parent.right
                     anchors.rightMargin: 14
                     anchors.verticalCenter: parent.verticalCenter
-                    text: zoneRow.modelData.replace(/_/g, " ")
+                    text: themeRow.modelData
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodyLg
-                    color: zoneRow.current ? Theme.text : Theme.subtext
+                    color: themeRow.isCurrent ? Theme.text : Theme.subtext
                     elide: Text.ElideRight
                 }
 
@@ -267,7 +286,7 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: picker.choose(zoneRow.modelData)
+                    onClicked: picker.choose(themeRow.modelData)
                 }
 
                 Behavior on color {

@@ -37,6 +37,7 @@ Singleton {
     readonly property var barModuleKeys: ["showWorkspaces", "showMedia", "showTray", "showClock", "showNotifications", "showSystem"]
     readonly property var widgetKeys: ["widgetsEnabled", "widgetSnap", "widgetLockAll", "widgetHideFullscreen", "widgetOnTop"]
     readonly property var idleKeys: ["idleDim", "idleDimAfter", "idleDimLevel", "idleDimKeyboard", "idleLock", "idleLockAfter", "idleScreenOff", "idleScreenOffAfter", "idleSuspend", "idleSuspendAfter", "idleSuspendOnAc", "idleLockBeforeSleep", "idleWakeAfterSleep", "idleRespectInhibitors", "idleWhileMedia"]
+    readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envIconTheme", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
     readonly property var notifKeys: ["toastEnabled", "toastTimeout", "toastUseAppTimeout", "toastCriticalSticky", "toastShowBody", "toastShowActions", "toastBodyLines", "notifShowIcons", "notifMaxHistory", "doNotDisturb", "dndAllowCritical", "dndFullscreen", "quietHours", "quietFrom", "quietTo", "notifSound", "notifSoundName", "notifSoundVolume", "notifSoundUrgentOnly", "notifMutedApps"]
 
     property alias barStyle: s.barStyle
@@ -147,6 +148,26 @@ Singleton {
     property alias desktopSelection: s.desktopSelection
     property alias desktopMenu: s.desktopMenu
 
+    // one-shot: the machine's own gtk/qt/cursor settings are read in once
+    property alias envAdopted: s.envAdopted
+    property alias envCursorTheme: s.envCursorTheme
+    property alias envCursorSize: s.envCursorSize
+    property alias envIconTheme: s.envIconTheme
+    property alias envGtkTheme: s.envGtkTheme
+    property alias envQtStyle: s.envQtStyle
+    property alias envQtPlatformTheme: s.envQtPlatformTheme
+    property alias envColorScheme: s.envColorScheme
+    property alias envFontSync: s.envFontSync
+    property alias envAppFont: s.envAppFont
+    property alias envAppFontSize: s.envAppFontSize
+    property alias envDocumentFont: s.envDocumentFont
+    property alias envDocumentFontSize: s.envDocumentFontSize
+    property alias envMonoFont: s.envMonoFont
+    property alias envMonoFontSize: s.envMonoFontSize
+    property alias envApplyGtk: s.envApplyGtk
+    property alias envApplyQt: s.envApplyQt
+    property alias envApplyHypr: s.envApplyHypr
+
     readonly property var builtinThemes: [
         { "id": "matugen", "name": "Matugen", "desc": "Colors generated from your wallpaper", "swatchBg": "#12171a", "swatchAccent": "#8ad0ee" },
         { "id": "pywal", "name": "Pywal", "desc": "Wallpaper colors via pywal's classic palette", "swatchBg": "#1a1e24", "swatchAccent": "#c9a1a9" },
@@ -244,7 +265,7 @@ Singleton {
         "notifMutedApps": "",
         "notifSeenApps": "",
         "dockEnabled": true,
-        "dockIconSize": 46,
+        "dockIconSize": 41,
         "dockSpacing": 10,
         "dockBottomMargin": 20,
         "dockMagnify": true,
@@ -285,7 +306,25 @@ Singleton {
         "idleRespectInhibitors": true,
         "idleWhileMedia": true,
         "desktopSelection": true,
-        "desktopMenu": true
+        "desktopMenu": true,
+        "envAdopted": false,
+        "envCursorTheme": "",
+        "envCursorSize": 24,
+        "envIconTheme": "",
+        "envGtkTheme": "",
+        "envQtStyle": "Fusion",
+        "envQtPlatformTheme": "",
+        "envColorScheme": "auto",
+        "envFontSync": false,
+        "envAppFont": "",
+        "envAppFontSize": 11,
+        "envDocumentFont": "",
+        "envDocumentFontSize": 11,
+        "envMonoFont": "",
+        "envMonoFontSize": 10,
+        "envApplyGtk": true,
+        "envApplyQt": true,
+        "envApplyHypr": true
     })
 
     // what the bar module is holding right now, so the settings page can offer
@@ -306,12 +345,16 @@ Singleton {
     readonly property string resetBlurToken: "__blur__"
     readonly property string clearWidgetsToken: "__widgets__"
     readonly property string resetIdleToken: "__idle__"
+    readonly property string resetEnvToken: "__env__"
 
     signal themeChangeRequested(string id)
 
     signal themeDeleteRequested(string id)
 
     signal fontPickerRequested()
+
+    // "cursor" | "icon" | "gtk" | "qtStyle" | "appFont" | "docFont" | "monoFont"
+    signal envPickerRequested(string kind)
 
     signal timeZonePickerRequested()
 
@@ -587,7 +630,7 @@ Singleton {
             property string notifMutedApps: ""
             property string notifSeenApps: ""
             property bool dockEnabled: true
-            property int dockIconSize: 46
+            property int dockIconSize: 41
             property int dockSpacing: 10
             property int dockBottomMargin: 20
             property bool dockMagnify: true
@@ -629,6 +672,24 @@ Singleton {
             property bool idleWhileMedia: true
             property bool desktopSelection: true
             property bool desktopMenu: true
+            property bool envAdopted: false
+            property string envCursorTheme: ""
+            property int envCursorSize: 24
+            property string envIconTheme: ""
+            property string envGtkTheme: ""
+            property string envQtStyle: "Fusion"
+            property string envQtPlatformTheme: ""
+            property string envColorScheme: "auto"
+            property bool envFontSync: false
+            property string envAppFont: ""
+            property int envAppFontSize: 11
+            property string envDocumentFont: ""
+            property int envDocumentFontSize: 11
+            property string envMonoFont: ""
+            property int envMonoFontSize: 10
+            property bool envApplyGtk: true
+            property bool envApplyQt: true
+            property bool envApplyHypr: true
         }
 
     }

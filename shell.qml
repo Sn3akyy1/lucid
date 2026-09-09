@@ -13,13 +13,15 @@ import Quickshell.Wayland
 
 ShellRoot {
     // singletons are made lazily, and these have to be up before anything
-    // asks: the KDE Connect bridge and its ipc target, the bluez extras, and
-    // the idle daemon, which owns hypridle.conf
+    // asks: the KDE Connect bridge and its ipc target, the bluez extras, the
+    // idle daemon, which owns hypridle.conf, and the environment, which owns
+    // the gtk and qt appearance files
     Component.onCompleted: {
         void KdeConnect.installed;
         void Bt.present;
         void Net.connectivity;
         void Idle.probed;
+        void Env.probed;
     }
 
     PanelWindow {

@@ -30,6 +30,7 @@ FloatingWindow {
     readonly property var pages: [
         { "key": "general", "label": "General", "title": "General", "blurb": "Shape, colour and motion across the whole shell" },
         { "key": "theme", "label": "Theme", "title": "Theme and Appearance", "blurb": "Colour schemes, wallpapers and themes you import" },
+        { "key": "environment", "label": "Environment", "title": "Environment", "blurb": "Cursors, icons, fonts and application themes, across GTK, Qt and Hyprland alike" },
         { "key": "bar", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
         { "key": "dock", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
         { "key": "widgets", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
@@ -53,6 +54,46 @@ FloatingWindow {
         win.visible = true;
     }
 
+    // which of the environment's lists is open, so the answer knows where to go
+    property string envPickKind: ""
+
+    function openEnvPicker(kind) {
+        win.envPickKind = kind;
+        if (kind === "cursor")
+            envPicker.open("Cursor theme", "cursor themes", Env.cursorThemes, Prefs.envCursorTheme, false);
+        else if (kind === "icon") {
+            Env.loadPreviews();
+            envPicker.open("Icon theme", "icon themes", Env.iconThemes, Prefs.envIconTheme, true);
+        } else if (kind === "gtk")
+            envPicker.open("Application theme", "GTK themes", Env.gtkThemes, Prefs.envGtkTheme, false);
+        else if (kind === "qtStyle")
+            envPicker.open("Qt style", "Qt styles", Env.qtStyles, Prefs.envQtStyle, false);
+        else if (kind === "appFont")
+            envPicker.open("Application font", "fonts", Qt.fontFamilies(), Env.appFont, false);
+        else if (kind === "docFont")
+            envPicker.open("Document font", "fonts", Qt.fontFamilies(), Prefs.envDocumentFont, false);
+        else if (kind === "monoFont")
+            envPicker.open("Monospace font", "fonts", Qt.fontFamilies(), Prefs.envMonoFont, false);
+    }
+
+    function applyEnvChoice(name) {
+        var k = win.envPickKind;
+        if (k === "cursor")
+            Prefs.envCursorTheme = name;
+        else if (k === "icon")
+            Prefs.envIconTheme = name;
+        else if (k === "gtk")
+            Prefs.envGtkTheme = name;
+        else if (k === "qtStyle")
+            Prefs.envQtStyle = name;
+        else if (k === "appFont")
+            Prefs.envAppFont = name;
+        else if (k === "docFont")
+            Prefs.envDocumentFont = name;
+        else if (k === "monoFont")
+            Prefs.envMonoFont = name;
+    }
+
     onVisibleChanged: {
         if (win.visible) {
             focusSink.forceActiveFocus();
@@ -61,6 +102,7 @@ FloatingWindow {
             confirmDialog.dismiss();
             fontPicker.dismiss();
             timeZonePicker.dismiss();
+            envPicker.dismiss();
         }
     }
     onClosed: win.visible = false
@@ -117,6 +159,10 @@ FloatingWindow {
             win.show("dock");
         }
 
+        function environment(): void {
+            win.show("environment");
+        }
+
         function widgets(): void {
             win.show("widgets");
         }
@@ -151,7 +197,7 @@ FloatingWindow {
         }
 
         function font(): void {
-            win.show("general");
+            win.show("environment");
             Prefs.fontPickerRequested();
         }
 
@@ -177,6 +223,8 @@ FloatingWindow {
                 Widgets.closeAll();
             else if (action === Prefs.resetIdleToken)
                 Prefs.resetKeys(Prefs.idleKeys);
+            else if (action === Prefs.resetEnvToken)
+                Prefs.resetKeys(Prefs.envKeys);
             else if (action.indexOf("wifi-forget:") === 0)
                 Net.forgetSsid(action.substring(12));
             else if (action.indexOf("net-delete:") === 0)
@@ -208,6 +256,16 @@ FloatingWindow {
         z: 100
     }
 
+    EnvPicker {
+        id: envPicker
+
+        z: 100
+        previews: Env.iconPreviews
+        onChosen: (name) => {
+            return win.applyEnvChoice(name);
+        }
+    }
+
     Connections {
         function onResetConfirmRequested(title, body, confirmLabel, action) {
             confirmDialog.ask(title, body, confirmLabel, action);
@@ -215,6 +273,10 @@ FloatingWindow {
 
         function onFontPickerRequested() {
             fontPicker.open();
+        }
+
+        function onEnvPickerRequested(kind) {
+            win.openEnvPicker(kind);
         }
 
         function onTimeZonePickerRequested() {
@@ -232,6 +294,8 @@ FloatingWindow {
         Keys.onEscapePressed: {
             if (fontPicker.shown)
                 fontPicker.dismiss();
+            else if (envPicker.shown)
+                envPicker.dismiss();
             else if (timeZonePicker.shown)
                 timeZonePicker.dismiss();
             else if (confirmDialog.shown)
@@ -634,6 +698,8 @@ FloatingWindow {
                                 return "GeneralPage.qml";
                             case "theme":
                                 return "ThemePage.qml";
+                            case "environment":
+                                return "EnvironmentPage.qml";
                             case "bar":
                                 return "BarPage.qml";
                             case "dock":
