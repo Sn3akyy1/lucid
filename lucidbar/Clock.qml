@@ -3,6 +3,7 @@ import QtQuick.Shapes
 import Quickshell
 import Quickshell.Hyprland._FocusGrab
 import Quickshell.Io
+import "../lucidwidgets"
 import qs
 
 BarPill {
@@ -12,23 +13,21 @@ BarPill {
     readonly property string minuteFormat: Prefs.clock24h ? "mm" : "mm AP"
     readonly property string fullTimeFormat: Prefs.clock24h ? "H:mm:ss" : "h:mm:ss AP"
     readonly property int horizontalPadding: 17
-    property real lat: 52.2297
-    property real lon: 21.0122
-    property real temp: 0
-    property int humidity: 0
-    property int weatherCode: 0
-    property real feelsLike: 0
-    property int viewYear: new Date().getFullYear()
-    property int viewMonth: new Date().getMonth()
+    readonly property int temp: WeatherSource.report ? WeatherSource.report.tempC : 0
+    readonly property int humidity: WeatherSource.report ? WeatherSource.report.humidity : 0
+    readonly property int weatherCode: WeatherSource.report ? WeatherSource.report.code : 0
+    readonly property int feelsLike: WeatherSource.report ? WeatherSource.report.feelsC : 0
+    property int viewYear: Loc.now().getFullYear()
+    property int viewMonth: Loc.now().getMonth()
     readonly property bool isViewingCurrentMonth: {
-        const now = new Date();
+        const now = Loc.now();
         return root.viewYear === now.getFullYear() && root.viewMonth === now.getMonth();
     }
     property bool calFrontIsA: true
     property int clockTick: 0
     readonly property bool isNight: {
         root.clockTick;
-        const h = new Date().getHours();
+        const h = Loc.now().getHours();
         return h < 6 || h >= 20;
     }
     property var editingDate: null
@@ -43,7 +42,7 @@ BarPill {
     property string lastCheckedDay: ""
     readonly property bool hasUpcomingReminder: {
         root.clockTick;
-        const now = new Date();
+        const now = Loc.now();
         now.setHours(0, 0, 0, 0);
         for (const r of remindersAdapter.items) {
             const d = new Date(r.year, r.month, r.day);
@@ -58,7 +57,7 @@ BarPill {
 
     readonly property var nextReminder: {
         root.clockTick;
-        const now = new Date();
+        const now = Loc.now();
         let best = null;
         let bestAt = null;
         for (const r of remindersAdapter.items) {
@@ -81,7 +80,7 @@ BarPill {
         if (!at)
             return "";
 
-        const mins = Math.round((at - new Date()) / 60000);
+        const mins = Math.round((at - Loc.now()) / 60000);
         if (mins < 1)
             return "now";
 
@@ -96,58 +95,8 @@ BarPill {
         return days === 1 ? "tomorrow" : "in " + days + " days";
     }
 
-    function weatherIconCategory(code, night) {
-        if (code === 0)
-            return night ? "clear-night" : "sunny";
-
-        if (code <= 3)
-            return night ? "partly-night" : "partly";
-
-        if (code <= 48)
-            return "fog";
-
-        if (code <= 67)
-            return "rain";
-
-        if (code <= 77)
-            return "snow";
-
-        if (code <= 82)
-            return "rain";
-
-        if (code <= 99)
-            return "storm";
-
-        return "cloudy";
-    }
-
-    function weatherDesc(code) {
-        if (code === 0)
-            return "Clear";
-
-        if (code <= 3)
-            return "Partly Cloudy";
-
-        if (code <= 48)
-            return "Foggy";
-
-        if (code <= 67)
-            return "Rainy";
-
-        if (code <= 77)
-            return "Snowy";
-
-        if (code <= 82)
-            return "Rain Showers";
-
-        if (code <= 99)
-            return "Thunderstorm";
-
-        return "—";
-    }
-
     function buildCalendarModel(year, month) {
-        const now = new Date();
+        const now = Loc.now();
         const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
         const today = now.getDate();
         const firstDay = new Date(year, month, 1).getDay();
@@ -309,7 +258,7 @@ BarPill {
     }
 
     function checkReminders() {
-        const now = new Date();
+        const now = Loc.now();
         const todayKey = now.getFullYear() + "-" + now.getMonth() + "-" + now.getDate();
         if (root.lastCheckedDay !== todayKey) {
             root.dismissedToday = {
@@ -340,7 +289,7 @@ BarPill {
     function snoozeReminder(id, minutes) {
         const m = Object.assign({
         }, root.snoozedUntil);
-        m[id] = Date.now() + minutes * 60000;
+        m[id] = Loc.nowMs() + minutes * 60000;
         root.snoozedUntil = m;
         root.notifyQueue = root.notifyQueue.filter((q) => {
             return q.id !== id;
@@ -378,7 +327,7 @@ BarPill {
     }
 
     function goToday() {
-        const now = new Date();
+        const now = Loc.now();
         const newYear = now.getFullYear();
         const newMonth = now.getMonth();
         const dir = (newYear * 12 + newMonth) >= (root.viewYear * 12 + root.viewMonth) ? 1 : -1;
@@ -402,7 +351,7 @@ BarPill {
     Component.onCompleted: root.resyncCalendarGrids()
     onExpandedChanged: {
         if (expanded) {
-            const now = new Date();
+            const now = Loc.now();
             root.viewYear = now.getFullYear();
             root.viewMonth = now.getMonth();
             root.calFrontIsA = true;
@@ -434,43 +383,14 @@ BarPill {
         running: true
         repeat: true
         onTriggered: {
-            clockHourText.text = new Date().toLocaleTimeString(Qt.locale(), root.hourFormat).replace(/\s*[AP]M/i, "");
-            clockMinuteText.text = new Date().toLocaleTimeString(Qt.locale(), root.minuteFormat);
-            dateText.text = new Date().toLocaleDateString(Qt.locale(), "ddd d");
-            expandedTimeText.text = new Date().toLocaleTimeString(Qt.locale(), root.fullTimeFormat);
-            expandedDateText.text = new Date().toLocaleDateString(Qt.locale(), "dddd, MMMM d");
+            clockHourText.text = Loc.now().toLocaleTimeString(Qt.locale(), root.hourFormat).replace(/\s*[AP]M/i, "");
+            clockMinuteText.text = Loc.now().toLocaleTimeString(Qt.locale(), root.minuteFormat);
+            dateText.text = Loc.now().toLocaleDateString(Qt.locale(), "ddd d");
+            expandedTimeText.text = Loc.now().toLocaleTimeString(Qt.locale(), root.fullTimeFormat);
+            expandedDateText.text = Loc.now().toLocaleDateString(Qt.locale(), "dddd, MMMM d");
             root.clockTick++;
             root.checkReminders();
         }
-    }
-
-    Timer {
-        interval: 15 * 60 * 1000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: weatherProc.running = true
-    }
-
-    Process {
-        id: weatherProc
-
-        command: ["curl", "-s", "https://api.open-meteo.com/v1/forecast?latitude=" + root.lat + "&longitude=" + root.lon + "&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature"]
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const data = JSON.parse(this.text);
-                    root.temp = Math.round(data.current.temperature_2m);
-                    root.humidity = Math.round(data.current.relative_humidity_2m);
-                    root.weatherCode = data.current.weather_code;
-                    root.feelsLike = Math.round(data.current.apparent_temperature);
-                } catch (e) {
-                    console.log("weather parse failed:", e);
-                }
-            }
-        }
-
     }
 
     compactContent: [
@@ -487,7 +407,7 @@ BarPill {
                 Text {
                     id: clockHourText
 
-                    text: new Date().toLocaleTimeString(Qt.locale(), root.hourFormat).replace(/\s*[AP]M/i, "")
+                    text: Loc.now().toLocaleTimeString(Qt.locale(), root.hourFormat).replace(/\s*[AP]M/i, "")
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.bold: true
@@ -528,7 +448,7 @@ BarPill {
                 Text {
                     id: clockMinuteText
 
-                    text: new Date().toLocaleTimeString(Qt.locale(), root.minuteFormat)
+                    text: Loc.now().toLocaleTimeString(Qt.locale(), root.minuteFormat)
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.bold: true
@@ -550,7 +470,7 @@ BarPill {
                 id: dateText
 
                 anchors.verticalCenter: parent.verticalCenter
-                text: new Date().toLocaleDateString(Qt.locale(), "ddd d")
+                text: Loc.now().toLocaleDateString(Qt.locale(), "ddd d")
                 visible: Prefs.clockShowDate
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
@@ -801,7 +721,7 @@ BarPill {
 
                             anchors.centerIn: parent
                             text: "Close"
-                            color: Theme.onAccent
+                            color: Theme.fgAccent
                             font.family: Theme.fontFamily
                             font.bold: true
                             font.pixelSize: Theme.fontLabel
@@ -894,7 +814,7 @@ BarPill {
                                 id: expandedTimeText
 
                                 width: heroCard.width
-                                text: new Date().toLocaleTimeString(Qt.locale(), root.fullTimeFormat)
+                                text: Loc.now().toLocaleTimeString(Qt.locale(), root.fullTimeFormat)
                                 color: Theme.text
                                 font.family: Theme.fontFamily
                                 font.bold: true
@@ -906,7 +826,7 @@ BarPill {
                                 id: expandedDateText
 
                                 width: heroCard.width
-                                text: new Date().toLocaleDateString(Qt.locale(), "dddd, MMMM d")
+                                text: Loc.now().toLocaleDateString(Qt.locale(), "dddd, MMMM d")
                                 color: Theme.accent
                                 font.family: Theme.fontFamily
                                 font.bold: true
@@ -972,208 +892,13 @@ BarPill {
                                 color: Theme.accentContainer
                                 anchors.verticalCenter: parent.verticalCenter
 
-                                Item {
-                                    id: weatherIconBox
-
-                                    readonly property string category: root.weatherIconCategory(root.weatherCode, root.isNight)
-                                    readonly property bool isPartly: category === "partly" || category === "partly-night"
-
-                                    width: 22
-                                    height: 22
+                                WeatherIcon {
                                     anchors.centerIn: parent
-
-                                    WeatherGlyph {
-                                        svgPath: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z M12 6L12 4 M12 18L12 20 M18 12L20 12 M6 12L4 12 M16.24 7.76L17.66 6.34 M7.76 7.76L6.34 6.34 M16.24 16.24L17.66 17.66 M7.76 16.24L6.34 17.66"
-                                        anchors.horizontalCenterOffset: weatherIconBox.isPartly ? 4 : 0
-                                        anchors.verticalCenterOffset: weatherIconBox.isPartly ? -4 : 0
-                                        scale: (weatherIconBox.category === "sunny" ? 22 : 13) / 24
-                                        opacity: (weatherIconBox.category === "sunny" || weatherIconBox.category === "partly") ? 1 : 0
-
-                                        RotationAnimation on rotation {
-                                            from: 0
-                                            to: 360
-                                            duration: Theme.barMs(14000)
-                                            loops: Animation.Infinite
-                                            running: weatherIconBox.category === "sunny" || weatherIconBox.category === "partly"
-                                        }
-
-                                    }
-
-                                    WeatherGlyph {
-                                        svgPath: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z M17.5 5.5v3M16 7h3 M20.5 10.5v2M19.5 11.5h2 M6 6.5v2M5 7.5h2"
-                                        anchors.horizontalCenterOffset: weatherIconBox.isPartly ? 4 : 0
-                                        anchors.verticalCenterOffset: weatherIconBox.isPartly ? -4 : 0
-                                        scale: (weatherIconBox.category === "clear-night" ? 22 : 13) / 24
-                                        opacity: (weatherIconBox.category === "clear-night" || weatherIconBox.category === "partly-night") ? 1 : 0
-
-                                        RotationAnimation on rotation {
-                                            from: 0
-                                            to: 360
-                                            duration: Theme.barMs(40000)
-                                            loops: Animation.Infinite
-                                            running: weatherIconBox.category === "clear-night" || weatherIconBox.category === "partly-night"
-                                        }
-
-                                    }
-
-                                    WeatherGlyph {
-                                        svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"
-                                        anchors.horizontalCenterOffset: weatherIconBox.isPartly ? -3 : 0
-                                        anchors.verticalCenterOffset: weatherIconBox.isPartly ? 3 : 0
-                                        scale: (weatherIconBox.category === "cloudy" ? 22 : 15) / 24
-                                        opacity: (weatherIconBox.category === "cloudy" || weatherIconBox.isPartly) ? 1 : 0
-                                    }
-
-                                    // cloud + rain
-                                    WeatherGlyph {
-                                        id: rainGlyph
-
-                                        svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z M8 20L6.5 23.5 M12.5 20L11 23.5 M17 20L15.5 23.5"
-                                        scale: 22 / 24
-                                        opacity: weatherIconBox.category === "rain" ? 1 : 0
-
-                                        transform: Translate {
-
-                                            SequentialAnimation on y {
-                                                loops: Animation.Infinite
-                                                running: weatherIconBox.category === "rain"
-
-                                                NumberAnimation {
-                                                    from: 0
-                                                    to: 1.6
-                                                    duration: Theme.barMs(450)
-                                                    easing.type: Easing.InQuad
-                                                }
-
-                                                NumberAnimation {
-                                                    from: 1.6
-                                                    to: 0
-                                                    duration: Theme.barMs(0)
-                                                }
-
-                                            }
-
-                                        }
-
-                                    }
-
-                                    // cloud + snow
-                                    WeatherGlyph {
-                                        svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z M8 20.4v2.6M6.7 21.7h2.6 M12.5 20.4v2.6M11.2 21.7h2.6 M17 20.4v2.6M15.7 21.7h2.6"
-                                        scale: 22 / 24
-                                        opacity: weatherIconBox.category === "snow" ? 1 : 0
-
-                                        transform: Translate {
-
-                                            SequentialAnimation on x {
-                                                loops: Animation.Infinite
-                                                running: weatherIconBox.category === "snow"
-
-                                                NumberAnimation {
-                                                    from: 0
-                                                    to: 1.4
-                                                    duration: Theme.barMs(900)
-                                                    easing.type: Easing.InOutSine
-                                                }
-
-                                                NumberAnimation {
-                                                    from: 1.4
-                                                    to: -1.4
-                                                    duration: Theme.barMs(1800)
-                                                    easing.type: Easing.InOutSine
-                                                }
-
-                                                NumberAnimation {
-                                                    from: -1.4
-                                                    to: 0
-                                                    duration: Theme.barMs(900)
-                                                    easing.type: Easing.InOutSine
-                                                }
-
-                                            }
-
-                                        }
-
-                                    }
-
-                                    // cloud + fog
-                                    WeatherGlyph {
-                                        svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z M6 20H11M13 20H19 M5.5 21.7H10.5M12.5 21.7H19 M6 23.4H11M13 23.4H18.5"
-                                        scale: 22 / 24
-                                        opacity: weatherIconBox.category === "fog" ? 1 : 0
-
-                                        transform: Translate {
-
-                                            SequentialAnimation on x {
-                                                loops: Animation.Infinite
-                                                running: weatherIconBox.category === "fog"
-
-                                                NumberAnimation {
-                                                    from: 0
-                                                    to: 1.8
-                                                    duration: Theme.barMs(1800)
-                                                    easing.type: Easing.InOutSine
-                                                }
-
-                                                NumberAnimation {
-                                                    from: 1.8
-                                                    to: -1.8
-                                                    duration: Theme.barMs(3600)
-                                                    easing.type: Easing.InOutSine
-                                                }
-
-                                                NumberAnimation {
-                                                    from: -1.8
-                                                    to: 0
-                                                    duration: Theme.barMs(1800)
-                                                    easing.type: Easing.InOutSine
-                                                }
-
-                                            }
-
-                                        }
-
-                                    }
-
-                                    // cloud + storm (rumbles periodically)
-                                    WeatherGlyph {
-                                        svgPath: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z M13.5 19L11.2 21.8L13 21.8L10.5 24"
-                                        scale: 22 / 24
-                                        opacity: weatherIconBox.category === "storm" ? 1 : 0
-
-                                        SequentialAnimation on rotation {
-                                            loops: Animation.Infinite
-                                            running: weatherIconBox.category === "storm"
-
-                                            NumberAnimation {
-                                                from: 0
-                                                to: -4
-                                                duration: Theme.barMs(80)
-                                                easing.type: Easing.OutQuad
-                                            }
-
-                                            NumberAnimation {
-                                                from: -4
-                                                to: 4
-                                                duration: Theme.barMs(120)
-                                                easing.type: Easing.InOutQuad
-                                            }
-
-                                            NumberAnimation {
-                                                from: 4
-                                                to: 0
-                                                duration: Theme.barMs(80)
-                                                easing.type: Easing.OutQuad
-                                            }
-
-                                            PauseAnimation {
-                                                duration: Theme.barMs(2200)
-                                            }
-
-                                        }
-
-                                    }
-
+                                    kind: WeatherSource.kindFor(root.weatherCode, root.isNight)
+                                    // meteocons keeps more padding in its canvas than the old glyph did
+                                    size: 26
+                                    tint: Theme.accent
+                                    cloudColor: Theme.accent
                                 }
 
                             }
@@ -1191,7 +916,7 @@ BarPill {
                                 }
 
                                 Text {
-                                    text: root.weatherDesc(root.weatherCode) + " • " + root.humidity + "% Hum"
+                                    text: WeatherSource.descFor(root.weatherCode) + " • " + root.humidity + "% Hum"
                                     color: Theme.subtext
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fontLabel
@@ -1601,7 +1326,7 @@ BarPill {
                                         Text {
                                             anchors.centerIn: parent
                                             text: "AM"
-                                            color: root.reminderMeridiem === "AM" ? Theme.onAccent : Theme.subtext
+                                            color: root.reminderMeridiem === "AM" ? Theme.fgAccent : Theme.subtext
                                             font.family: Theme.fontFamily
                                             font.bold: true
                                             font.pixelSize: Theme.fontLabel
@@ -1630,7 +1355,7 @@ BarPill {
                                         Text {
                                             anchors.centerIn: parent
                                             text: "PM"
-                                            color: root.reminderMeridiem === "PM" ? Theme.onAccent : Theme.subtext
+                                            color: root.reminderMeridiem === "PM" ? Theme.fgAccent : Theme.subtext
                                             font.family: Theme.fontFamily
                                             font.bold: true
                                             font.pixelSize: Theme.fontLabel
@@ -1677,7 +1402,7 @@ BarPill {
 
                                     anchors.centerIn: parent
                                     text: "Add"
-                                    color: Theme.onAccent
+                                    color: Theme.fgAccent
                                     font.family: Theme.fontFamily
                                     font.bold: true
                                     font.pixelSize: Theme.fontLabel
@@ -1916,7 +1641,7 @@ BarPill {
                         Text {
                             anchors.centerIn: parent
                             text: dayCell.modelData.day
-                            color: dayCell.modelData.today ? Theme.onAccent : (dayCell.modelData.other ? Theme.subtext : Theme.text)
+                            color: dayCell.modelData.today ? Theme.fgAccent : (dayCell.modelData.other ? Theme.subtext : Theme.text)
                             opacity: dayCell.modelData.other ? 0.3 : 1
                             font.family: Theme.fontFamily
                             font.bold: dayCell.modelData.today
@@ -1930,7 +1655,7 @@ BarPill {
                             width: 4
                             height: 4
                             radius: 2
-                            color: dayCell.modelData.today ? Theme.onAccent : Theme.accent
+                            color: dayCell.modelData.today ? Theme.fgAccent : Theme.accent
                             visible: dayCell.hasReminder
                             scale: dayCell.hasReminder ? 1 : 0
 
@@ -2011,62 +1736,4 @@ BarPill {
 
     }
 
-    // one weather icon layer, crossfades on change
-    component WeatherGlyph: Shape {
-        id: glyph
-
-        property string svgPath: ""
-
-        width: 24
-        height: 24
-        anchors.centerIn: parent
-        preferredRendererType: Shape.CurveRenderer
-
-        ShapePath {
-            strokeColor: Theme.accent
-            strokeWidth: 1.5
-            fillColor: "transparent"
-            capStyle: ShapePath.RoundCap
-            joinStyle: ShapePath.RoundJoin
-
-            PathSvg {
-                path: glyph.svgPath
-            }
-
-        }
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Theme.barDurMedium
-                easing.type: Theme.easeStandard
-            }
-
-        }
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: Theme.barDurMedium
-                easing.type: Theme.easeEmphasized
-                easing.overshoot: Theme.emphasizedOvershoot
-            }
-
-        }
-
-        Behavior on anchors.horizontalCenterOffset {
-            NumberAnimation {
-                duration: Theme.barDurMedium
-                easing.type: Theme.easeStandard
-            }
-
-        }
-
-        Behavior on anchors.verticalCenterOffset {
-            NumberAnimation {
-                duration: Theme.barDurMedium
-                easing.type: Theme.easeStandard
-            }
-
-        }
-
-    }
 }

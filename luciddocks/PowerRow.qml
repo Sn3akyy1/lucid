@@ -32,8 +32,22 @@ Item {
     // settled height once the panel resize finishes
     property real stableHeight: height
     property int currentIndex: 0
+    property int hoveredIndex: -1
+    property int pressedIndex: -1
+    readonly property int gap: 10
+    readonly property real cardWidth: (powerRow.width - powerRow.gap * (powerRow.actions.length - 1)) / powerRow.actions.length
+    // off for one tick on open so the indicator snaps to the reset index instead of sliding
+    property bool slideEnabled: true
 
     signal actionChosen(string id)
+
+    function toneFor(id) {
+        return (id === "shutdown" || id === "reboot") ? Theme.error : Theme.accent;
+    }
+
+    function armSlide() {
+        powerRow.slideEnabled = true;
+    }
 
     function step(delta) {
         powerRow.currentIndex = Math.max(0, Math.min(powerRow.actions.length - 1, powerRow.currentIndex + delta));
@@ -46,6 +60,71 @@ Item {
 
     }
 
+    onVisibleChanged: {
+        powerRow.slideEnabled = false;
+        Qt.callLater(powerRow.armSlide);
+    }
+
+    // one indicator that travels to the current card
+    Rectangle {
+        id: indicator
+
+        readonly property var action: powerRow.actions[powerRow.currentIndex]
+        readonly property bool onHovered: powerRow.hoveredIndex === powerRow.currentIndex
+        readonly property bool onPressed: powerRow.pressedIndex === powerRow.currentIndex
+
+        width: powerRow.cardWidth
+        height: cards.height
+        x: powerRow.currentIndex * (powerRow.cardWidth + powerRow.gap)
+        // rides the hover lift of the card it sits on
+        y: cards.y + (indicator.onHovered ? -4 : 0)
+        radius: Theme.radiusLg
+        color: powerRow.toneFor(indicator.action ? indicator.action.id : "")
+        opacity: Theme.stateFocus
+        scale: indicator.onPressed ? 0.96 : 1
+
+        Behavior on x {
+            enabled: powerRow.slideEnabled
+
+            NumberAnimation {
+                duration: Theme.durShort
+                easing.type: Theme.easeStandard
+            }
+
+        }
+
+        Behavior on y {
+            NumberAnimation {
+                duration: Theme.durShort
+                easing.type: Easing.OutCubic
+            }
+
+        }
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Theme.durShort
+            }
+
+        }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Theme.durShort
+            }
+
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Theme.durQuick
+                easing.type: Easing.OutCubic
+            }
+
+        }
+
+    }
+
     Row {
         id: cards
 
@@ -54,7 +133,7 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: Math.max(0, (powerRow.stableHeight - cards.height) / 2)
         height: Math.min(powerRow.stableHeight, 132)
-        spacing: 10
+        spacing: powerRow.gap
 
         Repeater {
             model: powerRow.actions
@@ -68,10 +147,9 @@ Item {
                 readonly property bool hovered: hoverHandler.hovered
                 readonly property bool pressed: tapHandler.pressed
                 readonly property bool selected: powerRow.currentIndex === card.index
-                readonly property bool destructive: card.modelData.id === "shutdown" || card.modelData.id === "reboot"
-                readonly property color tone: card.destructive ? Theme.error : Theme.accent
+                readonly property color tone: powerRow.toneFor(card.modelData.id)
 
-                width: (powerRow.width - 10 * (powerRow.actions.length - 1)) / powerRow.actions.length
+                width: powerRow.cardWidth
                 height: parent.height
                 y: card.hovered ? -4 : 0
 
@@ -83,22 +161,16 @@ Item {
                     color: "transparent"
                     scale: card.pressed ? 0.96 : 1
 
+                    // hover state layer, separate from the travelling indicator
                     Rectangle {
                         anchors.fill: parent
                         radius: parent.radius
-                        color: card.selected ? card.tone : Theme.text
-                        opacity: card.pressed ? Theme.statePressed : (card.selected ? (card.hovered ? 0.16 : Theme.stateFocus) : (card.hovered ? Theme.stateHover : 0))
+                        color: Theme.text
+                        opacity: card.pressed ? Theme.statePressed : (card.hovered ? Theme.stateHover : 0)
 
                         Behavior on opacity {
                             NumberAnimation {
-                                duration: Theme.durShort
-                            }
-
-                        }
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.durShort
+                                duration: Theme.durQuick
                             }
 
                         }
@@ -115,6 +187,14 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             pathData: card.modelData.glyph
                             glyphColor: (card.selected || card.hovered) ? card.tone : Theme.subtext
+
+                            Behavior on glyphColor {
+                                ColorAnimation {
+                                    duration: Theme.durShort
+                                }
+
+                            }
+
                         }
 
                         Text {
@@ -124,6 +204,14 @@ Item {
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel
                             font.weight: Font.Medium
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: Theme.durShort
+                                }
+
+                            }
+
                         }
 
                     }
@@ -144,14 +232,25 @@ Item {
 
                 onHoveredChanged: {
                     if (card.hovered)
-                        powerRow.currentIndex = card.index;
+                        powerRow.hoveredIndex = card.index;
+                    else if (powerRow.hoveredIndex === card.index)
+                        powerRow.hoveredIndex = -1;
+                }
 
+                onPressedChanged: {
+                    if (card.pressed)
+                        powerRow.pressedIndex = card.index;
+                    else if (powerRow.pressedIndex === card.index)
+                        powerRow.pressedIndex = -1;
                 }
 
                 TapHandler {
                     id: tapHandler
 
-                    onTapped: powerRow.actionChosen(card.modelData.id)
+                    onTapped: {
+                        powerRow.currentIndex = card.index;
+                        powerRow.actionChosen(card.modelData.id);
+                    }
                 }
 
                 Behavior on y {

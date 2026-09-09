@@ -206,7 +206,7 @@ PopupWindow {
                         Text {
                             anchors.centerIn: parent
                             text: entry.modelData.count
-                            color: Theme.onAccent
+                            color: Theme.fgAccent
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
                             font.weight: Font.DemiBold

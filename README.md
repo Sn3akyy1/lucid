@@ -6,8 +6,9 @@
 
 **A Material 3 Expressive desktop shell for Hyprland, built on [Quickshell](https://quickshell.org).**
 
-A bar, a dock that morphs into a launcher, a lock screen, an emoji picker,
-a screenshot tool and a settings app — themed together from your wallpaper.
+A bar, a dock that morphs into a launcher, desktop widgets, a lock screen,
+an emoji picker, a screenshot tool and a settings app — themed together from
+your wallpaper.
 
 <p>
   <a href="https://github.com/Sn3akyy1/lucid-shell/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Sn3akyy1/lucid-shell?style=for-the-badge&label=LAST%20COMMIT&labelColor=14100E&color=FF7F50"></a>
@@ -128,6 +129,8 @@ installing to pick them up.
 | `SUPER` + `W` | Workspace overview (also: three-finger swipe) |
 | `SUPER` + `D` / `Print` | Region screenshot |
 | `SUPER` + `Print` | Full screenshot |
+| `SUPER` + `SHIFT` + `T` | Copy text from a region (OCR) |
+| `SUPER` + `SHIFT` + `C` | Pick a colour off the screen |
 | `SUPER` + `E` | Files |
 | `SUPER` + `C` | Close window |
 | `SUPER` + `V` | Toggle float |
@@ -147,6 +150,8 @@ bind = SUPER, SPACE,  exec, qs ipc call -- launcher toggle
 bind = SUPER, E,      exec, qs ipc call -- moji toggle
 bind = SUPER, L,      exec, qs ipc call -- lock lock
 bind = SUPER, S,      exec, qs ipc call -- snap toggle
+bind = SUPER SHIFT, T, exec, qs ipc call -- snap text
+bind = SUPER SHIFT, C, exec, qs ipc call -- snap color
 bind = SUPER, comma,  exec, qs ipc call -- settings open
 ```
 
@@ -206,6 +211,36 @@ Type `=` in the search field for a calculator (`=2^3^2`, right-associative).
 *Wallpaper mode: a carousel that previews as you move through it, and applies
 on the second press.*
 
+### Desktop widgets
+
+Cards you place on the wallpaper yourself. Open **Settings → Widgets**, click a
+tile, and it lands on the desktop; drag it anywhere, pin it so it stops moving,
+and it comes back where you left it after a reboot.
+
+Nine kinds, twenty-six looks between them — every category ships several
+variants of the same data:
+
+| Widget | Looks |
+| --- | --- |
+| Clock | Digital, stacked, analog, minimal (no card at all), world clock across three cities |
+| Calendar | Full month, this week, today |
+| System | Arc gauges, meters, a two-minute graph, or a bare row of numbers — CPU, memory, disk and temperature |
+| Battery | Ring, cell, or the full detail with time left and draw |
+| Media | Artwork card, compact row, or cover art with the controls over it |
+| Weather | Now, a four-day forecast, or an icon and a number — for the place set in Date & Time |
+| Notes | A sticky square or a ruled sheet, saved as you type |
+| To-do | A checklist or just what is still outstanding |
+| Palette | The Material roles the shell is currently built from, click one to copy the hex |
+
+Every widget has its own menu — right-click it, or use the gear that appears on
+hover — for its style, four sizes, and its own options: 12- or 24-hour, which
+metrics to show, °C or °F, a note's tint, and so on.
+
+Dragging snaps to the screen edges and centre lines and lines up with the other
+widgets, with guides while you drag. Widgets sit **below** your windows by
+default so they behave like a desktop, and step aside for fullscreen windows;
+both are switches on the Widgets page if you would rather they float on top.
+
 ### Everything else
 
 - **Lock screen** — a real `WlSessionLock`, with weather, media controls,
@@ -214,7 +249,100 @@ on the second press.*
   favourites and skin-tone variants; pastes into the focused window
 - **Screenshots** — region select, full screen, and screen recording with
   optional mic and system audio
+- **Text copier** — the *Text* mode in the screenshot toolbar. Drag a box over
+  anything on screen — an image, a video still, a PDF, an error dialog, a
+  window that will not let you select its text — and the words inside it land
+  on your clipboard. Runs the crop through tesseract twice, once inverted, and
+  keeps the better read, so light-on-dark UI text works as well as a scan.
+  Emoji come across too: tesseract has none in its character set and either
+  drops them or reads them as junk letters, so anything colourful and square
+  is matched against the glyphs of your installed emoji fonts instead. One
+  flat colour means text, many means emoji. A shape it cannot name is left
+  out rather than guessed at. Reading takes a moment, so the overlay does not
+  vanish on release: the toolbar, the shade and the box you drew all stay, and
+  a beam sweeps the selection until the text is on the clipboard, at which
+  point it closes itself. The result lands as a toast under the bar rather
+  than a desktop notification -- screenshots keep theirs, because that one
+  carries an "Open" action a toast cannot
+- **Colour picker** -- the *Colour* mode hands off to `hyprpicker`. Choosing it
+  drops the freeze, the shade and the crosshair and lets clicks through, so the
+  toolbar is left floating over a live, usable desktop. Pick HEX, RGB or HSL,
+  then hit the eyedropper: the toolbar stays up over hyprpicker, you click a
+  pixel, and the value is copied and shown in a toast with the colour beside it.
+  The output template is set per format, so the zoom lens, the clipboard and the
+  toast all read the same and all three are valid CSS (`#RRGGBB`, `rgb(r, g, b)`,
+  `hsl(h, s%, l%)`). Cancelling the pick leaves you on the toolbar;
+  picking a colour ends the session. The toast shows the colour as itself rather than
+  as an icon. hyprpicker is asked for raw components and the string is built
+  here, so the swatch, the clipboard and the format all agree
+- **Toasts** -- a compact pill under the bar for things that just need saying.
+  Any script can raise one: `qs ipc call -- toast show game "Game Mode On"`,
+  or `toast warn alert "..."` for the red variant. Named icons are `copy`,
+  `check`, `alert`, `info`, `text`, `game` and `camera`; anything else is
+  taken as a raw SVG path
 - **OSD** — volume and brightness overlays
+- **Desktop** — drag across empty desktop and a translucent accent box follows
+  the cursor, the way it does on Windows and macOS; it is cosmetic and selects
+  nothing. Right-click the desktop for wallpaper, theme, your placed widgets,
+  a screenshot and settings. Both are switches on the General page
+- **Date and time** — a *Date & Time* page in Settings holds where the shell
+  thinks it is. Turn on **Auto-detect location** — the same switch as the GPS
+  tile in the bar's system panel — and your position is read from your network
+  connection every few hours; leave it off and name a town yourself. One
+  forecast is fetched for that position from
+  [Open-Meteo](https://open-meteo.com) and shared by the bar clock, the lock
+  screen and the weather widget, so the three can never disagree. The time zone
+  on that page is the **machine's**, not a private one: picking a zone runs
+  `timedatectl set-timezone` behind a polkit prompt, so every application on
+  the box moves together and Lucid can never drift from the rest of your
+  desktop. Switch on *Set it from my location* and a new position brings the
+  zone with it. A program reads the zone once when it starts, so anything
+  already open stays on the old one until you restart it — Lucid corrects for
+  that itself and is right either way
+- **Network** — a *Network* page covering what NetworkManager can do. Wi-Fi
+  radio, a live network list grouped into connected, saved and nearby, with a
+  filter, a scan you can stop, per-network join with password, forget and
+  join-automatically, and a form for hidden networks. Below that: wired devices
+  with link speed, VPN and WireGuard profiles to connect and disconnect, a
+  Wi-Fi hotspot to share the connection, and every saved profile with its
+  autoconnect switch. Each device also gets its addressing — IPv4, IPv6,
+  gateway, DNS, MAC, MTU, link rate — and an **IP configuration** editor that
+  switches between DHCP and a hand-set address, gateway and DNS, or just
+  overrides DNS while leaving the rest automatic. Scriptable with
+  `qs ipc call network status | list | rescan`
+- **Bluetooth** — a *Bluetooth* page in Settings is a full manager: the radio,
+  discoverability, whether the machine accepts pairing requests, and the name
+  other devices see. Below it every device the adapter knows, grouped into
+  connected, paired and available, with a filter, a scan that stops itself
+  after a minute, and per device: connect, pair, forget, rename, auto-reconnect,
+  allow-wake, block, and battery where the device reports it. A connected pair
+  of headphones also gets its **audio mode** — high quality versus headset,
+  whichever profiles PipeWire offers for it — so switching to the microphone
+  no longer means a trip to `pavucontrol`
+- **KDE Connect** — a *KDE Connect* page that is a real client, not a launcher
+  for someone else's. It drives the KDE Connect daemon over D-Bus, so it pairs,
+  unpairs and answers pairing requests with the verification key shown on both
+  sides. Open a connected device and you get: **send files** through the
+  desktop's own file chooser, send text or a link, ring it, lock it, mount and
+  browse its storage, send your clipboard, run the commands you set up on it,
+  its **notifications** with dismiss and inline reply, a **media remote** with
+  seek and volume for whichever player it is running, **its** system volume,
+  and a **touchpad and keyboard** that drive the phone from this machine. Every
+  per-device feature can be switched off individually. Scriptable too —
+  `qs ipc call kdeconnect status`, `list`, `rescan`, and
+  `qs ipc call -- kdeconnect ring <id>`
+- **Idle and sleep** — an *Idle* page that owns hypridle for you. It writes
+  `~/.config/hypr/hypridle.conf` and restarts the daemon whenever something on
+  the page changes, so the ladder — dim, lock, screen off, suspend — is set with
+  sliders rather than by hand. A rail at the top of the page shows the sequence
+  in the order it actually fires and warns when two steps are out of turn.
+  Extras worth knowing: **keep awake**, a caffeine toggle that holds every step
+  until you turn it off; **never interrupt something playing**, which asks
+  playerctl before each step; a suspend that can be limited to battery only; and
+  lock-before-sleep plus wake-the-screen-on-resume. Whatever was in your
+  hypridle.conf first is read into the page once and copied to
+  `hypridle.conf.pre-lucid`, so nothing is lost. Scriptable with
+  `qs ipc call idle status | keepawake | on | off | restart`
 - **Settings** — a GUI for all of the above, no config file editing
 
 <img src="assets/prev3.webp" alt="The Lucid settings app on the Dock page">
@@ -262,16 +390,22 @@ you know what's being pulled in.
 | `awww` | Setting the wallpaper |
 | `python-pywal` | The Pywal theme |
 | `networkmanager` | Wi-Fi panel |
-| `bluez`, `bluez-utils` | Bluetooth panel |
+| `bluez`, `bluez-utils` | Bluetooth panel and the Bluetooth settings page |
+| `kdeconnect`, `python-gobject` | The KDE Connect page. The daemon is the backend and starts itself; `python-gobject` backs the bridge Lucid talks to it through. Without either the page says so and does nothing else |
 | `libpulse`, `wireplumber` | Volume, audio devices |
 | `brightnessctl`, `upower` | Brightness, battery |
+| `hypridle` | The Idle page: dimming, locking, screen off and suspend when you walk away. Without it the page says so and writes nothing |
 | `grim`, `wf-recorder`, `ffmpeg`, `imagemagick` | Screenshots and recording |
+| `tesseract`, `tesseract-data-eng` | The Text mode's OCR. Without them Text mode says so and copies nothing. Add `tesseract-data-<lang>` and set `ocrLang` in `lucidshot/Screenshot.qml` for another language |
+| `python-pillow`, `python-numpy`, `python-fonttools` | Emoji in copied text. Without them the text still copies, minus the emoji. The glyph atlas is built once and cached in `~/.cache/lucidshot-ocr`; `lucidshot/emoji-ocr.py --atlas` builds it up front so the first copy is not slow |
 | `wl-clipboard`, `wtype` | Emoji and GIF pasting |
 | `cava` | Audio visualiser in the media panel (its config is installed to `~/.config/cava/quickshell.conf`; the strip needs that file's raw-ascii output settings) |
 | `songrec` | Song identification |
-| `curl` | Weather and GIF search |
+| `curl` | Weather, location lookup and GIF search |
+| `polkit-kde-agent` | The password prompt when Date & Time sets the system time zone. Any polkit authentication agent will do; without one running, `timedatectl` refuses and the page says so |
 | `libnotify` | Notification actions |
 | `swappy` | The "Open" action on a screenshot notification |
+| `hyprpicker` | The Colour mode. Without it the mode says so and picks nothing |
 | `xdg-utils` | Opening links and files from the shell |
 | `noto-fonts-emoji` | Emoji rendering |
 
@@ -331,11 +465,14 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | Target | Functions |
 | --- | --- |
 | `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `search <query>` |
-| `settings` | `toggle` `open` `close` `show <page>` `general` `bar` `dock` `font` `reset` |
+| `settings` | `toggle` `open` `close` `show <page>` `general` `bar` `dock` `widgets` `datetime` `idle` `font` `reset` |
+| `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
+| `widgets` | `add <type> <variant>` `remove <uid>` `clear` `toggle` `lock` `unlock` `list` `catalogue` `settings` |
 | `moji` | `toggle` `open` `close` `emoji` `kaomoji` `gif` `center` |
 | `lock` | `lock` `unlock` `isLocked` |
-| `snap` | `toggle` `open` `close` |
-| `screenshot` | `full` |
+| `snap` | `toggle` `open` `close` `text` `color` |
+| `toast` | `show <icon> <label>` `warn <icon> <label>` |
+| `screenshot` | `full` `text` |
 | `media` | `toggle` `open` `close` `identify` `playPause` `next` `previous` |
 | `workspaces` | `toggle` `open` `close` |
 | `debug` | `toggle` `on` `off` — draws input and blur region outlines |

@@ -1,14 +1,19 @@
 import QtQuick
 import qs
 
+// m3 expressive connected button group: separate segments with a hairline gap,
+// full-shape on the group's outer edges, and the selected one filled tonally
 Item {
     id: seg
 
+    // fills the unselected segments; there is no continuous track any more
+    property color trackColor: Theme.bgSunken
     // [{ "key": "island", "label": "Islands" }, ...]
     property var options: []
     // driven by its binding, never self-assigned
     property string current: ""
     property bool enabled: true
+    property int gap: 2
 
     signal chosen(string key)
 
@@ -16,23 +21,11 @@ Item {
     implicitWidth: 240
     opacity: seg.enabled ? 1 : 0.38
 
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Theme.durShort
-        }
-
-    }
-
-    Rectangle {
-        anchors.fill: parent
-        radius: height / 2
-        color: Theme.bgSunken
-    }
-
     Row {
         id: row
 
         anchors.fill: parent
+        spacing: seg.gap
 
         Repeater {
             model: seg.options
@@ -42,21 +35,40 @@ Item {
 
                 required property int index
                 required property var modelData
-
                 readonly property bool selected: seg.current === cell.modelData.key
                 readonly property bool isFirst: cell.index === 0
                 readonly property bool isLast: cell.index === seg.options.length - 1
+                readonly property real outer: seg.height / 2
+                readonly property real inner: cell.selected ? Theme.shapeMd : Theme.shapeXs
 
-                width: seg.options.length > 0 ? seg.width / seg.options.length : 0
+                width: seg.options.length > 0 ? (seg.width - seg.gap * (seg.options.length - 1)) / seg.options.length : 0
                 height: seg.height
 
                 Rectangle {
                     anchors.fill: parent
-                    topLeftRadius: cell.isFirst ? seg.height / 2 : 0
-                    bottomLeftRadius: cell.isFirst ? seg.height / 2 : 0
-                    topRightRadius: cell.isLast ? seg.height / 2 : 0
-                    bottomRightRadius: cell.isLast ? seg.height / 2 : 0
-                    color: cell.selected ? Theme.accentContainer : (cellArea.containsMouse ? Theme.bgHover : "transparent")
+                    topLeftRadius: cell.isFirst ? cell.outer : cell.inner
+                    bottomLeftRadius: cell.isFirst ? cell.outer : cell.inner
+                    topRightRadius: cell.isLast ? cell.outer : cell.inner
+                    bottomRightRadius: cell.isLast ? cell.outer : cell.inner
+                    color: cell.selected ? Theme.accentContainer : seg.trackColor
+
+                    Rectangle {
+                        anchors.fill: parent
+                        topLeftRadius: parent.topLeftRadius
+                        bottomLeftRadius: parent.bottomLeftRadius
+                        topRightRadius: parent.topRightRadius
+                        bottomRightRadius: parent.bottomRightRadius
+                        color: Theme.text
+                        opacity: !seg.enabled ? 0 : (cellArea.pressed ? Theme.statePressed : (cellArea.containsMouse ? Theme.stateHover : 0))
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.durQuick
+                            }
+
+                        }
+
+                    }
 
                     Behavior on color {
                         ColorAnimation {
@@ -65,13 +77,22 @@ Item {
 
                     }
 
-                }
+                    Behavior on topLeftRadius {
+                        NumberAnimation {
+                            duration: Theme.durMedium
+                            easing.type: Theme.easeStandard
+                        }
 
-                Rectangle {
-                    width: 1
-                    height: parent.height
-                    visible: !cell.isFirst && !cell.selected && !(cell.index > 0 && seg.current === seg.options[cell.index - 1].key)
-                    color: Theme.outlineStrong
+                    }
+
+                    Behavior on topRightRadius {
+                        NumberAnimation {
+                            duration: Theme.durMedium
+                            easing.type: Theme.easeStandard
+                        }
+
+                    }
+
                 }
 
                 Row {
@@ -84,21 +105,6 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         opacity: cell.selected ? 1 : 0
                         clip: true
-
-                        Behavior on width {
-                            NumberAnimation {
-                                duration: Theme.durShort
-                                easing.type: Theme.easeStandard
-                            }
-
-                        }
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Theme.durShort
-                            }
-
-                        }
 
                         Rectangle {
                             x: 3
@@ -122,6 +128,22 @@ Item {
                             color: Theme.text
                         }
 
+                        Behavior on width {
+                            NumberAnimation {
+                                duration: Theme.durMedium
+                                easing.type: Theme.easeEmphasized
+                                easing.overshoot: Theme.emphasizedOvershoot
+                            }
+
+                        }
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.durShort
+                            }
+
+                        }
+
                     }
 
                     Text {
@@ -129,8 +151,8 @@ Item {
                         text: cell.modelData.label
                         color: cell.selected ? Theme.text : Theme.subtext
                         font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontBody
-                        font.bold: cell.selected
+                        font.pixelSize: Theme.fontLabelLg
+                        font.weight: cell.selected ? Font.DemiBold : Font.Medium
 
                         Behavior on color {
                             ColorAnimation {
@@ -155,6 +177,13 @@ Item {
 
             }
 
+        }
+
+    }
+
+    Behavior on opacity {
+        NumberAnimation {
+            duration: Theme.durShort
         }
 
     }

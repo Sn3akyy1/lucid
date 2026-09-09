@@ -367,7 +367,7 @@ PanelWindow {
                         preferredRendererType: Shape.CurveRenderer
 
                         ShapePath {
-                            fillColor: osdWindow.badgeActive ? Theme.onAccent : Theme.text
+                            fillColor: osdWindow.badgeActive ? Theme.fgAccent : Theme.text
                             strokeWidth: 0
 
                             PathSvg {
@@ -458,7 +458,7 @@ PanelWindow {
                     anchors.leftMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
                     text: osdWindow.levelMuted ? "" : Math.round(osdWindow.levelValue) + "%"
-                    color: osdWindow.levelMuted ? Theme.text : Theme.onAccent
+                    color: osdWindow.levelMuted ? Theme.text : Theme.fgAccent
                     font.family: Theme.fontFamily
                     font.bold: true
                     font.pixelSize: Theme.fs(14)
@@ -490,7 +490,7 @@ PanelWindow {
                         preferredRendererType: Shape.CurveRenderer
 
                         ShapePath {
-                            fillColor: osdWindow.levelMuted ? Theme.text : Theme.onAccent
+                            fillColor: osdWindow.levelMuted ? Theme.text : Theme.fgAccent
                             strokeWidth: 0
 
                             PathSvg {

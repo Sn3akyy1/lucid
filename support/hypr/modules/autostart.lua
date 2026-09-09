@@ -7,6 +7,7 @@
    --hl.exec_cmd("waybar")
    --hl.exec_cmd("swaync")
    hl.exec_cmd("quickshell")
+   hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
    hl.exec_cmd("gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark'")
    hl.exec_cmd("gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'")
    hl.exec_cmd("gsettings set org.gnome.desktop.interface icon-theme 'FairyWren_Dark'")

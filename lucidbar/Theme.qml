@@ -67,30 +67,33 @@ Singleton {
     readonly property color accent: root.accentPunch === 1 ? root.cPrimary : root.atTone(root.cPrimary, root.toneOf(root.cPrimary) + (root.accentPunch - 1) * 9)
     readonly property color accentHover: root.atTone(root.accent, Math.min(100, root.toneOf(root.accent) + 6))
     readonly property color accentPressed: root.atTone(root.accent, Math.max(0, root.toneOf(root.accent) - 6))
-    readonly property color onAccent: root.cOnPrimary
+    // NB: these cannot be named on<Role>. A property `onFoo` declared beside a
+    // property `foo` is parsed as a signal-handler assignment, so the binding is
+    // silently dropped and the colour stays black. Keep the fg prefix.
+    readonly property color fgAccent: root.cOnPrimary
     readonly property color accentContainer: root.shade(root.cPrimaryContainer, root._toneShift)
-    readonly property color onAccentContainer: root.cOnPrimaryContainer
+    readonly property color fgAccentContainer: root.cOnPrimaryContainer
     readonly property color accentMuted: root.atTone(root.withSat(root.cPrimary, 0.55), (root.toneOf(root.cPrimary) + root.toneOf(root.cOnSurfaceVariant)) / 2)
     readonly property color accentBorder: root.alpha(root.accent, 0.45)
     readonly property bool hasTonalContainers: m.on_secondary_container !== ""
     readonly property color secondaryContainer: root.hasTonalContainers ? root.shade(root.cSecondaryContainer, root._toneShift) : root.bgHigh
-    readonly property color onSecondaryContainer: root.hasTonalContainers ? root.cOnSecondaryContainer : root.text
+    readonly property color fgSecondaryContainer: root.hasTonalContainers ? root.cOnSecondaryContainer : root.text
     readonly property color tertiaryContainer: root.hasTonalContainers ? root.shade(root.cTertiaryContainer, root._toneShift) : root.bgHigh
-    readonly property color onTertiaryContainer: root.hasTonalContainers ? root.cOnTertiaryContainer : root.text
+    readonly property color fgTertiaryContainer: root.hasTonalContainers ? root.cOnTertiaryContainer : root.text
     readonly property color outline: root.cOutlineVariant
     readonly property color outlineStrong: root.cOutline
     readonly property color error: root.cError
-    readonly property color onError: root.cOnError
+    readonly property color fgError: root.cOnError
     readonly property color errorContainer: root.hasTonalContainers ? root.shade(root.cErrorContainer, root._toneShift) : root.bgHigh
-    readonly property color onErrorContainer: root.hasTonalContainers ? root.cOnErrorContainer : root.error
+    readonly property color fgErrorContainer: root.hasTonalContainers ? root.cOnErrorContainer : root.error
     readonly property color success: root.isGreenish(root.cTertiary) ? root.cTertiary : root.statusHue(145)
-    readonly property color onSuccess: root.atTone(root.success, 20)
+    readonly property color fgSuccess: root.atTone(root.success, 20)
     readonly property color warning: root.statusHue(45)
-    readonly property color onWarning: root.atTone(root.warning, 20)
+    readonly property color fgWarning: root.atTone(root.warning, 20)
     readonly property color shadow: root.cShadow
     readonly property color scrim: root.alpha(root.cScrim, 0.5)
     readonly property color inverseSurface: root.cInverseSurface
-    readonly property color onInverseSurface: root.cInverseOnSurface
+    readonly property color fgInverseSurface: root.cInverseOnSurface
     readonly property color inversePrimary: root.cInversePrimary
     readonly property real stateHover: 0.08
     readonly property real stateFocus: 0.1
@@ -102,6 +105,25 @@ Singleton {
     readonly property int radiusMd: 16
     readonly property int radiusLg: 20
     readonly property int radiusXl: 28
+
+    // m3 shape scale, in dp
+    readonly property int shapeNone: 0
+    readonly property int shapeXs: 4
+    readonly property int shapeSm: 8
+    readonly property int shapeMd: 12
+    readonly property int shapeLg: 16
+    readonly property int shapeLgInc: 20
+    readonly property int shapeXl: 28
+    readonly property int shapeXlInc: 32
+    readonly property int shapeXxl: 48
+    readonly property int shapeFull: 999
+
+    // m3 surface containers, under their spec names
+    readonly property color surfaceLowest: root.bgOpaque
+    readonly property color surfaceLow: root.bgTile
+    readonly property color surfaceContainer: root.bgHover
+    readonly property color surfaceHigh: root.bgActive
+    readonly property color surfaceHighest: root.bgHigh
     readonly property real barMotionScale: root.motionScale * pf.barMotionScale
     readonly property int barDurQuick: Math.round(120 * root.barMotionScale)
     readonly property int barDurShort: Math.round(180 * root.barMotionScale)
@@ -126,6 +148,21 @@ Singleton {
     readonly property int fontBody: Math.round(12 * pf.fontScale)
     readonly property int fontTitle: Math.round(13 * pf.fontScale)
     readonly property int fontHeadline: Math.round(15 * pf.fontScale)
+
+    // m3 type scale, trimmed one step for desktop density
+    readonly property int fontDisplaySm: Math.round(32 * pf.fontScale)
+    readonly property int fontHeadlineLg: Math.round(30 * pf.fontScale)
+    readonly property int fontHeadlineMd: Math.round(26 * pf.fontScale)
+    readonly property int fontHeadlineSm: Math.round(22 * pf.fontScale)
+    readonly property int fontTitleLg: Math.round(19 * pf.fontScale)
+    readonly property int fontTitleMd: Math.round(16 * pf.fontScale)
+    readonly property int fontTitleSm: Math.round(14 * pf.fontScale)
+    readonly property int fontBodyLg: Math.round(15 * pf.fontScale)
+    readonly property int fontBodyMd: Math.round(13 * pf.fontScale)
+    readonly property int fontBodySm: Math.round(12 * pf.fontScale)
+    readonly property int fontLabelLg: Math.round(13 * pf.fontScale)
+    readonly property int fontLabelMd: Math.round(12 * pf.fontScale)
+    readonly property int fontLabelSm: Math.round(11 * pf.fontScale)
 
     function fs(px) {
         return Math.round(px * pf.fontScale);

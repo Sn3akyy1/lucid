@@ -14,6 +14,8 @@ PanelWindow {
     property string activeTool: ""
     property string pendingAction: ""
     property string captureMode: "camera"
+    property string openMode: "camera"
+    property string colorFormat: "hex"
     property string freezePath: Quickshell.env("HOME") + "/.cache/quickshell-snap-freeze.png"
 
     property string recordingState: "idle"
@@ -36,15 +38,24 @@ PanelWindow {
     property real selW: 0
     property real selH: 0
 
+    // the ocr reads the frozen image, so the overlay can stay up while it works
+    property bool ocrBusy: false
+    property real busyX: 0
+    property real busyY: 0
+    property real busyW: 0
+    property real busyH: 0
+
     readonly property real freezeScale: (freezeImg.implicitWidth > 0 && snapWindow.width > 0) ? (freezeImg.implicitWidth / snapWindow.width) : 1
 
     readonly property color shadeColor: Theme.alpha(Theme.shadow, 0.55)
-    readonly property bool shadeVisible: contentVisible && activeTool !== "fullscreen"
+    readonly property bool shadeVisible: contentVisible && activeTool !== "fullscreen" && captureMode !== "color"
 
-    readonly property bool desktopExposed: captureMode === "video" && (activeTool === "fullscreen" || recordingState !== "idle")
+    readonly property bool desktopExposed: captureMode === "color" || (captureMode === "video" && (activeTool === "fullscreen" || recordingState !== "idle"))
 
     signal fullscreenRequested()
     signal regionRequested(real x, real y, real w, real h)
+    signal textRequested(real x, real y, real w, real h)
+    signal colorPickRequested(string format)
 
     color: "transparent"
     exclusiveZone: -1
@@ -60,7 +71,7 @@ PanelWindow {
     }
 
     Region {
-        id: recordingMask
+        id: toolbarOnlyMask
 
         Region {
             item: toolbar
@@ -93,7 +104,7 @@ PanelWindow {
         interval: 16
         onTriggered: {
             if (snapWindow.desktopExposed)
-                snapWindow.mask = recordingMask;
+                snapWindow.mask = toolbarOnlyMask;
         }
     }
 
@@ -219,14 +230,17 @@ function stopRecordingBackend() {
     }
 
     function setCaptureMode(id) {
-        if (id !== "camera" && id !== "video")
+        if (id !== "camera" && id !== "video" && id !== "text" && id !== "color")
             return;
         if (snapWindow.captureMode === id)
             return;
-        if (id === "camera" && snapWindow.recordingState !== "idle")
+        if (id !== "video" && snapWindow.recordingState !== "idle")
             return;
+        var leavingColor = snapWindow.captureMode === "color";
         snapWindow.captureMode = id;
         snapWindow.activeTool = id === "video" ? "fullscreen" : "select";
+        if (leavingColor && (id === "camera" || id === "text"))
+            snapWindow.refreeze();
         snapWindow.resetSelection();
         if (id === "video") {
             snapWindow.recordingState = "idle";
@@ -276,7 +290,7 @@ function stopRecordingBackend() {
         snapWindow.captureMode = "video";
         snapWindow.activeTool = snapWindow.currentCrop ? "select" : "fullscreen";
         snapWindow.resetSelection();
-        snapWindow.mask = snapWindow.desktopExposed ? recordingMask : null;
+        snapWindow.mask = snapWindow.desktopExposed ? toolbarOnlyMask : null;
     }
 
     Timer {
@@ -329,12 +343,16 @@ function stopRecordingBackend() {
     }
 
     function resetToFreshSession() {
+        // a hidden recording is still running, so reopening has to land back on it
+        var mode = snapWindow.hiddenRecording ? "video" : snapWindow.openMode;
         snapWindow.contentVisible = true;
         snapWindow.animateContent = true;
-        snapWindow.activeTool = "select";
+        snapWindow.activeTool = mode === "video" ? "fullscreen" : "select";
         snapWindow.pendingAction = "";
-        snapWindow.captureMode = "camera";
+        snapWindow.captureMode = mode;
         snapWindow.toolbarHidden = false;
+        snapWindow.ocrBusy = false;
+        ocrTimeout.stop();
         snapWindow.resetSelection();
         if (!snapWindow.hiddenRecording) {
             snapWindow.recordingState = "idle";
@@ -342,19 +360,51 @@ function stopRecordingBackend() {
             snapWindow.micOn = true;
             snapWindow.headphoneOn = true;
         }
-        snapWindow.mask = snapWindow.desktopExposed ? recordingMask : null;
+        snapWindow.mask = snapWindow.desktopExposed ? toolbarOnlyMask : null;
         toolbar.x = Qt.binding(function () {
             return (snapWindow.width - toolbar.width) / 2;
         });
         toolbar.y = toolbar.restY;
     }
 
+    // hide the toolbar for a frame, re-grab, then come back. without the hide the
+    // toolbar itself lands in the freeze
+    function refreeze() {
+        if (freezeProcess.running)
+            return;
+        snapWindow.animateContent = false;
+        snapWindow.contentVisible = false;
+        refreezeDelay.restart();
+    }
+
+    Timer {
+        id: refreezeDelay
+
+        interval: 50
+        onTriggered: {
+            freezeProcess.quiet = true;
+            freezeProcess.running = true;
+        }
+    }
+
     Process {
         id: freezeProcess
+
+        property bool quiet: false
 
         command: ["sh", "-c", "grim -l 0 '" + snapWindow.freezePath + "'"]
 
         onExited: (code) => {
+            if (freezeProcess.quiet) {
+                freezeProcess.quiet = false;
+                if (code === 0) {
+                    freezeImg.source = "";
+                    freezeImg.source = "file://" + snapWindow.freezePath;
+                }
+                snapWindow.contentVisible = true;
+                snapWindow.animateContent = true;
+                return;
+            }
             if (code !== 0)
                 return;
             freezeImg.source = "";
@@ -364,7 +414,52 @@ function stopRecordingBackend() {
         }
     }
 
+    function startColorPick() {
+        snapWindow.colorPickRequested(snapWindow.colorFormat);
+    }
+
+    // hold the overlay open and scan the region until the copy comes back
+    function beginTextRead(x, y, w, h, whole) {
+        if (snapWindow.ocrBusy)
+            return;
+        snapWindow.busyX = x;
+        snapWindow.busyY = y;
+        snapWindow.busyW = w;
+        snapWindow.busyH = h;
+        snapWindow.ocrBusy = true;
+        ocrTimeout.restart();
+        if (whole)
+            snapWindow.textRequested(0, 0, 0, 0);
+        else
+            snapWindow.textRequested(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+    }
+
+    function finishTextRead() {
+        ocrTimeout.stop();
+        snapWindow.ocrBusy = false;
+        snapWindow.open = false;
+    }
+
+    // nothing should be able to wedge the overlay open if the reader never answers
+    Timer {
+        id: ocrTimeout
+
+        interval: 30000
+        onTriggered: snapWindow.finishTextRead()
+    }
+
     function runTool(id) {
+        if (snapWindow.captureMode === "color")
+            return;
+        if (snapWindow.captureMode === "text") {
+            if (id === "select") {
+                snapWindow.activeTool = "select";
+                snapWindow.resetSelection();
+            } else if (id === "fullscreen") {
+                snapWindow.beginTextRead(0, 0, snapWindow.width, snapWindow.height, true);
+            }
+            return;
+        }
         if (snapWindow.captureMode === "video") {
             if (id === "select" || id === "fullscreen") {
                 snapWindow.activeTool = id;
@@ -488,18 +583,101 @@ function stopRecordingBackend() {
         color: "transparent"
         border.color: Theme.accent
         border.width: 1
-        visible: snapWindow.contentVisible && snapWindow.activeTool === "select" && snapWindow.selW > 0 && snapWindow.selH > 0 && !(snapWindow.captureMode === "video" && snapWindow.recordingState !== "idle")
+        visible: snapWindow.contentVisible && !snapWindow.ocrBusy && snapWindow.activeTool === "select" && snapWindow.selW > 0 && snapWindow.selH > 0 && !(snapWindow.captureMode === "video" && snapWindow.recordingState !== "idle")
         x: snapWindow.selX
         y: snapWindow.selY
         width: snapWindow.selW
         height: snapWindow.selH
     }
 
+    // reading feedback: the box stays put and a beam sweeps it until the copy lands
+    Item {
+        id: scanner
+
+        visible: snapWindow.ocrBusy
+        x: snapWindow.busyX
+        y: snapWindow.busyY
+        width: snapWindow.busyW
+        height: snapWindow.busyH
+        clip: true
+
+        Rectangle {
+            anchors.fill: parent
+            color: Theme.alpha(Theme.accent, 0.06)
+            border.color: Theme.accent
+            border.width: 1
+        }
+
+        Rectangle {
+            id: beam
+
+            width: parent.width
+            height: 26
+            y: -height
+
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: Theme.alpha(Theme.accent, 0)
+                }
+
+                GradientStop {
+                    position: 0.82
+                    color: Theme.alpha(Theme.accent, 0.28)
+                }
+
+                GradientStop {
+                    position: 1
+                    color: Theme.accent
+                }
+
+            }
+
+        }
+
+        SequentialAnimation {
+            running: snapWindow.ocrBusy
+            loops: Animation.Infinite
+
+            NumberAnimation {
+                target: beam
+                property: "y"
+                from: -beam.height
+                to: scanner.height
+                duration: Theme.ms(850)
+                easing.type: Easing.InOutSine
+            }
+
+            PauseAnimation {
+                duration: Theme.ms(120)
+            }
+
+        }
+
+        // corner ticks, so a tall thin selection still reads as "being worked on"
+        Repeater {
+            model: 4
+
+            Rectangle {
+                readonly property bool rightSide: index % 2 === 1
+                readonly property bool bottomSide: index > 1
+
+                width: 9
+                height: 2
+                color: Theme.accent
+                x: rightSide ? scanner.width - width : 0
+                y: bottomSide ? scanner.height - height : 0
+            }
+
+        }
+
+    }
+
     MouseArea {
         id: selectArea
 
         anchors.fill: parent
-        enabled: snapWindow.contentVisible && !snapWindow.desktopExposed
+        enabled: snapWindow.contentVisible && !snapWindow.desktopExposed && !snapWindow.ocrBusy
         hoverEnabled: true
         cursorShape: snapWindow.activeTool === "select" ? Qt.CrossCursor : Qt.ArrowCursor
 
@@ -529,7 +707,7 @@ function stopRecordingBackend() {
 
         onReleased: mouse => {
             if (snapWindow.activeTool !== "select") {
-                if (snapWindow.captureMode === "camera")
+                if (snapWindow.captureMode !== "video")
                     snapWindow.open = false;
                 return;
             }
@@ -538,8 +716,12 @@ function stopRecordingBackend() {
                 snapWindow.selH = 0;
                 return;
             }
-            if (snapWindow.captureMode !== "camera")
+            if (snapWindow.captureMode === "video")
                 return;
+            if (snapWindow.captureMode === "text") {
+                snapWindow.beginTextRead(snapWindow.selX, snapWindow.selY, snapWindow.selW, snapWindow.selH, false);
+                return;
+            }
             snapWindow.pendingAction = "region";
             snapWindow.animateContent = false;
             snapWindow.contentVisible = false;
@@ -608,23 +790,59 @@ function stopRecordingBackend() {
                 SnapDivider {}
 
                 Row {
+                    visible: snapWindow.captureMode !== "color"
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 4
 
                     IconAction {
                         iconPath: "M3,3H9V5H5V9H3V3M15,3H21V9H19V5H15V3M19,15H21V21H15V19H19V15M3,15H5V19H9V21H3V15Z"
-                        label: "Snap Select"
+                        label: snapWindow.captureMode === "text" ? "Copy Text in Region" : "Snap Select"
                         active: snapWindow.activeTool === "select"
-                        disabled: snapWindow.captureMode === "video" && snapWindow.recordingState !== "idle"
+                        disabled: snapWindow.ocrBusy || (snapWindow.captureMode === "video" && snapWindow.recordingState !== "idle")
                         onTapped: snapWindow.runTool("select")
                     }
 
                     IconAction {
                         iconPath: "M21,16H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10V20H8V22H16V20H14V18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2Z"
-                        label: "Fullscreen"
+                        label: snapWindow.captureMode === "text" ? "Copy All Text on Screen" : "Fullscreen"
                         active: snapWindow.activeTool === "fullscreen"
-                        disabled: snapWindow.captureMode === "video" && snapWindow.recordingState !== "idle"
+                        disabled: snapWindow.ocrBusy || (snapWindow.captureMode === "video" && snapWindow.recordingState !== "idle")
                         onTapped: snapWindow.runTool("fullscreen")
+                    }
+                }
+
+                Row {
+                    id: colorControls
+
+                    visible: snapWindow.captureMode === "color"
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 10
+
+                    IconAction {
+                        anchors.verticalCenter: parent.verticalCenter
+                        iconPath: "M19.35,11.72L17.22,13.85L15.81,12.43L8.1,20.14L3.5,21.5L2.5,20.5L3.86,15.9L11.57,8.19L10.15,6.78L12.28,4.65L19.35,11.72Z"
+                        label: "Pick a Colour"
+                        activeColor: Theme.accent
+                        onTapped: snapWindow.startColorPick()
+                    }
+
+                    SnapDivider {}
+
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 4
+
+                        FormatChip {
+                            fmt: "hex"
+                        }
+
+                        FormatChip {
+                            fmt: "rgb"
+                        }
+
+                        FormatChip {
+                            fmt: "hsl"
+                        }
                     }
                 }
 
@@ -723,6 +941,58 @@ function stopRecordingBackend() {
             }
         }
 
+        component FormatChip: Item {
+            id: fchip
+
+            property string fmt: ""
+
+            readonly property bool active: snapWindow.colorFormat === fchip.fmt
+
+            width: fchipText.implicitWidth + 18
+            height: 28
+
+            Rectangle {
+                anchors.fill: parent
+                radius: Theme.radiusXs
+                color: fchip.active ? Theme.accent : (fchipHover.hovered ? Theme.alpha(Theme.text, 0.09) : Theme.alpha(Theme.text, 0.05))
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Theme.ms(150)
+                    }
+                }
+
+            }
+
+            Text {
+                id: fchipText
+
+                anchors.centerIn: parent
+                text: fchip.fmt.toUpperCase()
+                color: fchip.active ? Theme.fgAccent : Theme.subtext
+                font.family: Theme.fontFamily
+                font.bold: true
+                font.pixelSize: Theme.fs(11)
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Theme.ms(120)
+                    }
+                }
+
+            }
+
+            HoverHandler {
+                id: fchipHover
+
+                cursorShape: Qt.PointingHandCursor
+            }
+
+            TapHandler {
+                onTapped: snapWindow.colorFormat = fchip.fmt
+            }
+        }
+
         component SnapDivider: Rectangle {
             width: 1
             height: 22
@@ -788,7 +1058,7 @@ function stopRecordingBackend() {
                     preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
-                        fillColor: action.active ? Theme.onAccent : (hover.hovered ? Theme.accent : Theme.subtext)
+                        fillColor: action.active ? Theme.fgAccent : (hover.hovered ? Theme.accent : Theme.subtext)
                         strokeWidth: 0
 
                         PathSvg {
@@ -920,7 +1190,7 @@ function stopRecordingBackend() {
                     preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
-                        fillColor: seg.active ? Theme.onAccent : Theme.subtext
+                        fillColor: seg.active ? Theme.fgAccent : Theme.subtext
                         strokeWidth: 0
 
                         PathSvg {
@@ -943,7 +1213,7 @@ function stopRecordingBackend() {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: seg.label
-                    color: seg.active ? Theme.onAccent : Theme.subtext
+                    color: seg.active ? Theme.fgAccent : Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(12)
                     font.bold: seg.active
@@ -976,8 +1246,9 @@ function stopRecordingBackend() {
 
             readonly property bool videoMode: snapWindow.captureMode === "video"
             readonly property bool recording: snapWindow.recordingState !== "idle"
+            readonly property int modeIndex: snapWindow.captureMode === "video" ? 1 : (snapWindow.captureMode === "text" ? 2 : (snapWindow.captureMode === "color" ? 3 : 0))
 
-            width: 158
+            width: 310
             height: 38
             radius: Theme.radiusSm
             color: switchHover.hovered ? Theme.alpha(Theme.text, 0.08) : Theme.alpha(Theme.text, 0.05)
@@ -993,7 +1264,7 @@ function stopRecordingBackend() {
             }
 
             Rectangle {
-                x: modeSwitch.videoMode ? 79 : 3
+                x: 3 + modeSwitch.modeIndex * 76
                 y: 3
                 width: 76
                 height: parent.height - 6
@@ -1015,8 +1286,8 @@ function stopRecordingBackend() {
                 ModeSegment {
                     label: "Photo"
                     iconPath: "M9,2L7.17,4H4A2,2 0 0,0 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6A2,2 0 0,0 20,4H16.83L15,2H9M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"
-                    active: !modeSwitch.videoMode
-                    disabled: modeSwitch.recording && modeSwitch.videoMode
+                    active: snapWindow.captureMode === "camera"
+                    disabled: modeSwitch.recording || snapWindow.ocrBusy
                     onTapped: snapWindow.setCaptureMode("camera")
                 }
 
@@ -1030,6 +1301,22 @@ function stopRecordingBackend() {
                         else
                             snapWindow.setCaptureMode("video");
                     }
+                }
+
+                ModeSegment {
+                    label: "Text"
+                    iconPath: "M5,4V7H10.5V19H13.5V7H19V4H5Z"
+                    active: snapWindow.captureMode === "text"
+                    disabled: modeSwitch.recording || snapWindow.ocrBusy
+                    onTapped: snapWindow.setCaptureMode("text")
+                }
+
+                ModeSegment {
+                    label: "Colour"
+                    iconPath: "M19.35,11.72L17.22,13.85L15.81,12.43L8.1,20.14L3.5,21.5L2.5,20.5L3.86,15.9L11.57,8.19L10.15,6.78L12.28,4.65L19.35,11.72Z"
+                    active: snapWindow.captureMode === "color"
+                    disabled: modeSwitch.recording || snapWindow.ocrBusy
+                    onTapped: snapWindow.setCaptureMode("color")
                 }
             }
         }
@@ -1144,7 +1431,7 @@ function stopRecordingBackend() {
                     preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
-                        fillColor: chip.on ? Theme.onAccent : Theme.subtext
+                        fillColor: chip.on ? Theme.fgAccent : Theme.subtext
                         strokeWidth: 0
 
                         PathSvg {
@@ -1167,7 +1454,7 @@ function stopRecordingBackend() {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: chip.on ? chip.labelOn : chip.labelOff
-                    color: chip.on ? Theme.onAccent : Theme.subtext
+                    color: chip.on ? Theme.fgAccent : Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(11)
                     font.bold: true
@@ -1281,11 +1568,31 @@ function stopRecordingBackend() {
             if (snapWindow.open && !snapWindow.toolbarHidden) {
                 snapWindow.open = false;
             } else {
+                snapWindow.openMode = "camera";
                 snapWindow.beginOpen();
             }
         }
 
         function open(): void {
+            snapWindow.openMode = "camera";
+            snapWindow.beginOpen();
+        }
+
+        function text(): void {
+            if (snapWindow.open && !snapWindow.toolbarHidden) {
+                snapWindow.setCaptureMode("text");
+                return;
+            }
+            snapWindow.openMode = "text";
+            snapWindow.beginOpen();
+        }
+
+        function color(): void {
+            if (snapWindow.open && !snapWindow.toolbarHidden) {
+                snapWindow.setCaptureMode("color");
+                return;
+            }
+            snapWindow.openMode = "color";
             snapWindow.beginOpen();
         }
 

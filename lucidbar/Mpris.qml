@@ -765,7 +765,7 @@ BarPill {
                 glyphSize: 13
                 filled: true
                 path: root.isPlaying ? root.pauseGlyph : root.playGlyph
-                tint: Theme.onAccent
+                tint: Theme.fgAccent
                 enabledAction: root.player !== null && root.player.canTogglePlaying
                 onActivated: root.togglePlay()
             }
@@ -1429,7 +1429,7 @@ BarPill {
                         filled: true
                         anchors.verticalCenter: parent.verticalCenter
                         path: root.isPlaying ? root.pauseGlyph : root.playGlyph
-                        tint: Theme.onAccent
+                        tint: Theme.fgAccent
                         enabledAction: root.player !== null && root.player.canTogglePlaying
                         onActivated: root.togglePlay()
                     }
@@ -1692,7 +1692,7 @@ BarPill {
 
                                         width: 3
                                         radius: 999
-                                        color: Theme.onAccent
+                                        color: Theme.fgAccent
                                         anchors.verticalCenter: parent.verticalCenter
                                         height: Math.max(4, root.bandLevel(1 + index * 7, 7 + index * 7) * 26)
 
@@ -1714,7 +1714,7 @@ BarPill {
                                 anchors.centerIn: parent
                                 visible: root.shazamState !== "listening"
                                 path: root.shazamState === "idle" ? root.identifyGlyph : root.retryGlyph
-                                tint: Theme.onAccent
+                                tint: Theme.fgAccent
                                 glyphSize: 26
                             }
 
@@ -2299,7 +2299,7 @@ BarPill {
         Rectangle {
             anchors.fill: parent
             radius: parent.radius
-            color: btn.filled ? Theme.onAccent : Theme.text
+            color: btn.filled ? Theme.fgAccent : Theme.text
             opacity: !btn.enabledAction ? 0 : (btnArea.pressed ? Theme.statePressed : (btnArea.containsMouse ? Theme.stateHover : 0))
 
             Behavior on opacity {
@@ -2352,7 +2352,7 @@ BarPill {
         property string label: ""
         property string path: ""
         property bool accented: false
-        readonly property color onColor: pill.accented ? Theme.onAccent : Theme.text
+        readonly property color onColor: pill.accented ? Theme.fgAccent : Theme.text
 
         signal activated()
 

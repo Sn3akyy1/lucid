@@ -2,7 +2,9 @@ import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Shapes
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Hyprland._FocusGrab
+import Quickshell.Io
 import Quickshell.Services.Notifications
 import Quickshell.Widgets
 import qs
@@ -12,7 +14,22 @@ BarPill {
     id: root
 
     readonly property bool dnd: Prefs.doNotDisturb
+    property int quietTick: 0
+    readonly property bool quietNow: {
+        root.quietTick;
+        return Prefs.inQuietWindow(Loc.now());
+    }
+    readonly property bool fullscreenUp: {
+        var t = Hyprland.activeToplevel;
+        if (!t || !t.lastIpcObject)
+            return false;
+
+        return (t.lastIpcObject.fullscreen || 0) > 0;
+    }
+    // anything that should hold a popup back, however it was asked for
+    readonly property bool silenced: root.dnd || root.quietNow || (Prefs.dndFullscreen && root.fullscreenUp)
     property var toastNotification: null
+    property bool toastSticky: false
     property bool ready: false
     readonly property int horizontalPadding: 10
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
@@ -23,10 +40,51 @@ BarPill {
     readonly property string badgeDisplayText: root.notifCount > 9 ? "9+" : String(root.notifCount)
     property var sortedNotifications: []
 
+    property bool trimming: false
+
     function refreshSorted() {
+        if (root.trimming)
+            return ;
+
         const v = notifServer.trackedNotifications ? notifServer.trackedNotifications.values.slice() : [];
         v.sort((a, b) => b.id - a.id);
+        // dismissing re-enters this through onValuesChanged, so hold it off
+        if (v.length > Prefs.notifMaxHistory) {
+            root.trimming = true;
+            for (const old of v.slice(Prefs.notifMaxHistory)) old.dismiss()
+            root.trimming = false;
+            v.length = Prefs.notifMaxHistory;
+        }
         root.sortedNotifications = v;
+        Prefs.liveNotifCount = v.length;
+    }
+
+    // 0 means it waits for you
+    function toastMsFor(n) {
+        if (!n)
+            return Prefs.toastTimeout * 1000;
+
+        if (Prefs.toastCriticalSticky && n.urgency === NotificationUrgency.Critical)
+            return 0;
+
+        if (n.expireTimeout === 0)
+            return 0;
+
+        if (Prefs.toastUseAppTimeout && n.expireTimeout > 0)
+            return n.expireTimeout;
+
+        return Prefs.toastTimeout * 1000;
+    }
+
+    function playSound(n) {
+        if (!Prefs.notifSound || root.silenced)
+            return ;
+
+        if (Prefs.notifSoundUrgentOnly && n.urgency !== NotificationUrgency.Critical)
+            return ;
+
+        soundProc.running = false;
+        soundProc.running = true;
     }
 
     function clearAll() {
@@ -81,24 +139,39 @@ BarPill {
         persistenceSupported: false
         Component.onCompleted: root.refreshSorted()
         onNotification: (notification) => {
+            Prefs.noteApp(notification.appName);
+            // a muted application is turned away outright, never tracked
+            if (Prefs.isMuted(notification.appName))
+                return ;
+
             notification.tracked = true;
             if (!root.ready)
+                return ;
+
+            const urgent = notification.urgency === NotificationUrgency.Critical;
+            if (root.silenced && !(Prefs.dndAllowCritical && urgent))
+                return ;
+
+            root.playSound(notification);
+            if (!Prefs.toastEnabled)
                 return ;
 
             if (root.expanded)
                 return ;
 
-            if (root.dnd)
+            // one that is waiting for you is not shouted over
+            if (root.toastNotification && root.toastSticky)
                 return ;
 
-            if (root.toastNotification && root.toastNotification.expireTimeout === 0)
-                return ;
-
+            const ms = root.toastMsFor(notification);
             root.toastNotification = notification;
-            if (notification.expireTimeout === 0)
+            root.toastSticky = ms <= 0;
+            if (ms <= 0) {
                 toastTimer.stop();
-            else
+            } else {
+                toastTimer.interval = ms;
                 toastTimer.restart();
+            }
         }
     }
 
@@ -108,11 +181,53 @@ BarPill {
         onTriggered: root.ready = true
     }
 
+    // interval is assigned per notification, so no binding here
     Timer {
         id: toastTimer
 
-        interval: Prefs.toastTimeout * 1000
+        interval: 5000
         onTriggered: root.toastNotification = null
+    }
+
+    Timer {
+        interval: 20000
+        repeat: true
+        running: Prefs.quietHours
+        triggeredOnStart: true
+        onTriggered: root.quietTick++
+    }
+
+    // lastIpcObject only moves when something asks it to
+    Timer {
+        id: fullscreenPoll
+
+        interval: 120
+        onTriggered: Hyprland.refreshToplevels()
+    }
+
+    Connections {
+        function onRawEvent(event) {
+            if (event.name === "fullscreen" || event.name === "activewindowv2" || event.name === "closewindow")
+                fullscreenPoll.restart();
+
+        }
+
+        enabled: Prefs.dndFullscreen
+        target: Hyprland
+    }
+
+    Process {
+        id: soundProc
+
+        command: ["paplay", "--volume=" + Prefs.notifSoundPaVolume, Prefs.notifSoundPath]
+    }
+
+    Connections {
+        function onNotificationsClearRequested() {
+            root.clearAll();
+        }
+
+        target: Prefs
     }
 
     Timer {
@@ -167,9 +282,9 @@ BarPill {
 
                 Shape {
                     visible: opacity > 0.01
-                    opacity: root.dnd ? 0 : 1
-                    scale: (16 / 24) * (root.dnd ? 0.55 : 1)
-                    rotation: root.dnd ? -35 : 0
+                    opacity: root.silenced ? 0 : 1
+                    scale: (16 / 24) * (root.silenced ? 0.55 : 1)
+                    rotation: root.silenced ? -35 : 0
                     width: 24
                     height: 24
                     anchors.centerIn: parent
@@ -213,9 +328,9 @@ BarPill {
 
                 Shape {
                     visible: opacity > 0.01
-                    opacity: root.dnd ? 1 : 0
-                    scale: (16 / 24) * (root.dnd ? 1 : 0.55)
-                    rotation: root.dnd ? 0 : 35
+                    opacity: root.silenced ? 1 : 0
+                    scale: (16 / 24) * (root.silenced ? 1 : 0.55)
+                    rotation: root.silenced ? 0 : 35
                     width: 24
                     height: 24
                     anchors.centerIn: parent
@@ -387,6 +502,8 @@ BarPill {
         readonly property string directImage: notifImage.indexOf("image://icon/") === 0 ? "" : notifImage
         readonly property string iconSource: directImage || (themeIconName ? Quickshell.iconPath(themeIconName) : "")
         readonly property bool hovered: toastHover.hovered
+        // the body and the buttons line up under the title, icon or no icon
+        readonly property int textIndent: Prefs.notifShowIcons ? 28 : 0
 
         clip: true
         onNotifChanged: {
@@ -477,6 +594,7 @@ BarPill {
                         width: 20
                         height: 20
                         anchors.top: parent.top
+                        visible: Prefs.notifShowIcons
 
                         IconImage {
                             id: toastIcon
@@ -510,7 +628,7 @@ BarPill {
                     }
 
                     Column {
-                        width: parent.width - 20 - 8 - 24
+                        width: parent.width - toastFace.textIndent - 24
                         spacing: 1
 
                         Text {
@@ -541,19 +659,21 @@ BarPill {
 
             Text {
                 width: parent.width
-                leftPadding: 28
-                visible: toastFace.notif && toastFace.notif.body !== ""
+                leftPadding: toastFace.textIndent
+                visible: Prefs.toastShowBody && toastFace.notif && toastFace.notif.body !== ""
                 text: toastFace.notif ? toastFace.notif.body : ""
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(11)
                 wrapMode: Text.WordWrap
+                maximumLineCount: Prefs.toastBodyLines
+                elide: Text.ElideRight
                 textFormat: Text.PlainText
             }
 
             Row {
-                leftPadding: 28
-                visible: toastFace.notif && toastFace.notif.actions.length > 0
+                leftPadding: toastFace.textIndent
+                visible: Prefs.toastShowActions && toastFace.notif && toastFace.notif.actions.length > 0
                 spacing: 6
 
                 Repeater {
@@ -934,6 +1054,7 @@ BarPill {
         readonly property string iconSource: directImage || (themeIconName ? Quickshell.iconPath(themeIconName) : "")
         readonly property color accentColor: card.notifUrgency === NotificationUrgency.Critical ? Theme.error : (card.notifUrgency === NotificationUrgency.Low ? Theme.subtextDim : Theme.accent)
         readonly property bool isHovered: cardHover.hovered
+        readonly property int textIndent: Prefs.notifShowIcons ? 28 : 0
         property real arrivalGlow: 0
         readonly property real fullHeight: cardColumn.implicitHeight + 20
         property real enterProgress: 0
@@ -1075,6 +1196,7 @@ BarPill {
                     radius: 999
                     color: Theme.bgTrack
                     anchors.top: parent.top
+                    visible: Prefs.notifShowIcons
 
                     IconImage {
                         id: iconImage
@@ -1099,7 +1221,7 @@ BarPill {
                 }
 
                 Column {
-                    width: parent.width - 20 - 20 - 16
+                    width: parent.width - card.textIndent - 20 - 8
                     spacing: 1
                     height: (cardAppNameText.visible ? cardAppNameText.height + spacing : 0) + cardSummaryText.height
 
@@ -1181,7 +1303,7 @@ BarPill {
 
             Text {
                 width: parent.width
-                leftPadding: 28
+                leftPadding: card.textIndent
                 visible: card.notifBody !== ""
                 text: card.notifBody
                 color: Theme.subtext
@@ -1192,7 +1314,7 @@ BarPill {
             }
 
             Row {
-                leftPadding: 28
+                leftPadding: card.textIndent
                 visible: card.notifActions.length > 0
                 spacing: 6
 

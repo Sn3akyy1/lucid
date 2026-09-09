@@ -102,7 +102,6 @@ BarPill {
     readonly property var btAdapter: Bluetooth.defaultAdapter
     readonly property bool btEnabled: btAdapter ? btAdapter.enabled : false
     property bool airplaneMode: false
-    property bool nightLight: false
     property int pendingBrightness: -1
     property var _lsblkDisks: []
     property var diskList: []
@@ -145,6 +144,272 @@ BarPill {
         return true;
     }
 
+    // hover tooltips over the compact strip
+    property string tipKind: ""
+    property Item tipTarget: null
+    // what the card actually renders; trails tipKind so the resize lands at opacity 0
+    property string tipViewKind: ""
+    property Item tipViewTarget: null
+    property bool tipShown: false
+    property bool tipOverPill: false
+    property bool tipOverCard: false
+    property int tipAnimMs: Theme.barDurShort
+    property int tipAnimEase: Easing.OutCubic
+    property bool tipDragging: false
+    property bool tipOnIcon: false
+    readonly property bool tipWanted: (root.tipOverPill && root.tipOnIcon) || root.tipOverCard || root.tipDragging
+    readonly property int tipGap: 6
+    // grows each icon's slab a little; the row spacing is 8, so gaps stay dead
+    readonly property int tipSlabPad: 2
+    // a dwell delay, not an animation, so it is deliberately not motion-scaled:
+    // Theme.barMs(1000) would be 1.5s at the current 1.52 bar scale
+    readonly property int tipShowDelay: 1000
+    readonly property int tipEnterMs: Theme.barMs(120)
+    readonly property int tipExitMs: Theme.barMs(80)
+
+    // each icon owns its own slab, so the pill's end padding and the gaps
+    // between icons show nothing at all
+    function tipPick(px) {
+        const segs = [["wifi", wifiIcon], ["bluetooth", btIcon], ["volume", volIndicator], ["mic", micIndicator], ["battery", batteryRow]];
+        for (const s of segs) {
+            const t = s[1];
+            if (!t || !t.visible || t.width <= 0.5)
+                continue;
+
+            const left = t.mapToItem(tipHover, 0, 0).x;
+            if (px >= left - root.tipSlabPad && px <= left + t.width + root.tipSlabPad)
+                return s;
+
+        }
+        return null;
+    }
+
+    function tipAim(px) {
+        const seg = root.tipPick(px);
+        root.tipOnIcon = seg !== null;
+        if (!seg || root.tipKind === seg[0])
+            return ;
+
+        root.tipTarget = seg[1];
+        root.tipKind = seg[0];
+    }
+
+    function tipApplyView() {
+        root.tipViewKind = root.tipKind;
+        root.tipViewTarget = root.tipTarget;
+    }
+
+    function tipClose() {
+        tipShowTimer.stop();
+        tipHideTimer.stop();
+        root.tipOverPill = false;
+        root.tipOverCard = false;
+        root.tipOnIcon = false;
+        root.tipShown = false;
+    }
+
+    function tipSetVolume(v) {
+        if (!root.sink || !root.sink.audio)
+            return ;
+
+        root.sink.audio.muted = false;
+        root.sink.audio.volume = Math.max(0, Math.min(1, v / 100));
+    }
+
+    function tipNodeName(node) {
+        if (!node)
+            return "";
+
+        const d = node.description;
+        if (d && d.length > 0)
+            return d;
+
+        const n = node.nickname;
+        if (n && n.length > 0)
+            return n;
+
+        return node.name || "";
+    }
+
+    // clamped against compactWidth so a change in the strip width re-runs the map
+    readonly property real tipAnchorX: {
+        const t = root.tipViewTarget;
+        if (!t)
+            return root.compactWidth / 2;
+
+        return Math.max(0, Math.min(root.compactWidth, t.mapToItem(root, t.width / 2, 0).x));
+    }
+    readonly property real tipCardX: {
+        const w = tipCard.width;
+        const lo = 10 - root.x;
+        const hi = root.screenW - 10 - w - root.x;
+        return Math.round(Math.max(lo, Math.min(hi, root.tipAnchorX - w / 2)));
+    }
+
+    readonly property string tipOverline: {
+        switch (root.tipViewKind) {
+        case "wifi":
+            return wifiPanel.primaryIsEthernet ? "ETHERNET" : "WI-FI";
+        case "bluetooth":
+            return "BLUETOOTH";
+        case "volume":
+            return "VOLUME";
+        case "mic":
+            return "MICROPHONE";
+        case "battery":
+            return "BATTERY";
+        }
+        return "";
+    }
+    readonly property string tipTitle: {
+        switch (root.tipViewKind) {
+        case "wifi":
+            if (wifiPanel.primaryIsEthernet)
+                return "Wired connection";
+
+            if (!Networking.wifiEnabled)
+                return "Wi-Fi off";
+
+            if (wifiPanel.connecting)
+                return "Connecting\u2026";
+
+            if (wifiPanel.wifiConnected && wifiPanel.activeNetwork)
+                return wifiPanel.activeNetwork.name;
+
+            return "Not connected";
+        case "bluetooth":
+            if (!root.btEnabled)
+                return "Bluetooth off";
+
+            if (btPanel.connectedDevices.length === 1)
+                return btPanel.connectedDevices[0].name;
+
+            if (btPanel.connectedDevices.length > 1)
+                return btPanel.connectedDevices.length + " devices";
+
+            if (btPanel.anyConnecting)
+                return "Connecting\u2026";
+
+            return "Not connected";
+        case "volume":
+            return root.volMuted ? "Muted" : root.volumePercent + "%";
+        case "mic":
+            return root.micMuted ? "Muted" : "Active";
+        case "battery":
+            return root.batteryPresent ? root.batteryPercent + "%" : "No battery";
+        }
+        return "";
+    }
+    readonly property string tipSupport: {
+        switch (root.tipViewKind) {
+        case "wifi":
+            if (wifiPanel.primaryIsEthernet)
+                return wifiPanel.wiredDevice ? wifiPanel.wiredDevice.name : "Wired";
+
+            if (!Networking.wifiEnabled)
+                return "Radio disabled";
+
+            if (!wifiPanel.wifiConnected)
+                return wifiPanel.nearbyNetworks.length + " networks nearby";
+
+            const warn = wifiPanel.connectivityLabel();
+            const sig = wifiPanel.strengthLabel(wifiPanel.signalStrength) + " \u00b7 " + Math.round(wifiPanel.signalStrength) + "%";
+            return warn !== "" ? sig + " \u00b7 " + warn : sig;
+        case "bluetooth":
+            if (!root.btEnabled)
+                return "";
+
+            if (btPanel.connectedDevices.length === 1) {
+                const b = btPanel.getBatteryText(btPanel.connectedDevices[0]);
+                return b !== "" ? "Connected \u00b7 " + b + " battery" : "Connected";
+            }
+            if (btPanel.connectedDevices.length > 1)
+                return btPanel.connectedDevices.map((d) => {
+                    return d.name;
+                }).join(", ");
+
+            if (btPanel.discovering)
+                return "Scanning\u2026";
+
+            return btPanel.pairedDevices.length + " paired";
+        case "volume":
+            return root.tipNodeName(root.sink);
+        case "mic":
+            return root.tipNodeName(root.source);
+        case "battery":
+            if (!root.batteryPresent)
+                return "";
+
+            return root.tipBatteryTime !== "" ? root.tipBatteryState + " \u00b7 " + root.tipBatteryTime : root.tipBatteryState;
+        }
+        return "";
+    }
+    readonly property string tipBatteryState: {
+        if (!root.battery)
+            return "";
+
+        if (root.battery.state === UPowerDeviceState.FullyCharged)
+            return "Fully charged";
+
+        return root.batteryCharging ? "Charging" : "On battery";
+    }
+    readonly property string tipBatteryTime: {
+        if (!root.battery)
+            return "";
+
+        const secs = root.batteryCharging ? root.battery.timeToFull : root.battery.timeToEmpty;
+        if (!secs || secs <= 0)
+            return "";
+
+        const h = Math.floor(secs / 3600);
+        const m = Math.round((secs % 3600) / 60);
+        const body = h > 0 ? h + "h " + m + "m" : m + "m";
+        return root.batteryCharging ? body + " to full" : body + " left";
+    }
+
+    onTipWantedChanged: {
+        if (root.tipWanted) {
+            tipHideTimer.stop();
+            if (!root.tipShown)
+                tipShowTimer.restart();
+
+        } else {
+            tipShowTimer.stop();
+            tipHideTimer.restart();
+        }
+    }
+    // a behavior reads the previous flag value, so the timings are set here
+    onTipShownChanged: {
+        root.tipAnimMs = root.tipShown ? root.tipEnterMs : root.tipExitMs;
+        root.tipAnimEase = root.tipShown ? Easing.OutCubic : Easing.InCubic;
+    }
+    onTipKindChanged: {
+        root.tipShown = false;
+        if (root.tipKind !== "")
+            tipShowTimer.restart();
+
+    }
+
+    Timer {
+        id: tipShowTimer
+
+        interval: root.tipShowDelay
+        onTriggered: {
+            if (!root.tipWanted)
+                return ;
+
+            root.tipApplyView();
+            root.tipShown = true;
+        }
+    }
+
+    Timer {
+        id: tipHideTimer
+
+        interval: Theme.barMs(90)
+        onTriggered: root.tipShown = false
+    }
+
     shown: Prefs.showSystem
 
     compactWidth: content.implicitWidth + root.horizontalPadding * 2
@@ -163,6 +428,7 @@ BarPill {
     onCompactClicked: root.view = "main"
     onExpandedChanged: {
         if (expanded) {
+            root.tipClose();
             statsTimer.restart();
             lsblkProc.running = true;
         } else {
@@ -406,6 +672,8 @@ BarPill {
             spacing: 8
 
             Item {
+                id: wifiIcon
+
                 width: 16
                 height: 16
                 anchors.verticalCenter: parent.verticalCenter
@@ -465,6 +733,8 @@ BarPill {
             }
 
             SvgIcon {
+                id: btIcon
+
                 visible: root.btEnabled
                 anchors.verticalCenter: parent.verticalCenter
                 path: "M17.71,7.71L12,2H11V9.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L11,14.41V22H12L17.71,16.29L13.41,12L17.71,7.71M13,5.83L15.17,8L13,10.17V5.83M13,13.83L15.17,16L13,18.17V13.83Z"
@@ -473,12 +743,16 @@ BarPill {
             }
 
             StatusIndicator {
+                id: volIndicator
+
                 svgPath: root.volumeIconFor(root.volumePercent)
                 labelText: root.volMuted ? "Muted" : root.volumePercent
                 isMuted: root.volMuted
             }
 
             StatusIndicator {
+                id: micIndicator
+
                 svgPath: "M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
                 labelText: root.micMuted ? "Off" : "On"
                 isMuted: root.micMuted
@@ -597,6 +871,27 @@ BarPill {
 
             }
 
+        },
+        MouseArea {
+            id: tipHover
+
+            anchors.fill: parent
+            enabled: root.shown && !root.anyOpen
+            hoverEnabled: true
+            // no button is accepted, so the pill's own click still opens the panel
+            acceptedButtons: Qt.NoButton
+            onEntered: root.tipAim(tipHover.mouseX)
+            onPositionChanged: (mouse) => {
+                root.tipAim(mouse.x);
+            }
+            // mirrored rather than set on enter/exit, so disabling clears it too
+            onContainsMouseChanged: {
+                root.compactHovered = tipHover.containsMouse;
+                root.tipOverPill = tipHover.containsMouse;
+                if (!tipHover.containsMouse)
+                    root.tipOnIcon = false;
+
+            }
         }
     ]
 
@@ -711,10 +1006,24 @@ BarPill {
                             }
 
                             ToggleTile {
-                                iconPath: "M12 3a9 9 0 1 0 8.94 10.06.5.5 0 0 0-.66-.54A7 7 0 1 1 11.48 3.72a.5.5 0 0 0-.54-.66A9.06 9.06 0 0 0 12 3Z"
-                                name: "Night Light"
-                                checked: root.nightLight
-                                onToggled: root.nightLight = !root.nightLight
+                                iconPath: "M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"
+                                name: "GPS"
+                                sub: {
+                                    if (Loc.busy)
+                                        return "Locating…";
+
+                                    if (!Prefs.gpsEnabled)
+                                        return Loc.place !== "" ? Loc.place : "Off";
+
+                                    return Loc.place !== "" ? Loc.place : "No fix yet";
+                                }
+                                checked: Prefs.gpsEnabled
+                                onToggled: {
+                                    Prefs.gpsEnabled = !Prefs.gpsEnabled;
+                                    if (Prefs.gpsEnabled)
+                                        Loc.detect();
+
+                                }
                             }
 
                         }
@@ -895,7 +1204,7 @@ BarPill {
                                     SvgIcon {
                                         anchors.centerIn: parent
                                         path: (root.mprisMod && root.mprisMod.isPlaying) ? "M8 6h3v12H8V6Zm5 0h3v12h-3V6Z" : "M8 5v14l11-7L8 5Z"
-                                        tint: Theme.onAccent
+                                        tint: Theme.fgAccent
                                         iconSize: 14
                                     }
 
@@ -1072,7 +1381,7 @@ BarPill {
                                                 Text {
                                                     anchors.verticalCenter: parent.verticalCenter
                                                     text: root.selectedDisk || "—"
-                                                    color: Theme.onAccent
+                                                    color: Theme.fgAccent
                                                     font.family: Theme.fontFamily
                                                     font.bold: true
                                                     font.pixelSize: Theme.fs(10)
@@ -1081,7 +1390,7 @@ BarPill {
                                                 SvgIcon {
                                                     anchors.verticalCenter: parent.verticalCenter
                                                     path: "M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6Z"
-                                                    tint: Theme.onAccent
+                                                    tint: Theme.fgAccent
                                                     iconSize: 10
                                                     rotation: root.diskDropdownOpen ? 180 : 0
 
@@ -1581,7 +1890,7 @@ BarPill {
                                     anchors.leftMargin: 8
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: optRow.modelData.name
-                                    color: optRow.isSelected ? Theme.onAccent : Theme.text
+                                    color: optRow.isSelected ? Theme.fgAccent : Theme.text
                                     opacity: (!optRow.modelData.mounted && !optRow.isSelected) ? 0.45 : 1
                                     font.family: Theme.fontFamily
                                     font.bold: true
@@ -1827,6 +2136,291 @@ BarPill {
         }
     ]
 
+    overlayOpen: tipCard.visible
+    overlayItem: tipCard
+
+    overlayContent: [
+        Rectangle {
+            id: tipCard
+
+            readonly property int pad: 14
+            // measured off unconstrained metrics, since an eliding Text reports
+            // its elided width and would pin the card at whatever it first got
+            readonly property real natural: {
+                let w = Math.max(tipOverlineText.implicitWidth, tipTitleMetrics.width + (root.tipViewKind === "volume" ? 32 : 0));
+                if (tipSupportText.visible)
+                    w = Math.max(w, tipSupportMetrics.width);
+
+                // rounding the card width down by a fraction would elide the text
+                return Math.ceil(w) + 2;
+            }
+            readonly property int floorW: root.tipViewKind === "volume" ? 232 : 128
+
+            width: Math.ceil(Math.min(320, Math.max(tipCard.floorW, tipCard.natural + tipCard.pad * 2)))
+            height: Math.round(tipCol.implicitHeight + tipCard.pad * 2 - 6)
+            x: root.tipCardX
+            y: root.compactHeight + root.tipGap
+            radius: Theme.radiusSm
+            color: Theme.bg
+            opacity: root.tipShown ? 1 : 0
+            visible: tipCard.opacity > 0.01
+
+            // the only hover-enabled area in the card, so nothing can steal it
+            MouseArea {
+                id: tipCardArea
+
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: root.tipViewKind === "volume" ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onEntered: root.tipOverCard = true
+                onExited: root.tipOverCard = false
+                onPressed: (mouse) => {
+                    if (root.tipViewKind !== "volume")
+                        return ;
+
+                    if (tipMute.hitBy(mouse.x, mouse.y)) {
+                        if (root.sink && root.sink.audio)
+                            root.sink.audio.muted = !root.sink.audio.muted;
+
+                        return ;
+                    }
+                    const sp = tipSlider.mapFromItem(tipCardArea, mouse.x, mouse.y);
+                    if (sp.y < -10 || sp.y > tipSlider.height + 10)
+                        return ;
+
+                    root.tipDragging = true;
+                    root.tipSetVolume(tipSlider.valueAt(sp.x));
+                }
+                onPositionChanged: (mouse) => {
+                    if (!root.tipDragging)
+                        return ;
+
+                    root.tipSetVolume(tipSlider.valueAt(tipSlider.mapFromItem(tipCardArea, mouse.x, mouse.y).x));
+                }
+                onReleased: root.tipDragging = false
+                onCanceled: root.tipDragging = false
+                onWheel: (wheel) => {
+                    if (root.tipViewKind === "volume")
+                        root.tipSetVolume(root.volumePercent + (wheel.angleDelta.y > 0 ? 5 : -5));
+
+                    wheel.accepted = true;
+                }
+            }
+
+            TextMetrics {
+                id: tipTitleMetrics
+
+                font: tipTitleText.font
+                text: root.tipTitle
+            }
+
+            TextMetrics {
+                id: tipSupportMetrics
+
+                font: tipSupportText.font
+                text: root.tipSupport
+            }
+
+            Column {
+                id: tipCol
+
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.leftMargin: tipCard.pad
+                anchors.topMargin: tipCard.pad - 3
+                width: tipCard.width - tipCard.pad * 2
+                spacing: 3
+
+                Text {
+                    id: tipOverlineText
+
+                    text: root.tipOverline
+                    color: Theme.subtext
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                    font.pixelSize: Theme.fs(9)
+                    font.letterSpacing: 0.7
+                }
+
+                Text {
+                    id: tipTitleText
+
+                    width: tipCol.width - (root.tipViewKind === "volume" ? 32 : 0)
+                    text: root.tipTitle
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                    font.pixelSize: Theme.fs(14)
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    id: tipSupportText
+
+                    width: tipCol.width
+                    visible: tipSupportText.text !== ""
+                    text: root.tipSupport
+                    color: Theme.subtext
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fs(10)
+                    elide: Text.ElideRight
+                    topPadding: 1
+                }
+
+                M3Slider {
+                    id: tipSlider
+
+                    visible: root.tipViewKind === "volume"
+                    width: tipCol.width
+                    value: root.volumePercent
+                    muted: root.volMuted
+                }
+
+            }
+
+            Rectangle {
+                id: tipMute
+
+                function hitBy(px, py) {
+                    return px >= tipMute.x && px <= tipMute.x + tipMute.width && py >= tipMute.y && py <= tipMute.y + tipMute.height;
+                }
+
+                readonly property bool hovered: tipCardArea.containsMouse && tipMute.hitBy(tipCardArea.mouseX, tipCardArea.mouseY)
+
+                visible: root.tipViewKind === "volume"
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.rightMargin: 9
+                anchors.topMargin: 9
+                width: 28
+                height: 28
+                radius: 999
+                color: root.volMuted ? Theme.accentContainer : (tipMute.hovered ? Theme.withBlur(Theme.bgHover) : "transparent")
+
+                SvgIcon {
+                    anchors.centerIn: parent
+                    path: root.volMuted ? root.volumeIconLevels[0].path : root.volumeIconFor(root.volumePercent)
+                    tint: root.volMuted ? Theme.fgAccentContainer : Theme.subtext
+                    iconSize: 16
+                }
+
+                Rectangle {
+                    visible: root.volMuted
+                    anchors.centerIn: parent
+                    width: 18
+                    height: 1.5
+                    rotation: 45
+                    color: Theme.error
+                }
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Theme.barDurQuick
+                    }
+
+                }
+
+            }
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: root.tipAnimMs
+                    easing.type: root.tipAnimEase
+                }
+
+            }
+
+        }
+    ]
+
+    // m3 slider: thick track, detached handle, stop dot at the far end
+    component M3Slider: Item {
+        id: sl
+
+        property real value: 0
+        property bool muted: false
+
+        readonly property int handleW: 4
+        readonly property int trackH: 16
+        readonly property int notch: 6
+        readonly property real pos: Math.max(0, Math.min(1, sl.value / 100))
+        readonly property real handleX: sl.pos * Math.max(0, sl.width - sl.handleW)
+        readonly property color liveColor: sl.muted ? Theme.outlineStrong : Theme.accent
+
+        function valueAt(px) {
+            const span = Math.max(1, sl.width - sl.handleW);
+            return Math.max(0, Math.min(100, ((px - sl.handleW / 2) / span) * 100));
+        }
+
+        height: 32
+
+        Rectangle {
+            id: activeTrack
+
+            x: 0
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.max(0, sl.handleX - sl.notch)
+            height: sl.trackH
+            radius: sl.trackH / 2
+            topRightRadius: 2
+            bottomRightRadius: 2
+            color: sl.liveColor
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.barDurQuick
+                }
+
+            }
+
+        }
+
+        Rectangle {
+            id: inactiveTrack
+
+            x: Math.min(sl.width, sl.handleX + sl.handleW + sl.notch)
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.max(0, sl.width - inactiveTrack.x)
+            height: sl.trackH
+            radius: sl.trackH / 2
+            topLeftRadius: 2
+            bottomLeftRadius: 2
+            color: Theme.withBlur(Theme.bgHigh)
+
+            Rectangle {
+                visible: inactiveTrack.width > 16
+                anchors.right: parent.right
+                anchors.rightMargin: 6
+                anchors.verticalCenter: parent.verticalCenter
+                width: 4
+                height: 4
+                radius: 2
+                color: Theme.outlineStrong
+            }
+
+        }
+
+        Rectangle {
+            id: handle
+
+            x: sl.handleX
+            anchors.verticalCenter: parent.verticalCenter
+            width: sl.handleW
+            height: sl.trackH + 12
+            radius: sl.handleW / 2
+            color: sl.liveColor
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.barDurQuick
+                }
+
+            }
+
+        }
+
+    }
+
     component StatusIndicator: Row {
         property string svgPath: ""
         property string labelText: ""
@@ -2001,7 +2595,7 @@ BarPill {
                 visible: tile.iconGlyph === ""
                 anchors.verticalCenter: parent.verticalCenter
                 path: tile.iconPath
-                tint: tile.checked ? Theme.onAccent : Theme.subtext
+                tint: tile.checked ? Theme.fgAccent : Theme.subtext
                 iconSize: 17
             }
 
@@ -2009,7 +2603,7 @@ BarPill {
                 visible: tile.iconGlyph !== ""
                 anchors.verticalCenter: parent.verticalCenter
                 text: tile.iconGlyph
-                color: tile.checked ? Theme.onAccent : Theme.subtext
+                color: tile.checked ? Theme.fgAccent : Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(16)
             }
@@ -2022,7 +2616,7 @@ BarPill {
                 Text {
                     width: parent.width
                     text: tile.name
-                    color: tile.checked ? Theme.onAccent : Theme.text
+                    color: tile.checked ? Theme.fgAccent : Theme.text
                     font.family: Theme.fontFamily
                     font.bold: true
                     font.pixelSize: Theme.fs(12)
@@ -2033,7 +2627,7 @@ BarPill {
                     width: parent.width
                     visible: tile.sub !== ""
                     text: tile.sub
-                    color: tile.checked ? Theme.alpha(Theme.onAccent, 0.75) : Theme.subtext
+                    color: tile.checked ? Theme.alpha(Theme.fgAccent, 0.75) : Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
                     elide: Text.ElideRight
@@ -2062,12 +2656,12 @@ BarPill {
             width: 22
             height: 22
             radius: 999
-            color: arrowArea.containsMouse ? (tile.checked ? Theme.alpha(Theme.onAccent, 0.2) : Theme.accentContainer) : "transparent"
+            color: arrowArea.containsMouse ? (tile.checked ? Theme.alpha(Theme.fgAccent, 0.2) : Theme.accentContainer) : "transparent"
 
             SvgIcon {
                 anchors.centerIn: parent
                 path: "M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41Z"
-                tint: tile.checked ? Theme.onAccent : (arrowArea.containsMouse ? Theme.accent : Theme.subtext)
+                tint: tile.checked ? Theme.fgAccent : (arrowArea.containsMouse ? Theme.accent : Theme.subtext)
                 iconSize: 13
             }
 
@@ -2174,7 +2768,7 @@ BarPill {
                     anchors.leftMargin: sliderRow.iconMargin
                     anchors.verticalCenter: parent.verticalCenter
                     text: Math.round(sliderRow.displayValue) + "%"
-                    color: Theme.onAccent
+                    color: Theme.fgAccent
                     font.family: Theme.fontFamily
                     font.bold: true
                     font.pixelSize: Theme.fs(13)
@@ -2197,7 +2791,7 @@ BarPill {
                     anchors.rightMargin: sliderRow.iconMargin
                     levels: sliderRow.iconLevels
                     value: sliderRow.displayValue
-                    tint: Theme.onAccent
+                    tint: Theme.fgAccent
                     iconSize: sliderRow.trackHeight - sliderRow.iconMargin * 2
                     transformOrigin: Item.Center
                     scale: 0.75 + 0.35 * (sliderRow.displayValue / 100)

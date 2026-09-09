@@ -17,6 +17,7 @@ Item {
         for (var i = 0; i < picker.families.length; i++) {
             if (picker.families[i].toLowerCase().indexOf(q) !== -1)
                 out.push(picker.families[i]);
+
         }
         return out;
     }
@@ -42,14 +43,6 @@ Item {
     visible: picker.shown || picker.opacity > 0.01
     opacity: picker.shown ? 1 : 0
 
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Theme.durShort
-            easing.type: Theme.easeStandard
-        }
-
-    }
-
     Rectangle {
         anchors.fill: parent
         color: Theme.alpha(Theme.cShadow, 0.55)
@@ -72,15 +65,6 @@ Item {
         clip: true
         scale: picker.shown ? 1 : 0.92
 
-        Behavior on scale {
-            NumberAnimation {
-                duration: Theme.durMedium
-                easing.type: Theme.easeEmphasized
-                easing.overshoot: Theme.emphasizedOvershoot
-            }
-
-        }
-
         MouseArea {
             anchors.fill: parent
         }
@@ -94,8 +78,8 @@ Item {
             text: "Interface font"
             color: Theme.text
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fs(17)
-            font.bold: true
+            font.pixelSize: Theme.fontHeadlineSm
+            font.weight: Font.Medium
         }
 
         Rectangle {
@@ -107,8 +91,8 @@ Item {
             anchors.leftMargin: 22
             anchors.rightMargin: 22
             anchors.topMargin: 14
-            height: 40
-            radius: Theme.radiusSm
+            height: 46
+            radius: Theme.shapeLg
             color: Theme.bgSunken
             border.width: searchInput.activeFocus ? 2 : 1
             border.color: searchInput.activeFocus ? Theme.accent : Theme.outlineStrong
@@ -122,10 +106,10 @@ Item {
                 verticalAlignment: TextInput.AlignVCenter
                 color: Theme.text
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontBody
+                font.pixelSize: Theme.fontBodyLg
                 selectByMouse: true
                 selectionColor: Theme.accent
-                selectedTextColor: Theme.onAccent
+                selectedTextColor: Theme.fgAccent
                 clip: true
                 onTextChanged: picker.filter = searchInput.text
                 Keys.onEscapePressed: picker.dismiss()
@@ -143,7 +127,7 @@ Item {
                 text: "Search " + picker.families.length + " installed fonts"
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontBody
+                font.pixelSize: Theme.fontBodyLg
                 visible: searchInput.text === ""
             }
 
@@ -193,20 +177,12 @@ Item {
                 id: fontRow
 
                 required property string modelData
-
                 readonly property bool current: fontRow.modelData === Theme.fontFamily
 
                 width: list.width - 14
-                height: 44
-                radius: Theme.radiusSm
+                height: 50
+                radius: height / 2
                 color: fontRow.current ? Theme.accentContainer : (rowArea.containsMouse ? Theme.bgHover : "transparent")
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.durQuick
-                    }
-
-                }
 
                 Text {
                     anchors.left: parent.left
@@ -216,7 +192,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: fontRow.modelData
                     font.family: fontRow.modelData
-                    font.pixelSize: Theme.fontTitle
+                    font.pixelSize: Theme.fontBodyLg
                     color: fontRow.current ? Theme.text : Theme.subtext
                     elide: Text.ElideRight
                 }
@@ -230,8 +206,32 @@ Item {
                     onClicked: picker.choose(fontRow.modelData)
                 }
 
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Theme.durQuick
+                    }
+
+                }
+
             }
 
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Theme.durMedium
+                easing.type: Theme.easeEmphasized
+                easing.overshoot: Theme.emphasizedOvershoot
+            }
+
+        }
+
+    }
+
+    Behavior on opacity {
+        NumberAnimation {
+            duration: Theme.durShort
+            easing.type: Theme.easeStandard
         }
 
     }

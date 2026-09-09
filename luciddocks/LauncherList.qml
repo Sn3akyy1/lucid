@@ -14,18 +14,46 @@ Item {
     property string emptyLabel: "No results"
     // the settled view height; view.height is mid-animation while the panel resizes
     property real stableHeight: 0
-
     signal activated(int index)
 
-    onCurrentIndexChanged: view.currentIndex = list.currentIndex
+    // the view consumes these; reading them back off `view` re-entered the layout
+    readonly property int rowSpacing: 2
+    readonly property int bottomPad: 8
+    readonly property real viewport: list.stableHeight > 0 ? list.stableHeight : list.height
+    // summed from the model, so it never depends on the layout it feeds
+    readonly property real contentExtent: {
+        if (!list.model || list.model.count === 0)
+            return 0;
 
-    readonly property bool needsScrollbar: view.contentHeight > (list.stableHeight > 0 ? list.stableHeight : view.height)
+        var h = 0;
+        for (var i = 0; i < list.model.count; i++) h += list.rowHeight(i) + list.rowSpacing;
+        return h - list.rowSpacing + list.bottomPad;
+    }
+    readonly property real maxScroll: Math.max(0, list.contentExtent - list.viewport)
+    // reading view.contentHeight here fed rowWidth back into the layout and looped
+    readonly property bool needsScrollbar: list.contentExtent > list.viewport
     // only give up the gutter when the scrollbar is actually there
     readonly property int rowWidth: Math.max(0, view.width - (list.needsScrollbar ? 14 : 0))
-    readonly property Item currentItem: view.currentItem
+    readonly property real selectionY: list.rowY(list.currentIndex)
+    readonly property real selectionHeight: list.rowHeight(list.currentIndex)
 
     function rowAt(index) {
         return list.model && index >= 0 && index < list.model.count ? list.model.get(index) : null;
+    }
+
+    // must match the delegate's height expression below
+    function rowHeight(index) {
+        var r = list.rowAt(index);
+        if (!r)
+            return 0;
+
+        return r.kind === "header" ? 30 : (r.subtitle !== "" ? 58 : 48);
+    }
+
+    function rowY(index) {
+        var y = 0;
+        for (var i = 0; i < index; i++) y += list.rowHeight(i) + list.rowSpacing;
+        return y;
     }
 
     function isSelectable(index) {
@@ -66,7 +94,6 @@ Item {
         list.currentIndex = list.firstSelectable();
         scrollAnim.stop();
         view.contentY = 0;
-        view.positionViewAtBeginning();
     }
 
     function ensureSelectable() {
@@ -76,23 +103,21 @@ Item {
     }
 
     function scrollToCurrent() {
-        var item = view.currentItem;
-        if (!item) {
-            view.positionViewAtIndex(list.currentIndex, ListView.Contain);
-            return;
-        }
-
+        var top = list.rowY(list.currentIndex);
+        var bottom = top + list.rowHeight(list.currentIndex);
         var cur = scrollAnim.running ? scrollAnim.to : view.contentY;
         var target = cur;
-        if (item.y < cur)
-            target = item.y;
-        else if (item.y + item.height > cur + view.height)
-            target = item.y + item.height - view.height;
+        if (top < cur)
+            target = top;
+        else if (bottom > cur + list.viewport)
+            target = bottom - list.viewport;
         else
             return;
 
-        var maxY = Math.max(0, view.contentHeight - view.height);
-        target = Math.max(0, Math.min(maxY, target));
+        target = Math.max(0, Math.min(list.maxScroll, target));
+        if (Math.abs(target - cur) < 0.5)
+            return;
+
         scrollAnim.stop();
         scrollAnim.from = view.contentY;
         scrollAnim.to = target;
@@ -120,8 +145,8 @@ Item {
     Rectangle {
         id: selection
 
-        property real slot: list.currentItem ? list.currentItem.y : 0
-        property real slotHeight: list.currentItem ? list.currentItem.height : 0
+        property real slot: list.selectionY
+        property real slotHeight: list.selectionHeight
 
         x: 0
         y: selection.slot - view.contentY
@@ -129,7 +154,7 @@ Item {
         height: selection.slotHeight
         radius: Theme.radiusMd
         color: Theme.withBlur(Theme.bgActive)
-        visible: list.currentItem !== null && view.count > 0
+        visible: view.count > 0 && list.isSelectable(list.currentIndex)
         z: 0
 
         Behavior on slot {
@@ -155,14 +180,11 @@ Item {
 
         anchors.fill: parent
         clip: true
-        spacing: 2
-        bottomMargin: 8
+        spacing: list.rowSpacing
+        bottomMargin: list.bottomPad
         model: list.model
         currentIndex: list.currentIndex
-        onCountChanged: {
-            list.ensureSelectable();
-            view.currentIndex = list.currentIndex;
-        }
+        onCountChanged: list.ensureSelectable()
         highlightFollowsCurrentItem: false
         interactive: true
         boundsBehavior: Flickable.StopAtBounds
@@ -181,9 +203,8 @@ Item {
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: (event) => {
                 event.accepted = true;
-                var maxY = Math.max(0, view.contentHeight - view.height);
                 var base = scrollAnim.running ? scrollAnim.to : view.contentY;
-                var target = Math.max(0, Math.min(maxY, base - (event.angleDelta.y / 120) * 60));
+                var target = Math.max(0, Math.min(list.maxScroll, base - (event.angleDelta.y / 120) * 60));
                 if (target === base)
                     return;
 

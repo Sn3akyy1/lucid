@@ -110,11 +110,14 @@ PKG_REQUIRED=(quickshell qt6-5compat qt6-declarative qt6-multimedia)
 PKG_FEATURES=(
     matugen jq imagemagick
     networkmanager bluez bluez-utils
-    libpulse wireplumber brightnessctl upower
+    kdeconnect python-gobject
+    libpulse wireplumber brightnessctl upower hypridle
     grim wf-recorder ffmpeg wl-clipboard wtype
+    tesseract tesseract-data-eng hyprpicker
+    python-pillow python-numpy python-fonttools
     cava songrec curl libnotify awww
     python-pywal noto-fonts-emoji
-    xdg-utils swappy
+    xdg-utils swappy polkit-kde-agent
 )
 # invoked by the shipped Hyprland binds and the Lucid look. without these the
 # config installs fine but its keys do nothing and the prompt renders as boxes
@@ -293,6 +296,7 @@ else
         --exclude='./luciddocks/wallpaper.json' \
         --exclude='./lucidmoji/config.json' \
         --exclude='./lucidmoji/state.json' \
+        --exclude='./lucidwidgets/widgets.json' \
         . | tar -C "$SHELL_DIR" -xf -
     say "  shell files -> $SHELL_DIR"
 fi
@@ -403,6 +407,7 @@ seed usage.json            luciddocks/usage.json
 seed wallpaper.json        luciddocks/wallpaper.json
 seed moji-config.json      lucidmoji/config.json
 seed moji-state.json       lucidmoji/state.json
+seed widgets.json          lucidwidgets/widgets.json
 
 # the media visualiser runs `cava -p ~/.config/cava/quickshell.conf`. without
 # that file cava falls back to its own defaults, which emit ncurses output
@@ -562,6 +567,8 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     cp -r "$SRC/support/lucid/themes/." "$LUCID_DIR/themes/"
     install -m755 "$SRC/support/lucid/apply-theme.sh"      "$LUCID_DIR/apply-theme.sh"
     install -m755 "$SRC/support/lucid/gen-pywal-palette.py" "$LUCID_DIR/gen-pywal-palette.py"
+    install -m755 "$SRC/support/lucid/add-theme.py"        "$LUCID_DIR/add-theme.py"
+    install -m644 "$SRC/support/lucid/lucid_palette.py"    "$LUCID_DIR/lucid_palette.py"
     install -m755 "$SRC/support/wallpaper/set-wallpaper.sh" "$WALL_SCRIPT_DIR/set-wallpaper.sh"
     say "  theme palettes  -> $LUCID_DIR/themes"
     say "  theme scripts   -> $LUCID_DIR"

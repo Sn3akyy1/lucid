@@ -13,14 +13,15 @@ PanelWindow {
     property var lockScreen: null
 
     property bool morphing: false
-    readonly property bool dockBusy: dockWindow.menuOpen || dockWindow.dragging || (dockWindow.morphing && !dockWindow.launcherFromHidden)
+    property bool closingFromHidden: false
+    readonly property bool dockBusy: dockWindow.menuOpen || dockWindow.dragging || (dockWindow.morphing && !dockWindow.launcherFromHidden && !dockWindow.closingFromHidden)
     property bool slidingAway: false
     readonly property bool heldByPointer: revealArea.containsMouse || (shellHover.hovered && !dockWindow.slidingAway)
     readonly property bool dockRevealed: !Prefs.dockAutoHide || dockWindow.dockBusy || dockWindow.heldByPointer
     property bool launcherFromHidden: false
     readonly property bool renderAsNotch: Prefs.dockNotch || dockWindow.launcherFromHidden
     readonly property int placementMargin: dockWindow.launcherFromHidden ? 0 : Prefs.effectiveDockBottomMargin
-    readonly property real hiddenOffset: dockWindow.dockRevealed ? 0 : -(shell.implicitHeight + Prefs.dockBottomMargin - 1)
+    readonly property real hiddenOffset: dockWindow.dockRevealed ? 0 : -(shell.implicitHeight + dockWindow.placementMargin - 1)
 
     onDockRevealedChanged: {
         if (dockWindow.dockRevealed) {
@@ -42,6 +43,13 @@ PanelWindow {
     property int shellResizeMs: Theme.ms(60)
     readonly property var morphCurve: [0.4, 0, 0.2, 1, 1, 1]
 
+    // the one way in from outside the dock — the launcher's modes are its
+    // own search prefixes, so callers pass the prefix they want
+    function openLauncher(query) {
+        launcherFace.searchText = query;
+        dockWindow.menuOpen = true;
+    }
+
     function pulseMorph() {
         dockWindow.shellResizeMs = Theme.ms(480);
         dockWindow.morphing = true;
@@ -57,9 +65,11 @@ PanelWindow {
         dockWindow.contentFadeDelay = dockWindow.menuOpen ? 190 : 0;
         if (dockWindow.menuOpen) {
             dockWindow.launcherFromHidden = Prefs.dockAutoHide && !dockWindow.heldByPointer;
+            dockWindow.closingFromHidden = false;
             dockWindow.snapPlacement = true;
             snapClear.restart();
         } else if (dockWindow.launcherFromHidden) {
+            dockWindow.closingFromHidden = true;
             hideAfterClose.restart();
         } else {
             dockWindow.launcherFromHidden = false;
@@ -92,10 +102,11 @@ PanelWindow {
         onTriggered: {
             dockWindow.morphing = false;
             dockWindow.shellResizeMs = Theme.ms(60);
+            dockWindow.closingFromHidden = false;
         }
     }
 
-    property string fallbackWallpaper: Qt.resolvedUrl("./fallback.jpg").toString().replace("file://", "")
+    property string fallbackWallpaper: Qt.resolvedUrl("../assets/fallback.jpg").toString().replace("file://", "")
     property var scannedApps: []
     readonly property string currentTheme: Prefs.currentTheme
     property string pendingWallpaper: ""
@@ -120,6 +131,31 @@ PanelWindow {
         return t && t.lastIpcObject && t.lastIpcObject.address ? t.lastIpcObject.address : "";
     }
 
+    // quickshell only fills lastIpcObject on an explicit refresh, so without
+    // this a new window waits out the poll below before it reaches the dock
+    Timer {
+        id: toplevelRefresh
+
+        interval: 8
+        onTriggered: Hyprland.refreshToplevels()
+    }
+
+    Connections {
+        target: Hyprland
+
+        function onRawEvent(event) {
+            switch (event.name) {
+            case "openwindow":
+            case "closewindow":
+            case "movewindow":
+            case "movewindowv2":
+                toplevelRefresh.restart();
+                break;
+            }
+        }
+    }
+
+    // safety net for anything the events above miss
     Timer {
         interval: 4000
         running: dockWindow.visible && (dockWindow.menuOpen || dockWindow.dockRevealed)
@@ -184,9 +220,6 @@ PanelWindow {
         } else {
             dockWindow.wallpaperArmed = false;
         }
-        if (dockWindow.mode === "theme")
-            dockWindow.scanThemeWallpapers();
-
     }
 
     readonly property var allCommands: [{
@@ -210,6 +243,11 @@ PanelWindow {
         "desc": "Lock, suspend, restart or shut down",
         "glyph": DockIcons.power
     }, {
+        "id": "widgets",
+        "name": "Desktop Widgets",
+        "desc": "Place clocks, meters and notes on the desktop",
+        "glyph": DockIcons.widgets
+    }, {
         "id": "settings",
         "name": "Settings",
         "desc": "Open Lucid's settings",
@@ -217,7 +255,6 @@ PanelWindow {
     }]
     // shared with the settings app, see Prefs.themeCatalogue
     readonly property var allThemes: Prefs.themeCatalogue
-    property var themeHasWallpaper: ({})
 
     readonly property int iconSlot: Prefs.dockIconSize
     readonly property int iconGap: Prefs.dockSpacing
@@ -473,12 +510,10 @@ PanelWindow {
                 if (q !== "" && th.name.toLowerCase().indexOf(q) === -1)
                     continue;
 
-                var noWall = th.id !== "matugen" && dockWindow.themeHasWallpaper[th.id] === false;
-                rows.push(dockWindow.makeRow("theme", "theme-" + th.id, th.name, noWall ? "No wallpapers installed for this theme" : th.desc, {
+                rows.push(dockWindow.makeRow("theme", "theme-" + th.id, th.name, th.desc, {
                     "swatchBg": th.swatchBg,
                     "swatchAccent": th.swatchAccent,
                     "trailing": th.id === dockWindow.currentTheme ? "check" : "",
-                    "disabled": noWall,
                     "payload": th.id
                 }));
             }
@@ -566,6 +601,9 @@ PanelWindow {
         } else if (id === "settings") {
             dockWindow.menuOpen = false;
             Prefs.settingsRequested("");
+        } else if (id === "widgets") {
+            dockWindow.menuOpen = false;
+            Prefs.settingsRequested("widgets");
         }
     }
 
@@ -609,19 +647,6 @@ PanelWindow {
                 return;
             }
         }
-    }
-
-    function scanThemeWallpapers() {
-        var script = "";
-        for (var i = 0; i < dockWindow.allThemes.length; i++) {
-            var id = dockWindow.allThemes[i].id;
-            if (id === "matugen")
-                continue;
-
-            script += "d=\"" + Prefs.wallpaperDirFor(id) + "\"; " + "if [ -d \"$d\" ] && [ -n \"$(find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) -print -quit)\" ]; " + "then echo \"" + id + ":1\"; else echo \"" + id + ":0\"; fi; ";
-        }
-        themeWallpaperScan.command = ["sh", "-c", script];
-        themeWallpaperScan.running = true;
     }
 
     function switchTheme(id) {
@@ -934,7 +959,7 @@ PanelWindow {
     }
 
     margins.bottom: 0
-    exclusiveZone: (!Prefs.dockEnabled || Prefs.dockAutoHide) ? 0 : (shell.implicitHeight + Prefs.effectiveDockBottomMargin)
+    exclusiveZone: (!Prefs.loaded || !Prefs.dockEnabled || Prefs.dockAutoHide) ? 0 : (shell.implicitHeight + Prefs.effectiveDockBottomMargin)
     WlrLayershell.keyboardFocus: dockWindow.menuOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     WlrLayershell.layer: dockWindow.menuOpen ? WlrLayer.Overlay : WlrLayer.Top
     color: "transparent"
@@ -1003,8 +1028,7 @@ PanelWindow {
         }
 
         function open(): void {
-            launcherFace.searchText = "";
-            dockWindow.menuOpen = true;
+            dockWindow.openLauncher("");
         }
 
         function close(): void {
@@ -1012,18 +1036,15 @@ PanelWindow {
         }
 
         function wallpaper(): void {
-            launcherFace.searchText = ">wallpaper";
-            dockWindow.menuOpen = true;
+            dockWindow.openLauncher(">wallpaper");
         }
 
         function theme(): void {
-            launcherFace.searchText = ">theme";
-            dockWindow.menuOpen = true;
+            dockWindow.openLauncher(">theme");
         }
 
         function power(): void {
-            launcherFace.searchText = ">power";
-            dockWindow.menuOpen = true;
+            dockWindow.openLauncher(">power");
         }
 
         function blur(): void {
@@ -1339,26 +1360,6 @@ PanelWindow {
                     Quickshell.execDetached(["sh", "-c", "echo " + id + " > " + home + "/.cache/current_theme && " + home + "/.config/lucid/apply-theme.sh " + id]);
                 }
                 dockWindow.applyWallpaper(wallpaper);
-            }
-        }
-
-    }
-
-    Process {
-        id: themeWallpaperScan
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var map = {};
-                var lines = text.trim().split("\n");
-                for (var i = 0; i < lines.length; i++) {
-                    var parts = lines[i].split(":");
-                    if (parts.length === 2)
-                        map[parts[0]] = parts[1] === "1";
-
-                }
-                dockWindow.themeHasWallpaper = map;
-                dockWindow.rebuildResults();
             }
         }
 
@@ -1888,6 +1889,7 @@ PanelWindow {
         }
 
     }
+
 
     BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && shell.shellReady) ? dockBlurRegion : null
 

@@ -223,7 +223,7 @@ Item {
         Text {
             anchors.centerIn: parent
             text: dockItem.windowCount
-            color: Theme.onAccent
+            color: Theme.fgAccent
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(9)
             font.weight: Font.DemiBold

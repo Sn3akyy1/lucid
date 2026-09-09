@@ -1,15 +1,27 @@
 import "./lucidbar"
+import "./luciddesktop"
 import "./luciddocks"
 import "./lucidlock"
 import "./lucidmoji"
 import "./lucidosd"
 import "./lucidprefs"
 import "./lucidshot"
+import "./lucidwidgets"
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
 
 ShellRoot {
+    // singletons are made lazily, and these have to be up before anything
+    // asks: the KDE Connect bridge and its ipc target, the bluez extras, and
+    // the idle daemon, which owns hypridle.conf
+    Component.onCompleted: {
+        void KdeConnect.installed;
+        void Bt.present;
+        void Net.connectivity;
+        void Idle.probed;
+    }
+
     PanelWindow {
         id: bar
 
@@ -203,6 +215,26 @@ ShellRoot {
             id: screenshotMod
 
             onCaptured: snapMod.open = false
+            onTextResult: (status) => {
+                snapMod.finishTextRead();
+                if (status === "copied")
+                    toastMod.popup("copy", "Text copied", false);
+                else if (status === "notool")
+                    toastMod.popup("alert", "Install tesseract to copy text", true);
+                else
+                    toastMod.popup("alert", "No text found", true);
+            }
+            onColorResult: (value, hex, status) => {
+                if (status === "notool") {
+                    toastMod.popup("alert", "Install hyprpicker to pick colours", true);
+                } else if (status === "ok") {
+                    snapMod.open = false;
+                    if (hex === "")
+                        toastMod.popup("copy", value, false);
+                    else
+                        toastMod.popupSwatch(hex, value);
+                }
+            }
         }
 
         SnapOverlay {
@@ -212,6 +244,10 @@ ShellRoot {
             onRegionRequested: (x, y, w, h) => {
                 return screenshotMod.captureRegion(x, y, w, h, false, snapMod.freezePath, snapMod.freezeScale);
             }
+            onTextRequested: (x, y, w, h) => {
+                return screenshotMod.copyText(x, y, w, h, snapMod.freezePath, snapMod.freezeScale);
+            }
+            onColorPickRequested: (format) => screenshotMod.pickColor(format)
         }
 
         Workspaces {
@@ -291,8 +327,22 @@ ShellRoot {
     }
 
 
+    WidgetLayer {
+        id: widgetLayer
+    }
+
+    WidgetIpc {
+    }
+
+    Desktop {
+    }
+
     Osd {
         id: osdMod
+    }
+
+    Toast {
+        id: toastMod
     }
 
     Lock {
@@ -329,6 +379,20 @@ ShellRoot {
             onClicked: dock.menuOpen = false
         }
 
+    }
+
+    Connections {
+        function onDesktopActionRequested(action) {
+            if (action === "wallpaper")
+                dock.openLauncher(">wallpaper");
+            else if (action === "theme")
+                dock.openLauncher(">theme");
+            else if (action === "screenshot")
+                snapMod.beginOpen();
+
+        }
+
+        target: Prefs
     }
 
     Connections {

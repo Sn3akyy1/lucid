@@ -53,7 +53,7 @@ Item {
 
         anchors.fill: track
         radius: track.radius
-        color: sw.checked ? Theme.onAccent : Theme.text
+        color: sw.checked ? Theme.fgAccent : Theme.text
         opacity: !sw.enabled ? 0 : (area.pressed ? Theme.statePressed : (area.containsMouse ? Theme.stateHover : 0))
 
         Behavior on opacity {
@@ -78,7 +78,7 @@ Item {
         radius: handle.size / 2
         x: sw.checked ? handle.onX : handle.restX
         anchors.verticalCenter: parent.verticalCenter
-        color: sw.checked ? Theme.onAccent : Theme.outlineStrong
+        color: sw.checked ? Theme.fgAccent : Theme.outlineStrong
 
         Behavior on x {
             NumberAnimation {

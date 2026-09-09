@@ -33,17 +33,16 @@ Scope {
     property real cpuPercent: 0
     property real _prevCpuTotal: -1
     property real _prevCpuIdle: -1
-    property real lat: 52.2297
-    property real lon: 21.0122
-    property real temp: 0
-    property int humidity: 0
-    property int weatherCode: 0
-    property real feelsLike: 0
-    property real windSpeed: 0
-    property real tempMax: 0
-    property real tempMin: 0
-    property real uvIndex: 0
-    property string sunsetTime: ""
+    readonly property var wx: WeatherSource.report
+    readonly property int temp: root.wx ? root.wx.tempC : 0
+    readonly property int humidity: root.wx ? root.wx.humidity : 0
+    readonly property int weatherCode: root.wx ? root.wx.code : 0
+    readonly property int feelsLike: root.wx ? root.wx.feelsC : 0
+    readonly property int windSpeed: root.wx ? root.wx.windKmph : 0
+    readonly property int tempMax: root.wx ? root.wx.days[0].maxC : 0
+    readonly property int tempMin: root.wx ? root.wx.days[0].minC : 0
+    readonly property int uvIndex: root.wx ? root.wx.uv : 0
+    readonly property string sunsetTime: root.wx ? new Date(root.wx.sunset).toLocaleTimeString(Qt.locale(), "h:mm AP") : ""
     property int clockTick: 0
     property string sysUsername: ""
     property string sysHostname: ""
@@ -142,7 +141,7 @@ Scope {
 
     readonly property bool isNight: {
         root.clockTick;
-        const h = new Date().getHours();
+        const h = Loc.now().getHours();
         return h < 6 || h >= 20;
     }
 
@@ -318,38 +317,6 @@ Scope {
         target: root.wifiDevice ? root.wifiDevice.networks : null
     }
 
-    Timer {
-        id: weatherTimer
-        interval: 15 * 60 * 1000
-        running: false
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: weatherProc.running = true
-    }
-
-    Process {
-        id: weatherProc
-        command: ["curl", "-s", "https://api.open-meteo.com/v1/forecast?latitude=" + root.lat + "&longitude=" + root.lon + "&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunset&timezone=auto"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const data = JSON.parse(this.text);
-                    root.temp = Math.round(data.current.temperature_2m);
-                    root.humidity = Math.round(data.current.relative_humidity_2m);
-                    root.weatherCode = data.current.weather_code;
-                    root.feelsLike = Math.round(data.current.apparent_temperature);
-                    root.windSpeed = Math.round(data.current.wind_speed_10m);
-                    root.tempMax = Math.round(data.daily.temperature_2m_max[0]);
-                    root.tempMin = Math.round(data.daily.temperature_2m_min[0]);
-                    root.uvIndex = Math.round(data.daily.uv_index_max[0]);
-                    root.sunsetTime = new Date(data.daily.sunset[0]).toLocaleTimeString(Qt.locale(), "h:mm AP");
-                } catch (e) {
-                    console.log("weather parse failed:", e);
-                }
-            }
-        }
-    }
-
     Process {
         id: cpuStatProc
         command: ["cat", "/proc/stat"]
@@ -450,7 +417,7 @@ Scope {
 
     readonly property string wallpaperPath: {
         const p = wallpaperFile.text().trim();
-        return p.length > 0 ? p : (Quickshell.env("HOME") + "/.config/quickshell/luciddocks/fallback.jpg");
+        return p.length > 0 ? p : (Quickshell.env("HOME") + "/.config/quickshell/assets/fallback.jpg");
     }
 
     WlSessionLock {
@@ -592,7 +559,7 @@ Scope {
                     Text {
                         id: lockClockTimeText
                         width: lockClock.width
-                        text: new Date().toLocaleTimeString(Qt.locale(), "h:mm:ss AP")
+                        text: Loc.now().toLocaleTimeString(Qt.locale(), "h:mm:ss AP")
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.bold: true
@@ -603,7 +570,7 @@ Scope {
                     Text {
                         id: lockClockDateText
                         width: lockClock.width
-                        text: new Date().toLocaleDateString(Qt.locale(), "dddd, MMMM d")
+                        text: Loc.now().toLocaleDateString(Qt.locale(), "dddd, MMMM d")
                         color: Theme.accent
                         font.family: Theme.fontFamily
                         font.bold: false
@@ -618,8 +585,8 @@ Scope {
                     repeat: true
                     triggeredOnStart: true
                     onTriggered: {
-                        lockClockTimeText.text = new Date().toLocaleTimeString(Qt.locale(), "h:mm:ss AP");
-                        lockClockDateText.text = new Date().toLocaleDateString(Qt.locale(), "dddd, MMMM d");
+                        lockClockTimeText.text = Loc.now().toLocaleTimeString(Qt.locale(), "h:mm:ss AP");
+                        lockClockDateText.text = Loc.now().toLocaleDateString(Qt.locale(), "dddd, MMMM d");
                         root.clockTick++;
                     }
                 }
@@ -1415,7 +1382,7 @@ Scope {
                                 visible: !passwordBar.authenticating
 
                                 ShapePath {
-                                    fillColor: Theme.onAccent
+                                    fillColor: Theme.fgAccent
                                     strokeWidth: 0
                                     PathSvg {
                                         path: "M4 11h12.17l-5.59-5.59L12 4l8 8-8 8-1.41-1.41L16.17 13H4v-2Z"
@@ -1432,7 +1399,7 @@ Scope {
                                 preferredRendererType: Shape.CurveRenderer
 
                                 ShapePath {
-                                    strokeColor: Theme.onAccent
+                                    strokeColor: Theme.fgAccent
                                     strokeWidth: 2.4
                                     fillColor: "transparent"
                                     capStyle: ShapePath.RoundCap
@@ -1780,7 +1747,7 @@ Scope {
                                 preferredRendererType: Shape.CurveRenderer
 
                                 ShapePath {
-                                    fillColor: Theme.onAccent
+                                    fillColor: Theme.fgAccent
                                     strokeWidth: 0
                                     PathSvg { path: root.mprisIsPlaying ? "M8 6h3v12H8V6Zm5 0h3v12h-3V6Z" : "M8 5v14l11-7L8 5Z" }
                                 }
@@ -2780,11 +2747,10 @@ Scope {
             if (root.locked) {
                 statsTimer.restart();
                 lsblkProc.running = true;
-                weatherTimer.restart();
+                WeatherSource.ensure();
                 sysInfoTimer.restart();
             } else {
                 statsTimer.stop();
-                weatherTimer.stop();
                 sysInfoTimer.stop();
                 root.unlocking = false;
             }

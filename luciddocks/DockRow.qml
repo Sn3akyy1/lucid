@@ -30,6 +30,8 @@ Item {
     readonly property int slotSize: Prefs.dockIconSize
     readonly property int slotGap: Prefs.dockSpacing
     readonly property int slotPitch: row.slotSize + row.slotGap
+    // the gap opening and the icon landing in it share one timing
+    readonly property int enterMs: Theme.ms(220)
     readonly property int count: repeater.count
     readonly property int previewCount: row.count + ((row.reserveSlot && row.dragMode === "reorder") ? 1 : 0)
 
@@ -68,7 +70,7 @@ Item {
         enabled: row.ready
 
         NumberAnimation {
-            duration: Theme.ms(220)
+            duration: row.enterMs
             easing.type: Easing.OutCubic
         }
 
@@ -123,7 +125,7 @@ Item {
             readonly property bool overRemoveThreshold: row.dragMode === "reorder" && dragHandler.active && -slot.y > slot.removeThreshold
             readonly property bool overPinThreshold: row.dragMode === "pin" && dragHandler.active && row.pinArmed
 
-            property real entranceScale: slot.justAdded ? 0 : 1
+            property real entranceScale: slot.justAdded ? 0.55 : 1
             property real entranceOpacity: slot.justAdded ? 0 : 1
 
             width: row.slotSize
@@ -181,11 +183,19 @@ Item {
             ParallelAnimation {
                 id: entranceAnim
 
+                // the model keeps justAdded, so clear it or a rebuilt
+                // delegate replays the entrance
+                onFinished: {
+                    if (slot.index >= 0 && slot.index < row.model.count)
+                        row.model.setProperty(slot.index, "justAdded", false);
+
+                }
+
                 NumberAnimation {
                     target: slot
                     property: "entranceScale"
                     to: 1
-                    duration: Theme.durEnter
+                    duration: row.enterMs
                     easing.type: Easing.OutBack
                     easing.overshoot: Theme.emphasizedOvershoot
                 }
@@ -194,7 +204,7 @@ Item {
                     target: slot
                     property: "entranceOpacity"
                     to: 1
-                    duration: Theme.ms(220)
+                    duration: row.enterMs
                     easing.type: Easing.OutCubic
                 }
 
@@ -310,7 +320,7 @@ Item {
                 enabled: !dragHandler.active
 
                 NumberAnimation {
-                    duration: Theme.ms(220)
+                    duration: row.enterMs
                     easing.type: Easing.OutCubic
                 }
 
@@ -320,13 +330,17 @@ Item {
                 enabled: !dragHandler.active
 
                 NumberAnimation {
-                    duration: Theme.ms(220)
+                    duration: row.enterMs
                     easing.type: Easing.OutCubic
                 }
 
             }
 
+            // a behavior here would restart every frame of the animations
+            // below and pin scale at its start value until they finish
             Behavior on scale {
+                enabled: !entranceAnim.running && !bumpAnim.running && !removeAnim.running
+
                 NumberAnimation {
                     duration: Theme.durShort
                     easing.type: Easing.OutCubic

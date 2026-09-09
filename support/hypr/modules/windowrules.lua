@@ -44,6 +44,6 @@ hl.window_rule({
     match = { class = "org.quickshell", title = "Lucid Settings" },
 
     float  = true,
-    size   = "1020 700",
+    size   = "1180 800",
     center = true,
 })

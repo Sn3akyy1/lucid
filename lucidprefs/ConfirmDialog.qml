@@ -1,6 +1,8 @@
 import QtQuick
+import QtQuick.Shapes
 import qs
 
+// m3 basic dialog: extra-large shape, hero icon, headline, actions bottom-right
 Item {
     id: dialog
 
@@ -37,14 +39,6 @@ Item {
     visible: dialog.opacity > 0.01
     opacity: dialog.shown ? 1 : 0
 
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Theme.durShort
-            easing.type: Theme.easeStandard
-        }
-
-    }
-
     Rectangle {
         anchors.fill: parent
         color: Theme.alpha(Theme.cShadow, 0.55)
@@ -60,20 +54,12 @@ Item {
         id: card
 
         anchors.centerIn: parent
-        width: Math.min(400, dialog.width - 64)
-        height: cardCol.implicitHeight + 48
-        radius: Theme.radiusXl
+        width: Math.min(420, dialog.width - 64)
+        height: cardCol.implicitHeight + 56
+        radius: Theme.shapeXl
         color: Theme.bgHigh
-        scale: dialog.shown ? 1 : 0.9
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: Theme.durMedium
-                easing.type: Theme.easeEmphasized
-                easing.overshoot: Theme.emphasizedOvershoot
-            }
-
-        }
+        scale: dialog.shown ? 1 : 0.88
+        opacity: dialog.shown ? 1 : 0
 
         // clicks on the card must not reach the dimmer
         MouseArea {
@@ -86,16 +72,41 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 24
-            spacing: 10
+            anchors.margins: 28
+            spacing: 12
+
+            // m3 puts a hero icon above a destructive headline
+            Shape {
+                width: 26
+                height: 26
+                anchors.horizontalCenter: parent.horizontalCenter
+                preferredRendererType: Shape.CurveRenderer
+
+                ShapePath {
+                    strokeWidth: 0
+                    fillColor: Theme.error
+
+                    PathSvg {
+                        path: "M12 2 1 21h22L12 2Zm0 5 7.5 12.9h-15L12 7Zm-1 4v5h2v-5h-2Zm0 6v2h2v-2h-2Z"
+                    }
+
+                }
+
+                transform: Scale {
+                    xScale: 26 / 24
+                    yScale: 26 / 24
+                }
+
+            }
 
             Text {
                 width: parent.width
                 text: dialog.title
                 color: Theme.text
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(17)
-                font.bold: true
+                font.pixelSize: Theme.fontHeadlineSm
+                font.weight: Font.Medium
+                horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
             }
 
@@ -104,13 +115,15 @@ Item {
                 text: dialog.body
                 color: Theme.subtext
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(12)
+                font.pixelSize: Theme.fontBodyLg
+                lineHeight: 1.3
+                horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
             }
 
             Item {
                 width: parent.width
-                height: 8
+                height: 10
             }
 
             Row {
@@ -132,6 +145,30 @@ Item {
 
             }
 
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Theme.durMedium
+                easing.type: Theme.easeEmphasized
+                easing.overshoot: Theme.emphasizedOvershoot
+            }
+
+        }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Theme.durShort
+            }
+
+        }
+
+    }
+
+    Behavior on opacity {
+        NumberAnimation {
+            duration: Theme.durShort
+            easing.type: Theme.easeStandard
         }
 
     }

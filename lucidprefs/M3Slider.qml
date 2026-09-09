@@ -15,7 +15,6 @@ Item {
     property bool dragging: false
     property real dragValue: 0
     property bool showReadout: true
-
     readonly property real displayValue: slider.dragging ? slider.dragValue : slider.value
     readonly property real span: slider.to - slider.from
     readonly property real fraction: slider.span > 0 ? Math.max(0, Math.min(1, (slider.displayValue - slider.from) / slider.span)) : 0
@@ -26,6 +25,7 @@ Item {
             var i = Math.round((slider.displayValue - slider.from) / slider.stepSize);
             if (i >= 0 && i < slider.stepLabels.length)
                 return slider.stepLabels[i];
+
         }
         return slider.displayValue.toFixed(slider.decimals) + slider.suffix;
     }
@@ -51,36 +51,20 @@ Item {
         }
     }
 
-    implicitHeight: 44 + (slider.showReadout ? 22 : 0)
+    implicitHeight: 44 + (slider.showReadout ? 24 : 0)
     implicitWidth: 200
     opacity: slider.enabled ? 1 : 0.38
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Theme.durShort
-        }
-
-    }
-
 
     Item {
         id: indicator
 
         readonly property real wanted: track.x + track.handleX - indicator.width / 2
 
-        width: readoutText.implicitWidth + 16
-        height: 20
+        width: readoutText.implicitWidth + 18
+        height: 22
         visible: slider.showReadout
         anchors.top: parent.top
         x: Math.max(0, Math.min(slider.width - indicator.width, indicator.wanted))
-
-        Behavior on x {
-            NumberAnimation {
-                duration: Theme.ms(150)
-                easing.type: Easing.OutCubic
-            }
-
-        }
 
         Rectangle {
             anchors.fill: parent
@@ -101,16 +85,24 @@ Item {
 
             anchors.centerIn: parent
             text: slider.readout
-            color: slider.dragging ? Theme.onAccent : Theme.subtext
+            color: slider.dragging ? Theme.fgAccent : Theme.subtext
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontLabel
-            font.bold: true
+            font.pixelSize: Theme.fontLabelMd
+            font.weight: Font.DemiBold
 
             Behavior on color {
                 ColorAnimation {
                     duration: Theme.durQuick
                 }
 
+            }
+
+        }
+
+        Behavior on x {
+            NumberAnimation {
+                duration: Theme.ms(150)
+                easing.type: Easing.OutCubic
             }
 
         }
@@ -203,7 +195,6 @@ Item {
                 id: stop
 
                 required property int index
-
                 readonly property real centerX: Math.max(track.stopInset, Math.min(track.width - track.stopInset, track.centerOf(slider.stepCount > 1 ? stop.index / (slider.stepCount - 1) : 0)))
                 readonly property bool covered: stop.centerX <= track.activeEnd
                 readonly property bool masked: Math.abs(stop.centerX - track.handleX) < track.handleWidth / 2 + track.handleGap + track.stopSize / 2
@@ -213,7 +204,7 @@ Item {
                 radius: track.stopSize / 2
                 x: stop.centerX - track.stopSize / 2
                 anchors.verticalCenter: parent.verticalCenter
-                color: stop.covered ? Theme.onAccent : Theme.outlineStrong
+                color: stop.covered ? Theme.fgAccent : Theme.outlineStrong
                 opacity: stop.masked ? 0 : 1
 
                 Behavior on opacity {
@@ -276,6 +267,13 @@ Item {
             }
             onReleased: slider.dragging = false
             onCanceled: slider.dragging = false
+        }
+
+    }
+
+    Behavior on opacity {
+        NumberAnimation {
+            duration: Theme.durShort
         }
 
     }

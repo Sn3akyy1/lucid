@@ -8,6 +8,7 @@ luciddocks/wallpaper.json
 lucidmoji/config.json
 lucidmoji/state.json
 lucidprefs/prefs.json
+lucidwidgets/widgets.json
 
 # editor / tooling
 .claude/
@@ -16,3 +17,6 @@ lucidprefs/prefs.json
 
 # screenshot originals — the committed .webp versions are what the README uses
 assets/*.png
+
+# python bytecode from the emoji reader
+__pycache__/

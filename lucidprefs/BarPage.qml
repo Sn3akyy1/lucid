@@ -247,43 +247,12 @@ Column {
     }
 
     SettingCard {
-        title: "CLOCK"
-
-        SettingRow {
-            title: "24-hour time"
-            description: "Show 14:30 instead of 02:30 PM."
-
-            M3Switch {
-                checked: Prefs.clock24h
-                onToggled: (v) => {
-                    return Prefs.clock24h = v;
-                }
-            }
-
-        }
-
-        SettingRow {
-            title: "Show date"
-            description: "Keep the weekday and day-of-month beside the time."
-            showDivider: false
-
-            M3Switch {
-                checked: Prefs.clockShowDate
-                onToggled: (v) => {
-                    return Prefs.clockShowDate = v;
-                }
-            }
-
-        }
-
-    }
-
-    SettingCard {
         title: "NOTIFICATIONS"
 
         SettingRow {
             title: "Do not disturb"
-            description: "Notifications are still collected in the list, but no toast is shown."
+            resetKey: "doNotDisturb"
+            description: "Notifications are still collected in the list, but no popup is shown."
 
             M3Switch {
                 checked: Prefs.doNotDisturb
@@ -295,22 +264,14 @@ Column {
         }
 
         SettingRow {
-            title: "Toast duration"
-            resetKey: "toastTimeout"
-            description: "How long a toast stays on screen when the notification does not ask for something else."
+            title: "Everything else"
+            description: "How long a popup stays, quiet hours, sound and which applications may interrupt you all live on their own page."
             showDivider: false
-            stacked: true
 
-            M3Slider {
-                width: parent.width
-                from: 1
-                to: 15
-                stepSize: 1
-                suffix: " s"
-                value: Prefs.toastTimeout
-                onMoved: (v) => {
-                    return Prefs.toastTimeout = v;
-                }
+            M3Button {
+                text: "Notifications…"
+                variant: "tonal"
+                onClicked: Prefs.settingsRequested("notifications")
             }
 
         }

@@ -291,7 +291,7 @@ Item {
                     width: 15
                     height: 15
                     pathData: DockIcons.check
-                    glyphColor: Theme.onAccent
+                    glyphColor: Theme.fgAccent
                 }
 
                 Behavior on opacity {
