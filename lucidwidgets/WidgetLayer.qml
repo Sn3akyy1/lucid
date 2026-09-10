@@ -26,7 +26,10 @@ Variants {
         screen: layer.modelData
         visible: Prefs.loaded && Widgets.loaded && Prefs.widgetsEnabled && Widgets.count > 0 && !layer.suppressed
         color: "transparent"
-        exclusiveZone: 0
+        // reserves nothing and refuses to be shrunk into the bar and dock's strips,
+        // so a card can be dragged to a true screen edge and sit under the dock.
+        // setting exclusiveZone at all would silently undo this
+        exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: Prefs.widgetOnTop ? WlrLayer.Top : WlrLayer.Bottom
         WlrLayershell.keyboardFocus: deck.wantsKeyboard ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 

@@ -21,6 +21,11 @@ IpcHandler {
         Widgets.setScale(uid, parseFloat(zoom));
     }
 
+    // only the variants that carry their own size take this
+    function resize(uid: string, w: string, h: string): void {
+        Widgets.setSize(uid, parseFloat(w), parseFloat(h));
+    }
+
     function place(uid: string, x: string, y: string): void {
         Widgets.setPos(uid, parseFloat(x), parseFloat(y));
     }

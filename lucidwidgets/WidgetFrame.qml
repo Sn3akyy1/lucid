@@ -30,16 +30,27 @@ Item {
     }
     readonly property bool locked: frame.pinned || Prefs.widgetLockAll
     readonly property bool onThisScreen: frame.board !== null && (frame.screenName === "" ? frame.board.isPrimary : frame.screenName === frame.board.screenName)
-    readonly property real cardW: Math.round(frame.bw * frame.zoom)
-    readonly property real cardH: Math.round(frame.bh * frame.zoom)
+    readonly property var variantInfo: Widgets.variantAt(frame.wtype, frame.wvariant)
+    // a variant that carries its own size: drag any edge instead of picking S/M/L/XL
+    readonly property bool resizable: frame.variantInfo !== null && frame.variantInfo.resizable === true
+    readonly property real safeZoom: frame.zoom > 0 ? frame.zoom : 1
+    // while a grip is held the card runs off the live drag, not off the store
+    readonly property real bodyW: frame.resizing ? frame.resW / frame.safeZoom : frame.bw
+    readonly property real bodyH: frame.resizing ? frame.resH / frame.safeZoom : frame.bh
+    readonly property real cardW: Math.round(frame.bodyW * frame.zoom)
+    readonly property real cardH: Math.round(frame.bodyH * frame.zoom)
     readonly property int radius: Math.round(Math.min(Theme.radiusXl * frame.zoom, frame.cardH / 2, frame.cardW / 2))
     // the same corner expressed in the body's own unscaled coordinates
     readonly property real bodyRadius: frame.zoom > 0 ? frame.radius / frame.zoom : frame.radius
     readonly property bool active: frame.hovered || frame.dragging || frame.menuOpen
     // a variant can ask for no container at all and draw straight onto the wallpaper
     readonly property bool bare: body.item !== null && body.item.bare === true
+    // ... or for nothing at all. never while you are working on the card, and the
+    // fade to zero takes it out of the mask on its own, since visible follows opacity
+    readonly property bool blanked: body.item !== null && body.item.hidden === true && !frame.dragging && !frame.resizing && !frame.menuOpen
 
     property bool dragging: false
+    property bool resizing: false
     property bool hovered: false
     property bool menuOpen: false
     property real dragX: 0
@@ -48,6 +59,47 @@ Item {
     property real grabY: 0
     property real guideX: -1
     property real guideY: -1
+    // -1 / 0 / 1 for the edge the held grip pulls on
+    property int gripH: 0
+    property int gripV: 0
+    property real pressBX: 0
+    property real pressBY: 0
+    property real startX: 0
+    property real startY: 0
+    property real startW: 0
+    property real startH: 0
+    property real resX: 0
+    property real resY: 0
+    property real resW: 0
+    property real resH: 0
+
+    readonly property real gripSize: 12
+    // the eight handles, clockwise from the top left corner
+    readonly property var gripSpecs: [{
+        "h": -1,
+        "v": -1
+    }, {
+        "h": 0,
+        "v": -1
+    }, {
+        "h": 1,
+        "v": -1
+    }, {
+        "h": 1,
+        "v": 0
+    }, {
+        "h": 1,
+        "v": 1
+    }, {
+        "h": 0,
+        "v": 1
+    }, {
+        "h": -1,
+        "v": 1
+    }, {
+        "h": -1,
+        "v": 0
+    }]
 
     readonly property real snapPad: 20
     readonly property real snapGap: 16
@@ -216,6 +268,86 @@ Item {
         Widgets.setPos(frame.uid, frame.dragX, frame.dragY);
     }
 
+    function beginResize(hx, vy, px, py) {
+        if (frame.locked || !frame.resizable)
+            return ;
+
+        frame.gripH = hx;
+        frame.gripV = vy;
+        frame.pressBX = px;
+        frame.pressBY = py;
+        frame.startX = frame.x;
+        frame.startY = frame.y;
+        frame.startW = frame.width;
+        frame.startH = frame.height;
+        frame.resX = frame.x;
+        frame.resY = frame.y;
+        frame.resW = frame.width;
+        frame.resH = frame.height;
+        frame.resizing = true;
+        Widgets.raise(frame.uid);
+    }
+
+    function moveResize(px, py) {
+        if (!frame.resizing)
+            return ;
+
+        // the catalogue's limits are body pixels, the pointer moves in board ones
+        var lim = Widgets.sizeLimits(frame.wtype, frame.wvariant);
+        var z = frame.safeZoom;
+        var boardW = frame.board ? frame.board.width : frame.startX + frame.startW;
+        var boardH = frame.board ? frame.board.height : frame.startY + frame.startH;
+        var dx = px - frame.pressBX;
+        var dy = py - frame.pressBY;
+        var nx = frame.startX;
+        var ny = frame.startY;
+        var nw = frame.startW;
+        var nh = frame.startH;
+        if (frame.gripH > 0) {
+            nw = Math.min(lim.maxW * z, Math.min(boardW - nx, frame.startW + dx));
+        } else if (frame.gripH < 0) {
+            var right = frame.startX + frame.startW;
+            nw = Math.min(lim.maxW * z, Math.min(right, frame.startW - dx));
+        }
+        if (frame.gripV > 0) {
+            nh = Math.min(lim.maxH * z, Math.min(boardH - ny, frame.startH + dy));
+        } else if (frame.gripV < 0) {
+            var bottom = frame.startY + frame.startH;
+            nh = Math.min(lim.maxH * z, Math.min(bottom, frame.startH - dy));
+        }
+        nw = Math.max(lim.minW * z, nw);
+        nh = Math.max(lim.minH * z, nh);
+        if (frame.gripH < 0)
+            nx = frame.startX + frame.startW - nw;
+
+        if (frame.gripV < 0)
+            ny = frame.startY + frame.startH - nh;
+
+        frame.resX = nx;
+        frame.resY = ny;
+        frame.resW = nw;
+        frame.resH = nh;
+    }
+
+    function endResize() {
+        if (!frame.resizing)
+            return ;
+
+        var z = frame.safeZoom;
+        Widgets.setSize(frame.uid, frame.resW / z, frame.resH / z);
+        Widgets.setPos(frame.uid, frame.resX, frame.resY);
+        frame.resizing = false;
+    }
+
+    // the menu's shortcut for the look the visualiser is really after
+    function fillWidth() {
+        if (!frame.board || !frame.resizable)
+            return ;
+
+        Widgets.setSize(frame.uid, frame.board.width / frame.safeZoom, frame.bh);
+        Widgets.setPos(frame.uid, 0, frame.wy);
+    }
+
     function toggleMenu() {
         if (frame.menuOpen) {
             frame.menuOpen = false;
@@ -234,8 +366,8 @@ Item {
     // what WidgetRegion masks and blurs
     readonly property real surfaceX: 0
     readonly property real surfaceY: 0
-    readonly property real surfaceWidth: frame.cardW
-    readonly property real surfaceHeight: frame.cardH
+    readonly property real surfaceWidth: frame.width
+    readonly property real surfaceHeight: frame.height
     readonly property int surfaceRadius: frame.radius
     // the options panel is a child of this frame, so its board position is just an offset
     readonly property bool menuVisible: menu.visible
@@ -249,9 +381,9 @@ Item {
     width: frame.cardW
     height: frame.cardH
     z: frame.zOrder
-    x: frame.dragging ? frame.dragX : frame.clampX(frame.wx)
-    y: frame.dragging ? frame.dragY : frame.clampY(frame.wy)
-    opacity: frame.closing ? 0 : (frame.appeared ? 1 : 0)
+    x: frame.resizing ? frame.resX : (frame.dragging ? frame.dragX : frame.clampX(frame.wx))
+    y: frame.resizing ? frame.resY : (frame.dragging ? frame.dragY : frame.clampY(frame.wy))
+    opacity: (frame.closing || frame.blanked) ? 0 : (frame.appeared ? 1 : 0)
     scale: frame.closing ? 0.9 : (frame.appeared ? (frame.dragging ? 1.025 : 1) : (frame.born ? 0.86 : 0.97))
 
     property bool appeared: false
@@ -292,7 +424,7 @@ Item {
     }
 
     Behavior on width {
-        enabled: frame.appeared
+        enabled: frame.appeared && !frame.resizing
 
         NumberAnimation {
             duration: Theme.durMedium
@@ -302,7 +434,7 @@ Item {
     }
 
     Behavior on height {
-        enabled: frame.appeared
+        enabled: frame.appeared && !frame.resizing
 
         NumberAnimation {
             duration: Theme.durMedium
@@ -312,7 +444,7 @@ Item {
     }
 
     Behavior on x {
-        enabled: !frame.dragging
+        enabled: !frame.dragging && !frame.resizing
 
         NumberAnimation {
             duration: Theme.durMedium
@@ -322,7 +454,7 @@ Item {
     }
 
     Behavior on y {
-        enabled: !frame.dragging
+        enabled: !frame.dragging && !frame.resizing
 
         NumberAnimation {
             duration: Theme.durMedium
@@ -336,7 +468,7 @@ Item {
 
         enabled: !frame.closing
         onHoveredChanged: frame.hovered = hoverHandler.hovered
-        cursorShape: frame.locked ? Qt.ArrowCursor : (frame.dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor)
+        cursorShape: (frame.locked || frame.resizing) ? Qt.ArrowCursor : (frame.dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor)
     }
 
     // sits under the body so buttons and fields inside the widget win the click
@@ -367,8 +499,8 @@ Item {
         // the body lays out at its natural size and the whole thing is scaled, so a
         // variant never has to know what zoom it is being drawn at
         Item {
-            width: frame.bw
-            height: frame.bh
+            width: frame.bodyW
+            height: frame.bodyH
             scale: frame.zoom
             transformOrigin: Item.TopLeft
 
@@ -395,7 +527,9 @@ Item {
             anchors.fill: parent
             radius: parent.radius
             color: Theme.text
-            opacity: frame.dragging ? 0.07 : (frame.active ? 0.035 : 0)
+            // a pinned card cannot be moved or resized, so it gets no hover chrome
+            // at all - on a bare full-width one this tint was a stray rectangle
+            opacity: frame.locked ? 0 : (frame.dragging ? 0.07 : (frame.active ? 0.035 : 0))
 
             Behavior on opacity {
                 NumberAnimation {
@@ -455,6 +589,99 @@ Item {
 
             menuArea.moved = false;
         }
+    }
+
+    // a resizable card has no other affordance, so outline it while it is under
+    // the pointer - the bare variants have no container to hint at an edge
+    Item {
+        anchors.fill: parent
+        z: 7
+        visible: frame.resizable && !frame.locked && outline.opacity > 0.01
+
+        Rectangle {
+            id: outline
+
+            anchors.fill: parent
+            radius: frame.radius
+            color: "transparent"
+            border.width: 1
+            border.color: Theme.alpha(Theme.accent, 0.55)
+            opacity: (frame.active || frame.resizing) ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Theme.durShort
+                }
+
+            }
+
+        }
+
+        Repeater {
+            model: frame.gripSpecs
+
+            Rectangle {
+                id: dot
+
+                required property var modelData
+
+                readonly property bool corner: dot.modelData.h !== 0 && dot.modelData.v !== 0
+
+                width: 6
+                height: 6
+                radius: 3
+                color: Theme.accent
+                opacity: outline.opacity
+                visible: dot.corner
+                x: dot.modelData.h < 0 ? -3 : frame.width - 3
+                y: dot.modelData.v < 0 ? -3 : frame.height - 3
+            }
+
+        }
+
+    }
+
+    // eight handles over everything else, left button only so a right press still
+    // reaches the menu underneath
+    Repeater {
+        model: (frame.resizable && !frame.locked) ? frame.gripSpecs : []
+
+        MouseArea {
+            id: grip
+
+            required property var modelData
+
+            readonly property real t: frame.gripSize
+
+            z: 8
+            enabled: !frame.locked
+            acceptedButtons: Qt.LeftButton
+            hoverEnabled: true
+            cursorShape: {
+                if (grip.modelData.h === 0)
+                    return Qt.SizeVerCursor;
+
+                if (grip.modelData.v === 0)
+                    return Qt.SizeHorCursor;
+
+                return grip.modelData.h === grip.modelData.v ? Qt.SizeFDiagCursor : Qt.SizeBDiagCursor;
+            }
+            x: grip.modelData.h < 0 ? 0 : (grip.modelData.h > 0 ? frame.width - grip.t : grip.t)
+            y: grip.modelData.v < 0 ? 0 : (grip.modelData.v > 0 ? frame.height - grip.t : grip.t)
+            width: grip.modelData.h === 0 ? Math.max(0, frame.width - grip.t * 2) : grip.t
+            height: grip.modelData.v === 0 ? Math.max(0, frame.height - grip.t * 2) : grip.t
+            onPressed: (mouse) => {
+                var p = grip.mapToItem(frame.board, mouse.x, mouse.y);
+                frame.beginResize(grip.modelData.h, grip.modelData.v, p.x, p.y);
+            }
+            onPositionChanged: (mouse) => {
+                var p = grip.mapToItem(frame.board, mouse.x, mouse.y);
+                frame.moveResize(p.x, p.y);
+            }
+            onReleased: frame.endResize()
+            onCanceled: frame.endResize()
+        }
+
     }
 
     WidgetMenu {

@@ -17,6 +17,7 @@ Item {
     readonly property var typeInfo: menu.frame ? Widgets.typeAt(menu.frame.wtype) : null
     readonly property var variantInfo: menu.frame ? Widgets.variantAt(menu.frame.wtype, menu.frame.wvariant) : null
     readonly property var optionList: menu.frame ? Widgets.optionsFor(menu.frame.wtype, menu.frame.wvariant) : []
+    readonly property bool resizable: menu.frame !== null && menu.frame.resizable
     readonly property var screens: Quickshell.screens
 
     function clampY(want) {
@@ -235,6 +236,7 @@ Item {
                 M3Segmented {
                     width: parent.width
                     implicitHeight: 34
+                    visible: !menu.resizable
                     trackColor: Theme.bgHover
                     current: menu.frame ? String(menu.frame.zoom) : "1"
                     options: [{
@@ -255,6 +257,81 @@ Item {
                             Widgets.setScale(menu.frame.uid, parseFloat(key));
 
                     }
+                }
+
+                // a variant that owns its size gets the two shapes worth a button and
+                // the numbers, the rest of it is the grips on the card itself
+                Text {
+                    width: parent.width
+                    visible: menu.resizable
+                    text: menu.frame ? (Math.round(menu.frame.bodyW) + " × " + Math.round(menu.frame.bodyH) + " · drag any edge") : ""
+                    color: Theme.subtextDim
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontLabel
+                    elide: Text.ElideRight
+                }
+
+                Row {
+                    width: parent.width
+                    spacing: 8
+                    visible: menu.resizable
+
+                    Repeater {
+                        model: [{
+                            "key": "full",
+                            "label": "Full width"
+                        }, {
+                            "key": "reset",
+                            "label": "Reset"
+                        }]
+
+                        Rectangle {
+                            id: sizeBtn
+
+                            required property var modelData
+
+                            width: (menu.panelW - 24 - 8) / 2
+                            height: 32
+                            radius: 16
+                            color: sizeArea.containsMouse ? Theme.bgActive : Theme.bgHover
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: Theme.durQuick
+                                }
+
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: sizeBtn.modelData.label
+                                color: Theme.subtext
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontLabel
+                                font.bold: true
+                            }
+
+                            MouseArea {
+                                id: sizeArea
+
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (!menu.frame)
+                                        return ;
+
+                                    if (sizeBtn.modelData.key === "full")
+                                        menu.frame.fillWidth();
+                                    else
+                                        Widgets.resetSize(menu.frame.uid);
+                                }
+                            }
+
+                        }
+
+                    }
+
                 }
 
             }

@@ -19,7 +19,7 @@ your wallpaper.
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/VERSION-v0.57%20beta-FF7F50?style=for-the-badge&labelColor=14100E">
+  <img alt="Version" src="https://img.shields.io/badge/VERSION-v1.0.0-FF7F50?style=for-the-badge&labelColor=14100E">
   <img alt="Platform" src="https://img.shields.io/badge/PLATFORM-ARCH%20LINUX-FFAB91?style=for-the-badge&logo=archlinux&logoColor=FFAB91&labelColor=14100E">
   <img alt="Compositor" src="https://img.shields.io/badge/COMPOSITOR-HYPRLAND-80CBC4?style=for-the-badge&labelColor=14100E">
   <a href="https://quickshell.org"><img alt="Built on Quickshell" src="https://img.shields.io/badge/BUILT%20ON-QUICKSHELL-FFC46B?style=for-the-badge&labelColor=14100E"></a>
@@ -31,8 +31,9 @@ your wallpaper.
 
 ---
 
-> **Beta.** This is the first public release. It works, it's what I use daily, but
-> expect rough edges and breaking changes between versions. Bug reports welcome.
+> **v1.0.0 — the first stable release.** It's what I use daily. Everything that
+> landed in it is in the [changelog](CHANGELOG.md). Rough edges are still
+> possible and bug reports are welcome.
 
 ## Install
 
@@ -173,7 +174,7 @@ off in Settings.
 - **Clock** — calendar, weather, and reminders that toast when they're due
 - **Notifications** — arrival toasts, history, do-not-disturb
 - **System** — volume, brightness, battery, disk stats, plus full Wi-Fi and
-  Bluetooth panels
+  Bluetooth panels. Hover any icon on the compact strip and it names itself
 
 Two shapes, set in Settings: **island** (floating rounded pills) or **notch**
 (flush to the screen edge, with flares that blend into it).
@@ -183,10 +184,6 @@ Two shapes, set in Settings: **island** (floating rounded pills) or **notch**
 *The System pill opens into a control centre — Wi-Fi and Bluetooth with full
 panels behind them, brightness and volume, battery, RAM, CPU and per-disk usage,
 with notifications underneath.*
-
-<img src="assets/prev5.webp" alt="The media panel with album art, visualiser and seek bar">
-
-*Media, expanded: album art, a live `cava` visualiser, and a waveform seek bar.*
 
 ### Dock and launcher
 
@@ -200,7 +197,7 @@ The launcher is one search field over five modes:
 | --- | --- |
 | Apps | Fuzzy search over `.desktop` entries — word boundaries and initials both hit, so `vsc` finds Visual Studio Code |
 | Commands | Shell commands and shell actions |
-| Theme | Switch between the seven bundled palettes |
+| Theme | Switch between the seven bundled palettes, and any you have imported |
 | Wallpaper | Carousel of your wallpaper folder |
 | Power | Lock, log out, suspend, reboot, shut down, hibernate |
 
@@ -217,7 +214,12 @@ Cards you place on the wallpaper yourself. Open **Settings → Widgets**, click 
 tile, and it lands on the desktop; drag it anywhere, pin it so it stops moving,
 and it comes back where you left it after a reboot.
 
-Nine kinds, twenty-six looks between them — every category ships several
+<img src="assets/prev5.webp" alt="Desktop widgets on the wallpaper: calendar, weather, clock and media">
+
+*A month calendar, the weather, a stacked clock and the media card, with a
+full-width visualiser running under the dock.*
+
+Ten kinds, thirty looks between them — every category ships several
 variants of the same data:
 
 | Widget | Looks |
@@ -227,17 +229,22 @@ variants of the same data:
 | System | Arc gauges, meters, a two-minute graph, or a bare row of numbers — CPU, memory, disk and temperature |
 | Battery | Ring, cell, or the full detail with time left and draw |
 | Media | Artwork card, compact row, or cover art with the controls over it |
+| Visualiser | Bars, mirrored bands, or one filled wave — live off whatever is playing. Drag any edge to size it, right across the screen if you want |
 | Weather | Now, a four-day forecast, or an icon and a number — for the place set in Date & Time |
 | Notes | A sticky square or a ruled sheet, saved as you type |
 | To-do | A checklist or just what is still outstanding |
 | Palette | The Material roles the shell is currently built from, click one to copy the hex |
 
 Every widget has its own menu — right-click it, or use the gear that appears on
-hover — for its style, four sizes, and its own options: 12- or 24-hour, which
-metrics to show, °C or °F, a note's tint, and so on.
+hover — for its style, its size, and its own options: 12- or 24-hour, which
+metrics to show, °C or °F, a note's tint, and so on. Most take one of four
+sizes; the visualiser instead grows an outline with handles when you hover it,
+and you drag any edge or corner to whatever shape you want.
 
 Dragging snaps to the screen edges and centre lines and lines up with the other
-widgets, with guides while you drag. Widgets sit **below** your windows by
+widgets, with guides while you drag. They can go anywhere on the screen,
+including the strips the bar and the dock reserve — a full-width visualiser
+tucked under the dock is the point. Widgets sit **below** your windows by
 default so they behave like a desktop, and step aside for fullscreen windows;
 both are switches on the Widgets page if you would rather they float on top.
 
@@ -280,6 +287,12 @@ both are switches on the Widgets page if you would rather they float on top.
   or `toast warn alert "..."` for the red variant. Named icons are `copy`,
   `check`, `alert`, `info`, `text`, `game` and `camera`; anything else is
   taken as a raw SVG path
+- **Notifications** — a *Notifications* page for how they behave: whether
+  popups appear at all, how long one stays and whether an application may set
+  its own timeout, how much of the message and how many action buttons show,
+  do-not-disturb with quiet hours between two times and a rule for fullscreen
+  windows, a notification sound with its own volume, how many the list keeps,
+  and per-application muting
 - **OSD** — volume and brightness overlays
 - **Desktop** — drag across empty desktop and a translucent accent box follows
   the cursor, the way it does on Windows and macOS; it is cosmetic and selects
@@ -319,7 +332,7 @@ both are switches on the Widgets page if you would rather they float on top.
   of headphones also gets its **audio mode** — high quality versus headset,
   whichever profiles PipeWire offers for it — so switching to the microphone
   no longer means a trip to `pavucontrol`
-- **KDE Connect** — a *KDE Connect* page that is a real client, not a launcher
+- **Phone** — a *Phone* page that is a real KDE Connect client, not a launcher
   for someone else's. It drives the KDE Connect daemon over D-Bus, so it pairs,
   unpairs and answers pairing requests with the verification key shown on both
   sides. Open a connected device and you get: **send files** through the
@@ -349,7 +362,9 @@ both are switches on the Widgets page if you would rather they float on top.
   fonts. The point is that one choice reaches everywhere: each change is
   written to GTK 2, 3 and 4, to `gsettings`, to the XCursor fallback theme, to
   qt5ct and qt6ct, and to Hyprland's env module, and `hyprctl setcursor` runs
-  so the pointer changes under your hand rather than at the next login. Only
+  so the pointer changes under your hand rather than at the next login. The dock
+  picks a new icon theme up the moment you choose it — Qt only reads the icon
+  theme when a process starts, so Lucid walks the theme directories itself. Only
   the keys Lucid owns are touched — every comment and every other setting in
   those files stays where it was, and a toolkit this machine does not use is
   skipped rather than conjured. It starts by reading what the machine already
@@ -357,7 +372,9 @@ both are switches on the Widgets page if you would rather they float on top.
   those values up again after you have changed appearance with another tool.
   Turn GTK, Qt or Hyprland off individually if you would rather keep one of
   them by hand. Scriptable with `qs ipc call settings environment`
-- **Settings** — a GUI for all of the above, no config file editing
+- **Settings** — a GUI for all of the above, no config file editing. Thirteen
+  pages behind a collapsible rail, grouped-list cards, an app bar that collapses
+  as you scroll, and a reset arrow on anything you have moved off its default
 
 <img src="assets/prev3.webp" alt="The Lucid settings app on the Dock page">
 
@@ -371,7 +388,8 @@ launcher's Theme mode:
 
 **Matugen** and **Pywal** generate a palette from your current wallpaper.
 **Catppuccin Mocha**, **Gruvbox**, **Nightfox**, **Nord** and **Tokyo Night**
-are fixed palettes that don't change with the wallpaper.
+are fixed palettes that don't change with the wallpaper. Anything you import
+sits alongside them, and the whole list can be dragged into the order you want.
 
 Whichever is active, the shell reads `~/.cache/quickshell/matugen.json` — a
 flat map of Material 3 colour roles. Changing your wallpaper through Lucid
@@ -384,8 +402,25 @@ left alone.
 
 ### Adding your own theme
 
-Drop a palette at `~/.config/lucid/themes/<id>/quickshell.json` using the
-same keys as the bundled ones, then add it to `themeCatalogue` in `Prefs.qml`.
+**Settings → Theme** takes the URL of any colour-scheme repo, clones it, reads
+it, and builds a full Material 3 palette out of what it finds. Scheme repos
+agree on no common format, so detection is tiered: base16 and base24 YAML and
+name-keyed JSON (Catppuccin and friends) are read exactly, and anything else
+falls back to harvesting hex codes and sorting them by tone and chroma. A repo
+carrying several variants lists them so you can pick one, and wallpapers in the
+repo come along with it.
+
+Nothing from the repo is ever executed — only text is parsed and only images
+are copied.
+
+It writes `~/.config/lucid/themes/<id>/{quickshell.json,meta.json}` and
+`~/Pictures/wallpapers/<id>/`, which you can also do by hand: a
+`quickshell.json` with the same keys as the bundled palettes is all a theme is.
+The importer runs from a terminal too:
+
+```sh
+python3 ~/.config/lucid/add-theme.py <repo-url> [--list] [--variant <name>] [--name <label>]
+```
 
 ## Requirements
 
@@ -401,6 +436,7 @@ you know what's being pulled in.
 | Package | Backs |
 | --- | --- |
 | `matugen`, `jq` | Wallpaper-derived colours, theme switching |
+| `git` | Importing a theme from a scheme repo on Settings → Theme |
 | `awww` | Setting the wallpaper |
 | `python-pywal` | The Pywal theme |
 | `networkmanager` | Wi-Fi panel |
@@ -413,7 +449,7 @@ you know what's being pulled in.
 | `tesseract`, `tesseract-data-eng` | The Text mode's OCR. Without them Text mode says so and copies nothing. Add `tesseract-data-<lang>` and set `ocrLang` in `lucidshot/Screenshot.qml` for another language |
 | `python-pillow`, `python-numpy`, `python-fonttools` | Emoji in copied text. Without them the text still copies, minus the emoji. The glyph atlas is built once and cached in `~/.cache/lucidshot-ocr`; `lucidshot/emoji-ocr.py --atlas` builds it up front so the first copy is not slow |
 | `wl-clipboard`, `wtype` | Emoji and GIF pasting |
-| `cava` | Audio visualiser in the media panel (its config is installed to `~/.config/cava/quickshell.conf`; the strip needs that file's raw-ascii output settings) |
+| `cava` | Audio visualisers — the media panel's strip (its config is installed to `~/.config/cava/quickshell.conf`; the strip needs that file's raw-ascii output settings) and the desktop widget, which writes its own `~/.cache/quickshell/lucid-cava.conf` at whatever band count the widest card asks for |
 | `songrec` | Song identification |
 | `curl` | Weather, location lookup and GIF search |
 | `polkit-kde-agent` | The password prompt when Date & Time sets the system time zone. Any polkit authentication agent will do; without one running, `timedatectl` refuses and the page says so |
@@ -479,9 +515,11 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | Target | Functions |
 | --- | --- |
 | `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `search <query>` |
-| `settings` | `toggle` `open` `close` `show <page>` `general` `bar` `dock` `widgets` `datetime` `idle` `font` `reset` |
+| `settings` | `toggle` `open` `close` `show <page>` `general` `bar` `dock` `environment` `widgets` `notifications` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
 | `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
-| `widgets` | `add <type> <variant>` `remove <uid>` `clear` `toggle` `lock` `unlock` `list` `catalogue` `settings` |
+| `network` | `status` `list` `rescan` |
+| `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |
+| `widgets` | `add <type> <variant>` `remove <uid>` `clear` `toggle` `lock` `unlock` `list` `catalogue` `settings` `resize <uid> <w> <h>` |
 | `moji` | `toggle` `open` `close` `emoji` `kaomoji` `gif` `center` |
 | `lock` | `lock` `unlock` `isLocked` |
 | `snap` | `toggle` `open` `close` `text` `color` |
@@ -498,15 +536,19 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 ```
 
 Moves `~/.config/quickshell` aside rather than deleting it, so your settings
-survive. Packages installed by `install.sh` are left alone.
+survive. Packages installed by `install.sh` are left alone. It prints what else
+it left in place — the matugen template blocks, `~/.config/hypr`,
+`starship.toml` and its init lines in your rc files, kitty's colour include —
+each with a timestamped backup beside it, so you can undo them by hand.
 
 ## Troubleshooting
 
-**A big coloured circle covers the media popup.**
-The visualiser strip is reading one enormous bar. That happens when cava is
-running without `~/.config/cava/quickshell.conf` — its own defaults emit
-ncurses output rather than the raw ascii frames the strip parses. Re-run the
-installer, or copy `support/cava/quickshell.conf` there yourself.
+**The media popup's visualiser sits flat and never moves.**
+cava is running without `~/.config/cava/quickshell.conf` — its own defaults emit
+ncurses output rather than the raw ascii frames the strip parses, so there is
+nothing to draw. Re-run the installer, or copy `support/cava/quickshell.conf`
+there yourself. Before v1.0.0 this showed as one enormous bar covering the
+popup instead.
 
 **Another app's notifications show instead of Lucid's.**
 `org.freedesktop.Notifications` is a single-owner D-Bus name. Lucid's bar

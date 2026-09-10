@@ -8,6 +8,8 @@ Singleton {
 
     readonly property string home: Quickshell.env("HOME")
     property bool loaded: false
+    // set when the file on disk predates the board covering the whole output
+    property bool needsLift: false
     property int nextId: 1
     property int topZ: 1
     // the primary layer reports its size here so spawn() can place a card sensibly
@@ -25,6 +27,12 @@ Singleton {
     property string menuUid: ""
 
     signal spawned(string uid)
+
+    // the layer covers the whole output, so a card can be dragged under the bar or
+    // the dock on purpose. a freshly spawned one should still land clear of them:
+    // these mirror the two windows' own exclusive zones
+    readonly property real spawnTop: Prefs.barEnabled ? Prefs.effectiveBarTopMargin + Prefs.barHeight : 0
+    readonly property real spawnBottom: (Prefs.dockEnabled && !Prefs.dockAutoHide) ? Prefs.dockIconSize + 20 + Prefs.effectiveDockBottomMargin : 0
 
     // one entry per category; a variant is another face on the same data, not another widget
     readonly property var catalogue: [{
@@ -277,6 +285,97 @@ Singleton {
             "def": true
         }]
     }, {
+        "id": "visualiser",
+        "name": "Visualiser",
+        "blurb": "Whatever is coming out of your speakers, drawn.",
+        "variants": [{
+            "id": "bars",
+            "name": "Bars",
+            "blurb": "Columns off the baseline. Stretch it the width of the screen.",
+            "w": 720,
+            "h": 140,
+            "resizable": true,
+            "minW": 120,
+            "minH": 36,
+            "maxW": 5120,
+            "maxH": 900
+        }, {
+            "id": "mirror",
+            "name": "Mirror",
+            "blurb": "The same bands, opened out from a centre line.",
+            "w": 640,
+            "h": 160,
+            "resizable": true,
+            "minW": 120,
+            "minH": 40,
+            "maxW": 5120,
+            "maxH": 900
+        }, {
+            "id": "wave",
+            "name": "Wave",
+            "blurb": "One filled curve instead of separate bars.",
+            "w": 560,
+            "h": 150,
+            "resizable": true,
+            "minW": 120,
+            "minH": 40,
+            "maxW": 5120,
+            "maxH": 900
+        }],
+        "options": [{
+            "key": "density",
+            "label": "Detail",
+            "type": "choice",
+            "def": "normal",
+            "choices": [{
+                "key": "wide",
+                "label": "Coarse"
+            }, {
+                "key": "normal",
+                "label": "Normal"
+            }, {
+                "key": "fine",
+                "label": "Fine"
+            }]
+        }, {
+            "key": "tint",
+            "label": "Colour",
+            "type": "choice",
+            "def": "accent",
+            "choices": [{
+                "key": "accent",
+                "label": "Accent"
+            }, {
+                "key": "gradient",
+                "label": "Gradient"
+            }, {
+                "key": "mono",
+                "label": "White"
+            }]
+        }, {
+            "key": "frost",
+            "label": "Frosted bars",
+            "type": "bool",
+            "def": true
+        }, {
+            "key": "rounded",
+            "label": "Rounded tips",
+            "type": "bool",
+            "def": true,
+            "variants": ["bars", "mirror"]
+        }, {
+            "key": "flip",
+            "label": "Hang from the top",
+            "type": "bool",
+            "def": false,
+            "variants": ["bars", "wave"]
+        }, {
+            "key": "idleFade",
+            "label": "Hide when silent",
+            "type": "bool",
+            "def": true
+        }]
+    }, {
         "id": "weather",
         "name": "Weather",
         "blurb": "Conditions now and over the next few days.",
@@ -425,6 +524,22 @@ Singleton {
         return t.variants[0];
     }
 
+    // a variant that carries its own size instead of taking the catalogue's
+    function resizable(typeId, variantId) {
+        var v = root.variantAt(typeId, variantId);
+        return v !== null && v.resizable === true;
+    }
+
+    function sizeLimits(typeId, variantId) {
+        var v = root.variantAt(typeId, variantId);
+        return ({
+            "minW": (v && v.minW) ? v.minW : 120,
+            "minH": (v && v.minH) ? v.minH : 60,
+            "maxW": (v && v.maxW) ? v.maxW : 5120,
+            "maxH": (v && v.maxH) ? v.maxH : 2160
+        });
+    }
+
     // options the given variant actually honours
     function optionsFor(typeId, variantId) {
         var t = root.typeAt(typeId);
@@ -480,9 +595,10 @@ Singleton {
     function freeSpot(w, h) {
         var pad = 28;
         var step = 24;
+        var top = root.spawnTop + pad;
         var maxX = Math.max(pad, root.canvasW - w - pad);
-        var maxY = Math.max(pad, root.canvasH - h - pad);
-        for (var y = pad; y <= maxY; y += step) {
+        var maxY = Math.max(top, root.canvasH - root.spawnBottom - h - pad);
+        for (var y = top; y <= maxY; y += step) {
             for (var x = pad; x <= maxX; x += step) {
                 var clear = true;
                 for (var i = 0; i < instances.count && clear; i++) {
@@ -502,7 +618,7 @@ Singleton {
         var n = instances.count;
         return ({
             "x": Math.min(maxX, pad + (n % 8) * 34),
-            "y": Math.min(maxY, pad + (n % 8) * 34)
+            "y": Math.min(maxY, top + (n % 8) * 34)
         });
     }
 
@@ -604,9 +720,13 @@ Singleton {
         if (!v)
             return ;
 
+        // a size you dragged survives a style swap, as long as the new style owns
+        // its size too
+        var keep = v.resizable === true && root.resizable(e.wtype, e.wvariant);
+        var lim = root.sizeLimits(e.wtype, v.id);
         instances.setProperty(i, "wvariant", v.id);
-        instances.setProperty(i, "bw", v.w);
-        instances.setProperty(i, "bh", v.h);
+        instances.setProperty(i, "bw", keep ? Math.max(lim.minW, Math.min(lim.maxW, e.bw)) : v.w);
+        instances.setProperty(i, "bh", keep ? Math.max(lim.minH, Math.min(lim.maxH, e.bh)) : v.h);
         root.save();
     }
 
@@ -626,6 +746,30 @@ Singleton {
                 return ;
             }
         }
+    }
+
+    function setSize(uid, w, h) {
+        var i = root.indexOf(uid);
+        if (i < 0)
+            return ;
+
+        var e = instances.get(i);
+        var lim = root.sizeLimits(e.wtype, e.wvariant);
+        instances.setProperty(i, "bw", Math.round(Math.max(lim.minW, Math.min(lim.maxW, w))));
+        instances.setProperty(i, "bh", Math.round(Math.max(lim.minH, Math.min(lim.maxH, h))));
+        root.save();
+    }
+
+    function resetSize(uid) {
+        var i = root.indexOf(uid);
+        if (i < 0)
+            return ;
+
+        var e = instances.get(i);
+        var v = root.variantAt(e.wtype, e.wvariant);
+        if (v)
+            root.setSize(uid, v.w, v.h);
+
     }
 
     function setScale(uid, v) {
@@ -680,6 +824,22 @@ Singleton {
         }
     }
 
+    // widgets used to live on a layer the bar had already pushed down, so every
+    // coordinate in an older file is short by the strip it reserved. the shift is
+    // read off Prefs, so this has to wait for it: before that the answer would be
+    // whatever the JsonAdapter defaults say rather than what the bar is doing
+    function liftOntoFullBoard() {
+        if (!root.needsLift || !Prefs.loaded)
+            return ;
+
+        root.needsLift = false;
+        var dy = root.spawnTop;
+        if (dy > 0) {
+            for (var i = 0; i < instances.count; i++) instances.setProperty(i, "wy", instances.get(i).wy + dy)
+        }
+        root.save();
+    }
+
     function save() {
         saveDebounce.restart();
     }
@@ -697,6 +857,8 @@ Singleton {
                 "variant": e.wvariant,
                 "wx": e.wx,
                 "wy": e.wy,
+                "bw": e.bw,
+                "bh": e.bh,
                 "pinned": e.pinned,
                 "zoom": e.zoom,
                 "zOrder": e.zOrder,
@@ -706,6 +868,7 @@ Singleton {
         }
         return JSON.stringify({
             "nextId": root.nextId,
+            "boardFull": true,
             "instances": out
         }, null, 2);
     }
@@ -737,8 +900,8 @@ Singleton {
                 "wvariant": v.id,
                 "wx": e.wx || 40,
                 "wy": e.wy || 40,
-                "bw": v.w,
-                "bh": v.h,
+                "bw": (v.resizable === true && e.bw) ? e.bw : v.w,
+                "bh": (v.resizable === true && e.bh) ? e.bh : v.h,
                 "pinned": e.pinned === true,
                 "zoom": e.zoom || 1,
                 "zOrder": e.zOrder || 1,
@@ -749,7 +912,17 @@ Singleton {
             });
         }
         root.nextId = Math.max(data.nextId || 1, instances.count + 1);
+        root.needsLift = data.boardFull !== true;
         root.loaded = true;
+        root.liftOntoFullBoard();
+    }
+
+    Connections {
+        function onLoadedChanged() {
+            root.liftOntoFullBoard();
+        }
+
+        target: Prefs
     }
 
     ListModel {
