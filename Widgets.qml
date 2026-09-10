@@ -500,6 +500,45 @@ Singleton {
             "type": "bool",
             "def": true
         }]
+    }, {
+        "id": "kdeconnect",
+        "name": "Phone",
+        "blurb": "Phone status, battery, signal and quick controls via KDE Connect.",
+        "variants": [{
+            "id": "card",
+            "name": "Card",
+            "blurb": "Battery, signal, and quick control buttons.",
+            "w": 284,
+            "h": 180
+        }, {
+            "id": "compact",
+            "name": "Compact",
+            "blurb": "Minimal row with phone battery & ring button.",
+            "w": 220,
+            "h": 96
+        }, {
+            "id": "remote",
+            "name": "Remote",
+            "blurb": "Battery, phone media controls, and quick actions.",
+            "w": 300,
+            "h": 220
+        }],
+        "options": [{
+            "key": "showRing",
+            "label": "Ring button",
+            "type": "bool",
+            "def": true
+        }, {
+            "key": "showClipboard",
+            "label": "Clipboard button",
+            "type": "bool",
+            "def": true
+        }, {
+            "key": "showLock",
+            "label": "Lock button",
+            "type": "bool",
+            "def": true
+        }]
     }]
 
     function typeAt(typeId) {
