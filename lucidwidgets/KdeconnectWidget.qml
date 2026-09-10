@@ -48,7 +48,6 @@ WidgetBody {
     readonly property bool showShare: w.opt("showShare") !== false
     readonly property bool showRing: w.opt("showRing") !== false
     readonly property bool showClipboard: w.opt("showClipboard") !== false
-    readonly property bool showLock: w.opt("showLock") !== false
 
     // ------------------------------------------------ Empty / Disconnected state
     Item {
@@ -375,17 +374,6 @@ WidgetBody {
                 }
 
                 WidgetButton {
-                    visible: w.showLock
-                    icon: "lock"
-                    diameter: 36
-                    iconSize: 18
-                    surface: true
-                    active: w.dev ? !!w.dev.locked : false
-                    tip: w.dev && w.dev.locked ? "Unlock phone" : "Lock phone"
-                    onClicked: if (w.dev) KdeConnect.setLocked(w.dev.id, !w.dev.locked)
-                }
-
-                WidgetButton {
                     icon: "refresh"
                     diameter: 36
                     iconSize: 18
@@ -566,17 +554,6 @@ WidgetBody {
                     surface: true
                     tip: "Send clipboard"
                     onClicked: if (w.dev) KdeConnect.sendClipboard(w.dev.id)
-                }
-
-                WidgetButton {
-                    visible: w.showLock
-                    icon: "lock"
-                    diameter: 36
-                    iconSize: 18
-                    surface: true
-                    active: w.dev ? !!w.dev.locked : false
-                    tip: w.dev && w.dev.locked ? "Unlock phone" : "Lock phone"
-                    onClicked: if (w.dev) KdeConnect.setLocked(w.dev.id, !w.dev.locked)
                 }
 
                 WidgetButton {

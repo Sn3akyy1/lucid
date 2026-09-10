@@ -538,11 +538,6 @@ Singleton {
             "label": "Clipboard button",
             "type": "bool",
             "def": true
-        }, {
-            "key": "showLock",
-            "label": "Lock button",
-            "type": "bool",
-            "def": true
         }]
     }]
 
