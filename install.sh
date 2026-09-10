@@ -9,7 +9,7 @@
 
 set -euo pipefail
 
-VERSION="0.57"
+VERSION="1.0.0"
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SHELL_DIR="$HOME/.config/quickshell"
 LUCID_DIR="$HOME/.config/lucid"

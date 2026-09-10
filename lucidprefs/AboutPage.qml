@@ -5,7 +5,7 @@ import qs
 Column {
     id: page
 
-    readonly property string version: "v0.57"
+    readonly property string version: "v1.0.0"
     readonly property bool beta: true
     readonly property var components: [{
         "name": "lucidbar",
@@ -138,7 +138,7 @@ Column {
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: "A Quickshell desktop for Hyprland"
+                        text: "The brightest thing in your setup."
                         color: Theme.subtext
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBody
