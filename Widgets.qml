@@ -524,6 +524,11 @@ Singleton {
             "h": 220
         }],
         "options": [{
+            "key": "showShare",
+            "label": "Send file button",
+            "type": "bool",
+            "def": true
+        }, {
             "key": "showRing",
             "label": "Ring button",
             "type": "bool",

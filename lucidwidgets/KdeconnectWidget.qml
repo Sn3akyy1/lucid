@@ -45,6 +45,7 @@ WidgetBody {
     readonly property string trackArtist: w.hasMedia ? (w.mprisData.artist || "") : ""
     readonly property bool isPlaying: w.hasMedia ? !!w.mprisData.playing : false
 
+    readonly property bool showShare: w.opt("showShare") !== false
     readonly property bool showRing: w.opt("showRing") !== false
     readonly property bool showClipboard: w.opt("showClipboard") !== false
     readonly property bool showLock: w.opt("showLock") !== false
@@ -127,7 +128,7 @@ WidgetBody {
 
             Column {
                 anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - 90
+                width: parent.width - 46 - (w.showShare ? 42 : 0) - (w.showRing ? 42 : 0)
                 spacing: 2
 
                 Text {
@@ -158,6 +159,17 @@ WidgetBody {
                         font.pixelSize: 11
                     }
                 }
+            }
+
+            WidgetButton {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: w.showShare
+                icon: "share"
+                diameter: 32
+                iconSize: 16
+                surface: true
+                tip: "Send file"
+                onClicked: if (w.dev) KdeConnect.pickFiles(w.dev.id, "Send to " + w.dev.name)
             }
 
             WidgetButton {
@@ -331,6 +343,16 @@ WidgetBody {
             Row {
                 width: parent.width
                 spacing: 8
+
+                WidgetButton {
+                    visible: w.showShare
+                    icon: "share"
+                    diameter: 36
+                    iconSize: 18
+                    surface: true
+                    tip: "Send file"
+                    onClicked: if (w.dev) KdeConnect.pickFiles(w.dev.id, "Send to " + w.dev.name)
+                }
 
                 WidgetButton {
                     visible: w.showRing
@@ -515,6 +537,16 @@ WidgetBody {
             Row {
                 width: parent.width
                 spacing: 8
+
+                WidgetButton {
+                    visible: w.showShare
+                    icon: "share"
+                    diameter: 36
+                    iconSize: 18
+                    surface: true
+                    tip: "Send file"
+                    onClicked: if (w.dev) KdeConnect.pickFiles(w.dev.id, "Send to " + w.dev.name)
+                }
 
                 WidgetButton {
                     visible: w.showRing
