@@ -18,6 +18,8 @@ Singleton {
     property bool hardBlocked: false
     property string aliasError: ""
     property bool aliasBusy: false
+    // a power-on waiting for bluez to hear that rfkill let go
+    property bool powerPending: false
 
     // bluez_card.* entries from pipewire, one per connected audio device
     property var audioCards: []
@@ -127,6 +129,28 @@ Singleton {
         profileProc.running = true;
     }
 
+    // bluez refuses to power a radio rfkill holds, so release the block first
+    function setEnabled(on) {
+        if (!root.adapter)
+            return ;
+
+        root.powerPending = on;
+        if (!on) {
+            root.adapter.enabled = false;
+            return ;
+        }
+        unblockProc.running = false;
+        unblockProc.running = true;
+    }
+
+    function finishPowerOn() {
+        if (!root.powerPending || !root.adapter || root.adapter.state === BluetoothAdapterState.Blocked)
+            return ;
+
+        root.powerPending = false;
+        root.adapter.enabled = true;
+    }
+
     function setAlias(name) {
         const clean = (name || "").trim();
         if (clean === "" || clean === root.alias)
@@ -219,6 +243,34 @@ Singleton {
         id: profileProc
 
         onExited: root.refresh()
+    }
+
+    Process {
+        id: unblockProc
+
+        command: ["rfkill", "unblock", "bluetooth"]
+        onExited: {
+            root.finishPowerOn();
+            pendingExpiry.restart();
+            root.refresh();
+        }
+    }
+
+    // bluez often reports the unblock after rfkill has already exited
+    Connections {
+        function onStateChanged() {
+            root.finishPowerOn();
+        }
+
+        target: root.adapter
+    }
+
+    // a failed unblock mustn't power the radio on hours later
+    Timer {
+        id: pendingExpiry
+
+        interval: 3000
+        onTriggered: root.powerPending = false
     }
 
     Process {

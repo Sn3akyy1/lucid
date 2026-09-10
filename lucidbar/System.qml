@@ -959,11 +959,7 @@ BarPill {
                                 sub: btPanel.label
                                 checked: root.btEnabled
                                 showArrow: true
-                                onToggled: {
-                                    if (root.btAdapter)
-                                        root.btAdapter.enabled = !root.btAdapter.enabled;
-
-                                }
+                                onToggled: Bt.setEnabled(!root.btEnabled)
                                 onExpandRequested: root.showView("bluetooth")
                             }
 
@@ -987,9 +983,7 @@ BarPill {
                                     root.airplaneMode = !root.airplaneMode;
                                     if (root.airplaneMode) {
                                         Networking.wifiEnabled = false;
-                                        if (root.btAdapter)
-                                            root.btAdapter.enabled = false;
-
+                                        Bt.setEnabled(false);
                                     }
                                 }
                             }
@@ -2062,11 +2056,7 @@ BarPill {
 
                         MouseArea {
                             anchors.fill: parent
-                            onClicked: {
-                                if (root.btAdapter)
-                                    root.btAdapter.enabled = !root.btAdapter.enabled;
-
-                            }
+                            onClicked: Bt.setEnabled(!root.btEnabled)
                         }
 
                         Behavior on color {

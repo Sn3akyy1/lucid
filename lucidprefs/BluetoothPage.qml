@@ -102,9 +102,7 @@ Column {
                 enabled: !!page.adapter && !Bt.hardBlocked
                 checked: page.on
                 onToggled: (v) => {
-                    if (page.adapter)
-                        page.adapter.enabled = v;
-
+                    Bt.setEnabled(v);
                 }
             }
 
