@@ -95,9 +95,11 @@ Every page is scriptable: `qs ipc call network status | list | rescan`,
   spicetify, pywalfox and ags all repaint from the active theme, each one only if
   it is actually installed. Running kitty and open shells recolour in place rather
   than at the next launch.
-- **SDDM** can be painted from the same palette — it runs before login, so the
-  colours are written into the theme itself, and only keys whose value is already a
-  hex colour are touched.
+- **SDDM** — `support/lucid/sync-sddm.sh` paints the login theme from the same
+  palette, since SDDM runs before login and cannot read a per-user one. It is not
+  installed or run by default: `/usr/share/sddm/themes` is root-owned, and the
+  script refuses rather than escalating. Copy it to `~/.config/lucid/` and make
+  the theme writable if you want it.
 - The installer now ships a full **Hyprland config layer** (`hyprland.lua` plus
   modules for binds, window and layer rules, decorations, animations, gestures,
   input and autostart) and a **look layer** for kitty, fish and starship.

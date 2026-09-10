@@ -95,6 +95,18 @@ git pull
 ./install.sh
 ```
 
+### Older versions
+
+`v0.57 beta` is a tag, so it stays exactly where it is:
+
+```sh
+git clone --branch v0.57 https://github.com/Sn3akyy1/lucid-shell.git
+```
+
+It is on the [releases page](https://github.com/Sn3akyy1/lucid-shell/releases)
+too, as a source archive. Nothing carries over between the two — v1.0.0 moved
+enough that it is worth installing fresh.
+
 ### Installer options
 
 | Flag | What it does |
