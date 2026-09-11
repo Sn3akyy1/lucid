@@ -284,7 +284,7 @@ WidgetBody {
                             spacing: 8
 
                             Rectangle {
-                                width: 80
+                                width: 60
                                 height: 8
                                 radius: 4
                                 color: Theme.alpha(Theme.outline, 0.3)

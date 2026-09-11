@@ -508,19 +508,19 @@ Singleton {
             "id": "card",
             "name": "Card",
             "blurb": "Battery, signal, and quick control buttons.",
-            "w": 284,
+            "w": 268,
             "h": 180
         }, {
             "id": "compact",
             "name": "Compact",
             "blurb": "Minimal row with phone battery & ring button.",
-            "w": 220,
+            "w": 216,
             "h": 96
         }, {
             "id": "remote",
             "name": "Remote",
             "blurb": "Battery, phone media controls, and quick actions.",
-            "w": 300,
+            "w": 284,
             "h": 220
         }],
         "options": [{
