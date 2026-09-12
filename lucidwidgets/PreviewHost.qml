@@ -7,6 +7,8 @@ QtObject {
     property string wtype: ""
     property string wvariant: ""
     property bool hovered: false
+    // options a preset sets, drawn in place of the defaults
+    property var opts: ({})
 
     readonly property string uid: ""
     readonly property bool preview: true
@@ -25,6 +27,12 @@ QtObject {
     })
 
     function opt(key) {
+        // a preset's own options, and whatever is already written in a card, but an
+        // empty note still gets the sample so the tile never shows a blank card
+        var own = ph.opts ? ph.opts[key] : undefined;
+        if (own !== undefined && (!Widgets.isContentKey(ph.wtype, key) || own !== Widgets.defaultOptions(ph.wtype)[key]))
+            return own;
+
         var sample = ph.samples[ph.wtype];
         if (sample && sample[key] !== undefined)
             return sample[key];

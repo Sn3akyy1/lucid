@@ -29,7 +29,7 @@ hl.bind(mainMod .. " + T",       hl.dsp.exec_cmd("qs ipc call launcher theme"))
 hl.bind(mainMod .. " + P",       hl.dsp.exec_cmd("qs ipc call launcher command"))
 
 -- Lucid Settings (took SUPER+S from the scratchpad, which moved down a
--- modifier - see the Scratchpad section below)
+-- modifier - see the Special workspaces section below)
 hl.bind(mainMod .. " + S",       hl.dsp.exec_cmd("qs ipc call settings toggle"))
 
 -- LucidMoji
@@ -51,9 +51,17 @@ for i = 1, 10 do
     hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
 end
 
--- Scratchpad (moved off SUPER+S, which now opens Lucid Settings)
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.workspace.toggle_special("magic"))
-hl.bind(mainMod .. " + ALT + S",   hl.dsp.window.move({ workspace = "special:magic" }))
+-- Special workspaces: scratchpads that slide over whatever you are on and hide
+-- again with the same key. Settings > Workspaces picks the apps each one opens
+local hasSpecials, specials = pcall(require, "modules.specials")
+if hasSpecials then
+    hl.bind(mainMod .. " + SHIFT + S", specials.scratchpad())      -- the scratchpad, or put away whichever is open
+    hl.bind(mainMod .. " + ALT + S",   specials.stash())           -- stash the focused window, or bring it back
+    hl.bind(mainMod .. " + SHIFT + M", specials.toggle("music"))
+    hl.bind(mainMod .. " + SHIFT + D", specials.toggle("comms"))
+    hl.bind(mainMod .. " + SHIFT + R", specials.toggle("todo"))
+    hl.bind("CTRL + SHIFT + Escape",   specials.toggle("sysmon"))
+end
 
 -- Scroll through workspaces
 hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))

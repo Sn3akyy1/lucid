@@ -42,6 +42,15 @@ PopupWindow {
         return a.indexOf("0x") === 0 ? a : "0x" + a;
     }
 
+    function workspaceLabel(group) {
+        var name = group.workspaceName || "";
+        if (name.indexOf("special:") !== 0)
+            return "Workspace " + group.workspaceId;
+
+        var s = name.slice(8);
+        return s === "" || s === "special" ? "Scratchpad" : "Scratchpad · " + s;
+    }
+
     anchor.window: popup.hostWindow
     anchor.rect.x: popup.anchorLocalX - popup.width / 2
     anchor.rect.y: popup.anchorLocalY - popup.height - 12
@@ -100,7 +109,7 @@ PopupWindow {
                     readonly property string windowTitle: {
                         var t = entry.toplevel;
                         var o = t && t.lastIpcObject ? t.lastIpcObject : null;
-                        return o && o.title ? o.title : ("Workspace " + entry.modelData.workspaceId);
+                        return o && o.title ? o.title : popup.workspaceLabel(entry.modelData);
                     }
 
                     width: popup.cardW
@@ -242,7 +251,7 @@ PopupWindow {
 
                         Text {
                             width: parent.width
-                            text: "Workspace " + entry.modelData.workspaceId
+                            text: popup.workspaceLabel(entry.modelData)
                             color: Theme.subtextDim
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel

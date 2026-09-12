@@ -50,7 +50,7 @@ PanelWindow {
 
     color: "transparent"
     exclusiveZone: 0
-    visible: pill.opacity > 0.01
+    visible: pill.opacity > 0.01 && Monitors.surfacesUp
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     implicitWidth: Math.max(160, pill.width + 40)

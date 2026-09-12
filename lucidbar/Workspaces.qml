@@ -1,5 +1,6 @@
 import QtQml.Models
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Hyprland._FocusGrab
@@ -13,6 +14,7 @@ Item {
 
     readonly property int cornerRadius: root.popupMode ? Math.min(Theme.radiusLg, Math.round(shell.height / 2)) : (root.expanded ? Theme.radiusLg : Prefs.barPillRadius)
     property var hostWindow: null
+    property var dockMod: null
     property bool expanded: false
     property real restX: 0
     property real restY: 0
@@ -60,20 +62,96 @@ Item {
     }
     readonly property int maxWorkspaces: 6
     readonly property int slotCount: Math.max(root.maxWorkspaces, root.highestWorkspaceId)
+    readonly property var specialList: {
+        const out = [];
+        for (const w of Hyprland.workspaces.values) {
+            if (w.id < 0 && w.name.indexOf("special:") === 0)
+                out.push(w);
+
+        }
+        // lucid's own in key order, others after
+        out.sort((a, b) => {
+            const d = Specials.order(a.name) - Specials.order(b.name);
+            return d !== 0 ? d : (a.name < b.name ? -1 : (a.name > b.name ? 1 : 0));
+        });
+        return out;
+    }
+    readonly property int specialCount: root.specialList.length
+    // special slots follow the regular ones, in both the pill and the overview
+    readonly property int totalSlots: root.slotCount + root.specialCount
+    // quickshell never marks a special workspace active, so this comes from the monitor
+    readonly property string shownSpecial: {
+        const o = root.refMonitor ? root.refMonitor.lastIpcObject : null;
+        return o && o.specialWorkspace && o.specialWorkspace.name ? o.specialWorkspace.name : "";
+    }
+    readonly property int shownSpecialSlot: {
+        for (let i = 0; i < root.specialCount; i++) {
+            if (root.specialList[i].name === root.shownSpecial)
+                return root.slotCount + i;
+
+        }
+        return -1;
+    }
+    readonly property int activeSlot: root.shownSpecialSlot >= 0 ? root.shownSpecialSlot : root.activeWsId - 1
+    // apps stashed in each special workspace, one entry per app, parallel to specialList
+    readonly property var specialApps: {
+        const byName = ({});
+        for (const t of Hyprland.toplevels.values) {
+            const ws = t.workspace;
+            if (!ws || ws.id >= 0)
+                continue;
+
+            const o = t.lastIpcObject;
+            const a = String(t.address);
+            const address = a.indexOf("0x") === 0 ? a : "0x" + a;
+            const cls = (t.wayland && t.wayland.appId) || (o && o.class) || "";
+            if (!byName[ws.name])
+                byName[ws.name] = [];
+
+            const list = byName[ws.name];
+            let app = list.find((x) => {
+                return x.appClass.toLowerCase() === cls.toLowerCase();
+            });
+            if (!app) {
+                app = {
+                    "address": address,
+                    "appClass": cls,
+                    "focused": false
+                };
+                list.push(app);
+            }
+            // a click should land on the window that was last in use
+            if (t.activated === true) {
+                app.address = address;
+                app.focused = true;
+            }
+        }
+        return root.specialList.map((w) => {
+            return byName[w.name] || [];
+        });
+    }
+    readonly property bool sunk: root.shownSpecialSlot >= 0 && !root.rowHovered
     readonly property int horizontalPadding: 10
     readonly property int dotGap: 6
+    readonly property int specialGap: 6
     readonly property int dotSize: 10
     readonly property int activeDotWidth: 24
     readonly property int hoverDotSize: 24
     readonly property int hoverActiveDotWidth: 38
+    readonly property int sunkDotSize: 6
+    readonly property int sunkActiveWidth: 14
+    readonly property int stashIcon: 16
+    readonly property int stashMax: 3
+    readonly property int stashTuck: 7
+    readonly property int stashFan: 20
     readonly property int compactHeight: Prefs.barHeight
-    property int hoveredWsId: -1
+    property int hoveredSlot: -1
     readonly property bool rowHovered: rowHover.hovered && !root.expanded
-    readonly property int litWsId: root.rowHovered ? (root.hoveredWsId === -1 ? root.activeWsId : root.hoveredWsId) : root.activeWsId
-    readonly property bool litIndexValid: root.litWsId >= 1 && root.litWsId <= root.slotCount
-    readonly property real dotsWidth: root.slotCount > 0 ? root.slotX(root.slotCount) - root.dotGap : 0
+    readonly property int litSlot: root.rowHovered && root.hoveredSlot !== -1 ? root.hoveredSlot : root.activeSlot
+    onLitSlotChanged: activePill.retarget()
+    readonly property bool litIndexValid: root.litSlot >= 0 && root.litSlot < root.totalSlots
+    readonly property real dotsWidth: root.totalSlots > 0 ? root.slotX(root.totalSlots) - root.dotGap : 0
     property real dotsWidthAnim: root.dotsWidth
-    property real dotHeightAnim: root.rowHovered ? root.hoverDotSize : root.dotSize
     readonly property int compactWidth: Math.round(root.dotsWidthAnim) + root.horizontalPadding * 2
     property real wheelAccum: 0
     readonly property var refMonitor: {
@@ -145,10 +223,27 @@ Item {
             "score": 0
         };
 
+        // columns come from the regular grid alone, so specials only ever add rows below it
+        if (root.specialCount > 0) {
+            const rows = Math.ceil(n / best.cols) + Math.ceil(root.specialCount / best.cols);
+            const wLimit = (availW - (best.cols - 1) * root.baseTileSpacing) / best.cols;
+            const hLimit = (availH - (rows - 0.5) * root.baseTileSpacing - labelBlock) / rows - labelBlock;
+            const previewW = Math.min(wLimit, hLimit * root.tileAspect, basePreviewW);
+            if (previewW > 24)
+                best = {
+                "cols": best.cols,
+                "rows": rows,
+                "previewW": previewW,
+                "scale": previewW / basePreviewW,
+                "score": best.score
+            };
+
+        }
         return best;
     }
     readonly property int gridColumns: root.gridPlan.cols
-    readonly property int gridRows: root.gridPlan.rows
+    readonly property int regularRows: Math.ceil(Math.max(1, root.slotCount) / root.gridColumns)
+    readonly property int specialRows: Math.ceil(root.specialCount / root.gridColumns)
     readonly property real gridScale: Math.max(0.5, root.gridPlan.scale)
     readonly property int previewW: Math.round(root.gridPlan.previewW)
     readonly property int previewH: Math.max(24, Math.round(root.gridPlan.previewW / root.tileAspect))
@@ -159,7 +254,10 @@ Item {
     readonly property int tileSpacing: Math.max(8, Math.round(root.baseTileSpacing * root.gridScale))
     readonly property int cardPadding: Math.max(12, Math.round(root.baseCardPadding * Math.min(1, root.gridScale + 0.25)))
     readonly property int gridWidth: root.gridColumns * root.tileW + (root.gridColumns - 1) * root.tileSpacing
-    readonly property int gridHeight: root.gridRows * root.tileH + (root.gridRows - 1) * root.tileSpacing
+    readonly property int regularBottom: root.regularRows * (root.tileH + root.tileSpacing) - root.tileSpacing
+    readonly property int captionY: root.regularBottom + Math.round(root.tileSpacing * 1.5)
+    readonly property int specialTop: root.captionY + root.labelHeight + root.labelGap
+    readonly property int gridHeight: root.specialRows > 0 ? root.specialTop + root.specialRows * (root.tileH + root.tileSpacing) - root.tileSpacing : root.regularBottom
     readonly property int cardWidth: root.gridWidth + root.cardPadding * 2
     readonly property int cardHeight: root.gridHeight + root.cardPadding * 2
     readonly property real labelFontSize: Math.max(9, 12 * root.gridScale)
@@ -185,9 +283,8 @@ Item {
                 continue;
 
             const mv = root.pendingMoves[o.address];
-            const wsId = mv !== undefined ? mv.wsId : o.workspace.id;
-            const slot = wsId - 1;
-            if (slot < 0 || slot >= root.slotCount)
+            const slot = root.slotForWsId(mv !== undefined ? mv.wsId : o.workspace.id);
+            if (slot < 0)
                 continue;
 
             const sw = root.pendingSwaps[o.address];
@@ -215,35 +312,145 @@ Item {
     readonly property int trackEase: 130
 
     function wsAt(index) {
+        if (index >= root.slotCount)
+            return root.specialList[index - root.slotCount] || null;
+
         return root.wsById[index + 1] || null;
     }
 
-    function slotWidth(index) {
-        if (root.rowHovered)
-            return root.litWsId === index + 1 ? root.hoverActiveDotWidth : root.hoverDotSize;
+    function slotWsId(index) {
+        if (index < root.slotCount)
+            return index + 1;
 
         const ws = root.wsAt(index);
-        return ws && (ws.active || ws.urgent) ? root.activeDotWidth : root.dotSize;
+        return ws ? ws.id : 0;
+    }
+
+    function slotForWsId(id) {
+        if (id > 0)
+            return id <= root.slotCount ? id - 1 : -1;
+
+        for (let i = 0; i < root.specialCount; i++) {
+            if (root.specialList[i].id === id)
+                return root.slotCount + i;
+
+        }
+        return -1;
+    }
+
+    function slotItem(index) {
+        if (index < 0)
+            return null;
+
+        return index < root.slotCount ? dotRepeater.itemAt(index) : chipRepeater.itemAt(index - root.slotCount);
+    }
+
+    // text flips as the accent pill arrives under it, not before
+    function pillCovers(x, w) {
+        const c = x + w / 2;
+        return activePill.visible && c >= activePill.x && c <= activePill.x + activePill.width;
+    }
+
+    function slotWidth(index) {
+        if (index >= root.slotCount)
+            return root.chipWidth(index);
+
+        if (root.rowHovered)
+            return root.litSlot === index ? root.hoverActiveDotWidth : root.hoverDotSize;
+
+        const ws = root.wsAt(index);
+        const wide = index === root.activeSlot || (ws && (ws.active || ws.urgent));
+        if (root.sunk)
+            return wide ? root.sunkActiveWidth : root.sunkDotSize;
+
+        return wide ? root.activeDotWidth : root.dotSize;
+    }
+
+    function slotHeight(index) {
+        if (index >= root.slotCount)
+            return root.chipOpen(index) ? root.hoverDotSize : root.stashIcon;
+
+        if (root.rowHovered)
+            return root.hoverDotSize;
+
+        return root.sunk ? root.sunkDotSize : root.dotSize;
+    }
+
+    function chipOpen(index) {
+        return root.rowHovered || index === root.shownSpecialSlot;
+    }
+
+    function chipLabel(j) {
+        const ws = root.specialList[j];
+        const n = (root.specialApps[j] || []).length;
+        return (ws ? root.specialName(ws.name) : "") + (n > root.stashMax ? "  +" + (n - root.stashMax) : "");
+    }
+
+    function chipIconsEnd(k) {
+        return k > 0 ? 4 + root.stashIcon + (k - 1) * root.stashFan + 6 : 10;
+    }
+
+    function chipWidth(index) {
+        const j = index - root.slotCount;
+        const k = Math.min((root.specialApps[j] || []).length, root.stashMax);
+        if (!root.chipOpen(index))
+            return k > 0 ? root.stashIcon + (k - 1) * root.stashTuck : root.dotSize;
+
+        return root.chipIconsEnd(k) + root.textWidth(root.chipLabel(j)) + 10;
+    }
+
+    function textWidth(s) {
+        void nameMetrics.font;
+        return Math.ceil(nameMetrics.advanceWidth(s));
+    }
+
+    function iconFor(c) {
+        if (c === "")
+            return "";
+
+        if (root.dockMod)
+            return root.dockMod.iconForClass(c);
+
+        let p = Quickshell.iconPath(c, true);
+        if (p === "")
+            p = Quickshell.iconPath(c.toLowerCase(), true);
+
+        if (p === "") {
+            const dot = c.lastIndexOf(".");
+            if (dot >= 0)
+                p = Quickshell.iconPath(c.slice(dot + 1).toLowerCase(), true);
+
+        }
+        return p;
     }
 
     function slotX(index) {
         let x = 0;
-        for (let i = 0; i < index; i++) x += root.slotWidth(i) + root.dotGap
+        for (let i = 0; i < index; i++) {
+            x += root.slotWidth(i) + root.dotGap;
+            if (i + 1 >= root.slotCount && i + 1 < root.totalSlots)
+                x += root.specialGap;
+
+        }
         return x;
     }
 
     function slotPosX(index) {
-        return index % root.gridColumns * (root.tileW + root.tileSpacing);
+        const i = index < root.slotCount ? index : index - root.slotCount;
+        return i % root.gridColumns * (root.tileW + root.tileSpacing);
     }
 
     function slotPosY(index) {
-        return Math.floor(index / root.gridColumns) * (root.tileH + root.tileSpacing);
+        if (index < root.slotCount)
+            return Math.floor(index / root.gridColumns) * (root.tileH + root.tileSpacing);
+
+        return root.specialTop + Math.floor((index - root.slotCount) / root.gridColumns) * (root.tileH + root.tileSpacing);
     }
 
     function slotAt(px, py) {
         let best = -1;
         let bestDist = Infinity;
-        for (let i = 0; i < root.slotCount; i++) {
+        for (let i = 0; i < root.totalSlots; i++) {
             const dx = px - (root.slotPosX(i) + root.tileW / 2);
             const dy = py - (root.slotPosY(i) + root.previewH / 2);
             const d = dx * dx + dy * dy;
@@ -256,14 +463,56 @@ Item {
     }
 
     function stagger(index, extra) {
-        const start = 0.18 + index / Math.max(1, root.slotCount) * 0.4 + extra;
+        const start = 0.18 + index / Math.max(1, root.totalSlots) * 0.4 + extra;
         const t = (root.reveal - start) / 0.3;
         const c = t < 0 ? 0 : (t > 1 ? 1 : t);
         return 1 - (1 - c) * (1 - c) * (1 - c);
     }
 
+    function luaStr(s) {
+        return "'" + String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
+    }
+
+    function specialShort(name) {
+        return name.indexOf("special:") === 0 ? name.slice(8) : name;
+    }
+
+    function specialName(name) {
+        return Specials.label(name);
+    }
+
+    function toggleSpecial(name) {
+        Hyprland.dispatch("hl.dsp.workspace.toggle_special(" + root.luaStr(root.specialShort(name)) + ")");
+    }
+
+    function showSpecial(name) {
+        if (root.shownSpecial !== name)
+            root.toggleSpecial(name);
+
+    }
+
+    function hideSpecial() {
+        if (root.shownSpecial !== "")
+            root.toggleSpecial(root.shownSpecial);
+
+    }
+
+    // picking a regular workspace from the bar means leaving the special one too
     function focusWorkspace(wsId) {
+        root.hideSpecial();
         Hyprland.dispatch("hl.dsp.focus({workspace=" + wsId + "})");
+    }
+
+    function activateSlot(index) {
+        if (index >= root.slotCount) {
+            const ws = root.wsAt(index);
+            if (ws)
+                root.showSpecial(ws.name);
+
+        } else if (index >= 0) {
+            root.focusWorkspace(index + 1);
+        }
+        root.expanded = false;
     }
 
     function cycleWorkspace(dir) {
@@ -282,8 +531,21 @@ Item {
         Hyprland.dispatch("hl.dsp.focus({window='address:" + address + "'})");
     }
 
-    function moveWindowToWorkspace(address, wsId) {
-        Hyprland.dispatch("hl.dsp.window.move({workspace=" + wsId + ", follow=false, window='address:" + address + "'})");
+    // focusing a stashed window is what opens its scratchpad
+    function openStashed(index, app) {
+        if (index === root.shownSpecialSlot && app.focused)
+            root.hideSpecial();
+        else
+            root.focusWindow(app.address);
+    }
+
+    // special workspaces go by name: a negative id reads as a relative move
+    function moveWindowToSlot(address, index) {
+        const ws = root.wsAt(index);
+        const target = index < root.slotCount ? String(index + 1) : (ws ? root.luaStr(ws.name) : "");
+        if (target !== "")
+            Hyprland.dispatch("hl.dsp.window.move({workspace=" + target + ", follow=false, window='address:" + address + "'})");
+
     }
 
     function swapWindows(addressA, addressB) {
@@ -436,33 +698,45 @@ Item {
     }
 
     function moveSelection(dx, dy) {
-        const cols = root.gridColumns;
+        const n = root.totalSlots;
         let cur = root.selectedIndex;
         if (cur < 0)
-            cur = Math.max(0, Math.min(root.slotCount - 1, root.activeWsId - 1));
+            cur = Math.max(0, Math.min(n - 1, root.activeSlot));
 
-        let col = cur % cols + dx;
-        let row = Math.floor(cur / cols) + dy;
-        if (col < 0) {
-            col = cols - 1;
-            row -= 1;
+        if (dx !== 0) {
+            root.selectedIndex = ((cur + dx) % n + n) % n;
+            return ;
         }
-        if (col >= cols) {
-            col = 0;
-            row += 1;
+        // rows can be ragged, so step to the nearest tile in the next row
+        const rows = [];
+        for (let i = 0; i < n; i++) {
+            const y = root.slotPosY(i);
+            if (rows.indexOf(y) < 0)
+                rows.push(y);
+
         }
-        let idx = row * cols + col;
-        while (idx < 0) idx += root.slotCount
-        while (idx >= root.slotCount) idx -= root.slotCount
-        root.selectedIndex = idx;
+        rows.sort((a, b) => {
+            return a - b;
+        });
+        const targetY = rows[((rows.indexOf(root.slotPosY(cur)) + dy) % rows.length + rows.length) % rows.length];
+        const cx = root.slotPosX(cur);
+        let best = cur;
+        let bestDist = Infinity;
+        for (let i = 0; i < n; i++) {
+            if (root.slotPosY(i) !== targetY)
+                continue;
+
+            const d = Math.abs(root.slotPosX(i) - cx);
+            if (d < bestDist) {
+                bestDist = d;
+                best = i;
+            }
+        }
+        root.selectedIndex = best;
     }
 
     function activateSelection() {
-        const idx = root.selectedIndex >= 0 ? root.selectedIndex : root.activeWsId - 1;
-        if (idx >= 0)
-            root.focusWorkspace(idx + 1);
-
-        root.expanded = false;
+        root.activateSlot(root.selectedIndex >= 0 ? root.selectedIndex : root.activeSlot);
     }
 
     onWindowListChanged: root.syncWindowModel()
@@ -473,7 +747,7 @@ Item {
         root.revealDuration = Theme.barMs(root.expanded ? 420 : 200);
         root.compactFadePause = Theme.barMs(root.expanded ? 0 : 200);
         root.selectedIndex = -1;
-        root.hoveredWsId = -1;
+        root.hoveredSlot = -1;
         if (root.expanded) {
             root.everExpanded = true;
             Hyprland.refreshToplevels();
@@ -556,6 +830,14 @@ Item {
         id: windowModel
     }
 
+    FontMetrics {
+        id: nameMetrics
+
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fs(12)
+        font.bold: true
+    }
+
     IpcHandler {
         target: "workspaces"
 
@@ -594,6 +876,23 @@ Item {
         onTriggered: root.wheelAccum = 0
     }
 
+    Timer {
+        id: monitorRefresh
+
+        interval: 8
+        onTriggered: Hyprland.refreshMonitors()
+    }
+
+    Connections {
+        function onRawEvent(event) {
+            if (event.name === "activespecial" || event.name === "activespecialv2")
+                monitorRefresh.restart();
+
+        }
+
+        target: Hyprland
+    }
+
     HyprlandFocusGrab {
         active: root.expanded
         windows: root.hostWindow ? [root.hostWindow] : []
@@ -606,20 +905,12 @@ Item {
         enabled: !root.expanded
         onHoveredChanged: {
             if (!hovered)
-                root.hoveredWsId = -1;
+                root.hoveredSlot = -1;
 
         }
     }
 
     Behavior on dotsWidthAnim {
-        NumberAnimation {
-            duration: Theme.barMs(300)
-            easing.type: Easing.OutCubic
-        }
-
-    }
-
-    Behavior on dotHeightAnim {
         NumberAnimation {
             duration: Theme.barMs(300)
             easing.type: Easing.OutCubic
@@ -756,32 +1047,106 @@ Item {
 
                 anchors.centerIn: parent
                 width: root.dotsWidthAnim
-                height: root.dotHeightAnim
+                height: root.hoverDotSize
 
                 Rectangle {
                     id: activePill
 
-                    readonly property int litIndex: root.litWsId - 1
+                    readonly property int litIndex: root.litSlot
                     readonly property var litWs: root.litIndexValid ? root.wsAt(activePill.litIndex) : null
+                    // rides the lit slot's own geometry, so it cannot trail it; a switch
+                    // starts from where the pill was and glides the offset to zero
+                    property Item target: null
+                    property real offX: 0
+                    property real offW: 0
+                    property real offH: 0
+                    property bool holding: false
+
+                    function place() {
+                        const t = activePill.target;
+                        if (!t || activePill.holding)
+                            return ;
+
+                        activePill.x = t.x + activePill.offX;
+                        activePill.width = t.width + activePill.offW;
+                        activePill.height = t.height + activePill.offH;
+                    }
+
+                    function retarget() {
+                        // litIndexValid is a binding and can be stale inside onLitSlotChanged
+                        const i = root.litSlot;
+                        const next = i >= 0 && i < root.totalSlots ? root.slotItem(i) : null;
+                        if (!next || next === activePill.target)
+                            return ;
+
+                        glide.stop();
+                        // a destroyed target nulls out, but the last drawn geometry still stands
+                        const fresh = activePill.width <= 0;
+                        activePill.holding = true;
+                        activePill.offX = fresh ? 0 : activePill.x - next.x;
+                        activePill.offW = fresh ? 0 : activePill.width - next.width;
+                        activePill.offH = fresh ? 0 : activePill.height - next.height;
+                        activePill.target = next;
+                        activePill.holding = false;
+                        activePill.place();
+                        // hover follows the pointer; keyboard switches keep the long slide
+                        glide.span = rowHover.hovered && !root.expanded ? Theme.barMs(80) : Theme.barMs(300);
+                        glide.restart();
+                    }
 
                     visible: root.litIndexValid
-                    x: root.litIndexValid ? root.slotX(activePill.litIndex) : 0
-                    width: root.litIndexValid ? root.slotWidth(activePill.litIndex) : 0
-                    height: parent.height
+                    x: 0
+                    y: (parent.height - height) / 2
+                    width: 0
+                    height: 0
                     radius: 999
                     color: activePill.litWs && activePill.litWs.urgent ? Theme.error : Theme.accent
+                    onOffXChanged: activePill.place()
+                    onOffWChanged: activePill.place()
+                    onOffHChanged: activePill.place()
 
-                    Behavior on x {
+                    Connections {
+                        function onXChanged() {
+                            activePill.place();
+                        }
+
+                        function onWidthChanged() {
+                            activePill.place();
+                        }
+
+                        function onHeightChanged() {
+                            activePill.place();
+                        }
+
+                        target: activePill.target
+                    }
+
+                    ParallelAnimation {
+                        id: glide
+
+                        property int span: 0
+
                         NumberAnimation {
-                            duration: Theme.barMs(300)
+                            target: activePill
+                            property: "offX"
+                            to: 0
+                            duration: glide.span
                             easing.type: Easing.OutCubic
                         }
 
-                    }
-
-                    Behavior on width {
                         NumberAnimation {
-                            duration: Theme.barMs(300)
+                            target: activePill
+                            property: "offW"
+                            to: 0
+                            duration: glide.span
+                            easing.type: Easing.OutCubic
+                        }
+
+                        NumberAnimation {
+                            target: activePill
+                            property: "offH"
+                            to: 0
+                            duration: glide.span
                             easing.type: Easing.OutCubic
                         }
 
@@ -798,7 +1163,10 @@ Item {
                 }
 
                 Repeater {
+                    id: dotRepeater
+
                     model: root.slotCount
+                    onItemAdded: Qt.callLater(activePill.retarget)
 
                     Rectangle {
                         id: dot
@@ -808,13 +1176,14 @@ Item {
                         readonly property var wsObj: root.wsAt(dot.index)
                         readonly property bool isActive: dot.wsObj ? dot.wsObj.active : false
                         readonly property bool isUrgent: dot.wsObj ? dot.wsObj.urgent : false
-                        readonly property bool isLit: root.rowHovered && root.litWsId === dot.wsId
+                        readonly property bool isLit: root.rowHovered && root.pillCovers(dot.x, dot.width)
 
                         x: root.slotX(dot.index)
+                        y: (parent.height - height) / 2
                         width: root.slotWidth(dot.index)
-                        height: parent.height
+                        height: root.slotHeight(dot.index)
                         radius: 999
-                        color: dot.isUrgent ? Theme.error : (root.rowHovered ? "transparent" : (dot.isActive ? "transparent" : Theme.withBlur(Theme._darken(Theme.subtext, 0.45))))
+                        color: dot.isUrgent ? Theme.error : (root.rowHovered || dot.index === root.activeSlot ? "transparent" : Theme.withBlur(Theme._darken(Theme.subtext, 0.45)))
 
                         Text {
                             anchors.centerIn: parent
@@ -838,7 +1207,7 @@ Item {
                         HoverHandler {
                             onHoveredChanged: {
                                 if (hovered)
-                                    root.hoveredWsId = dot.wsId;
+                                    root.hoveredSlot = dot.index;
 
                             }
                         }
@@ -847,7 +1216,9 @@ Item {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                if (dot.isActive)
+                                if (dot.isActive && root.shownSpecial !== "")
+                                    root.hideSpecial();
+                                else if (dot.isActive)
                                     root.expanded = true;
                                 else
                                     root.focusWorkspace(dot.wsId);
@@ -870,9 +1241,231 @@ Item {
 
                         }
 
+                        Behavior on height {
+                            NumberAnimation {
+                                duration: Theme.barMs(300)
+                                easing.type: Easing.OutCubic
+                            }
+
+                        }
+
                         Behavior on color {
                             ColorAnimation {
                                 duration: Theme.barMs(200)
+                                easing.type: Easing.OutCubic
+                            }
+
+                        }
+
+                    }
+
+                }
+
+                Repeater {
+                    id: chipRepeater
+
+                    model: root.specialCount
+                    onItemAdded: Qt.callLater(activePill.retarget)
+
+                    Item {
+                        id: chip
+
+                        required property int index
+                        readonly property int slot: root.slotCount + chip.index
+                        readonly property var wsObj: root.specialList[chip.index] || null
+                        readonly property var apps: root.specialApps[chip.index] || []
+                        readonly property int iconCount: Math.min(chip.apps.length, root.stashMax)
+                        readonly property bool open: root.chipOpen(chip.slot)
+                        readonly property bool lit: root.pillCovers(chip.x, chip.width)
+                        property real saturation: chip.open ? 0 : -1
+
+                        x: root.slotX(chip.slot)
+                        y: (parent.height - height) / 2
+                        width: root.slotWidth(chip.slot)
+                        height: root.slotHeight(chip.slot)
+
+                        HoverHandler {
+                            onHoveredChanged: {
+                                if (hovered)
+                                    root.hoveredSlot = chip.slot;
+
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (chip.wsObj)
+                                    root.toggleSpecial(chip.wsObj.name);
+
+                            }
+                        }
+
+                        Item {
+                            id: stack
+
+                            readonly property int pad: 3
+
+                            x: (chip.open ? 4 : 0) - stack.pad
+                            y: Math.round((chip.height - root.stashIcon) / 2) - stack.pad
+                            width: root.stashIcon + Math.max(0, chip.iconCount - 1) * root.stashFan + stack.pad * 2
+                            height: root.stashIcon + stack.pad * 2
+                            opacity: chip.open ? 1 : 0.6
+                            layer.enabled: true
+
+                            Repeater {
+                                model: chip.iconCount
+
+                                Item {
+                                    id: stashed
+
+                                    required property int index
+                                    readonly property var app: chip.apps[stashed.index] || null
+                                    readonly property string icon: stashed.app ? root.iconFor(stashed.app.appClass) : ""
+
+                                    x: stack.pad + stashed.index * (chip.open ? root.stashFan : root.stashTuck)
+                                    y: stack.pad
+                                    z: -stashed.index
+                                    width: root.stashIcon
+                                    height: root.stashIcon
+                                    scale: stashedArea.containsMouse ? 1.15 : 1
+
+                                    IconImage {
+                                        anchors.fill: parent
+                                        source: stashed.icon
+                                        visible: stashed.icon !== ""
+                                        asynchronous: true
+                                    }
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        visible: stashed.icon === ""
+                                        radius: width / 2
+                                        color: chip.lit ? Theme.alpha(Theme.bgOpaque, 0.22) : Theme.alpha(Theme.text, 0.2)
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: stashed.app && stashed.app.appClass !== "" ? stashed.app.appClass.charAt(0).toUpperCase() : "?"
+                                            color: chip.lit ? Theme.bgOpaque : Theme.text
+                                            font.family: Theme.fontFamily
+                                            font.bold: true
+                                            font.pixelSize: Theme.fs(9)
+                                        }
+
+                                    }
+
+                                    MouseArea {
+                                        id: stashedArea
+
+                                        anchors.fill: parent
+                                        enabled: chip.open
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (stashed.app)
+                                                root.openStashed(chip.slot, stashed.app);
+
+                                        }
+                                    }
+
+                                    Behavior on x {
+                                        NumberAnimation {
+                                            duration: Theme.barMs(300)
+                                            easing.type: Easing.OutCubic
+                                        }
+
+                                    }
+
+                                    Behavior on scale {
+                                        NumberAnimation {
+                                            duration: Theme.barMs(150)
+                                            easing.type: Easing.OutCubic
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                            layer.effect: MultiEffect {
+                                saturation: chip.saturation
+                            }
+
+                            Behavior on x {
+                                NumberAnimation {
+                                    duration: Theme.barMs(300)
+                                    easing.type: Easing.OutCubic
+                                }
+
+                            }
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Theme.barMs(300)
+                                    easing.type: Easing.OutCubic
+                                }
+
+                            }
+
+                        }
+
+                        Text {
+                            x: root.chipIconsEnd(chip.iconCount)
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.chipLabel(chip.index)
+                            opacity: chip.open ? 1 : 0
+                            color: chip.lit ? Theme.bgOpaque : Theme.subtext
+                            font.family: nameMetrics.font.family
+                            font.pixelSize: nameMetrics.font.pixelSize
+                            font.bold: true
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Theme.barMs(300)
+                                    easing.type: Easing.OutCubic
+                                }
+
+                            }
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: Theme.barMs(80)
+                                    easing.type: Easing.OutCubic
+                                }
+
+                            }
+
+                        }
+
+                        Behavior on saturation {
+                            NumberAnimation {
+                                duration: Theme.barMs(300)
+                                easing.type: Easing.OutCubic
+                            }
+
+                        }
+
+                        Behavior on x {
+                            NumberAnimation {
+                                duration: Theme.barMs(300)
+                                easing.type: Easing.OutCubic
+                            }
+
+                        }
+
+                        Behavior on width {
+                            NumberAnimation {
+                                duration: Theme.barMs(300)
+                                easing.type: Easing.OutCubic
+                            }
+
+                        }
+
+                        Behavior on height {
+                            NumberAnimation {
+                                duration: Theme.barMs(300)
                                 easing.type: Easing.OutCubic
                             }
 
@@ -953,22 +1546,40 @@ Item {
                 anchors.centerIn: parent
                 scale: 0.94 + 0.06 * (1 - Math.pow(1 - root.reveal, 3))
 
+                Text {
+                    y: root.captionY
+                    height: root.labelHeight
+                    visible: root.specialCount > 0
+                    opacity: root.stagger(root.slotCount, 0)
+                    verticalAlignment: Text.AlignVCenter
+                    text: root.specialCount > 1 ? "SCRATCHPADS" : "SCRATCHPAD"
+                    color: Theme.subtextDim
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                    font.pixelSize: Math.max(8, 10 * root.gridScale)
+                    font.letterSpacing: 1.2
+                }
+
                 Repeater {
                     id: tileRepeater
 
-                    model: root.slotCount
+                    model: root.totalSlots
 
                     Item {
                         id: tile
 
                         required property int index
                         readonly property var wsObj: root.wsAt(tile.index)
-                        readonly property bool isActive: tile.wsObj ? tile.wsObj.active : false
+                        readonly property bool isSpecial: tile.index >= root.slotCount
+                        readonly property bool isActive: tile.isSpecial ? tile.index === root.shownSpecialSlot : (tile.wsObj ? tile.wsObj.active : false)
                         readonly property bool isUrgent: tile.wsObj ? tile.wsObj.urgent : false
                         readonly property bool isDropTarget: root.dragging && root.dropSlot === tile.index
                         readonly property bool highlighted: tileHover.hovered || root.selectedIndex === tile.index
                         readonly property string label: {
                             const w = tile.wsObj;
+                            if (tile.isSpecial)
+                                return root.specialName(w ? w.name : "");
+
                             if (w && w.name && w.name !== String(tile.index + 1))
                                 return w.name;
 
@@ -1060,10 +1671,7 @@ Item {
 
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.focusWorkspace(tile.index + 1);
-                                root.expanded = false;
-                            }
+                            onClicked: root.activateSlot(tile.index)
                         }
 
                     }
@@ -1113,23 +1721,7 @@ Item {
                         readonly property real restW: Math.max(2, thumb.clampedW - thumb.thumbGap)
                         readonly property real restH: Math.max(2, thumb.clampedH - thumb.thumbGap)
                         readonly property var toplevel: root.tlByAddress[thumb.address] || null
-                        readonly property string iconSource: {
-                            const c = thumb.appClass;
-                            if (c === "")
-                                return "";
-
-                            let p = Quickshell.iconPath(c, true);
-                            if (p === "")
-                                p = Quickshell.iconPath(c.toLowerCase(), true);
-
-                            if (p === "") {
-                                const dot = c.lastIndexOf(".");
-                                if (dot >= 0)
-                                    p = Quickshell.iconPath(c.slice(dot + 1).toLowerCase(), true);
-
-                            }
-                            return p;
-                        }
+                        readonly property string iconSource: root.iconFor(thumb.appClass)
                         readonly property bool hasPreview: thumb.everHadContent || preview.hasContent
                         readonly property bool isSwapTarget: !dragHandler.active && root.swapTarget === thumb.address
                         property bool everHadContent: false
@@ -1177,8 +1769,8 @@ Item {
                                     }
                                     return ;
                                 }
-                                root.setPendingMove(thumb.address, targetSlot + 1);
-                                root.moveWindowToWorkspace(thumb.address, targetSlot + 1);
+                                root.setPendingMove(thumb.address, root.slotWsId(targetSlot));
+                                root.moveWindowToSlot(thumb.address, targetSlot);
                             }
                             onCentroidChanged: {
                                 if (!dragHandler.active)

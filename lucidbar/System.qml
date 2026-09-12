@@ -1003,11 +1003,11 @@ BarPill {
                                 iconPath: "M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"
                                 name: "GPS"
                                 sub: {
+                                    if (!Prefs.gpsEnabled)
+                                        return "Off";
+
                                     if (Loc.busy)
                                         return "Locating…";
-
-                                    if (!Prefs.gpsEnabled)
-                                        return Loc.place !== "" ? Loc.place : "Off";
 
                                     return Loc.place !== "" ? Loc.place : "No fix yet";
                                 }

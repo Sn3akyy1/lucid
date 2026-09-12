@@ -68,7 +68,7 @@ Variants {
             property Item dragFrame: null
 
             readonly property string screenName: layer.screen ? layer.screen.name : ""
-            readonly property bool isPrimary: Quickshell.screens.length > 0 && layer.screen === Quickshell.screens[0]
+            readonly property bool isPrimary: layer.screen !== null && layer.screen === Monitors.mainScreen
             readonly property int frameCount: rep.count
             readonly property bool editing: Widgets.editUid !== "" && deck.editFrame !== null
             // only ask for keys at all once something you can type into is placed;

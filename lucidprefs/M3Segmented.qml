@@ -10,12 +10,13 @@ Item {
     property color trackColor: Theme.bgSunken
     // [{ "key": "island", "label": "Islands" }, ...]
     property var options: []
-    // driven by its binding, never self-assigned
-    property string current: ""
+    // driven by its binding, never self-assigned. var, not string: a numeric
+    // key coerces to "0" and then never matches its own option
+    property var current: ""
     property bool enabled: true
     property int gap: 2
 
-    signal chosen(string key)
+    signal chosen(var key)
 
     implicitHeight: 40
     implicitWidth: 240

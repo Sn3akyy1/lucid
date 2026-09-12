@@ -504,6 +504,17 @@ Item {
             scale: frame.zoom
             transformOrigin: Item.TopLeft
 
+            // a preset can resize a card as it moves it, so the content follows the card
+            Behavior on scale {
+                enabled: frame.appeared && !frame.resizing
+
+                NumberAnimation {
+                    duration: Theme.durMedium
+                    easing.type: Theme.easeStandard
+                }
+
+            }
+
             Loader {
                 id: body
 

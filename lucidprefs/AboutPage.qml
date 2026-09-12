@@ -5,7 +5,7 @@ import qs
 Column {
     id: page
 
-    readonly property string version: "v1.0.0"
+    readonly property string version: Updates.currentLabel
     readonly property bool beta: true
     readonly property var components: [{
         "name": "lucidbar",
@@ -146,6 +146,50 @@ Column {
 
                 }
 
+            }
+
+        }
+
+    }
+
+    SettingCard {
+        title: "UPDATES"
+
+        SettingRow {
+            title: Updates.available ? "Lucid v" + Updates.latest + " is out" : "Version " + Updates.currentLabel
+            description: Updates.status
+
+            Row {
+                spacing: 8
+
+                M3Button {
+                    text: Updates.busy ? "Checking…" : "Check now"
+                    variant: "tonal"
+                    enabled: !Updates.busy && Updates.current !== ""
+                    onClicked: Updates.check()
+                }
+
+                M3Button {
+                    text: "What's new"
+                    variant: Updates.available ? "filled" : "outlined"
+                    onClicked: Updates.openLatest()
+                }
+
+            }
+
+        }
+
+        SettingRow {
+            title: "Check for updates"
+            resetKey: "updateCheck"
+            description: "Once a day Lucid asks GitHub for the newest release, and tells you once when there is one. The request carries nothing about you or this machine."
+            showDivider: false
+
+            M3Switch {
+                checked: Prefs.updateCheck
+                onToggled: (v) => {
+                    return Prefs.updateCheck = v;
+                }
             }
 
         }

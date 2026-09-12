@@ -347,6 +347,15 @@ PanelWindow {
         return null;
     }
 
+    // the bar's scratchpad stash goes through this so it shows the icons the dock shows
+    function iconForClass(cls) {
+        if (!cls || cls === "")
+            return "";
+
+        var entry = dockWindow.entryForClass(cls);
+        return IconTheme.resolve(entry && entry.iconName !== "" ? entry.iconName : cls);
+    }
+
     readonly property var pinnedAppIds: {
         var ids = {};
         for (var i = 0; i < appListModel.count; i++) {
@@ -909,6 +918,7 @@ PanelWindow {
         var arr = [];
         for (var o = 0; o < order.length; o++) arr.push({
             "workspaceId": order[o],
+            "workspaceName": groups[order[o]][0].workspace.name || "",
             "count": groups[order[o]].length,
             "address": groups[order[o]][0].address
         });
@@ -958,6 +968,9 @@ PanelWindow {
         for (var j = 0; j < targets.length; j++) Hyprland.dispatch("hl.dsp.window.close({window='address:" + targets[j] + "'})");
     }
 
+    // off for a beat when displays change, so a surface torn down with an
+    // unplugged one is remapped rather than staying gone until a reload
+    visible: Monitors.surfacesUp
     margins.bottom: 0
     exclusiveZone: (!Prefs.loaded || !Prefs.dockEnabled || Prefs.dockAutoHide) ? 0 : (shell.implicitHeight + Prefs.effectiveDockBottomMargin)
     WlrLayershell.keyboardFocus: dockWindow.menuOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
@@ -1049,7 +1062,7 @@ PanelWindow {
 
         function blur(): void {
             dockWindow.menuOpen = false;
-            Prefs.settingsRequested("general");
+            Prefs.settingsRequested("glass");
         }
 
         function command(): void {

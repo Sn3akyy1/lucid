@@ -339,6 +339,11 @@ function stopRecordingBackend() {
             return;
         if (snapWindow.open && !snapWindow.toolbarHidden)
             return;
+        // pinned to the display in use, so the freeze grim takes and the one
+        // the overlay is drawn on are the same display
+        if (Monitors.focusedScreen)
+            snapWindow.screen = Monitors.focusedScreen;
+
         freezeProcess.running = true;
     }
 
@@ -392,7 +397,9 @@ function stopRecordingBackend() {
 
         property bool quiet: false
 
-        command: ["sh", "-c", "grim -l 0 '" + snapWindow.freezePath + "'"]
+        // -o, or a second display would be stitched into the freeze and every
+        // crop taken off it would be read at the wrong scale
+        command: ["sh", "-c", (snapWindow.screen ? "grim -o '" + snapWindow.screen.name + "'" : "grim") + " -l 0 '" + snapWindow.freezePath + "'"]
 
         onExited: (code) => {
             if (freezeProcess.quiet) {

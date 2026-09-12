@@ -8,6 +8,7 @@
 #   anything else — a static theme owns its palette, so colours are left alone
 #
 # the wallpaper is set first because it is the only step you actually see.
+# ~/.config/lucid/wallpaper-outputs.conf, if it exists, overrides single outputs.
 
 set -euo pipefail
 
@@ -17,6 +18,7 @@ CACHE_DIR="$HOME/.cache"
 CURRENT_WALL_FILE="$CACHE_DIR/current_wallpaper"
 CURRENT_THEME_FILE="$CACHE_DIR/current_theme"
 LUCID_DIR="$HOME/.config/lucid"
+WALL_RULES_FILE="$LUCID_DIR/wallpaper-outputs.conf"
 
 CURRENT_THEME="$(cat "$CURRENT_THEME_FILE" 2>/dev/null || echo matugen)"
 
@@ -51,10 +53,56 @@ if ! "$WP_CLI" query &>/dev/null; then
     sleep 0.5
 fi
 
-"$WP_CLI" img "$WALLPAPER" \
-    --transition-type fade \
-    --transition-duration 1 \
-    --transition-fps 60
+set_output() {
+    # $1 image, $2 output ("" for every one), rest passed to the daemon
+    local img="$1" out="$2"; shift 2
+    if [[ -n "$out" ]]; then
+        "$WP_CLI" img "$img" -o "$out" \
+            --transition-type fade --transition-duration 1 --transition-fps 60 "$@" \
+            || echo "warning: could not set the wallpaper on $out" >&2
+    else
+        "$WP_CLI" img "$img" \
+            --transition-type fade --transition-duration 1 --transition-fps 60 "$@"
+    fi
+}
+
+# per-output overrides, one rule a line:  <output>  <extra args for img>
+# any argument that is a file becomes that output's image, the rest are passed
+# through, so a portrait screen can letterbox instead of crop, or show its own
+# picture. every other output gets $WALLPAPER, in the same pass, so nothing
+# fades twice
+declare -A WALL_RULES=()
+if [[ -f "$WALL_RULES_FILE" ]]; then
+    while read -r RULE_OUT RULE_ARGS; do
+        [[ -z "${RULE_OUT:-}" || "$RULE_OUT" == \#* ]] && continue
+        WALL_RULES["$RULE_OUT"]="$RULE_ARGS"
+    done < "$WALL_RULES_FILE"
+fi
+
+OUTPUTS=()
+if [[ ${#WALL_RULES[@]} -gt 0 ]] && command -v hyprctl &>/dev/null; then
+    while read -r NAME; do
+        [[ -n "$NAME" ]] && OUTPUTS+=("$NAME")
+    done < <(hyprctl monitors | awk '/^Monitor /{print $2}')
+fi
+
+if [[ ${#OUTPUTS[@]} -eq 0 ]]; then
+    set_output "$WALLPAPER" ""
+else
+    for OUT in "${OUTPUTS[@]}"; do
+        OUT_IMG="$WALLPAPER"
+        OUT_ARGS=()
+        for ARG in ${WALL_RULES[$OUT]:-}; do
+            ARG="${ARG/#\~/$HOME}"
+            if [[ -f "$ARG" ]]; then
+                OUT_IMG="$ARG"
+            else
+                OUT_ARGS+=("$ARG")
+            fi
+        done
+        set_output "$OUT_IMG" "$OUT" ${OUT_ARGS[@]+"${OUT_ARGS[@]}"}
+    done
+fi
 
 mkdir -p "$CACHE_DIR"
 printf '%s' "$WALLPAPER" > "$CURRENT_WALL_FILE"

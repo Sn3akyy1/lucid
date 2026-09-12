@@ -25,6 +25,18 @@ Singleton {
     // uid of the card currently held by the pointer, and of the one showing its menu
     property string dragUid: ""
     property string menuUid: ""
+    // the preset on the desktop right now, "" once the arrangement is your own
+    property string presetId: ""
+    // presets saved from your own desktop, in the same shape as the built-in ones
+    property var userPresets: []
+    // the unsaved arrangement a preset last replaced, so it is one click away
+    property var lastLayout: []
+    // cards a preset took off while they still held something you wrote
+    property var stash: []
+    // the primary screen's cards as plain entries, for drawing it small
+    property var desktopLayout: []
+    // the last layout only has somewhere to go back to while something else is showing
+    readonly property bool canRestore: root.lastLayout.length > 0 && (root.presetId !== "" || instances.count === 0)
 
     signal spawned(string uid)
 
@@ -502,6 +514,131 @@ Singleton {
         }]
     }]
 
+    // the full-width bars every preset stands on. listed first in each, so the cards
+    // after them sit on top wherever a peak reaches up behind one
+    readonly property var footBars: ({ "type": "visualiser", "variant": "bars", "at": "bl", "x": 0, "y": 940, "w": 1920, "h": 140, "stretch": true, "pinned": true, "opts": { "density": "fine" } })
+
+    // laid out on a 1920x1080 screen. "at" pins a card to an edge, t/m/b then l/c/r,
+    // so a cluster holds together at any other size; "stretch" pins both sides.
+    // cards stop at y 924, clear of the bars
+    readonly property var presets: [{
+        "id": "collage",
+        "name": "Collage",
+        "blurb": "Notes, cover art, the time and your charge, stacked on the right.",
+        "cards": [
+            root.footBars,
+            { "type": "notes", "variant": "sticky", "at": "tr", "x": 1646, "y": 112 },
+            { "type": "media", "variant": "art", "at": "tr", "x": 1386, "y": 185 },
+            { "type": "battery", "variant": "ring", "at": "tr", "x": 1658, "y": 372, "zoom": 1.25 },
+            { "type": "clock", "variant": "stack", "at": "tr", "x": 1410, "y": 445 }
+        ]
+    }, {
+        "id": "bookends",
+        "name": "Bookends",
+        "blurb": "Date and weather on the left, the time and your music on the right.",
+        "cards": [
+            root.footBars,
+            { "type": "calendar", "variant": "month", "at": "tl", "x": 20, "y": 110 },
+            { "type": "weather", "variant": "compact", "at": "tl", "x": 26, "y": 432, "zoom": 1.5 },
+            { "type": "clock", "variant": "stack", "at": "tr", "x": 1612, "y": 178, "zoom": 1.25 },
+            { "type": "media", "variant": "card", "at": "tr", "x": 1612, "y": 489 }
+        ]
+    }, {
+        "id": "dashboard",
+        "name": "Dashboard",
+        "blurb": "The day down the left, the machine and your list down the right.",
+        "cards": [
+            root.footBars,
+            { "type": "clock", "variant": "stack", "at": "tl", "x": 46, "y": 287, "zoom": 1.25 },
+            { "type": "media", "variant": "card", "at": "tl", "x": 349, "y": 283 },
+            { "type": "calendar", "variant": "month", "at": "tl", "x": 33, "y": 618 },
+            { "type": "weather", "variant": "compact", "at": "tl", "x": 349, "y": 734, "zoom": 1.5 },
+            { "type": "battery", "variant": "bar", "at": "tr", "x": 1622, "y": 126 },
+            { "type": "system", "variant": "rings", "at": "tr", "x": 1578, "y": 260 },
+            { "type": "system", "variant": "graph", "at": "tr", "x": 1562, "y": 434 },
+            { "type": "todo", "variant": "list", "at": "tr", "x": 1586, "y": 636 }
+        ]
+    }, {
+        "id": "minimal",
+        "name": "Minimal",
+        "blurb": "Just the time on the wallpaper, and the music along the bottom.",
+        "cards": [
+            root.footBars,
+            { "type": "clock", "variant": "minimal", "at": "bl", "x": 56, "y": 756, "zoom": 1.75 }
+        ]
+    }, {
+        "id": "focus",
+        "name": "Focus",
+        "blurb": "The time and what is left to do, front and centre.",
+        "cards": [
+            root.footBars,
+            { "type": "clock", "variant": "analog", "at": "tc", "x": 652, "y": 120, "zoom": 1.25 },
+            { "type": "todo", "variant": "focus", "at": "tc", "x": 933, "y": 120, "zoom": 1.25 }
+        ]
+    }, {
+        "id": "planner",
+        "name": "Planner",
+        "blurb": "The hour, the month, a list and a notepad, in reading order.",
+        "cards": [
+            root.footBars,
+            { "type": "clock", "variant": "digital", "at": "tl", "x": 40, "y": 100 },
+            { "type": "todo", "variant": "list", "at": "tl", "x": 356, "y": 100 },
+            { "type": "calendar", "variant": "month", "at": "tl", "x": 40, "y": 264 },
+            { "type": "notes", "variant": "lined", "at": "tl", "x": 356, "y": 404 }
+        ]
+    }, {
+        "id": "studio",
+        "name": "Studio",
+        "blurb": "Big cover art, and the sound as one flowing wave beside it.",
+        "cards": [
+            { "type": "visualiser", "variant": "wave", "at": "bl", "x": 422, "y": 930, "w": 1498, "h": 150, "stretch": true, "pinned": true, "opts": { "tint": "gradient" } },
+            { "type": "media", "variant": "art", "at": "bl", "x": 40, "y": 674, "zoom": 1.5 }
+        ]
+    }, {
+        "id": "moodboard",
+        "name": "Moodboard",
+        "blurb": "Your palette beside the cover art, and a note for ideas.",
+        "cards": [
+            root.footBars,
+            { "type": "media", "variant": "art", "at": "tl", "x": 40, "y": 100 },
+            { "type": "palette", "variant": "swatches", "at": "tl", "x": 300, "y": 100 },
+            { "type": "palette", "variant": "ramp", "at": "tl", "x": 300, "y": 288 },
+            { "type": "notes", "variant": "sticky", "at": "tl", "x": 40, "y": 360, "opts": { "tint": "tertiary" } }
+        ]
+    }, {
+        "id": "traveller",
+        "name": "Traveller",
+        "blurb": "Three cities, the forecast and the week ahead.",
+        "cards": [
+            root.footBars,
+            { "type": "clock", "variant": "world", "at": "tr", "x": 964, "y": 100 },
+            { "type": "weather", "variant": "forecast", "at": "tr", "x": 1244, "y": 100 },
+            { "type": "calendar", "variant": "week", "at": "tr", "x": 1580, "y": 100 }
+        ]
+    }, {
+        "id": "monitor",
+        "name": "Monitor",
+        "blurb": "Load, memory, disk and charge, tucked into a corner.",
+        "cards": [
+            root.footBars,
+            { "type": "system", "variant": "rings", "at": "br", "x": 1284, "y": 556 },
+            { "type": "battery", "variant": "detail", "at": "br", "x": 1632, "y": 558 },
+            { "type": "system", "variant": "bars", "at": "br", "x": 1308, "y": 730 },
+            { "type": "system", "variant": "graph", "at": "br", "x": 1592, "y": 738 }
+        ]
+    }, {
+        "id": "corners",
+        "name": "Corners",
+        "blurb": "One card in each corner and nothing in the middle.",
+        "cards": [
+            root.footBars,
+            { "type": "clock", "variant": "digital", "at": "tl", "x": 40, "y": 100 },
+            { "type": "weather", "variant": "current", "at": "tr", "x": 1616, "y": 100 },
+            { "type": "media", "variant": "row", "at": "bl", "x": 40, "y": 806 },
+            { "type": "battery", "variant": "bar", "at": "br", "x": 1632, "y": 806 }
+        ]
+    }]
+
     function typeAt(typeId) {
         for (var i = 0; i < root.catalogue.length; i++) {
             if (root.catalogue[i].id === typeId)
@@ -647,6 +784,7 @@ Singleton {
             "closing": false,
             "born": true
         });
+        root.edited();
         root.save();
         root.spawned(uid);
         return uid;
@@ -658,6 +796,7 @@ Singleton {
             return ;
 
         instances.setProperty(i, "closing", true);
+        root.edited();
         purgeTimer.restart();
     }
 
@@ -667,11 +806,17 @@ Singleton {
                 instances.remove(i);
 
         }
+        root.touched();
         root.save();
     }
 
+    // an unsaved layout is set aside before it is cleared away, so it can come back
     function closeAll() {
+        if (root.presetId === "" && root.liveCount() > 0)
+            root.lastLayout = root.snapshot(true);
+
         for (var i = 0; i < instances.count; i++) instances.setProperty(i, "closing", true)
+        root.edited();
         purgeTimer.restart();
     }
 
@@ -681,16 +826,23 @@ Singleton {
                 instances.setProperty(i, "closing", true);
 
         }
+        root.edited();
         purgeTimer.restart();
     }
 
+    // a press without travel still lands here, so only a real move counts as an edit
     function setPos(uid, x, y) {
         var i = root.indexOf(uid);
         if (i < 0)
             return ;
 
+        var e = instances.get(i);
+        if (e.wx === Math.round(x) && e.wy === Math.round(y))
+            return ;
+
         instances.setProperty(i, "wx", Math.round(x));
         instances.setProperty(i, "wy", Math.round(y));
+        root.edited();
         root.save();
     }
 
@@ -727,6 +879,7 @@ Singleton {
         instances.setProperty(i, "wvariant", v.id);
         instances.setProperty(i, "bw", keep ? Math.max(lim.minW, Math.min(lim.maxW, e.bw)) : v.w);
         instances.setProperty(i, "bh", keep ? Math.max(lim.minH, Math.min(lim.maxH, e.bh)) : v.h);
+        root.edited();
         root.save();
     }
 
@@ -755,8 +908,14 @@ Singleton {
 
         var e = instances.get(i);
         var lim = root.sizeLimits(e.wtype, e.wvariant);
-        instances.setProperty(i, "bw", Math.round(Math.max(lim.minW, Math.min(lim.maxW, w))));
-        instances.setProperty(i, "bh", Math.round(Math.max(lim.minH, Math.min(lim.maxH, h))));
+        var nw = Math.round(Math.max(lim.minW, Math.min(lim.maxW, w)));
+        var nh = Math.round(Math.max(lim.minH, Math.min(lim.maxH, h)));
+        if (e.bw === nw && e.bh === nh)
+            return ;
+
+        instances.setProperty(i, "bw", nw);
+        instances.setProperty(i, "bh", nh);
+        root.edited();
         root.save();
     }
 
@@ -778,6 +937,7 @@ Singleton {
             return ;
 
         instances.setProperty(i, "zoom", Math.max(0.75, Math.min(1.75, v)));
+        root.edited();
         root.save();
     }
 
@@ -787,6 +947,7 @@ Singleton {
             return ;
 
         instances.setProperty(i, "screenName", name);
+        root.edited();
         root.save();
     }
 
@@ -824,6 +985,494 @@ Singleton {
         }
     }
 
+    // anything done by hand to what is placed or where
+    function edited() {
+        root.presetId = "";
+        root.touched();
+    }
+
+    function touched() {
+        Qt.callLater(root.refreshDesktop);
+    }
+
+    function refreshDesktop() {
+        var next = root.snapshot(true);
+        if (JSON.stringify(next) !== JSON.stringify(root.desktopLayout))
+            root.desktopLayout = next;
+
+    }
+
+    // the main display is wherever the shell sits, the first one otherwise
+    function primaryScreen() {
+        return Monitors.mainScreen;
+    }
+
+    // presets only ever arrange the primary screen; cards on the others are left alone
+    function onPrimary(e) {
+        var scr = root.primaryScreen();
+        return e.screenName === "" || (scr !== null && e.screenName === scr.name);
+    }
+
+    function liveCount() {
+        var n = 0;
+        for (var i = 0; i < instances.count; i++) {
+            var e = instances.get(i);
+            if (!e.closing && root.onPrimary(e))
+                n++;
+
+        }
+        return n;
+    }
+
+    // one card in the shape widgets.json, a layout and the stash all share
+    function entryOf(e) {
+        return ({
+            "uid": e.uid,
+            "type": e.wtype,
+            "variant": e.wvariant,
+            "wx": e.wx,
+            "wy": e.wy,
+            "bw": e.bw,
+            "bh": e.bh,
+            "pinned": e.pinned,
+            "zoom": e.zoom,
+            "zOrder": e.zOrder,
+            "screenName": e.screenName,
+            "opts": JSON.parse(e.optsJson)
+        });
+    }
+
+    function snapshot(primaryOnly) {
+        var out = [];
+        for (var i = 0; i < instances.count; i++) {
+            var e = instances.get(i);
+            if (!e.closing && (primaryOnly !== true || root.onPrimary(e)))
+                out.push(root.entryOf(e));
+
+        }
+        return out;
+    }
+
+    // built-ins first, so a built-in tile never re-reads when a saved preset changes
+    function presetAt(id) {
+        for (var i = 0; i < root.presets.length; i++) {
+            if (root.presets[i].id === id)
+                return root.presets[i];
+
+        }
+        for (var j = 0; j < root.userPresets.length; j++) {
+            if (root.userPresets[j].id === id)
+                return root.userPresets[j];
+
+        }
+        return null;
+    }
+
+    function userPresetNamed(name) {
+        var key = String(name).trim().toLowerCase();
+        for (var i = 0; i < root.userPresets.length; i++) {
+            if (String(root.userPresets[i].name).toLowerCase() === key)
+                return root.userPresets[i];
+
+        }
+        return null;
+    }
+
+    function presetLayout(id) {
+        return root.layoutOf(root.presetAt(id));
+    }
+
+    // a preset's cards placed on the primary screen. a preset remembers the screen it
+    // was laid out on, and the whole arrangement scales from that one to this one
+    function layoutOf(p) {
+        if (!p || !Array.isArray(p.cards))
+            return [];
+
+        var scr = root.primaryScreen();
+        var W = scr ? scr.width : root.canvasW;
+        var H = scr ? scr.height : root.canvasH;
+        var RW = p.refW || 1920;
+        var RH = p.refH || 1080;
+        var s = Math.max(0.6, Math.min(1.6, Math.min(W / RW, H / RH)));
+        var out = [];
+        for (var i = 0; i < p.cards.length; i++) {
+            var c = p.cards[i];
+            var v = root.variantAt(c.type, c.variant);
+            if (!v)
+                continue;
+
+            var z0 = c.zoom || 1;
+            var zoom = Math.round(z0 * s * 100) / 100;
+            var bw = (v.resizable === true && c.w) ? c.w : v.w;
+            var bh = (v.resizable === true && c.h) ? c.h : v.h;
+            var refW = bw * z0;
+            var refH = bh * z0;
+            var at = c.at || "tl";
+            var x = c.x * s;
+            if (c.stretch === true)
+                bw = (W - (RW - c.x - refW) * s - x) / zoom;
+            else if (at.charAt(1) === "r")
+                x = W - (RW - c.x - refW) * s - bw * zoom;
+            else if (at.charAt(1) === "c")
+                x = W / 2 + (c.x + refW / 2 - RW / 2) * s - bw * zoom / 2;
+            var y = c.y * s;
+            if (at.charAt(0) === "b")
+                y = H - (RH - c.y - refH) * s - bh * zoom;
+            else if (at.charAt(0) === "m")
+                y = H / 2 + (c.y + refH / 2 - RH / 2) * s - bh * zoom / 2;
+            if (v.resizable === true) {
+                var lim = root.sizeLimits(c.type, v.id);
+                bw = Math.max(lim.minW, Math.min(lim.maxW, bw));
+                bh = Math.max(lim.minH, Math.min(lim.maxH, bh));
+            }
+            var entry = {
+                "type": c.type,
+                "variant": v.id,
+                "wx": Math.round(Math.max(0, Math.min(W - bw * zoom, x))),
+                "wy": Math.round(Math.max(0, Math.min(H - bh * zoom, y))),
+                "bw": Math.round(bw),
+                "bh": Math.round(bh),
+                "zoom": zoom,
+                "pinned": c.pinned === true,
+                "screenName": "",
+                "opts": c.opts || ({})
+            };
+            // a saved preset knows which cards it was made from
+            if (c.uid !== undefined)
+                entry.uid = c.uid;
+
+            out.push(entry);
+        }
+        return out;
+    }
+
+    // the desktop written down as a preset: each cluster pinned to the edge it sits
+    // nearest, so the arrangement still hugs its corners on a screen of another size
+    function presetFromDesktop(id, name) {
+        var scr = root.primaryScreen();
+        var W = scr ? scr.width : root.canvasW;
+        var H = scr ? scr.height : root.canvasH;
+        var cards = root.snapshot(true);
+        var box = cards.map((c) => {
+            var w = c.bw * c.zoom;
+            var h = c.bh * c.zoom;
+            return ({
+                "x": Math.max(0, Math.min(W - w, c.wx)),
+                "y": Math.max(0, Math.min(H - h, c.wy)),
+                "w": w,
+                "h": h
+            });
+        });
+        // a resizable card run out to a screen edge keeps both of its sides pinned
+        var stretch = cards.map((c, i) => {
+            return root.resizable(c.type, c.variant) && box[i].w >= W / 2 && (box[i].x <= 4 || box[i].x + box[i].w >= W - 4);
+        });
+        // cards within a hand's width of each other move as one
+        var group = cards.map((c, i) => {
+            return i;
+        });
+        var find = (i) => {
+            while (group[i] !== i)
+                i = group[i];
+            return i;
+        };
+        var near = 48;
+        for (var i = 0; i < cards.length; i++) {
+            for (var j = i + 1; j < cards.length; j++) {
+                var a = box[i];
+                var b = box[j];
+                if (!stretch[i] && !stretch[j] && a.x - near < b.x + b.w && b.x - near < a.x + a.w && a.y - near < b.y + b.h && b.y - near < a.y + a.h)
+                    group[find(i)] = find(j);
+
+            }
+        }
+        var ext = {};
+        for (var k = 0; k < cards.length; k++) {
+            var g = find(k);
+            var r = ext[g] || ({
+                "x0": W,
+                "y0": H,
+                "x1": 0,
+                "y1": 0
+            });
+            r.x0 = Math.min(r.x0, box[k].x);
+            r.y0 = Math.min(r.y0, box[k].y);
+            r.x1 = Math.max(r.x1, box[k].x + box[k].w);
+            r.y1 = Math.max(r.y1, box[k].y + box[k].h);
+            ext[g] = r;
+        }
+        var out = [];
+        for (var n = 0; n < cards.length; n++) {
+            var c = cards[n];
+            var e = ext[find(n)];
+            var cx = (e.x0 + e.x1) / 2;
+            var cy = (e.y0 + e.y1) / 2;
+            out.push({
+                "uid": c.uid,
+                "type": c.type,
+                "variant": c.variant,
+                "at": (cy < H / 3 ? "t" : (cy > H * 2 / 3 ? "b" : "m")) + (cx < W / 3 ? "l" : (cx > W * 2 / 3 ? "r" : "c")),
+                "x": Math.round(box[n].x),
+                "y": Math.round(box[n].y),
+                "w": c.bw,
+                "h": c.bh,
+                "zoom": c.zoom,
+                "stretch": stretch[n],
+                "pinned": c.pinned === true,
+                "opts": c.opts
+            });
+        }
+        return ({
+            "id": id,
+            "name": name,
+            "refW": W,
+            "refH": H,
+            "saved": Date.now(),
+            "cards": out
+        });
+    }
+
+    // keeps the primary screen as a preset of your own; a name already in use is
+    // updated where it stands rather than doubled
+    function savePreset(name) {
+        var clean = String(name).trim().substring(0, 32);
+        if (clean === "" || root.liveCount() === 0)
+            return "";
+
+        var old = root.userPresetNamed(clean);
+        var id = old !== null ? old.id : "user-" + Date.now().toString(36);
+        var p = root.presetFromDesktop(id, old !== null ? old.name : clean);
+        var list = root.userPresets.slice();
+        var at = -1;
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].id === id)
+                at = i;
+
+        }
+        if (at >= 0)
+            list[at] = p;
+        else
+            list.unshift(p);
+        root.userPresets = list;
+        root.presetId = id;
+        root.save();
+        return id;
+    }
+
+    // the widgets on the desktop stay where they are; only the preset goes
+    function deletePreset(id) {
+        var list = root.userPresets.filter((q) => {
+            return q.id !== id;
+        });
+        if (list.length === root.userPresets.length)
+            return false;
+
+        root.userPresets = list;
+        if (root.presetId === id)
+            root.presetId = "";
+
+        root.save();
+        return true;
+    }
+
+    // the options nobody picks from a menu: the text of a note, the items of a list
+    function isContentKey(typeId, key) {
+        var t = root.typeAt(typeId);
+        if (!t)
+            return false;
+
+        for (var i = 0; i < t.options.length; i++) {
+            if (t.options[i].key === key)
+                return t.options[i].type === "hidden";
+
+        }
+        return false;
+    }
+
+    function holdsContent(typeId, opts) {
+        var d = root.defaultOptions(typeId);
+        for (var k in opts) {
+            if (root.isContentKey(typeId, k) && opts[k] !== undefined && opts[k] !== d[k])
+                return true;
+
+        }
+        return false;
+    }
+
+    // incoming options win, except anything you wrote, which stays with its card
+    function mergeOpts(typeId, current, incoming) {
+        var d = root.defaultOptions(typeId);
+        var out = {};
+        for (var k in d) out[k] = d[k]
+        for (var k1 in current) out[k1] = current[k1]
+        for (var k2 in incoming) {
+            if (root.isContentKey(typeId, k2) && out[k2] !== undefined && out[k2] !== d[k2])
+                continue;
+
+            out[k2] = incoming[k2];
+        }
+        return out;
+    }
+
+    // moves what is already out onto a new layout instead of rebuilding it, so a card
+    // that stays slides to its new spot and keeps whatever you wrote in it
+    function arrange(plan) {
+        root.menuUid = "";
+        root.editUid = "";
+        var live = [];
+        for (var i = 0; i < instances.count; i++) {
+            var r = instances.get(i);
+            if (!r.closing && root.onPrimary(r))
+                live.push({
+                "uid": r.uid,
+                "wtype": r.wtype,
+                "wvariant": r.wvariant,
+                "wx": r.wx,
+                "wy": r.wy
+            });
+
+        }
+        // reading order, so the upper of two alike cards takes the upper slot
+        live.sort((a, b) => {
+            return a.wy !== b.wy ? a.wy - b.wy : a.wx - b.wx;
+        });
+        var stash = root.stash.slice();
+        var taken = {};
+        var pick = plan.map(() => {
+            return null;
+        });
+        var fromLive = (e, test) => {
+            for (var j = 0; j < live.length; j++) {
+                if (!taken[live[j].uid] && test(e, live[j])) {
+                    taken[live[j].uid] = true;
+                    return ({
+                        "live": true,
+                        "uid": live[j].uid
+                    });
+                }
+            }
+            return null;
+        };
+        var fromStash = (e, test) => {
+            for (var j = 0; j < stash.length; j++) {
+                if (test(e, stash[j]))
+                    return ({
+                    "live": false,
+                    "entry": stash.splice(j, 1)[0]
+                });
+
+            }
+            return null;
+        };
+        // the same card, then one parked earlier, then the same look, then the same kind
+        var passes = [(e) => {
+            return fromLive(e, (a, m) => {
+                return a.uid !== undefined && a.uid === m.uid;
+            });
+        }, (e) => {
+            return fromStash(e, (a, s) => {
+                return a.uid !== undefined && a.uid === s.uid;
+            });
+        }, (e) => {
+            return fromLive(e, (a, m) => {
+                return a.type === m.wtype && a.variant === m.wvariant;
+            });
+        }, (e) => {
+            return fromLive(e, (a, m) => {
+                return a.type === m.wtype;
+            });
+        }, (e) => {
+            return fromStash(e, (a, s) => {
+                return a.type === s.type;
+            });
+        }];
+        for (var q = 0; q < passes.length; q++) {
+            for (var p = 0; p < plan.length; p++) {
+                if (pick[p] === null)
+                    pick[p] = passes[q](plan[p]);
+
+            }
+        }
+        for (var n = 0; n < plan.length; n++) {
+            var e = plan[n];
+            var v = root.variantAt(e.type, e.variant);
+            if (!v)
+                continue;
+
+            var got = pick[n];
+            var place = {
+                "wvariant": v.id,
+                "wx": e.wx,
+                "wy": e.wy,
+                "bw": v.resizable === true ? e.bw : v.w,
+                "bh": v.resizable === true ? e.bh : v.h,
+                "pinned": e.pinned === true,
+                "zoom": e.zoom || 1,
+                "zOrder": ++root.topZ,
+                "screenName": e.screenName || ""
+            };
+            if (got !== null && got.live) {
+                var k = root.indexOf(got.uid);
+                place.optsJson = JSON.stringify(root.mergeOpts(e.type, JSON.parse(instances.get(k).optsJson), e.opts || {}));
+                instances.set(k, place);
+                continue;
+            }
+            var base = got !== null ? got.entry : null;
+            var uid = base !== null ? base.uid : (e.uid !== undefined ? e.uid : "w" + root.nextId++);
+            place.optsJson = JSON.stringify(root.mergeOpts(e.type, base !== null ? (base.opts || {}) : {}, e.opts || {}));
+            place.closing = false;
+            place.born = true;
+            // a card still fading out from a moment ago turns round instead of doubling up
+            var fading = root.indexOf(uid);
+            taken[uid] = true;
+            if (fading >= 0) {
+                instances.set(fading, place);
+            } else {
+                place.uid = uid;
+                place.wtype = e.type;
+                instances.append(place);
+            }
+        }
+        for (var g = 0; g < live.length; g++) {
+            if (taken[live[g].uid])
+                continue;
+
+            var at = root.indexOf(live[g].uid);
+            var gone = instances.get(at);
+            if (root.holdsContent(gone.wtype, JSON.parse(gone.optsJson)))
+                stash.push(root.entryOf(gone));
+
+            instances.setProperty(at, "closing", true);
+        }
+        root.stash = stash.slice(-12);
+        purgeTimer.restart();
+        root.touched();
+        root.save();
+    }
+
+    function applyPreset(id) {
+        var plan = root.presetLayout(id);
+        if (plan.length === 0)
+            return false;
+
+        // an arrangement nobody saved is set aside first, so a preset never costs you one
+        if (root.presetId === "" && root.liveCount() > 0)
+            root.lastLayout = root.snapshot(true);
+
+        root.arrange(plan);
+        root.presetId = id;
+        return true;
+    }
+
+    function restoreLast() {
+        if (!root.canRestore)
+            return false;
+
+        root.arrange(root.lastLayout);
+        root.presetId = "";
+        return true;
+    }
+
     // widgets used to live on a layer the bar had already pushed down, so every
     // coordinate in an older file is short by the strip it reserved. the shift is
     // read off Prefs, so this has to wait for it: before that the answer would be
@@ -837,6 +1486,7 @@ Singleton {
         if (dy > 0) {
             for (var i = 0; i < instances.count; i++) instances.setProperty(i, "wy", instances.get(i).wy + dy)
         }
+        root.touched();
         root.save();
     }
 
@@ -845,31 +1495,14 @@ Singleton {
     }
 
     function serialise() {
-        var out = [];
-        for (var i = 0; i < instances.count; i++) {
-            var e = instances.get(i);
-            if (e.closing)
-                continue;
-
-            out.push({
-                "uid": e.uid,
-                "type": e.wtype,
-                "variant": e.wvariant,
-                "wx": e.wx,
-                "wy": e.wy,
-                "bw": e.bw,
-                "bh": e.bh,
-                "pinned": e.pinned,
-                "zoom": e.zoom,
-                "zOrder": e.zOrder,
-                "screenName": e.screenName,
-                "opts": JSON.parse(e.optsJson)
-            });
-        }
         return JSON.stringify({
             "nextId": root.nextId,
             "boardFull": true,
-            "instances": out
+            "preset": root.presetId,
+            "saved": root.userPresets,
+            "last": root.lastLayout,
+            "stash": root.stash,
+            "instances": root.snapshot(false)
         }, null, 2);
     }
 
@@ -898,8 +1531,8 @@ Singleton {
                 "uid": e.uid,
                 "wtype": e.type,
                 "wvariant": v.id,
-                "wx": e.wx || 40,
-                "wy": e.wy || 40,
+                "wx": typeof e.wx === "number" ? e.wx : 40,
+                "wy": typeof e.wy === "number" ? e.wy : 40,
                 "bw": (v.resizable === true && e.bw) ? e.bw : v.w,
                 "bh": (v.resizable === true && e.bh) ? e.bh : v.h,
                 "pinned": e.pinned === true,
@@ -912,8 +1545,15 @@ Singleton {
             });
         }
         root.nextId = Math.max(data.nextId || 1, instances.count + 1);
+        root.userPresets = Array.isArray(data.saved) ? data.saved.filter((p) => {
+            return p && typeof p.id === "string" && typeof p.name === "string" && Array.isArray(p.cards);
+        }) : [];
+        root.presetId = (typeof data.preset === "string" && root.presetAt(data.preset) !== null) ? data.preset : "";
+        root.lastLayout = Array.isArray(data.last) ? data.last : [];
+        root.stash = Array.isArray(data.stash) ? data.stash : [];
         root.needsLift = data.boardFull !== true;
         root.loaded = true;
+        root.refreshDesktop();
         root.liftOntoFullBoard();
     }
 

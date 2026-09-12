@@ -41,6 +41,9 @@ printf '  ~/.config/matugen/config.toml   the [templates.*] blocks Lucid added\n
 printf '  ~/.config/hypr                  the lua config, binds and rules\n'
 printf '  ~/.config/starship.toml         the prompt, and its init line in\n'
 printf '                                  .bashrc / .zshrc / config.fish\n'
-printf '  ~/.config/kitty/kitty.conf      the matugen-colors.conf include\n'
+printf '  ~/.config/kitty/kitty.conf      the matugen-colors.conf and\n'
+printf '                                  lucid-glass.conf includes\n'
+printf '  ~/Pictures/wallpapers           the wallpapers, yours and the\n'
+printf '                                  bundled ones alike\n'
 printf 'Installed packages are left alone too.\n'
 printf '%sRestore from a .backup-* file, or undo these by hand.%s\n' "$ylw" "$r"

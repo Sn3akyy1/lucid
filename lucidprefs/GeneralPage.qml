@@ -6,19 +6,6 @@ Column {
     id: page
 
     readonly property string home: Quickshell.env("HOME")
-    readonly property var blurSteps: [0, 0.2, 0.5, 0.8, 1]
-    readonly property var blurLabels: ["Off", "Light", "Balanced", "Heavy", "Full"]
-    readonly property int blurIndex: {
-        var best = 0, dist = 999;
-        for (var i = 0; i < page.blurSteps.length; i++) {
-            var d = Math.abs(page.blurSteps[i] - Theme.blurAmount);
-            if (d < dist) {
-                dist = d;
-                best = i;
-            }
-        }
-        return best;
-    }
     spacing: 26
 
     SettingCard {
@@ -74,22 +61,12 @@ Column {
 
         SettingRow {
             title: "Glass"
-            resetAction: Prefs.resetBlurToken
-            resetVisible: Theme.blurAmount !== 0
-            description: "How far the compositor blurs the desktop through the shell's surfaces. This replaced the launcher's old >blur strip, which now opens this page instead."
-            warning: "Frosting is handled by the compositor, not the shell, and is buggy \u2014 expect visual artefacts. Set this to Off to avoid them."
-            stacked: true
+            description: "How far the desktop shows through the shell, the terminal and your windows now has a page of its own."
 
-            M3Slider {
-                width: parent.width
-                from: 0
-                to: 4
-                stepSize: 1
-                stepLabels: page.blurLabels
-                value: page.blurIndex
-                onMoved: (v) => {
-                    return Theme.setBlurAmount(page.blurSteps[Math.round(v)]);
-                }
+            M3Button {
+                text: "Glass…"
+                variant: "tonal"
+                onClicked: Prefs.settingsRequested("glass")
             }
 
         }

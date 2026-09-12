@@ -314,6 +314,30 @@ Item {
         anchors.centerIn: parent
         width: 22
         height: 22
+        visible: glyph.kind === "workspaces"
+        preferredRendererType: Shape.CurveRenderer
+
+        ShapePath {
+            strokeWidth: 0
+            fillColor: glyph.color
+
+            PathSvg {
+                path: "M12,16L19.36,10.27L21,9L12,2L3,9L4.63,10.27L12,16Z M12,18.54L4.62,12.81L3,14.07L12,21.07L21,14.07L19.37,12.8L12,18.54Z"
+            }
+
+        }
+
+        transform: Scale {
+            xScale: 22 / 24
+            yScale: 22 / 24
+        }
+
+    }
+
+    Shape {
+        anchors.centerIn: parent
+        width: 22
+        height: 22
         visible: glyph.kind === "idle"
         preferredRendererType: Shape.CurveRenderer
 
@@ -377,6 +401,45 @@ Item {
 
     }
 
+    // two panes, the near one see-through over the far one
+    Item {
+        anchors.fill: parent
+        visible: glyph.kind === "glass"
+
+        Rectangle {
+            x: 2.5
+            y: 2.5
+            width: 12
+            height: 12
+            radius: 3.5
+            color: "transparent"
+            border.width: 1.6
+            border.color: glyph.color
+        }
+
+        Rectangle {
+            x: 7.5
+            y: 7.5
+            width: 12
+            height: 12
+            radius: 3.5
+            color: glyph.color
+            opacity: 0.45
+        }
+
+        Rectangle {
+            x: 7.5
+            y: 7.5
+            width: 12
+            height: 12
+            radius: 3.5
+            color: "transparent"
+            border.width: 1.6
+            border.color: glyph.color
+        }
+
+    }
+
     Item {
         anchors.fill: parent
         visible: glyph.kind === "theme"
@@ -415,6 +478,52 @@ Item {
             width: 1.6
             height: 4.4
             color: glyph.color
+        }
+
+    }
+
+    // a screen on a stand, with a second one stood beside it
+    Item {
+        anchors.fill: parent
+        visible: glyph.kind === "displays"
+
+        Rectangle {
+            x: 1.5
+            y: 4
+            width: 13
+            height: 9.5
+            radius: 2
+            color: "transparent"
+            border.width: 1.6
+            border.color: glyph.color
+        }
+
+        Rectangle {
+            x: 7.2
+            y: 13.5
+            width: 1.6
+            height: 2.6
+            color: glyph.color
+        }
+
+        Rectangle {
+            x: 4.5
+            y: 16.1
+            width: 7
+            height: 1.6
+            radius: 0.8
+            color: glyph.color
+        }
+
+        Rectangle {
+            x: 15.5
+            y: 7
+            width: 5.5
+            height: 8
+            radius: 1.8
+            color: "transparent"
+            border.width: 1.6
+            border.color: glyph.color
         }
 
     }

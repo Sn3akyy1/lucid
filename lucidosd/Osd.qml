@@ -168,6 +168,8 @@ PanelWindow {
     exclusiveZone: 0
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    // remapped with the rest of the shell when displays change
+    visible: Monitors.surfacesUp
     implicitWidth: 420
     implicitHeight: 110
     margins.bottom: 110

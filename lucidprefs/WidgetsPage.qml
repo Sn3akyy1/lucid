@@ -1,14 +1,27 @@
 import QtQuick
+import Quickshell
+import Quickshell.Io
 import qs
 
 Column {
     id: page
 
     property string filter: "all"
+    // the preset previews are drawn over this
+    property string wallpaper: ""
 
     readonly property var shownTypes: page.filter === "all" ? Widgets.catalogue : Widgets.catalogue.filter((t) => {
         return t.id === page.filter;
     })
+
+    // as many columns as fit, every tile the same width
+    function tileWidth(grid) {
+        return Math.max(0, Math.floor((grid.width - grid.columnSpacing * (grid.columns - 1)) / grid.columns));
+    }
+
+    function columnsFor(width) {
+        return Math.max(2, Math.floor((width + 10) / 222));
+    }
 
     spacing: 26
     // the header switch turns the whole layer off, so the page has nothing left to set
@@ -22,8 +35,112 @@ Column {
 
     }
 
+    FileView {
+        path: Quickshell.env("HOME") + "/.cache/current_wallpaper"
+        blockLoading: true
+        printErrors: false
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: page.wallpaper = text().trim()
+    }
+
     WidgetsMap {
         width: parent.width
+        wallpaper: page.wallpaper
+    }
+
+    SettingCard {
+        title: "PRESETS"
+
+        SettingRow {
+            title: "Start from a layout"
+            description: "Each one places a set of widgets and spaces them out for you. Cards you already have slide over to their new spot and keep whatever you wrote in them."
+            showDivider: false
+            stacked: true
+
+            Grid {
+                id: builtIn
+
+                width: parent.width
+                columns: page.columnsFor(builtIn.width)
+                columnSpacing: 10
+                rowSpacing: 10
+
+                Repeater {
+                    model: Widgets.presets
+
+                    PresetTile {
+                        required property var modelData
+
+                        width: page.tileWidth(builtIn)
+                        title: modelData.name
+                        blurb: modelData.blurb
+                        cards: Widgets.presetLayout(modelData.id)
+                        wallpaper: page.wallpaper
+                        selected: Widgets.presetId === modelData.id
+                        onChosen: Widgets.applyPreset(modelData.id)
+                    }
+
+                }
+
+            }
+
+        }
+
+        SettingRow {
+            title: "Your presets"
+            description: Widgets.userPresets.length === 0 ? "Arrange the desktop the way you like it, then save it here and switch back to it whenever you want." : "Saving again under a name you already used updates that preset."
+            showDivider: false
+            stacked: true
+
+            Grid {
+                id: saved
+
+                width: parent.width
+                columns: page.columnsFor(saved.width)
+                columnSpacing: 10
+                rowSpacing: 10
+
+                PresetSaveTile {
+                    width: page.tileWidth(saved)
+                    wallpaper: page.wallpaper
+                }
+
+                // an arrangement nobody saved, set aside when a preset replaced it
+                PresetTile {
+                    width: page.tileWidth(saved)
+                    visible: Widgets.canRestore
+                    title: "Last layout"
+                    blurb: "Not saved. What was on your desktop before this preset."
+                    cards: Widgets.lastLayout
+                    wallpaper: page.wallpaper
+                    mark: "refresh"
+                    onChosen: Widgets.restoreLast()
+                }
+
+                Repeater {
+                    model: Widgets.userPresets
+
+                    PresetTile {
+                        required property var modelData
+
+                        width: page.tileWidth(saved)
+                        title: modelData.name
+                        blurb: "Saved " + Qt.formatDate(new Date(modelData.saved || 0), "d MMMM yyyy")
+                        cards: Widgets.presetLayout(modelData.id)
+                        wallpaper: page.wallpaper
+                        selected: Widgets.presetId === modelData.id
+                        removable: true
+                        onChosen: Widgets.applyPreset(modelData.id)
+                        onRemoveRequested: Prefs.askConfirm("Delete “" + modelData.name + "”?", "The preset goes. The widgets on your desktop stay exactly where they are.", "Delete", "widget-preset:" + modelData.id)
+                    }
+
+                }
+
+            }
+
+        }
+
     }
 
     SettingCard {

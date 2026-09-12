@@ -2,6 +2,140 @@
 
 All notable changes to Lucid are recorded here, newest first.
 
+## v1.0.5 — 2026-09-12
+
+Multiple displays, properly: the shell sits where you put it, every screen is
+configurable from the settings app, and a display coming and going no longer
+takes the bar with it. Plus scratchpad workspaces on their own keys, glass you
+can aim at one app at a time, widget arrangements you can save, and Lucid
+telling you when there is a new version.
+
+### Displays
+
+- **A Displays page**, under Environment in the sidebar, for every screen the
+  machine has: resolution, refresh rate, scale, orientation and adaptive sync,
+  one card per output. Each card names the panel, its size and what it is doing
+  right now, and only offers modes the display actually reports — so there is no
+  way to pick one it cannot show.
+- **Scale says what you get.** Each option is labelled with the room it leaves
+  for windows, a scale that does not divide the panel evenly is called out as
+  such, and scales that would leave less than 960px of width are not offered at
+  all.
+- **Displays are arranged by dragging them.** With more than one screen the page
+  draws the layout the way Hyprland sees it; drag one and its edges snap to its
+  neighbours, so there are no gaps for the pointer to fall into. *Arrange
+  automatically* hands the placement back to Hyprland. Moving one display pins
+  them all where they already are, so Hyprland cannot shuffle the rest around
+  the one you moved.
+- **A display can mirror another, or be switched off** — except the last one
+  left on, which the page will not let go. The Hyprland module refuses it too,
+  so a hand-edited config cannot black out every screen either.
+- **The shell can be pinned to one display.** The bar, the dock, the volume and
+  brightness popup and the toasts are one of each, and they all move together;
+  widgets with no display of their own follow too. *Automatic* leaves the choice
+  to Hyprland as before. The wallpaper, the desktop menu and the lock screen are
+  drawn on every display either way. `qs ipc call -- displays shell <name>` does
+  it from a keybind, and takes `here`, `next`, `prev` or `auto` as well;
+  `qs ipc call displays list` says where it is.
+- **Unplugging the display the shell was pinned to no longer takes the shell
+  with it.** It moves to a display that is left, keeping the pick, so plugging
+  back in puts it back where you had it.
+- **The bar and the dock can each be sent to a display of their own**, for a
+  setup that wants them apart — *The bar on its own* and *The dock on its own*
+  on the same page, both *With the shell* by default. `qs ipc call -- displays
+  bar left` and `displays dock middle` do it from a keybind.
+- **A display can be named by where it sits**: `left`, `middle` and `right`
+  work anywhere an output name does, as do `here` for the display in use and
+  `next`/`prev`. `qs ipc call displays list` prints the outputs left to right
+  and marks what is sitting on each.
+- **Screenshots are taken of one display**, the one in use, rather than every
+  display stitched into a single image — which also means a region crop lands
+  where you drew it, and the capture flash is on the screen you captured.
+- Settings become Hyprland monitor rules in `~/.config/hypr/lucid-monitors.lua`,
+  read by `modules/monitors.lua` on every change, so nothing reloads. A display
+  is keyed by its description rather than its port, so unplugging it and putting
+  it back in a different socket keeps what you set. A display dropped from the
+  page goes back to its preferred mode the same way. Scriptable with
+  `qs ipc call settings displays`.
+
+### Wallpaper
+
+- **Wallpapers ship with Lucid.** A set for each theme lives in the repo under
+  `wallpapers/`, and the installer copies them into `~/Pictures/wallpapers/<theme>`
+  — the folder the strip reads while you are on that theme — so the picker has
+  something in it the first time you open it. A file you already have is never
+  overwritten, nothing is ever removed, and `--no-wallpapers` skips the step.
+- **One display can be given its own wallpaper, or its own fit.** Rules go in
+  `~/.config/lucid/wallpaper-outputs.conf`, one output a line — an image path,
+  arguments for `awww`/`swww`, or both — so a portrait screen can letterbox
+  instead of crop, or show a different picture entirely. Outputs with no rule
+  keep the wallpaper you picked, in the same pass, so nothing fades twice, and
+  colours are still generated from the wallpaper itself. The installer drops a
+  commented example in place the first time, and never touches it again.
+
+### Glass
+
+- **Glass is its own page now**, above Theme in the sidebar. The slider moved
+  off Settings → General (which keeps a button through to it), and `>blur` in
+  the launcher opens it.
+- **One slider, three surfaces, each let through as far as it can take.** The
+  page shows where it lands: the shell's own panels go furthest, kitty goes all
+  the way — its `background_opacity` only touches the background, so the text
+  stays readable at *Full* — and app windows go a quarter as far, because
+  Hyprland fades a window's text along with it.
+- **Kitty follows the slider.** Lucid writes `~/.config/kitty/lucid-glass.conf`
+  and signals kitty to reload, so open terminals follow without restarting. The
+  exception is the very first window after installing: `dynamic_background_opacity`
+  only takes effect in a kitty that started with it set, so reopen it once. Your
+  `kitty.conf` gains a single `include ./lucid-glass.conf` line with a
+  `kitty.conf.pre-lucid-glass` copy beside it; take the line back out and it
+  stays out.
+- **Apps can be frosted one at a time.** Tick the ones you want from what you
+  have installed — editors, browsers, file managers, chat, Spotify — and each
+  gets a row that follows the master slider until you give it a value of its
+  own. Anything else that is open can be added by its window class, and it stays
+  on the page after the window closes.
+- Per-app values become Hyprland window rules in `~/.config/hypr/lucid-glass.lua`,
+  read by `modules/glass.lua` on every change, so nothing reloads. Windows
+  already open are set directly rather than waiting for a restart, and an app
+  taken off the list goes back to opaque the same way. VSCodium's old hardcoded
+  `opacity 0.90` rule left `modules/windowrules.lua` and ships as this page's
+  default instead.
+
+### Update check
+
+- **Lucid says when a new version is out.** Once a day it asks GitHub's public
+  API for the newest release, compares it with the `VERSION` file the installer
+  puts beside `shell.qml`, and posts one notification per version with a
+  **What's new** button onto the release notes. It never repeats itself for a
+  version you have already been told about.
+- **Settings → About** gained an *Updates* card: what the last check found, a
+  *Check now* button, and the switch that turns the daily check off. The request
+  carries nothing about you or your machine, and `qs ipc call updates status`
+  reports the same thing from a terminal.
+
+### Special workspaces
+
+- **Music, comms, to-do and system monitor workspaces**, each on its own key:
+  `Super+Shift+M`, `Super+Shift+D`, `Super+Shift+R` and `Ctrl+Shift+Esc`. One
+  press slides the workspace over whatever you are on, the next puts it away.
+  The key starts the app if it is not running and pulls it back in if you moved
+  it out, and apps opened from the launcher or the dock land in their workspace
+  too.
+- **The scratchpad is `special` now, not `magic`.** `Super+Shift+S` also puts
+  away whichever workspace is up, and `Super+Alt+S` stashes the focused window —
+  pressed inside a special workspace, it sends the window back instead.
+- **Settings → Workspaces** picks each workspace's apps from what is installed
+  (eleven music players, twelve chat and mail apps, seven to-do apps and six
+  system monitors are recognised), turns any of them off, and sets the dimming
+  and whether a workspace change puts them away. Changes apply live: Hyprland
+  reads `~/.config/hypr/lucid-specials.lua` on every key press.
+- In the bar, special workspaces sit beside the dots as a stack of the apps in
+  them, and opening one lifts it into the accent with its name — Music, Comms,
+  To-do, System — in key order.
+- Special workspaces pop in with a short vertical slide and fade instead of
+  sliding across like a workspace change.
+
 ## v1.0.0 — 2026-09-10
 
 The first stable release. Lucid stops being a bar and a dock and becomes a whole
@@ -158,4 +292,4 @@ Every page is scriptable: `qs ipc call network status | list | rescan`,
 ---
 
 Earlier releases are on the
-[tags page](https://github.com/Sn3akyy1/lucid-shell/releases).
+[tags page](https://github.com/Sn3akyy1/lucid/releases).

@@ -8,14 +8,22 @@ Item {
     property string text: ""
     property string placeholder: ""
     property bool enabled: true
+    // off for a field that only commits on enter, so clicking away cancels instead
+    property bool commitOnBlur: true
 
     signal accepted(string value)
     signal edited(string value)
+    signal cancelled()
 
     // typing breaks the binding to `text`, so a reset has to reach the input
     function clear() {
         input.text = "";
         field.text = "";
+    }
+
+    function focusInput() {
+        input.forceActiveFocus();
+        input.selectAll();
     }
 
     implicitWidth: 220
@@ -61,9 +69,14 @@ Item {
         }
         onAccepted: field.accepted(input.text)
         onActiveFocusChanged: {
-            if (!input.activeFocus && input.text !== field.text)
+            if (!input.activeFocus && field.commitOnBlur && input.text !== field.text)
                 field.accepted(input.text);
 
+        }
+        // only an enter-to-commit field owns escape; the rest still pass it up
+        Keys.onEscapePressed: (event) => {
+            field.cancelled();
+            event.accepted = !field.commitOnBlur;
         }
 
         Connections {

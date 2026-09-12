@@ -451,7 +451,7 @@ Item {
                 M3Segmented {
                     width: parent.width
                     implicitHeight: 34
-                    current: (menu.frame && menu.frame.screenName !== "") ? menu.frame.screenName : (menu.screens.length > 0 ? menu.screens[0].name : "")
+                    current: (menu.frame && menu.frame.screenName !== "") ? menu.frame.screenName : (Monitors.mainScreen ? Monitors.mainScreen.name : "")
                     options: menu.screens.map((s) => {
                         return ({
                             "key": s.name,

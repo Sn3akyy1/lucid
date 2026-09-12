@@ -34,12 +34,6 @@ hl.window_rule({
 })
 
 hl.window_rule({
-    name = "codium",
-    match = { class = "codium" },
-    opacity = 0.90
-})
-
-hl.window_rule({
     name  = "float-lucid-settings",
     match = { class = "org.quickshell", title = "Lucid Settings" },
 

@@ -38,6 +38,9 @@ Singleton {
     readonly property var widgetKeys: ["widgetsEnabled", "widgetSnap", "widgetLockAll", "widgetHideFullscreen", "widgetOnTop"]
     readonly property var idleKeys: ["idleDim", "idleDimAfter", "idleDimLevel", "idleDimKeyboard", "idleLock", "idleLockAfter", "idleScreenOff", "idleScreenOffAfter", "idleSuspend", "idleSuspendAfter", "idleSuspendOnAc", "idleLockBeforeSleep", "idleWakeAfterSleep", "idleRespectInhibitors", "idleWhileMedia"]
     readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envIconTheme", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
+    readonly property var specialKeys: ["specialScratchpad", "specialMusic", "specialComms", "specialTodo", "specialSysmon", "specialMusicApps", "specialCommsApps", "specialTodoApps", "specialSysmonApps", "specialKeepApps", "specialHideOnSwitch", "specialDim"]
+    readonly property var glassKeys: ["glassApps", "glassValues"]
+    readonly property var monitorKeys: ["monitorSetups", "monitorShellScreen", "monitorBarScreen", "monitorDockScreen"]
     readonly property var notifKeys: ["toastEnabled", "toastTimeout", "toastUseAppTimeout", "toastCriticalSticky", "toastShowBody", "toastShowActions", "toastBodyLines", "notifShowIcons", "notifMaxHistory", "doNotDisturb", "dndAllowCritical", "dndFullscreen", "quietHours", "quietFrom", "quietTo", "notifSound", "notifSoundName", "notifSoundVolume", "notifSoundUrgentOnly", "notifMutedApps"]
 
     property alias barStyle: s.barStyle
@@ -123,6 +126,31 @@ Singleton {
     property alias btScanOnOpen: s.btScanOnOpen
     property alias btShowUnnamed: s.btShowUnnamed
     property alias kdeConnectEnabled: s.kdeConnectEnabled
+    property alias updateCheck: s.updateCheck
+
+    property alias specialScratchpad: s.specialScratchpad
+    property alias specialMusic: s.specialMusic
+    property alias specialComms: s.specialComms
+    property alias specialTodo: s.specialTodo
+    property alias specialSysmon: s.specialSysmon
+    // comma-joined app ids, or "auto" for the first one installed
+    property alias specialMusicApps: s.specialMusicApps
+    property alias specialCommsApps: s.specialCommsApps
+    property alias specialTodoApps: s.specialTodoApps
+    property alias specialSysmonApps: s.specialSysmonApps
+    property alias specialKeepApps: s.specialKeepApps
+    property alias specialHideOnSwitch: s.specialHideOnSwitch
+    property alias specialDim: s.specialDim
+
+    property alias glassApps: s.glassApps
+    property alias glassValues: s.glassValues
+
+    // per-output display config, JSON keyed by hyprland monitor selector
+    property alias monitorSetups: s.monitorSetups
+    property alias monitorShellScreen: s.monitorShellScreen
+    // empty means the bar or dock goes wherever the shell went
+    property alias monitorBarScreen: s.monitorBarScreen
+    property alias monitorDockScreen: s.monitorDockScreen
 
     property alias idleEnabled: s.idleEnabled
     property alias idleAutostart: s.idleAutostart
@@ -286,6 +314,7 @@ Singleton {
         "btScanOnOpen": true,
         "btShowUnnamed": false,
         "kdeConnectEnabled": true,
+        "updateCheck": true,
         "idleEnabled": false,
         "idleAutostart": true,
         "idleKeepAwake": false,
@@ -324,7 +353,25 @@ Singleton {
         "envMonoFontSize": 10,
         "envApplyGtk": true,
         "envApplyQt": true,
-        "envApplyHypr": true
+        "envApplyHypr": true,
+        "specialScratchpad": true,
+        "specialMusic": true,
+        "specialComms": true,
+        "specialTodo": true,
+        "specialSysmon": true,
+        "specialMusicApps": "auto",
+        "specialCommsApps": "auto",
+        "specialTodoApps": "auto",
+        "specialSysmonApps": "auto",
+        "specialKeepApps": true,
+        "specialHideOnSwitch": false,
+        "specialDim": 0.2,
+        "glassApps": "vscodium",
+        "glassValues": "vscodium=0.9",
+        "monitorSetups": "{}",
+        "monitorShellScreen": "",
+        "monitorBarScreen": "",
+        "monitorDockScreen": ""
     })
 
     // what the bar module is holding right now, so the settings page can offer
@@ -346,6 +393,9 @@ Singleton {
     readonly property string clearWidgetsToken: "__widgets__"
     readonly property string resetIdleToken: "__idle__"
     readonly property string resetEnvToken: "__env__"
+    readonly property string resetSpecialsToken: "__specials__"
+    readonly property string resetGlassToken: "__glass__"
+    readonly property string resetMonitorsToken: "__monitors__"
 
     signal themeChangeRequested(string id)
 
@@ -651,6 +701,7 @@ Singleton {
             property bool btScanOnOpen: true
             property bool btShowUnnamed: false
             property bool kdeConnectEnabled: true
+            property bool updateCheck: true
             property bool idleEnabled: false
             property bool idleAutostart: true
             property bool idleKeepAwake: false
@@ -690,6 +741,26 @@ Singleton {
             property bool envApplyGtk: true
             property bool envApplyQt: true
             property bool envApplyHypr: true
+            property bool specialScratchpad: true
+            property bool specialMusic: true
+            property bool specialComms: true
+            property bool specialTodo: true
+            property bool specialSysmon: true
+            property string specialMusicApps: "auto"
+            property string specialCommsApps: "auto"
+            property string specialTodoApps: "auto"
+            property string specialSysmonApps: "auto"
+            property bool specialKeepApps: true
+            property bool specialHideOnSwitch: false
+            property real specialDim: 0.2
+            // the apps on the Glass page, and the ones given their own value
+            property string glassApps: "vscodium"
+            property string glassValues: "vscodium=0.9"
+            // what Settings > Displays gave each output, and which one the shell sits on
+            property string monitorSetups: "{}"
+            property string monitorShellScreen: ""
+            property string monitorBarScreen: ""
+            property string monitorDockScreen: ""
         }
 
     }

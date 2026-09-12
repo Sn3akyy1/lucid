@@ -8,10 +8,14 @@ Item {
     property string wvariant: ""
     property bool live: true
     property bool hovered: false
+    // a card that owns its size, such as a stretched visualiser, draws at that size
+    property real bodyW: 0
+    property real bodyH: 0
+    property var opts: ({})
 
     readonly property var info: Widgets.variantAt(pv.wtype, pv.wvariant)
-    readonly property real natW: pv.info ? pv.info.w : 200
-    readonly property real natH: pv.info ? pv.info.h : 200
+    readonly property real natW: pv.bodyW > 0 ? pv.bodyW : (pv.info ? pv.info.w : 200)
+    readonly property real natH: pv.bodyH > 0 ? pv.bodyH : (pv.info ? pv.info.h : 200)
     readonly property real fit: Math.min(pv.width / pv.natW, pv.height / pv.natH, 1)
     readonly property bool bare: card.item !== null && card.item.bare === true
 
@@ -23,6 +27,7 @@ Item {
         wtype: pv.wtype
         wvariant: pv.wvariant
         hovered: pv.hovered
+        opts: pv.opts
     }
 
     Rectangle {

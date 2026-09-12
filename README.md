@@ -11,15 +11,15 @@ an emoji picker, a screenshot tool and a settings app — themed together from
 your wallpaper.
 
 <p>
-  <a href="https://github.com/Sn3akyy1/lucid-shell/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Sn3akyy1/lucid-shell?style=for-the-badge&label=LAST%20COMMIT&labelColor=14100E&color=FF7F50"></a>
-  <a href="https://github.com/Sn3akyy1/lucid-shell/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Sn3akyy1/lucid-shell?style=for-the-badge&label=STARS&labelColor=14100E&color=FFC46B"></a>
-  <a href="https://github.com/Sn3akyy1/lucid-shell/releases"><img alt="Release" src="https://img.shields.io/github/v/tag/Sn3akyy1/lucid-shell?style=for-the-badge&label=RELEASE&labelColor=14100E&color=FFAB91"></a>
-  <img alt="Repo size" src="https://img.shields.io/github/repo-size/Sn3akyy1/lucid-shell?style=for-the-badge&label=REPO%20SIZE&labelColor=14100E&color=E8A87C">
+  <a href="https://github.com/Sn3akyy1/lucid/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Sn3akyy1/lucid?style=for-the-badge&label=LAST%20COMMIT&labelColor=14100E&color=FF7F50"></a>
+  <a href="https://github.com/Sn3akyy1/lucid/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Sn3akyy1/lucid?style=for-the-badge&label=STARS&labelColor=14100E&color=FFC46B"></a>
+  <a href="https://github.com/Sn3akyy1/lucid/releases"><img alt="Release" src="https://img.shields.io/github/v/tag/Sn3akyy1/lucid?style=for-the-badge&label=RELEASE&labelColor=14100E&color=FFAB91"></a>
+  <img alt="Repo size" src="https://img.shields.io/github/repo-size/Sn3akyy1/lucid?style=for-the-badge&label=REPO%20SIZE&labelColor=14100E&color=E8A87C">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-80CBC4?style=for-the-badge&labelColor=14100E"></a>
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/VERSION-v1.0.0-FF7F50?style=for-the-badge&labelColor=14100E">
+  <img alt="Version" src="https://img.shields.io/badge/VERSION-v1.0.5-FF7F50?style=for-the-badge&labelColor=14100E">
   <img alt="Platform" src="https://img.shields.io/badge/PLATFORM-ARCH%20LINUX-FFAB91?style=for-the-badge&logo=archlinux&logoColor=FFAB91&labelColor=14100E">
   <img alt="Compositor" src="https://img.shields.io/badge/COMPOSITOR-HYPRLAND-80CBC4?style=for-the-badge&labelColor=14100E">
   <a href="https://quickshell.org"><img alt="Built on Quickshell" src="https://img.shields.io/badge/BUILT%20ON-QUICKSHELL-FFC46B?style=for-the-badge&labelColor=14100E"></a>
@@ -31,9 +31,15 @@ your wallpaper.
 
 ---
 
-> **v1.0.0 — the first stable release.** It's what I use daily. Everything that
-> landed in it is in the [changelog](CHANGELOG.md). Rough edges are still
-> possible and bug reports are welcome.
+> **v1.0.5 — multiple displays, special workspaces and widget presets.** It's
+> what I use daily. Everything that landed in it, and in v1.0.0 before it, is in
+> the [changelog](CHANGELOG.md). Rough edges are still possible and bug reports
+> are welcome.
+
+> **To hear about new versions**, press **Watch → Custom → Releases** at the top
+> of this page. Lucid also checks for itself: once a day it asks GitHub for the
+> newest release and says so once, in a notification. See
+> [Updating](#updating).
 
 ## Install
 
@@ -41,8 +47,8 @@ Lucid installs to `~/.config/quickshell` and needs **Arch Linux** and
 **Hyprland**. Three commands:
 
 ```sh
-git clone https://github.com/Sn3akyy1/lucid-shell.git
-cd lucid-shell
+git clone https://github.com/Sn3akyy1/lucid.git
+cd lucid
 ./install.sh
 ```
 
@@ -63,11 +69,11 @@ That's it — the installer does the rest:
    asked first; `--no-hypr` keeps yours untouched.
 5. **Sets up theming** — the palettes, the wallpaper hook, and the matugen
    template. An existing `matugen/config.toml` is appended to, never replaced.
-6. **Applies the look** — kitty's colours and its fish shell, the starship
-   prompt (wired into `.bashrc`, `.zshrc` and `config.fish`), the
-   VSCode/VSCodium Matugen theme,
-   and the GTK theme: `adw-gtk3-dark` with the FairyWren icons, written to
-   `gsettings` and to both `gtk-3.0` and `gtk-4.0` `settings.ini`.
+6. **Applies the look** — kitty's colours, its opacity and its fish shell, the
+   starship prompt (wired into `.bashrc`, `.zshrc` and `config.fish`), the
+   VSCode/VSCodium Matugen theme, and the GTK theme: `adw-gtk3-dark` with the
+   FairyWren icons, written to `gsettings` and to both `gtk-3.0` and `gtk-4.0`
+   `settings.ini`.
    `--no-look` skips this.
 7. **Pins the dock** — reads your installed `.desktop` files and pins the real
    apps, so the dock is never a row of blank letter tiles.
@@ -95,15 +101,27 @@ git pull
 ./install.sh
 ```
 
+Lucid tells you when there is something to pull. Once a day it asks GitHub's
+public API for the newest release, and when that is newer than the version you
+installed it posts one notification — once per version, never again for the same
+one. The request is a plain `curl` for
+`api.github.com/repos/Sn3akyy1/lucid/releases/latest` and carries nothing about
+you or your machine; **Settings → About** shows what it found and turns it off.
+
+```sh
+qs ipc call updates status   # what it knows
+qs ipc call updates check    # ask now
+```
+
 ### Older versions
 
 `v0.57 beta` is a tag, so it stays exactly where it is:
 
 ```sh
-git clone --branch v0.57 https://github.com/Sn3akyy1/lucid-shell.git
+git clone --branch v0.57 https://github.com/Sn3akyy1/lucid.git
 ```
 
-It is on the [releases page](https://github.com/Sn3akyy1/lucid-shell/releases)
+It is on the [releases page](https://github.com/Sn3akyy1/lucid/releases)
 too, as a source archive. Nothing carries over between the two — v1.0.0 moved
 enough that it is worth installing fresh.
 
@@ -115,6 +133,7 @@ enough that it is worth installing fresh.
 | `--no-hypr` | Keeps your Hyprland config. Lucid's binds, window rules, blur and autostart are not installed. |
 | `--no-apps` | Doesn't install the apps the dock ships pinned (Zen, VSCodium, Spotify, Vesktop, Files, Steam, Proton VPN). The dock then pins whatever equivalents you already have. |
 | `--no-look` | Doesn't touch `kitty.conf`, `starship.toml`, your shell rc files, VSCode settings, or the GTK theme and icons. |
+| `--no-wallpapers` | Doesn't copy the bundled wallpapers into `~/Pictures/wallpapers`. They are ~180 MB, so this is worth passing on a small disk or a slow link. |
 | `--with-hypr` | Reinstalls Lucid's Hyprland config even when one is already in place. |
 | `--skip-deps` | Never installs packages, just reports what's missing. |
 | `-y`, `--yes` | Accept every prompt. |
@@ -148,6 +167,12 @@ installing to pick them up.
 | `SUPER` + `C` | Close window |
 | `SUPER` + `V` | Toggle float |
 | `SUPER` + `1`–`0` | Switch workspace (`+SHIFT` moves the window) |
+| `SUPER` + `SHIFT` + `S` | Scratchpad, or put away whichever special workspace is up |
+| `SUPER` + `ALT` + `S` | Stash the focused window in the scratchpad, or send it back |
+| `SUPER` + `SHIFT` + `M` | Music workspace |
+| `SUPER` + `SHIFT` + `D` | Comms workspace |
+| `SUPER` + `SHIFT` + `R` | To-do workspace |
+| `CTRL` + `SHIFT` + `Esc` | System monitor workspace |
 | `SUPER` + arrows | Move focus |
 | `SUPER` + `R` | Reload Hyprland |
 | `F1`–`F6` | Volume, mic, brightness |
@@ -168,6 +193,15 @@ bind = SUPER SHIFT, C, exec, qs ipc call -- snap color
 bind = SUPER, comma,  exec, qs ipc call -- settings open
 ```
 
+Special workspaces are Hyprland Lua rather than IPC. On a Lua config of your
+own, copy `support/hypr/modules/specials.lua` into `~/.config/hypr/modules/`
+and bind its functions the way Lucid's `modules/binds.lua` does:
+
+```lua
+local specials = require("modules.specials")
+hl.bind("SUPER + SHIFT + M", specials.toggle("music"))
+```
+
 Keep the `--`. It is only strictly required when the call takes an argument —
 `qs ipc call settings show bar` fails with *"The following argument was not
 expected: bar"*, while `qs ipc call -- settings show bar` works. It is harmless
@@ -180,7 +214,11 @@ on argument-free calls, so using it everywhere saves you the surprise.
 Six modules, each a pill that expands into a panel. Every one can be turned
 off in Settings.
 
-- **Workspaces** — live window previews per workspace, click to switch
+- **Workspaces** — live window previews per workspace, click to switch.
+  Scratchpads (special workspaces) sit beside the dots as a greyed stack of the
+  apps stashed in them; opening one sinks the dots and lifts the stack into the
+  accent with its name. Click an icon to jump to that window, or drag windows in
+  and out from the overview's scratchpad row
 - **Media** — MPRIS controls, seek bar, art, and Shazam-style song ID (`songrec`)
 - **Tray** — SNI system tray with working context menus
 - **Clock** — calendar, weather, and reminders that toast when they're due
@@ -259,6 +297,32 @@ including the strips the bar and the dock reserve — a full-width visualiser
 tucked under the dock is the point. Widgets sit **below** your windows by
 default so they behave like a desktop, and step aside for fullscreen windows;
 both are switches on the Widgets page if you would rather they float on top.
+
+### Special workspaces
+
+Scratchpads that slide over whatever workspace you are on, and hide again with
+the same keys.
+
+| Keys | Workspace | Opens |
+| --- | --- | --- |
+| `SUPER` + `SHIFT` + `S` | Scratchpad | Nothing of its own — somewhere to park windows |
+| `SUPER` + `SHIFT` + `M` | Music | Spotify, Feishin, Supersonic, Cider, YouTube Music, TIDAL… |
+| `SUPER` + `SHIFT` + `D` | Comms | Discord, Vesktop, Telegram, Signal, Element, Slack… |
+| `SUPER` + `SHIFT` + `R` | To-do | Todoist, Planify, Errands, Endeavour, Obsidian… |
+| `CTRL` + `SHIFT` + `Esc` | System | btop in a terminal, Mission Center, Resources… |
+
+A key starts its workspace's app if it is not running, and pulls it back in if
+you moved it somewhere else; opened from the launcher or the dock, the app lands
+in its workspace too. `SUPER` + `ALT` + `S` stashes the focused window in the
+scratchpad and, pressed inside a special workspace, sends it back. The
+scratchpad key also puts away whichever workspace is up, so one key always
+returns you to what you were doing.
+
+**Settings → Workspaces** picks each one's apps from what is installed, turns any
+of them off, and sets how far the screen behind dims and whether switching
+workspace puts them away. It writes `~/.config/hypr/lucid-specials.lua`, which
+`modules/specials.lua` reads on every key press, so a change applies without a
+Hyprland reload.
 
 ### Everything else
 
@@ -384,7 +448,40 @@ both are switches on the Widgets page if you would rather they float on top.
   those values up again after you have changed appearance with another tool.
   Turn GTK, Qt or Hyprland off individually if you would rather keep one of
   them by hand. Scriptable with `qs ipc call settings environment`
-- **Settings** — a GUI for all of the above, no config file editing. Thirteen
+- **Displays** — a *Displays* page for the screens themselves: resolution,
+  refresh rate, scale, orientation and adaptive sync, one card per output, which
+  names the panel and its size and says what it is doing right now. Only modes
+  the display actually reports are offered, so there is no picking one it cannot
+  show, and each scale is labelled with the room it leaves for windows — with a
+  word of warning on the ones that do not divide the panel evenly. More than one
+  screen adds an arrangement you drag: displays snap to their neighbours' edges
+  so the pointer has no gaps to fall into, and moving one pins them all where
+  they already are rather than letting Hyprland shuffle the rest. A display can
+  mirror another or be switched off, except the last one left on, which neither
+  the page nor the Hyprland module will let go. The shell itself — the bar, the
+  dock, the volume popup and the toasts — sits on whichever display you pick,
+  and widgets with no display of their own follow it; the bar and the dock can
+  each be sent to a display of their own if you would rather have them apart.
+  The wallpaper, the desktop menu and the lock screen are drawn on all of them
+  either way. Unplug the
+  display it was pinned to and it moves to one that is left, without losing the
+  pick, so plugging back in puts it back. It all becomes monitor rules in
+  `~/.config/hypr/lucid-monitors.lua`, applied without a reload, and a display is
+  keyed by its description rather than its port, so moving the cable keeps what
+  you set. Scriptable with `qs ipc call settings displays`, and the display the
+  shell sits on with `qs ipc call -- displays shell <name|here|next|auto>` —
+  worth a keybind if you move between screens
+- **Glass** — a *Glass* page holding one slider for how far the desktop shows
+  through what is in front of it, and a readout of where that lands. Three
+  surfaces follow it, each as far as it can take: the shell's own panels, kitty
+  — whose `background_opacity` leaves the text alone, so it can go all the way —
+  and app windows, a quarter as far, because Hyprland fades a window's text
+  along with its background. Any installed app can be frosted on its own, and
+  anything else you have open can be added by its window class. Per-app values
+  become Hyprland window rules in `~/.config/hypr/lucid-glass.lua`, applied
+  without a reload and pushed onto windows that are already open. Scriptable
+  with `qs ipc call settings glass`
+- **Settings** — a GUI for all of the above, no config file editing. Sixteen
   pages behind a collapsible rail, grouped-list cards, an app bar that collapses
   as you scroll, and a reset arrow on anything you have moved off its default
 
@@ -407,6 +504,21 @@ Whichever is active, the shell reads `~/.cache/quickshell/matugen.json` — a
 flat map of Material 3 colour roles. Changing your wallpaper through Lucid
 runs `~/.config/hypr/scripts/wallpaper/set-wallpaper.sh`, which sets the
 wallpaper and then regenerates that file if the active theme is wallpaper-derived.
+
+Every display gets the same picture, cropped to fill. To treat one differently —
+a portrait screen that should letterbox rather than crop, or a second screen
+with a picture of its own — put a rule in `~/.config/lucid/wallpaper-outputs.conf`,
+one output a line:
+
+```
+DP-3      --resize fit --fill-color 000000
+HDMI-A-1  ~/Pictures/wallpapers/second.jpg
+```
+
+Any argument that is a file becomes that output's picture; the rest is passed to
+`awww`/`swww`. Outputs with no rule keep the wallpaper you picked, and colours
+are still generated from that one. `qs ipc call displays list` prints your
+outputs, left to right.
 
 If you already use matugen, the installer **appends** its Quickshell template
 to your `config.toml` and backs up the original — your existing templates are
@@ -517,8 +629,11 @@ or pick any installed font in Settings → General.
 
 Tenor works too if you'd rather use that. Emoji and kaomoji need no key.
 
-**Wallpapers** default to `~/Pictures/wallpapers`. Change the folder in
-Settings → General.
+**Wallpapers** default to `~/Pictures/wallpapers`, one folder per theme —
+`~/Pictures/wallpapers/gruvbox` is what the strip shows while you are on
+Gruvbox. The installer puts a set in each of them, skipping any file you already
+have, and `--no-wallpapers` leaves the folder alone entirely. Change the folder
+in Settings → General, which then applies to every theme.
 
 ## IPC reference
 
@@ -527,7 +642,7 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | Target | Functions |
 | --- | --- |
 | `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `search <query>` |
-| `settings` | `toggle` `open` `close` `show <page>` `general` `bar` `dock` `environment` `widgets` `notifications` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
+| `settings` | `toggle` `open` `close` `show <page>` `general` `bar` `dock` `environment` `widgets` `workspaces` `notifications` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
 | `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
 | `network` | `status` `list` `rescan` |
 | `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |
@@ -539,6 +654,8 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | `screenshot` | `full` `text` |
 | `media` | `toggle` `open` `close` `identify` `playPause` `next` `previous` |
 | `workspaces` | `toggle` `open` `close` |
+| `updates` | `status` `check` |
+| `displays` | `list` `settings` `shell <where>` `bar <where>` `dock <where>` — *where* is an output name, `left`/`middle`/`right`, `here`, `next`, `prev` or `auto` |
 | `debug` | `toggle` `on` `off` — draws input and blur region outlines |
 
 ## Uninstall
@@ -550,8 +667,9 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 Moves `~/.config/quickshell` aside rather than deleting it, so your settings
 survive. Packages installed by `install.sh` are left alone. It prints what else
 it left in place — the matugen template blocks, `~/.config/hypr`,
-`starship.toml` and its init lines in your rc files, kitty's colour include —
-each with a timestamped backup beside it, so you can undo them by hand.
+`starship.toml` and its init lines in your rc files, kitty's colour and
+opacity includes — each with a timestamped backup beside it, so you can undo
+them by hand.
 
 ## Troubleshooting
 

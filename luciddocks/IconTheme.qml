@@ -40,6 +40,32 @@ QtObject {
         return "";
     }
 
+    // the whole lookup: our own walk first, then Quickshell.iconPath on the
+    // name, lowercased, and its last dotted segment
+    function resolve(name) {
+        void iconTheme.generation;
+        if (!name || name === "")
+            return "";
+
+        var own = iconTheme.pathFor(name);
+        if (own !== "")
+            return own;
+
+        var tries = [name, name.toLowerCase()];
+        var dot = name.lastIndexOf(".");
+        if (dot > 0 && dot < name.length - 1) {
+            var tail = name.substring(dot + 1);
+            tries.push(tail, tail.toLowerCase());
+        }
+        for (var i = 0; i < tries.length; i++) {
+            var p = Quickshell.iconPath(tries[i], true);
+            if (p !== "")
+                return p;
+
+        }
+        return "";
+    }
+
     function runBatch() {
         // one batch at a time, or a rename storm spawns a process per icon
         if (iconTheme.resolver.running) {

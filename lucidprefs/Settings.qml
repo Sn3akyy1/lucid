@@ -27,21 +27,31 @@ FloatingWindow {
     readonly property real collapse: Math.max(0, Math.min(1, win.scrollY / 72))
 
     property string page: "general"
+    // grouped, and the rail draws a heading above the first page of each group
     readonly property var pages: [
-        { "key": "general", "label": "General", "title": "General", "blurb": "Shape, colour and motion across the whole shell" },
-        { "key": "theme", "label": "Theme", "title": "Theme and Appearance", "blurb": "Colour schemes, wallpapers and themes you import" },
-        { "key": "environment", "label": "Environment", "title": "Environment", "blurb": "Cursors, icons, fonts and application themes, across GTK, Qt and Hyprland alike" },
-        { "key": "bar", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
-        { "key": "dock", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
-        { "key": "widgets", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
-        { "key": "notifications", "label": "Notifications", "title": "Notifications", "blurb": "Popups, quiet hours, sound and which applications may interrupt you", "toggle": "showNotifications" },
-        { "key": "network", "label": "Network", "title": "Network", "blurb": "Wi-Fi, wired, VPN and how this machine gets its address" },
-        { "key": "bluetooth", "label": "Bluetooth", "title": "Bluetooth and Devices", "blurb": "The radio, what it is paired with, and the phone you connect to it" },
-        { "key": "kdeconnect", "label": "Phone", "title": "Phone", "blurb": "Your phone on this machine over KDE Connect: files, notifications, clipboard and a remote", "toggle": "kdeConnectEnabled" },
-        { "key": "idle", "label": "Idle", "title": "Idle and Sleep", "blurb": "What happens when you walk away: dimming, locking, screen off and suspend", "toggle": "idleEnabled" },
-        { "key": "datetime", "label": "Date & Time", "title": "Date and Time", "blurb": "Where you are, which zone the clock keeps and how it reads" },
-        { "key": "about", "label": "About", "title": "About", "blurb": "Lucid" }
+        { "key": "general", "group": "Appearance", "label": "General", "title": "General", "blurb": "Shape, colour and motion across the whole shell" },
+        { "key": "glass", "group": "Appearance", "label": "Glass", "title": "Glass", "blurb": "How far the desktop shows through the shell, the terminal and your windows" },
+        { "key": "theme", "group": "Appearance", "label": "Theme", "title": "Theme and Appearance", "blurb": "Colour schemes, wallpapers and themes you import" },
+        { "key": "environment", "group": "Appearance", "label": "Environment", "title": "Environment", "blurb": "Cursors, icons, fonts and application themes, across GTK, Qt and Hyprland alike" },
+        { "key": "bar", "group": "Desktop", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
+        { "key": "dock", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
+        { "key": "widgets", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
+        { "key": "workspaces", "group": "Desktop", "label": "Workspaces", "title": "Special Workspaces", "blurb": "Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key" },
+        { "key": "displays", "group": "Devices", "label": "Displays", "title": "Displays", "blurb": "Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on" },
+        { "key": "network", "group": "Devices", "label": "Network", "title": "Network", "blurb": "Wi-Fi, wired, VPN and how this machine gets its address" },
+        { "key": "bluetooth", "group": "Devices", "label": "Bluetooth", "title": "Bluetooth and Devices", "blurb": "The radio, what it is paired with, and the phone you connect to it" },
+        { "key": "kdeconnect", "group": "Devices", "label": "Phone", "title": "Phone", "blurb": "Your phone on this machine over KDE Connect: files, notifications, clipboard and a remote", "toggle": "kdeConnectEnabled" },
+        { "key": "notifications", "group": "System", "label": "Notifications", "title": "Notifications", "blurb": "Popups, quiet hours, sound and which applications may interrupt you", "toggle": "showNotifications" },
+        { "key": "idle", "group": "System", "label": "Idle", "title": "Idle and Sleep", "blurb": "What happens when you walk away: dimming, locking, screen off and suspend", "toggle": "idleEnabled" },
+        { "key": "datetime", "group": "System", "label": "Date & Time", "title": "Date and Time", "blurb": "Where you are, which zone the clock keeps and how it reads" },
+        { "key": "about", "group": "System", "label": "About", "title": "About", "blurb": "Lucid" }
     ]
+
+    // "" unless this page opens its group
+    function groupAt(i) {
+        const g = win.pages[i] ? win.pages[i].group : "";
+        return i === 0 || win.pages[i - 1].group !== g ? g : "";
+    }
 
     readonly property var current: win.pages.find((p) => {
         return p.key === win.page;
@@ -151,6 +161,10 @@ FloatingWindow {
             win.show("general");
         }
 
+        function glass(): void {
+            win.show("glass");
+        }
+
         function bar(): void {
             win.show("bar");
         }
@@ -163,8 +177,21 @@ FloatingWindow {
             win.show("environment");
         }
 
+        function displays(): void {
+            win.show("displays");
+        }
+
+        // the page is about monitors; both names reach it
+        function monitors(): void {
+            win.show("displays");
+        }
+
         function widgets(): void {
             win.show("widgets");
+        }
+
+        function workspaces(): void {
+            win.show("workspaces");
         }
 
         function notifications(): void {
@@ -225,6 +252,12 @@ FloatingWindow {
                 Prefs.resetKeys(Prefs.idleKeys);
             else if (action === Prefs.resetEnvToken)
                 Prefs.resetKeys(Prefs.envKeys);
+            else if (action === Prefs.resetSpecialsToken)
+                Prefs.resetKeys(Prefs.specialKeys);
+            else if (action === Prefs.resetGlassToken)
+                Prefs.resetKeys(Prefs.glassKeys);
+            else if (action === Prefs.resetMonitorsToken)
+                Prefs.resetKeys(Prefs.monitorKeys);
             else if (action.indexOf("wifi-forget:") === 0)
                 Net.forgetSsid(action.substring(12));
             else if (action.indexOf("net-delete:") === 0)
@@ -239,6 +272,8 @@ FloatingWindow {
                 Prefs.wallpaperDeleteRequested(action.substring(10));
             else if (action.indexOf("theme:") === 0)
                 Prefs.themeDeleteRequested(action.substring(6));
+            else if (action.indexOf("widget-preset:") === 0)
+                Widgets.deletePreset(action.substring(14));
             else
                 Prefs.set(action, Prefs.defaults[action]);
         }
@@ -422,113 +457,188 @@ FloatingWindow {
                     Repeater {
                         model: win.pages
 
-                        Item {
-                            id: navItem
+                        Column {
+                            id: navCell
 
                             required property var modelData
-
-                            readonly property bool selected: win.page === navItem.modelData.key
-                            readonly property real iconX: 20 * win.railT + ((navItem.width - 22) / 2) * (1 - win.railT)
-                            readonly property real labelFade: Math.max(0, (win.railT - 0.5) / 0.5)
-                            readonly property color fg: navItem.selected ? Theme.fgSecondaryContainer : (navArea.containsMouse ? Theme.text : Theme.subtext)
+                            required property int index
+                            readonly property string heading: win.groupAt(navCell.index)
 
                             width: parent.width
-                            height: 50
+                            spacing: 0
 
-                            // m3 active indicator: a full-shape tonal pill
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: height / 2
-                                color: navItem.selected ? Theme.secondaryContainer : "transparent"
+                            // the group's name while the rail is open, shrinking
+                            // to a rule once there is no width left to print it
+                            Item {
+                                width: parent.width
+                                height: Math.round(15 + 19 * win.railT)
+                                visible: navCell.heading !== ""
 
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: Theme.durShort
-                                    }
-
+                                Text {
+                                    x: 20
+                                    anchors.bottom: parent.bottom
+                                    anchors.bottomMargin: 5
+                                    text: navCell.heading
+                                    color: Theme.subtextDim
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontLabel
+                                    font.weight: Font.DemiBold
+                                    font.letterSpacing: 0.6
+                                    opacity: Math.max(0, (win.railT - 0.55) / 0.45)
+                                    visible: opacity > 0.01
                                 }
 
                                 Rectangle {
-                                    anchors.fill: parent
-                                    radius: parent.radius
-                                    color: navItem.fg
-                                    opacity: navArea.pressed ? Theme.statePressed : (navArea.containsMouse && !navItem.selected ? Theme.stateHover : 0)
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.bottom: parent.bottom
+                                    anchors.bottomMargin: 7
+                                    width: 22
+                                    height: 1.5
+                                    radius: 0.75
+                                    color: Theme.outline
+                                    opacity: Math.max(0, 1 - win.railT * 2.5)
+                                    visible: opacity > 0.01
+                                }
 
-                                    Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: Theme.durQuick
+                            }
+
+                            Item {
+                                id: navItem
+
+                                readonly property var modelData: navCell.modelData
+
+                                readonly property bool selected: win.page === navItem.modelData.key
+                                readonly property real iconX: 20 * win.railT + ((navItem.width - 22) / 2) * (1 - win.railT)
+                                readonly property real labelFade: Math.max(0, (win.railT - 0.5) / 0.5)
+                                readonly property color fg: navItem.selected ? Theme.fgSecondaryContainer : (navArea.containsMouse ? Theme.text : Theme.subtext)
+
+                                width: parent.width
+                                height: 50
+
+                                // m3 active indicator: a full-shape tonal pill
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: height / 2
+                                    color: navItem.selected ? Theme.secondaryContainer : "transparent"
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: Theme.durShort
+                                        }
+
+                                    }
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        radius: parent.radius
+                                        color: navItem.fg
+                                        opacity: navArea.pressed ? Theme.statePressed : (navArea.containsMouse && !navItem.selected ? Theme.stateHover : 0)
+
+                                        Behavior on opacity {
+                                            NumberAnimation {
+                                                duration: Theme.durQuick
+                                            }
+
                                         }
 
                                     }
 
                                 }
 
-                            }
+                                LucidaMark {
+                                    x: navItem.iconX
+                                    width: 22
+                                    height: 22
+                                    strokeWidth: 3.4
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: navItem.modelData.key === "about"
+                                    ringColor: navItem.selected ? navItem.fg : Theme.subtext
+                                    starColor: navItem.fg
+                                }
 
-                            LucidaMark {
-                                x: navItem.iconX
-                                width: 22
-                                height: 22
-                                strokeWidth: 3.4
-                                anchors.verticalCenter: parent.verticalCenter
-                                visible: navItem.modelData.key === "about"
-                                ringColor: navItem.selected ? navItem.fg : Theme.subtext
-                                starColor: navItem.fg
-                            }
+                                NavGlyph {
+                                    x: navItem.iconX
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: navItem.modelData.key !== "about"
+                                    kind: navItem.modelData.key
+                                    color: navItem.fg
 
-                            NavGlyph {
-                                x: navItem.iconX
-                                anchors.verticalCenter: parent.verticalCenter
-                                visible: navItem.modelData.key !== "about"
-                                kind: navItem.modelData.key
-                                color: navItem.fg
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: Theme.durShort
+                                        }
 
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: Theme.durShort
                                     }
 
                                 }
 
-                            }
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: navItem.iconX + 38
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 14
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: navItem.modelData.label
+                                    color: navItem.fg
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontBodyLg
+                                    font.weight: navItem.selected ? Font.DemiBold : Font.Medium
+                                    elide: Text.ElideRight
+                                    opacity: navItem.labelFade
+                                    visible: opacity > 0.01
 
-                            Text {
-                                anchors.left: parent.left
-                                anchors.leftMargin: navItem.iconX + 38
-                                anchors.right: parent.right
-                                anchors.rightMargin: 14
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: navItem.modelData.label
-                                color: navItem.fg
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontBodyLg
-                                font.weight: navItem.selected ? Font.DemiBold : Font.Medium
-                                elide: Text.ElideRight
-                                opacity: navItem.labelFade
-                                visible: opacity > 0.01
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: Theme.durShort
+                                        }
 
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: Theme.durShort
                                     }
 
                                 }
 
-                            }
+                                MouseArea {
+                                    id: navArea
 
-                            MouseArea {
-                                id: navArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: win.page = navItem.modelData.key
+                                }
 
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: win.page = navItem.modelData.key
                             }
 
                         }
 
                     }
 
+                }
+
+                // without this the rail falls back to Flickable's own wheel
+                // steps, which crawl. the panes' step, on the panes' curve
+                WheelHandler {
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                    onWheel: (event) => {
+                        event.accepted = true;
+                        var maxY = Math.max(0, navScroll.contentHeight - navScroll.height);
+                        var base = navFlick.running ? navFlick.to : navScroll.contentY;
+                        var target = Math.max(0, Math.min(maxY, base - (event.angleDelta.y / 120) * win.wheelStep));
+                        if (target === base)
+                            return ;
+
+                        navFlick.stop();
+                        navFlick.from = navScroll.contentY;
+                        navFlick.to = target;
+                        navFlick.start();
+                    }
+                }
+
+                NumberAnimation {
+                    id: navFlick
+
+                    target: navScroll
+                    property: "contentY"
+                    duration: Theme.ms(170)
+                    easing.type: Easing.OutCubic
                 }
 
             }
@@ -696,16 +806,22 @@ FloatingWindow {
                             switch (pane.modelData.key) {
                             case "general":
                                 return "GeneralPage.qml";
+                            case "glass":
+                                return "GlassPage.qml";
                             case "theme":
                                 return "ThemePage.qml";
                             case "environment":
                                 return "EnvironmentPage.qml";
+                            case "displays":
+                                return "MonitorsPage.qml";
                             case "bar":
                                 return "BarPage.qml";
                             case "dock":
                                 return "DockPage.qml";
                             case "widgets":
                                 return "WidgetsPage.qml";
+                            case "workspaces":
+                                return "WorkspacesPage.qml";
                             case "notifications":
                                 return "NotificationsPage.qml";
                             case "network":

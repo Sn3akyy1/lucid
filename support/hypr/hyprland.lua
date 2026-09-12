@@ -34,3 +34,4 @@ require("modules.binds")
 --------------------------------
 require("modules.windowrules")
 require("modules.layerrules")
+require("modules.glass")

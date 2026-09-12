@@ -9,13 +9,14 @@ Item {
     property bool checked: false
     property bool danger: false
     property bool enabled: true
+    property string icon: ""
 
     readonly property color mark: check.danger ? Theme.error : Theme.accent
 
     signal toggled()
 
-    implicitWidth: box.width + 9 + text.implicitWidth
-    implicitHeight: 22
+    implicitWidth: box.width + 9 + (check.icon !== "" ? appIcon.width + 9 : 0) + text.implicitWidth
+    implicitHeight: check.icon !== "" ? 26 : 22
     opacity: check.enabled ? 1 : 0.38
 
     Rectangle {
@@ -77,10 +78,25 @@ Item {
 
     }
 
+    Image {
+        id: appIcon
+
+        anchors.left: box.right
+        anchors.leftMargin: 10
+        anchors.verticalCenter: parent.verticalCenter
+        width: 22
+        height: 22
+        sourceSize: Qt.size(44, 44)
+        source: check.icon
+        visible: check.icon !== ""
+        smooth: true
+        mipmap: true
+    }
+
     Text {
         id: text
 
-        anchors.left: box.right
+        anchors.left: check.icon !== "" ? appIcon.right : box.right
         anchors.leftMargin: 9
         anchors.verticalCenter: parent.verticalCenter
         text: check.label

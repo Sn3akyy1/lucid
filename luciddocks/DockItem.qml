@@ -78,35 +78,7 @@ Item {
         return t.wayland && t.wayland.appId && t.wayland.appId.toLowerCase() === dockItem.appId.toLowerCase() && t.urgent;
     })
 
-    function resolveIcon(name) {
-        if (!name || name === "")
-            return "";
-
-        if (name.charAt(0) === "/")
-            return "file://" + name;
-
-        // our own lookup first: it follows the live icon theme, which
-        // Quickshell.iconPath cannot once qt has started
-        var own = IconTheme.pathFor(name);
-        if (own !== "")
-            return own;
-
-        var tries = [name, name.toLowerCase()];
-        var dot = name.lastIndexOf(".");
-        if (dot > 0 && dot < name.length - 1) {
-            var tail = name.substring(dot + 1);
-            tries.push(tail, tail.toLowerCase());
-        }
-        for (var i = 0; i < tries.length; i++) {
-            var p = Quickshell.iconPath(tries[i], true);
-            if (p !== "")
-                return p;
-        }
-        return "";
-    }
-
-    // generation is read so the binding re-runs when the icon theme changes
-    readonly property string iconSource: IconTheme.generation >= 0 ? dockItem.resolveIcon(dockItem.iconName) : ""
+    readonly property string iconSource: IconTheme.resolve(dockItem.iconName)
     readonly property string monogram: dockItem.displayName !== "" ? dockItem.displayName.charAt(0).toUpperCase() : "?"
 
     readonly property real hoverSwell: (dockItem.active ? 0.12 : 0.08) * Prefs.dockHoverEffect

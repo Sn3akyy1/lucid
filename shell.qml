@@ -12,22 +12,32 @@ import Quickshell
 import Quickshell.Wayland
 
 ShellRoot {
+    id: root
+
     // singletons are made lazily, and these have to be up before anything
     // asks: the KDE Connect bridge and its ipc target, the bluez extras, the
-    // idle daemon, which owns hypridle.conf, and the environment, which owns
-    // the gtk and qt appearance files
+    // idle daemon, which owns hypridle.conf, the environment, which owns
+    // the gtk and qt appearance files, and the special workspaces, which own
+    // lucid-specials.lua, the glass mirror, which owns kitty's opacity file,
+    // the displays, which own lucid-monitors.lua,
+    // and the update check, which runs whether or not the settings app is
+    // ever opened
     Component.onCompleted: {
         void KdeConnect.installed;
         void Bt.present;
         void Net.connectivity;
         void Idle.probed;
         void Env.probed;
+        void Specials.moduleProbed;
+        void Glass.probed;
+        void Monitors.probed;
+        void Updates.current;
     }
 
     PanelWindow {
         id: bar
 
-        visible: Prefs.loaded && Prefs.barEnabled
+        visible: Prefs.loaded && Prefs.barEnabled && Monitors.surfacesUp
         property bool laidOut: false
         readonly property bool anyModuleShown: bar.leftGroupWidth + clockMod.width + bar.rightGroupWidth > 0.5
         function placeGroup(widths, originX) {
@@ -256,6 +266,7 @@ ShellRoot {
             id: workspacesMod
 
             hostWindow: bar
+            dockMod: dock
             restX: bar.leftPlaces[0]
             restY: 0
 
@@ -336,6 +347,9 @@ ShellRoot {
     WidgetIpc {
     }
 
+    MonitorIpc {
+    }
+
     Desktop {
     }
 
@@ -364,7 +378,7 @@ ShellRoot {
     PanelWindow {
         id: clickCatcher
 
-        visible: dock.menuOpen
+        visible: dock.menuOpen && Monitors.surfacesUp
         color: "transparent"
         exclusiveZone: 0
         WlrLayershell.layer: WlrLayer.Top
@@ -379,6 +393,45 @@ ShellRoot {
         MouseArea {
             anchors.fill: parent
             onClicked: dock.menuOpen = false
+        }
+
+    }
+
+    // every surface there is one of, on the display Settings > Displays picks —
+    // the bar and dock can be sent to one of their own, the rest follow the shell.
+    // gated, because unset must leave the choice to hyprland, which null would not.
+    // emoji and screenshot act on the window you are in, so they follow the focus
+    Binding {
+        target: bar
+        property: "screen"
+        value: Monitors.barPlacement
+        when: Monitors.barPlacement !== null
+    }
+
+    Instantiator {
+        model: [dock, clickCatcher]
+
+        Binding {
+            required property var modelData
+
+            target: modelData
+            property: "screen"
+            value: Monitors.dockPlacement
+            when: Monitors.dockPlacement !== null
+        }
+
+    }
+
+    Instantiator {
+        model: [osdMod, toastMod]
+
+        Binding {
+            required property var modelData
+
+            target: modelData
+            property: "screen"
+            value: Monitors.shellPlacement
+            when: Monitors.shellPlacement !== null
         }
 
     }
