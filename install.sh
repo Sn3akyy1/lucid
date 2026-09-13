@@ -592,6 +592,27 @@ if [[ $WITH_HYPR -eq 1 ]]; then
         HYPR_LUA_INSTALLED=1
         say "  hyprland.lua + $(ls "$SRC/support/hypr/modules" | wc -l) modules -> $HYPR_DIR"
         say "  ${dim}binds, window rules, blur, animations and autostart come with it${r}"
+        # a refresh replaces hyprland.lua whole, but a require added to it
+        # since the last run - hyprmod's require("hyprland-gui"), a module
+        # of your own - is not Lucid's to drop. those lines go back in,
+        # after Lucid's, so what they set still wins. only on a refresh:
+        # a config replaced on request was meant to go
+        if [[ $HYPR_IS_LUCID -eq 1 && -f "$HYPR_DIR.backup-$STAMP/hyprland.lua" ]]; then
+            carried=()
+            while IFS= read -r line; do
+                grep -qxF -- "$line" "$HYPR_DIR/hyprland.lua" && continue
+                printf '%s\n' "${carried[@]:-}" | grep -qxF -- "$line" && continue
+                carried+=("$line")
+            done < <(grep -E '^[[:space:]]*(pcall[[:space:]]*\([[:space:]]*)?(require|dofile)[[:space:]]*[(,]' \
+                        "$HYPR_DIR.backup-$STAMP/hyprland.lua" || true)
+            if (( ${#carried[@]} )); then
+                {
+                    printf '\n-- kept by the Lucid installer: these were added to hyprland.lua after it was installed\n'
+                    printf '%s\n' "${carried[@]}"
+                } >> "$HYPR_DIR/hyprland.lua"
+                say "  kept ${#carried[@]} require line(s) added to hyprland.lua since the last install"
+            fi
+        fi
 
         # the binds shell out to these, so a missing one is a dead key rather
         # than a visible error. worth saying now, not after the first F-key
