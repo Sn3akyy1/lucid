@@ -554,6 +554,25 @@ if [[ $WITH_HYPR -eq 1 ]]; then
         fi
     fi
 
+    # the lua config only exists from Hyprland 0.55. an older one reads
+    # hyprland.conf and ignores hyprland.lua, so replacing the config would
+    # leave it with nothing but its own defaults - worth asking first.
+    # `hyprctl version` prints "Hyprland 0.54.0 built from ..." with no v,
+    # so the number is taken bare and compared as a number
+    if [[ $DO_HYPR -eq 1 ]] && command -v hyprctl &>/dev/null; then
+        HYPR_VER=$(hyprctl version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
+        if [[ -n "$HYPR_VER" ]]; then
+            IFS=. read -r hv_major hv_minor _ <<< "$HYPR_VER"
+            if (( hv_major == 0 && hv_minor < 55 )); then
+                warn "  Hyprland $HYPR_VER predates the lua config (0.55+) — it will ignore hyprland.lua"
+                if ! ask "  Install it anyway?"; then
+                    DO_HYPR=0
+                    say "  ${dim}left alone — update Hyprland, then re-run with --with-hypr${r}"
+                fi
+            fi
+        fi
+    fi
+
     if [[ $DO_HYPR -eq 1 ]]; then
         if [[ $HAS_HYPR_CFG -eq 1 ]]; then
             cp -r "$HYPR_DIR" "$HYPR_DIR.backup-$STAMP"
@@ -580,12 +599,6 @@ if [[ $WITH_HYPR -eq 1 ]]; then
             command -v "$c" &>/dev/null || warn "  $c is missing — the binds that use it will do nothing"
         done
 
-        if command -v hyprctl &>/dev/null; then
-            HYPR_VER=$(hyprctl version 2>/dev/null | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
-            case "$HYPR_VER" in
-                v0.4*|v0.3*|v0.2*|v0.1*) warn "  Hyprland $HYPR_VER predates the lua config format — expect errors" ;;
-            esac
-        fi
     fi
 else
     step "Skipping the Hyprland config (--no-hypr)"
