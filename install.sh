@@ -588,6 +588,24 @@ if [[ $WITH_HYPR -eq 1 ]]; then
         if [[ -f "$HYPR_DIR/hyprland.conf" ]]; then
             mv "$HYPR_DIR/hyprland.conf" "$HYPR_DIR/hyprland.conf.replaced-$STAMP"
             say "  hyprland.conf -> hyprland.conf.replaced-$STAMP (lua config wins now)"
+            # a lua config cannot source a .conf, so whatever the old config
+            # pulled in - hyprmod's hyprland-gui.conf, a file of your own -
+            # stops being read here. name them, so the settings that vanish
+            # with them are not a mystery: each needs a lua module in its
+            # place (hyprmod adds require("hyprland-gui") when re-run)
+            sourced=()
+            while IFS= read -r f; do
+                [[ -n "$f" ]] && sourced+=("$f")
+            done < <(sed -nE 's/^[[:space:]]*source[[:space:]]*=[[:space:]]*//p' \
+                        "$HYPR_DIR/hyprland.conf.replaced-$STAMP" \
+                     | sed -E 's/[[:space:]]*#.*$//; s/[[:space:]]+$//' || true)
+            if (( ${#sourced[@]} )); then
+                warn "  it sourced ${#sourced[@]} file(s) that hyprland.lua will not read:"
+                for f in "${sourced[@]}"; do
+                    say "    $f"
+                done
+                say "  ${dim}a lua config cannot source .conf files. whatever wrote those needs a lua module instead — hyprmod: re-run it and accept its require(\"hyprland-gui\") line${r}"
+            fi
         fi
         HYPR_LUA_INSTALLED=1
         say "  hyprland.lua + $(ls "$SRC/support/hypr/modules" | wc -l) modules -> $HYPR_DIR"
