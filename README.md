@@ -159,6 +159,7 @@ installing to pick them up.
 | `SUPER` + `SHIFT` + `V` | Clipboard history |
 | `SUPER` + `S` | Settings |
 | `SUPER` + `.` | Emoji picker |
+| `SUPER` + `K` | On-screen keyboard |
 | `SUPER` + `W` | Workspace overview (also: three-finger swipe) |
 | `SUPER` + `D` / `Print` | Region screenshot |
 | `SUPER` + `Print` | Full screenshot |
@@ -353,6 +354,19 @@ Hyprland reload.
   blurs further and everything but the sign-in card steps back. It counts your
   remaining tries against faillock, warns about Caps Lock, shows the keyboard
   layout, and will not let a notification launch anything while it is up
+- **Login screen** — the lock screen ported to SDDM, so the machine looks like
+  itself before you have signed in: the same clock, the same palette and the
+  same wallpaper, blurred once in advance rather than on a cold GPU, with the
+  user and session pickers where the glance chips sit. It is painted from the
+  running shell's own colours, so it follows a theme change. The installer
+  copies it in when SDDM is present but never switches to it — which theme
+  greets you stays your call
+- **On-screen keyboard** — `SUPER` + `K`, the desktop's right-click menu or the
+  launcher's command list. It never takes the focus off what you are typing
+  into, and clicks outside it reach the application underneath, so the caret
+  stays where you put it. A letters layer and a function layer, modifiers that
+  latch on one press and lock on two, and chords sent as chords. Drag it
+  anywhere by the strip along its top and it stays there
 - **Emoji picker** — emoji, kaomoji and GIFs (Giphy or Tenor), with recents,
   favourites and skin-tone variants; pastes into the focused window
 - **Screenshots** — region select, full screen, and screen recording with
@@ -694,6 +708,8 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |
 | `widgets` | `add <type> <variant>` `remove <uid>` `clear` `toggle` `lock` `unlock` `list` `catalogue` `settings` `resize <uid> <w> <h>` |
 | `moji` | `toggle` `open` `close` `emoji` `kaomoji` `gif` `center` |
+| `keyboard` | `toggle` `open` `close` `letters` `fnkeys` `center` `bigger` `smaller` |
+| `notifs` | `toggle` `open` `close` `clear` `toggleDnd` `expandAll` `settings` `count` |
 | `lock` | `lock` `unlock` `isLocked` `status` — nothing here bypasses the password; PAM is the only way in |
 | `snap` | `toggle` `open` `close` `text` `color` |
 | `toast` | `show <icon> <label>` `warn <icon> <label>` |
