@@ -38,7 +38,12 @@ built rather than inverted.
   greeting, weather, media, notifications. Touch the keyboard and it focuses —
   the wallpaper blurs further, the clock shrinks out of the way, everything
   that is not the field steps back, and the sign-in card is all that is lit.
-  It drifts back to the glance after half a minute of quiet.
+  **What steps back also goes inert** — while the field has the screen, the
+  media card, the notifications, the power bar and the glance chips take
+  neither clicks nor hover: no pill opens, no button lights up, and a click out
+  there buys the focus back rather than pressing whatever was under the
+  pointer. It drifts back to the glance after half a
+  minute of quiet.
 - **The password field is an M3 outlined field**: a focus ring in the accent,
   beads that pop in per character, a reveal toggle, and a submit button that
   turns into a proper indeterminate spinner while PAM thinks and a tick when it
@@ -242,7 +247,10 @@ built rather than inverted.
   two-tone clock, the same palette, the same wallpaper, blurred once in advance
   so the login screen is not running a blur on a cold GPU. The user and session
   pickers take the place of the glance chips, and the weather, media and
-  notifications drop out, there being no session yet to read them from.
+  notifications drop out, there being no session yet to read them from. It
+  carries the lock's two faces too, including going inert while the field has
+  the screen: the pickers and the power bar take neither clicks nor hover until
+  a click hands the focus back.
 - It is painted from the running shell's own resolved colours, so it follows a
   theme or wallpaper change like everything else does, and repaints without
   asking for a password.

@@ -16,6 +16,9 @@ Item {
     // 0 glance, 1 focus. the day steps back so the field can step forward
     property real focusK: Lockscreen.focused ? 1 : 0
     readonly property real e: surface.ease(surface.t)
+    // while the field has the screen, everything that steps back also stops
+    // taking clicks. a click out there only buys the focus back
+    readonly property bool glanceLive: !Lockscreen.focused
     readonly property int pad: Math.round(Math.max(36, Math.min(76, surface.height * 0.062)))
     readonly property int rightWidth: Math.round(Math.max(340, Math.min(440, surface.width * 0.25)))
 
@@ -187,6 +190,7 @@ Item {
             anchors.topMargin: surface.pad
             visible: surface.primary
             opacity: surface.rv(0) * (1 - surface.focusK * 0.6)
+            enabled: surface.glanceLive
 
             transform: Translate {
                 y: (1 - surface.rv(0)) * -24
@@ -204,6 +208,7 @@ Item {
             anchors.topMargin: surface.pad
             visible: surface.primary
             opacity: surface.rv(0.06) * (1 - surface.focusK * 0.6)
+            enabled: surface.glanceLive
 
             transform: Translate {
                 y: (1 - surface.rv(0.06)) * -24
@@ -266,6 +271,7 @@ Item {
 
                     width: parent.width
                     opacity: surface.rv(0.32) * (1 - surface.focusK * 0.5)
+                    enabled: surface.glanceLive
                     transformOrigin: Item.Right
                     scale: 0.96 + 0.04 * surface.rv(0.32)
 
@@ -279,6 +285,7 @@ Item {
                     width: parent.width
                     maxHeight: Math.max(120, rightCol.height - auth.height - (player.visible ? player.height + cards.spacing : 0) - cards.spacing)
                     opacity: surface.rv(0.42) * (1 - surface.focusK * 0.5)
+                    enabled: surface.glanceLive
                     transformOrigin: Item.Right
                     scale: 0.96 + 0.04 * surface.rv(0.42)
 
@@ -300,6 +307,7 @@ Item {
             anchors.bottomMargin: surface.pad
             visible: surface.primary
             opacity: surface.rv(0.5) * (1 - surface.focusK * 0.6)
+            enabled: surface.glanceLive
 
             transform: Translate {
                 y: (1 - surface.rv(0.5)) * 30

@@ -128,6 +128,8 @@ Rectangle {
         HoverHandler {
             id: hover
 
+            // a pointer handler ignores Item.enabled unless told to
+            enabled: pb.enabled
             cursorShape: Qt.PointingHandCursor
         }
 
@@ -201,6 +203,7 @@ Rectangle {
             HoverHandler {
                 id: cancelHover
 
+                enabled: bar.enabled
                 cursorShape: Qt.PointingHandCursor
             }
 
@@ -241,6 +244,7 @@ Rectangle {
             HoverHandler {
                 id: goHover
 
+                enabled: bar.enabled
                 cursorShape: Qt.PointingHandCursor
             }
 

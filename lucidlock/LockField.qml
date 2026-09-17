@@ -92,15 +92,6 @@ Item {
         id: shift
     }
 
-    // clicking the pill counts as taking hold of the field; the TextInput's own
-    // focus-on-press does not say anything about the lock's two faces
-    TapHandler {
-        onTapped: {
-            Lockscreen.engage();
-            field.focusInput();
-        }
-    }
-
     Rectangle {
         id: pill
 
@@ -456,6 +447,23 @@ Item {
 
         }
 
+    }
+
+    // the TextInput only covers the text line, and it takes that press
+    // exclusively — which is why a handler on the pill never saw a click there.
+    // this sits over the whole pill, engages, then declines so the press still
+    // reaches the input underneath. the trailing buttons are left alone
+    MouseArea {
+        anchors.left: parent.left
+        anchors.right: trailing.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        acceptedButtons: Qt.LeftButton
+        onPressed: (mouse) => {
+            Lockscreen.engage();
+            field.focusInput();
+            mouse.accepted = false;
+        }
     }
 
 }

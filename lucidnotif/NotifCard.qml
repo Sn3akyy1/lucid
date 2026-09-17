@@ -103,6 +103,10 @@ Item {
 
     HoverHandler {
         id: hover
+
+        // a pointer handler keeps firing inside a disabled item; the lock
+        // screen switches whole blocks off and needs the hover to go with them
+        enabled: card.enabled
     }
 
     Column {
