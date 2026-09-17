@@ -8,7 +8,7 @@ pragma Singleton
 Singleton {
     id: root
 
-    readonly property string repo: "Sn3akyy1/lucid-update-test"
+    readonly property string repo: "Sn3akyy1/lucid"
     readonly property string releasesUrl: "https://github.com/" + root.repo + "/releases"
     readonly property int everyMs: 86400000 // test-marker
 

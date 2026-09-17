@@ -321,6 +321,11 @@ built rather than inverted.
   the first sample averaged over the whole time the panel had been closed.
 - The widget options menu opened underneath your windows when the cards are set
   to sit below them. It is drawn on its own layer now.
+- Hyprland's autostart re-applied the GTK theme, the icon theme and a dark
+  colour scheme on every login, overriding whatever the Environment page had
+  been told and putting light mode's applications straight back into dark. The
+  installer seeds those once when you ask for the Lucid look; the Environment
+  page owns them from then on.
 - `sync-sddm.sh` never ran and never reported that it had not. A misplaced
   `exit 0` meant it returned success without painting anything, so the login
   screen sat on a months-old palette; it was not installed by the installer
