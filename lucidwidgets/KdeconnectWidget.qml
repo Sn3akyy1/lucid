@@ -49,522 +49,686 @@ WidgetBody {
     readonly property bool showRing: w.opt("showRing") !== false
     readonly property bool showClipboard: w.opt("showClipboard") !== false
 
-    // ------------------------------------------------ Empty / Disconnected state
+    readonly property bool low: !w.charging && w.chargePct >= 0 && w.chargePct <= 20
+    readonly property color tint: w.low ? Theme.error : Theme.accent
+    readonly property real battLevel: w.chargePct >= 0 ? w.chargePct / 100 : 0
+    readonly property string stateText: {
+        if (w.chargePct < 0)
+            return "Connected";
+
+        if (w.charging)
+            return w.chargePct >= 100 ? "Fully charged" : "Charging";
+
+        return w.low ? "Battery low" : "On battery";
+    }
+
+    component SignalMark: Row {
+        spacing: 6
+        visible: w.sigStrength >= 0 || w.netType !== ""
+
+        Row {
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 2
+            visible: w.sigStrength >= 0
+
+            Repeater {
+                model: 5
+
+                Rectangle {
+                    required property int index
+
+                    anchors.bottom: parent.bottom
+                    width: 3
+                    height: 4 + index * 3
+                    radius: 1.5
+                    color: index < w.sigStrength ? Theme.text : Theme.alpha(Theme.text, 0.16)
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Theme.durShort
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: w.netType !== ""
+            text: w.netType
+            color: Theme.subtextDim
+            font.family: Theme.fontFamily
+            font.pixelSize: 10
+            font.bold: true
+            font.letterSpacing: 1.2
+        }
+
+    }
+
+    component Bolt: WidgetGlyph {
+        name: "bolt"
+        color: w.tint
+        visible: w.charging
+
+        SequentialAnimation on opacity {
+            running: w.charging
+            loops: Animation.Infinite
+
+            NumberAnimation {
+                from: 1
+                to: 0.4
+                duration: Theme.ms(900)
+                easing.type: Easing.InOutSine
+            }
+
+            NumberAnimation {
+                from: 0.4
+                to: 1
+                duration: Theme.ms(900)
+                easing.type: Easing.InOutSine
+            }
+
+        }
+
+    }
+
+    component ActionBar: Row {
+        property real diameter: 36
+        property real iconSize: 18
+        // the compact card has room for the two headline actions only
+        property bool full: true
+
+        spacing: 10
+
+        WidgetButton {
+            visible: w.showShare
+            icon: "share"
+            diameter: parent.diameter
+            iconSize: parent.iconSize
+            surface: true
+            hoverGrow: true
+            tip: "Send file"
+            onClicked: if (w.dev) KdeConnect.pickFiles(w.dev.id, "Send to " + w.dev.name)
+        }
+
+        WidgetButton {
+            visible: w.showRing
+            icon: "ring"
+            diameter: parent.diameter
+            iconSize: parent.iconSize
+            surface: true
+            hoverGrow: true
+            tip: "Ring phone"
+            onClicked: if (w.dev) KdeConnect.ring(w.dev.id)
+        }
+
+        WidgetButton {
+            visible: w.showClipboard && parent.full
+            icon: "clipboard"
+            diameter: parent.diameter
+            iconSize: parent.iconSize
+            surface: true
+            hoverGrow: true
+            tip: "Send clipboard"
+            onClicked: if (w.dev) KdeConnect.sendClipboard(w.dev.id)
+        }
+
+        WidgetButton {
+            visible: parent.full
+            icon: "refresh"
+            diameter: parent.diameter
+            iconSize: parent.iconSize
+            surface: true
+            hoverGrow: true
+            tip: "Ping phone"
+            onClicked: if (w.dev) KdeConnect.ping(w.dev.id, "Ping from Lucid")
+        }
+
+    }
+
     Item {
         id: emptyState
+
+        // compact has no room to stack, so the same content lies down instead
+        readonly property bool tight: w.variant === "compact"
+
         visible: !w.connected
         anchors.fill: parent
 
-        Column {
-            anchors.centerIn: parent
-            spacing: 8
-            width: parent.width - 24
+        Item {
+            visible: emptyState.tight
+            anchors.fill: parent
+            anchors.margins: 16
 
             WidgetGlyph {
-                anchors.horizontalCenter: parent.horizontalCenter
-                name: "kdeconnect"
-                size: 32
-                color: Theme.subtext
+                id: tightIcon
+
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                name: "phone"
+                size: 26
+                color: Theme.subtextDim
+            }
+
+            WidgetButton {
+                id: tightBtn
+
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                icon: "refresh"
+                diameter: 30
+                iconSize: 15
+                surface: true
+                hoverGrow: true
+                tip: "Rescan devices"
+                onClicked: KdeConnect.rescan()
+            }
+
+            Column {
+                anchors.left: tightIcon.right
+                anchors.leftMargin: 12
+                anchors.right: tightBtn.left
+                anchors.rightMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 1
+
+                Text {
+                    width: parent.width
+                    text: KdeConnect.installed ? "No phone" : "Unavailable"
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 13
+                    font.bold: true
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    width: parent.width
+                    text: KdeConnect.installed ? "Pair in Settings" : "Install kdeconnect"
+                    color: Theme.subtextDim
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    elide: Text.ElideRight
+                }
+
+            }
+
+        }
+
+        // the roomy variants keep the connected skeleton: mark and title up top,
+        // the action sitting where the action row sits
+        Item {
+            visible: !emptyState.tight
+            anchors.fill: parent
+            anchors.margins: 20
+
+            WidgetGlyph {
+                id: roomyIcon
+
+                anchors.left: parent.left
+                anchors.top: parent.top
+                name: "phone"
+                size: 26
+                color: Theme.subtextDim
             }
 
             Text {
-                anchors.horizontalCenter: parent.horizontalCenter
+                id: roomyTitle
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: roomyIcon.bottom
+                anchors.topMargin: 14
                 text: KdeConnect.installed ? "No phone connected" : "KDE Connect unavailable"
                 color: Theme.text
+                font.family: Theme.fontFamily
+                font.pixelSize: 14
+                font.bold: true
+                elide: Text.ElideRight
+            }
+
+            Text {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: roomyTitle.bottom
+                anchors.topMargin: 3
+                text: KdeConnect.installed ? "Pair a phone in Settings" : "Install kdeconnect to pair a phone"
+                color: Theme.subtextDim
+                font.family: Theme.fontFamily
+                font.pixelSize: 11
+                wrapMode: Text.WordWrap
+            }
+
+            WidgetButton {
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
+                icon: "refresh"
+                diameter: 36
+                iconSize: 18
+                surface: true
+                hoverGrow: true
+                tip: "Rescan devices"
+                onClicked: KdeConnect.rescan()
+            }
+
+        }
+
+    }
+
+    Item {
+        id: compactView
+
+        visible: w.connected && w.variant === "compact"
+        anchors.fill: parent
+        anchors.margins: 16
+
+        Item {
+            id: compactHead
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 16
+
+            SignalMark {
+                id: compactSig
+
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text {
+                anchors.left: parent.left
+                anchors.right: compactSig.left
+                anchors.rightMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+                text: w.phoneName
+                color: Theme.text
+                font.family: Theme.fontFamily
+                font.pixelSize: 13
+                font.bold: true
+                elide: Text.ElideRight
+            }
+
+        }
+
+        Row {
+            id: compactHero
+
+            anchors.left: parent.left
+            anchors.top: compactHead.bottom
+            anchors.topMargin: 4
+            spacing: 2
+
+            Text {
+                id: compactPct
+
+                anchors.verticalCenter: parent.verticalCenter
+                text: w.chargePct >= 0 ? w.chargePct : "—"
+                color: Theme.text
+                font.family: Theme.fontFamily
+                font.pixelSize: 26
+                font.bold: true
+                font.letterSpacing: -1
+            }
+
+            Text {
+                anchors.baseline: compactPct.baseline
+                text: w.chargePct >= 0 ? "%" : ""
+                color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: 13
                 font.bold: true
             }
 
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: KdeConnect.installed ? "Pair a phone in Settings" : "Install kdeconnect to connect phone"
-                color: Theme.subtext
-                font.family: Theme.fontFamily
-                font.pixelSize: 11
-                wrapMode: Text.WordWrap
-                horizontalAlignment: Text.AlignHCenter
-                width: parent.width
+            Bolt {
+                anchors.verticalCenter: parent.verticalCenter
+                size: 13
             }
 
-            WidgetButton {
-                anchors.horizontalCenter: parent.horizontalCenter
-                icon: "refresh"
-                diameter: 32
-                iconSize: 16
-                surface: true
-                tip: "Rescan devices"
-                onClicked: KdeConnect.rescan()
-            }
         }
+
+        ActionBar {
+            anchors.right: parent.right
+            anchors.verticalCenter: compactHero.verticalCenter
+            diameter: 30
+            iconSize: 15
+            spacing: 8
+            full: false
+        }
+
+        Meter {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            thickness: 5
+            value: w.battLevel
+            fillColor: w.tint
+            visible: w.chargePct >= 0
+        }
+
     }
 
-    // ------------------------------------------------ Compact Variant
-    Item {
-        id: compactView
-        visible: w.connected && w.variant === "compact"
-        anchors.fill: parent
-
-        Row {
-            anchors.fill: parent
-            anchors.margins: 12
-            spacing: 10
-
-            Rectangle {
-                width: 36
-                height: 36
-                radius: 18
-                color: Theme.alpha(Theme.accent, 0.15)
-                anchors.verticalCenter: parent.verticalCenter
-
-                WidgetGlyph {
-                    anchors.centerIn: parent
-                    name: "phone"
-                    size: 20
-                    color: Theme.accent
-                }
-            }
-
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - 46 - (w.showShare ? 42 : 0) - (w.showRing ? 42 : 0)
-                spacing: 2
-
-                Text {
-                    text: w.phoneName
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 13
-                    font.bold: true
-                    elide: Text.ElideRight
-                    width: parent.width
-                }
-
-                Row {
-                    spacing: 6
-
-                    WidgetGlyph {
-                        anchors.verticalCenter: parent.verticalCenter
-                        name: "battery"
-                        size: 12
-                        color: w.charging ? Theme.accent : Theme.subtext
-                    }
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: w.chargePct >= 0 ? (w.chargePct + "%" + (w.charging ? "⚡" : "")) : "Connected"
-                        color: Theme.subtext
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
-                    }
-                }
-            }
-
-            WidgetButton {
-                anchors.verticalCenter: parent.verticalCenter
-                visible: w.showShare
-                icon: "share"
-                diameter: 32
-                iconSize: 16
-                surface: true
-                tip: "Send file"
-                onClicked: if (w.dev) KdeConnect.pickFiles(w.dev.id, "Send to " + w.dev.name)
-            }
-
-            WidgetButton {
-                anchors.verticalCenter: parent.verticalCenter
-                visible: w.showRing
-                icon: "ring"
-                diameter: 32
-                iconSize: 16
-                surface: true
-                tip: "Ring phone"
-                onClicked: if (w.dev) KdeConnect.ring(w.dev.id)
-            }
-        }
-    }
-
-    // ------------------------------------------------ Card Variant
     Item {
         id: cardView
+
         visible: w.connected && (w.variant === "card" || w.variant === "" || !w.variant)
         anchors.fill: parent
+        anchors.margins: 20
 
-        Column {
-            anchors.fill: parent
-            anchors.margins: 14
-            spacing: 12
+        Item {
+            id: cardHead
 
-            // Header: Icon + Name + Status pill
-            Row {
-                width: parent.width
-                spacing: 10
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 20
 
-                Rectangle {
-                    width: 38
-                    height: 38
-                    radius: 19
-                    color: Theme.alpha(Theme.accent, 0.15)
+            WidgetGlyph {
+                id: cardIcon
 
-                    WidgetGlyph {
-                        anchors.centerIn: parent
-                        name: "phone"
-                        size: 20
-                        color: Theme.accent
-                    }
-                }
-
-                Column {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width - 48
-                    spacing: 2
-
-                    Text {
-                        text: w.phoneName
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 14
-                        font.bold: true
-                        elide: Text.ElideRight
-                        width: parent.width
-                    }
-
-                    Row {
-                        spacing: 8
-
-                        Row {
-                            spacing: 4
-                            visible: w.chargePct >= 0
-
-                            WidgetGlyph {
-                                anchors.verticalCenter: parent.verticalCenter
-                                name: "battery"
-                                size: 12
-                                color: w.charging ? Theme.accent : Theme.subtext
-                            }
-
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: w.chargePct + "%" + (w.charging ? " (Charging)" : "")
-                                color: Theme.subtext
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 11
-                            }
-                        }
-
-                        Text {
-                            visible: w.netType !== ""
-                            text: "• " + w.netType
-                            color: Theme.subtext
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 11
-                        }
-                    }
-                }
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                name: "phone"
+                size: 18
+                color: Theme.accent
             }
 
-            // Stats gauge / status bar
-            Rectangle {
-                width: parent.width
-                height: 40
-                radius: Theme.radiusMd
-                color: Theme.alpha(Theme.bgHigh, 0.6)
+            SignalMark {
+                id: cardSig
 
-                Row {
-                    anchors.fill: parent
-                    anchors.margins: 8
-
-                    // Battery bar
-                    Item {
-                        width: parent.width / 2
-                        height: parent.height
-
-                        Row {
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 8
-
-                            Rectangle {
-                                width: 60
-                                height: 8
-                                radius: 4
-                                color: Theme.alpha(Theme.outline, 0.3)
-                                anchors.verticalCenter: parent.verticalCenter
-
-                                Rectangle {
-                                    width: Math.max(4, parent.width * Math.max(0, Math.min(1, w.chargePct / 100)))
-                                    height: parent.height
-                                    radius: 4
-                                    color: w.chargePct <= 20 ? Theme.error : Theme.accent
-                                }
-                            }
-
-                            Text {
-                                text: w.chargePct >= 0 ? (w.chargePct + "%") : "—"
-                                color: Theme.text
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 11
-                                font.bold: true
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
-                    }
-
-                    // Signal indicator
-                    Item {
-                        width: parent.width / 2
-                        height: parent.height
-
-                        Row {
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 6
-
-                            WidgetGlyph {
-                                anchors.verticalCenter: parent.verticalCenter
-                                name: "system"
-                                size: 14
-                                color: Theme.subtext
-                            }
-
-                            Text {
-                                text: w.sigStrength >= 0 ? ("Signal " + w.sigStrength + "/5") : "Connected"
-                                color: Theme.subtext
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 11
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
-                    }
-                }
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
             }
 
-            // Action Buttons Row
-            Row {
-                width: parent.width
-                spacing: 8
-
-                WidgetButton {
-                    visible: w.showShare
-                    icon: "share"
-                    diameter: 36
-                    iconSize: 18
-                    surface: true
-                    tip: "Send file"
-                    onClicked: if (w.dev) KdeConnect.pickFiles(w.dev.id, "Send to " + w.dev.name)
-                }
-
-                WidgetButton {
-                    visible: w.showRing
-                    icon: "ring"
-                    diameter: 36
-                    iconSize: 18
-                    surface: true
-                    tip: "Ring phone"
-                    onClicked: if (w.dev) KdeConnect.ring(w.dev.id)
-                }
-
-                WidgetButton {
-                    visible: w.showClipboard
-                    icon: "clipboard"
-                    diameter: 36
-                    iconSize: 18
-                    surface: true
-                    tip: "Send clipboard"
-                    onClicked: if (w.dev) KdeConnect.sendClipboard(w.dev.id)
-                }
-
-                WidgetButton {
-                    icon: "refresh"
-                    diameter: 36
-                    iconSize: 18
-                    surface: true
-                    tip: "Ping phone"
-                    onClicked: if (w.dev) KdeConnect.ping(w.dev.id, "Ping from Lucid")
-                }
+            Text {
+                anchors.left: cardIcon.right
+                anchors.leftMargin: 9
+                anchors.right: cardSig.left
+                anchors.rightMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+                text: w.phoneName
+                color: Theme.text
+                font.family: Theme.fontFamily
+                font.pixelSize: 14
+                font.bold: true
+                elide: Text.ElideRight
             }
+
         }
+
+        Row {
+            id: cardHero
+
+            anchors.left: parent.left
+            anchors.top: cardHead.bottom
+            anchors.topMargin: 14
+            spacing: 2
+
+            Text {
+                id: cardPct
+
+                anchors.verticalCenter: parent.verticalCenter
+                text: w.chargePct >= 0 ? w.chargePct : "—"
+                color: Theme.text
+                font.family: Theme.fontFamily
+                font.pixelSize: 34
+                font.bold: true
+                font.letterSpacing: -1.5
+            }
+
+            Text {
+                anchors.baseline: cardPct.baseline
+                text: w.chargePct >= 0 ? "%" : ""
+                color: Theme.subtext
+                font.family: Theme.fontFamily
+                font.pixelSize: 15
+                font.bold: true
+            }
+
+            Bolt {
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: 2
+                size: 15
+            }
+
+        }
+
+        Text {
+            anchors.right: parent.right
+            anchors.bottom: cardHero.bottom
+            anchors.bottomMargin: 7
+            text: w.stateText
+            color: w.low ? Theme.error : Theme.subtextDim
+            font.family: Theme.fontFamily
+            font.pixelSize: 11
+            font.bold: true
+            font.letterSpacing: 1.2
+        }
+
+        Meter {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: cardHero.bottom
+            anchors.topMargin: 12
+            thickness: 6
+            value: w.battLevel
+            fillColor: w.tint
+            visible: w.chargePct >= 0
+        }
+
+        ActionBar {
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+        }
+
     }
 
-    // ------------------------------------------------ Remote Variant
     Item {
         id: remoteView
+
         visible: w.connected && w.variant === "remote"
         anchors.fill: parent
+        anchors.margins: 20
 
-        Column {
-            anchors.fill: parent
-            anchors.margins: 14
-            spacing: 10
+        Item {
+            id: remoteHead
 
-            // Header
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 20
+
+            WidgetGlyph {
+                id: remoteIcon
+
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                name: "phone"
+                size: 16
+                color: Theme.accent
+            }
+
             Row {
-                width: parent.width
-                spacing: 8
+                id: remoteBatt
 
-                Rectangle {
-                    width: 32
-                    height: 32
-                    radius: 16
-                    color: Theme.alpha(Theme.accent, 0.15)
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 3
+
+                Bolt {
                     anchors.verticalCenter: parent.verticalCenter
-
-                    WidgetGlyph {
-                        anchors.centerIn: parent
-                        name: "phone"
-                        size: 16
-                        color: Theme.accent
-                    }
+                    size: 12
                 }
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: w.phoneName
+                    text: w.chargePct >= 0 ? w.chargePct + "%" : ""
+                    color: w.low ? Theme.error : Theme.text
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 13
+                    font.bold: true
+                }
+
+            }
+
+            Text {
+                anchors.left: remoteIcon.right
+                anchors.leftMargin: 8
+                anchors.right: remoteBatt.left
+                anchors.rightMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+                text: w.phoneName
+                color: Theme.text
+                font.family: Theme.fontFamily
+                font.pixelSize: 13
+                font.bold: true
+                elide: Text.ElideRight
+            }
+
+        }
+
+        Meter {
+            id: remoteMeter
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: remoteHead.bottom
+            anchors.topMargin: 8
+            thickness: 4
+            value: w.battLevel
+            fillColor: w.tint
+            visible: w.chargePct >= 0
+        }
+
+        Item {
+            id: remoteMedia
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: remoteMeter.bottom
+            anchors.topMargin: 14
+            anchors.bottom: remoteRule.top
+            anchors.bottomMargin: 14
+
+            Column {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                visible: w.hasMedia
+                spacing: 1
+
+                Text {
+                    width: parent.width
+                    text: w.trackTitle
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: 13
                     font.bold: true
                     elide: Text.ElideRight
-                    width: parent.width - 90
                 }
 
                 Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: w.chargePct >= 0 ? (w.chargePct + "%") : ""
+                    width: parent.width
+                    text: w.trackArtist
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: 11
+                    elide: Text.ElideRight
                 }
+
             }
 
-            // Media card if active, or status details
-            Rectangle {
-                width: parent.width
-                height: 86
-                radius: Theme.radiusLg
-                color: Theme.alpha(Theme.bgHigh, 0.6)
-
-                Column {
-                    visible: w.hasMedia
-                    anchors.fill: parent
-                    anchors.margins: 10
-                    spacing: 6
-
-                    Text {
-                        text: w.trackTitle
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 12
-                        font.bold: true
-                        elide: Text.ElideRight
-                        width: parent.width
-                    }
-
-                    Text {
-                        text: w.trackArtist
-                        color: Theme.subtext
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
-                        elide: Text.ElideRight
-                        width: parent.width
-                    }
-
-                    Row {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 16
-
-                        WidgetButton {
-                            icon: "prev"
-                            diameter: 28
-                            iconSize: 14
-                            tip: "Previous track"
-                            onClicked: if (w.dev) KdeConnect.mpris(w.dev.id, "Previous")
-                        }
-
-                        WidgetButton {
-                            icon: w.isPlaying ? "pause" : "play"
-                            diameter: 28
-                            iconSize: 14
-                            filled: true
-                            tip: w.isPlaying ? "Pause" : "Play"
-                            onClicked: if (w.dev) KdeConnect.mpris(w.dev.id, "PlayPause")
-                        }
-
-                        WidgetButton {
-                            icon: "next"
-                            diameter: 28
-                            iconSize: 14
-                            tip: "Next track"
-                            onClicked: if (w.dev) KdeConnect.mpris(w.dev.id, "Next")
-                        }
-                    }
-                }
-
-                // Idle message if no media active
-                Column {
-                    visible: !w.hasMedia
-                    anchors.centerIn: parent
-                    spacing: 4
-
-                    WidgetGlyph {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        name: "media"
-                        size: 20
-                        color: Theme.subtext
-                    }
-
-                    Text {
-                        text: "No active media playing on phone"
-                        color: Theme.subtext
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
-                    }
-                }
-            }
-
-            // Quick actions grid
+            // same spec as the media widget's transport row
             Row {
-                width: parent.width
-                spacing: 8
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                visible: w.hasMedia
+                spacing: 10
 
                 WidgetButton {
-                    visible: w.showShare
-                    icon: "share"
-                    diameter: 36
-                    iconSize: 18
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: "prev"
+                    diameter: 30
+                    iconSize: 15
                     surface: true
-                    tip: "Send file"
-                    onClicked: if (w.dev) KdeConnect.pickFiles(w.dev.id, "Send to " + w.dev.name)
+                    hoverGrow: true
+                    tip: "Previous track"
+                    onClicked: if (w.dev) KdeConnect.mpris(w.dev.id, "Previous")
                 }
 
                 WidgetButton {
-                    visible: w.showRing
-                    icon: "ring"
-                    diameter: 36
-                    iconSize: 18
-                    surface: true
-                    tip: "Ring phone"
-                    onClicked: if (w.dev) KdeConnect.ring(w.dev.id)
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: w.isPlaying ? "pause" : "play"
+                    diameter: 40
+                    iconSize: 19
+                    filled: true
+                    hoverGrow: true
+                    tip: w.isPlaying ? "Pause" : "Play"
+                    onClicked: if (w.dev) KdeConnect.mpris(w.dev.id, "PlayPause")
                 }
 
                 WidgetButton {
-                    visible: w.showClipboard
-                    icon: "clipboard"
-                    diameter: 36
-                    iconSize: 18
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: "next"
+                    diameter: 30
+                    iconSize: 15
                     surface: true
-                    tip: "Send clipboard"
-                    onClicked: if (w.dev) KdeConnect.sendClipboard(w.dev.id)
+                    hoverGrow: true
+                    tip: "Next track"
+                    onClicked: if (w.dev) KdeConnect.mpris(w.dev.id, "Next")
                 }
 
-                WidgetButton {
-                    icon: "refresh"
-                    diameter: 36
-                    iconSize: 18
-                    surface: true
-                    tip: "Ping phone"
-                    onClicked: if (w.dev) KdeConnect.ping(w.dev.id, "Ping from Lucid")
-                }
             }
+
+            Column {
+                anchors.centerIn: parent
+                visible: !w.hasMedia
+                spacing: 6
+
+                WidgetGlyph {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    name: "media"
+                    size: 24
+                    color: Theme.alpha(Theme.text, 0.22)
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "Nothing playing"
+                    color: Theme.subtextDim
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 11
+                    font.bold: true
+                    font.letterSpacing: 1.2
+                }
+
+            }
+
         }
+
+        Rectangle {
+            id: remoteRule
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: remoteActions.top
+            anchors.bottomMargin: 14
+            height: 1
+            color: Theme.alpha(Theme.outline, 0.5)
+        }
+
+        ActionBar {
+            id: remoteActions
+
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+        }
+
     }
+
 }
