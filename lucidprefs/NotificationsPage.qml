@@ -614,6 +614,28 @@ Column {
         }
 
         SettingRow {
+            title: "Lock keys and microphone"
+            resetKey: "osdToggles"
+            description: "Where Caps Lock, Num Lock and muting the microphone show up: on the OSD at the bottom, with volume and brightness, or as a toast at the top like the rest of these events."
+
+            M3Segmented {
+                width: 220
+                current: Prefs.osdToggles
+                options: [{
+                    "key": "osd",
+                    "label": "OSD"
+                }, {
+                    "key": "toast",
+                    "label": "Toast"
+                }]
+                onChosen: (key) => {
+                    return Prefs.osdToggles = key;
+                }
+            }
+
+        }
+
+        SettingRow {
             title: "Game mode"
             resetKey: "toastOnGameMode"
             enabled: Prefs.gameModeStateFile !== ""
