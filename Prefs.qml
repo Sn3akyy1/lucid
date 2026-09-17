@@ -87,6 +87,15 @@ Singleton {
     property alias showWorkspaces: s.showWorkspaces
     property alias showMedia: s.showMedia
     property alias showTray: s.showTray
+    property alias showKbLayout: s.showKbLayout
+    property alias gameModeOnCmd: s.gameModeOnCmd
+    property alias gameModeOffCmd: s.gameModeOffCmd
+    property alias gameModeStatusCmd: s.gameModeStatusCmd
+
+    readonly property string gameModeStateFile: {
+        const m = /(?:test|\[)\s+-[ef]\s+(\S+)/.exec(root.gameModeStatusCmd || "");
+        return m ? m[1].replace(/^['"]|['"]$/g, "") : "";
+    }
     property alias showClock: s.showClock
     property alias showNotifications: s.showNotifications
     property alias showSystem: s.showSystem
@@ -288,6 +297,10 @@ Singleton {
         "showWorkspaces": true,
         "showMedia": true,
         "showTray": true,
+        "showKbLayout": true,
+        "gameModeOnCmd": "",
+        "gameModeOffCmd": "",
+        "gameModeStatusCmd": "",
         "showClock": true,
         "showNotifications": true,
         "showSystem": true,
@@ -701,6 +714,10 @@ Singleton {
             property bool showWorkspaces: true
             property bool showMedia: true
             property bool showTray: true
+            property bool showKbLayout: true
+            property string gameModeOnCmd: ""
+            property string gameModeOffCmd: ""
+            property string gameModeStatusCmd: ""
             property bool showClock: true
             property bool showNotifications: true
             property bool showSystem: true

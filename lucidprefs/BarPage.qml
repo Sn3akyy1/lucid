@@ -278,4 +278,75 @@ Column {
 
     }
 
+    SettingCard {
+        title: "SYSTEM MODULE"
+
+        SettingRow {
+            title: "Keyboard layout"
+            resetKey: "showKbLayout"
+            description: "Shows the active keyboard layout next to the network icon. Click it to switch to the next layout."
+
+            M3Switch {
+                checked: Prefs.showKbLayout
+                onToggled: (v) => {
+                    return Prefs.showKbLayout = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Game mode: turn on"
+            resetKey: "gameModeOnCmd"
+            description: "Shell command the Game Mode quick toggle runs to switch it on. Runs through bash, so pipes and && work."
+            stacked: true
+
+            M3TextField {
+                width: parent.width
+                placeholder: "e.g. sudo -n g15-gamemode on"
+                text: Prefs.gameModeOnCmd
+                onAccepted: (v) => {
+                    return Prefs.gameModeOnCmd = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Game mode: turn off"
+            resetKey: "gameModeOffCmd"
+            description: "Shell command run to switch game mode off again."
+            stacked: true
+
+            M3TextField {
+                width: parent.width
+                placeholder: "e.g. sudo -n g15-gamemode off"
+                text: Prefs.gameModeOffCmd
+                onAccepted: (v) => {
+                    return Prefs.gameModeOffCmd = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Game mode: status check"
+            resetKey: "gameModeStatusCmd"
+            description: "Optional. Exits 0 while game mode is on, so the toggle stays right when something else (a keybind, a script) changes it. Checked whenever the panel opens."
+            showDivider: false
+            stacked: true
+
+            M3TextField {
+                width: parent.width
+                placeholder: "e.g. test -f /run/g15-gamemode.state"
+                text: Prefs.gameModeStatusCmd
+                onAccepted: (v) => {
+                    return Prefs.gameModeStatusCmd = v;
+                }
+            }
+
+        }
+
+    }
+
 }
