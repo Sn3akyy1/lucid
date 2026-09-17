@@ -632,8 +632,14 @@ Singleton {
     }
 
     readonly property var shellPlacement: root.placementFor(Prefs.monitorShellScreen)
-    // the bar and dock may sit apart from the rest; empty follows the shell
-    readonly property var barPlacement: root.placementFor(Prefs.monitorBarScreen) || root.shellPlacement
+    // "*" puts a bar on every display instead of one somewhere
+    readonly property bool barEverywhere: Prefs.monitorBarScreen === "*"
+    // the bar and dock may sit apart from the rest; empty follows the shell.
+    // with a bar everywhere this is the one that speaks for the shell
+    readonly property var barPlacement: root.barEverywhere ? root.shellPlacement : (root.placementFor(Prefs.monitorBarScreen) || root.shellPlacement)
+    // with a bar on every display, only one of them turns into notification
+    // popups: the shell's own display, or the one being worked on
+    readonly property var popupScreen: root.shellPlacement || root.focusedScreen || root.mainScreen
     readonly property var dockPlacement: root.placementFor(Prefs.monitorDockScreen) || root.shellPlacement
 
     // unplugging a display tears down the surfaces that were on it for good:
@@ -680,6 +686,11 @@ Singleton {
     // "shell" | "bar" | "dock" -> the key it landed on, "" for automatic, or
     // null if the spec named nothing live
     function aimSurface(which, spec) {
+        const every = String(spec === undefined || spec === null ? "" : spec).trim();
+        if (which === "bar" && (every === "*" || every === "all" || every === "every" || every === "everywhere")) {
+            root.setBarScreen("*");
+            return "*";
+        }
         const from = which === "bar" ? root.keyOf(root.barPlacement) : (which === "dock" ? root.keyOf(root.dockPlacement) : root.shellKey);
         const key = root.resolveKey(spec, from);
         if (key === null)
@@ -706,7 +717,7 @@ Singleton {
             if (root.keyOf(root.shellPlacement) === k)
                 on.push("shell");
 
-            if (root.keyOf(root.barPlacement) === k)
+            if (root.barEverywhere || root.keyOf(root.barPlacement) === k)
                 on.push("bar");
 
             if (root.keyOf(root.dockPlacement) === k)
@@ -722,6 +733,9 @@ Singleton {
         const key = root.aimSurface(which, spec);
         if (key === null)
             return "no display called \"" + spec + "\", see: qs ipc call displays list";
+
+        if (key === "*")
+            return "every display";
 
         if (key !== "")
             return root.nameOf(key);

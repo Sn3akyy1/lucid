@@ -837,22 +837,7 @@ Item {
         font.bold: true
     }
 
-    IpcHandler {
-        target: "workspaces"
-
-        function toggle(): void {
-            root.expanded = !root.expanded;
-        }
-
-        function open(): void {
-            root.expanded = true;
-        }
-
-        function close(): void {
-            root.expanded = false;
-        }
-
-    }
+    // the "workspaces" ipc target lives in shell.qml, which can have a bar per display
 
     Timer {
         interval: root.trackInterval

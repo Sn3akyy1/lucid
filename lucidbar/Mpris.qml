@@ -421,42 +421,7 @@ BarPill {
     compactInteractive: false
     panelFades: false
 
-    IpcHandler {
-        target: "media"
-
-        function toggle(): void {
-            if (root.expanded)
-                root.expanded = false;
-            else
-                root.openPanel("player");
-        }
-
-        function open(): void {
-            root.openPanel("player");
-        }
-
-        function close(): void {
-            root.expanded = false;
-        }
-
-        function identify(): void {
-            root.openPanel("shazam");
-            root.startListening();
-        }
-
-        function playPause(): void {
-            root.togglePlay();
-        }
-
-        function next(): void {
-            root.skip(1);
-        }
-
-        function previous(): void {
-            root.skip(-1);
-        }
-
-    }
+    // the "media" ipc target lives in shell.qml, which can have a bar per display
 
     FileView {
         id: historyFile
