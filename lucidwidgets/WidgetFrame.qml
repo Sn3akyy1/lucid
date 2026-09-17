@@ -117,6 +117,10 @@ Item {
         Widgets.setOption(frame.uid, key, value);
     }
 
+    function setOpts(changes) {
+        Widgets.setOptions(frame.uid, changes);
+    }
+
     function clampX(v) {
         return frame.board ? Math.max(0, Math.min(frame.board.width - frame.cardW, v)) : v;
     }
