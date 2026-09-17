@@ -213,6 +213,126 @@ Column {
     }
 
     SettingCard {
+        title: "LAUNCHER"
+
+        SettingRow {
+            title: "Launcher width"
+            resetKey: "launcherWidth"
+            description: "How wide the application launcher opens - also the command, theme and clipboard lists. The wallpaper strip and power menu keep their own size."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 420
+                to: 1000
+                stepSize: 10
+                suffix: " px"
+                value: Prefs.launcherWidth
+                onMoved: (v) => {
+                    return Prefs.launcherWidth = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Visible results"
+            resetKey: "launcherMaxRows"
+            description: "How many results the launcher shows before the list scrolls. It grows up to that many rows and shrinks when there are fewer."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 3
+                to: 12
+                stepSize: 1
+                suffix: " rows"
+                value: Prefs.launcherMaxRows
+                onMoved: (v) => {
+                    return Prefs.launcherMaxRows = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "App descriptions"
+            resetKey: "launcherAppDescriptions"
+            description: "A line under each application saying what it is, taken from its desktop entry."
+
+            M3Switch {
+                checked: Prefs.launcherAppDescriptions
+                onToggled: (v) => {
+                    return Prefs.launcherAppDescriptions = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Open windows in results"
+            resetKey: "launcherWindows"
+            description: "Searching also finds windows that are already open, by title or application. Return switches to the window instead of starting the app again."
+
+            M3Switch {
+                checked: Prefs.launcherWindows
+                onToggled: (v) => {
+                    return Prefs.launcherWindows = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Power buttons"
+            resetKey: "launcherPowerChips"
+            description: "Lock, suspend, restart and shut down buttons next to the search field. Restart and shut down ask for a second click."
+
+            M3Switch {
+                checked: Prefs.launcherPowerChips
+                onToggled: (v) => {
+                    return Prefs.launcherPowerChips = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Web search"
+            resetKey: "launcherWebSearch"
+            description: "The last result offers to search the web for what you typed, and an address like example.org opens straight away."
+
+            M3Switch {
+                checked: Prefs.launcherWebSearch
+                onToggled: (v) => {
+                    return Prefs.launcherWebSearch = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Search address"
+            resetKey: "launcherSearchUrl"
+            description: "Opened in the default browser, with %s replaced by the search. DuckDuckGo also understands bangs like !yt or !gh."
+            showDivider: false
+            stacked: true
+            opacity: Prefs.launcherWebSearch ? 1 : 0.5
+
+            M3TextField {
+                width: parent.width
+                placeholder: "https://duckduckgo.com/?q=%s"
+                text: Prefs.launcherSearchUrl
+                onAccepted: (v) => {
+                    return Prefs.launcherSearchUrl = v;
+                }
+            }
+
+        }
+
+    }
+
+    SettingCard {
         title: "CLIPBOARD"
 
         SettingRow {

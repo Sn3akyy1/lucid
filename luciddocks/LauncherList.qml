@@ -17,6 +17,53 @@ Item {
     signal activated(int index)
     signal deleteRequested(int index)
 
+    // typing rewrites the whole list at once. Per-row transitions on that many
+    // inserts, moves and removals, cut short every keystroke, tangle: rows fly in
+    // from far off, gaps open, text doubles. So while a query is changing the rows
+    // land straight in place and the list settles as one; the row transitions come
+    // back once typing pauses, for small changes like deleting a clipboard entry
+    property bool filtering: false
+    property real settleOpacity: 1
+    property real settleOffset: 0
+
+    function beginFilter() {
+        list.filtering = true;
+        filterQuiet.restart();
+        settleAnim.stop();
+        list.settleOpacity = Math.min(list.settleOpacity, 0.45);
+        list.settleOffset = 5;
+        settleAnim.start();
+    }
+
+    // outlives the layout pass that places the rows
+    Timer {
+        id: filterQuiet
+
+        interval: 320
+        onTriggered: list.filtering = false
+    }
+
+    ParallelAnimation {
+        id: settleAnim
+
+        NumberAnimation {
+            target: list
+            property: "settleOpacity"
+            to: 1
+            duration: Theme.ms(220)
+            easing.type: Easing.OutCubic
+        }
+
+        NumberAnimation {
+            target: list
+            property: "settleOffset"
+            to: 0
+            duration: Theme.ms(260)
+            easing.type: Easing.OutCubic
+        }
+
+    }
+
     // the view consumes these; reading them back off `view` re-entered the layout
     readonly property int rowSpacing: 2
     readonly property int bottomPad: 8
@@ -42,13 +89,39 @@ Item {
         return list.model && index >= 0 && index < list.model.count ? list.model.get(index) : null;
     }
 
-    // must match the delegate's height expression below
+    // the one row-height rule: the delegate, the scroll maths and the dock's panel sizing all use it
+    function heightFor(kind, subtitle) {
+        if (kind === "header")
+            return 30;
+
+        // an app's own actions sit under it, a step down; the app name goes inline
+        if (kind === "action")
+            return 40;
+
+        return subtitle !== "" ? 58 : 48;
+    }
+
+    // what Return does, on the selected row: a window has to read differently from a fresh launch
+    function hintFor(kind) {
+        switch (kind) {
+        case "window":
+            return "Switch";
+        case "app":
+        case "action":
+        case "url":
+            return "Open";
+        case "command":
+        case "power":
+            return "Run";
+        case "web":
+            return "Search";
+        }
+        return "";
+    }
+
     function rowHeight(index) {
         var r = list.rowAt(index);
-        if (!r)
-            return 0;
-
-        return r.kind === "header" ? 30 : (r.subtitle !== "" ? 58 : 48);
+        return r ? list.heightFor(r.kind, r.subtitle) : 0;
     }
 
     function rowY(index) {
@@ -98,7 +171,14 @@ Item {
     }
 
     function ensureSelectable() {
-        if (list.model && list.model.count > 0 && !list.isSelectable(list.currentIndex))
+        if (!list.model || list.model.count === 0)
+            return;
+
+        // a deleted last row leaves the selection on the new last one, not the top
+        if (list.currentIndex >= list.model.count)
+            list.currentIndex = list.model.count - 1;
+
+        if (!list.isSelectable(list.currentIndex))
             list.currentIndex = list.firstSelectable();
 
     }
@@ -157,6 +237,11 @@ Item {
         color: Theme.withBlur(Theme.bgActive)
         visible: view.count > 0 && list.isSelectable(list.currentIndex)
         z: 0
+        opacity: list.settleOpacity
+
+        transform: Translate {
+            y: list.settleOffset
+        }
 
         Behavior on slot {
             NumberAnimation {
@@ -181,6 +266,11 @@ Item {
 
         anchors.fill: parent
         clip: true
+        opacity: list.settleOpacity
+
+        transform: Translate {
+            y: list.settleOffset
+        }
         spacing: list.rowSpacing
         bottomMargin: list.bottomPad
         model: list.model
@@ -216,13 +306,64 @@ Item {
             }
         }
 
+        // typing re-sorts the list: rows that stay glide to their new slot, discarded
+        // ones slip out underneath, and new ones wait until those are mostly gone —
+        // before, moves jumped and landed on rows still fading, doubling the text
         add: Transition {
+            enabled: !list.filtering
+
+            SequentialAnimation {
+                PropertyAction {
+                    property: "opacity"
+                    value: 0
+                }
+
+                PauseAnimation {
+                    duration: Theme.ms(70)
+                }
+
+                NumberAnimation {
+                    property: "opacity"
+                    to: 1
+                    duration: Theme.ms(180)
+                    easing.type: Easing.OutCubic
+                }
+
+            }
+
+        }
+
+        move: Transition {
+            enabled: !list.filtering
+
+            NumberAnimation {
+                properties: "y"
+                duration: Theme.ms(240)
+                easing.type: Easing.OutCubic
+            }
+
+            // a move can cut an add short; never leave a row half-faded
             NumberAnimation {
                 property: "opacity"
-                from: 0
                 to: 1
                 duration: Theme.durQuick
+            }
+
+        }
+
+        moveDisplaced: Transition {
+            enabled: !list.filtering
+
+            NumberAnimation {
+                properties: "y"
+                duration: Theme.ms(240)
                 easing.type: Easing.OutCubic
+            }
+
+            NumberAnimation {
+                property: "opacity"
+                to: 1
+                duration: Theme.durQuick
             }
 
         }
@@ -247,21 +388,36 @@ Item {
         }
 
         remove: Transition {
+            enabled: !list.filtering
+
+            // under the rows that stay, and gone before they settle over it
+            PropertyAction {
+                property: "z"
+                value: -1
+            }
+
             NumberAnimation {
                 property: "opacity"
-                from: 1
                 to: 0
-                duration: Theme.durExit
-                easing.type: Easing.InCubic
+                duration: Theme.ms(110)
+                easing.type: Easing.OutCubic
             }
 
         }
 
         displaced: Transition {
+            enabled: !list.filtering
+
             NumberAnimation {
                 properties: "y"
-                duration: Theme.durShort
+                duration: Theme.ms(240)
                 easing.type: Easing.OutCubic
+            }
+
+            NumberAnimation {
+                property: "opacity"
+                to: 1
+                duration: Theme.durQuick
             }
 
         }
@@ -317,13 +473,18 @@ Item {
             required property bool disabled
             required property bool selectable
             required property int index
+            required property string payload
+            // an app action listed straight under its app
+            required property bool nested
+            readonly property bool isAction: rowItem.kind === "action"
+            readonly property string hint: rowItem.selected && rowItem.trailing === "" ? list.hintFor(rowItem.kind) : ""
 
             readonly property bool isHeader: rowItem.kind === "header"
             readonly property bool selected: list.currentIndex === rowItem.index && rowItem.selectable
             readonly property bool hovering: list.hoveredIndex === rowItem.index && rowItem.selectable && !rowItem.disabled
 
             width: list.rowWidth
-            height: rowItem.isHeader ? 30 : (rowItem.subtitle !== "" ? 58 : 48)
+            height: list.heightFor(rowItem.kind, rowItem.subtitle)
             opacity: rowItem.disabled ? 0.4 : 1
 
             function askThumb() {
@@ -367,15 +528,15 @@ Item {
             Row {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
-                anchors.leftMargin: 14
+                anchors.leftMargin: rowItem.nested ? 44 : 14
                 anchors.right: parent.right
                 anchors.rightMargin: 14
                 spacing: 14
                 visible: !rowItem.isHeader
 
                 IconImage {
-                    width: 28
-                    height: 28
+                    width: rowItem.isAction ? 22 : 28
+                    height: rowItem.isAction ? 22 : 28
                     anchors.verticalCenter: parent.verticalCenter
                     visible: rowItem.iconName !== ""
                     source: rowItem.iconName === "" ? "" : (IconTheme.generation >= 0 && IconTheme.pathFor(rowItem.iconName) !== "" ? IconTheme.pathFor(rowItem.iconName) : Quickshell.iconPath(rowItem.iconName, true))
@@ -426,8 +587,8 @@ Item {
                 }
 
                 DockGlyph {
-                    width: 22
-                    height: 22
+                    width: rowItem.isAction ? 16 : 22
+                    height: rowItem.isAction ? 16 : 22
                     anchors.verticalCenter: parent.verticalCenter
                     visible: rowItem.glyph !== ""
                     pathData: rowItem.glyph
@@ -453,12 +614,17 @@ Item {
                 }
 
                 Column {
+                    // leaves the check glyph, the Return hint and the delete button their room; long clipboard text elides instead of spilling
+                    width: Math.max(0, parent.width - x - (rowItem.trailing !== "" ? 32 : 0) - (hintLabel.visible ? hintLabel.implicitWidth + 12 : 0) - (dropButton.visible ? 30 : 0))
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
 
                     Text {
+                        width: parent.width
+                        elide: Text.ElideRight
                         textFormat: Text.StyledText
-                        text: list.highlight(rowItem.title)
+                        // an action found on its own names its app on the same line
+                        text: list.highlight(rowItem.title) + (rowItem.isAction && rowItem.subtitle !== "" ? "<font color=\"" + Theme.toHex(Theme.subtextDim) + "\">&nbsp;&nbsp;·&nbsp;&nbsp;" + list.escapeMarkup(rowItem.subtitle) + "</font>" : "")
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBody
@@ -466,15 +632,31 @@ Item {
                     }
 
                     Text {
+                        width: parent.width
+                        elide: Text.ElideRight
                         text: rowItem.subtitle
                         color: Theme.subtext
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontLabel
-                        visible: rowItem.subtitle !== ""
+                        visible: rowItem.subtitle !== "" && !rowItem.isAction
                     }
 
                 }
 
+            }
+
+            Text {
+                id: hintLabel
+
+                anchors.right: parent.right
+                anchors.rightMargin: 16
+                anchors.verticalCenter: parent.verticalCenter
+                visible: rowItem.hint !== "" && !rowItem.isHeader
+                text: rowItem.hint
+                color: Theme.subtextDim
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontLabel
+                font.weight: Font.Medium
             }
 
             DockGlyph {
@@ -545,16 +727,18 @@ Item {
 
     }
 
+    // titles are StyledText and clipboard rows can hold anything, so escape before tagging
+    function escapeMarkup(s) {
+        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
     function highlight(title) {
         var q = list.query.trim();
-        if (q === "")
-            return title;
-
-        var idx = title.toLowerCase().indexOf(q.toLowerCase());
+        var idx = q === "" ? -1 : title.toLowerCase().indexOf(q.toLowerCase());
         if (idx === -1)
-            return title;
+            return list.escapeMarkup(title);
 
-        return title.substring(0, idx) + "<font color=\"" + Theme.toHex(Theme.accent) + "\">" + title.substring(idx, idx + q.length) + "</font>" + title.substring(idx + q.length);
+        return list.escapeMarkup(title.substring(0, idx)) + "<font color=\"" + Theme.toHex(Theme.accent) + "\">" + list.escapeMarkup(title.substring(idx, idx + q.length)) + "</font>" + list.escapeMarkup(title.substring(idx + q.length));
     }
 
     Column {
