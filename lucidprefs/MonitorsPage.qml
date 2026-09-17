@@ -41,6 +41,38 @@ Column {
         return bits.join("  ·  ");
     }
 
+    // the display the map is pointed at, so its settings can be jumped to
+    property string focusKey: ""
+
+    // the pane this page is loaded into, whatever it is called there
+    function paneFlick() {
+        let p = page.parent;
+        while (p) {
+            if (p.contentY !== undefined && p.contentHeight !== undefined)
+                return p;
+
+            p = p.parent;
+        }
+        return null;
+    }
+
+    function reveal(key) {
+        page.focusKey = key;
+        const flick = page.paneFlick();
+        if (!flick)
+            return ;
+
+        for (let i = 0; i < units.count; i++) {
+            const unit = units.itemAt(i);
+            if (!unit || unit.key !== key)
+                continue;
+
+            const y = unit.mapToItem(flick.contentItem, 0, 0).y;
+            flick.contentY = Math.max(0, Math.min(Math.max(0, flick.contentHeight - flick.height), y - 16));
+            return ;
+        }
+    }
+
     // the displays left to right, so the chips read the way they are arranged
     readonly property var displayChips: Monitors.orderedKeys.map((k) => {
         return {
@@ -76,11 +108,11 @@ Column {
     SettingCard {
         title: "ARRANGEMENT"
         subtitle: "Where each display sits next to the others. Windows and the pointer cross at the edges you line up here."
-        visible: Monitors.liveCount > 1
+        visible: Monitors.liveCount > 0
 
         SettingRow {
-            title: "Drag a display to move it"
-            description: "An edge dragged near another one snaps to it, so there are no gaps between them."
+            title: Monitors.liveCount > 1 ? "Drag a display to move it" : "This display"
+            description: Monitors.liveCount > 1 ? "An edge dragged near another one snaps to it, so there are no gaps between them. Click one to jump to its settings." : "Click it to jump to its settings. With a second display plugged in, this is where you arrange them."
             stacked: true
             showDivider: false
 
@@ -90,15 +122,29 @@ Column {
 
                 MonitorMap {
                     width: parent.width
+                    selected: page.focusKey
+                    onPicked: (key) => page.reveal(key)
                 }
 
-                M3Button {
-                    text: "Arrange automatically"
-                    variant: "text"
-                    enabled: Monitors.keys.some((k) => {
-                        return !Monitors.isAuto(k);
-                    })
-                    onClicked: Monitors.autoArrange()
+                Row {
+                    spacing: 8
+
+                    M3Button {
+                        text: "Arrange automatically"
+                        variant: "text"
+                        visible: Monitors.liveCount > 1
+                        enabled: Monitors.keys.some((k) => {
+                            return !Monitors.isAuto(k);
+                        })
+                        onClicked: Monitors.autoArrange()
+                    }
+
+                    M3Button {
+                        text: "Identify"
+                        variant: "text"
+                        onClicked: Monitors.identify()
+                    }
+
                 }
 
             }
@@ -108,6 +154,8 @@ Column {
     }
 
     Repeater {
+        id: units
+
         model: Monitors.keys
 
         Column {
@@ -128,7 +176,7 @@ Column {
 
                 Text {
                     leftPadding: 22
-                    text: unit.out ? unit.out.name : ""
+                    text: unit.out ? (Monitors.liveCount > 1 ? Monitors.numberFor(unit.key) + " · " + unit.out.name : unit.out.name) : ""
                     color: Theme.accent
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontTitleSm

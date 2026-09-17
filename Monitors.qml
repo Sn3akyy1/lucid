@@ -670,6 +670,30 @@ Singleton {
         Prefs.monitorDockScreen = (key === undefined || key === null) ? "" : String(key);
     }
 
+    // asks the shell to put a number on every screen, matching the page
+    signal identifyRequested()
+
+    function identify() {
+        root.identifyRequested();
+    }
+
+    // what the map, the list and the Identify overlay all call a display
+    function numberFor(key) {
+        const at = root.orderedKeys.indexOf(key);
+        return at < 0 ? "?" : String(at + 1);
+    }
+
+    function labelFor(key) {
+        const o = root.output(key);
+        if (!o)
+            return key;
+
+        const made = [o.make, o.model].filter((x) => {
+            return x !== "" && x.indexOf("0x") !== 0;
+        }).join(" ");
+        return made !== "" ? made : (o.description !== "" ? o.description : o.name);
+    }
+
     // the outputs left to right, which is the order a person describes them in
     readonly property var orderedKeys: root.shellKeys.slice().sort((a, b) => {
         const x = root.output(a);

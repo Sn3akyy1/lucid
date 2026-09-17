@@ -382,6 +382,10 @@ ShellRoot {
         id: settingsMod
     }
 
+    // the numbers the Displays page puts on every screen
+    DisplayIdentify {
+    }
+
     Auth {
         id: polkitMod
     }
