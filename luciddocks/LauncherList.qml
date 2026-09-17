@@ -15,6 +15,7 @@ Item {
     // the settled view height; view.height is mid-animation while the panel resizes
     property real stableHeight: 0
     signal activated(int index)
+    signal deleteRequested(int index)
 
     // the view consumes these; reading them back off `view` re-entered the layout
     readonly property int rowSpacing: 2
@@ -312,6 +313,7 @@ Item {
             required property string swatchBg
             required property string swatchAccent
             required property string trailing
+            required property string thumb
             required property bool disabled
             required property bool selectable
             required property int index
@@ -323,6 +325,15 @@ Item {
             width: list.rowWidth
             height: rowItem.isHeader ? 30 : (rowItem.subtitle !== "" ? 58 : 48)
             opacity: rowItem.disabled ? 0.4 : 1
+
+            function askThumb() {
+                if (rowItem.thumb !== "")
+                    Clip.requestThumb(rowItem.thumb);
+
+            }
+
+            onThumbChanged: rowItem.askThumb()
+            Component.onCompleted: rowItem.askThumb()
 
             Text {
                 anchors.left: parent.left
@@ -368,6 +379,50 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: rowItem.iconName !== ""
                     source: rowItem.iconName === "" ? "" : (IconTheme.generation >= 0 && IconTheme.pathFor(rowItem.iconName) !== "" ? IconTheme.pathFor(rowItem.iconName) : Quickshell.iconPath(rowItem.iconName, true))
+                }
+
+                Rectangle {
+                    width: 40
+                    height: 30
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: rowItem.thumb !== ""
+                    radius: Theme.radiusSm
+                    color: Theme.bgTile
+                    clip: true
+
+                    Image {
+                        id: thumbImage
+
+                        anchors.fill: parent
+                        source: rowItem.thumb === "" ? "" : (Clip.thumbs[rowItem.thumb] || "")
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        cache: false
+                        sourceSize.width: 80
+                        sourceSize.height: 60
+                        visible: thumbImage.status === Image.Ready
+                        // the file went away under the cached path; drop it so
+                        // the next request decodes again
+                        onStatusChanged: {
+                            if (thumbImage.status !== Image.Error)
+                                return;
+
+                            // a failed decode caches "" instead, so this
+                            // settles rather than loops
+                            Clip.invalidateThumb(rowItem.thumb);
+                            Clip.requestThumb(rowItem.thumb);
+                        }
+                    }
+
+                    DockGlyph {
+                        anchors.centerIn: parent
+                        width: 16
+                        height: 16
+                        visible: !thumbImage.visible
+                        pathData: DockIcons.brokenImage
+                        glyphColor: Theme.subtextDim
+                    }
+
                 }
 
                 DockGlyph {
@@ -431,6 +486,51 @@ Item {
                 visible: rowItem.trailing === "check"
                 pathData: DockIcons.check
                 glyphColor: Theme.accent
+            }
+
+            Item {
+                id: dropButton
+
+                width: 30
+                height: 30
+                anchors.right: parent.right
+                anchors.rightMargin: 8
+                anchors.verticalCenter: parent.verticalCenter
+                visible: rowItem.kind === "clip" && (rowItem.hovering || rowItem.selected)
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: width / 2
+                    color: dropHover.hovered ? Theme.error : Theme.text
+                    opacity: dropTap.pressed ? Theme.statePressed : (dropHover.hovered ? Theme.stateHover : 0)
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Theme.durQuick
+                        }
+
+                    }
+
+                }
+
+                DockGlyph {
+                    anchors.centerIn: parent
+                    width: 15
+                    height: 15
+                    pathData: DockIcons.trash
+                    glyphColor: dropHover.hovered ? Theme.error : Theme.subtext
+                }
+
+                HoverHandler {
+                    id: dropHover
+                }
+
+                TapHandler {
+                    id: dropTap
+
+                    onTapped: list.deleteRequested(rowItem.index)
+                }
+
             }
 
             TapHandler {

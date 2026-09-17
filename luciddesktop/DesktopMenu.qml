@@ -58,6 +58,12 @@ Item {
             "divider": true
         });
         arr.push({
+            "id": "keyboard",
+            "label": "On-Screen Keyboard",
+            "glyph": DockIcons.keyboard,
+            "divider": false
+        });
+        arr.push({
             "id": "settings",
             "label": "Settings",
             "glyph": DockIcons.settings,

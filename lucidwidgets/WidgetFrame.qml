@@ -53,6 +53,9 @@ Item {
     property bool resizing: false
     property bool hovered: false
     property bool menuOpen: false
+    // where the right-click landed, in the frame's own coordinates
+    property real menuAtX: 0
+    property real menuAtY: 0
     property real dragX: 0
     property real dragY: 0
     property real grabX: 0
@@ -348,7 +351,7 @@ Item {
         Widgets.setPos(frame.uid, 0, frame.wy);
     }
 
-    function toggleMenu() {
+    function toggleMenu(px, py) {
         if (frame.menuOpen) {
             frame.menuOpen = false;
             if (Widgets.menuUid === frame.uid)
@@ -357,6 +360,8 @@ Item {
         } else {
             // claim the slot first: the connection below shuts every other menu,
             // and this frame's own guard would close us if we opened before it
+            frame.menuAtX = px === undefined ? frame.width / 2 : px;
+            frame.menuAtY = py === undefined ? frame.height / 2 : py;
             Widgets.menuUid = frame.uid;
             frame.menuOpen = true;
             Widgets.raise(frame.uid);
@@ -369,13 +374,6 @@ Item {
     readonly property real surfaceWidth: frame.width
     readonly property real surfaceHeight: frame.height
     readonly property int surfaceRadius: frame.radius
-    // the options panel is a child of this frame, so its board position is just an offset
-    readonly property bool menuVisible: menu.visible
-    readonly property real menuX: frame.x + menu.x
-    readonly property real menuY: frame.y + menu.y
-    readonly property real menuW: menu.width
-    readonly property real menuH: menu.height
-    readonly property int menuRadius: Theme.radiusLg
 
     visible: frame.onThisScreen && frame.opacity > 0.01
     width: frame.cardW
@@ -591,7 +589,7 @@ Item {
             if (menuArea.moved)
                 frame.endDrag();
             else
-                frame.toggleMenu();
+                frame.toggleMenu(menuArea.pressX, menuArea.pressY);
             menuArea.moved = false;
         }
         onCanceled: {
@@ -693,13 +691,6 @@ Item {
             onCanceled: frame.endResize()
         }
 
-    }
-
-    WidgetMenu {
-        id: menu
-
-        frame: frame
-        z: 30
     }
 
 }

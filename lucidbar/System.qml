@@ -12,14 +12,25 @@ import qs
 BarPill {
     id: root
 
-    // wired from shell.qml, for handing off to the real panels
-    property var notifMod: null
+    // wired from shell.qml
     property var mprisMod: null
 
     property string view: "main"
     readonly property bool inSubView: root.view !== "main"
 
     property bool viewSwitching: false
+
+    // m3 easing, as authored in the spec
+    readonly property var easeEmphasized: [0.2, 0, 0, 1, 1, 1]
+    readonly property var easeEmphasizedDecel: [0.05, 0.7, 0.1, 1, 1, 1]
+    readonly property var easeEmphasizedAccel: [0.3, 0, 0.8, 0.15, 1, 1]
+
+    // m3 spacing, on the 4dp grid
+    readonly property int sp1: 4
+    readonly property int sp2: 8
+    readonly property int sp3: 12
+    readonly property int sp4: 16
+    readonly property int sp5: 20
 
     Timer {
         id: viewResetTimer
@@ -46,45 +57,97 @@ BarPill {
         root.viewSwitching = true;
         viewSwitchTimer.restart();
 
+        // must precede the assignment: writing view re-evaluates the size
+        // bindings synchronously, and the Behavior is consulted on that write
         root.beginTransition();
         root.view = v;
+        if (v === "output")
+            sinkPortsProc.running = true;
+
     }
 
     readonly property int horizontalPadding: 16
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
     readonly property int maxPanelHeight: Math.min(820, Math.max(200, root.screenH - 40))
-    readonly property int contentWidth: root.panelWidth - 28
-    readonly property int subHeaderHeight: 38
+    readonly property int panelPad: root.sp4
+    readonly property int contentWidth: root.panelWidth - root.panelPad * 2
+    readonly property int headerHeight: 44
+    readonly property int subHeaderHeight: 44
+    // header top margin + header + gap + body + bottom padding
+    readonly property int viewChrome: root.sp2 + root.headerHeight + root.sp1 + root.panelPad
     readonly property real viewContentHeight: {
         if (root.view === "wifi")
-            return wifiPanel.implicitHeight + root.subHeaderHeight + 10;
+            return wifiPanel.implicitHeight + root.viewChrome;
 
         if (root.view === "bluetooth")
-            return btPanel.implicitHeight + root.subHeaderHeight + 10;
+            return btPanel.implicitHeight + root.viewChrome;
 
-        return expandedColumn.implicitHeight;
+        if (root.view === "output")
+            return outputList.implicitHeight + root.viewChrome;
+
+        return mainColumn.implicitHeight + root.viewChrome;
     }
 
     property string backlightDevice: ""
     property int maxBrightness: 0
-    readonly property int brightnessPercent: root.maxBrightness > 0 ? Math.round((parseInt(brightnessFile.text()) / root.maxBrightness) * 100) : 0
+    readonly property int brightnessPercent: {
+        if (root.maxBrightness <= 0)
+            return 0;
+
+        const raw = parseInt(brightnessFile.text());
+        return isNaN(raw) ? 0 : Math.round((raw / root.maxBrightness) * 100);
+    }
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
     readonly property bool micMuted: (source && source.audio) ? source.audio.muted : true
     readonly property bool volMuted: (sink && sink.audio) ? sink.audio.muted : true
     readonly property int volumePercent: (sink && sink.audio) ? Math.round(sink.audio.volume * 100) : 0
 
+    // real devices only: streams are per-app, not something to switch to
+    readonly property var outputNodes: !Pipewire.ready ? [] : Pipewire.nodes.values.filter((n) => {
+        return n.audio && n.isSink && !n.isStream;
+    })
+
+    function setVolume(v) {
+        if (!root.sink || !root.sink.audio)
+            return ;
+
+        root.sink.audio.volume = Math.max(0, Math.min(1, v / 100));
+    }
+
+    function toggleVolMute() {
+        if (root.sink && root.sink.audio)
+            root.sink.audio.muted = !root.sink.audio.muted;
+
+    }
+
+    // material icons, 24dp, official path data
     readonly property var brightnessIconLevels: [
-        { "max": 33, "path": "M12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z" },
-        { "max": 66, "path": "M12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM12 1a1 1 0 0 1 1 1v1.5a1 1 0 1 1-2 0V2a1 1 0 0 1 1-1Zm0 18.5a1 1 0 0 1 1 1V22a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1ZM1 12a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H2a1 1 0 0 1-1-1Zm18.5 0a1 1 0 0 1 1-1H22a1 1 0 1 1 0 2h-1.5a1 1 0 0 1-1-1Z" },
-        { "max": 100, "path": "M12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM12 1a1 1 0 0 1 1 1v1.5a1 1 0 1 1-2 0V2a1 1 0 0 1 1-1Zm0 18.5a1 1 0 0 1 1 1V22a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1ZM4.22 4.22a1 1 0 0 1 1.41 0l1.06 1.06a1 1 0 1 1-1.41 1.41L4.22 5.63a1 1 0 0 1 0-1.41Zm12.6 12.6a1 1 0 0 1 1.41 0l1.06 1.06a1 1 0 0 1-1.41 1.41l-1.06-1.06a1 1 0 0 1 0-1.41ZM1 12a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H2a1 1 0 0 1-1-1Zm18.5 0a1 1 0 0 1 1-1H22a1 1 0 1 1 0 2h-1.5a1 1 0 0 1-1-1ZM4.22 19.78a1 1 0 0 1 0-1.41l1.06-1.06a1 1 0 1 1 1.41 1.41l-1.06 1.06a1 1 0 0 1-1.41 0Zm12.6-12.6a1 1 0 0 1 0-1.41l1.06-1.06a1 1 0 1 1 1.41 1.41l-1.06 1.06a1 1 0 0 1-1.41 0Z" }
+        { "max": 33, "path": "M20 15.31L23.31 12 20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" },
+        { "max": 66, "path": "M20 15.31L23.31 12 20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69zM12 18V6c3.31 0 6 2.69 6 6s-2.69 6-6 6z" },
+        { "max": 100, "path": "M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z" }
     ]
+    // level 0 is the slash-free glyph: the mute overlay draws its own slash
     readonly property var volumeIconLevels: [
         { "max": 0, "path": "M7 9v6h4l5 5V4l-5 5H7z" },
         { "max": 49, "path": "M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z" },
         { "max": 100, "path": "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" }
     ]
+
+    readonly property string micIconPath: "M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"
+    readonly property string btIconPath: "M17.71 7.71L12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"
+    readonly property string chevronPath: "M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+    readonly property string chevronLeftPath: "M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+    readonly property string checkPath: "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+    readonly property string expandPath: "M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"
+    readonly property string speakerPath: "M17 2H7c-1.1 0-2 .9-2 2v16c0 1.1.9 1.99 2 1.99L17 22c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-5 2c1.1 0 2 .9 2 2s-.9 2-2 2c-1.11 0-2-.9-2-2s.89-2 2-2zm0 16c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+    readonly property string settingsPath: "M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"
+    readonly property string prevPath: "M6 6h2v12H6zm3.5 6l8.5 6V6z"
+    readonly property string nextPath: "M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"
+    readonly property string playPath: "M8 5v14l11-7z"
+    readonly property string pausePath: "M6 19h4V5H6v14zm8-14v14h4V5h-4z"
+    readonly property string notePath: "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"
 
     function volumeIconFor(pct) {
         for (var i = 0; i < root.volumeIconLevels.length; i++) {
@@ -98,10 +161,33 @@ BarPill {
     readonly property bool batteryPresent: battery ? battery.isPresent : false
     readonly property int batteryPercent: batteryPresent ? Math.round(battery.percentage * 100) : 0
     readonly property bool batteryCharging: root.batteryPresent && !UPower.onBattery
-    readonly property bool dndOn: root.notifMod ? root.notifMod.dnd : false
+    readonly property bool dndOn: Notifs.dnd
     readonly property var btAdapter: Bluetooth.defaultAdapter
     readonly property bool btEnabled: btAdapter ? btAdapter.enabled : false
+
     property bool airplaneMode: false
+    property bool _preAirplaneWifi: false
+    property bool _preAirplaneBt: false
+
+    // the old version never put the radios back, so turning it off did nothing
+    function toggleAirplane() {
+        if (!root.airplaneMode) {
+            root._preAirplaneWifi = Networking.wifiEnabled;
+            root._preAirplaneBt = root.btEnabled;
+            root.airplaneMode = true;
+            Networking.wifiEnabled = false;
+            Bt.setEnabled(false);
+            return ;
+        }
+        root.airplaneMode = false;
+        if (root._preAirplaneWifi)
+            Networking.wifiEnabled = true;
+
+        if (root._preAirplaneBt)
+            Bt.setEnabled(true);
+
+    }
+
     property int pendingBrightness: -1
     property var _lsblkDisks: []
     property var diskList: []
@@ -112,8 +198,25 @@ BarPill {
     property var cpuHistory: []
     property real ramPercent: 0
     property real cpuPercent: 0
+    property real ramUsedGB: 0
+    property real ramTotalGB: 0
+    property real cpuTemp: -1
+    property real uptimeSecs: -1
     property real _prevCpuTotal: -1
     property real _prevCpuIdle: -1
+
+    readonly property string uptimeText: {
+        if (root.uptimeSecs < 0)
+            return "";
+
+        const d = Math.floor(root.uptimeSecs / 86400);
+        const h = Math.floor((root.uptimeSecs % 86400) / 3600);
+        const m = Math.floor((root.uptimeSecs % 3600) / 60);
+        if (d > 0)
+            return "up " + d + "d " + h + "h";
+
+        return h > 0 ? "up " + h + "h " + m + "m" : "up " + m + "m";
+    }
 
     function pushSample(historyArr, v, max) {
         const next = historyArr.concat([v]);
@@ -126,22 +229,6 @@ BarPill {
     function setBrightness(percent) {
         root.pendingBrightness = Math.max(0, Math.min(100, Math.round(percent)));
         brightnessDebounce.restart();
-    }
-
-    property var notifShownIds: ({})
-    property bool notifShownSeeded: false
-
-    function markNotifShown(id) {
-        if (!root.notifShownSeeded) {
-            const pending = root.notifMod ? root.notifMod.sortedNotifications : [];
-            for (const n of pending) root.notifShownIds[n.id] = true
-            root.notifShownSeeded = true;
-        }
-        if (root.notifShownIds[id])
-            return false;
-
-        root.notifShownIds[id] = true;
-        return true;
     }
 
     // hover tooltips over the compact strip
@@ -161,8 +248,7 @@ BarPill {
     readonly property int tipGap: 6
     // grows each icon's slab a little; the row spacing is 8, so gaps stay dead
     readonly property int tipSlabPad: 2
-    // a dwell delay, not an animation, so it is deliberately not motion-scaled:
-    // Theme.barMs(1000) would be 1.5s at the current 1.52 bar scale
+    // a dwell delay, not an animation, so it is deliberately not motion-scaled
     readonly property int tipShowDelay: 1000
     readonly property int tipEnterMs: Theme.barMs(120)
     readonly property int tipExitMs: Theme.barMs(80)
@@ -213,10 +299,27 @@ BarPill {
             return ;
 
         root.sink.audio.muted = false;
-        root.sink.audio.volume = Math.max(0, Math.min(1, v / 100));
+        root.setVolume(v);
     }
 
-    function tipNodeName(node) {
+    // every sink on one card shares node.description, and it differs only in a
+    // tail that elides away - node.nick is short and actually distinct
+    function deviceLabel(node) {
+        if (!node)
+            return "";
+
+        const nick = node.nickname;
+        if (nick && nick.length > 0)
+            return nick;
+
+        const pr = node.properties || {};
+        if (pr["device.profile.description"])
+            return pr["device.profile.description"];
+
+        return root.nodeName(node);
+    }
+
+    function nodeName(node) {
         if (!node)
             return "";
 
@@ -271,7 +374,7 @@ BarPill {
                 return "Wi-Fi off";
 
             if (wifiPanel.connecting)
-                return "Connecting\u2026";
+                return "Connecting…";
 
             if (wifiPanel.wifiConnected && wifiPanel.activeNetwork)
                 return wifiPanel.activeNetwork.name;
@@ -288,7 +391,7 @@ BarPill {
                 return btPanel.connectedDevices.length + " devices";
 
             if (btPanel.anyConnecting)
-                return "Connecting\u2026";
+                return "Connecting…";
 
             return "Not connected";
         case "volume":
@@ -313,15 +416,15 @@ BarPill {
                 return wifiPanel.nearbyNetworks.length + " networks nearby";
 
             const warn = wifiPanel.connectivityLabel();
-            const sig = wifiPanel.strengthLabel(wifiPanel.signalStrength) + " \u00b7 " + Math.round(wifiPanel.signalStrength) + "%";
-            return warn !== "" ? sig + " \u00b7 " + warn : sig;
+            const sig = wifiPanel.strengthLabel(wifiPanel.signalStrength) + " · " + Math.round(wifiPanel.signalStrength) + "%";
+            return warn !== "" ? sig + " · " + warn : sig;
         case "bluetooth":
             if (!root.btEnabled)
                 return "";
 
             if (btPanel.connectedDevices.length === 1) {
                 const b = btPanel.getBatteryText(btPanel.connectedDevices[0]);
-                return b !== "" ? "Connected \u00b7 " + b + " battery" : "Connected";
+                return b !== "" ? "Connected · " + b + " battery" : "Connected";
             }
             if (btPanel.connectedDevices.length > 1)
                 return btPanel.connectedDevices.map((d) => {
@@ -329,18 +432,18 @@ BarPill {
                 }).join(", ");
 
             if (btPanel.discovering)
-                return "Scanning\u2026";
+                return "Scanning…";
 
             return btPanel.pairedDevices.length + " paired";
         case "volume":
-            return root.tipNodeName(root.sink);
+            return root.deviceLabel(root.sink);
         case "mic":
-            return root.tipNodeName(root.source);
+            return root.deviceLabel(root.source);
         case "battery":
             if (!root.batteryPresent)
                 return "";
 
-            return root.tipBatteryTime !== "" ? root.tipBatteryState + " \u00b7 " + root.tipBatteryTime : root.tipBatteryState;
+            return root.tipBatteryTime !== "" ? root.tipBatteryState + " · " + root.tipBatteryTime : root.tipBatteryState;
         }
         return "";
     }
@@ -365,6 +468,21 @@ BarPill {
         const m = Math.round((secs % 3600) / 60);
         const body = h > 0 ? h + "h " + m + "m" : m + "m";
         return root.batteryCharging ? body + " to full" : body + " left";
+    }
+
+    // the stat card's second line: draw while discharging, else time
+    readonly property string batteryDetail: {
+        if (!root.batteryPresent)
+            return "no battery";
+
+        const rate = root.battery ? root.battery.changeRate : 0;
+        if (!root.batteryCharging && rate > 0.05)
+            return rate.toFixed(1) + " W";
+
+        if (root.tipBatteryTime !== "")
+            return root.tipBatteryTime;
+
+        return root.batteryCharging ? "charging" : "on battery";
     }
 
     onTipWantedChanged: {
@@ -414,8 +532,8 @@ BarPill {
 
     compactWidth: content.implicitWidth + root.horizontalPadding * 2
     panelWidth: Math.min(400, root.screenW - 34)
-    panelHeight: Math.min(root.maxPanelHeight, root.viewContentHeight + 28)
-    expandedRadius: 20
+    panelHeight: Math.min(root.maxPanelHeight, root.viewContentHeight)
+    expandedRadius: Theme.shapeXl
     compactCollapseScale: 0.94
     surfaceLayered: true
 
@@ -434,6 +552,10 @@ BarPill {
         } else {
             statsTimer.stop();
             diskDropdownOpen = false;
+            // the counters keep running while closed, so the first delta after
+            // reopening would average over the whole closed span
+            root._prevCpuTotal = -1;
+            root._prevCpuIdle = -1;
             viewResetTimer.restart();
         }
     }
@@ -448,6 +570,7 @@ BarPill {
         onTriggered: {
             cpuStatProc.running = true;
             memProc.running = true;
+            hostProc.running = true;
         }
     }
 
@@ -479,7 +602,10 @@ BarPill {
         command: root.backlightDevice ? ["cat", "/sys/class/backlight/" + root.backlightDevice + "/max_brightness"] : []
 
         stdout: StdioCollector {
-            onStreamFinished: root.maxBrightness = parseInt(this.text.trim())
+            onStreamFinished: {
+                const v = parseInt(this.text.trim());
+                root.maxBrightness = isNaN(v) ? 0 : v;
+            }
         }
 
     }
@@ -537,7 +663,28 @@ BarPill {
                 const avail = parseInt(availMatch[1]);
                 const usage = total > 0 ? Math.max(0, Math.min(100, 100 * (1 - avail / total))) : 0;
                 root.ramPercent = usage;
+                root.ramTotalGB = total / 1048576;
+                root.ramUsedGB = (total - avail) / 1048576;
                 root.ramHistory = root.pushSample(root.ramHistory, usage, 16);
+            }
+        }
+
+    }
+
+    // uptime plus whichever hwmon actually belongs to the cpu
+    Process {
+        id: hostProc
+
+        command: ["bash", "-c", "printf 'UP %s\\n' \"$(cut -d' ' -f1 /proc/uptime)\"; t=''; for h in /sys/class/hwmon/hwmon*; do n=$(cat \"$h/name\" 2>/dev/null); case \"$n\" in coretemp|k10temp|zenpower|cpu_thermal) t=$(cat \"$h/temp1_input\" 2>/dev/null); break;; esac; done; [ -z \"$t\" ] && t=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null); printf 'T %s\\n' \"${t:-}\""]
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const up = /UP\s+([\d.]+)/.exec(this.text);
+                if (up)
+                    root.uptimeSecs = parseFloat(up[1]);
+
+                const t = /T\s+(\d+)/.exec(this.text);
+                root.cpuTemp = t ? parseInt(t[1]) / 1000 : -1;
             }
         }
 
@@ -646,14 +793,58 @@ BarPill {
 
     }
 
+    // a sink whose port is "not available" (nothing plugged in) can be set as
+    // preferred but pipewire will refuse to make it the default, so the click
+    // looks like it silently did nothing. Gate those out up front.
+    property var sinkAvailable: ({})
+
+    onOutputNodesChanged: {
+        if (root.view === "output")
+            sinkPortsProc.running = true;
+
+    }
+
+    Process {
+        id: sinkPortsProc
+
+        command: ["pactl", "list", "sinks"]
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const avail = {};
+                let name = "";
+                let ports = ({});
+                for (const raw of this.text.split("\n")) {
+                    const line = raw.trim();
+                    let m = /^Name:\s+(\S+)/.exec(line);
+                    if (m) {
+                        name = m[1];
+                        ports = {};
+                        continue;
+                    }
+                    m = /^\[Out\]\s+([^:]+):/.exec(line);
+                    if (m) {
+                        ports[m[1].trim()] = line.indexOf("not available") === -1;
+                        continue;
+                    }
+                    m = /^Active Port:\s+\[Out\]\s+(.+)$/.exec(line);
+                    if (m && name !== "")
+                        avail[name] = ports[m[1].trim()] !== false;
+
+                }
+                root.sinkAvailable = avail;
+            }
+        }
+
+    }
+
     PwObjectTracker {
         objects: [root.sink, root.source]
     }
 
-    ScriptModel {
-        id: miniNotifModel
-
-        values: root.notifMod ? root.notifMod.sortedNotifications.slice(0, 2) : []
+    // only bound while the picker is up, so idle devices stay untracked
+    PwObjectTracker {
+        objects: root.view === "output" ? root.outputNodes : []
     }
 
     FileView {
@@ -737,7 +928,7 @@ BarPill {
 
                 visible: root.btEnabled
                 anchors.verticalCenter: parent.verticalCenter
-                path: "M17.71,7.71L12,2H11V9.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L11,14.41V22H12L17.71,16.29L13.41,12L17.71,7.71M13,5.83L15.17,8L13,10.17V5.83M13,13.83L15.17,16L13,18.17V13.83Z"
+                path: root.btIconPath
                 tint: btPanel.connectedDevices.length > 0 ? Theme.accent : Theme.subtext
                 iconSize: 15
             }
@@ -753,7 +944,7 @@ BarPill {
             StatusIndicator {
                 id: micIndicator
 
-                svgPath: "M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
+                svgPath: root.micIconPath
                 labelText: root.micMuted ? "Off" : "On"
                 isMuted: root.micMuted
             }
@@ -866,7 +1057,7 @@ BarPill {
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.bold: true
-                    font.pixelSize: Theme.fs(13)
+                    font.pixelSize: Theme.fontLabelLg
                 }
 
             }
@@ -910,6 +1101,7 @@ BarPill {
                 x: root.inSubView ? -root.panelWidth : 0
                 visible: x > -root.panelWidth + 0.5
 
+                // gated, or the first layout (width 0 -> panelWidth) animates too
                 Behavior on x {
                     enabled: root.viewSwitching
 
@@ -921,27 +1113,84 @@ BarPill {
 
                 }
 
+                Item {
+                    id: mainHeader
+
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.topMargin: root.sp2
+                    anchors.leftMargin: root.panelPad
+                    anchors.rightMargin: root.panelPad
+                    height: root.headerHeight
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Control Centre"
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.bold: true
+                        font.pixelSize: Theme.fontTitleSm
+                    }
+
+                    Row {
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: root.sp2
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: root.uptimeText !== ""
+                            text: root.uptimeText
+                            color: Theme.subtextDim
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontLabelSm
+                        }
+
+                        IconButton {
+                            anchors.verticalCenter: parent.verticalCenter
+                            path: root.settingsPath
+                            tint: Theme.subtext
+                            diameter: 30
+                            iconSize: 17
+                            onTapped: {
+                                root.expanded = false;
+                                Prefs.settingsRequested("");
+                            }
+                        }
+
+                    }
+
+                }
+
                 Flickable {
                     id: scrollArea
 
-                    anchors.fill: parent
-                    anchors.margins: 14
+                    anchors.top: mainHeader.bottom
+                    anchors.topMargin: root.sp1
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.leftMargin: root.panelPad
+                    anchors.rightMargin: root.panelPad
+                    anchors.bottomMargin: root.panelPad
                     contentWidth: width
-                    contentHeight: expandedColumn.implicitHeight
+                    contentHeight: mainColumn.implicitHeight
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
 
                     Column {
-                        id: expandedColumn
+                        id: mainColumn
 
                         width: scrollArea.width
-                        spacing: 14
+                        spacing: root.sp5
 
                         Grid {
                             width: root.contentWidth
                             columns: 2
-                            columnSpacing: 8
-                            rowSpacing: 8
+                            columnSpacing: root.sp2
+                            rowSpacing: root.sp2
 
                             ToggleTile {
                                 iconGlyph: "󰤯"
@@ -954,7 +1203,7 @@ BarPill {
                             }
 
                             ToggleTile {
-                                iconPath: "M17.71,7.71L12,2H11V9.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L11,14.41V22H12L17.71,16.29L13.41,12L17.71,7.71M13,5.83L15.17,8L13,10.17V5.83M13,13.83L15.17,16L13,18.17V13.83Z"
+                                iconPath: root.btIconPath
                                 name: "Bluetooth"
                                 sub: btPanel.label
                                 checked: root.btEnabled
@@ -964,44 +1213,32 @@ BarPill {
                             }
 
                             ToggleTile {
-                                iconPath: "M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
-                                name: "Microphone"
-                                sub: root.micMuted ? "Disabled" : "Active"
-                                checked: !root.micMuted
-                                onToggled: {
-                                    if (root.source && root.source.audio)
-                                        root.source.audio.muted = !root.source.audio.muted;
-
-                                }
-                            }
-
-                            ToggleTile {
-                                iconPath: "M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2.5 1.5V22l4-1 4 1v-1.5L11 19v-5.5L21 16Z"
-                                name: "Airplane Mode"
+                                iconPath: "M22,16v-2l-8.5-5V3.5C13.5,2.67,12.83,2,12,2s-1.5,0.67-1.5,1.5V9L2,14v2l8.5-2.5V19L8,20.5L8,22l4-1l4,1l0-1.5L13.5,19 v-5.5L22,16z"
+                                name: "Airplane"
+                                sub: root.airplaneMode ? "Radios off" : "Off"
                                 checked: root.airplaneMode
-                                onToggled: {
-                                    root.airplaneMode = !root.airplaneMode;
-                                    if (root.airplaneMode) {
-                                        Networking.wifiEnabled = false;
-                                        Bt.setEnabled(false);
-                                    }
-                                }
+                                onToggled: root.toggleAirplane()
                             }
 
                             ToggleTile {
-                                iconPath: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm5 11H7v-2h10v2Z"
+                                iconPath: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"
                                 name: "Do Not Disturb"
+                                sub: root.dndOn ? "Silenced" : "Off"
                                 checked: root.dndOn
-                                onToggled: {
-                                    if (root.notifMod)
-                                        root.notifMod.dnd = !root.notifMod.dnd;
-
-                                }
+                                onToggled: Notifs.toggleDnd()
                             }
 
                             ToggleTile {
-                                iconPath: "M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"
-                                name: "GPS"
+                                iconPath: "M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.9 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"
+                                name: "Caffeine"
+                                sub: Prefs.idleKeepAwake ? "Staying awake" : "Idle allowed"
+                                checked: Prefs.idleKeepAwake
+                                onToggled: Prefs.idleKeepAwake = !Prefs.idleKeepAwake
+                            }
+
+                            ToggleTile {
+                                iconPath: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                                name: "Location"
                                 sub: {
                                     if (!Prefs.gpsEnabled)
                                         return "Off";
@@ -1022,238 +1259,221 @@ BarPill {
 
                         }
 
-                        Rectangle {
-                            width: parent.width
-                            height: 1
-                            color: Theme.outline
+                        Column {
+                            width: root.contentWidth
+                            spacing: root.sp2
+
+                            Overline {
+                                text: "SOUND & DISPLAY"
+                            }
+
+                            GroupCard {
+                                width: root.contentWidth
+
+                                SliderRow {
+                                    width: parent.width
+                                    iconLevels: root.brightnessIconLevels
+                                    value: root.brightnessPercent
+                                    onMoved: (v) => {
+                                        return root.setBrightness(v);
+                                    }
+                                }
+
+                                SliderRow {
+                                    width: parent.width
+                                    iconLevels: root.volumeIconLevels
+                                    value: root.volumePercent
+                                    muted: root.volMuted
+                                    showMute: true
+                                    showPicker: true
+                                    onMoved: (v) => {
+                                        return root.setVolume(v);
+                                    }
+                                    onMuteToggled: root.toggleVolMute()
+                                    onPickerRequested: root.showView("output")
+                                }
+
+                            }
+
                         }
 
                         Column {
                             width: root.contentWidth
-                            spacing: 12
+                            spacing: root.sp2
+                            visible: root.mprisMod && root.mprisMod.player
 
-                            SliderRow {
-                                iconLevels: root.brightnessIconLevels
-                                value: root.brightnessPercent
-                                onCommitted: (v) => {
-                                    return root.setBrightness(v);
-                                }
-                            }
-
-                            SliderRow {
-                                iconLevels: root.volumeIconLevels
-                                value: root.volumePercent
-                                onCommitted: (v) => {
-                                    if (root.sink && root.sink.audio)
-                                        root.sink.audio.volume = v / 100;
-
-                                }
-                            }
-
-                        }
-
-                        Rectangle {
-                            width: parent.width
-                            height: 1
-                            color: Theme.outline
-                        }
-
-                        Rectangle {
-                            id: mprisSection
-
-                            readonly property var mprisPlayer: root.mprisMod ? root.mprisMod.player : null
-
-                            width: root.contentWidth
-                            height: 62
-                            radius: 12
-                            color: mprisArea.containsMouse ? Theme.withBlur(Theme.bgHover) : Theme.withBlur(Theme.bgTile)
-
-                            MouseArea {
-                                id: mprisArea
-
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.expanded = false;
-                                    if (root.mprisMod)
-                                        root.mprisMod.expanded = true;
-
-                                }
+                            Overline {
+                                text: "NOW PLAYING"
                             }
 
                             Rectangle {
-                                id: mprisArt
+                                id: mediaCard
 
-                                anchors.left: parent.left
-                                anchors.leftMargin: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 42
-                                height: 42
-                                radius: 10
-                                color: Theme.withBlur(Theme.bgActive)
-                                clip: true
+                                readonly property var mprisPlayer: root.mprisMod ? root.mprisMod.player : null
+                                readonly property real progress: (root.mprisMod && root.mprisMod.lenSec > 0) ? Math.max(0, Math.min(1, root.mprisMod.posSec / root.mprisMod.lenSec)) : 0
 
-                                Image {
-                                    id: mprisArtImg
+                                width: root.contentWidth
+                                height: 72
+                                radius: Theme.shapeLg
+                                color: Theme.withBlur(Theme.bgTile)
+
+                                StateLayer {
+                                    hovered: mediaArea.containsMouse
+                                    pressed: mediaArea.pressed
+                                }
+
+                                MouseArea {
+                                    id: mediaArea
 
                                     anchors.fill: parent
-                                    source: mprisSection.mprisPlayer ? mprisSection.mprisPlayer.trackArtUrl : ""
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
-                                    visible: status === Image.Ready
-                                }
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.expanded = false;
+                                        if (root.mprisMod)
+                                            root.mprisMod.expanded = true;
 
-                                SvgIcon {
-                                    anchors.centerIn: parent
-                                    visible: !mprisArtImg.visible
-                                    path: "M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6Z"
-                                    tint: Theme.subtext
-                                    iconSize: 18
-                                }
-
-                            }
-
-                            Column {
-                                anchors.left: mprisArt.right
-                                anchors.leftMargin: 10
-                                anchors.right: mprisControls.left
-                                anchors.rightMargin: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 2
-
-                                Text {
-                                    width: parent.width
-                                    text: root.mprisMod ? root.mprisMod.title : "Nothing playing"
-                                    color: Theme.text
-                                    font.family: Theme.fontFamily
-                                    font.bold: true
-                                    font.pixelSize: Theme.fs(12)
-                                    elide: Text.ElideRight
-                                }
-
-                                Text {
-                                    width: parent.width
-                                    visible: text !== ""
-                                    text: root.mprisMod ? root.mprisMod.artist : ""
-                                    color: Theme.subtext
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(10)
-                                    elide: Text.ElideRight
-                                }
-
-                            }
-
-                            Row {
-                                id: mprisControls
-
-                                anchors.right: parent.right
-                                anchors.rightMargin: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 6
-
-                                Item {
-                                    width: 15
-                                    height: 15
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    opacity: mprisPrevArea.containsMouse ? 0.7 : 1
-
-                                    SvgIcon {
-                                        anchors.fill: parent
-                                        path: "M6 6h2v12H6V6Zm3.5 6 8.5-6v12l-8.5-6Z"
-                                        tint: Theme.text
-                                        iconSize: 15
                                     }
+                                }
 
-                                    MouseArea {
-                                        id: mprisPrevArea
+                                // ClippingRectangle: radius + clip alone leaves
+                                // the image corners square
+                                ClippingRectangle {
+                                    id: mediaArt
+
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: root.sp3
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 48
+                                    height: 48
+                                    radius: Theme.shapeMd
+                                    color: Theme.withBlur(Theme.bgActive)
+
+                                    Image {
+                                        id: mediaArtImg
 
                                         anchors.fill: parent
-                                        anchors.margins: -5
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            if (mprisSection.mprisPlayer && mprisSection.mprisPlayer.canGoPrevious)
-                                                mprisSection.mprisPlayer.previous();
-
-                                        }
+                                        source: root.mprisMod ? root.mprisMod.artUrl : ""
+                                        fillMode: Image.PreserveAspectCrop
+                                        asynchronous: true
+                                        cache: true
+                                        sourceSize.width: 128
+                                        sourceSize.height: 128
+                                        visible: mediaArtImg.status === Image.Ready
                                     }
-
-                                    Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: Theme.barMs(120)
-                                        }
-
-                                    }
-
-                                }
-
-                                Rectangle {
-                                    width: 24
-                                    height: 24
-                                    radius: 999
-                                    color: Theme.accent
-                                    anchors.verticalCenter: parent.verticalCenter
 
                                     SvgIcon {
                                         anchors.centerIn: parent
-                                        path: (root.mprisMod && root.mprisMod.isPlaying) ? "M8 6h3v12H8V6Zm5 0h3v12h-3V6Z" : "M8 5v14l11-7L8 5Z"
-                                        tint: Theme.fgAccent
-                                        iconSize: 14
-                                    }
-
-                                    MouseArea {
-                                        id: mprisPlayArea
-
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            if (mprisSection.mprisPlayer && mprisSection.mprisPlayer.canTogglePlaying)
-                                                mprisSection.mprisPlayer.togglePlaying();
-
-                                        }
-                                    }
-
-                                    Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: Theme.barMs(120)
-                                        }
-
+                                        visible: !mediaArtImg.visible
+                                        path: root.notePath
+                                        tint: Theme.subtext
+                                        iconSize: 20
                                     }
 
                                 }
 
                                 Item {
-                                    width: 15
-                                    height: 15
+                                    anchors.left: mediaArt.right
+                                    anchors.leftMargin: root.sp3
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: root.sp3
                                     anchors.verticalCenter: parent.verticalCenter
-                                    opacity: mprisNextArea.containsMouse ? 0.7 : 1
+                                    height: 48
 
-                                    SvgIcon {
-                                        anchors.fill: parent
-                                        path: "M18 6h-2v12h2V6Zm-3.5 6L6 6v12l8.5-6Z"
-                                        tint: Theme.text
-                                        iconSize: 15
-                                    }
+                                    Row {
+                                        id: mediaControls
 
-                                    MouseArea {
-                                        id: mprisNextArea
+                                        anchors.right: parent.right
+                                        anchors.top: parent.top
+                                        spacing: 2
 
-                                        anchors.fill: parent
-                                        anchors.margins: -5
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            if (mprisSection.mprisPlayer && mprisSection.mprisPlayer.canGoNext)
-                                                mprisSection.mprisPlayer.next();
+                                        IconButton {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            path: root.prevPath
+                                            tint: Theme.text
+                                            diameter: 28
+                                            iconSize: 17
+                                            onTapped: {
+                                                if (mediaCard.mprisPlayer && mediaCard.mprisPlayer.canGoPrevious)
+                                                    mediaCard.mprisPlayer.previous();
 
+                                            }
                                         }
+
+                                        IconButton {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            path: (root.mprisMod && root.mprisMod.isPlaying) ? root.pausePath : root.playPath
+                                            tint: Theme.fgAccent
+                                            bg: Theme.accent
+                                            layerTint: Theme.fgAccent
+                                            diameter: 30
+                                            iconSize: 18
+                                            onTapped: {
+                                                if (mediaCard.mprisPlayer && mediaCard.mprisPlayer.canTogglePlaying)
+                                                    mediaCard.mprisPlayer.togglePlaying();
+
+                                            }
+                                        }
+
+                                        IconButton {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            path: root.nextPath
+                                            tint: Theme.text
+                                            diameter: 28
+                                            iconSize: 17
+                                            onTapped: {
+                                                if (mediaCard.mprisPlayer && mediaCard.mprisPlayer.canGoNext)
+                                                    mediaCard.mprisPlayer.next();
+
+                                            }
+                                        }
+
                                     }
 
-                                    Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: Theme.barMs(120)
+                                    Column {
+                                        anchors.left: parent.left
+                                        anchors.right: mediaControls.left
+                                        anchors.rightMargin: root.sp2
+                                        anchors.top: parent.top
+                                        anchors.topMargin: 3
+                                        spacing: 1
+
+                                        Text {
+                                            width: parent.width
+                                            text: root.mprisMod ? root.mprisMod.title : ""
+                                            color: Theme.text
+                                            font.family: Theme.fontFamily
+                                            font.bold: true
+                                            font.pixelSize: Theme.fontLabelLg
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            width: parent.width
+                                            visible: text !== ""
+                                            text: root.mprisMod ? root.mprisMod.artist : ""
+                                            color: Theme.subtext
+                                            font.family: Theme.fontFamily
+                                            font.pixelSize: Theme.fontLabelSm
+                                            elide: Text.ElideRight
+                                        }
+
+                                    }
+
+                                    Rectangle {
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.bottom: parent.bottom
+                                        anchors.bottomMargin: 2
+                                        height: 3
+                                        radius: Theme.shapeFull
+                                        color: Theme.withBlur(Theme.bgHigh)
+
+                                        Rectangle {
+                                            width: parent.width * mediaCard.progress
+                                            height: parent.height
+                                            radius: Theme.shapeFull
+                                            color: Theme.accent
                                         }
 
                                     }
@@ -1262,51 +1482,46 @@ BarPill {
 
                             }
 
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Theme.barMs(120)
-                                }
-
-                            }
-
-                        }
-
-                        Rectangle {
-                            width: parent.width
-                            height: 1
-                            color: Theme.outline
                         }
 
                         Column {
                             width: root.contentWidth
-                            spacing: 8
+                            spacing: root.sp2
+
+                            Overline {
+                                text: "SYSTEM"
+                            }
 
                             Row {
                                 width: parent.width
-                                spacing: 8
+                                spacing: root.sp2
 
                                 StatCard {
-                                    width: (root.contentWidth - 16) / 3
-                                    label: "BATTERY"
-                                    valueText: root.batteryPresent ? root.batteryPercent + "%" : "N/A"
-                                    showBar: root.batteryPresent
-                                    barPct: root.batteryPercent
+                                    width: (root.contentWidth - root.sp2 * 2) / 3
+                                    label: "CPU"
+                                    valueText: root.cpuHistory.length > 0 ? Math.round(root.cpuPercent) + "%" : "—"
+                                    detailText: root.cpuTemp > 0 ? Math.round(root.cpuTemp) + " °C" : ""
+                                    showChart: true
+                                    chartHistory: root.cpuHistory
                                 }
 
                                 StatCard {
-                                    width: (root.contentWidth - 16) / 3
+                                    width: (root.contentWidth - root.sp2 * 2) / 3
                                     label: "RAM"
                                     valueText: root.ramHistory.length > 0 ? Math.round(root.ramPercent) + "%" : "—"
+                                    detailText: root.ramTotalGB > 0 ? root.ramUsedGB.toFixed(1) + " / " + Math.round(root.ramTotalGB) + " GB" : ""
                                     showChart: true
                                     chartHistory: root.ramHistory
                                 }
 
                                 StatCard {
-                                    width: (root.contentWidth - 16) / 3
-                                    label: "CPU"
-                                    valueText: root.cpuHistory.length > 0 ? Math.round(root.cpuPercent) + "%" : "—"
-                                    showChart: true
-                                    chartHistory: root.cpuHistory
+                                    width: (root.contentWidth - root.sp2 * 2) / 3
+                                    label: "BATTERY"
+                                    valueText: root.batteryPresent ? root.batteryPercent + "%" : "N/A"
+                                    detailText: root.batteryDetail
+                                    showBar: root.batteryPresent
+                                    barPct: root.batteryPercent
+                                    barColor: root.batteryCharging ? Theme.accent : (root.batteryPercent <= 20 ? Theme.error : Theme.accent)
                                 }
 
                             }
@@ -1325,10 +1540,11 @@ BarPill {
                                 readonly property real usedGB: selectedDiskInfo ? selectedDiskInfo.used / 1.07374e+09 : 0
                                 readonly property real totalGB: selectedDiskInfo ? selectedDiskInfo.size / 1.07374e+09 : 0
                                 readonly property real usedPct: (selectedDiskInfo && selectedDiskInfo.size > 0) ? (selectedDiskInfo.used / selectedDiskInfo.size * 100) : 0
+                                readonly property bool unmounted: diskCard.selectedDiskInfo !== null && !diskCard.selectedDiskInfo.mounted
 
                                 width: root.contentWidth
-                                height: diskColumn.implicitHeight + 20
-                                radius: 12
+                                height: diskColumn.implicitHeight + root.sp3 * 2
+                                radius: Theme.shapeMd
                                 color: Theme.withBlur(Theme.bgTile)
 
                                 Column {
@@ -1337,21 +1553,17 @@ BarPill {
                                     anchors.left: parent.left
                                     anchors.right: parent.right
                                     anchors.top: parent.top
-                                    anchors.margins: 10
-                                    spacing: 6
+                                    anchors.margins: root.sp3
+                                    spacing: root.sp1 + 2
 
                                     Item {
                                         width: parent.width
                                         height: 22
 
-                                        Text {
+                                        Overline {
                                             anchors.left: parent.left
                                             anchors.verticalCenter: parent.verticalCenter
                                             text: "DISK"
-                                            color: Theme.subtext
-                                            font.family: Theme.fontFamily
-                                            font.bold: true
-                                            font.pixelSize: Theme.fs(10)
                                         }
 
                                         Rectangle {
@@ -1361,8 +1573,8 @@ BarPill {
                                             anchors.verticalCenter: parent.verticalCenter
                                             height: 22
                                             width: diskTriggerRow.implicitWidth + 18
-                                            radius: 999
-                                            color: diskTriggerArea.containsMouse ? Theme.accentHover : Theme.accent
+                                            radius: Theme.shapeFull
+                                            color: Theme.withBlur(Theme.bgHigh)
                                             visible: root.diskList.length > 0
                                             scale: diskTriggerArea.pressed ? 0.96 : 1
 
@@ -1375,28 +1587,35 @@ BarPill {
                                                 Text {
                                                     anchors.verticalCenter: parent.verticalCenter
                                                     text: root.selectedDisk || "—"
-                                                    color: Theme.fgAccent
+                                                    color: Theme.text
                                                     font.family: Theme.fontFamily
                                                     font.bold: true
-                                                    font.pixelSize: Theme.fs(10)
+                                                    font.pixelSize: Theme.fontLabelSm
                                                 }
 
                                                 SvgIcon {
                                                     anchors.verticalCenter: parent.verticalCenter
-                                                    path: "M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6Z"
-                                                    tint: Theme.fgAccent
-                                                    iconSize: 10
+                                                    path: root.expandPath
+                                                    tint: Theme.subtext
+                                                    iconSize: 11
                                                     rotation: root.diskDropdownOpen ? 180 : 0
 
                                                     Behavior on rotation {
                                                         NumberAnimation {
                                                             duration: Theme.barMs(180)
+                                                            easing.type: Easing.Bezier
+                                                            easing.bezierCurve: root.easeEmphasized
                                                         }
 
                                                     }
 
                                                 }
 
+                                            }
+
+                                            StateLayer {
+                                                hovered: diskTriggerArea.containsMouse
+                                                pressed: diskTriggerArea.pressed
                                             }
 
                                             MouseArea {
@@ -1407,19 +1626,17 @@ BarPill {
                                                 cursorShape: Qt.PointingHandCursor
                                                 onClicked: {
                                                     if (!root.diskDropdownOpen) {
-                                                        const pos = diskTrigger.mapToItem(mainView, 0, diskTrigger.height);
-                                                        diskPopup.x = pos.x + diskTrigger.width - diskPopup.width;
-                                                        diskPopup.y = pos.y + 6;
+                                                        const below = diskTrigger.mapToItem(mainView, 0, diskTrigger.height);
+                                                        const above = diskTrigger.mapToItem(mainView, 0, 0);
+                                                        diskPopup.x = below.x + diskTrigger.width - diskPopup.width;
+                                                        // the disk card sits last, so below usually runs past the
+                                                        // panel's clipped edge; flip up when it does
+                                                        const fitsBelow = below.y + 6 + diskPopup.height <= root.panelHeight - root.sp2;
+                                                        diskPopup.dropUp = !fitsBelow;
+                                                        diskPopup.y = fitsBelow ? below.y + 6 : Math.max(root.sp2, above.y - diskPopup.height - 6);
                                                     }
                                                     root.diskDropdownOpen = !root.diskDropdownOpen;
                                                 }
-                                            }
-
-                                            Behavior on color {
-                                                ColorAnimation {
-                                                    duration: Theme.barMs(120)
-                                                }
-
                                             }
 
                                             Behavior on scale {
@@ -1440,382 +1657,24 @@ BarPill {
                                             if (!diskCard.selectedDiskInfo)
                                                 return "No disks found";
 
-                                            if (!diskCard.selectedDiskInfo.mounted)
-                                                return "Not mounted · " + Math.round(diskCard.totalGB) + " GB";
+                                            if (diskCard.unmounted)
+                                                return "Not mounted";
 
-                                            return Math.round(diskCard.usedGB) + " GB / " + Math.round(diskCard.totalGB) + " GB";
+                                            return Math.round(diskCard.usedGB) + " / " + Math.round(diskCard.totalGB) + " GB";
                                         }
-                                        color: (diskCard.selectedDiskInfo && !diskCard.selectedDiskInfo.mounted) ? Theme.subtext : Theme.text
+                                        color: diskCard.unmounted ? Theme.subtext : Theme.text
                                         font.family: Theme.fontFamily
                                         font.bold: true
-                                        font.pixelSize: Theme.fs(15)
+                                        font.pixelSize: Theme.fontTitleMd
                                     }
 
-                                    Rectangle {
+                                    Meter {
                                         width: parent.width
-                                        height: 5
-                                        radius: 999
-                                        color: Theme.withBlur(Theme.bgHigh)
-                                        opacity: (diskCard.selectedDiskInfo && !diskCard.selectedDiskInfo.mounted) ? 0.4 : 1
                                         visible: diskCard.selectedDiskInfo !== null
-
-                                        Rectangle {
-                                            width: parent.width * (diskCard.usedPct / 100)
-                                            height: parent.height
-                                            radius: 999
-                                            color: Theme.accent
-
-                                            Behavior on width {
-                                                NumberAnimation {
-                                                    duration: Theme.barMs(300)
-                                                }
-
-                                            }
-
-                                        }
-
+                                        opacity: diskCard.unmounted ? 0.4 : 1
+                                        pct: diskCard.usedPct
                                     }
 
-                                }
-
-                            }
-
-                        }
-
-                        Rectangle {
-                            width: parent.width
-                            height: 1
-                            color: Theme.outline
-                        }
-
-                        Rectangle {
-                            id: notifSection
-
-                            width: root.contentWidth
-                            height: notifCol.implicitHeight + 25
-                            radius: 12
-                            color: notifSectionArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent"
-
-                            MouseArea {
-                                id: notifSectionArea
-
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.expanded = false;
-                                    if (root.notifMod)
-                                        root.notifMod.expanded = true;
-
-                                }
-                            }
-
-                            Column {
-                                id: notifCol
-
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.top: parent.top
-                                anchors.margins: 15
-                                spacing: 8
-
-                                Item {
-                                    width: parent.width
-                                    height: 18
-
-                                    Text {
-                                        anchors.left: parent.left
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Notifications"
-                                        color: Theme.subtext
-                                        font.family: Theme.fontFamily
-                                        font.bold: true
-                                        font.pixelSize: Theme.fs(10)
-                                    }
-
-                                    Text {
-                                        anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Clear"
-                                        color: clearArea.containsMouse ? Theme.accentHover : Theme.accent
-                                        opacity: (root.notifMod && root.notifMod.notifCount > 0) ? 1 : 0.35
-                                        font.family: Theme.fontFamily
-                                        font.bold: true
-                                        font.pixelSize: Theme.fs(10)
-
-                                        MouseArea {
-                                            id: clearArea
-
-                                            anchors.fill: parent
-                                            anchors.margins: -6
-                                            enabled: root.notifMod && root.notifMod.notifCount > 0
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: (mouse) => {
-                                                mouse.accepted = true;
-                                                if (root.notifMod)
-                                                    root.notifMod.clearAll();
-
-                                            }
-                                        }
-
-                                    }
-
-                                }
-
-                                ListView {
-                                    id: miniList
-
-                                    width: parent.width
-                                    height: contentHeight
-                                    visible: root.notifMod && root.notifMod.notifCount > 0
-                                    spacing: 8
-                                    interactive: false
-                                    model: miniNotifModel
-
-                                    delegate: Rectangle {
-                                        id: miniCard
-
-                                        required property var modelData
-                                        readonly property var notification: modelData
-                                        property string notifAppName: ""
-                                        property string notifSummary: ""
-                                        property string notifImage: ""
-                                        property string notifAppIcon: ""
-                                        readonly property string themeIconName: miniCard.notifAppIcon || (miniCard.notifImage.indexOf("image://icon/") === 0 ? miniCard.notifImage.slice(13) : "")
-                                        readonly property string directImage: miniCard.notifImage.indexOf("image://icon/") === 0 ? "" : miniCard.notifImage
-                                        readonly property string iconSrc: directImage || (themeIconName ? Quickshell.iconPath(themeIconName) : "")
-                                        property real arrivalGlow: 0
-
-                                        function syncNotification() {
-                                            const n = miniCard.notification;
-                                            if (!n)
-                                                return ;
-
-                                            miniCard.notifAppName = n.appName;
-                                            miniCard.notifSummary = n.summary;
-                                            miniCard.notifImage = n.image;
-                                            miniCard.notifAppIcon = n.appIcon;
-                                        }
-
-                                        onNotificationChanged: miniCard.syncNotification()
-                                        Component.onCompleted: {
-                                            miniCard.syncNotification();
-                                            if (!miniCard.notification || !root.markNotifShown(miniCard.notification.id)) {
-                                                miniCard.opacity = 1;
-                                                miniCard.scale = 1;
-                                            }
-                                        }
-                                        width: parent ? parent.width : 0
-                                        height: 44
-                                        radius: 10
-                                        color: Theme.withBlur(miniCard.arrivalGlow > 0 ? Theme._mix(Theme.bgSunken, Theme.accent, miniCard.arrivalGlow * 0.32) : Theme.bgSunken)
-
-                                        Connections {
-                                            function onAppNameChanged() {
-                                                miniCard.syncNotification();
-                                            }
-
-                                            function onAppIconChanged() {
-                                                miniCard.syncNotification();
-                                            }
-
-                                            function onSummaryChanged() {
-                                                miniCard.syncNotification();
-                                            }
-
-                                            function onImageChanged() {
-                                                miniCard.syncNotification();
-                                            }
-
-                                            target: miniCard.notification
-                                        }
-
-                                        Row {
-                                            anchors.fill: parent
-                                            anchors.margins: 8
-                                            spacing: 8
-
-                                            Rectangle {
-                                                width: 24
-                                                height: 24
-                                                radius: 7
-                                                color: Theme.bgTrack
-                                                anchors.verticalCenter: parent.verticalCenter
-
-                                                IconImage {
-                                                    anchors.fill: parent
-                                                    anchors.margins: 1
-                                                    source: miniCard.iconSrc
-                                                    asynchronous: true
-                                                    visible: status === Image.Ready
-                                                }
-
-                                            }
-
-                                            Column {
-                                                width: parent.width - 24 - 8
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                spacing: 1
-
-                                                Text {
-                                                    width: parent.width
-                                                    visible: miniCard.notifAppName !== ""
-                                                    text: miniCard.notifAppName
-                                                    color: Theme.subtextDim
-                                                    font.family: Theme.fontFamily
-                                                    font.pixelSize: Theme.fs(9)
-                                                    elide: Text.ElideRight
-                                                }
-
-                                                Text {
-                                                    width: parent.width
-                                                    text: miniCard.notifSummary
-                                                    color: Theme.text
-                                                    font.family: Theme.fontFamily
-                                                    font.bold: true
-                                                    font.pixelSize: Theme.fs(11)
-                                                    elide: Text.ElideRight
-                                                }
-
-                                            }
-
-                                        }
-
-                                    }
-
-                                    add: Transition {
-                                        id: miniAdd
-
-                                        SequentialAnimation {
-                                            PropertyAction {
-                                                property: "opacity"
-                                                value: 0
-                                            }
-
-                                            PauseAnimation {
-                                                duration: Theme.barMs(70)
-                                            }
-
-                                            NumberAnimation {
-                                                property: "opacity"
-                                                to: 1
-                                                duration: Theme.barMs(220)
-                                                easing.type: Easing.OutCubic
-                                            }
-
-                                        }
-
-                                        SequentialAnimation {
-                                            PropertyAction {
-                                                property: "y"
-                                                value: miniAdd.ViewTransition.destination.y - 14
-                                            }
-
-                                            PauseAnimation {
-                                                duration: Theme.barMs(70)
-                                            }
-
-                                            NumberAnimation {
-                                                property: "y"
-                                                to: miniAdd.ViewTransition.destination.y
-                                                duration: Theme.barMs(340)
-                                                easing.type: Easing.OutCubic
-                                            }
-
-                                        }
-
-                                        SequentialAnimation {
-                                            PropertyAction {
-                                                property: "scale"
-                                                value: 0.92
-                                            }
-
-                                            PauseAnimation {
-                                                duration: Theme.barMs(70)
-                                            }
-
-                                            NumberAnimation {
-                                                property: "scale"
-                                                to: 1
-                                                duration: Theme.barMs(360)
-                                                easing.type: Easing.OutBack
-                                                easing.overshoot: 1.6
-                                            }
-
-                                        }
-
-                                        SequentialAnimation {
-                                            PropertyAction {
-                                                property: "arrivalGlow"
-                                                value: 1
-                                            }
-
-                                            PauseAnimation {
-                                                duration: Theme.barMs(70)
-                                            }
-
-                                            NumberAnimation {
-                                                property: "arrivalGlow"
-                                                to: 0
-                                                duration: Theme.barMs(850)
-                                                easing.type: Easing.InCubic
-                                            }
-
-                                        }
-
-                                    }
-
-                                    displaced: Transition {
-                                        NumberAnimation {
-                                            properties: "x,y"
-                                            duration: Theme.barMs(300)
-                                            easing.type: Easing.OutCubic
-                                        }
-
-                                        NumberAnimation {
-                                            property: "opacity"
-                                            to: 1
-                                            duration: Theme.barMs(200)
-                                        }
-
-                                        NumberAnimation {
-                                            property: "scale"
-                                            to: 1
-                                            duration: Theme.barMs(200)
-                                        }
-
-                                    }
-
-                                    remove: Transition {
-                                        NumberAnimation {
-                                            property: "opacity"
-                                            to: 0
-                                            duration: Theme.barMs(200)
-                                            easing.type: Easing.InCubic
-                                        }
-
-                                        NumberAnimation {
-                                            property: "scale"
-                                            to: 0.9
-                                            duration: Theme.barMs(200)
-                                            easing.type: Easing.InCubic
-                                        }
-
-                                    }
-
-                                }
-
-                                Text {
-                                    width: parent.width
-                                    visible: !root.notifMod || root.notifMod.notifCount === 0
-                                    horizontalAlignment: Text.AlignHCenter
-                                    text: "No notifications"
-                                    color: Theme.subtext
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(11)
-                                    topPadding: 4
-                                    bottomPadding: 4
                                 }
 
                             }
@@ -1847,22 +1706,23 @@ BarPill {
                 Rectangle {
                     id: diskPopup
 
+                    property bool dropUp: false
+
                     visible: opacity > 0.01
                     opacity: root.diskDropdownOpen ? 1 : 0
                     scale: root.diskDropdownOpen ? 1 : 0.94
-                    transformOrigin: Item.Top
-                    width: 140
-                    height: diskPopupColumn.implicitHeight + 8
-                    radius: 12
-                    color: Theme.withBlur(Theme.bgTile)
-                    border.width: 0
+                    transformOrigin: diskPopup.dropUp ? Item.Bottom : Item.Top
+                    width: 150
+                    height: diskPopupColumn.implicitHeight + root.sp1 * 2
+                    radius: Theme.shapeMd
+                    color: Theme.withBlur(Theme.bgActive)
                     z: 100
 
                     Column {
                         id: diskPopupColumn
 
                         anchors.fill: parent
-                        anchors.margins: 4
+                        anchors.margins: root.sp1
                         spacing: 2
 
                         Repeater {
@@ -1875,36 +1735,36 @@ BarPill {
                                 readonly property bool isSelected: optRow.modelData.name === root.selectedDisk
 
                                 width: parent.width
-                                height: 26
-                                radius: 8
+                                height: 30
+                                radius: Theme.shapeSm
                                 color: optRow.isSelected ? Theme.accent : "transparent"
 
                                 Text {
                                     anchors.left: parent.left
-                                    anchors.leftMargin: 8
+                                    anchors.leftMargin: root.sp2 + 2
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: optRow.modelData.name
                                     color: optRow.isSelected ? Theme.fgAccent : Theme.text
                                     opacity: (!optRow.modelData.mounted && !optRow.isSelected) ? 0.45 : 1
                                     font.family: Theme.fontFamily
                                     font.bold: true
-                                    font.pixelSize: Theme.fs(11)
+                                    font.pixelSize: Theme.fontLabelMd
                                 }
 
-                                Rectangle {
-                                    anchors.fill: parent
-                                    radius: parent.radius
-                                    color: Theme.text
-                                    opacity: (optArea.containsMouse && !optRow.isSelected) ? 0.08 : 0
+                                SvgIcon {
+                                    visible: optRow.isSelected
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: root.sp2
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    path: root.checkPath
+                                    tint: Theme.fgAccent
+                                    iconSize: 13
+                                }
 
-                                    Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: Theme.barMs(150)
-                                            easing.type: Easing.OutCubic
-                                        }
-
-                                    }
-
+                                StateLayer {
+                                    hovered: optArea.containsMouse
+                                    pressed: optArea.pressed
+                                    tint: optRow.isSelected ? Theme.fgAccent : Theme.text
                                 }
 
                                 MouseArea {
@@ -1917,13 +1777,6 @@ BarPill {
                                         root.selectedDisk = optRow.modelData.name;
                                         root.diskDropdownOpen = false;
                                     }
-                                }
-
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: Theme.barMs(120)
-                                    }
-
                                 }
 
                             }
@@ -1942,7 +1795,8 @@ BarPill {
                     Behavior on scale {
                         NumberAnimation {
                             duration: Theme.barMs(180)
-                            easing.type: Easing.OutCubic
+                            easing.type: Easing.Bezier
+                            easing.bezierCurve: root.easeEmphasizedDecel
                         }
 
                     }
@@ -1976,103 +1830,55 @@ BarPill {
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    anchors.topMargin: 14
-                    anchors.leftMargin: 14
-                    anchors.rightMargin: 14
+                    anchors.topMargin: root.sp2
+                    anchors.leftMargin: root.panelPad - 4
+                    anchors.rightMargin: root.panelPad
                     height: root.subHeaderHeight
 
-                    Rectangle {
+                    IconButton {
                         id: backChip
 
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 26
-                        height: 26
-                        radius: 999
-                        color: backArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent"
-
-                        SvgIcon {
-                            anchors.centerIn: parent
-                            path: "M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12l4.58-4.59Z"
-                            tint: Theme.text
-                            iconSize: 16
-                        }
-
-                        MouseArea {
-                            id: backArea
-
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.showView("main")
-                        }
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.barMs(120)
-                            }
-
-                        }
-
+                        path: root.chevronLeftPath
+                        tint: Theme.text
+                        diameter: 32
+                        iconSize: 18
+                        onTapped: root.showView("main")
                     }
 
                     Text {
                         anchors.left: backChip.right
-                        anchors.leftMargin: 8
+                        anchors.leftMargin: root.sp1
                         anchors.verticalCenter: parent.verticalCenter
-                        text: root.view === "wifi" ? "Network" : "Bluetooth"
+                        text: {
+                            switch (root.view) {
+                            case "wifi":
+                                return "Network";
+                            case "bluetooth":
+                                return "Bluetooth";
+                            case "output":
+                                return "Output device";
+                            }
+                            return "";
+                        }
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.bold: true
-                        font.pixelSize: Theme.fs(13)
+                        font.pixelSize: Theme.fontTitleSm
                     }
 
-                    Rectangle {
-                        visible: root.view === "bluetooth"
+                    M3Switch {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 32
-                        height: 18
-                        radius: 999
-                        color: root.btEnabled ? Theme.accent : Theme.outlineStrong
-
-                        Rectangle {
-                            width: 14
-                            height: 14
-                            radius: 7
-                            color: Theme.bg
-                            anchors.verticalCenter: parent.verticalCenter
-                            x: root.btEnabled ? parent.width - width - 2 : 2
-
-                            Behavior on x {
-                                NumberAnimation {
-                                    duration: Theme.barMs(200)
-                                    easing.type: Easing.OutCubic
-                                }
-
-                            }
-
+                        visible: root.view === "bluetooth" || root.view === "wifi"
+                        checked: root.view === "wifi" ? Networking.wifiEnabled : root.btEnabled
+                        onToggled: {
+                            if (root.view === "wifi")
+                                Networking.wifiEnabled = !Networking.wifiEnabled;
+                            else
+                                Bt.setEnabled(!root.btEnabled);
                         }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: Bt.setEnabled(!root.btEnabled)
-                        }
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.barMs(200)
-                            }
-
-                        }
-
-                    }
-
-                    Rectangle {
-                        anchors.bottom: parent.bottom
-                        width: parent.width
-                        height: 1
-                        color: Theme.outline
                     }
 
                 }
@@ -2081,15 +1887,23 @@ BarPill {
                     id: subScroll
 
                     anchors.top: subHeader.bottom
-                    anchors.topMargin: 10
+                    anchors.topMargin: root.sp1
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
-                    anchors.leftMargin: 14
-                    anchors.rightMargin: 14
-                    anchors.bottomMargin: 14
+                    anchors.leftMargin: root.panelPad
+                    anchors.rightMargin: root.panelPad
+                    anchors.bottomMargin: root.panelPad
                     contentWidth: width
-                    contentHeight: root.view === "bluetooth" ? btPanel.implicitHeight : wifiPanel.implicitHeight
+                    contentHeight: {
+                        switch (root.view) {
+                        case "bluetooth":
+                            return btPanel.implicitHeight;
+                        case "output":
+                            return outputList.implicitHeight;
+                        }
+                        return wifiPanel.implicitHeight;
+                    }
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
 
@@ -2107,6 +1921,21 @@ BarPill {
                         width: subScroll.width
                         active: root.expanded && root.view === "bluetooth"
                         visible: root.view === "bluetooth"
+                    }
+
+                    DeviceList {
+                        id: outputList
+
+                        width: subScroll.width
+                        visible: root.view === "output"
+                        nodes: root.outputNodes
+                        current: root.sink
+                        emptyText: "No output devices"
+                        iconPath: root.speakerPath
+                        availability: root.sinkAvailable
+                        onPicked: (node) => {
+                            Pipewire.preferredDefaultAudioSink = node;
+                        }
                     }
 
                     MouseArea {
@@ -2150,7 +1979,7 @@ BarPill {
             height: Math.round(tipCol.implicitHeight + tipCard.pad * 2 - 6)
             x: root.tipCardX
             y: root.compactHeight + root.tipGap
-            radius: Theme.radiusSm
+            radius: Theme.shapeMd
             color: Theme.bg
             opacity: root.tipShown ? 1 : 0
             visible: tipCard.opacity > 0.01
@@ -2169,9 +1998,7 @@ BarPill {
                         return ;
 
                     if (tipMute.hitBy(mouse.x, mouse.y)) {
-                        if (root.sink && root.sink.audio)
-                            root.sink.audio.muted = !root.sink.audio.muted;
-
+                        root.toggleVolMute();
                         return ;
                     }
                     const sp = tipSlider.mapFromItem(tipCardArea, mouse.x, mouse.y);
@@ -2228,8 +2055,8 @@ BarPill {
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.bold: true
-                    font.pixelSize: Theme.fs(9)
-                    font.letterSpacing: 0.7
+                    font.pixelSize: Theme.fontLabelSm
+                    font.letterSpacing: 0.8
                 }
 
                 Text {
@@ -2240,7 +2067,7 @@ BarPill {
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.bold: true
-                    font.pixelSize: Theme.fs(14)
+                    font.pixelSize: Theme.fontTitleSm
                     elide: Text.ElideRight
                 }
 
@@ -2252,7 +2079,7 @@ BarPill {
                     text: root.tipSupport
                     color: Theme.subtext
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
+                    font.pixelSize: Theme.fontLabelSm
                     elide: Text.ElideRight
                     topPadding: 1
                 }
@@ -2284,13 +2111,18 @@ BarPill {
                 anchors.topMargin: 9
                 width: 28
                 height: 28
-                radius: 999
-                color: root.volMuted ? Theme.accentContainer : (tipMute.hovered ? Theme.withBlur(Theme.bgHover) : "transparent")
+                radius: Theme.shapeFull
+                color: "transparent"
+
+                StateLayer {
+                    hovered: tipMute.hovered
+                    pressed: false
+                }
 
                 SvgIcon {
                     anchors.centerIn: parent
                     path: root.volMuted ? root.volumeIconLevels[0].path : root.volumeIconFor(root.volumePercent)
-                    tint: root.volMuted ? Theme.fgAccentContainer : Theme.subtext
+                    tint: root.volMuted ? Theme.error : Theme.subtext
                     iconSize: 16
                 }
 
@@ -2301,13 +2133,6 @@ BarPill {
                     height: 1.5
                     rotation: 45
                     color: Theme.error
-                }
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.barDurQuick
-                    }
-
                 }
 
             }
@@ -2323,23 +2148,198 @@ BarPill {
         }
     ]
 
+    // m3 state layer: one hover/press idiom for every interactive surface here
+    component StateLayer: Rectangle {
+        id: layer
+
+        property bool hovered: false
+        property bool pressed: false
+        property color tint: Theme.text
+
+        anchors.fill: parent
+        radius: parent.radius !== undefined ? parent.radius : 0
+        color: layer.tint
+        opacity: layer.pressed ? Theme.statePressed : (layer.hovered ? Theme.stateHover : 0)
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Theme.barMs(150)
+                easing.type: Easing.Bezier
+                easing.bezierCurve: root.easeEmphasized
+            }
+
+        }
+
+    }
+
+    component Overline: Text {
+        color: Theme.subtext
+        font.family: Theme.fontFamily
+        font.bold: true
+        font.pixelSize: Theme.fontLabelSm
+        font.letterSpacing: 0.8
+    }
+
+    // flat grouped container, the same shape the settings app uses
+    component GroupCard: Rectangle {
+        id: group
+
+        default property alias rows: groupColumn.data
+
+        implicitHeight: groupColumn.implicitHeight + root.sp3 * 2
+        height: implicitHeight
+        radius: Theme.shapeLg
+        color: Theme.withBlur(Theme.bgTile)
+
+        Column {
+            id: groupColumn
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.topMargin: root.sp3
+            anchors.leftMargin: root.sp3
+            anchors.rightMargin: root.sp3
+            spacing: root.sp1
+        }
+
+    }
+
+    component IconButton: Rectangle {
+        id: btn
+
+        property string path: ""
+        property color tint: Theme.text
+        property int diameter: 32
+        property int iconSize: 18
+        property color bg: "transparent"
+        property color layerTint: Theme.text
+
+        signal tapped()
+
+        width: btn.diameter
+        height: btn.diameter
+        radius: Theme.shapeFull
+        color: btn.bg
+
+        StateLayer {
+            hovered: btnArea.containsMouse
+            pressed: btnArea.pressed
+            tint: btn.layerTint
+        }
+
+        SvgIcon {
+            anchors.centerIn: parent
+            path: btn.path
+            tint: btn.tint
+            iconSize: btn.iconSize
+        }
+
+        MouseArea {
+            id: btnArea
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: btn.tapped()
+        }
+
+    }
+
+    // m3 switch anatomy: the handle grows from 16 to 22 as it travels
+    component M3Switch: Rectangle {
+        id: sw
+
+        property bool checked: false
+
+        signal toggled()
+
+        width: 44
+        height: 26
+        radius: Theme.shapeFull
+        color: sw.checked ? Theme.accent : Theme.withBlur(Theme.bgHigh)
+
+        Rectangle {
+            id: swHandle
+
+            width: sw.checked ? 22 : 16
+            height: width
+            radius: Theme.shapeFull
+            anchors.verticalCenter: parent.verticalCenter
+            x: sw.checked ? sw.width - width - 2 : 5
+            color: sw.checked ? Theme.bgOpaque : Theme.outlineStrong
+
+            Behavior on x {
+                NumberAnimation {
+                    duration: Theme.barMs(250)
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: root.easeEmphasized
+                }
+
+            }
+
+            Behavior on width {
+                NumberAnimation {
+                    duration: Theme.barMs(250)
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: root.easeEmphasized
+                }
+
+            }
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.barDurQuick
+                }
+
+            }
+
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: sw.toggled()
+        }
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Theme.barMs(200)
+            }
+
+        }
+
+    }
+
     // m3 slider: thick track, detached handle, stop dot at the far end
     component M3Slider: Item {
         id: sl
 
         property real value: 0
         property bool muted: false
+        property bool interactive: false
+        property bool dragging: false
+        property real dragValue: 0
+        readonly property real liveValue: sl.dragging ? sl.dragValue : sl.value
+
+        signal moved(real v)
 
         readonly property int handleW: 4
         readonly property int trackH: 16
         readonly property int notch: 6
-        readonly property real pos: Math.max(0, Math.min(1, sl.value / 100))
+        readonly property real pos: Math.max(0, Math.min(1, sl.liveValue / 100))
         readonly property real handleX: sl.pos * Math.max(0, sl.width - sl.handleW)
         readonly property color liveColor: sl.muted ? Theme.outlineStrong : Theme.accent
 
         function valueAt(px) {
             const span = Math.max(1, sl.width - sl.handleW);
             return Math.max(0, Math.min(100, ((px - sl.handleW / 2) / span) * 100));
+        }
+
+        function applyAt(px) {
+            sl.dragging = true;
+            sl.dragValue = sl.valueAt(px);
+            sl.moved(sl.dragValue);
         }
 
         height: 32
@@ -2409,6 +2409,523 @@ BarPill {
 
         }
 
+        MouseArea {
+            anchors.fill: parent
+            anchors.topMargin: -4
+            anchors.bottomMargin: -4
+            enabled: sl.interactive
+            preventStealing: true
+            cursorShape: Qt.PointingHandCursor
+            onPressed: (mouse) => {
+                return sl.applyAt(mouse.x);
+            }
+            onPositionChanged: (mouse) => {
+                if (pressed)
+                    sl.applyAt(mouse.x);
+
+            }
+            onReleased: sl.dragging = false
+            onCanceled: sl.dragging = false
+            onWheel: (wheel) => {
+                sl.moved(Math.max(0, Math.min(100, sl.value + (wheel.angleDelta.y > 0 ? 5 : -5))));
+                wheel.accepted = true;
+            }
+        }
+
+    }
+
+    // leading control, track, trailing readout
+    component SliderRow: Item {
+        id: sliderRow
+
+        property var iconLevels: []
+        property real value: 0
+        property bool muted: false
+        property bool showMute: false
+        property bool showPicker: false
+        readonly property real displayValue: sliderTrack.liveValue
+
+        signal moved(real v)
+        signal muteToggled()
+        signal pickerRequested()
+
+        height: 40
+
+        Rectangle {
+            id: sliderLead
+
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            width: 32
+            height: 32
+            radius: Theme.shapeFull
+            color: "transparent"
+
+            StateLayer {
+                hovered: sliderRow.showMute && leadArea.containsMouse
+                pressed: sliderRow.showMute && leadArea.pressed
+            }
+
+            MorphIcon {
+                anchors.centerIn: parent
+                levels: sliderRow.iconLevels
+                value: sliderRow.displayValue
+                tint: sliderRow.muted ? Theme.error : Theme.subtext
+                iconSize: 18
+            }
+
+            Rectangle {
+                visible: sliderRow.muted
+                anchors.centerIn: parent
+                width: 22
+                height: 1.5
+                rotation: 45
+                color: Theme.error
+            }
+
+            MouseArea {
+                id: leadArea
+
+                anchors.fill: parent
+                enabled: sliderRow.showMute
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: sliderRow.muteToggled()
+            }
+
+        }
+
+        M3Slider {
+            id: sliderTrack
+
+            anchors.left: sliderLead.right
+            anchors.leftMargin: root.sp3
+            anchors.right: sliderTail.left
+            anchors.rightMargin: root.sp3
+            anchors.verticalCenter: parent.verticalCenter
+            interactive: true
+            value: sliderRow.value
+            muted: sliderRow.muted
+            onMoved: (v) => {
+                return sliderRow.moved(v);
+            }
+        }
+
+        // fixed width, so a row without a picker still lines its track up
+        Item {
+            id: sliderTail
+
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            width: 74
+            height: 28
+
+            Text {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: 34
+                horizontalAlignment: Text.AlignRight
+                text: Math.round(sliderRow.displayValue) + "%"
+                color: sliderRow.muted ? Theme.subtextDim : Theme.text
+                font.family: Theme.fontFamily
+                font.bold: true
+                font.pixelSize: Theme.fontLabelMd
+            }
+
+            IconButton {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                visible: sliderRow.showPicker
+                path: root.chevronPath
+                tint: Theme.subtext
+                diameter: 28
+                iconSize: 13
+                onTapped: sliderRow.pickerRequested()
+            }
+
+        }
+
+    }
+
+    // the output/input picker body
+    component DeviceList: Column {
+        id: devList
+
+        property var nodes: []
+        property var current: null
+        property string emptyText: ""
+        property string iconPath: ""
+        property var availability: ({})
+
+        signal picked(var node)
+
+        spacing: root.sp2
+
+        Repeater {
+            model: devList.nodes
+
+            Rectangle {
+                id: devOpt
+
+                required property var modelData
+                readonly property bool isCurrent: devList.current === devOpt.modelData
+                readonly property bool usable: devList.availability[devOpt.modelData.name] !== false
+
+                width: devList.width
+                height: 56
+                radius: Theme.shapeMd
+                color: devOpt.isCurrent ? Theme.accent : Theme.withBlur(Theme.bgTile)
+                opacity: devOpt.usable ? 1 : 0.42
+
+                StateLayer {
+                    hovered: devOptArea.containsMouse
+                    pressed: devOptArea.pressed
+                    tint: devOpt.isCurrent ? Theme.fgAccent : Theme.text
+                }
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Theme.barMs(180)
+                    }
+
+                }
+
+                SvgIcon {
+                    id: devOptIcon
+
+                    anchors.left: parent.left
+                    anchors.leftMargin: root.sp3
+                    anchors.verticalCenter: parent.verticalCenter
+                    path: devList.iconPath
+                    tint: devOpt.isCurrent ? Theme.fgAccent : Theme.subtext
+                    iconSize: 18
+                }
+
+                Column {
+                    anchors.left: devOptIcon.right
+                    anchors.leftMargin: root.sp3
+                    anchors.right: devOptCheck.left
+                    anchors.rightMargin: root.sp2
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 1
+
+                    Text {
+                        width: parent.width
+                        text: root.deviceLabel(devOpt.modelData)
+                        color: devOpt.isCurrent ? Theme.fgAccent : Theme.text
+                        font.family: Theme.fontFamily
+                        font.bold: true
+                        font.pixelSize: Theme.fontLabelLg
+                        elide: Text.ElideRight
+                    }
+
+                    Text {
+                        width: parent.width
+                        visible: text !== ""
+                        text: devOpt.isCurrent ? "Default device" : (devOpt.usable ? "" : "Not connected")
+                        color: devOpt.isCurrent ? Theme.alpha(Theme.fgAccent, 0.75) : Theme.subtextDim
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontLabelSm
+                        elide: Text.ElideRight
+                    }
+
+                }
+
+                SvgIcon {
+                    id: devOptCheck
+
+                    anchors.right: parent.right
+                    anchors.rightMargin: root.sp3
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: devOpt.isCurrent
+                    path: root.checkPath
+                    tint: Theme.fgAccent
+                    iconSize: 16
+                }
+
+                MouseArea {
+                    id: devOptArea
+
+                    anchors.fill: parent
+                    enabled: devOpt.usable
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: devList.picked(devOpt.modelData)
+                }
+
+            }
+
+        }
+
+        Text {
+            width: devList.width
+            visible: devList.nodes.length === 0
+            horizontalAlignment: Text.AlignHCenter
+            text: devList.emptyText
+            color: Theme.subtext
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontLabelMd
+            topPadding: root.sp5
+            bottomPadding: root.sp5
+        }
+
+    }
+
+    component Meter: Rectangle {
+        id: meter
+
+        property real pct: 0
+        property color barColor: Theme.accent
+
+        height: 6
+        radius: Theme.shapeFull
+        color: Theme.withBlur(Theme.bgHigh)
+
+        Rectangle {
+            width: Math.max(0, Math.min(1, meter.pct / 100)) * parent.width
+            height: parent.height
+            radius: Theme.shapeFull
+            color: meter.barColor
+
+            Behavior on width {
+                NumberAnimation {
+                    duration: Theme.barMs(300)
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: root.easeEmphasized
+                }
+
+            }
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.barMs(200)
+                }
+
+            }
+
+        }
+
+    }
+
+    // one anatomy for all three: overline, value, detail, then a meter zone
+    // whose contents share a baseline whether they are a bar or a sparkline
+    component StatCard: Rectangle {
+        id: card
+
+        property string label: ""
+        property string valueText: "—"
+        property string detailText: ""
+        property bool showBar: false
+        property real barPct: 0
+        property color barColor: Theme.accent
+        property bool showChart: false
+        property var chartHistory: []
+
+        readonly property int meterZone: 22
+
+        // every card carries the same four rows, so all three size alike even
+        // when a detail line is empty
+        implicitHeight: statColumn.implicitHeight + root.sp3 * 2
+        height: implicitHeight
+        radius: Theme.shapeMd
+        color: Theme.withBlur(Theme.bgTile)
+
+        Column {
+            id: statColumn
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: root.sp3
+            spacing: root.sp1
+
+            Overline {
+                width: parent.width
+                text: card.label
+                elide: Text.ElideRight
+            }
+
+            Text {
+                width: parent.width
+                text: card.valueText
+                color: Theme.text
+                font.family: Theme.fontFamily
+                font.bold: true
+                font.pixelSize: Theme.fontTitleMd
+            }
+
+            Text {
+                width: parent.width
+                text: card.detailText
+                color: Theme.subtextDim
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontLabelSm
+                elide: Text.ElideRight
+            }
+
+            Item {
+                id: meterZone
+
+                width: parent.width
+                height: card.meterZone
+
+            Meter {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                visible: card.showBar
+                pct: card.barPct
+                barColor: card.barColor
+            }
+
+            Row {
+                id: chartRow
+
+                anchors.fill: parent
+                visible: card.showChart
+                spacing: 2
+
+                Repeater {
+                    model: card.chartHistory
+
+                    Rectangle {
+                        required property real modelData
+
+                        anchors.bottom: parent.bottom
+                        width: (chartRow.width - Math.max(0, card.chartHistory.length - 1) * chartRow.spacing) / Math.max(1, card.chartHistory.length)
+                        height: Math.max(2, (modelData / 100) * chartRow.height)
+                        radius: 2
+                        color: Theme.accent
+                        opacity: 0.85
+
+                        Behavior on height {
+                            NumberAnimation {
+                                duration: Theme.barMs(220)
+                                easing.type: Easing.Bezier
+                                easing.bezierCurve: root.easeEmphasized
+                            }
+
+                        }
+
+                    }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    // flat tile; "on" is carried by the icon tint and a growing accent underline
+    // checked tiles fill with the accent, the way they did before
+    component ToggleTile: Rectangle {
+        id: tile
+
+        property string iconPath: ""
+        property string iconGlyph: ""
+        property string name: ""
+        property string sub: ""
+        property bool checked: false
+        property bool showArrow: false
+
+        signal toggled()
+        signal expandRequested()
+
+        width: (root.contentWidth - root.sp2) / 2
+        height: 56
+        radius: Theme.shapeLg
+        color: tile.checked ? Theme.accent : Theme.withBlur(Theme.bgTile)
+
+        StateLayer {
+            hovered: tileArea.containsMouse
+            pressed: tileArea.pressed
+            tint: tile.checked ? Theme.fgAccent : Theme.text
+        }
+
+        MouseArea {
+            id: tileArea
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: tile.toggled()
+        }
+
+        Row {
+            anchors.left: parent.left
+            anchors.leftMargin: root.sp3
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: root.sp2
+            width: parent.width - root.sp3 - (tile.showArrow ? 38 : root.sp3)
+
+            SvgIcon {
+                visible: tile.iconGlyph === ""
+                anchors.verticalCenter: parent.verticalCenter
+                path: tile.iconPath
+                tint: tile.checked ? Theme.fgAccent : Theme.subtext
+                iconSize: 18
+            }
+
+            Text {
+                visible: tile.iconGlyph !== ""
+                anchors.verticalCenter: parent.verticalCenter
+                text: tile.iconGlyph
+                color: tile.checked ? Theme.fgAccent : Theme.subtext
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fs(17)
+            }
+
+            Column {
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 1
+                width: parent.width - 18 - root.sp2
+
+                Text {
+                    width: parent.width
+                    text: tile.name
+                    color: tile.checked ? Theme.fgAccent : Theme.text
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                    font.pixelSize: Theme.fontLabelLg
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    width: parent.width
+                    visible: tile.sub !== ""
+                    text: tile.sub
+                    color: tile.checked ? Theme.alpha(Theme.fgAccent, 0.75) : Theme.subtext
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontLabelSm
+                    elide: Text.ElideRight
+                }
+
+            }
+
+        }
+
+        IconButton {
+            visible: tile.showArrow
+            anchors.right: parent.right
+            anchors.rightMargin: root.sp1
+            anchors.verticalCenter: parent.verticalCenter
+            path: root.chevronPath
+            tint: tile.checked ? Theme.fgAccent : Theme.subtext
+            diameter: 30
+            iconSize: 14
+            onTapped: tile.expandRequested()
+        }
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Theme.barMs(180)
+            }
+
+        }
+
     }
 
     component StatusIndicator: Row {
@@ -2460,7 +2977,7 @@ BarPill {
             color: Theme.text
             font.family: Theme.fontFamily
             font.bold: true
-            font.pixelSize: Theme.fs(13)
+            font.pixelSize: Theme.fontLabelLg
         }
 
     }
@@ -2545,358 +3062,6 @@ BarPill {
 
                     PathSvg {
                         path: levelShape.modelData.path
-                    }
-
-                }
-
-            }
-
-        }
-
-    }
-
-    component ToggleTile: Rectangle {
-        id: tile
-
-        property string iconPath: ""
-        property string iconGlyph: ""
-        property string name: ""
-        property string sub: ""
-        property bool checked: false
-        property bool showArrow: false
-
-        signal toggled()
-        signal expandRequested()
-
-        width: (root.contentWidth - 8) / 2
-        height: 58
-        radius: 14
-        color: tile.checked ? Theme.accent : Theme.withBlur(Theme.bgTile)
-        border.width: 0
-
-        Row {
-            anchors.left: parent.left
-            anchors.leftMargin: 10
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 8
-            width: parent.width - (tile.showArrow ? 40 : 20)
-
-            SvgIcon {
-                visible: tile.iconGlyph === ""
-                anchors.verticalCenter: parent.verticalCenter
-                path: tile.iconPath
-                tint: tile.checked ? Theme.fgAccent : Theme.subtext
-                iconSize: 17
-            }
-
-            Text {
-                visible: tile.iconGlyph !== ""
-                anchors.verticalCenter: parent.verticalCenter
-                text: tile.iconGlyph
-                color: tile.checked ? Theme.fgAccent : Theme.subtext
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(16)
-            }
-
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 1
-                width: parent.width - 17 - 8
-
-                Text {
-                    width: parent.width
-                    text: tile.name
-                    color: tile.checked ? Theme.fgAccent : Theme.text
-                    font.family: Theme.fontFamily
-                    font.bold: true
-                    font.pixelSize: Theme.fs(12)
-                    elide: Text.ElideRight
-                }
-
-                Text {
-                    width: parent.width
-                    visible: tile.sub !== ""
-                    text: tile.sub
-                    color: tile.checked ? Theme.alpha(Theme.fgAccent, 0.75) : Theme.subtext
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    elide: Text.ElideRight
-                }
-
-            }
-
-        }
-
-        MouseArea {
-            id: tileArea
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: tile.toggled()
-        }
-
-        Rectangle {
-            id: arrowBtn
-
-            visible: tile.showArrow
-            anchors.right: parent.right
-            anchors.rightMargin: 8
-            anchors.verticalCenter: parent.verticalCenter
-            width: 22
-            height: 22
-            radius: 999
-            color: arrowArea.containsMouse ? (tile.checked ? Theme.alpha(Theme.fgAccent, 0.2) : Theme.accentContainer) : "transparent"
-
-            SvgIcon {
-                anchors.centerIn: parent
-                path: "M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41Z"
-                tint: tile.checked ? Theme.fgAccent : (arrowArea.containsMouse ? Theme.accent : Theme.subtext)
-                iconSize: 13
-            }
-
-            MouseArea {
-                id: arrowArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: tile.expandRequested()
-            }
-
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            radius: parent.radius
-            color: Theme.text
-            opacity: (tileArea.containsMouse && !tile.checked) ? 0.08 : 0
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.barMs(150)
-                    easing.type: Easing.OutCubic
-                }
-
-            }
-
-        }
-
-        Behavior on color {
-            ColorAnimation {
-                duration: Theme.barMs(150)
-            }
-
-        }
-
-    }
-
-    component SliderRow: Item {
-        id: sliderRow
-
-        property var iconLevels: []
-        property real value: 0
-        property bool dragging: false
-        property real dragValue: 0
-        readonly property real displayValue: dragging ? dragValue : value
-        readonly property int trackHeight: 32
-        readonly property int iconMargin: 9
-
-        signal committed(real v)
-
-        function updateFromX(x) {
-            sliderRow.dragging = true;
-            const pct = Math.max(0, Math.min(1, x / trackWrap.width));
-            sliderRow.dragValue = pct * 100;
-            sliderRow.committed(sliderRow.dragValue);
-        }
-
-        width: root.contentWidth
-        height: trackHeight
-
-        Item {
-            id: trackWrap
-
-            anchors.fill: parent
-
-            Rectangle {
-                id: rail
-
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: 2
-                radius: 1
-                color: Theme.withBlur(Theme.outline)
-            }
-
-            Rectangle {
-                id: fill
-
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                height: sliderRow.trackHeight
-                radius: height / 2
-                color: Theme.accent
-                clip: true
-                width: Math.max(height, trackWrap.width * (sliderRow.displayValue / 100))
-
-                Behavior on width {
-                    enabled: !sliderRow.dragging
-
-                    NumberAnimation {
-                        duration: Theme.barMs(220)
-                        easing.type: Easing.OutCubic
-                    }
-
-                }
-
-                Text {
-                    id: percentLabel
-
-                    anchors.left: parent.left
-                    anchors.leftMargin: sliderRow.iconMargin
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: Math.round(sliderRow.displayValue) + "%"
-                    color: Theme.fgAccent
-                    font.family: Theme.fontFamily
-                    font.bold: true
-                    font.pixelSize: Theme.fs(13)
-                    opacity: (fill.width - sliderRow.iconMargin * 2 - width - sliderIcon.width - 6) > 0 ? 1 : 0
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Theme.barMs(120)
-                        }
-
-                    }
-
-                }
-
-                MorphIcon {
-                    id: sliderIcon
-
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: parent.right
-                    anchors.rightMargin: sliderRow.iconMargin
-                    levels: sliderRow.iconLevels
-                    value: sliderRow.displayValue
-                    tint: Theme.fgAccent
-                    iconSize: sliderRow.trackHeight - sliderRow.iconMargin * 2
-                    transformOrigin: Item.Center
-                    scale: 0.75 + 0.35 * (sliderRow.displayValue / 100)
-
-                    Behavior on scale {
-                        enabled: !sliderRow.dragging
-
-                        NumberAnimation {
-                            duration: Theme.barMs(220)
-                            easing.type: Easing.OutCubic
-                        }
-
-                    }
-
-                }
-
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                preventStealing: true
-                onPressed: (mouse) => {
-                    return sliderRow.updateFromX(mouse.x);
-                }
-                onPositionChanged: (mouse) => {
-                    if (pressed)
-                        sliderRow.updateFromX(mouse.x);
-
-                }
-                onReleased: sliderRow.dragging = false
-            }
-
-        }
-
-    }
-
-    component StatCard: Rectangle {
-        id: card
-
-        property string label: ""
-        property string valueText: "—"
-        property bool showBar: false
-        property real barPct: 0
-        property bool showChart: false
-        property var chartHistory: []
-
-        height: 82
-        radius: 12
-        color: Theme.withBlur(Theme.bgTile)
-
-        Column {
-            anchors.fill: parent
-            anchors.margins: 10
-            spacing: 6
-
-            Text {
-                text: card.label
-                color: Theme.subtext
-                font.family: Theme.fontFamily
-                font.bold: true
-                font.pixelSize: Theme.fs(10)
-            }
-
-            Text {
-                text: card.valueText
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.bold: true
-                font.pixelSize: Theme.fs(15)
-            }
-
-            Rectangle {
-                visible: card.showBar
-                width: parent.width
-                height: 5
-                radius: 999
-                color: Theme.withBlur(Theme.bgHigh)
-
-                Rectangle {
-                    width: parent.width * (card.barPct / 100)
-                    height: parent.height
-                    radius: 999
-                    color: Theme.accent
-
-                    Behavior on width {
-                        NumberAnimation {
-                            duration: Theme.barMs(300)
-                        }
-
-                    }
-
-                }
-
-            }
-
-            Row {
-                id: chartRow
-
-                visible: card.showChart
-                width: parent.width
-                height: 26
-                spacing: 2
-
-                Repeater {
-                    model: card.chartHistory
-
-                    Rectangle {
-                        required property real modelData
-
-                        anchors.bottom: parent.bottom
-                        width: (chartRow.width - Math.max(0, card.chartHistory.length - 1) * chartRow.spacing) / Math.max(1, card.chartHistory.length)
-                        height: Math.max(2, (modelData / 100) * chartRow.height)
-                        radius: 2
-                        color: Theme.accent
-                        opacity: 0.85
                     }
 
                 }

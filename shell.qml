@@ -1,9 +1,12 @@
 import "./lucidbar"
 import "./luciddesktop"
 import "./luciddocks"
+import "./lucidkeys"
 import "./lucidlock"
 import "./lucidmoji"
+import "./lucidnotif"
 import "./lucidosd"
+import "./lucidpolkit"
 import "./lucidprefs"
 import "./lucidshot"
 import "./lucidwidgets"
@@ -20,8 +23,9 @@ ShellRoot {
     // the gtk and qt appearance files, and the special workspaces, which own
     // lucid-specials.lua, the glass mirror, which owns kitty's opacity file,
     // the displays, which own lucid-monitors.lua,
-    // and the update check, which runs whether or not the settings app is
-    // ever opened
+    // the update check, which runs whether or not the settings app is
+    // ever opened, and the clipboard, which owns the wl-paste watchers and so
+    // has to be up long before the launcher is first opened
     Component.onCompleted: {
         void KdeConnect.installed;
         void Bt.present;
@@ -32,6 +36,10 @@ ShellRoot {
         void Glass.probed;
         void Monitors.probed;
         void Updates.current;
+        void Notifs.count;
+        void Clip.probed;
+        void Users.probed;
+        void Polkit.registered;
     }
 
     PanelWindow {
@@ -153,7 +161,6 @@ ShellRoot {
             popupAlign: "right"
 
             hostWindow: bar
-            notifMod: notifMod
             mprisMod: mprisMod
             x: bar.rightPlaces[1]
             anchors.top: parent.top
@@ -219,8 +226,6 @@ ShellRoot {
 
         Dock {
             id: dock
-
-            lockScreen: lockMod
         }
 
         Screenshot {
@@ -363,16 +368,30 @@ ShellRoot {
 
     Lock {
         id: lockMod
-
-        notifMod: notifMod
     }
 
     Moji {
         id: mojiMod
     }
 
+    Keyboard {
+        id: keyboardMod
+    }
+
     Settings {
         id: settingsMod
+    }
+
+    Auth {
+        id: polkitMod
+    }
+
+    Connections {
+        function onSettingsRequested() {
+            settingsMod.show("notifications");
+        }
+
+        target: Notifs
     }
 
     PanelWindow {
@@ -423,7 +442,7 @@ ShellRoot {
     }
 
     Instantiator {
-        model: [osdMod, toastMod]
+        model: [osdMod, toastMod, keyboardMod, polkitMod]
 
         Binding {
             required property var modelData
@@ -434,6 +453,14 @@ ShellRoot {
             when: Monitors.shellPlacement !== null
         }
 
+    }
+
+    Connections {
+        function onKeyboardRequested() {
+            keyboardMod.show();
+        }
+
+        target: Prefs
     }
 
     Connections {

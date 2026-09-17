@@ -7,6 +7,7 @@ luciddocks/usage.json
 luciddocks/wallpaper.json
 lucidmoji/config.json
 lucidmoji/state.json
+lucidkeys/state.json
 lucidprefs/prefs.json
 lucidwidgets/widgets.json
 
@@ -20,3 +21,9 @@ assets/*.png
 
 # python bytecode from the emoji reader
 __pycache__/
+
+# generated on demand from each theme's own dark palette
+support/lucid/themes/*/quickshell-light.json
+
+# the login screen's wallpaper, blurred from whatever the desktop is using
+support/sddm/lucid/background.jpg

@@ -95,7 +95,6 @@ Column {
             title: "Surface darkness"
             resetKey: "surfaceDarkness"
             description: "How far every panel is darkened beneath the theme's own surface colour. Auto follows the theme."
-            showDivider: false
             stacked: true
 
             Row {
@@ -122,6 +121,43 @@ Column {
                     text: Prefs.surfaceDarkness >= 0 ? "Auto" : "Manual"
                     variant: Prefs.surfaceDarkness >= 0 ? "tonal" : "filled"
                     onClicked: Prefs.surfaceDarkness = Prefs.surfaceDarkness >= 0 ? -1 : 0.45
+                }
+
+            }
+
+        }
+
+        SettingRow {
+            title: "Accent tint"
+            resetKey: "surfaceTint"
+            description: "How much of the accent colour is mixed into every panel. A light palette comes out of the generator almost white, so Auto tints it and leaves dark panels flat."
+            showDivider: false
+            stacked: true
+
+            Row {
+                spacing: 16
+                width: parent.width
+
+                M3Slider {
+                    width: parent.width - resetTint.width - 16
+                    enabled: Prefs.surfaceTint >= 0
+                    from: 0
+                    to: 1
+                    stepSize: 0.05
+                    decimals: 2
+                    value: Prefs.surfaceTint >= 0 ? Prefs.surfaceTint : (Theme.isLight ? 0.7 : 0)
+                    onMoved: (v) => {
+                        return Prefs.surfaceTint = v;
+                    }
+                }
+
+                M3Button {
+                    id: resetTint
+
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: Prefs.surfaceTint >= 0 ? "Auto" : "Manual"
+                    variant: Prefs.surfaceTint >= 0 ? "tonal" : "filled"
+                    onClicked: Prefs.surfaceTint = Prefs.surfaceTint >= 0 ? -1 : (Theme.isLight ? 0.7 : 0.2)
                 }
 
             }

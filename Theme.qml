@@ -7,7 +7,18 @@ Singleton {
     id: root
 
     property string themeName: "matugen"
-    property real pillDarkness: pf.surfaceDarkness >= 0 ? pf.surfaceDarkness : (themeName === "matugen" ? 0.45 : 0)
+    // read off the palette, never off the pref: whatever is in the cache decides,
+    // so the shell never renders light rules against a palette still being regenerated
+    readonly property bool isLight: root.toneOf(root.cSurface) > 50
+    // +1 dark, -1 light. every "lighter means more elevated" derivation flips on it
+    readonly property int _dir: root.isLight ? -1 : 1
+    property real pillDarkness: pf.surfaceDarkness >= 0 ? pf.surfaceDarkness : (themeName === "matugen" && !root.isLight ? 0.45 : 0)
+    // light surfaces come out of matugen near-white, so the accent is what keeps
+    // them from reading as flat paper. auto is off in dark: pills stay flat there.
+    // 0.7 is not a taste call — it is the smallest value that clears the chroma
+    // ceiling: k also sets how far `surface()` walks off white (k * _tintLift),
+    // and below ~0.6 the ramp never leaves the tones where no hue can exist
+    readonly property real surfaceTint: pf.surfaceTint >= 0 ? pf.surfaceTint : (root.isLight ? 0.7 : 0)
     property real accentPunch: pf.accentPunch
     readonly property real motionBaseline: 1.125
     readonly property real motionScale: pf.motionScale * root.motionBaseline
@@ -20,6 +31,17 @@ Singleton {
         blurAdapter.value = v;
     }
     readonly property real _toneShift: root.pillDarkness * 3
+    // tones the ramp travels off white (or off black) at full tint
+    readonly property real _tintLift: 10
+    // chroma the tint aims for at full strength, as an 0..1 channel spread.
+    // aiming at an *amount* rather than mixing a fixed fraction is what keeps
+    // every palette looking alike: chroma headroom grows steeply as tone falls,
+    // so one fixed fraction turned a near-grey gruvbox into bright mint while
+    // leaving a near-white matugen untouched
+    readonly property real _tintTarget: 0.13
+    // where the top rung of a light ramp is pulled to. taken off cLowest so a
+    // palette whose own ladder already starts below white is moved less, not more
+    readonly property real _rampShift: root.surfaceTint <= 0 ? 0 : (root.isLight ? Math.max(0, root.toneOf(root.cLowest) - (100 - root.surfaceTint * root._tintLift)) : -(root.surfaceTint * root._tintLift))
     readonly property color cPrimary: m.primary
     readonly property color cOnPrimary: m.on_primary
     readonly property color cPrimaryContainer: m.primary_container
@@ -45,31 +67,31 @@ Singleton {
     readonly property color cInverseSurface: m.inverse_surface
     readonly property color cShadow: m.shadow
     readonly property color cScrim: m.scrim
-    readonly property color cOnSecondary: m.on_secondary !== "" ? m.on_secondary : root.atTone(root.cSecondary, 20)
-    readonly property color cOnSecondaryContainer: m.on_secondary_container !== "" ? m.on_secondary_container : root.atTone(root.cSecondary, 90)
-    readonly property color cTertiaryContainer: m.tertiary_container !== "" ? m.tertiary_container : root.atTone(root.cTertiary, 30)
-    readonly property color cOnTertiaryContainer: m.on_tertiary_container !== "" ? m.on_tertiary_container : root.atTone(root.cTertiary, 90)
-    readonly property color cOnErrorContainer: m.on_error_container !== "" ? m.on_error_container : root.atTone(root.cError, 90)
-    readonly property color cSurfaceBright: m.surface_bright !== "" ? m.surface_bright : root.atTone(root.cHighest, root.toneOf(root.cHighest) + 2)
-    readonly property color cInverseOnSurface: m.inverse_on_surface !== "" ? m.inverse_on_surface : root.atTone(root.cSurface, 20)
-    readonly property color cInversePrimary: m.inverse_primary !== "" ? m.inverse_primary : root.atTone(root.cPrimary, 40)
-    readonly property color bg: root.alpha(root.shade(root.cLowest, root._toneShift + root.blurAmount * 2), 1 - root.blurAmount * 0.85)
+    readonly property color cOnSecondary: m.on_secondary !== "" ? m.on_secondary : root.atTone(root.cSecondary, root.isLight ? 100 : 20)
+    readonly property color cOnSecondaryContainer: m.on_secondary_container !== "" ? m.on_secondary_container : root.atTone(root.cSecondary, root.isLight ? 10 : 90)
+    readonly property color cTertiaryContainer: m.tertiary_container !== "" ? m.tertiary_container : root.atTone(root.cTertiary, root.isLight ? 90 : 30)
+    readonly property color cOnTertiaryContainer: m.on_tertiary_container !== "" ? m.on_tertiary_container : root.atTone(root.cTertiary, root.isLight ? 10 : 90)
+    readonly property color cOnErrorContainer: m.on_error_container !== "" ? m.on_error_container : root.atTone(root.cError, root.isLight ? 10 : 90)
+    readonly property color cSurfaceBright: m.surface_bright !== "" ? m.surface_bright : root.isLight ? root.atTone(root.cLowest, root.toneOf(root.cLowest) - 2) : root.atTone(root.cHighest, root.toneOf(root.cHighest) + 2)
+    readonly property color cInverseOnSurface: m.inverse_on_surface !== "" ? m.inverse_on_surface : root.atTone(root.cSurface, root.isLight ? 95 : 20)
+    readonly property color cInversePrimary: m.inverse_primary !== "" ? m.inverse_primary : root.atTone(root.cPrimary, root.isLight ? 80 : 40)
+    readonly property color bg: root.alpha(root.surface(root.cLowest, root._toneShift + root.blurAmount * 2), 1 - root.blurAmount * 0.85)
     readonly property color bgTransparent: root.alpha(root.bg, 0)
-    readonly property color bgOpaque: root.shade(root.cLowest, root._toneShift)
-    readonly property color bgSunken: root.atTone(root.cLowest, Math.max(0, root.toneOf(root.bgOpaque) - 2.5))
-    readonly property color bgTile: root.shade(root.cLow, root._toneShift)
-    readonly property color bgHover: root.shade(root.cContainer, root._toneShift)
-    readonly property color bgActive: root.shade(root.cHigh, root._toneShift)
-    readonly property color bgHigh: root.shade(root.cHighest, root._toneShift)
-    readonly property color bgBright: root.shade(root.cSurfaceBright, root._toneShift)
-    readonly property color bgTrack: root.shade(root.cSurfaceVariant, root._toneShift)
-    readonly property color dockItem: root.atTone(root.bgOpaque, root.toneOf(root.bgOpaque) + 4)
+    readonly property color bgOpaque: root.surface(root.cLowest, root._toneShift)
+    readonly property color bgSunken: root.tint(root.atTone(root.cLowest, Math.max(0, root.toneOf(root.bgOpaque) - 2.5)), root.surfaceTint)
+    readonly property color bgTile: root.surface(root.cLow, root._toneShift)
+    readonly property color bgHover: root.surface(root.cContainer, root._toneShift)
+    readonly property color bgActive: root.surface(root.cHigh, root._toneShift)
+    readonly property color bgHigh: root.surface(root.cHighest, root._toneShift)
+    readonly property color bgBright: root.surface(root.cSurfaceBright, root._toneShift)
+    readonly property color bgTrack: root.surface(root.cSurfaceVariant, root._toneShift)
+    readonly property color dockItem: root.atTone(root.bgOpaque, root.toneOf(root.bgOpaque) + root._dir * 4)
     readonly property color text: root.cOnSurface
     readonly property color subtext: root.cOnSurfaceVariant
-    readonly property color subtextDim: root.atTone(root.cOnSurfaceVariant, 65)
-    readonly property color accent: root.accentPunch === 1 ? root.cPrimary : root.atTone(root.cPrimary, root.toneOf(root.cPrimary) + (root.accentPunch - 1) * 9)
-    readonly property color accentHover: root.atTone(root.accent, Math.min(100, root.toneOf(root.accent) + 6))
-    readonly property color accentPressed: root.atTone(root.accent, Math.max(0, root.toneOf(root.accent) - 6))
+    readonly property color subtextDim: root.atTone(root.cOnSurfaceVariant, root.isLight ? 50 : 65)
+    readonly property color accent: root.accentPunch === 1 ? root.cPrimary : root.atTone(root.cPrimary, root.toneOf(root.cPrimary) + root._dir * (root.accentPunch - 1) * 9)
+    readonly property color accentHover: root.atTone(root.accent, Math.max(0, Math.min(100, root.toneOf(root.accent) + root._dir * 6)))
+    readonly property color accentPressed: root.atTone(root.accent, Math.max(0, Math.min(100, root.toneOf(root.accent) - root._dir * 6)))
     // NB: these cannot be named on<Role>. A property `onFoo` declared beside a
     // property `foo` is parsed as a signal-handler assignment, so the binding is
     // silently dropped and the colour stays black. Keep the fg prefix.
@@ -90,9 +112,9 @@ Singleton {
     readonly property color errorContainer: root.hasTonalContainers ? root.shade(root.cErrorContainer, root._toneShift) : root.bgHigh
     readonly property color fgErrorContainer: root.hasTonalContainers ? root.cOnErrorContainer : root.error
     readonly property color success: root.isGreenish(root.cTertiary) ? root.cTertiary : root.statusHue(145)
-    readonly property color fgSuccess: root.atTone(root.success, 20)
+    readonly property color fgSuccess: root.atTone(root.success, root.isLight ? 100 : 20)
     readonly property color warning: root.statusHue(45)
-    readonly property color fgWarning: root.atTone(root.warning, 20)
+    readonly property color fgWarning: root.atTone(root.warning, root.isLight ? 100 : 20)
     readonly property color shadow: root.cShadow
     readonly property color scrim: root.alpha(root.cScrim, 0.5)
     readonly property color inverseSurface: root.cInverseSurface
@@ -234,6 +256,47 @@ Singleton {
         return tones === 0 ? c : root.atTone(c, root.toneOf(c) - tones);
     }
 
+    // pull a neutral toward the accent's hue without moving it off its tone. the
+    // blend is re-pinned afterwards so the elevation ladder keeps its spacing —
+    // mixing in sRGB alone would drag every rung a different distance
+    function tint(c, k) {
+        if (k <= 0)
+            return c;
+
+        var h = root.cPrimary.hslHue;
+        if (h < 0)
+            return c;
+
+        var t = root.toneOf(c);
+        // built at mid lightness, where saturation still has room to read, then
+        // moved onto the target tone.
+        // floor the chroma: a wallpaper-derived accent is often nearly grey
+        // (pywal has handed us 0.18), and mixing grey into grey stays grey
+        var pure = root.atTone(Qt.hsla(h, Math.max(0.55, Math.min(1, root.cPrimary.hslSaturation)), 0.55, 1), t);
+        // all the hue this tone can physically carry. nothing survives at tone
+        // 100, which is why the ramp has to be walked off white first
+        var head = root.chromaOf(pure);
+        if (head <= 0.001)
+            return c;
+
+        var f = Math.min(1, k * root._tintTarget / head);
+        var m = root._mix(c, pure, f);
+        return root.atTone(Qt.rgba(m.r, m.g, m.b, c.a), t);
+    }
+
+    // how much colour a value actually shows, as a 0..1 channel spread
+    function chromaOf(c) {
+        return Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b);
+    }
+
+    // one rung of the surface ramp. tinting also walks the rung away from the
+    // extreme it sits against, because a tone carries no hue there — matugen's
+    // light `surface_container_lowest` is pure #ffffff, and without the lift the
+    // accent would have nowhere to land on the shell's main surface
+    function surface(c, tones) {
+        return root.tint(root.shade(c, tones + root._rampShift), root.surfaceTint);
+    }
+
     // scale chroma, hold tone
     function withSat(c, k) {
         var h = c.hslHue;
@@ -250,7 +313,7 @@ Singleton {
 
     function statusHue(deg) {
         var s = Math.max(0.35, Math.min(0.75, root.cPrimary.hslSaturation));
-        return root.atTone(Qt.hsla(deg / 360, s, 0.55, 1), 80);
+        return root.atTone(Qt.hsla(deg / 360, s, 0.55, 1), root.isLight ? 40 : 80);
     }
 
     function _mix(a, b, t) {
@@ -346,6 +409,7 @@ Singleton {
 
             property real accentPunch: 1
             property real surfaceDarkness: -1
+            property real surfaceTint: -1
             property real motionScale: 1
             property real barMotionScale: 1.35
             property string fontFamily: "Google Sans"

@@ -7,13 +7,18 @@ Item {
     id: menu
 
     property Item frame: null
+    property real fieldW: 1920
+    property real fieldH: 1080
 
     readonly property real panelW: 272
-    readonly property real gap: 12
+    readonly property real edge: 8
     readonly property bool open: menu.frame !== null && menu.frame.menuOpen
-    readonly property real boardW: (menu.frame && menu.frame.board) ? menu.frame.board.width : 1920
-    readonly property real boardH: (menu.frame && menu.frame.board) ? menu.frame.board.height : 1080
-    readonly property bool toRight: menu.frame ? (menu.frame.x + menu.frame.width + menu.gap + menu.panelW <= menu.boardW) : true
+    // the right-click point, in screen coordinates
+    readonly property real originX: menu.frame ? menu.frame.x + menu.frame.menuAtX : 0
+    readonly property real originY: menu.frame ? menu.frame.y + menu.frame.menuAtY : 0
+    // the panel hangs off the corner it was opened at, and flips rather than run off the screen
+    readonly property bool toRight: menu.originX + menu.panelW + menu.edge <= menu.fieldW
+    readonly property bool toDown: menu.originY + panel.height + menu.edge <= menu.fieldH
     readonly property var typeInfo: menu.frame ? Widgets.typeAt(menu.frame.wtype) : null
     readonly property var variantInfo: menu.frame ? Widgets.variantAt(menu.frame.wtype, menu.frame.wvariant) : null
     readonly property var optionList: menu.frame ? Widgets.optionsFor(menu.frame.wtype, menu.frame.wvariant) : []
@@ -21,28 +26,20 @@ Item {
     readonly property var screens: Quickshell.screens
 
     function clampY(want) {
-        if (!menu.frame)
-            return want;
-
-        var lo = 8 - menu.frame.y;
-        var hi = menu.boardH - panel.height - 8 - menu.frame.y;
-        return hi < lo ? lo : Math.max(lo, Math.min(hi, want));
+        var hi = menu.fieldH - panel.height - menu.edge;
+        return hi < menu.edge ? menu.edge : Math.max(menu.edge, Math.min(hi, want));
     }
 
     width: menu.panelW
     height: panel.height
     visible: panel.opacity > 0.01
-    // right of the card, else left, else clamped onto the screen over the card
+    // down-right of the click, else flipped, else clamped onto the screen
     x: {
-        if (!menu.frame)
-            return 0;
-
-        var want = menu.toRight ? menu.frame.width + menu.gap : -menu.panelW - menu.gap;
-        var lo = 8 - menu.frame.x;
-        var hi = menu.boardW - menu.panelW - 8 - menu.frame.x;
-        return hi < lo ? lo : Math.max(lo, Math.min(hi, want));
+        var want = menu.toRight ? menu.originX : menu.originX - menu.panelW;
+        var hi = menu.fieldW - menu.panelW - menu.edge;
+        return hi < menu.edge ? menu.edge : Math.max(menu.edge, Math.min(hi, want));
     }
-    y: menu.clampY(0)
+    y: menu.clampY(menu.toDown ? menu.originY : menu.originY - panel.height)
 
     Rectangle {
         id: panel
@@ -53,7 +50,7 @@ Item {
         color: Theme.withBlur("#000000")
         opacity: menu.open ? 1 : 0
         scale: menu.open ? 1 : 0.94
-        transformOrigin: menu.toRight ? Item.TopLeft : Item.TopRight
+        transformOrigin: menu.toRight ? (menu.toDown ? Item.TopLeft : Item.BottomLeft) : (menu.toDown ? Item.TopRight : Item.BottomRight)
 
         Behavior on opacity {
             NumberAnimation {

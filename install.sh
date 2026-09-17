@@ -123,15 +123,21 @@ PKG_FEATURES=(
     networkmanager bluez bluez-utils
     kdeconnect python-gobject
     libpulse wireplumber brightnessctl upower hypridle
-    grim wf-recorder ffmpeg wl-clipboard wtype
+    grim wf-recorder ffmpeg wl-clipboard wtype cliphist
     tesseract tesseract-data-eng hyprpicker
     python-pillow python-numpy python-fonttools
     cava songrec curl libnotify awww fastfetch
     python-pywal noto-fonts-emoji
-    xdg-utils zenity swappy polkit-kde-agent
+    # the shell is the session's own polkit agent; polkitd and its setuid
+    # helper are the backend it drives
+    xdg-utils zenity swappy polkit
+    # the accounts page reads and writes users through this, and asks the
+    # shell's polkit dialog whenever a change needs an administrator
+    accountsservice
     # the environment page writes the desktop's appearance through these, and
-    # the file chooser kde connect sends files with comes from the gtk portal
-    gsettings-desktop-schemas qt6ct xdg-desktop-portal-gtk
+    # the file chooser kde connect sends files with comes from the gtk portal.
+    # librsvg renders a cursor theme again when its shadow is turned off
+    gsettings-desktop-schemas qt6ct xdg-desktop-portal-gtk librsvg
 )
 # invoked by the shipped Hyprland binds and the Lucid look. without these the
 # config installs fine but its keys do nothing and the prompt renders as boxes
@@ -313,9 +319,21 @@ else
         --exclude='./luciddocks/wallpaper.json' \
         --exclude='./lucidmoji/config.json' \
         --exclude='./lucidmoji/state.json' \
+        --exclude='./lucidkeys/state.json' \
         --exclude='./lucidwidgets/widgets.json' \
         . | tar -C "$SHELL_DIR" -xf -
     say "  shell files -> $SHELL_DIR"
+fi
+
+# the launcher sits outside the shell tree so autostart can reach it whether or
+# not the Hyprland config was installed. it picks the Qt scene graph backend
+# before exec'ing quickshell — see support/lucid/launch-shell.sh
+if [[ -f "$SRC/support/lucid/launch-shell.sh" ]]; then
+    mkdir -p "$LUCID_DIR"
+    install -m755 "$SRC/support/lucid/launch-shell.sh" "$LUCID_DIR/launch-shell.sh"
+    say "  shell launcher -> $LUCID_DIR/launch-shell.sh"
+else
+    warn "support/lucid/launch-shell.sh missing, autostart will run quickshell directly"
 fi
 
 # state files. a re-run keeps your settings: anything already in place wins,
@@ -424,6 +442,7 @@ seed usage.json            luciddocks/usage.json
 seed wallpaper.json        luciddocks/wallpaper.json
 seed moji-config.json      lucidmoji/config.json
 seed moji-state.json       lucidmoji/state.json
+seed keys-state.json       lucidkeys/state.json
 seed widgets.json          lucidwidgets/widgets.json
 
 # the media visualiser runs `cava -p ~/.config/cava/quickshell.conf`. without
@@ -603,10 +622,32 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     install -m755 "$SRC/support/lucid/apply-theme.sh"      "$LUCID_DIR/apply-theme.sh"
     install -m755 "$SRC/support/lucid/gen-pywal-palette.py" "$LUCID_DIR/gen-pywal-palette.py"
     install -m755 "$SRC/support/lucid/add-theme.py"        "$LUCID_DIR/add-theme.py"
+    install -m755 "$SRC/support/lucid/gen-light-palette.py" "$LUCID_DIR/gen-light-palette.py"
+    install -m755 "$SRC/support/lucid/set-mode.sh"         "$LUCID_DIR/set-mode.sh"
+    install -m755 "$SRC/support/lucid/sync-sddm.sh"        "$LUCID_DIR/sync-sddm.sh"
     install -m644 "$SRC/support/lucid/lucid_palette.py"    "$LUCID_DIR/lucid_palette.py"
     install -m755 "$SRC/support/wallpaper/set-wallpaper.sh" "$WALL_SCRIPT_DIR/set-wallpaper.sh"
     # rules you wrote are yours: only ever placed when there are none
     [[ -f "$LUCID_DIR/wallpaper-outputs.conf" ]] || install -m644 "$SRC/support/lucid/wallpaper-outputs.conf" "$LUCID_DIR/wallpaper-outputs.conf"
+    # the sddm theme lives outside $HOME, so it is the one thing here that
+    # needs root. skipped entirely when sddm is not installed, and it never
+    # switches the active theme - that stays the user's call
+    if [[ -d /usr/share/sddm/themes ]]; then
+        SDDM_THEME_DIR=/usr/share/sddm/themes/lucid
+        if sudo install -d -m755 "$SDDM_THEME_DIR" 2>/dev/null \
+           && sudo cp -r "$SRC/support/sddm/lucid/." "$SDDM_THEME_DIR/"; then
+            # sync-sddm.sh repaints this on every theme change, and it must be
+            # able to do that without asking for a password every time
+            sudo chown -R "$USER" "$SDDM_THEME_DIR"
+            say "  sddm theme      -> $SDDM_THEME_DIR"
+            # /etc/sddm.conf outranks /etc/sddm.conf.d, so point at the file
+            # that actually wins rather than at the tidier-looking drop-in
+            say "    enable it with: Current=lucid under [Theme] in /etc/sddm.conf"
+        else
+            warn "could not install the sddm theme (needs sudo); skipping"
+        fi
+    fi
+
     say "  theme palettes  -> $LUCID_DIR/themes"
     say "  theme scripts   -> $LUCID_DIR"
     say "  wallpaper hook  -> $WALL_SCRIPT_DIR/set-wallpaper.sh"

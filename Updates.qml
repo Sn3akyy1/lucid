@@ -8,9 +8,9 @@ pragma Singleton
 Singleton {
     id: root
 
-    readonly property string repo: "Sn3akyy1/lucid"
+    readonly property string repo: "Sn3akyy1/lucid-update-test"
     readonly property string releasesUrl: "https://github.com/" + root.repo + "/releases"
-    readonly property int everyMs: 86400000
+    readonly property int everyMs: 86400000 // test-marker
 
     // the installer copies a VERSION file in beside shell.qml
     property string current: ""
@@ -172,6 +172,10 @@ Singleton {
 
         function status(): string {
             return root.currentLabel + " — " + root.status;
+        }
+
+        function probe(): string {
+            return root.repo + " | latest=" + root.latest + " | url=" + root.latestUrl;
         }
 
     }

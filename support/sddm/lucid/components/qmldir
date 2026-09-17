@@ -1,0 +1,10 @@
+singleton Theme 1.0 Theme.qml
+singleton Lock 1.0 Lock.qml
+Glyph 1.0 Glyph.qml
+Spinner 1.0 Spinner.qml
+IconButton 1.0 IconButton.qml
+Clock 1.0 Clock.qml
+Field 1.0 Field.qml
+AuthCard 1.0 AuthCard.qml
+PowerBar 1.0 PowerBar.qml
+Chips 1.0 Chips.qml

@@ -10,6 +10,16 @@ Column {
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string currentTheme: Prefs.currentTheme
+    readonly property var modeOptions: [{
+        "key": "dark",
+        "label": "Dark"
+    }, {
+        "key": "light",
+        "label": "Light"
+    }]
+    // the two wallpaper-derived themes re-extract; everything else is authored
+    // dark and gets a light variant built from its own colours
+    readonly property string modeHint: page.currentTheme === "matugen" || page.currentTheme === "pywal" ? "Re-derives the palette from your wallpaper in the mode you pick. Applications are asked to match." : "Builds a light palette from this theme's own colours. Applications are asked to match."
     property string appliedWallpaper: ""
     // same folder the dock's wallpaper strip browses
     readonly property string wallpaperDir: Prefs.wallpaperDir
@@ -241,6 +251,21 @@ Column {
 
     SettingCard {
         title: "THEME"
+
+        SettingRow {
+            title: "Light or dark"
+            description: page.modeHint
+
+            M3Segmented {
+                width: 200
+                current: Prefs.colorMode
+                options: page.modeOptions
+                onChosen: (key) => {
+                    return Prefs.setColorMode(key);
+                }
+            }
+
+        }
 
         SettingRow {
             title: "Colour scheme"

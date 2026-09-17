@@ -9,9 +9,6 @@ import qs
 PanelWindow {
     id: dockWindow
 
-    // wired from shell.qml, so the power menu can reach the real lock screen
-    property var lockScreen: null
-
     property bool morphing: false
     property bool closingFromHidden: false
     readonly property bool dockBusy: dockWindow.menuOpen || dockWindow.dragging || (dockWindow.morphing && !dockWindow.launcherFromHidden && !dockWindow.closingFromHidden)
@@ -178,6 +175,9 @@ PanelWindow {
         if (q.indexOf(">power") === 0)
             return "power";
 
+        if (q.indexOf(">clip") === 0)
+            return "clipboard";
+
         if (q.indexOf(">") === 0)
             return "commands";
 
@@ -193,6 +193,9 @@ PanelWindow {
 
         if (mode === "power")
             return ">power";
+
+        if (mode === "clipboard")
+            return ">clip";
 
         if (mode === "commands")
             return ">";
@@ -220,6 +223,9 @@ PanelWindow {
         } else {
             dockWindow.wallpaperArmed = false;
         }
+        if (dockWindow.mode === "clipboard")
+            Clip.refresh();
+
     }
 
     readonly property var allCommands: [{
@@ -238,6 +244,11 @@ PanelWindow {
         "desc": "Change the colour scheme",
         "glyph": DockIcons.palette
     }, {
+        "id": "clipboard",
+        "name": "Clipboard History",
+        "desc": "Copy something you copied earlier",
+        "glyph": DockIcons.clipboard
+    }, {
         "id": "power",
         "name": "Power",
         "desc": "Lock, suspend, restart or shut down",
@@ -247,6 +258,11 @@ PanelWindow {
         "name": "Desktop Widgets",
         "desc": "Place clocks, meters and notes on the desktop",
         "glyph": DockIcons.widgets
+    }, {
+        "id": "keyboard",
+        "name": "On-Screen Keyboard",
+        "desc": "Type with the pointer when there is no keyboard",
+        "glyph": DockIcons.keyboard
     }, {
         "id": "settings",
         "name": "Settings",
@@ -263,6 +279,8 @@ PanelWindow {
     property real dragHeadroom: 220
 
     readonly property int menuMaxHeight: 560
+    // the command palette is a short fixed list, so it caps tighter than the app launcher
+    readonly property int commandMaxHeight: 452
     // how much of the panel is chrome, not results
     readonly property int panelPadding: 36
     readonly property int wallCardCount: 5
@@ -286,7 +304,7 @@ PanelWindow {
         return 420;
     }
     property real resultsHeight: 0
-    readonly property real menuContentMax: dockWindow.menuMaxHeight - dockWindow.panelPadding - launcherFace.chromeHeight
+    readonly property real menuContentMax: (dockWindow.mode === "commands" ? dockWindow.commandMaxHeight : dockWindow.menuMaxHeight) - dockWindow.panelPadding - launcherFace.chromeHeight
     readonly property real menuHeight: {
         var content;
         if (dockWindow.mode === "wallpaper")
@@ -399,6 +417,7 @@ PanelWindow {
             "swatchBg": opts.swatchBg || "",
             "swatchAccent": opts.swatchAccent || "",
             "trailing": opts.trailing || "",
+            "thumb": opts.thumb || "",
             "disabled": opts.disabled === true,
             "selectable": opts.selectable !== false,
             "payload": opts.payload || ""
@@ -513,6 +532,19 @@ PanelWindow {
                     }));
 
             }
+        } else if (mode === "clipboard") {
+            var ents = Clip.entries;
+            for (var e = 0; e < ents.length; e++) {
+                var ent = ents[e];
+                if (q !== "" && ent.preview.toLowerCase().indexOf(q) === -1)
+                    continue;
+
+                rows.push(dockWindow.makeRow("clip", "clip-" + ent.id, ent.preview, ent.meta, {
+                    "glyph": ent.isImage ? "" : DockIcons.clipboard,
+                    "thumb": ent.isImage ? ent.id : "",
+                    "payload": ent.id
+                }));
+            }
         } else if (mode === "theme") {
             for (var t = 0; t < dockWindow.allThemes.length; t++) {
                 var th = dockWindow.allThemes[t];
@@ -590,11 +622,23 @@ PanelWindow {
         } else if (row.kind === "calc") {
             Quickshell.execDetached(["wl-copy", "--", row.payload]);
             dockWindow.menuOpen = false;
+        } else if (row.kind === "clip") {
+            Clip.copy(row.payload);
+            dockWindow.menuOpen = false;
         } else if (row.kind === "theme") {
             dockWindow.switchTheme(row.payload);
         } else if (row.kind === "command") {
             dockWindow.runCommand(row.payload);
         }
+    }
+
+    // clipboard rows are the only removable ones
+    function deleteResult(index) {
+        var row = resultsModel.get(index);
+        if (!row || row.kind !== "clip")
+            return;
+
+        Clip.remove(row.payload);
     }
 
     function runCommand(id) {
@@ -604,9 +648,14 @@ PanelWindow {
             launcherFace.searchText = ">theme";
         } else if (id === "power") {
             launcherFace.searchText = ">power";
+        } else if (id === "clipboard") {
+            launcherFace.searchText = ">clip";
         } else if (id === "shuffle") {
             wallpaperShuffle.pick();
             dockWindow.menuOpen = false;
+        } else if (id === "keyboard") {
+            dockWindow.menuOpen = false;
+            Prefs.keyboardRequested();
         } else if (id === "settings") {
             dockWindow.menuOpen = false;
             Prefs.settingsRequested("");
@@ -667,9 +716,7 @@ PanelWindow {
 
     function runPowerAction(id) {
         if (id === "lock") {
-            if (dockWindow.lockScreen)
-                dockWindow.lockScreen.locked = true;
-
+            Lockscreen.lock();
             dockWindow.menuOpen = false;
             return;
         }
@@ -1060,6 +1107,10 @@ PanelWindow {
             dockWindow.openLauncher(">power");
         }
 
+        function clipboard(): void {
+            dockWindow.openLauncher(">clip");
+        }
+
         function blur(): void {
             dockWindow.menuOpen = false;
             Prefs.settingsRequested("glass");
@@ -1154,6 +1205,16 @@ PanelWindow {
 
     // the strip rescan rides on wallpaperDir, which follows the theme
     onCurrentThemeChanged: dockWindow.rebuildResults()
+
+    Connections {
+        function onEntriesChanged() {
+            if (dockWindow.mode === "clipboard")
+                dockWindow.rebuildResults();
+
+        }
+
+        target: Clip
+    }
 
     FileView {
         id: currentWallFile
@@ -1804,6 +1865,7 @@ PanelWindow {
             onActivated: (index) => dockWindow.activateResult(index)
             onCloseRequested: dockWindow.menuOpen = false
             onBackRequested: launcherFace.searchText = dockWindow.mode === "commands" ? "" : ">"
+            onDeleteRequested: (index) => dockWindow.deleteResult(index)
             onWallpaperPreviewed: (path) => dockWindow.requestWallpaper(path)
             onWallpaperChosen: (path) => {
                 dockWindow.applyWallpaper(path);

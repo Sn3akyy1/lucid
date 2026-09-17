@@ -2,6 +2,331 @@
 
 All notable changes to Lucid are recorded here, newest first.
 
+## v1.1.0 — 2026-09-17
+
+Everything the shell asks you for, it now asks for itself: a lock screen that
+checks your password through PAM, the administrator prompt for the whole
+machine, the accounts on it, and a login screen wearing the same palette. Around
+that, a notification centre that groups and replies, clipboard history in the
+launcher, a keyboard you can type with when there is not one, and a light mode
+built rather than inverted.
+
+### Lock screen
+
+- **The lock screen is rebuilt from scratch.** The old single 1000x600 card
+  packed with weather, disk charts, CPU and RAM graphs and a fastfetch dump is
+  gone. In its place the content floats on the wallpaper the way Material You
+  lays out a lock screen: an oversized two-line clock in the wallpaper's own
+  accent colour on the left, the weather above it, the glanceable chips top
+  right, and a right-hand column carrying the sign-in card, what is playing and
+  the notifications.
+- **It authenticates through PAM.** The old screen shelled out to
+  `sudo -S -v`, which only worked for accounts that happen to be sudoers and
+  told you nothing when it failed. The lock now opens a real PAM session
+  against `/etc/pam.d/login` — the same service a display manager uses — so any
+  account can unlock, and PAM's own words are what you read when something goes
+  wrong. A second question from PAM (a token, a second factor) reopens the
+  field with PAM's prompt on it rather than dead-ending.
+- **The refusals say something useful.** "Incorrect password — 2 tries left"
+  counting down against faillock's real `deny`, "Too many attempts — try again
+  in 8 minutes" with the countdown read from `faillock` itself, "The check
+  timed out" when PAM stops answering, and PAM's own sentence when it has one.
+- **Caps Lock gets its own badge** next to the field, so the commonest reason a
+  password is refused stays visible even while a refusal is on screen. The
+  active keyboard layout shows beside it when you are typing.
+- **Two faces, one screen.** Resting, the lock is a glance: clock, date,
+  greeting, weather, media, notifications. Touch the keyboard and it focuses —
+  the wallpaper blurs further, the clock shrinks out of the way, everything
+  that is not the field steps back, and the sign-in card is all that is lit.
+  It drifts back to the glance after half a minute of quiet.
+- **The password field is an M3 outlined field**: a focus ring in the accent,
+  beads that pop in per character, a reveal toggle, and a submit button that
+  turns into a proper indeterminate spinner while PAM thinks and a tick when it
+  opens. The lock glyph turns over on success; the pill and the avatar's ring
+  go green, or red and shake.
+- **Power actions ask first.** Log out, restart and shut down morph the bar
+  into a confirmation instead of going straight through; suspend and hibernate
+  still go immediately. The question withdraws itself after seven seconds.
+  Hovering one opens it into its own labelled pill inside the bar — the glyph
+  stays put, the bar grows around it — rather than floating a tooltip over the
+  wallpaper.
+- **A caret you can steer.** The beads are not just a count: a caret sits where
+  the next character will land, and the arrow keys walk it back through what is
+  already typed so a single character can be fixed instead of starting over.
+  Each new bead is left behind *by* that caret — it starts as the caret's own
+  line and settles into a dot where it stood.
+- **Clicking away puts the lock back to rest.** Anywhere off the sign-in card
+  drops the focus, forgets what was half-typed and clears any refusal still on
+  screen; the card itself counts as inside, so clicking the avatar aims the
+  keyboard at the field instead.
+- **Notifications on the lock cannot reach past it.** Their action buttons and
+  inline reply are hidden, and `Notifs` refuses to invoke an action or send a
+  reply while the session is locked, so no card can launch or talk to an
+  application from the lock screen.
+- **Every other screen gets the clock**, not a second password field.
+- **Arriving and leaving are different gestures.** The entrance is a staggered
+  wave read off a single number: the wallpaper settles out of a push-in and
+  blurs, the clock rises in from the left, and the right-hand cards slide in
+  one after another. Leaving is not that run backwards — the whole stage leans
+  forward and dissolves at once while the wallpaper comes back into focus.
+- **New layout of the code.** `Lockscreen.qml` is a root singleton holding the
+  session state, PAM, the attempt ledger and the IPC; `lucidlock/` is eleven
+  small views instead of one 3000-line file. `lucidlock/BlurBackdrop.qml`, which
+  nothing had used for a long time, is gone.
+- `qs ipc call -- lock` keeps `lock`, `unlock` and `isLocked`, and gains
+  `status` (the session state as JSON). Nothing bypasses the password: the
+  scaffolding used while the screen was being built — a dry-run mode, and
+  handles that could force a verdict — is gone, so PAM is the only way in.
+
+### Authentication
+
+- **Lucid is the session's polkit agent.** Anything on the machine that needs
+  an administrator — mounting a disk, changing the time zone, installing a
+  package, `pkexec`, the Users page — now asks through a Lucid dialog instead
+  of the KDE one. Only the dialog is ours: polkitd still decides what needs
+  authorising and PAM still checks the password, through polkit's own setuid
+  helper. Nothing about the security model changes.
+- **The dialog says what is actually being asked.** A badge glyph picked from
+  the action itself (a disk for udisks, a power symbol for logind, a terminal
+  for `pkexec`, a parcel for package installs), the action's short description
+  from `pkaction` as the headline, and polkit's own sentence underneath —
+  retyped out of its `like this' quoting into real quotation marks.
+- **It shows whose password it wants.** Every identity polkit will accept is
+  listed with the name and picture from the Users page, and when there is more
+  than one, picking a different administrator re-points the request at them.
+- **The field is the lock screen's field** — the same pill, focus ring and
+  reveal toggle — so a password prompt looks the same wherever the shell asks
+  for one. A refusal tints the pill, shakes it and says what PAM said; a grant
+  shows a tick before it leaves.
+- Escape, the Cancel button and a click on the dimmer all dismiss the request
+  properly, so whatever asked is told it was refused rather than left waiting.
+  The dialog holds the keyboard only while a request is actually live.
+
+### Users and accounts
+
+- **The settings app manages the machine's user accounts.** A card at the top of
+  the navigation rail shows your picture and name and opens a new *Users and
+  Accounts* page, where every account on the machine is listed and picking one
+  points the whole page at it.
+- **Full name, username, account type, login shell, email and location** are all
+  editable, with the guards that matter: the last administrator cannot demote
+  themselves, an account that is signed in cannot be renamed, and you cannot
+  lock or clear the password of the account you are using.
+- **Passwords** are set through a dialog that checks the two entries match and
+  rates what you typed, and a password hint can be left alongside. An account
+  can instead be told to choose its own password at its next sign-in.
+- **Accounts can be added and removed.** Adding asks for a name, guesses the
+  username from it, and offers to set the first password now or leave it for
+  first sign-in. Removing makes the files a separate, explicit decision from the
+  account itself.
+- **Account pictures** can be chosen from the machine's stock faces or any image
+  on disk; it is centre-cropped and scaled to 256 px, saved to `~/.face` for
+  your own account so the lock screen finds it, and can be removed again to fall
+  back to initials on a tonal disc.
+- **Supplementary groups** — audio, video, libvirt and the like — are shown as
+  chips you can toggle, batched into one authorisation rather than one per group.
+- Everything privileged goes through AccountsService on the system bus, so the
+  session's polkit agent does the asking and the shell never runs as root. A
+  refused or cancelled prompt is reported on the page instead of failing
+  silently. Requires `accountsservice`, now declared in the installer.
+- **Account pictures keep a history.** Changing your picture files the old one
+  away rather than losing it, and the picker shows what the account wore
+  before, newest first — clicking one puts it back. Removing a picture keeps it
+  too, so going back to initials is never a one-way door.
+- The shelf holds twelve pictures or 8 MB, whichever runs out first, and the
+  oldest drop off as new ones arrive. Pictures are stored by what they look
+  like, so re-applying one already there just moves it to the front instead of
+  filing a second copy. **Clear** empties the whole shelf.
+- The history lives in your own data directory, so reading it never asks for an
+  administrator.
+- **Passwords now need four characters rather than six**, in the password
+  dialog and when adding an account. The strength read-out is unchanged, so a
+  short password is allowed but still reads as weak.
+- Fixed: a face directory's own hidden fallback silhouette (SDDM ships one as
+  `.face.icon`) was being offered as a stock picture, showing up as an empty
+  black circle in the picker.
+
+### Notifications
+
+- **The notification centre is rebuilt.** One place now owns every notification
+  in the shell — the pill on the bar, the popups and the lock screen are three
+  views onto the same list, so dismissing something dismisses it everywhere and
+  Do Not Disturb means the same thing wherever you turn it on.
+- **Notifications group by application.** Five messages from one chat collapse
+  into a single stack with the application's name on it; open it to read them,
+  clear it to drop the lot. A heading separates what has just arrived from the
+  rest, and each card says how long ago it came.
+- **You can answer without leaving what you are doing.** Applications that offer
+  an inline reply get a message box on the notification itself.
+- **File copies, downloads and transfers report how far along they are**, as a
+  bar that fills in place rather than one notification per percent.
+- **Popups stack under the bar.** The newest grows out of the pill itself and
+  the rest float beneath it; hovering the stack freezes every countdown at once,
+  and anything past the limit waits in the list instead of racing past. A swipe
+  up sends a popup back to the bar, a swipe sideways clears a card from the list.
+- Grouping, timestamps, progress, inline reply and how many popups show at once
+  are all switchable on the Notifications page.
+- `qs ipc call -- notifs open|close|toggle|clear|toggleDnd|expandAll|count`.
+
+### Control centre
+
+- **The System pill's job is narrower and what is left goes deeper.** The
+  notifications preview is gone from it — the Notifications pill owns that list
+  — and what remains is device state and quick settings.
+- **Audio devices can be switched from it.** A chevron on the volume and
+  microphone rows slides in the outputs or the inputs, named the way you would
+  name them — "Speaker", "HDMI 1" — rather than by the chipset four of them
+  share. A socket with nothing plugged into it says "Not connected" and cannot
+  be picked.
+- **A Caffeine tile**, so the idle ladder can be held off without opening the
+  settings app.
+- CPU temperature, uptime, memory in gigabytes, and on a laptop what the battery
+  is actually drawing.
+- The player card stays, redesigned: album art, title and artist, previous and
+  next either side of a filled play button, and a progress bar that moves.
+
+### Clipboard history
+
+- **The launcher remembers what you copy.** `SUPER` + `SHIFT` + `V`, or `>clip`
+  in the search field, lists what has been through the clipboard, newest first —
+  pick one to put it back.
+- **Images are kept too**, and preview on their row.
+- `Delete`, or the button on the row, drops one entry; *Clear history* on the
+  Dock settings page drops all of them; the switch beside it turns the whole
+  thing off.
+- `cliphist` is the store, and the shell owns the watchers that feed it — so
+  history records for as long as the shell is running, not only while the
+  launcher is open.
+
+### On-screen keyboard
+
+- **A keyboard for when there is not one.** `SUPER` + `K`, the desktop's
+  right-click menu, the launcher's command list, or `qs ipc call keyboard
+  toggle`.
+- **It never takes the focus off what you are typing into**, and clicks outside
+  the panel reach the application underneath — so the caret stays where you put
+  it and you can aim at a field between keystrokes.
+- A letters layer and a function layer; modifiers latch on one press and lock on
+  two; Caps is kept to the panel so it cannot fall out of step with the real
+  keyboard. Chords go out as chords, which is the only form some applications
+  accept.
+- Drag it anywhere by the strip along its top, and it stays where you left it.
+
+### Light mode
+
+- **The shell has a light mode**, under Theme in the settings app. The palette is
+  rebuilt rather than inverted at the last minute: matugen and pywal re-extract
+  the wallpaper in the mode you picked, and the themes that only ship a dark
+  palette get a light one built from their own colours in tone space — Nord
+  lands on its own Snow Storm, Gruvbox on its own cream.
+- **The accent is applied to light surfaces.** A generated light palette is
+  almost white, and no hue exists at all near tone 100 — so the ramp is first
+  walked off white, then mixed toward the accent at each rung's own tone, which
+  keeps the elevation ladder exactly as far apart as it was. The tint aims at an
+  amount of colour rather than mixing a fixed fraction, so every theme lands in
+  the same place: a near-grey Gruvbox and a vivid pywal both come out tinted
+  rather than one staying white and the other turning mint. *Accent tint*,
+  beside Surface darkness, controls how far.
+- **The mode is remembered**, in `~/.cache/current_mode` beside the theme, so
+  changing wallpaper keeps the mode instead of dropping back to dark.
+- **Applications follow the shell.** Flipping the mode also asks GTK and Qt for
+  it and swaps the GTK and icon themes to their light or dark counterpart —
+  but only to a counterpart that is actually installed.
+- Status colours, dim text, hover and pressed states, and every elevated
+  surface now flip direction with the mode, instead of staying at the tone that
+  only reads on a dark background.
+
+### Login screen
+
+- **SDDM gets a Lucid theme** — the lock screen ported to the greeter: the same
+  two-tone clock, the same palette, the same wallpaper, blurred once in advance
+  so the login screen is not running a blur on a cold GPU. The user and session
+  pickers take the place of the glance chips, and the weather, media and
+  notifications drop out, there being no session yet to read them from.
+- It is painted from the running shell's own resolved colours, so it follows a
+  theme or wallpaper change like everything else does, and repaints without
+  asking for a password.
+- The installer copies it in when SDDM is present, but **never switches to it** —
+  which theme greets you stays your call.
+
+### Volume, brightness and the lock keys
+
+- **The volume, brightness and microphone popups are redrawn** to the same
+  anatomy the control centre's sliders use: a badge, a track that answers the
+  keypress, and a readout. Mute is cut through the badge as a gap in the glyph
+  rather than a line laid over it.
+- **Caps Lock and Num Lock get a popup of their own**, showing the letters the
+  next keystroke will make — `ABC` against `abc` — rather than the words on and
+  off, and rolling from one to the other.
+- **Toasts are snackbars**, to the Material 3 metrics, and a colour too dark to
+  read against the pill is lifted until it is.
+
+### Workspaces
+
+- **Any installed application can be put on a scratchpad workspace**, not only
+  the ones the catalogue knows about: *Add an app* on the Workspaces page lists
+  everything on the machine, and works out what to match the window by.
+- **The chips say what a stashed window is rather than who made it.** The
+  application logos are replaced by a glyph read off the application's own
+  categories — a terminal for a terminal, a note for an editor — drawn as
+  vectors, so they stay sharp at any scale. Tucked away, only the front one
+  shows; opening the chip fans the rest out behind it.
+
+### Environment
+
+- **The pointer's shadow can be turned off.** Hyprland has no switch for this —
+  the shade is painted into the cursor theme's own images — so Lucid renders the
+  theme again from its vector sources, copying every size, hotspot and frame
+  delay exactly, and points GTK, Qt, XCursor and Hyprland at that copy. The
+  pointer keeps its shape; only the shade goes.
+
+### Performance
+
+- **Animations run at the screen's refresh rate on NVIDIA.** Qt refuses threaded
+  rendering on the proprietary driver — its own workaround for an old resize bug
+  — and falls back to a render loop whose animation clock is a fixed 16ms timer,
+  which pins every animation in the shell to ~60fps however fast the monitor is.
+  Hyprland stays smooth throughout, which is why this looked like the shell
+  being slow. Lucid now starts through `~/.config/lucid/launch-shell.sh`, which
+  moves those machines to Qt's Vulkan backend, where the restriction does not
+  apply.
+- It only switches when NVIDIA is the card the compositor actually renders on,
+  the driver is 555 or newer, and an NVIDIA Vulkan driver is present — a hybrid
+  laptop rendering on Intel is left alone. `launch-shell.sh --explain` prints
+  what it decided and why, without starting anything.
+
+### Contributed
+
+- **A KDE Connect widget** for the desktop, in three sizes: the phone's name and
+  battery at a glance, a card with signal and charge state, and a remote. Files
+  can be sent to the phone from it. Thanks to @k-k-j123.
+- **A Sound page** in the settings app — output and input devices with what each
+  one is, a volume for every application making or taking sound right now, and
+  the choice of whether picking a new output carries what is already playing
+  across to it. Thanks to @MrZtone.
+- **Installer fixes:** the warning about an old Hyprland actually fires, a
+  configuration the installer cannot read is no longer replaced without asking
+  first, and `require` lines added to `hyprland.lua` by hand survive a refresh.
+  Thanks to @arbelonson-source.
+
+### Fixed
+
+- Do Not Disturb could not be turned on from the System pill or the lock screen.
+  Both wrote to a value that refused to be written, so the switch moved and
+  nothing happened.
+- Airplane mode never gave the radios back. It only ever turned Wi-Fi and
+  Bluetooth off, so switching it off again did nothing; it now puts back exactly
+  what was on before.
+- The CPU reading in the System panel was wrong for a moment after opening it —
+  the first sample averaged over the whole time the panel had been closed.
+- The widget options menu opened underneath your windows when the cards are set
+  to sit below them. It is drawn on its own layer now.
+- `sync-sddm.sh` never ran and never reported that it had not. A misplaced
+  `exit 0` meant it returned success without painting anything, so the login
+  screen sat on a months-old palette; it was not installed by the installer
+  either, and it exited silently on a machine without `/etc/sddm.conf.d`. All
+  three are fixed, and matugen applies it now too.
+
 ## v1.0.5 — 2026-09-12
 
 Multiple displays, properly: the shell sits where you put it, every screen is

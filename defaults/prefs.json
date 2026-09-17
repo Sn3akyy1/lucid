@@ -37,6 +37,7 @@
     "showTray": true,
     "showWorkspaces": true,
     "surfaceDarkness": -1,
+    "surfaceTint": -1,
     "toastTimeout": 5,
     "wallpaperFolder": ""
 }

@@ -256,8 +256,13 @@ def dirs_with(sub):
     return out
 
 
+NOSHADOW = "-noshadow"
+
+
 def cursor_themes():
-    return sorted(dirs_with("cursors"), key=str.lower)
+    """The shadowless rebuilds are variants of a theme, not themes to offer."""
+    return sorted((n for n in dirs_with("cursors") if not n.endswith(NOSHADOW)),
+                  key=str.lower)
 
 
 def icon_themes():
@@ -456,15 +461,21 @@ def probe():
     qgen_fam, qgen_size = qfont_parse(ini_get(QT6CT, "Fonts", "general"))
     qfix_fam, qfix_size = qfont_parse(ini_get(QT6CT, "Fonts", "fixed"))
 
+    cursor = (lua_env_get("XCURSOR_THEME")
+              or gsettings_get("cursor-theme")
+              or ini_get(GTK3, "Settings", "gtk-cursor-theme-name") or "")
+    shadow = not cursor.endswith(NOSHADOW)
+    if not shadow:
+        cursor = cursor[:-len(NOSHADOW)]
+
     return {
         "cursorThemes": cursor_themes(),
         "iconThemes": icon_themes(),
         "gtkThemes": gtk_themes(),
         "qtStyles": qt_styles(),
         "current": {
-            "cursorTheme": (lua_env_get("XCURSOR_THEME")
-                            or gsettings_get("cursor-theme")
-                            or ini_get(GTK3, "Settings", "gtk-cursor-theme-name") or ""),
+            "cursorTheme": cursor,
+            "cursorShadow": shadow,
             "cursorSize": csize,
             "iconTheme": (gsettings_get("icon-theme")
                           or ini_get(GTK3, "Settings", "gtk-icon-theme-name")

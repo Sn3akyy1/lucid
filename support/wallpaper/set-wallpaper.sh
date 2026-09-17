@@ -7,20 +7,25 @@
 #   pywal    — wal extracts, gen-pywal-palette.py maps it to material roles
 #   anything else — a static theme owns its palette, so colours are left alone
 #
+# the mode argument is remembered in ~/.cache/current_mode, so a later wallpaper
+# change keeps whichever of light/dark the desktop is currently in instead of
+# silently dropping back to dark.
+#
 # the wallpaper is set first because it is the only step you actually see.
 # ~/.config/lucid/wallpaper-outputs.conf, if it exists, overrides single outputs.
 
 set -euo pipefail
 
 WALLPAPER="${1:-}"
-MODE="${2:-dark}"
 CACHE_DIR="$HOME/.cache"
 CURRENT_WALL_FILE="$CACHE_DIR/current_wallpaper"
 CURRENT_THEME_FILE="$CACHE_DIR/current_theme"
+CURRENT_MODE_FILE="$CACHE_DIR/current_mode"
 LUCID_DIR="$HOME/.config/lucid"
 WALL_RULES_FILE="$LUCID_DIR/wallpaper-outputs.conf"
 
 CURRENT_THEME="$(cat "$CURRENT_THEME_FILE" 2>/dev/null || echo matugen)"
+MODE="${2:-$(cat "$CURRENT_MODE_FILE" 2>/dev/null || echo dark)}"
 
 usage() {
     echo "usage: $(basename "$0") <path-to-image> [dark|light]"
@@ -106,6 +111,7 @@ fi
 
 mkdir -p "$CACHE_DIR"
 printf '%s' "$WALLPAPER" > "$CURRENT_WALL_FILE"
+printf '%s' "$MODE" > "$CURRENT_MODE_FILE"
 
 case "$CURRENT_THEME" in
 matugen)
@@ -116,6 +122,9 @@ matugen)
     # --source-color-index keeps it non-interactive, so it can't hang on a
     # picker prompt it will never receive from a keybind
     matugen image "$WALLPAPER" -m "$MODE" --source-color-index 0
+    # matugen writes the palette from its own templates and never reaches
+    # apply-theme.sh, so this is the only place the login screen can follow it
+    "$LUCID_DIR/sync-sddm.sh" 2>/dev/null || true
     hyprctl reload &>/dev/null || true
     ;;
 pywal)
@@ -123,10 +132,14 @@ pywal)
         echo "warning: pywal not installed, colours unchanged" >&2
         exit 0
     fi
-    # -n leaves the wallpaper alone, it is already set above
-    wal -i "$WALLPAPER" -n -s -t -e -q || echo "warning: wal failed" >&2
-    if "$LUCID_DIR/gen-pywal-palette.py"; then
-        "$LUCID_DIR/apply-theme.sh" pywal
+    # -n leaves the wallpaper alone, it is already set above; -l extracts a
+    # light terminal palette, which is what the light branch of the generator
+    # expects to be handed
+    WAL_ARGS=(-i "$WALLPAPER" -n -s -t -e -q)
+    [[ "$MODE" == "light" ]] && WAL_ARGS+=(-l)
+    wal "${WAL_ARGS[@]}" || echo "warning: wal failed" >&2
+    if "$LUCID_DIR/gen-pywal-palette.py" "$MODE"; then
+        "$LUCID_DIR/apply-theme.sh" pywal "$MODE"
     else
         echo "warning: pywal palette generation failed" >&2
     fi

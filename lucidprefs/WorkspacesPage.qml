@@ -83,35 +83,52 @@ Column {
 
                 required property string modelData
                 readonly property var space: Specials.space(modelData)
-                readonly property var apps: (Specials.available[modelData] || []).map((a) => {
-                    return a.id;
-                })
+                readonly property var apps: {
+                    const out = (Specials.available[modelData] || []).map((a) => {
+                        return a.id;
+                    });
+                    // an added app is only in the list while it is ticked
+                    for (const id of Specials.chosen(modelData)) {
+                        if (Specials.isCustom(id) && out.indexOf(id) === -1)
+                            out.push(id);
+
+                    }
+                    return out;
+                }
 
                 title: space.label
                 resetKey: space.apps
-                stacked: apps.length > 0
+                stacked: true
                 enabled: Specials.isOn(modelData)
                 disabledReason: space.label + " is switched off above, so its key does nothing."
-                description: apps.length > 0 ? "" : "None of the " + page.kinds[modelData] + " Lucid knows are installed: " + page.known(modelData) + ". Install one and it shows up here."
+                description: apps.length > 0 ? "" : "None of the " + page.kinds[modelData] + " Lucid knows are installed: " + page.known(modelData) + "."
 
                 Column {
                     width: parent.width
                     spacing: 14
-                    visible: appsRow.apps.length > 0
 
                     Repeater {
                         model: appsRow.apps
 
                         CheckLine {
                             required property string modelData
+                            readonly property var app: Specials.appById(appsRow.modelData, modelData)
 
-                            label: Specials.appById(appsRow.modelData, modelData).name
+                            label: app ? app.name : modelData
                             icon: Specials.iconOf(appsRow.modelData, modelData)
                             enabled: appsRow.enabled
                             checked: Specials.isChosen(appsRow.modelData, modelData)
                             onToggled: Specials.setChosen(appsRow.modelData, modelData, !checked)
                         }
 
+                    }
+
+                    M3Button {
+                        text: "Add an app"
+                        variant: "text"
+                        iconPath: "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z"
+                        enabled: appsRow.enabled
+                        onClicked: Prefs.appPickerRequested(appsRow.modelData)
                     }
 
                 }

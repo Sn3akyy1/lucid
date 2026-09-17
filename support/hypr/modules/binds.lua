@@ -27,6 +27,8 @@ hl.bind(mainMod .. " + J",       hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. " + B",       hl.dsp.exec_cmd("qs ipc call launcher wallpaper"))
 hl.bind(mainMod .. " + T",       hl.dsp.exec_cmd("qs ipc call launcher theme"))
 hl.bind(mainMod .. " + P",       hl.dsp.exec_cmd("qs ipc call launcher command"))
+-- SUPER+V is the usual clipboard key, but it floats windows here
+hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("qs ipc call launcher clipboard"))
 
 -- Lucid Settings (took SUPER+S from the scratchpad, which moved down a
 -- modifier - see the Special workspaces section below)
@@ -34,6 +36,9 @@ hl.bind(mainMod .. " + S",       hl.dsp.exec_cmd("qs ipc call settings toggle"))
 
 -- LucidMoji
 hl.bind(mainMod .. " + period",  hl.dsp.exec_cmd("qs ipc call moji toggle"))
+
+-- Lucid on-screen keyboard
+hl.bind(mainMod .. " + K",       hl.dsp.exec_cmd("qs ipc call keyboard toggle"))
 
 -- Lucid workspace overview (also: 3-finger swipe down/up, see modules/gestures.lua)
 hl.bind(mainMod .. " + W",       hl.dsp.exec_cmd("qs ipc call workspaces toggle"))

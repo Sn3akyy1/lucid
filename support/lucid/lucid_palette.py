@@ -85,7 +85,8 @@ def hue_gap(a, b):
     return min(d, 360 - d)
 
 
-def build_palette(bg, fg, accents, hints=None, reserve_red_for_error=False):
+def build_palette(bg, fg, accents, hints=None, reserve_red_for_error=False,
+                  mode='dark'):
     """bg/fg/accents (hex strings) -> the 36-role dict Theme.qml reads.
 
     `hints` names roles the caller already knows - a base16 scheme says which
@@ -98,8 +99,16 @@ def build_palette(bg, fg, accents, hints=None, reserve_red_for_error=False):
     chroma ranking reaches for them first, and a red accent leaves nothing to
     tell an error state apart. Off by default: a wallpaper's own strongest
     colour should still win, red or not.
+
+    `mode` flips every direction the scheme has: the container ladder walks down
+    from the background instead of up, accents land dark instead of light, and
+    each on-role swaps to the far end of its tone range. bg/fg are expected to
+    already suit the mode - a light scheme wants a light bg and a dark fg.
     """
     hints = hints or {}
+    light = mode == 'light'
+    # +1 dark, -1 light: the sign of "more elevated means lighter"
+    sgn = -1 if light else 1
     bt = tone(bg)
 
     cand = [c for c in accents if hue_sat(c)[1] > 0.05] or list(accents)
@@ -133,11 +142,13 @@ def build_palette(bg, fg, accents, hints=None, reserve_red_for_error=False):
     if not primary:
         pool = [c for c in ranked if not reddish(c)] if reserve_red_for_error else []
         primary = (pool or ranked)[0]
-    # M3 puts primary at tone 80 in a dark scheme. A scheme's own can land far
-    # darker; lift only when it would not read against the background, so most
-    # palettes keep the colour their author actually chose.
-    if tone(primary) < bt + 45:
-        primary = hx(at_tone(primary, min(80, bt + 55)))
+    # M3 puts primary at tone 80 in a dark scheme and tone 40 in a light one.
+    # A scheme's own can land far the wrong side; move it only when it would not
+    # read against the background, so most palettes keep the colour their author
+    # actually chose.
+    if sgn * (tone(primary) - bt) < 45:
+        primary = hx(at_tone(primary, min(80, bt + 55) if not light
+                             else max(40, bt - 55)))
     used.append(primary)
 
     PT = tone(primary)
@@ -175,42 +186,65 @@ def build_palette(bg, fg, accents, hints=None, reserve_red_for_error=False):
     # derived fallback that ignored the hinted rungs below it would sink under
     # them - an elevated surface rendering darker than the one it sits on.
     surf = hints.get('surfaces') or {}
-    ladder, floor = {}, bt
-    for key, dt in [('low', bt + 5), ('container', bt + 9), ('high', bt + 14),
-                    ('highest', bt + 19), ('bright', bt + 22)]:
+    # a light ladder is tighter than a dark one - the same spread that reads as
+    # depth on black reads as dirt on white
+    if light:
+        rungs = [('low', bt - 3), ('container', bt - 6), ('high', bt - 9),
+                 ('highest', bt - 12)]
+    else:
+        rungs = [('low', bt + 5), ('container', bt + 9), ('high', bt + 14),
+                 ('highest', bt + 19), ('bright', bt + 22)]
+    ladder, edge = {}, bt
+    for key, dt in rungs:
         c = surf.get(key)
-        if c and tone(c) > floor:
+        if c and sgn * (tone(c) - edge) > 0:
             ladder[key] = hx(c)
-            floor = tone(c)
+            edge = tone(c)
         else:
-            t = max(dt, floor + 3)
+            t = dt if sgn * (dt - edge) >= 3 else edge + sgn * 3
             ladder[key] = role(bg, t)
-            floor = t
+            edge = t
     low = surf.get('lowest')
-    ladder['lowest'] = hx(low) if (low and tone(low) < bt) else role(bg, max(0, bt - 4))
+    if light:
+        # in a light scheme `bright` is the near-white floor beside `surface`,
+        # not the top of the ladder, and `lowest` is the brightest rung
+        b = surf.get('bright')
+        ladder['bright'] = hx(b) if (b and tone(b) > bt) else role(bg, min(100, bt + 1))
+        ladder['lowest'] = hx(low) if (low and tone(low) > bt) else role(bg, min(100, bt + 3))
+    else:
+        ladder['lowest'] = hx(low) if (low and tone(low) < bt) else role(bg, max(0, bt - 4))
 
     def layer(key, t):
         return ladder[key]
 
+    # on-roles sit at the far end of their range from the mode's background
+    ON_ACCENT = 100 if light else 20
+    ACCENT_CONTAINER = 90 if light else 30
+    ON_ACCENT_CONTAINER = 10 if light else 90
+    INVERSE_PRIMARY = 80 if light else 40
+    ON_SURFACE_VARIANT = 30 if light else 80
+    OUTLINE = 50 if light else 60
+    INVERSE_ON_SURFACE = 95 if light else 20
+
     return {
         "source_color": primary,
         "primary": primary,
-        "on_primary": role(primary, 20),
-        "primary_container": role(primary, 30),
-        "on_primary_container": role(primary, 90),
-        "inverse_primary": role(primary, 40),
+        "on_primary": role(primary, ON_ACCENT),
+        "primary_container": role(primary, ACCENT_CONTAINER),
+        "on_primary_container": role(primary, ON_ACCENT_CONTAINER),
+        "inverse_primary": role(primary, INVERSE_PRIMARY),
         "secondary": secondary,
-        "on_secondary": role(secondary, 20),
-        "secondary_container": role(secondary, 30),
-        "on_secondary_container": role(secondary, 90),
+        "on_secondary": role(secondary, ON_ACCENT),
+        "secondary_container": role(secondary, ACCENT_CONTAINER),
+        "on_secondary_container": role(secondary, ON_ACCENT_CONTAINER),
         "tertiary": tertiary,
-        "on_tertiary": role(tertiary, 20),
-        "tertiary_container": role(tertiary, 30),
-        "on_tertiary_container": role(tertiary, 90),
+        "on_tertiary": role(tertiary, ON_ACCENT),
+        "tertiary_container": role(tertiary, ACCENT_CONTAINER),
+        "on_tertiary_container": role(tertiary, ON_ACCENT_CONTAINER),
         "error": error,
-        "on_error": role(error, 20),
-        "error_container": role(error, 30),
-        "on_error_container": role(error, 90),
+        "on_error": role(error, ON_ACCENT),
+        "error_container": role(error, ACCENT_CONTAINER),
+        "on_error_container": role(error, ON_ACCENT_CONTAINER),
         "surface_container_lowest": layer("lowest", max(0, bt - 4)),
         "surface": bg,
         "surface_dim": bg,
@@ -221,12 +255,12 @@ def build_palette(bg, fg, accents, hints=None, reserve_red_for_error=False):
         "surface_bright": layer("bright", bt + 22),
         "surface_tint": primary,
         "on_surface": fg,
-        "on_surface_variant": role(fg, 80),
+        "on_surface_variant": role(fg, ON_SURFACE_VARIANT),
         "surface_variant": layer("high", bt + 14),
-        "outline": role(fg, 60),
+        "outline": role(fg, OUTLINE),
         "outline_variant": layer("highest", bt + 19),
         "inverse_surface": fg,
-        "inverse_on_surface": role(bg, 20),
+        "inverse_on_surface": role(bg, INVERSE_ON_SURFACE),
         "shadow": "#000000",
         "scrim": "#000000",
     }

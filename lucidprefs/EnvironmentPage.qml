@@ -40,6 +40,23 @@ Column {
         }
 
         SettingRow {
+            title: "Pointer shadow"
+            resetKey: "envCursorShadow"
+            enabled: Env.shadowCapable && !Env.shadowBuilding
+            disabledReason: Env.shadowBuilding ? "Rendering the pointer without its shadow\u2026 this takes a few seconds." : (Env.shadowReason !== "" ? "\u201c" + Prefs.envCursorTheme + "\u201d " + Env.shadowReason + "." : "Reading the theme\u2019s sources\u2026")
+            description: "The soft shade behind the pointer. Hyprland has no switch for it \u2014 it is painted into the theme itself \u2014 so turning it off renders the theme again from its vector sources and points everything at that copy. The pointer keeps its exact shape, sizes and hotspots."
+            warning: Env.shadowError
+
+            M3Switch {
+                checked: Prefs.envCursorShadow
+                onToggled: (v) => {
+                    return Prefs.envCursorShadow = v;
+                }
+            }
+
+        }
+
+        SettingRow {
             title: "Cursor size"
             resetKey: "envCursorSize"
             description: "In pixels. GTK, Qt and Hyprland are all told the same number, which is what stops the pointer changing size as you move between applications."

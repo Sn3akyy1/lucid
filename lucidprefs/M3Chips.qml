@@ -8,6 +8,9 @@ Flow {
 
     property var options: []
     property var current: ""
+    // membership rather than choice: every key in selectedKeys reads as picked
+    property bool multi: false
+    property var selectedKeys: []
     property bool enabled: true
     // a lone chip is worth showing as the current value even when there is
     // nothing else to pick, so this gates the click without dimming it
@@ -24,7 +27,7 @@ Flow {
             id: chip
 
             required property var modelData
-            readonly property bool selected: chips.current === chip.modelData.key
+            readonly property bool selected: chips.multi ? chips.selectedKeys.indexOf(chip.modelData.key) >= 0 : chips.current === chip.modelData.key
 
             width: label.implicitWidth + 30
             height: 36

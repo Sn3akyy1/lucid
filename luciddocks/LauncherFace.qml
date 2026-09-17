@@ -4,7 +4,7 @@ import qs
 Item {
     id: face
 
-    // "apps" | "commands" | "theme" | "wallpaper" | "power"
+    // "apps" | "commands" | "theme" | "wallpaper" | "power" | "clipboard"
     property string mode: "apps"
     property var model: null
     property var wallpaperModel: null
@@ -18,7 +18,7 @@ Item {
     property int wallCardGap: 10
     property alias searchText: searchInput.text
     property string highlightQuery: ""
-    property string placeholder: "Search apps, or type > for commands"
+    readonly property string placeholder: face.displayMode === "clipboard" ? "Search clipboard history" : "Search apps, or type > for commands"
     property real targetWidth: width
     property real targetHeight: height
 
@@ -36,6 +36,7 @@ Item {
     signal wallpaperPreviewed(string path)
     signal powerActionChosen(string id)
     signal backRequested()
+    signal deleteRequested(int index)
 
     function setWallpaperIndex(i) {
         wallStrip.setIndexImmediate(i);
@@ -119,8 +120,20 @@ Item {
             model: face.model
             query: face.highlightQuery
             stableHeight: face.stableContentHeight
-            emptyLabel: face.displayMode === "commands" ? "No commands found" : (face.displayMode === "theme" ? "No themes found" : "No apps found")
+            emptyLabel: {
+                if (face.displayMode === "commands")
+                    return "No commands found";
+
+                if (face.displayMode === "theme")
+                    return "No themes found";
+
+                if (face.displayMode === "clipboard")
+                    return Clip.available ? "Clipboard history is empty" : "Install cliphist to keep clipboard history";
+
+                return "No apps found";
+            }
             onActivated: (index) => face.activated(index)
+            onDeleteRequested: (index) => face.deleteRequested(index)
         }
 
         WallpaperStrip {
@@ -258,6 +271,14 @@ Item {
                     event.accepted = true;
                 } else if (face.displayMode === "power") {
                     powerRow.step(1);
+                    event.accepted = true;
+                } else {
+                    event.accepted = false;
+                }
+            }
+            Keys.onDeletePressed: (event) => {
+                if (face.displayMode === "clipboard" && resultList.isSelectable(resultList.currentIndex)) {
+                    face.deleteRequested(resultList.currentIndex);
                     event.accepted = true;
                 } else {
                     event.accepted = false;

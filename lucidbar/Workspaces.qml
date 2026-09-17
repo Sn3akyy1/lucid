@@ -1,6 +1,6 @@
 import QtQml.Models
 import QtQuick
-import QtQuick.Effects
+import QtQuick.Shapes
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Hyprland._FocusGrab
@@ -142,7 +142,6 @@ Item {
     readonly property int sunkActiveWidth: 14
     readonly property int stashIcon: 16
     readonly property int stashMax: 3
-    readonly property int stashTuck: 7
     readonly property int stashFan: 20
     readonly property int compactHeight: Prefs.barHeight
     property int hoveredSlot: -1
@@ -394,7 +393,7 @@ Item {
         const j = index - root.slotCount;
         const k = Math.min((root.specialApps[j] || []).length, root.stashMax);
         if (!root.chipOpen(index))
-            return k > 0 ? root.stashIcon + (k - 1) * root.stashTuck : root.dotSize;
+            return k > 0 ? root.stashIcon : root.dotSize;
 
         return root.chipIconsEnd(k) + root.textWidth(root.chipLabel(j)) + 10;
     }
@@ -1277,7 +1276,6 @@ Item {
                         readonly property int iconCount: Math.min(chip.apps.length, root.stashMax)
                         readonly property bool open: root.chipOpen(chip.slot)
                         readonly property bool lit: root.pillCovers(chip.x, chip.width)
-                        property real saturation: chip.open ? 0 : -1
 
                         x: root.slotX(chip.slot)
                         y: (parent.height - height) / 2
@@ -1305,14 +1303,11 @@ Item {
                         Item {
                             id: stack
 
-                            readonly property int pad: 3
-
-                            x: (chip.open ? 4 : 0) - stack.pad
-                            y: Math.round((chip.height - root.stashIcon) / 2) - stack.pad
-                            width: root.stashIcon + Math.max(0, chip.iconCount - 1) * root.stashFan + stack.pad * 2
-                            height: root.stashIcon + stack.pad * 2
+                            x: chip.open ? 4 : 0
+                            y: Math.round((chip.height - root.stashIcon) / 2)
+                            width: root.stashIcon + (chip.open ? Math.max(0, chip.iconCount - 1) * root.stashFan : 0)
+                            height: root.stashIcon
                             opacity: chip.open ? 1 : 0.6
-                            layer.enabled: true
 
                             Repeater {
                                 model: chip.iconCount
@@ -1322,35 +1317,41 @@ Item {
 
                                     required property int index
                                     readonly property var app: chip.apps[stashed.index] || null
-                                    readonly property string icon: stashed.app ? root.iconFor(stashed.app.appClass) : ""
+                                    // only the front one shows while tucked; the rest fan out on open
+                                    readonly property bool shown: chip.open || stashed.index === 0
+                                    readonly property string glyph: {
+                                        // desktop entries stream in over a few seconds
+                                        void Specials.entryCount;
+                                        if (!stashed.app || !chip.wsObj)
+                                            return "apps";
 
-                                    x: stack.pad + stashed.index * (chip.open ? root.stashFan : root.stashTuck)
-                                    y: stack.pad
+                                        return Specials.appGlyph(stashed.app.appClass, chip.wsObj.name);
+                                    }
+
+                                    x: chip.open ? stashed.index * root.stashFan : 0
                                     z: -stashed.index
                                     width: root.stashIcon
                                     height: root.stashIcon
+                                    opacity: stashed.shown ? 1 : 0
                                     scale: stashedArea.containsMouse ? 1.15 : 1
 
-                                    IconImage {
+                                    Shape {
                                         anchors.fill: parent
-                                        source: stashed.icon
-                                        visible: stashed.icon !== ""
-                                        asynchronous: true
-                                    }
+                                        preferredRendererType: Shape.CurveRenderer
 
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        visible: stashed.icon === ""
-                                        radius: width / 2
-                                        color: chip.lit ? Theme.alpha(Theme.bgOpaque, 0.22) : Theme.alpha(Theme.text, 0.2)
+                                        ShapePath {
+                                            strokeWidth: 0
+                                            fillColor: chip.lit ? Theme.bgOpaque : Theme.text
 
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: stashed.app && stashed.app.appClass !== "" ? stashed.app.appClass.charAt(0).toUpperCase() : "?"
-                                            color: chip.lit ? Theme.bgOpaque : Theme.text
-                                            font.family: Theme.fontFamily
-                                            font.bold: true
-                                            font.pixelSize: Theme.fs(9)
+                                            PathSvg {
+                                                path: Specials.glyphPath(stashed.glyph)
+                                            }
+
+                                        }
+
+                                        transform: Scale {
+                                            xScale: root.stashIcon / 24
+                                            yScale: root.stashIcon / 24
                                         }
 
                                     }
@@ -1359,7 +1360,7 @@ Item {
                                         id: stashedArea
 
                                         anchors.fill: parent
-                                        enabled: chip.open
+                                        enabled: chip.open && stashed.shown
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
@@ -1367,6 +1368,14 @@ Item {
                                                 root.openStashed(chip.slot, stashed.app);
 
                                         }
+                                    }
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: Theme.barMs(300)
+                                            easing.type: Easing.OutCubic
+                                        }
+
                                     }
 
                                     Behavior on x {
@@ -1387,10 +1396,6 @@ Item {
 
                                 }
 
-                            }
-
-                            layer.effect: MultiEffect {
-                                saturation: chip.saturation
                             }
 
                             Behavior on x {
@@ -1435,14 +1440,6 @@ Item {
                                     easing.type: Easing.OutCubic
                                 }
 
-                            }
-
-                        }
-
-                        Behavior on saturation {
-                            NumberAnimation {
-                                duration: Theme.barMs(300)
-                                easing.type: Easing.OutCubic
                             }
 
                         }

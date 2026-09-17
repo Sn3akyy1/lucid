@@ -1,0 +1,16 @@
+[SddmGreeterTheme]
+Name=Lucid
+Description=Lucid's lock screen, as the login screen
+Author=Sn3akyy1
+License=MIT
+Type=sddm-theme
+Version=1.0
+Screenshot=screenshot.png
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=lucid
+Theme-API=2.0
+# sddm ships two greeter binaries and picks between them from this key.
+# without it you get /usr/bin/sddm-greeter, which is Qt5, and every
+# versionless `import QtQuick` fails with "Library import requires a version"
+QtVersion=6

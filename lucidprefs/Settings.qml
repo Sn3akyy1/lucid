@@ -27,8 +27,11 @@ FloatingWindow {
     readonly property real collapse: Math.max(0, Math.min(1, win.scrollY / 72))
 
     property string page: "general"
-    // grouped, and the rail draws a heading above the first page of each group
+    // grouped, and the rail draws a heading above the first page of each group.
+    // a hidden page still gets a pane and a header; it just has no rail entry,
+    // because something else on screen already leads to it
     readonly property var pages: [
+        { "key": "users", "group": "Account", "label": "Account", "title": "Users and Accounts", "blurb": "Who may sign in to this machine, what they are called and what they are allowed to do", "hidden": true },
         { "key": "general", "group": "Appearance", "label": "General", "title": "General", "blurb": "Shape, colour and motion across the whole shell" },
         { "key": "glass", "group": "Appearance", "label": "Glass", "title": "Glass", "blurb": "How far the desktop shows through the shell, the terminal and your windows" },
         { "key": "theme", "group": "Appearance", "label": "Theme", "title": "Theme and Appearance", "blurb": "Colour schemes, wallpapers and themes you import" },
@@ -47,10 +50,15 @@ FloatingWindow {
         { "key": "about", "group": "System", "label": "About", "title": "About", "blurb": "Lucid" }
     ]
 
+    // what the rail actually lists
+    readonly property var navPages: win.pages.filter((p) => {
+        return p.hidden !== true;
+    })
+
     // "" unless this page opens its group
     function groupAt(i) {
-        const g = win.pages[i] ? win.pages[i].group : "";
-        return i === 0 || win.pages[i - 1].group !== g ? g : "";
+        const g = win.navPages[i] ? win.navPages[i].group : "";
+        return i === 0 || win.navPages[i - 1].group !== g ? g : "";
     }
 
     readonly property var current: win.pages.find((p) => {
@@ -62,6 +70,10 @@ FloatingWindow {
             win.page = p;
 
         win.visible = true;
+        // themes can be installed while the shell runs; look again on every open
+        if (win.page === "environment")
+            Env.rescan();
+
     }
 
     // which of the environment's lists is open, so the answer knows where to go
@@ -84,6 +96,13 @@ FloatingWindow {
             envPicker.open("Document font", "fonts", Qt.fontFamilies(), Prefs.envDocumentFont, false);
         else if (kind === "monoFont")
             envPicker.open("Monospace font", "fonts", Qt.fontFamilies(), Prefs.envMonoFont, false);
+    }
+
+    // a rescan can finish while a list is open; keep it showing what is installed
+    function refreshEnvPicker(kind, items) {
+        if (envPicker.shown && win.envPickKind === kind)
+            envPicker.items = items;
+
     }
 
     function applyEnvChoice(name) {
@@ -113,13 +132,20 @@ FloatingWindow {
             fontPicker.dismiss();
             timeZonePicker.dismiss();
             envPicker.dismiss();
+            appPicker.dismiss();
+            avatarPicker.dismiss();
+            passwordDialog.dismiss();
+            newUserDialog.dismiss();
+            deleteUserDialog.dismiss();
         }
     }
     onClosed: win.visible = false
 
     visible: false
     title: "Lucid Settings"
-    color: Theme.bg
+    // a surface created fully opaque keeps qtwayland's opaque region for the life
+    // of the process and hyprland never blurs it, so stay one step under solid
+    color: Theme.alpha(Theme.bg, Math.min(Theme.bg.a, 254 / 255))
 
     implicitWidth: 1180
     implicitHeight: 800
@@ -159,6 +185,15 @@ FloatingWindow {
 
         function general(): void {
             win.show("general");
+        }
+
+        function users(): void {
+            win.show("users");
+        }
+
+        // the page is about accounts; both names reach it
+        function accounts(): void {
+            win.show("users");
         }
 
         function glass(): void {
@@ -248,6 +283,8 @@ FloatingWindow {
                 Theme.setBlurAmount(0);
             else if (action === Prefs.clearWidgetsToken)
                 Widgets.closeAll();
+            else if (action === Prefs.clearClipboardToken)
+                Clip.wipe();
             else if (action === Prefs.resetIdleToken)
                 Prefs.resetKeys(Prefs.idleKeys);
             else if (action === Prefs.resetEnvToken)
@@ -302,6 +339,96 @@ FloatingWindow {
     }
 
     Connections {
+        function onCursorThemesChanged() {
+            win.refreshEnvPicker("cursor", Env.cursorThemes);
+        }
+
+        function onIconThemesChanged() {
+            win.refreshEnvPicker("icon", Env.iconThemes);
+        }
+
+        function onGtkThemesChanged() {
+            win.refreshEnvPicker("gtk", Env.gtkThemes);
+        }
+
+        function onQtStylesChanged() {
+            win.refreshEnvPicker("qtStyle", Env.qtStyles);
+        }
+
+        target: Env
+    }
+
+    AppPicker {
+        id: appPicker
+
+        z: 100
+        onChosen: (workspace, entryId) => {
+            return Specials.addApp(workspace, entryId);
+        }
+    }
+
+    AvatarPicker {
+        id: avatarPicker
+
+        z: 100
+        onChosen: (uid, path) => {
+            return Users.set(uid, {
+                "avatar": path
+            }, "avatar");
+        }
+    }
+
+    PasswordDialog {
+        id: passwordDialog
+
+        z: 100
+        onSubmitted: (uid, password, hint) => {
+            return Users.set(uid, {
+                "password": password,
+                "passwordHint": hint
+            }, "password");
+        }
+    }
+
+    NewUserDialog {
+        id: newUserDialog
+
+        z: 100
+        onSubmitted: (spec) => {
+            return Users.create(spec);
+        }
+    }
+
+    DeleteUserDialog {
+        id: deleteUserDialog
+
+        z: 100
+        onSubmitted: (uid, removeFiles) => {
+            return Users.remove(uid, removeFiles);
+        }
+    }
+
+    Connections {
+        function onAvatarRequested(uid) {
+            avatarPicker.open(Users.userFor(uid));
+        }
+
+        function onPasswordRequested(uid, headline, body, hint) {
+            passwordDialog.open(uid, headline, body, hint);
+        }
+
+        function onNewUserRequested() {
+            newUserDialog.open();
+        }
+
+        function onDeleteRequested(uid) {
+            deleteUserDialog.open(Users.userFor(uid));
+        }
+
+        target: Users
+    }
+
+    Connections {
         function onResetConfirmRequested(title, body, confirmLabel, action) {
             confirmDialog.ask(title, body, confirmLabel, action);
         }
@@ -318,6 +445,10 @@ FloatingWindow {
             timeZonePicker.open();
         }
 
+        function onAppPickerRequested(workspace) {
+            appPicker.open(workspace);
+        }
+
         target: Prefs
     }
 
@@ -327,12 +458,22 @@ FloatingWindow {
         anchors.fill: parent
         focus: true
         Keys.onEscapePressed: {
-            if (fontPicker.shown)
+            if (passwordDialog.shown)
+                passwordDialog.dismiss();
+            else if (newUserDialog.shown)
+                newUserDialog.dismiss();
+            else if (deleteUserDialog.shown)
+                deleteUserDialog.dismiss();
+            else if (avatarPicker.shown)
+                avatarPicker.dismiss();
+            else if (fontPicker.shown)
                 fontPicker.dismiss();
             else if (envPicker.shown)
                 envPicker.dismiss();
             else if (timeZonePicker.shown)
                 timeZonePicker.dismiss();
+            else if (appPicker.shown)
+                appPicker.dismiss();
             else if (confirmDialog.shown)
                 confirmDialog.dismiss();
             else
@@ -430,14 +571,28 @@ FloatingWindow {
 
             }
 
+            // the account, above the destinations: the way into everything the
+            // machine knows about whoever is signed in
+            UserCard {
+                id: userCard
+
+                x: rail.pad
+                width: rail.width - rail.pad * 2
+                anchors.top: railHead.bottom
+                anchors.topMargin: 2
+                railT: win.railT
+                selected: win.page === "users"
+                onClicked: win.page = "users"
+            }
+
             // the destinations outgrew the window, so they scroll under a pinned footer
             Flickable {
                 id: navScroll
 
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.top: railHead.bottom
-                anchors.topMargin: 6
+                anchors.top: userCard.bottom
+                anchors.topMargin: 10
                 anchors.bottom: railFoot.top
                 anchors.bottomMargin: 8
                 contentWidth: width
@@ -455,7 +610,7 @@ FloatingWindow {
                     spacing: 3
 
                     Repeater {
-                        model: win.pages
+                        model: win.navPages
 
                         Column {
                             id: navCell
@@ -804,6 +959,8 @@ FloatingWindow {
                         active: paneLoader.everActive
                         source: {
                             switch (pane.modelData.key) {
+                            case "users":
+                                return "UsersPage.qml";
                             case "general":
                                 return "GeneralPage.qml";
                             case "glass":
@@ -853,6 +1010,9 @@ FloatingWindow {
                         if (pane.active) {
                             paneLoader.everActive = true;
                             win.scrollY = pane.contentY;
+                            if (pane.modelData.key === "environment")
+                                Env.rescan();
+
                         }
                     }
                     Component.onCompleted: {

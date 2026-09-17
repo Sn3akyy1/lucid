@@ -19,7 +19,7 @@ your wallpaper.
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/VERSION-v1.0.5-FF7F50?style=for-the-badge&labelColor=14100E">
+  <img alt="Version" src="https://img.shields.io/badge/VERSION-v1.1.0-FF7F50?style=for-the-badge&labelColor=14100E">
   <img alt="Platform" src="https://img.shields.io/badge/PLATFORM-ARCH%20LINUX-FFAB91?style=for-the-badge&logo=archlinux&logoColor=FFAB91&labelColor=14100E">
   <img alt="Compositor" src="https://img.shields.io/badge/COMPOSITOR-HYPRLAND-80CBC4?style=for-the-badge&labelColor=14100E">
   <a href="https://quickshell.org"><img alt="Built on Quickshell" src="https://img.shields.io/badge/BUILT%20ON-QUICKSHELL-FFC46B?style=for-the-badge&labelColor=14100E"></a>
@@ -156,6 +156,7 @@ installing to pick them up.
 | `SUPER` + `P` | Command palette |
 | `SUPER` + `T` | Theme picker |
 | `SUPER` + `B` | Wallpaper picker |
+| `SUPER` + `SHIFT` + `V` | Clipboard history |
 | `SUPER` + `S` | Settings |
 | `SUPER` + `.` | Emoji picker |
 | `SUPER` + `W` | Workspace overview (also: three-finger swipe) |
@@ -241,7 +242,7 @@ A floating M3 toolbar that grows into the launcher rather than opening a
 second window over it. Pinned apps, running-window indicators, drag to
 reorder, optional magnification and auto-hide.
 
-The launcher is one search field over five modes:
+The launcher is one search field over six modes:
 
 | Mode | What it does |
 | --- | --- |
@@ -250,8 +251,16 @@ The launcher is one search field over five modes:
 | Theme | Switch between the seven bundled palettes, and any you have imported |
 | Wallpaper | Carousel of your wallpaper folder |
 | Power | Lock, log out, suspend, reboot, shut down, hibernate |
+| Clipboard | What you copied earlier, images included — pick one to put it back on the clipboard |
 
 Type `=` in the search field for a calculator (`=2^3^2`, right-associative).
+
+Clipboard mode keeps what you copy and hands it back: pick an entry to put it
+back on the clipboard, `Delete` (or the button on the row) to drop one, and
+*Clear history* on the Dock settings page to drop the lot. Images are kept too
+and preview in the row. `cliphist` is the store; the shell owns the `wl-paste`
+watchers that feed it, so history records for as long as the shell is running.
+Turn the whole thing off with the switch on the Dock page.
 
 <img src="assets/prev2.webp" alt="The wallpaper carousel inside the launcher">
 
@@ -326,8 +335,24 @@ Hyprland reload.
 
 ### Everything else
 
-- **Lock screen** — a real `WlSessionLock`, with weather, media controls,
-  notifications and system stats on it
+- **Account picture history** — changing your account picture keeps the old one
+  on a shelf in the picker, newest first, so any picture you have worn is a
+  click away. It holds twelve or 8 MB, drops the oldest as new ones arrive,
+  files nothing twice, and can be emptied outright
+- **Authentication prompts** — Lucid is the session's polkit agent, so every
+  request for an administrator on the machine comes up in the shell's own
+  dialog rather than KDE's. polkitd and PAM are still the backend; the dialog
+  names the action, shows which account's password it wants (with the picture
+  from the Users page) and lets you pick a different administrator when polkit
+  will accept more than one
+- **Lock screen** — a real `WlSessionLock` that checks the password through
+  PAM, laid out the way Material You lays out a lock screen: an oversized
+  two-line clock in the wallpaper's own colour, the weather, battery, network
+  and Bluetooth at a glance, what is playing, the notifications and a power bar
+  that asks before it logs you out. Start typing and it focuses — the wallpaper
+  blurs further and everything but the sign-in card steps back. It counts your
+  remaining tries against faillock, warns about Caps Lock, shows the keyboard
+  layout, and will not let a notification launch anything while it is up
 - **Emoji picker** — emoji, kaomoji and GIFs (Giphy or Tenor), with recents,
   favourites and skin-tone variants; pastes into the focused window
 - **Screenshots** — region select, full screen, and screen recording with
@@ -433,10 +458,15 @@ Hyprland reload.
   `hypridle.conf.pre-lucid`, so nothing is lost. Scriptable with
   `qs ipc call idle status | keepawake | on | off | restart`
 - **Environment** — an *Environment* page that owns the desktop's appearance
-  outside the shell. Cursor theme and size, icon theme, GTK theme, light or
-  dark, the Qt style, and the interface, application, document and monospace
-  fonts. The point is that one choice reaches everywhere: each change is
-  written to GTK 2, 3 and 4, to `gsettings`, to the XCursor fallback theme, to
+  outside the shell. Cursor theme, size and shadow, icon theme, GTK theme,
+  light or dark, the Qt style, and the interface, application, document and
+  monospace fonts. *Pointer shadow* has no compositor switch behind it — the
+  shade is painted into the cursor theme's own images — so turning it off
+  renders the theme again from its vector sources into
+  `~/.local/share/icons/<theme>-noshadow`, copying the original's sizes,
+  hotspots and frame delays exactly, and points everything at that copy.
+  The point is that one choice reaches everywhere: each change is written
+  to GTK 2, 3 and 4, to `gsettings`, to the XCursor fallback theme, to
   qt5ct and qt6ct, and to Hyprland's env module, and `hyprctl setcursor` runs
   so the pointer changes under your hand rather than at the next login. The dock
   picks a new icon theme up the moment you choose it — Qt only reads the icon
@@ -462,8 +492,9 @@ Hyprland reload.
   dock, the volume popup and the toasts — sits on whichever display you pick,
   and widgets with no display of their own follow it; the bar and the dock can
   each be sent to a display of their own if you would rather have them apart.
-  The wallpaper, the desktop menu and the lock screen are drawn on all of them
-  either way. Unplug the
+  The wallpaper and the desktop menu are drawn on all of them either way, and
+  so is the lock screen — though only the display the shell is on carries the
+  password field; the rest show the clock. Unplug the
   display it was pinned to and it moves to one that is left, without losing the
   pick, so plugging back in puts it back. It all becomes monitor rules in
   `~/.config/hypr/lucid-monitors.lua`, applied without a reload, and a display is
@@ -573,10 +604,11 @@ you know what's being pulled in.
 | `tesseract`, `tesseract-data-eng` | The Text mode's OCR. Without them Text mode says so and copies nothing. Add `tesseract-data-<lang>` and set `ocrLang` in `lucidshot/Screenshot.qml` for another language |
 | `python-pillow`, `python-numpy`, `python-fonttools` | Emoji in copied text. Without them the text still copies, minus the emoji. The glyph atlas is built once and cached in `~/.cache/lucidshot-ocr`; `lucidshot/emoji-ocr.py --atlas` builds it up front so the first copy is not slow |
 | `wl-clipboard`, `wtype` | Emoji and GIF pasting |
+| `cliphist` | Clipboard history. Without it the launcher's Clipboard mode says so and the Dock page's switch is greyed out |
 | `cava` | Audio visualisers — the media panel's strip (its config is installed to `~/.config/cava/quickshell.conf`; the strip needs that file's raw-ascii output settings) and the desktop widget, which writes its own `~/.cache/quickshell/lucid-cava.conf` at whatever band count the widest card asks for |
 | `songrec` | Song identification |
 | `curl` | Weather, location lookup and GIF search |
-| `polkit-kde-agent` | The password prompt when Date & Time sets the system time zone. Any polkit authentication agent will do; without one running, `timedatectl` refuses and the page says so |
+| `polkit` | Every administrator prompt. The shell registers itself as the session's authentication agent and drives polkit's own setuid helper, so no separate agent is needed — and no other agent should be started, as only one can hold the session |
 | `libnotify` | Notification actions |
 | `swappy` | The "Open" action on a screenshot notification |
 | `hyprpicker` | The Colour mode. Without it the mode says so and picks nothing |
@@ -641,14 +673,14 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 
 | Target | Functions |
 | --- | --- |
-| `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `search <query>` |
+| `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `clipboard` `search <query>` |
 | `settings` | `toggle` `open` `close` `show <page>` `general` `bar` `dock` `environment` `widgets` `workspaces` `notifications` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
 | `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
 | `network` | `status` `list` `rescan` |
 | `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |
 | `widgets` | `add <type> <variant>` `remove <uid>` `clear` `toggle` `lock` `unlock` `list` `catalogue` `settings` `resize <uid> <w> <h>` |
 | `moji` | `toggle` `open` `close` `emoji` `kaomoji` `gif` `center` |
-| `lock` | `lock` `unlock` `isLocked` |
+| `lock` | `lock` `unlock` `isLocked` `status` — nothing here bypasses the password; PAM is the only way in |
 | `snap` | `toggle` `open` `close` `text` `color` |
 | `toast` | `show <icon> <label>` `warn <icon> <label>` |
 | `screenshot` | `full` `text` |
@@ -656,6 +688,7 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | `workspaces` | `toggle` `open` `close` |
 | `updates` | `status` `check` |
 | `displays` | `list` `settings` `shell <where>` `bar <where>` `dock <where>` — *where* is an output name, `left`/`middle`/`right`, `here`, `next`, `prev` or `auto` |
+| `polkit` | `status` `demo <action-id>` `fail` `grant` `close` — `demo` raises the dialog with no PAM session behind it, for previewing a theme |
 | `debug` | `toggle` `on` `off` — draws input and blur region outlines |
 
 ## Uninstall
@@ -733,6 +766,28 @@ layerrule = xray 1, quickshell
 
 **Icons look blurry.** A fractional `monitor` scale factor puts icons on
 fractional pixels. Use an integer scale, or adjust the icon size in Settings.
+
+**Animations feel choppy on an NVIDIA card, even at 144Hz or higher.** Qt's
+Wayland plugin refuses threaded OpenGL on the proprietary NVIDIA driver — that
+is its workaround for [QTBUG-95817](https://bugreports.qt.io/browse/QTBUG-95817)
+— so Qt Quick falls back to the basic render loop, whose animation driver is a
+fixed ~16ms timer with no vsync awareness. Every animation in the shell is then
+pinned to ~60fps however fast the monitor runs, which is why Hyprland stays
+smooth while Lucid does not.
+
+Lucid starts through `~/.config/lucid/launch-shell.sh`, which moves those
+machines to Qt's Vulkan backend — Vulkan carries no such vendor check, so the
+threaded loop and its vsync-driven animations come back. Ask it what it decided:
+
+```sh
+~/.config/lucid/launch-shell.sh --explain
+```
+
+It only switches when NVIDIA is the GPU the compositor actually renders on, the
+driver is 555 or newer, and an NVIDIA Vulkan driver is present. Mesa already
+gets the threaded loop and is left alone. Override the detection with
+`LUCID_RHI_BACKEND=vulkan` or `LUCID_RHI_BACKEND=opengl`; an existing
+`QSG_RHI_BACKEND` in your environment always wins.
 
 **A keybind with an argument does nothing.** Add `--` before the target:
 `qs ipc call -- settings show bar`. Without it `qs` parses the argument as its

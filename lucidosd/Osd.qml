@@ -26,6 +26,16 @@ PanelWindow {
     property bool capsLock: false
     property bool numLock: false
     property bool kbInitialized: false
+
+    // m3 shape, spacing and slider metrics, shared with lucidbar/System.qml
+    readonly property int cardPadX: 16
+    readonly property int badgeSize: 44
+    readonly property int cardGap: 14
+    readonly property int trackWidth: 200
+    readonly property int readoutWidth: 50
+    readonly property int glyphSize: 22
+
+    // level 0 is the slash-free glyph: the badge draws its own slash
     readonly property var volumeIconLevels: [{
         "max": 0,
         "path": "M7 9v6h4l5 5V4l-5 5H7z"
@@ -38,26 +48,22 @@ PanelWindow {
     }]
     readonly property var brightnessIconLevels: [{
         "max": 33,
-        "path": "M12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"
+        "path": "M20 15.31L23.31 12 20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"
     }, {
         "max": 66,
-        "path": "M12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM12 1a1 1 0 0 1 1 1v1.5a1 1 0 1 1-2 0V2a1 1 0 0 1 1-1Zm0 18.5a1 1 0 0 1 1 1V22a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1ZM1 12a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H2a1 1 0 0 1-1-1Zm18.5 0a1 1 0 0 1 1-1H22a1 1 0 1 1 0 2h-1.5a1 1 0 0 1-1-1Z"
+        "path": "M20 15.31L23.31 12 20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69zM12 18V6c3.31 0 6 2.69 6 6s-2.69 6-6 6z"
     }, {
         "max": 100,
-        "path": "M12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM12 1a1 1 0 0 1 1 1v1.5a1 1 0 1 1-2 0V2a1 1 0 0 1 1-1Zm0 18.5a1 1 0 0 1 1 1V22a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1ZM4.22 4.22a1 1 0 0 1 1.41 0l1.06 1.06a1 1 0 1 1-1.41 1.41L4.22 5.63a1 1 0 0 1 0-1.41Zm12.6 12.6a1 1 0 0 1 1.41 0l1.06 1.06a1 1 0 0 1-1.41 1.41l-1.06-1.06a1 1 0 0 1 0-1.41ZM1 12a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H2a1 1 0 0 1-1-1Zm18.5 0a1 1 0 0 1 1-1H22a1 1 0 1 1 0 2h-1.5a1 1 0 0 1-1-1ZM4.22 19.78a1 1 0 0 1 0-1.41l1.06-1.06a1 1 0 1 1 1.41 1.41l-1.06 1.06a1 1 0 0 1-1.41 0Zm12.6-12.6a1 1 0 0 1 0-1.41l1.06-1.06a1 1 0 1 1 1.41 1.41l-1.06 1.06a1 1 0 0 1-1.41 0Z"
+        "path": "M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"
     }]
-    readonly property string micIconPath: "M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
-    readonly property string capsLockIconPath: "M12 4 6 11 18 11Z M6 15h12v2H6Z"
-    readonly property string numLockIconPath: "M7 4h4v4H7Z M13 4h4v4h-4Z M7 10h4v4H7Z M13 10h4v4h-4Z M7 16h4v4H7Z M13 16h4v4h-4Z"
+    readonly property string micIconPath: "M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"
+    readonly property string capsLockIconPath: "M12 8.41 16.59 13 18 11.59l-6-6-6 6L7.41 13 12 8.41ZM6 18h12v-2H6Z"
+    readonly property string numLockIconPath: "M4.9 6.6a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0 -3.4 0M10.3 6.6a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0 -3.4 0M15.7 6.6a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0 -3.4 0M4.9 12a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0 -3.4 0M10.3 12a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0 -3.4 0M15.7 12a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0 -3.4 0M4.9 17.4a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0 -3.4 0M10.3 17.4a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0 -3.4 0M15.7 17.4a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0 -3.4 0"
     readonly property bool isLevelType: osdWindow.oscType === "volume" || osdWindow.oscType === "brightness"
     readonly property bool badgeActive: osdWindow.toggleState
-    readonly property bool showMuteSlash: osdWindow.oscType === "mic" && !osdWindow.toggleState
-    readonly property string currentIconPath: {
+    readonly property bool showMuteSlash: (osdWindow.oscType === "mic" && !osdWindow.toggleState) || (osdWindow.oscType === "volume" && osdWindow.levelMuted)
+    readonly property string toggleIconPath: {
         switch (osdWindow.oscType) {
-        case "volume":
-            return osdWindow.levelMuted ? osdWindow.volumeIconLevels[0].path : osdWindow.volumeIconFor(osdWindow.levelValue);
-        case "brightness":
-            return osdWindow.brightnessIconFor(osdWindow.levelValue);
         case "mic":
             return osdWindow.micIconPath;
         case "capslock":
@@ -84,52 +90,60 @@ PanelWindow {
             return "";
         }
     }
-    readonly property string currentStateText: {
+    // the lock keys show the letters the next keystroke makes rather than a word
+    readonly property string toggleOnText: {
         switch (osdWindow.oscType) {
         case "mic":
-            return osdWindow.toggleState ? "Unmuted" : "Muted";
+            return "Unmuted";
         case "capslock":
+            return "ABC";
         case "numlock":
-            return osdWindow.toggleState ? "On" : "Off";
+            return "123";
         default:
             return "";
         }
     }
-
-    function volumeIconFor(pct) {
-        for (var i = 0; i < osdWindow.volumeIconLevels.length; i++) {
-            if (pct <= osdWindow.volumeIconLevels[i].max)
-                return osdWindow.volumeIconLevels[i].path;
-
+    readonly property string toggleOffText: {
+        switch (osdWindow.oscType) {
+        case "mic":
+            return "Muted";
+        case "capslock":
+            return "abc";
+        case "numlock":
+            return "Arrows";
+        default:
+            return "";
         }
-        return osdWindow.volumeIconLevels[osdWindow.volumeIconLevels.length - 1].path;
     }
+    readonly property color toggleOffColor: osdWindow.oscType === "mic" ? Theme.error : Theme.subtextDim
 
-    function brightnessIconFor(pct) {
-        for (var i = 0; i < osdWindow.brightnessIconLevels.length; i++) {
-            if (pct <= osdWindow.brightnessIconLevels[i].max)
-                return osdWindow.brightnessIconLevels[i].path;
-
-        }
-        return osdWindow.brightnessIconLevels[osdWindow.brightnessIconLevels.length - 1].path;
-    }
-
-    readonly property int enterMs: Theme.ms(200)
-    readonly property int exitMs: Theme.ms(160)
-
+    // the params have to be set before the flag flips: a Behavior reads the
+    // previous value of anything its animation binds to
     function setCardVisible(v) {
-        cardFade.duration = v ? osdWindow.enterMs : osdWindow.exitMs;
-        cardFade.easing.type = v ? Easing.OutCubic : Easing.InCubic;
-        cardPop.duration = v ? osdWindow.enterMs : osdWindow.exitMs;
-        cardPop.easing.type = v ? Easing.OutBack : Easing.InCubic;
+        cardFade.duration = v ? Theme.durEnter : Theme.durExit;
+        cardFade.easing.bezierCurve = v ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
+        cardRise.duration = v ? Theme.durEnter : Theme.durExit;
+        cardRise.easing.bezierCurve = v ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
+        cardPop.duration = v ? Theme.durEnter : Theme.durExit;
+        if (v) {
+            cardPop.easing.type = Easing.OutBack;
+            cardPop.easing.overshoot = Theme.emphasizedOvershoot;
+        } else {
+            cardPop.easing.bezierCurve = Theme.easeEmphasizedAccel;
+            cardPop.easing.type = Easing.Bezier;
+        }
         osdWindow.cardVisible = v;
     }
 
     function trigger() {
         osdWindow.setCardVisible(true);
         hideTimer.restart();
-        pulseAnim.restart();
-        levelPulseAnim.restart();
+        if (osdWindow.isLevelType)
+            levelPulseAnim.restart();
+        else if (osdWindow.oscType === "mic")
+            pulseAnim.restart();
+        else
+            nudgeAnim.restart();
     }
 
     function showVolume() {
@@ -170,9 +184,9 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     // remapped with the rest of the shell when displays change
     visible: Monitors.surfacesUp
-    implicitWidth: 420
-    implicitHeight: 110
-    margins.bottom: 110
+    implicitWidth: 480
+    implicitHeight: 140
+    margins.bottom: 96
     Component.onCompleted: findDeviceProc.running = true
     onBacklightDeviceChanged: {
         if (backlightDevice !== "")
@@ -329,211 +343,249 @@ PanelWindow {
     Rectangle {
         id: card
 
+        readonly property int levelWidth: osdWindow.cardPadX * 2 + osdWindow.badgeSize + osdWindow.cardGap * 2 + osdWindow.trackWidth + osdWindow.readoutWidth
+        readonly property int toggleWidth: osdWindow.cardPadX * 2 + osdWindow.badgeSize + osdWindow.cardGap + Math.ceil(Math.max(labelMetrics.advanceWidth, stateFlip.width))
+
         anchors.centerIn: parent
-        height: 64
-        width: osdWindow.isLevelType ? (levelSlider.width + 30) : (innerRow.implicitWidth + 30)
-        radius: 32
+        anchors.verticalCenterOffset: osdWindow.cardVisible ? 0 : 16
+        height: 76
+        width: osdWindow.isLevelType ? card.levelWidth : card.toggleWidth
+        radius: Theme.shapeXlInc
         color: Theme.bg
         opacity: osdWindow.cardVisible ? 1 : 0
-        scale: osdWindow.cardVisible ? 1 : 0.82
+        scale: osdWindow.cardVisible ? 1 : 0.9
         visible: opacity > 0.15
 
-        Row {
-            id: innerRow
+        TextMetrics {
+            id: labelMetrics
 
-            visible: !osdWindow.isLevelType
-            anchors.centerIn: parent
-            spacing: 14
+            text: osdWindow.currentLabel.toUpperCase()
+            font.family: Theme.fontFamily
+            font.bold: true
+            font.pixelSize: Theme.fontLabelSm
+            font.letterSpacing: 1.2
+        }
 
-            Rectangle {
-                id: iconBadge
+        Rectangle {
+            id: iconBadge
 
-                width: 40
-                height: 40
-                radius: 20
-                anchors.verticalCenter: parent.verticalCenter
-                color: osdWindow.badgeActive ? Theme.accent : Theme.withBlur(Theme.bgHigh)
+            anchors.left: parent.left
+            anchors.leftMargin: osdWindow.cardPadX
+            anchors.verticalCenter: parent.verticalCenter
+            width: osdWindow.badgeSize
+            height: osdWindow.badgeSize
+            radius: Theme.shapeFull
+            color: osdWindow.badgeActive ? Theme.accent : Theme.withBlur(Theme.bgHigh)
 
-                Item {
-                    id: iconWrap
-
-                    anchors.centerIn: parent
-                    width: 20
-                    height: 20
-
-                    Shape {
-                        width: 24
-                        height: 24
-                        scale: 20 / 24
-                        anchors.centerIn: parent
-                        preferredRendererType: Shape.CurveRenderer
-
-                        ShapePath {
-                            fillColor: osdWindow.badgeActive ? Theme.fgAccent : Theme.text
-                            strokeWidth: 0
-
-                            PathSvg {
-                                path: osdWindow.currentIconPath
-                            }
-
-                        }
-
-                    }
-
-                    Rectangle {
-                        visible: osdWindow.showMuteSlash
-                        anchors.centerIn: parent
-                        width: parent.width * 1.3
-                        height: 1.6
-                        radius: 1
-                        rotation: 45
-                        color: Theme.error
-                    }
-
-                }
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.ms(200)
-                    }
-
-                }
-
+            MorphIcon {
+                anchors.centerIn: parent
+                visible: osdWindow.isLevelType
+                levels: osdWindow.oscType === "brightness" ? osdWindow.brightnessIconLevels : osdWindow.volumeIconLevels
+                value: osdWindow.levelMuted ? 0 : osdWindow.levelValue
+                tint: osdWindow.badgeActive ? "black" : (osdWindow.levelMuted ? Theme.error : Theme.text)
+                iconSize: osdWindow.glyphSize
             }
 
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 5
+            SvgIcon {
+                id: toggleGlyph
 
-                Text {
-                    text: osdWindow.currentLabel
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.bold: true
-                    font.pixelSize: Theme.fs(13)
-                }
+                anchors.centerIn: parent
+                visible: !osdWindow.isLevelType
+                path: osdWindow.toggleIconPath
+                tint: osdWindow.badgeActive ? "black" : Theme.text
+                iconSize: osdWindow.glyphSize
+            }
 
-                Text {
-                    text: osdWindow.currentStateText
-                    color: osdWindow.toggleState ? Theme.accent : Theme.subtextDim
-                    font.family: Theme.fontFamily
-                    font.bold: true
-                    font.pixelSize: Theme.fs(11)
+            // a cut in the badge colour, so the slash reads as a gap
+            // through the glyph rather than a line laid over it
+            Rectangle {
+                visible: osdWindow.showMuteSlash
+                anchors.centerIn: parent
+                width: osdWindow.glyphSize * 1.3 + 4
+                height: 5
+                rotation: 45
+                color: iconBadge.color
+            }
+
+            Rectangle {
+                visible: osdWindow.showMuteSlash
+                anchors.centerIn: parent
+                width: osdWindow.glyphSize * 1.3
+                height: 1.6
+                radius: 1
+                rotation: 45
+                color: Theme.error
+            }
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.durShort
                 }
 
             }
 
         }
 
+        // overline + slider, the m3 list-item anatomy System.qml's SliderRow uses
+        Column {
+            visible: osdWindow.isLevelType
+            anchors.left: iconBadge.right
+            anchors.leftMargin: osdWindow.cardGap
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 7
+
+            Text {
+                text: osdWindow.currentLabel.toUpperCase()
+                color: Theme.subtextDim
+                font.family: Theme.fontFamily
+                font.bold: true
+                font.pixelSize: Theme.fontLabelSm
+                font.letterSpacing: 1.2
+            }
+
+            LevelTrack {
+                id: levelTrack
+
+                width: osdWindow.trackWidth
+                value: osdWindow.levelValue
+                muted: osdWindow.levelMuted
+                animated: card.visible
+            }
+
+        }
+
         Item {
-            id: levelSlider
+            id: readout
 
             visible: osdWindow.isLevelType
-            width: 220
-            height: 40
-            anchors.centerIn: parent
+            width: osdWindow.readoutWidth
+            height: 28
+            anchors.right: parent.right
+            anchors.rightMargin: osdWindow.cardPadX
+            anchors.verticalCenter: parent.verticalCenter
 
-            Rectangle {
-                anchors.left: parent.left
+            Text {
+                id: pctSign
+
                 anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: 2
-                radius: 1
-                color: Theme.withBlur(Theme.outline)
+                anchors.baseline: pctNum.baseline
+                text: "%"
+                color: Theme.subtextDim
+                font.family: Theme.fontFamily
+                font.bold: true
+                font.pixelSize: Theme.fontLabelSm
             }
 
-            Rectangle {
-                id: levelFill
+            Text {
+                id: pctNum
 
-                anchors.left: parent.left
+                anchors.right: pctSign.left
+                anchors.rightMargin: 2
                 anchors.verticalCenter: parent.verticalCenter
-                height: parent.height
-                radius: height / 2
-                color: osdWindow.levelMuted ? Theme.withBlur(Theme.bgHigh) : Theme.accent
+                text: Math.round(levelTrack.value)
+                color: osdWindow.levelMuted ? Theme.subtextDim : Theme.text
+                font.family: Theme.fontFamily
+                font.bold: true
+                font.pixelSize: Theme.fontTitleLg
+            }
+
+        }
+
+        Column {
+            visible: !osdWindow.isLevelType
+            anchors.left: iconBadge.right
+            anchors.leftMargin: osdWindow.cardGap
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 5
+
+            Text {
+                text: osdWindow.currentLabel.toUpperCase()
+                color: Theme.subtextDim
+                font.family: Theme.fontFamily
+                font.bold: true
+                font.pixelSize: Theme.fontLabelSm
+                font.letterSpacing: 1.2
+            }
+
+            // off sits above on, so flipping rolls the column up one line
+            Item {
+                id: stateFlip
+
+                readonly property int lineHeight: Math.ceil(offMetrics.height)
+
+                width: Math.ceil(Math.max(onMetrics.advanceWidth, offMetrics.advanceWidth))
+                height: stateFlip.lineHeight
                 clip: true
-                width: osdWindow.levelMuted ? height : Math.max(height, parent.width * (osdWindow.levelValue / 100))
 
-                Text {
-                    id: levelPercentLabel
+                TextMetrics {
+                    id: onMetrics
 
-                    anchors.left: parent.left
-                    anchors.leftMargin: 12
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: osdWindow.levelMuted ? "" : Math.round(osdWindow.levelValue) + "%"
-                    color: osdWindow.levelMuted ? Theme.text : Theme.fgAccent
+                    text: osdWindow.toggleOnText
                     font.family: Theme.fontFamily
                     font.bold: true
-                    font.pixelSize: Theme.fs(14)
-                    opacity: (levelFill.width - 12 - width - levelIconWrap.width - 8) > 0 ? 1 : 0
+                    font.pixelSize: Theme.fontTitleSm
+                }
 
-                    Behavior on opacity {
+                TextMetrics {
+                    id: offMetrics
+
+                    text: osdWindow.toggleOffText
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                    font.pixelSize: Theme.fontTitleSm
+                }
+
+                Column {
+                    width: parent.width
+                    y: osdWindow.toggleState ? -stateFlip.lineHeight : 0
+
+                    Text {
+                        width: parent.width
+                        height: stateFlip.lineHeight
+                        text: osdWindow.toggleOffText
+                        color: osdWindow.toggleOffColor
+                        font.family: Theme.fontFamily
+                        font.bold: true
+                        font.pixelSize: Theme.fontTitleSm
+                    }
+
+                    Text {
+                        width: parent.width
+                        height: stateFlip.lineHeight
+                        text: osdWindow.toggleOnText
+                        color: Theme.accent
+                        font.family: Theme.fontFamily
+                        font.bold: true
+                        font.pixelSize: Theme.fontTitleSm
+                    }
+
+                    Behavior on y {
+                        enabled: card.visible
+
                         NumberAnimation {
-                            duration: Theme.ms(120)
+                            duration: Theme.durMedium
+                            easing.type: Easing.Bezier
+                            easing.bezierCurve: Theme.easeEmphasizedDecel
                         }
 
-                    }
-
-                }
-
-                Item {
-                    id: levelIconWrap
-
-                    width: 20
-                    height: 20
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: parent.right
-                    anchors.rightMargin: 10
-
-                    Shape {
-                        width: 24
-                        height: 24
-                        scale: 20 / 24
-                        anchors.centerIn: parent
-                        preferredRendererType: Shape.CurveRenderer
-
-                        ShapePath {
-                            fillColor: osdWindow.levelMuted ? Theme.text : Theme.fgAccent
-                            strokeWidth: 0
-
-                            PathSvg {
-                                path: osdWindow.currentIconPath
-                            }
-
-                        }
-
-                    }
-
-                    Rectangle {
-                        visible: osdWindow.levelMuted
-                        anchors.centerIn: parent
-                        width: parent.width * 1.3
-                        height: 1.6
-                        radius: 1
-                        rotation: 45
-                        color: Theme.error
-                    }
-
-                }
-
-                Behavior on width {
-                    enabled: card.visible
-
-                    NumberAnimation {
-                        duration: Theme.ms(200)
-                        easing.type: Easing.OutCubic
-                    }
-
-                }
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.ms(200)
                     }
 
                 }
 
             }
 
+        }
+
+        NumberAnimation {
+            id: nudgeAnim
+
+            target: toggleGlyph
+            property: "anchors.verticalCenterOffset"
+            from: osdWindow.toggleState ? 7 : -7
+            to: 0
+            duration: Theme.durLong
+            easing.type: Easing.OutBack
+            easing.overshoot: 2.4
         }
 
         SequentialAnimation {
@@ -543,37 +595,42 @@ PanelWindow {
                 target: iconBadge
                 property: "scale"
                 to: 1.12
-                duration: Theme.ms(90)
-                easing.type: Easing.OutCubic
+                duration: Theme.durQuick
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easeEmphasizedDecel
             }
 
             NumberAnimation {
                 target: iconBadge
                 property: "scale"
                 to: 1
-                duration: Theme.ms(180)
-                easing.type: Easing.OutCubic
+                duration: Theme.durShort
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easeEmphasizedDecel
             }
 
         }
 
+        // the handle answers the keypress, the way an m3 slider answers a press
         SequentialAnimation {
             id: levelPulseAnim
 
             NumberAnimation {
-                target: levelIconWrap
-                property: "scale"
-                to: 1.18
-                duration: Theme.ms(90)
-                easing.type: Easing.OutCubic
+                target: levelTrack
+                property: "handleStretch"
+                to: 8
+                duration: Theme.durQuick
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easeEmphasizedDecel
             }
 
             NumberAnimation {
-                target: levelIconWrap
-                property: "scale"
-                to: 1
-                duration: Theme.ms(180)
-                easing.type: Easing.OutCubic
+                target: levelTrack
+                property: "handleStretch"
+                to: 0
+                duration: Theme.durMedium
+                easing.type: Easing.OutBack
+                easing.overshoot: Theme.emphasizedOvershoot
             }
 
         }
@@ -582,8 +639,9 @@ PanelWindow {
             enabled: card.visible
 
             NumberAnimation {
-                duration: Theme.ms(220)
-                easing.type: Easing.OutCubic
+                duration: Theme.durMedium
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easeEmphasizedDecel
             }
 
         }
@@ -592,8 +650,9 @@ PanelWindow {
             NumberAnimation {
                 id: cardFade
 
-                duration: osdWindow.enterMs
-                easing.type: Easing.OutCubic
+                duration: Theme.durEnter
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easeEmphasizedDecel
             }
 
         }
@@ -602,9 +661,20 @@ PanelWindow {
             NumberAnimation {
                 id: cardPop
 
-                duration: osdWindow.enterMs
+                duration: Theme.durEnter
                 easing.type: Easing.OutBack
-                easing.overshoot: 1.6
+                easing.overshoot: Theme.emphasizedOvershoot
+            }
+
+        }
+
+        Behavior on anchors.verticalCenterOffset {
+            NumberAnimation {
+                id: cardRise
+
+                duration: Theme.durEnter
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easeEmphasizedDecel
             }
 
         }
@@ -612,6 +682,193 @@ PanelWindow {
     }
 
     mask: Region {
+    }
+
+    component SvgIcon: Item {
+        id: iconRoot
+
+        property string path: ""
+        property color tint: Theme.text
+        property int iconSize: 16
+
+        width: iconSize
+        height: iconSize
+
+        Shape {
+            width: 24
+            height: 24
+            scale: iconRoot.iconSize / 24
+            anchors.centerIn: parent
+            preferredRendererType: Shape.CurveRenderer
+
+            ShapePath {
+                fillColor: iconRoot.tint
+                strokeWidth: 0
+
+                PathSvg {
+                    path: iconRoot.path
+                }
+
+            }
+
+        }
+
+    }
+
+    // the glyph crossfades between levels instead of snapping
+    component MorphIcon: Item {
+        id: morphIcon
+
+        property var levels: []
+        property real value: 0
+        property color tint: Theme.text
+        property int iconSize: 16
+        readonly property int activeIndex: {
+            for (let i = 0; i < morphIcon.levels.length; i++) {
+                if (morphIcon.value <= morphIcon.levels[i].max)
+                    return i;
+
+            }
+            return morphIcon.levels.length - 1;
+        }
+
+        width: iconSize
+        height: iconSize
+
+        Repeater {
+            model: morphIcon.levels
+
+            Shape {
+                id: levelShape
+
+                required property int index
+                required property var modelData
+
+                width: 24
+                height: 24
+                scale: morphIcon.iconSize / 24
+                anchors.centerIn: parent
+                preferredRendererType: Shape.CurveRenderer
+                opacity: morphIcon.activeIndex === levelShape.index ? 1 : 0
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Theme.durShort
+                        easing.type: Easing.OutCubic
+                    }
+
+                }
+
+                ShapePath {
+                    fillColor: morphIcon.tint
+                    strokeWidth: 0
+
+                    PathSvg {
+                        path: levelShape.modelData.path
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    // m3 slider anatomy: 16dp tracks notched 6dp either side of a 4dp handle,
+    // squared off where they meet it, stop indicator on the inactive end
+    component LevelTrack: Item {
+        id: lt
+
+        property real value: 0
+        property bool muted: false
+        property bool animated: false
+        property real handleStretch: 0
+        readonly property int handleW: 4
+        readonly property int trackH: 16
+        readonly property int notch: 6
+        readonly property real pos: Math.max(0, Math.min(1, lt.value / 100))
+        readonly property real handleX: lt.pos * Math.max(0, lt.width - lt.handleW)
+        readonly property color liveColor: lt.muted ? Theme.outlineStrong : Theme.accent
+
+        height: 28
+
+        Behavior on value {
+            enabled: lt.animated
+
+            NumberAnimation {
+                duration: Theme.durShort
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easeEmphasizedDecel
+            }
+
+        }
+
+        Rectangle {
+            id: activeTrack
+
+            x: 0
+            anchors.verticalCenter: parent.verticalCenter
+            // below a couple of px the rounded stub reads as an artifact
+            visible: activeTrack.width > 2
+            width: Math.max(0, lt.handleX - lt.notch)
+            height: lt.trackH
+            radius: lt.trackH / 2
+            topRightRadius: 2
+            bottomRightRadius: 2
+            color: lt.liveColor
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.durShort
+                }
+
+            }
+
+        }
+
+        Rectangle {
+            id: inactiveTrack
+
+            x: Math.min(lt.width, lt.handleX + lt.handleW + lt.notch)
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.max(0, lt.width - inactiveTrack.x)
+            height: lt.trackH
+            radius: lt.trackH / 2
+            topLeftRadius: 2
+            bottomLeftRadius: 2
+            color: Theme.withBlur(Theme.bgHigh)
+
+            Rectangle {
+                visible: inactiveTrack.width > 16
+                anchors.right: parent.right
+                anchors.rightMargin: 6
+                anchors.verticalCenter: parent.verticalCenter
+                width: 4
+                height: 4
+                radius: 2
+                color: Theme.outlineStrong
+            }
+
+        }
+
+        Rectangle {
+            x: lt.handleX
+            anchors.verticalCenter: parent.verticalCenter
+            width: lt.handleW
+            height: lt.trackH + 12 + lt.handleStretch
+            radius: lt.handleW / 2
+            color: lt.liveColor
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.durShort
+                }
+
+            }
+
+        }
+
     }
 
 }

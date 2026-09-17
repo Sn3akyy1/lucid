@@ -69,6 +69,28 @@ Column {
         }
 
         SettingRow {
+            title: "How many at once"
+            resetKey: "toastMaxVisible"
+            enabled: Prefs.showNotifications && Prefs.toastEnabled
+            disabledReason: "Popups are switched off."
+            description: "A burst of notifications stacks under the bar. Anything past this waits in the list instead."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 1
+                to: 6
+                stepSize: 1
+                enabled: Prefs.showNotifications && Prefs.toastEnabled
+                value: Prefs.toastMaxVisible
+                onMoved: (v) => {
+                    return Prefs.toastMaxVisible = v;
+                }
+            }
+
+        }
+
+        SettingRow {
             title: "How long one stays"
             resetKey: "toastTimeout"
             enabled: Prefs.showNotifications && Prefs.toastEnabled
@@ -170,13 +192,30 @@ Column {
             enabled: Prefs.showNotifications && Prefs.toastEnabled
             disabledReason: "Popups are switched off."
             description: "Reply, Open, Snooze — whatever the application offers, on the popup itself. They are always in the list."
-            showDivider: false
 
             M3Switch {
                 checked: Prefs.toastShowActions
                 enabled: Prefs.showNotifications && Prefs.toastEnabled
                 onToggled: (v) => {
                     return Prefs.toastShowActions = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Reply without switching"
+            resetKey: "notifInlineReply"
+            enabled: Prefs.showNotifications
+            disabledReason: "Notifications are switched off, so nothing is shown or collected."
+            description: "Chat applications that support it get a message box on the notification itself, so you can answer without leaving what you are doing."
+            showDivider: false
+
+            M3Switch {
+                checked: Prefs.notifInlineReply
+                enabled: Prefs.showNotifications
+                onToggled: (v) => {
+                    return Prefs.notifInlineReply = v;
                 }
             }
 
@@ -406,6 +445,48 @@ Column {
                 checked: Prefs.notifShowIcons
                 onToggled: (v) => {
                     return Prefs.notifShowIcons = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Group by application"
+            resetKey: "notifGrouping"
+            description: "One application's notifications collapse into a single stack you can open, instead of filling the list one by one."
+
+            M3Switch {
+                checked: Prefs.notifGrouping
+                onToggled: (v) => {
+                    return Prefs.notifGrouping = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Show times"
+            resetKey: "notifTimestamps"
+            description: "How long ago each one arrived, beside the application's name, and a heading splitting new ones from the rest."
+
+            M3Switch {
+                checked: Prefs.notifTimestamps
+                onToggled: (v) => {
+                    return Prefs.notifTimestamps = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Show progress"
+            resetKey: "notifProgress"
+            description: "File copies, downloads and transfers report how far along they are. This draws it as a bar that fills in place."
+
+            M3Switch {
+                checked: Prefs.notifProgress
+                onToggled: (v) => {
+                    return Prefs.notifProgress = v;
                 }
             }
 

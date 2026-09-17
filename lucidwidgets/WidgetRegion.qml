@@ -5,21 +5,25 @@ Region {
     id: reg
 
     property var frame: null
+    property var panel: null
     property bool blur: false
-    // "card" is the widget itself, "menu" the options panel floating beside it
+    // "card" is the widget itself, "menu" the options panel, which lives in a
+    // window of its own and so reports its own geometry
     property string part: "card"
 
     readonly property bool isMenu: reg.part === "menu"
     // a bare variant draws straight onto the wallpaper, so nothing frosts behind it
     readonly property bool bareCard: !reg.isMenu && reg.frame !== null && reg.frame.bare === true
-    readonly property bool live: reg.frame !== null && !(reg.blur && reg.bareCard) && (reg.isMenu ? reg.frame.menuVisible : (reg.frame.visible && reg.frame.width > 0.5))
+    // the menu window is only up while the panel is, so its region tracks size,
+    // not visibility: an empty region would have Hyprland blur the whole layer
+    readonly property bool live: reg.isMenu ? (reg.panel !== null && reg.panel.width > 0.5 && reg.panel.height > 0.5) : (reg.frame !== null && !(reg.blur && reg.bareCard) && reg.frame.visible && reg.frame.width > 0.5)
     // the compositor's blur mask needs a horizontal hair of inset or the edge crawls
     readonly property real inset: reg.blur ? 1 : 0
-    readonly property real bx: !reg.live ? 0 : (reg.isMenu ? reg.frame.menuX : reg.frame.x + reg.frame.surfaceX)
-    readonly property real by: !reg.live ? 0 : (reg.isMenu ? reg.frame.menuY : reg.frame.y + reg.frame.surfaceY)
-    readonly property real bw: !reg.live ? 0 : (reg.isMenu ? reg.frame.menuW : reg.frame.surfaceWidth)
-    readonly property real bh: !reg.live ? 0 : (reg.isMenu ? reg.frame.menuH : reg.frame.surfaceHeight)
-    readonly property int rad: !reg.live ? 0 : (reg.isMenu ? reg.frame.menuRadius : reg.frame.surfaceRadius)
+    readonly property real bx: !reg.live ? 0 : (reg.isMenu ? reg.panel.x : reg.frame.x + reg.frame.surfaceX)
+    readonly property real by: !reg.live ? 0 : (reg.isMenu ? reg.panel.y : reg.frame.y + reg.frame.surfaceY)
+    readonly property real bw: !reg.live ? 0 : (reg.isMenu ? reg.panel.width : reg.frame.surfaceWidth)
+    readonly property real bh: !reg.live ? 0 : (reg.isMenu ? reg.panel.height : reg.frame.surfaceHeight)
+    readonly property int rad: !reg.live ? 0 : (reg.isMenu ? Theme.radiusLg : reg.frame.surfaceRadius)
 
     function lo(v) {
         return Math.ceil(v - 0.002);

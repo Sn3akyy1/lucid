@@ -15,8 +15,11 @@ PanelWindow {
     property color swatch: "transparent"
     property bool hasSwatch: false
 
-    readonly property int enterMs: Theme.ms(220)
-    readonly property int exitMs: Theme.ms(160)
+    // m3 snackbar metrics: 48dp container, 16dp leading pad, 12dp icon gap
+    readonly property int pillHeight: 48
+    readonly property int pillPad: 16
+    readonly property int iconGap: 12
+    readonly property int glyphSize: 20
 
     // named icons so a caller (or a shell script over ipc) need not pass svg
     readonly property var icons: ({
@@ -35,8 +38,7 @@ PanelWindow {
         toastWindow.hasSwatch = true;
         toastWindow.label = text;
         toastWindow.warn = false;
-        toastWindow.shown = true;
-        hideTimer.restart();
+        toastWindow.popIn();
     }
 
     function popup(icon, text, isWarn) {
@@ -44,8 +46,32 @@ PanelWindow {
         toastWindow.iconPath = toastWindow.icons[icon] || icon || toastWindow.icons["info"];
         toastWindow.label = text;
         toastWindow.warn = isWarn === true;
+        toastWindow.popIn();
+    }
+
+    // the params have to be set before the flag flips: a Behavior reads the
+    // previous value of anything its animation binds to
+    function popIn() {
+        pillFade.duration = Theme.durEnter;
+        pillFade.easing.bezierCurve = Theme.easeEmphasizedDecel;
+        pillDrop.duration = Theme.durEnter;
+        pillDrop.easing.bezierCurve = Theme.easeEmphasizedDecel;
+        pillPop.duration = Theme.durEnter;
+        pillPop.easing.type = Easing.OutBack;
+        pillPop.easing.overshoot = Theme.emphasizedOvershoot;
         toastWindow.shown = true;
         hideTimer.restart();
+    }
+
+    function popOut() {
+        pillFade.duration = Theme.durExit;
+        pillFade.easing.bezierCurve = Theme.easeEmphasizedAccel;
+        pillDrop.duration = Theme.durExit;
+        pillDrop.easing.bezierCurve = Theme.easeEmphasizedAccel;
+        pillPop.duration = Theme.durExit;
+        pillPop.easing.bezierCurve = Theme.easeEmphasizedAccel;
+        pillPop.easing.type = Easing.Bezier;
+        toastWindow.shown = false;
     }
 
     color: "transparent"
@@ -54,7 +80,7 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     implicitWidth: Math.max(160, pill.width + 40)
-    implicitHeight: 84
+    implicitHeight: 88
     margins.top: 10
     BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && toastWindow.visible) ? toastBlur : null
 
@@ -69,7 +95,7 @@ PanelWindow {
         id: hideTimer
 
         interval: 2200
-        onTriggered: toastWindow.shown = false
+        onTriggered: toastWindow.popOut()
     }
 
     Region {
@@ -92,89 +118,108 @@ PanelWindow {
         id: pill
 
         anchors.horizontalCenter: parent.horizontalCenter
-        y: toastWindow.shown ? 18 : 2
-        height: 46
-        width: row.implicitWidth + 36
-        radius: height / 2
+        y: toastWindow.shown ? 20 : 2
+        height: toastWindow.pillHeight
+        width: leadIcon.width + toastWindow.iconGap + Math.ceil(labelMetrics.advanceWidth) + toastWindow.pillPad * 2
+        radius: Theme.shapeFull
         color: Theme.bg
         opacity: toastWindow.shown ? 1 : 0
         scale: toastWindow.shown ? 1 : 0.92
 
+        TextMetrics {
+            id: labelMetrics
+
+            text: toastWindow.label
+            font.family: Theme.fontFamily
+            font.bold: true
+            font.pixelSize: Theme.fontBodyMd
+        }
+
         Behavior on y {
             NumberAnimation {
-                duration: toastWindow.shown ? toastWindow.enterMs : toastWindow.exitMs
-                easing.type: toastWindow.shown ? Easing.OutBack : Easing.InCubic
+                id: pillDrop
+
+                duration: Theme.durEnter
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easeEmphasizedDecel
             }
+
         }
 
         Behavior on opacity {
             NumberAnimation {
-                duration: toastWindow.shown ? toastWindow.enterMs : toastWindow.exitMs
+                id: pillFade
+
+                duration: Theme.durEnter
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easeEmphasizedDecel
             }
+
         }
 
         Behavior on scale {
             NumberAnimation {
-                duration: toastWindow.shown ? toastWindow.enterMs : toastWindow.exitMs
-                easing.type: toastWindow.shown ? Easing.OutBack : Easing.InCubic
+                id: pillPop
+
+                duration: Theme.durEnter
+                easing.type: Easing.OutBack
+                easing.overshoot: Theme.emphasizedOvershoot
             }
+
         }
 
-        Row {
-            id: row
+        Item {
+            id: leadIcon
 
-            anchors.centerIn: parent
-            spacing: 11
+            anchors.left: parent.left
+            anchors.leftMargin: toastWindow.pillPad
+            anchors.verticalCenter: parent.verticalCenter
+            width: toastWindow.glyphSize
+            height: toastWindow.glyphSize
 
-            Item {
-                width: 20
-                height: 20
-                anchors.verticalCenter: parent.verticalCenter
+            Rectangle {
+                visible: toastWindow.hasSwatch
+                anchors.centerIn: parent
+                width: parent.width
+                height: parent.height
+                radius: Theme.shapeFull
+                color: toastWindow.swatch
+                // a near-black pick would vanish into the pill without this
+                border.color: Theme.alpha(Theme.text, 0.25)
+                border.width: 1
+            }
 
-                Rectangle {
-                    visible: toastWindow.hasSwatch
-                    anchors.centerIn: parent
-                    width: 18
-                    height: 18
-                    radius: 9
-                    color: toastWindow.swatch
-                    border.color: Theme.alpha(Theme.text, 0.25)
-                    border.width: 1
-                }
+            Shape {
+                visible: !toastWindow.hasSwatch
+                width: 24
+                height: 24
+                scale: toastWindow.glyphSize / 24
+                anchors.centerIn: parent
+                preferredRendererType: Shape.CurveRenderer
 
-                Shape {
-                    anchors.fill: parent
-                    visible: !toastWindow.hasSwatch
-                    preferredRendererType: Shape.CurveRenderer
+                ShapePath {
+                    fillColor: toastWindow.warn ? Theme.error : Theme.accent
+                    strokeWidth: 0
 
-                    ShapePath {
-                        fillColor: toastWindow.warn ? Theme.error : Theme.accent
-                        strokeWidth: 0
-
-                        PathSvg {
-                            path: toastWindow.iconPath
-                        }
-
-                    }
-
-                    transform: Scale {
-                        xScale: 20 / 24
-                        yScale: 20 / 24
+                    PathSvg {
+                        path: toastWindow.iconPath
                     }
 
                 }
 
             }
 
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: toastWindow.label
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.bold: true
-                font.pixelSize: Theme.fs(13)
-            }
+        }
 
+        Text {
+            anchors.left: leadIcon.right
+            anchors.leftMargin: toastWindow.iconGap
+            anchors.verticalCenter: parent.verticalCenter
+            text: toastWindow.label
+            color: Theme.text
+            font.family: Theme.fontFamily
+            font.bold: true
+            font.pixelSize: Theme.fontBodyMd
         }
 
     }

@@ -37,16 +37,17 @@ Singleton {
     readonly property var barModuleKeys: ["showWorkspaces", "showMedia", "showTray", "showClock", "showNotifications", "showSystem"]
     readonly property var widgetKeys: ["widgetsEnabled", "widgetSnap", "widgetLockAll", "widgetHideFullscreen", "widgetOnTop"]
     readonly property var idleKeys: ["idleDim", "idleDimAfter", "idleDimLevel", "idleDimKeyboard", "idleLock", "idleLockAfter", "idleScreenOff", "idleScreenOffAfter", "idleSuspend", "idleSuspendAfter", "idleSuspendOnAc", "idleLockBeforeSleep", "idleWakeAfterSleep", "idleRespectInhibitors", "idleWhileMedia"]
-    readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envIconTheme", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
+    readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envCursorShadow", "envIconTheme", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
     readonly property var specialKeys: ["specialScratchpad", "specialMusic", "specialComms", "specialTodo", "specialSysmon", "specialMusicApps", "specialCommsApps", "specialTodoApps", "specialSysmonApps", "specialKeepApps", "specialHideOnSwitch", "specialDim"]
     readonly property var glassKeys: ["glassApps", "glassValues"]
     readonly property var monitorKeys: ["monitorSetups", "monitorShellScreen", "monitorBarScreen", "monitorDockScreen"]
-    readonly property var notifKeys: ["toastEnabled", "toastTimeout", "toastUseAppTimeout", "toastCriticalSticky", "toastShowBody", "toastShowActions", "toastBodyLines", "notifShowIcons", "notifMaxHistory", "doNotDisturb", "dndAllowCritical", "dndFullscreen", "quietHours", "quietFrom", "quietTo", "notifSound", "notifSoundName", "notifSoundVolume", "notifSoundUrgentOnly", "notifMutedApps"]
+    readonly property var notifKeys: ["toastEnabled", "toastTimeout", "toastUseAppTimeout", "toastCriticalSticky", "toastShowBody", "toastShowActions", "toastBodyLines", "notifShowIcons", "notifMaxHistory", "doNotDisturb", "dndAllowCritical", "dndFullscreen", "quietHours", "quietFrom", "quietTo", "notifSound", "notifSoundName", "notifSoundVolume", "notifSoundUrgentOnly", "notifMutedApps", "notifGrouping", "notifTimestamps", "notifProgress", "notifInlineReply", "toastMaxVisible"]
 
     property alias barStyle: s.barStyle
     property alias dockStyle: s.dockStyle
     property alias accentPunch: s.accentPunch
     property alias surfaceDarkness: s.surfaceDarkness
+    property alias surfaceTint: s.surfaceTint
     property alias motionScale: s.motionScale
     property alias fontFamily: s.fontFamily
     property alias fontScale: s.fontScale
@@ -55,6 +56,25 @@ Singleton {
     property alias themeOrder: s.themeOrder
     property string currentTheme: "matugen"
     readonly property string wallpaperDir: root.wallpaperDirFor(root.currentTheme)
+    // "dark" | "light". kept in ~/.cache/current_mode beside current_theme
+    // because set-wallpaper.sh and apply-theme.sh have to agree on it too
+    property string colorMode: "dark"
+
+    function setColorMode(mode) {
+        if ((mode !== "dark" && mode !== "light") || mode === root.colorMode)
+            return;
+
+        // set straight away so the control answers the click; the cache file is
+        // what actually confirms it, and the palette lands a moment later
+        root.colorMode = mode;
+        // a light shell beside dark application chrome reads as broken, so apps
+        // follow. the Environment page can still be set back to auto afterwards
+        root.envColorScheme = mode;
+        // Env owns the theme names and knows what is installed, so the matching
+        // GTK and icon variants are swapped there
+        root.colorModeApplied(mode);
+        Quickshell.execDetached([Quickshell.env("HOME") + "/.config/lucid/set-mode.sh", mode]);
+    }
 
     property alias barEnabled: s.barEnabled
     property alias barPopupMode: s.barPopupMode
@@ -101,6 +121,11 @@ Singleton {
     // comma-joined; bracket writes on the adapter are dropped, so both go through the alias
     property alias notifMutedApps: s.notifMutedApps
     property alias notifSeenApps: s.notifSeenApps
+    property alias notifGrouping: s.notifGrouping
+    property alias notifTimestamps: s.notifTimestamps
+    property alias notifProgress: s.notifProgress
+    property alias notifInlineReply: s.notifInlineReply
+    property alias toastMaxVisible: s.toastMaxVisible
 
     property alias dockEnabled: s.dockEnabled
     property alias dockIconSize: s.dockIconSize
@@ -116,6 +141,7 @@ Singleton {
     property alias dockShowTooltips: s.dockShowTooltips
     property alias dockShowRunning: s.dockShowRunning
     property alias dockIconTiles: s.dockIconTiles
+    property alias clipboardEnabled: s.clipboardEnabled
 
     property alias widgetsEnabled: s.widgetsEnabled
     property alias widgetSnap: s.widgetSnap
@@ -180,6 +206,7 @@ Singleton {
     property alias envAdopted: s.envAdopted
     property alias envCursorTheme: s.envCursorTheme
     property alias envCursorSize: s.envCursorSize
+    property alias envCursorShadow: s.envCursorShadow
     property alias envIconTheme: s.envIconTheme
     property alias envGtkTheme: s.envGtkTheme
     property alias envQtStyle: s.envQtStyle
@@ -243,6 +270,7 @@ Singleton {
         "dockStyle": "island",
         "accentPunch": 1,
         "surfaceDarkness": -1,
+        "surfaceTint": -1,
         "motionScale": 1,
         "fontFamily": "Google Sans",
         "fontScale": 1,
@@ -292,6 +320,11 @@ Singleton {
         "notifSoundUrgentOnly": false,
         "notifMutedApps": "",
         "notifSeenApps": "",
+        "notifGrouping": true,
+        "notifTimestamps": true,
+        "notifProgress": true,
+        "notifInlineReply": true,
+        "toastMaxVisible": 3,
         "dockEnabled": true,
         "dockIconSize": 41,
         "dockSpacing": 10,
@@ -306,6 +339,7 @@ Singleton {
         "dockShowTooltips": true,
         "dockShowRunning": true,
         "dockIconTiles": false,
+        "clipboardEnabled": true,
         "widgetsEnabled": true,
         "widgetSnap": true,
         "widgetLockAll": false,
@@ -339,6 +373,7 @@ Singleton {
         "envAdopted": false,
         "envCursorTheme": "",
         "envCursorSize": 24,
+        "envCursorShadow": true,
         "envIconTheme": "",
         "envGtkTheme": "",
         "envQtStyle": "Fusion",
@@ -391,6 +426,7 @@ Singleton {
     readonly property string resetDockToken: "__dock__"
     readonly property string resetBlurToken: "__blur__"
     readonly property string clearWidgetsToken: "__widgets__"
+    readonly property string clearClipboardToken: "__clipboard__"
     readonly property string resetIdleToken: "__idle__"
     readonly property string resetEnvToken: "__env__"
     readonly property string resetSpecialsToken: "__specials__"
@@ -398,6 +434,9 @@ Singleton {
     readonly property string resetMonitorsToken: "__monitors__"
 
     signal themeChangeRequested(string id)
+
+    // a deliberate light/dark flip, as opposed to the cache file merely loading
+    signal colorModeApplied(string mode)
 
     signal themeDeleteRequested(string id)
 
@@ -407,6 +446,11 @@ Singleton {
     signal envPickerRequested(string kind)
 
     signal timeZonePickerRequested()
+
+    signal keyboardRequested()
+
+    // which special workspace the app being picked is going into
+    signal appPickerRequested(string workspace)
 
     onAnyBarModuleEnabledChanged: {
         if (!root.anyBarModuleEnabled && root.barEnabled)
@@ -604,6 +648,14 @@ Singleton {
         onLoaded: root.currentTheme = text().trim() || "matugen"
     }
 
+    FileView {
+        path: Quickshell.env("HOME") + "/.cache/current_mode"
+        blockLoading: true
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: root.colorMode = text().trim() === "light" ? "light" : "dark"
+    }
+
     Timer {
         id: writeDebounce
 
@@ -630,6 +682,7 @@ Singleton {
             property string dockStyle: "island"
             property real accentPunch: 1
             property real surfaceDarkness: -1
+            property real surfaceTint: -1
             property real motionScale: 1
             property string fontFamily: "Google Sans"
             property real fontScale: 1
@@ -679,6 +732,11 @@ Singleton {
             property bool notifSoundUrgentOnly: false
             property string notifMutedApps: ""
             property string notifSeenApps: ""
+            property bool notifGrouping: true
+            property bool notifTimestamps: true
+            property bool notifProgress: true
+            property bool notifInlineReply: true
+            property int toastMaxVisible: 3
             property bool dockEnabled: true
             property int dockIconSize: 41
             property int dockSpacing: 10
@@ -693,6 +751,7 @@ Singleton {
             property bool dockShowTooltips: true
             property bool dockShowRunning: true
             property bool dockIconTiles: false
+            property bool clipboardEnabled: true
             property bool widgetsEnabled: true
             property bool widgetSnap: true
             property bool widgetLockAll: false
@@ -726,6 +785,7 @@ Singleton {
             property bool envAdopted: false
             property string envCursorTheme: ""
             property int envCursorSize: 24
+            property bool envCursorShadow: true
             property string envIconTheme: ""
             property string envGtkTheme: ""
             property string envQtStyle: "Fusion"

@@ -1,20 +1,48 @@
 #!/usr/bin/env bash
-# apply-theme.sh <theme-id>
+# apply-theme.sh <theme-id> [dark|light]
 #
 # copies a theme's palette into the cache Lucid reads, then mirrors it into
 # kitty, spicetify's Sleek theme, VSCodium, Vesktop, GTK, starship and Steam —
 # each one only if it is actually installed. pywal comes through here once
 # gen-pywal-palette.py has written its palette; matugen does not — it drives
 # those same apps from its own templates.
+#
+# in light mode the theme's own light palette is used. Only pywal ships one it
+# generated itself (from `wal -l`); every other theme is authored dark, so
+# gen-light-palette.py inverts it in tone space the first time it is needed and
+# again whenever the dark palette it came from has changed under it.
 
 set -euo pipefail
 
-THEME="${1:?usage: apply-theme.sh <theme-id>}"
-PALETTE="$HOME/.config/lucid/themes/$THEME/quickshell.json"
+THEME="${1:?usage: apply-theme.sh <theme-id> [dark|light]}"
+MODE="${2:-$(cat "$HOME/.cache/current_mode" 2>/dev/null || echo dark)}"
+THEME_DIR="$HOME/.config/lucid/themes/$THEME"
+PALETTE="$THEME_DIR/quickshell.json"
+
+if [[ "$MODE" != "dark" && "$MODE" != "light" ]]; then
+    echo "error: mode must be dark or light (got: $MODE)" >&2
+    exit 1
+fi
 
 if [[ ! -f "$PALETTE" ]]; then
     echo "error: no palette at $PALETTE" >&2
     exit 1
+fi
+
+if [[ "$MODE" == "light" ]]; then
+    LIGHT="$THEME_DIR/quickshell-light.json"
+    # rebuild when it is missing, or stale against the dark palette it came from
+    if [[ ! -f "$LIGHT" || "$PALETTE" -nt "$LIGHT" ]]; then
+        python3 "$HOME/.config/lucid/gen-light-palette.py" "$THEME_DIR" >/dev/null \
+            || echo "warning: could not build a light palette for $THEME" >&2
+    fi
+    # a bare [[ ]] as the last statement of the branch would take its non-zero
+    # exit straight out through set -e, so this stays an if
+    if [[ -f "$LIGHT" ]]; then
+        PALETTE="$LIGHT"
+    else
+        echo "warning: no light palette for $THEME, applying its dark one" >&2
+    fi
 fi
 
 if ! command -v jq &>/dev/null; then
@@ -310,7 +338,7 @@ fi
 
 # steam — millennium's material theme has its own matugen config
 if command -v matugen &>/dev/null && [[ -f "$HOME/.config/matugen-steam/config.toml" ]]; then
-    matugen -c "$HOME/.config/matugen-steam/config.toml" color hex "$PRIMARY" -m dark &>/dev/null &
+    matugen -c "$HOME/.config/matugen-steam/config.toml" color hex "$PRIMARY" -m "$MODE" &>/dev/null &
 fi
 
 # sddm — the login screen cannot read a per-user palette, so paint the theme.
