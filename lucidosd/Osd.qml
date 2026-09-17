@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Services.Pipewire
 import Quickshell.Wayland
 import qs
+import "../luciddocks"
 
 PanelWindow {
     id: osdWindow
@@ -22,18 +23,36 @@ PanelWindow {
     readonly property bool micMuted: (source && source.audio) ? source.audio.muted : false
     property string backlightDevice: ""
     property int maxBrightness: 0
+    property int pendingBrightness: -1
     readonly property int brightnessPercent: osdWindow.maxBrightness > 0 ? Math.round((parseInt(brightnessFile.text()) / osdWindow.maxBrightness) * 100) : 0
     property bool capsLock: false
     property bool numLock: false
     property bool kbInitialized: false
 
-    // m3 shape, spacing and slider metrics, shared with lucidbar/System.qml
-    readonly property int cardPadX: 16
-    readonly property int badgeSize: 44
-    readonly property int cardGap: 14
+    // m3 shape, spacing and slider metrics, shared with lucidbar/System.qml.
+    // the island keeps them; a notch is a size the user sets, so its own scale
+    // with the card rather than filling it edge to edge
+    readonly property int cardPadX: osdWindow.notch ? Math.max(10, Math.round(osdWindow.notchHeight * 0.21)) : 16
+    readonly property int badgeSize: osdWindow.notch ? Math.min(44, osdWindow.notchHeight - osdWindow.notchPad * 2) : 44
+    readonly property int cardGap: osdWindow.notch ? Math.max(8, Math.round(osdWindow.notchHeight * 0.18)) : 14
     readonly property int trackWidth: 200
     readonly property int readoutWidth: 50
-    readonly property int glyphSize: 22
+    readonly property int glyphSize: osdWindow.notch ? Math.round(osdWindow.badgeSize / 2) : 22
+    // how much card is left around the badge
+    readonly property int notchPad: Math.max(6, Math.round(osdWindow.notchHeight * 0.14))
+    readonly property int trackHeight: Math.max(8, Math.min(16, Math.round(osdWindow.badgeSize * 0.36)))
+    // "VOLUME" over the track only while there is room for both
+    readonly property bool showOverline: !osdWindow.notch || osdWindow.notchHeight >= 64
+    readonly property int columnGap: osdWindow.notch ? Math.max(3, Math.round(osdWindow.notchHeight * 0.09)) : 7
+
+    // notch style: the card sits flush on the bottom edge and slides out of it
+    readonly property bool notch: Prefs.osdNotch
+    // the notch card's size from settings; its width goes to the level track,
+    // and a toggle card still grows to fit its label
+    readonly property int notchWidth: Prefs.osdNotchWidth
+    readonly property int notchHeight: Prefs.osdNotchHeight
+    readonly property int levelChrome: osdWindow.cardPadX * 2 + osdWindow.badgeSize + osdWindow.cardGap * 2 + osdWindow.readoutWidth
+    readonly property int levelTrackWidth: osdWindow.notch ? Math.max(80, osdWindow.notchWidth - osdWindow.levelChrome) : osdWindow.trackWidth
 
     // level 0 is the slash-free glyph: the badge draws its own slash
     readonly property var volumeIconLevels: [{
@@ -117,11 +136,27 @@ PanelWindow {
     }
     readonly property color toggleOffColor: osdWindow.oscType === "mic" ? Theme.error : Theme.subtextDim
 
+    // shows the card while its size is dragged in settings, without the icon pulse
+    function previewSize() {
+        if (!osdWindow.ready || !osdWindow.notch)
+            return ;
+
+        if (!osdWindow.isLevelType) {
+            osdWindow.oscType = "volume";
+            osdWindow.levelValue = osdWindow.volumePercent;
+            osdWindow.levelMuted = osdWindow.volMuted;
+        }
+        osdWindow.setCardVisible(true);
+        hideTimer.restart();
+    }
+
     // the params have to be set before the flag flips: a Behavior reads the
     // previous value of anything its animation binds to
     function setCardVisible(v) {
-        cardFade.duration = v ? Theme.durEnter : Theme.durExit;
+        cardFade.duration = v ? (osdWindow.notch ? Theme.durQuick : Theme.durEnter) : Theme.durExit;
         cardFade.easing.bezierCurve = v ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
+        cardSlide.duration = v ? Theme.durEnter : Theme.durExit;
+        cardSlide.easing.bezierCurve = v ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
         cardRise.duration = v ? Theme.durEnter : Theme.durExit;
         cardRise.easing.bezierCurve = v ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
         cardPop.duration = v ? Theme.durEnter : Theme.durExit;
@@ -160,22 +195,51 @@ PanelWindow {
         osdWindow.trigger();
     }
 
-    function showMic() {
-        osdWindow.oscType = "mic";
-        osdWindow.toggleState = !osdWindow.micMuted;
+    // caps lock, num lock and the microphone are on/off news; with toasts chosen
+    // for them ToastEvents shows it and the card stays down
+    signal toggled(string kind, bool on)
+
+    function showToggle(kind, on) {
+        osdWindow.toggled(kind, on);
+        if (Prefs.osdTogglesToast)
+            return ;
+
+        osdWindow.oscType = kind;
+        osdWindow.toggleState = on;
         osdWindow.trigger();
+    }
+
+    function showMic() {
+        osdWindow.showToggle("mic", !osdWindow.micMuted);
     }
 
     function showCaps(state) {
-        osdWindow.oscType = "capslock";
-        osdWindow.toggleState = state;
-        osdWindow.trigger();
+        osdWindow.showToggle("capslock", state);
     }
 
     function showNum(state) {
-        osdWindow.oscType = "numlock";
-        osdWindow.toggleState = state;
-        osdWindow.trigger();
+        osdWindow.showToggle("numlock", state);
+    }
+
+    // the cursor on the level track, frac 0..1 of its width
+    function setLevelAt(frac) {
+        const pct = Math.round(Math.max(0, Math.min(1, frac)) * 100);
+        if (osdWindow.oscType === "volume") {
+            if (!osdWindow.sink || !osdWindow.sink.audio)
+                return ;
+
+            osdWindow.levelValue = pct;
+            osdWindow.levelMuted = false;
+            osdWindow.sink.audio.muted = false;
+            osdWindow.sink.audio.volume = pct / 100;
+        } else if (osdWindow.oscType === "brightness") {
+            // never drag the panel fully dark
+            osdWindow.levelValue = Math.max(1, pct);
+            osdWindow.pendingBrightness = Math.max(1, pct);
+            if (!brightnessThrottle.running)
+                brightnessThrottle.start();
+
+        }
     }
 
     color: "transparent"
@@ -184,29 +248,42 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     // remapped with the rest of the shell when displays change
     visible: Monitors.surfacesUp
-    implicitWidth: 480
-    implicitHeight: 140
-    margins.bottom: 96
-    Component.onCompleted: findDeviceProc.running = true
+    implicitWidth: osdWindow.notch ? Math.max(480, card.width + 2 * Prefs.dockNotchFlare + 8) : 480
+    implicitHeight: osdWindow.notch ? osdWindow.notchHeight : 140
+    margins.bottom: osdWindow.notch ? 0 : 96
+    Component.onCompleted: {
+        findDeviceProc.running = true;
+        // the layer-shell surface's first commit ignores margins.bottom when it
+        // already equals its bound value at creation (quickshell/Aquamarine bug);
+        // nudging it once, a tick after creation, forces a real reconfigure
+        marginKickTimer.start();
+    }
+    onNotchWidthChanged: osdWindow.previewSize()
+    onNotchHeightChanged: osdWindow.previewSize()
     onBacklightDeviceChanged: {
         if (backlightDevice !== "")
             readMaxProc.running = true;
 
     }
+    // while the track is dragged the card already shows the value; re-showing would
+    // pulse the handle and snap the track back to a lagging reading
     onVolumePercentChanged: {
         if (!osdWindow.ready)
+            return ;
+
+        if (levelDrag.pressed)
             return ;
 
         osdWindow.showVolume();
     }
     onVolMutedChanged: {
-        if (!osdWindow.ready)
+        if (!osdWindow.ready || levelDrag.pressed)
             return ;
 
         osdWindow.showVolume();
     }
     onBrightnessPercentChanged: {
-        if (!osdWindow.ready)
+        if (!osdWindow.ready || levelDrag.pressed)
             return ;
 
         osdWindow.showBrightness();
@@ -233,11 +310,58 @@ PanelWindow {
         onTriggered: osdWindow.ready = true
     }
 
+    // see Component.onCompleted: bump margins.bottom off its bound value, then
+    // restore the live binding a tick later
+    Timer {
+        id: marginKickTimer
+
+        interval: 50
+        onTriggered: {
+            osdWindow.margins.bottom = osdWindow.margins.bottom + 1;
+            marginRestoreTimer.start();
+        }
+    }
+
+    Timer {
+        id: marginRestoreTimer
+
+        interval: 50
+        onTriggered: osdWindow.margins.bottom = Qt.binding(function() {
+            return osdWindow.notch ? 0 : 96;
+        })
+    }
+
     Timer {
         id: hideTimer
 
         interval: 1600
-        onTriggered: osdWindow.setCardVisible(false)
+        onTriggered: {
+            // the cursor holds the card open; leaving it restarts this timer
+            if (levelDrag.holding)
+                return ;
+
+            osdWindow.setCardVisible(false);
+        }
+    }
+
+    // spaced out so a drag does not spawn a brightnessctl per mouse move; the
+    // last value still lands once the running one exits
+    Timer {
+        id: brightnessThrottle
+
+        interval: 50
+        onTriggered: {
+            if (setBrightnessProc.running)
+                brightnessThrottle.restart();
+            else if (osdWindow.pendingBrightness >= 0)
+                setBrightnessProc.running = true;
+        }
+    }
+
+    Process {
+        id: setBrightnessProc
+
+        command: osdWindow.pendingBrightness >= 0 ? ["brightnessctl", "set", osdWindow.pendingBrightness + "%"] : []
     }
 
     Process {
@@ -329,32 +453,44 @@ PanelWindow {
         id: osdBlurRegion
 
         readonly property real paintedX: card.x + card.width * (1 - card.scale) / 2
-        readonly property real paintedY: card.y + card.height * (1 - card.scale) / 2
+        readonly property real paintedY: card.y + card.drop + card.height * (1 - card.scale) / 2
         readonly property real paintedWidth: card.width * card.scale
         readonly property real paintedHeight: card.height * card.scale
 
         x: Math.ceil(osdBlurRegion.paintedX - 0.002)
         y: Math.ceil(osdBlurRegion.paintedY - 0.002)
         width: Math.max(0, Math.floor(osdBlurRegion.paintedX + osdBlurRegion.paintedWidth + 0.002) - Math.ceil(osdBlurRegion.paintedX - 0.002))
-        height: Math.max(0, Math.floor(osdBlurRegion.paintedY + osdBlurRegion.paintedHeight + 0.002) - Math.ceil(osdBlurRegion.paintedY - 0.002))
+        height: Math.max(0, Math.min(osdWindow.height, Math.floor(osdBlurRegion.paintedY + osdBlurRegion.paintedHeight + 0.002)) - Math.ceil(osdBlurRegion.paintedY - 0.002))
         radius: Math.round(card.radius * card.scale)
+        bottomLeftRadius: osdWindow.notch ? 0 : osdBlurRegion.radius
+        bottomRightRadius: osdWindow.notch ? 0 : osdBlurRegion.radius
     }
 
     Rectangle {
         id: card
 
-        readonly property int levelWidth: osdWindow.cardPadX * 2 + osdWindow.badgeSize + osdWindow.cardGap * 2 + osdWindow.trackWidth + osdWindow.readoutWidth
+        readonly property int levelWidth: osdWindow.levelChrome + osdWindow.levelTrackWidth
         readonly property int toggleWidth: osdWindow.cardPadX * 2 + osdWindow.badgeSize + osdWindow.cardGap + Math.ceil(Math.max(labelMetrics.advanceWidth, stateFlip.width))
+        // how far the notch card is pushed below the screen edge
+        property real drop: (osdWindow.notch && !osdWindow.cardVisible) ? card.height : 0
 
-        anchors.centerIn: parent
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: osdWindow.notch ? undefined : parent.verticalCenter
+        anchors.bottom: osdWindow.notch ? parent.bottom : undefined
         anchors.verticalCenterOffset: osdWindow.cardVisible ? 0 : 16
-        height: 76
-        width: osdWindow.isLevelType ? card.levelWidth : card.toggleWidth
-        radius: Theme.shapeXlInc
+        height: osdWindow.notch ? osdWindow.notchHeight : 76
+        width: osdWindow.isLevelType ? card.levelWidth : (osdWindow.notch ? Math.max(osdWindow.notchWidth, card.toggleWidth) : card.toggleWidth)
+        radius: Math.min(Theme.shapeXlInc, card.height / 2)
+        bottomLeftRadius: osdWindow.notch ? 0 : card.radius
+        bottomRightRadius: osdWindow.notch ? 0 : card.radius
         color: Theme.bg
         opacity: osdWindow.cardVisible ? 1 : 0
-        scale: osdWindow.cardVisible ? 1 : 0.9
-        visible: opacity > 0.15
+        scale: (osdWindow.notch || osdWindow.cardVisible) ? 1 : 0.9
+        visible: opacity > (osdWindow.notch ? 0.01 : 0.15)
+
+        transform: Translate {
+            y: card.drop
+        }
 
         TextMetrics {
             id: labelMetrics
@@ -432,9 +568,10 @@ PanelWindow {
             anchors.left: iconBadge.right
             anchors.leftMargin: osdWindow.cardGap
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 7
+            spacing: osdWindow.columnGap
 
             Text {
+                visible: osdWindow.showOverline
                 text: osdWindow.currentLabel.toUpperCase()
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
@@ -446,10 +583,11 @@ PanelWindow {
             LevelTrack {
                 id: levelTrack
 
-                width: osdWindow.trackWidth
+                width: osdWindow.levelTrackWidth
+                trackH: osdWindow.trackHeight
                 value: osdWindow.levelValue
                 muted: osdWindow.levelMuted
-                animated: card.visible
+                animated: card.visible && !levelDrag.pressed
             }
 
         }
@@ -486,7 +624,7 @@ PanelWindow {
                 color: osdWindow.levelMuted ? Theme.subtextDim : Theme.text
                 font.family: Theme.fontFamily
                 font.bold: true
-                font.pixelSize: Theme.fontTitleLg
+                font.pixelSize: osdWindow.showOverline ? Theme.fontTitleLg : Theme.fontTitle
             }
 
         }
@@ -496,7 +634,7 @@ PanelWindow {
             anchors.left: iconBadge.right
             anchors.leftMargin: osdWindow.cardGap
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 5
+            spacing: osdWindow.notch ? Math.max(2, osdWindow.columnGap - 2) : 5
 
             Text {
                 text: osdWindow.currentLabel.toUpperCase()
@@ -574,6 +712,46 @@ PanelWindow {
 
             }
 
+        }
+
+        // drag or click the level track to set volume or brightness
+        MouseArea {
+            id: levelDrag
+
+            // hovering only holds after real movement, so a card that slides in
+            // under a resting cursor still hides on time
+            property bool moved: false
+            readonly property bool holding: levelDrag.pressed || (levelDrag.containsMouse && levelDrag.moved)
+
+            function apply(mouse) {
+                osdWindow.setLevelAt(levelDrag.mapToItem(levelTrack, mouse.x, mouse.y).x / Math.max(1, levelTrack.width));
+            }
+
+            anchors.fill: parent
+            enabled: osdWindow.isLevelType
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onPositionChanged: (mouse) => {
+                levelDrag.moved = true;
+                if (levelDrag.pressed)
+                    levelDrag.apply(mouse);
+
+            }
+            onPressed: (mouse) => {
+                levelDrag.moved = true;
+                levelDrag.apply(mouse);
+            }
+            onExited: {
+                levelDrag.moved = false;
+                if (!levelDrag.pressed)
+                    hideTimer.restart();
+
+            }
+            onReleased: {
+                if (!levelDrag.containsMouse)
+                    hideTimer.restart();
+
+            }
         }
 
         NumberAnimation {
@@ -679,9 +857,46 @@ PanelWindow {
 
         }
 
+        Behavior on drop {
+            enabled: osdWindow.notch
+
+            NumberAnimation {
+                id: cardSlide
+
+                duration: Theme.durEnter
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easeEmphasizedDecel
+            }
+
+        }
+
     }
 
+    // concave corners joining the notch card to the screen edge, as the dock does
+    Repeater {
+        model: osdWindow.notch ? 2 : 0
+
+        DockFlare {
+            required property int index
+
+            readonly property bool isRight: index === 1
+
+            size: Prefs.dockNotchFlare
+            mirrored: isRight
+            x: isRight ? card.x + card.width : card.x - width
+            y: card.y + card.height - height + card.drop
+            opacity: card.opacity
+            visible: card.visible
+        }
+
+    }
+
+    // only a showing level card takes the cursor; everything else passes through
     mask: Region {
+        x: card.x
+        y: card.y + card.drop
+        width: (osdWindow.isLevelType && osdWindow.cardVisible) ? card.width : 0
+        height: (osdWindow.isLevelType && osdWindow.cardVisible) ? card.height : 0
     }
 
     component SvgIcon: Item {
@@ -785,13 +1000,13 @@ PanelWindow {
         property bool animated: false
         property real handleStretch: 0
         readonly property int handleW: 4
-        readonly property int trackH: 16
+        property int trackH: 16
         readonly property int notch: 6
         readonly property real pos: Math.max(0, Math.min(1, lt.value / 100))
         readonly property real handleX: lt.pos * Math.max(0, lt.width - lt.handleW)
         readonly property color liveColor: lt.muted ? Theme.outlineStrong : Theme.accent
 
-        height: 28
+        height: lt.trackH + 12
 
         Behavior on value {
             enabled: lt.animated

@@ -109,6 +109,14 @@ Singleton {
     property alias locationTz: s.locationTz
     property alias timeZoneAuto: s.timeZoneAuto
     property alias doNotDisturb: s.doNotDisturb
+    readonly property bool osdNotch: root.osdStyle === "notch"
+    // caps lock, num lock and the microphone show as a toast instead of on the osd
+    readonly property bool osdTogglesToast: root.osdToggles === "toast"
+
+    property alias osdStyle: s.osdStyle
+    property alias osdNotchWidth: s.osdNotchWidth
+    property alias osdNotchHeight: s.osdNotchHeight
+    property alias osdToggles: s.osdToggles
     property alias toastTimeout: s.toastTimeout
     property alias toastOnLayout: s.toastOnLayout
     property alias toastOnGameMode: s.toastOnGameMode
@@ -322,6 +330,10 @@ Singleton {
         "locationTz": "",
         "timeZoneAuto": true,
         "doNotDisturb": false,
+        "osdStyle": "island",
+        "osdNotchWidth": 354,
+        "osdNotchHeight": 76,
+        "osdToggles": "osd",
         "toastTimeout": 5,
         "toastOnLayout": true,
         "toastOnGameMode": true,
@@ -747,6 +759,10 @@ Singleton {
             property string locationTz: ""
             property bool timeZoneAuto: true
             property bool doNotDisturb: false
+            property string osdStyle: "island"
+            property int osdNotchWidth: 354
+            property int osdNotchHeight: 76
+            property string osdToggles: "osd"
             property int toastTimeout: 5
             property bool toastOnLayout: true
             property bool toastOnGameMode: true
