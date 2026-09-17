@@ -98,7 +98,7 @@ Item {
             anchors.centerIn: thumb
             width: 34
             height: 34
-            radius: 17
+            radius: Theme.rad(17)
             color: Theme.accent
             opacity: area.containsMouse && !tile.naming && !tile.empty ? 1 : 0
             scale: area.containsMouse && !tile.naming && !tile.empty ? 1 : 0.7
@@ -135,7 +135,7 @@ Item {
             anchors.bottomMargin: 8
             width: hint.implicitWidth + 20
             height: 24
-            radius: 12
+            radius: Theme.rad(12)
             color: Theme.bgOpaque
             opacity: tile.naming ? 1 : 0
             visible: opacity > 0.01

@@ -669,7 +669,7 @@ BarPill {
                             required property int index
 
                             width: 2.5
-                            radius: 999
+                            radius: Theme.radiusPill
                             color: Theme.accent
                             anchors.verticalCenter: parent.verticalCenter
                             height: root.isPlaying ? Math.max(3, root.bandLevel(1 + index * 11, 10 + index * 11) * 16) : 3
@@ -960,7 +960,7 @@ BarPill {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: 4
                                 height: 4
-                                radius: 999
+                                radius: Theme.radiusPill
                                 color: Theme.accent
                                 opacity: volumeRow.fraction > 0.94 ? 0 : 0.55
                             }
@@ -972,7 +972,7 @@ BarPill {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: volumeRow.handleWidth
                                 height: volArea.pressed ? 14 : 20
-                                radius: 999
+                                radius: Theme.radiusPill
                                 color: Theme.accent
 
                                 Behavior on height {
@@ -1051,7 +1051,7 @@ BarPill {
                             // a wide bar must not drag the height up with it
                             height: Math.min(vizStrip.height, Math.max(width, level * vizStrip.height))
                             anchors.bottom: parent.bottom
-                            radius: 999
+                            radius: Theme.radiusPill
                             color: root.barColor(level)
 
                             Behavior on height {
@@ -1295,7 +1295,7 @@ BarPill {
                     Rectangle {
                         width: 6
                         height: 6
-                        radius: 999
+                        radius: Theme.radiusPill
                         color: Theme.accent
                         anchors.verticalCenter: parent.verticalCenter
 
@@ -1605,7 +1605,7 @@ BarPill {
                                 anchors.centerIn: parent
                                 width: 64
                                 height: 64
-                                radius: 999
+                                radius: Theme.radiusPill
                                 color: "transparent"
                                 border.width: 2
                                 border.color: Theme.accent
@@ -1657,7 +1657,7 @@ BarPill {
                             anchors.centerIn: parent
                             width: 64
                             height: 64
-                            radius: 999
+                            radius: Theme.radiusPill
                             color: Theme.accent
                             scale: listenArea.pressed ? 0.94 : (listenArea.containsMouse ? 1.05 : 1)
 
@@ -1691,7 +1691,7 @@ BarPill {
                                         required property int index
 
                                         width: 3
-                                        radius: 999
+                                        radius: Theme.radiusPill
                                         color: Theme.fgAccent
                                         anchors.verticalCenter: parent.verticalCenter
                                         height: Math.max(4, root.bandLevel(1 + index * 7, 7 + index * 7) * 26)
@@ -2284,7 +2284,7 @@ BarPill {
 
         width: btn.diameter
         height: btn.diameter
-        radius: 999
+        radius: Theme.radiusPill
         color: btn.filled ? Theme.accent : (btn.ghost ? "transparent" : Theme.withBlur(Theme.bgHigh))
         opacity: btn.enabledAction ? 1 : 0.3
         scale: btnArea.pressed ? 0.9 : (btnArea.containsMouse ? 1.07 : 1)
@@ -2358,7 +2358,7 @@ BarPill {
 
         implicitWidth: pillRow.implicitWidth + 26
         height: 30
-        radius: 999
+        radius: Theme.radiusPill
         color: pill.accented ? Theme.accent : Theme.withBlur(Theme.bgHigh)
         scale: pillArea.pressed ? 0.94 : (pillArea.containsMouse ? 1.04 : 1)
 

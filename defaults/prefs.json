@@ -30,6 +30,7 @@
     "fontFamily": "Google Sans",
     "fontScale": 1,
     "motionScale": 1,
+    "radiusScale": 1,
     "showClock": true,
     "showMedia": true,
     "showNotifications": true,

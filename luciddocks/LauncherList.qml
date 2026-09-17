@@ -437,7 +437,7 @@ Item {
                 Rectangle {
                     width: 24
                     height: 24
-                    radius: 12
+                    radius: Theme.rad(12)
                     anchors.verticalCenter: parent.verticalCenter
                     visible: rowItem.swatchBg !== ""
                     color: rowItem.swatchBg !== "" ? rowItem.swatchBg : "transparent"

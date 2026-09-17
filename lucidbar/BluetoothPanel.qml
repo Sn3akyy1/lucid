@@ -236,7 +236,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 28
                 height: 16
-                radius: 999
+                radius: Theme.radiusPill
                 color: (root.adapter && root.adapter.discoverable) ? Theme.accent : Theme.outlineStrong
 
                 Rectangle {
@@ -645,7 +645,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 42
-            radius: 12
+            radius: Theme.rad(12)
             color: devItem.isExpanded ? Theme.withBlur(Theme.bgActive) : (rowArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent")
 
             Row {
@@ -660,7 +660,7 @@ Item {
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: 9
+                        radius: Theme.rad(9)
                         color: Theme.alpha(Theme.accent, devItem.isConnected ? 0.22 : 0.12)
 
                         Behavior on color {
@@ -892,7 +892,7 @@ Item {
 
                         width: devItem.group === "nearby" ? parent.width : (parent.width - 8) / 2
                         height: parent.height
-                        radius: 999
+                        radius: Theme.radiusPill
                         color: busy ? Theme.withBlur(Theme.outlineStrong) : (devItem.isConnected ? Theme.accentContainer : (primaryArea.containsMouse ? Theme.accentHover : Theme.accent))
                         opacity: busy ? 0.7 : 1
                         scale: primaryArea.pressed ? 0.96 : 1
@@ -958,7 +958,7 @@ Item {
                         visible: devItem.group !== "nearby"
                         width: (parent.width - 8) / 2
                         height: parent.height
-                        radius: 999
+                        radius: Theme.radiusPill
                         color: forgetArea.containsMouse ? Theme.withBlur(Theme.outlineStrong) : "transparent"
                         border.width: 1
                         border.color: Theme.outlineStrong
@@ -1204,7 +1204,7 @@ Item {
                     visible: devItem.renaming
                     width: parent.width - 46
                     height: 30
-                    radius: 8
+                    radius: Theme.rad(8)
                     color: Theme.withBlur(Theme.bgSunken)
                     border.width: 1
                     border.color: renameInput.activeFocus ? Theme.accent : Theme.bgHigh

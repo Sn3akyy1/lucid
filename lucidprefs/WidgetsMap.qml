@@ -119,7 +119,7 @@ Item {
                         anchors.margins: 4
                         width: 18
                         height: 18
-                        radius: 9
+                        radius: Theme.rad(9)
                         color: Theme.accent
                         opacity: spot.pinned ? 1 : (area.containsMouse ? 0.55 : 0)
                         visible: opacity > 0.01

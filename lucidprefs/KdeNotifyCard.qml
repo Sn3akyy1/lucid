@@ -149,7 +149,7 @@ SettingCard {
 
                         width: 30
                         height: 30
-                        radius: 15
+                        radius: Theme.rad(15)
                         anchors.right: parent.right
                         anchors.rightMargin: 12
                         anchors.top: parent.top

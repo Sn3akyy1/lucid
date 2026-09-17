@@ -389,7 +389,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: 44
             height: 44
-            radius: 999
+            radius: Theme.radiusPill
             color: field.good ? Theme.success : (field.canSubmit || Lockscreen.busy ? (submitArea.hovered ? Theme.accentHover : Theme.accent) : Theme.alpha(Theme.outlineStrong, 0.35))
             scale: submitTap.pressed ? 0.9 : 1
 
