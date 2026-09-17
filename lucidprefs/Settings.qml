@@ -40,6 +40,7 @@ FloatingWindow {
         { "key": "dock", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
         { "key": "widgets", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
         { "key": "workspaces", "group": "Desktop", "label": "Workspaces", "title": "Special Workspaces", "blurb": "Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key" },
+        { "key": "keybinds", "group": "Desktop", "label": "Keybinds", "title": "Keybinds", "blurb": "Every Hyprland shortcut: change one, switch it off or add your own" },
         { "key": "displays", "group": "Devices", "label": "Displays", "title": "Displays", "blurb": "Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on" },
         { "key": "sound", "group": "Devices", "label": "Sound", "title": "Sound", "blurb": "Which speakers play and which microphone listens, what each application is using, and how loud any of it is" },
         { "key": "network", "group": "Devices", "label": "Network", "title": "Network", "blurb": "Wi-Fi, wired, VPN and how this machine gets its address" },
@@ -133,6 +134,7 @@ FloatingWindow {
             fontPicker.dismiss();
             timeZonePicker.dismiss();
             envPicker.dismiss();
+            keybindEditor.dismiss();
             appPicker.dismiss();
             avatarPicker.dismiss();
             passwordDialog.dismiss();
@@ -211,6 +213,10 @@ FloatingWindow {
 
         function environment(): void {
             win.show("environment");
+        }
+
+        function keybinds(): void {
+            win.show("keybinds");
         }
 
         function displays(): void {
@@ -305,7 +311,10 @@ FloatingWindow {
                 Prefs.resetKeys(Prefs.glassKeys);
             else if (action === Prefs.resetMonitorsToken)
                 Prefs.resetKeys(Prefs.monitorKeys);
-            else if (action.indexOf("wifi-forget:") === 0)
+            else if (action.indexOf("keybind-delete:") === 0) {
+                Keybinds.remove(action.substring(15));
+                keybindEditor.dismiss();
+            } else if (action.indexOf("wifi-forget:") === 0)
                 Net.forgetSsid(action.substring(12));
             else if (action.indexOf("net-delete:") === 0)
                 Net.forget(action.substring(11));
@@ -346,6 +355,22 @@ FloatingWindow {
         onChosen: (name) => {
             return win.applyEnvChoice(name);
         }
+    }
+
+    // under the confirm dialog, which asks before a delete from inside it
+    KeybindEditor {
+        id: keybindEditor
+
+        z: 90
+        onDismissed: focusSink.forceActiveFocus()
+    }
+
+    Connections {
+        function onEditRequested(id) {
+            keybindEditor.open(id);
+        }
+
+        target: Keybinds
     }
 
     Connections {
@@ -486,6 +511,8 @@ FloatingWindow {
                 appPicker.dismiss();
             else if (confirmDialog.shown)
                 confirmDialog.dismiss();
+            else if (keybindEditor.shown)
+                keybindEditor.dismiss();
             else
                 win.visible = false;
         }
@@ -979,6 +1006,8 @@ FloatingWindow {
                                 return "ThemePage.qml";
                             case "environment":
                                 return "EnvironmentPage.qml";
+                            case "keybinds":
+                                return "KeybindsPage.qml";
                             case "displays":
                                 return "MonitorsPage.qml";
                             case "bar":

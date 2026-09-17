@@ -378,6 +378,10 @@ ShellRoot {
         id: keyboardMod
     }
 
+    KeybindSheet {
+        id: keybindSheetMod
+    }
+
     Settings {
         id: settingsMod
     }
@@ -442,7 +446,7 @@ ShellRoot {
     }
 
     Instantiator {
-        model: [osdMod, toastMod, keyboardMod, polkitMod]
+        model: [osdMod, toastMod, keyboardMod, polkitMod, keybindSheetMod]
 
         Binding {
             required property var modelData
