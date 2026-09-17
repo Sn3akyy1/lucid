@@ -4,8 +4,9 @@
 
 -- Every output starts on its preferred mode, placed automatically. Lucid
 -- Settings > Displays writes what you change to ~/.config/hypr/lucid-monitors.lua,
--- which is read on every apply, so a change there needs no reload. Without that
--- file nothing below the defaults runs.
+-- which is read on every apply, so a change there needs no reload - except to the
+-- workspaces it ties to a display, which reload. Without that file nothing below
+-- the defaults runs.
 
 local M = {}
 
@@ -114,8 +115,25 @@ function M.apply()
     touched = want
 end
 
+-- workspaces tied to a display. hyprland keeps a workspace rule once it has
+-- one, so the page reloads rather than evals when these change, and they are
+-- only set here, on load
+local function workspaces(cfg)
+    if type(cfg.workspaces) ~= "table" then return end
+    for _, w in ipairs(cfg.workspaces) do
+        if type(w.workspace) == "string" and type(w.monitor) == "string" and w.monitor ~= "" then
+            pcall(hl.workspace_rule, {
+                workspace = w.workspace,
+                monitor   = w.monitor,
+                default   = w.default == true or nil,
+            })
+        end
+    end
+end
+
 -- the settings page runs hyprctl eval 'LucidMonitors.apply()' after a change
 LucidMonitors = M
 pcall(M.apply)
+pcall(workspaces, config())
 
 return M
