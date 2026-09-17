@@ -790,8 +790,10 @@ Item {
     }
     readonly property bool popupMode: Prefs.barPopupMode
     readonly property bool compactHovered: root.rowHovered
-    readonly property int topRadius: Prefs.barNotch && !root.popupMode ? 0 : root.cornerRadius
-    readonly property int pillTopRadius: Prefs.barNotch ? 0 : Prefs.barPillRadius
+    readonly property int topRadius: Prefs.barFlush && !root.popupMode ? 0 : root.cornerRadius
+    readonly property int pillTopRadius: Prefs.barFlush ? 0 : Prefs.barPillRadius
+    // on the full bar the strip behind already paints the resting pill
+    readonly property color restingColor: Prefs.barFull ? Theme.alpha(Theme.text, root.compactHovered ? 0.08 : 0) : Theme.bg
     readonly property bool popupExpanding: root.popupMode && root.expanded
     readonly property bool popupOpen: root.shown && root.popupMode && shell.y > 0.5
     readonly property int barRadius: root.popupMode ? Prefs.barPillRadius : root.cornerRadius
@@ -931,7 +933,7 @@ Item {
         visible: root.popupMode
         width: root.compactWidth
         height: root.compactHeight
-        color: Theme.bg
+        color: root.restingColor
 
         Behavior on color {
             enabled: root.hostWindow ? root.hostWindow.laidOut : false
@@ -960,7 +962,7 @@ Item {
         x: root.popupMode && root.expanded ? shell.cardX - root.x : 0
         y: root.popupMode && root.expanded ? shell.cardY - root.y : 0
         visible: !root.popupMode || shell.y > 0.5
-        color: Theme.bg
+        color: (root.popupMode || root.expanded) ? Theme.bg : root.restingColor
         radius: root.cornerRadius
         topLeftRadius: root.topRadius
         topRightRadius: root.topRadius
@@ -1175,6 +1177,8 @@ Item {
                         readonly property var wsObj: root.wsAt(dot.index)
                         readonly property bool isActive: dot.wsObj ? dot.wsObj.active : false
                         readonly property bool isUrgent: dot.wsObj ? dot.wsObj.urgent : false
+                        // workspaces can exist while empty, so count windows rather than trusting wsObj
+                        readonly property bool isOccupied: dot.wsObj ? dot.wsObj.toplevels.values.length > 0 : false
                         readonly property bool isLit: root.rowHovered && root.pillCovers(dot.x, dot.width)
 
                         x: root.slotX(dot.index)
@@ -1182,13 +1186,13 @@ Item {
                         width: root.slotWidth(dot.index)
                         height: root.slotHeight(dot.index)
                         radius: 999
-                        color: dot.isUrgent ? Theme.error : (root.rowHovered || dot.index === root.activeSlot ? "transparent" : Theme.withBlur(Theme._darken(Theme.subtext, 0.45)))
+                        color: dot.isUrgent ? Theme.error : (root.rowHovered || dot.index === root.activeSlot ? "transparent" : Theme.withBlur(dot.isOccupied ? Theme.cSecondary : Theme._darken(Theme.subtext, 0.45)))
 
                         Text {
                             anchors.centerIn: parent
                             text: dot.wsId
                             opacity: root.rowHovered ? 1 : 0
-                            color: dot.isLit ? Theme.bgOpaque : Theme.subtext
+                            color: dot.isLit ? Theme.bgOpaque : (dot.isOccupied ? Theme.cSecondary : Theme.subtext)
                             font.family: Theme.fontFamily
                             font.bold: true
                             font.pixelSize: Theme.fs(13)
