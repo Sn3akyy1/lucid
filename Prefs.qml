@@ -158,6 +158,13 @@ Singleton {
     property alias dockShowTooltips: s.dockShowTooltips
     property alias dockShowRunning: s.dockShowRunning
     property alias dockIconTiles: s.dockIconTiles
+    property alias launcherWidth: s.launcherWidth
+    property alias launcherMaxRows: s.launcherMaxRows
+    property alias launcherAppDescriptions: s.launcherAppDescriptions
+    property alias launcherWindows: s.launcherWindows
+    property alias launcherPowerChips: s.launcherPowerChips
+    property alias launcherWebSearch: s.launcherWebSearch
+    property alias launcherSearchUrl: s.launcherSearchUrl
     property alias clipboardEnabled: s.clipboardEnabled
 
     property alias widgetsEnabled: s.widgetsEnabled
@@ -370,6 +377,13 @@ Singleton {
         "dockShowTooltips": true,
         "dockShowRunning": true,
         "dockIconTiles": false,
+        "launcherWidth": 560,
+        "launcherMaxRows": 8,
+        "launcherAppDescriptions": true,
+        "launcherWindows": true,
+        "launcherPowerChips": true,
+        "launcherWebSearch": true,
+        "launcherSearchUrl": "https://duckduckgo.com/?q=%s",
         "clipboardEnabled": true,
         "widgetsEnabled": true,
         "widgetSnap": true,
@@ -796,6 +810,13 @@ Singleton {
             property bool dockShowTooltips: true
             property bool dockShowRunning: true
             property bool dockIconTiles: false
+            property int launcherWidth: 560
+            property int launcherMaxRows: 8
+            property bool launcherAppDescriptions: true
+            property bool launcherWindows: true
+            property bool launcherPowerChips: true
+            property bool launcherWebSearch: true
+            property string launcherSearchUrl: "https://duckduckgo.com/?q=%s"
             property bool clipboardEnabled: true
             property bool widgetsEnabled: true
             property bool widgetSnap: true
