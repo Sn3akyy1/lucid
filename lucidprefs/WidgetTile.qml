@@ -106,7 +106,7 @@ Item {
             anchors.margins: 8
             width: 20
             height: 20
-            radius: 10
+            radius: Theme.rad(10)
             color: Theme.accent
             opacity: tile.placed > 0 ? 1 : 0
             visible: opacity > 0.01
@@ -133,7 +133,7 @@ Item {
             anchors.centerIn: stage
             width: 34
             height: 34
-            radius: 17
+            radius: Theme.rad(17)
             color: Theme.accent
             opacity: area.containsMouse ? 1 : 0
             scale: area.containsMouse ? 1 : 0.7

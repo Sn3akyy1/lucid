@@ -33,6 +33,7 @@
     "gameModeOnCmd": "",
     "gameModeStatusCmd": "",
     "motionScale": 1,
+    "radiusScale": 1,
     "showClock": true,
     "showKbLayout": true,
     "showMedia": true,

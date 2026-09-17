@@ -389,7 +389,7 @@ Column {
                             Rectangle {
                                 width: 28
                                 height: 28
-                                radius: 14
+                                radius: Theme.rad(14)
                                 anchors.verticalCenter: parent.verticalCenter
                                 color: swatch.tileBg
 
@@ -449,7 +449,7 @@ Column {
 
                             width: 22
                             height: 22
-                            radius: 11
+                            radius: Theme.rad(11)
                             anchors.right: parent.right
                             anchors.top: parent.top
                             anchors.margins: 6
@@ -580,7 +580,7 @@ Column {
                         Rectangle {
                             width: 34
                             height: 34
-                            radius: 17
+                            radius: Theme.rad(17)
                             anchors.verticalCenter: parent.verticalCenter
                             visible: page.addState === "done" && page.addResult !== null
                             color: page.addResult ? page.addResult.swatchBg : "transparent"
@@ -598,7 +598,7 @@ Column {
                         Rectangle {
                             width: 34
                             height: 34
-                            radius: 17
+                            radius: Theme.rad(17)
                             anchors.verticalCenter: parent.verticalCenter
                             visible: page.addState !== "done"
                             color: page.addState === "error" ? Theme.alpha(Theme.error, 0.18) : Theme.alpha(Theme.accent, 0.18)
@@ -754,7 +754,7 @@ Column {
 
                                 width: 28
                                 height: 28
-                                radius: 14
+                                radius: Theme.rad(14)
                                 anchors.right: parent.right
                                 anchors.top: parent.top
                                 anchors.margins: 6

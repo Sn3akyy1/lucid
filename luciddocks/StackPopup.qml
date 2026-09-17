@@ -204,7 +204,7 @@ PopupWindow {
                         visible: entry.modelData.count >= 2
                         width: 22
                         height: 22
-                        radius: 11
+                        radius: Theme.rad(11)
                         color: Theme.accent
                         anchors.left: mainCard.left
                         anchors.top: mainCard.top

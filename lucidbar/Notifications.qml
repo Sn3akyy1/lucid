@@ -240,7 +240,7 @@ BarPill {
                 anchors.verticalCenter: parent.verticalCenter
                 height: 16
                 width: root.notifCount > 0 ? Math.max(16, badgeText.implicitWidth + 8) : 0
-                radius: 999
+                radius: Theme.radiusPill
                 color: root.badgeColor
                 opacity: root.notifCount > 0 ? 1 : 0
                 scale: root.notifCount > 0 ? 1 : 0.4

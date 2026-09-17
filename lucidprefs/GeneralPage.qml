@@ -92,6 +92,27 @@ Column {
         }
 
         SettingRow {
+            title: "Corner rounding"
+            resetKey: "radiusScale"
+            description: "Scales every rounded corner in the shell at once — pills, panels, the dock, cards and buttons. 100% is the shipped shape; 0% squares everything off. Pill-shaped controls stay pill-shaped until you reach 0."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 0
+                to: 150
+                stepSize: 5
+                decimals: 0
+                suffix: " %"
+                value: Math.round(Prefs.radiusScale * 100)
+                onMoved: (v) => {
+                    return Prefs.radiusScale = v / 100;
+                }
+            }
+
+        }
+
+        SettingRow {
             title: "Surface darkness"
             resetKey: "surfaceDarkness"
             description: "How far every panel is darkened beneath the theme's own surface colour. Auto follows the theme."

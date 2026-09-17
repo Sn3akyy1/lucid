@@ -162,7 +162,7 @@ SettingCard {
 
                         width: chipText.implicitWidth + 24
                         height: 30
-                        radius: 15
+                        radius: Theme.rad(15)
                         color: chip.selected ? Theme.accentContainer : (chipArea.containsMouse ? Theme.bgHover : Theme.bgSunken)
 
                         Behavior on color {

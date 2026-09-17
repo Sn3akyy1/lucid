@@ -110,7 +110,7 @@ Item {
             anchors.centerIn: thumb
             width: 34
             height: 34
-            radius: 17
+            radius: Theme.rad(17)
             color: Theme.accent
             opacity: area.containsMouse && !tile.selected ? 1 : 0
             scale: area.containsMouse && !tile.selected ? 1 : 0.7
@@ -162,7 +162,7 @@ Item {
         anchors.margins: 16
         width: 28
         height: 28
-        radius: 14
+        radius: Theme.rad(14)
         color: removeArea.containsMouse ? Theme.errorContainer : Theme.bgOpaque
         opacity: tile.removable && tile.hovered ? 1 : 0
         visible: opacity > 0.01

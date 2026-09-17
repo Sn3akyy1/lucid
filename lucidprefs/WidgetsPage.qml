@@ -176,7 +176,7 @@ Column {
 
                         width: chipLabel.implicitWidth + 26
                         height: 32
-                        radius: 16
+                        radius: Theme.rad(16)
                         color: chip.selected ? Theme.accentContainer : (chipArea.containsMouse ? Theme.bgHover : Theme.bgSunken)
 
                         Behavior on color {
