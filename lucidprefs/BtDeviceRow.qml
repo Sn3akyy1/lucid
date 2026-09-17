@@ -278,7 +278,7 @@ Column {
                     onClicked: {
                         dev.actionFailed = false;
                         if (dev.group === "nearby")
-                            dev.modelData.pair();
+                            Bt.pair(dev.modelData);
                         else if (dev.isConnected)
                             dev.modelData.disconnect();
                         else

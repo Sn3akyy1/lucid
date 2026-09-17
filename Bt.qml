@@ -24,6 +24,10 @@ Singleton {
     // bluez_card.* entries from pipewire, one per connected audio device
     property var audioCards: []
 
+    // pairings started while pairable was off, see pair()
+    property var pairQueue: []
+    property bool pairableHeld: false
+
     readonly property string blockReason: {
         if (root.hardBlocked)
             return "A hardware switch or an Fn key has Bluetooth blocked. The radio cannot come on until that is released.";
@@ -49,6 +53,46 @@ Singleton {
         if (d)
             d.forget();
 
+    }
+
+    // bluez only keeps the key from a pairing the adapter was bondable for. With pairable off
+    // the pairing goes through, lives as long as the link and is thrown away, so the device
+    // drops about two seconds after connecting. Hold pairable on around it, then put it back
+    function pair(device) {
+        if (!device || !root.adapter)
+            return ;
+
+        if (root.adapter.pairable && !root.pairableHeld) {
+            device.pair();
+            return ;
+        }
+        root.pairQueue = root.pairQueue.concat([{
+            "address": device.address,
+            "since": 0
+        }]);
+        if (!root.pairableHeld) {
+            root.pairableHeld = true;
+            pairableOn.running = true;
+        } else if (!pairableOn.running) {
+            root.startQueuedPairs();
+        }
+    }
+
+    function startQueuedPairs() {
+        const now = Date.now();
+        root.pairQueue = root.pairQueue.map((p) => {
+            if (p.since !== 0)
+                return p;
+
+            const d = root.deviceAt(p.address);
+            if (d)
+                d.pair();
+
+            return {
+                "address": p.address,
+                "since": now
+            };
+        });
     }
 
     function cardFor(address) {
@@ -306,6 +350,40 @@ Singleton {
         running: true
         triggeredOnStart: true
         onTriggered: root.refresh()
+    }
+
+    // exits once bluez has applied it, so a pairing never starts ahead of the bondable flag
+    Process {
+        id: pairableOn
+
+        command: ["bluetoothctl", "pairable", "on"]
+        onExited: root.startQueuedPairs()
+    }
+
+    Process {
+        id: pairableOff
+
+        command: ["bluetoothctl", "pairable", "off"]
+    }
+
+    // a queued pairing is over once its device stops pairing; the grace covers the moment
+    // before pair() raises the flag
+    Timer {
+        interval: 1000
+        repeat: true
+        running: root.pairableHeld && !pairableOn.running
+        onTriggered: {
+            const now = Date.now();
+            root.pairQueue = root.pairQueue.filter((p) => {
+                const d = root.deviceAt(p.address);
+                return !!d && (d.pairing || now - p.since < 3000);
+            });
+            if (root.pairQueue.length > 0)
+                return ;
+
+            root.pairableHeld = false;
+            pairableOff.running = true;
+        }
     }
 
 }
