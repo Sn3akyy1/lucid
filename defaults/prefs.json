@@ -1,8 +1,11 @@
 {
     "accentPunch": 1,
+    "barAutoHide": false,
     "barEnabled": true,
+    "barFullCorner": 18,
     "barHeight": 35,
     "barHoverGrow": 3,
+    "barHoverOpen": false,
     "barMotionScale": 1.35,
     "barNotchFlare": 14,
     "barPopupGap": 10,

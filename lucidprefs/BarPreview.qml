@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Shapes
 import qs
 
 Rectangle {
@@ -13,7 +14,7 @@ Rectangle {
 
         readonly property real unit: screen.height / 100
         readonly property real modH: screen.unit * 11
-        readonly property real barY: Prefs.barNotch ? 0 : screen.unit * 7
+        readonly property real barY: Prefs.barFlush ? 0 : screen.unit * 7
         readonly property real sideM: screen.unit * 4
         readonly property real gap: screen.unit * 3
 
@@ -47,6 +48,56 @@ Rectangle {
 
         }
 
+        Rectangle {
+            id: fullStrip
+
+            width: screen.width
+            height: screen.modH
+            color: Theme.bgOpaque
+            visible: Prefs.barFull
+        }
+
+        Repeater {
+            model: Prefs.barFull ? [false, true] : []
+
+            Shape {
+                required property bool modelData
+                readonly property real r: Math.max(0, Prefs.barFullCorner * 0.5)
+
+                x: modelData ? screen.width - r : 0
+                y: screen.modH
+                width: r
+                height: r
+                visible: r > 0
+                preferredRendererType: Shape.CurveRenderer
+
+                transform: Scale {
+                    xScale: modelData ? 1 : -1
+                    origin.x: r / 2
+                }
+
+                ShapePath {
+                    strokeWidth: 0
+                    fillColor: Theme.bgOpaque
+                    startX: r
+                    startY: r
+
+                    PathArc {
+                        x: 0
+                        y: 0
+                        radiusX: r
+                        radiusY: r
+                        direction: PathArc.Counterclockwise
+                    }
+
+                    PathLine { x: r; y: 0 }
+                    PathLine { x: r; y: r }
+                }
+
+            }
+
+        }
+
         Row {
             id: leftRow
 
@@ -70,9 +121,9 @@ Rectangle {
 
                     width: screen.width * modelData
                     height: screen.modH
-                    color: Theme.bgOpaque
-                    topLeftRadius: Prefs.barNotch ? 0 : height / 2
-                    topRightRadius: Prefs.barNotch ? 0 : height / 2
+                    color: Prefs.barFull ? "transparent" : Theme.bgOpaque
+                    topLeftRadius: Prefs.barFlush ? 0 : height / 2
+                    topRightRadius: Prefs.barFlush ? 0 : height / 2
                     bottomLeftRadius: height / 2
                     bottomRightRadius: height / 2
 
@@ -96,9 +147,9 @@ Rectangle {
             y: screen.barY
             width: screen.width * 0.13
             height: screen.modH
-            color: Theme.bgOpaque
-            topLeftRadius: Prefs.barNotch ? 0 : height / 2
-            topRightRadius: Prefs.barNotch ? 0 : height / 2
+            color: Prefs.barFull ? "transparent" : Theme.bgOpaque
+            topLeftRadius: Prefs.barFlush ? 0 : height / 2
+            topRightRadius: Prefs.barFlush ? 0 : height / 2
             bottomLeftRadius: height / 2
             bottomRightRadius: height / 2
 
@@ -142,9 +193,9 @@ Rectangle {
 
                     width: screen.width * modelData
                     height: screen.modH
-                    color: Theme.bgOpaque
-                    topLeftRadius: Prefs.barNotch ? 0 : height / 2
-                    topRightRadius: Prefs.barNotch ? 0 : height / 2
+                    color: Prefs.barFull ? "transparent" : Theme.bgOpaque
+                    topLeftRadius: Prefs.barFlush ? 0 : height / 2
+                    topRightRadius: Prefs.barFlush ? 0 : height / 2
                     bottomLeftRadius: height / 2
                     bottomRightRadius: height / 2
 
@@ -168,10 +219,10 @@ Rectangle {
 
                     width: parent.width
                     height: screen.modH
-                    color: Theme.bgOpaque
+                    color: Prefs.barFull ? "transparent" : Theme.bgOpaque
                     visible: Prefs.barPopupMode
-                    topLeftRadius: Prefs.barNotch ? 0 : height / 2
-                    topRightRadius: Prefs.barNotch ? 0 : height / 2
+                    topLeftRadius: Prefs.barFlush ? 0 : height / 2
+                    topRightRadius: Prefs.barFlush ? 0 : height / 2
                     bottomLeftRadius: height / 2
                     bottomRightRadius: height / 2
                 }
@@ -183,9 +234,9 @@ Rectangle {
                     height: Prefs.barPopupMode ? screen.unit * 40 : screen.unit * 52
                     y: Prefs.barPopupMode ? screen.modH + Math.max(screen.unit * 1.5, Prefs.barPopupGap * screen.unit * 0.22) : 0
                     color: Theme.bgOpaque
-                    radius: screen.unit * 4
-                    topLeftRadius: Prefs.barPopupMode || !Prefs.barNotch ? screen.unit * 4 : 0
-                    topRightRadius: Prefs.barPopupMode || !Prefs.barNotch ? screen.unit * 4 : 0
+                    radius: screen.unit * 4 * Theme.radiusScale
+                    topLeftRadius: Prefs.barPopupMode || !Prefs.barFlush ? screen.unit * 4 * Theme.radiusScale : 0
+                    topRightRadius: Prefs.barPopupMode || !Prefs.barFlush ? screen.unit * 4 * Theme.radiusScale : 0
 
                     Behavior on y {
                         NumberAnimation {
@@ -234,7 +285,7 @@ Rectangle {
         anchors.rightMargin: 22
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 20
-        text: (Prefs.barNotch ? "Notches" : "Islands") + "  ·  " + (Prefs.barPopupMode ? "pop-up" : "morph")
+        text: (Prefs.barFull ? "Full bar" : Prefs.barNotch ? "Notches" : "Islands") + "  ·  " + (Prefs.barPopupMode ? "pop-up" : "morph") + (Prefs.barAutoHide ? "  ·  auto-hide" : "")
         color: Theme.subtext
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontLabel
