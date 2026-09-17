@@ -110,6 +110,14 @@ Singleton {
     property alias timeZoneAuto: s.timeZoneAuto
     property alias doNotDisturb: s.doNotDisturb
     property alias toastTimeout: s.toastTimeout
+    property alias toastOnLayout: s.toastOnLayout
+    property alias toastOnGameMode: s.toastOnGameMode
+    property alias toastOnBattery: s.toastOnBattery
+    property alias toastOnBluetooth: s.toastOnBluetooth
+    property alias toastOnWifi: s.toastOnWifi
+    property alias toastOnAudio: s.toastOnAudio
+    property alias toastOnDisplays: s.toastOnDisplays
+    property alias toastOnPower: s.toastOnPower
     property alias toastEnabled: s.toastEnabled
     property alias toastUseAppTimeout: s.toastUseAppTimeout
     property alias toastCriticalSticky: s.toastCriticalSticky
@@ -315,6 +323,14 @@ Singleton {
         "timeZoneAuto": true,
         "doNotDisturb": false,
         "toastTimeout": 5,
+        "toastOnLayout": true,
+        "toastOnGameMode": true,
+        "toastOnBattery": true,
+        "toastOnBluetooth": true,
+        "toastOnWifi": true,
+        "toastOnAudio": true,
+        "toastOnDisplays": true,
+        "toastOnPower": true,
         "toastEnabled": true,
         "toastUseAppTimeout": true,
         "toastCriticalSticky": true,
@@ -732,6 +748,14 @@ Singleton {
             property bool timeZoneAuto: true
             property bool doNotDisturb: false
             property int toastTimeout: 5
+            property bool toastOnLayout: true
+            property bool toastOnGameMode: true
+            property bool toastOnBattery: true
+            property bool toastOnBluetooth: true
+            property bool toastOnWifi: true
+            property bool toastOnAudio: true
+            property bool toastOnDisplays: true
+            property bool toastOnPower: true
             property bool toastEnabled: true
             property bool toastUseAppTimeout: true
             property bool toastCriticalSticky: true

@@ -596,4 +596,137 @@ Column {
 
     }
 
+    SettingCard {
+        title: "SYSTEM EVENTS"
+
+        SettingRow {
+            title: "Keyboard layout"
+            resetKey: "toastOnLayout"
+            description: "A small toast at the top of the screen with the layout you switched to."
+
+            M3Switch {
+                checked: Prefs.toastOnLayout
+                onToggled: (v) => {
+                    return Prefs.toastOnLayout = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Game mode"
+            resetKey: "toastOnGameMode"
+            enabled: Prefs.gameModeStateFile !== ""
+            disabledReason: "Game mode is noticed by watching the file its status command checks. Set the status command under Bar → System module to something like test -f /run/gamemode.state."
+            description: "When game mode turns on or off - from the tile, a keybind or anywhere else."
+
+            M3Switch {
+                checked: Prefs.toastOnGameMode
+                enabled: Prefs.gameModeStateFile !== ""
+                onToggled: (v) => {
+                    return Prefs.toastOnGameMode = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Battery and charger"
+            resetKey: "toastOnBattery"
+            description: "Plugging in or out, a full charge, and warnings at 20, 10 and 5 %."
+
+            M3Switch {
+                checked: Prefs.toastOnBattery
+                onToggled: (v) => {
+                    return Prefs.toastOnBattery = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Bluetooth devices"
+            resetKey: "toastOnBluetooth"
+            description: "A device connecting, with its battery when it reports one, or disconnecting. Switching Bluetooth off stays quiet."
+
+            M3Switch {
+                checked: Prefs.toastOnBluetooth
+                onToggled: (v) => {
+                    return Prefs.toastOnBluetooth = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Wi-Fi"
+            resetKey: "toastOnWifi"
+            description: "Joining or losing a network. A quick drop and rejoin, like waking from sleep, stays quiet."
+
+            M3Switch {
+                checked: Prefs.toastOnWifi
+                onToggled: (v) => {
+                    return Prefs.toastOnWifi = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Sound output"
+            resetKey: "toastOnAudio"
+            description: "The default output changing - speakers to headphones and back."
+
+            M3Switch {
+                checked: Prefs.toastOnAudio
+                onToggled: (v) => {
+                    return Prefs.toastOnAudio = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Displays"
+            resetKey: "toastOnDisplays"
+            description: "A monitor being plugged in or unplugged."
+
+            M3Switch {
+                checked: Prefs.toastOnDisplays
+                onToggled: (v) => {
+                    return Prefs.toastOnDisplays = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Power profile"
+            resetKey: "toastOnPower"
+            description: "Balanced, performance or power saver. A switch made by game mode is left to its own toast."
+
+            M3Switch {
+                checked: Prefs.toastOnPower
+                onToggled: (v) => {
+                    return Prefs.toastOnPower = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Preview"
+            description: "Plays one of each, one after another, with made-up details."
+            showDivider: false
+
+            M3Button {
+                text: "Preview"
+                variant: "text"
+                onClicked: Quickshell.execDetached(["qs", "ipc", "call", "toastevents", "preview"])
+            }
+
+        }
+
+    }
+
 }
