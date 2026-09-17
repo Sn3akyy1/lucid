@@ -424,6 +424,20 @@ Hyprland reload.
   switches between DHCP and a hand-set address, gateway and DNS, or just
   overrides DNS while leaving the rest automatic. Scriptable with
   `qs ipc call network status | list | rescan`
+- **Sound** — a *Sound* page for what plays and what listens. Every output and
+  every input the machine has, each one named, with what it is doing right now
+  — its mode and the socket the sound comes out of — and a tick on the one in
+  use. Click another and it takes over; anything already playing moves across
+  with it, which is the part that is usually missing. Open a device for its own
+  volume, its **socket** — speakers, the headphone jack, the digital output,
+  with the unplugged ones said to be unplugged — and its **mode**, the card
+  profile that decides what devices it offers at all. Below that, everything
+  making or taking sound right now: a volume and a mute of its own per program,
+  and a device of its own, so one application can play somewhere else while the
+  rest stay put. A visualiser or a screen recorder sitting on a monitor is left
+  where it is rather than dragged onto a microphone. It reads PipeWire directly
+  and hears about changes as they happen, so it agrees with `pavucontrol` and
+  with whatever else you use. Scriptable with `qs ipc call settings sound`
 - **Bluetooth** — a *Bluetooth* page in Settings is a full manager: the radio,
   discoverability, whether the machine accepts pairing requests, and the name
   other devices see. Below it every device the adapter knows, grouped into
@@ -512,7 +526,7 @@ Hyprland reload.
   become Hyprland window rules in `~/.config/hypr/lucid-glass.lua`, applied
   without a reload and pushed onto windows that are already open. Scriptable
   with `qs ipc call settings glass`
-- **Settings** — a GUI for all of the above, no config file editing. Sixteen
+- **Settings** — a GUI for all of the above, no config file editing. Seventeen
   pages behind a collapsible rail, grouped-list cards, an app bar that collapses
   as you scroll, and a reset arrow on anything you have moved off its default
 

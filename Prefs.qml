@@ -151,6 +151,7 @@ Singleton {
 
     property alias btScanOnOpen: s.btScanOnOpen
     property alias btShowUnnamed: s.btShowUnnamed
+    property alias audioMoveStreams: s.audioMoveStreams
     property alias kdeConnectEnabled: s.kdeConnectEnabled
     property alias updateCheck: s.updateCheck
 
@@ -347,6 +348,7 @@ Singleton {
         "widgetOnTop": false,
         "btScanOnOpen": true,
         "btShowUnnamed": false,
+        "audioMoveStreams": true,
         "kdeConnectEnabled": true,
         "updateCheck": true,
         "idleEnabled": false,
@@ -759,6 +761,7 @@ Singleton {
             property bool widgetOnTop: false
             property bool btScanOnOpen: true
             property bool btShowUnnamed: false
+            property bool audioMoveStreams: true
             property bool kdeConnectEnabled: true
             property bool updateCheck: true
             property bool idleEnabled: false

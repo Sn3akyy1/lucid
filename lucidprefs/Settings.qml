@@ -41,6 +41,7 @@ FloatingWindow {
         { "key": "widgets", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
         { "key": "workspaces", "group": "Desktop", "label": "Workspaces", "title": "Special Workspaces", "blurb": "Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key" },
         { "key": "displays", "group": "Devices", "label": "Displays", "title": "Displays", "blurb": "Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on" },
+        { "key": "sound", "group": "Devices", "label": "Sound", "title": "Sound", "blurb": "Which speakers play and which microphone listens, what each application is using, and how loud any of it is" },
         { "key": "network", "group": "Devices", "label": "Network", "title": "Network", "blurb": "Wi-Fi, wired, VPN and how this machine gets its address" },
         { "key": "bluetooth", "group": "Devices", "label": "Bluetooth", "title": "Bluetooth and Devices", "blurb": "The radio, what it is paired with, and the phone you connect to it" },
         { "key": "kdeconnect", "group": "Devices", "label": "Phone", "title": "Phone", "blurb": "Your phone on this machine over KDE Connect: files, notifications, clipboard and a remote", "toggle": "kdeConnectEnabled" },
@@ -231,6 +232,15 @@ FloatingWindow {
 
         function notifications(): void {
             win.show("notifications");
+        }
+
+        function sound(): void {
+            win.show("sound");
+        }
+
+        // the page is called Sound; both names reach it
+        function audio(): void {
+            win.show("sound");
         }
 
         function network(): void {
@@ -981,6 +991,8 @@ FloatingWindow {
                                 return "WorkspacesPage.qml";
                             case "notifications":
                                 return "NotificationsPage.qml";
+                            case "sound":
+                                return "AudioPage.qml";
                             case "network":
                                 return "NetworkPage.qml";
                             case "bluetooth":

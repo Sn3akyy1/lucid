@@ -573,6 +573,25 @@ if [[ $WITH_HYPR -eq 1 ]]; then
         fi
     fi
 
+    # the lua config only exists from Hyprland 0.55. an older one reads
+    # hyprland.conf and ignores hyprland.lua, so replacing the config would
+    # leave it with nothing but its own defaults - worth asking first.
+    # `hyprctl version` prints "Hyprland 0.54.0 built from ..." with no v,
+    # so the number is taken bare and compared as a number
+    if [[ $DO_HYPR -eq 1 ]] && command -v hyprctl &>/dev/null; then
+        HYPR_VER=$(hyprctl version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
+        if [[ -n "$HYPR_VER" ]]; then
+            IFS=. read -r hv_major hv_minor _ <<< "$HYPR_VER"
+            if (( hv_major == 0 && hv_minor < 55 )); then
+                warn "  Hyprland $HYPR_VER predates the lua config (0.55+) — it will ignore hyprland.lua"
+                if ! ask "  Install it anyway?"; then
+                    DO_HYPR=0
+                    say "  ${dim}left alone — update Hyprland, then re-run with --with-hypr${r}"
+                fi
+            fi
+        fi
+    fi
+
     if [[ $DO_HYPR -eq 1 ]]; then
         if [[ $HAS_HYPR_CFG -eq 1 ]]; then
             cp -r "$HYPR_DIR" "$HYPR_DIR.backup-$STAMP"
@@ -592,6 +611,27 @@ if [[ $WITH_HYPR -eq 1 ]]; then
         HYPR_LUA_INSTALLED=1
         say "  hyprland.lua + $(ls "$SRC/support/hypr/modules" | wc -l) modules -> $HYPR_DIR"
         say "  ${dim}binds, window rules, blur, animations and autostart come with it${r}"
+        # a refresh replaces hyprland.lua whole, but a require added to it
+        # since the last run - hyprmod's require("hyprland-gui"), a module
+        # of your own - is not Lucid's to drop. those lines go back in,
+        # after Lucid's, so what they set still wins. only on a refresh:
+        # a config replaced on request was meant to go
+        if [[ $HYPR_IS_LUCID -eq 1 && -f "$HYPR_DIR.backup-$STAMP/hyprland.lua" ]]; then
+            carried=()
+            while IFS= read -r line; do
+                grep -qxF -- "$line" "$HYPR_DIR/hyprland.lua" && continue
+                printf '%s\n' "${carried[@]:-}" | grep -qxF -- "$line" && continue
+                carried+=("$line")
+            done < <(grep -E '^[[:space:]]*(pcall[[:space:]]*\([[:space:]]*)?(require|dofile)[[:space:]]*[(,]' \
+                        "$HYPR_DIR.backup-$STAMP/hyprland.lua" || true)
+            if (( ${#carried[@]} )); then
+                {
+                    printf '\n-- kept by the Lucid installer: these were added to hyprland.lua after it was installed\n'
+                    printf '%s\n' "${carried[@]}"
+                } >> "$HYPR_DIR/hyprland.lua"
+                say "  kept ${#carried[@]} require line(s) added to hyprland.lua since the last install"
+            fi
+        fi
 
         # the binds shell out to these, so a missing one is a dead key rather
         # than a visible error. worth saying now, not after the first F-key
@@ -599,12 +639,6 @@ if [[ $WITH_HYPR -eq 1 ]]; then
             command -v "$c" &>/dev/null || warn "  $c is missing — the binds that use it will do nothing"
         done
 
-        if command -v hyprctl &>/dev/null; then
-            HYPR_VER=$(hyprctl version 2>/dev/null | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
-            case "$HYPR_VER" in
-                v0.4*|v0.3*|v0.2*|v0.1*) warn "  Hyprland $HYPR_VER predates the lua config format — expect errors" ;;
-            esac
-        fi
     fi
 else
     step "Skipping the Hyprland config (--no-hypr)"

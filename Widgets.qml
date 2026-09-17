@@ -512,6 +512,45 @@ Singleton {
             "type": "bool",
             "def": true
         }]
+    }, {
+        "id": "kdeconnect",
+        "name": "Phone",
+        "blurb": "Phone status, battery, signal and quick controls via KDE Connect.",
+        "variants": [{
+            "id": "card",
+            "name": "Card",
+            "blurb": "Battery, signal, and quick control buttons.",
+            "w": 268,
+            "h": 180
+        }, {
+            "id": "compact",
+            "name": "Compact",
+            "blurb": "Minimal row with phone battery & ring button.",
+            "w": 216,
+            "h": 96
+        }, {
+            "id": "remote",
+            "name": "Remote",
+            "blurb": "Battery, phone media controls, and quick actions.",
+            "w": 284,
+            "h": 220
+        }],
+        "options": [{
+            "key": "showShare",
+            "label": "Send file button",
+            "type": "bool",
+            "def": true
+        }, {
+            "key": "showRing",
+            "label": "Ring button",
+            "type": "bool",
+            "def": true
+        }, {
+            "key": "showClipboard",
+            "label": "Clipboard button",
+            "type": "bool",
+            "def": true
+        }]
     }]
 
     // the full-width bars every preset stands on. listed first in each, so the cards
