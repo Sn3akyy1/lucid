@@ -51,11 +51,32 @@ Lucid/
 - **Radii, easing and durations** match `Theme.qml`: radii of 8, 12, 16, 20 and 28 px, the
   emphasized decelerate curve `cubic-bezier(0.05, 0.7, 0.1, 1)`, and durations scaled by the
   shell's 1.125 motion baseline.
-- **Motion**: headings rise in on load, sections fade up as they scroll into view, a
-  palette or mode change spreads from the clicked button in a circle, and pages cross-fade
-  where the browser supports View Transitions. Visitors with reduced motion turned on get
-  none of it. The scroll reveal is armed by a small script in each page's `<head>`, and it
-  shows everything after 2.5 seconds if `script.js` fails to load.
+- **Buttons** behave like Lucid's `M3Button`: a pill at rest and on hover, where hover lays an
+  8% state layer in the label colour. Accent-filled buttons change their fill instead, as
+  Lucid's accent chips do: `--accent-hover` and `--accent-pressed` are the accent six tone
+  steps lighter or darker (Theme.qml's `accentHover`/`accentPressed`). On hover they also
+  swell to 106% on the fast spring, which overshoots a touch and settles; a press squishes
+  them to 97%. The swell only applies to devices with a real pointer, so a tap on a phone
+  doesn't leave the button swollen. A press morphs the
+  corners to 12px with Lucid's emphasized overshoot. Nothing lifts or changes shape on hover.
+- **Motion** uses Material 3 Expressive's spatial springs (Compose's `MotionScheme.expressive`),
+  sampled into CSS `linear()` curves: `--spring-fast` for press and selection morphs, `--spring`
+  for movement. On top of that:
+  - headings rise in on load, and sections fade up as they scroll into view
+  - moving between pages, the nav's active pill glides from the link you left to the new
+    one, the way Lucid's workspace pill moves (OutCubic, 340 ms, no overshoot)
+  - menus grow out of their pill
+  - a gallery thumbnail grows into the full-size viewer, and the announcement notification
+    grows into its dialog
+  - the hero's Lucida orbit turns as you scroll, and the header logo spins on hover
+  - a palette or mode change spreads from the clicked button in a circle
+  - pages cross-fade with the bar held still
+
+  The morphs, the circle and the page fades use View Transitions. If a browser has no frame
+  ready within 400 ms, a watchdog applies the change without the animation, so a click always
+  does something. Visitors with reduced motion get none of it. The scroll reveal is armed by a
+  small script in each page's `<head>`, and shows everything after 2.5 seconds if `script.js`
+  fails to load.
 - **Icons** are Material Symbols Rounded (Apache 2.0), inlined into each page as an SVG
   sprite so they also work when a page is opened straight from disk. The GitHub mark is
   from Octicons (MIT).

@@ -59,6 +59,8 @@
   --hover: color-mix(in oklab, var(--text) 8%, transparent);
   --press: color-mix(in oklab, var(--text) 12%, transparent);
   --accent-soft: color-mix(in oklab, var(--accent) 14%, transparent);
+  --accent-hover: var(--accent);
+  --accent-pressed: var(--accent);
   --scrim: rgb(0 0 0 / 0.6);
 
   --font: "Google Sans", "Product Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -86,6 +88,13 @@
   --ease-out: cubic-bezier(0.3, 0, 0.8, 0.15);
   --ease-std: cubic-bezier(0.33, 1, 0.68, 1);
   --ease-back: cubic-bezier(0.34, 1.4, 0.64, 1);
+  /* M3 Expressive spatial springs (Compose MotionScheme.expressive), sampled into linear():
+     fast is damping 0.6 / stiffness 800, default and slow are 0.8 / 380 and 0.8 / 200 */
+  --spring-fast: linear(0, 0.0442, 0.1537, 0.2988, 0.4562, 0.6089, 0.7458, 0.8604, 0.9503, 1.0158, 1.0593, 1.0841, 1.0941, 1.0931, 1.0846, 1.0719, 1.0572, 1.0424, 1.0287, 1.017, 1.0076, 1.0006, 0.9957, 0.9927, 0.9913, 0.991, 0.9916, 0.9927, 0.994, 0.9955, 0.9968, 0.998, 1);
+  --spring: linear(0, 0.0303, 0.1051, 0.2049, 0.3152, 0.4263, 0.5316, 0.6271, 0.7108, 0.7821, 0.8411, 0.8887, 0.9262, 0.955, 0.9764, 0.9917, 1.0023, 1.009, 1.0129, 1.0148, 1.0151, 1.0145, 1.0133, 1.0117, 1.0101, 1.0084, 1.0068, 1.0054, 1.0042, 1.0031, 1.0023, 1.0016, 1);
+  --d-spring-fast: 360ms;
+  --d-spring: 440ms;
+  --d-spring-slow: 600ms;
   --d-quick: 135ms;
   --d-short: 200ms;
   --d-medium: 315ms;
@@ -154,6 +163,28 @@
   --err-c: #ffdad6;
   --on-err-c: #410002;
   --scrim: rgb(20 10 8 / 0.45);
+}
+
+/* Theme.accentHover / accentPressed: the accent six tone steps toward the light in dark mode
+   (and toward the dark in light mode) for hover, the other way for a press. M3 tone is
+   CIELAB L*, so lab(from ...) makes the same shift for every palette */
+@supports (color: lab(from red l a b)) {
+  :root {
+    --accent-hover: lab(from var(--accent) calc(l + 6) a b);
+    --accent-pressed: lab(from var(--accent) calc(l - 6) a b);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --accent-hover: lab(from var(--accent) calc(l - 6) a b);
+      --accent-pressed: lab(from var(--accent) calc(l + 6) a b);
+    }
+  }
+
+  :root[data-theme="light"] {
+    --accent-hover: lab(from var(--accent) calc(l - 6) a b);
+    --accent-pressed: lab(from var(--accent) calc(l + 6) a b);
+  }
 }
 
 /* base */
@@ -868,25 +899,67 @@ pre,
   text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color var(--d-short) var(--ease-std), color var(--d-short) var(--ease-std), border-radius var(--d-medium) var(--ease-in);
+  position: relative;
+  isolation: isolate;
+  transition: border-radius var(--d-medium) var(--ease-back);
 }
 
 .btn:hover {
   text-decoration: none;
-  border-radius: var(--r-md);
+}
+
+.btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--d-quick) var(--ease-std);
+  pointer-events: none;
+}
+
+.btn:hover::after {
+  opacity: 0.08;
+}
+
+.btn:active::after {
+  opacity: 0.1;
 }
 
 .btn:active {
-  border-radius: var(--r-sm);
+  border-radius: 12px;
 }
 
+/* accent buttons swell toward the pointer on the fast spring, which overshoots a touch and
+   settles; a press squishes them and morphs the corners. scale is its own property, so it
+   never fights the load and reveal animations on the rows around them */
 .btn-primary {
   background: var(--accent);
   color: var(--on-accent);
+  transition: scale var(--d-spring-fast) var(--spring-fast), background-color var(--d-short) var(--ease-std), border-radius var(--d-medium) var(--ease-back);
 }
 
-.btn-primary:hover {
-  background: color-mix(in oklab, var(--accent) 88%, var(--text));
+.btn-primary::after {
+  display: none;
+}
+
+@media (hover: hover) {
+  .btn-primary:hover {
+    scale: 1.06;
+    background: var(--accent-hover);
+  }
+}
+
+.btn-primary:focus-visible {
+  scale: 1.06;
+  background: var(--accent-hover);
+}
+
+.btn-primary:active {
+  scale: 0.97;
+  background: var(--accent-pressed);
 }
 
 .btn-tonal {
@@ -894,17 +967,9 @@ pre,
   color: var(--on-accent-c);
 }
 
-.btn-tonal:hover {
-  background: color-mix(in oklab, var(--accent-c) 88%, var(--text));
-}
-
 .btn-quiet {
   background: var(--s3);
   color: var(--text);
-}
-
-.btn-quiet:hover {
-  background: var(--s4);
 }
 
 .btn-sm {
@@ -1694,12 +1759,11 @@ td.wrap-ok {
   background: var(--s1);
   color: var(--text);
   text-decoration: none;
-  transition: background-color var(--d-short) var(--ease-std), border-radius var(--d-medium) var(--ease-in);
+  transition: background-color var(--d-short) var(--ease-std);
 }
 
 a.card:hover {
   background: var(--s2);
-  border-radius: var(--r-lg);
 }
 
 .card .ico {
@@ -2267,12 +2331,11 @@ a.card:hover {
   color: var(--text);
   text-align: left;
   cursor: pointer;
-  transition: background-color var(--d-short) var(--ease-std), border-radius var(--d-medium) var(--ease-in);
+  transition: background-color var(--d-short) var(--ease-std);
 }
 
 .topic:hover {
   background: var(--s2);
-  border-radius: var(--r-lg);
 }
 
 .topic[aria-pressed="true"] {
@@ -3637,6 +3700,184 @@ a.person:hover {
 .theme-shift::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
+}
+
+/* fluid motion: springs for anything that moves or changes shape */
+@keyframes panel-grow {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 92% 0 round 24px);
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0 round 28px);
+    transform: none;
+  }
+}
+
+@keyframes orbit-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* shapes settle with the fast spring's overshoot */
+.seg button {
+  transition: background-color var(--d-short) var(--ease-std), color var(--d-short) var(--ease-std), border-radius var(--d-spring-fast) var(--spring-fast);
+}
+
+.seg-check {
+  transition: width var(--d-spring-fast) var(--spring-fast), opacity var(--d-short) var(--ease-std);
+}
+
+.pw-swatch {
+  transition: transform var(--d-spring-fast) var(--spring-fast);
+}
+
+/* what you can click lifts toward the pointer; translate, so it never fights the reveal */
+.pal {
+  transition: background-color var(--d-short) var(--ease-std), color var(--d-short) var(--ease-std), transform var(--d-spring-fast) var(--spring-fast);
+}
+
+.link-arrow .i {
+  transition: translate var(--d-spring-fast) var(--spring-fast);
+}
+
+/* panels grow out of their pill, the way the bar's modules open */
+.panel,
+.sheet-card {
+  animation: panel-grow var(--d-spring) var(--spring) both;
+}
+
+/* the nav's items sit above the gliding pill */
+.nav {
+  position: relative;
+}
+
+.nav-link,
+.dd-btn {
+  position: relative;
+  z-index: 1;
+}
+
+/* the active pill glides from the page you came from, the way the bar's workspace pill
+   moves (OutCubic, about 340 ms, no overshoot). the head script hides the real pill from
+   first paint while script.js flies a stand-in across */
+.nav-pill {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  height: 40px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  pointer-events: none;
+}
+
+.nav-arriving .nav :is(.nav-link[aria-current="page"], .dd-btn.is-current) {
+  background: transparent;
+  color: var(--text-2);
+  transition: none;
+}
+
+.nav-arriving .nav :is(.nav-link, .dd-btn).nav-lit {
+  color: var(--on-accent);
+  transition: color 340ms var(--ease-std);
+}
+
+/* page to page, the new bar takes over at once, so no ghost of the old pill shows through */
+::view-transition-old(site-bar) {
+  animation: none;
+  opacity: 0;
+}
+
+::view-transition-new(site-bar) {
+  animation: none;
+}
+
+/* the logo's orbit spins once when you point at it */
+.brand .mark-orbit {
+  transform-box: view-box;
+  transform-origin: 12px 12px;
+}
+
+.brand:hover .mark-orbit {
+  animation: orbit-spin 900ms var(--spring) both;
+}
+
+/* container transforms: a thumbnail grows into the viewer, a notification into its dialog */
+.vt-morph .bar {
+  view-transition-name: none;
+}
+
+.vt-morph::view-transition-old(root) {
+  animation: 240ms var(--ease-std) both fade-out;
+}
+
+.vt-morph::view-transition-new(root) {
+  animation: 320ms var(--ease-std) both fade-in;
+}
+
+::view-transition-group(morph) {
+  animation-duration: var(--d-spring-slow);
+  animation-timing-function: var(--spring);
+  overflow: clip;
+  border-radius: var(--r-xl);
+}
+
+::view-transition-old(morph),
+::view-transition-new(morph) {
+  height: 100%;
+  object-fit: cover;
+  animation-timing-function: var(--ease-std);
+}
+
+::view-transition-old(morph) {
+  animation-duration: 160ms;
+}
+
+::view-transition-new(morph) {
+  animation-duration: 320ms;
+}
+
+/* a morphed-in dialog skips its own entrance; its exit still plays */
+.lightbox.no-enter:not(.is-closing),
+.lightbox.no-enter:not(.is-closing)::backdrop,
+.ann-dialog.no-enter:not(.is-closing),
+.ann-dialog.no-enter:not(.is-closing)::backdrop,
+#lb-img.no-enter {
+  animation: none;
+}
+
+/* scroll-linked: the hero's orbit turns as you scroll, and the screenshot settles into focus */
+@keyframes orbit-turn {
+  to {
+    rotate: 50deg;
+  }
+}
+
+@keyframes settle-in {
+  from {
+    scale: 1.08;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll()) {
+    .hero-mark .mark-orbit {
+      transform-box: view-box;
+      transform-origin: 12px 12px;
+      animation: orbit-turn linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 80vh;
+    }
+
+    .showcase .shot img {
+      animation: settle-in linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 45%;
+    }
+  }
 }
 
 /* responsive */

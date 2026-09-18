@@ -101,6 +101,22 @@
     el.classList.remove("is-closing");
   }
 
+  // start a view transition that cannot swallow its update: the browser only runs the update
+  // once it has captured a frame, so if none comes within 400 ms, skip the animation and apply
+  // the change directly. `run` is guarded, so the update never happens twice
+  function transition(update) {
+    let ran = null;
+    const run = () => (ran ??= Promise.resolve().then(update));
+    const shift = document.startViewTransition(run);
+    const watchdog = setTimeout(() => {
+      if (ran) return;
+      shift.skipTransition();
+      run();
+    }, 400);
+    shift.finished.finally(() => clearTimeout(watchdog)).catch(() => {});
+    return shift;
+  }
+
   // a palette or mode change spreads from the button in a circle, like a new wallpaper
   function reshade(origin, change) {
     if (!document.startViewTransition || calm()) {
@@ -112,7 +128,7 @@
     const y = box.top + box.height / 2;
     const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
     root.classList.add("theme-shift");
-    const shift = document.startViewTransition(change);
+    const shift = transition(change);
     shift.ready
       .then(() =>
         root.animate(
@@ -122,6 +138,98 @@
       )
       .catch(() => {});
     shift.finished.finally(() => root.classList.remove("theme-shift"));
+  }
+
+  const canMorph = () => !!document.startViewTransition && !calm();
+
+  function onScreen(el) {
+    if (!el || !el.isConnected) return false;
+    const box = el.getBoundingClientRect();
+    return box.width > 0 && box.bottom > 0 && box.top < innerHeight;
+  }
+
+  // a container transform: `from` grows into `to` while `update` swaps the page underneath
+  function morph(from, to, update) {
+    root.classList.add("vt-morph");
+    from.style.viewTransitionName = "morph";
+    const shift = transition(async () => {
+      from.style.viewTransitionName = "";
+      await update();
+      to.style.viewTransitionName = "morph";
+    });
+    return shift.finished.catch(() => {}).finally(() => {
+      from.style.viewTransitionName = "";
+      to.style.viewTransitionName = "";
+      root.classList.remove("vt-morph");
+    });
+  }
+
+  /* page to page, the nav's active pill glides from the link you left, like the bar's
+     workspace pill. the page you leave records where its pill was; the head script of the
+     next one hides its own pill from first paint, and a stand-in flies across ---------- */
+
+  const nav = $(".nav");
+  const activeItem = () => (nav ? $('.nav-link[aria-current="page"], .dd-btn.is-current', nav) : null);
+
+  window.addEventListener("pagehide", () => {
+    const a = activeItem();
+    if (!a || !nav.offsetParent) {
+      store.set("lucid-nav-from", null, "sessionStorage");
+      return;
+    }
+    const box = a.getBoundingClientRect();
+    const host = nav.getBoundingClientRect();
+    const from = { x: box.left - host.left, w: box.width, vw: innerWidth, t: Date.now() };
+    store.set("lucid-nav-from", JSON.stringify(from), "sessionStorage");
+  });
+
+  if (root.classList.contains("nav-arriving")) {
+    let from = null;
+    try {
+      from = JSON.parse(store.get("lucid-nav-from", "sessionStorage") || "null");
+    } catch {
+      from = null;
+    }
+    store.set("lucid-nav-from", null, "sessionStorage");
+    const to = activeItem();
+    let landed = false;
+    const land = () => {
+      // swap the stand-in for the real pill in one frame, with no fade in between
+      if (landed) return;
+      landed = true;
+      if (to) to.style.transition = "none";
+      root.classList.remove("nav-arriving");
+      to?.classList.remove("nav-lit");
+      $(".nav-pill", nav)?.remove();
+      if (to) {
+        void to.offsetWidth;
+        to.style.transition = "";
+      }
+    };
+    if (!from || !to || !nav.offsetParent) land();
+    else {
+      const box = to.getBoundingClientRect();
+      const x = box.left - nav.getBoundingClientRect().left;
+      if (Math.abs(x - from.x) < 1) land();
+      else {
+        const pill = document.createElement("span");
+        pill.className = "nav-pill";
+        pill.setAttribute("aria-hidden", "true");
+        nav.prepend(pill);
+        to.classList.add("nav-lit");
+        pill
+          .animate(
+            [
+              { translate: `${from.x}px 0`, width: `${from.w}px` },
+              { translate: `${x}px 0`, width: `${box.width}px` },
+            ],
+            { duration: 340, easing: "cubic-bezier(0.33, 1, 0.68, 1)", fill: "forwards" }
+          )
+          .finished.then(land, land);
+        // the finished promise waits on a rendered frame; land on time regardless
+        setTimeout(land, 420);
+      }
+    }
   }
 
   /* appearance: mode and palette ------------------------------------------ */
@@ -469,17 +577,37 @@
       a.addEventListener("click", (e) => {
         e.preventDefault();
         cancelOut(lb);
-        show(i);
-        lb.showModal();
-        document.body.classList.add("is-locked");
+        const thumb = $("img", a);
+        const open = async () => {
+          show(i);
+          lb.showModal();
+          document.body.classList.add("is-locked");
+          await img.decode().catch(() => {});
+        };
+        if (canMorph() && thumb) {
+          lb.classList.add("no-enter");
+          img.classList.add("no-enter");
+          morph(thumb, img, open).then(() => {
+            // keep the entrance from replaying; the next shot still fades in
+            img.style.animation = "none";
+            img.classList.remove("no-enter");
+          });
+        } else {
+          lb.classList.remove("no-enter");
+          open();
+        }
       })
     );
 
     const closeLb = () => {
-      if (lb.open && !lb.classList.contains("is-closing")) animateOut(lb, () => lb.close());
+      if (!lb.open || lb.classList.contains("is-closing")) return;
+      const thumb = $("img", items[index]);
+      if (canMorph() && onScreen(thumb)) morph(img, thumb, () => lb.close());
+      else animateOut(lb, () => lb.close());
     };
 
     lb.addEventListener("close", () => {
+      lb.classList.remove("no-enter");
       document.body.classList.remove("is-locked");
       items[index]?.focus();
     });
@@ -531,20 +659,30 @@
 
   // each announcement is a <dialog id="ann-<id>">; anything with data-ann="<id>" opens it,
   // and index.html#ann-<id> opens it on arrival, so one can be linked to directly
-  function openAnn(id) {
+  function openAnn(id, opener) {
     const dlg = document.getElementById(`ann-${id}`);
     if (!dlg || typeof dlg.showModal !== "function") return false;
-    cancelOut(dlg);
-    if (!dlg.open) dlg.showModal();
-    document.body.classList.add("is-locked");
-    $(".ann-scroll", dlg)?.scrollTo(0, 0);
-    history.replaceState(null, "", `#${dlg.id}`);
+    const open = () => {
+      cancelOut(dlg);
+      if (!dlg.open) dlg.showModal();
+      document.body.classList.add("is-locked");
+      $(".ann-scroll", dlg)?.scrollTo(0, 0);
+      history.replaceState(null, "", `#${dlg.id}`);
+    };
+    dlg._opener = opener || null;
+    if (opener && canMorph() && !dlg.open) {
+      dlg.classList.add("no-enter");
+      morph(opener, dlg, open);
+    } else open();
     return true;
   }
 
   $$(".ann-dialog").forEach((dlg) => {
     const close = () => {
-      if (dlg.open && !dlg.classList.contains("is-closing")) animateOut(dlg, () => dlg.close());
+      if (!dlg.open || dlg.classList.contains("is-closing")) return;
+      const back = dlg._opener;
+      if (back && canMorph() && onScreen(back)) morph(dlg, back, () => dlg.close());
+      else animateOut(dlg, () => dlg.close());
     };
     dlg.addEventListener("cancel", (e) => {
       e.preventDefault();
@@ -554,6 +692,7 @@
       if (e.target === dlg || e.target.closest("[data-ann-close]")) close();
     });
     dlg.addEventListener("close", () => {
+      dlg.classList.remove("no-enter");
       document.body.classList.remove("is-locked");
       if (location.hash === `#${dlg.id}`) history.replaceState(null, "", location.pathname + location.search);
     });
@@ -561,7 +700,7 @@
 
   $$("[data-ann]").forEach((el) =>
     el.addEventListener("click", (e) => {
-      if (openAnn(el.dataset.ann)) e.preventDefault();
+      if (openAnn(el.dataset.ann, el)) e.preventDefault();
     })
   );
 
