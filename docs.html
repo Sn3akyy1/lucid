@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lucid Docs</title>
+  <meta name="description" content="Install Lucid on Arch Linux and Hyprland, update it, bind its keys, script it over IPC, theme it, and see exactly what it installs.">
+  <meta name="theme-color" content="#0f0807" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fae7e3" media="(prefers-color-scheme: light)">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Lucid">
+  <meta property="og:title" content="Lucid Docs">
+  <meta property="og:description" content="Install Lucid on Arch Linux and Hyprland, update it, bind its keys, script it over IPC, theme it, and see exactly what it installs.">
+  <meta property="og:image" content="https://sn3akyy1.github.io/lucid/assets/images/og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="preload" href="assets/fonts/GoogleSans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <script>(function(){var d=document.documentElement;try{var t=localStorage.getItem('lucid-theme'),p=localStorage.getItem('lucid-palette');if(t==='light'||t==='dark')d.setAttribute('data-theme',t);if(p&&/^[a-z-]+$/.test(p)&&p!=='matugen')d.setAttribute('data-palette',p);}catch(e){}try{if('IntersectionObserver' in window&&matchMedia('(prefers-reduced-motion: no-preference)').matches){d.classList.add('reveal-ready');setTimeout(function(){if(!window.__lucidReveal)d.classList.remove('reveal-ready')},2500)}}catch(e){}})();</script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+<svg class="sprite" width="0" height="0" style="position: absolute" aria-hidden="true"><symbol id="i-apps" viewBox="0 -960 960 960"><path d="M183.5-183.5Q160-207 160-240t23.5-56.5Q207-320 240-320t56.5 23.5Q320-273 320-240t-23.5 56.5Q273-160 240-160t-56.5-23.5Zm240 0Q400-207 400-240t23.5-56.5Q447-320 480-320t56.5 23.5Q560-273 560-240t-23.5 56.5Q513-160 480-160t-56.5-23.5Zm240 0Q640-207 640-240t23.5-56.5Q687-320 720-320t56.5 23.5Q800-273 800-240t-23.5 56.5Q753-160 720-160t-56.5-23.5Zm-480-240Q160-447 160-480t23.5-56.5Q207-560 240-560t56.5 23.5Q320-513 320-480t-23.5 56.5Q273-400 240-400t-56.5-23.5Zm240 0Q400-447 400-480t23.5-56.5Q447-560 480-560t56.5 23.5Q560-513 560-480t-23.5 56.5Q513-400 480-400t-56.5-23.5Zm240 0Q640-447 640-480t23.5-56.5Q687-560 720-560t56.5 23.5Q800-513 800-480t-23.5 56.5Q753-400 720-400t-56.5-23.5Zm-480-240Q160-687 160-720t23.5-56.5Q207-800 240-800t56.5 23.5Q320-753 320-720t-23.5 56.5Q273-640 240-640t-56.5-23.5Zm240 0Q400-687 400-720t23.5-56.5Q447-800 480-800t56.5 23.5Q560-753 560-720t-23.5 56.5Q513-640 480-640t-56.5-23.5Zm240 0Q640-687 640-720t23.5-56.5Q687-800 720-800t56.5 23.5Q800-753 800-720t-23.5 56.5Q753-640 720-640t-56.5-23.5Z"/></symbol><symbol id="i-bug_report" viewBox="0 -960 960 960"><path d="M480-120q-65 0-120.5-32T272-240h-72q-17 0-28.5-11.5T160-280q0-17 11.5-28.5T200-320h44q-3-20-3.5-40t-.5-40h-40q-17 0-28.5-11.5T160-440q0-17 11.5-28.5T200-480h40q0-20 .5-40t3.5-40h-44q-17 0-28.5-11.5T160-600q0-17 11.5-28.5T200-640h72q14-23 31.5-43t40.5-35l-37-38q-11-11-11-27.5t12-28.5q11-11 28-11t28 11l58 58q28-9 57-9t57 9l60-59q11-11 27.5-11t28.5 12q11 11 11 28t-11 28l-38 38q23 15 41.5 34.5T688-640h72q17 0 28.5 11.5T800-600q0 17-11.5 28.5T760-560h-44q3 20 3.5 40t.5 40h40q17 0 28.5 11.5T800-440q0 17-11.5 28.5T760-400h-40q0 20-.5 40t-3.5 40h44q17 0 28.5 11.5T800-280q0 17-11.5 28.5T760-240h-72q-32 56-87.5 88T480-120Zm0-80q66 0 113-47t47-113v-160q0-66-47-113t-113-47q-66 0-113 47t-47 113v160q0 66 47 113t113 47Zm-40-120h80q17 0 28.5-11.5T560-360q0-17-11.5-28.5T520-400h-80q-17 0-28.5 11.5T400-360q0 17 11.5 28.5T440-320Zm0-160h80q17 0 28.5-11.5T560-520q0-17-11.5-28.5T520-560h-80q-17 0-28.5 11.5T400-520q0 17 11.5 28.5T440-480Zm40 40Z"/></symbol><symbol id="i-close" viewBox="0 -960 960 960"><path d="M480-424 284-228q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536-480l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480-424Z"/></symbol><symbol id="i-content_copy" viewBox="0 -960 960 960"><path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-520q0-17 11.5-28.5T160-720q17 0 28.5 11.5T200-680v520h400q17 0 28.5 11.5T640-120q0 17-11.5 28.5T600-80H200Zm160-240v-480 480Z"/></symbol><symbol id="i-deployed_code" viewBox="0 -960 960 960"><path d="M440-183v-274L200-596v274l240 139Zm80 0 240-139v-274L520-457v274Zm-40-343 237-137-237-137-237 137 237 137ZM160-252q-19-11-29.5-29T120-321v-318q0-22 10.5-40t29.5-29l280-161q19-11 40-11t40 11l280 161q19 11 29.5 29t10.5 40v318q0 22-10.5 40T800-252L520-91q-19 11-40 11t-40-11L160-252Zm320-228Z"/></symbol><symbol id="i-download" viewBox="0 -960 960 960"><path d="M465-339.5q-7-2.5-13-8.5L308-492q-12-12-11.5-28t11.5-28q12-12 28.5-12.5T365-549l75 75v-286q0-17 11.5-28.5T480-800q17 0 28.5 11.5T520-760v286l75-75q12-12 28.5-11.5T652-548q11 12 11.5 28T652-492L508-348q-6 6-13 8.5t-15 2.5q-8 0-15-2.5ZM240-160q-33 0-56.5-23.5T160-240v-80q0-17 11.5-28.5T200-360q17 0 28.5 11.5T240-320v80h480v-80q0-17 11.5-28.5T760-360q17 0 28.5 11.5T800-320v80q0 33-23.5 56.5T720-160H240Z"/></symbol><symbol id="i-expand_more" viewBox="0 -960 960 960"><path d="M465-364.5q-7-2.5-13-8.5L268-557q-11-11-11-28t11-28q11-11 28-11t28 11l156 156 156-156q11-11 28-11t28 11q11 11 11 28t-11 28L508-373q-6 6-13 8.5t-15 2.5q-8 0-15-2.5Z"/></symbol><symbol id="i-forum" viewBox="0 -960 960 960"><path d="M840-136q-8 0-15-3t-13-9l-92-92H320q-33 0-56.5-23.5T240-320v-40h440q33 0 56.5-23.5T760-440v-280h40q33 0 56.5 23.5T880-640v463q0 18-12 29.5T840-136ZM160-473l47-47h393v-280H160v327Zm-40 137q-16 0-28-11.5T80-377v-423q0-33 23.5-56.5T160-880h440q33 0 56.5 23.5T680-800v280q0 33-23.5 56.5T600-440H240l-92 92q-6 6-13 9t-15 3Zm40-184v-280 280Z"/></symbol><symbol id="i-github" viewBox="0 0 16 16"><path d="M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656"/></symbol><symbol id="i-help" viewBox="0 -960 960 960"><path d="M513.5-254.5Q528-269 528-290t-14.5-35.5Q499-340 478-340t-35.5 14.5Q428-311 428-290t14.5 35.5Q457-240 478-240t35.5-14.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Zm4-172q25 0 43.5 16t18.5 40q0 22-13.5 39T502-525q-23 20-40.5 44T444-427q0 14 10.5 23.5T479-394q15 0 25.5-10t13.5-25q4-21 18-37.5t30-31.5q23-22 39.5-48t16.5-58q0-51-41.5-83.5T484-720q-38 0-72.5 16T359-655q-7 12-4.5 25.5T368-609q14 8 29 5t25-17q11-15 27.5-23t34.5-8Z"/></symbol><symbol id="i-history" viewBox="0 -960 960 960"><path d="M480-120q-126 0-223-76.5T131-392q-4-15 6-27.5t27-14.5q16-2 29 6t18 24q24 90 99 147t170 57q117 0 198.5-81.5T760-480q0-117-81.5-198.5T480-760q-69 0-129 32t-101 88h70q17 0 28.5 11.5T360-600q0 17-11.5 28.5T320-560H160q-17 0-28.5-11.5T120-600v-160q0-17 11.5-28.5T160-800q17 0 28.5 11.5T200-760v54q51-64 124.5-99T480-840q75 0 140.5 28.5t114 77q48.5 48.5 77 114T840-480q0 75-28.5 140.5t-77 114q-48.5 48.5-114 77T480-120Zm40-376 100 100q11 11 11 28t-11 28q-11 11-28 11t-28-11L452-452q-6-6-9-13.5t-3-15.5v-159q0-17 11.5-28.5T480-680q17 0 28.5 11.5T520-640v144Z"/></symbol><symbol id="i-info" viewBox="0 -960 960 960"><path d="M508.5-291.5Q520-303 520-320v-160q0-17-11.5-28.5T480-520q-17 0-28.5 11.5T440-480v160q0 17 11.5 28.5T480-280q17 0 28.5-11.5Zm0-320Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></symbol><symbol id="i-keyboard" viewBox="0 -960 960 960"><path d="M160-200q-33 0-56.5-23.5T80-280v-400q0-33 23.5-56.5T160-760h640q33 0 56.5 23.5T880-680v400q0 33-23.5 56.5T800-200H160Zm0-80h640v-400H160v400Zm200-40h240q17 0 28.5-11.5T640-360q0-17-11.5-28.5T600-400H360q-17 0-28.5 11.5T320-360q0 17 11.5 28.5T360-320Zm-200 40v-400 400Zm108.5-291.5Q280-583 280-600t-11.5-28.5Q257-640 240-640t-28.5 11.5Q200-617 200-600t11.5 28.5Q223-560 240-560t28.5-11.5Zm120 0Q400-583 400-600t-11.5-28.5Q377-640 360-640t-28.5 11.5Q320-617 320-600t11.5 28.5Q343-560 360-560t28.5-11.5Zm120 0Q520-583 520-600t-11.5-28.5Q497-640 480-640t-28.5 11.5Q440-617 440-600t11.5 28.5Q463-560 480-560t28.5-11.5Zm120 0Q640-583 640-600t-11.5-28.5Q617-640 600-640t-28.5 11.5Q560-617 560-600t11.5 28.5Q583-560 600-560t28.5-11.5Zm120 0Q760-583 760-600t-11.5-28.5Q737-640 720-640t-28.5 11.5Q680-617 680-600t11.5 28.5Q703-560 720-560t28.5-11.5Zm-480 120Q280-463 280-480t-11.5-28.5Q257-520 240-520t-28.5 11.5Q200-497 200-480t11.5 28.5Q223-440 240-440t28.5-11.5Zm120 0Q400-463 400-480t-11.5-28.5Q377-520 360-520t-28.5 11.5Q320-497 320-480t11.5 28.5Q343-440 360-440t28.5-11.5Zm120 0Q520-463 520-480t-11.5-28.5Q497-520 480-520t-28.5 11.5Q440-497 440-480t11.5 28.5Q463-440 480-440t28.5-11.5Zm120 0Q640-463 640-480t-11.5-28.5Q617-520 600-520t-28.5 11.5Q560-497 560-480t11.5 28.5Q583-440 600-440t28.5-11.5Zm120 0Q760-463 760-480t-11.5-28.5Q737-520 720-520t-28.5 11.5Q680-497 680-480t11.5 28.5Q703-440 720-440t28.5-11.5Z"/></symbol><symbol id="i-lightbulb" viewBox="0 -960 960 960"><path d="M423.5-103.5Q400-127 400-160h160q0 33-23.5 56.5T480-80q-33 0-56.5-23.5ZM360-200q-17 0-28.5-11.5T320-240q0-17 11.5-28.5T360-280h240q17 0 28.5 11.5T640-240q0 17-11.5 28.5T600-200H360Zm-30-120q-69-41-109.5-110T180-580q0-125 87.5-212.5T480-880q125 0 212.5 87.5T780-580q0 81-40.5 150T630-320H330Zm24-80h252q45-32 69.5-79T700-580q0-92-64-156t-156-64q-92 0-156 64t-64 156q0 54 24.5 101t69.5 79Zm126 0Z"/></symbol><symbol id="i-lucid_star" viewBox="6.9 6.9 10.2 10.2"><path d="M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"/></symbol><symbol id="i-lucid_theme" viewBox="0 0 22 22"><circle cx="11" cy="11" r="8.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="11" cy="11" r="5"/><rect x="10.6" y="2" width="1.6" height="4.4"/><rect x="10.6" y="15.6" width="1.6" height="4.4"/></symbol><symbol id="i-menu" viewBox="0 -960 960 960"><path d="M160-240q-17 0-28.5-11.5T120-280q0-17 11.5-28.5T160-320h640q17 0 28.5 11.5T840-280q0 17-11.5 28.5T800-240H160Zm0-200q-17 0-28.5-11.5T120-480q0-17 11.5-28.5T160-520h640q17 0 28.5 11.5T840-480q0 17-11.5 28.5T800-440H160Zm0-200q-17 0-28.5-11.5T120-680q0-17 11.5-28.5T160-720h640q17 0 28.5 11.5T840-680q0 17-11.5 28.5T800-640H160Z"/></symbol><symbol id="i-menu_book" viewBox="0 -960 960 960"><path d="M260-320q47 0 91.5 10.5T440-278v-394q-41-24-87-36t-93-12q-36 0-71.5 7T120-692v396q35-12 69.5-18t70.5-6Zm260 42q44-21 88.5-31.5T700-320q36 0 70.5 6t69.5 18v-396q-33-14-68.5-21t-71.5-7q-47 0-93 12t-87 36v394Zm-66.5 93.5Q441-188 430-194q-39-23-82-34.5T260-240q-42 0-82.5 11T100-198q-21 11-40.5-1T40-234v-482q0-11 5.5-21T62-752q46-24 96-36t102-12q58 0 113.5 15T480-740q51-30 106.5-45T700-800q52 0 102 12t96 36q11 5 16.5 15t5.5 21v482q0 23-19.5 35t-40.5 1q-37-20-77.5-31T700-240q-45 0-88 11.5T530-194q-11 6-23.5 9.5T480-181q-14 0-26.5-3.5ZM280-494Zm280-115q0-9 6.5-18.5T581-640q29-10 58-15t61-5q20 0 39.5 2.5T778-651q9 2 15.5 10t6.5 18q0 17-11 25t-28 4q-14-3-29.5-4.5T700-600q-26 0-51 5t-48 13q-18 7-29.5-1T560-609Zm0 220q0-9 6.5-18.5T581-420q29-10 58-15t61-5q20 0 39.5 2.5T778-431q9 2 15.5 10t6.5 18q0 17-11 25t-28 4q-14-3-29.5-4.5T700-380q-26 0-51 4.5T601-363q-18 7-29.5-.5T560-389Zm0-110q0-9 6.5-18.5T581-530q29-10 58-15t61-5q20 0 39.5 2.5T778-541q9 2 15.5 10t6.5 18q0 17-11 25t-28 4q-14-3-29.5-4.5T700-490q-26 0-51 5t-48 13q-18 7-29.5-1T560-499Z"/></symbol><symbol id="i-palette" viewBox="0 -960 960 960"><path d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 32.5-156t88-127Q256-817 330-848.5T488-880q80 0 151 27.5t124.5 76q53.5 48.5 85 115T880-518q0 115-70 176.5T640-280h-74q-9 0-12.5 5t-3.5 11q0 12 15 34.5t15 51.5q0 50-27.5 74T480-80Zm0-400Zm-177 23q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120-160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm200 0q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120 160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17ZM480-160q9 0 14.5-5t5.5-13q0-14-15-33t-15-57q0-42 29-67t71-25h70q66 0 113-38.5T800-518q0-121-92.5-201.5T488-800q-136 0-232 93t-96 227q0 133 93.5 226.5T480-160Z"/></symbol><symbol id="i-person" viewBox="0 -960 960 960"><path d="M367-527q-47-47-47-113t47-113q47-47 113-47t113 47q47 47 47 113t-47 113q-47 47-113 47t-113-47ZM160-240v-32q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v32q0 33-23.5 56.5T720-160H240q-33 0-56.5-23.5T160-240Zm80 0h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm296.5-343.5Q560-607 560-640t-23.5-56.5Q513-720 480-720t-56.5 23.5Q400-673 400-640t23.5 56.5Q447-560 480-560t56.5-23.5ZM480-640Zm0 400Z"/></symbol><symbol id="i-photo_library" viewBox="0 -960 960 960"><path d="m530-460-46-60q-6-8-16-8t-16 8l-67 88q-8 10-2.5 21t18.5 11h318q13 0 18.5-11t-2.5-21l-97-127q-6-8-16-8t-16 8l-76 99ZM320-240q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-520q0-17 11.5-28.5T120-720q17 0 28.5 11.5T160-680v520h520q17 0 28.5 11.5T720-120q0 17-11.5 28.5T680-80H160Zm160-720v480-480Z"/></symbol><symbol id="i-support_agent" viewBox="0 -960 960 960"><path d="M480-120q-17 0-28.5-11.5T440-160q0-17 11.5-28.5T480-200h280v-284q0-117-81.5-198.5T480-764q-117 0-198.5 81.5T200-484v204q0 17-11.5 28.5T160-240q-33 0-56.5-23.5T80-320v-80q0-21 10.5-39.5T120-469l3-53q8-68 39.5-126t79-101q47.5-43 109-67T480-840q68 0 129 24t109 66.5Q766-707 797-649t40 126l3 52q19 9 29.5 27t10.5 38v92q0 20-10.5 38T840-249v49q0 33-23.5 56.5T760-120H480ZM331.5-411.5Q320-423 320-440t11.5-28.5Q343-480 360-480t28.5 11.5Q400-457 400-440t-11.5 28.5Q377-400 360-400t-28.5-11.5Zm240 0Q560-423 560-440t11.5-28.5Q583-480 600-480t28.5 11.5Q640-457 640-440t-11.5 28.5Q617-400 600-400t-28.5-11.5ZM241-462q-7-106 64-182t177-76q89 0 156.5 56.5T720-519q-91-1-167.5-49T435-698q-16 80-67.5 142.5T241-462Z"/></symbol><symbol id="i-terminal" viewBox="0 -960 960 960"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H160v400Zm187-200-76-76q-12-12-11.5-28t12.5-28q12-11 28-11.5t28 11.5l104 104q12 12 12 28t-12 28L328-308q-11 11-27.5 11.5T272-308q-11-11-11-28t11-28l75-76Zm173 160q-17 0-28.5-11.5T480-320q0-17 11.5-28.5T520-360h160q17 0 28.5 11.5T720-320q0 17-11.5 28.5T680-280H520Z"/></symbol><symbol id="i-wallpaper" viewBox="0 -960 960 960"><path d="M200-120q-33 0-56.5-23.5T120-200v-200q0-17 11.5-28.5T160-440q17 0 28.5 11.5T200-400v200h200q17 0 28.5 11.5T440-160q0 17-11.5 28.5T400-120H200Zm560 0H560q-17 0-28.5-11.5T520-160q0-17 11.5-28.5T560-200h200v-200q0-17 11.5-28.5T800-440q17 0 28.5 11.5T840-400v200q0 33-23.5 56.5T760-120ZM450-320l104-139q6-8 16-8t16 8l110 147q8 10 2 21t-18 11H280q-12 0-18-11t2-21l80-107q6-8 16-8t16 8l74 99ZM120-760q0-33 23.5-56.5T200-840h200q17 0 28.5 11.5T440-800q0 17-11.5 28.5T400-760H200v200q0 17-11.5 28.5T160-520q-17 0-28.5-11.5T120-560v-200Zm720 0v200q0 17-11.5 28.5T800-520q-17 0-28.5-11.5T760-560v-200H560q-17 0-28.5-11.5T520-800q0-17 11.5-28.5T560-840h200q33 0 56.5 23.5T840-760ZM577-577q-17-17-17-43t17-43q17-17 43-17t43 17q17 17 17 43t-17 43q-17 17-43 17t-43-17Z"/></symbol><symbol id="i-widgets" viewBox="0 -960 960 960"><path d="M638-468 468-638q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l170-170q6-6 13-8.5t15-2.5q8 0 15 2.5t13 8.5l170 170q6 6 8.5 13t2.5 15q0 8-2.5 15t-8.5 13L694-468q-6 6-13 8.5t-15 2.5q-8 0-15-2.5t-13-8.5Zm-518-92v-240q0-17 11.5-28.5T160-840h240q17 0 28.5 11.5T440-800v240q0 17-11.5 28.5T400-520H160q-17 0-28.5-11.5T120-560Zm400 400v-240q0-17 11.5-28.5T560-440h240q17 0 28.5 11.5T840-400v240q0 17-11.5 28.5T800-120H560q-17 0-28.5-11.5T520-160Zm-400 0v-240q0-17 11.5-28.5T160-440h240q17 0 28.5 11.5T440-400v240q0 17-11.5 28.5T400-120H160q-17 0-28.5-11.5T120-160Zm80-440h160v-160H200v160Zm467 48 113-113-113-113-113 113 113 113Zm-67 352h160v-160H600v160Zm-400 0h160v-160H200v160Zm160-400Zm194-65ZM360-360Zm240 0Z"/></symbol></svg>
+<a class="skip" href="#main">Skip to content</a>
+<header class="bar">
+  <div class="wrap bar-inner">
+    <a class="pill brand" href="index.html" aria-label="Lucid home"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="mark-ring" d="M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100"/><path class="mark-star" d="M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"/><circle class="mark-dot" cx="21" cy="9.4" r="1"/></svg><span>Lucid</span><span class="brand-ver">v1.1.0</span></a>
+    <nav class="pill nav" aria-label="Main">
+      <a class="nav-link" href="features.html">Features</a>
+      <a class="nav-link" href="screenshots.html">Screenshots</a>
+      <div class="dd">
+        <button class="dd-btn is-current" type="button" aria-expanded="false" aria-controls="dd-docs" data-dd>Docs<svg class="i" aria-hidden="true" focusable="false"><use href="#i-expand_more"></use></svg></button>
+        <div class="panel" id="dd-docs" hidden>
+          <div class="panel-title">Docs</div>
+          <a class="menu-item" href="docs.html#install"><span class="ico"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg></span><span><strong>Install</strong><span>Three commands, and what they do</span></span></a>
+<a class="menu-item" href="docs.html#keybinds"><span class="ico"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-keyboard"></use></svg></span><span><strong>Keybinds</strong><span>Every shortcut the installer ships</span></span></a>
+<a class="menu-item" href="docs.html#ipc"><span class="ico"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-terminal"></use></svg></span><span><strong>IPC reference</strong><span>Script any surface with qs ipc</span></span></a>
+<a class="menu-item" href="docs.html#theming"><span class="ico"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-palette"></use></svg></span><span><strong>Theming</strong><span>Palettes, light mode, your own themes</span></span></a>
+<a class="menu-item" href="docs.html#requirements"><span class="ico"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-deployed_code"></use></svg></span><span><strong>Requirements</strong><span>What gets installed, and why</span></span></a>
+          <div class="menu-sep"></div>
+          <a class="menu-item" href="docs.html" aria-current="page"><span class="ico"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-menu_book"></use></svg></span><span><strong>All docs</strong><span>Everything on one page</span></span></a>
+        </div>
+      </div>
+      <div class="dd">
+        <button class="dd-btn" type="button" aria-expanded="false" aria-controls="dd-help" data-dd>Help<svg class="i" aria-hidden="true" focusable="false"><use href="#i-expand_more"></use></svg></button>
+        <div class="panel" id="dd-help" hidden>
+          <div class="panel-title">Help and support</div>
+          <a class="menu-item" href="help.html"><span class="ico"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-help"></use></svg></span><span><strong>Help Center</strong><span>Answers and troubleshooting</span></span></a>
+<a class="menu-item" href="support.html"><span class="ico"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-support_agent"></use></svg></span><span><strong>Support</strong><span>Ways to get help</span></span></a>
+<a class="menu-item" href="support.html#report"><span class="ico"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-bug_report"></use></svg></span><span><strong>Report a bug</strong><span>Opens a pre-filled GitHub issue</span></span></a>
+<a class="menu-item" href="support.html#feature"><span class="ico"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-lightbulb"></use></svg></span><span><strong>Suggest a feature</strong><span>Tell us what Lucid should do</span></span></a>
+<a class="menu-item" href="https://github.com/Sn3akyy1/lucid/issues" rel="noopener"><span class="ico"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-forum"></use></svg></span><span><strong>Open issues</strong><span>See what's already reported</span></span></a>
+        </div>
+      </div>
+      <a class="nav-link" href="changelog.html">Changelog</a>
+      <a class="nav-link" href="creator.html">Creator</a>
+    </nav>
+    <div class="pill status">
+      <a class="gh-link" href="https://github.com/Sn3akyy1/lucid" rel="noopener"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-github"></use></svg><span class="visually-hidden">Lucid on GitHub, stars:</span><span class="gh-count"><svg class="i star" aria-hidden="true" focusable="false"><use href="#i-lucid_star"></use></svg></span><span class="gh-count" data-gh="stars">170</span></a>
+      <div class="dd">
+        <button class="icon-btn" type="button" aria-expanded="false" aria-controls="dd-look" aria-label="Theme" data-dd><svg class="i" aria-hidden="true" focusable="false"><use href="#i-lucid_theme"></use></svg></button>
+        <div class="panel appearance" id="dd-look" hidden>
+          <div class="panel-title">Light or dark</div>
+          <div class="seg" role="group" aria-label="Light or dark"><button type="button" data-mode="dark" aria-pressed="false"><span class="seg-check" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 10 7.24 14.24M5.8 13 12.16 6.64"/></svg></span>Dark</button><button type="button" data-mode="light" aria-pressed="false"><span class="seg-check" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 10 7.24 14.24M5.8 13 12.16 6.64"/></svg></span>Light</button></div>
+          <div class="panel-title">Colour scheme</div>
+          <div class="pal-grid"><button class="pal" type="button" data-palette="matugen" aria-pressed="true"><span class="pal-dot" aria-hidden="true" style="--sw-bg: #1a110f; --sw-dot: #ffb59c"></span><span class="pal-name">Matugen</span></button>
+<button class="pal" type="button" data-palette="catppuccin-mocha" aria-pressed="false"><span class="pal-dot" aria-hidden="true" style="--sw-bg: #1e1e2e; --sw-dot: #89b4fa"></span><span class="pal-name">Catppuccin Mocha</span></button>
+<button class="pal" type="button" data-palette="gruvbox" aria-pressed="false"><span class="pal-dot" aria-hidden="true" style="--sw-bg: #282828; --sw-dot: #83a598"></span><span class="pal-name">Gruvbox</span></button>
+<button class="pal" type="button" data-palette="nightfox" aria-pressed="false"><span class="pal-dot" aria-hidden="true" style="--sw-bg: #192330; --sw-dot: #719cd6"></span><span class="pal-name">Nightfox</span></button>
+<button class="pal" type="button" data-palette="nord" aria-pressed="false"><span class="pal-dot" aria-hidden="true" style="--sw-bg: #232831; --sw-dot: #88c0d0"></span><span class="pal-name">Nord</span></button>
+<button class="pal" type="button" data-palette="tokyo-night" aria-pressed="false"><span class="pal-dot" aria-hidden="true" style="--sw-bg: #1a1b26; --sw-dot: #7aa2f7"></span><span class="pal-name">Tokyo Night</span></button></div>
+        </div>
+      </div>
+      <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="sheet" aria-label="Open menu"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-menu"></use></svg></button>
+    </div>
+  </div>
+</header>
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-label="Menu">
+    <div class="sheet-top">
+      <a class="brand" href="index.html"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="mark-ring" d="M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100"/><path class="mark-star" d="M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"/><circle class="mark-dot" cx="21" cy="9.4" r="1"/></svg><span>Lucid</span></a>
+      <button class="icon-btn" type="button" data-sheet-close aria-label="Close menu"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-close"></use></svg></button>
+    </div>
+    <nav class="sheet-group" aria-label="Pages"><a class="sheet-link" href="index.html"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-apps"></use></svg>Home</a>
+<a class="sheet-link" href="features.html"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-widgets"></use></svg>Features</a>
+<a class="sheet-link" href="screenshots.html"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-photo_library"></use></svg>Screenshots</a>
+<a class="sheet-link" href="changelog.html"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-history"></use></svg>Changelog</a>
+<a class="sheet-link" href="creator.html"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-person"></use></svg>Creator</a></nav>
+    <div class="sheet-group" aria-label="Docs" role="group"><a class="sheet-link" href="docs.html#install"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg>Install</a>
+<a class="sheet-link" href="docs.html#keybinds"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-keyboard"></use></svg>Keybinds</a>
+<a class="sheet-link" href="docs.html#ipc"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-terminal"></use></svg>IPC reference</a>
+<a class="sheet-link" href="docs.html#theming"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-palette"></use></svg>Theming</a>
+<a class="sheet-link" href="docs.html#requirements"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-deployed_code"></use></svg>Requirements</a></div>
+    <div class="sheet-group" aria-label="Help" role="group"><a class="sheet-link" href="help.html"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-help"></use></svg>Help Center</a>
+<a class="sheet-link" href="support.html"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-support_agent"></use></svg>Support</a>
+<a class="sheet-link" href="support.html#report"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-bug_report"></use></svg>Report a bug</a>
+<a class="sheet-link" href="support.html#feature"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-lightbulb"></use></svg>Suggest a feature</a>
+<a class="sheet-link" href="https://github.com/Sn3akyy1/lucid/issues" rel="noopener"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-forum"></use></svg>Open issues</a></div>
+  </div>
+</div>
+<main id="main">
+  <header class="page-head">
+    <div class="wrap page-head-inner">
+      <ol class="crumbs"><li><a href="index.html">Home</a></li><li>Docs</li></ol>
+      <h1>Docs</h1>
+      <p class="lede">Installing, updating, keybinds, IPC and theming. Lucid installs to <code>~/.config/quickshell</code> and needs <strong>Arch Linux</strong> and <strong>Hyprland</strong>.</p>
+    </div>
+  </header>
+
+  <div class="wrap docs">
+    <nav class="toc" aria-label="Contents" data-spy>
+      <a href="#install">Install</a>
+      <a class="sub" href="#installer">What the installer does</a>
+      <a class="sub" href="#updating">Updating</a>
+      <a class="sub" href="#options">Installer options</a>
+      <a href="#keybinds">Keybinds</a>
+      <a class="sub" href="#custom-binds">Binding your own</a>
+      <a href="#ipc">IPC reference</a>
+      <a href="#theming">Theming</a>
+      <a class="sub" href="#light-mode">Light mode</a>
+      <a class="sub" href="#wallpapers">Wallpapers per display</a>
+      <a class="sub" href="#own-theme">Your own theme</a>
+      <a href="#requirements">Requirements</a>
+      <a class="sub" href="#fonts">Fonts</a>
+      <a href="#optional">Optional setup</a>
+      <a href="#uninstall">Uninstall</a>
+    </nav>
+
+    <article class="prose">
+      <section id="install">
+        <h2>Install</h2>
+        <p>Three commands:</p>
+        <div class="code">
+          <pre><code><span class="p">$ </span>git clone https://github.com/Sn3akyy1/lucid.git
+<span class="p">$ </span>cd lucid
+<span class="p">$ </span>./install.sh</code></pre>
+          <button class="copy-btn" type="button" data-copy="git clone https://github.com/Sn3akyy1/lucid.git&#10;cd lucid&#10;./install.sh" aria-label="Copy the install commands"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button>
+        </div>
+        <p>Then reload Hyprland so the new binds and rules take effect, or log out and back in, which picks up the autostart too. To start the shell by hand in the meantime, run <code>qs</code>.</p>
+        <div class="code">
+          <pre><code><span class="p">$ </span>hyprctl reload</code></pre>
+          <button class="copy-btn" type="button" data-copy="hyprctl reload" aria-label="Copy the command"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button>
+        </div>
+        <div class="callout"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-wallpaper"></use></svg><p>Set a wallpaper from <strong>Settings → General</strong> on first run. That is what generates your colour palette.</p></div>
+      </section>
+
+      <section id="installer">
+        <h3>What the installer does</h3>
+        <ol>
+          <li><strong>Checks your system.</strong> It refuses to run anywhere it can't finish the job, rather than leaving you half-installed.</li>
+          <li><strong>Installs dependencies.</strong> It finds <code>paru</code> or <code>yay</code> and uses it, falling back to <code>pacman</code> for repo packages. It lists everything and asks before touching your system. Say no and it carries on, telling you which features won't work. This includes the apps Lucid pins to the dock, several GB and mostly from the AUR; <code>--no-apps</code> skips them.</li>
+          <li><strong>Copies the shell</strong> to <code>~/.config/quickshell</code>, moving any existing config to <code>~/.config/quickshell.backup-&lt;timestamp&gt;</code> first.</li>
+          <li><strong>Sets up Hyprland:</strong> <code>hyprland.lua</code> and its modules, meaning the keybinds, window and layer rules, blur, animations, and an autostart that launches the shell on login. An existing config is backed up and you are asked first; <code>--no-hypr</code> keeps yours untouched.</li>
+          <li><strong>Sets up theming:</strong> the palettes, the wallpaper hook and the matugen template. An existing <code>matugen/config.toml</code> is appended to, never replaced.</li>
+          <li><strong>Applies the look:</strong> kitty's colours, opacity and fish shell, the starship prompt (wired into <code>.bashrc</code>, <code>.zshrc</code> and <code>config.fish</code>), the VSCode/VSCodium Matugen theme, and the GTK theme, <code>adw-gtk3-dark</code> with the FairyWren icons. <code>--no-look</code> skips this.</li>
+          <li><strong>Pins the dock</strong> by reading your installed <code>.desktop</code> files, so the dock is never a row of blank letter tiles.</li>
+          <li><strong>Offers to restart</strong> a running instance onto the new files.</li>
+        </ol>
+      </section>
+
+      <section id="updating">
+        <h3>Updating</h3>
+        <p>Pull and re-run. Your settings, pinned apps, reminders, Shazam history and API keys are carried forward into the new install, and the previous install is kept as a timestamped backup.</p>
+        <div class="code">
+          <pre><code><span class="p">$ </span>git pull
+<span class="p">$ </span>./install.sh</code></pre>
+          <button class="copy-btn" type="button" data-copy="git pull&#10;./install.sh" aria-label="Copy the update commands"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button>
+        </div>
+        <p>Lucid tells you when there is something to pull. Once a day it asks GitHub's public API for the newest release, and when that is newer than your install it posts one notification, once per version. The request is a plain <code>curl</code> for <code>api.github.com/repos/Sn3akyy1/lucid/releases/latest</code> and carries nothing about you or your machine. <strong>Settings → About</strong> shows what it found and turns it off.</p>
+        <div class="code">
+          <pre><code><span class="p">$ </span>qs ipc call updates status   <span class="c"># what it knows</span>
+<span class="p">$ </span>qs ipc call updates check    <span class="c"># ask now</span></code></pre>
+          <button class="copy-btn" type="button" data-copy="qs ipc call updates status&#10;qs ipc call updates check" aria-label="Copy the commands"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button>
+        </div>
+        <p>The <strong>v0.57 beta</strong> stays available as a tag. Nothing carries over between it and v1.x, which moved enough that a fresh install is worth it.</p>
+        <div class="code">
+          <pre><code><span class="p">$ </span>git clone --branch v0.57 https://github.com/Sn3akyy1/lucid.git</code></pre>
+          <button class="copy-btn" type="button" data-copy="git clone --branch v0.57 https://github.com/Sn3akyy1/lucid.git" aria-label="Copy the command"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button>
+        </div>
+      </section>
+
+      <section id="options">
+        <h3>Installer options</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Flag</th><th scope="col">What it does</th></tr></thead>
+            <tbody>
+              <tr><td><code>--no-theming</code></td><td class="wrap-ok">Skips the palette layer and leaves <code>~/.config/lucid</code> and <code>~/.config/matugen</code> alone. Use it if you already have a matugen setup you don't want touched.</td></tr>
+              <tr><td><code>--no-hypr</code></td><td class="wrap-ok">Keeps your Hyprland config. Lucid's binds, window rules, blur and autostart are not installed.</td></tr>
+              <tr><td><code>--no-apps</code></td><td class="wrap-ok">Doesn't install the apps the dock ships pinned (Zen, VSCodium, Spotify, Vesktop, Files, Steam, Proton VPN). The dock pins whatever equivalents you already have.</td></tr>
+              <tr><td><code>--no-look</code></td><td class="wrap-ok">Doesn't touch <code>kitty.conf</code>, <code>starship.toml</code>, your shell rc files, VSCode settings, or the GTK theme and icons.</td></tr>
+              <tr><td><code>--no-wallpapers</code></td><td class="wrap-ok">Doesn't copy the bundled wallpapers into <code>~/Pictures/wallpapers</code>. They are about 180 MB.</td></tr>
+              <tr><td><code>--with-hypr</code></td><td class="wrap-ok">Reinstalls Lucid's Hyprland config even when one is already in place.</td></tr>
+              <tr><td><code>--skip-deps</code></td><td class="wrap-ok">Never installs packages, just reports what's missing.</td></tr>
+              <tr><td><code>-y</code>, <code>--yes</code></td><td class="wrap-ok">Accepts every prompt.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="keybinds">
+        <h2>Keybinds</h2>
+        <p>The installer ships these in <code>~/.config/hypr/modules/binds.lua</code>, along with the window rules, blur, animations and autostart. Run <code>hyprctl reload</code> after installing to pick them up.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Keys</th><th scope="col">Does</th></tr></thead>
+            <tbody>
+              <tr><td><span class="keys"><kbd>Super</kbd> tap</span></td><td>Launcher</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>P</kbd></span></td><td>Command palette</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>T</kbd></span></td><td>Theme picker</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>B</kbd></span></td><td>Wallpaper picker</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd></span></td><td>Clipboard history</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>S</kbd></span></td><td>Settings</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>.</kbd></span></td><td>Emoji picker</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>K</kbd></span></td><td>On-screen keyboard</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>W</kbd></span></td><td class="wrap-ok">Workspace overview (also a three-finger swipe)</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>D</kbd> or <kbd>Print</kbd></span></td><td>Region screenshot</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>Print</kbd></span></td><td>Full screenshot</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd></span></td><td>Copy text from a region (OCR)</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd></span></td><td>Pick a colour off the screen</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>E</kbd></span></td><td>Files</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>C</kbd></span></td><td>Close window</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>V</kbd></span></td><td>Toggle float</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>1</kbd>–<kbd>0</kbd></span></td><td class="wrap-ok">Switch workspace (add <kbd>Shift</kbd> to move the window)</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd></span></td><td class="wrap-ok">Scratchpad, or put away whichever special workspace is up</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd></span></td><td class="wrap-ok">Stash the focused window in the scratchpad, or send it back</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd></span></td><td>Music workspace</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd></span></td><td>Comms workspace</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd></span></td><td>To-do workspace</td></tr>
+              <tr><td><span class="keys"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Esc</kbd></span></td><td>System monitor workspace</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+arrows</span></td><td>Move focus</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>R</kbd></span></td><td>Reload Hyprland</td></tr>
+              <tr><td><span class="keys"><kbd>F1</kbd>–<kbd>F6</kbd></span></td><td>Volume, mic, brightness</td></tr>
+              <tr><td><span class="keys"><kbd>F9</kbd></span></td><td>Terminal</td></tr>
+              <tr><td><span class="keys"><kbd>F10</kbd></span></td><td>Lock</td></tr>
+              <tr><td><span class="keys"><kbd>F12</kbd></span></td><td>Calculator</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="custom-binds">
+        <h3>Binding your own</h3>
+        <p>Installed with <code>--no-hypr</code>, or want to bind things yourself? Everything is exposed over IPC, so bind the calls from your own Lua config (Hyprland 0.55.6 and newer):</p>
+        <div class="code">
+          <pre><code>hl.bind(&quot;SUPER + space&quot;,     hl.dsp.exec_cmd(&quot;qs ipc call -- launcher toggle&quot;))
+hl.bind(&quot;SUPER + E&quot;,         hl.dsp.exec_cmd(&quot;qs ipc call -- moji toggle&quot;))
+hl.bind(&quot;SUPER + L&quot;,         hl.dsp.exec_cmd(&quot;qs ipc call -- lock lock&quot;))
+hl.bind(&quot;SUPER + S&quot;,         hl.dsp.exec_cmd(&quot;qs ipc call -- snap toggle&quot;))
+hl.bind(&quot;SUPER + SHIFT + T&quot;, hl.dsp.exec_cmd(&quot;qs ipc call -- snap text&quot;))
+hl.bind(&quot;SUPER + SHIFT + C&quot;, hl.dsp.exec_cmd(&quot;qs ipc call -- snap color&quot;))
+hl.bind(&quot;SUPER + comma&quot;,     hl.dsp.exec_cmd(&quot;qs ipc call -- settings open&quot;))</code></pre>
+          <button class="copy-btn" type="button" data-copy-from="prev" aria-label="Copy the binds"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button>
+        </div>
+        <p><code>hl.dsp.exec_cmd</code> runs its command directly, not through a shell, so keep each one to a plain command: <code>&amp;&amp;</code>, <code>||</code> and quoting are passed through as literal arguments.</p>
+        <div class="callout"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-info"></use></svg><p><strong>Keep the <code>--</code>.</strong> It is only strictly needed when the call takes an argument: <code>qs ipc call settings show bar</code> fails with “The following argument was not expected: bar”, while <code>qs ipc call -- settings show bar</code> works. It is harmless on calls without arguments, so using it everywhere saves you the surprise.</p></div>
+        <p>Special workspaces are Hyprland Lua rather than IPC. On a Lua config of your own, copy <code>support/hypr/modules/specials.lua</code> into <code>~/.config/hypr/modules/</code> and bind its functions the way Lucid's <code>modules/binds.lua</code> does:</p>
+        <div class="code">
+          <pre><code>local specials = require("modules.specials")
+hl.bind("SUPER + SHIFT + M", specials.toggle("music"))</code></pre>
+          <button class="copy-btn" type="button" data-copy-from="prev" aria-label="Copy the Lua"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button>
+        </div>
+      </section>
+
+      <section id="ipc">
+        <h2>IPC reference</h2>
+        <p>Every surface is scriptable: <code>qs ipc call -- &lt;target&gt; &lt;function&gt; [arg]</code>.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Target</th><th scope="col">Functions</th></tr></thead>
+            <tbody>
+              <tr><td><code>launcher</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>wallpaper</code> <code>theme</code> <code>power</code> <code>blur</code> <code>command</code> <code>shuffle</code> <code>clipboard</code> <code>search &lt;query&gt;</code></td></tr>
+              <tr><td><code>settings</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>show &lt;page&gt;</code> <code>general</code> <code>users</code> <code>glass</code> <code>bar</code> <code>dock</code> <code>environment</code> <code>displays</code> <code>widgets</code> <code>workspaces</code> <code>notifications</code> <code>sound</code> <code>network</code> <code>bluetooth</code> <code>kdeconnect</code> <code>idle</code> <code>datetime</code> <code>font</code> <code>reset</code></td></tr>
+              <tr><td><code>idle</code></td><td class="wrap-ok"><code>status</code> <code>keepawake</code> <code>awake</code> <code>normal</code> <code>on</code> <code>off</code> <code>restart</code></td></tr>
+              <tr><td><code>network</code></td><td class="wrap-ok"><code>status</code> <code>list</code> <code>rescan</code></td></tr>
+              <tr><td><code>kdeconnect</code></td><td class="wrap-ok"><code>status</code> <code>list</code> <code>rescan</code> <code>ring &lt;id&gt;</code> <code>ping &lt;id&gt;</code> <code>clipboard &lt;id&gt;</code> <code>files &lt;id&gt;</code> <code>send &lt;id&gt; &lt;path&gt;</code></td></tr>
+              <tr><td><code>widgets</code></td><td class="wrap-ok"><code>add &lt;type&gt; &lt;variant&gt;</code> <code>remove &lt;uid&gt;</code> <code>clear</code> <code>toggle</code> <code>lock</code> <code>unlock</code> <code>list</code> <code>catalogue</code> <code>settings</code> <code>resize &lt;uid&gt; &lt;w&gt; &lt;h&gt;</code></td></tr>
+              <tr><td><code>moji</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>emoji</code> <code>kaomoji</code> <code>gif</code> <code>center</code></td></tr>
+              <tr><td><code>keyboard</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>letters</code> <code>fnkeys</code> <code>center</code> <code>bigger</code> <code>smaller</code></td></tr>
+              <tr><td><code>notifs</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>clear</code> <code>toggleDnd</code> <code>expandAll</code> <code>settings</code> <code>count</code></td></tr>
+              <tr><td><code>lock</code></td><td class="wrap-ok"><code>lock</code> <code>unlock</code> <code>isLocked</code> <code>status</code>. Nothing here bypasses the password; PAM is the only way in.</td></tr>
+              <tr><td><code>snap</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>text</code> <code>color</code></td></tr>
+              <tr><td><code>toast</code></td><td class="wrap-ok"><code>show &lt;icon&gt; &lt;label&gt;</code> <code>warn &lt;icon&gt; &lt;label&gt;</code></td></tr>
+              <tr><td><code>screenshot</code></td><td class="wrap-ok"><code>full</code> <code>text</code></td></tr>
+              <tr><td><code>media</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>identify</code> <code>playPause</code> <code>next</code> <code>previous</code></td></tr>
+              <tr><td><code>workspaces</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code></td></tr>
+              <tr><td><code>updates</code></td><td class="wrap-ok"><code>status</code> <code>check</code></td></tr>
+              <tr><td><code>displays</code></td><td class="wrap-ok"><code>list</code> <code>settings</code> <code>shell &lt;where&gt;</code> <code>bar &lt;where&gt;</code> <code>dock &lt;where&gt;</code>. <em>where</em> is an output name, <code>left</code>, <code>middle</code> or <code>right</code>, <code>here</code>, <code>next</code>, <code>prev</code> or <code>auto</code>.</td></tr>
+              <tr><td><code>polkit</code></td><td class="wrap-ok"><code>status</code> <code>demo &lt;action-id&gt;</code> <code>fail</code> <code>grant</code> <code>close</code>. <code>demo</code> raises the dialog with no PAM session behind it, for previewing a theme.</td></tr>
+              <tr><td><code>debug</code></td><td class="wrap-ok"><code>toggle</code> <code>on</code> <code>off</code>. Draws input and blur region outlines.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Toast icons by name are <code>copy</code>, <code>check</code>, <code>alert</code>, <code>info</code>, <code>text</code>, <code>game</code> and <code>camera</code>. Anything else is taken as a raw SVG path.</p>
+      </section>
+
+      <section id="theming">
+        <h2>Theming</h2>
+        <p>Colours come from one of seven palettes, picked in Settings or through the launcher's Theme mode. <strong>Matugen</strong> and <strong>Pywal</strong> generate a palette from your current wallpaper. <strong>Catppuccin Mocha</strong>, <strong>Gruvbox</strong>, <strong>Nightfox</strong>, <strong>Nord</strong> and <strong>Tokyo Night</strong> are fixed palettes that don't change with the wallpaper. Anything you import sits alongside them, and the whole list can be dragged into the order you want.</p>
+        <p>Whichever is active, the shell reads <code>~/.cache/quickshell/matugen.json</code>, a flat map of Material 3 colour roles. Changing your wallpaper through Lucid runs <code>~/.config/hypr/scripts/wallpaper/set-wallpaper.sh</code>, which sets the wallpaper and regenerates that file if the active theme comes from the wallpaper.</p>
+        <p>If you already use matugen, the installer <strong>appends</strong> its Quickshell template to your <code>config.toml</code> and backs up the original. Your existing templates are left alone.</p>
+      </section>
+
+      <section id="light-mode">
+        <h3>Light mode</h3>
+        <p>Every palette has a light mode: <strong>Light or dark</strong> on the Theme page. Matugen and Pywal re-extract the wallpaper in the mode you pick, and the fixed palettes get a light version built from their own colours, so Nord lands on its own Snow Storm and Gruvbox on its own cream. Light surfaces carry a trace of the accent, and <em>Accent tint</em> on the General page sets how much. GTK and Qt apps follow, switching to the light or dark counterpart of their theme where one is installed.</p>
+      </section>
+
+      <section id="wallpapers">
+        <h3>Wallpapers per display</h3>
+        <p>Every display gets the same picture, cropped to fill. To treat one differently, like a portrait screen that should letterbox, or a second screen with a picture of its own, add a rule to <code>~/.config/lucid/wallpaper-outputs.conf</code>, one output per line:</p>
+        <div class="code">
+          <pre><code>DP-3      --resize fit --fill-color 000000
+HDMI-A-1  ~/Pictures/wallpapers/second.jpg</code></pre>
+          <button class="copy-btn" type="button" data-copy-from="prev" aria-label="Copy the example"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button>
+        </div>
+        <p>Any argument that is a file becomes that output's picture; the rest is passed to <code>awww</code>/<code>swww</code>. Outputs with no rule keep the wallpaper you picked, and colours still come from that one. <code>qs ipc call displays list</code> prints your outputs, left to right.</p>
+      </section>
+
+      <section id="own-theme">
+        <h3>Your own theme</h3>
+        <p><strong>Settings → Theme</strong> takes the URL of any colour-scheme repo, clones it, reads it, and builds a full Material 3 palette from what it finds. base16 and base24 YAML and name-keyed JSON (Catppuccin and friends) are read exactly; anything else falls back to harvesting hex codes and sorting them by tone and chroma. A repo with several variants lists them so you can pick one, and wallpapers in the repo come along with it.</p>
+        <div class="callout"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-info"></use></svg><p>Nothing from the repo is ever executed. Only text is parsed and only images are copied.</p></div>
+        <p>It writes <code>~/.config/lucid/themes/&lt;id&gt;/{quickshell.json,meta.json}</code> and <code>~/Pictures/wallpapers/&lt;id&gt;/</code>, which you can also do by hand: a <code>quickshell.json</code> with the same keys as the bundled palettes is all a theme is. The importer runs from a terminal too:</p>
+        <div class="code">
+          <pre><code><span class="p">$ </span>python3 ~/.config/lucid/add-theme.py &lt;repo-url&gt; [--list] [--variant &lt;name&gt;] [--name &lt;label&gt;]</code></pre>
+          <button class="copy-btn" type="button" data-copy="python3 ~/.config/lucid/add-theme.py " aria-label="Copy the command"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button>
+        </div>
+      </section>
+
+      <section id="requirements">
+        <h2>Requirements</h2>
+        <p>Arch Linux and Hyprland. The installer handles all of this; it is listed here so you know what is being pulled in. Lucid uses Hyprland-specific APIs for workspaces and window management and will not work on other compositors.</p>
+        <h3>Required</h3>
+        <p>The shell won't start without these:</p>
+        <p class="pkg-line"><code>quickshell</code><code>qt6-5compat</code><code>qt6-declarative</code><code>qt6-multimedia</code></p>
+        <h3>Per feature</h3>
+        <p>A missing one breaks only its own feature.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Package</th><th scope="col">Backs</th></tr></thead>
+            <tbody>
+              <tr><td><code>matugen</code>, <code>jq</code></td><td class="wrap-ok">Wallpaper-derived colours, theme switching</td></tr>
+              <tr><td><code>git</code></td><td class="wrap-ok">Importing a theme from a scheme repo</td></tr>
+              <tr><td><code>awww</code></td><td class="wrap-ok">Setting the wallpaper</td></tr>
+              <tr><td><code>python-pywal</code></td><td class="wrap-ok">The Pywal theme</td></tr>
+              <tr><td><code>networkmanager</code></td><td class="wrap-ok">Wi-Fi panel</td></tr>
+              <tr><td><code>bluez</code>, <code>bluez-utils</code></td><td class="wrap-ok">Bluetooth panel and the Bluetooth settings page</td></tr>
+              <tr><td><code>kdeconnect</code>, <code>python-gobject</code></td><td class="wrap-ok">The Phone page. Without either the page says so and does nothing else</td></tr>
+              <tr><td><code>libpulse</code>, <code>wireplumber</code></td><td class="wrap-ok">Volume, audio devices</td></tr>
+              <tr><td><code>brightnessctl</code>, <code>upower</code></td><td class="wrap-ok">Brightness, battery</td></tr>
+              <tr><td><code>hypridle</code></td><td class="wrap-ok">The Idle page: dimming, locking, screen off and suspend</td></tr>
+              <tr><td><code>grim</code>, <code>wf-recorder</code>, <code>ffmpeg</code>, <code>imagemagick</code></td><td class="wrap-ok">Screenshots and recording</td></tr>
+              <tr><td><code>tesseract</code>, <code>tesseract-data-eng</code></td><td class="wrap-ok">The text copier's OCR</td></tr>
+              <tr><td><code>python-pillow</code>, <code>python-numpy</code>, <code>python-fonttools</code></td><td class="wrap-ok">Emoji in copied text. Without them the text still copies, minus the emoji</td></tr>
+              <tr><td><code>wl-clipboard</code>, <code>wtype</code></td><td class="wrap-ok">Emoji and GIF pasting</td></tr>
+              <tr><td><code>cliphist</code></td><td class="wrap-ok">Clipboard history</td></tr>
+              <tr><td><code>cava</code></td><td class="wrap-ok">Audio visualisers in the media panel and the desktop widget</td></tr>
+              <tr><td><code>songrec</code></td><td class="wrap-ok">Song identification</td></tr>
+              <tr><td><code>curl</code></td><td class="wrap-ok">Weather, location lookup and GIF search</td></tr>
+              <tr><td><code>polkit</code></td><td class="wrap-ok">Every administrator prompt. The shell is the session's authentication agent, so no other agent should be started</td></tr>
+              <tr><td><code>accountsservice</code></td><td class="wrap-ok">The Users and Accounts page</td></tr>
+              <tr><td><code>libnotify</code></td><td class="wrap-ok">Notification actions</td></tr>
+              <tr><td><code>swappy</code></td><td class="wrap-ok">The Open action on a screenshot notification</td></tr>
+              <tr><td><code>hyprpicker</code></td><td class="wrap-ok">The colour picker</td></tr>
+              <tr><td><code>xdg-utils</code></td><td class="wrap-ok">Opening links and files from the shell</td></tr>
+              <tr><td><code>librsvg</code></td><td class="wrap-ok">Turning the pointer's shadow off</td></tr>
+              <tr><td><code>noto-fonts-emoji</code></td><td class="wrap-ok">Emoji rendering</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>The Hyprland config and the look</h3>
+        <p>Installed unless you pass <code>--no-hypr</code> or <code>--no-look</code>. The binds shell out to these, so a missing one is a dead key: <code>kitty</code>, <code>fish</code>, <code>nautilus</code>, <code>playerctl</code>, <code>gnome-calculator</code>, <code>starship</code>, <code>ttf-jetbrains-mono-nerd</code>, <code>adw-gtk-theme</code> and <code>papirus-icon-theme</code>.</p>
+        <h3>The dock's default pins</h3>
+        <p>Installed unless you pass <code>--no-apps</code>. Several GB, mostly from the AUR:</p>
+        <p class="pkg-line"><code>zen-browser-bin</code><code>vscodium-bin</code><code>spotify</code><code>vesktop</code><code>nautilus</code><code>steam</code><code>proton-vpn-gtk-app</code></p>
+        <p>Anything you already have an equivalent of is left alone: <code>vscodium</code> counts for <code>vscodium-bin</code>, <code>discord</code> for <code>vesktop</code>, and so on. <code>steam</code> is skipped unless the <code>multilib</code> repo is enabled.</p>
+      </section>
+
+      <section id="fonts">
+        <h3>Fonts</h3>
+        <p>The default UI font is <strong>Google Sans</strong>, which is not in the Arch repos. Without it Qt falls back to your default sans and everything still works, or you can pick any installed font in Settings → General.</p>
+      </section>
+
+      <section id="optional">
+        <h2>Optional setup</h2>
+        <p><strong>GIF search</strong> needs a free Giphy key (email only, no card) from <a href="https://developers.giphy.com/dashboard/" rel="noopener">developers.giphy.com</a>. Put it in <code>~/.config/quickshell/lucidmoji/config.json</code>. Tenor works too. Emoji and kaomoji need no key.</p>
+        <div class="code">
+          <pre><code>{ "giphyKey": "your-key-here", "tenorKey": "", "gifDir": "" }</code></pre>
+          <button class="copy-btn" type="button" data-copy-from="prev" aria-label="Copy the JSON"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button>
+        </div>
+        <p><strong>Wallpapers</strong> default to <code>~/Pictures/wallpapers</code>, one folder per theme: <code>~/Pictures/wallpapers/gruvbox</code> is what the strip shows while you are on Gruvbox. The installer puts a set in each, skipping any file you already have. Change the folder in Settings → General, which then applies to every theme.</p>
+      </section>
+
+      <section id="uninstall">
+        <h2>Uninstall</h2>
+        <div class="code">
+          <pre><code><span class="p">$ </span>./uninstall.sh</code></pre>
+          <button class="copy-btn" type="button" data-copy="./uninstall.sh" aria-label="Copy the command"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button>
+        </div>
+        <p>It moves <code>~/.config/quickshell</code> aside rather than deleting it, so your settings survive. Packages installed by <code>install.sh</code> are left alone. It prints what else it left in place (the matugen template blocks, <code>~/.config/hypr</code>, <code>starship.toml</code> and its init lines in your rc files, kitty's colour and opacity includes), each with a timestamped backup beside it, so you can undo them by hand.</p>
+        <div class="callout"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-help"></use></svg><p>Something not working? The <a href="help.html">Help Center</a> covers the common problems, and <a href="support.html#report">Support</a> helps you file a good bug report.</p></div>
+      </section>
+    </article>
+  </div>
+</main>
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="index.html"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="mark-ring" d="M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100"/><path class="mark-star" d="M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"/><circle class="mark-dot" cx="21" cy="9.4" r="1"/></svg><span>Lucid</span></a>
+        <p>A Material 3 Expressive desktop shell for Hyprland, built on Quickshell and themed from your wallpaper.</p>
+      </div>
+      <nav aria-labelledby="f-lucid"><h2 id="f-lucid">Lucid</h2><ul>
+        <li><a href="features.html">Features</a></li>
+        <li><a href="screenshots.html">Screenshots</a></li>
+        <li><a href="index.html#announcements">Announcements</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+        <li><a href="creator.html">Creator</a></li>
+      </ul></nav>
+      <nav aria-labelledby="f-docs"><h2 id="f-docs">Docs</h2><ul>
+        <li><a href="docs.html#install">Install</a></li>
+        <li><a href="docs.html#keybinds">Keybinds</a></li>
+        <li><a href="docs.html#ipc">IPC reference</a></li>
+        <li><a href="docs.html#theming">Theming</a></li>
+        <li><a href="docs.html#requirements">Requirements</a></li>
+      </ul></nav>
+      <nav aria-labelledby="f-help"><h2 id="f-help">Help</h2><ul>
+        <li><a href="help.html">Help Center</a></li>
+        <li><a href="support.html">Support</a></li>
+        <li><a href="support.html#report">Report a bug</a></li>
+        <li><a href="support.html#feature">Suggest a feature</a></li>
+      </ul></nav>
+      <nav aria-labelledby="f-project"><h2 id="f-project">Project</h2><ul>
+        <li><a href="https://github.com/Sn3akyy1/lucid" rel="noopener">GitHub</a></li>
+        <li><a href="https://github.com/Sn3akyy1/lucid/releases" rel="noopener">Releases</a></li>
+        <li><a href="https://github.com/Sn3akyy1/lucid/blob/main/LICENSE" rel="noopener">MIT licence</a></li>
+        <li><a href="https://quickshell.org" rel="noopener">Quickshell</a></li>
+      </ul></nav>
+    </div>
+    <div class="footer-base">
+      <span>© 2026 Sn3aky. Lucid is free software under the MIT licence.</span>
+      <span>Set in Google Sans and Noto Sans Mono, under the <a href="assets/fonts/OFL-GoogleSans.txt">SIL Open Font License</a>.</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
