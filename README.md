@@ -31,10 +31,10 @@ your wallpaper.
 
 ---
 
-> **v1.0.5 — multiple displays, special workspaces and widget presets.** It's
-> what I use daily. Everything that landed in it, and in v1.0.0 before it, is in
-> the [changelog](CHANGELOG.md). Rough edges are still possible and bug reports
-> are welcome.
+> **v1.1.0 — lock screen, polkit, accounts and light mode.** It's what I use
+> daily. Everything that landed in it, and in every version before it, is in the
+> [changelog](CHANGELOG.md). Rough edges are still possible and bug reports are
+> welcome.
 
 > **To hear about new versions**, press **Watch → Custom → Releases** at the top
 > of this page. Lucid also checks for itself: once a day it asks GitHub for the
