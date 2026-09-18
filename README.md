@@ -217,16 +217,21 @@ Six modules, each a pill that expands into a panel. Every one can be turned
 off in Settings.
 
 - **Workspaces** — live window previews per workspace, click to switch.
-  Scratchpads (special workspaces) sit beside the dots as a greyed stack of the
-  apps stashed in them; opening one sinks the dots and lifts the stack into the
-  accent with its name. Click an icon to jump to that window, or drag windows in
-  and out from the overview's scratchpad row
+  Scratchpads (special workspaces) sit beside the dots as a greyed chip marked
+  with a glyph for what is stashed in them — a terminal for a terminal, a note
+  for an editor, read off each app's own categories. Opening one sinks the dots,
+  fans the glyphs out and lifts them into the accent with its name. Click a
+  glyph to jump to that window, or drag windows in and out from the overview's
+  scratchpad row
 - **Media** — MPRIS controls, seek bar, art, and Shazam-style song ID (`songrec`)
 - **Tray** — SNI system tray with working context menus
 - **Clock** — calendar, weather, and reminders that toast when they're due
-- **Notifications** — arrival toasts, history, do-not-disturb
-- **System** — volume, brightness, battery, disk stats, plus full Wi-Fi and
-  Bluetooth panels. Hover any icon on the compact strip and it names itself
+- **Notifications** — grouped by application, with inline reply for chat apps
+  and progress bars for transfers. New ones stack under the bar, the newest
+  growing out of the pill itself; do-not-disturb holds them back
+- **System** — volume, brightness, battery, disk stats and a Caffeine tile,
+  plus full Wi-Fi and Bluetooth panels and a switcher for the audio output and
+  input. Hover any icon on the compact strip and it names itself
 
 Two shapes, set in Settings: **island** (floating rounded pills) or **notch**
 (flush to the screen edge, with flares that blend into it).
@@ -234,8 +239,8 @@ Two shapes, set in Settings: **island** (floating rounded pills) or **notch**
 <img src="assets/prev4.webp" alt="The System panel: toggles, sliders, media, and system stats">
 
 *The System pill opens into a control centre — Wi-Fi and Bluetooth with full
-panels behind them, brightness and volume, battery, RAM, CPU and per-disk usage,
-with notifications underneath.*
+panels behind them, brightness and volume with the audio devices behind those,
+battery, RAM, CPU and per-disk usage.*
 
 ### Dock and launcher
 
@@ -279,7 +284,7 @@ and it comes back where you left it after a reboot.
 *A month calendar, the weather, a stacked clock and the media card, with a
 full-width visualiser running under the dock.*
 
-Ten kinds, thirty looks between them — every category ships several
+Eleven kinds, thirty-three looks between them — every category ships several
 variants of the same data:
 
 | Widget | Looks |
@@ -294,6 +299,7 @@ variants of the same data:
 | Notes | A sticky square or a ruled sheet, saved as you type |
 | To-do | A checklist or just what is still outstanding |
 | Palette | The Material roles the shell is currently built from, click one to copy the hex |
+| Phone | Card, compact row, or a remote — the paired phone's battery and signal, with ring, ping, send a file and send the clipboard a click away; the remote drives whatever the phone is playing |
 
 Every widget has its own menu — right-click it, or use the gear that appears on
 hover — for its style, its size, and its own options: 12- or 24-hour, which
@@ -328,14 +334,24 @@ scratchpad and, pressed inside a special workspace, sends it back. The
 scratchpad key also puts away whichever workspace is up, so one key always
 returns you to what you were doing.
 
-**Settings → Workspaces** picks each one's apps from what is installed, turns any
-of them off, and sets how far the screen behind dims and whether switching
-workspace puts them away. It writes `~/.config/hypr/lucid-specials.lua`, which
+**Settings → Workspaces** picks each one's apps, turns any of them off, and sets
+how far the screen behind dims and whether switching workspace puts them away.
+*Add an app* offers everything installed, not only the catalogue above, and
+works out what to match its window by. It writes `~/.config/hypr/lucid-specials.lua`, which
 `modules/specials.lua` reads on every key press, so a change applies without a
 Hyprland reload.
 
 ### Everything else
 
+- **Users and accounts** — the card at the top of the Settings rail opens a
+  *Users and Accounts* page for every account on the machine: full name,
+  username, account type, login shell, email and location, with the guards that
+  matter — the last administrator cannot demote themselves and a signed-in
+  account cannot be renamed. Set a password or have the account choose its own
+  at the next sign-in, add and remove accounts, toggle supplementary groups, and
+  pick a picture from the stock faces or any image. It all goes through
+  AccountsService, so the shell's own polkit dialog does the asking and nothing
+  runs as root
 - **Account picture history** — changing your account picture keeps the old one
   on a shelf in the picker, newest first, so any picture you have worn is a
   click away. It holds twelve or 8 MB, drops the oldest as new ones arrive,
@@ -407,8 +423,12 @@ Hyprland reload.
   its own timeout, how much of the message and how many action buttons show,
   do-not-disturb with quiet hours between two times and a rule for fullscreen
   windows, a notification sound with its own volume, how many the list keeps,
-  and per-application muting
-- **OSD** — volume and brightness overlays
+  per-application muting, and switches for grouping by application, showing how
+  long ago each arrived, progress bars, inline reply, and how many popups stack
+  at once
+- **OSD** — volume, brightness and microphone, each a badge and a level; Caps
+  Lock and Num Lock get one too, showing the letters the next keystroke will
+  make — `ABC` against `abc` — rather than the words on and off
 - **Desktop** — drag across empty desktop and a translucent accent box follows
   the cursor, the way it does on Windows and macOS; it is cosmetic and selects
   nothing. Right-click the desktop for wallpaper, theme, your placed widgets,
@@ -559,6 +579,14 @@ launcher's Theme mode:
 are fixed palettes that don't change with the wallpaper. Anything you import
 sits alongside them, and the whole list can be dragged into the order you want.
 
+Every palette has a light mode too — **Light or dark** on the Theme page.
+Matugen and Pywal re-extract the wallpaper in the mode you pick; the fixed
+palettes get a light version built from their own colours, so Nord lands on its
+own Snow Storm and Gruvbox on its own cream. Light surfaces carry a trace of the
+accent, and *Accent tint* on the General page sets how much. The mode is
+remembered beside the theme, and GTK and Qt applications follow it, switching to
+the light or dark counterpart of their theme where one is installed.
+
 Whichever is active, the shell reads `~/.cache/quickshell/matugen.json` — a
 flat map of Material 3 colour roles. Changing your wallpaper through Lucid
 runs `~/.config/hypr/scripts/wallpaper/set-wallpaper.sh`, which sets the
@@ -637,10 +665,12 @@ you know what's being pulled in.
 | `songrec` | Song identification |
 | `curl` | Weather, location lookup and GIF search |
 | `polkit` | Every administrator prompt. The shell registers itself as the session's authentication agent and drives polkit's own setuid helper, so no separate agent is needed — and no other agent should be started, as only one can hold the session |
+| `accountsservice` | The Users and Accounts page. Every change goes through it, so the shell's own polkit dialog asks and nothing runs as root |
 | `libnotify` | Notification actions |
 | `swappy` | The "Open" action on a screenshot notification |
 | `hyprpicker` | The Colour mode. Without it the mode says so and picks nothing |
 | `xdg-utils` | Opening links and files from the shell |
+| `librsvg` | Turning the pointer's shadow off — the cursor theme is rendered again from its vector sources |
 | `noto-fonts-emoji` | Emoji rendering |
 
 **The Hyprland config and the look** — installed unless you pass `--no-hypr`
@@ -702,7 +732,7 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | Target | Functions |
 | --- | --- |
 | `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `clipboard` `search <query>` |
-| `settings` | `toggle` `open` `close` `show <page>` `general` `bar` `dock` `environment` `widgets` `workspaces` `notifications` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
+| `settings` | `toggle` `open` `close` `show <page>` `general` `users` `glass` `bar` `dock` `environment` `displays` `widgets` `workspaces` `notifications` `sound` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
 | `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
 | `network` | `status` `list` `rescan` |
 | `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |
