@@ -8,6 +8,9 @@ Item {
     id: map
 
     readonly property int snap: 60
+    // a lone display has nothing to line up with, and the view re-centres on it
+    // under the pointer, so a drag would only run away with its position
+    readonly property bool movable: Monitors.liveCount > 1
     property string held: ""
     // the display the page is pointed at
     property string selected: ""
@@ -178,7 +181,7 @@ Item {
 
                     anchors.fill: parent
                     hoverEnabled: true
-                    cursorShape: Qt.SizeAllCursor
+                    cursorShape: map.movable ? Qt.SizeAllCursor : Qt.PointingHandCursor
                     // the grab point in hyprland's coordinates, so the plate
                     // does not jump to the pointer as the drag starts
                     property real grabX: 0
@@ -198,7 +201,7 @@ Item {
 
                     }
                     onPositionChanged: (mouse) => {
-                        if (map.held !== plate.modelData)
+                        if (map.held !== plate.modelData || !map.movable)
                             return ;
 
                         // moving anything pins them all, or hyprland reshuffles
