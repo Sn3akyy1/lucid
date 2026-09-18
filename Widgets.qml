@@ -550,6 +550,17 @@ Singleton {
             "label": "Clipboard button",
             "type": "bool",
             "def": true
+        }, {
+            "key": "showBrowse",
+            "label": "Browse files button",
+            "type": "bool",
+            "def": true,
+            "variants": ["card", "remote"]
+        }, {
+            "key": "deviceId",
+            "label": "",
+            "type": "hidden",
+            "def": ""
         }]
     }]
 
