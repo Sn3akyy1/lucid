@@ -2018,7 +2018,8 @@ a.card:hover {
   gap: 16px;
 }
 
-.gallery .g-item:first-child {
+.gallery .g-item:first-child,
+.gallery .g-item:last-child {
   grid-column: span 2;
 }
 
@@ -4024,7 +4025,8 @@ a.person:hover {
   }
 
   .t-lock,
-  .gallery .g-item:first-child {
+  .gallery .g-item:first-child,
+  .gallery .g-item:last-child {
     grid-column: auto;
   }
 
