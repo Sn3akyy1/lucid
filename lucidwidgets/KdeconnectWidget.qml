@@ -20,14 +20,80 @@ WidgetBody {
         }
     })
 
+    // every phone this machine is paired with, reachable or not
+    readonly property var paired: w.preview ? [w.sampleDev] : KdeConnect.reachable.concat(KdeConnect.offline)
+    // the one this card was pinned to, when there is more than one
+    readonly property string pinnedId: String(w.opt("deviceId") || "")
+
     readonly property var dev: {
         if (w.preview)
             return w.sampleDev;
+        if (w.pinnedId !== "") {
+            const pinned = KdeConnect.device(w.pinnedId);
+            if (pinned)
+                return pinned;
+
+        }
         if (KdeConnect.reachable && KdeConnect.reachable.length > 0)
             return KdeConnect.reachable[0];
         if (KdeConnect.devices && KdeConnect.devices.length > 0)
             return KdeConnect.devices[0];
         return null;
+    }
+    readonly property bool manyPhones: !w.preview && w.paired.length > 1
+
+    function nextDevice() {
+        if (!w.manyPhones || !w.dev)
+            return ;
+
+        const at = w.paired.findIndex((d) => {
+            return d.id === w.dev.id;
+        });
+        w.setOpts({
+            "deviceId": w.paired[(at + 1) % w.paired.length].id
+        });
+    }
+
+    // a phone answers an action only when its own plugin is on
+    function can(plugin) {
+        return w.preview || (w.connected && KdeConnect.pluginOn(w.dev, plugin));
+    }
+
+    // what just happened, in the action bar for a moment
+    property string flash: ""
+
+    function say(text) {
+        w.flash = text;
+        flashTimer.restart();
+    }
+
+    function act(key) {
+        if (w.preview || !w.dev)
+            return ;
+
+        const id = w.dev.id;
+        if (key === "share") {
+            KdeConnect.pickFiles(id, "Send to " + w.dev.name);
+        } else if (key === "ring") {
+            KdeConnect.ring(id);
+            w.say("Ringing " + w.dev.name);
+        } else if (key === "clipboard") {
+            KdeConnect.sendClipboard(id);
+            w.say("Clipboard sent");
+        } else if (key === "browse") {
+            KdeConnect.browse(id);
+            w.say("Opening its files");
+        } else if (key === "ping") {
+            KdeConnect.ping(id, "Ping from Lucid");
+            w.say("Pinged");
+        }
+    }
+
+    Timer {
+        id: flashTimer
+
+        interval: 2200
+        onTriggered: w.flash = ""
     }
 
     readonly property bool connected: w.dev ? (w.dev.reachable === true) : false
@@ -48,6 +114,7 @@ WidgetBody {
     readonly property bool showShare: w.opt("showShare") !== false
     readonly property bool showRing: w.opt("showRing") !== false
     readonly property bool showClipboard: w.opt("showClipboard") !== false
+    readonly property bool showBrowse: w.opt("showBrowse") !== false
 
     readonly property bool low: !w.charging && w.chargePct >= 0 && w.chargePct <= 20
     readonly property color tint: w.low ? Theme.error : Theme.accent
@@ -146,46 +213,84 @@ WidgetBody {
 
         WidgetButton {
             visible: w.showShare
+            enabled: w.can("kdeconnect_share")
             icon: "share"
             diameter: parent.diameter
             iconSize: parent.iconSize
             surface: true
             hoverGrow: true
-            tip: "Send file"
-            onClicked: if (w.dev) KdeConnect.pickFiles(w.dev.id, "Send to " + w.dev.name)
+            tip: enabled ? "Send file" : "Sharing is off on the phone"
+            onClicked: w.act("share")
         }
 
         WidgetButton {
             visible: w.showRing
+            enabled: w.can("kdeconnect_findmyphone")
             icon: "ring"
             diameter: parent.diameter
             iconSize: parent.iconSize
             surface: true
             hoverGrow: true
-            tip: "Ring phone"
-            onClicked: if (w.dev) KdeConnect.ring(w.dev.id)
+            tip: enabled ? "Ring phone" : "Find my phone is off on the phone"
+            onClicked: w.act("ring")
         }
 
         WidgetButton {
             visible: w.showClipboard && parent.full
+            enabled: w.can("kdeconnect_clipboard")
             icon: "clipboard"
             diameter: parent.diameter
             iconSize: parent.iconSize
             surface: true
             hoverGrow: true
-            tip: "Send clipboard"
-            onClicked: if (w.dev) KdeConnect.sendClipboard(w.dev.id)
+            tip: enabled ? "Send clipboard" : "Clipboard sharing is off on the phone"
+            onClicked: w.act("clipboard")
+        }
+
+        WidgetButton {
+            visible: w.showBrowse && parent.full
+            enabled: w.can("kdeconnect_sftp")
+            icon: "folder"
+            diameter: parent.diameter
+            iconSize: parent.iconSize
+            surface: true
+            hoverGrow: true
+            tip: enabled ? "Browse its files" : "File browsing is off on the phone"
+            onClicked: w.act("browse")
         }
 
         WidgetButton {
             visible: parent.full
+            enabled: w.can("kdeconnect_ping")
             icon: "refresh"
             diameter: parent.diameter
             iconSize: parent.iconSize
             surface: true
             hoverGrow: true
             tip: "Ping phone"
-            onClicked: if (w.dev) KdeConnect.ping(w.dev.id, "Ping from Lucid")
+            onClicked: w.act("ping")
+        }
+
+        // only worth a button when there is somewhere else to go
+        WidgetButton {
+            visible: w.manyPhones && parent.full
+            icon: "next"
+            diameter: parent.diameter
+            iconSize: parent.iconSize
+            surface: true
+            hoverGrow: true
+            tip: "Another phone"
+            onClicked: w.nextDevice()
+        }
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: parent.full && w.flash !== ""
+            text: w.flash
+            color: Theme.accent
+            font.family: Theme.fontFamily
+            font.pixelSize: 11
+            elide: Text.ElideRight
         }
 
     }
