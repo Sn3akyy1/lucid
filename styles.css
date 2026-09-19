@@ -198,6 +198,25 @@
   display: none !important;
 }
 
+/* every stacked grid gets one column that may shrink below its content. an implicit column is
+   sized by the widest thing in it, so one unbreakable code line would push the whole stack,
+   headings and all, past the edge of a phone. later rules that set their own columns win */
+:where(.section-head, .appearance, .sheet, .sheet-card, .sheet-group, .hero-copy, .theming-copy,
+  .theming-copy ul, .studio, .studio-head, .srow-text, .pw-card, .install-copy, .steps, .keycard,
+  .card, .page-head-inner, .feature-copy, .facts, .feature-detail, .mini, .g-item,
+  .g-item figcaption, .lb-stage, .toc, .prose, .prose > section, .prose ul, .prose ol,
+  .help-layout, .articles, .article-body, .empty, .form, .field, .preview, .gather-item,
+  .profile-copy, .stat, .timeline, .mark-story-copy, .releases, .release-meta, .release-body,
+  .rgroup, .rgroup ul, .lost, .footer-brand, .footer ul, .ann-centre, .ann-scroll, .ann-point,
+  .ann-list, .bind-list) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.lightbox[open],
+.ann-dialog[open] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -1072,8 +1091,8 @@ kbd {
 }
 
 .code pre {
-  margin: 0;
-  padding: 18px 64px 18px 20px;
+  margin: 0 52px 0 0;
+  padding: 18px 16px 18px 20px;
   overflow-x: auto;
   color: var(--text);
   font-size: 0.875rem;
@@ -1161,6 +1180,10 @@ td:first-child {
 
 td.wrap-ok {
   white-space: normal;
+}
+
+.table-wrap .keys {
+  flex-wrap: nowrap;
 }
 
 /* home hero */
@@ -4036,7 +4059,7 @@ a.person:hover {
   }
 
   .keygrid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .ann-pair {
@@ -4069,6 +4092,67 @@ a.person:hover {
 
   .keycard {
     min-height: 0;
+  }
+}
+
+/* phones: tables become stacked rows, the first cell a small heading over the rest */
+@media (max-width: 640px) {
+  .table-wrap {
+    overflow-x: visible;
+  }
+
+  .table-wrap table,
+  .table-wrap tbody,
+  .table-wrap tr,
+  .table-wrap td {
+    display: block;
+    width: auto;
+  }
+
+  .table-wrap thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .table-wrap tbody tr {
+    display: grid;
+    gap: 4px;
+    padding: 14px 18px;
+    border-top: 1px solid var(--line);
+  }
+
+  .table-wrap tbody tr:first-child {
+    border-top: 0;
+  }
+
+  .table-wrap tbody td,
+  .table-wrap tbody tr + tr td,
+  .table-wrap tbody tr:first-child td {
+    padding: 0;
+    border-top: 0;
+    white-space: normal;
+  }
+
+  .table-wrap td:first-child {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .table-wrap td + td {
+    color: var(--text-2);
+  }
+
+  .table-wrap .keys {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 400px) {
+  .pw {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
