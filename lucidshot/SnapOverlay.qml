@@ -17,6 +17,8 @@ PanelWindow {
     property string openMode: "camera"
     property string colorFormat: "hex"
     property string freezePath: Quickshell.env("HOME") + "/.cache/quickshell-snap-freeze.png"
+    // wf-recorder records the overlay's own monitor, not the whole layout
+    readonly property string outputArg: snapWindow.screen ? " -o '" + snapWindow.screen.name + "'" : ""
 
     property string recordingState: "idle"
     property int recordSeconds: 0
@@ -180,9 +182,9 @@ function stopRecordingBackend() {
     function recorderLaunchCmd(segFile) {
         return "DRI=$(ls /dev/dri/renderD* 2>/dev/null | head -1); " +
             "if [ -n \"$DRI\" ]; then " +
-            "wf-recorder -c h264_vaapi -d \"$DRI\" --audio=wfrec_combined.monitor -f '" + segFile + "' & " +
+            "wf-recorder" + snapWindow.outputArg + " -c h264_vaapi -d \"$DRI\" --audio=wfrec_combined.monitor -f '" + segFile + "' & " +
             "else " +
-            "wf-recorder --audio=wfrec_combined.monitor -x yuv420p -f '" + segFile + "' & " +
+            "wf-recorder" + snapWindow.outputArg + " --audio=wfrec_combined.monitor -x yuv420p -f '" + segFile + "' & " +
             "fi; " +
             "echo $! > " + snapWindow.recordPidFile + "; " +
             "wait";
