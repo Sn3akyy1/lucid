@@ -40,7 +40,7 @@ Singleton {
     readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envCursorShadow", "envIconTheme", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
     readonly property var specialKeys: ["specialScratchpad", "specialMusic", "specialComms", "specialTodo", "specialSysmon", "specialMusicApps", "specialCommsApps", "specialTodoApps", "specialSysmonApps", "specialKeepApps", "specialHideOnSwitch", "specialDim"]
     readonly property var glassKeys: ["glassApps", "glassValues"]
-    readonly property var monitorKeys: ["monitorSetups", "monitorShellScreen", "monitorBarScreen", "monitorDockScreen"]
+    readonly property var monitorKeys: ["monitorSetups", "monitorShellScreen", "monitorBarScreen", "monitorDockScreen", "monitorWorkspaces"]
     readonly property var notifKeys: ["toastEnabled", "toastTimeout", "toastUseAppTimeout", "toastCriticalSticky", "toastShowBody", "toastShowActions", "toastBodyLines", "notifShowIcons", "notifMaxHistory", "doNotDisturb", "dndAllowCritical", "dndFullscreen", "quietHours", "quietFrom", "quietTo", "notifSound", "notifSoundName", "notifSoundVolume", "notifSoundUrgentOnly", "notifMutedApps", "notifGrouping", "notifTimestamps", "notifProgress", "notifInlineReply", "toastMaxVisible"]
 
     property alias barStyle: s.barStyle
@@ -195,6 +195,7 @@ Singleton {
     // empty means the bar or dock goes wherever the shell went
     property alias monitorBarScreen: s.monitorBarScreen
     property alias monitorDockScreen: s.monitorDockScreen
+    property alias monitorWorkspaces: s.monitorWorkspaces
 
     property alias idleEnabled: s.idleEnabled
     property alias idleAutostart: s.idleAutostart
@@ -437,7 +438,8 @@ Singleton {
         "monitorSetups": "{}",
         "monitorShellScreen": "",
         "monitorBarScreen": "",
-        "monitorDockScreen": ""
+        "monitorDockScreen": "",
+        "monitorWorkspaces": "{}"
     })
 
     // what the bar module is holding right now, so the settings page can offer
@@ -865,6 +867,7 @@ Singleton {
             property string monitorShellScreen: ""
             property string monitorBarScreen: ""
             property string monitorDockScreen: ""
+            property string monitorWorkspaces: "{}"
         }
 
     }
