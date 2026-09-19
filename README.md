@@ -25,7 +25,7 @@ your wallpaper.
   <a href="https://quickshell.org"><img alt="Built on Quickshell" src="https://img.shields.io/badge/BUILT%20ON-QUICKSHELL-FFC46B?style=for-the-badge&labelColor=14100E"></a>
 </p>
 
-<img src="assets/prev1.webp" alt="The Lucid desktop: bar at the top, dock at the bottom">
+<img src="assets/prev1.webp" alt="The Lucid desktop: the bar along the top, calendar, weather, clock and music widgets on the wallpaper, and the dock along the bottom">
 
 </div>
 
@@ -239,8 +239,9 @@ Two shapes, set in Settings: **island** (floating rounded pills) or **notch**
 <img src="assets/prev4.webp" alt="The System panel: toggles, sliders, media, and system stats">
 
 *The System pill opens into a control centre — Wi-Fi and Bluetooth with full
-panels behind them, brightness and volume with the audio devices behind those,
-battery, RAM, CPU and per-disk usage.*
+panels behind them, quick toggles like Caffeine and Do Not Disturb, brightness
+and volume with the audio devices behind those, what is playing, and CPU, RAM,
+battery and per-disk usage.*
 
 ### Dock and launcher
 
@@ -279,10 +280,10 @@ Cards you place on the wallpaper yourself. Open **Settings → Widgets**, click 
 tile, and it lands on the desktop; drag it anywhere, pin it so it stops moving,
 and it comes back where you left it after a reboot.
 
-<img src="assets/prev5.webp" alt="Desktop widgets on the wallpaper: calendar, weather, clock and media">
+<img src="assets/prev5.webp" alt="Clock, calendar, to-do and note widgets on a lakeside wallpaper, with the volume popup above the dock">
 
-*A month calendar, the weather, a stacked clock and the media card, with a
-full-width visualiser running under the dock.*
+*A clock, the month, a to-do list and a sticky note, with the volume popup
+showing above the dock and a visualiser running under it.*
 
 Eleven kinds, thirty-three looks between them — every category ships several
 variants of the same data:
@@ -564,10 +565,17 @@ Hyprland reload.
   pages behind a collapsible rail, grouped-list cards, an app bar that collapses
   as you scroll, and a reset arrow on anything you have moved off its default
 
-<img src="assets/prev3.webp" alt="The Lucid settings app on the Dock page">
+<img src="assets/prev6.webp" alt="The Lucid lock screen: a large clock on the left, and the sign-in card, the song playing and notifications on the right">
 
-*Settings, with a live preview of whatever you are adjusting. Every control
-shows a reset arrow once it differs from the default.*
+*The lock screen — the clock in the wallpaper's own colour, the weather,
+battery, network and Bluetooth at a glance, what is playing, the notifications,
+and the power bar in the corner.*
+
+<img src="assets/prev3.webp" alt="The Lucid settings app on the General page">
+
+*Settings on the General page — the shape of the bar and the dock, glass, and
+how strongly the accent and the surfaces are tinted. The rail groups the pages
+into Appearance, Desktop and Devices.*
 
 ## Theming
 
@@ -586,6 +594,11 @@ own Snow Storm and Gruvbox on its own cream. Light surfaces carry a trace of the
 accent, and *Accent tint* on the General page sets how much. The mode is
 remembered beside the theme, and GTK and Qt applications follow it, switching to
 the light or dark counterpart of their theme where one is installed.
+
+<img src="assets/prev7.webp" alt="Lucid in light mode: pale green widgets, bar and dock over a night-time street">
+
+*Light mode, with the palette taken from the wallpaper. The bar, the dock and
+every widget follow it.*
 
 Whichever is active, the shell reads `~/.cache/quickshell/matugen.json` — a
 flat map of Material 3 colour roles. Changing your wallpaper through Lucid
