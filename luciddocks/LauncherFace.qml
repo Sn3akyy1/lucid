@@ -18,7 +18,38 @@ Item {
     property int wallCardGap: 10
     property alias searchText: searchInput.text
     property string highlightQuery: ""
-    readonly property string placeholder: face.displayMode === "clipboard" ? "Search clipboard history" : "Search apps, or type > for commands"
+    readonly property string placeholder: face.displayMode === "clipboard" ? "Search clipboard history" : "Search apps, windows and commands, or type >"
+    // lock / suspend / restart / shut down, beside the search field
+    property bool showPowerChips: false
+    // the power action waiting on its second press, owned by the dock
+    property string armedPower: ""
+    readonly property var powerChips: [{
+        "id": "lock",
+        "label": "Lock",
+        "confirm": "",
+        "glyph": DockIcons.lock,
+        "danger": false
+    }, {
+        "id": "suspend",
+        "label": "Suspend",
+        "confirm": "",
+        "glyph": DockIcons.suspend,
+        "danger": false
+    }, {
+        "id": "reboot",
+        "label": "Restart",
+        "confirm": "Restart?",
+        "glyph": DockIcons.reboot,
+        "danger": true
+    }, {
+        "id": "shutdown",
+        "label": "Shut down",
+        "confirm": "Shut down?",
+        "glyph": DockIcons.power,
+        "danger": true,
+        // the one to find at a glance: filled with the palette's primary
+        "accent": true
+    }]
     property real targetWidth: width
     property real targetHeight: height
 
@@ -37,6 +68,11 @@ Item {
     signal powerActionChosen(string id)
     signal backRequested()
     signal deleteRequested(int index)
+    signal powerChipTapped(string id)
+
+    function rowHeightFor(kind, subtitle) {
+        return resultList.heightFor(kind, subtitle);
+    }
 
     function setWallpaperIndex(i) {
         wallStrip.setIndexImmediate(i);
@@ -45,6 +81,11 @@ Item {
     function resetSelection() {
         resultList.resetSelection();
         powerRow.currentIndex = 0;
+    }
+
+    // call before a query rewrites the results, see LauncherList.filtering
+    function beginFilter() {
+        resultList.beginFilter();
     }
 
     function resultsChanged() {
@@ -170,7 +211,7 @@ Item {
         id: searchBar
 
         anchors.left: parent.left
-        anchors.right: parent.right
+        anchors.right: powerChips.left
         anchors.bottom: parent.bottom
         height: face.searchHeight
         radius: Theme.radiusPill
@@ -277,7 +318,7 @@ Item {
                 }
             }
             Keys.onDeletePressed: (event) => {
-                if (face.displayMode === "clipboard" && resultList.isSelectable(resultList.currentIndex)) {
+if (face.displayMode === "clipboard" && resultList.isSelectable(resultList.currentIndex)) {
                     face.deleteRequested(resultList.currentIndex);
                     event.accepted = true;
                 } else {
@@ -354,6 +395,149 @@ Item {
                     easing.type: Easing.OutCubic
                 }
 
+            }
+
+        }
+
+    }
+
+    // beside the search field while it searches; the wider modes take the room back
+    Item {
+        id: powerChips
+
+        readonly property bool shown: face.showPowerChips && (face.mode === "apps" || face.mode === "commands")
+        property real reveal: powerChips.shown ? 1 : 0
+
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: face.searchHeight
+        // the gap to the search field folds away with the chips
+        width: (chipRow.width + 8) * powerChips.reveal
+        visible: powerChips.reveal > 0
+        clip: true
+
+        Row {
+            id: chipRow
+
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 6
+            opacity: powerChips.reveal
+
+            Repeater {
+                model: face.powerChips
+
+                delegate: Item {
+                    id: chip
+
+                    required property var modelData
+
+                    readonly property bool armed: face.armedPower === chip.modelData.id
+                    // the label slides out on hover, and stays out while it waits on a second click
+                    readonly property bool open: chipHover.hovered || chip.armed
+                    readonly property color tone: chip.modelData.danger ? Theme.error : Theme.accent
+                    // armed, it drops the fill so the red confirmation still reads
+                    readonly property bool filled: chip.modelData.accent === true && !chip.armed
+
+                    width: face.searchHeight + (chip.open ? chipLabel.implicitWidth + 12 : 0)
+                    height: face.searchHeight
+                    clip: true
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Theme.radiusPill
+                        color: chip.filled ? Theme.accent : Theme.withBlur(Theme.bgTile)
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.durShort
+                            }
+
+                        }
+
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Theme.radiusPill
+                        color: chip.armed ? chip.tone : (chip.filled ? Theme.fgAccent : Theme.text)
+                        opacity: chip.armed ? Theme.stateFocus : (chipTap.pressed ? Theme.statePressed : (chipHover.hovered ? Theme.stateHover : 0))
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.durQuick
+                            }
+
+                        }
+
+                    }
+
+                    DockGlyph {
+                        x: Math.round((face.searchHeight - width) / 2)
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 18
+                        height: 18
+                        pathData: chip.modelData.glyph
+                        glyphColor: chip.filled ? Theme.fgAccent : (chip.open ? chip.tone : Theme.subtext)
+
+                        Behavior on glyphColor {
+                            ColorAnimation {
+                                duration: Theme.durShort
+                            }
+
+                        }
+
+                    }
+
+                    Text {
+                        id: chipLabel
+
+                        x: face.searchHeight - 6
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: chip.armed ? chip.modelData.confirm : chip.modelData.label
+                        color: chip.armed ? chip.tone : (chip.filled ? Theme.fgAccent : Theme.text)
+                        opacity: chip.open ? 1 : 0
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontLabel
+                        font.weight: Font.Medium
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.durShort
+                            }
+
+                        }
+
+                    }
+
+                    HoverHandler {
+                        id: chipHover
+                    }
+
+                    TapHandler {
+                        id: chipTap
+
+                        onTapped: face.powerChipTapped(chip.modelData.id)
+                    }
+
+                    Behavior on width {
+                        NumberAnimation {
+                            duration: Theme.durShort
+                            easing.type: Easing.OutCubic
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        Behavior on reveal {
+            NumberAnimation {
+                duration: Theme.durShort
+                easing.type: Easing.OutCubic
             }
 
         }
