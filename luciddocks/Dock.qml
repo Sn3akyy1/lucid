@@ -301,6 +301,10 @@ PanelWindow {
         if (dockWindow.mode === "power")
             return 660;
 
+        // the list plus its preview pane
+        if (dockWindow.mode === "clipboard")
+            return Math.min(780, dockWindow.maxDockWidth - 48);
+
         return 420;
     }
     property real resultsHeight: 0
@@ -311,6 +315,9 @@ PanelWindow {
             content = dockWindow.wallHeroH + 70;
         else if (dockWindow.mode === "power")
             content = 140;
+        // fixed, so deleting entries doesn't shrink the preview under the cursor
+        else if (dockWindow.mode === "clipboard")
+            content = Math.min(dockWindow.menuContentMax, 420);
         else
             content = Math.max(70, Math.min(dockWindow.resultsHeight, dockWindow.menuContentMax));
         return Math.round(dockWindow.panelPadding + launcherFace.chromeHeight + content);
@@ -540,8 +547,9 @@ PanelWindow {
                     continue;
 
                 rows.push(dockWindow.makeRow("clip", "clip-" + ent.id, ent.preview, ent.meta, {
-                    "glyph": ent.isImage ? "" : DockIcons.clipboard,
+                    "glyph": dockWindow.clipGlyph(ent),
                     "thumb": ent.isImage ? ent.id : "",
+                    "swatchBg": ent.kind === "color" ? ent.color : "",
                     "payload": ent.id
                 }));
             }
@@ -630,6 +638,21 @@ PanelWindow {
         } else if (row.kind === "command") {
             dockWindow.runCommand(row.payload);
         }
+    }
+
+    function clipGlyph(ent) {
+        switch (ent.kind) {
+        case "image":
+        case "color":
+            return "";
+        case "url":
+            return DockIcons.link;
+        case "email":
+            return DockIcons.mail;
+        case "text":
+            return DockIcons.notes;
+        }
+        return DockIcons.clipboard;
     }
 
     // clipboard rows are the only removable ones
@@ -1107,8 +1130,12 @@ PanelWindow {
             dockWindow.openLauncher(">power");
         }
 
+        // a second call closes it, so one key both opens and dismisses it
         function clipboard(): void {
-            dockWindow.openLauncher(">clip");
+            if (dockWindow.menuOpen && dockWindow.mode === "clipboard")
+                dockWindow.menuOpen = false;
+            else
+                dockWindow.openLauncher(">clip");
         }
 
         function blur(): void {
@@ -1866,6 +1893,7 @@ PanelWindow {
             onCloseRequested: dockWindow.menuOpen = false
             onBackRequested: launcherFace.searchText = dockWindow.mode === "commands" ? "" : ">"
             onDeleteRequested: (index) => dockWindow.deleteResult(index)
+            onClearRequested: Clip.wipe()
             onWallpaperPreviewed: (path) => dockWindow.requestWallpaper(path)
             onWallpaperChosen: (path) => {
                 dockWindow.applyWallpaper(path);

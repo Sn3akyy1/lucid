@@ -23,6 +23,15 @@ Singleton {
     property bool refreshQueued: false
     property var deleteQueue: []
     property int topId: 0
+    // the selected entry at full size, for the launcher's preview pane
+    property var fulls: ({})
+    property string fullWanted: ""
+    property string textId: ""
+    property string textBody: ""
+    property bool textReady: false
+    property bool textTruncated: false
+    property string textWanted: ""
+    readonly property int textLimit: 16000
 
     readonly property int listLimit: 300
     readonly property string thumbDir: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/lucid-clip"
@@ -39,13 +48,57 @@ Singleton {
         listProc.running = true;
     }
 
-    // "225 KiB png 637x541" -> "PNG · 637×541 · 225 KiB"
-    function imageMeta(preview) {
-        var m = preview.match(/binary data\s+(.+?)\s+(\w+)\s+(\d+)x(\d+)/);
+    // "[[ binary data 516 KiB png 1614x854 ]]"; anything but an image comes
+    // without the dimensions, and is no use to a thumbnail
+    function binaryInfo(preview) {
+        var m = preview.match(/^\[\[ binary data (\S+ \S+)(?: (\S+))?(?: (\d+)x(\d+))? \]\]$/);
         if (!m)
-            return "Image";
+            return null;
 
-        return m[2].toUpperCase() + " · " + m[3] + "×" + m[4] + " · " + m[1];
+        return {
+            "size": m[1],
+            "format": (m[2] || "").toLowerCase(),
+            "width": m[3] ? parseInt(m[3], 10) : 0,
+            "height": m[4] ? parseInt(m[4], 10) : 0
+        };
+    }
+
+    // "PNG · 637×541 · 225 KiB"
+    function imageMeta(info) {
+        return info.format.toUpperCase() + " · " + info.width + "×" + info.height + " · " + info.size;
+    }
+
+    // text that is a colour, a link or an address is shown as one
+    function textKind(preview) {
+        var t = preview.trim();
+        var hex = t.match(/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i);
+        if (hex) {
+            var h = hex[1];
+            if (h.length === 3)
+                h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+
+            var rgb = h.substring(0, 6);
+            var r = parseInt(rgb.substring(0, 2), 16), g = parseInt(rgb.substring(2, 4), 16), b = parseInt(rgb.substring(4, 6), 16);
+            return {
+                "kind": "color",
+                // Qt reads 8 digits as #AARRGGBB, CSS writes #RRGGBBAA
+                "color": "#" + (h.length === 8 ? h.substring(6) + rgb : rgb),
+                "darkColor": 0.2126 * r + 0.7152 * g + 0.0722 * b < 140
+            };
+        }
+        if (/^[a-z][a-z0-9+.-]*:\/\/\S+$/i.test(t))
+            return {
+                "kind": "url"
+            };
+
+        if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t))
+            return {
+                "kind": "email"
+            };
+
+        return {
+            "kind": "text"
+        };
     }
 
     function parseList(text) {
@@ -62,12 +115,19 @@ Singleton {
 
             var id = line.substring(0, tab);
             var preview = line.substring(tab + 1);
-            var isImage = preview.indexOf("[[ binary data") === 0;
+            var info = root.binaryInfo(preview);
+            var isImage = info !== null && info.width > 0;
+            var text = info === null ? root.textKind(preview) : null;
             out.push({
                 "id": id,
-                "preview": isImage ? "Image" : preview,
+                "preview": isImage ? "Image" : (info !== null ? "Binary data" : preview),
                 "isImage": isImage,
-                "meta": isImage ? root.imageMeta(preview) : ""
+                "meta": isImage ? root.imageMeta(info) : (info !== null ? (info.format !== "" ? info.format + " · " : "") + info.size : ""),
+                "kind": isImage ? "image" : (info !== null ? "binary" : text.kind),
+                "color": text && text.color ? text.color : "",
+                "darkColor": !!(text && text.darkColor),
+                "width": info !== null ? info.width : 0,
+                "height": info !== null ? info.height : 0
             });
         }
         return out;
@@ -171,7 +231,105 @@ Singleton {
     function dropThumbs() {
         root.thumbs = ({});
         root.thumbQueue = [];
+        root.fulls = ({});
         Quickshell.execDetached(["sh", "-c", "rm -rf \"$1\"", "sh", root.thumbDir]);
+    }
+
+    function entry(id) {
+        for (var i = 0; i < root.entries.length; i++) {
+            if (root.entries[i].id === id)
+                return root.entries[i];
+
+        }
+        return null;
+    }
+
+    // the original bytes, for the preview; one decode at a time, and only the
+    // last entry asked for is worth decoding next
+    function requestFull(id) {
+        if (!root.available || id === "" || root.fulls[id] !== undefined)
+            return;
+
+        root.fullWanted = id;
+        if (!fullProc.running)
+            root.startFull();
+
+    }
+
+    function startFull() {
+        var id = root.fullWanted;
+        root.fullWanted = "";
+        if (id === "" || root.fulls[id] !== undefined)
+            return;
+
+        fullProc.fullId = id;
+        fullProc.command = ["sh", "-c", "d=\"$1\"; i=\"$2\"; mkdir -p \"$d\" && chmod 700 \"$d\" || exit 1; " + "cliphist decode \"$i\" > \"$d/full-$i.part\" && mv \"$d/full-$i.part\" \"$d/full-$i\" || { rm -f \"$d/full-$i.part\"; exit 1; }", "sh", root.thumbDir, String(id)];
+        fullProc.running = true;
+    }
+
+    // the whole text, up to textLimit, for the preview
+    function loadText(id) {
+        if (!root.available || id === "")
+            return;
+
+        if (root.textId === id && (root.textReady || textProc.running))
+            return;
+
+        root.textWanted = id;
+        if (!textProc.running)
+            root.startText();
+
+    }
+
+    function startText() {
+        var id = root.textWanted;
+        root.textWanted = "";
+        if (id === "")
+            return;
+
+        root.textId = id;
+        root.textReady = false;
+        textProc.command = ["sh", "-c", "cliphist decode \"$1\" | head -c " + (root.textLimit + 1), "sh", String(id)];
+        textProc.running = true;
+    }
+
+    Process {
+        id: fullProc
+
+        property string fullId: ""
+
+        onExited: (code) => {
+            var t = {};
+            for (var k in root.fulls) t[k] = root.fulls[k];
+            t[fullProc.fullId] = code === 0 ? "file://" + root.thumbDir + "/full-" + fullProc.fullId : "";
+            root.fulls = t;
+            if (root.fullWanted !== "")
+                root.startFull();
+
+        }
+    }
+
+    Process {
+        id: textProc
+
+        // a newer request waiting means this text is already stale
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (root.textWanted !== "")
+                    return;
+
+                var body = this.text;
+                root.textTruncated = body.length > root.textLimit;
+                root.textBody = root.textTruncated ? body.substring(0, root.textLimit) : body;
+                root.textReady = true;
+            }
+        }
+
+        onExited: {
+            if (root.textWanted !== "")
+                root.startText();
+
+        }
     }
 
     Process {
