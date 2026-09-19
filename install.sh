@@ -1113,10 +1113,13 @@ fi
 step "Done"
 
 # a running instance is still on the old files, so offer the restart that
-# actually puts the new version on screen
+# actually puts the new version on screen.
+# the path alone is not enough: with nothing running, `qs list` says
+# "No running instances for <path>", which the path matches. the field only
+# a real instance has is what to look for.
 # no grep -q here: it would close the pipe, and pipefail would then read the
 # producer's SIGPIPE as "not running"
-if qs list 2>/dev/null | grep -F "$SHELL_DIR/shell.qml" >/dev/null; then
+if qs list 2>/dev/null | grep -F "Config path: $SHELL_DIR/shell.qml" >/dev/null; then
     if ask "  Lucid is running on the old files. Restart it now?"; then
         qs kill -p "$SHELL_DIR" 2>/dev/null || true
         sleep 1
