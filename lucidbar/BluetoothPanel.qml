@@ -927,7 +927,7 @@ Item {
                             onClicked: {
                                 devItem.actionFailed = false;
                                 if (devItem.group === "nearby")
-                                    devItem.modelData.pair();
+                                    Bt.pair(devItem.modelData);
                                 else if (devItem.isConnected)
                                     devItem.modelData.disconnect();
                                 else
