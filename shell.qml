@@ -366,6 +366,10 @@ ShellRoot {
         id: toastMod
     }
 
+    ToastEvents {
+        toast: toastMod
+    }
+
     Lock {
         id: lockMod
     }

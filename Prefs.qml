@@ -87,6 +87,15 @@ Singleton {
     property alias showWorkspaces: s.showWorkspaces
     property alias showMedia: s.showMedia
     property alias showTray: s.showTray
+    property alias showKbLayout: s.showKbLayout
+    property alias gameModeOnCmd: s.gameModeOnCmd
+    property alias gameModeOffCmd: s.gameModeOffCmd
+    property alias gameModeStatusCmd: s.gameModeStatusCmd
+
+    readonly property string gameModeStateFile: {
+        const m = /(?:test|\[)\s+-[ef]\s+(\S+)/.exec(root.gameModeStatusCmd || "");
+        return m ? m[1].replace(/^['"]|['"]$/g, "") : "";
+    }
     property alias showClock: s.showClock
     property alias showNotifications: s.showNotifications
     property alias showSystem: s.showSystem
@@ -101,6 +110,14 @@ Singleton {
     property alias timeZoneAuto: s.timeZoneAuto
     property alias doNotDisturb: s.doNotDisturb
     property alias toastTimeout: s.toastTimeout
+    property alias toastOnLayout: s.toastOnLayout
+    property alias toastOnGameMode: s.toastOnGameMode
+    property alias toastOnBattery: s.toastOnBattery
+    property alias toastOnBluetooth: s.toastOnBluetooth
+    property alias toastOnWifi: s.toastOnWifi
+    property alias toastOnAudio: s.toastOnAudio
+    property alias toastOnDisplays: s.toastOnDisplays
+    property alias toastOnPower: s.toastOnPower
     property alias toastEnabled: s.toastEnabled
     property alias toastUseAppTimeout: s.toastUseAppTimeout
     property alias toastCriticalSticky: s.toastCriticalSticky
@@ -288,6 +305,10 @@ Singleton {
         "showWorkspaces": true,
         "showMedia": true,
         "showTray": true,
+        "showKbLayout": true,
+        "gameModeOnCmd": "",
+        "gameModeOffCmd": "",
+        "gameModeStatusCmd": "",
         "showClock": true,
         "showNotifications": true,
         "showSystem": true,
@@ -302,6 +323,14 @@ Singleton {
         "timeZoneAuto": true,
         "doNotDisturb": false,
         "toastTimeout": 5,
+        "toastOnLayout": true,
+        "toastOnGameMode": true,
+        "toastOnBattery": true,
+        "toastOnBluetooth": true,
+        "toastOnWifi": true,
+        "toastOnAudio": true,
+        "toastOnDisplays": true,
+        "toastOnPower": true,
         "toastEnabled": true,
         "toastUseAppTimeout": true,
         "toastCriticalSticky": true,
@@ -701,6 +730,10 @@ Singleton {
             property bool showWorkspaces: true
             property bool showMedia: true
             property bool showTray: true
+            property bool showKbLayout: true
+            property string gameModeOnCmd: ""
+            property string gameModeOffCmd: ""
+            property string gameModeStatusCmd: ""
             property bool showClock: true
             property bool showNotifications: true
             property bool showSystem: true
@@ -715,6 +748,14 @@ Singleton {
             property bool timeZoneAuto: true
             property bool doNotDisturb: false
             property int toastTimeout: 5
+            property bool toastOnLayout: true
+            property bool toastOnGameMode: true
+            property bool toastOnBattery: true
+            property bool toastOnBluetooth: true
+            property bool toastOnWifi: true
+            property bool toastOnAudio: true
+            property bool toastOnDisplays: true
+            property bool toastOnPower: true
             property bool toastEnabled: true
             property bool toastUseAppTimeout: true
             property bool toastCriticalSticky: true
