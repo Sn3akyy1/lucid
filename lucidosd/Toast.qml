@@ -10,7 +10,11 @@ PanelWindow {
 
     property bool shown: false
     property string iconPath: ""
+    // a nerd font glyph, for the icons that only exist as one (wi-fi)
+    property string iconGlyph: ""
     property string label: ""
+    // a quieter second part, after the label
+    property string detail: ""
     property bool warn: false
     property color swatch: "transparent"
     property bool hasSwatch: false
@@ -20,6 +24,15 @@ PanelWindow {
     readonly property int pillPad: 16
     readonly property int iconGap: 12
     readonly property int glyphSize: 20
+    readonly property int labelMax: 340
+    readonly property int detailMax: 260
+
+    // system events wait their turn here instead of cutting each other off
+    property var queue: []
+    // how many may wait; a burst past it sheds the oldest plain entry
+    property int queueCap: 8
+    // what is on screen, so a newer event of the same kind updates it in place
+    property string currentKey: ""
 
     // named icons so a caller (or a shell script over ipc) need not pass svg
     readonly property var icons: ({
@@ -32,21 +45,75 @@ PanelWindow {
         "camera": "M9,2L7.17,4H4A2,2 0 0,0 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6A2,2 0 0,0 20,4H16.83L15,2H9M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"
     })
 
-    // a picked colour shows as itself rather than as an icon
-    function popupSwatch(hex, text) {
-        toastWindow.swatch = hex;
-        toastWindow.hasSwatch = true;
-        toastWindow.label = text;
-        toastWindow.warn = false;
+    // entry: { icon, label, detail, warn, swatch, key, ms }. icon is a name from
+    // the list above, raw svg path data, or a single glyph
+    function present(entry) {
+        const icon = entry.icon || "";
+        const named = toastWindow.icons[icon];
+        const isPath = named !== undefined || /^[Mm][\d\s.,-]/.test(icon);
+        const isGlyph = !isPath && icon.length > 0 && icon.length <= 2;
+        toastWindow.currentKey = entry.key || "";
+        toastWindow.hasSwatch = entry.swatch !== undefined;
+        if (entry.swatch !== undefined)
+            toastWindow.swatch = entry.swatch;
+
+        toastWindow.iconPath = named || (isPath ? icon : (isGlyph ? "" : toastWindow.icons["info"]));
+        toastWindow.iconGlyph = isGlyph ? icon : "";
+        toastWindow.label = entry.label || "";
+        toastWindow.detail = entry.detail || "";
+        toastWindow.warn = entry.warn === true;
+        hideTimer.interval = entry.ms > 0 ? entry.ms : (toastWindow.queue.length > 0 ? 1700 : 2200);
         toastWindow.popIn();
     }
 
+    // a picked colour shows as itself rather than as an icon
+    function popupSwatch(hex, text) {
+        toastWindow.present({
+            "swatch": hex,
+            "label": text
+        });
+    }
+
+    // feedback for something the user just did: shown at once, over anything
     function popup(icon, text, isWarn) {
-        toastWindow.hasSwatch = false;
-        toastWindow.iconPath = toastWindow.icons[icon] || icon || toastWindow.icons["info"];
-        toastWindow.label = text;
-        toastWindow.warn = isWarn === true;
-        toastWindow.popIn();
+        toastWindow.present({
+            "icon": icon,
+            "label": text,
+            "warn": isWarn === true
+        });
+    }
+
+    // something that happened on its own: waits behind whatever is showing
+    function enqueue(entry) {
+        if (toastWindow.shown && entry.key && entry.key === toastWindow.currentKey) {
+            toastWindow.present(entry);
+            return ;
+        }
+        const q = toastWindow.queue.filter((e) => {
+            return !(entry.key && e.key === entry.key);
+        });
+        q.push(entry);
+        // a burst past the cap sheds the oldest plain entry; warnings stay
+        if (q.length > toastWindow.queueCap) {
+            const drop = q.findIndex((e) => {
+                return !e.warn;
+            });
+            q.splice(drop >= 0 ? drop : 0, 1);
+        }
+        toastWindow.queue = q;
+        if (!toastWindow.shown && !nextTimer.running)
+            toastWindow.showNext();
+
+    }
+
+    function showNext() {
+        if (toastWindow.queue.length === 0)
+            return ;
+
+        const q = toastWindow.queue.slice();
+        const entry = q.shift();
+        toastWindow.queue = q;
+        toastWindow.present(entry);
     }
 
     // the params have to be set before the flag flips: a Behavior reads the
@@ -95,7 +162,20 @@ PanelWindow {
         id: hideTimer
 
         interval: 2200
-        onTriggered: toastWindow.popOut()
+        onTriggered: {
+            toastWindow.popOut();
+            if (toastWindow.queue.length > 0)
+                nextTimer.start();
+
+        }
+    }
+
+    // lets the last one finish leaving before the next comes in
+    Timer {
+        id: nextTimer
+
+        interval: Theme.durExit + 90
+        onTriggered: toastWindow.showNext()
     }
 
     Region {
@@ -120,7 +200,7 @@ PanelWindow {
         anchors.horizontalCenter: parent.horizontalCenter
         y: toastWindow.shown ? 20 : 2
         height: toastWindow.pillHeight
-        width: leadIcon.width + toastWindow.iconGap + Math.ceil(labelMetrics.advanceWidth) + toastWindow.pillPad * 2
+        width: leadIcon.width + toastWindow.iconGap + labelText.width + (detailText.visible ? toastWindow.iconGap + detailText.width : 0) + toastWindow.pillPad * 2
         radius: Theme.shapeFull
         color: Theme.bg
         opacity: toastWindow.shown ? 1 : 0
@@ -132,6 +212,14 @@ PanelWindow {
             text: toastWindow.label
             font.family: Theme.fontFamily
             font.bold: true
+            font.pixelSize: Theme.fontBodyMd
+        }
+
+        TextMetrics {
+            id: detailMetrics
+
+            text: toastWindow.detail
+            font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyMd
         }
 
@@ -189,8 +277,17 @@ PanelWindow {
                 border.width: 1
             }
 
+            Text {
+                visible: !toastWindow.hasSwatch && toastWindow.iconGlyph !== ""
+                anchors.centerIn: parent
+                text: toastWindow.iconGlyph
+                color: toastWindow.warn ? Theme.error : Theme.accent
+                font.family: Theme.fontFamily
+                font.pixelSize: toastWindow.glyphSize
+            }
+
             Shape {
-                visible: !toastWindow.hasSwatch
+                visible: !toastWindow.hasSwatch && toastWindow.iconGlyph === ""
                 width: 24
                 height: 24
                 scale: toastWindow.glyphSize / 24
@@ -212,13 +309,32 @@ PanelWindow {
         }
 
         Text {
+            id: labelText
+
             anchors.left: leadIcon.right
             anchors.leftMargin: toastWindow.iconGap
             anchors.verticalCenter: parent.verticalCenter
+            width: Math.min(Math.ceil(labelMetrics.advanceWidth), toastWindow.labelMax)
+            elide: Text.ElideRight
             text: toastWindow.label
             color: Theme.text
             font.family: Theme.fontFamily
             font.bold: true
+            font.pixelSize: Theme.fontBodyMd
+        }
+
+        Text {
+            id: detailText
+
+            anchors.left: labelText.right
+            anchors.leftMargin: toastWindow.iconGap
+            anchors.verticalCenter: parent.verticalCenter
+            visible: toastWindow.detail !== ""
+            width: Math.min(Math.ceil(detailMetrics.advanceWidth), toastWindow.detailMax)
+            elide: Text.ElideRight
+            text: toastWindow.detail
+            color: Theme.subtext
+            font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyMd
         }
 

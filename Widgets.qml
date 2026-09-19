@@ -229,6 +229,113 @@ Singleton {
             }]
         }]
     }, {
+        "id": "thermal",
+        "name": "Thermals",
+        "blurb": "The graphics card, the fans, and how hot it is all running.",
+        "variants": [{
+            "id": "detail",
+            "name": "Detail",
+            "blurb": "The graphics card in full, each fan, and the power profile.",
+            "w": 308,
+            "h": 236
+        }, {
+            "id": "rings",
+            "name": "Rings",
+            "blurb": "GPU heat and load, CPU heat and the fans as arc gauges.",
+            "w": 316,
+            "h": 158
+        }, {
+            "id": "compact",
+            "name": "Compact",
+            "blurb": "Two temperatures and a fan speed, in a row.",
+            "w": 236,
+            "h": 90
+        }],
+        "options": [{
+            "key": "showFans",
+            "label": "Fans",
+            "type": "bool",
+            "def": true
+        }, {
+            "key": "showControls",
+            "label": "Power profile and game mode",
+            "type": "bool",
+            "def": true,
+            "variants": ["detail"]
+        }, {
+            "key": "interval",
+            "label": "Refresh",
+            "type": "choice",
+            "def": "2",
+            "choices": [{
+                "key": "2",
+                "label": "2s"
+            }, {
+                "key": "5",
+                "label": "5s"
+            }, {
+                "key": "10",
+                "label": "10s"
+            }]
+        }]
+    }, {
+        "id": "network",
+        "name": "Network",
+        "blurb": "Which connection you are on, and what is moving over it.",
+        "variants": [{
+            "id": "graph",
+            "name": "Graph",
+            "blurb": "A minute of download and upload, drawn.",
+            "w": 308,
+            "h": 186
+        }, {
+            "id": "detail",
+            "name": "Detail",
+            "blurb": "Address, signal, VPN and whether the internet answers.",
+            "w": 292,
+            "h": 204
+        }, {
+            "id": "compact",
+            "name": "Compact",
+            "blurb": "Down and up, as two numbers.",
+            "w": 236,
+            "h": 90
+        }],
+        "options": [{
+            "key": "units",
+            "label": "Units",
+            "type": "choice",
+            "def": "bytes",
+            "choices": [{
+                "key": "bytes",
+                "label": "MB/s"
+            }, {
+                "key": "bits",
+                "label": "Mbit/s"
+            }]
+        }, {
+            "key": "showAddress",
+            "label": "Show addresses",
+            "type": "bool",
+            "def": true,
+            "variants": ["detail"]
+        }, {
+            "key": "interval",
+            "label": "Refresh",
+            "type": "choice",
+            "def": "1",
+            "choices": [{
+                "key": "1",
+                "label": "1s"
+            }, {
+                "key": "2",
+                "label": "2s"
+            }, {
+                "key": "5",
+                "label": "5s"
+            }]
+        }]
+    }, {
         "id": "battery",
         "name": "Battery",
         "blurb": "Charge, and how long it has left.",
@@ -388,6 +495,53 @@ Singleton {
             "def": true
         }]
     }, {
+        "id": "games",
+        "name": "Games",
+        "blurb": "Your installed Steam games, one click from playing.",
+        "variants": [{
+            "id": "shelf",
+            "name": "Shelf",
+            "blurb": "Covers in a row, last played first. Drag an edge to fit more.",
+            "w": 452,
+            "h": 236,
+            "resizable": true,
+            "minW": 160,
+            "minH": 190,
+            "maxW": 3840,
+            "maxH": 560
+        }, {
+            "id": "hero",
+            "name": "Last played",
+            "blurb": "The game you played last, over its artwork.",
+            "w": 364,
+            "h": 172
+        }, {
+            "id": "list",
+            "name": "List",
+            "blurb": "One row per game.",
+            "w": 300,
+            "h": 280
+        }],
+        "options": [{
+            "key": "order",
+            "label": "Order",
+            "type": "choice",
+            "def": "recent",
+            "variants": ["shelf", "list"],
+            "choices": [{
+                "key": "recent",
+                "label": "Last played"
+            }, {
+                "key": "name",
+                "label": "A–Z"
+            }]
+        }, {
+            "key": "gameModeOnLaunch",
+            "label": "Game mode on launch",
+            "type": "bool",
+            "def": false
+        }]
+    }, {
         "id": "weather",
         "name": "Weather",
         "blurb": "Conditions now and over the next few days.",
@@ -485,6 +639,139 @@ Singleton {
             "def": false
         }, {
             "key": "items",
+            "label": "",
+            "type": "hidden",
+            "def": "[]"
+        }]
+    }, {
+        "id": "timer",
+        "name": "Timer",
+        "blurb": "A countdown, a pomodoro or a stopwatch that survives a reboot.",
+        "variants": [{
+            "id": "countdown",
+            "name": "Timer",
+            "blurb": "Scroll the dial to set it, click it to start.",
+            "w": 236,
+            "h": 236
+        }, {
+            "id": "pomodoro",
+            "name": "Pomodoro",
+            "blurb": "Focus rounds and breaks, four to a set.",
+            "w": 256,
+            "h": 256
+        }, {
+            "id": "stopwatch",
+            "name": "Stopwatch",
+            "blurb": "Counts up, with laps.",
+            "w": 256,
+            "h": 150
+        }],
+        "options": [{
+            "key": "focusMinutes",
+            "label": "Focus",
+            "type": "choice",
+            "def": "25",
+            "variants": ["pomodoro"],
+            "choices": [{
+                "key": "15",
+                "label": "15m"
+            }, {
+                "key": "25",
+                "label": "25m"
+            }, {
+                "key": "45",
+                "label": "45m"
+            }, {
+                "key": "50",
+                "label": "50m"
+            }]
+        }, {
+            "key": "breakMinutes",
+            "label": "Break",
+            "type": "choice",
+            "def": "5",
+            "variants": ["pomodoro"],
+            "choices": [{
+                "key": "5",
+                "label": "5m"
+            }, {
+                "key": "10",
+                "label": "10m"
+            }, {
+                "key": "15",
+                "label": "15m"
+            }]
+        }, {
+            "key": "longBreak",
+            "label": "Longer break every fourth round",
+            "type": "bool",
+            "def": true,
+            "variants": ["pomodoro"]
+        }, {
+            "key": "autoContinue",
+            "label": "Start the next round by itself",
+            "type": "bool",
+            "def": false,
+            "variants": ["pomodoro"]
+        }, {
+            "key": "notify",
+            "label": "Notify when time is up",
+            "type": "bool",
+            "def": true,
+            "variants": ["countdown", "pomodoro"]
+        }, {
+            "key": "sound",
+            "label": "Play a sound",
+            "type": "bool",
+            "def": true,
+            "variants": ["countdown", "pomodoro"]
+        }, {
+            "key": "mode",
+            "label": "",
+            "type": "hidden",
+            "def": ""
+        }, {
+            "key": "duration",
+            "label": "",
+            "type": "hidden",
+            "def": 300000
+        }, {
+            "key": "endsAt",
+            "label": "",
+            "type": "hidden",
+            "def": 0
+        }, {
+            "key": "left",
+            "label": "",
+            "type": "hidden",
+            "def": 0
+        }, {
+            "key": "doneAt",
+            "label": "",
+            "type": "hidden",
+            "def": 0
+        }, {
+            "key": "phase",
+            "label": "",
+            "type": "hidden",
+            "def": "focus"
+        }, {
+            "key": "round",
+            "label": "",
+            "type": "hidden",
+            "def": 1
+        }, {
+            "key": "swStart",
+            "label": "",
+            "type": "hidden",
+            "def": 0
+        }, {
+            "key": "swAccum",
+            "label": "",
+            "type": "hidden",
+            "def": 0
+        }, {
+            "key": "laps",
             "label": "",
             "type": "hidden",
             "def": "[]"
@@ -1000,6 +1287,26 @@ Singleton {
             return ;
 
         opts[key] = value;
+        instances.setProperty(i, "optsJson", JSON.stringify(opts));
+        root.save();
+    }
+
+    function setOptions(uid, changes) {
+        var i = root.indexOf(uid);
+        if (i < 0)
+            return ;
+
+        var opts = JSON.parse(instances.get(i).optsJson);
+        var dirty = false;
+        for (var k in changes) {
+            if (opts[k] !== changes[k]) {
+                opts[k] = changes[k];
+                dirty = true;
+            }
+        }
+        if (!dirty)
+            return ;
+
         instances.setProperty(i, "optsJson", JSON.stringify(opts));
         root.save();
     }

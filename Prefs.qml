@@ -40,7 +40,7 @@ Singleton {
     readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envCursorShadow", "envIconTheme", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
     readonly property var specialKeys: ["specialScratchpad", "specialMusic", "specialComms", "specialTodo", "specialSysmon", "specialMusicApps", "specialCommsApps", "specialTodoApps", "specialSysmonApps", "specialKeepApps", "specialHideOnSwitch", "specialDim"]
     readonly property var glassKeys: ["glassApps", "glassValues"]
-    readonly property var monitorKeys: ["monitorSetups", "monitorShellScreen", "monitorBarScreen", "monitorDockScreen"]
+    readonly property var monitorKeys: ["monitorSetups", "monitorShellScreen", "monitorBarScreen", "monitorDockScreen", "monitorWorkspaces"]
     readonly property var notifKeys: ["toastEnabled", "toastTimeout", "toastUseAppTimeout", "toastCriticalSticky", "toastShowBody", "toastShowActions", "toastBodyLines", "notifShowIcons", "notifMaxHistory", "doNotDisturb", "dndAllowCritical", "dndFullscreen", "quietHours", "quietFrom", "quietTo", "notifSound", "notifSoundName", "notifSoundVolume", "notifSoundUrgentOnly", "notifMutedApps", "notifGrouping", "notifTimestamps", "notifProgress", "notifInlineReply", "toastMaxVisible"]
 
     property alias barStyle: s.barStyle
@@ -87,6 +87,15 @@ Singleton {
     property alias showWorkspaces: s.showWorkspaces
     property alias showMedia: s.showMedia
     property alias showTray: s.showTray
+    property alias showKbLayout: s.showKbLayout
+    property alias gameModeOnCmd: s.gameModeOnCmd
+    property alias gameModeOffCmd: s.gameModeOffCmd
+    property alias gameModeStatusCmd: s.gameModeStatusCmd
+
+    readonly property string gameModeStateFile: {
+        const m = /(?:test|\[)\s+-[ef]\s+(\S+)/.exec(root.gameModeStatusCmd || "");
+        return m ? m[1].replace(/^['"]|['"]$/g, "") : "";
+    }
     property alias showClock: s.showClock
     property alias showNotifications: s.showNotifications
     property alias showSystem: s.showSystem
@@ -101,6 +110,14 @@ Singleton {
     property alias timeZoneAuto: s.timeZoneAuto
     property alias doNotDisturb: s.doNotDisturb
     property alias toastTimeout: s.toastTimeout
+    property alias toastOnLayout: s.toastOnLayout
+    property alias toastOnGameMode: s.toastOnGameMode
+    property alias toastOnBattery: s.toastOnBattery
+    property alias toastOnBluetooth: s.toastOnBluetooth
+    property alias toastOnWifi: s.toastOnWifi
+    property alias toastOnAudio: s.toastOnAudio
+    property alias toastOnDisplays: s.toastOnDisplays
+    property alias toastOnPower: s.toastOnPower
     property alias toastEnabled: s.toastEnabled
     property alias toastUseAppTimeout: s.toastUseAppTimeout
     property alias toastCriticalSticky: s.toastCriticalSticky
@@ -178,6 +195,7 @@ Singleton {
     // empty means the bar or dock goes wherever the shell went
     property alias monitorBarScreen: s.monitorBarScreen
     property alias monitorDockScreen: s.monitorDockScreen
+    property alias monitorWorkspaces: s.monitorWorkspaces
 
     property alias idleEnabled: s.idleEnabled
     property alias idleAutostart: s.idleAutostart
@@ -288,6 +306,10 @@ Singleton {
         "showWorkspaces": true,
         "showMedia": true,
         "showTray": true,
+        "showKbLayout": true,
+        "gameModeOnCmd": "",
+        "gameModeOffCmd": "",
+        "gameModeStatusCmd": "",
         "showClock": true,
         "showNotifications": true,
         "showSystem": true,
@@ -302,6 +324,14 @@ Singleton {
         "timeZoneAuto": true,
         "doNotDisturb": false,
         "toastTimeout": 5,
+        "toastOnLayout": true,
+        "toastOnGameMode": true,
+        "toastOnBattery": true,
+        "toastOnBluetooth": true,
+        "toastOnWifi": true,
+        "toastOnAudio": true,
+        "toastOnDisplays": true,
+        "toastOnPower": true,
         "toastEnabled": true,
         "toastUseAppTimeout": true,
         "toastCriticalSticky": true,
@@ -408,7 +438,8 @@ Singleton {
         "monitorSetups": "{}",
         "monitorShellScreen": "",
         "monitorBarScreen": "",
-        "monitorDockScreen": ""
+        "monitorDockScreen": "",
+        "monitorWorkspaces": "{}"
     })
 
     // what the bar module is holding right now, so the settings page can offer
@@ -701,6 +732,10 @@ Singleton {
             property bool showWorkspaces: true
             property bool showMedia: true
             property bool showTray: true
+            property bool showKbLayout: true
+            property string gameModeOnCmd: ""
+            property string gameModeOffCmd: ""
+            property string gameModeStatusCmd: ""
             property bool showClock: true
             property bool showNotifications: true
             property bool showSystem: true
@@ -715,6 +750,14 @@ Singleton {
             property bool timeZoneAuto: true
             property bool doNotDisturb: false
             property int toastTimeout: 5
+            property bool toastOnLayout: true
+            property bool toastOnGameMode: true
+            property bool toastOnBattery: true
+            property bool toastOnBluetooth: true
+            property bool toastOnWifi: true
+            property bool toastOnAudio: true
+            property bool toastOnDisplays: true
+            property bool toastOnPower: true
             property bool toastEnabled: true
             property bool toastUseAppTimeout: true
             property bool toastCriticalSticky: true
@@ -824,6 +867,7 @@ Singleton {
             property string monitorShellScreen: ""
             property string monitorBarScreen: ""
             property string monitorDockScreen: ""
+            property string monitorWorkspaces: "{}"
         }
 
     }

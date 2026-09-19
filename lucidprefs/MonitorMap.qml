@@ -8,7 +8,14 @@ Item {
     id: map
 
     readonly property int snap: 60
+    // a lone display has nothing to line up with, and the view re-centres on it
+    // under the pointer, so a drag would only run away with its position
+    readonly property bool movable: Monitors.liveCount > 1
     property string held: ""
+    // the display the page is pointed at
+    property string selected: ""
+
+    signal picked(string key)
 
     // the whole layout in hyprland's own coordinates, with a margin so an
     // output dragged past the edge still has somewhere to land
@@ -120,6 +127,7 @@ Item {
                 readonly property var size: Monitors.layoutSize(plate.modelData)
                 readonly property var pos: Monitors.posOf(plate.modelData)
                 readonly property bool lit: drag.containsMouse || map.held === plate.modelData
+                readonly property bool chosen: map.selected === plate.modelData
 
                 visible: plate.out !== null && Monitors.isOn(plate.modelData)
                 width: Math.max(34, plate.size.w * map.fit)
@@ -128,7 +136,21 @@ Item {
                 y: map.offY + plate.pos.y * map.fit
                 radius: Theme.shapeSm
                 color: plate.lit ? Theme.accent : Theme.bgActive
+                border.width: plate.chosen && !plate.lit ? 2 : 0
+                border.color: Theme.accent
                 z: plate.lit ? 2 : 1
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.margins: 6
+                    visible: plate.height > 44
+                    text: Monitors.numberFor(plate.modelData)
+                    color: plate.lit ? Theme.fgAccent : Theme.subtextDim
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontLabel
+                    font.weight: Font.DemiBold
+                }
 
                 Column {
                     anchors.centerIn: parent
@@ -159,21 +181,35 @@ Item {
 
                     anchors.fill: parent
                     hoverEnabled: true
-                    cursorShape: Qt.SizeAllCursor
+                    cursorShape: map.movable ? Qt.SizeAllCursor : Qt.PointingHandCursor
                     // the grab point in hyprland's coordinates, so the plate
                     // does not jump to the pointer as the drag starts
                     property real grabX: 0
                     property real grabY: 0
+                    // a press that never moved is a pick, not a drag
+                    property bool moved: false
                     onPressed: (mouse) => {
-                        Monitors.pinAll();
                         map.held = plate.modelData;
+                        drag.moved = false;
                         drag.grabX = mouse.x / map.fit;
                         drag.grabY = mouse.y / map.fit;
                     }
-                    onReleased: map.held = ""
+                    onReleased: {
+                        map.held = "";
+                        if (!drag.moved)
+                            map.picked(plate.modelData);
+
+                    }
                     onPositionChanged: (mouse) => {
-                        if (map.held !== plate.modelData)
+                        if (map.held !== plate.modelData || !map.movable)
                             return ;
+
+                        // moving anything pins them all, or hyprland reshuffles
+                        // the rest around the one that moved
+                        if (!drag.moved) {
+                            drag.moved = true;
+                            Monitors.pinAll();
+                        }
 
                         const gx = (mouse.x - drag.grabX * map.fit + plate.x - map.offX) / map.fit;
                         const gy = (mouse.y - drag.grabY * map.fit + plate.y - map.offY) / map.fit;

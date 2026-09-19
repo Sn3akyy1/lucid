@@ -41,6 +41,38 @@ Column {
         return bits.join("  ·  ");
     }
 
+    // the display the map is pointed at, so its settings can be jumped to
+    property string focusKey: ""
+
+    // the pane this page is loaded into, whatever it is called there
+    function paneFlick() {
+        let p = page.parent;
+        while (p) {
+            if (p.contentY !== undefined && p.contentHeight !== undefined)
+                return p;
+
+            p = p.parent;
+        }
+        return null;
+    }
+
+    function reveal(key) {
+        page.focusKey = key;
+        const flick = page.paneFlick();
+        if (!flick)
+            return ;
+
+        for (let i = 0; i < units.count; i++) {
+            const unit = units.itemAt(i);
+            if (!unit || unit.key !== key)
+                continue;
+
+            const y = unit.mapToItem(flick.contentItem, 0, 0).y;
+            flick.contentY = Math.max(0, Math.min(Math.max(0, flick.contentHeight - flick.height), y - 16));
+            return ;
+        }
+    }
+
     // the displays left to right, so the chips read the way they are arranged
     readonly property var displayChips: Monitors.orderedKeys.map((k) => {
         return {
@@ -76,11 +108,11 @@ Column {
     SettingCard {
         title: "ARRANGEMENT"
         subtitle: "Where each display sits next to the others. Windows and the pointer cross at the edges you line up here."
-        visible: Monitors.liveCount > 1
+        visible: Monitors.liveCount > 0
 
         SettingRow {
-            title: "Drag a display to move it"
-            description: "An edge dragged near another one snaps to it, so there are no gaps between them."
+            title: Monitors.liveCount > 1 ? "Drag a display to move it" : "This display"
+            description: Monitors.liveCount > 1 ? "An edge dragged near another one snaps to it, so there are no gaps between them. Click one to jump to its settings." : "Click it to jump to its settings. With a second display plugged in, this is where you arrange them."
             stacked: true
             showDivider: false
 
@@ -90,15 +122,29 @@ Column {
 
                 MonitorMap {
                     width: parent.width
+                    selected: page.focusKey
+                    onPicked: (key) => page.reveal(key)
                 }
 
-                M3Button {
-                    text: "Arrange automatically"
-                    variant: "text"
-                    enabled: Monitors.keys.some((k) => {
-                        return !Monitors.isAuto(k);
-                    })
-                    onClicked: Monitors.autoArrange()
+                Row {
+                    spacing: 8
+
+                    M3Button {
+                        text: "Arrange automatically"
+                        variant: "text"
+                        visible: Monitors.liveCount > 1
+                        enabled: Monitors.keys.some((k) => {
+                            return !Monitors.isAuto(k);
+                        })
+                        onClicked: Monitors.autoArrange()
+                    }
+
+                    M3Button {
+                        text: "Identify"
+                        variant: "text"
+                        onClicked: Monitors.identify()
+                    }
+
                 }
 
             }
@@ -108,6 +154,8 @@ Column {
     }
 
     Repeater {
+        id: units
+
         model: Monitors.keys
 
         Column {
@@ -128,7 +176,7 @@ Column {
 
                 Text {
                     leftPadding: 22
-                    text: unit.out ? unit.out.name : ""
+                    text: unit.out ? (Monitors.liveCount > 1 ? Monitors.numberFor(unit.key) + " · " + unit.out.name : unit.out.name) : ""
                     color: Theme.accent
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontTitleSm
@@ -429,6 +477,92 @@ Column {
                 onChosen: (k) => {
                     return Monitors.setDockScreen(k);
                 }
+            }
+
+        }
+
+    }
+
+    SettingCard {
+        title: "WORKSPACES"
+        subtitle: "Workspaces 1 to " + Monitors.workspaceCount + " either open on whichever display you are on, or each belong to one display and always open there."
+        visible: Monitors.liveCount > 1 || Monitors.workspacesSplit
+
+        SettingRow {
+            title: "Workspaces"
+            resetKey: "monitorWorkspaces"
+            description: {
+                if (!Monitors.workspacesSplit)
+                    return "Shared: a workspace opens on the display you are on when you switch to it.";
+
+                const stray = Monitors.strayWorkspaces;
+                return "Per display: each workspace opens on its own display, and each display starts on its lowest one." + (stray > 0 ? " " + stray + (stray === 1 ? " workspace belongs" : " workspaces belong") + " to a display that is not plugged in, so it opens wherever you are." : "");
+            }
+            stacked: true
+
+            M3Segmented {
+                width: Math.min(parent.width, 320)
+                current: Monitors.workspacesSplit ? "split" : "shared"
+                options: [{
+                    "key": "shared",
+                    "label": "Shared"
+                }, {
+                    "key": "split",
+                    "label": "Per display"
+                }]
+                onChosen: (key) => {
+                    return Monitors.setWorkspaceMode(key);
+                }
+            }
+
+        }
+
+        Repeater {
+            model: Monitors.workspacesSplit ? Monitors.workspaceKeys : []
+
+            SettingRow {
+                id: wsRow
+
+                required property var modelData
+                readonly property var mine: Monitors.workspacesOf(wsRow.modelData)
+
+                title: Monitors.nameOf(wsRow.modelData)
+                description: wsRow.mine.length > 0 ? "Starts on workspace " + wsRow.mine[0] + ". Pick a number to move that workspace here." : "No workspace of its own yet. Pick a number to move one here."
+                stacked: true
+
+                M3Chips {
+                    width: parent.width
+                    multi: true
+                    selectedKeys: wsRow.mine.map((n) => {
+                        return String(n);
+                    })
+                    options: Array.from({
+                        "length": Monitors.workspaceCount
+                    }, (_, i) => {
+                        return {
+                            "key": String(i + 1),
+                            "label": String(i + 1)
+                        };
+                    })
+                    onChosen: (k) => {
+                        return Monitors.assignWorkspace(parseInt(k, 10), wsRow.modelData);
+                    }
+                }
+
+            }
+
+        }
+
+        SettingRow {
+            visible: Monitors.workspacesSplit && Monitors.workspaceKeys.length > 1
+            title: "Split evenly"
+            description: "Workspaces 1 to " + Monitors.workspaceCount + " in runs, from the leftmost display to the rightmost."
+            showDivider: false
+
+            M3Button {
+                variant: "tonal"
+                text: "Split"
+                onClicked: Monitors.splitEvenly()
             }
 
         }

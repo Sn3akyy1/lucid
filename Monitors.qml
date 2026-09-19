@@ -670,6 +670,30 @@ Singleton {
         Prefs.monitorDockScreen = (key === undefined || key === null) ? "" : String(key);
     }
 
+    // asks the shell to put a number on every screen, matching the page
+    signal identifyRequested()
+
+    function identify() {
+        root.identifyRequested();
+    }
+
+    // what the map, the list and the Identify overlay all call a display
+    function numberFor(key) {
+        const at = root.orderedKeys.indexOf(key);
+        return at < 0 ? "?" : String(at + 1);
+    }
+
+    function labelFor(key) {
+        const o = root.output(key);
+        if (!o)
+            return key;
+
+        const made = [o.make, o.model].filter((x) => {
+            return x !== "" && x.indexOf("0x") !== 0;
+        }).join(" ");
+        return made !== "" ? made : (o.description !== "" ? o.description : o.name);
+    }
+
     // the outputs left to right, which is the order a person describes them in
     readonly property var orderedKeys: root.shellKeys.slice().sort((a, b) => {
         const x = root.output(a);
@@ -758,6 +782,88 @@ Singleton {
         return root.screenFor(byName) !== null ? byName : null;
     }
 
+    // ---- workspaces ---------------------------------------------------------
+    // shared: a workspace opens wherever you are. split: each one belongs to a
+    // display, stored by key like the rest, so it follows the monitor between ports
+    readonly property int workspaceCount: 10
+    readonly property var workspacePlan: {
+        let p = {};
+        try {
+            p = JSON.parse(Prefs.monitorWorkspaces || "{}") || {};
+        } catch (e) {
+            p = {};
+        }
+        return {
+            "mode": p.mode === "split" ? "split" : "shared",
+            "assign": (p.assign && typeof p.assign === "object") ? p.assign : {}
+        };
+    }
+    readonly property bool workspacesSplit: root.workspacePlan.mode === "split"
+    // split, but belonging to nothing plugged in, so hyprland places them itself
+    readonly property int strayWorkspaces: {
+        if (!root.workspacesSplit)
+            return 0;
+
+        let n = 0;
+        for (let i = 1; i <= root.workspaceCount; i++) {
+            const k = root.workspacePlan.assign[String(i)];
+            if (!k || root.output(k) === null)
+                n++;
+
+        }
+        return n;
+    }
+
+    function writeWorkspaces(mode, assign) {
+        Prefs.set("monitorWorkspaces", JSON.stringify({
+            "mode": mode,
+            "assign": assign
+        }));
+    }
+
+    function workspacesOf(key) {
+        const out = [];
+        for (let n = 1; n <= root.workspaceCount; n++) {
+            if (root.workspacePlan.assign[String(n)] === key)
+                out.push(n);
+
+        }
+        return out;
+    }
+
+    // the displays a workspace can live on: on, and not showing another one
+    readonly property var workspaceKeys: root.orderedKeys.filter((k) => {
+        return root.isOn(k) && root.mirrorOf(k) === "";
+    })
+
+    // runs of workspaces, from the leftmost display to the rightmost
+    function evenSplit() {
+        const keys = root.workspaceKeys;
+        const assign = {};
+        if (keys.length === 0)
+            return assign;
+
+        const per = Math.ceil(root.workspaceCount / keys.length);
+        for (let n = 1; n <= root.workspaceCount; n++) assign[String(n)] = keys[Math.min(keys.length - 1, Math.floor((n - 1) / per))]
+        return assign;
+    }
+
+    function setWorkspaceMode(mode) {
+        const assign = root.workspacePlan.assign;
+        root.writeWorkspaces(mode, (mode === "split" && Object.keys(assign).length === 0) ? root.evenSplit() : assign);
+    }
+
+    function assignWorkspace(n, key) {
+        const assign = {};
+        for (const k in root.workspacePlan.assign) assign[k] = root.workspacePlan.assign[k]
+        assign[String(n)] = key;
+        root.writeWorkspaces("split", assign);
+    }
+
+    function splitEvenly() {
+        root.writeWorkspaces("split", root.evenSplit());
+    }
+
     // ---- the rules file ---------------------------------------------------
     function luaStr(s) {
         return "\"" + String(s).replace(/\\/g, "\\\\").replace(/"/g, "\\\"") + "\"";
@@ -785,14 +891,51 @@ Singleton {
             fields.push("vrr = " + (s.vrr !== undefined ? s.vrr : 0));
             out += "        { " + fields.join(", ") + " },\n";
         }
-        out += "    },\n}\n";
+        out += "    },\n";
+        out += root.workspacesLua;
+        out += "}\n";
         return out;
+    }
+
+    // each display opens on its lowest workspace
+    readonly property string workspacesLua: {
+        if (!root.workspacesSplit)
+            return "";
+
+        const assign = root.workspacePlan.assign;
+        const first = {};
+        for (let n = 1; n <= root.workspaceCount; n++) {
+            const k = assign[String(n)];
+            if (k && first[k] === undefined)
+                first[k] = n;
+
+        }
+        if (Object.keys(first).length === 0)
+            return "";
+
+        let out = "    workspaces = {\n";
+        for (let n = 1; n <= root.workspaceCount; n++) {
+            const k = assign[String(n)];
+            if (!k)
+                continue;
+
+            out += "        { workspace = " + root.luaStr(String(n)) + ", monitor = " + root.luaStr(k) + (first[k] === n ? ", default = true" : "") + " },\n";
+        }
+        return out + "    },\n";
+    }
+
+    // hyprland keeps a workspace rule once it has one, so a change to these
+    // takes a reload; the monitor rules alone are applied in place
+    function workspacePart(text) {
+        const at = String(text).indexOf("    workspaces = {");
+        return at < 0 ? "" : String(text).slice(at);
     }
 
     function writeRules() {
         if (!Prefs.loaded || !dataFile.ready || root.rulesLua === dataFile.current)
             return ;
 
+        dataFile.reloadAfter = root.workspacePart(dataFile.current) !== root.workspacePart(root.rulesLua);
         dataFile.current = root.rulesLua;
         dataFile.setText(root.rulesLua);
     }
@@ -821,6 +964,7 @@ Singleton {
 
         property bool ready: false
         property string current: ""
+        property bool reloadAfter: false
 
         path: root.dataPath
         blockLoading: true
@@ -837,7 +981,10 @@ Singleton {
         }
         // the rules live in hyprland, so it re-reads once the file is on disk
         onSaved: {
-            Quickshell.execDetached(["hyprctl", "eval", "if LucidMonitors then LucidMonitors.apply() end"]);
+            if (dataFile.reloadAfter)
+                Quickshell.execDetached(["hyprctl", "reload"]);
+            else
+                Quickshell.execDetached(["hyprctl", "eval", "if LucidMonitors then LucidMonitors.apply() end"]);
             probeDebounce.restart();
         }
         // a dropped write would otherwise stay "current" and never be retried
