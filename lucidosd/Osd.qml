@@ -197,6 +197,9 @@ PanelWindow {
         if (!osdWindow.ready)
             return ;
 
+        if (Prefs.soundVolumeFeedback && !osdWindow.volMuted)
+            volumeTick.restart();
+
         osdWindow.showVolume();
     }
     onVolMutedChanged: {
@@ -225,6 +228,15 @@ PanelWindow {
 
     PwObjectTracker {
         objects: [osdWindow.sink, osdWindow.source]
+    }
+
+    // waits for the level to settle, so a held key or a drag ticks once at the
+    // end rather than in a burst
+    Timer {
+        id: volumeTick
+
+        interval: 140
+        onTriggered: Quickshell.execDetached(["paplay", "/usr/share/sounds/freedesktop/stereo/audio-volume-change.oga"])
     }
 
     Timer {

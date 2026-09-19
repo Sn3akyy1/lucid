@@ -40,6 +40,7 @@
     "showSystem": true,
     "showTray": true,
     "showWorkspaces": true,
+    "soundVolumeFeedback": false,
     "surfaceDarkness": -1,
     "surfaceTint": -1,
     "toastOnAudio": true,
