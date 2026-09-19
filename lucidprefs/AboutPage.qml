@@ -95,7 +95,7 @@ Column {
                         visible: page.beta
                         width: betaLabel.implicitWidth + 16
                         height: 22
-                        radius: 11
+                        radius: Theme.rad(11)
                         color: "transparent"
                         border.width: 1
                         border.color: Theme.accent

@@ -128,7 +128,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 42
-            radius: 12
+            radius: Theme.rad(12)
             color: netItem.isExpanded ? Theme.withBlur(Theme.bgActive) : (rowArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent")
 
             Row {
@@ -267,7 +267,7 @@ Item {
                     visible: netItem.showPasswordInput && !netItem.isConnected
                     width: parent.width - 46
                     height: 32
-                    radius: 8
+                    radius: Theme.rad(8)
                     color: Theme.withBlur(Theme.bgSunken)
                     border.width: 1
                     border.color: netItem.connectFailed ? Theme.error : (passwordInput.activeFocus ? Theme.accent : Theme.bgHigh)
@@ -322,7 +322,7 @@ Item {
 
                         width: (netItem.isTrusted && !netItem.showPasswordInput) ? (parent.width - 8) / 2 : parent.width
                         height: parent.height
-                        radius: 999
+                        radius: Theme.radiusPill
                         color: netItem.isConnecting ? Theme.withBlur(Theme.outlineStrong) : (netItem.isConnected ? Theme.accentContainer : (connectArea.containsMouse ? Theme.accentHover : Theme.accent))
                         scale: connectArea.pressed ? 0.96 : 1
 
@@ -383,7 +383,7 @@ Item {
                         visible: netItem.isTrusted && !netItem.showPasswordInput
                         width: (parent.width - 8) / 2
                         height: parent.height
-                        radius: 999
+                        radius: Theme.radiusPill
                         color: forgetArea.containsMouse ? Theme.withBlur(Theme.outlineStrong) : "transparent"
                         border.width: 1
                         border.color: Theme.outlineStrong
@@ -1018,7 +1018,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 78
                 height: 26
-                radius: 999
+                radius: Theme.radiusPill
                 color: ethDisconnectArea.containsMouse ? Theme.outlineStrong : "transparent"
                 border.width: 1
                 border.color: Theme.outlineStrong
@@ -1077,7 +1077,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 32
                 height: 18
-                radius: 999
+                radius: Theme.radiusPill
                 color: Networking.wifiEnabled ? Theme.accent : Theme.outlineStrong
 
                 Rectangle {
@@ -1355,7 +1355,7 @@ Item {
                     Rectangle {
                         width: parent.width - 8
                         height: 30
-                        radius: 8
+                        radius: Theme.rad(8)
                         color: Theme.withBlur(Theme.bgSunken)
                         border.width: 1
                         border.color: hiddenSsidInput.activeFocus ? Theme.accent : Theme.bgHigh
@@ -1397,7 +1397,7 @@ Item {
                     Rectangle {
                         width: parent.width - 8
                         height: 30
-                        radius: 8
+                        radius: Theme.rad(8)
                         color: Theme.withBlur(Theme.bgSunken)
                         border.width: 1
                         border.color: root.hiddenFailed ? Theme.error : (hiddenPskInput.activeFocus ? Theme.accent : Theme.bgHigh)
@@ -1456,7 +1456,7 @@ Item {
                         Rectangle {
                             width: 90
                             height: parent.height
-                            radius: 999
+                            radius: Theme.radiusPill
                             color: hiddenConnectArea.containsMouse ? Theme.accentHover : Theme.accent
 
                             Text {
@@ -1482,7 +1482,7 @@ Item {
                         Rectangle {
                             width: 70
                             height: parent.height
-                            radius: 999
+                            radius: Theme.radiusPill
                             color: "transparent"
                             border.width: 1
                             border.color: Theme.outlineStrong

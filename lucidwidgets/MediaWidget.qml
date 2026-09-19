@@ -386,7 +386,7 @@ WidgetBody {
                 anchors.centerIn: parent
                 width: 46
                 height: 46
-                radius: 23
+                radius: Theme.rad(23)
                 color: Theme.alpha(Theme.bgOpaque, 0.8)
                 opacity: (w.has && !w.playing && !w.hovered) ? 1 : 0
                 visible: opacity > 0.01

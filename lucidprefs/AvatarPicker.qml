@@ -41,7 +41,7 @@ Item {
 
         width: 62
         height: 62
-        radius: 31
+        radius: Theme.rad(31)
         color: Theme.bgSunken
 
         Image {

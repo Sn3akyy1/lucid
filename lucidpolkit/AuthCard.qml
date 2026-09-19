@@ -129,7 +129,7 @@ Rectangle {
             Rectangle {
                 width: 52
                 height: 52
-                radius: 26
+                radius: Theme.rad(26)
                 color: Theme.accentContainer
 
                 AuthGlyph {
@@ -211,7 +211,7 @@ Rectangle {
 
                         height: 40
                         width: chipRow.width + 26
-                        radius: 20
+                        radius: Theme.rad(20)
                         color: chip.active ? Theme.accentContainer : Theme.bgTile
                         border.width: chip.active ? 0 : 1
                         border.color: Theme.outline
@@ -293,7 +293,7 @@ Rectangle {
 
             width: parent.width
             height: 50
-            radius: 25
+            radius: Theme.rad(25)
             color: Polkit.errorText !== "" ? Theme.alpha(Theme.error, 0.14) : (pwInput.activeFocus ? Theme.bgHigh : Theme.bgSunken)
             opacity: card.busy ? 0.6 : 1
             scale: 1 + pill.focusLift * 0.015 + pill.typePulse
@@ -623,7 +623,7 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             width: 60
             height: 60
-            radius: 30
+            radius: Theme.rad(30)
             color: Theme.alpha(Theme.success, 0.18)
 
             AuthGlyph {
