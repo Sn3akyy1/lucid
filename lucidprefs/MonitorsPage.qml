@@ -369,7 +369,7 @@ Column {
 
     SettingCard {
         title: "SHELL"
-        subtitle: "The bar, the dock, the volume popup and the toasts are one of each, so they sit together on one display unless you send the bar or the dock to another. The wallpaper, the desktop menu and the lock screen are drawn on every display either way."
+        subtitle: "The bar, the dock, the volume popup and the toasts are one of each, so they sit together on one display unless you send the bar or the dock to another, or put a bar on every display. The wallpaper, the desktop menu and the lock screen are drawn on every display either way."
         visible: Monitors.liveCount > 1
 
         SettingRow {
@@ -395,15 +395,18 @@ Column {
         SettingRow {
             title: "The bar on its own"
             resetKey: "monitorBarScreen"
-            description: "For a bar that belongs on a different display to the dock. Left alone it goes wherever the shell went."
+            description: "For a bar that belongs on a different display to the dock, or one on every display. Left alone it goes wherever the shell went. With a bar everywhere, notification popups still come out of the shell's own display."
             stacked: true
 
             M3Chips {
                 width: parent.width
-                current: Prefs.monitorBarScreen === "" ? "" : Monitors.keyOf(Monitors.barPlacement)
+                current: Prefs.monitorBarScreen === "" ? "" : (Monitors.barEverywhere ? "*" : Monitors.keyOf(Monitors.barPlacement))
                 options: [{
                     "key": "",
                     "label": "With the shell"
+                }, {
+                    "key": "*",
+                    "label": "Every display"
                 }].concat(page.displayChips)
                 onChosen: (k) => {
                     return Monitors.setBarScreen(k);
