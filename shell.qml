@@ -85,6 +85,43 @@ ShellRoot {
         }
         readonly property real sideMargin: Prefs.barSideMargin
 
+        // busy: a panel is open somewhere on the bar, so it stays out
+        // regardless of the pointer. held: the pointer is on the reveal
+        // strip or already on a module - either keeps it from hiding
+        readonly property bool barBusy: workspacesMod.expanded || mprisMod.anyOpen || sysTrayMod.anyOpen || clockMod.anyOpen || notifMod.anyOpen || systemMod.anyOpen
+        property bool slidingAway: false
+        readonly property bool heldByPointer: revealArea.containsMouse || (!bar.slidingAway && (workspacesMod.compactHovered || mprisMod.surfaceHovered || sysTrayMod.surfaceHovered || clockMod.surfaceHovered || notifMod.surfaceHovered || systemMod.surfaceHovered))
+        readonly property bool barRevealed: !Prefs.barAutoHide || bar.barBusy || bar.heldByPointer
+        // how far the compact content sits above its resting y=0 while
+        // hidden - past the window's own top edge, so it clips away for free
+        property real hiddenOffset: bar.barRevealed ? 0 : -(Prefs.barHeight + Prefs.effectiveBarTopMargin + 4)
+
+        Behavior on hiddenOffset {
+            NumberAnimation {
+                duration: Theme.durLong
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easeEmphasizedDecel
+            }
+
+        }
+
+        onBarRevealedChanged: {
+            if (bar.barRevealed) {
+                bar.slidingAway = false;
+                slideAwayTimer.stop();
+            } else {
+                bar.slidingAway = true;
+                slideAwayTimer.restart();
+            }
+        }
+
+        Timer {
+            id: slideAwayTimer
+
+            interval: Theme.durLong
+            onTriggered: bar.slidingAway = false
+        }
+
         Component.onCompleted: laidOutTimer.start()
 
         Timer {
@@ -96,7 +133,7 @@ ShellRoot {
 
         color: "transparent"
         implicitHeight: bar.screen ? bar.screen.height - Prefs.effectiveBarTopMargin : 800
-        exclusiveZone: (Prefs.barEnabled && bar.anyModuleShown) ? Prefs.barHeight : 0
+        exclusiveZone: (Prefs.barEnabled && bar.anyModuleShown && !Prefs.barAutoHide) ? Prefs.barHeight : 0
 
         anchors {
             top: true
@@ -109,6 +146,92 @@ ShellRoot {
             top: Prefs.effectiveBarTopMargin
         }
 
+        // full bar: one strip across the whole top edge, under every module
+        Rectangle {
+            id: fullStrip
+
+            visible: Prefs.barFull && bar.anyModuleShown
+            x: 0
+            y: bar.hiddenOffset
+            z: -2
+            width: bar.width
+            height: Prefs.barHeight
+            color: Theme.bg
+
+            Behavior on color {
+                enabled: bar.laidOut
+
+                ColorAnimation {
+                    duration: Theme.barMs(260)
+                    easing.type: Easing.OutCubic
+                }
+
+            }
+
+        }
+
+        // rounded corners hanging off the strip where it meets the screen sides
+        BarFlare {
+            visible: fullStrip.visible && size > 0
+            mirrored: true
+            size: Prefs.barFullCorner
+            x: 0
+            y: Prefs.barHeight + bar.hiddenOffset
+            z: -2
+        }
+
+        BarFlare {
+            visible: fullStrip.visible && size > 0
+            size: Prefs.barFullCorner
+            x: bar.width - width
+            y: Prefs.barHeight + bar.hiddenOffset
+            z: -2
+        }
+
+        // full bar: an open panel hangs off the strip, so round the two concave
+        // corners where its sides meet the strip's lower edge. They grow with
+        // the panel's height, so a folding panel takes them with it
+        Repeater {
+            model: (Prefs.barFull && !Prefs.barPopupMode) ? [mprisMod, sysTrayMod, clockMod, notifMod, systemMod] : []
+
+            Item {
+                id: panelFlares
+
+                required property var modelData
+
+                // surfaceOpen, not the height alone: a pill that is only
+                // resizing its compact face is see-through on the full bar
+                readonly property real reach: (panelFlares.modelData.visible && panelFlares.modelData.surfaceOpen === true) ? panelFlares.modelData.height - Prefs.barHeight : 0
+
+                // never past the screen edge, and never into the screen corner
+                // that already rounds that side
+                function sizeFor(toTheLeft) {
+                    var m = panelFlares.modelData;
+                    var toEdge = toTheLeft ? m.x : bar.width - m.x - m.width;
+                    var room = toEdge - (toEdge < Prefs.barFullCorner * 2 ? Prefs.barFullCorner : 0);
+                    return Math.max(0, Math.floor(Math.min(Prefs.barFullCorner, panelFlares.reach, room)));
+                }
+
+                anchors.fill: parent
+                z: -1
+
+                BarFlare {
+                    size: panelFlares.sizeFor(true)
+                    x: panelFlares.modelData.x - width + 0.5
+                    y: Prefs.barHeight
+                }
+
+                BarFlare {
+                    mirrored: true
+                    size: panelFlares.sizeFor(false)
+                    x: panelFlares.modelData.x + panelFlares.modelData.width - 0.5
+                    y: Prefs.barHeight
+                }
+
+            }
+
+        }
+
         Mpris {
             id: mprisMod
 
@@ -117,6 +240,7 @@ ShellRoot {
             hostWindow: bar
             x: bar.leftPlaces[1]
             anchors.top: parent.top
+            anchors.topMargin: bar.hiddenOffset
 
         }
 
@@ -128,6 +252,7 @@ ShellRoot {
             hostWindow: bar
             x: bar.leftPlaces[2]
             anchors.top: parent.top
+            anchors.topMargin: bar.hiddenOffset
 
         }
 
@@ -140,6 +265,7 @@ ShellRoot {
 
             hostWindow: bar
             anchors.top: parent.top
+            anchors.topMargin: bar.hiddenOffset
             x: Math.min(Math.max((parent.width - width) / 2, bar.sideMargin + bar.leftGroupWidth + sideGap), bar.width - bar.rightGroupWidth - bar.sideMargin - width - sideGap)
 
         }
@@ -152,6 +278,7 @@ ShellRoot {
             hostWindow: bar
             x: bar.rightPlaces[0]
             anchors.top: parent.top
+            anchors.topMargin: bar.hiddenOffset
 
         }
 
@@ -164,6 +291,7 @@ ShellRoot {
             mprisMod: mprisMod
             x: bar.rightPlaces[1]
             anchors.top: parent.top
+            anchors.topMargin: bar.hiddenOffset
 
         }
 
@@ -209,7 +337,7 @@ ShellRoot {
                     hovered: flares.modHovered
                     size: flares.flareFor(true)
                     x: flares.modelData ? flares.modelData.x - width + flares.bite : 0
-                    y: 0
+                    y: bar.hiddenOffset
                 }
 
                 BarFlare {
@@ -217,7 +345,7 @@ ShellRoot {
                     mirrored: true
                     size: flares.flareFor(false)
                     x: flares.modelData ? flares.modelData.x + flares.modelData.width - flares.bite : 0
-                    y: 0
+                    y: bar.hiddenOffset
                 }
 
             }
@@ -273,7 +401,7 @@ ShellRoot {
             hostWindow: bar
             dockMod: dock
             restX: bar.leftPlaces[0]
-            restY: 0
+            restY: bar.hiddenOffset
 
         }
 
@@ -303,12 +431,37 @@ ShellRoot {
                 mod: systemMod
             }
 
+            Region {
+                item: Prefs.barAutoHide ? revealArea : null
+            }
+
+        }
+
+        // touching this strip reveals the bar
+        MouseArea {
+            id: revealArea
+
+            x: 0
+            y: 0
+            width: bar.width
+            height: 4
+            hoverEnabled: true
+            acceptedButtons: Qt.NoButton
+            enabled: Prefs.barAutoHide
+            visible: Prefs.barAutoHide
         }
 
         BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && bar.laidOut) ? barBlurRegion : null
 
         Region {
             id: barBlurRegion
+
+            Region {
+                x: 0
+                y: fullStrip.visible ? bar.hiddenOffset : 0
+                width: fullStrip.visible ? Math.round(bar.width) : 0
+                height: fullStrip.visible ? Prefs.barHeight : 0
+            }
 
             ModuleRegion {
                 blur: true

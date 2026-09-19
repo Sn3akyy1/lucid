@@ -13,11 +13,35 @@ Column {
 
         SettingRow {
             title: "Bar style"
-            description: "Islands float free of the screen edge. Notches sit flush against it, squaring off the corners that meet it."
+            description: "Islands float free of the screen edge. Notches sit flush against it, squaring off the corners that meet it. Full bar joins every module on one continuous strip across the top."
+
+            M3Segmented {
+                width: 360
+                current: Prefs.barStyle
+                options: [{
+                    "key": "island",
+                    "label": "Islands"
+                }, {
+                    "key": "notch",
+                    "label": "Notches"
+                }, {
+                    "key": "full",
+                    "label": "Full bar"
+                }]
+                onChosen: (key) => {
+                    return Prefs.barStyle = key;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Dock style"
+            description: "The same choice for the dock, against the bottom edge."
 
             M3Segmented {
                 width: 260
-                current: Prefs.barStyle
+                current: Prefs.dockStyle
                 options: [{
                     "key": "island",
                     "label": "Islands"
@@ -26,7 +50,7 @@ Column {
                     "label": "Notches"
                 }]
                 onChosen: (key) => {
-                    return Prefs.barStyle = key;
+                    return Prefs.dockStyle = key;
                 }
             }
 

@@ -29,9 +29,12 @@ Singleton {
     }
 
     readonly property bool barNotch: root.barStyle === "notch"
+    readonly property bool barFull: root.barStyle === "full"
+    // notches and the full bar both sit flush against the top edge
+    readonly property bool barFlush: root.barNotch || root.barFull
     readonly property bool dockNotch: root.dockStyle === "notch"
     readonly property int barPillRadius: Math.min(18, Math.round(root.barHeight / 2))
-    readonly property int effectiveBarTopMargin: root.barNotch ? 0 : root.barTopMargin
+    readonly property int effectiveBarTopMargin: root.barFlush ? 0 : root.barTopMargin
     readonly property int effectiveDockBottomMargin: root.dockNotch ? 0 : root.dockBottomMargin
     readonly property bool anyBarModuleEnabled: root.showWorkspaces || root.showMedia || root.showTray || root.showClock || root.showNotifications || root.showSystem
     readonly property var barModuleKeys: ["showWorkspaces", "showMedia", "showTray", "showClock", "showNotifications", "showSystem"]
@@ -152,6 +155,10 @@ Singleton {
     property alias dockHoverEffect: s.dockHoverEffect
     property alias barMotionScale: s.barMotionScale
     property alias barNotchFlare: s.barNotchFlare
+    // the concave corners the full bar hangs against the screen sides
+    property alias barFullCorner: s.barFullCorner
+    property alias barHoverOpen: s.barHoverOpen
+    property alias barAutoHide: s.barAutoHide
     property alias dockNotchFlare: s.dockNotchFlare
     property alias dockAutoHide: s.dockAutoHide
     property alias dockShowIndicators: s.dockShowIndicators
@@ -364,6 +371,9 @@ Singleton {
         "dockHoverEffect": 1,
         "barMotionScale": 1.35,
         "barNotchFlare": 14,
+        "barFullCorner": 18,
+        "barHoverOpen": false,
+        "barAutoHide": false,
         "dockNotchFlare": 14,
         "dockAutoHide": false,
         "dockShowIndicators": true,
@@ -790,6 +800,9 @@ Singleton {
             property real dockHoverEffect: 1
             property real barMotionScale: 1.35
             property int barNotchFlare: 14
+            property int barFullCorner: 18
+            property bool barHoverOpen: false
+            property bool barAutoHide: false
             property int dockNotchFlare: 14
             property bool dockAutoHide: false
             property bool dockShowIndicators: true

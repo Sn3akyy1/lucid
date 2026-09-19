@@ -23,6 +23,45 @@ Column {
         title: "OPENING BEHAVIOUR"
 
         SettingRow {
+            title: "Auto-hide"
+            description: "The bar slides off the top of the screen and comes back when the pointer reaches the edge, or while one of its panels is open."
+
+            M3Switch {
+                checked: Prefs.barAutoHide
+                onToggled: (v) => {
+                    return Prefs.barAutoHide = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Open on hover"
+            resetKey: "barHoverOpen"
+            description: "Rest the pointer on a module and its panel opens by itself, no click needed; move away and it closes again. A panel opened this way leaves the keyboard with whatever window had it — click the panel to take focus, exactly as a clicked-open one does. The workspace overview still needs a click."
+
+            M3Switch {
+                checked: Prefs.barHoverOpen
+                onToggled: (v) => {
+                    return Prefs.barHoverOpen = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Pop-up mode"
+            description: "Modules stop morphing their own pill into a panel. The pill stays put in the bar and the panel appears below it as a detached pop-up."
+
+            M3Switch {
+                checked: Prefs.barPopupMode
+                onToggled: (v) => {
+                    return Prefs.barPopupMode = v;
+                }
+            }
+
+        }
+        SettingRow {
             title: "Pop-up mode"
             description: "Modules stop morphing their own pill into a panel. The pill stays put in the bar and the panel appears below it as a detached pop-up."
 
@@ -88,13 +127,13 @@ Column {
             title: "Distance from top"
             resetKey: "barTopMargin"
             description: "How far the bar floats below the top edge of the screen."
-            enabled: !Prefs.barNotch
-            disabledReason: "Notches sit flush against the screen edge by definition - switch back to islands on the General page to float the bar."
+            enabled: !Prefs.barFlush
+            disabledReason: "Notches and the full bar sit flush against the screen edge by definition - switch back to islands on the General page to float the bar."
             stacked: true
 
             M3Slider {
                 width: parent.width
-                enabled: !Prefs.barNotch
+                enabled: !Prefs.barFlush
                 from: 0
                 to: 48
                 stepSize: 1
@@ -170,6 +209,30 @@ Column {
             }
 
         }
+
+        SettingRow {
+            title: "Screen corners"
+            resetKey: "barFullCorner"
+            description: "How far the full bar's strip curves into the left and right screen edges. Separate from Edge blend, which is the curve between the strip and an open panel."
+            enabled: Prefs.barFull
+            disabledReason: "Only the full bar meets the screen edges - switch bar style to Full bar on the General page."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: Prefs.barFull
+                from: 0
+                to: 40
+                stepSize: 1
+                suffix: " px"
+                value: Prefs.barFullCorner
+                onMoved: (v) => {
+                    return Prefs.barFullCorner = v;
+                }
+            }
+
+        }
+
 
         SettingRow {
             title: "Module spacing"
