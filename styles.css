@@ -503,8 +503,15 @@ pre,
 }
 
 .status {
+  position: relative;
   justify-self: end;
   gap: 2px;
+}
+
+/* the theme panel hangs from the whole pill, not its button, so it never runs off the left
+   edge on a phone, where the menu button sits to the right of the theme button */
+.status .dd {
+  position: static;
 }
 
 .gh-link {
@@ -4092,6 +4099,40 @@ a.person:hover {
 
   .keycard {
     min-height: 0;
+  }
+}
+
+/* narrow screens: the section chips wrap instead of scrolling out of sight; a wrapped block
+   is too tall to follow the page, so it stays in place */
+@media (max-width: 860px) {
+  .jump {
+    position: static;
+    flex-wrap: wrap;
+    width: auto;
+    border-radius: var(--r-xl);
+    overflow: visible;
+  }
+}
+
+/* phones: the install command and the news pill wrap rather than clip */
+@media (max-width: 640px) {
+  .hero-install {
+    border-radius: var(--r-lg);
+    padding: 8px 8px 8px 16px;
+  }
+
+  .hero-install code {
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .news {
+    border-radius: var(--r-lg);
+  }
+
+  .news span {
+    white-space: normal;
   }
 }
 
