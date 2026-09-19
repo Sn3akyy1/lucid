@@ -16,6 +16,8 @@ Scope {
     id: root
 
     required property var toast
+    // the osd, whose caps lock, num lock and microphone changes can come here instead
+    property var osd: null
 
     property bool armed: false
 
@@ -423,6 +425,46 @@ Scope {
         }
     }
 
+    // caps lock, num lock and the microphone, when they are set to show here
+    // rather than on the osd. Something the user just did, so it cuts in at once;
+    // the osd only reports real changes, so there is nothing to settle or arm
+    readonly property string micOffPath: "M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"
+
+    function toggleEntry(kind, on) {
+        const o = root.osd;
+        switch (kind) {
+        case "capslock":
+            return {
+                "key": "toggle-capslock",
+                "icon": o ? o.capsLockIconPath : "info",
+                "label": on ? "Caps Lock on" : "Caps Lock off"
+            };
+        case "numlock":
+            return {
+                "key": "toggle-numlock",
+                "icon": o ? o.numLockIconPath : "info",
+                "label": on ? "Num Lock on" : "Num Lock off"
+            };
+        default:
+            return {
+                "key": "toggle-mic",
+                "icon": on ? (o ? o.micIconPath : "info") : root.micOffPath,
+                "label": on ? "Microphone on" : "Microphone muted"
+            };
+        }
+    }
+
+    Connections {
+        function onToggled(kind, on) {
+            if (Prefs.osdTogglesToast)
+                root.toast.present(root.toggleEntry(kind, on));
+
+        }
+
+        target: root.osd
+        ignoreUnknownSignals: true
+    }
+
     IpcHandler {
         target: "toastevents"
 
@@ -435,6 +477,12 @@ Scope {
             // one of each is more than a real burst may hold
             root.toast.queueCap = 16;
             root.send("preview-layout", root.glyphPath("keyboard"), root.layoutName || "English (US)", "Keyboard layout");
+            if (Prefs.osdTogglesToast) {
+                const caps = root.toggleEntry("capslock", true);
+                const mic = root.toggleEntry("mic", false);
+                root.send("preview-caps", caps.icon, caps.label, "");
+                root.send("preview-mic", mic.icon, mic.label, "");
+            }
             root.send("preview-game", "game", "Game mode on", "");
             root.send("preview-charger", root.chargingPath, "Charging", pct + "%");
             root.send("preview-low", root.batteryAlertPath, "Battery low", "20% left", true);
