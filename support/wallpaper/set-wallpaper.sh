@@ -147,6 +147,8 @@ pywal)
     ;;
 *)
     echo "static theme ($CURRENT_THEME) — colours unchanged"
+    # the palette stays put but the login screen still carries the wallpaper
+    "$LUCID_DIR/sync-sddm.sh" 2>/dev/null || true
     ;;
 esac
 
