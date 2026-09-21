@@ -50,7 +50,8 @@ ${b}Lucid $VERSION installer${r}
   --no-look      don't touch kitty.conf, starship.toml or VSCode
                  settings
   --no-hypr      keep your Hyprland config; Lucid's binds, window
-                 rules and blur are not installed
+                 rules and blur are not installed (a line that starts
+                 the shell on login is still offered)
   --no-apps      don't install the apps pinned to the dock by
                  default (Zen, VSCodium, Spotify, Steam, ...)
   --no-wallpapers
@@ -1108,6 +1109,50 @@ elif [[ $WITH_WALLPAPERS -eq 0 ]]; then
     say "  ${dim}$PICTURES_DIR is left alone; the strip shows whatever is in it${r}"
 fi
 
+# ----------------------------------------------------------------- autostart
+
+# Lucid's Hyprland config starts the shell from modules/autostart.lua. a config
+# that was kept has nothing that does, so the shell is gone after the next
+# login however the install went.
+# runs after the look step, whose hyprland.lua backup would otherwise replace
+# the one taken here
+LUCID_AUTOSTART=""
+if [[ $HYPR_LUA_INSTALLED -eq 0 ]] && [[ -f "$HYPR_DIR/hyprland.lua" || -f "$HYPR_DIR/hyprland.conf" ]]; then
+    step "Starting Lucid on login"
+
+    # launching the shell is Lucid's launcher, an exec-once or an hl.exec_cmd.
+    # binds, calls into a running shell (qs ipc ...) and commented-out lines
+    # do not count
+    found=$(grep -rnE --include='*.lua' --include='*.conf' --exclude-dir='*backup*' \
+                -e 'launch-shell\.sh' \
+                -e '^[[:space:]]*exec(-once)?[[:space:]]*=[[:space:]]*([^[:space:]]*/)?(qs|quickshell)([[:space:]]*$|[[:space:]]+[^a-z[:space:]])' \
+                -e "hl\.exec_cmd\([[:space:]]*[\"']([^\"']*/)?(qs|quickshell)([\"']|[[:space:]]+[^a-z[:space:]\"'])" \
+                "$HYPR_DIR" 2>/dev/null \
+            | grep -vE '^[^:]*:[0-9]+:[[:space:]]*(--|#)' | head -n1 | cut -d: -f1 || true)
+    if [[ -n "$found" ]]; then
+        LUCID_AUTOSTART="${found#"$HYPR_DIR"/}"
+        say "  ${dim}$LUCID_AUTOSTART already starts it${r}"
+    elif ask "  Nothing in your Hyprland config starts Lucid. Start it on login?"; then
+        if [[ -f "$HYPR_DIR/hyprland.lua" ]]; then
+            mkdir -p "$HYPR_DIR/modules"
+            cp "$SRC/support/hypr/lucid-autostart.lua" "$HYPR_DIR/modules/lucid-autostart.lua"
+            [[ -f "$HYPR_DIR/hyprland.lua.backup-$STAMP" ]] \
+                || cp "$HYPR_DIR/hyprland.lua" "$HYPR_DIR/hyprland.lua.backup-$STAMP"
+            printf '\nrequire("modules.lucid-autostart")\n' >> "$HYPR_DIR/hyprland.lua"
+            LUCID_AUTOSTART="modules/lucid-autostart.lua"
+            say "  hyprland.lua now requires modules.lucid-autostart"
+        else
+            [[ -f "$HYPR_DIR/hyprland.conf.backup-$STAMP" ]] \
+                || cp "$HYPR_DIR/hyprland.conf" "$HYPR_DIR/hyprland.conf.backup-$STAMP"
+            printf '\nexec-once = ~/.config/lucid/launch-shell.sh\n' >> "$HYPR_DIR/hyprland.conf"
+            LUCID_AUTOSTART="hyprland.conf"
+            say "  hyprland.conf now starts ~/.config/lucid/launch-shell.sh"
+        fi
+    else
+        say "  ${dim}left alone — after each login, start it with qs${r}"
+    fi
+fi
+
 # ---------------------------------------------------------------------- done
 
 step "Done"
@@ -1159,8 +1204,15 @@ if [[ $HYPR_LUA_INSTALLED -eq 1 ]]; then
 
 EOF
 else
+    if [[ -n "$LUCID_AUTOSTART" ]]; then
+        say "  Autostart:     ~/.config/hypr/$LUCID_AUTOSTART starts it on login"
+    elif [[ -f "$HYPR_DIR/hyprland.lua" ]]; then
+        say "  Autostart:     add this to hyprland.lua (or re-run and say yes):"
+        say "                 ${b}hl.on(\"hyprland.start\", function () hl.exec_cmd(\"~/.config/lucid/launch-shell.sh\") end)${r}"
+    else
+        say "  Autostart:     add ${b}exec-once = ~/.config/lucid/launch-shell.sh${r} to your Hyprland config"
+    fi
     cat <<EOF
-  Autostart:     add ${b}exec-once = qs${r} to your Hyprland config
 
   Suggested Hyprland binds:
 
