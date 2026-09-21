@@ -293,14 +293,21 @@ Item {
             enabled: pill.popupMode
         }
 
-        PointHandler {
-            enabled: pill.hoverOpen
-            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-            onActiveChanged: {
-                if (active)
-                    pill.hoverOpen = false;
+        // over the contents, not on this rect: see the one on the shell
+        Item {
+            anchors.fill: parent
+            z: 1000
 
+            PointHandler {
+                enabled: pill.hoverOpen
+                acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                onActiveChanged: {
+                    if (active)
+                        pill.hoverOpen = false;
+
+                }
             }
+
         }
 
         Behavior on color {
@@ -338,15 +345,24 @@ Item {
 
         }
 
-        // a passive grab, so the panel's buttons and drags keep working
-        PointHandler {
-            enabled: pill.hoverOpen
-            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-            onActiveChanged: {
-                if (active)
-                    pill.hoverOpen = false;
+        // a passive grab, so the panel's buttons and drags keep working. On an
+        // item stacked over the contents, not on the shell: a handler on a parent
+        // never hears a press a child MouseArea already took (a right-click on a
+        // tray item, say), and the panel folded away under the tray's menu
+        Item {
+            anchors.fill: parent
+            z: 1000
 
+            PointHandler {
+                enabled: pill.hoverOpen
+                acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                onActiveChanged: {
+                    if (active)
+                        pill.hoverOpen = false;
+
+                }
             }
+
         }
 
         Behavior on x {
