@@ -76,6 +76,14 @@ BarPill {
         } : null;
     }
 
+    // hh only counts to 12 next to AP, so the hour is formatted with it and
+    // the locale's own AM/PM ("PM", "P.M.", "午後") is cut back out
+    function hourText() {
+        const now = Loc.now();
+        const text = now.toLocaleTimeString(Qt.locale(), root.hourFormat);
+        return Prefs.clock24h ? text : text.replace(now.toLocaleTimeString(Qt.locale(), "AP"), "").trim();
+    }
+
     function untilText(at) {
         if (!at)
             return "";
@@ -383,7 +391,7 @@ BarPill {
         running: true
         repeat: true
         onTriggered: {
-            clockHourText.text = Loc.now().toLocaleTimeString(Qt.locale(), root.hourFormat).replace(/\s*[AP]M/i, "");
+            clockHourText.text = root.hourText();
             clockMinuteText.text = Loc.now().toLocaleTimeString(Qt.locale(), root.minuteFormat);
             dateText.text = Loc.now().toLocaleDateString(Qt.locale(), "ddd d");
             expandedTimeText.text = Loc.now().toLocaleTimeString(Qt.locale(), root.fullTimeFormat);
@@ -407,7 +415,7 @@ BarPill {
                 Text {
                     id: clockHourText
 
-                    text: Loc.now().toLocaleTimeString(Qt.locale(), root.hourFormat).replace(/\s*[AP]M/i, "")
+                    text: root.hourText()
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.bold: true
