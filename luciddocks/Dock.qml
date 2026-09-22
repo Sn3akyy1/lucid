@@ -721,8 +721,9 @@ PanelWindow {
             return;
         }
         var cmds = {
-            // uwsm only stops a session it started, so fall back to hyprland
-            "logout": ["sh", "-c", "uwsm stop 2>/dev/null || hyprctl dispatch exit"],
+            // uwsm only stops a session it started, so fall back to hyprland; a lua
+            // config reads a dispatch as lua, where a bare "exit" is no dispatcher
+            "logout": ["sh", "-c", "uwsm stop 2>/dev/null || hyprctl dispatch 'hl.dsp.exit()' || hyprctl dispatch exit"],
             "suspend": ["systemctl", "suspend"],
             "shutdown": ["systemctl", "poweroff"],
             "hibernate": ["systemctl", "hibernate"],
