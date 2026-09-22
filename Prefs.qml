@@ -167,6 +167,8 @@ Singleton {
     property alias launcherPowerSearch: s.launcherPowerSearch
     property alias launcherWebSearch: s.launcherWebSearch
     property alias launcherSearchUrl: s.launcherSearchUrl
+    property alias launcherFavApps: s.launcherFavApps
+    property alias launcherHiddenApps: s.launcherHiddenApps
     property alias clipboardEnabled: s.clipboardEnabled
 
     property alias widgetsEnabled: s.widgetsEnabled
@@ -388,6 +390,8 @@ Singleton {
         "launcherPowerSearch": true,
         "launcherWebSearch": true,
         "launcherSearchUrl": "https://duckduckgo.com/?q=%s",
+        "launcherFavApps": "",
+        "launcherHiddenApps": "",
         "clipboardEnabled": true,
         "widgetsEnabled": true,
         "widgetSnap": true,
@@ -836,6 +840,9 @@ Singleton {
             property bool launcherPowerSearch: true
             property bool launcherWebSearch: true
             property string launcherSearchUrl: "https://duckduckgo.com/?q=%s"
+            // desktop entry ids, comma separated; see Apps
+            property string launcherFavApps: ""
+            property string launcherHiddenApps: ""
             property bool clipboardEnabled: true
             property bool widgetsEnabled: true
             property bool widgetSnap: true

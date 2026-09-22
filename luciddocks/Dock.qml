@@ -153,7 +153,8 @@ PanelWindow {
     }
 
     property string fallbackWallpaper: Qt.resolvedUrl("../assets/fallback.jpg").toString().replace("file://", "")
-    property var scannedApps: []
+    // every app, hidden ones included: the dock still has to put icons on their windows
+    readonly property var scannedApps: Apps.list
     readonly property string currentTheme: Prefs.currentTheme
     property string pendingWallpaper: ""
     property string appliedWallpaper: ""
@@ -628,6 +629,7 @@ PanelWindow {
             "disabled": opts.disabled === true,
             "selectable": opts.selectable !== false,
             "nested": opts.nested === true,
+            "starred": opts.starred === true,
             "payload": opts.payload || ""
         };
     }
@@ -671,9 +673,16 @@ PanelWindow {
         var scored = [];
         for (var i = 0; i < dockWindow.scannedApps.length; i++) {
             var app = dockWindow.scannedApps[i];
+            if (Apps.isHidden(app))
+                continue;
+
             var score = q !== "" ? dockWindow.matchScore(app, q) : 0;
             if (q !== "" && score < 0)
                 continue;
+
+            // a favourite goes first among matches as good as it, never past a better one
+            if (q !== "" && Apps.isFav(app))
+                score += 5;
 
             scored.push({
                 "app": app,
@@ -696,8 +705,18 @@ PanelWindow {
     function rowForApp(app) {
         return dockWindow.makeRow("app", "app-" + app.name, app.name, Prefs.launcherAppDescriptions ? (app.desc || "") : "", {
             "iconName": app.iconName,
+            "starred": Apps.isFav(app),
             "payload": app.command
         });
+    }
+
+    // right-click on an app row; the row key carries the name, and names are unique in Apps.list
+    function toggleFavAt(index) {
+        var row = resultsModel.get(index);
+        if (!row || row.kind !== "app")
+            return;
+
+        Apps.toggleFav(Apps.byName(row.key.substring(4)));
     }
 
     readonly property var kindRank: ({
@@ -792,7 +811,7 @@ PanelWindow {
             var acts = [];
             for (var p = 0; p < dockWindow.scannedApps.length; p++) {
                 var host = dockWindow.scannedApps[p];
-                if (host === expanded)
+                if (host === expanded || Apps.isHidden(host))
                     continue;
 
                 for (var x = 0; x < host.actions.length; x++) {
@@ -902,14 +921,22 @@ PanelWindow {
 
             var scored = dockWindow.appRows(q);
             if (q === "") {
+                var favs = Apps.favApps;
+                if (favs.length > 0) {
+                    rows.push(dockWindow.headerRow("Favourites"));
+                    for (var v = 0; v < favs.length; v++) rows.push(dockWindow.rowForApp(favs[v]));
+                }
+                // the favourites are already on show above
                 var frequent = scored.filter(function(s) {
-                    return s.uses > 0;
+                    return s.uses > 0 && !Apps.isFav(s.app);
                 }).slice(0, 5);
                 if (frequent.length > 0) {
                     rows.push(dockWindow.headerRow("Frequent"));
                     for (var f = 0; f < frequent.length; f++) rows.push(dockWindow.rowForApp(frequent[f].app));
-                    rows.push(dockWindow.headerRow("All applications"));
                 }
+                if (favs.length > 0 || frequent.length > 0)
+                    rows.push(dockWindow.headerRow("All applications"));
+
                 var rest = scored.slice().sort(function(a, b) {
                     return a.app.name.toLowerCase() < b.app.name.toLowerCase() ? -1 : 1;
                 });
@@ -1489,7 +1516,24 @@ PanelWindow {
         if (dockWindow.appliedWallpaper === "")
             dockWindow.applyWallpaper(dockWindow.fallbackWallpaper);
 
-        appScanner.running = true;
+        Apps.rescan();
+    }
+
+    Connections {
+        function onScanned() {
+            dockWindow.rebuildResults();
+            dockWindow.syncRunningApps();
+        }
+
+        function onHiddenIdsChanged() {
+            dockWindow.rebuildResults();
+        }
+
+        function onFavIdsChanged() {
+            dockWindow.rebuildResults();
+        }
+
+        target: Apps
     }
 
     Connections {
@@ -1759,74 +1803,6 @@ PanelWindow {
             }]
         }
 
-    }
-
-    Process {
-        id: appScanner
-
-        command: ["sh", "-c", "for d in /usr/share/applications \"$HOME/.local/share/applications\" " + "/var/lib/flatpak/exports/share/applications \"$HOME/.local/share/flatpak/exports/share/applications\" " + "/var/lib/snapd/desktop/applications; do " + "[ -d \"$d\" ] && find \"$d\" -maxdepth 1 -name '*.desktop' -print0; " + "done | xargs -0 -r awk '" + "function clean(v) { gsub(/\\|/, \" \", v); gsub(/\\r/, \"\", v); return v } " + "function flush(   n, e, ids, na, k, id, ae, al) { " + "n = clean(name); e = clean(ex); " + "if (nodisp || hidden) return; " + "if (type != \"\" && type != \"Application\") return; " + "if (n == \"\" || e == \"\") return; " + "gsub(/ ?%[a-zA-Z]/, \"\", e); sub(/[ \\t]+$/, \"\", e); " + "if (term == \"true\") e = \"kitty -e \" e; " + "al = \"\"; na = split(actlist, ids, \";\"); " + "for (k = 1; k <= na; k++) { id = ids[k]; if (id == \"\" || !(id in AN) || !(id in AE)) continue; " + "ae = clean(AE[id]); gsub(/ ?%[a-zA-Z]/, \"\", ae); sub(/[ \\t]+$/, \"\", ae); if (ae == \"\") continue; " + "if (term == \"true\") ae = \"kitty -e \" ae; " + "al = al (al == \"\" ? \"\" : \"\\036\") clean(AN[id]) \"\\037\" ae } " + "print n \"|\" clean(icon) \"|\" clean(kw \" \" gen \" \" com \" \" cats) \"|\" e \"|\" clean(wm) \"|\" base \"|\" al \"|\" clean(com != \"\" ? com : gen) } " + "BEGINFILE { name=\"\"; icon=\"\"; ex=\"\"; kw=\"\"; gen=\"\"; com=\"\"; cats=\"\"; wm=\"\"; type=\"\"; term=\"\"; nodisp=0; hidden=0; insec=0; " + "actlist=\"\"; act=\"\"; delete AN; delete AE; " + "base=FILENAME; sub(/.*\\//, \"\", base); sub(/\\.desktop$/, \"\", base) } " + "/^[ \\t]*\\[/ { insec = ($0 ~ /^\\[Desktop Entry\\]/) ? 1 : 0; act = \"\"; " + "if ($0 ~ /^\\[Desktop Action /) { act = $0; sub(/^\\[Desktop Action /, \"\", act); sub(/\\].*$/, \"\", act) } next } " + "act != \"\" && /^Name=/ { if (!(act in AN)) AN[act] = substr($0, 6); next } " + "act != \"\" && /^Exec=/ { if (!(act in AE)) AE[act] = substr($0, 6); next } " + "!insec { next } " + "/^Actions=/ { if (actlist == \"\") actlist = substr($0, 9) } " + "/^Name=/ { if (name == \"\") name = substr($0, 6) } " + "/^Icon=/ { if (icon == \"\") icon = substr($0, 6) } " + "/^Exec=/ { if (ex == \"\") ex = substr($0, 6) } " + "/^Keywords=/ { if (kw == \"\") { kw = substr($0, 10); gsub(/;/, \" \", kw) } } " + "/^GenericName=/ { if (gen == \"\") gen = substr($0, 13) } " + "/^Comment=/ { if (com == \"\") com = substr($0, 9) } " + "/^Categories=/ { if (cats == \"\") { cats = substr($0, 12); gsub(/;/, \" \", cats) } } " + "/^StartupWMClass=/ { if (wm == \"\") wm = substr($0, 16) } " + "/^Type=/ { if (type == \"\") type = substr($0, 6) } " + "/^Terminal=/ { if (term == \"\") term = substr($0, 10) } " + "/^NoDisplay=true/ { nodisp = 1 } " + "/^Hidden=true/ { hidden = 1 } " + "ENDFILE { flush() }'"]
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var lines = text.split("\n");
-                var seen = {};
-                var arr = [];
-                for (var i = 0; i < lines.length; i++) {
-                    if (lines[i].trim() === "")
-                        continue;
-
-                    var p = lines[i].split("|");
-                    if (p.length < 6)
-                        continue;
-
-                    var name = p[0];
-                    var key = name.toLowerCase();
-                    if (seen[key])
-                        continue;
-
-                    seen[key] = true;
-                    // first letter of each word, for acronym matching
-                    var initials = name.split(/[\s\-_]+/).map(function(w) {
-                        return w.charAt(0);
-                    }).join("").toLowerCase();
-                    // [Desktop Action] entries: name and command split by US, entries by RS
-                    var actions = [];
-                    var packed = p.length > 6 ? p[6].split("\u001e") : [];
-                    for (var a = 0; a < packed.length; a++) {
-                        var pair = packed[a].split("\u001f");
-                        if (pair.length === 2 && pair[0] !== "" && pair[1] !== "")
-                            actions.push({
-                                "name": pair[0],
-                                "command": pair[1]
-                            });
-
-                    }
-                    arr.push({
-                        "name": name,
-                        "iconName": p[1],
-                        "search": (name + " " + p[2] + " " + p[5]).toLowerCase(),
-                        "initials": initials,
-                        "command": p[3],
-                        "wmClass": p[4],
-                        "base": p[5],
-                        "actions": actions,
-                        // Comment, or GenericName without one; never just the name again
-                        "desc": p.length > 7 && p[7].toLowerCase() !== key ? p[7] : ""
-                    });
-                }
-                dockWindow.scannedApps = arr;
-                dockWindow.rebuildResults();
-                dockWindow.syncRunningApps();
-            }
-        }
-
-    }
-
-    Timer {
-        interval: 20000
-        running: true
-        repeat: true
-        onTriggered: appScanner.running = true
     }
 
     Process {
@@ -2346,6 +2322,7 @@ PanelWindow {
             onCloseRequested: dockWindow.menuOpen = false
             onBackRequested: launcherFace.searchText = dockWindow.mode === "commands" ? "" : ">"
             onDeleteRequested: (index) => dockWindow.deleteResult(index)
+            onFavToggleRequested: (index) => dockWindow.toggleFavAt(index)
             onWallpaperPreviewed: (path) => dockWindow.requestWallpaper(path)
             onWallpaperChosen: (path) => {
                 dockWindow.applyWallpaper(path);

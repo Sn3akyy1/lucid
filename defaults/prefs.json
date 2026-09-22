@@ -33,6 +33,8 @@
     "gameModeOnCmd": "",
     "gameModeStatusCmd": "",
     "launcherAppDescriptions": true,
+    "launcherFavApps": "",
+    "launcherHiddenApps": "",
     "launcherMaxRows": 8,
     "launcherPowerButtons": "lock,suspend,reboot,shutdown",
     "launcherPowerChips": true,

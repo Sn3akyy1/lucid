@@ -85,6 +85,7 @@ Item {
     signal powerActionChosen(string id)
     signal backRequested()
     signal deleteRequested(int index)
+    signal favToggleRequested(int index)
     signal powerChipTapped(string id)
 
     function rowHeightFor(kind, subtitle) {
@@ -192,6 +193,7 @@ Item {
             }
             onActivated: (index) => face.activated(index)
             onDeleteRequested: (index) => face.deleteRequested(index)
+            onFavToggleRequested: (index) => face.favToggleRequested(index)
         }
 
         WallpaperStrip {

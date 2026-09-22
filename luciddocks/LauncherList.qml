@@ -16,6 +16,8 @@ Item {
     property real stableHeight: 0
     signal activated(int index)
     signal deleteRequested(int index)
+    // right-click on an app row
+    signal favToggleRequested(int index)
 
     // typing rewrites the whole list at once. Per-row transitions on that many
     // inserts, moves and removals, cut short every keystroke, tangle: rows fly in
@@ -476,6 +478,8 @@ Item {
             required property string payload
             // an app action listed straight under its app
             required property bool nested
+            // an app starred as a favourite
+            required property bool starred
             readonly property bool isAction: rowItem.kind === "action"
             readonly property string hint: rowItem.selected && rowItem.trailing === "" ? list.hintFor(rowItem.kind) : ""
 
@@ -615,7 +619,7 @@ Item {
 
                 Column {
                     // leaves the check glyph, the Return hint and the delete button their room; long clipboard text elides instead of spilling
-                    width: Math.max(0, parent.width - x - (rowItem.trailing !== "" ? 32 : 0) - (hintLabel.visible ? hintLabel.implicitWidth + 12 : 0) - (dropButton.visible ? 30 : 0))
+                    width: Math.max(0, parent.width - x - (rowItem.trailing !== "" ? 32 : 0) - (hintLabel.visible ? hintLabel.implicitWidth + 12 : 0) - (dropButton.visible ? 30 : 0) - (favStar.visible ? favStar.width + 10 : 0))
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
 
@@ -657,6 +661,19 @@ Item {
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
                 font.weight: Font.Medium
+            }
+
+            DockGlyph {
+                id: favStar
+
+                width: 14
+                height: 14
+                anchors.right: hintLabel.visible ? hintLabel.left : parent.right
+                anchors.rightMargin: hintLabel.visible ? 10 : 16
+                anchors.verticalCenter: parent.verticalCenter
+                visible: rowItem.starred && !rowItem.isHeader
+                pathData: DockIcons.star
+                glyphColor: rowItem.selected ? Theme.accent : Theme.accentMuted
             }
 
             DockGlyph {
@@ -721,6 +738,12 @@ Item {
                     list.currentIndex = rowItem.index;
                     list.activated(rowItem.index);
                 }
+            }
+
+            TapHandler {
+                acceptedButtons: Qt.RightButton
+                enabled: rowItem.kind === "app"
+                onTapped: list.favToggleRequested(rowItem.index)
             }
 
         }

@@ -216,6 +216,18 @@ Column {
         title: "LAUNCHER"
 
         SettingRow {
+            title: "Favourites and hidden apps"
+            description: "Star the applications the launcher lists first, and hide the ones it should never offer, on their own page."
+
+            M3Button {
+                text: "Apps…"
+                variant: "tonal"
+                onClicked: Prefs.settingsRequested("apps")
+            }
+
+        }
+
+        SettingRow {
             title: "Launcher width"
             resetKey: "launcherWidth"
             description: "How wide the application launcher opens - also the command, theme and clipboard lists. The wallpaper strip and power menu keep their own size."
