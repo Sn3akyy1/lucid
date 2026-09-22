@@ -94,7 +94,7 @@ navigation link, change it in all nine files.
 
 When a new version ships, update:
 
-- the version chip in every page's header (`brand-ver`, currently `v1.1.0`),
+- the version chip in every page's header (`brand-ver`, currently `v1.10.5`),
 - the news pill on `index.html`,
 - `changelog.html`, by adding a new `<article class="release">` at the top and moving the
   "Latest" chip to it,

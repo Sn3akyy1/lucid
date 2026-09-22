@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Lucid Changelog</title>
-  <meta name="description" content="What landed in each Lucid release, from the v0.57 beta to v1.1.0: lock screen, polkit, accounts, light mode, displays, glass, widgets and more.">
+  <meta name="description" content="What landed in each Lucid release, from the v0.57 beta to v1.10.5: lock screen, polkit, accounts, light mode, displays, glass, widgets and more.">
   <meta name="theme-color" content="#0f0807" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#fae7e3" media="(prefers-color-scheme: light)">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Lucid">
   <meta property="og:title" content="Lucid Changelog">
-  <meta property="og:description" content="What landed in each Lucid release, from the v0.57 beta to v1.1.0: lock screen, polkit, accounts, light mode, displays, glass, widgets and more.">
+  <meta property="og:description" content="What landed in each Lucid release, from the v0.57 beta to v1.10.5: lock screen, polkit, accounts, light mode, displays, glass, widgets and more.">
   <meta property="og:image" content="assets/images/og-image.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="favicon.ico" sizes="any">
@@ -27,7 +27,7 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="bar">
   <div class="wrap bar-inner">
-    <a class="pill brand" href="index.html" aria-label="Lucid home"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g class="mark-orbit"><path class="mark-ring" d="M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100"/><circle class="mark-dot" cx="21" cy="9.4" r="1"/></g><path class="mark-star" d="M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"/></svg><span>Lucid</span><span class="brand-ver">v1.1.0</span></a>
+    <a class="pill brand" href="index.html" aria-label="Lucid home"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g class="mark-orbit"><path class="mark-ring" d="M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100"/><circle class="mark-dot" cx="21" cy="9.4" r="1"/></g><path class="mark-star" d="M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"/></svg><span>Lucid</span><span class="brand-ver">v1.10.5</span></a>
     <nav class="pill nav" aria-label="Main">
       <a class="nav-link" href="features.html">Features</a>
       <a class="nav-link" href="screenshots.html">Screenshots</a>
@@ -118,9 +118,22 @@
     <div class="callout" style="margin-bottom: 24px"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-notifications"></use></svg><p><strong>To hear about new versions,</strong> press <strong>Watch → Custom → Releases</strong> on the GitHub repo. Lucid also checks for itself once a day and tells you once, in a notification.</p></div>
 
     <div class="releases">
-      <article class="release" id="v1-1-0">
+      <article class="release" id="v1-10-5">
         <div class="release-meta">
           <span class="chip chip-accent" style="justify-self: start">Latest</span>
+          <span class="ver">v1.10.5</span>
+          <time datetime="2026-09-22">22 September 2026</time>
+          <a class="link-arrow" href="https://github.com/Sn3akyy1/lucid/releases/tag/v1.10.5" rel="noopener">Release notes<svg class="i" aria-hidden="true" focusable="false"><use href="#i-north_east"></use></svg></a>
+        </div>
+        <div class="release-body">
+          <h2>The shell starts on login again</h2>
+          <p>After a restart, the wallpaper came back but the bar, the dock and the widgets did not, and running the installer again was the only way to get them back. The line that starts the shell on login opened with <code>[&nbsp;-x&nbsp;…&nbsp;]</code>, and Hyprland reads a command that opens with <code>[...]</code> as exec rules, like <code>[workspace&nbsp;2]&nbsp;kitty</code>, so it ran nothing, silently. It uses <code>test -x</code> now. Found by <a href="https://github.com/ciroenrique4-eng" rel="noopener">@ciroenrique4-eng</a>.</p>
+          <p>To update, pull and run the installer again. It replaces <code>~/.config/hypr/modules/autostart.lua</code> with the fixed one.</p>
+        </div>
+      </article>
+
+      <article class="release" id="v1-1-0">
+        <div class="release-meta">
           <span class="ver">v1.1.0</span>
           <time datetime="2026-09-17">17 September 2026</time>
           <a class="link-arrow" href="https://github.com/Sn3akyy1/lucid/releases/tag/v1.1.0" rel="noopener">Release notes<svg class="i" aria-hidden="true" focusable="false"><use href="#i-north_east"></use></svg></a>
