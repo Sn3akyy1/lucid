@@ -763,7 +763,7 @@ PanelWindow {
 
         }
         // never from two letters: "re" shouldn't put Restart one Return away
-        if (q.length >= 3) {
+        if (Prefs.launcherPowerSearch && q.length >= 3) {
             for (var pw = 0; pw < dockWindow.powerCommands.length; pw++) {
                 var ps = dockWindow.commandScore(dockWindow.powerCommands[pw], q);
                 if (ps >= 0)
@@ -1514,6 +1514,10 @@ PanelWindow {
         }
 
         function onLauncherMaxRowsChanged() {
+            dockWindow.rebuildResults();
+        }
+
+        function onLauncherPowerSearchChanged() {
             dockWindow.rebuildResults();
         }
 
@@ -2349,6 +2353,7 @@ PanelWindow {
             }
             onPowerActionChosen: (id) => dockWindow.runPowerAction(id)
             showPowerChips: Prefs.launcherPowerChips
+            powerButtons: Prefs.powerButtonList
             armedPower: dockWindow.armedPower
             onPowerChipTapped: (id) => dockWindow.requestPower(id)
 

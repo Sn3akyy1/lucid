@@ -163,6 +163,8 @@ Singleton {
     property alias launcherAppDescriptions: s.launcherAppDescriptions
     property alias launcherWindows: s.launcherWindows
     property alias launcherPowerChips: s.launcherPowerChips
+    property alias launcherPowerButtons: s.launcherPowerButtons
+    property alias launcherPowerSearch: s.launcherPowerSearch
     property alias launcherWebSearch: s.launcherWebSearch
     property alias launcherSearchUrl: s.launcherSearchUrl
     property alias clipboardEnabled: s.clipboardEnabled
@@ -382,6 +384,8 @@ Singleton {
         "launcherAppDescriptions": true,
         "launcherWindows": true,
         "launcherPowerChips": true,
+        "launcherPowerButtons": "lock,suspend,reboot,shutdown",
+        "launcherPowerSearch": true,
         "launcherWebSearch": true,
         "launcherSearchUrl": "https://duckduckgo.com/?q=%s",
         "clipboardEnabled": true,
@@ -628,6 +632,19 @@ Singleton {
         });
     }
 
+    // which power buttons sit beside the launcher's search field, by runPowerAction id
+    readonly property var powerButtonList: root.splitList(root.launcherPowerButtons)
+
+    function setPowerButton(id, on) {
+        var list = root.powerButtonList.filter((x) => {
+            return x !== id;
+        });
+        if (on)
+            list.push(id);
+
+        root.launcherPowerButtons = list.join(",");
+    }
+
     readonly property var mutedApps: root.splitList(root.notifMutedApps)
     // every app that has sent a notification since the list was last cleared, so
     // the settings page can offer them instead of asking you to type a name
@@ -815,6 +832,8 @@ Singleton {
             property bool launcherAppDescriptions: true
             property bool launcherWindows: true
             property bool launcherPowerChips: true
+            property string launcherPowerButtons: "lock,suspend,reboot,shutdown"
+            property bool launcherPowerSearch: true
             property bool launcherWebSearch: true
             property string launcherSearchUrl: "https://duckduckgo.com/?q=%s"
             property bool clipboardEnabled: true

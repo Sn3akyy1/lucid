@@ -19,21 +19,35 @@ Item {
     property alias searchText: searchInput.text
     property string highlightQuery: ""
     readonly property string placeholder: face.displayMode === "clipboard" ? "Search clipboard history" : "Search apps, windows and commands, or type >"
-    // lock / suspend / restart / shut down, beside the search field
+    // power buttons beside the search field
     property bool showPowerChips: false
+    // which of them, by id; they keep the order below whatever order these come in
+    property var powerButtons: []
     // the power action waiting on its second press, owned by the dock
     property string armedPower: ""
-    readonly property var powerChips: [{
+    readonly property var allPowerChips: [{
         "id": "lock",
         "label": "Lock",
         "confirm": "",
         "glyph": DockIcons.lock,
         "danger": false
     }, {
+        "id": "logout",
+        "label": "Log out",
+        "confirm": "Log out?",
+        "glyph": DockIcons.logout,
+        "danger": true
+    }, {
         "id": "suspend",
         "label": "Suspend",
         "confirm": "",
         "glyph": DockIcons.suspend,
+        "danger": false
+    }, {
+        "id": "hibernate",
+        "label": "Hibernate",
+        "confirm": "",
+        "glyph": DockIcons.hibernate,
         "danger": false
     }, {
         "id": "reboot",
@@ -50,6 +64,9 @@ Item {
         // the one to find at a glance: filled with the palette's primary
         "accent": true
     }]
+    readonly property var powerChips: face.allPowerChips.filter((c) => {
+        return face.powerButtons.indexOf(c.id) !== -1;
+    })
     property real targetWidth: width
     property real targetHeight: height
 
@@ -405,7 +422,7 @@ Item {
     Item {
         id: powerChips
 
-        readonly property bool shown: face.showPowerChips && (face.mode === "apps" || face.mode === "commands")
+        readonly property bool shown: face.showPowerChips && face.powerChips.length > 0 && (face.mode === "apps" || face.mode === "commands")
         property real reveal: powerChips.shown ? 1 : 0
 
         anchors.right: parent.right

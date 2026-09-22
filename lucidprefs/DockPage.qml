@@ -286,12 +286,65 @@ Column {
         SettingRow {
             title: "Power buttons"
             resetKey: "launcherPowerChips"
-            description: "Lock, suspend, restart and shut down buttons next to the search field. Restart and shut down ask for a second click."
+            description: "Buttons next to the search field to lock, suspend, restart or shut down. The ones that end the session ask for a second click."
 
             M3Switch {
                 checked: Prefs.launcherPowerChips
                 onToggled: (v) => {
                     return Prefs.launcherPowerChips = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Buttons to show"
+            resetKey: "launcherPowerButtons"
+            description: "Each one you pick takes a little room from the search field."
+            stacked: true
+            enabled: Prefs.launcherPowerChips
+            disabledReason: "Turn on power buttons to choose which ones appear."
+
+            M3Chips {
+                width: parent.width
+                multi: true
+                enabled: Prefs.launcherPowerChips
+                selectedKeys: Prefs.powerButtonList
+                options: [{
+                    "key": "lock",
+                    "label": "Lock"
+                }, {
+                    "key": "logout",
+                    "label": "Log out"
+                }, {
+                    "key": "suspend",
+                    "label": "Suspend"
+                }, {
+                    "key": "hibernate",
+                    "label": "Hibernate"
+                }, {
+                    "key": "reboot",
+                    "label": "Restart"
+                }, {
+                    "key": "shutdown",
+                    "label": "Shut down"
+                }]
+                onChosen: (k) => {
+                    return Prefs.setPowerButton(k, Prefs.powerButtonList.indexOf(k) === -1);
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Power actions in search"
+            resetKey: "launcherPowerSearch"
+            description: "Typing at least three letters of lock, suspend, restart, shut down and the like offers them as results. Restart, shut down and log out still want a second Return."
+
+            M3Switch {
+                checked: Prefs.launcherPowerSearch
+                onToggled: (v) => {
+                    return Prefs.launcherPowerSearch = v;
                 }
             }
 
