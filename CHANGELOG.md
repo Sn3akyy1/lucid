@@ -2,6 +2,40 @@
 
 All notable changes to Lucid are recorded here, newest first.
 
+## v1.10.5 — 2026-09-22
+
+The shell disappeared after a restart. This release fixes that.
+
+### Fixed
+
+- **The shell starts on login again.** After a reboot or a new login, the
+  wallpaper came back but the bar, dock and widgets did not, and re-running
+  `install.sh` was the only way to get them back. The line in
+  `modules/autostart.lua` that starts the shell opened with `[ -x … ]`, and
+  Hyprland reads a command that opens with `[...]` as exec rules (as in
+  `[workspace 2] kitty`), so it ran nothing, silently. It uses `test -x` now.
+  Found by @ciroenrique4-eng in #28.
+
+### Upgrading
+
+Pull and re-run. The installer replaces `~/.config/hypr/modules/autostart.lua`
+with the fixed one.
+
+```sh
+git pull
+./install.sh
+```
+
+If you kept your own Hyprland config when the installer asked, nothing in it
+starts Lucid. Add this to `~/.config/hypr/hyprland.lua`:
+
+```lua
+hl.on("hyprland.start", function ()
+    local launcher = os.getenv("HOME") .. "/.config/lucid/launch-shell.sh"
+    hl.exec_cmd("test -x '" .. launcher .. "' && exec '" .. launcher .. "' || exec quickshell")
+end)
+```
+
 ## v1.1.0 — 2026-09-17
 
 Everything the shell asks you for, it now asks for itself: a lock screen that
