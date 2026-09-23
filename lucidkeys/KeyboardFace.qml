@@ -255,7 +255,7 @@ Item {
 
                         Rectangle {
                             anchors.fill: parent
-                            radius: width / 2
+                            radius: Theme.pill(width)
                             color: Theme.alpha(Theme.text, ctlHover.hovered && !ctl.dead ? Theme.stateHover : 0)
 
                             Behavior on color {

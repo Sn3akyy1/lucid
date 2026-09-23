@@ -31,7 +31,7 @@ Flow {
 
             width: label.implicitWidth + 30
             height: 36
-            radius: Theme.shapeFull
+            radius: Theme.pill(height)
             color: chip.selected ? Theme.accentContainer : Theme.bgSunken
             opacity: chips.enabled ? 1 : 0.38
 

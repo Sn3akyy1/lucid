@@ -36,14 +36,14 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: width / 2
+        radius: Theme.pill(width)
         color: btn.baseColor
     }
 
     // the state layer, m3's one honest way to show a pointer is here
     Rectangle {
         anchors.fill: parent
-        radius: width / 2
+        radius: Theme.pill(width)
         color: btn.hoverColor
         opacity: btn.pressed ? Theme.statePressed : (btn.hovered ? Theme.stateHover : 0)
 

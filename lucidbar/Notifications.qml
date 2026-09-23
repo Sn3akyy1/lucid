@@ -240,7 +240,7 @@ BarPill {
                 anchors.verticalCenter: parent.verticalCenter
                 height: 16
                 width: root.notifCount > 0 ? Math.max(16, badgeText.implicitWidth + 8) : 0
-                radius: 999
+                radius: Theme.pill(height)
                 color: root.badgeColor
                 opacity: root.notifCount > 0 ? 1 : 0
                 scale: root.notifCount > 0 ? 1 : 0.4
@@ -491,7 +491,7 @@ BarPill {
                         anchors.centerIn: parent
                         width: overflowRow.implicitWidth + 22
                         height: 26
-                        radius: height / 2
+                        radius: Theme.pill(height)
                         color: overflowArea.containsMouse ? Theme.withBlur(Theme.bgActive) : Theme.withBlur(Theme.bg)
 
                         Row {

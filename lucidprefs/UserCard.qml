@@ -21,7 +21,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: height / 2
+        radius: Theme.pill(height)
         color: card.selected ? Theme.secondaryContainer : Theme.bgTile
 
         Behavior on color {

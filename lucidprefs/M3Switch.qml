@@ -26,7 +26,7 @@ Item {
         id: track
 
         anchors.fill: parent
-        radius: height / 2
+        radius: Theme.pill(height)
         color: sw.checked ? Theme.accent : Theme.bgHigh
         border.width: sw.checked ? 0 : 2
         border.color: Theme.outlineStrong
@@ -75,7 +75,7 @@ Item {
 
         width: handle.size
         height: handle.size
-        radius: handle.size / 2
+        radius: Theme.pill(handle.size)
         x: sw.checked ? handle.onX : handle.restX
         anchors.verticalCenter: parent.verticalCenter
         color: sw.checked ? Theme.fgAccent : Theme.outlineStrong

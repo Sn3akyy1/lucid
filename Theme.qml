@@ -124,24 +124,36 @@ Singleton {
     readonly property real stateFocus: 0.1
     readonly property real statePressed: 0.1
     readonly property real stateDragged: 0.16
-    readonly property int radiusPill: 999
-    readonly property int radiusXs: 8
-    readonly property int radiusSm: 12
-    readonly property int radiusMd: 16
-    readonly property int radiusLg: 20
-    readonly property int radiusXl: 28
+    // how round the whole shell is: every corner below is the authored dp times
+    // this, so one slider squares the shell off. 1 is the shipped shape scale.
+    readonly property real radiusScale: pf.radiusScale
+
+    function rad(px) {
+        return Math.round(px * root.radiusScale);
+    }
+    // a pill or a circle, by its short side: fully round up to 1, and below
+    // that it squares off with the rest (radiusPill would stay a pill until 0)
+    function pill(size) {
+        return Math.round(size / 2 * Math.min(1, root.radiusScale));
+    }
+    readonly property int radiusPill: root.rad(999)
+    readonly property int radiusXs: root.rad(8)
+    readonly property int radiusSm: root.rad(12)
+    readonly property int radiusMd: root.rad(16)
+    readonly property int radiusLg: root.rad(20)
+    readonly property int radiusXl: root.rad(28)
 
     // m3 shape scale, in dp
     readonly property int shapeNone: 0
-    readonly property int shapeXs: 4
-    readonly property int shapeSm: 8
-    readonly property int shapeMd: 12
-    readonly property int shapeLg: 16
-    readonly property int shapeLgInc: 20
-    readonly property int shapeXl: 28
-    readonly property int shapeXlInc: 32
-    readonly property int shapeXxl: 48
-    readonly property int shapeFull: 999
+    readonly property int shapeXs: root.rad(4)
+    readonly property int shapeSm: root.rad(8)
+    readonly property int shapeMd: root.rad(12)
+    readonly property int shapeLg: root.rad(16)
+    readonly property int shapeLgInc: root.rad(20)
+    readonly property int shapeXl: root.rad(28)
+    readonly property int shapeXlInc: root.rad(32)
+    readonly property int shapeXxl: root.rad(48)
+    readonly property int shapeFull: root.rad(999)
 
     // m3 surface containers, under their spec names
     readonly property color surfaceLowest: root.bgOpaque
@@ -409,6 +421,7 @@ Singleton {
 
             property real accentPunch: 1
             property real surfaceDarkness: -1
+            property real radiusScale: 1
             property real surfaceTint: -1
             property real motionScale: 1
             property real barMotionScale: 1.35

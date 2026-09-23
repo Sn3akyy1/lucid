@@ -21,7 +21,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: area.pressed ? Theme.shapeSm : width / 2
+        radius: area.pressed ? Theme.shapeSm : Theme.pill(width)
         color: btn.active ? btn.activeTint : Theme.text
         opacity: {
             if (!btn.enabled)

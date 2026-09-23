@@ -396,7 +396,7 @@ Item {
             anchors.leftMargin: face.pad
             anchors.rightMargin: face.pad
             height: 34
-            radius: Theme.radiusPill
+            radius: Theme.pill(height)
             color: Theme.withBlur(Theme.bgTile)
 
             Row {

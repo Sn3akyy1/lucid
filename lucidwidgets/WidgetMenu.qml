@@ -175,7 +175,7 @@ Item {
 
                             width: chipLabel.implicitWidth + 22
                             height: 30
-                            radius: 15
+                            radius: Theme.rad(15)
                             color: chip.selected ? Theme.accentContainer : (chipArea.containsMouse ? Theme.bgActive : Theme.bgHover)
 
                             Behavior on color {
@@ -289,7 +289,7 @@ Item {
 
                             width: (menu.panelW - 24 - 8) / 2
                             height: 32
-                            radius: 16
+                            radius: Theme.rad(16)
                             color: sizeArea.containsMouse ? Theme.bgActive : Theme.bgHover
 
                             Behavior on color {
@@ -477,7 +477,7 @@ Item {
                 Rectangle {
                     width: (parent.width - 8) / 2
                     height: 36
-                    radius: 18
+                    radius: Theme.rad(18)
                     color: dupArea.containsMouse ? Theme.bgActive : Theme.bgHover
 
                     Behavior on color {
@@ -527,7 +527,7 @@ Item {
                 Rectangle {
                     width: (parent.width - 8) / 2
                     height: 36
-                    radius: 18
+                    radius: Theme.rad(18)
                     color: remArea.containsMouse ? Theme.errorContainer : Theme.bgHover
 
                     Behavior on color {

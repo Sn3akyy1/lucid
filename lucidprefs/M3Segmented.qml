@@ -39,7 +39,7 @@ Item {
                 readonly property bool selected: seg.current === cell.modelData.key
                 readonly property bool isFirst: cell.index === 0
                 readonly property bool isLast: cell.index === seg.options.length - 1
-                readonly property real outer: seg.height / 2
+                readonly property real outer: Theme.pill(seg.height)
                 readonly property real inner: cell.selected ? Theme.shapeMd : Theme.shapeXs
 
                 width: seg.options.length > 0 ? (seg.width - seg.gap * (seg.options.length - 1)) / seg.options.length : 0

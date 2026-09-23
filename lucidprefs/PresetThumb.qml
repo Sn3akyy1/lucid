@@ -87,7 +87,7 @@ ClippingRectangle {
             y: Prefs.effectiveBarTopMargin * thumb.fit
             width: thumb.width * modelData[1]
             height: Math.max(2, Prefs.barHeight * thumb.fit)
-            radius: height / 2
+            radius: Theme.pill(height)
             color: Theme.bgOpaque
         }
 
@@ -99,7 +99,7 @@ ClippingRectangle {
         anchors.bottomMargin: Prefs.effectiveDockBottomMargin * thumb.fit
         width: thumb.width * 0.22
         height: Math.max(3, (Prefs.dockIconSize + 20) * thumb.fit)
-        radius: height * 0.3
+        radius: height * 0.3 * Theme.radiusScale
         color: Theme.bgOpaque
         visible: Prefs.dockEnabled && !Prefs.dockAutoHide
     }

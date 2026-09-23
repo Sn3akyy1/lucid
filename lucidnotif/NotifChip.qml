@@ -12,7 +12,7 @@ Rectangle {
 
     implicitWidth: row.implicitWidth + (chip.iconPath !== "" ? 20 : 24)
     implicitHeight: 26
-    radius: area.pressed ? Theme.shapeSm : height / 2
+    radius: area.pressed ? Theme.shapeSm : Theme.pill(height)
     color: area.pressed ? Theme.accentPressed : (area.containsMouse ? Theme.accentHover : Theme.accent)
 
     Row {

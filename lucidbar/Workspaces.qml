@@ -1098,7 +1098,7 @@ Item {
                     y: (parent.height - height) / 2
                     width: 0
                     height: 0
-                    radius: 999
+                    radius: Theme.radiusPill
                     color: activePill.litWs && activePill.litWs.urgent ? Theme.error : Theme.accent
                     onOffXChanged: activePill.place()
                     onOffWChanged: activePill.place()
@@ -1181,7 +1181,7 @@ Item {
                         y: (parent.height - height) / 2
                         width: root.slotWidth(dot.index)
                         height: root.slotHeight(dot.index)
-                        radius: 999
+                        radius: Theme.radiusPill
                         color: dot.isUrgent ? Theme.error : (root.rowHovered || dot.index === root.activeSlot ? "transparent" : Theme.withBlur(Theme._darken(Theme.subtext, 0.45)))
 
                         Text {
@@ -1594,7 +1594,7 @@ Item {
 
                             width: root.previewW
                             height: root.previewH
-                            radius: 10
+                            radius: Theme.rad(10)
                             color: tile.highlighted ? Theme.bgHover : "transparent"
                             border.color: tile.isUrgent ? Theme.error : ((tile.isActive || tile.highlighted || tile.isDropTarget) ? Theme.accent : Theme.alpha(Theme.text, 0.25))
                             border.width: (tile.isActive || tile.isUrgent || tile.highlighted || tile.isDropTarget) ? 2 : 1
@@ -1730,7 +1730,7 @@ Item {
                         y: dragHandler.active ? thumb.dragOriginY + dragHandler.translation.y : thumb.restY
                         width: thumb.restW
                         height: thumb.restH
-                        radius: 6
+                        radius: Theme.rad(6)
                         color: Theme.withBlur(Theme.bgSunken)
                         border.width: dragHandler.active || thumb.isSwapTarget || thumb.focused ? 2 : 1
                         border.color: thumb.isSwapTarget || dragHandler.active || thumb.focused ? Theme.accent : Theme.alpha(Theme.text, 0.25)

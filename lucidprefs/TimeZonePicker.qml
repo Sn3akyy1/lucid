@@ -245,7 +245,7 @@ Item {
 
                 width: list.width - 14
                 height: 48
-                radius: height / 2
+                radius: Theme.pill(height)
                 color: zoneRow.current ? Theme.accentContainer : (rowArea.containsMouse ? Theme.bgHover : "transparent")
 
                 Text {

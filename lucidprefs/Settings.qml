@@ -710,7 +710,7 @@ FloatingWindow {
                                 // m3 active indicator: a full-shape tonal pill
                                 Rectangle {
                                     anchors.fill: parent
-                                    radius: height / 2
+                                    radius: Theme.pill(height)
                                     color: navItem.selected ? Theme.secondaryContainer : "transparent"
 
                                     Behavior on color {

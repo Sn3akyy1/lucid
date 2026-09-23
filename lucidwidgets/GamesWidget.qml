@@ -252,7 +252,7 @@ WidgetBody {
                         anchors.centerIn: parent
                         width: 42
                         height: 42
-                        radius: 21
+                        radius: Theme.rad(21)
                         color: Theme.accent
                         opacity: (tile.hot || tile.starting) ? 1 : 0
 
@@ -444,7 +444,7 @@ WidgetBody {
 
                 implicitWidth: playRow.implicitWidth + 28
                 implicitHeight: 32
-                radius: height / 2
+                radius: Theme.pill(height)
                 color: playArea.containsMouse ? Theme.accentHover : Theme.accent
 
                 Row {
@@ -585,7 +585,7 @@ WidgetBody {
                             anchors.verticalCenter: parent.verticalCenter
                             width: 76
                             height: 36
-                            radius: 7
+                            radius: Theme.rad(7)
                             wide: true
                             game: row.modelData
                         }
@@ -658,7 +658,7 @@ WidgetBody {
         property bool wide: false
         readonly property string file: cover.game ? (cover.wide ? (cover.game.header || cover.game.capsule || "") : (cover.game.capsule || cover.game.header || "")) : ""
 
-        radius: 10
+        radius: Theme.rad(10)
         color: cover.game ? Theme.alpha(w.tint(cover.game.name), 0.24) : Theme.alpha(Theme.text, 0.07)
 
         Text {

@@ -281,7 +281,7 @@ Item {
                 anchors.margins: 10
                 width: 24
                 height: 24
-                radius: 12
+                radius: Theme.rad(12)
                 color: Theme.accent
                 opacity: slot.isApplied ? 1 : 0
                 visible: opacity > 0.01

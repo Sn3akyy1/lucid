@@ -81,7 +81,7 @@ Item {
 
         width: row.slotSize
         height: row.slotSize
-        radius: Math.round(14 * row.slotSize / 46)
+        radius: Math.round(Theme.rad(14) * row.slotSize / 46)
         color: Theme.alpha(Theme.accent, 0.15)
         visible: row.dragMode === "reorder" && row.dropActive && row.dropIndex >= 0
         x: Math.max(0, Math.min(row.dropIndex, row.count)) * row.slotPitch

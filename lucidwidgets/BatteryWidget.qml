@@ -217,7 +217,7 @@ WidgetBody {
                 anchors.right: parent.right
                 anchors.rightMargin: 7
                 height: parent.height
-                radius: 9
+                radius: Theme.rad(9)
                 color: Theme.alpha(Theme.text, 0.1)
 
                 Rectangle {

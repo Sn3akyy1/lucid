@@ -162,7 +162,7 @@ SettingCard {
 
                         width: chipText.implicitWidth + 24
                         height: 30
-                        radius: 15
+                        radius: Theme.rad(15)
                         color: chip.selected ? Theme.accentContainer : (chipArea.containsMouse ? Theme.bgHover : Theme.bgSunken)
 
                         Behavior on color {
@@ -212,7 +212,7 @@ SettingCard {
 
         width: btn.primary ? 48 : 40
         height: btn.primary ? 48 : 40
-        radius: width / 2
+        radius: Theme.pill(width)
         anchors.verticalCenter: parent ? parent.verticalCenter : undefined
         color: btn.primary ? (btnArea.containsMouse ? Theme.accentHover : Theme.accent) : (btnArea.containsMouse ? Theme.bgHover : Theme.bgSunken)
         scale: btnArea.pressed ? 0.94 : 1

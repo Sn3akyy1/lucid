@@ -112,7 +112,7 @@ BarPill {
                 anchors.verticalCenter: parent.verticalCenter
                 height: 16
                 width: root.trayCount > 0 ? Math.max(16, countText.implicitWidth + 8) : 0
-                radius: 999
+                radius: Theme.pill(height)
                 color: Theme.accent
                 opacity: root.trayCount > 0 ? 1 : 0
                 scale: root.trayCount > 0 ? 1 : 0.4
@@ -392,7 +392,7 @@ BarPill {
                                     anchors.verticalCenter: parent.verticalCenter
                                     width: 5
                                     height: 5
-                                    radius: 999
+                                    radius: Theme.radiusPill
                                     color: Theme.accent
                                 }
 
@@ -564,7 +564,7 @@ BarPill {
                 Rectangle {
                     visible: !cardIconImage.visible
                     anchors.fill: parent
-                    radius: 999
+                    radius: Theme.pill(width)
                     color: Theme.withBlur(Theme.bgHigh)
 
                     Text {
@@ -584,7 +584,7 @@ BarPill {
                     anchors.top: parent.top
                     width: 8
                     height: 8
-                    radius: 999
+                    radius: Theme.radiusPill
                     color: Theme.accent
                     border.width: 2
                     border.color: Theme.bgOpaque

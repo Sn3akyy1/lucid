@@ -210,7 +210,7 @@ Column {
 
                         width: pill.implicitWidth + 20
                         height: 24
-                        radius: 12
+                        radius: Theme.rad(12)
                         color: tone
 
                         Text {
@@ -376,7 +376,7 @@ Column {
                             anchors.horizontalCenter: parent.horizontalCenter
                             width: 52
                             height: 52
-                            radius: 26
+                            radius: Theme.rad(26)
                             color: "transparent"
                             border.width: 1.6
                             border.color: Theme.outlineStrong

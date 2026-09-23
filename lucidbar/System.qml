@@ -983,7 +983,7 @@ BarPill {
                 anchors.verticalCenter: parent.verticalCenter
                 width: kbText.implicitWidth + 10
                 height: 18
-                radius: 9
+                radius: Theme.rad(9)
                 color: kbArea.containsMouse ? Theme.alpha(Theme.text, 0.1) : "transparent"
 
                 Text {
@@ -1756,7 +1756,7 @@ BarPill {
                                             anchors.verticalCenter: parent.verticalCenter
                                             height: 22
                                             width: diskTriggerRow.implicitWidth + 18
-                                            radius: Theme.shapeFull
+                                            radius: Theme.pill(height)
                                             color: Theme.withBlur(Theme.bgHigh)
                                             visible: root.diskList.length > 0
                                             scale: diskTriggerArea.pressed ? 0.96 : 1
@@ -2306,7 +2306,7 @@ BarPill {
                 anchors.topMargin: 9
                 width: 28
                 height: 28
-                radius: Theme.shapeFull
+                radius: Theme.pill(width)
                 color: "transparent"
 
                 StateLayer {
@@ -2414,7 +2414,7 @@ BarPill {
 
         width: btn.diameter
         height: btn.diameter
-        radius: Theme.shapeFull
+        radius: Theme.pill(btn.diameter)
         color: btn.bg
 
         StateLayer {
@@ -2451,7 +2451,7 @@ BarPill {
 
         width: 44
         height: 26
-        radius: Theme.shapeFull
+        radius: Theme.pill(height)
         color: sw.checked ? Theme.accent : Theme.withBlur(Theme.bgHigh)
 
         Rectangle {
@@ -2459,7 +2459,7 @@ BarPill {
 
             width: sw.checked ? 22 : 16
             height: width
-            radius: Theme.shapeFull
+            radius: Theme.pill(width)
             anchors.verticalCenter: parent.verticalCenter
             x: sw.checked ? sw.width - width - 2 : 5
             color: sw.checked ? Theme.bgOpaque : Theme.outlineStrong
@@ -2546,7 +2546,7 @@ BarPill {
             anchors.verticalCenter: parent.verticalCenter
             width: Math.max(0, sl.handleX - sl.notch)
             height: sl.trackH
-            radius: sl.trackH / 2
+            radius: Theme.pill(sl.trackH)
             topRightRadius: 2
             bottomRightRadius: 2
             color: sl.liveColor
@@ -2567,7 +2567,7 @@ BarPill {
             anchors.verticalCenter: parent.verticalCenter
             width: Math.max(0, sl.width - inactiveTrack.x)
             height: sl.trackH
-            radius: sl.trackH / 2
+            radius: Theme.pill(sl.trackH)
             topLeftRadius: 2
             bottomLeftRadius: 2
             color: Theme.withBlur(Theme.bgHigh)
@@ -2653,7 +2653,7 @@ BarPill {
             anchors.verticalCenter: parent.verticalCenter
             width: 32
             height: 32
-            radius: Theme.shapeFull
+            radius: Theme.pill(width)
             color: "transparent"
 
             StateLayer {

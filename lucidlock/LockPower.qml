@@ -29,7 +29,7 @@ Rectangle {
     property real morph: bar.pending !== "" ? 1 : 0
 
     height: 60
-    radius: 999
+    radius: Theme.pill(height)
     color: Lockscreen.card
     // no Behavior here on purpose: actions.implicitWidth is already a live,
     // animating number, and easing it again is what put the bar out of step
@@ -93,7 +93,7 @@ Rectangle {
 
         Rectangle {
             anchors.fill: parent
-            radius: 999
+            radius: Theme.pill(height)
             color: pb.danger ? Theme.alpha(Theme.error, 0.18) : Theme.alpha(Theme.text, 0.12)
             // ahead of the opening, so the container is there to grow into
             opacity: Math.min(1, pb.openK * 2.6)
@@ -186,7 +186,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             width: cancelText.implicitWidth + 28
             height: 40
-            radius: 999
+            radius: Theme.pill(height)
             color: cancelHover.hovered ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent"
 
             Text {
@@ -218,7 +218,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             width: goText.implicitWidth + 32
             height: 40
-            radius: 999
+            radius: Theme.pill(height)
             color: goHover.hovered ? Theme.atTone(Theme.error, Theme.toneOf(Theme.error) + (Theme.isLight ? -6 : 6)) : Theme.error
             scale: goTap.pressed ? 0.94 : 1
 

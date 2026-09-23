@@ -94,7 +94,7 @@ Column {
 
             Rectangle {
                 anchors.fill: parent
-                radius: 13
+                radius: Theme.rad(13)
                 color: Theme.alpha(Theme.accent, dev.isConnected ? 0.24 : 0.11)
 
                 Behavior on color {
@@ -361,7 +361,7 @@ Column {
 
                             width: profLabel.implicitWidth + 24
                             height: 30
-                            radius: 15
+                            radius: Theme.rad(15)
                             color: prof.selected ? Theme.accentContainer : (profArea.containsMouse ? Theme.bgHover : Theme.bgSunken)
 
                             Text {

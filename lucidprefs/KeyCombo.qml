@@ -26,7 +26,7 @@ Row {
             anchors.verticalCenter: parent.verticalCenter
             height: combo.capHeight
             width: Math.max(combo.capHeight, cap.implicitWidth + 16)
-            radius: 7
+            radius: Theme.rad(7)
             color: combo.capColor
             border.width: 1
             border.color: Theme.alpha(Theme.outline, 0.6)

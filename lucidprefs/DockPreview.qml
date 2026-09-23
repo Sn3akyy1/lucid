@@ -57,7 +57,7 @@ Rectangle {
                         Rectangle {
                             anchors.fill: parent
                             anchors.margins: 1
-                            radius: width * 0.24
+                            radius: width * 0.24 * Theme.radiusScale
                             scale: Prefs.dockMagnify && parent.index === 2 ? 1.35 : 1
                             color: Theme.alpha(Theme.text, parent.index === 2 ? 0.5 : 0.28)
 

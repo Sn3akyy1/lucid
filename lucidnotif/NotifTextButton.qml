@@ -17,7 +17,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: area.pressed ? Theme.shapeSm : height / 2
+        radius: area.pressed ? Theme.shapeSm : Theme.pill(height)
         color: btn.labelColor
         opacity: !btn.enabled ? 0 : (area.pressed ? Theme.statePressed : (area.containsMouse ? Theme.stateHover : 0))
 

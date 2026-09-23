@@ -30,7 +30,7 @@ Singleton {
 
     readonly property bool barNotch: root.barStyle === "notch"
     readonly property bool dockNotch: root.dockStyle === "notch"
-    readonly property int barPillRadius: Math.min(18, Math.round(root.barHeight / 2))
+    readonly property int barPillRadius: Math.round(Math.min(18, Math.round(root.barHeight / 2)) * root.radiusScale)
     readonly property int effectiveBarTopMargin: root.barNotch ? 0 : root.barTopMargin
     readonly property int effectiveDockBottomMargin: root.dockNotch ? 0 : root.dockBottomMargin
     readonly property bool anyBarModuleEnabled: root.showWorkspaces || root.showMedia || root.showTray || root.showClock || root.showNotifications || root.showSystem
@@ -47,6 +47,7 @@ Singleton {
     property alias dockStyle: s.dockStyle
     property alias accentPunch: s.accentPunch
     property alias surfaceDarkness: s.surfaceDarkness
+    property alias radiusScale: s.radiusScale
     property alias surfaceTint: s.surfaceTint
     property alias motionScale: s.motionScale
     property alias fontFamily: s.fontFamily
@@ -289,6 +290,7 @@ Singleton {
         "dockStyle": "island",
         "accentPunch": 1,
         "surfaceDarkness": -1,
+        "radiusScale": 1,
         "surfaceTint": -1,
         "motionScale": 1,
         "fontFamily": "Google Sans",
@@ -715,6 +717,7 @@ Singleton {
             property string dockStyle: "island"
             property real accentPunch: 1
             property real surfaceDarkness: -1
+            property real radiusScale: 1
             property real surfaceTint: -1
             property real motionScale: 1
             property string fontFamily: "Google Sans"

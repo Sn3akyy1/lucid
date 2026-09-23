@@ -30,7 +30,7 @@ Column {
 
             width: 38
             height: 38
-            radius: 19
+            radius: Theme.rad(19)
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             color: backArea.containsMouse ? Theme.bgHover : Theme.bgTile

@@ -30,7 +30,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: width / 2
+        radius: Theme.pill(width)
         color: btn.filled ? Theme.accent : (btn.active ? Theme.alpha(btn.activeColor, 0.18) : (btn.surface ? btn.surfaceColor : "transparent"))
 
         Behavior on color {
@@ -44,7 +44,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: width / 2
+        radius: Theme.pill(width)
         color: btn.stateColor
         opacity: !btn.enabled ? 0 : (area.pressed ? Theme.statePressed : (area.containsMouse ? Theme.stateHover : 0))
 

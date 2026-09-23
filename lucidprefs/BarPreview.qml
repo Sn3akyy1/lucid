@@ -71,10 +71,10 @@ Rectangle {
                     width: screen.width * modelData
                     height: screen.modH
                     color: Theme.bgOpaque
-                    topLeftRadius: Prefs.barNotch ? 0 : height / 2
-                    topRightRadius: Prefs.barNotch ? 0 : height / 2
-                    bottomLeftRadius: height / 2
-                    bottomRightRadius: height / 2
+                    topLeftRadius: Prefs.barNotch ? 0 : Theme.pill(height)
+                    topRightRadius: Prefs.barNotch ? 0 : Theme.pill(height)
+                    bottomLeftRadius: Theme.pill(height)
+                    bottomRightRadius: Theme.pill(height)
 
                     Behavior on color {
                         ColorAnimation {
@@ -97,10 +97,10 @@ Rectangle {
             width: screen.width * 0.13
             height: screen.modH
             color: Theme.bgOpaque
-            topLeftRadius: Prefs.barNotch ? 0 : height / 2
-            topRightRadius: Prefs.barNotch ? 0 : height / 2
-            bottomLeftRadius: height / 2
-            bottomRightRadius: height / 2
+            topLeftRadius: Prefs.barNotch ? 0 : Theme.pill(height)
+            topRightRadius: Prefs.barNotch ? 0 : Theme.pill(height)
+            bottomLeftRadius: Theme.pill(height)
+            bottomRightRadius: Theme.pill(height)
 
             Behavior on y {
                 NumberAnimation {
@@ -143,10 +143,10 @@ Rectangle {
                     width: screen.width * modelData
                     height: screen.modH
                     color: Theme.bgOpaque
-                    topLeftRadius: Prefs.barNotch ? 0 : height / 2
-                    topRightRadius: Prefs.barNotch ? 0 : height / 2
-                    bottomLeftRadius: height / 2
-                    bottomRightRadius: height / 2
+                    topLeftRadius: Prefs.barNotch ? 0 : Theme.pill(height)
+                    topRightRadius: Prefs.barNotch ? 0 : Theme.pill(height)
+                    bottomLeftRadius: Theme.pill(height)
+                    bottomRightRadius: Theme.pill(height)
 
                     Behavior on color {
                         ColorAnimation {
@@ -170,10 +170,10 @@ Rectangle {
                     height: screen.modH
                     color: Theme.bgOpaque
                     visible: Prefs.barPopupMode
-                    topLeftRadius: Prefs.barNotch ? 0 : height / 2
-                    topRightRadius: Prefs.barNotch ? 0 : height / 2
-                    bottomLeftRadius: height / 2
-                    bottomRightRadius: height / 2
+                    topLeftRadius: Prefs.barNotch ? 0 : Theme.pill(height)
+                    topRightRadius: Prefs.barNotch ? 0 : Theme.pill(height)
+                    bottomLeftRadius: Theme.pill(height)
+                    bottomRightRadius: Theme.pill(height)
                 }
 
                 Rectangle {

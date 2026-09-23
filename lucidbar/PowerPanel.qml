@@ -28,7 +28,7 @@ Item {
 
                 width: col.width
                 height: 50
-                radius: 12
+                radius: Theme.rad(12)
                 color: option.selected ? Theme.withBlur(Theme.bgActive) : (optionArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent")
 
                 Row {
@@ -40,7 +40,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 30
                         height: 30
-                        radius: 9
+                        radius: Theme.rad(9)
                         color: Theme.alpha(Theme.accent, option.selected ? 0.22 : 0.12)
 
                         Shape {
@@ -101,7 +101,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 18
                         height: 18
-                        radius: 9
+                        radius: Theme.rad(9)
                         color: "transparent"
                         border.width: 2
                         border.color: option.selected ? Theme.accent : Theme.outlineStrong

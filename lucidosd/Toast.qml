@@ -201,7 +201,7 @@ PanelWindow {
         y: toastWindow.shown ? 20 : 2
         height: toastWindow.pillHeight
         width: leadIcon.width + toastWindow.iconGap + labelText.width + (detailText.visible ? toastWindow.iconGap + detailText.width : 0) + toastWindow.pillPad * 2
-        radius: Theme.shapeFull
+        radius: Theme.pill(height)
         color: Theme.bg
         opacity: toastWindow.shown ? 1 : 0
         scale: toastWindow.shown ? 1 : 0.92
@@ -270,7 +270,7 @@ PanelWindow {
                 anchors.centerIn: parent
                 width: parent.width
                 height: parent.height
-                radius: Theme.shapeFull
+                radius: Theme.pill(width)
                 color: toastWindow.swatch
                 // a near-black pick would vanish into the pill without this
                 border.color: Theme.alpha(Theme.text, 0.25)
