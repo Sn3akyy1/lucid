@@ -831,11 +831,17 @@ empty. Set a wallpaper through Settings → General, or copy a bundled palette:
 `cp ~/.config/lucid/themes/nord/quickshell.json ~/.cache/quickshell/matugen.json`
 
 **The blur frosts my windows instead of the desktop.** Hyprland's blur samples
-whatever is behind the layer. Add to `hyprland.conf`:
+whatever is behind the layer. Lucid leaves that on so a panel opened over a
+window shows the window; if you would rather have every pill frost the
+wallpaper, uncomment the `xray` line at the end of
+`~/.config/hypr/modules/layerrules.lua`, or add this to `hyprland.lua`:
 
+```lua
+hl.layer_rule({ match = { namespace = "quickshell" }, xray = true })
 ```
-layerrule = xray 1, quickshell
-```
+
+A Lua config cannot source a `.conf` file, so the old `layerrule = xray 1,
+quickshell` line has nowhere to go.
 
 **Icons look blurry.** A fractional `monitor` scale factor puts icons on
 fractional pixels. Use an integer scale, or adjust the icon size in Settings.
