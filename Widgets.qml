@@ -70,6 +70,12 @@ Singleton {
             "w": 212,
             "h": 212
         }, {
+            "id": "shape",
+            "name": "Shape",
+            "blurb": "The time set inside one big expressive shape.",
+            "w": 220,
+            "h": 220
+        }, {
             "id": "minimal",
             "name": "Minimal",
             "blurb": "One line of time, no container behind it.",
@@ -108,10 +114,27 @@ Singleton {
             "type": "bool",
             "def": true
         }, {
-            "key": "accentTime",
-            "label": "Tint the time",
-            "type": "bool",
-            "def": false
+            "key": "shape",
+            "label": "Shape",
+            "type": "choice",
+            "def": "cookie9",
+            "variants": ["shape"],
+            "choices": [{
+                "key": "cookie9",
+                "label": "Cookie"
+            }, {
+                "key": "sunny",
+                "label": "Sunny"
+            }, {
+                "key": "clover8",
+                "label": "Clover"
+            }, {
+                "key": "pentagon",
+                "label": "Pentagon"
+            }, {
+                "key": "flower",
+                "label": "Flower"
+            }]
         }, {
             "key": "zones",
             "label": "Cities",
@@ -127,6 +150,9 @@ Singleton {
             }, {
                 "key": "asia",
                 "label": "Asia"
+            }, {
+                "key": "mine",
+                "label": "Yours"
             }]
         }]
     }, {
@@ -151,13 +177,14 @@ Singleton {
             "blurb": "One enormous date and its weekday.",
             "w": 200,
             "h": 200
+        }, {
+            "id": "agenda",
+            "name": "Agenda",
+            "blurb": "Today's date beside your next reminders.",
+            "w": 320,
+            "h": 200
         }],
         "options": [{
-            "key": "mondayFirst",
-            "label": "Week starts Monday",
-            "type": "bool",
-            "def": true
-        }, {
             "key": "showMonthName",
             "label": "Show the month",
             "type": "bool",
@@ -170,48 +197,70 @@ Singleton {
         "variants": [{
             "id": "rings",
             "name": "Rings",
-            "blurb": "One arc gauge per metric.",
-            "w": 292,
-            "h": 158
+            "blurb": "A thick ring per reading, its icon inside.",
+            "w": 320,
+            "h": 150
         }, {
             "id": "bars",
             "name": "Meters",
             "blurb": "Labelled bars stacked in a column.",
-            "w": 268,
-            "h": 194
+            "w": 300,
+            "h": 170
         }, {
             "id": "graph",
             "name": "Graph",
-            "blurb": "Two minutes of history, drawn.",
-            "w": 308,
-            "h": 186
+            "blurb": "Two minutes of the processor, drawn.",
+            "w": 320,
+            "h": 200
+        }, {
+            "id": "tiles",
+            "name": "Tiles",
+            "blurb": "Each reading in its own tile, filling as it climbs.",
+            "w": 280,
+            "h": 220
+        }, {
+            "id": "network",
+            "name": "Network",
+            "blurb": "What is coming in and going out, live.",
+            "w": 320,
+            "h": 170
         }, {
             "id": "compact",
             "name": "Compact",
             "blurb": "Just the numbers, in a row.",
-            "w": 216,
-            "h": 90
+            "w": 300,
+            "h": 80
         }],
         "options": [{
             "key": "showCpu",
             "label": "Processor",
             "type": "bool",
-            "def": true
+            "def": true,
+            "variants": ["rings", "bars", "graph", "tiles", "compact"]
         }, {
             "key": "showRam",
             "label": "Memory",
             "type": "bool",
-            "def": true
+            "def": true,
+            "variants": ["rings", "bars", "graph", "tiles", "compact"]
         }, {
             "key": "showDisk",
             "label": "Disk",
             "type": "bool",
-            "def": true
+            "def": true,
+            "variants": ["rings", "bars", "graph", "tiles", "compact"]
         }, {
             "key": "showTemp",
             "label": "Temperature",
             "type": "bool",
-            "def": false
+            "def": false,
+            "variants": ["rings", "bars", "graph", "tiles", "compact"]
+        }, {
+            "key": "showGpu",
+            "label": "Graphics, where the card reports it",
+            "type": "bool",
+            "def": false,
+            "variants": ["rings", "bars", "graph", "tiles", "compact"]
         }, {
             "key": "interval",
             "label": "Refresh",
@@ -235,21 +284,27 @@ Singleton {
         "variants": [{
             "id": "ring",
             "name": "Ring",
-            "blurb": "An arc that fills as it charges.",
-            "w": 176,
-            "h": 176
+            "blurb": "A thick ring, turning a shape while it charges.",
+            "w": 180,
+            "h": 180
         }, {
             "id": "bar",
             "name": "Bar",
-            "blurb": "A cell drawn side on.",
-            "w": 248,
-            "h": 118
+            "blurb": "The cell itself, filling side on.",
+            "w": 260,
+            "h": 112
         }, {
             "id": "detail",
             "name": "Detail",
             "blurb": "Charge, state, time left and draw.",
-            "w": 268,
-            "h": 164
+            "w": 280,
+            "h": 170
+        }, {
+            "id": "devices",
+            "name": "Devices",
+            "blurb": "This computer and every wireless battery beside it.",
+            "w": 280,
+            "h": 176
         }],
         "options": [{
             "key": "showTime",
@@ -281,11 +336,22 @@ Singleton {
         }, {
             "id": "art",
             "name": "Artwork",
-            "blurb": "The cover, with controls over it on hover.",
+            "blurb": "The cover edge to edge, the track over it.",
             "w": 244,
             "h": 244
+        }, {
+            "id": "disc",
+            "name": "Disc",
+            "blurb": "The cover as a record that turns while it plays.",
+            "w": 220,
+            "h": 220
         }],
         "options": [{
+            "key": "artTint",
+            "label": "Colours from the artwork",
+            "type": "bool",
+            "def": true
+        }, {
             "key": "showProgress",
             "label": "Progress bar",
             "type": "bool",
@@ -294,7 +360,8 @@ Singleton {
             "key": "scroll",
             "label": "Scroll long titles",
             "type": "bool",
-            "def": true
+            "def": true,
+            "variants": ["card", "row"]
         }]
     }, {
         "id": "visualiser",
@@ -351,7 +418,7 @@ Singleton {
             }]
         }, {
             "key": "tint",
-            "label": "Colour",
+            "label": "Bar colour",
             "type": "choice",
             "def": "accent",
             "choices": [{
@@ -409,6 +476,12 @@ Singleton {
             "blurb": "An icon and a number.",
             "w": 196,
             "h": 96
+        }, {
+            "id": "hourly",
+            "name": "Hourly",
+            "blurb": "The next twelve hours as a temperature curve.",
+            "w": 360,
+            "h": 188
         }],
         "options": [{
             "key": "units",
@@ -430,31 +503,32 @@ Singleton {
         "variants": [{
             "id": "sticky",
             "name": "Sticky",
-            "blurb": "A tinted square you can fill.",
+            "blurb": "A tinted square in soft, round type.",
             "w": 244,
             "h": 244
         }, {
             "id": "lined",
             "name": "Lined",
-            "blurb": "A wider sheet with a title.",
+            "blurb": "A ruled sheet that counts your words.",
             "w": 308,
-            "h": 228
+            "h": 240
+        }, {
+            "id": "headline",
+            "name": "Headline",
+            "blurb": "One line in display type, sized to fill the card.",
+            "w": 320,
+            "h": 150
         }],
         "options": [{
             "key": "tint",
-            "label": "Tint",
-            "type": "choice",
-            "def": "neutral",
-            "choices": [{
-                "key": "neutral",
-                "label": "Plain"
-            }, {
-                "key": "accent",
-                "label": "Accent"
-            }, {
-                "key": "tertiary",
-                "label": "Warm"
-            }]
+            "label": "",
+            "type": "hidden",
+            "def": ""
+        }, {
+            "key": "edited",
+            "label": "",
+            "type": "hidden",
+            "def": 0
         }, {
             "key": "text",
             "label": "",
@@ -468,15 +542,15 @@ Singleton {
         "variants": [{
             "id": "list",
             "name": "List",
-            "blurb": "Everything, done items struck through.",
-            "w": 284,
-            "h": 288
+            "blurb": "Everything, with a checkbox each.",
+            "w": 290,
+            "h": 300
         }, {
             "id": "focus",
             "name": "Focus",
-            "blurb": "Only what is still outstanding.",
-            "w": 268,
-            "h": 200
+            "blurb": "The next thing, big, with done and later.",
+            "w": 280,
+            "h": 220
         }],
         "options": [{
             "key": "hideDone",
@@ -496,15 +570,21 @@ Singleton {
         "variants": [{
             "id": "swatches",
             "name": "Roles",
-            "blurb": "The key Material roles, click one to copy it.",
-            "w": 288,
-            "h": 172
+            "blurb": "Six roles, each in its own shape. Click to copy.",
+            "w": 300,
+            "h": 232
         }, {
             "id": "ramp",
             "name": "Ramp",
             "blurb": "The accent walked down its tonal scale.",
-            "w": 276,
-            "h": 128
+            "w": 300,
+            "h": 140
+        }, {
+            "id": "scheme",
+            "name": "Scheme",
+            "blurb": "Four key colours, each a column of tones.",
+            "w": 300,
+            "h": 220
         }],
         "options": [{
             "key": "showHex",
@@ -519,21 +599,21 @@ Singleton {
         "variants": [{
             "id": "card",
             "name": "Card",
-            "blurb": "Battery, signal, and quick control buttons.",
-            "w": 268,
-            "h": 180
+            "blurb": "Battery, signal and a row of quick actions.",
+            "w": 290,
+            "h": 150
         }, {
             "id": "compact",
             "name": "Compact",
-            "blurb": "Minimal row with phone battery & ring button.",
-            "w": 216,
-            "h": 96
+            "blurb": "One row: the phone, its charge, a ring button.",
+            "w": 260,
+            "h": 80
         }, {
             "id": "remote",
             "name": "Remote",
-            "blurb": "Battery, phone media controls, and quick actions.",
-            "w": 284,
-            "h": 220
+            "blurb": "What the phone is playing, and the quick actions.",
+            "w": 300,
+            "h": 214
         }],
         "options": [{
             "key": "showShare",
@@ -551,6 +631,176 @@ Singleton {
             "type": "bool",
             "def": true
         }]
+    }, {
+        "id": "timer",
+        "name": "Timer",
+        "blurb": "Countdowns, a pomodoro and a stopwatch, shared with the bar's clock.",
+        "variants": [{
+            "id": "ring",
+            "name": "Countdown",
+            "blurb": "The nearest timer in a ring, or one-tap lengths to start one.",
+            "w": 220,
+            "h": 250
+        }, {
+            "id": "pomodoro",
+            "name": "Pomodoro",
+            "blurb": "Focus and break phases, a dot for every round.",
+            "w": 230,
+            "h": 280
+        }, {
+            "id": "stopwatch",
+            "name": "Stopwatch",
+            "blurb": "Hundredths in the accent, lap and reset beside it.",
+            "w": 280,
+            "h": 170
+        }],
+        "options": [{
+            "key": "presets",
+            "label": "Quick lengths",
+            "type": "choice",
+            "def": "1,5,10,25",
+            "variants": ["ring"],
+            "choices": [{
+                "key": "1,5,10,25",
+                "label": "Short"
+            }, {
+                "key": "5,15,30,60",
+                "label": "Long"
+            }, {
+                "key": "3,4,8,12",
+                "label": "Kitchen"
+            }]
+        }]
+    }, {
+        "id": "glance",
+        "name": "At a Glance",
+        "blurb": "The date and weather, and the one thing worth knowing now.",
+        "variants": [{
+            "id": "line",
+            "name": "On the wallpaper",
+            "blurb": "White type straight on the wallpaper, no card.",
+            "w": 460,
+            "h": 96
+        }, {
+            "id": "card",
+            "name": "Card",
+            "blurb": "The same two lines on a tonal card.",
+            "w": 440,
+            "h": 110
+        }],
+        "options": [{
+            "key": "units",
+            "label": "Units",
+            "type": "choice",
+            "def": "metric",
+            "choices": [{
+                "key": "metric",
+                "label": "°C"
+            }, {
+                "key": "imperial",
+                "label": "°F"
+            }]
+        }]
+    }, {
+        "id": "photo",
+        "name": "Photo",
+        "blurb": "A frame that turns over your pictures on its own.",
+        "variants": [{
+            "id": "frame",
+            "name": "Frame",
+            "blurb": "The photo filling the card, its date on a chip.",
+            "w": 300,
+            "h": 220
+        }, {
+            "id": "shape",
+            "name": "Shape",
+            "blurb": "Cut to an expressive shape, straight on the wallpaper.",
+            "w": 220,
+            "h": 220
+        }, {
+            "id": "polaroid",
+            "name": "Print",
+            "blurb": "A print with the day it was taken written under it.",
+            "w": 230,
+            "h": 270
+        }],
+        "options": [{
+            "key": "source",
+            "label": "Pictures from",
+            "type": "choice",
+            "def": "pictures",
+            "choices": [{
+                "key": "pictures",
+                "label": "Pictures"
+            }, {
+                "key": "wallpapers",
+                "label": "Wallpapers"
+            }, {
+                "key": "screenshots",
+                "label": "Screenshots"
+            }]
+        }, {
+            "key": "every",
+            "label": "Change every",
+            "type": "choice",
+            "def": "15",
+            "choices": [{
+                "key": "0",
+                "label": "Never"
+            }, {
+                "key": "5",
+                "label": "5 min"
+            }, {
+                "key": "15",
+                "label": "15 min"
+            }, {
+                "key": "60",
+                "label": "Hour"
+            }]
+        }, {
+            "key": "shape",
+            "label": "Shape",
+            "type": "choice",
+            "def": "cookie12",
+            "variants": ["shape"],
+            "choices": [{
+                "key": "cookie12",
+                "label": "Cookie"
+            }, {
+                "key": "clover4",
+                "label": "Clover"
+            }, {
+                "key": "arch",
+                "label": "Arch"
+            }, {
+                "key": "circle",
+                "label": "Circle"
+            }]
+        }, {
+            "key": "showDate",
+            "label": "Show the date",
+            "type": "bool",
+            "def": true,
+            "variants": ["frame"]
+        }]
+    }, {
+        "id": "fetch",
+        "name": "Fetch",
+        "blurb": "Your machine, the way a fetch script prints it.",
+        "variants": [{
+            "id": "card",
+            "name": "Card",
+            "blurb": "The Lucida mark, who you are, and a labelled list.",
+            "w": 330,
+            "h": 344
+        }, {
+            "id": "terminal",
+            "name": "Terminal",
+            "blurb": "A prompt and the fetch printed under it in mono.",
+            "w": 380,
+            "h": 318
+        }],
+        "options": []
     }]
 
     // the full-width bars every preset stands on. listed first in each, so the cards
@@ -645,6 +895,18 @@ Singleton {
             { "type": "notes", "variant": "sticky", "at": "tl", "x": 40, "y": 360, "opts": { "tint": "tertiary" } }
         ]
     }, {
+        "id": "briefing",
+        "name": "Briefing",
+        "blurb": "The day across the top, a timer and a photo under it.",
+        "cards": [
+            root.footBars,
+            { "type": "glance", "variant": "line", "at": "tl", "x": 40, "y": 96 },
+            { "type": "timer", "variant": "ring", "at": "tl", "x": 40, "y": 214 },
+            { "type": "photo", "variant": "shape", "at": "tl", "x": 300, "y": 214 },
+            { "type": "calendar", "variant": "agenda", "at": "tr", "x": 1560, "y": 96 },
+            { "type": "fetch", "variant": "terminal", "at": "tr", "x": 1510, "y": 320 }
+        ]
+    }, {
         "id": "traveller",
         "name": "Traveller",
         "blurb": "Three cities, the forecast and the week ahead.",
@@ -716,13 +978,41 @@ Singleton {
         });
     }
 
+    // every card can sit on any of the m3 containers
+    readonly property var toneOption: ({
+        "key": "tone",
+        "label": "Colour",
+        "type": "choice",
+        "def": "auto",
+        "choices": [{
+            "key": "auto",
+            "label": "Auto"
+        }, {
+            "key": "surface",
+            "label": "Surface"
+        }, {
+            "key": "primary",
+            "label": "Primary"
+        }, {
+            "key": "secondary",
+            "label": "Secondary"
+        }, {
+            "key": "tertiary",
+            "label": "Tertiary"
+        }]
+    })
+
+    function allOptions(t) {
+        return t.options.concat([root.toneOption]);
+    }
+
     // options the given variant actually honours
     function optionsFor(typeId, variantId) {
         var t = root.typeAt(typeId);
         if (!t)
             return [];
 
-        return t.options.filter((o) => {
+        return root.allOptions(t).filter((o) => {
             return o.type !== "hidden" && (!o.variants || o.variants.indexOf(variantId) >= 0);
         });
     }
@@ -733,7 +1023,8 @@ Singleton {
         if (!t)
             return out;
 
-        for (var i = 0; i < t.options.length; i++) out[t.options[i].key] = t.options[i].def
+        var all = root.allOptions(t);
+        for (var i = 0; i < all.length; i++) out[all[i].key] = all[i].def
         return out;
     }
 

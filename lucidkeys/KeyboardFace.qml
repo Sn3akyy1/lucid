@@ -184,6 +184,7 @@ Item {
                             color: tabItem.selected ? Theme.text : Theme.subtext
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontTitle
+                            font.variableAxes: Theme.axes(Theme.fontTitle, 420, 0)
                             font.weight: tabItem.selected ? Font.Medium : Font.Normal
 
                             Behavior on color {

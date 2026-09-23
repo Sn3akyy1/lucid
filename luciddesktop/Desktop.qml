@@ -191,6 +191,18 @@ Variants {
                 height: menu.open ? menuLayer.height : 0
             }
 
+            BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && menu.open) ? menuBlur : null
+
+            Region {
+                id: menuBlur
+
+                x: Math.ceil(menu.paintedX)
+                y: Math.ceil(menu.paintedY)
+                width: Math.max(0, Math.floor(menu.paintedX + menu.paintedW) - Math.ceil(menu.paintedX))
+                height: Math.max(0, Math.floor(menu.paintedY + menu.paintedH) - Math.ceil(menu.paintedY))
+                radius: Math.round(menu.paintedRadius)
+            }
+
         }
 
     }

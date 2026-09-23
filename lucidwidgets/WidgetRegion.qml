@@ -23,7 +23,7 @@ Region {
     readonly property real by: !reg.live ? 0 : (reg.isMenu ? reg.panel.y : reg.frame.y + reg.frame.surfaceY)
     readonly property real bw: !reg.live ? 0 : (reg.isMenu ? reg.panel.width : reg.frame.surfaceWidth)
     readonly property real bh: !reg.live ? 0 : (reg.isMenu ? reg.panel.height : reg.frame.surfaceHeight)
-    readonly property int rad: !reg.live ? 0 : (reg.isMenu ? Theme.radiusLg : reg.frame.surfaceRadius)
+    readonly property int rad: !reg.live ? 0 : (reg.isMenu ? (reg.panel.cornerRadius !== undefined ? reg.panel.cornerRadius : Theme.radiusLg) : reg.frame.surfaceRadius)
 
     function lo(v) {
         return Math.ceil(v - 0.002);

@@ -3,6 +3,7 @@ import QtQuick.Controls.Basic
 import Quickshell
 import Quickshell.Io
 import qs
+import qs.lucidui
 
 FloatingWindow {
     id: win
@@ -30,34 +31,31 @@ FloatingWindow {
     // grouped, and the rail draws a heading above the first page of each group.
     // a hidden page still gets a pane and a header; it just has no rail entry,
     // because something else on screen already leads to it
-    readonly property var pages: [
-        { "key": "users", "group": "Account", "label": "Account", "title": "Users and Accounts", "blurb": "Who may sign in to this machine, what they are called and what they are allowed to do", "hidden": true },
-        { "key": "general", "group": "Appearance", "label": "General", "title": "General", "blurb": "Shape, colour and motion across the whole shell" },
-        { "key": "glass", "group": "Appearance", "label": "Glass", "title": "Glass", "blurb": "How far the desktop shows through the shell, the terminal and your windows" },
-        { "key": "theme", "group": "Appearance", "label": "Theme", "title": "Theme and Appearance", "blurb": "Colour schemes, wallpapers and themes you import" },
-        { "key": "environment", "group": "Appearance", "label": "Environment", "title": "Environment", "blurb": "Cursors, icons, fonts and application themes, across GTK, Qt and Hyprland alike" },
-        { "key": "bar", "group": "Desktop", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
-        { "key": "dock", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
-        { "key": "widgets", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
-        { "key": "workspaces", "group": "Desktop", "label": "Workspaces", "title": "Special Workspaces", "blurb": "Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key" },
-        { "key": "displays", "group": "Devices", "label": "Displays", "title": "Displays", "blurb": "Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on" },
-        { "key": "sound", "group": "Devices", "label": "Sound", "title": "Sound", "blurb": "Which speakers play and which microphone listens, what each application is using, and how loud any of it is" },
-        { "key": "network", "group": "Devices", "label": "Network", "title": "Network", "blurb": "Wi-Fi, wired, VPN and how this machine gets its address" },
-        { "key": "bluetooth", "group": "Devices", "label": "Bluetooth", "title": "Bluetooth and Devices", "blurb": "The radio, what it is paired with, and the phone you connect to it" },
-        { "key": "kdeconnect", "group": "Devices", "label": "Phone", "title": "Phone", "blurb": "Your phone on this machine over KDE Connect: files, notifications, clipboard and a remote", "toggle": "kdeConnectEnabled" },
-        { "key": "notifications", "group": "System", "label": "Notifications", "title": "Notifications", "blurb": "Popups, quiet hours, sound and which applications may interrupt you", "toggle": "showNotifications" },
-        { "key": "idle", "group": "System", "label": "Idle", "title": "Idle and Sleep", "blurb": "What happens when you walk away: dimming, locking, screen off and suspend", "toggle": "idleEnabled" },
-        { "key": "datetime", "group": "System", "label": "Date & Time", "title": "Date and Time", "blurb": "Where you are, which zone the clock keeps and how it reads" },
-        { "key": "about", "group": "System", "label": "About", "title": "About", "blurb": "Lucid" }
-    ]
+    readonly property var pages: Prefs.settingsPages
 
-    // what the rail actually lists
+    // what the rail actually lists; a search narrows it to the pages that match
+    property string navQuery: ""
+    readonly property bool searching: win.navQuery.trim() !== ""
     readonly property var navPages: win.pages.filter((p) => {
-        return p.hidden !== true;
+        return (p.hidden !== true || win.searching) && win.matchesQuery(p);
     })
+
+    function matchesQuery(p) {
+        const q = win.navQuery.trim().toLowerCase();
+        if (q === "")
+            return true;
+
+        const hay = (p.label + " " + p.title + " " + p.blurb + " " + (p.keys || "")).toLowerCase();
+        return q.split(/\s+/).every((t) => {
+            return hay.indexOf(t) >= 0;
+        });
+    }
 
     // "" unless this page opens its group
     function groupAt(i) {
+        if (win.searching)
+            return i === 0 ? "Results" : "";
+
         const g = win.navPages[i] ? win.navPages[i].group : "";
         return i === 0 || win.navPages[i - 1].group !== g ? g : "";
     }
@@ -538,7 +536,7 @@ FloatingWindow {
                     size: 44
                     iconSize: 22
                     enabled: surface.width >= 880
-                    iconPath: "M3 18h18v-2H3v2Zm0-5h18v-2H3v2Zm0-7v2h18V6H3Z"
+                    iconPath: "menu"
                     onClicked: win.railWanted = !win.railWanted
                 }
 
@@ -565,6 +563,7 @@ FloatingWindow {
                             color: Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontTitleMd
+                            font.variableAxes: Theme.axes(Theme.fontTitleMd, 600, 0)
                             font.weight: Font.DemiBold
                         }
 
@@ -573,6 +572,7 @@ FloatingWindow {
                             color: Theme.subtext
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabelMd
+                            font.variableAxes: Theme.axes(Theme.fontLabelMd, 420, 0)
                         }
 
                     }
@@ -595,13 +595,38 @@ FloatingWindow {
                 onClicked: win.page = "users"
             }
 
+            TextField {
+                id: navSearch
+
+                x: rail.pad
+                width: rail.width - rail.pad * 2
+                anchors.top: userCard.bottom
+                anchors.topMargin: 10
+                variant: "search"
+                placeholder: "Search settings"
+                containerColor: Theme.withBlur(Theme.surfaceHigh)
+                opacity: Math.max(0, (win.railT - 0.55) / 0.45)
+                visible: opacity > 0.01
+                height: visible ? implicitHeight : 0
+                onTextEdited: win.navQuery = navSearch.text
+                onAccepted: {
+                    if (win.navPages.length > 0)
+                        win.page = win.navPages[0].key;
+
+                }
+                onEscaped: {
+                    navSearch.text = "";
+                    win.navQuery = "";
+                }
+            }
+
             // the destinations outgrew the window, so they scroll under a pinned footer
             Flickable {
                 id: navScroll
 
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.top: userCard.bottom
+                anchors.top: navSearch.visible ? navSearch.bottom : userCard.bottom
                 anchors.topMargin: 10
                 anchors.bottom: railFoot.top
                 anchors.bottomMargin: 8
@@ -644,11 +669,11 @@ FloatingWindow {
                                     anchors.bottom: parent.bottom
                                     anchors.bottomMargin: 5
                                     text: navCell.heading
-                                    color: Theme.subtextDim
+                                    color: Theme.primary
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fontLabel
+                                    font.pixelSize: Theme.fontLabelLg
+                                    font.variableAxes: Theme.axes(Theme.fontLabelLg, 600, 0)
                                     font.weight: Font.DemiBold
-                                    font.letterSpacing: 0.6
                                     opacity: Math.max(0, (win.railT - 0.55) / 0.45)
                                     visible: opacity > 0.01
                                 }
@@ -727,6 +752,7 @@ FloatingWindow {
                                     visible: navItem.modelData.key !== "about"
                                     kind: navItem.modelData.key
                                     color: navItem.fg
+                                    active: navItem.selected
 
                                     Behavior on color {
                                         ColorAnimation {
@@ -747,6 +773,7 @@ FloatingWindow {
                                     color: navItem.fg
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fontBodyLg
+                                    font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
                                     font.weight: navItem.selected ? Font.DemiBold : Font.Medium
                                     elide: Text.ElideRight
                                     opacity: navItem.labelFade
@@ -1077,6 +1104,7 @@ FloatingWindow {
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Math.round(Theme.fontHeadlineMd - (Theme.fontHeadlineMd - Theme.fontTitleLg) * win.collapse)
+                        font.variableAxes: Theme.axes(Math.round(Theme.fontHeadlineMd - (Theme.fontHeadlineMd - Theme.fontTitleLg) * win.collapse), 520, 0)
                         font.weight: Font.Medium
                         elide: Text.ElideRight
                     }
@@ -1087,6 +1115,7 @@ FloatingWindow {
                         color: Theme.subtext
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBodyMd
+                        font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
                         elide: Text.ElideRight
                         opacity: Math.max(0, 1 - win.collapse * 2.4)
                         visible: opacity > 0.01

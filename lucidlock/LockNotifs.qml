@@ -42,6 +42,7 @@ Rectangle {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontTitleSm
+                font.variableAxes: Theme.axes(Theme.fontTitleSm, 520, 0)
                 font.weight: Font.Medium
             }
 
@@ -61,6 +62,7 @@ Rectangle {
                     color: Theme.fgAccent
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabelSm
+                    font.variableAxes: Theme.axes(Theme.fontLabelSm, 520, 0)
                     font.weight: Font.Medium
                 }
 
@@ -103,6 +105,7 @@ Rectangle {
             color: Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodySm
+            font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
         }
 
     }
@@ -175,6 +178,7 @@ Rectangle {
                         font.family: Theme.fontFamily
                         font.weight: Font.DemiBold
                         font.pixelSize: Theme.fontLabelSm
+                        font.variableAxes: Theme.axes(Theme.fontLabelSm, 600, 0)
                         font.letterSpacing: 0.6
                     }
 

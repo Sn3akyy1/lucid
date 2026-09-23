@@ -1,51 +1,75 @@
 import QtQuick
+import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Mpris
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 WidgetBody {
     id: w
 
-    readonly property var players: {
-        var out = [];
-        var list = Mpris.players.values;
-        for (var i = 0; i < list.length; i++) {
-            if (list[i].dbusName && list[i].dbusName.indexOf("playerctld") !== -1)
-                continue;
-
-            out.push(list[i]);
-        }
-        return out;
-    }
+    readonly property var players: Mpris.players.values.filter((p) => {
+        return !(p.dbusName && p.dbusName.indexOf("playerctld") !== -1);
+    })
     readonly property var player: {
-        var list = w.players;
-        for (var i = 0; i < list.length; i++) {
-            if (list[i].isPlaying)
-                return list[i];
+        for (var i = 0; i < w.players.length; i++) {
+            if (w.players[i].isPlaying)
+                return w.players[i];
 
         }
-        return list.length > 0 ? list[0] : null;
+        return w.players.length > 0 ? w.players[0] : null;
     }
     readonly property bool has: w.player !== null
     readonly property bool playing: w.has ? w.player.isPlaying : false
     readonly property string title: w.has ? (w.player.trackTitle || "Unknown track") : "Nothing playing"
     readonly property string artist: w.has ? (w.player.trackArtist || w.player.identity || "") : "Start something and it lands here"
+    readonly property string source: w.has ? (w.player.identity || "") : ""
     readonly property string artUrl: w.has ? (w.player.trackArtUrl || "") : ""
     readonly property real length: w.has ? w.player.length : 0
     readonly property real position: w.has ? w.player.position : 0
-    // mpris reports position in 1s steps, so interpolate between them or the wave stutters
+    // mpris reports position in whole seconds, so interpolate between them
     property real livePos: w.position
     property real posBase: w.position
     property double posStamp: Date.now()
     property int jumpDuration: 0
     property bool snapNext: false
+    property bool scrubbing: false
     readonly property bool canSeek: w.has && w.player.canSeek
     readonly property real progress: w.length > 0 ? Math.max(0, Math.min(1, w.livePos / w.length)) : 0
     readonly property bool showProgress: w.opt("showProgress") !== false
-    // set by whichever seek control is being dragged: the interpolator below
-    // must stop, or it fights the scrub
-    property bool scrubbing: false
-    readonly property bool scroll: w.opt("scroll") !== false
+    readonly property bool scroll: w.opt("scroll") !== false && !w.preview
+    // the card takes its colours off the cover, the way a phone's player does
+    readonly property bool artTint: w.opt("artTint") !== false && w.artUrl !== "" && quant.colors.length > 0
+    readonly property color seed: {
+        var best = null;
+        var score = -1;
+        for (var i = 0; i < quant.colors.length; i++) {
+            var c = quant.colors[i];
+            var t = Theme.toneOf(c);
+            // colourful, and not a near-black or near-white corner of the cover
+            var sc = Theme.chromaOf(c) * (t > 12 && t < 90 ? 1 : 0.2);
+            if (sc > score) {
+                score = sc;
+                best = c;
+            }
+        }
+        return best !== null ? best : Theme.cPrimary;
+    }
+    readonly property color seedVivid: Theme.withSat(w.seed, 1.4)
+    // the quantizer only reads local files, so a cover served over the web is
+    // fetched once into the cache and read from there. every card fetches into
+    // its own part file, since two cards on one track race for the same cover
+    readonly property bool remoteArt: /^https?:/.test(w.artUrl)
+    readonly property string artFile: {
+        if (!w.remoteArt)
+            return "";
+
+        var h = 5381;
+        for (var i = 0; i < w.artUrl.length; i++) h = ((h * 33) ^ w.artUrl.charCodeAt(i)) >>> 0
+        return Quickshell.env("HOME") + "/.cache/lucid/art/" + h.toString(16) + ".img";
+    }
+    property string localArt: ""
 
     function toggle() {
         if (w.has && w.player.canTogglePlaying)
@@ -75,13 +99,37 @@ WidgetBody {
         w.livePos = target;
     }
 
-    function clock(secs) {
-        if (!secs || secs < 0)
-            return "0:00";
+    ownInk: w.artTint
+    fill: w.artTint ? Theme.withBlur(Theme.atTone(w.seedVivid, Theme.isLight ? 90 : 22)) : w.toneFill
+    ink: w.artTint ? Theme.atTone(w.seedVivid, Theme.isLight ? 12 : 94) : w.toneInk
+    inkAccent: w.artTint ? Theme.atTone(w.seedVivid, Theme.isLight ? 40 : 80) : w.toneInkAccent
+    onInkAccent: w.artTint ? Theme.atTone(w.seedVivid, Theme.isLight ? 98 : 16) : w.toneOnInkAccent
+    Behavior on fill {
+        ColorAnimation {
+            duration: Theme.durSlowEffects
+        }
 
-        var m = Math.floor(secs / 60);
-        var s = Math.floor(secs % 60);
-        return m + ":" + String(s).padStart(2, "0");
+    }
+
+    Behavior on ink {
+        ColorAnimation {
+            duration: Theme.durSlowEffects
+        }
+
+    }
+
+    Behavior on inkAccent {
+        ColorAnimation {
+            duration: Theme.durSlowEffects
+        }
+
+    }
+
+    Behavior on onInkAccent {
+        ColorAnimation {
+            duration: Theme.durSlowEffects
+        }
+
     }
 
     onPositionChanged: {
@@ -98,8 +146,40 @@ WidgetBody {
         w.posStamp = Date.now();
     }
 
+    function fetchCover() {
+        w.localArt = "";
+        if (w.artFile !== "" && w.opt("artTint") !== false && !w.preview) {
+            fetchArt.running = false;
+            fetchArt.running = true;
+        }
+    }
+
+    onArtFileChanged: w.fetchCover()
+    Component.onCompleted: w.fetchCover()
+
+    Process {
+        id: fetchArt
+
+        command: ["sh", "-c", "f=\"$1\"; d=\"$(dirname \"$f\")\"; mkdir -p \"$d\"; find \"$d\" -name '*.img' -mtime +14 -delete 2>/dev/null; [ -s \"$f\" ] || { t=\"$f.$$\"; curl -sfL --max-time 10 -o \"$t\" \"$2\" && mv \"$t\" \"$f\" || rm -f \"$t\"; }; [ -s \"$f\" ]", "sh", w.artFile, w.artUrl]
+        onExited: (code) => {
+            if (code === 0)
+                w.localArt = "file://" + w.artFile;
+
+        }
+    }
+
+    ColorQuantizer {
+        id: quant
+
+        source: w.remoteArt ? w.localArt : w.artUrl
+        depth: 3
+        rescaleSize: 48
+    }
+
+    // a blanked or off-screen card has no progress bar to move, so do not run
+    // a per-frame handler for it
     FrameAnimation {
-        running: w.playing && w.showProgress && !w.preview && !w.scrubbing
+        running: w.visible && w.playing && w.showProgress && !w.preview && !w.scrubbing
         onTriggered: w.livePos = Math.min(w.length, w.posBase + (Date.now() - w.posStamp) / 1000)
     }
 
@@ -107,7 +187,7 @@ WidgetBody {
     Timer {
         interval: 1000
         repeat: true
-        running: w.playing && w.showProgress && !w.preview && !w.scrubbing
+        running: w.visible && w.playing && w.showProgress && !w.preview && !w.scrubbing
         onTriggered: {
             if (w.player)
                 w.player.positionChanged();
@@ -115,47 +195,157 @@ WidgetBody {
         }
     }
 
-    Item {
-        id: cardView
+    // the cover, rounded, or a note on the ink when there is none
+    component Cover: ClippingRectangle {
+        id: cov
 
+        property real corner: 20
+
+        radius: cov.corner
+        color: Theme.alpha(w.ink, 0.08)
+
+        Image {
+            id: covImg
+
+            anchors.fill: parent
+            source: w.artUrl
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            sourceSize.width: 512
+            sourceSize.height: 512
+            visible: covImg.status === Image.Ready
+        }
+
+        Icon {
+            anchors.centerIn: parent
+            visible: covImg.status !== Image.Ready
+            name: "music_note"
+            size: Math.min(cov.width, cov.height) * 0.36
+            fill: 1
+            color: w.inkFaint
+        }
+
+    }
+
+    component Transport: Row {
+        id: tr
+
+        property real big: 56
+        property bool showPrev: true
+
+        spacing: 8
+
+        IconButton {
+            visible: tr.showPrev
+            anchors.verticalCenter: parent.verticalCenter
+            icon: "skip_previous"
+            iconFill: 1
+            tintOverride: w.ink
+            disabled: !(w.has && w.player.canGoPrevious)
+            onClicked: w.skip(-1)
+        }
+
+        Rectangle {
+            anchors.verticalCenter: parent.verticalCenter
+            width: tr.big * 1.3
+            height: tr.big
+            radius: playTap.pressed ? tr.big * 0.28 : tr.big / 2
+            color: w.inkAccent
+            opacity: w.has ? 1 : 0.4
+
+            Behavior on radius {
+                NumberAnimation {
+                    duration: Theme.durFastSpatial
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.curveDefaultSpatial
+                }
+
+            }
+
+            Icon {
+                anchors.centerIn: parent
+                name: w.playing ? "pause" : "play_arrow"
+                size: tr.big * 0.5
+                fill: 1
+                color: w.onInkAccent
+            }
+
+            StateLayer {
+                id: playTap
+
+                radius: parent.radius
+                tint: w.onInkAccent
+                disabled: !w.has
+                onClicked: w.toggle()
+            }
+
+        }
+
+        IconButton {
+            anchors.verticalCenter: parent.verticalCenter
+            icon: "skip_next"
+            iconFill: 1
+            tintOverride: w.ink
+            disabled: !(w.has && w.player.canGoNext)
+            onClicked: w.skip(1)
+        }
+
+    }
+
+    // card: the cover, then the track, a wavy seek and the transport
+    Item {
         visible: w.variant === "card"
         anchors.fill: parent
-        anchors.margins: 16
+        anchors.margins: 14
 
-        // a cover is square, so give it the card's full width in both directions
-        Artwork {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
+        Cover {
+            id: cardArt
+
+            width: parent.width
             height: width
-            corner: 16
+            corner: 22
+        }
+
+        Rectangle {
+            visible: w.source !== ""
+            x: 10
+            y: 10
+            width: srcLabel.implicitWidth + 18
+            height: 24
+            radius: 12
+            color: Theme.alpha(w.fill, 0.85)
+
+            LText {
+                id: srcLabel
+
+                anchors.centerIn: parent
+                role: "labelSmall"
+                color: w.ink
+                text: w.source
+            }
+
         }
 
         Column {
-            id: cardText
+            anchors.top: cardArt.bottom
+            anchors.topMargin: 12
+            width: parent.width
+            spacing: 0
 
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: cardSeek.top
-            anchors.bottomMargin: 10
-            spacing: 1
-
-            Text {
+            Marquee {
                 width: parent.width
+                role: "titleMedium"
+                weight: 600
+                color: w.ink
                 text: w.title
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: 15
-                font.bold: true
-                elide: Text.ElideRight
+                scrolling: w.scroll
             }
 
-            Text {
+            LText {
                 width: parent.width
+                role: "bodyMedium"
+                color: w.inkDim
                 text: w.artist
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: 12
                 elide: Text.ElideRight
             }
 
@@ -164,453 +354,287 @@ WidgetBody {
         WaveSeek {
             id: cardSeek
 
-            anchors.left: parent.left
-            anchors.right: parent.right
+            visible: w.showProgress
+            opacity: w.has ? 1 : 0.35
             anchors.bottom: cardControls.top
-            anchors.bottomMargin: 8
+            anchors.bottomMargin: 4
+            width: parent.width
             position: w.livePos
             length: w.length
+            interactive: w.canSeek
             jumpDuration: w.jumpDuration
-            interactive: w.canSeek && !w.preview
+            accent: w.inkAccent
+            trackColor: Theme.alpha(w.ink, 0.16)
+            labelColor: w.inkDim
             onDraggingChanged: w.scrubbing = cardSeek.dragging
-            visible: w.showProgress
-            height: w.showProgress ? implicitHeight : 0
-            onSeekRequested: (sec) => {
-                return w.seekTo(sec);
+            onSeekRequested: (s) => {
+                return w.seekTo(s);
             }
         }
 
-        Controls {
+        Transport {
             id: cardControls
 
-            anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            big: 52
         }
 
     }
 
+    // row: a strip, cover on the left, the track over its controls
     Item {
-        id: rowView
-
         visible: w.variant === "row"
         anchors.fill: parent
-        anchors.margins: 16
+        anchors.margins: 12
 
-        Artwork {
+        Cover {
             id: rowArt
 
-            width: parent.height - (w.showProgress ? 10 : 0)
-            height: width
-            anchors.left: parent.left
-            anchors.top: parent.top
-            corner: 13
+            width: parent.height
+            height: parent.height
+            corner: 18
         }
 
         Column {
             anchors.left: rowArt.right
             anchors.leftMargin: 14
-            anchors.right: rowControls.left
-            anchors.rightMargin: 10
-            anchors.verticalCenter: rowArt.verticalCenter
-            spacing: 2
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.topMargin: 2
+            spacing: 0
 
-            Text {
+            Marquee {
                 width: parent.width
+                role: "titleSmall"
+                color: w.ink
                 text: w.title
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: 14
-                font.bold: true
-                elide: Text.ElideRight
+                scrolling: w.scroll
             }
 
-            Text {
+            LText {
                 width: parent.width
+                role: "bodySmall"
+                color: w.inkDim
                 text: w.artist
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: 12
                 elide: Text.ElideRight
             }
 
         }
 
-        Controls {
+        LinearProgress {
+            visible: w.showProgress && w.has
+            anchors.left: rowArt.right
+            anchors.leftMargin: 14
+            anchors.right: rowControls.left
+            anchors.rightMargin: 10
+            anchors.verticalCenter: rowControls.verticalCenter
+            value: w.progress
+            thickness: 4
+            animated: false
+            color: w.inkAccent
+            trackColor: Theme.alpha(w.ink, 0.14)
+        }
+
+        Transport {
             id: rowControls
 
             anchors.right: parent.right
-            anchors.verticalCenter: rowArt.verticalCenter
-            k: 0.86
-        }
-
-        Meter {
-            anchors.left: parent.left
-            anchors.right: parent.right
+            anchors.rightMargin: -6
             anchors.bottom: parent.bottom
-            thickness: 3
-            value: w.progress
-            fillColor: Theme.accent
-            visible: w.showProgress
+            spacing: 0
+            big: 38
         }
 
     }
 
+    // art: the cover edge to edge, the track over a scrim
     Item {
-        id: artView
-
-        readonly property real corner: w.host ? w.host.bodyRadius : Theme.radiusXl
-
         visible: w.variant === "art"
         anchors.fill: parent
 
-        // every overlay lives inside the cover: the frame's card clips to its
-        // bounding box only, so a square-cornered child pokes out of the rounding
-        Artwork {
+        Cover {
             anchors.fill: parent
-            corner: artView.corner
-
-            // lifts the centred transport off a bright cover
-            Rectangle {
-                anchors.fill: parent
-                color: Qt.rgba(0, 0, 0, 0.3)
-                opacity: w.hovered ? 1 : 0
-                visible: opacity > 0.01
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.durShort
-                    }
-
-                }
-
-            }
-
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                height: parent.height * 0.5
-                opacity: w.hovered ? 1 : 0
-                visible: opacity > 0.01
-
-                gradient: Gradient {
-                    GradientStop {
-                        position: 0
-                        color: "transparent"
-                    }
-
-                    GradientStop {
-                        position: 1
-                        color: Qt.rgba(0, 0, 0, 0.8)
-                    }
-
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.durShort
-                    }
-
-                }
-
-            }
-
-            Column {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.leftMargin: 16
-                anchors.rightMargin: 16
-                anchors.bottomMargin: 28
-                spacing: 1
-                opacity: w.hovered ? 1 : 0
-                visible: opacity > 0.01
-
-                Text {
-                    width: parent.width
-                    text: w.title
-                    color: "#ffffff"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 14
-                    font.bold: true
-                    elide: Text.ElideRight
-                }
-
-                Text {
-                    width: parent.width
-                    text: w.artist
-                    color: "#ffffff"
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 12
-                    elide: Text.ElideRight
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.durShort
-                    }
-
-                }
-
-            }
-
-            // sits on the idle badge, so the play button grows in place instead of
-            // darting to the bottom of the card the moment the pointer arrives
-            Controls {
-                anchors.centerIn: parent
-                k: 0.9
-                overArt: true
-                opacity: w.hovered && w.has ? 1 : 0
-                visible: opacity > 0.01
-                scale: w.hovered ? 1 : 0.9
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.durShort
-                    }
-
-                }
-
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: Theme.durShort
-                        easing.type: Theme.easeStandard
-                    }
-
-                }
-
-            }
-
-            // paused indicator only: the transport above replaces it on hover
-            Rectangle {
-                anchors.centerIn: parent
-                width: 46
-                height: 46
-                radius: 23
-                color: Theme.alpha(Theme.bgOpaque, 0.8)
-                opacity: (w.has && !w.playing && !w.hovered) ? 1 : 0
-                visible: opacity > 0.01
-                scale: w.hovered ? 1.12 : 1
-
-                WidgetGlyph {
-                    anchors.centerIn: parent
-                    name: "play"
-                    size: 22
-                    color: Theme.text
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.durShort
-                    }
-
-                }
-
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: Theme.durShort
-                        easing.type: Theme.easeStandard
-                    }
-
-                }
-
-            }
-
-            ArtSeek {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.leftMargin: 16
-                anchors.rightMargin: 16
-                anchors.bottomMargin: 6
-            }
-
+            corner: w.corner
         }
-
-    }
-
-    component Artwork: ClippingRectangle {
-        id: art
-
-        property real corner: 14
-
-        radius: art.corner
-        color: Theme.alpha(Theme.text, 0.07)
-
-        Image {
-            anchors.fill: parent
-            source: w.artUrl
-            fillMode: Image.PreserveAspectCrop
-            asynchronous: true
-            cache: true
-            sourceSize.width: 320
-            sourceSize.height: 320
-            visible: w.artUrl !== "" && status === Image.Ready
-        }
-
-        WidgetGlyph {
-            anchors.centerIn: parent
-            name: "media"
-            size: Math.min(parent.width, parent.height) * 0.3
-            color: Theme.alpha(Theme.text, 0.22)
-            visible: w.artUrl === ""
-        }
-
-    }
-
-    component Controls: Row {
-        id: ctl
-
-        // Item already owns "scale", so the control size multiplier needs its own name
-        property real k: 1
-        // white-on-scrim, for the transport that sits over the cover
-        property bool overArt: false
-        readonly property color glyph: ctl.overArt ? "#ffffff" : Theme.text
-        readonly property color chip: ctl.overArt ? Theme.alpha("#ffffff", 0.18) : Theme.withBlur(Theme.bgHigh)
-
-        // same spec as the bar's Mpris transport row
-        spacing: 10 * ctl.k
-
-        WidgetButton {
-            anchors.verticalCenter: parent.verticalCenter
-            icon: "prev"
-            diameter: 30 * ctl.k
-            iconSize: 15 * ctl.k
-            surface: true
-            surfaceColor: ctl.chip
-            stateColor: ctl.glyph
-            hoverGrow: true
-            iconColor: ctl.glyph
-            enabled: w.has && w.player.canGoPrevious
-            onClicked: w.skip(-1)
-        }
-
-        WidgetButton {
-            anchors.verticalCenter: parent.verticalCenter
-            icon: w.playing ? "pause" : "play"
-            diameter: 40 * ctl.k
-            iconSize: 19 * ctl.k
-            filled: true
-            hoverGrow: true
-            enabled: w.has
-            onClicked: w.toggle()
-        }
-
-        WidgetButton {
-            anchors.verticalCenter: parent.verticalCenter
-            icon: "next"
-            diameter: 30 * ctl.k
-            iconSize: 15 * ctl.k
-            surface: true
-            surfaceColor: ctl.chip
-            stateColor: ctl.glyph
-            hoverGrow: true
-            iconColor: ctl.glyph
-            enabled: w.has && w.player.canGoNext
-            onClicked: w.skip(1)
-        }
-
-    }
-
-    // the artwork variant's seek strip: a pill over the cover that thickens under
-    // the pointer. inset from the edges, or the card's corner radius would clip
-    // its ends off and the track would lose its first and last few percent
-    component ArtSeek: Item {
-        id: strip
-
-        property bool dragging: false
-        property real dragProgress: 0
-        readonly property bool active: strip.dragging || hit.containsMouse
-        readonly property real shown: strip.dragging ? strip.dragProgress : w.progress
-        readonly property real thickness: strip.active ? 6 : 3
-
-        function fractionAt(px) {
-            return Math.max(0, Math.min(1, px / Math.max(1, strip.width)));
-        }
-
-        // taller than it paints: a 3px line is not a hit target
-        implicitHeight: 22
-        // dragging keeps it up if the pointer wanders off the card mid-scrub
-        opacity: (w.hovered || strip.dragging) ? 1 : 0
-        visible: w.showProgress && w.has && strip.opacity > 0.01
-        onDraggingChanged: w.scrubbing = strip.dragging
 
         Rectangle {
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            height: strip.thickness
-            radius: height / 2
-            color: Theme.alpha("#ffffff", strip.active ? 0.34 : 0.24)
+            anchors.bottom: parent.bottom
+            height: parent.height * 0.5
+            bottomLeftRadius: w.corner
+            bottomRightRadius: w.corner
 
-            Rectangle {
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                width: Math.max(parent.height, parent.width * strip.shown)
-                height: parent.height
-                radius: height / 2
-                color: Theme.accent
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: "transparent"
+                }
 
-                Behavior on width {
-                    enabled: !strip.dragging
-
-                    NumberAnimation {
-                        duration: Theme.ms(w.jumpDuration)
-                        easing.type: Easing.OutCubic
-                    }
-
+                GradientStop {
+                    position: 1
+                    color: Theme.alpha(w.fill, 0.94)
                 }
 
             }
 
-            Behavior on height {
+        }
+
+        Column {
+            anchors.left: parent.left
+            anchors.leftMargin: 16
+            anchors.right: artPlay.left
+            anchors.rightMargin: 10
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 18
+            spacing: 0
+
+            Marquee {
+                width: parent.width
+                role: "titleSmall"
+                color: w.ink
+                text: w.title
+                scrolling: w.scroll
+            }
+
+            LText {
+                width: parent.width
+                role: "bodySmall"
+                color: w.inkDim
+                text: w.artist
+                elide: Text.ElideRight
+            }
+
+        }
+
+        Rectangle {
+            id: artPlay
+
+            anchors.right: parent.right
+            anchors.rightMargin: 14
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 14
+            width: 48
+            height: 48
+            radius: artTap.pressed ? 14 : 24
+            color: w.inkAccent
+
+            Icon {
+                anchors.centerIn: parent
+                name: w.playing ? "pause" : "play_arrow"
+                size: 26
+                fill: 1
+                color: w.onInkAccent
+            }
+
+            StateLayer {
+                id: artTap
+
+                radius: parent.radius
+                tint: w.onInkAccent
+                onClicked: w.toggle()
+            }
+
+        }
+
+        Rectangle {
+            visible: w.showProgress && w.has
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: w.corner
+            width: (parent.width - w.corner * 2) * w.progress
+            height: 3
+            radius: 1.5
+            color: w.inkAccent
+        }
+
+    }
+
+    // disc: the cover as a record that turns while it plays, ringed by the track's progress
+    Item {
+        id: disc
+
+        visible: w.variant === "disc"
+        anchors.fill: parent
+
+        CircularProgress {
+            anchors.centerIn: parent
+            width: Math.min(parent.width, parent.height) - 16
+            height: width
+            thickness: 6
+            value: w.progress
+            animated: false
+            color: w.inkAccent
+            trackColor: Theme.alpha(w.ink, 0.14)
+        }
+
+        ShapedImage {
+            id: record
+
+            anchors.centerIn: parent
+            width: Math.min(parent.width, parent.height) - 40
+            height: width
+            shape: "cookie12"
+            source: w.artUrl
+            fallbackColor: Theme.alpha(w.ink, 0.1)
+
+            RotationAnimation on rotation {
+                from: 0
+                to: 360
+                duration: 24000
+                loops: Animation.Infinite
+                running: w.playing && w.visible && !w.preview
+            }
+
+            Icon {
+                anchors.centerIn: parent
+                name: "album"
+                size: record.width * 0.4
+                color: w.inkFaint
+            }
+
+        }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: 56
+            height: 56
+            radius: discTap.pressed ? 16 : 28
+            color: w.inkAccent
+            opacity: w.hovered || !w.playing ? 1 : 0
+            scale: w.hovered || !w.playing ? 1 : 0.7
+
+            Behavior on opacity {
                 NumberAnimation {
-                    duration: Theme.durShort
-                    easing.type: Theme.easeStandard
+                    duration: Theme.durDefaultEffects
                 }
 
             }
 
-            Behavior on color {
-                ColorAnimation {
-                    duration: Theme.durShort
+            Behavior on scale {
+                NumberAnimation {
+                    duration: Theme.durFastSpatial
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.curveFastSpatial
                 }
 
             }
 
-        }
-
-        MouseArea {
-            id: hit
-
-            anchors.fill: parent
-            enabled: w.canSeek && !w.preview
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            // otherwise the frame's drag handler steals the gesture mid-scrub
-            preventStealing: true
-            onPressed: (mouse) => {
-                strip.dragging = true;
-                strip.dragProgress = strip.fractionAt(mouse.x);
+            Icon {
+                anchors.centerIn: parent
+                name: w.playing ? "pause" : "play_arrow"
+                size: 30
+                fill: 1
+                color: w.onInkAccent
             }
-            onPositionChanged: (mouse) => {
-                if (strip.dragging)
-                    strip.dragProgress = strip.fractionAt(mouse.x);
 
-            }
-            onReleased: {
-                w.seekTo(strip.dragProgress * w.length);
-                strip.dragging = false;
-            }
-            onCanceled: strip.dragging = false
-            onWheel: (wheel) => {
-                return w.seekTo(w.livePos + (wheel.angleDelta.y > 0 ? 5 : -5));
-            }
-        }
+            StateLayer {
+                id: discTap
 
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Theme.durShort
+                radius: parent.radius
+                tint: w.onInkAccent
+                onClicked: w.toggle()
             }
 
         }

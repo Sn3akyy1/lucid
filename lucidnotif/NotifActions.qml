@@ -8,7 +8,7 @@ Item {
     property var notification: null
     property bool replyOpen: false
     property var actionList: []
-    readonly property bool canReply: Notifs.canReply(actions.notification)
+    readonly property bool canReply: Notifs.canReply(actions.notification) === true
     readonly property bool hasAny: actions.actionList.length > 0 || actions.canReply
 
     signal replyToggled(bool open)
@@ -104,7 +104,7 @@ Item {
             width: parent.width - sendButton.width - parent.spacing
             height: 32
             radius: height / 2
-            color: Theme.bgSunken
+            color: Theme.surfaceHighest
             border.width: 1
             border.color: replyInput.activeFocus ? Theme.accent : Theme.bgHigh
 
@@ -124,6 +124,7 @@ Item {
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(11)
+                font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
             }
 
             TextInput {
@@ -136,6 +137,7 @@ Item {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(11)
+                font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
                 selectByMouse: true
                 selectionColor: Theme.accent
                 selectedTextColor: Theme.fgAccent

@@ -48,6 +48,7 @@ Column {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(20)
+                font.variableAxes: Theme.axes(Theme.fs(20), 420, 0)
             }
 
             MouseArea {
@@ -86,6 +87,7 @@ Column {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(18)
+                font.variableAxes: Theme.axes(Theme.fs(18), 640, 0)
                 font.bold: true
                 elide: Text.ElideRight
             }
@@ -96,6 +98,7 @@ Column {
                 color: Theme.accent
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                 elide: Text.ElideRight
             }
 
@@ -115,6 +118,7 @@ Column {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
             }
 
             BatteryPip {

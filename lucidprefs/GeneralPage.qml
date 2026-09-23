@@ -108,7 +108,7 @@ Column {
                     to: 0.8
                     stepSize: 0.05
                     decimals: 2
-                    value: Prefs.surfaceDarkness >= 0 ? Prefs.surfaceDarkness : 0.45
+                    value: Prefs.surfaceDarkness >= 0 ? Prefs.surfaceDarkness : Theme.pillDarkness
                     onMoved: (v) => {
                         return Prefs.surfaceDarkness = v;
                     }
@@ -120,7 +120,7 @@ Column {
                     anchors.verticalCenter: parent.verticalCenter
                     text: Prefs.surfaceDarkness >= 0 ? "Auto" : "Manual"
                     variant: Prefs.surfaceDarkness >= 0 ? "tonal" : "filled"
-                    onClicked: Prefs.surfaceDarkness = Prefs.surfaceDarkness >= 0 ? -1 : 0.45
+                    onClicked: Prefs.surfaceDarkness = Prefs.surfaceDarkness >= 0 ? -1 : 0.3
                 }
 
             }

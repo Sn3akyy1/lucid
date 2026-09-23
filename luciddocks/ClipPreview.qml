@@ -188,6 +188,7 @@ Item {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBody
+                font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
                 font.weight: Font.Medium
             }
 
@@ -212,6 +213,7 @@ Item {
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabel
+            font.variableAxes: Theme.axes(Theme.fontLabel, 520, 0)
             font.weight: Font.Medium
         }
 
@@ -222,6 +224,7 @@ Item {
             color: preview.clearArmed ? Theme.error : Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabel
+            font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
 
             Behavior on color {
                 ColorAnimation {

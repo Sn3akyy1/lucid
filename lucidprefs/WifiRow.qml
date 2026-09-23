@@ -124,6 +124,7 @@ Column {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontTitle
+                font.variableAxes: Theme.axes(Theme.fontTitle, 640, 0)
                 font.bold: true
                 elide: Text.ElideRight
             }
@@ -134,6 +135,7 @@ Column {
                 color: net.isConnected ? Theme.accent : Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                 elide: Text.ElideRight
             }
 
@@ -177,6 +179,7 @@ Column {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBody
+                font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
                 rotation: net.expanded ? 180 : 0
 
                 Behavior on rotation {
@@ -307,6 +310,7 @@ Column {
                 color: Theme.error
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                 wrapMode: Text.WordWrap
             }
 
@@ -328,6 +332,7 @@ Column {
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
             }
 
         }

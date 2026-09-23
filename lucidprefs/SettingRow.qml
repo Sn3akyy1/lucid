@@ -175,6 +175,7 @@ Item {
             color: !row.enabled && row.disabledReason !== "" ? Theme.accentMuted : Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyMd
+            font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
             lineHeight: 1.28
             opacity: row.enabled ? 1 : 0.5
             wrapMode: Text.WordWrap
@@ -234,6 +235,7 @@ Item {
                 color: Theme.error
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyMd
+                font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
                 lineHeight: 1.25
                 wrapMode: Text.WordWrap
             }

@@ -103,6 +103,7 @@ Item {
         color: check.checked ? Theme.text : Theme.subtext
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontLabel
+        font.variableAxes: Theme.axes(Theme.fontLabel, (check.checked) ? 640 : 420, 0)
         font.bold: check.checked
     }
 

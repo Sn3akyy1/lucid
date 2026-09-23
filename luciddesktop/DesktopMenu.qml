@@ -72,6 +72,13 @@ Item {
         return arr;
     }
 
+    // the panel as drawn, scale included, in the menu's parent's coordinates
+    readonly property real paintedX: menu.x + (menu.toLeft ? panel.width : 0) * (1 - panel.scale)
+    readonly property real paintedY: menu.y + (menu.toUp ? panel.height : 0) * (1 - panel.scale)
+    readonly property real paintedW: panel.width * panel.scale
+    readonly property real paintedH: panel.height * panel.scale
+    readonly property real paintedRadius: panel.radius * panel.scale
+
     signal chosen(string id)
 
     function openAt(px, py) {
@@ -172,6 +179,7 @@ Item {
                             color: Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontBody
+                            font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
                             font.weight: Font.Medium
                             elide: Text.ElideRight
                         }

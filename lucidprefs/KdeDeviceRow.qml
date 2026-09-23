@@ -112,6 +112,7 @@ Column {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontTitle
+                font.variableAxes: Theme.axes(Theme.fontTitle, 640, 0)
                 font.bold: true
                 elide: Text.ElideRight
             }
@@ -122,6 +123,7 @@ Column {
                 color: dev.asking ? Theme.warning : (dev.opens ? Theme.accent : Theme.subtext)
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                 elide: Text.ElideRight
             }
 
@@ -146,6 +148,7 @@ Column {
                     color: Theme.subtextDim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabel
+                    font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                 }
 
                 SignalBars {
@@ -168,6 +171,7 @@ Column {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(16)
+                font.variableAxes: Theme.axes(Theme.fs(16), 420, 0)
                 rotation: !dev.opens && dev.expanded ? 180 : 0
 
                 Behavior on rotation {
@@ -249,6 +253,7 @@ Column {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                 wrapMode: Text.WordWrap
             }
 

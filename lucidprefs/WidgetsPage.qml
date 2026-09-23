@@ -194,6 +194,7 @@ Column {
                             color: chip.selected ? Theme.fgAccentContainer : Theme.subtext
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel
+                            font.variableAxes: Theme.axes(Theme.fontLabel, (chip.selected) ? 640 : 420, 0)
                             font.bold: chip.selected
                         }
 

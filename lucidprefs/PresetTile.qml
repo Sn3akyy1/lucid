@@ -71,6 +71,7 @@ Item {
             color: tile.selected ? Theme.fgAccentContainer : Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBody
+            font.variableAxes: Theme.axes(Theme.fontBody, 640, 0)
             font.bold: true
             elide: Text.ElideRight
         }
@@ -85,6 +86,7 @@ Item {
             color: tile.selected ? Theme.fgAccentContainer : Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(10)
+            font.variableAxes: Theme.axes(Theme.fs(10), (tile.selected) ? 640 : 420, 0)
             font.bold: tile.selected
         }
 
@@ -100,6 +102,7 @@ Item {
             color: tile.selected ? Theme.alpha(Theme.fgAccentContainer, 0.75) : Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(10)
+            font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
             wrapMode: Text.WordWrap
             maximumLineCount: 2
             elide: Text.ElideRight

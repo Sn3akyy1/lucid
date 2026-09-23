@@ -105,6 +105,7 @@ SettingCard {
                     color: Theme.subtextDim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBody
+                    font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
                 }
 
                 MouseArea {
@@ -216,6 +217,7 @@ SettingCard {
                 color: card.typing ? Theme.accent : Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBody
+                font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
             }
 
             Item {

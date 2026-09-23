@@ -106,6 +106,7 @@ Column {
                             color: Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontBodyMd
+                            font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
                         }
 
                         Text {
@@ -116,6 +117,7 @@ Column {
                             color: Theme.subtextDim
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontBody
+                            font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
                         }
 
                         Text {
@@ -129,6 +131,7 @@ Column {
                             color: Theme.accent
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontBodyMd
+                            font.variableAxes: Theme.axes(Theme.fontBodyMd, 520, 0)
                             font.weight: Font.Medium
                         }
 

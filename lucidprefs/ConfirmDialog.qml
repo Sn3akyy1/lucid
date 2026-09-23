@@ -105,6 +105,7 @@ Item {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontHeadlineSm
+                font.variableAxes: Theme.axes(Theme.fontHeadlineSm, 520, 0)
                 font.weight: Font.Medium
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
@@ -116,6 +117,7 @@ Item {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyLg
+                font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
                 lineHeight: 1.3
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap

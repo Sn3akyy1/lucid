@@ -410,6 +410,7 @@ Column {
                                 color: swatch.selected ? Theme.text : Theme.subtext
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontLabel
+                                font.variableAxes: Theme.axes(Theme.fontLabel, (swatch.selected) ? 640 : 420, 0)
                                 font.bold: swatch.selected
                                 wrapMode: Text.WordWrap
                             }
@@ -609,6 +610,7 @@ Column {
                                 color: page.addState === "error" ? Theme.error : Theme.accent
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontTitle
+                                font.variableAxes: Theme.axes(Theme.fontTitle, 640, 0)
                                 font.bold: true
                             }
 
@@ -632,6 +634,7 @@ Column {
                                 color: Theme.text
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontLabel
+                                font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
                                 font.bold: true
                                 elide: Text.ElideRight
                                 width: parent.width
@@ -642,6 +645,7 @@ Column {
                                 color: page.addState === "error" ? Theme.error : Theme.subtext
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontBody
+                                font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
                                 wrapMode: Text.WordWrap
                                 width: parent.width
                             }
@@ -938,6 +942,7 @@ Column {
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBody
+                    font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
                     visible: wallpapers.count === 0
                 }
 

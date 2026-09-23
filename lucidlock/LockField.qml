@@ -155,6 +155,7 @@ Item {
         color: Theme.subtextDim
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg
+        font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
         opacity: input.text.length === 0 && !Lockscreen.busy && !Lockscreen.focused ? 1 : 0
         visible: opacity > 0.01
 
@@ -270,7 +271,8 @@ Item {
             SequentialAnimation {
                 id: blink
 
-                running: true
+                // the field outlives the lock screen, so blink only while on screen
+                running: caret.visible
                 loops: Animation.Infinite
 
                 PauseAnimation {
@@ -320,6 +322,7 @@ Item {
         selectedTextColor: Theme.text
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg
+        font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
         selectByMouse: false
         clip: true
         activeFocusOnPress: true

@@ -107,6 +107,7 @@ Rectangle {
                             color: node.modelData.start ? Theme.subtextDim : Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel
+                            font.variableAxes: Theme.axes(Theme.fontLabel, (!node.modelData.start) ? 640 : 420, 0)
                             font.bold: !node.modelData.start
                             wrapMode: Text.WordWrap
                         }
@@ -118,6 +119,7 @@ Rectangle {
                             color: Theme.accentMuted
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel
+                            font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                             visible: node.modelData.time !== ""
                         }
 
@@ -146,6 +148,7 @@ Rectangle {
         color: Theme.subtext
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBody
+        font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
         wrapMode: Text.WordWrap
     }
 

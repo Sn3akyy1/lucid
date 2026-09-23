@@ -24,6 +24,59 @@ Item {
     readonly property real pad: 20
     readonly property real corner: body.host ? body.host.bodyRadius : Theme.radiusXl
     readonly property bool editing: body.uid !== "" && Widgets.editUid === body.uid
+    // the card's m3 container, and the ink that reads on it. "auto" is the
+    // widget's own default: the ones that are mostly one big reading go tonal
+    property string defaultTone: "surface"
+    readonly property string tone: {
+        var t = body.opt("tone");
+        return (t === undefined || t === "auto" || t === "") ? body.defaultTone : t;
+    }
+    readonly property bool tonal: body.tone !== "surface"
+    readonly property color toneFill: {
+        switch (body.tone) {
+        case "primary":
+            return Theme.withBlur(Theme.primaryContainer);
+        case "secondary":
+            return Theme.withBlur(Theme.secondaryContainer);
+        case "tertiary":
+            return Theme.withBlur(Theme.tertiaryContainer);
+        }
+        return Theme.bg;
+    }
+    readonly property color toneInk: {
+        switch (body.tone) {
+        case "primary":
+            return Theme.fgPrimaryContainer;
+        case "secondary":
+            return Theme.fgSecondaryContainer;
+        case "tertiary":
+            return Theme.fgTertiaryContainer;
+        }
+        return Theme.text;
+    }
+    readonly property color toneInkAccent: {
+        switch (body.tone) {
+        case "primary":
+            return Theme.primary;
+        case "secondary":
+            return Theme.secondary;
+        case "tertiary":
+            return Theme.tertiary;
+        }
+        return Theme.accent;
+    }
+    // what sits on an inkAccent fill
+    readonly property color toneOnInkAccent: {
+        switch (body.tone) {
+        case "primary":
+            return Theme.fgPrimary;
+        case "secondary":
+            return Theme.fgSecondary;
+        case "tertiary":
+            return Theme.fgTertiary;
+        }
+        return Theme.fgAccent;
+    }
 
     function beginEdit() {
         Widgets.editUid = body.uid;
@@ -49,5 +102,14 @@ Item {
         return Math.round(Math.max(0, Math.min(100, v))) + "%";
     }
 
-}
+    // what the card and its contents are drawn in. a body can bind its own over
+    // these, the way the media card follows its cover
+    property color fill: body.toneFill
+    property color ink: body.toneInk
+    property color inkAccent: body.toneInkAccent
+    property color onInkAccent: body.toneOnInkAccent
+    property bool ownInk: false
+    readonly property color inkDim: body.tonal || body.ownInk ? Theme.alpha(body.ink, 0.78) : Theme.subtext
+    readonly property color inkFaint: body.tonal || body.ownInk ? Theme.alpha(body.ink, 0.56) : Theme.subtextDim
 
+}

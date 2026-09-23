@@ -26,6 +26,7 @@ Item {
         color: Theme.accent
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontTitleSm
+        font.variableAxes: Theme.axes(Theme.fontTitleSm, 600, 0)
         font.weight: Font.DemiBold
         font.letterSpacing: 0.1
         bottomPadding: 12
@@ -39,6 +40,7 @@ Item {
         color: Theme.subtextDim
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontLabel
+        font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
         visible: Widgets.count > 0
     }
 
@@ -175,6 +177,7 @@ Item {
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontTitle
+                    font.variableAxes: Theme.axes(Theme.fontTitle, 640, 0)
                     font.bold: true
                 }
 
@@ -184,6 +187,7 @@ Item {
                     color: Theme.subtextDim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabel
+                    font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                 }
 
             }

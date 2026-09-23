@@ -1,9 +1,12 @@
 import QtQuick
 import Quickshell.Services.UPower
 import qs
+import qs.lucidui
 
 WidgetBody {
     id: w
+
+    defaultTone: "secondary"
 
     readonly property var dev: UPower.displayDevice
     readonly property bool present: w.dev ? w.dev.isPresent : false
@@ -15,7 +18,7 @@ WidgetBody {
     readonly property bool low: w.opt("warnLow") !== false && !w.charging && w.level <= 0.2
     readonly property real rate: w.dev ? Math.abs(w.dev.changeRate) : 0
     readonly property real health: (w.dev && w.dev.healthSupported) ? w.dev.healthPercentage : -1
-    readonly property color tint: w.low ? Theme.error : Theme.accent
+    readonly property color tint: w.low ? Theme.error : w.inkAccent
     readonly property string stateText: {
         if (!w.present)
             return "No battery";
@@ -81,281 +84,461 @@ WidgetBody {
         return w.charging ? body + " to full" : body + " left";
     }
 
-    Item {
-        id: ring
+    // every other battery upower can see: mice, headsets, a paired phone
+    readonly property var others: {
+        var out = [];
+        var list = UPower.devices.values;
+        for (var i = 0; i < list.length; i++) {
+            var d = list[i];
+            if (!d || !d.isPresent || d.type === UPowerDeviceType.LinePower || d.nativePath === "" && d.model === "")
+                continue;
 
-        visible: w.variant === "ring"
-        anchors.fill: parent
+            if (d.type === UPowerDeviceType.Battery && d.powerSupply)
+                continue;
 
-        Gauge {
-            anchors.centerIn: parent
-            width: Math.min(parent.width, parent.height) - 34
-            height: width
-            thickness: 9
-            value: w.level
-            fillColor: w.tint
-            startAngle: -215
-            sweep: 250
+            out.push(d);
         }
+        return out;
+    }
 
-        Column {
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: -4
-            spacing: -2
+    function glyphFor(d) {
+        switch (d.type) {
+        case UPowerDeviceType.Mouse:
+            return "mouse";
+        case UPowerDeviceType.Keyboard:
+            return "keyboard";
+        case UPowerDeviceType.Headset:
+        case UPowerDeviceType.Headphones:
+            return "headphones";
+        case UPowerDeviceType.Phone:
+            return "smartphone";
+        case UPowerDeviceType.Tablet:
+            return "tablet";
+        case UPowerDeviceType.GamingInput:
+            return "stadia_controller";
+        case UPowerDeviceType.Speakers:
+            return "speaker";
+        }
+        return "battery_full";
+    }
 
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 1
+    // the battery glyph that matches the level, in eighths like the bar's
+    readonly property string levelGlyph: {
+        if (w.charging)
+            return "battery_charging_full";
 
-                Text {
-                    id: ringNumber
+        if (w.full)
+            return "battery_full";
 
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: w.present ? w.percent : "—"
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 34
-                    font.bold: true
-                    font.letterSpacing: -1.5
-                }
+        var steps = ["battery_0_bar", "battery_1_bar", "battery_2_bar", "battery_3_bar", "battery_4_bar", "battery_5_bar", "battery_6_bar", "battery_full"];
+        return steps[Math.max(0, Math.min(7, Math.floor(w.level * 8)))];
+    }
 
-                Text {
-                    anchors.baseline: ringNumber.baseline
-                    text: w.present ? "%" : ""
-                    color: Theme.subtext
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 15
-                    font.bold: true
-                }
+    component DeviceRow: Rectangle {
+        id: dr
 
+        property string glyph: ""
+        property string label: ""
+        property real value: 0
+        property bool plugged: false
+        property bool first: false
+        property bool last: false
+        readonly property color hue: dr.value <= 0.2 && !dr.plugged ? Theme.error : w.inkAccent
+
+        width: parent ? parent.width : 0
+        height: 48
+        topLeftRadius: dr.first ? 18 : 6
+        topRightRadius: dr.first ? 18 : 6
+        bottomLeftRadius: dr.last ? 18 : 6
+        bottomRightRadius: dr.last ? 18 : 6
+        color: Theme.alpha(w.ink, 0.07)
+
+        Item {
+            id: drRing
+
+            x: 8
+            anchors.verticalCenter: parent.verticalCenter
+            width: 34
+            height: 34
+
+            CircularProgress {
+                anchors.fill: parent
+                thickness: 3.5
+                value: dr.value
+                color: dr.hue
+                trackColor: Theme.alpha(w.ink, 0.12)
             }
 
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 3
+            Icon {
+                anchors.centerIn: parent
+                name: dr.glyph
+                size: 17
+                fill: 1
+                color: w.ink
+            }
 
-                WidgetGlyph {
-                    anchors.verticalCenter: parent.verticalCenter
-                    name: "bolt"
-                    size: 12
-                    color: w.tint
-                    visible: w.charging
-                }
+        }
 
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: w.charging ? "charging" : (w.full ? "full" : w.stateText.toLowerCase())
-                    color: Theme.subtextDim
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 11
-                    font.bold: true
-                }
+        LText {
+            anchors.left: drRing.right
+            anchors.leftMargin: 12
+            anchors.right: drVal.left
+            anchors.rightMargin: 8
+            anchors.verticalCenter: parent.verticalCenter
+            role: "bodyMedium"
+            weight: 520
+            color: w.ink
+            text: dr.label
+            elide: Text.ElideRight
+        }
 
+        Row {
+            id: drVal
+
+            anchors.right: parent.right
+            anchors.rightMargin: 14
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 2
+
+            Icon {
+                visible: dr.plugged
+                anchors.verticalCenter: parent.verticalCenter
+                name: "bolt"
+                size: 15
+                fill: 1
+                color: w.inkAccent
+            }
+
+            LText {
+                anchors.verticalCenter: parent.verticalCenter
+                role: "labelLarge"
+                weight: 660
+                tabular: true
+                color: w.ink
+                text: Math.round(dr.value * 100) + "%"
             }
 
         }
 
     }
 
+    // ring: one thick ring, the number inside, a bolt shape turning while it charges
     Item {
-        id: bar
+        id: ring
 
+        readonly property real d: Math.min(width, height) - 20
+
+        visible: w.variant === "ring"
+        anchors.fill: parent
+
+        MaterialShape {
+            anchors.centerIn: parent
+            width: ring.d - 34
+            height: width
+            shape: w.charging ? "cookie9" : "circle"
+            color: Theme.alpha(w.tint, w.charging ? 0.16 : 0.08)
+
+            RotationAnimation on rotation {
+                from: 0
+                to: 360
+                duration: 16000
+                loops: Animation.Infinite
+                running: w.charging && w.visible && !w.preview
+            }
+
+        }
+
+        CircularProgress {
+            anchors.centerIn: parent
+            width: ring.d
+            height: width
+            thickness: 10
+            value: w.level
+            color: w.tint
+            trackColor: Theme.alpha(w.ink, 0.1)
+        }
+
+        Column {
+            anchors.centerIn: parent
+            spacing: -4
+
+            Icon {
+                anchors.horizontalCenter: parent.horizontalCenter
+                name: w.charging ? "bolt" : (w.low ? "battery_alert" : "battery_full")
+                size: 20
+                fill: 1
+                color: w.tint
+            }
+
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                LText {
+                    role: "displaySmall"
+                    weight: 680
+                    rounded: 100
+                    tabular: true
+                    color: w.ink
+                    text: w.present ? w.percent : "—"
+                }
+
+                LText {
+                    anchors.baseline: parent.children[0].baseline
+                    role: "titleSmall"
+                    weight: 600
+                    color: w.inkDim
+                    text: w.present ? "%" : ""
+                }
+
+            }
+
+            LText {
+                anchors.horizontalCenter: parent.horizontalCenter
+                role: "labelSmall"
+                color: w.inkDim
+                text: w.timeText !== "" && w.timeText !== "estimating…" ? w.timeText : w.stateText
+            }
+
+        }
+
+    }
+
+    // bar: the battery itself, drawn as a big stadium that fills
+    Item {
         visible: w.variant === "bar"
         anchors.fill: parent
-        anchors.margins: 20
+        anchors.margins: 18
 
-        Row {
-            id: barHead
-
-            anchors.left: parent.left
-            anchors.top: parent.top
-            spacing: 6
-
-            Text {
-                anchors.bottom: parent.bottom
-                text: w.present ? w.percent + "%" : "—"
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: 30
-                font.bold: true
-                font.letterSpacing: -1
-            }
-
-            Text {
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 6
-                text: w.timeText
-                color: Theme.subtextDim
-                font.family: Theme.fontFamily
-                font.pixelSize: 12
-            }
-
-        }
-
-        Text {
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.topMargin: 4
-            text: w.stateText
-            color: w.tint
-            font.family: Theme.fontFamily
-            font.pixelSize: 12
-            font.bold: true
-        }
-
-        // a cell drawn side on, terminal and all
         Item {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            height: 26
+            id: cell
+
+            width: parent.width - 8
+            height: 46
 
             Rectangle {
-                id: cell
+                anchors.fill: parent
+                radius: 16
+                color: Theme.alpha(w.ink, 0.1)
+            }
 
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.rightMargin: 7
+            Rectangle {
+                width: Math.max(32, parent.width * w.level)
                 height: parent.height
-                radius: 9
-                color: Theme.alpha(Theme.text, 0.1)
+                radius: 16
+                color: w.tint
 
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    anchors.margins: 3
-                    width: Math.max(height, (parent.width - 6) * Math.max(0, Math.min(1, w.level)))
-                    radius: 6
-                    color: w.tint
-
-                    Behavior on width {
-                        NumberAnimation {
-                            duration: Theme.ms(520)
-                            easing.type: Easing.OutCubic
-                        }
-
+                Behavior on width {
+                    NumberAnimation {
+                        duration: Theme.durDefaultSpatial
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.curveDefaultSpatial
                     }
 
                 }
 
             }
 
-            Rectangle {
-                anchors.left: cell.right
-                anchors.leftMargin: 1
-                anchors.verticalCenter: cell.verticalCenter
-                width: 5
-                height: 11
-                topRightRadius: 3
-                bottomRightRadius: 3
-                color: Theme.alpha(Theme.text, 0.1)
+            Row {
+                anchors.left: parent.left
+                anchors.leftMargin: 14
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 6
+
+                Icon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: w.charging
+                    name: "bolt"
+                    size: 20
+                    fill: 1
+                    color: w.level > 0.25 ? w.onInkAccent : w.ink
+                }
+
+                LText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    role: "titleLarge"
+                    weight: 700
+                    rounded: 100
+                    tabular: true
+                    color: w.level > 0.25 ? (w.low ? Theme.fgError : w.onInkAccent) : w.ink
+                    text: w.present ? w.percent + "%" : "No battery"
+                }
+
             }
 
+        }
+
+        // the terminal nub
+        Rectangle {
+            anchors.left: cell.right
+            anchors.leftMargin: 3
+            anchors.verticalCenter: cell.verticalCenter
+            width: 5
+            height: 18
+            radius: 2.5
+            color: w.level >= 0.999 ? w.tint : Theme.alpha(w.ink, 0.1)
+        }
+
+        LText {
+            anchors.bottom: parent.bottom
+            role: "labelLarge"
+            color: w.ink
+            text: w.stateText
+        }
+
+        LText {
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            role: "labelLarge"
+            color: w.inkDim
+            text: w.timeText
         }
 
     }
 
+    // detail: the number, a wavy bar that moves while it charges, and the figures
     Item {
-        id: detail
-
         visible: w.variant === "detail"
         anchors.fill: parent
-        anchors.margins: 20
+        anchors.margins: 18
 
         Row {
-            id: detailHead
+            id: dHead
 
-            anchors.left: parent.left
-            anchors.top: parent.top
-            spacing: 10
+            spacing: 12
 
-            WidgetGlyph {
+            Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
-                name: "battery"
-                size: 26
-                color: w.tint
+                width: 44
+                height: 44
+                radius: 14
+                color: Theme.alpha(w.tint, 0.16)
+
+                Icon {
+                    anchors.centerIn: parent
+                    name: w.levelGlyph
+                    size: 24
+                    fill: 1
+                    color: w.tint
+                }
+
             }
 
             Column {
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: -2
+                spacing: -4
 
-                Text {
-                    text: w.present ? w.percent + "%" : "No battery"
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 30
-                    font.bold: true
-                    font.letterSpacing: -1
+                LText {
+                    role: "headlineMedium"
+                    weight: 680
+                    rounded: 100
+                    tabular: true
+                    color: w.ink
+                    text: w.present ? w.percent + "%" : "—"
                 }
 
-                Text {
+                LText {
+                    role: "labelMedium"
+                    color: w.inkDim
                     text: w.stateText
-                    color: w.tint
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 12
-                    font.bold: true
-                    visible: w.present
                 }
 
             }
 
         }
 
-        Meter {
-            id: detailMeter
+        LinearProgress {
+            id: dBar
 
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: detailHead.bottom
+            anchors.top: dHead.bottom
             anchors.topMargin: 14
-            thickness: 6
+            width: parent.width
             value: w.level
-            fillColor: w.tint
+            thickness: 6
+            wavy: w.charging && !w.preview
+            color: w.tint
+            trackColor: Theme.alpha(w.ink, 0.1)
         }
 
         Row {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: detailMeter.bottom
-            anchors.topMargin: 12
-            spacing: 0
+            anchors.bottom: parent.bottom
+            width: parent.width
 
             Repeater {
                 model: w.stats
 
                 Column {
-                    id: statCell
+                    id: stat
 
                     required property var modelData
 
-                    width: w.stats.length > 0 ? detail.width / w.stats.length : 0
-                    spacing: 1
+                    width: parent.width / Math.max(1, w.stats.length)
+                    spacing: 0
 
-                    Text {
-                        text: statCell.modelData.label
-                        color: Theme.subtextDim
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 9
-                        font.bold: true
-                        font.letterSpacing: 0.9
+                    LText {
+                        role: "labelSmall"
+                        color: w.inkFaint
+                        text: stat.modelData.label
                     }
 
-                    Text {
-                        width: statCell.width - 6
-                        text: statCell.modelData.value
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 13
-                        font.bold: true
-                        elide: Text.ElideRight
+                    LText {
+                        role: "titleSmall"
+                        weight: 640
+                        tabular: true
+                        color: w.ink
+                        text: stat.modelData.value
                     }
 
                 }
 
             }
 
+        }
+
+    }
+
+    // devices: this machine first, then whatever else is reporting a battery
+    Column {
+        visible: w.variant === "devices"
+        anchors.fill: parent
+        anchors.margins: 14
+        spacing: 4
+
+        DeviceRow {
+            visible: w.present
+            first: true
+            last: w.others.length === 0
+            glyph: "laptop_chromebook"
+            label: "This computer"
+            value: w.level
+            plugged: w.charging || w.full
+        }
+
+        Repeater {
+            model: w.others.slice(0, 3)
+
+            DeviceRow {
+                required property var modelData
+                required property int index
+
+                first: !w.present && index === 0
+                last: index === Math.min(3, w.others.length) - 1
+                glyph: w.glyphFor(modelData)
+                label: modelData.model || "Device"
+                value: modelData.percentage
+                plugged: modelData.state === UPowerDeviceState.Charging
+            }
+
+        }
+
+        LText {
+            visible: w.others.length === 0
+            width: parent.width
+            topPadding: 6
+            horizontalAlignment: Text.AlignHCenter
+            role: "labelMedium"
+            color: w.inkFaint
+            text: "Wireless devices show up here when they report a charge"
+            wrapMode: Text.Wrap
         }
 
     }

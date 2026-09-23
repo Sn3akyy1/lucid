@@ -1,6 +1,7 @@
 # runtime state — written by the shell, personal to each install
 lucidbar/blur.json
 lucidbar/clock_reminders.json
+lucidbar/chrono.json
 lucidbar/mpris_shazam.json
 luciddocks/pinned.json
 luciddocks/usage.json

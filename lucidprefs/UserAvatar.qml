@@ -33,6 +33,7 @@ Item {
             color: Theme.fgSecondaryContainer
             font.family: Theme.fontFamily
             font.pixelSize: Math.round(av.size * 0.38)
+            font.variableAxes: Theme.axes(Math.round(av.size * 0.38), 600, 0)
             font.weight: Font.DemiBold
             font.letterSpacing: 0.5
             visible: !av.ready

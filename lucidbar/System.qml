@@ -8,6 +8,7 @@ import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 BarPill {
     id: root
@@ -72,7 +73,7 @@ BarPill {
     readonly property int maxPanelHeight: Math.min(820, Math.max(200, root.screenH - 40))
     readonly property int panelPad: root.sp4
     readonly property int contentWidth: root.panelWidth - root.panelPad * 2
-    readonly property int headerHeight: 44
+    readonly property int headerHeight: 52
     readonly property int subHeaderHeight: 44
     // header top margin + header + gap + body + bottom padding
     readonly property int viewChrome: root.sp2 + root.headerHeight + root.sp1 + root.panelPad
@@ -85,6 +86,9 @@ BarPill {
 
         if (root.view === "output")
             return outputList.implicitHeight + root.viewChrome;
+
+        if (root.view === "power")
+            return powerList.implicitHeight + root.viewChrome;
 
         return mainColumn.implicitHeight + root.viewChrome;
     }
@@ -122,40 +126,27 @@ BarPill {
 
     }
 
-    // material icons, 24dp, official path data
-    readonly property var brightnessIconLevels: [
-        { "max": 33, "path": "M20 15.31L23.31 12 20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" },
-        { "max": 66, "path": "M20 15.31L23.31 12 20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69zM12 18V6c3.31 0 6 2.69 6 6s-2.69 6-6 6z" },
-        { "max": 100, "path": "M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z" }
-    ]
-    // level 0 is the slash-free glyph: the mute overlay draws its own slash
-    readonly property var volumeIconLevels: [
-        { "max": 0, "path": "M7 9v6h4l5 5V4l-5 5H7z" },
-        { "max": 49, "path": "M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z" },
-        { "max": 100, "path": "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" }
-    ]
+    function volumeIcon(pct, muted) {
+        if (muted || pct <= 0)
+            return "volume_off";
 
-    readonly property string micIconPath: "M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"
-    readonly property string btIconPath: "M17.71 7.71L12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"
-    readonly property string chevronPath: "M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
-    readonly property string chevronLeftPath: "M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
-    readonly property string checkPath: "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
-    readonly property string expandPath: "M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"
-    readonly property string speakerPath: "M17 2H7c-1.1 0-2 .9-2 2v16c0 1.1.9 1.99 2 1.99L17 22c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-5 2c1.1 0 2 .9 2 2s-.9 2-2 2c-1.11 0-2-.9-2-2s.89-2 2-2zm0 16c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
-    readonly property string settingsPath: "M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"
-    readonly property string prevPath: "M6 6h2v12H6zm3.5 6l8.5 6V6z"
-    readonly property string nextPath: "M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"
-    readonly property string playPath: "M8 5v14l11-7z"
-    readonly property string pausePath: "M6 19h4V5H6v14zm8-14v14h4V5h-4z"
-    readonly property string notePath: "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"
-
-    function volumeIconFor(pct) {
-        for (var i = 0; i < root.volumeIconLevels.length; i++) {
-            if (pct <= root.volumeIconLevels[i].max)
-                return root.volumeIconLevels[i].path;
-        }
-        return root.volumeIconLevels[root.volumeIconLevels.length - 1].path;
+        return pct < 34 ? "volume_mute" : (pct < 67 ? "volume_down" : "volume_up");
     }
+
+    readonly property string wifiGlyph: {
+        if (wifiPanel.primaryIsEthernet)
+            return "lan";
+
+        if (!Networking.wifiEnabled)
+            return "signal_wifi_off";
+
+        if (!wifiPanel.wifiConnected)
+            return "signal_wifi_0_bar";
+
+        const s = wifiPanel.signalStrength;
+        return s >= 75 ? "signal_wifi_4_bar" : (s >= 50 ? "network_wifi_3_bar" : (s >= 25 ? "network_wifi_2_bar" : "network_wifi_1_bar"));
+    }
+    readonly property string btGlyph: !root.btEnabled ? "bluetooth_disabled" : (btPanel.connectedDevices.length > 0 ? "bluetooth_connected" : "bluetooth")
 
     readonly property var battery: UPower.displayDevice
     readonly property bool batteryPresent: battery ? battery.isPresent : false
@@ -855,211 +846,114 @@ BarPill {
         onFileChanged: reload()
     }
 
+    property date nowDate: Loc.now()
+
+    Timer {
+        interval: 30000
+        repeat: true
+        running: root.expanded
+        triggeredOnStart: true
+        onTriggered: root.nowDate = Loc.now()
+    }
+
+    // two-step confirm for the actions that end the session
+    property string powerArmed: ""
+
+    Timer {
+        id: powerDisarm
+
+        interval: 3200
+        onTriggered: root.powerArmed = ""
+    }
+
+    function powerPick(id) {
+        if (id === "lock" || id === "suspend" || root.powerArmed === id) {
+            root.powerArmed = "";
+            root.expanded = false;
+            Power.run(id);
+            return ;
+        }
+        root.powerArmed = id;
+        powerDisarm.restart();
+    }
+
+    function toggleMicMute() {
+        if (root.source && root.source.audio)
+            root.source.audio.muted = !root.source.audio.muted;
+
+    }
+
+    readonly property string brightnessIcon: root.brightnessPercent < 34 ? "brightness_low" : (root.brightnessPercent < 67 ? "brightness_medium" : "brightness_high")
+
     compactContent: [
         Row {
             id: content
 
             anchors.centerIn: parent
-            spacing: 8
+            spacing: 10
 
-            Item {
+            Icon {
                 id: wifiIcon
 
-                width: 16
-                height: 16
                 anchors.verticalCenter: parent.verticalCenter
-
-                Text {
-                    anchors.centerIn: parent
-                    visible: !wifiPanel.primaryIsEthernet
-                    text: {
-                        const glyphs = ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"];
-                        if (!Networking.wifiEnabled)
-                            return "󰤮";
-
-                        const s = wifiPanel.signalStrength;
-                        return wifiPanel.wifiConnected ? glyphs[Math.max(0, Math.min(4, Math.floor(s / 20)))] : glyphs[0];
-                    }
-                    color: wifiPanel.wifiConnected ? Theme.accent : Theme.subtext
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(15)
-                }
-
-                Item {
-                    anchors.centerIn: parent
-                    width: 16
-                    height: 16
-                    visible: wifiPanel.primaryIsEthernet
-
-                    Rectangle {
-                        width: 10
-                        height: 7
-                        radius: 2
-                        anchors.centerIn: parent
-                        anchors.verticalCenterOffset: 2
-                        color: Theme.accent
-                    }
-
-                    Row {
-                        anchors.top: parent.top
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 2
-
-                        Rectangle {
-                            width: 2
-                            height: 5
-                            color: Theme.accent
-                        }
-
-                        Rectangle {
-                            width: 2
-                            height: 5
-                            color: Theme.accent
-                        }
-
-                    }
-
-                }
-
+                name: root.wifiGlyph
+                size: 17
+                fill: 1
+                color: (wifiPanel.wifiConnected || wifiPanel.primaryIsEthernet) ? Theme.accent : Theme.subtext
             }
 
-            SvgIcon {
+            Icon {
                 id: btIcon
 
                 visible: root.btEnabled
                 anchors.verticalCenter: parent.verticalCenter
-                path: root.btIconPath
-                tint: btPanel.connectedDevices.length > 0 ? Theme.accent : Theme.subtext
-                iconSize: 15
-            }
-
-            StatusIndicator {
-                id: volIndicator
-
-                svgPath: root.volumeIconFor(root.volumePercent)
-                labelText: root.volMuted ? "Muted" : root.volumePercent
-                isMuted: root.volMuted
-            }
-
-            StatusIndicator {
-                id: micIndicator
-
-                svgPath: root.micIconPath
-                labelText: root.micMuted ? "Off" : "On"
-                isMuted: root.micMuted
+                name: root.btGlyph
+                size: 16
+                color: btPanel.connectedDevices.length > 0 ? Theme.accent : Theme.subtext
             }
 
             Row {
+                id: volIndicator
+
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 3
+
+                Icon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: root.volumeIcon(root.volumePercent, root.volMuted)
+                    size: 17
+                    fill: 1
+                    color: root.volMuted ? Theme.error : Theme.text
+                }
+
+                LText {
+                    visible: !root.volMuted
+                    anchors.verticalCenter: parent.verticalCenter
+                    role: "labelMedium"
+                    weight: 620
+                    text: root.volumePercent
+                    color: Theme.text
+                }
+
+            }
+
+            Icon {
+                id: micIndicator
+
+                anchors.verticalCenter: parent.verticalCenter
+                name: root.micMuted ? "mic_off" : "mic"
+                size: 16
+                fill: 1
+                color: root.micMuted ? Theme.error : Theme.subtext
+            }
+
+            BatteryPill {
                 id: batteryRow
 
-                readonly property color battColor: root.batteryCharging ? Theme.accent : (root.batteryPercent <= 20 ? Theme.error : Theme.subtext)
-
-                spacing: 6
-                anchors.verticalCenter: parent.verticalCenter
                 visible: root.batteryPresent
-
-                Item {
-                    id: batteryIcon
-
-                    width: 24
-                    height: 15
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    Rectangle {
-                        id: body
-
-                        anchors.left: parent.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 20
-                        height: 15
-                        radius: 5
-                        color: "transparent"
-                        border.width: 1.5
-                        border.color: batteryRow.battColor
-
-                        Rectangle {
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            anchors.margins: 1
-                            width: Math.max(0, (parent.width - 2) * (root.batteryPercent / 100))
-                            radius: 2
-                            color: batteryRow.battColor
-
-                            Behavior on width {
-                                NumberAnimation {
-                                    duration: Theme.barMs(300)
-                                }
-
-                            }
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Theme.barMs(200)
-                                }
-
-                            }
-
-                        }
-
-                        Shape {
-                            visible: root.batteryCharging
-                            anchors.centerIn: parent
-                            width: 24
-                            height: 25
-                            scale: 12 / 24
-                            preferredRendererType: Shape.CurveRenderer
-
-                            ShapePath {
-                                fillColor: Theme.bgOpaque
-                                strokeWidth: 0
-
-                                PathSvg {
-                                    path: "M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z"
-                                }
-
-                            }
-
-                        }
-
-                        Behavior on border.color {
-                            ColorAnimation {
-                                duration: Theme.barMs(200)
-                            }
-
-                        }
-
-                    }
-
-                    Rectangle {
-                        anchors.left: body.right
-                        anchors.leftMargin: 1
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 2
-                        height: 7
-                        radius: 1
-                        color: batteryRow.battColor
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.barMs(200)
-                            }
-
-                        }
-
-                    }
-
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.batteryPercent + "%"
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.bold: true
-                    font.pixelSize: Theme.fontLabelLg
-                }
-
+                anchors.verticalCenter: parent.verticalCenter
+                percent: root.batteryPercent
+                charging: root.batteryCharging
             }
 
         },
@@ -1120,44 +1014,55 @@ BarPill {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.topMargin: root.sp2
-                    anchors.leftMargin: root.panelPad
-                    anchors.rightMargin: root.panelPad
+                    anchors.leftMargin: root.panelPad + 4
+                    anchors.rightMargin: root.panelPad - 4
                     height: root.headerHeight
 
-                    Text {
+                    Column {
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
-                        text: "Control Centre"
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        font.pixelSize: Theme.fontTitleSm
+                        spacing: 0
+
+                        LText {
+                            role: "titleMedium"
+                            weight: 600
+                            text: Qt.formatDate(root.nowDate, "dddd, d MMMM")
+                        }
+
+                        LText {
+                            visible: root.uptimeText !== ""
+                            role: "bodySmall"
+                            color: Theme.subtext
+                            text: root.uptimeText
+                        }
+
                     }
 
                     Row {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: root.sp2
-
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            visible: root.uptimeText !== ""
-                            text: root.uptimeText
-                            color: Theme.subtextDim
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontLabelSm
-                        }
+                        spacing: 2
 
                         IconButton {
-                            anchors.verticalCenter: parent.verticalCenter
-                            path: root.settingsPath
-                            tint: Theme.subtext
-                            diameter: 30
-                            iconSize: 17
-                            onTapped: {
+                            icon: "settings"
+                            onClicked: {
                                 root.expanded = false;
                                 Prefs.settingsRequested("");
                             }
+                        }
+
+                        IconButton {
+                            icon: "lock"
+                            onClicked: {
+                                root.expanded = false;
+                                Power.run("lock");
+                            }
+                        }
+
+                        IconButton {
+                            icon: "power_settings_new"
+                            variant: "tonal"
+                            onClicked: root.showView("power")
                         }
 
                     }
@@ -1184,70 +1089,141 @@ BarPill {
                         id: mainColumn
 
                         width: scrollArea.width
-                        spacing: root.sp5
+                        spacing: root.sp3
 
-                        Grid {
+                        Column {
                             width: root.contentWidth
-                            columns: 2
-                            columnSpacing: root.sp2
-                            rowSpacing: root.sp2
+                            spacing: root.sp2
 
-                            ToggleTile {
-                                iconGlyph: "󰤯"
-                                name: "Wi-Fi"
+                            Slider {
+                                visible: root.maxBrightness > 0
+                                width: root.contentWidth
+                                size: "m"
+                                icon: root.brightnessIcon
+                                from: 0
+                                to: 100
+                                value: root.brightnessPercent
+                                inactiveColor: Theme.withBlur(Theme.surfaceHighest)
+                                valueText: (v) => {
+                                    return Math.round(v) + "%";
+                                }
+                                onMoved: (v) => {
+                                    return root.setBrightness(v);
+                                }
+                            }
+
+                            Row {
+                                width: root.contentWidth
+                                spacing: root.sp2
+
+                                Slider {
+                                    width: root.contentWidth - outBtn.width - root.sp2
+                                    size: "m"
+                                    icon: root.volumeIcon(root.volumePercent, root.volMuted)
+                                    iconClickable: true
+                                    from: 0
+                                    to: 100
+                                    value: root.volumePercent
+                                    activeColor: root.volMuted ? Theme.outlineStrong : Theme.primary
+                                    inactiveColor: Theme.withBlur(Theme.surfaceHighest)
+                                    valueText: (v) => {
+                                        return Math.round(v) + "%";
+                                    }
+                                    onMoved: (v) => {
+                                        if (root.sink && root.sink.audio && root.sink.audio.muted)
+                                            root.sink.audio.muted = false;
+
+                                        root.setVolume(v);
+                                    }
+                                    onIconClicked: root.toggleVolMute()
+                                }
+
+                                Rectangle {
+                                    id: outBtn
+
+                                    width: 50
+                                    height: 38
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    radius: 12
+                                    color: Theme.withBlur(Theme.surfaceHighest)
+
+                                    StateLayer {
+                                        radius: parent.radius
+                                        onClicked: root.showView("output")
+                                    }
+
+                                    Icon {
+                                        anchors.centerIn: parent
+                                        name: "speaker"
+                                        size: 20
+                                        color: Theme.subtext
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                        Row {
+                            width: root.contentWidth
+                            spacing: root.sp2
+
+                            QuickTile {
+                                icon: root.wifiGlyph
+                                name: wifiPanel.primaryIsEthernet ? "Ethernet" : "Wi-Fi"
                                 sub: wifiPanel.statusText
-                                checked: Networking.wifiEnabled
-                                showArrow: true
+                                checked: Networking.wifiEnabled || wifiPanel.primaryIsEthernet
                                 onToggled: Networking.wifiEnabled = !Networking.wifiEnabled
                                 onExpandRequested: root.showView("wifi")
                             }
 
-                            ToggleTile {
-                                iconPath: root.btIconPath
+                            QuickTile {
+                                icon: root.btGlyph
                                 name: "Bluetooth"
                                 sub: btPanel.label
                                 checked: root.btEnabled
-                                showArrow: true
                                 onToggled: Bt.setEnabled(!root.btEnabled)
                                 onExpandRequested: root.showView("bluetooth")
                             }
 
-                            ToggleTile {
-                                iconPath: "M22,16v-2l-8.5-5V3.5C13.5,2.67,12.83,2,12,2s-1.5,0.67-1.5,1.5V9L2,14v2l8.5-2.5V19L8,20.5L8,22l4-1l4,1l0-1.5L13.5,19 v-5.5L22,16z"
-                                name: "Airplane"
-                                sub: root.airplaneMode ? "Radios off" : "Off"
-                                checked: root.airplaneMode
-                                onToggled: root.toggleAirplane()
-                            }
+                        }
 
-                            ToggleTile {
-                                iconPath: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"
-                                name: "Do Not Disturb"
-                                sub: root.dndOn ? "Silenced" : "Off"
+                        Row {
+                            width: root.contentWidth
+                            spacing: root.sp2
+
+                            SmallTile {
+                                icon: "do_not_disturb_on"
+                                label: "Silence"
                                 checked: root.dndOn
                                 onToggled: Notifs.toggleDnd()
                             }
 
-                            ToggleTile {
-                                iconPath: "M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.9 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"
-                                name: "Caffeine"
-                                sub: Prefs.idleKeepAwake ? "Staying awake" : "Idle allowed"
+                            SmallTile {
+                                icon: "coffee"
+                                label: "Awake"
                                 checked: Prefs.idleKeepAwake
                                 onToggled: Prefs.idleKeepAwake = !Prefs.idleKeepAwake
                             }
 
-                            ToggleTile {
-                                iconPath: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
-                                name: "Location"
-                                sub: {
-                                    if (!Prefs.gpsEnabled)
-                                        return "Off";
+                            SmallTile {
+                                icon: "dark_mode"
+                                label: "Dark"
+                                checked: Prefs.colorMode === "dark"
+                                onToggled: Prefs.setColorMode(Prefs.colorMode === "dark" ? "light" : "dark")
+                            }
 
-                                    if (Loc.busy)
-                                        return "Locating…";
+                            SmallTile {
+                                icon: "flight"
+                                label: "Airplane"
+                                checked: root.airplaneMode
+                                onToggled: root.toggleAirplane()
+                            }
 
-                                    return Loc.place !== "" ? Loc.place : "No fix yet";
-                                }
+                            SmallTile {
+                                icon: "location_on"
+                                label: Prefs.gpsEnabled && Loc.busy ? "Locating" : "Location"
                                 checked: Prefs.gpsEnabled
                                 onToggled: {
                                     Prefs.gpsEnabled = !Prefs.gpsEnabled;
@@ -1257,424 +1233,304 @@ BarPill {
                                 }
                             }
 
-                        }
-
-                        Column {
-                            width: root.contentWidth
-                            spacing: root.sp2
-
-                            Overline {
-                                text: "SOUND & DISPLAY"
-                            }
-
-                            GroupCard {
-                                width: root.contentWidth
-
-                                SliderRow {
-                                    width: parent.width
-                                    iconLevels: root.brightnessIconLevels
-                                    value: root.brightnessPercent
-                                    onMoved: (v) => {
-                                        return root.setBrightness(v);
-                                    }
-                                }
-
-                                SliderRow {
-                                    width: parent.width
-                                    iconLevels: root.volumeIconLevels
-                                    value: root.volumePercent
-                                    muted: root.volMuted
-                                    showMute: true
-                                    showPicker: true
-                                    onMoved: (v) => {
-                                        return root.setVolume(v);
-                                    }
-                                    onMuteToggled: root.toggleVolMute()
-                                    onPickerRequested: root.showView("output")
-                                }
-
+                            SmallTile {
+                                icon: root.micMuted ? "mic_off" : "mic"
+                                label: "Mic"
+                                checked: !root.micMuted
+                                onToggled: root.toggleMicMute()
                             }
 
                         }
 
-                        Column {
+                        // the tools: each one closes the panel first so it is never in the way
+                        Row {
                             width: root.contentWidth
                             spacing: root.sp2
+
+                            SmallTile {
+                                icon: "screenshot_region"
+                                label: "Capture"
+                                onToggled: {
+                                    root.expanded = false;
+                                    Quickshell.execDetached(["sh", "-c", "sleep 0.3; qs ipc call snap open"]);
+                                }
+                            }
+
+                            SmallTile {
+                                icon: Capture.active ? "stop_circle" : "screen_record"
+                                label: Capture.active ? Capture.clock(Capture.seconds) : "Record"
+                                checked: Capture.active
+                                onToggled: {
+                                    root.expanded = false;
+                                    Quickshell.execDetached(["sh", "-c", "sleep 0.3; qs ipc call snap video"]);
+                                }
+                            }
+
+                            SmallTile {
+                                icon: "colorize"
+                                label: "Picker"
+                                onToggled: {
+                                    root.expanded = false;
+                                    Quickshell.execDetached(["sh", "-c", "sleep 0.3; qs ipc call snap color"]);
+                                }
+                            }
+
+                            SmallTile {
+                                icon: "keyboard"
+                                label: "Keyboard"
+                                onToggled: {
+                                    root.expanded = false;
+                                    Prefs.keyboardRequested();
+                                }
+                            }
+
+                            SmallTile {
+                                icon: "timer"
+                                label: Chrono.headline ? Chrono.countdown(Chrono.headline.left) : "Timer"
+                                checked: Chrono.headline !== null && Chrono.headline.running
+                                onToggled: {
+                                    root.expanded = false;
+                                    Quickshell.execDetached(["qs", "ipc", "call", "--", "clock", "open", "timer"]);
+                                }
+                            }
+
+                            SmallTile {
+                                icon: "power_settings_new"
+                                label: "Session"
+                                onToggled: {
+                                    root.expanded = false;
+                                    Quickshell.execDetached(["qs", "ipc", "call", "session", "open"]);
+                                }
+                            }
+
+                        }
+
+                        Rectangle {
+                            id: mediaCard
+
+                            readonly property var mprisPlayer: root.mprisMod ? root.mprisMod.player : null
+                            readonly property real progress: (root.mprisMod && root.mprisMod.lenSec > 0) ? Math.max(0, Math.min(1, root.mprisMod.livePosSec / root.mprisMod.lenSec)) : 0
+                            readonly property bool playing: root.mprisMod ? root.mprisMod.isPlaying : false
+
                             visible: root.mprisMod && root.mprisMod.player
+                            width: root.contentWidth
+                            height: 84
+                            radius: Theme.shapeLgInc
+                            color: Theme.withBlur(Theme.surfaceHigh)
 
-                            Overline {
-                                text: "NOW PLAYING"
+                            StateLayer {
+                                radius: parent.radius
+                                onClicked: {
+                                    root.expanded = false;
+                                    if (root.mprisMod)
+                                        root.mprisMod.expanded = true;
+
+                                }
                             }
 
-                            Rectangle {
-                                id: mediaCard
+                            // ClippingRectangle: radius + clip alone leaves the image corners square
+                            ClippingRectangle {
+                                id: mediaArt
 
-                                readonly property var mprisPlayer: root.mprisMod ? root.mprisMod.player : null
-                                readonly property real progress: (root.mprisMod && root.mprisMod.lenSec > 0) ? Math.max(0, Math.min(1, root.mprisMod.posSec / root.mprisMod.lenSec)) : 0
-
-                                width: root.contentWidth
-                                height: 72
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 64
+                                height: 64
                                 radius: Theme.shapeLg
-                                color: Theme.withBlur(Theme.bgTile)
+                                color: Theme.withBlur(Theme.surfaceHighest)
 
-                                StateLayer {
-                                    hovered: mediaArea.containsMouse
-                                    pressed: mediaArea.pressed
-                                }
-
-                                MouseArea {
-                                    id: mediaArea
+                                Image {
+                                    id: mediaArtImg
 
                                     anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.expanded = false;
-                                        if (root.mprisMod)
-                                            root.mprisMod.expanded = true;
-
-                                    }
+                                    source: root.mprisMod ? root.mprisMod.artUrl : ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    cache: true
+                                    sourceSize.width: 128
+                                    sourceSize.height: 128
+                                    visible: mediaArtImg.status === Image.Ready
                                 }
 
-                                // ClippingRectangle: radius + clip alone leaves
-                                // the image corners square
-                                ClippingRectangle {
-                                    id: mediaArt
-
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: root.sp3
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: 48
-                                    height: 48
-                                    radius: Theme.shapeMd
-                                    color: Theme.withBlur(Theme.bgActive)
-
-                                    Image {
-                                        id: mediaArtImg
-
-                                        anchors.fill: parent
-                                        source: root.mprisMod ? root.mprisMod.artUrl : ""
-                                        fillMode: Image.PreserveAspectCrop
-                                        asynchronous: true
-                                        cache: true
-                                        sourceSize.width: 128
-                                        sourceSize.height: 128
-                                        visible: mediaArtImg.status === Image.Ready
-                                    }
-
-                                    SvgIcon {
-                                        anchors.centerIn: parent
-                                        visible: !mediaArtImg.visible
-                                        path: root.notePath
-                                        tint: Theme.subtext
-                                        iconSize: 20
-                                    }
-
+                                Icon {
+                                    anchors.centerIn: parent
+                                    visible: !mediaArtImg.visible
+                                    name: "music_note"
+                                    size: 26
+                                    color: Theme.subtext
                                 }
 
-                                Item {
-                                    anchors.left: mediaArt.right
-                                    anchors.leftMargin: root.sp3
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: root.sp3
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    height: 48
-
-                                    Row {
-                                        id: mediaControls
-
-                                        anchors.right: parent.right
-                                        anchors.top: parent.top
-                                        spacing: 2
-
-                                        IconButton {
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            path: root.prevPath
-                                            tint: Theme.text
-                                            diameter: 28
-                                            iconSize: 17
-                                            onTapped: {
-                                                if (mediaCard.mprisPlayer && mediaCard.mprisPlayer.canGoPrevious)
-                                                    mediaCard.mprisPlayer.previous();
-
-                                            }
-                                        }
-
-                                        IconButton {
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            path: (root.mprisMod && root.mprisMod.isPlaying) ? root.pausePath : root.playPath
-                                            tint: Theme.fgAccent
-                                            bg: Theme.accent
-                                            layerTint: Theme.fgAccent
-                                            diameter: 30
-                                            iconSize: 18
-                                            onTapped: {
-                                                if (mediaCard.mprisPlayer && mediaCard.mprisPlayer.canTogglePlaying)
-                                                    mediaCard.mprisPlayer.togglePlaying();
-
-                                            }
-                                        }
-
-                                        IconButton {
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            path: root.nextPath
-                                            tint: Theme.text
-                                            diameter: 28
-                                            iconSize: 17
-                                            onTapped: {
-                                                if (mediaCard.mprisPlayer && mediaCard.mprisPlayer.canGoNext)
-                                                    mediaCard.mprisPlayer.next();
-
-                                            }
-                                        }
-
-                                    }
-
-                                    Column {
-                                        anchors.left: parent.left
-                                        anchors.right: mediaControls.left
-                                        anchors.rightMargin: root.sp2
-                                        anchors.top: parent.top
-                                        anchors.topMargin: 3
-                                        spacing: 1
-
-                                        Text {
-                                            width: parent.width
-                                            text: root.mprisMod ? root.mprisMod.title : ""
-                                            color: Theme.text
-                                            font.family: Theme.fontFamily
-                                            font.bold: true
-                                            font.pixelSize: Theme.fontLabelLg
-                                            elide: Text.ElideRight
-                                        }
-
-                                        Text {
-                                            width: parent.width
-                                            visible: text !== ""
-                                            text: root.mprisMod ? root.mprisMod.artist : ""
-                                            color: Theme.subtext
-                                            font.family: Theme.fontFamily
-                                            font.pixelSize: Theme.fontLabelSm
-                                            elide: Text.ElideRight
-                                        }
-
-                                    }
-
-                                    Rectangle {
-                                        anchors.left: parent.left
-                                        anchors.right: parent.right
-                                        anchors.bottom: parent.bottom
-                                        anchors.bottomMargin: 2
-                                        height: 3
-                                        radius: Theme.shapeFull
-                                        color: Theme.withBlur(Theme.bgHigh)
-
-                                        Rectangle {
-                                            width: parent.width * mediaCard.progress
-                                            height: parent.height
-                                            radius: Theme.shapeFull
-                                            color: Theme.accent
-                                        }
-
-                                    }
-
-                                }
-
-                            }
-
-                        }
-
-                        Column {
-                            width: root.contentWidth
-                            spacing: root.sp2
-
-                            Overline {
-                                text: "SYSTEM"
                             }
 
                             Row {
-                                width: parent.width
-                                spacing: root.sp2
+                                id: mediaControls
 
-                                StatCard {
-                                    width: (root.contentWidth - root.sp2 * 2) / 3
-                                    label: "CPU"
-                                    valueText: root.cpuHistory.length > 0 ? Math.round(root.cpuPercent) + "%" : "—"
-                                    detailText: root.cpuTemp > 0 ? Math.round(root.cpuTemp) + " °C" : ""
-                                    showChart: true
-                                    chartHistory: root.cpuHistory
+                                anchors.right: parent.right
+                                anchors.rightMargin: 10
+                                anchors.top: parent.top
+                                anchors.topMargin: 12
+                                spacing: 2
+
+                                IconButton {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    icon: "skip_previous"
+                                    iconFill: 1
+                                    size: "xs"
+                                    tintOverride: Theme.text
+                                    onClicked: {
+                                        if (mediaCard.mprisPlayer && mediaCard.mprisPlayer.canGoPrevious)
+                                            mediaCard.mprisPlayer.previous();
+
+                                    }
                                 }
 
-                                StatCard {
-                                    width: (root.contentWidth - root.sp2 * 2) / 3
-                                    label: "RAM"
-                                    valueText: root.ramHistory.length > 0 ? Math.round(root.ramPercent) + "%" : "—"
-                                    detailText: root.ramTotalGB > 0 ? root.ramUsedGB.toFixed(1) + " / " + Math.round(root.ramTotalGB) + " GB" : ""
-                                    showChart: true
-                                    chartHistory: root.ramHistory
+                                IconButton {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    icon: mediaCard.playing ? "pause" : "play_arrow"
+                                    iconFill: 1
+                                    variant: "filled"
+                                    onClicked: {
+                                        if (mediaCard.mprisPlayer && mediaCard.mprisPlayer.canTogglePlaying)
+                                            mediaCard.mprisPlayer.togglePlaying();
+
+                                    }
                                 }
 
-                                StatCard {
-                                    width: (root.contentWidth - root.sp2 * 2) / 3
-                                    label: "BATTERY"
-                                    valueText: root.batteryPresent ? root.batteryPercent + "%" : "N/A"
-                                    detailText: root.batteryDetail
-                                    showBar: root.batteryPresent
-                                    barPct: root.batteryPercent
-                                    barColor: root.batteryCharging ? Theme.accent : (root.batteryPercent <= 20 ? Theme.error : Theme.accent)
+                                IconButton {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    icon: "skip_next"
+                                    iconFill: 1
+                                    size: "xs"
+                                    tintOverride: Theme.text
+                                    onClicked: {
+                                        if (mediaCard.mprisPlayer && mediaCard.mprisPlayer.canGoNext)
+                                            mediaCard.mprisPlayer.next();
+
+                                    }
                                 }
 
                             }
 
-                            Rectangle {
-                                id: diskCard
+                            Column {
+                                anchors.left: mediaArt.right
+                                anchors.leftMargin: 12
+                                anchors.right: mediaControls.left
+                                anchors.rightMargin: 8
+                                anchors.top: parent.top
+                                anchors.topMargin: 14
+                                spacing: 1
 
-                                readonly property var selectedDiskInfo: {
-                                    for (const d of root.diskList) {
-                                        if (d.name === root.selectedDisk)
-                                            return d;
-
-                                    }
-                                    return root.diskList.length > 0 ? root.diskList[0] : null;
+                                LText {
+                                    width: parent.width
+                                    role: "titleSmall"
+                                    text: root.mprisMod ? root.mprisMod.title : ""
+                                    elide: Text.ElideRight
                                 }
-                                readonly property real usedGB: selectedDiskInfo ? selectedDiskInfo.used / 1.07374e+09 : 0
-                                readonly property real totalGB: selectedDiskInfo ? selectedDiskInfo.size / 1.07374e+09 : 0
-                                readonly property real usedPct: (selectedDiskInfo && selectedDiskInfo.size > 0) ? (selectedDiskInfo.used / selectedDiskInfo.size * 100) : 0
-                                readonly property bool unmounted: diskCard.selectedDiskInfo !== null && !diskCard.selectedDiskInfo.mounted
 
-                                width: root.contentWidth
-                                height: diskColumn.implicitHeight + root.sp3 * 2
-                                radius: Theme.shapeMd
-                                color: Theme.withBlur(Theme.bgTile)
+                                LText {
+                                    width: parent.width
+                                    visible: text !== ""
+                                    role: "bodySmall"
+                                    color: Theme.subtext
+                                    text: root.mprisMod ? root.mprisMod.artist : ""
+                                    elide: Text.ElideRight
+                                }
 
-                                Column {
-                                    id: diskColumn
+                            }
 
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    anchors.top: parent.top
-                                    anchors.margins: root.sp3
-                                    spacing: root.sp1 + 2
+                            LinearProgress {
+                                anchors.left: mediaArt.right
+                                anchors.leftMargin: 12
+                                anchors.right: parent.right
+                                anchors.rightMargin: 16
+                                anchors.bottom: parent.bottom
+                                anchors.bottomMargin: 14
+                                value: mediaCard.progress
+                                wavy: true
+                                animated: mediaCard.playing
+                                valueAnimated: false
+                                amplitude: 2.5
+                                wavelength: 24
+                                trackColor: Theme.withBlur(Theme.surfaceHighest)
+                            }
 
-                                    Item {
-                                        width: parent.width
-                                        height: 22
+                        }
 
-                                        Overline {
-                                            anchors.left: parent.left
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: "DISK"
-                                        }
+                        Rectangle {
+                            id: statsCard
 
-                                        Rectangle {
-                                            id: diskTrigger
+                            readonly property var selectedDiskInfo: {
+                                for (const d of root.diskList) {
+                                    if (d.name === root.selectedDisk)
+                                        return d;
 
-                                            anchors.right: parent.right
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            height: 22
-                                            width: diskTriggerRow.implicitWidth + 18
-                                            radius: Theme.shapeFull
-                                            color: Theme.withBlur(Theme.bgHigh)
-                                            visible: root.diskList.length > 0
-                                            scale: diskTriggerArea.pressed ? 0.96 : 1
+                                }
+                                return root.diskList.length > 0 ? root.diskList[0] : null;
+                            }
+                            readonly property real diskPct: (selectedDiskInfo && selectedDiskInfo.size > 0 && selectedDiskInfo.mounted) ? selectedDiskInfo.used / selectedDiskInfo.size : 0
 
-                                            Row {
-                                                id: diskTriggerRow
+                            function cycleDisk() {
+                                if (root.diskList.length < 2)
+                                    return ;
 
-                                                anchors.centerIn: parent
-                                                spacing: 4
+                                var i = 0;
+                                for (var k = 0; k < root.diskList.length; k++) {
+                                    if (root.diskList[k].name === root.selectedDisk)
+                                        i = k;
 
-                                                Text {
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    text: root.selectedDisk || "—"
-                                                    color: Theme.text
-                                                    font.family: Theme.fontFamily
-                                                    font.bold: true
-                                                    font.pixelSize: Theme.fontLabelSm
-                                                }
+                                }
+                                root.selectedDisk = root.diskList[(i + 1) % root.diskList.length].name;
+                            }
 
-                                                SvgIcon {
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    path: root.expandPath
-                                                    tint: Theme.subtext
-                                                    iconSize: 11
-                                                    rotation: root.diskDropdownOpen ? 180 : 0
+                            width: root.contentWidth
+                            height: gaugeRow.implicitHeight + 28
+                            radius: Theme.shapeLgInc
+                            color: Theme.withBlur(Theme.surfaceHigh)
 
-                                                    Behavior on rotation {
-                                                        NumberAnimation {
-                                                            duration: Theme.barMs(180)
-                                                            easing.type: Easing.Bezier
-                                                            easing.bezierCurve: root.easeEmphasized
-                                                        }
+                            Row {
+                                id: gaugeRow
 
-                                                    }
+                                anchors.centerIn: parent
+                                width: parent.width - 16
 
-                                                }
+                                Gauge {
+                                    width: gaugeRow.width / 4
+                                    value: root.cpuPercent / 100
+                                    center: root.cpuHistory.length > 0 ? Math.round(root.cpuPercent) + "" : "—"
+                                    label: "CPU"
+                                    detail: root.cpuTemp > 0 ? Math.round(root.cpuTemp) + " °C" : ""
+                                    tone: root.cpuTemp >= 85 ? Theme.error : Theme.accent
+                                }
 
-                                            }
+                                Gauge {
+                                    width: gaugeRow.width / 4
+                                    value: root.ramPercent / 100
+                                    center: root.ramHistory.length > 0 ? Math.round(root.ramPercent) + "" : "—"
+                                    label: "Memory"
+                                    detail: root.ramTotalGB > 0 ? root.ramUsedGB.toFixed(1) + " GB" : ""
+                                    tone: Theme.accent
+                                }
 
-                                            StateLayer {
-                                                hovered: diskTriggerArea.containsMouse
-                                                pressed: diskTriggerArea.pressed
-                                            }
+                                Gauge {
+                                    width: gaugeRow.width / 4
+                                    value: statsCard.diskPct
+                                    center: statsCard.selectedDiskInfo && statsCard.selectedDiskInfo.mounted ? Math.round(statsCard.diskPct * 100) + "" : "—"
+                                    label: root.selectedDisk || "Disk"
+                                    detail: statsCard.selectedDiskInfo ? (statsCard.selectedDiskInfo.mounted ? Math.round(statsCard.selectedDiskInfo.used / 1.07374e+09) + " / " + Math.round(statsCard.selectedDiskInfo.size / 1.07374e+09) + " GB" : "not mounted") : ""
+                                    tone: Theme.accent
+                                    clickable: root.diskList.length > 1
+                                    onClicked: statsCard.cycleDisk()
+                                }
 
-                                            MouseArea {
-                                                id: diskTriggerArea
-
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: {
-                                                    if (!root.diskDropdownOpen) {
-                                                        const below = diskTrigger.mapToItem(mainView, 0, diskTrigger.height);
-                                                        const above = diskTrigger.mapToItem(mainView, 0, 0);
-                                                        diskPopup.x = below.x + diskTrigger.width - diskPopup.width;
-                                                        // the disk card sits last, so below usually runs past the
-                                                        // panel's clipped edge; flip up when it does
-                                                        const fitsBelow = below.y + 6 + diskPopup.height <= root.panelHeight - root.sp2;
-                                                        diskPopup.dropUp = !fitsBelow;
-                                                        diskPopup.y = fitsBelow ? below.y + 6 : Math.max(root.sp2, above.y - diskPopup.height - 6);
-                                                    }
-                                                    root.diskDropdownOpen = !root.diskDropdownOpen;
-                                                }
-                                            }
-
-                                            Behavior on scale {
-                                                NumberAnimation {
-                                                    duration: Theme.barMs(90)
-                                                    easing.type: Easing.OutQuad
-                                                }
-
-                                            }
-
-                                        }
-
-                                    }
-
-                                    Text {
-                                        width: parent.width
-                                        text: {
-                                            if (!diskCard.selectedDiskInfo)
-                                                return "No disks found";
-
-                                            if (diskCard.unmounted)
-                                                return "Not mounted";
-
-                                            return Math.round(diskCard.usedGB) + " / " + Math.round(diskCard.totalGB) + " GB";
-                                        }
-                                        color: diskCard.unmounted ? Theme.subtext : Theme.text
-                                        font.family: Theme.fontFamily
-                                        font.bold: true
-                                        font.pixelSize: Theme.fontTitleMd
-                                    }
-
-                                    Meter {
-                                        width: parent.width
-                                        visible: diskCard.selectedDiskInfo !== null
-                                        opacity: diskCard.unmounted ? 0.4 : 1
-                                        pct: diskCard.usedPct
-                                    }
-
+                                Gauge {
+                                    width: gaugeRow.width / 4
+                                    value: root.batteryPresent ? root.batteryPercent / 100 : 0
+                                    center: root.batteryPresent ? root.batteryPercent + "" : "—"
+                                    label: root.batteryCharging ? "Charging" : "Battery"
+                                    detail: root.batteryDetail
+                                    tone: root.batteryPercent <= 20 && !root.batteryCharging ? Theme.error : Theme.accent
+                                    centerIcon: root.batteryCharging ? "bolt" : ""
                                 }
 
                             }
@@ -1695,113 +1551,6 @@ BarPill {
 
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    visible: root.diskDropdownOpen
-                    enabled: root.diskDropdownOpen
-                    onClicked: root.diskDropdownOpen = false
-                }
-
-                // declared last so it paints on top
-                Rectangle {
-                    id: diskPopup
-
-                    property bool dropUp: false
-
-                    visible: opacity > 0.01
-                    opacity: root.diskDropdownOpen ? 1 : 0
-                    scale: root.diskDropdownOpen ? 1 : 0.94
-                    transformOrigin: diskPopup.dropUp ? Item.Bottom : Item.Top
-                    width: 150
-                    height: diskPopupColumn.implicitHeight + root.sp1 * 2
-                    radius: Theme.shapeMd
-                    color: Theme.withBlur(Theme.bgActive)
-                    z: 100
-
-                    Column {
-                        id: diskPopupColumn
-
-                        anchors.fill: parent
-                        anchors.margins: root.sp1
-                        spacing: 2
-
-                        Repeater {
-                            model: root.diskList
-
-                            Rectangle {
-                                id: optRow
-
-                                required property var modelData
-                                readonly property bool isSelected: optRow.modelData.name === root.selectedDisk
-
-                                width: parent.width
-                                height: 30
-                                radius: Theme.shapeSm
-                                color: optRow.isSelected ? Theme.accent : "transparent"
-
-                                Text {
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: root.sp2 + 2
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: optRow.modelData.name
-                                    color: optRow.isSelected ? Theme.fgAccent : Theme.text
-                                    opacity: (!optRow.modelData.mounted && !optRow.isSelected) ? 0.45 : 1
-                                    font.family: Theme.fontFamily
-                                    font.bold: true
-                                    font.pixelSize: Theme.fontLabelMd
-                                }
-
-                                SvgIcon {
-                                    visible: optRow.isSelected
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: root.sp2
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    path: root.checkPath
-                                    tint: Theme.fgAccent
-                                    iconSize: 13
-                                }
-
-                                StateLayer {
-                                    hovered: optArea.containsMouse
-                                    pressed: optArea.pressed
-                                    tint: optRow.isSelected ? Theme.fgAccent : Theme.text
-                                }
-
-                                MouseArea {
-                                    id: optArea
-
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.selectedDisk = optRow.modelData.name;
-                                        root.diskDropdownOpen = false;
-                                    }
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Theme.barMs(180)
-                        }
-
-                    }
-
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: Theme.barMs(180)
-                            easing.type: Easing.Bezier
-                            easing.bezierCurve: root.easeEmphasizedDecel
-                        }
-
-                    }
-
-                }
             }
 
             Item {
@@ -1831,7 +1580,7 @@ BarPill {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.topMargin: root.sp2
-                    anchors.leftMargin: root.panelPad - 4
+                    anchors.leftMargin: root.panelPad - 6
                     anchors.rightMargin: root.panelPad
                     height: root.subHeaderHeight
 
@@ -1840,35 +1589,33 @@ BarPill {
 
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
-                        path: root.chevronLeftPath
-                        tint: Theme.text
-                        diameter: 32
-                        iconSize: 18
-                        onTapped: root.showView("main")
+                        icon: "arrow_back"
+                        tintOverride: Theme.text
+                        onClicked: root.showView("main")
                     }
 
-                    Text {
+                    LText {
                         anchors.left: backChip.right
                         anchors.leftMargin: root.sp1
                         anchors.verticalCenter: parent.verticalCenter
+                        role: "titleMedium"
+                        weight: 600
                         text: {
                             switch (root.view) {
                             case "wifi":
-                                return "Network";
+                                return "Internet";
                             case "bluetooth":
                                 return "Bluetooth";
                             case "output":
-                                return "Output device";
+                                return "Sound output";
+                            case "power":
+                                return "Power";
                             }
                             return "";
                         }
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        font.pixelSize: Theme.fontTitleSm
                     }
 
-                    M3Switch {
+                    Switch {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         visible: root.view === "bluetooth" || root.view === "wifi"
@@ -1901,6 +1648,8 @@ BarPill {
                             return btPanel.implicitHeight;
                         case "output":
                             return outputList.implicitHeight;
+                        case "power":
+                            return powerList.implicitHeight;
                         }
                         return wifiPanel.implicitHeight;
                     }
@@ -1923,19 +1672,92 @@ BarPill {
                         visible: root.view === "bluetooth"
                     }
 
-                    DeviceList {
+                    Column {
                         id: outputList
 
                         width: subScroll.width
                         visible: root.view === "output"
-                        nodes: root.outputNodes
-                        current: root.sink
-                        emptyText: "No output devices"
-                        iconPath: root.speakerPath
-                        availability: root.sinkAvailable
-                        onPicked: (node) => {
-                            Pipewire.preferredDefaultAudioSink = node;
+                        spacing: 2
+
+                        Repeater {
+                            model: root.outputNodes
+
+                            ListItem {
+                                id: devOpt
+
+                                required property var modelData
+                                required property int index
+                                readonly property bool isCurrent: root.sink === devOpt.modelData
+                                readonly property bool usable: root.sinkAvailable[devOpt.modelData.name] !== false
+                                readonly property string lower: (root.deviceLabel(devOpt.modelData) + " " + (devOpt.modelData.name || "")).toLowerCase()
+
+                                width: outputList.width
+                                first: devOpt.index === 0
+                                last: devOpt.index === root.outputNodes.length - 1
+                                containerColor: Theme.withBlur(Theme.surfaceHigh)
+                                selected: devOpt.isCurrent
+                                disabled: !devOpt.usable
+                                icon: devOpt.lower.indexOf("head") >= 0 || devOpt.lower.indexOf("bluez") >= 0 ? "headphones" : (devOpt.lower.indexOf("hdmi") >= 0 ? "tv" : "speaker")
+                                headline: root.deviceLabel(devOpt.modelData)
+                                supporting: devOpt.isCurrent ? "Playing here" : (devOpt.usable ? "" : "Not connected")
+                                onClicked: {
+                                    if (devOpt.usable)
+                                        Pipewire.preferredDefaultAudioSink = devOpt.modelData;
+
+                                }
+                                trailing: [
+                                    Icon {
+                                        visible: devOpt.isCurrent
+                                        name: "check"
+                                        color: Theme.fgSecondaryContainer
+                                    }
+                                ]
+                            }
+
                         }
+
+                        LText {
+                            width: outputList.width
+                            visible: root.outputNodes.length === 0
+                            horizontalAlignment: Text.AlignHCenter
+                            role: "bodyMedium"
+                            color: Theme.subtext
+                            text: "No output devices"
+                            topPadding: root.sp5
+                            bottomPadding: root.sp5
+                        }
+
+                    }
+
+                    Column {
+                        id: powerList
+
+                        width: subScroll.width
+                        visible: root.view === "power"
+                        spacing: 2
+
+                        Repeater {
+                            model: Power.actions
+
+                            ListItem {
+                                id: pw
+
+                                required property var modelData
+                                required property int index
+                                readonly property bool armed: root.powerArmed === pw.modelData.id
+
+                                width: powerList.width
+                                first: pw.index === 0
+                                last: pw.index === Power.actions.length - 1
+                                containerColor: pw.armed ? Theme.errorContainer : Theme.withBlur(Theme.surfaceHigh)
+                                icon: pw.modelData.icon
+                                iconColor: pw.armed ? Theme.fgErrorContainer : Theme.subtext
+                                headline: pw.armed ? "Click again to " + pw.modelData.label.toLowerCase() : pw.modelData.label
+                                onClicked: root.powerPick(pw.modelData.id)
+                            }
+
+                        }
+
                     }
 
                     MouseArea {
@@ -1966,20 +1788,19 @@ BarPill {
             // measured off unconstrained metrics, since an eliding Text reports
             // its elided width and would pin the card at whatever it first got
             readonly property real natural: {
-                let w = Math.max(tipOverlineText.implicitWidth, tipTitleMetrics.width + (root.tipViewKind === "volume" ? 32 : 0));
+                let w = Math.max(tipOverlineText.implicitWidth, tipTitleMetrics.width + (root.tipViewKind === "volume" ? 36 : 0));
                 if (tipSupportText.visible)
                     w = Math.max(w, tipSupportMetrics.width);
 
-                // rounding the card width down by a fraction would elide the text
                 return Math.ceil(w) + 2;
             }
-            readonly property int floorW: root.tipViewKind === "volume" ? 232 : 128
+            readonly property int floorW: root.tipViewKind === "volume" ? 240 : 132
 
             width: Math.ceil(Math.min(320, Math.max(tipCard.floorW, tipCard.natural + tipCard.pad * 2)))
-            height: Math.round(tipCol.implicitHeight + tipCard.pad * 2 - 6)
+            height: Math.round(tipCol.implicitHeight + tipCard.pad * 2 - 4)
             x: root.tipCardX
             y: root.compactHeight + root.tipGap
-            radius: Theme.shapeMd
+            radius: Theme.shapeLg
             color: Theme.bg
             opacity: root.tipShown ? 1 : 0
             visible: tipCard.opacity > 0.01
@@ -2044,53 +1865,54 @@ BarPill {
                 anchors.left: parent.left
                 anchors.top: parent.top
                 anchors.leftMargin: tipCard.pad
-                anchors.topMargin: tipCard.pad - 3
+                anchors.topMargin: tipCard.pad - 2
                 width: tipCard.width - tipCard.pad * 2
-                spacing: 3
+                spacing: 2
 
-                Text {
+                LText {
                     id: tipOverlineText
 
+                    role: "labelSmall"
+                    color: Theme.primary
                     text: root.tipOverline
-                    color: Theme.subtext
-                    font.family: Theme.fontFamily
-                    font.bold: true
-                    font.pixelSize: Theme.fontLabelSm
                     font.letterSpacing: 0.8
                 }
 
-                Text {
+                LText {
                     id: tipTitleText
 
-                    width: tipCol.width - (root.tipViewKind === "volume" ? 32 : 0)
+                    width: tipCol.width - (root.tipViewKind === "volume" ? 36 : 0)
+                    role: "titleMedium"
+                    weight: 600
                     text: root.tipTitle
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.bold: true
-                    font.pixelSize: Theme.fontTitleSm
                     elide: Text.ElideRight
                 }
 
-                Text {
+                LText {
                     id: tipSupportText
 
                     width: tipCol.width
-                    visible: tipSupportText.text !== ""
-                    text: root.tipSupport
+                    visible: text !== ""
+                    role: "bodySmall"
                     color: Theme.subtext
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontLabelSm
+                    text: root.tipSupport
                     elide: Text.ElideRight
-                    topPadding: 1
+                    bottomPadding: 2
                 }
 
-                M3Slider {
+                Slider {
                     id: tipSlider
 
                     visible: root.tipViewKind === "volume"
+                    enabled: false
                     width: tipCol.width
+                    height: 30
+                    from: 0
+                    to: 100
                     value: root.volumePercent
-                    muted: root.volMuted
+                    showValue: false
+                    activeColor: root.volMuted ? Theme.outlineStrong : Theme.primary
+                    inactiveColor: Theme.surfaceHighest
                 }
 
             }
@@ -2107,32 +1929,19 @@ BarPill {
                 visible: root.tipViewKind === "volume"
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.rightMargin: 9
-                anchors.topMargin: 9
-                width: 28
-                height: 28
-                radius: Theme.shapeFull
-                color: "transparent"
+                anchors.rightMargin: 10
+                anchors.topMargin: 10
+                width: 32
+                height: 32
+                radius: 16
+                color: root.volMuted ? Theme.errorContainer : (tipMute.hovered ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent")
 
-                StateLayer {
-                    hovered: tipMute.hovered
-                    pressed: false
-                }
-
-                SvgIcon {
+                Icon {
                     anchors.centerIn: parent
-                    path: root.volMuted ? root.volumeIconLevels[0].path : root.volumeIconFor(root.volumePercent)
-                    tint: root.volMuted ? Theme.error : Theme.subtext
-                    iconSize: 16
-                }
-
-                Rectangle {
-                    visible: root.volMuted
-                    anchors.centerIn: parent
-                    width: 18
-                    height: 1.5
-                    rotation: 45
-                    color: Theme.error
+                    name: root.volumeIcon(root.volumePercent, root.volMuted)
+                    size: 18
+                    fill: 1
+                    color: root.volMuted ? Theme.fgErrorContainer : Theme.subtext
                 }
 
             }
@@ -2148,922 +1957,268 @@ BarPill {
         }
     ]
 
-    // m3 state layer: one hover/press idiom for every interactive surface here
-    component StateLayer: Rectangle {
-        id: layer
-
-        property bool hovered: false
-        property bool pressed: false
-        property color tint: Theme.text
-
-        anchors.fill: parent
-        radius: parent.radius !== undefined ? parent.radius : 0
-        color: layer.tint
-        opacity: layer.pressed ? Theme.statePressed : (layer.hovered ? Theme.stateHover : 0)
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Theme.barMs(150)
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.easeEmphasized
-            }
-
-        }
-
-    }
-
-    component Overline: Text {
-        color: Theme.subtext
-        font.family: Theme.fontFamily
-        font.bold: true
-        font.pixelSize: Theme.fontLabelSm
-        font.letterSpacing: 0.8
-    }
-
-    // flat grouped container, the same shape the settings app uses
-    component GroupCard: Rectangle {
-        id: group
-
-        default property alias rows: groupColumn.data
-
-        implicitHeight: groupColumn.implicitHeight + root.sp3 * 2
-        height: implicitHeight
-        radius: Theme.shapeLg
-        color: Theme.withBlur(Theme.bgTile)
-
-        Column {
-            id: groupColumn
-
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.topMargin: root.sp3
-            anchors.leftMargin: root.sp3
-            anchors.rightMargin: root.sp3
-            spacing: root.sp1
-        }
-
-    }
-
-    component IconButton: Rectangle {
-        id: btn
-
-        property string path: ""
-        property color tint: Theme.text
-        property int diameter: 32
-        property int iconSize: 18
-        property color bg: "transparent"
-        property color layerTint: Theme.text
-
-        signal tapped()
-
-        width: btn.diameter
-        height: btn.diameter
-        radius: Theme.shapeFull
-        color: btn.bg
-
-        StateLayer {
-            hovered: btnArea.containsMouse
-            pressed: btnArea.pressed
-            tint: btn.layerTint
-        }
-
-        SvgIcon {
-            anchors.centerIn: parent
-            path: btn.path
-            tint: btn.tint
-            iconSize: btn.iconSize
-        }
-
-        MouseArea {
-            id: btnArea
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: btn.tapped()
-        }
-
-    }
-
-    // m3 switch anatomy: the handle grows from 16 to 22 as it travels
-    component M3Switch: Rectangle {
-        id: sw
-
-        property bool checked: false
-
-        signal toggled()
-
-        width: 44
-        height: 26
-        radius: Theme.shapeFull
-        color: sw.checked ? Theme.accent : Theme.withBlur(Theme.bgHigh)
-
-        Rectangle {
-            id: swHandle
-
-            width: sw.checked ? 22 : 16
-            height: width
-            radius: Theme.shapeFull
-            anchors.verticalCenter: parent.verticalCenter
-            x: sw.checked ? sw.width - width - 2 : 5
-            color: sw.checked ? Theme.bgOpaque : Theme.outlineStrong
-
-            Behavior on x {
-                NumberAnimation {
-                    duration: Theme.barMs(250)
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: root.easeEmphasized
-                }
-
-            }
-
-            Behavior on width {
-                NumberAnimation {
-                    duration: Theme.barMs(250)
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: root.easeEmphasized
-                }
-
-            }
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: Theme.barDurQuick
-                }
-
-            }
-
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: sw.toggled()
-        }
-
-        Behavior on color {
-            ColorAnimation {
-                duration: Theme.barMs(200)
-            }
-
-        }
-
-    }
-
-    // m3 slider: thick track, detached handle, stop dot at the far end
-    component M3Slider: Item {
-        id: sl
-
-        property real value: 0
-        property bool muted: false
-        property bool interactive: false
-        property bool dragging: false
-        property real dragValue: 0
-        readonly property real liveValue: sl.dragging ? sl.dragValue : sl.value
-
-        signal moved(real v)
-
-        readonly property int handleW: 4
-        readonly property int trackH: 16
-        readonly property int notch: 6
-        readonly property real pos: Math.max(0, Math.min(1, sl.liveValue / 100))
-        readonly property real handleX: sl.pos * Math.max(0, sl.width - sl.handleW)
-        readonly property color liveColor: sl.muted ? Theme.outlineStrong : Theme.accent
-
-        function valueAt(px) {
-            const span = Math.max(1, sl.width - sl.handleW);
-            return Math.max(0, Math.min(100, ((px - sl.handleW / 2) / span) * 100));
-        }
-
-        function applyAt(px) {
-            sl.dragging = true;
-            sl.dragValue = sl.valueAt(px);
-            sl.moved(sl.dragValue);
-        }
-
-        height: 32
-
-        Rectangle {
-            id: activeTrack
-
-            x: 0
-            anchors.verticalCenter: parent.verticalCenter
-            width: Math.max(0, sl.handleX - sl.notch)
-            height: sl.trackH
-            radius: sl.trackH / 2
-            topRightRadius: 2
-            bottomRightRadius: 2
-            color: sl.liveColor
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: Theme.barDurQuick
-                }
-
-            }
-
-        }
-
-        Rectangle {
-            id: inactiveTrack
-
-            x: Math.min(sl.width, sl.handleX + sl.handleW + sl.notch)
-            anchors.verticalCenter: parent.verticalCenter
-            width: Math.max(0, sl.width - inactiveTrack.x)
-            height: sl.trackH
-            radius: sl.trackH / 2
-            topLeftRadius: 2
-            bottomLeftRadius: 2
-            color: Theme.withBlur(Theme.bgHigh)
-
-            Rectangle {
-                visible: inactiveTrack.width > 16
-                anchors.right: parent.right
-                anchors.rightMargin: 6
-                anchors.verticalCenter: parent.verticalCenter
-                width: 4
-                height: 4
-                radius: 2
-                color: Theme.outlineStrong
-            }
-
-        }
-
-        Rectangle {
-            id: handle
-
-            x: sl.handleX
-            anchors.verticalCenter: parent.verticalCenter
-            width: sl.handleW
-            height: sl.trackH + 12
-            radius: sl.handleW / 2
-            color: sl.liveColor
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: Theme.barDurQuick
-                }
-
-            }
-
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            anchors.topMargin: -4
-            anchors.bottomMargin: -4
-            enabled: sl.interactive
-            preventStealing: true
-            cursorShape: Qt.PointingHandCursor
-            onPressed: (mouse) => {
-                return sl.applyAt(mouse.x);
-            }
-            onPositionChanged: (mouse) => {
-                if (pressed)
-                    sl.applyAt(mouse.x);
-
-            }
-            onReleased: sl.dragging = false
-            onCanceled: sl.dragging = false
-            onWheel: (wheel) => {
-                sl.moved(Math.max(0, Math.min(100, sl.value + (wheel.angleDelta.y > 0 ? 5 : -5))));
-                wheel.accepted = true;
-            }
-        }
-
-    }
-
-    // leading control, track, trailing readout
-    component SliderRow: Item {
-        id: sliderRow
-
-        property var iconLevels: []
-        property real value: 0
-        property bool muted: false
-        property bool showMute: false
-        property bool showPicker: false
-        readonly property real displayValue: sliderTrack.liveValue
-
-        signal moved(real v)
-        signal muteToggled()
-        signal pickerRequested()
-
-        height: 40
-
-        Rectangle {
-            id: sliderLead
-
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            width: 32
-            height: 32
-            radius: Theme.shapeFull
-            color: "transparent"
-
-            StateLayer {
-                hovered: sliderRow.showMute && leadArea.containsMouse
-                pressed: sliderRow.showMute && leadArea.pressed
-            }
-
-            MorphIcon {
-                anchors.centerIn: parent
-                levels: sliderRow.iconLevels
-                value: sliderRow.displayValue
-                tint: sliderRow.muted ? Theme.error : Theme.subtext
-                iconSize: 18
-            }
-
-            Rectangle {
-                visible: sliderRow.muted
-                anchors.centerIn: parent
-                width: 22
-                height: 1.5
-                rotation: 45
-                color: Theme.error
-            }
-
-            MouseArea {
-                id: leadArea
-
-                anchors.fill: parent
-                enabled: sliderRow.showMute
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: sliderRow.muteToggled()
-            }
-
-        }
-
-        M3Slider {
-            id: sliderTrack
-
-            anchors.left: sliderLead.right
-            anchors.leftMargin: root.sp3
-            anchors.right: sliderTail.left
-            anchors.rightMargin: root.sp3
-            anchors.verticalCenter: parent.verticalCenter
-            interactive: true
-            value: sliderRow.value
-            muted: sliderRow.muted
-            onMoved: (v) => {
-                return sliderRow.moved(v);
-            }
-        }
-
-        // fixed width, so a row without a picker still lines its track up
-        Item {
-            id: sliderTail
-
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            width: 74
-            height: 28
-
-            Text {
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                width: 34
-                horizontalAlignment: Text.AlignRight
-                text: Math.round(sliderRow.displayValue) + "%"
-                color: sliderRow.muted ? Theme.subtextDim : Theme.text
-                font.family: Theme.fontFamily
-                font.bold: true
-                font.pixelSize: Theme.fontLabelMd
-            }
-
-            IconButton {
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                visible: sliderRow.showPicker
-                path: root.chevronPath
-                tint: Theme.subtext
-                diameter: 28
-                iconSize: 13
-                onTapped: sliderRow.pickerRequested()
-            }
-
-        }
-
-    }
-
-    // the output/input picker body
-    component DeviceList: Column {
-        id: devList
-
-        property var nodes: []
-        property var current: null
-        property string emptyText: ""
-        property string iconPath: ""
-        property var availability: ({})
-
-        signal picked(var node)
-
-        spacing: root.sp2
-
-        Repeater {
-            model: devList.nodes
-
-            Rectangle {
-                id: devOpt
-
-                required property var modelData
-                readonly property bool isCurrent: devList.current === devOpt.modelData
-                readonly property bool usable: devList.availability[devOpt.modelData.name] !== false
-
-                width: devList.width
-                height: 56
-                radius: Theme.shapeMd
-                color: devOpt.isCurrent ? Theme.accent : Theme.withBlur(Theme.bgTile)
-                opacity: devOpt.usable ? 1 : 0.42
-
-                StateLayer {
-                    hovered: devOptArea.containsMouse
-                    pressed: devOptArea.pressed
-                    tint: devOpt.isCurrent ? Theme.fgAccent : Theme.text
-                }
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.barMs(180)
-                    }
-
-                }
-
-                SvgIcon {
-                    id: devOptIcon
-
-                    anchors.left: parent.left
-                    anchors.leftMargin: root.sp3
-                    anchors.verticalCenter: parent.verticalCenter
-                    path: devList.iconPath
-                    tint: devOpt.isCurrent ? Theme.fgAccent : Theme.subtext
-                    iconSize: 18
-                }
-
-                Column {
-                    anchors.left: devOptIcon.right
-                    anchors.leftMargin: root.sp3
-                    anchors.right: devOptCheck.left
-                    anchors.rightMargin: root.sp2
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 1
-
-                    Text {
-                        width: parent.width
-                        text: root.deviceLabel(devOpt.modelData)
-                        color: devOpt.isCurrent ? Theme.fgAccent : Theme.text
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        font.pixelSize: Theme.fontLabelLg
-                        elide: Text.ElideRight
-                    }
-
-                    Text {
-                        width: parent.width
-                        visible: text !== ""
-                        text: devOpt.isCurrent ? "Default device" : (devOpt.usable ? "" : "Not connected")
-                        color: devOpt.isCurrent ? Theme.alpha(Theme.fgAccent, 0.75) : Theme.subtextDim
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontLabelSm
-                        elide: Text.ElideRight
-                    }
-
-                }
-
-                SvgIcon {
-                    id: devOptCheck
-
-                    anchors.right: parent.right
-                    anchors.rightMargin: root.sp3
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: devOpt.isCurrent
-                    path: root.checkPath
-                    tint: Theme.fgAccent
-                    iconSize: 16
-                }
-
-                MouseArea {
-                    id: devOptArea
-
-                    anchors.fill: parent
-                    enabled: devOpt.usable
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: devList.picked(devOpt.modelData)
-                }
-
-            }
-
-        }
-
-        Text {
-            width: devList.width
-            visible: devList.nodes.length === 0
-            horizontalAlignment: Text.AlignHCenter
-            text: devList.emptyText
-            color: Theme.subtext
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontLabelMd
-            topPadding: root.sp5
-            bottomPadding: root.sp5
-        }
-
-    }
-
-    component Meter: Rectangle {
-        id: meter
-
-        property real pct: 0
-        property color barColor: Theme.accent
-
-        height: 6
-        radius: Theme.shapeFull
-        color: Theme.withBlur(Theme.bgHigh)
-
-        Rectangle {
-            width: Math.max(0, Math.min(1, meter.pct / 100)) * parent.width
-            height: parent.height
-            radius: Theme.shapeFull
-            color: meter.barColor
-
-            Behavior on width {
-                NumberAnimation {
-                    duration: Theme.barMs(300)
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: root.easeEmphasized
-                }
-
-            }
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: Theme.barMs(200)
-                }
-
-            }
-
-        }
-
-    }
-
-    // one anatomy for all three: overline, value, detail, then a meter zone
-    // whose contents share a baseline whether they are a bar or a sparkline
-    component StatCard: Rectangle {
-        id: card
-
-        property string label: ""
-        property string valueText: "—"
-        property string detailText: ""
-        property bool showBar: false
-        property real barPct: 0
-        property color barColor: Theme.accent
-        property bool showChart: false
-        property var chartHistory: []
-
-        readonly property int meterZone: 22
-
-        // every card carries the same four rows, so all three size alike even
-        // when a detail line is empty
-        implicitHeight: statColumn.implicitHeight + root.sp3 * 2
-        height: implicitHeight
-        radius: Theme.shapeMd
-        color: Theme.withBlur(Theme.bgTile)
-
-        Column {
-            id: statColumn
-
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.margins: root.sp3
-            spacing: root.sp1
-
-            Overline {
-                width: parent.width
-                text: card.label
-                elide: Text.ElideRight
-            }
-
-            Text {
-                width: parent.width
-                text: card.valueText
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.bold: true
-                font.pixelSize: Theme.fontTitleMd
-            }
-
-            Text {
-                width: parent.width
-                text: card.detailText
-                color: Theme.subtextDim
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontLabelSm
-                elide: Text.ElideRight
-            }
-
-            Item {
-                id: meterZone
-
-                width: parent.width
-                height: card.meterZone
-
-            Meter {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                visible: card.showBar
-                pct: card.barPct
-                barColor: card.barColor
-            }
-
-            Row {
-                id: chartRow
-
-                anchors.fill: parent
-                visible: card.showChart
-                spacing: 2
-
-                Repeater {
-                    model: card.chartHistory
-
-                    Rectangle {
-                        required property real modelData
-
-                        anchors.bottom: parent.bottom
-                        width: (chartRow.width - Math.max(0, card.chartHistory.length - 1) * chartRow.spacing) / Math.max(1, card.chartHistory.length)
-                        height: Math.max(2, (modelData / 100) * chartRow.height)
-                        radius: 2
-                        color: Theme.accent
-                        opacity: 0.85
-
-                        Behavior on height {
-                            NumberAnimation {
-                                duration: Theme.barMs(220)
-                                easing.type: Easing.Bezier
-                                easing.bezierCurve: root.easeEmphasized
-                            }
-
-                        }
-
-                    }
-
-                    }
-
-                }
-
-            }
-
-        }
-
-    }
-
-    // flat tile; "on" is carried by the icon tint and a growing accent underline
-    // checked tiles fill with the accent, the way they did before
-    component ToggleTile: Rectangle {
+    // a big tile: the icon side toggles, the label side opens the detail view.
+    // the pill squares off once the tile is on
+    component QuickTile: Rectangle {
         id: tile
 
-        property string iconPath: ""
-        property string iconGlyph: ""
+        property string icon: ""
         property string name: ""
         property string sub: ""
         property bool checked: false
-        property bool showArrow: false
 
         signal toggled()
         signal expandRequested()
 
         width: (root.contentWidth - root.sp2) / 2
-        height: 56
-        radius: Theme.shapeLg
-        color: tile.checked ? Theme.accent : Theme.withBlur(Theme.bgTile)
+        height: 64
+        radius: tile.checked ? Theme.shapeLgInc : height / 2
+        color: tile.checked ? Theme.primary : Theme.withBlur(Theme.surfaceHighest)
 
-        StateLayer {
-            hovered: tileArea.containsMouse
-            pressed: tileArea.pressed
-            tint: tile.checked ? Theme.fgAccent : Theme.text
-        }
-
-        MouseArea {
-            id: tileArea
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: tile.toggled()
-        }
-
-        Row {
-            anchors.left: parent.left
-            anchors.leftMargin: root.sp3
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: root.sp2
-            width: parent.width - root.sp3 - (tile.showArrow ? 38 : root.sp3)
-
-            SvgIcon {
-                visible: tile.iconGlyph === ""
-                anchors.verticalCenter: parent.verticalCenter
-                path: tile.iconPath
-                tint: tile.checked ? Theme.fgAccent : Theme.subtext
-                iconSize: 18
+        Behavior on radius {
+            NumberAnimation {
+                duration: Theme.durDefaultSpatial
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.curveDefaultSpatial
             }
 
-            Text {
-                visible: tile.iconGlyph !== ""
-                anchors.verticalCenter: parent.verticalCenter
-                text: tile.iconGlyph
-                color: tile.checked ? Theme.fgAccent : Theme.subtext
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(17)
-            }
-
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 1
-                width: parent.width - 18 - root.sp2
-
-                Text {
-                    width: parent.width
-                    text: tile.name
-                    color: tile.checked ? Theme.fgAccent : Theme.text
-                    font.family: Theme.fontFamily
-                    font.bold: true
-                    font.pixelSize: Theme.fontLabelLg
-                    elide: Text.ElideRight
-                }
-
-                Text {
-                    width: parent.width
-                    visible: tile.sub !== ""
-                    text: tile.sub
-                    color: tile.checked ? Theme.alpha(Theme.fgAccent, 0.75) : Theme.subtext
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontLabelSm
-                    elide: Text.ElideRight
-                }
-
-            }
-
-        }
-
-        IconButton {
-            visible: tile.showArrow
-            anchors.right: parent.right
-            anchors.rightMargin: root.sp1
-            anchors.verticalCenter: parent.verticalCenter
-            path: root.chevronPath
-            tint: tile.checked ? Theme.fgAccent : Theme.subtext
-            diameter: 30
-            iconSize: 14
-            onTapped: tile.expandRequested()
         }
 
         Behavior on color {
             ColorAnimation {
-                duration: Theme.barMs(180)
+                duration: Theme.durDefaultEffects
             }
 
         }
 
+        StateLayer {
+            radius: tile.radius
+            tint: tile.checked ? Theme.fgPrimary : Theme.text
+            onClicked: tile.expandRequested()
+        }
+
+        Rectangle {
+            id: bubble
+
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            width: 44
+            height: 44
+            radius: 22
+            color: tile.checked ? Theme.alpha(Theme.fgPrimary, 0.14) : Theme.alpha(Theme.text, 0.08)
+
+            StateLayer {
+                radius: 22
+                tint: tile.checked ? Theme.fgPrimary : Theme.text
+                onClicked: tile.toggled()
+            }
+
+            Icon {
+                anchors.centerIn: parent
+                name: tile.icon
+                size: 22
+                fill: tile.checked ? 1 : 0
+                color: tile.checked ? Theme.fgPrimary : Theme.text
+            }
+
+        }
+
+        Column {
+            anchors.left: bubble.right
+            anchors.leftMargin: 10
+            anchors.right: chevron.left
+            anchors.rightMargin: 2
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 0
+
+            LText {
+                width: parent.width
+                role: "titleSmall"
+                weight: 600
+                text: tile.name
+                color: tile.checked ? Theme.fgPrimary : Theme.text
+                elide: Text.ElideRight
+            }
+
+            LText {
+                width: parent.width
+                visible: text !== ""
+                role: "bodySmall"
+                text: tile.sub
+                color: tile.checked ? Theme.alpha(Theme.fgPrimary, 0.78) : Theme.subtext
+                elide: Text.ElideRight
+            }
+
+        }
+
+        Icon {
+            id: chevron
+
+            anchors.right: parent.right
+            anchors.rightMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            name: "chevron_right"
+            size: 20
+            color: tile.checked ? Theme.fgPrimary : Theme.subtext
+        }
+
     }
 
-    component StatusIndicator: Row {
-        property string svgPath: ""
-        property string labelText: ""
-        property bool isMuted: false
+    // an icon-only tile with its name underneath
+    component SmallTile: Item {
+        id: st
 
-        spacing: 4
-        anchors.verticalCenter: parent.verticalCenter
+        property string icon: ""
+        property string label: ""
+        property bool checked: false
 
-        Item {
-            width: 14
-            height: 14
-            anchors.verticalCenter: parent.verticalCenter
+        signal toggled()
 
-            Shape {
-                width: 24
-                height: 24
-                scale: 14 / 24
-                anchors.centerIn: parent
-                preferredRendererType: Shape.CurveRenderer
+        width: (root.contentWidth - root.sp2 * 5) / 6
+        height: st.width + 20
 
-                ShapePath {
-                    fillColor: isMuted ? Theme.outlineStrong : Theme.text
-                    strokeWidth: 0
+        Rectangle {
+            id: sq
 
-                    PathSvg {
-                        path: svgPath
-                    }
+            width: st.width
+            height: st.width
+            radius: st.checked ? Theme.shapeLg : width / 2
+            color: st.checked ? Theme.primary : Theme.withBlur(Theme.surfaceHighest)
 
+            Behavior on radius {
+                NumberAnimation {
+                    duration: Theme.durDefaultSpatial
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.curveDefaultSpatial
                 }
 
             }
 
-            Rectangle {
-                visible: isMuted
-                anchors.centerIn: parent
-                width: parent.width * 1.3
-                height: 1.5
-                rotation: 45
-                color: Theme.error
-            }
-
-        }
-
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: labelText
-            color: Theme.text
-            font.family: Theme.fontFamily
-            font.bold: true
-            font.pixelSize: Theme.fontLabelLg
-        }
-
-    }
-
-    component SvgIcon: Item {
-        id: iconRoot
-
-        property string path: ""
-        property color tint: Theme.text
-        property int iconSize: 16
-
-        width: iconSize
-        height: iconSize
-
-        Shape {
-            width: 24
-            height: 24
-            scale: iconRoot.iconSize / 24
-            anchors.centerIn: parent
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-                fillColor: iconRoot.tint
-                strokeWidth: 0
-
-                PathSvg {
-                    path: iconRoot.path
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.durDefaultEffects
                 }
 
             }
 
+            StateLayer {
+                radius: sq.radius
+                tint: st.checked ? Theme.fgPrimary : Theme.text
+                onClicked: st.toggled()
+            }
+
+            Icon {
+                anchors.centerIn: parent
+                name: st.icon
+                size: 22
+                fill: st.checked ? 1 : 0
+                color: st.checked ? Theme.fgPrimary : Theme.text
+            }
+
+        }
+
+        LText {
+            anchors.top: sq.bottom
+            anchors.topMargin: 4
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: st.width + 6
+            horizontalAlignment: Text.AlignHCenter
+            role: "labelSmall"
+            color: st.checked ? Theme.text : Theme.subtext
+            text: st.label
+            elide: Text.ElideRight
         }
 
     }
 
-    component MorphIcon: Item {
-        id: morphIcon
+    // a ring gauge with its reading in the middle
+    component Gauge: Item {
+        id: g
 
-        property var levels: []
         property real value: 0
-        property color tint: Theme.text
-        property int iconSize: 16
-        readonly property int activeIndex: {
-            for (let i = 0; i < morphIcon.levels.length; i++) {
-                if (morphIcon.value <= morphIcon.levels[i].max)
-                    return i;
+        property string center: ""
+        property string centerIcon: ""
+        property string label: ""
+        property string detail: ""
+        property color tone: Theme.accent
+        property bool clickable: false
 
-            }
-            return morphIcon.levels.length - 1;
-        }
+        signal clicked()
 
-        width: iconSize
-        height: iconSize
+        implicitHeight: gcol.implicitHeight
 
-        Repeater {
-            model: morphIcon.levels
+        Column {
+            id: gcol
 
-            Shape {
-                id: levelShape
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: 6
 
-                required property int index
-                required property var modelData
+            Item {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 54
+                height: 54
 
-                width: 24
-                height: 24
-                scale: morphIcon.iconSize / 24
-                anchors.centerIn: parent
-                preferredRendererType: Shape.CurveRenderer
-                opacity: morphIcon.activeIndex === levelShape.index ? 1 : 0
+                CircularProgress {
+                    anchors.fill: parent
+                    value: g.value
+                    thickness: 5
+                    color: g.tone
+                    trackColor: Theme.withBlur(Theme.surfaceHighest)
+                }
 
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.barMs(180)
-                        easing.type: Easing.OutCubic
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 0
+
+                    Icon {
+                        visible: g.centerIcon !== ""
+                        anchors.verticalCenter: parent.verticalCenter
+                        name: g.centerIcon
+                        size: 13
+                        fill: 1
+                        color: g.tone
+                    }
+
+                    LText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        role: "labelLarge"
+                        weight: 680
+                        rounded: 100
+                        text: g.center
                     }
 
                 }
 
-                ShapePath {
-                    fillColor: morphIcon.tint
-                    strokeWidth: 0
+                StateLayer {
+                    visible: g.clickable
+                    radius: 27
+                    onClicked: g.clicked()
+                }
 
-                    PathSvg {
-                        path: levelShape.modelData.path
-                    }
+            }
 
+            Column {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 0
+
+                LText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    role: "labelMedium"
+                    text: g.label
+                    width: Math.min(implicitWidth, g.width - 4)
+                    elide: Text.ElideRight
+                }
+
+                LText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    visible: text !== ""
+                    role: "bodySmall"
+                    size: Theme.fs(11)
+                    color: Theme.subtext
+                    text: g.detail
+                    width: Math.min(implicitWidth, g.width - 4)
+                    elide: Text.ElideRight
                 }
 
             }

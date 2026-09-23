@@ -80,6 +80,7 @@ SettingCard {
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabel
+                    font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                 }
 
                 M3Slider {
@@ -102,6 +103,7 @@ SettingCard {
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabel
+                    font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                 }
 
             }
@@ -180,6 +182,7 @@ SettingCard {
                             color: chip.selected ? Theme.fgAccentContainer : Theme.subtext
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel
+                            font.variableAxes: Theme.axes(Theme.fontLabel, (chip.selected) ? 640 : 420, 0)
                             font.bold: chip.selected
                         }
 

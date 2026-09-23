@@ -87,6 +87,7 @@ Column {
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(30)
+                        font.variableAxes: Theme.axes(Theme.fs(30), 640, 0)
                         font.bold: true
                     }
 
@@ -108,6 +109,7 @@ Column {
                             color: Theme.accent
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
+                            font.variableAxes: Theme.axes(Theme.fs(10), 640, 0)
                             font.bold: true
                             font.letterSpacing: 1
                         }
@@ -125,6 +127,7 @@ Column {
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBody
+                        font.variableAxes: Theme.axes(Theme.fontBody, 640, 0)
                         font.bold: true
                     }
 
@@ -134,6 +137,7 @@ Column {
                         color: Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBody
+                        font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
                     }
 
                     Text {
@@ -142,6 +146,7 @@ Column {
                         color: Theme.subtext
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBody
+                        font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
                     }
 
                 }

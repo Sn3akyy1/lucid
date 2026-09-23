@@ -10,6 +10,16 @@ Item {
     property color lineColor: Theme.accent
     property real lineWidth: 2
     property bool filled: true
+    // scale to the loudest sample instead of 0..1, for rates with no ceiling
+    property bool autoScale: false
+    readonly property real peak: {
+        if (!spark.autoScale)
+            return 1;
+
+        var m = 0;
+        for (var i = 0; i < spark.samples.length; i++) m = Math.max(m, spark.samples[i])
+        return m > 0 ? m * 1.15 : 1;
+    }
 
     readonly property var points: {
         var n = spark.samples.length;
@@ -19,7 +29,7 @@ Item {
         var out = [];
         for (var i = 0; i < n; i++) {
             var x = (spark.width - spark.lineWidth) * (i / (n - 1)) + spark.lineWidth / 2;
-            var v = Math.max(0, Math.min(1, spark.samples[i]));
+            var v = Math.max(0, Math.min(1, spark.samples[i] / spark.peak));
             out.push(Qt.point(x, spark.height - spark.lineWidth / 2 - v * (spark.height - spark.lineWidth)));
         }
         return out;
@@ -42,7 +52,26 @@ Item {
 
         ShapePath {
             strokeWidth: 0
-            fillColor: spark.filled ? Theme.alpha(spark.lineColor, 0.22) : "transparent"
+            strokeColor: "transparent"
+            fillColor: spark.filled ? "white" : "transparent"
+
+            fillGradient: LinearGradient {
+                x1: 0
+                y1: 0
+                x2: 0
+                y2: spark.height
+
+                GradientStop {
+                    position: 0
+                    color: Theme.alpha(spark.lineColor, spark.filled ? 0.32 : 0)
+                }
+
+                GradientStop {
+                    position: 1
+                    color: Theme.alpha(spark.lineColor, 0)
+                }
+
+            }
 
             PathPolyline {
                 path: spark.area

@@ -13,7 +13,7 @@ Rectangle {
     implicitWidth: row.implicitWidth + (chip.iconPath !== "" ? 20 : 24)
     implicitHeight: 26
     radius: area.pressed ? Theme.shapeSm : height / 2
-    color: area.pressed ? Theme.accentPressed : (area.containsMouse ? Theme.accentHover : Theme.accent)
+    color: Theme.layer(Theme.secondaryContainer, Theme.fgSecondaryContainer, area.pressed ? Theme.statePressed : (area.containsMouse ? Theme.stateHover : 0))
 
     Row {
         id: row
@@ -26,16 +26,17 @@ Rectangle {
             visible: chip.iconPath !== ""
             size: 14
             path: chip.iconPath
-            color: Theme.fgAccent
+            color: Theme.fgSecondaryContainer
         }
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: chip.label
-            color: Theme.fgAccent
+            color: Theme.fgSecondaryContainer
             font.family: Theme.fontFamily
             font.bold: true
             font.pixelSize: Theme.fs(10)
+            font.variableAxes: Theme.axes(Theme.fs(10), 640, 0)
         }
 
     }

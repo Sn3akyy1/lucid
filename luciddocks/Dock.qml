@@ -172,14 +172,21 @@ PanelWindow {
         if (q.indexOf(">theme") === 0)
             return "theme";
 
-        if (q.indexOf(">power") === 0)
-            return "power";
-
         if (q.indexOf(">clip") === 0)
             return "clipboard";
 
         if (q.indexOf(">") === 0)
             return "commands";
+
+        // single-character prefixes: ? searches the web, $ runs a command, : finds an emoji
+        if (q.indexOf("?") === 0)
+            return "web";
+
+        if (q.indexOf("$") === 0)
+            return "run";
+
+        if (q.indexOf(":") === 0)
+            return "emoji";
 
         return "apps";
     }
@@ -191,14 +198,20 @@ PanelWindow {
         if (mode === "theme")
             return ">theme";
 
-        if (mode === "power")
-            return ">power";
-
         if (mode === "clipboard")
             return ">clip";
 
         if (mode === "commands")
             return ">";
+
+        if (mode === "web")
+            return "?";
+
+        if (mode === "run")
+            return "$";
+
+        if (mode === "emoji")
+            return ":";
 
         return "";
     }
@@ -251,7 +264,7 @@ PanelWindow {
     }, {
         "id": "power",
         "name": "Power",
-        "desc": "Lock, suspend, restart or shut down",
+        "desc": "The full-screen way out: lock, sleep, log out, restart",
         "glyph": DockIcons.power
     }, {
         "id": "widgets",
@@ -264,11 +277,51 @@ PanelWindow {
         "desc": "Type with the pointer when there is no keyboard",
         "glyph": DockIcons.keyboard
     }, {
+        "id": "emoji",
+        "name": "Emoji",
+        "desc": "Type : and a word, Return copies it",
+        "glyph": "mood"
+    }, {
+        "id": "run",
+        "name": "Run a Command",
+        "desc": "Type $ and a command line",
+        "glyph": "terminal"
+    }, {
+        "id": "web",
+        "name": "Search the Web",
+        "desc": "Type ? and what you are looking for",
+        "glyph": "travel_explore"
+    }, {
         "id": "settings",
         "name": "Settings",
         "desc": "Open Lucid's settings",
         "glyph": DockIcons.settings
     }]
+    readonly property var searchEngines: ({
+        "duckduckgo": {
+            "name": "DuckDuckGo",
+            "url": "https://duckduckgo.com/?q="
+        },
+        "google": {
+            "name": "Google",
+            "url": "https://www.google.com/search?q="
+        },
+        "brave": {
+            "name": "Brave Search",
+            "url": "https://search.brave.com/search?q="
+        },
+        "startpage": {
+            "name": "Startpage",
+            "url": "https://www.startpage.com/do/search?q="
+        },
+        "kagi": {
+            "name": "Kagi",
+            "url": "https://kagi.com/search?q="
+        }
+    })
+    readonly property var engine: dockWindow.searchEngines[Prefs.launcherSearchEngine] || dockWindow.searchEngines.duckduckgo
+    property var emojiList: []
+    property bool emojiWanted: false
     // shared with the settings app, see Prefs.themeCatalogue
     readonly property var allThemes: Prefs.themeCatalogue
 
@@ -278,9 +331,9 @@ PanelWindow {
     readonly property real maxDockWidth: dockWindow.screen ? dockWindow.screen.width : 1920
     property real dragHeadroom: 220
 
-    readonly property int menuMaxHeight: 560
+    readonly property int menuMaxHeight: 610
     // the command palette is a short fixed list, so it caps tighter than the app launcher
-    readonly property int commandMaxHeight: 452
+    readonly property int commandMaxHeight: 500
     // how much of the panel is chrome, not results
     readonly property int panelPadding: 36
     readonly property int wallCardCount: 5
@@ -298,14 +351,11 @@ PanelWindow {
         if (dockWindow.mode === "wallpaper")
             return dockWindow.wallStripWidth + dockWindow.panelPadding + dockWindow.wallHoverRoom;
 
-        if (dockWindow.mode === "power")
-            return 660;
-
         // the list plus its preview pane
         if (dockWindow.mode === "clipboard")
             return Math.min(780, dockWindow.maxDockWidth - 48);
 
-        return 420;
+        return 460;
     }
     property real resultsHeight: 0
     readonly property real menuContentMax: (dockWindow.mode === "commands" ? dockWindow.commandMaxHeight : dockWindow.menuMaxHeight) - dockWindow.panelPadding - launcherFace.chromeHeight
@@ -313,8 +363,6 @@ PanelWindow {
         var content;
         if (dockWindow.mode === "wallpaper")
             content = dockWindow.wallHeroH + 70;
-        else if (dockWindow.mode === "power")
-            content = 140;
         // fixed, so deleting entries doesn't shrink the preview under the cursor
         else if (dockWindow.mode === "clipboard")
             content = Math.min(dockWindow.menuContentMax, 420);
@@ -492,11 +540,71 @@ PanelWindow {
         return scored;
     }
 
+    // settings pages whose name or keywords hold every word typed
+    function settingRows(q, limit) {
+        var words = q.split(/\s+/).filter(function(w) {
+            return w !== "";
+        });
+        if (words.length === 0)
+            return [];
+
+        var out = [];
+        for (var i = 0; i < Prefs.settingsPages.length && out.length < limit; i++) {
+            var pg = Prefs.settingsPages[i];
+            var hay = (pg.label + " " + pg.title + " " + (pg.keys || "")).toLowerCase();
+            if (!words.every(function(w) {
+                return hay.indexOf(w) >= 0;
+            }))
+                continue;
+
+            out.push(dockWindow.makeRow("setting", "set-" + pg.key, pg.title, pg.blurb, {
+                "glyph": pg.icon,
+                "payload": pg.key
+            }));
+        }
+        return out;
+    }
+
     function rowForApp(app) {
         return dockWindow.makeRow("app", "app-" + app.name, app.name, "", {
             "iconName": app.iconName,
             "payload": app.command
         });
+    }
+
+    function webRow(q) {
+        var looksUrl = /^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(q) && q.indexOf(" ") === -1;
+        if (looksUrl)
+            return dockWindow.makeRow("web", "web-url", "Open " + q, "In your browser", {
+            "glyph": "open_in_new",
+            "payload": /^https?:/.test(q) ? q : "https://" + q
+        });
+
+        return dockWindow.makeRow("web", "web-search", "Search " + dockWindow.engine.name + " for \u201c" + q + "\u201d", "Opens in your browser", {
+            "glyph": "travel_explore",
+            "payload": dockWindow.engine.url + encodeURIComponent(q)
+        });
+    }
+
+    function emojiRows(q, limit) {
+        var words = q.toLowerCase().split(/\s+/).filter((x) => {
+            return x !== "";
+        });
+        var out = [];
+        var list = dockWindow.emojiList;
+        for (var i = 0; i < list.length && out.length < limit; i++) {
+            var em = list[i];
+            var hay = em.n + " " + (em.k || "");
+            if (words.length && !words.every((x) => {
+                return hay.indexOf(x) >= 0;
+            }))
+                continue;
+
+            out.push(dockWindow.makeRow("emoji", "emoji-" + i, em.e + "   " + em.n, "", {
+                "payload": em.e
+            }));
+        }
+        return out;
     }
 
     function rebuildResults() {
@@ -514,20 +622,21 @@ PanelWindow {
 
             var scored = dockWindow.appRows(q);
             if (q === "") {
-                var frequent = scored.filter(function(s) {
-                    return s.uses > 0;
-                }).slice(0, 5);
-                if (frequent.length > 0) {
-                    rows.push(dockWindow.headerRow("Frequent"));
-                    for (var f = 0; f < frequent.length; f++) rows.push(dockWindow.rowForApp(frequent[f].app));
-                    rows.push(dockWindow.headerRow("All applications"));
-                }
                 var rest = scored.slice().sort(function(a, b) {
                     return a.app.name.toLowerCase() < b.app.name.toLowerCase() ? -1 : 1;
                 });
                 for (var r = 0; r < rest.length; r++) rows.push(dockWindow.rowForApp(rest[r].app));
             } else {
                 for (var s2 = 0; s2 < scored.length; s2++) rows.push(dockWindow.rowForApp(scored[s2].app));
+                var pages = dockWindow.settingRows(q, 3);
+                if (pages.length > 0) {
+                    rows.push(dockWindow.headerRow("Settings"));
+                    rows = rows.concat(pages);
+                }
+                if (Prefs.launcherWebRow && calc === "") {
+                    rows.push(dockWindow.headerRow("Web"));
+                    rows.push(dockWindow.webRow(dockWindow.queryFor(raw)));
+                }
             }
         } else if (mode === "commands") {
             for (var c = 0; c < dockWindow.allCommands.length; c++) {
@@ -539,6 +648,37 @@ PanelWindow {
                     }));
 
             }
+            if (q !== "") {
+                var found = dockWindow.settingRows(q, 6);
+                if (found.length > 0) {
+                    rows.push(dockWindow.headerRow("Settings"));
+                    rows = rows.concat(found);
+                }
+            }
+        } else if (mode === "web") {
+            var wq = dockWindow.queryFor(raw);
+            if (wq !== "")
+                rows.push(dockWindow.webRow(wq));
+            else
+                rows.push(dockWindow.headerRow("Type what to search " + dockWindow.engine.name + " for"));
+        } else if (mode === "run") {
+            var line = dockWindow.queryFor(raw);
+            if (line !== "") {
+                rows.push(dockWindow.makeRow("run", "run-bg", "Run  " + line, "In the background", {
+                    "glyph": "play_arrow",
+                    "payload": line
+                }));
+                rows.push(dockWindow.makeRow("runterm", "run-term", "Run in a terminal", "Keeps the window open to read the output", {
+                    "glyph": "terminal",
+                    "payload": line
+                }));
+            } else {
+                rows.push(dockWindow.headerRow("Type a command line to run"));
+            }
+        } else if (mode === "emoji") {
+            dockWindow.emojiWanted = true;
+
+            rows = dockWindow.emojiRows(q, 48);
         } else if (mode === "clipboard") {
             var ents = Clip.entries;
             for (var e = 0; e < ents.length; e++) {
@@ -612,7 +752,7 @@ PanelWindow {
         // the loop adds one spacing too many; 8 is the view's bottom margin
         var h = 8 - 2;
         for (var i = 0; i < rows.length; i++) {
-            h += rows[i].kind === "header" ? 30 : (rows[i].subtitle !== "" ? 58 : 48);
+            h += rows[i].kind === "header" ? 34 : (rows[i].subtitle !== "" ? 58 : 50);
             h += 2;
         }
         return h;
@@ -627,6 +767,9 @@ PanelWindow {
             Quickshell.execDetached(["sh", "-c", row.payload]);
             dockWindow.recordLaunch(row.title);
             dockWindow.menuOpen = false;
+        } else if (row.kind === "setting") {
+            dockWindow.menuOpen = false;
+            Prefs.settingsRequested(row.payload);
         } else if (row.kind === "calc") {
             Quickshell.execDetached(["wl-copy", "--", row.payload]);
             dockWindow.menuOpen = false;
@@ -637,6 +780,19 @@ PanelWindow {
             dockWindow.switchTheme(row.payload);
         } else if (row.kind === "command") {
             dockWindow.runCommand(row.payload);
+        } else if (row.kind === "web") {
+            dockWindow.menuOpen = false;
+            Qt.openUrlExternally(row.payload);
+        } else if (row.kind === "run") {
+            dockWindow.menuOpen = false;
+            Quickshell.execDetached(["sh", "-c", row.payload]);
+        } else if (row.kind === "runterm") {
+            dockWindow.menuOpen = false;
+            // the shell stays behind the command so its output can be read
+            Quickshell.execDetached(["sh", "-c", "exec xdg-terminal-exec sh -c \"$1; echo; printf 'done, press Return'; read _\"", "sh", row.payload]);
+        } else if (row.kind === "emoji") {
+            Quickshell.execDetached(["wl-copy", "--", row.payload]);
+            dockWindow.menuOpen = false;
         }
     }
 
@@ -670,7 +826,8 @@ PanelWindow {
         } else if (id === "theme") {
             launcherFace.searchText = ">theme";
         } else if (id === "power") {
-            launcherFace.searchText = ">power";
+            dockWindow.menuOpen = false;
+            dockWindow.openSession();
         } else if (id === "clipboard") {
             launcherFace.searchText = ">clip";
         } else if (id === "shuffle") {
@@ -685,6 +842,12 @@ PanelWindow {
         } else if (id === "widgets") {
             dockWindow.menuOpen = false;
             Prefs.settingsRequested("widgets");
+        } else if (id === "emoji") {
+            launcherFace.searchText = ":";
+        } else if (id === "run") {
+            launcherFace.searchText = "$";
+        } else if (id === "web") {
+            launcherFace.searchText = "?";
         }
     }
 
@@ -737,25 +900,8 @@ PanelWindow {
         dockWindow.menuOpen = false;
     }
 
-    function runPowerAction(id) {
-        if (id === "lock") {
-            Lockscreen.lock();
-            dockWindow.menuOpen = false;
-            return;
-        }
-        var cmds = {
-            // uwsm only stops a session it started, so fall back to hyprland
-            "logout": ["sh", "-c", "uwsm stop 2>/dev/null || hyprctl dispatch exit"],
-            "suspend": ["systemctl", "suspend"],
-            "shutdown": ["systemctl", "poweroff"],
-            "hibernate": ["systemctl", "hibernate"],
-            "reboot": ["systemctl", "reboot"]
-        };
-        var cmd = cmds[id];
-        if (cmd)
-            Quickshell.execDetached(cmd);
-
-        dockWindow.menuOpen = false;
+    function openSession() {
+        Quickshell.execDetached(["qs", "ipc", "call", "session", "open"]);
     }
 
     function loadAppsFromDisk() {
@@ -1126,8 +1272,14 @@ PanelWindow {
             dockWindow.openLauncher(">theme");
         }
 
+        // qs ipc call launcher power: the full-screen session screen
         function power(): void {
-            dockWindow.openLauncher(">power");
+            dockWindow.menuOpen = false;
+            dockWindow.openSession();
+        }
+
+        function emoji(): void {
+            dockWindow.openLauncher(":");
         }
 
         // a second call closes it, so one key both opens and dismisses it
@@ -1200,18 +1352,79 @@ PanelWindow {
         visible: Prefs.dockAutoHide
     }
 
-    StackPopup {
-        id: stackPopup
+    // both dock popups live in one layer window of their own: hyprland frosts
+    // layer surfaces, and a popup surface never picked up the blur
+    PanelWindow {
+        id: dockOverlay
 
-        hostWindow: dockWindow
-        activeWorkspaceId: dockWindow.activeWorkspaceId
-    }
+        // the dock's surface is bottom-anchored and centred, so its own local
+        // coordinates land here once shifted by this much
+        readonly property real dockX: (dockOverlay.width - dockWindow.width) / 2
+        readonly property real dockY: dockOverlay.height - dockWindow.height
+        readonly property var card: contextMenu.menuVisible ? contextMenu : (stackPopup.popupVisible ? stackPopup : null)
+        readonly property real cx: dockOverlay.card ? Math.ceil(dockOverlay.card.cardX - 0.002) : 0
+        readonly property real cy: dockOverlay.card ? Math.ceil(dockOverlay.card.cardY - 0.002) : 0
+        readonly property real cw: dockOverlay.card ? Math.max(0, Math.floor(dockOverlay.card.cardX + (contextMenu.menuVisible ? contextMenu.cardW : stackPopup.cardW2) + 0.002) - dockOverlay.cx) : 0
+        readonly property real ch: dockOverlay.card ? Math.max(0, Math.floor(dockOverlay.card.cardY + (contextMenu.menuVisible ? contextMenu.cardH : stackPopup.cardH2) + 0.002) - dockOverlay.cy) : 0
 
-    ContextMenu {
-        id: contextMenu
+        screen: dockWindow.screen
+        color: "transparent"
+        visible: contextMenu.showing || stackPopup.showing
+        exclusionMode: ExclusionMode.Ignore
+        exclusiveZone: 0
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "lucid-dockmenu"
 
-        hostWindow: dockWindow
-        onActionChosen: (id) => dockWindow.handleContextAction(id)
+        anchors {
+            top: true
+            bottom: true
+            left: true
+            right: true
+        }
+
+        // only the open card takes clicks; everything else falls through
+        mask: Region {
+            x: dockOverlay.cx
+            y: dockOverlay.cy
+            width: dockOverlay.cw
+            height: dockOverlay.ch
+        }
+
+        BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && dockOverlay.card !== null) ? dockBlur : null
+
+        Region {
+            id: dockBlur
+
+            x: dockOverlay.cx
+            y: dockOverlay.cy
+            width: dockOverlay.cw
+            height: dockOverlay.ch
+            radius: contextMenu.menuVisible ? Theme.radiusMd : Theme.radiusXl
+        }
+
+        ContextMenu {
+            id: contextMenu
+
+            anchors.fill: parent
+            hostWindow: dockWindow
+            grabWindow: dockOverlay
+            originX: dockOverlay.dockX
+            originY: dockOverlay.dockY
+            onActionChosen: (id) => dockWindow.handleContextAction(id)
+        }
+
+        StackPopup {
+            id: stackPopup
+
+            anchors.fill: parent
+            hostWindow: dockWindow
+            grabWindow: dockOverlay
+            originX: dockOverlay.dockX
+            originY: dockOverlay.dockY
+            activeWorkspaceId: dockWindow.activeWorkspaceId
+        }
+
     }
 
     ListModel {
@@ -1241,6 +1454,24 @@ PanelWindow {
         }
 
         target: Clip
+    }
+
+    // the emoji picker's own list, read the first time : is typed
+    FileView {
+        id: emojiFile
+
+        path: dockWindow.emojiWanted ? Qt.resolvedUrl("../lucidmoji/emoji.json") : ""
+        printErrors: false
+        onLoaded: {
+            try {
+                dockWindow.emojiList = JSON.parse(emojiFile.text()).emoji || [];
+            } catch (e) {
+                dockWindow.emojiList = [];
+            }
+            if (dockWindow.mode === "emoji")
+                dockWindow.rebuildResults();
+
+        }
     }
 
     FileView {
@@ -1872,11 +2103,9 @@ PanelWindow {
 
             width: dockWindow.menuWidth - dockWindow.panelPadding
             height: dockWindow.menuHeight - dockWindow.panelPadding
+
             targetWidth: dockWindow.menuWidth - dockWindow.panelPadding
             targetHeight: dockWindow.menuHeight - dockWindow.panelPadding
-            anchors.centerIn: parent
-            opacity: dockWindow.menuOpen ? 1 : 0
-            visible: launcherFace.opacity > 0
             mode: dockWindow.mode
             model: resultsModel
             wallpaperModel: wallpapersModel
@@ -1892,6 +2121,14 @@ PanelWindow {
             onActivated: (index) => dockWindow.activateResult(index)
             onCloseRequested: dockWindow.menuOpen = false
             onBackRequested: launcherFace.searchText = dockWindow.mode === "commands" ? "" : ">"
+            onModeRequested: (m) => {
+                if (m === "power") {
+                    dockWindow.menuOpen = false;
+                    dockWindow.openSession();
+                    return ;
+                }
+                launcherFace.searchText = dockWindow.prefixFor(m);
+            }
             onDeleteRequested: (index) => dockWindow.deleteResult(index)
             onClearRequested: Clip.wipe()
             onWallpaperPreviewed: (path) => dockWindow.requestWallpaper(path)
@@ -1899,7 +2136,9 @@ PanelWindow {
                 dockWindow.applyWallpaper(path);
                 dockWindow.menuOpen = false;
             }
-            onPowerActionChosen: (id) => dockWindow.runPowerAction(id)
+            anchors.centerIn: parent
+            opacity: dockWindow.menuOpen ? 1 : 0
+            visible: launcherFace.opacity > 0
 
             Behavior on width {
                 enabled: shell.shellReady
@@ -1958,6 +2197,7 @@ PanelWindow {
             text: "dock surface headroom - " + Math.round(parent.width) + " x " + Math.round(parent.height) + " transparent" + (dockWindow.dragging ? " (INPUT LIVE: dragging)" : ", input masked out")
             color: "#cc80d8ff"
             font.pixelSize: 12
+            font.variableAxes: Theme.axes(12, 420, 0)
             font.family: Theme.fontFamily
         }
 

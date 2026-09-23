@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 BarPill {
     id: root
@@ -85,23 +86,12 @@ BarPill {
                 height: 16
                 anchors.verticalCenter: parent.verticalCenter
 
-                Shape {
-                    width: 24
-                    height: 24
-                    scale: 16 / 24
+                Icon {
                     anchors.centerIn: parent
-                    preferredRendererType: Shape.CurveRenderer
-
-                    ShapePath {
-                        fillColor: Theme.text
-                        strokeWidth: 0
-
-                        PathSvg {
-                            path: "M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z"
-                        }
-
-                    }
-
+                    name: "dashboard"
+                    size: 18
+                    fill: 1
+                    color: Theme.text
                 }
 
             }
@@ -123,10 +113,11 @@ BarPill {
 
                     anchors.centerIn: parent
                     text: root.trayCount > 9 ? "9+" : String(root.trayCount)
-                    color: Theme.bgOpaque
+                    color: Theme.fgAccent
                     font.family: Theme.fontFamily
                     font.bold: true
                     font.pixelSize: Theme.fs(11)
+                    font.variableAxes: Theme.axes(Theme.fs(11), 640, 0)
                 }
 
                 Behavior on width {
@@ -185,6 +176,7 @@ BarPill {
                     font.family: Theme.fontFamily
                     font.bold: true
                     font.pixelSize: Theme.fs(13)
+                    font.variableAxes: Theme.axes(Theme.fs(13), 640, 0)
                 }
 
                 Text {
@@ -194,6 +186,7 @@ BarPill {
                     color: root.attentionCount > 0 ? Theme.accent : Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(11)
+                    font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
 
                     Behavior on color {
                         ColorAnimation {
@@ -296,7 +289,7 @@ BarPill {
                 x: root.menuX
                 y: root.menuY
                 radius: Theme.radiusSm
-                color: Theme.bgOpaque
+                color: Theme.bg
                 clip: true
                 opacity: root.menuItem !== null ? 1 : 0
                 scale: root.menuItem !== null ? 1 : 0.94
@@ -407,6 +400,7 @@ BarPill {
                                     color: entryRow.entry.enabled ? Theme.text : Theme.subtextDim
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fs(11)
+                                    font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
                                     elide: Text.ElideRight
                                 }
 
@@ -574,6 +568,7 @@ BarPill {
                         font.family: Theme.fontFamily
                         font.bold: true
                         font.pixelSize: Theme.fs(11)
+                        font.variableAxes: Theme.axes(Theme.fs(11), 640, 0)
                     }
 
                 }
@@ -604,6 +599,7 @@ BarPill {
                     font.family: Theme.fontFamily
                     font.bold: true
                     font.pixelSize: Theme.fs(12)
+                    font.variableAxes: Theme.axes(Theme.fs(12), 640, 0)
                     elide: Text.ElideRight
                 }
 
@@ -614,6 +610,7 @@ BarPill {
                     color: card.needsAttention ? Theme.accent : Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
+                    font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
                     elide: Text.ElideRight
                 }
 

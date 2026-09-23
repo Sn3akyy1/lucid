@@ -273,6 +273,7 @@ Column {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBody
+                font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
             }
 
         }
@@ -501,6 +502,7 @@ Column {
         color: Theme.subtext
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontTitleSm
+        font.variableAxes: Theme.axes(Theme.fontTitleSm, 600, 0)
         font.weight: Font.DemiBold
         font.letterSpacing: 0.1
         leftPadding: 22

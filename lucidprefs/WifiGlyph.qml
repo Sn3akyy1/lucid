@@ -17,6 +17,7 @@ Text {
     color: Theme.accent
     font.family: Theme.fontFamily
     font.pixelSize: glyph.size
+    font.variableAxes: Theme.axes(glyph.size, 420, 0)
     horizontalAlignment: Text.AlignHCenter
     verticalAlignment: Text.AlignVCenter
 }

@@ -1,9 +1,11 @@
 import QtQuick
-import Quickshell.Io
 import qs
+import qs.lucidui
 
 WidgetBody {
     id: w
+
+    defaultTone: "primary"
 
     readonly property bool use24: {
         var m = w.opt("hourMode");
@@ -11,83 +13,31 @@ WidgetBody {
     }
     readonly property bool seconds: w.opt("seconds") === true
     readonly property bool showDate: w.opt("showDate") !== false
-    readonly property color timeColor: w.opt("accentTime") === true ? Theme.accent : Theme.text
     readonly property var zoneSets: ({
-        "eu": [{
-            "city": "London",
-            "tz": "Europe/London"
-        }, {
-            "city": "Paris",
-            "tz": "Europe/Paris"
-        }, {
-            "city": "Moscow",
-            "tz": "Europe/Moscow"
-        }],
-        "us": [{
-            "city": "New York",
-            "tz": "America/New_York"
-        }, {
-            "city": "Chicago",
-            "tz": "America/Chicago"
-        }, {
-            "city": "Los Angeles",
-            "tz": "America/Los_Angeles"
-        }],
-        "asia": [{
-            "city": "Dubai",
-            "tz": "Asia/Dubai"
-        }, {
-            "city": "Tokyo",
-            "tz": "Asia/Tokyo"
-        }, {
-            "city": "Sydney",
-            "tz": "Australia/Sydney"
-        }]
+        "eu": ["Europe/London", "Europe/Paris", "Europe/Moscow"],
+        "us": ["America/New_York", "America/Chicago", "America/Los_Angeles"],
+        "asia": ["Asia/Dubai", "Asia/Tokyo", "Australia/Sydney"],
+        "mine": Zones.cities.slice(0, 3)
     })
-    readonly property var zones: w.zoneSets[w.opt("zones")] !== undefined ? w.zoneSets[w.opt("zones")] : w.zoneSets["eu"]
-    // minutes east of UTC, one per city, filled in by the offset probe
-    property var offsets: [0, 0, 0]
-
-    property var now: Loc.now()
+    readonly property var zones: w.zoneSets[w.opt("zones")] || w.zoneSets["eu"]
+    property date now: Loc.now()
 
     function hourOf(d) {
         var h = d.getHours();
-        if (w.use24)
-            return String(h).padStart(2, "0");
-
-        var x = h % 12;
-        return String(x === 0 ? 12 : x);
+        return w.use24 ? String(h).padStart(2, "0") : String(h % 12 === 0 ? 12 : h % 12);
     }
 
-    function twoOf(n) {
+    function two(n) {
         return String(n).padStart(2, "0");
     }
 
-    function timeAt(minutesEast) {
-        var real = new Date(w.now.getTime() - Loc.shiftMs);
-        return new Date(real.getTime() + real.getTimezoneOffset() * 60000 + minutesEast * 60000);
-    }
-
-    function shortTime(d) {
-        var h = d.getHours();
-        var hs = w.use24 ? String(h).padStart(2, "0") : String(h % 12 === 0 ? 12 : h % 12);
-        return hs + ":" + w.twoOf(d.getMinutes());
-    }
-
-    function offsetLabel(minutesEast) {
-        var here = Loc.trueOffsetMin;
-        var diff = (minutesEast - here) / 60;
-        if (Math.abs(diff) < 0.01)
-            return "same as here";
-
-        var sign = diff > 0 ? "+" : "−";
-        var abs = Math.abs(diff);
-        var whole = Math.floor(abs);
-        var frac = Math.round((abs - whole) * 60);
-        return sign + whole + (frac ? ":" + w.twoOf(frac) : "") + "h";
+    function ampm(d) {
+        return w.use24 ? "" : (d.getHours() < 12 ? "AM" : "PM");
     }
 
     bare: w.variant === "minimal"
+    onZonesChanged: Zones.watch(w.zones)
+    Component.onCompleted: Zones.watch(w.zones)
 
     Timer {
         interval: 1000
@@ -97,366 +47,404 @@ WidgetBody {
         onTriggered: w.now = Loc.now()
     }
 
-    Timer {
-        interval: 600000
-        repeat: true
-        running: w.variant === "world"
-        triggeredOnStart: true
-        onTriggered: offsetProbe.restart()
-    }
-
-    Process {
-        id: offsetProbe
-
-        function restart() {
-            offsetProbe.running = false;
-            var parts = w.zones.map((z) => {
-                return "TZ=" + z.tz + " date +%z";
-            });
-            offsetProbe.command = ["sh", "-c", parts.join("; ")];
-            offsetProbe.running = true;
-        }
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var out = [];
-                var lines = this.text.trim().split("\n");
-                for (var i = 0; i < lines.length; i++) {
-                    var m = /([+-])(\d{2})(\d{2})/.exec(lines[i].trim());
-                    out.push(m ? (m[1] === "-" ? -1 : 1) * (parseInt(m[2]) * 60 + parseInt(m[3])) : 0);
-                }
-                w.offsets = out;
-            }
-        }
-
-    }
-
-    onZonesChanged: {
-        if (w.variant === "world")
-            offsetProbe.restart();
-
-    }
-
-    Column {
-        id: digital
-
+    // digital: the time set like a headline, the date under it
+    Item {
         visible: w.variant === "digital"
-        anchors.left: parent.left
-        anchors.leftMargin: 24
-        anchors.right: parent.right
-        anchors.rightMargin: 18
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: 4
+        anchors.fill: parent
 
-        Item {
-            width: parent.width
-            height: bigTime.implicitHeight
+        Row {
+            x: 22
+            y: 10
+            spacing: 6
 
-            Text {
-                id: bigTime
+            LText {
+                id: dTime
 
-                anchors.left: parent.left
-                anchors.top: parent.top
-                text: w.hourOf(w.now) + ":" + w.twoOf(w.now.getMinutes())
-                color: w.timeColor
-                font.family: Theme.fontFamily
-                font.pixelSize: 52
-                font.bold: true
-                font.letterSpacing: -1.5
+                size: 74
+                weight: 620
+                rounded: 100
+                tabular: true
+                color: w.ink
+                text: w.hourOf(w.now) + ":" + w.two(w.now.getMinutes())
             }
 
             Column {
-                anchors.left: bigTime.right
-                anchors.leftMargin: 8
-                anchors.baseline: bigTime.baseline
-                anchors.baselineOffset: -2
+                anchors.bottom: dTime.bottom
+                anchors.bottomMargin: 16
                 spacing: 0
 
-                Text {
-                    text: w.seconds ? w.twoOf(w.now.getSeconds()) : ""
-                    color: Theme.accentMuted
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 15
-                    font.bold: true
+                LText {
                     visible: w.seconds
+                    role: "titleMedium"
+                    weight: 600
+                    tabular: true
+                    color: w.inkAccent
+                    text: w.two(w.now.getSeconds())
                 }
 
-                Text {
-                    text: w.use24 ? "" : (w.now.getHours() < 12 ? "AM" : "PM")
-                    color: Theme.subtext
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 15
-                    font.bold: true
+                LText {
                     visible: !w.use24
+                    role: "labelLarge"
+                    color: w.inkDim
+                    text: w.ampm(w.now)
                 }
 
             }
 
         }
 
-        Text {
-            width: parent.width
-            text: w.now.toLocaleDateString(Qt.locale(), "dddd, d MMMM")
-            color: Theme.subtext
-            font.family: Theme.fontFamily
-            font.pixelSize: 14
-            elide: Text.ElideRight
+        LText {
             visible: w.showDate
+            x: 24
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 18
+            role: "titleSmall"
+            weight: 520
+            color: w.inkDim
+            text: w.now.toLocaleDateString(Qt.locale(), "dddd, d MMMM")
         }
 
     }
 
+    // stack: the hour over the minute, with the date tucked under them as one group
     Item {
-        id: stacked
+        id: stack
+
+        // sized off the card, not off `unit`, or the two size each other in a loop
+        readonly property int dateSize: Math.max(11, Math.round(stack.height * 0.06))
+        readonly property int dateBox: w.showDate ? Math.round(stack.dateSize * 1.45) : 0
+        // the lock screen's proportions: a line box of 0.82 units, two of them
+        readonly property int unit: Math.max(24, Math.min((stack.height - 52 - stack.dateBox) / 1.64, (stack.width - 56) / 1.35))
 
         visible: w.variant === "stack"
         anchors.fill: parent
 
         Column {
-            anchors.centerIn: parent
-            spacing: -22
+            id: stackGroup
 
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: w.hourOf(w.now)
-                color: w.timeColor
-                font.family: Theme.fontFamily
-                font.pixelSize: 86
-                font.bold: true
-                font.letterSpacing: -3
-            }
-
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: w.twoOf(w.now.getMinutes())
-                color: Theme.accentMuted
-                font.family: Theme.fontFamily
-                font.pixelSize: 86
-                font.bold: true
-                font.letterSpacing: -3
-            }
-
-        }
-
-        Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 18
-            text: w.showDate ? w.now.toLocaleDateString(Qt.locale(), "ddd d MMM") : (w.use24 ? "" : (w.now.getHours() < 12 ? "AM" : "PM"))
-            color: Theme.subtext
-            font.family: Theme.fontFamily
-            font.pixelSize: 13
-            font.letterSpacing: 1.4
-            font.bold: true
+            // the digits sit low in their line boxes, so nudge the group back up
+            y: Math.round((stack.height - height) / 2) - Math.round(stack.unit * 0.02)
+            spacing: 2
+
+            // both lines take the width of the wider one, so a one-digit hour sits
+            // centred over the minute instead of leaving a hole beside it
+            Item {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: Math.max(stackHour.implicitWidth, stackMin.implicitWidth)
+                height: Math.round(stack.unit * 1.64)
+
+                LText {
+                    id: stackHour
+
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    // a trailing negative letterSpacing narrows the layout box
+                    rightPadding: Math.round(stack.unit * 0.03)
+                    y: 0
+                    height: Math.round(stack.unit * 0.82)
+                    size: stack.unit
+                    weight: 620
+                    rounded: 100
+                    tabular: true
+                    font.letterSpacing: -Math.round(stack.unit * 0.03)
+                    color: w.ink
+                    text: w.hourOf(w.now)
+                }
+
+                LText {
+                    id: stackMin
+
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    rightPadding: Math.round(stack.unit * 0.03)
+                    y: Math.round(stack.unit * 0.82)
+                    height: Math.round(stack.unit * 0.82)
+                    size: stack.unit
+                    weight: 620
+                    rounded: 100
+                    tabular: true
+                    font.letterSpacing: -Math.round(stack.unit * 0.03)
+                    color: w.inkAccent
+                    text: w.two(w.now.getMinutes())
+                }
+
+            }
+
+            LText {
+                id: stackDate
+
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: w.showDate
+                size: stack.dateSize
+                weight: 640
+                color: w.ink
+                text: w.now.toLocaleDateString(Qt.locale(), "ddd d MMM") + (w.seconds ? "  ·  " + w.two(w.now.getSeconds()) : "")
+            }
+
         }
 
     }
 
+    // analog: a scalloped dial, chunky hands, the seconds as an orbiting dot
     Item {
         id: analog
 
-        readonly property real dial: Math.min(w.width, w.height) - 30
-        readonly property real ringR: analog.dial / 2
+        readonly property real r: Math.min(width, height) / 2 - 12
 
         visible: w.variant === "analog"
         anchors.fill: parent
 
-        Rectangle {
+        MaterialShape {
             anchors.centerIn: parent
-            width: analog.dial
-            height: analog.dial
-            radius: width / 2
-            color: Theme.alpha(Theme.text, 0.06)
+            width: analog.r * 2
+            height: analog.r * 2
+            shape: "cookie12"
+            color: Theme.alpha(w.ink, 0.08)
         }
 
-        Item {
-            anchors.centerIn: parent
-
-            Repeater {
-                model: 12
-
-                Item {
-                    id: tick
-
-                    required property int index
-
-                    readonly property bool major: tick.index % 3 === 0
-
-                    rotation: tick.index * 30
-
-                    Rectangle {
-                        x: -width / 2
-                        y: -analog.ringR + 9
-                        width: tick.major ? 2.6 : 2
-                        height: tick.major ? 11 : 6
-                        radius: width / 2
-                        color: tick.major ? Theme.subtext : Theme.alpha(Theme.text, 0.34)
-                    }
-
-                }
-
-            }
-
-            // hour
-            Item {
-                rotation: (w.now.getHours() % 12) * 30 + w.now.getMinutes() * 0.5
-
-                Rectangle {
-                    x: -width / 2
-                    y: -analog.ringR * 0.52
-                    width: 5
-                    height: analog.ringR * 0.52 + 5
-                    radius: width / 2
-                    color: w.timeColor
-                }
-
-            }
-
-            // minute
-            Item {
-                rotation: w.now.getMinutes() * 6 + w.now.getSeconds() * 0.1
-
-                Rectangle {
-                    x: -width / 2
-                    y: -analog.ringR * 0.76
-                    width: 3.4
-                    height: analog.ringR * 0.76 + 5
-                    radius: width / 2
-                    color: w.timeColor
-                }
-
-            }
-
-            // second
-            Item {
-                rotation: w.now.getSeconds() * 6
-                visible: w.seconds
-
-                Rectangle {
-                    x: -width / 2
-                    y: -analog.ringR * 0.82
-                    width: 1.8
-                    height: analog.ringR * 0.82 + 14
-                    radius: width / 2
-                    color: Theme.accent
-                }
-
-            }
+        Repeater {
+            model: 12
 
             Rectangle {
-                x: -width / 2
-                y: -height / 2
-                width: 8
-                height: 8
-                radius: 4
-                color: Theme.accent
+                required property int index
+
+                readonly property real a: index / 12 * 2 * Math.PI
+
+                x: analog.width / 2 + Math.sin(a) * (analog.r - 16) - width / 2
+                y: analog.height / 2 - Math.cos(a) * (analog.r - 16) - height / 2
+                width: index % 3 === 0 ? 7 : 4
+                height: width
+                radius: width / 2
+                visible: !(w.showDate && index === 3)
+                color: index % 3 === 0 ? w.ink : Theme.alpha(w.ink, 0.4)
             }
 
         }
 
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 6
-            text: w.now.toLocaleDateString(Qt.locale(), "ddd d")
-            color: Theme.subtextDim
-            font.family: Theme.fontFamily
-            font.pixelSize: 11
-            font.bold: true
+        // a watch's date window, where the three would be
+        Rectangle {
             visible: w.showDate
+            x: analog.width / 2 + analog.r - 22 - width
+            anchors.verticalCenter: parent.verticalCenter
+            width: dateWin.implicitWidth + 12
+            height: 22
+            radius: 8
+            color: Theme.alpha(w.inkAccent, 0.18)
+
+            LText {
+                id: dateWin
+
+                anchors.centerIn: parent
+                role: "labelMedium"
+                weight: 660
+                rounded: 100
+                tabular: true
+                color: w.inkAccent
+                text: w.now.getDate()
+            }
+
+        }
+
+        Rectangle {
+            x: analog.width / 2 - width / 2
+            y: analog.height / 2 - height + width / 2
+            width: 11
+            height: analog.r * 0.52
+            radius: 5.5
+            color: w.inkAccent
+            transformOrigin: Item.Bottom
+            rotation: (w.now.getHours() % 12 + w.now.getMinutes() / 60) * 30
+            antialiasing: true
+        }
+
+        Rectangle {
+            x: analog.width / 2 - width / 2
+            y: analog.height / 2 - height + width / 2
+            width: 6
+            height: analog.r * 0.8
+            radius: 3
+            color: w.ink
+            transformOrigin: Item.Bottom
+            rotation: (w.now.getMinutes() + w.now.getSeconds() / 60) * 6
+            antialiasing: true
+        }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: 14
+            height: 14
+            radius: 7
+            color: w.ink
+        }
+
+        Rectangle {
+            readonly property real a: w.now.getSeconds() / 60 * 2 * Math.PI
+
+            visible: w.seconds
+            x: analog.width / 2 + Math.sin(a) * (analog.r - 3) - width / 2
+            y: analog.height / 2 - Math.cos(a) * (analog.r - 3) - height / 2
+            width: 10
+            height: 10
+            radius: 5
+            color: w.inkAccent
         }
 
     }
 
-    Column {
-        id: minimal
+    // shape: the time inside one big expressive shape
+    Item {
+        visible: w.variant === "shape"
+        anchors.fill: parent
 
+        MaterialShape {
+            anchors.centerIn: parent
+            width: Math.min(parent.width, parent.height) - 18
+            height: width
+            shape: w.opt("shape") || "cookie9"
+            color: w.inkAccent
+            rotation: w.seconds ? w.now.getSeconds() * 6 : 0
+
+            Behavior on rotation {
+                RotationAnimation {
+                    duration: Theme.durDefaultSpatial
+                    direction: RotationAnimation.Clockwise
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.curveDefaultSpatial
+                }
+
+            }
+
+        }
+
+        Column {
+            anchors.centerIn: parent
+            spacing: -4
+
+            LText {
+                anchors.horizontalCenter: parent.horizontalCenter
+                size: 56
+                weight: 640
+                rounded: 100
+                tabular: true
+                color: w.onInkAccent
+                text: w.hourOf(w.now) + ":" + w.two(w.now.getMinutes())
+            }
+
+            LText {
+                visible: w.showDate
+                anchors.horizontalCenter: parent.horizontalCenter
+                role: "labelLarge"
+                color: Theme.alpha(w.onInkAccent, 0.8)
+                text: w.now.toLocaleDateString(Qt.locale(), "ddd d MMM")
+            }
+
+        }
+
+    }
+
+    // minimal: straight onto the wallpaper
+    Column {
         visible: w.variant === "minimal"
-        anchors.centerIn: parent
-        spacing: 2
+        anchors.left: parent.left
+        anchors.leftMargin: 6
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: -6
 
-        ShadowText {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: w.hourOf(w.now) + ":" + w.twoOf(w.now.getMinutes()) + (w.seconds ? ":" + w.twoOf(w.now.getSeconds()) : "")
-            color: w.opt("accentTime") === true ? Theme.accent : "#ffffff"
-            pixelSize: 44
-            bold: true
-            letterSpacing: -1.5
+        Row {
+            spacing: 6
+
+            ShadowText {
+                text: w.hourOf(w.now) + ":" + w.two(w.now.getMinutes())
+                color: "white"
+                shadow: true
+                pixelSize: 58
+                weight: 600
+                rounded: 100
+            }
+
+            ShadowText {
+                visible: !w.use24
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 12
+                text: w.ampm(w.now)
+                color: "white"
+                shadow: true
+                pixelSize: 18
+                weight: 560
+            }
+
         }
 
         ShadowText {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: w.now.toLocaleDateString(Qt.locale(), "dddd, d MMMM")
-            color: Qt.rgba(1, 1, 1, 0.82)
-            pixelSize: 13
-            bold: true
             visible: w.showDate
+            text: w.now.toLocaleDateString(Qt.locale(), "dddd, d MMMM")
+            color: "white"
+            opacity: 0.85
+            shadow: true
+            pixelSize: 15
+            weight: 520
         }
 
     }
 
+    // world: three cities, their time and how far ahead or behind
     Column {
-        id: world
-
         visible: w.variant === "world"
         anchors.fill: parent
-        anchors.margins: 18
-        spacing: 0
+        anchors.margins: 12
+        spacing: 3
 
         Repeater {
             model: w.zones
 
-            Item {
-                id: cityRow
+            Rectangle {
+                id: city
 
-                required property int index
                 required property var modelData
+                required property int index
+                readonly property date there: {
+                    w.now;
+                    return Zones.timeIn(city.modelData);
+                }
 
-                readonly property date local: w.timeAt(w.offsets[cityRow.index] !== undefined ? w.offsets[cityRow.index] : 0)
-
-                width: world.width
-                height: (world.height - world.spacing * 2) / 3
+                width: parent.width
+                height: (parent.height - 6) / 3
+                topLeftRadius: city.index === 0 ? 18 : 6
+                topRightRadius: city.index === 0 ? 18 : 6
+                bottomLeftRadius: city.index === w.zones.length - 1 ? 18 : 6
+                bottomRightRadius: city.index === w.zones.length - 1 ? 18 : 6
+                color: Theme.alpha(w.ink, 0.07)
 
                 Column {
-                    anchors.left: parent.left
+                    x: 14
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 1
+                    spacing: 0
 
-                    Text {
-                        text: cityRow.modelData.city
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 14
-                        font.bold: true
+                    LText {
+                        role: "titleSmall"
+                        color: w.ink
+                        text: Zones.cityOf(city.modelData)
                     }
 
-                    Text {
-                        text: w.offsetLabel(w.offsets[cityRow.index] !== undefined ? w.offsets[cityRow.index] : 0)
-                        color: Theme.subtextDim
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                    LText {
+                        role: "bodySmall"
+                        color: w.inkDim
+                        text: Zones.dayText(city.modelData) + (Zones.offsetText(city.modelData) !== "" ? " · " + Zones.offsetText(city.modelData) : "")
                     }
 
                 }
 
-                Text {
+                LText {
                     anchors.right: parent.right
+                    anchors.rightMargin: 14
                     anchors.verticalCenter: parent.verticalCenter
-                    text: w.shortTime(cityRow.local)
-                    color: cityRow.local.getHours() >= 7 && cityRow.local.getHours() < 20 ? Theme.text : Theme.accentMuted
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 24
-                    font.bold: true
-                    font.letterSpacing: -0.5
-                }
-
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    height: 1
-                    color: Theme.alpha(Theme.outline, 0.5)
-                    visible: cityRow.index < 2
+                    role: "headlineSmall"
+                    weight: 600
+                    rounded: 100
+                    tabular: true
+                    color: city.index === 0 ? w.inkAccent : w.ink
+                    text: w.hourOf(city.there) + ":" + w.two(city.there.getMinutes())
                 }
 
             }

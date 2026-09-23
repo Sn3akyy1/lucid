@@ -3,9 +3,22 @@ import Quickshell
 import Quickshell.Hyprland
 import qs
 
-PopupWindow {
+// the dock's right-click menu. it draws inside a layer window of its own, not a
+// popup, because hyprland only frosts layer surfaces
+Item {
     id: menu
 
+    // the layer window it lives in, for the focus grab
+    property var grabWindow: null
+    // where the dock's own surface starts inside this one, so the dock's local
+    // coordinates can be used unchanged
+    property real originX: 0
+    property real originY: 0
+    readonly property real cardW: 210
+    readonly property real cardH: list.implicitHeight + 16
+    readonly property real cardX: Math.max(8, Math.min(menu.width - menu.cardW - 8, menu.originX + menu.anchorLocalX - menu.cardW / 2))
+    readonly property real cardY: Math.max(8, menu.originY + menu.anchorLocalY - menu.cardH - 12)
+    readonly property bool showing: menu.menuVisible || fadeAnim.running
     property bool menuVisible: false
     property string appId: ""
     property string command: ""
@@ -14,7 +27,6 @@ PopupWindow {
     property var hostWindow: null
     property real anchorLocalX: 0
     property real anchorLocalY: 0
-
     readonly property var actions: {
         var arr = [];
         arr.push(menu.isPinned ? {
@@ -32,50 +44,43 @@ PopupWindow {
         });
         if (menu.command !== "")
             arr.push({
-                "id": "newWindow",
-                "label": "New Window",
-                "glyph": DockIcons.newWindow,
-                "danger": false,
-                "divider": false
-            });
+            "id": "newWindow",
+            "label": "New Window",
+            "glyph": DockIcons.newWindow,
+            "danger": false,
+            "divider": false
+        });
 
         if (menu.windowCount > 0)
             arr.push({
-                "id": "close",
-                "label": "Close Window",
-                "glyph": DockIcons.closeWindow,
-                "danger": true,
-                "divider": true
-            });
+            "id": "close",
+            "label": "Close Window",
+            "glyph": DockIcons.closeWindow,
+            "danger": true,
+            "divider": true
+        });
 
         if (menu.windowCount > 1)
             arr.push({
-                "id": "closeAll",
-                "label": "Close All (" + menu.windowCount + ")",
-                "glyph": DockIcons.closeWindow,
-                "danger": true,
-                "divider": false
-            });
+            "id": "closeAll",
+            "label": "Close All (" + menu.windowCount + ")",
+            "glyph": DockIcons.closeWindow,
+            "danger": true,
+            "divider": false
+        });
 
         return arr;
     }
-
-    signal actionChosen(string id)
-
     property int fadeDuration: Theme.durEnter
     property var fadeEasing: Theme.easeEmphasizedDecel
 
-    onMenuVisibleChanged: {
-        menu.fadeDuration = menu.menuVisible ? Theme.durEnter : Theme.durExit;
-        menu.fadeEasing = menu.menuVisible ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
-    }
+    signal actionChosen(string id)
 
     function openFor(item, appId, isPinned, command, windowCount) {
         if (menu.menuVisible && menu.appId.toLowerCase() === appId.toLowerCase()) {
             menu.menuVisible = false;
-            return;
+            return ;
         }
-
         var localPos = item.mapToItem(null, 0, 0);
         menu.appId = appId;
         menu.command = command;
@@ -86,18 +91,13 @@ PopupWindow {
         menu.menuVisible = true;
     }
 
-    anchor.window: menu.hostWindow
-    anchor.rect.x: menu.anchorLocalX - menu.width / 2
-    anchor.rect.y: menu.anchorLocalY - menu.height - 12
-    color: "transparent"
-    implicitWidth: 210
-    implicitHeight: list.implicitHeight + 16
-    visible: menu.menuVisible || fadeAnim.running
+    onMenuVisibleChanged: {
+        menu.fadeDuration = menu.menuVisible ? Theme.durEnter : Theme.durExit;
+        menu.fadeEasing = menu.menuVisible ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
+    }
 
     HyprlandFocusGrab {
-        id: focusGrab
-
-        windows: [menu]
+        windows: menu.grabWindow ? [menu.grabWindow] : []
         active: menu.menuVisible
         onActiveChanged: {
             if (!active)
@@ -109,7 +109,10 @@ PopupWindow {
     Rectangle {
         id: contentRoot
 
-        anchors.fill: parent
+        x: menu.cardX
+        y: menu.cardY
+        width: menu.cardW
+        height: menu.cardH
         radius: Theme.radiusMd
         color: Theme.bg
         opacity: menu.menuVisible ? 1 : 0
@@ -192,6 +195,7 @@ PopupWindow {
                             color: row.tone
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontBody
+                            font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
                             font.weight: Font.Medium
                         }
 

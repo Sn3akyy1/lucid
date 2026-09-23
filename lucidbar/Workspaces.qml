@@ -835,6 +835,7 @@ Item {
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fs(12)
         font.bold: true
+        font.variableAxes: Theme.axes(Theme.fs(12), 620, 0)
     }
 
     IpcHandler {
@@ -1176,22 +1177,24 @@ Item {
                         readonly property bool isActive: dot.wsObj ? dot.wsObj.active : false
                         readonly property bool isUrgent: dot.wsObj ? dot.wsObj.urgent : false
                         readonly property bool isLit: root.rowHovered && root.pillCovers(dot.x, dot.width)
+                        readonly property bool occupied: dot.wsObj ? (dot.wsObj.toplevels ? dot.wsObj.toplevels.values.length > 0 : true) : false
 
                         x: root.slotX(dot.index)
                         y: (parent.height - height) / 2
                         width: root.slotWidth(dot.index)
                         height: root.slotHeight(dot.index)
                         radius: 999
-                        color: dot.isUrgent ? Theme.error : (root.rowHovered || dot.index === root.activeSlot ? "transparent" : Theme.withBlur(Theme._darken(Theme.subtext, 0.45)))
+                        color: dot.isUrgent ? Theme.error : (root.rowHovered || dot.index === root.activeSlot ? "transparent" : Theme.alpha(Theme.subtext, dot.occupied ? 0.72 : 0.24))
 
                         Text {
                             anchors.centerIn: parent
                             text: dot.wsId
                             opacity: root.rowHovered ? 1 : 0
-                            color: dot.isLit ? Theme.bgOpaque : Theme.subtext
+                            color: dot.isLit ? Theme.fgPrimary : (dot.occupied ? Theme.text : Theme.subtextDim)
                             font.family: Theme.fontFamily
                             font.bold: true
                             font.pixelSize: Theme.fs(13)
+                            font.variableAxes: Theme.axes(Theme.fs(13), 680, 100)
 
                             Behavior on opacity {
                                 NumberAnimation {
@@ -1341,7 +1344,7 @@ Item {
 
                                         ShapePath {
                                             strokeWidth: 0
-                                            fillColor: chip.lit ? Theme.bgOpaque : Theme.text
+                                            fillColor: chip.lit ? Theme.fgPrimary : Theme.text
 
                                             PathSvg {
                                                 path: Specials.glyphPath(stashed.glyph)
@@ -1421,10 +1424,11 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             text: root.chipLabel(chip.index)
                             opacity: chip.open ? 1 : 0
-                            color: chip.lit ? Theme.bgOpaque : Theme.subtext
+                            color: chip.lit ? Theme.fgPrimary : Theme.subtext
                             font.family: nameMetrics.font.family
                             font.pixelSize: nameMetrics.font.pixelSize
                             font.bold: true
+                            font.variableAxes: nameMetrics.font.variableAxes
 
                             Behavior on opacity {
                                 NumberAnimation {
@@ -1549,12 +1553,12 @@ Item {
                     visible: root.specialCount > 0
                     opacity: root.stagger(root.slotCount, 0)
                     verticalAlignment: Text.AlignVCenter
-                    text: root.specialCount > 1 ? "SCRATCHPADS" : "SCRATCHPAD"
-                    color: Theme.subtextDim
+                    text: root.specialCount > 1 ? "Scratchpads" : "Scratchpad"
+                    color: Theme.primary
                     font.family: Theme.fontFamily
                     font.bold: true
-                    font.pixelSize: Math.max(8, 10 * root.gridScale)
-                    font.letterSpacing: 1.2
+                    font.pixelSize: Math.max(10, 12 * root.gridScale)
+                    font.variableAxes: Theme.axes(Math.max(10, 12 * root.gridScale), 600, 0)
                 }
 
                 Repeater {
@@ -1594,11 +1598,20 @@ Item {
 
                             width: root.previewW
                             height: root.previewH
-                            radius: 10
-                            color: tile.highlighted ? Theme.bgHover : "transparent"
-                            border.color: tile.isUrgent ? Theme.error : ((tile.isActive || tile.highlighted || tile.isDropTarget) ? Theme.accent : Theme.alpha(Theme.text, 0.25))
-                            border.width: (tile.isActive || tile.isUrgent || tile.highlighted || tile.isDropTarget) ? 2 : 1
-                            opacity: tile.wsObj ? 1 : 0.5
+                            radius: tile.isActive ? 18 : 12
+                            color: Theme.withBlur(tile.highlighted ? Theme.surfaceHighest : Theme.surfaceHigh)
+                            border.color: tile.isUrgent ? Theme.error : ((tile.isActive || tile.isDropTarget) ? Theme.primary : "transparent")
+                            border.width: (tile.isActive || tile.isUrgent || tile.isDropTarget) ? 3 : 0
+                            opacity: tile.wsObj ? 1 : 0.55
+
+                            Behavior on radius {
+                                NumberAnimation {
+                                    duration: Theme.durDefaultSpatial
+                                    easing.type: Easing.Bezier
+                                    easing.bezierCurve: Theme.curveDefaultSpatial
+                                }
+
+                            }
                             scale: tileClick.pressed ? 0.985 : (tile.highlighted ? 1.03 : 1)
 
                             Text {
@@ -1608,6 +1621,7 @@ Item {
                                 color: Theme.accent
                                 font.family: Theme.fontFamily
                                 font.pixelSize: root.plusFontSize
+                                font.variableAxes: Theme.axes(root.plusFontSize, 640, 0)
                                 font.bold: true
                             }
 
@@ -1650,9 +1664,10 @@ Item {
                             anchors.horizontalCenter: card.horizontalCenter
                             anchors.topMargin: root.labelGap
                             text: tile.label
-                            color: tile.highlighted ? Theme.text : Theme.subtext
+                            color: tile.isActive ? Theme.primary : (tile.highlighted ? Theme.text : Theme.subtext)
                             font.family: Theme.fontFamily
                             font.pixelSize: root.labelFontSize
+                            font.variableAxes: Theme.axes(root.labelFontSize, tile.isActive ? 620 : 480, 0)
 
                             Behavior on color {
                                 ColorAnimation {
@@ -1829,6 +1844,7 @@ Item {
                             color: Theme.subtext
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
+                            font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
                             elide: Text.ElideRight
                             horizontalAlignment: Text.AlignHCenter
                         }

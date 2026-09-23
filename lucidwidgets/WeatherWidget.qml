@@ -1,99 +1,64 @@
 import QtQuick
+import QtQuick.Shapes
 import qs
+import qs.lucidui
 
 WidgetBody {
     id: w
 
+    defaultTone: "tertiary"
+
     readonly property bool metric: w.opt("units") !== "imperial"
-    readonly property string unitMark: "°"
     readonly property var report: (WeatherSource.report === null && w.preview) ? w.sample : WeatherSource.report
-    // enough of a report to draw every variant in a gallery tile
     readonly property var sample: ({
-        "code": 2,
-        "tempC": 19,
-        "tempF": 66,
-        "feelsC": 18,
-        "feelsF": 64,
-        "humidity": 58,
-        "windKmph": 11,
-        "windMph": 7,
-        "uv": 4,
-        "sunrise": "",
-        "sunset": "",
-        "days": [{
-            "date": "",
-            "code": 2,
-            "maxC": 21,
-            "maxF": 70,
-            "minC": 12,
-            "minF": 54
-        }, {
-            "date": "",
-            "code": 0,
-            "maxC": 23,
-            "maxF": 73,
-            "minC": 13,
-            "minF": 55
-        }, {
-            "date": "",
-            "code": 61,
-            "maxC": 18,
-            "maxF": 64,
-            "minC": 11,
-            "minF": 52
-        }]
+        "code": 2, "tempC": 19, "tempF": 66, "feelsC": 18, "feelsF": 64, "humidity": 58, "windKmph": 11, "windMph": 7,
+        "uv": 4, "isDay": true, "pop": 20, "windDir": "W",
+        "days": [
+            { "date": "", "code": 2, "maxC": 21, "maxF": 70, "minC": 12, "minF": 54, "pop": 20 },
+            { "date": "", "code": 0, "maxC": 23, "maxF": 73, "minC": 13, "minF": 55, "pop": 0 },
+            { "date": "", "code": 61, "maxC": 18, "maxF": 64, "minC": 11, "minF": 52, "pop": 70 },
+            { "date": "", "code": 3, "maxC": 17, "maxF": 63, "minC": 10, "minF": 50, "pop": 30 },
+            { "date": "", "code": 1, "maxC": 20, "maxF": 68, "minC": 11, "minF": 52, "pop": 10 },
+            { "date": "", "code": 80, "maxC": 16, "maxF": 61, "minC": 9, "minF": 48, "pop": 60 }
+        ],
+        "hours": [19, 20, 20, 19, 17, 15, 14, 13, 13, 12, 12, 13, 15, 17, 19, 20, 21, 20, 19].map((t, i) => {
+            return { "time": "", "code": i > 6 && i < 12 ? 0 : 2, "tempC": t, "tempF": Math.round(t * 1.8 + 32), "pop": 10, "day": i < 5 || i > 12 };
+        })
     })
-    readonly property var current: w.report
-    readonly property var days: w.report ? w.report.days.slice(0, 4) : []
-    readonly property string place: WeatherSource.place !== "" ? WeatherSource.place : "Here"
-    readonly property bool ready: w.current !== null && w.current !== undefined
-    readonly property string trouble: WeatherSource.lastError
+    readonly property bool ready: w.report !== null && w.report !== undefined
+    readonly property string place: WeatherSource.place !== "" ? WeatherSource.place.split(",")[0] : "Here"
+    readonly property bool night: w.report && w.report.isDay !== undefined ? !w.report.isDay : (Loc.now().getHours() < 6 || Loc.now().getHours() >= 20)
+    readonly property var days: w.report && w.report.days ? w.report.days.slice(0, 6) : []
+    readonly property var hours: {
+        if (!w.report || !w.report.hours)
+            return [];
 
-    function temp(c, f) {
-        return w.metric ? c : f;
+        const out = [];
+        for (let i = 0; i < w.report.hours.length && out.length < 7; i += 3) out.push(w.report.hours[i])
+        return out;
     }
 
-    function nowTemp() {
-        return w.current ? w.temp(w.current.tempC, w.current.tempF) : 0;
-    }
-
-    function feels() {
-        return w.current ? w.temp(w.current.feelsC, w.current.feelsF) : 0;
-    }
-
-    function describe() {
-        return w.current ? WeatherSource.descFor(w.current.code) : "";
-    }
-
-    function iconFor(code) {
-        const h = Loc.now().getHours();
-        return WeatherSource.kindFor(code, h < 6 || h >= 20);
-    }
-
-    function dayIcon(d) {
-        return d ? WeatherSource.kindFor(d.code, false) : "cloud";
+    function t(c, f) {
+        return (w.metric ? c : f) + "°";
     }
 
     function dayName(d, i) {
         if (!d || !d.date) {
-            var fake = Loc.now();
+            const fake = Loc.now();
             fake.setDate(fake.getDate() + i);
             return i === 0 ? "Today" : fake.toLocaleDateString(Qt.locale(), "ddd");
         }
-        var parts = d.date.split("-");
-        var dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-        var today = Loc.now();
-        if (dt.getDate() === today.getDate() && dt.getMonth() === today.getMonth())
-            return "Today";
-
-        return dt.toLocaleDateString(Qt.locale(), "ddd");
+        return i === 0 ? "Today" : new Date(d.date + "T12:00").toLocaleDateString(Qt.locale(), "ddd");
     }
 
-    function windText() {
-        if (!w.current)
-            return "";
+    function hourName(h, i) {
+        if (i === 0)
+            return "Now";
 
-        return w.metric ? w.current.windKmph + " km/h" : w.current.windMph + " mph";
+        if (!h.time)
+            return (i * 3) + "h";
+
+        return new Date(h.time).toLocaleTimeString(Qt.locale(), Prefs.clock24h ? "HH:00" : "h AP");
     }
 
     Component.onCompleted: {
@@ -102,336 +67,420 @@ WidgetBody {
 
     }
 
-    // shown by every variant when there is nothing to draw yet
     Column {
-        anchors.centerIn: parent
-        spacing: 6
         visible: !w.ready
-        width: parent.width - 40
+        anchors.centerIn: parent
+        spacing: 8
 
-        Text {
+        LoadingIndicator {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: w.trouble !== "" ? "Weather unavailable" : "Fetching weather…"
-            color: Theme.subtext
-            font.family: Theme.fontFamily
-            font.pixelSize: 13
-            font.bold: true
+            visible: WeatherSource.busy
+            color: w.inkAccent
         }
 
-        Text {
-            width: parent.width
-            text: w.trouble
-            color: Theme.subtextDim
-            font.family: Theme.fontFamily
-            font.pixelSize: 11
-            horizontalAlignment: Text.AlignHCenter
-            wrapMode: Text.WordWrap
-            visible: w.trouble !== ""
-        }
-
-        WidgetButton {
+        LText {
             anchors.horizontalCenter: parent.horizontalCenter
-            icon: "refresh"
-            diameter: 30
-            iconSize: 16
-            visible: w.trouble !== ""
-            onClicked: WeatherSource.refresh()
+            role: "labelLarge"
+            color: w.inkDim
+            text: WeatherSource.lastError !== "" ? "Weather unavailable" : "Fetching weather"
         }
 
     }
 
+    // current: one big number and the sky it belongs to
     Item {
-        id: currentView
-
-        visible: w.variant === "current" && w.ready
+        visible: w.ready && w.variant === "current"
         anchors.fill: parent
-        anchors.margins: 18
 
-        WeatherIcon {
-            id: bigIcon
-
-            anchors.left: parent.left
-            anchors.top: parent.top
-            kind: w.current ? w.iconFor(w.current.code) : "cloud"
-            size: 54
-        }
-
-        Row {
+        Item {
             anchors.right: parent.right
+            anchors.rightMargin: 12
             anchors.top: parent.top
-            anchors.topMargin: -2
-            spacing: 1
+            anchors.topMargin: 12
+            width: 96
+            height: 96
 
-            Text {
-                id: bigTemp
+            MaterialShape {
+                anchors.fill: parent
+                shape: "sunny"
+                color: Theme.alpha(w.ink, 0.1)
 
-                text: w.nowTemp()
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: 50
-                font.bold: true
-                font.letterSpacing: -2
-            }
-
-            Text {
-                anchors.top: parent.top
-                anchors.topMargin: 6
-                text: w.unitMark
-                color: Theme.accent
-                font.family: Theme.fontFamily
-                font.pixelSize: 22
-                font.bold: true
-            }
-
-        }
-
-        Text {
-            id: desc
-
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: bigIcon.bottom
-            anchors.topMargin: 8
-            text: w.describe()
-            color: Theme.text
-            font.family: Theme.fontFamily
-            font.pixelSize: 14
-            font.bold: true
-            elide: Text.ElideRight
-        }
-
-        Text {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: desc.bottom
-            anchors.topMargin: 2
-            text: w.place + " · feels like " + w.feels() + w.unitMark
-            color: Theme.subtext
-            font.family: Theme.fontFamily
-            font.pixelSize: 12
-            elide: Text.ElideRight
-        }
-
-        Row {
-            anchors.left: parent.left
-            anchors.bottom: parent.bottom
-            spacing: 16
-
-            Row {
-                spacing: 5
-
-                WidgetGlyph {
-                    anchors.verticalCenter: parent.verticalCenter
-                    name: "drop"
-                    size: 13
-                    color: Theme.subtextDim
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: w.current ? w.current.humidity + "%" : ""
-                    color: Theme.subtext
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 12
+                RotationAnimation on rotation {
+                    from: 0
+                    to: 360
+                    duration: 90000
+                    loops: Animation.Infinite
+                    running: w.visible && !w.preview
                 }
 
             }
 
-            Row {
-                spacing: 5
-
-                WidgetGlyph {
-                    anchors.verticalCenter: parent.verticalCenter
-                    name: "wind"
-                    size: 13
-                    color: Theme.subtextDim
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: w.windText()
-                    color: Theme.subtext
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 12
-                }
-
+            WeatherIcon {
+                anchors.centerIn: parent
+                size: 72
+                kind: w.report ? WeatherSource.kindFor(w.report.code, w.night) : "clear"
+                tint: w.inkAccent
+                cloudColor: w.ink
             }
 
         }
 
-    }
+        LText {
+            x: 20
+            y: 16
+            role: "labelLarge"
+            color: w.inkDim
+            text: w.place
+        }
 
-    Item {
-        id: forecastView
-
-        visible: w.variant === "forecast" && w.ready
-        anchors.fill: parent
-        anchors.margins: 18
-
-        WeatherIcon {
-            id: fIcon
-
-            anchors.left: parent.left
-            anchors.top: parent.top
-            kind: w.current ? w.iconFor(w.current.code) : "cloud"
-            size: 42
+        LText {
+            x: 16
+            anchors.bottom: descCol.top
+            anchors.bottomMargin: -8
+            size: 64
+            weight: 600
+            rounded: 100
+            color: w.ink
+            text: w.report ? w.t(w.report.tempC, w.report.tempF) : ""
         }
 
         Column {
-            anchors.left: fIcon.right
-            anchors.leftMargin: 12
-            anchors.right: fTemp.left
-            anchors.rightMargin: 8
-            anchors.verticalCenter: fIcon.verticalCenter
-            spacing: 0
+            id: descCol
 
-            Text {
-                width: parent.width
-                text: w.describe()
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: 14
-                font.bold: true
-                elide: Text.ElideRight
-            }
-
-            Text {
-                width: parent.width
-                text: w.place
-                color: Theme.subtextDim
-                font.family: Theme.fontFamily
-                font.pixelSize: 11
-                elide: Text.ElideRight
-            }
-
-        }
-
-        Text {
-            id: fTemp
-
-            anchors.right: parent.right
-            anchors.verticalCenter: fIcon.verticalCenter
-            text: w.nowTemp() + w.unitMark
-            color: Theme.text
-            font.family: Theme.fontFamily
-            font.pixelSize: 32
-            font.bold: true
-            font.letterSpacing: -1
-        }
-
-        Rectangle {
-            id: fRule
-
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: fIcon.bottom
-            anchors.topMargin: 14
-            height: 1
-            color: Theme.alpha(Theme.outline, 0.5)
-        }
-
-        Row {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: fRule.bottom
+            x: 20
             anchors.bottom: parent.bottom
+            anchors.bottomMargin: 16
             spacing: 0
 
-            Repeater {
-                model: w.days
+            LText {
+                role: "titleSmall"
+                color: w.ink
+                text: w.report ? WeatherSource.descFor(w.report.code) : ""
+            }
 
-                Column {
-                    id: dayCell
-
-                    required property var modelData
-                    required property int index
-
-                    width: w.days.length > 0 ? forecastView.width / w.days.length : 0
-                    spacing: 4
-
-                    Item {
-                        width: parent.width
-                        height: 6
-                    }
-
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: w.dayName(dayCell.modelData, dayCell.index)
-                        color: Theme.subtextDim
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 10
-                        font.bold: true
-                        font.letterSpacing: 0.6
-                    }
-
-                    WeatherIcon {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        kind: w.dayIcon(dayCell.modelData)
-                        size: 30
-                    }
-
-                    Row {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 4
-
-                        Text {
-                            text: w.temp(dayCell.modelData.maxC, dayCell.modelData.maxF) + "°"
-                            color: Theme.text
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 12
-                            font.bold: true
-                        }
-
-                        Text {
-                            text: w.temp(dayCell.modelData.minC, dayCell.modelData.minF) + "°"
-                            color: Theme.subtextDim
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 12
-                        }
-
-                    }
-
-                }
-
+            LText {
+                role: "bodySmall"
+                color: w.inkDim
+                text: w.days.length ? "High " + w.t(w.days[0].maxC, w.days[0].maxF) + " · Low " + w.t(w.days[0].minC, w.days[0].minF) : ""
             }
 
         }
 
     }
 
+    // compact: a chip's worth
     Row {
-        id: compactView
+        visible: w.ready && w.variant === "compact"
+        anchors.left: parent.left
+        anchors.leftMargin: 14
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 12
 
-        visible: w.variant === "compact" && w.ready
-        anchors.centerIn: parent
-        spacing: 10
+        Item {
+            width: 60
+            height: 60
 
-        WeatherIcon {
-            anchors.verticalCenter: parent.verticalCenter
-            kind: w.current ? w.iconFor(w.current.code) : "cloud"
-            size: 38
+            MaterialShape {
+                anchors.fill: parent
+                shape: "cookie9"
+                color: Theme.alpha(w.ink, 0.1)
+            }
+
+            WeatherIcon {
+                anchors.centerIn: parent
+                size: 44
+                kind: w.report ? WeatherSource.kindFor(w.report.code, w.night) : "clear"
+                tint: w.inkAccent
+                cloudColor: w.ink
+            }
+
         }
 
         Column {
             anchors.verticalCenter: parent.verticalCenter
             spacing: -2
 
-            Text {
-                text: w.nowTemp() + w.unitMark
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: 30
-                font.bold: true
-                font.letterSpacing: -1
+            LText {
+                role: "headlineMedium"
+                weight: 620
+                rounded: 100
+                color: w.ink
+                text: w.report ? w.t(w.report.tempC, w.report.tempF) : ""
             }
 
-            Text {
-                text: w.describe()
-                color: Theme.subtext
-                font.family: Theme.fontFamily
-                font.pixelSize: 11
-                width: 96
-                elide: Text.ElideRight
+            LText {
+                role: "bodySmall"
+                color: w.inkDim
+                text: w.report ? WeatherSource.descFor(w.report.code) : ""
+            }
+
+        }
+
+    }
+
+    // forecast: today, then the week, each day with its range
+    Item {
+        id: fc
+
+        readonly property real lo: {
+            let m = 99;
+            for (const d of w.days.slice(1, 6)) m = Math.min(m, d.minC)
+            return m;
+        }
+        readonly property real hi: {
+            let m = -99;
+            for (const d of w.days.slice(1, 6)) m = Math.max(m, d.maxC)
+            return m;
+        }
+
+        visible: w.ready && w.variant === "forecast"
+        anchors.fill: parent
+        anchors.margins: 16
+
+        Row {
+            id: fcHead
+
+            spacing: 10
+
+            WeatherIcon {
+                anchors.verticalCenter: parent.verticalCenter
+                size: 46
+                kind: w.report ? WeatherSource.kindFor(w.report.code, w.night) : "clear"
+                tint: w.inkAccent
+                cloudColor: w.ink
+            }
+
+            LText {
+                anchors.verticalCenter: parent.verticalCenter
+                role: "displaySmall"
+                weight: 600
+                rounded: 100
+                color: w.ink
+                text: w.report ? w.t(w.report.tempC, w.report.tempF) : ""
+            }
+
+            Column {
+                anchors.verticalCenter: parent.verticalCenter
+
+                LText {
+                    role: "titleSmall"
+                    color: w.ink
+                    text: w.report ? WeatherSource.descFor(w.report.code) : ""
+                }
+
+                LText {
+                    role: "bodySmall"
+                    color: w.inkDim
+                    text: w.place
+                }
+
+            }
+
+        }
+
+        Column {
+            anchors.top: fcHead.bottom
+            anchors.topMargin: 10
+            width: parent.width
+            spacing: 2
+
+            Repeater {
+                model: w.days.slice(1, 6)
+
+                Item {
+                    required property var modelData
+                    required property int index
+
+                    width: parent.width
+                    height: 26
+
+                    LText {
+                        width: 40
+                        anchors.verticalCenter: parent.verticalCenter
+                        role: "labelLarge"
+                        color: w.ink
+                        text: w.dayName(modelData, index + 1)
+                    }
+
+                    WeatherIcon {
+                        x: 42
+                        anchors.verticalCenter: parent.verticalCenter
+                        size: 22
+                        animate: false
+                        kind: WeatherSource.kindFor(modelData.code, false)
+                        tint: w.inkAccent
+                        cloudColor: w.inkDim
+                    }
+
+                    LText {
+                        x: 72
+                        width: 32
+                        anchors.verticalCenter: parent.verticalCenter
+                        horizontalAlignment: Text.AlignRight
+                        role: "labelMedium"
+                        color: w.inkDim
+                        text: w.t(modelData.minC, modelData.minF)
+                    }
+
+                    // where this day's range sits in the week's
+                    Rectangle {
+                        x: 112
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - 112 - 40
+                        height: 6
+                        radius: 3
+                        color: Theme.alpha(w.ink, 0.12)
+
+                        Rectangle {
+                            readonly property real span: Math.max(1, fc.hi - fc.lo)
+
+                            x: parent.width * (modelData.minC - fc.lo) / span
+                            width: Math.max(6, parent.width * (modelData.maxC - modelData.minC) / span)
+                            height: parent.height
+                            radius: 3
+                            color: w.inkAccent
+                        }
+
+                    }
+
+                    LText {
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        role: "labelMedium"
+                        weight: 620
+                        color: w.ink
+                        text: w.t(modelData.maxC, modelData.maxF)
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    // hourly: the next day as a curve through the temperatures
+    Item {
+        id: hr
+
+        readonly property var temps: w.hours.map((h) => {
+            return w.metric ? h.tempC : h.tempF;
+        })
+        readonly property real lo: Math.min.apply(null, hr.temps.length ? hr.temps : [0])
+        readonly property real hi: Math.max.apply(null, hr.temps.length ? hr.temps : [1])
+        readonly property real colW: (hr.width - 32) / Math.max(1, w.hours.length)
+
+        function yAt(i) {
+            const span = Math.max(1, hr.hi - hr.lo);
+            return 62 + (1 - (hr.temps[i] - hr.lo) / span) * 34;
+        }
+
+        visible: w.ready && w.variant === "hourly"
+        anchors.fill: parent
+
+        LText {
+            x: 18
+            y: 14
+            role: "titleSmall"
+            color: w.ink
+            text: w.report ? WeatherSource.descFor(w.report.code) + " · " + w.t(w.report.tempC, w.report.tempF) : ""
+        }
+
+        LText {
+            anchors.right: parent.right
+            anchors.rightMargin: 18
+            y: 14
+            role: "labelMedium"
+            color: w.inkDim
+            text: w.place
+        }
+
+        Shape {
+            anchors.fill: parent
+            preferredRendererType: Shape.CurveRenderer
+            visible: hr.temps.length > 1
+
+            ShapePath {
+                strokeColor: w.inkAccent
+                strokeWidth: 3
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+
+                PathSvg {
+                    path: {
+                        let d = "";
+                        for (let i = 0; i < hr.temps.length; i++) {
+                            const x = 16 + hr.colW * (i + 0.5);
+                            const y = hr.yAt(i);
+                            if (i === 0) {
+                                d = "M" + x + " " + y;
+                            } else {
+                                const px = 16 + hr.colW * (i - 0.5);
+                                const py = hr.yAt(i - 1);
+                                d += " C" + (px + hr.colW / 2) + " " + py + " " + (x - hr.colW / 2) + " " + y + " " + x + " " + y;
+                            }
+                        }
+                        return d;
+                    }
+                }
+
+            }
+
+        }
+
+        Repeater {
+            model: w.hours
+
+            Item {
+                required property var modelData
+                required property int index
+
+                x: 16 + hr.colW * index
+                width: hr.colW
+                height: hr.height
+
+                LText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: hr.yAt(index) - 22
+                    role: "labelMedium"
+                    weight: 640
+                    color: w.ink
+                    text: w.t(modelData.tempC, modelData.tempF)
+                }
+
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: hr.yAt(index) - 4
+                    width: 8
+                    height: 8
+                    radius: 4
+                    color: w.inkAccent
+                }
+
+                WeatherIcon {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: hourLabel.top
+                    anchors.bottomMargin: 2
+                    size: 24
+                    animate: false
+                    kind: WeatherSource.kindFor(modelData.code, !modelData.day)
+                    tint: w.inkAccent
+                    cloudColor: w.inkDim
+                }
+
+                LText {
+                    id: hourLabel
+
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 12
+                    role: "labelSmall"
+                    color: index === 0 ? w.inkAccent : w.inkDim
+                    text: w.hourName(modelData, index)
+                }
+
             }
 
         }

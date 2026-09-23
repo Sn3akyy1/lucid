@@ -213,6 +213,63 @@ Column {
     }
 
     SettingCard {
+        title: "LAUNCHER"
+
+        SettingRow {
+            title: "Prefixes"
+            description: "> commands  ·  : emoji  ·  ? the web  ·  $ run a command line. The calculator answers any sum you type."
+            stacked: true
+        }
+
+        SettingRow {
+            title: "Offer a web search"
+            resetKey: "launcherWebRow"
+            description: "End every search with a row that looks it up on the web, or opens it if it is an address."
+
+            M3Switch {
+                checked: Prefs.launcherWebRow
+                onToggled: (v) => {
+                    return Prefs.launcherWebRow = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Search engine"
+            resetKey: "launcherSearchEngine"
+            description: "Used by the web row and the ? prefix."
+            stacked: true
+
+            M3Segmented {
+                width: parent.width
+                current: Prefs.launcherSearchEngine
+                options: [{
+                    "key": "duckduckgo",
+                    "label": "DuckDuckGo"
+                }, {
+                    "key": "google",
+                    "label": "Google"
+                }, {
+                    "key": "brave",
+                    "label": "Brave"
+                }, {
+                    "key": "startpage",
+                    "label": "Startpage"
+                }, {
+                    "key": "kagi",
+                    "label": "Kagi"
+                }]
+                onChosen: (k) => {
+                    return Prefs.launcherSearchEngine = k;
+                }
+            }
+
+        }
+
+    }
+
+    SettingCard {
         title: "CLIPBOARD"
 
         SettingRow {

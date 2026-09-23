@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 import qs
+import qs.lucidui
 
 // m3 expressive icon button: round at rest, morphs square-ish under press
 Item {
@@ -64,9 +65,9 @@ Item {
 
         Behavior on radius {
             NumberAnimation {
-                duration: Theme.durMedium
-                easing.type: Theme.easeEmphasized
-                easing.overshoot: Theme.emphasizedOvershoot
+                duration: Theme.durFastSpatial
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.curveDefaultSpatial
             }
 
         }
@@ -80,11 +81,19 @@ Item {
 
     }
 
+    Icon {
+        anchors.centerIn: parent
+        visible: /^[a-z0-9_]+$/.test(btn.iconPath)
+        name: visible ? btn.iconPath : ""
+        size: Math.round(btn.iconSize * 1.08)
+        color: btn.fgColor
+    }
+
     Shape {
         anchors.centerIn: parent
         width: btn.iconSize
         height: btn.iconSize
-        visible: btn.iconPath !== ""
+        visible: btn.iconPath !== "" && !/^[a-z0-9_]+$/.test(btn.iconPath)
         preferredRendererType: Shape.CurveRenderer
 
         ShapePath {

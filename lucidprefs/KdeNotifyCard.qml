@@ -73,6 +73,7 @@ SettingCard {
                             color: Theme.accent
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel
+                            font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
                             font.bold: true
                             elide: Text.ElideRight
                         }
@@ -83,6 +84,7 @@ SettingCard {
                             color: Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontBody
+                            font.variableAxes: Theme.axes(Theme.fontBody, 640, 0)
                             font.bold: true
                             elide: Text.ElideRight
                             visible: note.modelData.title !== ""
@@ -94,6 +96,7 @@ SettingCard {
                             color: Theme.subtext
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel
+                            font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                             wrapMode: Text.WordWrap
                             maximumLineCount: 4
                             elide: Text.ElideRight

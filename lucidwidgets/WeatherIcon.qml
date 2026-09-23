@@ -14,6 +14,9 @@ Item {
     property color tint: Theme.accent
     property color cloudColor: Theme.subtext
     property bool animate: true
+    // visible is the effective one, so a hidden card stops every drift and spin
+    // rather than driving the animation clock for something nobody can see
+    readonly property bool moving: icon.animate && icon.visible
 
     // the bar passes "sunny"/"cloudy"; everything else already matches
     readonly property string k: icon.kind === "sunny" ? "clear" : (icon.kind === "cloudy" ? "cloud" : icon.kind)
@@ -139,7 +142,7 @@ Item {
                     to: 45
                     duration: Theme.ms(6000)
                     loops: Animation.Infinite
-                    running: icon.animate && icon.bigSun
+                    running: icon.moving && icon.bigSun
                 }
 
             }
@@ -160,7 +163,7 @@ Item {
 
             SequentialAnimation on rotation {
                 loops: Animation.Infinite
-                running: icon.animate && icon.bigMoon
+                running: icon.moving && icon.bigMoon
 
                 NumberAnimation {
                     from: -15
@@ -207,7 +210,7 @@ Item {
                     to: 45
                     duration: Theme.ms(6000)
                     loops: Animation.Infinite
-                    running: icon.animate && icon.smallSun
+                    running: icon.moving && icon.smallSun
                 }
 
             }
@@ -233,7 +236,7 @@ Item {
 
             SequentialAnimation on rotation {
                 loops: Animation.Infinite
-                running: icon.animate && icon.smallMoon
+                running: icon.moving && icon.smallMoon
 
                 NumberAnimation {
                     from: -15
@@ -274,7 +277,7 @@ Item {
 
                 SequentialAnimation on x {
                     loops: Animation.Infinite
-                    running: icon.animate && icon.k === "cloud"
+                    running: icon.moving && icon.k === "cloud"
 
                     NumberAnimation {
                         from: -9
@@ -315,7 +318,7 @@ Item {
 
                 SequentialAnimation on x {
                     loops: Animation.Infinite
-                    running: icon.animate && icon.k === "cloud"
+                    running: icon.moving && icon.k === "cloud"
 
                     NumberAnimation {
                         from: -18
@@ -362,7 +365,7 @@ Item {
                     }
 
                     SequentialAnimation {
-                        running: icon.animate && icon.k === "rain"
+                        running: icon.moving && icon.k === "rain"
 
                         PauseAnimation {
                             duration: Theme.ms(drop.index * 333)
@@ -444,11 +447,11 @@ Item {
                         to: 360
                         duration: Theme.ms(6000)
                         loops: Animation.Infinite
-                        running: icon.animate && icon.k === "snow"
+                        running: icon.moving && icon.k === "snow"
                     }
 
                     SequentialAnimation {
-                        running: icon.animate && icon.k === "snow"
+                        running: icon.moving && icon.k === "snow"
 
                         PauseAnimation {
                             duration: Theme.ms(flake.index * 667)
@@ -519,7 +522,7 @@ Item {
 
                 SequentialAnimation on x {
                     loops: Animation.Infinite
-                    running: icon.animate && icon.k === "fog"
+                    running: icon.moving && icon.k === "fog"
 
                     NumberAnimation {
                         from: -24
@@ -550,7 +553,7 @@ Item {
 
                 SequentialAnimation on x {
                     loops: Animation.Infinite
-                    running: icon.animate && icon.k === "fog"
+                    running: icon.moving && icon.k === "fog"
 
                     NumberAnimation {
                         from: 24
@@ -592,7 +595,7 @@ Item {
 
                 SequentialAnimation on opacity {
                     loops: Animation.Infinite
-                    running: icon.animate && icon.k === "storm"
+                    running: icon.moving && icon.k === "storm"
 
                     PauseAnimation {
                         duration: Theme.ms(500)

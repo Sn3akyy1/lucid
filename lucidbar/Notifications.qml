@@ -39,6 +39,35 @@ BarPill {
     altHeight: Math.min(root.maxPanelHeight, topCard.implicitHeight)
     overlayOpen: root.altOpen && (root.restPopups.length > 0 || root.popupOverflow > 0)
     overlayItem: stackSheet
+    // the sheet is a card stack plus a narrow pill, not one slab. one region over
+    // the lot frosts the gaps and the full width behind the pill, so hand the mask
+    // each part instead
+    readonly property bool overlayBlurReady: stackSheet.opacity > 0.95
+    readonly property var overlayRects: {
+        const out = [];
+        if (!root.overlayOpen)
+            return out;
+
+        if (stackList.height > 1)
+            out.push({
+                "x": stackSheet.x + stackList.x,
+                "y": stackSheet.y + stackList.y,
+                "w": stackList.width,
+                "h": stackList.height,
+                "r": Theme.radiusLg
+            });
+
+        if (overflowPill.width > 1 && overflowSlot.height > 1)
+            out.push({
+                "x": stackSheet.x + overflowSlot.x + overflowPill.x,
+                "y": stackSheet.y + overflowSlot.y + overflowPill.y,
+                "w": overflowPill.width,
+                "h": overflowPill.height,
+                "r": overflowPill.height / 2
+            });
+
+        return out;
+    }
 
     property var shownPopup: null
 
@@ -165,6 +194,7 @@ BarPill {
                     size: 17
                     path: Notifs.icons.notifications
                     color: Theme.text
+                    fill: root.notifCount > 0 ? 1 : 0
                     opacity: root.silenced ? 0 : 1
                     scale: root.silenced ? 0.55 : 1
                     rotation: root.silenced ? -30 : 0
@@ -259,6 +289,7 @@ BarPill {
                     font.family: Theme.fontFamily
                     font.bold: true
                     font.pixelSize: Theme.fs(11)
+                    font.variableAxes: Theme.axes(Theme.fs(11), 640, 0)
                     Component.onCompleted: badgeText.displayedText = root.badgeDisplayText
                 }
 
@@ -482,12 +513,16 @@ BarPill {
 
                 // whatever the stack could not hold is still in the shade
                 Item {
+                    id: overflowSlot
+
                     width: parent.width
                     height: root.popupOverflow > 0 ? 26 : 0
                     opacity: root.popupOverflow > 0 ? 1 : 0
                     visible: opacity > 0.01
 
                     Rectangle {
+                        id: overflowPill
+
                         anchors.centerIn: parent
                         width: overflowRow.implicitWidth + 22
                         height: 26
@@ -507,6 +542,7 @@ BarPill {
                                 font.family: Theme.fontFamily
                                 font.bold: true
                                 font.pixelSize: Theme.fs(10)
+                                font.variableAxes: Theme.axes(Theme.fs(10), 640, 0)
                             }
 
                             NotifIcon {
@@ -583,6 +619,7 @@ BarPill {
                     font.family: Theme.fontFamily
                     font.weight: Font.DemiBold
                     font.pixelSize: Theme.fs(15)
+                    font.variableAxes: Theme.axes(Theme.fs(15), 600, 0)
                 }
 
                 Row {
@@ -633,6 +670,7 @@ BarPill {
                     color: (Notifs.dnd || Notifs.quietNow) ? Theme.accent : Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(11)
+                    font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
                 }
 
                 NotifTextButton {
@@ -672,6 +710,7 @@ BarPill {
                         font.family: Theme.fontFamily
                         font.weight: Font.DemiBold
                         font.pixelSize: Theme.fs(12)
+                        font.variableAxes: Theme.axes(Theme.fs(12), 600, 0)
                     }
 
                     Text {
@@ -680,6 +719,7 @@ BarPill {
                         color: Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
+                        font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
                     }
 
                 }
@@ -781,6 +821,7 @@ BarPill {
                                 font.family: Theme.fontFamily
                                 font.weight: Font.DemiBold
                                 font.pixelSize: Theme.fs(10)
+                                font.variableAxes: Theme.axes(Theme.fs(10), 600, 0)
                                 font.letterSpacing: 0.6
                             }
 

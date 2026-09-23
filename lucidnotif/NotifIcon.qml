@@ -1,36 +1,25 @@
 import QtQuick
-import QtQuick.Shapes
 import qs
+import qs.lucidui
 
-// one material symbol, authored on a 24dp grid
+// one material symbol by name
 Item {
     id: glyph
 
     property string path: ""
     property int size: 20
     property color color: Theme.text
+    property real fill: 0
 
     implicitWidth: glyph.size
     implicitHeight: glyph.size
 
-    Shape {
-        width: 24
-        height: 24
+    Icon {
         anchors.centerIn: parent
-        scale: glyph.size / 24
-        visible: glyph.path !== ""
-        preferredRendererType: Shape.CurveRenderer
-
-        ShapePath {
-            fillColor: glyph.color
-            strokeWidth: 0
-
-            PathSvg {
-                path: glyph.path
-            }
-
-        }
-
+        name: glyph.path
+        size: Math.round(glyph.size * 1.1)
+        fill: glyph.fill
+        color: glyph.color
     }
 
 }

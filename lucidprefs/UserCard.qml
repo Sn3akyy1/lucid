@@ -74,6 +74,7 @@ Item {
             color: card.fg
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyLg
+            font.variableAxes: Theme.axes(Theme.fontBodyLg, 600, 0)
             font.weight: Font.DemiBold
             elide: Text.ElideRight
 
@@ -99,6 +100,7 @@ Item {
             color: card.selected ? Theme.fgSecondaryContainer : Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabelMd
+            font.variableAxes: Theme.axes(Theme.fontLabelMd, 420, 0)
             elide: Text.ElideRight
             opacity: card.selected ? 0.75 : 1
         }

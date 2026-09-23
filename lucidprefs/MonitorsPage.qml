@@ -132,6 +132,7 @@ Column {
                     color: Theme.accent
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontTitleSm
+                    font.variableAxes: Theme.axes(Theme.fontTitleSm, 600, 0)
                     font.weight: Font.DemiBold
                     font.letterSpacing: 0.1
                 }
@@ -143,6 +144,7 @@ Column {
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodyMd
+                    font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
                     wrapMode: Text.WordWrap
                 }
 

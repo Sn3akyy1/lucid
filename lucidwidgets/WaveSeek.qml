@@ -200,6 +200,7 @@ Item {
             color: seek.labelColor
             font.family: Theme.fontFamily
             font.pixelSize: 11
+            font.variableAxes: Theme.axes(11, 420, 0)
         }
 
         Text {
@@ -211,6 +212,7 @@ Item {
             color: lenArea.containsMouse ? Theme.text : seek.labelColor
             font.family: Theme.fontFamily
             font.pixelSize: 11
+            font.variableAxes: Theme.axes(11, 420, 0)
 
             MouseArea {
                 id: lenArea

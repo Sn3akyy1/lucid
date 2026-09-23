@@ -98,6 +98,7 @@ Item {
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontHeadlineSm
+            font.variableAxes: Theme.axes(Theme.fontHeadlineSm, 520, 0)
             font.weight: Font.Medium
             elide: Text.ElideRight
         }
@@ -127,6 +128,7 @@ Item {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyLg
+                font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
                 selectByMouse: true
                 selectionColor: Theme.accent
                 selectedTextColor: Theme.fgAccent
@@ -148,6 +150,7 @@ Item {
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyLg
+                font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
                 visible: searchInput.text === ""
             }
 
@@ -160,6 +163,7 @@ Item {
             color: Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyLg
+            font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
             visible: picker.matches.length === 0
@@ -274,6 +278,7 @@ Item {
                         text: appRow.modelData.name
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBodyLg
+                        font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
                         color: Theme.text
                         elide: Text.ElideRight
                     }
@@ -284,6 +289,7 @@ Item {
                         visible: appRow.modelData.note !== ""
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontLabelSm
+                        font.variableAxes: Theme.axes(Theme.fontLabelSm, 420, 0)
                         color: Theme.subtextDim
                         elide: Text.ElideRight
                     }

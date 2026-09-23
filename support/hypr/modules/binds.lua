@@ -43,6 +43,9 @@ hl.bind(mainMod .. " + K",       hl.dsp.exec_cmd("qs ipc call keyboard toggle"))
 -- Lucid workspace overview (also: 3-finger swipe down/up, see modules/gestures.lua)
 hl.bind(mainMod .. " + W",       hl.dsp.exec_cmd("qs ipc call workspaces toggle"))
 
+-- Lucid session screen: lock, sleep, log out, restart, shut down
+hl.bind(mainMod .. " + Escape",  hl.dsp.exec_cmd("qs ipc call session toggle"))
+
 -- Focus with arrow keys
 hl.bind(mainMod .. " + left",    hl.dsp.focus({ direction = "left"  }))
 hl.bind(mainMod .. " + right",   hl.dsp.focus({ direction = "right" }))

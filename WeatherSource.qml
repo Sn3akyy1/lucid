@@ -101,7 +101,7 @@ Singleton {
             return ;
 
         src.busy = true;
-        fetcher.command = ["curl", "-sf", "--max-time", "15", "https://api.open-meteo.com/v1/forecast?latitude=" + Loc.lat + "&longitude=" + Loc.lon + "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&timezone=auto&forecast_days=4"];
+        fetcher.command = ["curl", "-sf", "--max-time", "15", "https://api.open-meteo.com/v1/forecast?latitude=" + Loc.lat + "&longitude=" + Loc.lon + "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,is_day,precipitation,pressure_msl&hourly=temperature_2m,weather_code,precipitation_probability,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_probability_max&timezone=auto&forecast_days=7&forecast_hours=25"];
         fetcher.running = true;
     }
 
@@ -109,6 +109,12 @@ Singleton {
         src.fetchedAt = 0;
         src.lastError = "";
         src.ensure();
+    }
+
+    // 0 north, clockwise
+    function compass(deg) {
+        const names = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+        return names[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
     }
 
     function store(data) {
@@ -121,8 +127,22 @@ Singleton {
             "maxC": Math.round(d.temperature_2m_max[i]),
             "maxF": src.toF(d.temperature_2m_max[i]),
             "minC": Math.round(d.temperature_2m_min[i]),
-            "minF": src.toF(d.temperature_2m_min[i])
+            "minF": src.toF(d.temperature_2m_min[i]),
+            "pop": d.precipitation_probability_max ? (d.precipitation_probability_max[i] || 0) : 0
         })
+        // the next day in hours, starting with the one we are in
+        const hours = [];
+        const h = data.hourly;
+        if (h && h.time) {
+            for (var j = 0; j < h.time.length; j++) hours.push({
+                "time": h.time[j],
+                "code": h.weather_code[j],
+                "tempC": Math.round(h.temperature_2m[j]),
+                "tempF": src.toF(h.temperature_2m[j]),
+                "pop": h.precipitation_probability ? (h.precipitation_probability[j] || 0) : 0,
+                "day": h.is_day ? h.is_day[j] === 1 : true
+            })
+        }
         src.report = {
             "code": cur.weather_code,
             "tempC": Math.round(cur.temperature_2m),
@@ -133,6 +153,12 @@ Singleton {
             "windKmph": Math.round(cur.wind_speed_10m),
             "windMph": Math.round(cur.wind_speed_10m * 0.621371),
             "uv": Math.round(d.uv_index_max[0]),
+            "isDay": cur.is_day === undefined ? true : cur.is_day === 1,
+            "windDir": cur.wind_direction_10m === undefined ? "" : src.compass(cur.wind_direction_10m),
+            "precip": cur.precipitation || 0,
+            "pressure": cur.pressure_msl ? Math.round(cur.pressure_msl) : 0,
+            "pop": days.length > 0 ? days[0].pop : 0,
+            "hours": hours,
             "sunrise": d.sunrise[0],
             "sunset": d.sunset[0],
             "days": days

@@ -62,6 +62,7 @@ Item {
         color: Theme.text
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg
+        font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
         selectByMouse: true
         selectionColor: Theme.accent
         selectedTextColor: Theme.fgAccent
@@ -107,6 +108,7 @@ Item {
         color: Theme.subtextDim
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg
+        font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
         elide: Text.ElideRight
         visible: input.text === ""
     }

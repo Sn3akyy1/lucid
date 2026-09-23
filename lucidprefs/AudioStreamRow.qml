@@ -79,6 +79,7 @@ Column {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontTitle
+                font.variableAxes: Theme.axes(Theme.fontTitle, 640, 0)
                 font.bold: true
                 elide: Text.ElideRight
             }
@@ -89,6 +90,7 @@ Column {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                 elide: Text.ElideRight
                 visible: stream.subtitle !== ""
             }
@@ -168,6 +170,7 @@ Column {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelLg
+                font.variableAxes: Theme.axes(Theme.fontLabelLg, 520, 0)
                 font.weight: Font.Medium
             }
 

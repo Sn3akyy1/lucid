@@ -83,6 +83,7 @@ Column {
                     color: Theme.fgSuccess
                     font.family: Theme.fontFamily
                     font.pixelSize: 8
+                    font.variableAxes: Theme.axes(8, 680, 0)
                     font.weight: Font.Bold
                 }
 
@@ -104,6 +105,7 @@ Column {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontTitle
+                font.variableAxes: Theme.axes(Theme.fontTitle, 640, 0)
                 font.bold: true
                 elide: Text.ElideRight
             }
@@ -114,6 +116,7 @@ Column {
                 color: dev.isDefault ? Theme.accent : Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                 elide: Text.ElideRight
             }
 
@@ -133,6 +136,7 @@ Column {
                 color: dev.muted ? Theme.subtextDim : Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
             }
 
             M3IconButton {
@@ -234,6 +238,7 @@ Column {
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabelLg
+                    font.variableAxes: Theme.axes(Theme.fontLabelLg, 520, 0)
                     font.weight: Font.Medium
                 }
 
@@ -264,6 +269,7 @@ Column {
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabelLg
+                    font.variableAxes: Theme.axes(Theme.fontLabelLg, 520, 0)
                     font.weight: Font.Medium
                 }
 

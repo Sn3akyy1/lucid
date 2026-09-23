@@ -1,6 +1,7 @@
 import "../lucidprefs"
 import QtQuick
 import qs
+import qs.lucidui
 
 // the authentication dialog: a badge for what is being asked, the request in
 // plain words, who is being asked, and the one field that matters
@@ -126,11 +127,26 @@ Rectangle {
             width: parent.width
             spacing: 16
 
-            Rectangle {
+            Item {
                 width: 52
                 height: 52
-                radius: 26
-                color: Theme.accentContainer
+
+                MaterialShape {
+                    anchors.fill: parent
+                    shape: "cookie9"
+                    color: Theme.accentContainer
+                    spin: Polkit.checking ? 40 : 0
+
+                    Behavior on spin {
+                        NumberAnimation {
+                            duration: Theme.durSlowSpatial
+                            easing.type: Easing.Bezier
+                            easing.bezierCurve: Theme.curveDefaultSpatial
+                        }
+
+                    }
+
+                }
 
                 AuthGlyph {
                     anchors.centerIn: parent
@@ -151,6 +167,7 @@ Rectangle {
                     color: Theme.accent
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabelMd
+                    font.variableAxes: Theme.axes(Theme.fontLabelMd, 520, 0)
                     font.weight: Font.Medium
                 }
 
@@ -160,6 +177,7 @@ Rectangle {
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontTitleLg
+                    font.variableAxes: Theme.axes(Theme.fontTitleLg, 520, 0)
                     font.weight: Font.Medium
                     wrapMode: Text.WordWrap
                     maximumLineCount: 2
@@ -176,6 +194,7 @@ Rectangle {
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyMd
+            font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
             lineHeight: 1.35
             wrapMode: Text.WordWrap
             visible: Polkit.message !== ""
@@ -192,6 +211,7 @@ Rectangle {
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelSm
+                font.variableAxes: Theme.axes(Theme.fontLabelSm, 420, 0)
             }
 
             Flow {
@@ -234,6 +254,7 @@ Rectangle {
                                 color: chip.active ? Theme.fgAccentContainer : Theme.text
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontBodyMd
+                                font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
                                 font.weight: chip.active ? Font.Medium : Font.Normal
                             }
 
@@ -277,6 +298,7 @@ Rectangle {
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodyMd
+                    font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
                 }
 
             }
@@ -378,6 +400,7 @@ Rectangle {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyLg
+                font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
                 selectByMouse: true
                 selectionColor: Theme.accent
                 selectedTextColor: Theme.fgAccent
@@ -400,6 +423,7 @@ Rectangle {
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyLg
+                font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
                 visible: pwInput.text === ""
             }
 
@@ -453,6 +477,7 @@ Rectangle {
                 color: Polkit.errorText !== "" ? Theme.error : Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodySm
+                font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
                 elide: Text.ElideRight
                 opacity: status.line !== "" ? 1 : 0
 
@@ -496,6 +521,7 @@ Rectangle {
                         color: Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBodySm
+                        font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
                     }
 
                     Text {
@@ -504,6 +530,7 @@ Rectangle {
                         color: Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBodySm
+                        font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
                         rotation: details.expanded ? 90 : 0
 
                         Behavior on rotation {
@@ -576,6 +603,7 @@ Rectangle {
                         color: Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBodySm
+                        font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
                         elide: Text.ElideMiddle
                     }
 
@@ -585,6 +613,7 @@ Rectangle {
                         color: Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBodySm
+                        font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
                         elide: Text.ElideRight
                         visible: Polkit.vendor !== ""
                     }
@@ -641,6 +670,7 @@ Rectangle {
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontTitleMd
+            font.variableAxes: Theme.axes(Theme.fontTitleMd, 520, 0)
             font.weight: Font.Medium
         }
 

@@ -36,7 +36,8 @@ Item {
 
     function sync() {
         const n = card.notification;
-        if (!n)
+        // a notification freed under the card reads back as undefined fields
+        if (!n || n.summary === undefined)
             return ;
 
         card.appName = n.appName || "Unknown";
@@ -145,6 +146,7 @@ Item {
                 color: card.critical ? Theme.error : Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
+                font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
                 font.letterSpacing: 0.3
                 elide: Text.ElideRight
             }
@@ -208,6 +210,7 @@ Item {
             font.family: Theme.fontFamily
             font.weight: Font.DemiBold
             font.pixelSize: Theme.fs(12)
+            font.variableAxes: Theme.axes(Theme.fs(12), 600, 0)
             wrapMode: Text.WordWrap
             maximumLineCount: 2
             elide: Text.ElideRight
@@ -221,6 +224,7 @@ Item {
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(11)
+            font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
             lineHeight: 1.15
             wrapMode: Text.WordWrap
             maximumLineCount: card.bodyLines > 0 ? card.bodyLines : 99

@@ -223,6 +223,50 @@ Singleton {
     property alias envApplyGtk: s.envApplyGtk
     property alias envApplyQt: s.envApplyQt
     property alias envApplyHypr: s.envApplyHypr
+    property alias clockShowSeconds: s.clockShowSeconds
+    property alias clockShowWeather: s.clockShowWeather
+    property alias clockShowTimer: s.clockShowTimer
+    property alias clockWorldZones: s.clockWorldZones
+    property alias pomodoroFocus: s.pomodoroFocus
+    property alias pomodoroShort: s.pomodoroShort
+    property alias pomodoroLong: s.pomodoroLong
+    property alias pomodoroRounds: s.pomodoroRounds
+    property alias pomodoroAutoStart: s.pomodoroAutoStart
+    property alias timerSound: s.timerSound
+    property alias weekStartMonday: s.weekStartMonday
+    property alias launcherSearchEngine: s.launcherSearchEngine
+    property alias launcherWebRow: s.launcherWebRow
+
+    // every settings page, for the app's rail and for the launcher's search
+    readonly property var settingsPages: [
+        { "key": "users", "icon": "account_circle", "keys": "user account password avatar login admin sudo", "group": "Account", "label": "Account", "title": "Users and Accounts", "blurb": "Who may sign in to this machine, what they are called and what they are allowed to do", "hidden": true },
+        { "key": "general", "icon": "tune", "keys": "style islands notches accent darkness surface tint motion animation speed font scale typography", "group": "Appearance", "label": "General", "title": "General", "blurb": "Shape, colour and motion across the whole shell" },
+        { "key": "glass", "icon": "blur_on", "keys": "blur transparency opacity translucent frosted kitty terminal windows", "group": "Appearance", "label": "Glass", "title": "Glass", "blurb": "How far the desktop shows through the shell, the terminal and your windows" },
+        { "key": "theme", "icon": "palette", "keys": "colour color scheme wallpaper matugen pywal catppuccin gruvbox nord dark light mode import", "group": "Appearance", "label": "Theme", "title": "Theme and Appearance", "blurb": "Colour schemes, wallpapers and themes you import" },
+        { "key": "environment", "icon": "format_paint", "keys": "cursor icons gtk qt fonts application theme", "group": "Appearance", "label": "Environment", "title": "Environment", "blurb": "Cursors, icons, fonts and application themes, across GTK, Qt and Hyprland alike" },
+        { "key": "bar", "icon": "toolbar", "keys": "status height margin spacing modules workspaces clock media tray system popup", "group": "Desktop", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
+        { "key": "dock", "icon": "dock_to_bottom", "keys": "icons size magnify autohide pinned running indicators tooltips launcher search engine web emoji windows run prefix", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
+        { "key": "widgets", "icon": "widgets", "keys": "desktop cards clock calendar weather presets", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
+        { "key": "workspaces", "icon": "workspaces", "keys": "special scratchpad music chat todo sysmon", "group": "Desktop", "label": "Workspaces", "title": "Special Workspaces", "blurb": "Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key" },
+        { "key": "displays", "icon": "desktop_windows", "keys": "monitor screen resolution refresh rate scale vrr arrangement", "group": "Devices", "label": "Displays", "title": "Displays", "blurb": "Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on" },
+        { "key": "sound", "icon": "volume_up", "keys": "audio volume speakers microphone output input devices", "group": "Devices", "label": "Sound", "title": "Sound", "blurb": "Which speakers play and which microphone listens, what each application is using, and how loud any of it is" },
+        { "key": "network", "icon": "wifi", "keys": "wifi ethernet vpn dns ip proxy internet", "group": "Devices", "label": "Network", "title": "Network", "blurb": "Wi-Fi, wired, VPN and how this machine gets its address" },
+        { "key": "bluetooth", "icon": "bluetooth", "keys": "devices pair headphones", "group": "Devices", "label": "Bluetooth", "title": "Bluetooth and Devices", "blurb": "The radio, what it is paired with, and the phone you connect to it" },
+        { "key": "kdeconnect", "icon": "smartphone", "keys": "phone kde connect files notifications clipboard", "group": "Devices", "label": "Phone", "title": "Phone", "blurb": "Your phone on this machine over KDE Connect: files, notifications, clipboard and a remote", "toggle": "kdeConnectEnabled" },
+        { "key": "notifications", "icon": "notifications", "keys": "popups toasts do not disturb dnd quiet hours sound muted apps", "group": "System", "label": "Notifications", "title": "Notifications", "blurb": "Popups, quiet hours, sound and which applications may interrupt you", "toggle": "showNotifications" },
+        { "key": "idle", "icon": "bedtime", "keys": "sleep suspend lock dim screen off hypridle caffeine", "group": "System", "label": "Idle", "title": "Idle and Sleep", "blurb": "What happens when you walk away: dimming, locking, screen off and suspend", "toggle": "idleEnabled" },
+        { "key": "datetime", "icon": "schedule", "keys": "clock time zone location 24 hour seconds week monday sunday timer pomodoro focus break alarm world", "group": "System", "label": "Date & Time", "title": "Date and Time", "blurb": "Where you are, the clock, and its timers" },
+        { "key": "about", "icon": "info", "keys": "version update lucid", "group": "System", "label": "About", "title": "About", "blurb": "Lucid" }
+    ]
+
+    function settingsPage(key) {
+        for (var i = 0; i < root.settingsPages.length; i++) {
+            if (root.settingsPages[i].key === key)
+                return root.settingsPages[i];
+
+        }
+        return null;
+    }
 
     readonly property var builtinThemes: [
         { "id": "matugen", "name": "Matugen", "desc": "Colors generated from your wallpaper", "swatchBg": "#12171a", "swatchAccent": "#8ad0ee" },
@@ -408,7 +452,20 @@ Singleton {
         "monitorSetups": "{}",
         "monitorShellScreen": "",
         "monitorBarScreen": "",
-        "monitorDockScreen": ""
+        "monitorDockScreen": "",
+        "clockShowSeconds": false,
+        "clockShowWeather": true,
+        "clockShowTimer": true,
+        "clockWorldZones": "Europe/London,America/New_York,Asia/Tokyo",
+        "pomodoroFocus": 25,
+        "pomodoroShort": 5,
+        "pomodoroLong": 15,
+        "pomodoroRounds": 4,
+        "pomodoroAutoStart": true,
+        "timerSound": true,
+        "weekStartMonday": true,
+        "launcherSearchEngine": "duckduckgo",
+        "launcherWebRow": true
     })
 
     // what the bar module is holding right now, so the settings page can offer
@@ -824,6 +881,19 @@ Singleton {
             property string monitorShellScreen: ""
             property string monitorBarScreen: ""
             property string monitorDockScreen: ""
+            property bool clockShowSeconds: false
+            property bool clockShowWeather: true
+            property bool clockShowTimer: true
+            property string clockWorldZones: "Europe/London,America/New_York,Asia/Tokyo"
+            property int pomodoroFocus: 25
+            property int pomodoroShort: 5
+            property int pomodoroLong: 15
+            property int pomodoroRounds: 4
+            property bool pomodoroAutoStart: true
+            property bool timerSound: true
+            property bool weekStartMonday: true
+            property string launcherSearchEngine: "duckduckgo"
+            property bool launcherWebRow: true
         }
 
     }

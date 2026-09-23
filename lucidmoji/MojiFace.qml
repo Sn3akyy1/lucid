@@ -319,6 +319,7 @@ Item {
                             color: tabItem.selected ? Theme.text : Theme.subtext
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontTitle
+                            font.variableAxes: Theme.axes(Theme.fontTitle, 640, 0)
                             font.bold: true
                             opacity: tabItem.selected || tabHover.hovered ? 1 : 0.7
 
@@ -372,6 +373,7 @@ Item {
                 color: Theme.accent
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
                 font.bold: true
                 opacity: text !== "" ? 1 : 0
 
@@ -422,6 +424,7 @@ Item {
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBody
+                    font.variableAxes: Theme.axes(Theme.fontBody, 640, 0)
                     font.bold: true
                     clip: true
                     focus: true
@@ -451,6 +454,7 @@ Item {
                         color: Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBody
+                        font.variableAxes: Theme.axes(Theme.fontBody, 640, 0)
                         font.bold: true
                         visible: searchInput.text === ""
                         z: -1
@@ -563,6 +567,7 @@ Item {
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabel
+            font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
             font.bold: true
         }
 
@@ -768,6 +773,7 @@ Item {
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabel
+                    font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
                     font.bold: true
                 }
 
@@ -844,6 +850,7 @@ Item {
                         color: face.current ? Theme.text : Theme.subtext
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBody
+                        font.variableAxes: Theme.axes(Theme.fontBody, 640, 0)
                         font.bold: true
                         elide: Text.ElideRight
                     }
@@ -854,6 +861,7 @@ Item {
                         color: Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
+                        font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
                         elide: Text.ElideRight
                     }
 
@@ -928,6 +936,7 @@ Item {
                 color: face.current && face.isFav(face.current.d) ? Theme.accent : Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(17)
+                font.variableAxes: Theme.axes(Theme.fs(17), 420, 0)
 
                 HoverHandler {
                     cursorShape: Qt.PointingHandCursor

@@ -100,12 +100,12 @@ WidgetBody {
             return Qt.rgba(1, 1, 1, 0.92);
 
         if (mode !== "gradient")
-            return Theme.accent;
+            return w.inkAccent;
 
         // primary walked to tertiary, so the ramp is whatever matugen pulled out of
         // the wallpaper (or the static theme's own pair), never a fixed rainbow
         var t = i / Math.max(1, w.barCount - 1);
-        var a = Theme.accent;
+        var a = w.inkAccent;
         var b = Theme.cTertiary;
         var c = Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1);
         // an sRGB walk between two roles drifts in brightness and leaves one end of
@@ -224,7 +224,10 @@ WidgetBody {
 
                 required property int index
 
-                readonly property real level: w.level(bar.index)
+                // reading Cava.levels is what subscribes this bar to every frame it
+                // emits, so a blanked card must not reach it: idle-faded is the
+                // normal state whenever nothing is playing
+                readonly property real level: columns.visible ? w.level(bar.index) : 0
 
                 x: w.barLeft(bar.index)
                 width: w.barSpan(bar.index)

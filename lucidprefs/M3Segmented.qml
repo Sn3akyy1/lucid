@@ -1,13 +1,14 @@
 import QtQuick
 import qs
+import qs.lucidui
 
-// m3 expressive connected button group: separate segments with a hairline gap,
-// full-shape on the group's outer edges, and the selected one filled tonally
+// m3 expressive connected button group: segments 2px apart, full-shape on the
+// group's outer edges, and the selected one filled with the primary colour
 Item {
     id: seg
 
-    // fills the unselected segments; there is no continuous track any more
-    property color trackColor: Theme.bgSunken
+    // fills the unselected segments
+    property color trackColor: Theme.surfaceHighest
     // [{ "key": "island", "label": "Islands" }, ...]
     property var options: []
     // driven by its binding, never self-assigned. var, not string: a numeric
@@ -20,7 +21,7 @@ Item {
 
     implicitHeight: 40
     implicitWidth: 240
-    opacity: seg.enabled ? 1 : 0.38
+    opacity: seg.enabled ? 1 : Theme.disabledContent
 
     Row {
         id: row
@@ -40,56 +41,61 @@ Item {
                 readonly property bool isFirst: cell.index === 0
                 readonly property bool isLast: cell.index === seg.options.length - 1
                 readonly property real outer: seg.height / 2
-                readonly property real inner: cell.selected ? Theme.shapeMd : Theme.shapeXs
+                readonly property real inner: cell.selected ? seg.height / 2 : Theme.shapeSm
+                readonly property real squeeze: area.pressed ? 4 : 0
 
                 width: seg.options.length > 0 ? (seg.width - seg.gap * (seg.options.length - 1)) / seg.options.length : 0
                 height: seg.height
 
                 Rectangle {
+                    id: box
+
                     anchors.fill: parent
-                    topLeftRadius: cell.isFirst ? cell.outer : cell.inner
-                    bottomLeftRadius: cell.isFirst ? cell.outer : cell.inner
-                    topRightRadius: cell.isLast ? cell.outer : cell.inner
-                    bottomRightRadius: cell.isLast ? cell.outer : cell.inner
-                    color: cell.selected ? Theme.accentContainer : seg.trackColor
-
-                    Rectangle {
-                        anchors.fill: parent
-                        topLeftRadius: parent.topLeftRadius
-                        bottomLeftRadius: parent.bottomLeftRadius
-                        topRightRadius: parent.topRightRadius
-                        bottomRightRadius: parent.bottomRightRadius
-                        color: Theme.text
-                        opacity: !seg.enabled ? 0 : (cellArea.pressed ? Theme.statePressed : (cellArea.containsMouse ? Theme.stateHover : 0))
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Theme.durQuick
-                            }
-
-                        }
-
-                    }
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Theme.durShort
-                        }
-
-                    }
+                    topLeftRadius: (cell.isFirst ? cell.outer : cell.inner) - cell.squeeze
+                    bottomLeftRadius: (cell.isFirst ? cell.outer : cell.inner) - cell.squeeze
+                    topRightRadius: (cell.isLast ? cell.outer : cell.inner) - cell.squeeze
+                    bottomRightRadius: (cell.isLast ? cell.outer : cell.inner) - cell.squeeze
+                    color: cell.selected ? Theme.primary : seg.trackColor
 
                     Behavior on topLeftRadius {
                         NumberAnimation {
-                            duration: Theme.durMedium
-                            easing.type: Theme.easeStandard
+                            duration: Theme.durFastSpatial
+                            easing.type: Easing.Bezier
+                            easing.bezierCurve: Theme.curveDefaultSpatial
+                        }
+
+                    }
+
+                    Behavior on bottomLeftRadius {
+                        NumberAnimation {
+                            duration: Theme.durFastSpatial
+                            easing.type: Easing.Bezier
+                            easing.bezierCurve: Theme.curveDefaultSpatial
                         }
 
                     }
 
                     Behavior on topRightRadius {
                         NumberAnimation {
-                            duration: Theme.durMedium
-                            easing.type: Theme.easeStandard
+                            duration: Theme.durFastSpatial
+                            easing.type: Easing.Bezier
+                            easing.bezierCurve: Theme.curveDefaultSpatial
+                        }
+
+                    }
+
+                    Behavior on bottomRightRadius {
+                        NumberAnimation {
+                            duration: Theme.durFastSpatial
+                            easing.type: Easing.Bezier
+                            easing.bezierCurve: Theme.curveDefaultSpatial
+                        }
+
+                    }
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Theme.durDefaultEffects
                         }
 
                     }
@@ -104,87 +110,53 @@ Item {
                         width: cell.selected ? 18 : 0
                         height: 18
                         anchors.verticalCenter: parent.verticalCenter
-                        opacity: cell.selected ? 1 : 0
                         clip: true
 
-                        Rectangle {
-                            x: 3
-                            y: 9
-                            width: 6
-                            height: 2
-                            radius: 1
-                            rotation: 45
-                            transformOrigin: Item.Left
-                            color: Theme.text
-                        }
-
-                        Rectangle {
-                            x: 5.8
-                            y: 12
-                            width: 9
-                            height: 2
-                            radius: 1
-                            rotation: -45
-                            transformOrigin: Item.Left
-                            color: Theme.text
+                        Icon {
+                            anchors.centerIn: parent
+                            name: "check"
+                            size: 18
+                            weight: 600
+                            color: Theme.fgPrimary
+                            opacity: cell.selected ? 1 : 0
                         }
 
                         Behavior on width {
                             NumberAnimation {
-                                duration: Theme.durMedium
-                                easing.type: Theme.easeEmphasized
-                                easing.overshoot: Theme.emphasizedOvershoot
-                            }
-
-                        }
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Theme.durShort
+                                duration: Theme.durFastSpatial
+                                easing.type: Easing.Bezier
+                                easing.bezierCurve: Theme.curveFastSpatial
                             }
 
                         }
 
                     }
 
-                    Text {
+                    LText {
                         anchors.verticalCenter: parent.verticalCenter
+                        role: "labelLarge"
+                        weight: cell.selected ? 620 : 520
                         text: cell.modelData.label
-                        color: cell.selected ? Theme.text : Theme.subtext
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontLabelLg
-                        font.weight: cell.selected ? Font.DemiBold : Font.Medium
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.durShort
-                            }
-
-                        }
-
+                        color: cell.selected ? Theme.fgPrimary : Theme.subtext
                     }
 
                 }
 
-                MouseArea {
-                    id: cellArea
+                StateLayer {
+                    id: area
 
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    enabled: seg.enabled
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: seg.chosen(cell.modelData.key)
+                    radius: Math.min(box.topLeftRadius, box.topRightRadius)
+                    tint: cell.selected ? Theme.fgPrimary : Theme.text
+                    disabled: !seg.enabled
+                    onClicked: {
+                        if (!cell.selected)
+                            seg.chosen(cell.modelData.key);
+
+                    }
                 }
 
             }
 
-        }
-
-    }
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Theme.durShort
         }
 
     }

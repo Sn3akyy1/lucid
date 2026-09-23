@@ -44,6 +44,7 @@ Rectangle {
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBody
+            font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
             font.weight: Font.Medium
         }
 
@@ -55,6 +56,7 @@ Rectangle {
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabel
+            font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
             visible: tip.detail !== ""
             height: visible ? implicitHeight : 0
         }

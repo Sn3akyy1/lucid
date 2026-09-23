@@ -492,7 +492,14 @@ Item {
         anchors.fill: parent
         radius: frame.radius
         clip: true
-        color: frame.bare ? "transparent" : Theme.bg
+        color: frame.bare ? "transparent" : (body.item && body.item.fill !== undefined ? body.item.fill : Theme.bg)
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Theme.durSlowEffects
+            }
+
+        }
 
         // the body lays out at its natural size and the whole thing is scaled, so a
         // variant never has to know what zoom it is being drawn at

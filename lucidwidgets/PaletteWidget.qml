@@ -1,41 +1,63 @@
 import QtQuick
 import Quickshell
 import qs
+import qs.lucidui
 
 WidgetBody {
     id: w
 
     readonly property bool showHex: w.opt("showHex") !== false
+    // each role wears its own expressive shape
     readonly property var roles: [{
         "name": "Primary",
-        "color": Theme.accent,
-        "on": Theme.fgAccent
-    }, {
-        "name": "Container",
-        "color": Theme.accentContainer,
-        "on": Theme.fgAccentContainer
+        "color": Theme.primary,
+        "on": Theme.fgPrimary,
+        "shape": "cookie9"
     }, {
         "name": "Secondary",
         "color": Theme.secondaryContainer,
-        "on": Theme.fgSecondaryContainer
+        "on": Theme.fgSecondaryContainer,
+        "shape": "clover4"
     }, {
         "name": "Tertiary",
         "color": Theme.tertiaryContainer,
-        "on": Theme.fgTertiaryContainer
+        "on": Theme.fgTertiaryContainer,
+        "shape": "sunny"
+    }, {
+        "name": "Container",
+        "color": Theme.primaryContainer,
+        "on": Theme.fgPrimaryContainer,
+        "shape": "pentagon"
     }, {
         "name": "Surface",
-        "color": Theme.bgTile,
-        "on": Theme.text
+        "color": Theme.surfaceHighest,
+        "on": Theme.text,
+        "shape": "square"
     }, {
         "name": "Error",
-        "color": Theme.errorContainer,
-        "on": Theme.fgErrorContainer
+        "color": Theme.error,
+        "on": Theme.fgError,
+        "shape": "gem"
     }]
-    readonly property var tones: [95, 85, 75, 65, 55, 45, 35, 25, 15]
-
+    readonly property var tones: [95, 90, 80, 70, 60, 50, 40, 30, 20, 10]
+    // key colours walked down their tones, the way the theme builder lays them out
+    readonly property var families: [{
+        "name": "Primary",
+        "seed": Theme.cPrimary
+    }, {
+        "name": "Secondary",
+        "seed": Theme.cSecondary
+    }, {
+        "name": "Tertiary",
+        "seed": Theme.cTertiary
+    }, {
+        "name": "Neutral",
+        "seed": Theme.withSat(Theme.cSurface, 0.22)
+    }]
     property string copied: ""
 
-    function copy(hex) {
+    function copy(c) {
+        var hex = Theme.toHex(c);
         Quickshell.execDetached(["wl-copy", "--", hex]);
         w.copied = hex;
         copiedClear.restart();
@@ -44,96 +66,132 @@ WidgetBody {
     Timer {
         id: copiedClear
 
-        interval: 1400
+        interval: 1600
         onTriggered: w.copied = ""
     }
 
-    Text {
-        id: title
+    Row {
+        id: head
 
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.leftMargin: 18
-        anchors.topMargin: 15
-        text: w.copied !== "" ? "COPIED " + w.copied.toUpperCase() : Prefs.currentTheme.toUpperCase().replace("-", " ")
-        color: Theme.accent
-        font.family: Theme.fontFamily
-        font.pixelSize: 10
-        font.bold: true
-        font.letterSpacing: 1.4
+        x: 18
+        y: 14
+        spacing: 8
+
+        Icon {
+            anchors.verticalCenter: parent.verticalCenter
+            name: w.copied !== "" ? "content_copy" : "palette"
+            size: 18
+            fill: 1
+            color: w.inkAccent
+        }
+
+        LText {
+            anchors.verticalCenter: parent.verticalCenter
+            role: "titleSmall"
+            color: w.ink
+            text: w.copied !== "" ? "Copied " + w.copied.toUpperCase() : Prefs.currentTheme.charAt(0).toUpperCase() + Prefs.currentTheme.slice(1).replace("-", " ")
+        }
+
     }
 
+    // roles: six shapes, click one to copy it
     Grid {
-        id: swatches
+        id: shapes
 
         visible: w.variant === "swatches"
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.top: title.bottom
+        anchors.top: head.bottom
         anchors.bottom: parent.bottom
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
-        anchors.topMargin: 10
-        anchors.bottomMargin: 16
+        anchors.margins: 12
+        anchors.topMargin: 8
         columns: 3
-        rowSpacing: 8
-        columnSpacing: 8
+        rowSpacing: 2
+        columnSpacing: 2
 
         Repeater {
             model: w.roles
 
-            Rectangle {
-                id: swatch
+            Item {
+                id: sw
 
                 required property var modelData
+                readonly property real d: Math.min(width - 16, height - (w.showHex ? 34 : 20))
 
-                readonly property string hex: Theme.toHex(swatch.modelData.color)
+                width: (shapes.width - 4) / 3
+                height: (shapes.height - 2) / 2
 
-                width: (swatches.width - swatches.columnSpacing * 2) / 3
-                height: (swatches.height - swatches.rowSpacing) / 2
-                radius: Theme.radiusSm
-                color: swatch.modelData.color
-                scale: swatchArea.pressed ? 0.95 : 1
+                MaterialShape {
+                    id: blob
 
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: Theme.durQuick
-                        easing.type: Theme.easeStandard
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: sw.d
+                    height: sw.d
+                    shape: sw.modelData.shape
+                    color: sw.modelData.color
+                    rotation: swTap.containsMouse ? 20 : 0
+                    scale: swTap.pressed ? 0.9 : 1
+
+                    Behavior on rotation {
+                        NumberAnimation {
+                            duration: Theme.durDefaultSpatial
+                            easing.type: Easing.Bezier
+                            easing.bezierCurve: Theme.curveDefaultSpatial
+                        }
+
+                    }
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: Theme.durFastSpatial
+                            easing.type: Easing.Bezier
+                            easing.bezierCurve: Theme.curveFastSpatial
+                        }
+
+                    }
+
+                    LText {
+                        anchors.centerIn: parent
+                        rotation: -blob.rotation
+                        role: "labelSmall"
+                        weight: 640
+                        color: sw.modelData.on
+                        text: "Aa"
                     }
 
                 }
 
                 Column {
-                    anchors.left: parent.left
-                    anchors.bottom: parent.bottom
-                    anchors.margins: 8
-                    spacing: -1
+                    anchors.top: blob.bottom
+                    anchors.topMargin: 3
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: -3
 
-                    Text {
-                        text: swatch.modelData.name
-                        color: swatch.modelData.on
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
-                        font.bold: true
+                    LText {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        role: "labelSmall"
+                        color: w.ink
+                        text: sw.modelData.name
                     }
 
-                    Text {
-                        text: swatch.hex
-                        color: Theme.alpha(swatch.modelData.on, 0.65)
-                        font.family: "monospace"
-                        font.pixelSize: 10
+                    LText {
                         visible: w.showHex
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        role: "labelSmall"
+                        tabular: true
+                        color: w.inkFaint
+                        text: Theme.toHex(sw.modelData.color).toUpperCase()
                     }
 
                 }
 
                 MouseArea {
-                    id: swatchArea
+                    id: swTap
 
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: w.copy(swatch.hex)
+                    onClicked: w.copy(sw.modelData.color)
                 }
 
             }
@@ -142,68 +200,147 @@ WidgetBody {
 
     }
 
-    Row {
-        id: ramp
-
+    // ramp: the accent down its tones, as one segmented pill
+    Item {
         visible: w.variant === "ramp"
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.top: title.bottom
         anchors.bottom: parent.bottom
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
-        anchors.topMargin: 10
-        anchors.bottomMargin: 16
-        spacing: 3
+        anchors.margins: 14
+        height: parent.height - head.height - 36
 
-        Repeater {
-            model: w.tones
+        Row {
+            anchors.fill: parent
+            spacing: 3
 
-            Rectangle {
-                id: step
+            Repeater {
+                model: w.tones
 
-                required property var modelData
-                required property int index
+                Rectangle {
+                    id: stop
 
-                readonly property color shade: Theme.atTone(Theme.accent, step.modelData)
-                readonly property string hex: Theme.toHex(step.shade)
+                    required property int modelData
+                    required property int index
+                    readonly property color c: Theme.atTone(Theme.cPrimary, stop.modelData)
+                    readonly property bool hot: stopTap.containsMouse
 
-                width: (ramp.width - ramp.spacing * (w.tones.length - 1)) / w.tones.length
-                height: parent.height
-                topLeftRadius: step.index === 0 ? Theme.radiusSm : 3
-                bottomLeftRadius: step.index === 0 ? Theme.radiusSm : 3
-                topRightRadius: step.index === w.tones.length - 1 ? Theme.radiusSm : 3
-                bottomRightRadius: step.index === w.tones.length - 1 ? Theme.radiusSm : 3
-                color: step.shade
-                scale: stepArea.pressed ? 0.94 : 1
+                    width: (parent.width - 3 * (w.tones.length - 1)) / w.tones.length
+                    height: parent.height
+                    topLeftRadius: stop.index === 0 ? 16 : 5
+                    bottomLeftRadius: stop.index === 0 ? 16 : 5
+                    topRightRadius: stop.index === w.tones.length - 1 ? 16 : 5
+                    bottomRightRadius: stop.index === w.tones.length - 1 ? 16 : 5
+                    color: stop.c
+                    scale: stop.hot ? 1.06 : 1
+                    z: stop.hot ? 1 : 0
 
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: Theme.durQuick
-                        easing.type: Theme.easeStandard
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: Theme.durFastSpatial
+                            easing.type: Easing.Bezier
+                            easing.bezierCurve: Theme.curveFastSpatial
+                        }
+
+                    }
+
+                    LText {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 8
+                        role: "labelSmall"
+                        tabular: true
+                        color: stop.modelData > 55 ? Qt.rgba(0, 0, 0, 0.7) : Qt.rgba(1, 1, 1, 0.8)
+                        text: stop.modelData
+                    }
+
+                    MouseArea {
+                        id: stopTap
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: w.copy(stop.c)
                     }
 
                 }
 
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 7
-                    text: step.modelData
-                    color: step.modelData > 55 ? Theme.atTone(Theme.accent, 10) : Theme.atTone(Theme.accent, 96)
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 10
-                    font.bold: true
-                    visible: w.showHex
+            }
+
+        }
+
+    }
+
+    // scheme: four key colours, each a column of tones
+    Row {
+        id: scheme
+
+        visible: w.variant === "scheme"
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: head.bottom
+        anchors.bottom: parent.bottom
+        anchors.margins: 14
+        anchors.topMargin: 10
+        spacing: 8
+
+        Repeater {
+            model: w.families
+
+            Column {
+                id: fam
+
+                required property var modelData
+                readonly property var steps: [90, 70, 50, 30, 10]
+
+                width: (scheme.width - scheme.spacing * 3) / 4
+                spacing: 2
+
+                LText {
+                    width: parent.width
+                    role: "labelSmall"
+                    color: w.inkDim
+                    text: fam.modelData.name
+                    elide: Text.ElideRight
                 }
 
-                MouseArea {
-                    id: stepArea
+                Repeater {
+                    model: fam.steps
 
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: w.copy(step.hex)
+                    Rectangle {
+                        id: chip
+
+                        required property int modelData
+                        required property int index
+                        readonly property color c: Theme.atTone(fam.modelData.seed, chip.modelData)
+
+                        width: fam.width
+                        height: (scheme.height - 18 - 8) / 5
+                        topLeftRadius: chip.index === 0 ? 12 : 3
+                        topRightRadius: chip.index === 0 ? 12 : 3
+                        bottomLeftRadius: chip.index === 4 ? 12 : 3
+                        bottomRightRadius: chip.index === 4 ? 12 : 3
+                        color: chip.c
+
+                        LText {
+                            visible: w.showHex && chipTap.containsMouse
+                            anchors.centerIn: parent
+                            role: "labelSmall"
+                            tabular: true
+                            color: chip.modelData > 55 ? Qt.rgba(0, 0, 0, 0.72) : Qt.rgba(1, 1, 1, 0.85)
+                            text: Theme.toHex(chip.c).toUpperCase()
+                        }
+
+                        MouseArea {
+                            id: chipTap
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: w.copy(chip.c)
+                        }
+
+                    }
+
                 }
 
             }

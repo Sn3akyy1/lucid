@@ -233,6 +233,7 @@ SettingCard {
             color: Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabel
+            font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
         }
 
         Text {
@@ -266,6 +267,7 @@ SettingCard {
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabel
+            font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
         }
 
         M3TextField {

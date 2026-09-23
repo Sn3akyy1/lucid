@@ -13,7 +13,7 @@ Item {
     // driven by the pill's swap animation; anchors own y, so this is a transform
     property real swapOffset: 0
 
-    readonly property int notifId: popupCard.notification ? popupCard.notification.id : -1
+    readonly property int notifId: popupCard.notification && popupCard.notification.id !== undefined ? popupCard.notification.id : -1
 
     function defaultAction() {
         const n = popupCard.notification;

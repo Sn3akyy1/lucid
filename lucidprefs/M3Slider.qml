@@ -88,6 +88,7 @@ Item {
             color: slider.dragging ? Theme.fgAccent : Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabelMd
+            font.variableAxes: Theme.axes(Theme.fontLabelMd, 600, 0)
             font.weight: Font.DemiBold
 
             Behavior on color {

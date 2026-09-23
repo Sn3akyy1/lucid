@@ -1,10 +1,11 @@
 import QtQuick
 import qs
+import qs.lucidui
 
 Item {
     id: face
 
-    // "apps" | "commands" | "theme" | "wallpaper" | "power" | "clipboard"
+    // "apps" | "commands" | "web" | "run" | "emoji" | "theme" | "wallpaper" | "clipboard"
     property string mode: "apps"
     property var model: null
     property var wallpaperModel: null
@@ -18,16 +19,32 @@ Item {
     property int wallCardGap: 10
     property alias searchText: searchInput.text
     property string highlightQuery: ""
-    readonly property string placeholder: face.displayMode === "clipboard" ? "Search clipboard history" : "Search apps, or type > for commands"
+    readonly property string placeholder: ({
+        "clipboard": "Search clipboard history",
+        "web": "Search the web",
+        "run": "Type a command line",
+        "emoji": "Find an emoji",
+        "commands": "Search commands"
+    })[face.displayMode] || "Search apps, or type > : ? $"
     property real targetWidth: width
     property real targetHeight: height
 
-    readonly property int searchHeight: 44
-    readonly property int chromeHeight: face.searchHeight + 12
+    readonly property int searchHeight: 46
+    readonly property int chipsHeight: 32
+    readonly property int chromeHeight: face.searchHeight + face.chipsHeight + 22
+    // the launcher's modes, reachable by prefix or by chip
+    readonly property var modes: [
+        { "key": "apps", "label": "Apps", "icon": "apps" },
+        { "key": "commands", "label": "Commands", "icon": "terminal" },
+        { "key": "clipboard", "label": "Clipboard", "icon": "content_paste" },
+        { "key": "wallpaper", "label": "Wallpapers", "icon": "wallpaper" },
+        { "key": "theme", "label": "Themes", "icon": "palette" },
+        { "key": "power", "label": "Power", "icon": "power_settings_new" }
+    ]
     readonly property real stableContentHeight: Math.max(0, face.targetHeight - face.chromeHeight)
 
     property string displayMode: "apps"
-    readonly property bool listVisible: face.displayMode !== "wallpaper" && face.displayMode !== "power"
+    readonly property bool listVisible: face.displayMode !== "wallpaper"
     // clipboard: the first Ctrl+Shift+Del arms clearing everything, a second within 3 s does it
     property bool clearArmed: false
     // bumped whenever the dock rewrites the results, so the preview re-reads the selected row
@@ -43,8 +60,8 @@ Item {
     signal closeRequested()
     signal wallpaperChosen(string path)
     signal wallpaperPreviewed(string path)
-    signal powerActionChosen(string id)
     signal backRequested()
+    signal modeRequested(string mode)
     signal deleteRequested(int index)
     signal clearRequested()
 
@@ -54,7 +71,6 @@ Item {
 
     function resetSelection() {
         resultList.resetSelection();
-        powerRow.currentIndex = 0;
     }
 
     function resultsChanged() {
@@ -138,8 +154,8 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.bottom: searchBar.top
-        anchors.bottomMargin: 12
+        anchors.bottom: chipRow.top
+        anchors.bottomMargin: 10
         clip: true
 
         LauncherList {
@@ -160,6 +176,9 @@ Item {
 
                 if (face.displayMode === "theme")
                     return "No themes found";
+
+                if (face.displayMode === "emoji")
+                    return "No emoji match";
 
                 if (face.displayMode === "clipboard")
                     return Clip.available ? "Clipboard history is empty" : "Install cliphist to keep clipboard history";
@@ -200,13 +219,93 @@ Item {
             onPreviewed: (path) => face.wallpaperPreviewed(path)
         }
 
-        PowerRow {
-            id: powerRow
+    }
 
-            anchors.fill: parent
-            visible: face.displayMode === "power"
-            stableHeight: face.stableContentHeight
-            onActionChosen: (id) => face.powerActionChosen(id)
+    Row {
+        id: chipRow
+
+        anchors.left: parent.left
+        anchors.leftMargin: 2
+        anchors.bottom: searchBar.top
+        anchors.bottomMargin: 10
+        height: face.chipsHeight
+        spacing: 6
+
+        Repeater {
+            model: face.modes
+
+            Rectangle {
+                id: chip
+
+                required property var modelData
+                readonly property bool on: face.displayMode === chip.modelData.key
+
+                height: face.chipsHeight
+                width: chip.on ? chipLabel.implicitWidth + 44 : face.chipsHeight + 8
+                radius: height / 2
+                color: chip.on ? Theme.withBlur(Theme.secondaryContainer) : "transparent"
+                border.width: chip.on ? 0 : 1
+                border.color: Theme.outline
+                clip: true
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: Theme.durDefaultSpatial
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.curveDefaultSpatial
+                    }
+
+                }
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Theme.durDefaultEffects
+                    }
+
+                }
+
+                StateLayer {
+                    radius: chip.radius
+                    tint: chip.on ? Theme.fgSecondaryContainer : Theme.text
+                    onClicked: {
+                        face.modeRequested(chip.modelData.key);
+                        searchInput.forceActiveFocus();
+                    }
+                }
+
+                Icon {
+                    id: chipIcon
+
+                    x: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: chip.modelData.icon
+                    size: 18
+                    fill: chip.on ? 1 : 0
+                    color: chip.on ? Theme.fgSecondaryContainer : Theme.subtext
+                }
+
+                LText {
+                    id: chipLabel
+
+                    anchors.left: chipIcon.right
+                    anchors.leftMargin: 6
+                    anchors.verticalCenter: parent.verticalCenter
+                    role: "labelLarge"
+                    text: chip.modelData.label
+                    color: Theme.fgSecondaryContainer
+                    opacity: chip.on ? 1 : 0
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Theme.durDefaultEffects
+                        }
+
+                    }
+
+                }
+
+            }
+
         }
 
     }
@@ -219,7 +318,7 @@ Item {
         anchors.bottom: parent.bottom
         height: face.searchHeight
         radius: Theme.radiusPill
-        color: Theme.withBlur(Theme.bgTile)
+        color: Theme.withBlur(Theme.surfaceHighest)
 
         Item {
             id: leadingButton
@@ -281,6 +380,7 @@ Item {
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBody
+            font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
             font.weight: Font.Medium
             clip: true
             focus: true
@@ -303,9 +403,6 @@ Item {
                 if (face.displayMode === "wallpaper") {
                     wallStrip.currentIndex = Math.max(0, wallStrip.currentIndex - 1);
                     event.accepted = true;
-                } else if (face.displayMode === "power") {
-                    powerRow.step(-1);
-                    event.accepted = true;
                 } else {
                     event.accepted = false;
                 }
@@ -313,9 +410,6 @@ Item {
             Keys.onRightPressed: (event) => {
                 if (face.displayMode === "wallpaper" && face.wallpaperModel) {
                     wallStrip.currentIndex = Math.min(face.wallpaperModel.count - 1, wallStrip.currentIndex + 1);
-                    event.accepted = true;
-                } else if (face.displayMode === "power") {
-                    powerRow.step(1);
                     event.accepted = true;
                 } else {
                     event.accepted = false;
@@ -343,6 +437,7 @@ Item {
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBody
+                font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
                 font.weight: Font.Medium
                 visible: searchInput.text === ""
                 z: -1
@@ -411,8 +506,6 @@ Item {
     function submit() {
         if (face.displayMode === "wallpaper")
             wallStrip.activateCurrent();
-        else if (face.displayMode === "power")
-            powerRow.activateCurrent();
         else
             resultList.activateCurrent();
     }

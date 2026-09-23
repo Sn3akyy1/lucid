@@ -36,7 +36,7 @@ Item {
         height: pv.natH
         scale: pv.fit
         radius: Theme.radiusXl
-        color: pv.bare ? "transparent" : Theme.bgOpaque
+        color: pv.bare ? "transparent" : (card.item && card.item.fill !== undefined ? Theme.alpha(card.item.fill, 1) : Theme.bgOpaque)
         clip: true
         enabled: false
 

@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell.Io
 import Quickshell.Networking
 import qs
+import qs.lucidui
 
 Item {
     id: root
@@ -14,49 +15,28 @@ Item {
 
         property color glyphColor: Theme.subtext
 
-        Rectangle {
-            width: 10
-            height: 7
-            radius: 2
+        Icon {
             anchors.centerIn: parent
-            anchors.verticalCenterOffset: 2
+            name: "lan"
+            size: 18
+            fill: 1
             color: glyph.glyphColor
-        }
-
-        Row {
-            anchors.top: parent.top
-            anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 2
-
-            Rectangle {
-                width: 2
-                height: 5
-                color: glyph.glyphColor
-            }
-
-            Rectangle {
-                width: 2
-                height: 5
-                color: glyph.glyphColor
-            }
-
         }
 
     }
 
     // shared so the pill and the list can't drift apart
-    component WifiStrengthGlyph: Text {
+    component WifiStrengthGlyph: Icon {
         id: wsg
 
         property real strength: 0
         property bool showOff: false
-        readonly property var icons: ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"]
         readonly property real normalizedStrength: wsg.strength <= 1 ? wsg.strength * 100 : wsg.strength
-        readonly property int level: Math.max(0, Math.min(4, Math.floor(wsg.normalizedStrength / 20)))
+        readonly property int level: wsg.normalizedStrength >= 80 ? 4 : (wsg.normalizedStrength >= 60 ? 3 : (wsg.normalizedStrength >= 40 ? 2 : (wsg.normalizedStrength >= 20 ? 1 : 0)))
 
-        text: wsg.showOff ? "󰤮" : wsg.icons[wsg.level]
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.fs(15)
+        name: wsg.showOff ? "signal_wifi_off" : ["signal_wifi_0_bar", "network_wifi_1_bar", "network_wifi_2_bar", "network_wifi_3_bar", "signal_wifi_4_bar"][wsg.level]
+        size: 20
+        fill: 1
     }
 
     component NetRow: Column {
@@ -127,20 +107,29 @@ Item {
 
         Rectangle {
             width: parent.width
-            height: 42
-            radius: 12
-            color: netItem.isExpanded ? Theme.withBlur(Theme.bgActive) : (rowArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent")
+            height: 54
+            radius: netItem.isExpanded ? 20 : 14
+            color: netItem.isExpanded ? Theme.withBlur(Theme.surfaceHighest) : (rowArea.containsMouse ? Theme.withBlur(Theme.layer(Theme.surfaceHigh, Theme.text, Theme.stateHover)) : Theme.withBlur(Theme.surfaceHigh))
+
+            Behavior on radius {
+                NumberAnimation {
+                    duration: Theme.durFastSpatial
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.curveDefaultSpatial
+                }
+
+            }
 
             Row {
                 anchors.fill: parent
-                anchors.margins: 9
-                spacing: 10
+                anchors.leftMargin: 14
+                anchors.rightMargin: 14
+                spacing: 14
 
                 Item {
-                    width: 16
-                    height: 16
+                    width: 20
+                    height: 20
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.verticalCenterOffset: 1
 
                     WifiStrengthGlyph {
                         anchors.centerIn: parent
@@ -149,6 +138,8 @@ Item {
                     }
 
                     Rectangle {
+                        id: netDot
+
                         visible: netItem.isConnected
                         width: 6
                         height: 6
@@ -158,8 +149,10 @@ Item {
                         anchors.bottom: parent.bottom
                         anchors.margins: -1
 
+                        // visible is the effective one, so a closed panel stops the pulse
+                        // instead of driving a repaint every frame for nobody
                         SequentialAnimation on opacity {
-                            running: netItem.isConnected
+                            running: netDot.visible
                             loops: Animation.Infinite
 
                             NumberAnimation {
@@ -181,7 +174,7 @@ Item {
                 }
 
                 Column {
-                    width: parent.width - 16 - 12 - 10
+                    width: parent.width - 20 - 18 - 28
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 1
 
@@ -191,24 +184,25 @@ Item {
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.bold: true
-                        font.pixelSize: Theme.fs(12)
+                        font.pixelSize: Theme.fs(13)
+                        font.variableAxes: Theme.axes(Theme.fs(13), 560, 0)
                         elide: Text.ElideRight
                     }
 
                     Text {
-                        text: netItem.isConnected ? "Connected · " + root.strengthLabel(netItem.modelData.signalStrength || 0) : root.strengthLabel(netItem.modelData.signalStrength || 0)
+                        text: netItem.isConnected ? "Connected · " + root.strengthLabel(root.pct(netItem.modelData.signalStrength || 0)) : root.strengthLabel(root.pct(netItem.modelData.signalStrength || 0)) + (netItem.isSecured ? "" : " · Open")
                         color: netItem.isConnected ? Theme.accent : Theme.subtext
                         font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fs(10)
+                        font.pixelSize: Theme.fs(11)
+                        font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
                     }
 
                 }
 
-                Text {
-                    text: "▾"
+                Icon {
+                    name: "expand_more"
+                    size: 20
                     color: Theme.subtext
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(11)
                     anchors.verticalCenter: parent.verticalCenter
                     rotation: netItem.isExpanded ? 180 : 0
 
@@ -280,6 +274,7 @@ Item {
                         color: Theme.outlineStrong
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(11)
+                        font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
                         visible: !passwordInput.text && !passwordInput.activeFocus
                     }
 
@@ -295,6 +290,7 @@ Item {
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(12)
+                        font.variableAxes: Theme.axes(Theme.fs(12), 420, 0)
                         selectByMouse: true
                         onAccepted: {
                             if (text.length > 0)
@@ -333,6 +329,7 @@ Item {
                             font.family: Theme.fontFamily
                             font.bold: true
                             font.pixelSize: Theme.fs(12)
+                            font.variableAxes: Theme.axes(Theme.fs(12), 640, 0)
                         }
 
                         MouseArea {
@@ -396,6 +393,7 @@ Item {
                             font.family: Theme.fontFamily
                             font.bold: true
                             font.pixelSize: Theme.fs(11)
+                            font.variableAxes: Theme.axes(Theme.fs(11), 640, 0)
                         }
 
                         MouseArea {
@@ -448,6 +446,7 @@ Item {
                     color: Theme.error
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
+                    font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
                     wrapMode: Text.WordWrap
                 }
 
@@ -488,6 +487,7 @@ Item {
                         font.family: Theme.fontFamily
                         font.bold: true
                         font.pixelSize: Theme.fs(11)
+                        font.variableAxes: Theme.axes(Theme.fs(11), 640, 0)
                         anchors.verticalCenter: parent.verticalCenter
 
                         MouseArea {
@@ -700,6 +700,11 @@ Item {
         connectTimeoutTimer.targetNetwork = network;
         connectTimeoutTimer.restart();
         network.connectWithPsk(password);
+    }
+
+    // networkmanager reports 0..1; some callers already hold a percentage
+    function pct(s) {
+        return s <= 1 ? s * 100 : s;
     }
 
     function strengthLabel(s) {
@@ -938,6 +943,7 @@ Item {
                 color: Networking.connectivity === NetworkConnectivity.None ? Theme.error : Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(11)
+                font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
             }
 
             Text {
@@ -948,6 +954,7 @@ Item {
                 color: Theme.accentMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
+                font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
                 font.underline: recheckArea.containsMouse
 
                 MouseArea {
@@ -990,6 +997,7 @@ Item {
                     font.family: Theme.fontFamily
                     font.bold: true
                     font.pixelSize: Theme.fs(12)
+                    font.variableAxes: Theme.axes(Theme.fs(12), 640, 0)
                 }
 
                 Text {
@@ -1008,6 +1016,7 @@ Item {
                     color: root.ethernetConnected ? Theme.accent : Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)
+                    font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
                 }
 
             }
@@ -1030,6 +1039,7 @@ Item {
                     font.family: Theme.fontFamily
                     font.bold: true
                     font.pixelSize: Theme.fs(10)
+                    font.variableAxes: Theme.axes(Theme.fs(10), 640, 0)
                 }
 
                 MouseArea {
@@ -1056,65 +1066,6 @@ Item {
 
         }
 
-        Item {
-            width: parent.width
-            height: 24
-
-            Text {
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Wi-Fi"
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.bold: true
-                font.pixelSize: Theme.fs(12)
-            }
-
-            Rectangle {
-                id: wifiSwitch
-
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                width: 32
-                height: 18
-                radius: 999
-                color: Networking.wifiEnabled ? Theme.accent : Theme.outlineStrong
-
-                Rectangle {
-                    width: 14
-                    height: 14
-                    radius: 7
-                    color: Theme.bg
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: Networking.wifiEnabled ? parent.width - width - 2 : 2
-
-                    Behavior on x {
-                        NumberAnimation {
-                            duration: Theme.barMs(200)
-                            easing.type: Easing.OutCubic
-                        }
-
-                    }
-
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    enabled: Networking.wifiHardwareEnabled
-                    onClicked: Networking.wifiEnabled = !Networking.wifiEnabled
-                }
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.barMs(200)
-                    }
-
-                }
-
-            }
-
-        }
-
         Text {
             visible: !Networking.wifiHardwareEnabled
             width: parent.width
@@ -1122,6 +1073,7 @@ Item {
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(11)
+            font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
             wrapMode: Text.WordWrap
         }
 
@@ -1133,7 +1085,7 @@ Item {
 
             visible: Networking.wifiEnabled && Networking.wifiHardwareEnabled
             width: parent.width
-            height: 28
+            height: 44
 
             Timer {
                 interval: 400
@@ -1152,68 +1104,74 @@ Item {
                 }
             }
 
-            Row {
-                anchors.left: parent.left
-                anchors.leftMargin: 4
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 8
-
-                Text {
-                    text: ""
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: scanButton.scanning ? Theme.accent : (scanArea.containsMouse ? Theme.text : Theme.subtext)
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(12)
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Theme.barMs(150)
-                        }
-
-                    }
-
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: scanButton.scanning ? "Scanning" + ".".repeat(scanButton.dotCount) : "Search for networks"
-                    color: scanButton.scanning ? Theme.accent : (scanArea.containsMouse ? Theme.text : Theme.subtext)
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(12)
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Theme.barMs(150)
-                        }
-
-                    }
-
-                }
-
-            }
-
-            Text {
-                anchors.right: parent.right
-                anchors.rightMargin: 4
-                anchors.verticalCenter: parent.verticalCenter
-                visible: scanButton.scanning
-                text: "tap to stop"
-                color: Theme.accentMuted
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(10)
-            }
-
-            MouseArea {
-                id: scanArea
-
+            Rectangle {
                 anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    if (root.wifiDevice)
-                        root.wifiDevice.scannerEnabled = !root.wifiDevice.scannerEnabled;
+                radius: height / 2
+                color: scanButton.scanning ? Theme.withBlur(Theme.secondaryContainer) : Theme.withBlur(Theme.surfaceHigh)
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Theme.durDefaultEffects
+                    }
 
                 }
+
+                StateLayer {
+                    radius: parent.radius
+                    tint: scanButton.scanning ? Theme.fgSecondaryContainer : Theme.text
+                    onClicked: {
+                        if (root.wifiDevice)
+                            root.wifiDevice.scannerEnabled = !root.wifiDevice.scannerEnabled;
+
+                    }
+                }
+
+                Row {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 10
+
+                    Item {
+                        width: 24
+                        height: 24
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        LoadingIndicator {
+                            anchors.fill: parent
+                            visible: scanButton.scanning
+                            color: Theme.fgSecondaryContainer
+                        }
+
+                        Icon {
+                            anchors.centerIn: parent
+                            visible: !scanButton.scanning
+                            name: "wifi_find"
+                            size: 20
+                            color: Theme.subtext
+                        }
+
+                    }
+
+                    LText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        role: "labelLarge"
+                        text: scanButton.scanning ? "Looking for networks" : "Search for networks"
+                        color: scanButton.scanning ? Theme.fgSecondaryContainer : Theme.text
+                    }
+
+                }
+
+                LText {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: scanButton.scanning
+                    role: "labelMedium"
+                    text: "Stop"
+                    color: Theme.fgSecondaryContainer
+                }
+
             }
 
         }
@@ -1231,12 +1189,12 @@ Item {
                 visible: root.connectedNetworks.length > 0
 
                 Text {
-                    text: "CONNECTED"
-                    color: Theme.subtextDim
+                    text: "Connected"
+                    color: Theme.primary
                     font.family: Theme.fontFamily
                     font.bold: true
-                    font.pixelSize: Theme.fs(10)
-                    font.letterSpacing: 1.2
+                    font.pixelSize: Theme.fs(12)
+                    font.variableAxes: Theme.axes(Theme.fs(12), 600, 0)
                     leftPadding: 4
                     bottomPadding: 3
                 }
@@ -1257,12 +1215,12 @@ Item {
                 visible: root.savedNetworks.length > 0
 
                 Text {
-                    text: "SAVED"
-                    color: Theme.subtextDim
+                    text: "Saved"
+                    color: Theme.primary
                     font.family: Theme.fontFamily
                     font.bold: true
-                    font.pixelSize: Theme.fs(10)
-                    font.letterSpacing: 1.2
+                    font.pixelSize: Theme.fs(12)
+                    font.variableAxes: Theme.axes(Theme.fs(12), 600, 0)
                     leftPadding: 4
                     bottomPadding: 3
                 }
@@ -1283,12 +1241,12 @@ Item {
                 visible: root.nearbyNetworks.length > 0
 
                 Text {
-                    text: "NEARBY"
-                    color: Theme.subtextDim
+                    text: "Nearby"
+                    color: Theme.primary
                     font.family: Theme.fontFamily
                     font.bold: true
-                    font.pixelSize: Theme.fs(10)
-                    font.letterSpacing: 1.2
+                    font.pixelSize: Theme.fs(12)
+                    font.variableAxes: Theme.axes(Theme.fs(12), 600, 0)
                     leftPadding: 4
                     bottomPadding: 3
                 }
@@ -1316,6 +1274,7 @@ Item {
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(12)
+                    font.variableAxes: Theme.axes(Theme.fs(12), 420, 0)
                 }
 
             }
@@ -1331,6 +1290,7 @@ Item {
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(11)
+                    font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
                     font.underline: hiddenToggleArea.containsMouse
                     leftPadding: 4
 
@@ -1368,6 +1328,7 @@ Item {
                             color: Theme.outlineStrong
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(11)
+                            font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
                             visible: !hiddenSsidInput.text && !hiddenSsidInput.activeFocus
                         }
 
@@ -1381,6 +1342,7 @@ Item {
                             color: Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(12)
+                            font.variableAxes: Theme.axes(Theme.fs(12), 420, 0)
                             selectByMouse: true
                             onTextChanged: root.hiddenSsid = text
                         }
@@ -1410,6 +1372,7 @@ Item {
                             color: Theme.outlineStrong
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(11)
+                            font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
                             visible: !hiddenPskInput.text && !hiddenPskInput.activeFocus
                         }
 
@@ -1425,6 +1388,7 @@ Item {
                             color: Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(12)
+                            font.variableAxes: Theme.axes(Theme.fs(12), 420, 0)
                             selectByMouse: true
                             onTextChanged: root.hiddenPsk = text
                             onAccepted: root.connectHidden()
@@ -1446,6 +1410,7 @@ Item {
                         color: Theme.error
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)
+                        font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
                         wrapMode: Text.WordWrap
                     }
 
@@ -1466,6 +1431,7 @@ Item {
                                 font.family: Theme.fontFamily
                                 font.bold: true
                                 font.pixelSize: Theme.fs(11)
+                                font.variableAxes: Theme.axes(Theme.fs(11), 640, 0)
                             }
 
                             MouseArea {
@@ -1494,6 +1460,7 @@ Item {
                                 font.family: Theme.fontFamily
                                 font.bold: true
                                 font.pixelSize: Theme.fs(11)
+                                font.variableAxes: Theme.axes(Theme.fs(11), 640, 0)
                             }
 
                             MouseArea {

@@ -72,6 +72,7 @@ Item {
                             font.family: Theme.fontFamily
                             font.bold: true
                             font.pixelSize: Theme.fs(10)
+                            font.variableAxes: Theme.axes(Theme.fs(10), 640, 0)
                         }
 
                     }

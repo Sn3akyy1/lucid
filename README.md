@@ -161,6 +161,7 @@ installing to pick them up.
 | `SUPER` + `.` | Emoji picker |
 | `SUPER` + `K` | On-screen keyboard |
 | `SUPER` + `W` | Workspace overview (also: three-finger swipe) |
+| `SUPER` + `Esc` | Session screen — lock, sleep, log out, restart, shut down |
 | `SUPER` + `D` / `Print` | Region screenshot |
 | `SUPER` + `Print` | Full screenshot |
 | `SUPER` + `SHIFT` + `T` | Copy text from a region (OCR) |
@@ -185,14 +186,15 @@ installing to pick them up.
 Ran with `--no-hypr`, or want to bind things yourself? Everything is exposed
 over IPC:
 
-```
-bind = SUPER, SPACE,  exec, qs ipc call -- launcher toggle
-bind = SUPER, E,      exec, qs ipc call -- moji toggle
-bind = SUPER, L,      exec, qs ipc call -- lock lock
-bind = SUPER, S,      exec, qs ipc call -- snap toggle
-bind = SUPER SHIFT, T, exec, qs ipc call -- snap text
-bind = SUPER SHIFT, C, exec, qs ipc call -- snap color
-bind = SUPER, comma,  exec, qs ipc call -- settings open
+```lua
+hl.bind("SUPER + SPACE",   hl.dsp.exec_cmd("qs ipc call -- launcher toggle"))
+hl.bind("SUPER + E",       hl.dsp.exec_cmd("qs ipc call -- moji toggle"))
+hl.bind("SUPER + L",       hl.dsp.exec_cmd("qs ipc call -- lock lock"))
+hl.bind("SUPER + Escape",  hl.dsp.exec_cmd("qs ipc call -- session toggle"))
+hl.bind("SUPER + S",       hl.dsp.exec_cmd("qs ipc call -- snap toggle"))
+hl.bind("SUPER + SHIFT + T", hl.dsp.exec_cmd("qs ipc call -- snap text"))
+hl.bind("SUPER + SHIFT + C", hl.dsp.exec_cmd("qs ipc call -- snap color"))
+hl.bind("SUPER + comma",   hl.dsp.exec_cmd("qs ipc call -- settings open"))
 ```
 
 Special workspaces are Hyprland Lua rather than IPC. On a Lua config of your
@@ -223,10 +225,16 @@ off in Settings.
   and out from the overview's scratchpad row
 - **Media** — MPRIS controls, seek bar, art, and Shazam-style song ID (`songrec`)
 - **Tray** — SNI system tray with working context menus
-- **Clock** — calendar, weather, and reminders that toast when they're due
+- **Clock** — a five-page clock app behind the time: the day with the weather
+  and what is next, a month calendar with reminders that toast when they are
+  due, countdown timers and a pomodoro, a stopwatch with laps, and world
+  clocks. Whatever is counting shows in the pill as a chip with a ring
 - **Notifications** — arrival toasts, history, do-not-disturb
 - **System** — volume, brightness, battery, disk stats, plus full Wi-Fi and
-  Bluetooth panels. Hover any icon on the compact strip and it names itself
+  Bluetooth panels. Two rows of tiles underneath: the toggles (silence, awake,
+  dark, airplane, location, mic) and the tools (capture, record, colour picker,
+  keyboard, timer, session). Hover any icon on the compact strip and it names
+  itself
 
 Two shapes, set in Settings: **island** (floating rounded pills) or **notch**
 (flush to the screen edge, with flares that blend into it).
@@ -243,18 +251,28 @@ A floating M3 toolbar that grows into the launcher rather than opening a
 second window over it. Pinned apps, running-window indicators, drag to
 reorder, optional magnification and auto-hide.
 
-The launcher is one search field over six modes:
+The launcher is one search field over eight modes, each with a prefix you can
+type (or a chip you can click):
 
-| Mode | What it does |
-| --- | --- |
-| Apps | Fuzzy search over `.desktop` entries — word boundaries and initials both hit, so `vsc` finds Visual Studio Code |
-| Commands | Shell commands and shell actions |
-| Theme | Switch between the seven bundled palettes, and any you have imported |
-| Wallpaper | Carousel of your wallpaper folder |
-| Power | Lock, log out, suspend, reboot, shut down, hibernate |
-| Clipboard | What you copied earlier, images included — pick one to put it back on the clipboard |
+| Mode | Prefix | What it does |
+| --- | --- | --- |
+| Apps | — | Fuzzy search over `.desktop` entries — word boundaries and initials both hit, so `vsc` finds Visual Studio Code |
+| Commands | `>` | Shell commands and shell actions |
+| Emoji | `:` | The emoji picker's own list, searched by name and keyword; Return copies one |
+| Web | `?` | Searches your engine of choice, or opens the address if what you typed is one |
+| Run | `$` | Runs a command line, in the background or in a terminal that stays open |
+| Theme | `>theme` | Switch between the seven bundled palettes, and any you have imported |
+| Wallpaper | `>wallpaper` | Carousel of your wallpaper folder |
+| Clipboard | `>clip` | What you copied earlier, images included — pick one to put it back on the clipboard |
 
 Type `=` in the search field for a calculator (`=2^3^2`, right-associative).
+
+The **Power** chip, and the Power row in the command palette, hand over to the
+full-screen session screen — the same one `SUPER` + `Esc` raises.
+
+Searching apps ends with a **web search** row, so one field covers "open it"
+and "look it up". It is a switch on the Dock settings page, along with the
+search engine — DuckDuckGo, Google, Brave, Startpage or Kagi.
 
 Clipboard mode keeps what you copy and hands it back: pick an entry to put it
 back on the clipboard, `Delete` (or the button on the row) to drop one, and
@@ -279,24 +297,30 @@ and it comes back where you left it after a reboot.
 *A month calendar, the weather, a stacked clock and the media card, with a
 full-width visualiser running under the dock.*
 
-Ten kinds, thirty looks between them — every category ships several
+Fourteen kinds, forty-odd looks between them — every category ships several
 variants of the same data:
 
 | Widget | Looks |
 | --- | --- |
-| Clock | Digital, stacked, analog, minimal (no card at all), world clock across three cities |
-| Calendar | Full month, this week, today |
-| System | Arc gauges, meters, a two-minute graph, or a bare row of numbers — CPU, memory, disk and temperature |
-| Battery | Ring, cell, or the full detail with time left and draw |
-| Media | Artwork card, compact row, or cover art with the controls over it |
+| Clock | Digital, stacked, analog with a date window, the time inside an expressive shape, minimal (no card at all), or world clocks |
+| Calendar | Full month, this week, today, or your next reminders |
+| System | Rings, meters, a two-minute graph, quick-settings tiles, or network throughput — CPU, memory, disk, temperature |
+| Battery | Ring, cell, full detail, or every wireless device that reports a charge |
+| Media | Artwork card, compact row, cover art with the controls over it, or a record that turns while it plays — and it takes its colours from the artwork |
 | Visualiser | Bars, mirrored bands, or one filled wave — live off whatever is playing. Drag any edge to size it, right across the screen if you want |
-| Weather | Now, a four-day forecast, or an icon and a number — for the place set in Date & Time |
-| Notes | A sticky square or a ruled sheet, saved as you type |
-| To-do | A checklist or just what is still outstanding |
+| Weather | Now, a forecast, an icon and a number, or the next twelve hours as a curve |
+| Notes | A sticky square, a ruled sheet that counts your words, or one line in display type |
+| To-do | A checklist with real checkboxes, or just the next thing with Done and Later |
+| Timer | A countdown with one-tap lengths, a pomodoro with a dot per round, or a stopwatch — the same timers the bar's clock keeps |
+| At a Glance | The date and weather, and under them the one thing worth knowing now: a running timer, your next reminder, what is playing, a low battery, sunset, or rain |
+| Photo | A frame that turns over your pictures on its own — filling the card, cut to a shape, or as a print with the date under it |
+| Fetch | Your machine the way a fetch script prints it, as a card or as terminal output |
 | Palette | The Material roles the shell is currently built from, click one to copy the hex |
 
-Every widget has its own menu — right-click it, or use the gear that appears on
-hover — for its style, its size, and its own options: 12- or 24-hour, which
+Every widget has its own sheet — right-click it, or use the gear that appears on
+hover. It draws every style of that widget as a live thumbnail, so you pick the
+look by seeing it, and holds the card's colour (auto, or any Material container),
+its size, and its own options: 12- or 24-hour, which
 metrics to show, °C or °F, a note's tint, and so on. Most take one of four
 sizes; the visualiser instead grows an outline with handles when you hover it,
 and you drag any edge or corner to whatever shape you want.
@@ -361,6 +385,12 @@ Hyprland reload.
   running shell's own colours, so it follows a theme change. The installer
   copies it in when SDDM is present but never switches to it — which theme
   greets you stays your call
+- **Session screen** — `SUPER` + `Esc`, the control centre's Session tile or
+  the launcher's command list. Lock, sleep, log out, restart and shut down, each
+  on its own expressive shape that morphs as you move along the row with the
+  arrow keys. The three that cost you work ask twice: the first press arms the
+  shape in red with a ring that runs out after four seconds, and only the second
+  goes through
 - **On-screen keyboard** — `SUPER` + `K`, the desktop's right-click menu or the
   launcher's command list. It never takes the focus off what you are typing
   into, and clicks outside it reach the application underneath, so the caret
@@ -701,7 +731,7 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 
 | Target | Functions |
 | --- | --- |
-| `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `clipboard` `search <query>` |
+| `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `clipboard` `emoji` `search <query>` |
 | `settings` | `toggle` `open` `close` `show <page>` `general` `bar` `dock` `environment` `widgets` `workspaces` `notifications` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
 | `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
 | `network` | `status` `list` `rescan` |
@@ -711,7 +741,10 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | `keyboard` | `toggle` `open` `close` `letters` `fnkeys` `center` `bigger` `smaller` |
 | `notifs` | `toggle` `open` `close` `clear` `toggleDnd` `expandAll` `settings` `count` |
 | `lock` | `lock` `unlock` `isLocked` `status` — nothing here bypasses the password; PAM is the only way in |
-| `snap` | `toggle` `open` `close` `text` `color` |
+| `snap` | `toggle` `open` `close` `text` `color` `video` |
+| `session` | `toggle` `open` `close` |
+| `timer` | `start <seconds>` `stopwatch` `pomodoro` `status` |
+| `clock` | `open <tab>` `toggle` `close` — *tab* is `today`, `calendar`, `timer`, `stopwatch` or `world` |
 | `toast` | `show <icon> <label>` `warn <icon> <label>` |
 | `screenshot` | `full` `text` |
 | `media` | `toggle` `open` `close` `identify` `playPause` `next` `previous` |

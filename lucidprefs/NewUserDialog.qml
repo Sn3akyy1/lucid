@@ -129,6 +129,7 @@ Item {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontHeadlineSm
+                font.variableAxes: Theme.axes(Theme.fontHeadlineSm, 520, 0)
                 font.weight: Font.Medium
             }
 
@@ -138,6 +139,7 @@ Item {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyMd
+                font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
                 wrapMode: Text.WordWrap
             }
 
@@ -182,6 +184,7 @@ Item {
                 color: dialog.nameProblem !== "" ? Theme.error : Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodySm
+                font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
                 wrapMode: Text.WordWrap
                 visible: text !== ""
             }
@@ -192,6 +195,7 @@ Item {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelLg
+                font.variableAxes: Theme.axes(Theme.fontLabelLg, 420, 0)
                 topPadding: 6
             }
 
@@ -216,6 +220,7 @@ Item {
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodySm
+                font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
                 lineHeight: 1.25
                 wrapMode: Text.WordWrap
             }
@@ -226,6 +231,7 @@ Item {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelLg
+                font.variableAxes: Theme.axes(Theme.fontLabelLg, 420, 0)
                 topPadding: 6
             }
 

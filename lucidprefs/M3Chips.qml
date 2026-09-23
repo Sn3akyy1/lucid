@@ -58,6 +58,7 @@ Flow {
                 color: chip.selected ? Theme.fgAccentContainer : Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelLg
+                font.variableAxes: Theme.axes(Theme.fontLabelLg, 420, 0)
                 font.weight: chip.selected ? Font.DemiBold : Font.Medium
             }
 

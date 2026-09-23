@@ -358,6 +358,7 @@ Item {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBody
+                font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
                 font.weight: Font.Medium
                 elide: Text.ElideRight
                 width: Math.min(implicitWidth, strip.width - 200)
@@ -369,6 +370,7 @@ Item {
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
             }
 
         }
@@ -399,6 +401,7 @@ Item {
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBody
+            font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
             font.weight: Font.Medium
         }
 

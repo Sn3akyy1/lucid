@@ -3,6 +3,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 Item {
     id: list
@@ -48,7 +49,7 @@ Item {
         if (!r)
             return 0;
 
-        return r.kind === "header" ? 30 : (r.subtitle !== "" ? 58 : 48);
+        return r.kind === "header" ? 34 : (r.subtitle !== "" ? 58 : 50);
     }
 
     function rowY(index) {
@@ -153,8 +154,8 @@ Item {
         y: selection.slot - view.contentY
         width: list.rowWidth
         height: selection.slotHeight
-        radius: Theme.radiusMd
-        color: Theme.withBlur(Theme.bgActive)
+        radius: Theme.radiusLg
+        color: Theme.withBlur(Theme.secondaryContainer)
         visible: view.count > 0 && list.isSelectable(list.currentIndex)
         z: 0
 
@@ -316,6 +317,7 @@ Item {
             required property string thumb
             required property bool disabled
             required property bool selectable
+            required property string payload
             required property int index
 
             readonly property bool isHeader: rowItem.kind === "header"
@@ -323,7 +325,7 @@ Item {
             readonly property bool hovering: list.hoveredIndex === rowItem.index && rowItem.selectable && !rowItem.disabled
 
             width: list.rowWidth
-            height: rowItem.isHeader ? 30 : (rowItem.subtitle !== "" ? 58 : 48)
+            height: rowItem.isHeader ? 34 : (rowItem.subtitle !== "" ? 58 : 50)
             opacity: rowItem.disabled ? 0.4 : 1
 
             function askThumb() {
@@ -335,22 +337,20 @@ Item {
             onThumbChanged: rowItem.askThumb()
             Component.onCompleted: rowItem.askThumb()
 
-            Text {
+            LText {
                 anchors.left: parent.left
-                anchors.leftMargin: 14
+                anchors.leftMargin: 16
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 6
+                anchors.bottomMargin: 8
                 visible: rowItem.isHeader
+                role: "labelLarge"
+                color: Theme.primary
                 text: rowItem.title
-                color: Theme.subtextDim
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontLabel
-                font.weight: Font.DemiBold
             }
 
             Rectangle {
                 anchors.fill: parent
-                radius: Theme.radiusMd
+                radius: Theme.radiusLg
                 color: Theme.text
                 opacity: rowItem.hovering ? Theme.stateHover : 0
                 visible: !rowItem.isHeader
@@ -374,8 +374,8 @@ Item {
                 visible: !rowItem.isHeader
 
                 IconImage {
-                    width: 28
-                    height: 28
+                    width: 32
+                    height: 32
                     anchors.verticalCenter: parent.verticalCenter
                     visible: rowItem.iconName !== ""
                     source: rowItem.iconName === "" ? "" : (IconTheme.generation >= 0 && IconTheme.pathFor(rowItem.iconName) !== "" ? IconTheme.pathFor(rowItem.iconName) : Quickshell.iconPath(rowItem.iconName, true))
@@ -431,48 +431,53 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: rowItem.glyph !== ""
                     pathData: rowItem.glyph
-                    glyphColor: rowItem.selected ? Theme.accent : Theme.accentMuted
+                    glyphColor: rowItem.selected ? Theme.fgSecondaryContainer : Theme.accent
                 }
 
                 Rectangle {
-                    width: 24
-                    height: 24
-                    radius: 12
+                    width: 32
+                    height: 32
+                    radius: 16
                     anchors.verticalCenter: parent.verticalCenter
                     visible: rowItem.swatchBg !== ""
                     color: rowItem.swatchBg !== "" ? rowItem.swatchBg : "transparent"
                     // a copied colour can be the panel's own; theme swatches never are
-                    border.width: rowItem.kind === "clip" ? 1 : 0
-                    border.color: Theme.alpha(Theme.text, 0.2)
-                    clip: true
+                    border.width: rowItem.kind === "clip" ? 1 : 2
+                    border.color: rowItem.kind === "clip" ? Theme.alpha(Theme.text, 0.2) : Theme.alpha(Theme.text, 0.12)
 
                     Rectangle {
-                        width: parent.width / 2
-                        height: parent.height
-                        anchors.right: parent.right
+                        visible: rowItem.swatchAccent !== ""
+                        anchors.centerIn: parent
+                        width: 14
+                        height: 14
+                        radius: 7
                         color: rowItem.swatchAccent !== "" ? rowItem.swatchAccent : "transparent"
                     }
 
                 }
 
                 Column {
+                    // the leading icon is 32 wide; clip rows keep room for their delete button
+                    width: parent.width - 32 - parent.spacing - (rowItem.kind === "clip" || rowItem.trailing !== "" ? 36 : 0)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
 
-                    Text {
+                    LText {
+                        width: parent.width
+                        elide: Text.ElideRight
                         textFormat: Text.StyledText
+                        role: "bodyLarge"
+                        weight: 500
                         text: list.highlight(rowItem.title)
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontBody
-                        font.weight: Font.Medium
+                        color: rowItem.selected ? Theme.fgSecondaryContainer : Theme.text
                     }
 
-                    Text {
+                    LText {
+                        width: parent.width
+                        elide: Text.ElideRight
+                        role: "bodySmall"
                         text: rowItem.subtitle
-                        color: Theme.subtext
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontLabel
+                        color: rowItem.selected ? Theme.alpha(Theme.fgSecondaryContainer, 0.78) : Theme.subtext
                         visible: rowItem.subtitle !== ""
                     }
 
@@ -488,7 +493,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: rowItem.trailing === "check"
                 pathData: DockIcons.check
-                glyphColor: Theme.accent
+                glyphColor: rowItem.selected ? Theme.fgSecondaryContainer : Theme.accent
             }
 
             Item {
@@ -581,6 +586,7 @@ Item {
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBody
+            font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
             font.weight: Font.Medium
         }
 

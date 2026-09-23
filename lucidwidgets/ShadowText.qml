@@ -8,11 +8,15 @@ Item {
     property color color: Theme.text
     property int pixelSize: 16
     property bool bold: false
+    property real weight: st.bold ? 640 : 420
+    property real rounded: 0
     property real letterSpacing: 0
     property bool shadow: false
     property int horizontalAlignment: Text.AlignLeft
+    property int elide: Text.ElideNone
 
-    implicitWidth: label.implicitWidth
+    // an eliding label reports its elided width, so measure the full run instead
+    implicitWidth: st.elide === Text.ElideNone ? label.implicitWidth : Math.ceil(full.advanceWidth)
     implicitHeight: label.implicitHeight
 
     Text {
@@ -23,10 +27,19 @@ Item {
         color: Qt.rgba(0, 0, 0, 0.45)
         font.family: Theme.fontFamily
         font.pixelSize: st.pixelSize
+        font.variableAxes: Theme.axes(st.pixelSize, st.weight, st.rounded)
         font.bold: st.bold
         font.letterSpacing: st.letterSpacing
         horizontalAlignment: st.horizontalAlignment
+        elide: st.elide
         visible: st.shadow
+    }
+
+    TextMetrics {
+        id: full
+
+        font: label.font
+        text: st.text
     }
 
     Text {
@@ -37,9 +50,11 @@ Item {
         color: st.color
         font.family: Theme.fontFamily
         font.pixelSize: st.pixelSize
+        font.variableAxes: Theme.axes(st.pixelSize, st.weight, st.rounded)
         font.bold: st.bold
         font.letterSpacing: st.letterSpacing
         horizontalAlignment: st.horizontalAlignment
+        elide: st.elide
     }
 
 }

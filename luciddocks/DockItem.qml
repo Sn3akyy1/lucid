@@ -161,6 +161,7 @@ Item {
                 color: Theme.accent
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(dockItem.sc(19))
+                font.variableAxes: Theme.axes(Theme.fs(dockItem.sc(19)), 600, 0)
                 font.weight: Font.DemiBold
             }
 
@@ -198,6 +199,7 @@ Item {
             color: Theme.fgAccent
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(9)
+            font.variableAxes: Theme.axes(Theme.fs(9), 600, 0)
             font.weight: Font.DemiBold
         }
 

@@ -1,477 +1,119 @@
 import QtQuick
-import QtQuick.Shapes
-import Quickshell
-import Quickshell.Io
 import qs
+import qs.lucidui
 
 WidgetBody {
     id: w
 
-    readonly property bool mondayFirst: w.opt("mondayFirst") !== false
-    readonly property bool showMonthName: w.opt("showMonthName") !== false
-    readonly property var dayLetters: w.mondayFirst ? ["M", "T", "W", "T", "F", "S", "S"] : ["S", "M", "T", "W", "T", "F", "S"]
-
-    property var today: Loc.now()
-    property int viewYear: Loc.now().getFullYear()
-    property int viewMonth: Loc.now().getMonth()
-
-    // 42 cells, the month padded out with the tail of the last one and the head of the next
-    readonly property var grid: {
-        var first = new Date(w.viewYear, w.viewMonth, 1);
-        var lead = (first.getDay() - (w.mondayFirst ? 1 : 0) + 7) % 7;
-        var daysThis = new Date(w.viewYear, w.viewMonth + 1, 0).getDate();
-        var daysPrev = new Date(w.viewYear, w.viewMonth, 0).getDate();
-        var prev = new Date(w.viewYear, w.viewMonth - 1, 1);
-        var next = new Date(w.viewYear, w.viewMonth + 1, 1);
-        var out = [];
-        for (var i = 0; i < 42; i++) {
-            var n = i - lead + 1;
-            if (n < 1)
-                out.push({
-                    "day": daysPrev + n,
-                    "inMonth": false,
-                    "year": prev.getFullYear(),
-                    "month": prev.getMonth()
-                });
-            else if (n > daysThis)
-                out.push({
-                    "day": n - daysThis,
-                    "inMonth": false,
-                    "year": next.getFullYear(),
-                    "month": next.getMonth()
-                });
-            else
-                out.push({
-                    "day": n,
-                    "inMonth": true,
-                    "year": w.viewYear,
-                    "month": w.viewMonth
-                });
+    readonly property bool mondayFirst: Prefs.weekStartMonday
+    property date now: Loc.now()
+    readonly property var week: {
+        Agenda.tick;
+        const lead = (w.now.getDay() + (w.mondayFirst ? 6 : 0)) % 7;
+        const out = [];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(w.now.getFullYear(), w.now.getMonth(), w.now.getDate() - lead + i);
+            out.push({
+                "d": d,
+                "today": i === lead,
+                "marked": Agenda.hasOn(d.getFullYear(), d.getMonth(), d.getDate())
+            });
         }
         return out;
     }
-    readonly property int weeksShown: {
-        var last = 0;
-        for (var i = 0; i < 42; i++) {
-            if (w.grid[i].inMonth)
-                last = Math.floor(i / 7);
-
-        }
-        return last + 1;
+    readonly property var coming: {
+        Agenda.tick;
+        return Agenda.upcoming(8);
     }
-    // the seven days around today, starting on the configured first day
-    readonly property var weekDays: {
-        var base = new Date(w.today.getFullYear(), w.today.getMonth(), w.today.getDate());
-        var off = (base.getDay() - (w.mondayFirst ? 1 : 0) + 7) % 7;
-        var out = [];
-        for (var i = 0; i < 7; i++) {
-            var d = new Date(base.getTime());
-            d.setDate(base.getDate() - off + i);
-            out.push(d);
-        }
-        return out;
-    }
-
-    // the squircle the bar's calendar marks today with, on material's 24x24 grid
-    readonly property string blobPath: "M14.14,4.56 L18.42,7.67 Q20.56,9.22 19.74,11.74 L18.11,16.77 Q17.29,19.28 14.65,19.28 L9.36,19.28 Q6.71,19.28 5.89,16.77 L4.26,11.74 Q3.44,9.22 5.58,7.67 L9.86,4.56 Q12,3 14.14,4.56 Z"
-    // the blob's own ink is about 16 units wide inside that grid
-    readonly property real blobUnit: 16
-
-    function hasReminderOn(year, month, day) {
-        var items = reminders.items;
-        for (var i = 0; i < items.length; i++) {
-            var r = items[i];
-            if (r.year === year && r.month === month && r.day === day)
-                return true;
-
-        }
-        return false;
-    }
-
-    function isToday(day) {
-        return day && w.viewYear === w.today.getFullYear() && w.viewMonth === w.today.getMonth() && day === w.today.getDate();
-    }
-
-    function step(n) {
-        var d = new Date(w.viewYear, w.viewMonth + n, 1);
-        w.viewYear = d.getFullYear();
-        w.viewMonth = d.getMonth();
-    }
-
-    function backToToday() {
-        w.viewYear = w.today.getFullYear();
-        w.viewMonth = w.today.getMonth();
+    readonly property int todayCount: {
+        Agenda.tick;
+        return Agenda.forDay(w.now.getFullYear(), w.now.getMonth(), w.now.getDate()).length;
     }
 
     Timer {
         interval: 60000
         repeat: true
         running: true
-        onTriggered: w.today = Loc.now()
+        triggeredOnStart: true
+        onTriggered: w.now = Loc.now()
     }
 
-    // the bar clock owns these; this only ever reads them
-    FileView {
-        path: Quickshell.env("HOME") + "/.config/quickshell/lucidbar/clock_reminders.json"
-        blockLoading: true
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
-
-        adapter: JsonAdapter {
-            id: reminders
-
-            property var items: []
-        }
-
-    }
-
-    onHoveredChanged: {
-        if (!w.hovered)
-            resetView.restart();
-
-    }
-
-    Timer {
-        id: resetView
-
-        interval: 8000
-        onTriggered: w.backToToday()
-    }
-
-    Item {
-        id: month
-
+    // month: a date picker's grid, today in lucid's pentagon
+    MonthView {
         visible: w.variant === "month"
-        anchors.fill: parent
-        anchors.margins: 18
-
-        Item {
-            id: monthHead
-
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            height: 30
-
-            Text {
-                id: monthName
-
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                text: new Date(w.viewYear, w.viewMonth, 1).toLocaleDateString(Qt.locale(), "MMMM")
-                color: Theme.accent
-                font.family: Theme.fontFamily
-                font.pixelSize: 17
-                font.bold: true
-                visible: w.showMonthName
-            }
-
-            Text {
-                anchors.left: monthName.right
-                anchors.leftMargin: 7
-                anchors.baseline: monthName.baseline
-                text: w.viewYear
-                color: Theme.alpha(Theme.accent, 0.62)
-                font.family: Theme.fontFamily
-                font.pixelSize: 14
-                visible: w.showMonthName
-            }
-
-            Row {
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 0
-                opacity: w.hovered ? 1 : 0
-                visible: opacity > 0.01
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.durShort
-                    }
-
-                }
-
-                WidgetButton {
-                    icon: "chevron"
-                    diameter: 26
-                    iconSize: 15
-                    rotation: 180
-                    onClicked: w.step(-1)
-                }
-
-                WidgetButton {
-                    icon: "chevron"
-                    diameter: 26
-                    iconSize: 15
-                    onClicked: w.step(1)
-                }
-
-            }
-
-        }
-
-        Row {
-            id: dayHead
-
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: monthHead.bottom
-            anchors.topMargin: 2
-            height: 20
-
-            Repeater {
-                model: w.dayLetters
-
-                Text {
-                    required property var modelData
-
-                    width: dayHead.width / 7
-                    height: dayHead.height
-                    text: modelData
-                    color: Theme.subtextDim
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 11
-                    font.bold: true
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-
-            }
-
-        }
-
-        Grid {
-            id: monthGrid
-
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: dayHead.bottom
-            anchors.bottom: parent.bottom
-            columns: 7
-
-            Repeater {
-                model: w.grid.slice(0, w.weeksShown * 7)
-
-                Item {
-                    id: cell
-
-                    required property var modelData
-
-                    readonly property bool marked: cell.modelData.inMonth && w.isToday(cell.modelData.day)
-                    readonly property bool hasReminder: w.hasReminderOn(cell.modelData.year, cell.modelData.month, cell.modelData.day)
-                    readonly property real span: Math.min(cell.width, cell.height)
-
-                    width: monthGrid.width / 7
-                    height: monthGrid.height / w.weeksShown
-
-                    // a handler rather than a MouseArea, so the card can still be dragged from here
-                    HoverHandler {
-                        id: cellHover
-                    }
-
-                    Shape {
-                        anchors.centerIn: parent
-                        width: 24
-                        height: 24
-                        scale: ((cell.span - 6) / w.blobUnit) * (cellHover.hovered ? 1.1 : 1)
-                        rotation: cellHover.hovered ? 6 : 0
-                        visible: cell.marked
-                        preferredRendererType: Shape.CurveRenderer
-
-                        ShapePath {
-                            fillColor: Theme.accent
-                            strokeWidth: 0
-
-                            PathSvg {
-                                path: w.blobPath
-                            }
-
-                        }
-
-                        Behavior on scale {
-                            NumberAnimation {
-                                duration: Theme.durShort
-                                easing.type: Theme.easeEmphasized
-                                easing.overshoot: Theme.emphasizedOvershoot
-                            }
-
-                        }
-
-                        Behavior on rotation {
-                            NumberAnimation {
-                                duration: Theme.durShort
-                                easing.type: Theme.easeEmphasized
-                                easing.overshoot: Theme.emphasizedOvershoot
-                            }
-
-                        }
-
-                    }
-
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: cell.span - 6
-                        height: cell.span - 6
-                        radius: width / 2
-                        color: (!cell.marked && cellHover.hovered) ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent"
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.durQuick
-                            }
-
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            anchors.verticalCenterOffset: cell.hasReminder ? -2 : 0
-                            text: cell.modelData.day
-                            color: cell.marked ? Theme.fgAccent : (cell.modelData.inMonth ? Theme.text : Theme.alpha(Theme.subtextDim, 0.45))
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 13
-                            font.bold: cell.marked
-                        }
-
-                        Rectangle {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 3
-                            width: 4
-                            height: 4
-                            radius: 2
-                            color: cell.marked ? Theme.fgAccent : Theme.accent
-                            visible: cell.hasReminder
-                            scale: cell.hasReminder ? 1 : 0
-
-                            Behavior on scale {
-                                NumberAnimation {
-                                    duration: Theme.durShort
-                                    easing.type: Theme.easeEmphasized
-                                    easing.overshoot: Theme.emphasizedOvershoot
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-        }
-
+        anchors.centerIn: parent
+        cell: Math.floor((w.width - 28) / 7)
+        mondayFirst: w.mondayFirst
+        showHeader: w.opt("showMonthName") !== false
+        showNav: w.hovered
+        ink: w.ink
+        inkDim: w.inkDim
+        accent: w.inkAccent
+        onAccent: w.onInkAccent
+        pickFill: Theme.alpha(w.ink, 0.1)
+        pickInk: w.ink
+        markColor: w.inkAccent
     }
 
+    // week: seven days, today lifted into a pill
     Item {
-        id: weekView
-
         visible: w.variant === "week"
         anchors.fill: parent
         anchors.margins: 16
 
-        Text {
-            id: weekLabel
-
-            anchors.left: parent.left
-            anchors.top: parent.top
-            text: w.today.toLocaleDateString(Qt.locale(), "MMMM yyyy")
-            color: Theme.accent
-            font.family: Theme.fontFamily
-            font.pixelSize: 12
-            font.bold: true
-            font.letterSpacing: 0.6
-            visible: w.showMonthName
+        LText {
+            role: "titleSmall"
+            color: w.inkAccent
+            text: w.now.toLocaleDateString(Qt.locale(), "MMMM yyyy")
         }
 
         Row {
-            anchors.left: parent.left
-            anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.top: w.showMonthName ? weekLabel.bottom : parent.top
-            anchors.topMargin: 6
+            width: parent.width
 
             Repeater {
-                model: w.weekDays
+                model: w.week
 
                 Item {
-                    id: wcell
-
                     required property var modelData
-                    required property int index
 
-                    readonly property bool marked: wcell.modelData.getDate() === w.today.getDate() && wcell.modelData.getMonth() === w.today.getMonth()
-                    readonly property bool hasReminder: w.hasReminderOn(wcell.modelData.getFullYear(), wcell.modelData.getMonth(), wcell.modelData.getDate())
-
-                    width: weekView.width / 7
-                    height: parent.height
-
-                    HoverHandler {
-                        id: weekHover
-                    }
+                    width: parent.width / 7
+                    height: 72
 
                     Rectangle {
-                        id: weekPill
-
-                        anchors.centerIn: parent
-                        width: Math.min(parent.width - 4, 42)
-                        height: Math.min(parent.height, 58)
+                        anchors.fill: parent
+                        anchors.margins: 2
                         radius: width / 2
-                        scale: weekHover.hovered ? 1.06 : 1
-                        color: wcell.marked ? Theme.accent : (weekHover.hovered ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent")
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.durQuick
-                            }
-
-                        }
-
-                        Behavior on scale {
-                            NumberAnimation {
-                                duration: Theme.durShort
-                                easing.type: Theme.easeEmphasized
-                                easing.overshoot: Theme.emphasizedOvershoot
-                            }
-
-                        }
-
-                        Rectangle {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 7
-                            width: 4
-                            height: 4
-                            radius: 2
-                            color: wcell.marked ? Theme.fgAccent : Theme.accent
-                            visible: wcell.hasReminder
-                        }
-
+                        color: modelData.today ? w.inkAccent : "transparent"
                     }
 
                     Column {
                         anchors.centerIn: parent
-                        anchors.verticalCenterOffset: wcell.hasReminder ? -3 : 0
-                        spacing: 1
+                        spacing: 2
 
-                        Text {
+                        LText {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: w.dayLetters[wcell.index]
-                            color: wcell.marked ? Theme.fgAccent : Theme.subtextDim
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 11
-                            font.bold: true
+                            role: "labelSmall"
+                            color: modelData.today ? Theme.alpha(w.onInkAccent, 0.8) : w.inkDim
+                            text: modelData.d.toLocaleDateString(Qt.locale(), "ddd").slice(0, 2)
                         }
 
-                        Text {
+                        LText {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: wcell.modelData.getDate()
-                            color: wcell.marked ? Theme.fgAccent : Theme.text
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 19
-                            font.bold: wcell.marked
+                            role: "titleLarge"
+                            weight: modelData.today ? 680 : 500
+                            rounded: 100
+                            color: modelData.today ? w.onInkAccent : w.ink
+                            text: modelData.d.getDate()
+                        }
+
+                        Rectangle {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: 5
+                            height: 5
+                            radius: 2.5
+                            color: modelData.today ? w.onInkAccent : w.inkAccent
+                            opacity: modelData.marked ? 1 : 0
                         }
 
                     }
@@ -484,41 +126,187 @@ WidgetBody {
 
     }
 
-    Column {
-        id: todayView
-
+    // today: the date as a big number, and how full the day is
+    Item {
         visible: w.variant === "today"
-        anchors.centerIn: parent
-        spacing: -8
+        anchors.fill: parent
 
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: w.today.toLocaleDateString(Qt.locale(), "dddd").toUpperCase()
-            color: Theme.accent
-            font.family: Theme.fontFamily
-            font.pixelSize: 13
-            font.bold: true
-            font.letterSpacing: 2.4
-            bottomPadding: 6
+        LText {
+            x: 20
+            y: 16
+            role: "titleMedium"
+            weight: 600
+            color: w.inkAccent
+            text: w.now.toLocaleDateString(Qt.locale(), "dddd")
         }
 
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: w.today.getDate()
-            color: Theme.text
-            font.family: Theme.fontFamily
-            font.pixelSize: 82
-            font.bold: true
-            font.letterSpacing: -3
+        LText {
+            anchors.centerIn: parent
+            anchors.verticalCenterOffset: 4
+            size: 96
+            weight: 620
+            rounded: 100
+            color: w.ink
+            text: w.now.getDate()
         }
 
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: w.today.toLocaleDateString(Qt.locale(), w.showMonthName ? "MMMM yyyy" : "yyyy")
-            color: Theme.subtext
-            font.family: Theme.fontFamily
-            font.pixelSize: 14
-            topPadding: 10
+        Row {
+            x: 20
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 16
+            spacing: 6
+
+            LText {
+                anchors.verticalCenter: parent.verticalCenter
+                role: "labelLarge"
+                color: w.inkDim
+                text: w.now.toLocaleDateString(Qt.locale(), "MMMM")
+            }
+
+            Repeater {
+                model: Math.min(3, w.todayCount)
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 6
+                    height: 6
+                    radius: 3
+                    color: w.inkAccent
+                }
+
+            }
+
+        }
+
+    }
+
+    // agenda: what is coming up
+    Item {
+        visible: w.variant === "agenda"
+        anchors.fill: parent
+        anchors.margins: 16
+
+        Row {
+            id: agHead
+
+            spacing: 8
+
+            LText {
+                anchors.verticalCenter: parent.verticalCenter
+                role: "titleMedium"
+                weight: 600
+                color: w.inkAccent
+                text: "Coming up"
+            }
+
+            LText {
+                anchors.verticalCenter: parent.verticalCenter
+                role: "labelMedium"
+                color: w.inkDim
+                text: w.now.toLocaleDateString(Qt.locale(), "ddd d MMM")
+            }
+
+        }
+
+        Column {
+            id: agList
+
+            // only as many rows as the card has room for
+            readonly property var shown: w.coming.slice(0, Math.max(1, Math.floor((parent.height - agHead.height - 10 + 3) / 43)))
+
+            anchors.top: agHead.bottom
+            anchors.topMargin: 10
+            width: parent.width
+            spacing: 3
+
+            Repeater {
+                model: agList.shown
+
+                Rectangle {
+                    id: ev
+
+                    required property var modelData
+                    required property int index
+
+                    width: parent.width
+                    height: 40
+                    topLeftRadius: ev.index === 0 ? 16 : 5
+                    topRightRadius: ev.index === 0 ? 16 : 5
+                    bottomLeftRadius: ev.index === agList.shown.length - 1 ? 16 : 5
+                    bottomRightRadius: ev.index === agList.shown.length - 1 ? 16 : 5
+                    readonly property bool soon: ev.modelData.at - w.now < 6 * 86400000
+                    color: Theme.alpha(w.ink, 0.07)
+
+                    Column {
+                        x: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 44
+                        spacing: -2
+
+                        LText {
+                            role: "labelSmall"
+                            color: w.inkAccent
+                            text: ev.modelData.at.toLocaleDateString(Qt.locale(), ev.soon ? "ddd" : "MMM").toUpperCase()
+                        }
+
+                        LText {
+                            role: "titleSmall"
+                            weight: 660
+                            rounded: 100
+                            color: w.ink
+                            text: ev.modelData.at.getDate()
+                        }
+
+                    }
+
+                    LText {
+                        x: 60
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - 60 - timeTag.width - 20
+                        role: "bodyMedium"
+                        weight: 520
+                        color: w.ink
+                        text: ev.modelData.item.name
+                        elide: Text.ElideRight
+                    }
+
+                    LText {
+                        id: timeTag
+
+                        anchors.right: parent.right
+                        anchors.rightMargin: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        role: "labelMedium"
+                        color: w.inkDim
+                        text: Agenda.timeText(ev.modelData.item)
+                    }
+
+                }
+
+            }
+
+            Column {
+                visible: w.coming.length === 0
+                width: parent.width
+                topPadding: 18
+                spacing: 6
+
+                Icon {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    name: "event_available"
+                    size: 30
+                    color: w.inkFaint
+                }
+
+                LText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    role: "bodyMedium"
+                    color: w.inkDim
+                    text: "Nothing coming up"
+                }
+
+            }
+
         }
 
     }

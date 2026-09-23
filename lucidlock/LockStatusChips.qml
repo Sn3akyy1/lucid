@@ -49,6 +49,7 @@ Row {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelLg
+                font.variableAxes: Theme.axes(Theme.fontLabelLg, 520, 0)
                 font.weight: Font.Medium
             }
 

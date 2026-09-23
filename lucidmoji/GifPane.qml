@@ -394,6 +394,7 @@ Item {
             color: pane.errorText !== "" ? Theme.error : Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabel
+            font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
             font.bold: true
 
             HoverHandler {
@@ -418,6 +419,7 @@ Item {
             color: pane.errorText !== "" ? Theme.error : Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(10)
+            font.variableAxes: Theme.axes(Theme.fs(10), 640, 0)
             font.bold: true
         }
 
@@ -492,6 +494,7 @@ Item {
                     color: "white"
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontTitle
+                    font.variableAxes: Theme.axes(Theme.fontTitle, 640, 0)
                     font.bold: true
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
@@ -607,6 +610,7 @@ Item {
                                 color: pane.host && pane.host.isFavGif(gifCell.modelData.url) ? Theme.accent : "white"
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fs(15)
+                                font.variableAxes: Theme.axes(Theme.fs(15), 420, 0)
                                 visible: cellHover.hovered || (pane.host && pane.host.isFavGif(gifCell.modelData.url))
 
                                 HoverHandler {
@@ -675,6 +679,7 @@ Item {
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabel
+            font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
             font.bold: true
         }
 
@@ -684,6 +689,7 @@ Item {
             color: Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(10)
+            font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
         }
 
     }
@@ -727,6 +733,7 @@ Item {
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabel
+            font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
             font.bold: true
         }
 
@@ -739,6 +746,7 @@ Item {
             color: Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(10)
+            font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
         }
 
     }

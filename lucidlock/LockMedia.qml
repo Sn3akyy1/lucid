@@ -151,6 +151,7 @@ Rectangle {
             elide: Text.ElideRight
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontTitleSm
+            font.variableAxes: Theme.axes(Theme.fontTitleSm, 520, 0)
             font.weight: Font.Medium
         }
 
@@ -161,6 +162,7 @@ Rectangle {
             elide: Text.ElideRight
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodySm
+            font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
         }
 
         Item {
@@ -213,6 +215,7 @@ Rectangle {
             color: Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabelSm
+            font.variableAxes: Theme.axes(Theme.fontLabelSm, 420, 0)
             visible: media.length > 0
         }
 

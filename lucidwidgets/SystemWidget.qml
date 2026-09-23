@@ -1,23 +1,46 @@
 import QtQuick
-import Quickshell.Io
 import qs
+import qs.lucidui
 
 WidgetBody {
     id: w
 
-    property real cpu: 0
-    property real ram: 0
-    property real disk: 0
-    property real temp: -1
-    property real ramUsedGb: 0
-    property real ramTotalGb: 0
-    property real diskUsedGb: 0
-    property real diskTotalGb: 0
-    property var cpuHistory: []
-    property var ramHistory: []
-    property real prevTotal: -1
-    property real prevIdle: -1
-
+    // a gallery tile draws fixed sample numbers and never wakes the poller
+    readonly property var sample: ({
+        "cpu": 0.34,
+        "ram": 0.62,
+        "disk": 0.48,
+        "temp": 51,
+        "gpu": -1,
+        "ramUsedGb": 9.8,
+        "ramTotalGb": 15.5,
+        "diskUsedGb": 220,
+        "diskTotalGb": 460,
+        "down": 2.4e+06,
+        "up": 310000
+    })
+    readonly property var sampleCpu: {
+        var a = [];
+        for (var i = 0; i < 60; i++) a.push(0.3 + 0.24 * Math.sin(i / 3.1) + 0.1 * Math.sin(i / 1.3))
+        return a;
+    }
+    readonly property var sampleNet: {
+        var a = [];
+        for (var i = 0; i < 60; i++) a.push(Math.max(0, 1.2e+06 + 1e+06 * Math.sin(i / 4) + 6e+05 * Math.sin(i / 1.7)))
+        return a;
+    }
+    readonly property real cpu: w.preview ? w.sample.cpu : Sys.cpu
+    readonly property real ram: w.preview ? w.sample.ram : Sys.ram
+    readonly property real disk: w.preview ? w.sample.disk : Sys.disk
+    readonly property real temp: w.preview ? w.sample.temp : Sys.temp
+    readonly property real gpu: w.preview ? w.sample.gpu : Sys.gpu
+    readonly property var cpuHistory: w.preview ? w.sampleCpu : Sys.cpuHistory
+    readonly property var downHistory: w.preview ? w.sampleNet : Sys.downHistory
+    readonly property var upHistory: w.preview ? w.sampleNet.map((v) => {
+        return v * 0.18;
+    }) : Sys.upHistory
+    readonly property real down: w.preview ? w.sample.down : Sys.netDown
+    readonly property real up: w.preview ? w.sample.up : Sys.netUp
     readonly property int pollMs: {
         var v = parseInt(w.opt("interval"));
         return (v > 0 ? v : 2) * 1000;
@@ -26,346 +49,153 @@ WidgetBody {
         var out = [];
         if (w.opt("showCpu") !== false)
             out.push({
-                "key": "cpu",
-                "label": "Processor",
-                "short": "CPU",
-                "value": w.cpu,
-                "text": Math.round(w.cpu * 100) + "%",
-                "detail": ""
-            });
+            "key": "cpu",
+            "label": "Processor",
+            "short": "CPU",
+            "icon": "memory",
+            "value": w.cpu,
+            "text": Math.round(w.cpu * 100) + "%",
+            "detail": w.preview ? "3.1 GHz" : (Sys.cpuMhz > 0 ? (Sys.cpuMhz / 1000).toFixed(1) + " GHz" : "")
+        });
 
         if (w.opt("showRam") !== false)
             out.push({
-                "key": "ram",
-                "label": "Memory",
-                "short": "RAM",
-                "value": w.ram,
-                "text": Math.round(w.ram * 100) + "%",
-                "detail": w.ramTotalGb > 0 ? w.ramUsedGb.toFixed(1) + " / " + w.ramTotalGb.toFixed(1) + " GB" : ""
-            });
+            "key": "ram",
+            "label": "Memory",
+            "short": "RAM",
+            "icon": "memory_alt",
+            "value": w.ram,
+            "text": Math.round(w.ram * 100) + "%",
+            "detail": w.gbOf(w.preview ? w.sample.ramUsedGb : Sys.ramUsedGb, w.preview ? w.sample.ramTotalGb : Sys.ramTotalGb)
+        });
 
         if (w.opt("showDisk") !== false)
             out.push({
-                "key": "disk",
-                "label": "Disk",
-                "short": "SSD",
-                "value": w.disk,
-                "text": Math.round(w.disk * 100) + "%",
-                "detail": w.diskTotalGb > 0 ? Math.round(w.diskTotalGb - w.diskUsedGb) + " GB free" : ""
-            });
+            "key": "disk",
+            "label": "Disk",
+            "short": "Disk",
+            "icon": "hard_drive",
+            "value": w.disk,
+            "text": Math.round(w.disk * 100) + "%",
+            "detail": (w.preview || Sys.diskTotalGb > 0) ? Math.round((w.preview ? w.sample.diskTotalGb - w.sample.diskUsedGb : Sys.diskTotalGb - Sys.diskUsedGb)) + " GB free" : ""
+        });
 
         if (w.opt("showTemp") === true && w.temp >= 0)
             out.push({
-                "key": "temp",
-                "label": "Temperature",
-                "short": "TEMP",
-                "value": Math.min(1, w.temp / 100),
-                "text": Math.round(w.temp) + "°",
-                "detail": ""
-            });
+            "key": "temp",
+            "label": "Temperature",
+            "short": "Temp",
+            "icon": "thermostat",
+            "value": Math.min(1, w.temp / 100),
+            "text": Math.round(w.temp) + "°",
+            "detail": w.temp > 80 ? "Running hot" : "CPU package"
+        });
+
+        if (w.opt("showGpu") === true && w.gpu >= 0)
+            out.push({
+            "key": "gpu",
+            "label": "Graphics",
+            "short": "GPU",
+            "icon": "developer_board",
+            "value": w.gpu,
+            "text": Math.round(w.gpu * 100) + "%",
+            "detail": Sys.gpuTemp >= 0 ? Math.round(Sys.gpuTemp) + "°" : ""
+        });
 
         return out;
     }
 
-    // every metric stays inside the wallpaper's own palette; tertiary is dropped
-    // because matugen resolves it green on a lot of wallpapers
-    function tint(key, value) {
-        if (key === "temp")
-            return value > 0.8 ? Theme.error : (value > 0.65 ? Theme.warning : Theme.accent);
-
-        if (value > 0.9)
-            return Theme.error;
-
-        if (key === "cpu")
-            return Theme.accent;
-
-        if (key === "ram")
-            return Theme.accentMuted;
-
-        return Theme.hasTonalContainers ? Theme.cSecondary : Theme.subtext;
+    function gbOf(used, total) {
+        return total > 0 ? used.toFixed(1) + " of " + Math.round(total) + " GB" : "";
     }
 
-    function push(arr, v) {
-        var next = arr.concat([v]);
-        while (next.length > 44) next.shift()
-        return next;
+    // each reading keeps to the palette, and only goes red when it means it
+    function tint(key, value) {
+        if (value > 0.9 || (key === "temp" && value > 0.85))
+            return Theme.error;
+
+        if (key === "temp" && value > 0.7)
+            return Theme.warning;
+
+        if (key === "ram" || key === "gpu")
+            return w.tonal ? w.inkAccent : Theme.secondary;
+
+        if (key === "disk" || key === "temp")
+            return w.tonal ? w.inkAccent : Theme.tertiary;
+
+        return w.inkAccent;
     }
 
     Component.onCompleted: {
-        if (w.preview) {
-            w.cpu = 0.34;
-            w.ram = 0.62;
-            w.disk = 0.48;
-            w.temp = 51;
-            w.ramUsedGb = 9.8;
-            w.ramTotalGb = 15.5;
-            w.diskUsedGb = 220;
-            w.diskTotalGb = 460;
-            var a = [], b = [];
-            for (var i = 0; i < 44; i++) {
-                a.push(0.3 + 0.24 * Math.sin(i / 3.1) + 0.1 * Math.sin(i / 1.3));
-                b.push(0.58 + 0.06 * Math.sin(i / 5.5));
-            }
-            w.cpuHistory = a;
-            w.ramHistory = b;
-        }
+        if (!w.preview)
+            Sys.hold(w.uid || "w", true, w.pollMs);
+
     }
-
-    Timer {
-        interval: w.pollMs
-        repeat: true
-        running: !w.preview
-        triggeredOnStart: true
-        onTriggered: poll.running = true
-    }
-
-    Process {
-        id: poll
-
-        command: ["sh", "-c", "echo @cpu; head -1 /proc/stat; echo @mem; grep -E '^(MemTotal|MemAvailable):' /proc/meminfo; echo @disk; df -B1 --output=size,used / | tail -1; echo @temp; t=''; for h in /sys/class/hwmon/hwmon*; do n=$(cat \"$h/name\" 2>/dev/null); case \"$n\" in coretemp|k10temp|zenpower|cpu_thermal|acpitz) [ -r \"$h/temp1_input\" ] && t=$(cat \"$h/temp1_input\") && break;; esac; done; [ -z \"$t\" ] && [ -r /sys/class/thermal/thermal_zone0/temp ] && t=$(cat /sys/class/thermal/thermal_zone0/temp); echo \"$t\""]
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var section = "";
-                var lines = this.text.split("\n");
-                var memTotal = 0, memAvail = 0;
-                for (var i = 0; i < lines.length; i++) {
-                    var line = lines[i].trim();
-                    if (line.charAt(0) === "@") {
-                        section = line.substring(1);
-                        continue;
-                    }
-                    if (line === "")
-                        continue;
-
-                    if (section === "cpu") {
-                        var parts = line.split(/\s+/).slice(1).map(Number);
-                        if (parts.length < 5)
-                            continue;
-
-                        var idle = parts[3] + parts[4];
-                        var total = parts.reduce((a, b) => {
-                            return a + b;
-                        }, 0);
-                        if (w.prevTotal >= 0 && total > w.prevTotal) {
-                            var use = 1 - (idle - w.prevIdle) / (total - w.prevTotal);
-                            w.cpu = Math.max(0, Math.min(1, use));
-                            w.cpuHistory = w.push(w.cpuHistory, w.cpu);
-                        }
-                        w.prevTotal = total;
-                        w.prevIdle = idle;
-                    } else if (section === "mem") {
-                        var m = /^(\w+):\s+(\d+)/.exec(line);
-                        if (!m)
-                            continue;
-
-                        if (m[1] === "MemTotal")
-                            memTotal = parseInt(m[2]);
-                        else
-                            memAvail = parseInt(m[2]);
-                    } else if (section === "disk") {
-                        var d = line.split(/\s+/).map(Number);
-                        if (d.length >= 2 && d[0] > 0) {
-                            w.diskTotalGb = d[0] / 1073741824;
-                            w.diskUsedGb = d[1] / 1073741824;
-                            w.disk = d[1] / d[0];
-                        }
-                    } else if (section === "temp") {
-                        var t = parseInt(line);
-                        w.temp = isNaN(t) ? -1 : (t > 1000 ? t / 1000 : t);
-                    }
-                }
-                if (memTotal > 0) {
-                    w.ramTotalGb = memTotal / 1048576;
-                    w.ramUsedGb = (memTotal - memAvail) / 1048576;
-                    w.ram = Math.max(0, Math.min(1, 1 - memAvail / memTotal));
-                    w.ramHistory = w.push(w.ramHistory, w.ram);
-                }
-            }
-        }
+    Component.onDestruction: Sys.hold(w.uid || "w", false)
+    onPollMsChanged: {
+        if (!w.preview)
+            Sys.hold(w.uid || "w", true, w.pollMs);
 
     }
 
+    // rings: one thick m3 ring per reading, the icon inside, the number under it
     Row {
-        id: rings
-
         visible: w.variant === "rings"
         anchors.centerIn: parent
-        width: parent.width - 24
-        spacing: 0
-
-        Repeater {
-            model: w.metrics
-
-            Column {
-                id: ringCell
-
-                required property var modelData
-
-                width: w.metrics.length > 0 ? rings.width / w.metrics.length : 0
-                spacing: 8
-
-                Item {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: 72
-                    height: 72
-
-                    Gauge {
-                        anchors.fill: parent
-                        thickness: 7
-                        value: ringCell.modelData.value
-                        fillColor: w.tint(ringCell.modelData.key, ringCell.modelData.value)
-                        startAngle: -215
-                        sweep: 250
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        anchors.verticalCenterOffset: -3
-                        text: ringCell.modelData.text
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 18
-                        font.bold: true
-                    }
-
-                }
-
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: ringCell.modelData.short
-                    color: Theme.subtextDim
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 10
-                    font.bold: true
-                    font.letterSpacing: 1.2
-                }
-
-            }
-
-        }
-
-    }
-
-    Column {
-        id: bars
-
-        visible: w.variant === "bars"
-        anchors.fill: parent
-        anchors.margins: 18
-        spacing: 0
 
         Repeater {
             model: w.metrics
 
             Item {
-                id: barRow
+                id: ring
 
                 required property var modelData
+                readonly property real d: Math.min(84, (w.width - 28) / Math.max(1, w.metrics.length) - 10)
 
-                // the detail line is the first thing to go when a fourth metric appears
-                readonly property bool showDetail: barRow.modelData.detail !== "" && w.metrics.length < 4
+                width: ring.d + 10
+                height: ring.d + 42
 
-                width: bars.width
-                height: w.metrics.length > 0 ? bars.height / w.metrics.length : 0
+                CircularProgress {
+                    id: arc
 
-                Text {
-                    id: barLabel
-
-                    anchors.left: parent.left
-                    anchors.top: parent.top
-                    text: barRow.modelData.label
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 13
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: ring.d
+                    height: ring.d
+                    thickness: 8
+                    value: ring.modelData.value
+                    color: w.tint(ring.modelData.key, ring.modelData.value)
+                    trackColor: Theme.alpha(w.ink, 0.1)
                 }
 
-                Text {
-                    anchors.right: parent.right
-                    anchors.baseline: barLabel.baseline
-                    text: barRow.modelData.text
-                    color: w.tint(barRow.modelData.key, barRow.modelData.value)
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 13
-                    font.bold: true
+                Icon {
+                    anchors.centerIn: arc
+                    name: ring.modelData.icon
+                    size: ring.d * 0.34
+                    fill: 1
+                    color: w.tint(ring.modelData.key, ring.modelData.value)
                 }
-
-                Meter {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.topMargin: 19
-                    thickness: 6
-                    value: barRow.modelData.value
-                    fillColor: w.tint(barRow.modelData.key, barRow.modelData.value)
-                }
-
-                Text {
-                    anchors.left: parent.left
-                    anchors.top: parent.top
-                    anchors.topMargin: 29
-                    text: barRow.modelData.detail
-                    color: Theme.subtextDim
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 11
-                    visible: barRow.showDetail
-                }
-
-            }
-
-        }
-
-    }
-
-    Item {
-        id: graph
-
-        visible: w.variant === "graph"
-        anchors.fill: parent
-        anchors.margins: 18
-
-        Row {
-            id: graphHead
-
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            spacing: 18
-
-            Repeater {
-                model: [{
-                    "key": "cpu",
-                    "short": "CPU",
-                    "value": w.cpu
-                }, {
-                    "key": "ram",
-                    "short": "RAM",
-                    "value": w.ram
-                }]
 
                 Column {
-                    id: headCell
+                    anchors.top: arc.bottom
+                    anchors.topMargin: 6
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: -2
 
-                    required property var modelData
-
-                    spacing: 0
-
-                    Text {
-                        text: headCell.modelData.short
-                        color: Theme.subtextDim
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 10
-                        font.bold: true
-                        font.letterSpacing: 1.2
+                    LText {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        role: "titleSmall"
+                        weight: 680
+                        rounded: 100
+                        tabular: true
+                        color: w.ink
+                        text: ring.modelData.text
                     }
 
-                    Text {
-                        text: Math.round(headCell.modelData.value * 100) + "%"
-                        color: w.tint(headCell.modelData.key, headCell.modelData.value)
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 24
-                        font.bold: true
-                        font.letterSpacing: -0.5
+                    LText {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        role: "labelSmall"
+                        color: w.inkDim
+                        text: ring.modelData.short
                     }
 
                 }
@@ -374,77 +204,435 @@ WidgetBody {
 
         }
 
-        Text {
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.topMargin: 2
-            text: w.ramTotalGb > 0 ? w.ramUsedGb.toFixed(1) + " GB used" : ""
-            color: Theme.subtextDim
-            font.family: Theme.fontFamily
-            font.pixelSize: 11
-        }
-
-        Spark {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: graphHead.bottom
-            anchors.topMargin: 12
-            anchors.bottom: parent.bottom
-            samples: w.cpuHistory
-            lineColor: w.tint("cpu", w.cpu)
-            lineWidth: 2.2
-        }
-
-        Spark {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: graphHead.bottom
-            anchors.topMargin: 12
-            anchors.bottom: parent.bottom
-            samples: w.ramHistory
-            lineColor: w.tint("ram", w.ram)
-            filled: false
-            lineWidth: 1.8
-            opacity: 0.9
-        }
-
     }
 
-    Row {
-        id: compact
-
-        visible: w.variant === "compact"
-        anchors.centerIn: parent
-        width: parent.width - 28
-        spacing: 0
+    // meters: a labelled row per reading over a thick bar with a stop dot
+    Column {
+        visible: w.variant === "bars"
+        anchors.fill: parent
+        anchors.margins: 18
+        spacing: 12
 
         Repeater {
             model: w.metrics
 
             Column {
-                id: compactCell
+                id: meter
 
                 required property var modelData
 
-                width: w.metrics.length > 0 ? compact.width / w.metrics.length : 0
-                spacing: 1
+                width: parent.width
+                spacing: 6
 
-                Text {
-                    text: compactCell.modelData.short
-                    color: Theme.subtextDim
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 10
-                    font.bold: true
-                    font.letterSpacing: 1.2
+                Item {
+                    width: parent.width
+                    height: 20
+
+                    Icon {
+                        id: mIcon
+
+                        anchors.verticalCenter: parent.verticalCenter
+                        name: meter.modelData.icon
+                        size: 18
+                        fill: 1
+                        color: w.tint(meter.modelData.key, meter.modelData.value)
+                    }
+
+                    LText {
+                        anchors.left: mIcon.right
+                        anchors.leftMargin: 8
+                        anchors.verticalCenter: parent.verticalCenter
+                        role: "labelLarge"
+                        color: w.ink
+                        text: meter.modelData.label
+                    }
+
+                    LText {
+                        anchors.right: mVal.left
+                        anchors.rightMargin: 8
+                        anchors.verticalCenter: parent.verticalCenter
+                        role: "labelMedium"
+                        color: w.inkFaint
+                        text: meter.modelData.detail
+                    }
+
+                    LText {
+                        id: mVal
+
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        role: "labelLarge"
+                        weight: 680
+                        tabular: true
+                        color: w.ink
+                        text: meter.modelData.text
+                    }
+
                 }
 
-                Text {
-                    text: compactCell.modelData.text
-                    color: w.tint(compactCell.modelData.key, compactCell.modelData.value)
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 22
-                    font.bold: true
-                    font.letterSpacing: -0.5
+                LinearProgress {
+                    width: parent.width
+                    value: meter.modelData.value
+                    thickness: 8
+                    color: w.tint(meter.modelData.key, meter.modelData.value)
+                    trackColor: Theme.alpha(w.ink, 0.1)
+                }
+
+            }
+
+        }
+
+    }
+
+    // graph: the processor's last two minutes, the rest as chips underneath
+    Item {
+        visible: w.variant === "graph"
+        anchors.fill: parent
+        anchors.margins: 18
+
+        Column {
+            id: gHead
+
+            spacing: -4
+
+            LText {
+                role: "labelLarge"
+                color: w.inkDim
+                text: "Processor"
+            }
+
+            LText {
+                role: "displaySmall"
+                weight: 640
+                rounded: 100
+                tabular: true
+                color: w.ink
+                text: Math.round(w.cpu * 100) + "%"
+            }
+
+        }
+
+        LText {
+            anchors.right: parent.right
+            anchors.top: parent.top
+            role: "labelMedium"
+            color: w.inkFaint
+            text: w.preview ? "load 1.2" : "load " + Sys.load1.toFixed(1)
+        }
+
+        Spark {
+            anchors.top: gHead.bottom
+            anchors.topMargin: 4
+            anchors.bottom: gChips.top
+            anchors.bottomMargin: 10
+            width: parent.width
+            samples: w.cpuHistory
+            lineColor: w.tint("cpu", w.cpu)
+            lineWidth: 2.5
+        }
+
+        Row {
+            id: gChips
+
+            anchors.bottom: parent.bottom
+            spacing: 6
+
+            Repeater {
+                model: w.metrics.filter((m) => {
+                    return m.key !== "cpu";
+                })
+
+                Rectangle {
+                    id: chip
+
+                    required property var modelData
+
+                    width: chipRow.implicitWidth + 20
+                    height: 28
+                    radius: 14
+                    color: Theme.alpha(w.ink, 0.08)
+
+                    Row {
+                        id: chipRow
+
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        Icon {
+                            anchors.verticalCenter: parent.verticalCenter
+                            name: chip.modelData.icon
+                            size: 15
+                            fill: 1
+                            color: w.tint(chip.modelData.key, chip.modelData.value)
+                        }
+
+                        LText {
+                            anchors.verticalCenter: parent.verticalCenter
+                            role: "labelMedium"
+                            weight: 640
+                            tabular: true
+                            color: w.ink
+                            text: chip.modelData.text
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    // tiles: a quick-settings grid, each reading in its own tonal tile
+    Flow {
+        id: tiles
+
+        readonly property int cols: w.metrics.length > 2 ? 2 : w.metrics.length
+        readonly property int rows: Math.ceil(w.metrics.length / Math.max(1, tiles.cols))
+
+        visible: w.variant === "tiles"
+        anchors.fill: parent
+        anchors.margins: 10
+        spacing: 6
+
+        Repeater {
+            model: w.metrics
+
+            Rectangle {
+                id: tile
+
+                required property var modelData
+                required property int index
+                readonly property color hue: w.tint(tile.modelData.key, tile.modelData.value)
+
+                // an odd one out takes the whole last row
+                readonly property bool spans: tiles.cols === 2 && tile.index === w.metrics.length - 1 && w.metrics.length % 2 === 1
+
+                width: tile.spans ? tiles.width : (tiles.width - tiles.spacing * (tiles.cols - 1)) / Math.max(1, tiles.cols)
+                height: (tiles.height - tiles.spacing * (tiles.rows - 1)) / Math.max(1, tiles.rows)
+                radius: 18
+                color: Theme.alpha(tile.hue, 0.14)
+
+                // the fill rises with the reading
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: parent.height * tile.modelData.value
+                    radius: parent.radius
+                    color: Theme.alpha(tile.hue, 0.22)
+
+                    Behavior on height {
+                        NumberAnimation {
+                            duration: Theme.durDefaultSpatial
+                            easing.type: Easing.Bezier
+                            easing.bezierCurve: Theme.curveDefaultSpatial
+                        }
+
+                    }
+
+                }
+
+                Icon {
+                    x: 14
+                    y: 12
+                    name: tile.modelData.icon
+                    size: 20
+                    fill: 1
+                    color: tile.hue
+                }
+
+                Column {
+                    x: 14
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 10
+                    spacing: -3
+
+                    LText {
+                        role: "headlineSmall"
+                        weight: 680
+                        rounded: 100
+                        tabular: true
+                        color: w.ink
+                        text: tile.modelData.text
+                    }
+
+                    LText {
+                        role: "labelMedium"
+                        color: w.inkDim
+                        text: tile.modelData.label
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    // network: what is coming in and going out, drawn over each other
+    Item {
+        visible: w.variant === "network"
+        anchors.fill: parent
+        anchors.margins: 18
+
+        Row {
+            id: nHead
+
+            spacing: 18
+
+            Repeater {
+                model: [{
+                    "icon": "arrow_downward",
+                    "label": "Down",
+                    "v": w.down,
+                    "c": w.inkAccent
+                }, {
+                    "icon": "arrow_upward",
+                    "label": "Up",
+                    "v": w.up,
+                    "c": w.tonal ? w.inkDim : Theme.tertiary
+                }]
+
+                Row {
+                    id: rateCell
+
+                    required property var modelData
+
+                    spacing: 8
+
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 30
+                        height: 30
+                        radius: 15
+                        color: Theme.alpha(rateCell.modelData.c, 0.16)
+
+                        Icon {
+                            anchors.centerIn: parent
+                            name: rateCell.modelData.icon
+                            size: 18
+                            color: rateCell.modelData.c
+                        }
+
+                    }
+
+                    Column {
+                        spacing: -3
+
+                        LText {
+                            role: "titleMedium"
+                            weight: 660
+                            tabular: true
+                            color: w.ink
+                            text: Sys.rate(rateCell.modelData.v)
+                        }
+
+                        LText {
+                            role: "labelSmall"
+                            color: w.inkDim
+                            text: rateCell.modelData.label
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        Item {
+            anchors.top: nHead.bottom
+            anchors.topMargin: 10
+            anchors.bottom: parent.bottom
+            width: parent.width
+
+            Spark {
+                id: downSpark
+
+                anchors.fill: parent
+                samples: w.downHistory
+                autoScale: true
+                lineColor: w.inkAccent
+                lineWidth: 2.5
+            }
+
+            // up shares down's scale, so the two read against each other
+            Spark {
+                anchors.fill: parent
+                samples: w.upHistory.map((v) => {
+                    return v / Math.max(1, downSpark.peak);
+                })
+                lineColor: w.tonal ? w.inkDim : Theme.tertiary
+                lineWidth: 2
+                filled: false
+            }
+
+        }
+
+    }
+
+    // compact: one strip of numbers
+    Row {
+        visible: w.variant === "compact"
+        anchors.centerIn: parent
+        spacing: 16
+
+        Repeater {
+            model: w.metrics.slice(0, 3)
+
+            Row {
+                id: cell
+
+                required property var modelData
+
+                spacing: 8
+
+                Item {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 34
+                    height: 34
+
+                    CircularProgress {
+                        anchors.fill: parent
+                        thickness: 4
+                        value: cell.modelData.value
+                        color: w.tint(cell.modelData.key, cell.modelData.value)
+                        trackColor: Theme.alpha(w.ink, 0.1)
+                    }
+
+                    Icon {
+                        anchors.centerIn: parent
+                        name: cell.modelData.icon
+                        size: 15
+                        fill: 1
+                        color: w.tint(cell.modelData.key, cell.modelData.value)
+                    }
+
+                }
+
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: -3
+
+                    LText {
+                        role: "titleSmall"
+                        weight: 680
+                        tabular: true
+                        color: w.ink
+                        text: cell.modelData.text
+                    }
+
+                    LText {
+                        role: "labelSmall"
+                        color: w.inkDim
+                        text: cell.modelData.short
+                    }
+
                 }
 
             }

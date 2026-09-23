@@ -109,6 +109,7 @@ Item {
             color: cap.capInk
             font.family: Theme.fontFamily
             font.pixelSize: Math.round(cap.unit * (cap.wordy ? 0.25 : 0.38))
+            font.variableAxes: Theme.axes(Math.round(cap.unit * (cap.wordy ? 0.25 : 0.38)), 420, 0)
             font.weight: cap.wordy ? Font.Medium : Font.Normal
         }
 

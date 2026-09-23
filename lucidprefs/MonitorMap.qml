@@ -140,6 +140,7 @@ Item {
                         color: plate.lit ? Theme.fgAccent : Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontLabelLg
+                        font.variableAxes: Theme.axes(Theme.fontLabelLg, 600, 0)
                         font.weight: Font.DemiBold
                     }
 
@@ -149,6 +150,7 @@ Item {
                         color: plate.lit ? Theme.fgAccent : Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontLabel
+                        font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                         visible: plate.height > 44
                     }
 

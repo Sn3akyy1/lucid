@@ -119,6 +119,7 @@ Rectangle {
             color: pb.tone
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabelLg
+            font.variableAxes: Theme.axes(Theme.fontLabelLg, 520, 0)
             font.weight: Font.Medium
             // the pill's own clip does the wiping; this only keeps the first
             // letter from appearing before there is room for it
@@ -176,6 +177,7 @@ Rectangle {
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyMd
+            font.variableAxes: Theme.axes(Theme.fontBodyMd, 520, 0)
             font.weight: Font.Medium
         }
 
@@ -195,6 +197,7 @@ Rectangle {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelLg
+                font.variableAxes: Theme.axes(Theme.fontLabelLg, 520, 0)
                 font.weight: Font.Medium
             }
 
@@ -235,6 +238,7 @@ Rectangle {
                 color: Theme.fgError
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelLg
+                font.variableAxes: Theme.axes(Theme.fontLabelLg, 520, 0)
                 font.weight: Font.Medium
             }
 

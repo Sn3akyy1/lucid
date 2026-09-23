@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 // who is being asked, the field they answer in, and the one line that tells
 // them how it went
@@ -50,46 +51,14 @@ Rectangle {
             width: 84
             height: 84
 
-            // clip is a rectangular scissor, so a plain Rectangle would leave
-            // the corners square; this one really rounds
-            ClippingRectangle {
-                anchors.fill: parent
-                radius: width / 2
-                color: Theme.accentContainer
-
-                Text {
-                    anchors.centerIn: parent
-                    text: Lockscreen.initials
-                    color: Theme.fgAccentContainer
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(30)
-                    font.weight: Font.Medium
-                    visible: face.status !== Image.Ready
-                }
-
-                Image {
-                    id: face
-
-                    anchors.fill: parent
-                    source: Lockscreen.avatar
-                    fillMode: Image.PreserveAspectCrop
-                    sourceSize.width: 168
-                    sourceSize.height: 168
-                    asynchronous: true
-                    cache: false
-                    visible: face.status === Image.Ready
-                }
-
-            }
-
-            // a ring that answers the field: accent while typing, red on
-            // refusal. it lives outside the clip, or half of it is scissored off
-            Rectangle {
-                anchors.fill: parent
-                radius: width / 2
-                color: "transparent"
-                border.width: 3
-                border.color: Lockscreen.granted ? Theme.success : (Lockscreen.phase === "failed" || Lockscreen.phase === "error" ? Theme.error : Theme.alpha(Theme.accent, 0.55))
+            // a ring in the avatar's own shape: accent while typing, red on refusal
+            MaterialShape {
+                anchors.centerIn: parent
+                width: parent.width + 10
+                height: parent.height + 10
+                shape: "cookie12"
+                spin: avatar.spin
+                color: Lockscreen.granted ? Theme.success : (Lockscreen.phase === "failed" || Lockscreen.phase === "error" ? Theme.error : Theme.alpha(Theme.accent, 0.7))
                 opacity: Lockscreen.focused ? 1 : 0
 
                 Behavior on opacity {
@@ -100,11 +69,42 @@ Rectangle {
 
                 }
 
-                Behavior on border.color {
+                Behavior on color {
                     ColorAnimation {
                         duration: Theme.ms(200)
                     }
 
+                }
+
+            }
+
+            ShapedImage {
+                id: avatar
+
+                anchors.fill: parent
+                shape: "cookie12"
+                source: Lockscreen.avatar
+                fallbackColor: Theme.accentContainer
+                decode: 168
+                // the scallops turn a little while the password is checked
+                spin: Lockscreen.phase === "checking" ? 30 : 0
+
+                Behavior on spin {
+                    NumberAnimation {
+                        duration: Theme.durSlowSpatial
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.curveDefaultSpatial
+                    }
+
+                }
+
+                LText {
+                    anchors.centerIn: parent
+                    role: "headlineMedium"
+                    weight: 560
+                    rounded: 100
+                    text: Lockscreen.initials
+                    color: Theme.fgAccentContainer
                 }
 
             }
@@ -121,6 +121,7 @@ Rectangle {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontHeadlineSm
+                font.variableAxes: Theme.axes(Theme.fontHeadlineSm, 520, 0)
                 font.weight: Font.Medium
             }
 
@@ -130,6 +131,7 @@ Rectangle {
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodySm
+                font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
                 visible: Lockscreen.userName !== "" && Lockscreen.userName !== Lockscreen.displayName
             }
 
@@ -183,6 +185,7 @@ Rectangle {
                 }
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodySm
+                font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
                 font.weight: Lockscreen.statusKind === "error" ? Font.Medium : Font.Normal
                 transform: Translate {
                     id: statusShift
@@ -260,6 +263,7 @@ Rectangle {
                             color: Theme.warning
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabelSm
+                            font.variableAxes: Theme.axes(Theme.fontLabelSm, 520, 0)
                             font.weight: Font.Medium
                         }
 
@@ -284,6 +288,7 @@ Rectangle {
                         color: Theme.subtext
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontLabelSm
+                        font.variableAxes: Theme.axes(Theme.fontLabelSm, 520, 0)
                         font.weight: Font.Medium
                     }
 

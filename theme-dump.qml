@@ -9,6 +9,11 @@ import qs
 //
 //   qs -p ~/.config/quickshell/theme-dump.qml
 ShellRoot {
+    // builds Theme now rather than inside the print below: a singleton read for
+    // the first time hands back its fallback colours, and the file it is waiting
+    // on only lands on the next event loop turn
+    Component.onCompleted: Theme.paletteLoaded
+
     Timer {
         property int tries: 0
 
@@ -17,8 +22,8 @@ ShellRoot {
         repeat: true
         onTriggered: {
             tries += 1;
-            // Prefs arrives over a FileView, so the first tick is too early
-            if (!Prefs.loaded && tries < 20)
+            // both arrive over a FileView, so the first tick is too early
+            if ((!Prefs.loaded || !Theme.paletteLoaded) && tries < 20)
                 return ;
 
             console.log("LUCIDTOKENS " + JSON.stringify({

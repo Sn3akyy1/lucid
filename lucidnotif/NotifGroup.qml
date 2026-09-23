@@ -106,6 +106,7 @@ Item {
                 font.family: Theme.fontFamily
                 font.weight: Font.DemiBold
                 font.pixelSize: Theme.fs(11)
+                font.variableAxes: Theme.axes(Theme.fs(11), 600, 0)
             }
 
             Row {

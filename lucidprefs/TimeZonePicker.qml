@@ -115,6 +115,7 @@ Item {
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontHeadlineSm
+            font.variableAxes: Theme.axes(Theme.fontHeadlineSm, 520, 0)
             font.weight: Font.Medium
         }
 
@@ -143,6 +144,7 @@ Item {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyLg
+                font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
                 selectByMouse: true
                 selectionColor: Theme.accent
                 selectedTextColor: Theme.fgAccent
@@ -164,6 +166,7 @@ Item {
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyLg
+                font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
                 visible: searchInput.text === ""
             }
 
@@ -257,6 +260,7 @@ Item {
                     text: zoneRow.modelData.replace(/_/g, " ")
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodyLg
+                    font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
                     color: zoneRow.current ? Theme.text : Theme.subtext
                     elide: Text.ElideRight
                 }

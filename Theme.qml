@@ -7,17 +7,18 @@ Singleton {
     id: root
 
     property string themeName: "matugen"
+    // false until the palette file has actually been parsed; every colour below
+    // is a fallback until then
+    property bool paletteLoaded: false
     // read off the palette, never off the pref: whatever is in the cache decides,
     // so the shell never renders light rules against a palette still being regenerated
     readonly property bool isLight: root.toneOf(root.cSurface) > 50
     // +1 dark, -1 light. every "lighter means more elevated" derivation flips on it
     readonly property int _dir: root.isLight ? -1 : 1
-    property real pillDarkness: pf.surfaceDarkness >= 0 ? pf.surfaceDarkness : (themeName === "matugen" && !root.isLight ? 0.45 : 0)
+    property real pillDarkness: pf.surfaceDarkness >= 0 ? pf.surfaceDarkness : 0
     // light surfaces come out of matugen near-white, so the accent is what keeps
-    // them from reading as flat paper. auto is off in dark: pills stay flat there.
-    // 0.7 is not a taste call — it is the smallest value that clears the chroma
-    // ceiling: k also sets how far `surface()` walks off white (k * _tintLift),
-    // and below ~0.6 the ramp never leaves the tones where no hue can exist
+    // them from reading as flat paper. k also sets how far `surface()` walks off
+    // white (k * _tintLift); below ~0.6 the ramp never leaves the tones where no hue can exist
     readonly property real surfaceTint: pf.surfaceTint >= 0 ? pf.surfaceTint : (root.isLight ? 0.7 : 0)
     property real accentPunch: pf.accentPunch
     readonly property real motionBaseline: 1.125
@@ -31,17 +32,10 @@ Singleton {
         blurAdapter.value = v;
     }
     readonly property real _toneShift: root.pillDarkness * 3
-    // tones the ramp travels off white (or off black) at full tint
     readonly property real _tintLift: 10
-    // chroma the tint aims for at full strength, as an 0..1 channel spread.
-    // aiming at an *amount* rather than mixing a fixed fraction is what keeps
-    // every palette looking alike: chroma headroom grows steeply as tone falls,
-    // so one fixed fraction turned a near-grey gruvbox into bright mint while
-    // leaving a near-white matugen untouched
     readonly property real _tintTarget: 0.13
-    // where the top rung of a light ramp is pulled to. taken off cLowest so a
-    // palette whose own ladder already starts below white is moved less, not more
     readonly property real _rampShift: root.surfaceTint <= 0 ? 0 : (root.isLight ? Math.max(0, root.toneOf(root.cLowest) - (100 - root.surfaceTint * root._tintLift)) : -(root.surfaceTint * root._tintLift))
+
     readonly property color cPrimary: m.primary
     readonly property color cOnPrimary: m.on_primary
     readonly property color cPrimaryContainer: m.primary_container
@@ -75,16 +69,27 @@ Singleton {
     readonly property color cSurfaceBright: m.surface_bright !== "" ? m.surface_bright : root.isLight ? root.atTone(root.cLowest, root.toneOf(root.cLowest) - 2) : root.atTone(root.cHighest, root.toneOf(root.cHighest) + 2)
     readonly property color cInverseOnSurface: m.inverse_on_surface !== "" ? m.inverse_on_surface : root.atTone(root.cSurface, root.isLight ? 95 : 20)
     readonly property color cInversePrimary: m.inverse_primary !== "" ? m.inverse_primary : root.atTone(root.cPrimary, root.isLight ? 80 : 40)
-    readonly property color bg: root.alpha(root.surface(root.cLowest, root._toneShift + root.blurAmount * 2), 1 - root.blurAmount * 0.85)
+
+    // the m3 surface ladder, after the darkness shift and the light-mode tint.
+    // the shell's own panels sit on `container`; what they hold climbs from there
+    readonly property color mSurface: root.surface(root.cSurface, root._toneShift)
+    readonly property color mLowest: root.surface(root.cLowest, root._toneShift)
+    readonly property color mLow: root.surface(root.cLow, root._toneShift)
+    readonly property color mContainer: root.surface(root.cContainer, root._toneShift)
+    readonly property color mHigh: root.surface(root.cHigh, root._toneShift)
+    readonly property color mHighest: root.surface(root.cHighest, root._toneShift)
+    readonly property color mBright: root.surface(root.cSurfaceBright, root._toneShift)
+
+    readonly property color bg: root.alpha(root.mContainer, 1 - root.blurAmount * 0.85)
     readonly property color bgTransparent: root.alpha(root.bg, 0)
-    readonly property color bgOpaque: root.surface(root.cLowest, root._toneShift)
-    readonly property color bgSunken: root.tint(root.atTone(root.cLowest, Math.max(0, root.toneOf(root.bgOpaque) - 2.5)), root.surfaceTint)
-    readonly property color bgTile: root.surface(root.cLow, root._toneShift)
-    readonly property color bgHover: root.surface(root.cContainer, root._toneShift)
-    readonly property color bgActive: root.surface(root.cHigh, root._toneShift)
-    readonly property color bgHigh: root.surface(root.cHighest, root._toneShift)
-    readonly property color bgBright: root.surface(root.cSurfaceBright, root._toneShift)
-    readonly property color bgTrack: root.surface(root.cSurfaceVariant, root._toneShift)
+    readonly property color bgOpaque: root.mContainer
+    readonly property color bgSunken: root.mLow
+    readonly property color bgTile: root.mHigh
+    readonly property color bgHover: root.mHighest
+    readonly property color bgActive: root.atTone(root.mHighest, root.toneOf(root.mHighest) + root._dir * 3)
+    readonly property color bgHigh: root.mHighest
+    readonly property color bgBright: root.mBright
+    readonly property color bgTrack: root.mHighest
     readonly property color dockItem: root.atTone(root.bgOpaque, root.toneOf(root.bgOpaque) + root._dir * 4)
     readonly property color text: root.cOnSurface
     readonly property color subtext: root.cOnSurfaceVariant
@@ -101,16 +106,16 @@ Singleton {
     readonly property color accentMuted: root.atTone(root.withSat(root.cPrimary, 0.55), (root.toneOf(root.cPrimary) + root.toneOf(root.cOnSurfaceVariant)) / 2)
     readonly property color accentBorder: root.alpha(root.accent, 0.45)
     readonly property bool hasTonalContainers: m.on_secondary_container !== ""
-    readonly property color secondaryContainer: root.hasTonalContainers ? root.shade(root.cSecondaryContainer, root._toneShift) : root.bgHigh
-    readonly property color fgSecondaryContainer: root.hasTonalContainers ? root.cOnSecondaryContainer : root.text
-    readonly property color tertiaryContainer: root.hasTonalContainers ? root.shade(root.cTertiaryContainer, root._toneShift) : root.bgHigh
-    readonly property color fgTertiaryContainer: root.hasTonalContainers ? root.cOnTertiaryContainer : root.text
+    readonly property color secondaryContainer: root.hasTonalContainers ? root.shade(root.cSecondaryContainer, root._toneShift) : root.atTone(root.withSat(root.cPrimary, 0.45), root.isLight ? 88 : 30)
+    readonly property color fgSecondaryContainer: root.hasTonalContainers ? root.cOnSecondaryContainer : root.atTone(root.cPrimary, root.isLight ? 12 : 92)
+    readonly property color tertiaryContainer: root.hasTonalContainers ? root.shade(root.cTertiaryContainer, root._toneShift) : root.atTone(root.withSat(root.cTertiary, 0.6), root.isLight ? 88 : 30)
+    readonly property color fgTertiaryContainer: root.hasTonalContainers ? root.cOnTertiaryContainer : root.atTone(root.cTertiary, root.isLight ? 12 : 92)
     readonly property color outline: root.cOutlineVariant
     readonly property color outlineStrong: root.cOutline
     readonly property color error: root.cError
     readonly property color fgError: root.cOnError
-    readonly property color errorContainer: root.hasTonalContainers ? root.shade(root.cErrorContainer, root._toneShift) : root.bgHigh
-    readonly property color fgErrorContainer: root.hasTonalContainers ? root.cOnErrorContainer : root.error
+    readonly property color errorContainer: root.hasTonalContainers ? root.shade(root.cErrorContainer, root._toneShift) : root.atTone(root.cError, root.isLight ? 90 : 28)
+    readonly property color fgErrorContainer: root.hasTonalContainers ? root.cOnErrorContainer : root.atTone(root.cError, root.isLight ? 12 : 92)
     readonly property color success: root.isGreenish(root.cTertiary) ? root.cTertiary : root.statusHue(145)
     readonly property color fgSuccess: root.atTone(root.success, root.isLight ? 100 : 20)
     readonly property color warning: root.statusHue(45)
@@ -120,10 +125,25 @@ Singleton {
     readonly property color inverseSurface: root.cInverseSurface
     readonly property color fgInverseSurface: root.cInverseOnSurface
     readonly property color inversePrimary: root.cInversePrimary
+
+    // m3 role names for new code; every surface above is one of these
+    readonly property color primary: root.accent
+    readonly property color fgPrimary: root.fgAccent
+    readonly property color primaryContainer: root.accentContainer
+    readonly property color fgPrimaryContainer: root.fgAccentContainer
+    readonly property color secondary: root.cSecondary
+    readonly property color fgSecondary: root.cOnSecondary
+    readonly property color tertiary: root.cTertiary
+    readonly property color fgTertiary: root.cOnTertiary
+    // a hairline between siblings on one surface
+    readonly property color divider: root.alpha(root.cOutlineVariant, root.isLight ? 0.7 : 0.55)
+
     readonly property real stateHover: 0.08
     readonly property real stateFocus: 0.1
     readonly property real statePressed: 0.1
     readonly property real stateDragged: 0.16
+    readonly property real disabledContent: 0.38
+    readonly property real disabledContainer: 0.12
     readonly property int radiusPill: 999
     readonly property int radiusXs: 8
     readonly property int radiusSm: 12
@@ -142,13 +162,16 @@ Singleton {
     readonly property int shapeXlInc: 32
     readonly property int shapeXxl: 48
     readonly property int shapeFull: 999
+    // where two members of one group meet
+    readonly property int shapeJoin: 4
 
     // m3 surface containers, under their spec names
-    readonly property color surfaceLowest: root.bgOpaque
-    readonly property color surfaceLow: root.bgTile
-    readonly property color surfaceContainer: root.bgHover
-    readonly property color surfaceHigh: root.bgActive
-    readonly property color surfaceHighest: root.bgHigh
+    readonly property color surfaceLowest: root.mLowest
+    readonly property color surfaceLow: root.mLow
+    readonly property color surfaceContainer: root.mContainer
+    readonly property color surfaceHigh: root.mHigh
+    readonly property color surfaceHighest: root.mHighest
+
     readonly property real barMotionScale: root.motionScale * pf.barMotionScale
     readonly property int barDurQuick: Math.round(120 * root.barMotionScale)
     readonly property int barDurShort: Math.round(180 * root.barMotionScale)
@@ -168,13 +191,34 @@ Singleton {
     readonly property int easeStandard: Easing.OutCubic
     readonly property int easeEmphasized: Easing.OutBack
     readonly property real emphasizedOvershoot: 0.7
-    readonly property string fontFamily: pf.fontFamily
+
+    // m3 expressive motion. spatial curves overshoot, so they move content and
+    // transforms only — never geometry a blur region or input mask tracks
+    readonly property var curveStandard: [0.2, 0, 0, 1, 1, 1]
+    readonly property var curveFastSpatial: [0.42, 1.67, 0.21, 0.9, 1, 1]
+    readonly property var curveDefaultSpatial: [0.38, 1.21, 0.22, 1, 1, 1]
+    readonly property var curveSlowSpatial: [0.39, 1.29, 0.35, 0.98, 1, 1]
+    readonly property var curveEffects: [0.31, 0.94, 0.34, 1, 1, 1]
+    readonly property int durFastSpatial: Math.round(350 * root.motionScale)
+    readonly property int durDefaultSpatial: Math.round(500 * root.motionScale)
+    readonly property int durSlowSpatial: Math.round(650 * root.motionScale)
+    readonly property int durFastEffects: Math.round(150 * root.motionScale)
+    readonly property int durDefaultEffects: Math.round(200 * root.motionScale)
+    readonly property int durSlowEffects: Math.round(300 * root.motionScale)
+
+    // "Google Sans" was the shipped default before the flex cut was bundled
+    readonly property string fontFamily: (pf.fontFamily === "" || pf.fontFamily === "Google Sans") ? root.brandFamily : pf.fontFamily
+    readonly property string brandFamily: flexLoader.status === FontLoader.Ready ? flexLoader.name : "Google Sans"
+    readonly property bool flexActive: root.fontFamily === root.brandFamily && flexLoader.status === FontLoader.Ready
+
     readonly property int fontLabel: Math.round(11 * root.fontScale)
     readonly property int fontBody: Math.round(12 * root.fontScale)
     readonly property int fontTitle: Math.round(13 * root.fontScale)
     readonly property int fontHeadline: Math.round(15 * root.fontScale)
 
     // m3 type scale, trimmed one step for desktop density
+    readonly property int fontDisplayLg: Math.round(52 * root.fontScale)
+    readonly property int fontDisplayMd: Math.round(42 * root.fontScale)
     readonly property int fontDisplaySm: Math.round(32 * root.fontScale)
     readonly property int fontHeadlineLg: Math.round(30 * root.fontScale)
     readonly property int fontHeadlineMd: Math.round(26 * root.fontScale)
@@ -188,6 +232,72 @@ Singleton {
     readonly property int fontLabelLg: Math.round(13 * root.fontScale)
     readonly property int fontLabelMd: Math.round(12 * root.fontScale)
     readonly property int fontLabelSm: Math.round(11 * root.fontScale)
+
+    // role -> [px at 1.0x, weight, rounded]. emphasized roles go heavier, the
+    // way m3 expressive does, and display numerals take the round terminals
+    readonly property var typeRoles: ({
+        "displayLarge": [52, 500, 100],
+        "displayMedium": [42, 500, 100],
+        "displaySmall": [32, 500, 60],
+        "headlineLarge": [30, 500, 40],
+        "headlineMedium": [26, 500, 30],
+        "headlineSmall": [22, 500, 20],
+        "titleLarge": [19, 500, 0],
+        "titleMedium": [16, 560, 0],
+        "titleSmall": [14, 560, 0],
+        "bodyLarge": [15, 420, 0],
+        "bodyMedium": [13, 420, 0],
+        "bodySmall": [12, 420, 0],
+        "labelLarge": [13, 560, 0],
+        "labelMedium": [12, 560, 0],
+        "labelSmall": [11, 560, 0]
+    })
+
+    function typeSize(role) {
+        var r = root.typeRoles[role] || root.typeRoles.bodyMedium;
+        return Math.round(r[0] * root.fontScale);
+    }
+
+    function typeWeight(role) {
+        var r = root.typeRoles[role] || root.typeRoles.bodyMedium;
+        return r[1];
+    }
+
+    function typeRound(role) {
+        var r = root.typeRoles[role] || root.typeRoles.bodyMedium;
+        return r[2];
+    }
+
+    // qt builds a font engine per distinct axis tuple and mmaps the whole 4mb
+    // flex file for each one, so a free-running opsz costs ~2.4mb of rss per
+    // pixel size in use. opsz only picks the optical master, never the rendered
+    // size, so snapping it to a ladder is invisible and collapses the engines
+    readonly property var _opszStops: [9, 13, 18, 28, 48, 96]
+
+    function _snap(px) {
+        var v = Math.max(6, Math.min(144, px));
+        var best = root._opszStops[0];
+        for (var i = 1; i < root._opszStops.length; i++) {
+            if (Math.abs(root._opszStops[i] - v) < Math.abs(best - v))
+                best = root._opszStops[i];
+
+        }
+        return best;
+    }
+
+    // the variable axes a flex text wants; empty for any other family, whose
+    // weight then comes from font.weight as usual
+    function axes(px, wght, rond) {
+        if (!root.flexActive)
+            return ({});
+
+        return ({
+            "wght": Math.round((wght || 400) / 25) * 25,
+            "opsz": root._snap(px),
+            "ROND": Math.round((rond || 0) / 10) * 10,
+            "GRAD": root.isLight ? 0 : -10
+        });
+    }
 
     function fs(px) {
         return Math.round(px * root.fontScale);
@@ -257,8 +367,7 @@ Singleton {
     }
 
     // pull a neutral toward the accent's hue without moving it off its tone. the
-    // blend is re-pinned afterwards so the elevation ladder keeps its spacing —
-    // mixing in sRGB alone would drag every rung a different distance
+    // blend is re-pinned afterwards so the elevation ladder keeps its spacing
     function tint(c, k) {
         if (k <= 0)
             return c;
@@ -268,20 +377,15 @@ Singleton {
             return c;
 
         var t = root.toneOf(c);
-        // built at mid lightness, where saturation still has room to read, then
-        // moved onto the target tone.
         // floor the chroma: a wallpaper-derived accent is often nearly grey
-        // (pywal has handed us 0.18), and mixing grey into grey stays grey
         var pure = root.atTone(Qt.hsla(h, Math.max(0.55, Math.min(1, root.cPrimary.hslSaturation)), 0.55, 1), t);
-        // all the hue this tone can physically carry. nothing survives at tone
-        // 100, which is why the ramp has to be walked off white first
         var head = root.chromaOf(pure);
         if (head <= 0.001)
             return c;
 
         var f = Math.min(1, k * root._tintTarget / head);
-        var m = root._mix(c, pure, f);
-        return root.atTone(Qt.rgba(m.r, m.g, m.b, c.a), t);
+        var mx = root._mix(c, pure, f);
+        return root.atTone(Qt.rgba(mx.r, mx.g, mx.b, c.a), t);
     }
 
     // how much colour a value actually shows, as a 0..1 channel spread
@@ -290,9 +394,7 @@ Singleton {
     }
 
     // one rung of the surface ramp. tinting also walks the rung away from the
-    // extreme it sits against, because a tone carries no hue there — matugen's
-    // light `surface_container_lowest` is pure #ffffff, and without the lift the
-    // accent would have nowhere to land on the shell's main surface
+    // extreme it sits against, because a tone carries no hue there
     function surface(c, tones) {
         return root.tint(root.shade(c, tones + root._rampShift), root.surfaceTint);
     }
@@ -302,6 +404,7 @@ Singleton {
         var h = c.hslHue;
         if (h < 0)
             return c;
+
         var s = Math.max(0, Math.min(1, c.hslSaturation * k));
         return root.atTone(Qt.hsla(h, s, c.hslLightness, c.a), root.toneOf(c));
     }
@@ -314,6 +417,12 @@ Singleton {
     function statusHue(deg) {
         var s = Math.max(0.35, Math.min(0.75, root.cPrimary.hslSaturation));
         return root.atTone(Qt.hsla(deg / 360, s, 0.55, 1), root.isLight ? 40 : 80);
+    }
+
+    // a state layer composited onto its container, for places a second
+    // rectangle would fight a blur region or a clip
+    function layer(base, over, a) {
+        return Qt.rgba(base.r * (1 - a) + over.r * a, base.g * (1 - a) + over.g * a, base.b * (1 - a) + over.b * a, base.a);
     }
 
     function _mix(a, b, t) {
@@ -343,38 +452,49 @@ Singleton {
         return root.alpha(c, 1 - root.blurAmount * 0.85);
     }
 
+    FontLoader {
+        id: flexLoader
+
+        source: "file://" + Quickshell.env("HOME") + "/.config/quickshell/assets/fonts/GoogleSansFlex.ttf"
+    }
+
     FileView {
         path: Quickshell.env("HOME") + "/.cache/quickshell/matugen.json"
         watchChanges: true
         onFileChanged: reload()
+        // the adapter below lands an event loop turn after this singleton is
+        // built, so a one-shot reader must wait for this rather than read
+        // straight through and get the fallbacks
+        onLoaded: root.paletteLoaded = true
+        onLoadFailed: root.paletteLoaded = true
 
         adapter: JsonAdapter {
             id: m
 
-            property string primary: "#ffb1c4"
-            property string on_primary: "#5e1130"
-            property string primary_container: "#7b2947"
-            property string on_primary_container: "#ffd9e1"
-            property string secondary: "#e3bdc4"
-            property string secondary_container: "#5c3f45"
-            property string tertiary: "#f2bd9a"
-            property string on_tertiary: "#4a2510"
+            property string primary: "#a8c7fa"
+            property string on_primary: "#062e6f"
+            property string primary_container: "#0842a0"
+            property string on_primary_container: "#d3e3fd"
+            property string secondary: "#bec6dc"
+            property string secondary_container: "#3e4759"
+            property string tertiary: "#ddbce0"
+            property string on_tertiary: "#3f2844"
             property string error: "#ffb4ab"
             property string on_error: "#690005"
             property string error_container: "#93000a"
-            property string surface: "#191113"
-            property string on_surface: "#efdfe1"
-            property string surface_variant: "#524347"
-            property string on_surface_variant: "#d6c2c6"
-            property string surface_dim: "#191113"
-            property string surface_container_lowest: "#140c0e"
-            property string surface_container_low: "#221a1c"
-            property string surface_container: "#261e20"
-            property string surface_container_high: "#31282a"
-            property string surface_container_highest: "#3d3335"
-            property string outline: "#9e8c90"
-            property string outline_variant: "#524347"
-            property string inverse_surface: "#efdfe1"
+            property string surface: "#111318"
+            property string on_surface: "#e2e2e9"
+            property string surface_variant: "#44474f"
+            property string on_surface_variant: "#c4c6d0"
+            property string surface_dim: "#111318"
+            property string surface_container_lowest: "#0c0e13"
+            property string surface_container_low: "#191c20"
+            property string surface_container: "#1d2024"
+            property string surface_container_high: "#282a2f"
+            property string surface_container_highest: "#33353a"
+            property string outline: "#8e9099"
+            property string outline_variant: "#44474f"
+            property string inverse_surface: "#e2e2e9"
             property string shadow: "#000000"
             property string scrim: "#000000"
             property string on_secondary: ""

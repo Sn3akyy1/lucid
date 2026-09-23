@@ -8,6 +8,7 @@ import "./lucidnotif"
 import "./lucidosd"
 import "./lucidpolkit"
 import "./lucidprefs"
+import "./lucidsession"
 import "./lucidshot"
 import "./lucidwidgets"
 import QtQuick
@@ -40,6 +41,10 @@ ShellRoot {
         void Clip.probed;
         void Users.probed;
         void Polkit.registered;
+        void Chrono.now;
+        void Agenda.tick;
+        void Zones.offsets;
+        void Capture.state;
     }
 
     PanelWindow {
@@ -384,6 +389,10 @@ ShellRoot {
 
     Auth {
         id: polkitMod
+    }
+
+    Session {
+        id: sessionMod
     }
 
     Connections {

@@ -104,6 +104,7 @@ Item {
             color: Theme.fgInverseSurface
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabelMd
+            font.variableAxes: Theme.axes(Theme.fontLabelMd, 520, 0)
             font.weight: Font.Medium
         }
 

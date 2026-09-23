@@ -314,6 +314,7 @@ Column {
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBody
+                    font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
                     opacity: Prefs.quietHours ? 1 : 0.38
                 }
 

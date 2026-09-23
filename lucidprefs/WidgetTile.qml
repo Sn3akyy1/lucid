@@ -79,6 +79,7 @@ Item {
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBody
+            font.variableAxes: Theme.axes(Theme.fontBody, 640, 0)
             font.bold: true
             elide: Text.ElideRight
         }
@@ -94,6 +95,7 @@ Item {
             color: Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(10)
+            font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
             elide: Text.ElideRight
             maximumLineCount: 2
             wrapMode: Text.WordWrap
@@ -124,6 +126,7 @@ Item {
                 color: Theme.fgAccent
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
+                font.variableAxes: Theme.axes(Theme.fs(10), 640, 0)
                 font.bold: true
             }
 

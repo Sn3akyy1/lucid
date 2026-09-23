@@ -56,6 +56,7 @@ Column {
             color: Users.busy || Users.lastErrorKind === "cancelled" ? Theme.subtext : Theme.fgErrorContainer
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyMd
+            font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
             lineHeight: 1.25
             wrapMode: Text.WordWrap
         }
@@ -111,6 +112,7 @@ Column {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontHeadlineSm
+                font.variableAxes: Theme.axes(Theme.fontHeadlineSm, 520, 0)
                 font.weight: Font.Medium
                 elide: Text.ElideRight
             }
@@ -121,6 +123,7 @@ Column {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyMd
+                font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
                 elide: Text.ElideRight
             }
 
@@ -221,6 +224,7 @@ Column {
                             color: parent.ink
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabelSm
+                            font.variableAxes: Theme.axes(Theme.fontLabelSm, 520, 0)
                             font.weight: Font.Medium
                         }
 
@@ -325,6 +329,7 @@ Column {
                                 color: tile.active ? Theme.fgSecondaryContainer : Theme.text
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontLabelMd
+                                font.variableAxes: Theme.axes(Theme.fontLabelMd, 420, 0)
                                 font.weight: tile.active ? Font.DemiBold : Font.Normal
                                 horizontalAlignment: Text.AlignHCenter
                                 elide: Text.ElideRight
@@ -405,6 +410,7 @@ Column {
                             color: Theme.subtext
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabelMd
+                            font.variableAxes: Theme.axes(Theme.fontLabelMd, 420, 0)
                             horizontalAlignment: Text.AlignHCenter
                         }
 
@@ -535,6 +541,7 @@ Column {
                     color: Theme.subtextDim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodySm
+                    font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
                     elide: Text.ElideRight
                     visible: text !== ""
                 }
@@ -736,6 +743,7 @@ Column {
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodySm
+                    font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
                     lineHeight: 1.3
                     wrapMode: Text.WordWrap
                     visible: text !== ""

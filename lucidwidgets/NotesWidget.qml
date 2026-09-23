@@ -1,43 +1,55 @@
 import QtQuick
 import qs
+import qs.lucidui
 
 WidgetBody {
     id: w
 
-    readonly property string tint: {
+    // the old tint choice still counts until a colour is picked
+    readonly property string legacyTint: {
         var v = w.opt("tint");
-        return v === undefined ? "neutral" : String(v);
+        return v === undefined ? "" : String(v);
     }
-    readonly property color paper: {
-        if (w.tint === "accent")
-            return Theme.accentContainer;
-
-        if (w.tint === "tertiary")
-            return Theme.tertiaryContainer;
-
-        return "transparent";
-    }
-    readonly property color ink: {
-        if (w.tint === "accent")
-            return Theme.fgAccentContainer;
-
-        if (w.tint === "tertiary")
-            return Theme.fgTertiaryContainer;
-
-        return Theme.text;
-    }
-    readonly property color faded: Theme.alpha(w.ink, 0.45)
     readonly property bool movable: !w.preview && w.host !== null && !w.host.locked
     readonly property bool hostDragging: !w.preview && w.host !== null && w.host.dragging === true
     readonly property string stored: {
         var v = w.opt("text");
         return v === undefined ? "" : String(v);
     }
+    readonly property real edited: Number(w.opt("edited")) || 0
+    readonly property int words: {
+        var t = editor.text.trim();
+        return t === "" ? 0 : t.split(/\s+/).length;
+    }
+    readonly property bool headline: w.variant === "headline"
+    readonly property bool lined: w.variant === "lined"
 
     function commit() {
+        if (editor.text === w.stored)
+            return ;
+
         w.setOpt("text", editor.text);
+        w.setOpt("edited", Date.now());
     }
 
+    function ago(ms) {
+        if (ms <= 0)
+            return "";
+
+        var s = (Date.now() - ms) / 1000;
+        if (s < 60)
+            return "edited just now";
+
+        if (s < 3600)
+            return "edited " + Math.floor(s / 60) + " min ago";
+
+        if (s < 86400)
+            return "edited " + Math.floor(s / 3600) + " h ago";
+
+        return "edited " + new Date(ms).toLocaleDateString(Qt.locale(), "d MMM");
+    }
+
+    defaultTone: w.legacyTint === "accent" ? "primary" : (w.legacyTint === "tertiary" ? "tertiary" : (w.variant === "sticky" ? "secondary" : (w.headline ? "primary" : "surface")))
     onEditingChanged: {
         if (w.editing)
             editor.forceActiveFocus();
@@ -52,101 +64,99 @@ WidgetBody {
         onTriggered: w.commit()
     }
 
-    Rectangle {
-        anchors.fill: parent
-        radius: w.corner
-        color: w.paper
-        visible: w.tint !== "neutral"
-    }
-
-    // faint rules behind the text, drawn on the editor's own line grid
+    // lined: a header with the word count, rules under the text
     Item {
-        id: rules
+        id: linedHead
 
-        anchors.fill: parent
-        anchors.margins: 18
-        anchors.topMargin: 44
-        clip: true
-        visible: w.variant === "lined"
+        visible: w.lined
+        x: 20
+        y: 14
+        width: parent.width - 40
+        height: 26
 
-        Repeater {
-            model: Math.max(0, Math.floor(rules.height / Math.max(1, metrics.height)))
+        Icon {
+            id: noteIcon
 
-            Rectangle {
-                required property int index
-
-                width: rules.width
-                height: 1
-                y: (index + 1) * metrics.height - 1
-                color: Theme.alpha(w.ink, 0.12)
-            }
-
+            anchors.verticalCenter: parent.verticalCenter
+            name: "sticky_note_2"
+            size: 18
+            fill: 1
+            color: w.inkAccent
         }
 
-    }
-
-    FontMetrics {
-        id: metrics
-
-        font.family: Theme.fontFamily
-        font.pixelSize: 13
-    }
-
-    Text {
-        id: linedTitle
-
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.leftMargin: 18
-        anchors.rightMargin: 18
-        anchors.topMargin: 16
-        text: "Note"
-        color: w.faded
-        font.family: Theme.fontFamily
-        font.pixelSize: 11
-        font.bold: true
-        font.letterSpacing: 1.4
-        visible: w.variant === "lined"
-    }
-
-    // clicks on the margins still land in the text; the editor itself handles its own
-    MouseArea {
-        anchors.fill: parent
-        enabled: w.editing
-        acceptedButtons: Qt.LeftButton
-        cursorShape: Qt.IBeamCursor
-        onPressed: {
-            w.beginEdit();
-            editor.forceActiveFocus();
-            editor.cursorPosition = editor.length;
+        LText {
+            anchors.left: noteIcon.right
+            anchors.leftMargin: 8
+            anchors.verticalCenter: parent.verticalCenter
+            role: "titleSmall"
+            color: w.ink
+            text: "Note"
         }
+
+        LText {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            role: "labelSmall"
+            color: w.inkFaint
+            text: w.words > 0 ? w.words + (w.words === 1 ? " word" : " words") : ""
+        }
+
     }
 
     Flickable {
         id: scroller
 
         anchors.fill: parent
-        anchors.margins: w.variant === "lined" ? 18 : 20
-        anchors.topMargin: w.variant === "lined" ? 44 : 20
+        anchors.margins: 20
+        anchors.topMargin: w.lined ? 48 : 20
+        anchors.bottomMargin: w.lined ? 30 : 20
         contentWidth: width
-        contentHeight: editor.implicitHeight
+        contentHeight: w.headline ? height : editor.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        interactive: contentHeight > height
+        interactive: !w.headline && contentHeight > height
+
+        FontMetrics {
+            id: fm
+
+            font: editor.font
+        }
+
+        // rules sit under each line of text and scroll with it
+        Repeater {
+            model: w.lined ? Math.ceil(Math.max(scroller.height, editor.implicitHeight) / fm.lineSpacing) : 0
+
+            Rectangle {
+                required property int index
+
+                y: (index + 1) * fm.lineSpacing + 1
+                width: scroller.width
+                height: 1
+                color: Theme.alpha(w.ink, 0.1)
+            }
+
+        }
 
         TextEdit {
             id: editor
 
+            // the headline shrinks to fit the card, the others scroll
+            readonly property int basePx: w.headline ? 40 : (w.variant === "sticky" ? 17 : 14)
+            readonly property int px: w.headline ? fit.px : editor.basePx
+
             width: scroller.width
+            height: w.headline ? scroller.height : implicitHeight
             text: w.stored
             color: w.ink
             font.family: Theme.fontFamily
-            font.pixelSize: 13
+            font.pixelSize: editor.px
+            font.variableAxes: Theme.axes(editor.px, w.headline ? 620 : (w.variant === "sticky" ? 480 : 420), w.lined ? 0 : 100)
             wrapMode: TextEdit.Wrap
+            horizontalAlignment: w.headline ? TextEdit.AlignHCenter : TextEdit.AlignLeft
+            verticalAlignment: w.headline ? TextEdit.AlignVCenter : TextEdit.AlignTop
             selectByMouse: true
-            selectionColor: Theme.accent
-            selectedTextColor: Theme.fgAccent
+            selectionColor: w.inkAccent
+            selectedTextColor: w.onInkAccent
             persistentSelection: true
             onTextChanged: {
                 if (editor.text !== w.stored)
@@ -178,21 +188,79 @@ WidgetBody {
 
         }
 
+        // steps the headline down until the wrapped text fits the card
         Text {
-            anchors.left: parent.left
-            anchors.top: parent.top
-            text: w.variant === "lined" ? "Type here. It stays put across reboots." : "Write something…"
-            color: Theme.alpha(w.ink, 0.32)
+            id: fit
+
+            property int px: 40
+
+            function measure() {
+                if (!w.headline || scroller.width <= 0)
+                    return ;
+
+                var t = editor.text === "" ? "M" : editor.text;
+                fit.text = t;
+                for (var p = 64; p >= 14; p -= 2) {
+                    fit.font.pixelSize = p;
+                    fit.font.variableAxes = Theme.axes(p, 620, 100);
+                    if (fit.implicitHeight <= scroller.height && fit.contentWidth <= scroller.width + 0.5) {
+                        fit.px = p;
+                        return ;
+                    }
+                }
+                fit.px = 14;
+            }
+
+            visible: false
+            width: scroller.width
+            wrapMode: Text.Wrap
             font.family: Theme.fontFamily
-            font.pixelSize: 13
+            Component.onCompleted: Qt.callLater(fit.measure)
+
+            Connections {
+                function onTextChanged() {
+                    Qt.callLater(fit.measure);
+                }
+
+                function onWidthChanged() {
+                    Qt.callLater(fit.measure);
+                }
+
+                function onHeightChanged() {
+                    Qt.callLater(fit.measure);
+                }
+
+                target: editor
+            }
+
+        }
+
+        LText {
+            anchors.fill: parent
             visible: editor.text === ""
+            role: w.headline ? "headlineSmall" : "bodyMedium"
+            color: Theme.alpha(w.ink, 0.36)
+            horizontalAlignment: w.headline ? Text.AlignHCenter : Text.AlignLeft
+            verticalAlignment: w.headline ? Text.AlignVCenter : Text.AlignTop
+            wrapMode: Text.Wrap
+            text: w.headline ? "One line, big" : (w.lined ? "Type here. It stays put across reboots." : "Write something…")
         }
 
     }
 
+    LText {
+        visible: w.lined
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 20
+        anchors.bottomMargin: 10
+        role: "labelSmall"
+        color: w.inkFaint
+        text: w.editing ? "Esc to finish" : w.ago(w.edited)
+    }
+
     // while the note is closed the whole card is a drag surface: a click opens the
-    // editor, a press that travels moves the widget. taking focus on press meant a
-    // left-drag could never start, since the editor swallowed the gesture
+    // editor, a press that travels moves the widget
     MouseArea {
         id: grab
 
@@ -246,16 +314,14 @@ WidgetBody {
         }
     }
 
-    Text {
+    LText {
+        visible: w.editing && !w.lined
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: 10
-        text: w.editing ? "esc to finish" : ""
-        color: Theme.alpha(w.ink, 0.4)
-        font.family: Theme.fontFamily
-        font.pixelSize: 10
-        font.bold: true
-        visible: w.editing
+        role: "labelSmall"
+        color: Theme.alpha(w.ink, 0.45)
+        text: "Esc to finish"
     }
 
 }

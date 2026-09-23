@@ -6,6 +6,7 @@ import Quickshell.Io
 import Quickshell.Services.Mpris
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 
 BarPill {
@@ -54,17 +55,8 @@ BarPill {
     readonly property bool isPlaying: root.player ? root.player.isPlaying : false
     readonly property string title: root.player ? (root.player.trackTitle || "Unknown") : "Nothing playing"
     readonly property string artist: root.player ? root.player.trackArtist : ""
-    readonly property string album: root.player ? root.player.trackAlbum : ""
     readonly property string artUrl: root.player ? root.player.trackArtUrl : ""
     readonly property string displayTitle: (root.player && root.artist) ? root.artist + "  -  " + root.title : root.title
-    readonly property string sourceName: root.player ? (root.player.identity || "Media") : ""
-    readonly property string metaLine: {
-        if (!root.player)
-            return "";
-
-        const showAlbum = root.album !== "" && root.album !== root.title;
-        return showAlbum ? root.album + "  ·  " + root.sourceName : root.sourceName;
-    }
     readonly property real posSec: root.player ? root.player.position : 0
     readonly property real lenSec: root.player ? root.player.length : 0
     readonly property bool hasDuration: root.lenSec > 0
@@ -92,38 +84,28 @@ BarPill {
     property string micDevice: ""
     readonly property string listenDevice: root.listenSource === "mic" ? root.micDevice : root.monitorDevice
     property double nowMs: Date.now()
-    readonly property string noteGlyph: "M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6Z"
-    readonly property string playGlyph: "M8 5v14l11-7L8 5Z"
-    readonly property string pauseGlyph: "M8 6h3v12H8V6Zm5 0h3v12h-3V6Z"
-    readonly property string prevGlyph: "M6 6h2v12H6V6Zm3.5 6 8.5-6v12l-8.5-6Z"
-    readonly property string nextGlyph: "M18 6h-2v12h2V6Zm-3.5 6L6 6v12l8.5-6Z"
-    readonly property string shuffleGlyph: "M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41ZM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5Zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13Z"
-    readonly property string repeatGlyph: "M7 7h10v3l4-4-4-4v3H5v6h2V7Zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4Z"
-    readonly property string repeatOneGlyph: "M7 7h10v3l4-4-4-4v3H5v6h2V7Zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4Zm-4-2V9h-1l-2 1v1h1.5v4H13Z"
-    readonly property string identifyGlyph: "M3 10h2v4H3v-4Zm4-3h2v10H7V7Zm4-4h2v18h-2V3Zm4 4h2v10h-2V7Zm4 3h2v4h-2v-4Z"
-    readonly property string backGlyph: "M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12l4.58-4.59Z"
-    readonly property string collapseGlyph: "M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14l-6-6Z"
-    readonly property string openGlyph: "M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7ZM19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7Z"
-    readonly property string copyGlyph: "M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z"
-    readonly property string searchGlyph: "M15.5 14h-.79l-.28-.27a6.47 6.47 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.5 6.5 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.47 6.47 0 0 0 5.34-1.48l.27.28v.79L18.25 20l1.49-1.49L15.5 14Zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14Z"
-    readonly property string retryGlyph: "M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35Z"
-    readonly property string trashGlyph: "M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12ZM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4Z"
-    readonly property string micGlyph: "M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
-    readonly property string checkGlyph: "M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17Z"
-    readonly property string swapGlyph: "M6.99 11 3 15l3.99 4v-3H14v-2H6.99v-3ZM21 9l-3.99-4v3H10v2h7.01v3L21 9Z"
+    readonly property string noteGlyph: "music_note"
+    readonly property string playGlyph: "play_arrow"
+    readonly property string pauseGlyph: "pause"
+    readonly property string prevGlyph: "skip_previous"
+    readonly property string nextGlyph: "skip_next"
+    readonly property string shuffleGlyph: "shuffle"
+    readonly property string repeatGlyph: "repeat"
+    readonly property string repeatOneGlyph: "repeat_one"
+    readonly property string identifyGlyph: "graphic_eq"
+    readonly property string backGlyph: "arrow_back"
+    readonly property string openGlyph: "open_in_new"
+    readonly property string copyGlyph: "content_copy"
+    readonly property string searchGlyph: "search"
+    readonly property string retryGlyph: "refresh"
+    readonly property string trashGlyph: "delete"
+    readonly property string micGlyph: "mic"
+    readonly property string checkGlyph: "check"
+    readonly property string swapGlyph: "swap_horiz"
     readonly property var volumeGlyphs: [
-        {
-            "max": 0,
-            "path": "M7 9v6h4l5 5V4l-5 5H7z"
-        },
-        {
-            "max": 49,
-            "path": "M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"
-        },
-        {
-            "max": 100,
-            "path": "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"
-        }
+        { "max": 0, "path": "volume_mute" },
+        { "max": 49, "path": "volume_down" },
+        { "max": 100, "path": "volume_up" }
     ]
 
     function fmt(sec) {
@@ -175,8 +157,24 @@ BarPill {
     }
 
     function openPanel(target) {
-        root.page = target;
+        if (root.expanded)
+            root.setPage(target);
+        else
+            root.page = target;
         root.expanded = true;
+    }
+
+    // the two pages push each other sideways, the way the System panel's views do
+    function setPage(target) {
+        if (root.page === target)
+            return ;
+
+        root.pageSwitching = true;
+        pageSwitchTimer.restart();
+        // must precede the assignment: writing page re-evaluates the height
+        // binding synchronously, and the Behavior is consulted on that write
+        root.beginTransition();
+        root.page = target;
     }
 
     function togglePlay() {
@@ -401,10 +399,17 @@ BarPill {
         sinkProc.running = true;
         sourceProc.running = true;
     }
-    property int pageFadePause: 0
+    // gates the slide, so the first layout and the reset on close do not animate
+    property bool pageSwitching: false
+
+    Timer {
+        id: pageSwitchTimer
+
+        interval: Theme.barMs(600)
+        onTriggered: root.pageSwitching = false
+    }
 
     onExpandedChanged: {
-        root.pageFadePause = Theme.barMs(root.expanded ? 140 : 0);
         if (root.expanded)
             return ;
 
@@ -419,7 +424,7 @@ BarPill {
     expandedRadius: Theme.radiusXl
     compactCollapseScale: 0.94
     compactInteractive: false
-    panelFades: false
+    surfaceLayered: true
 
     IpcHandler {
         target: "media"
@@ -548,18 +553,25 @@ BarPill {
     Process {
         id: cavaProc
 
-        running: true
+        // silence costs the same as sound to capture and parse, so only listen
+        // while something is actually playing or the panel is open on the strip
+        running: root.isPlaying || root.expanded
         command: ["cava", "-p", Quickshell.env('HOME') + "/.config/cava/quickshell.conf"]
+        onRunningChanged: {
+            if (!cavaProc.running && root.bars.length > 0)
+                root.bars = new Array(root.bars.length).fill(0);
+
+        }
 
         stdout: SplitParser {
             onRead: (line) => {
                 const raw = line.trim().split(" ");
                 const prev = root.bars;
-                const out = [];
+                const out = new Array(raw.length);
                 for (let i = 0; i < raw.length; i++) {
                     const v = parseInt(raw[i]) || 0;
                     const p = prev[i];
-                    out.push((p === undefined || v >= p) ? v : p * 0.82 + v * 0.18);
+                    out[i] = (p === undefined || v >= p) ? v : p * 0.82 + v * 0.18;
                 }
                 root.bars = out;
             }
@@ -653,14 +665,54 @@ BarPill {
             spacing: 8
 
             Item {
-                width: 14
-                height: 18
+                width: 26
+                height: 26
                 anchors.verticalCenter: parent.verticalCenter
+
+                CircularProgress {
+                    anchors.fill: parent
+                    visible: root.player !== null
+                    value: root.lenSec > 0 ? root.posSec / root.lenSec : 0
+                    thickness: 2.5
+                    color: Theme.accent
+                    trackColor: Theme.alpha(Theme.subtext, 0.22)
+                }
+
+                ClippingRectangle {
+                    id: compactArt
+
+                    anchors.centerIn: parent
+                    width: 18
+                    height: 18
+                    radius: 9
+                    color: Theme.surfaceHighest
+                    visible: root.player !== null && compactArtImg.status === Image.Ready
+
+                    Image {
+                        id: compactArtImg
+
+                        anchors.fill: parent
+                        source: root.artUrl
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        sourceSize.width: 64
+                        sourceSize.height: 64
+                    }
+
+                    RotationAnimation on rotation {
+                        from: 0
+                        to: 360
+                        duration: 14000
+                        loops: Animation.Infinite
+                        running: root.isPlaying && compactArt.visible
+                    }
+
+                }
 
                 Row {
                     anchors.centerIn: parent
-                    spacing: 2.5
-                    visible: root.player !== null
+                    spacing: 2
+                    visible: root.player !== null && !compactArt.visible
 
                     Repeater {
                         model: 3
@@ -672,7 +724,7 @@ BarPill {
                             radius: 999
                             color: Theme.accent
                             anchors.verticalCenter: parent.verticalCenter
-                            height: root.isPlaying ? Math.max(3, root.bandLevel(1 + index * 11, 10 + index * 11) * 16) : 3
+                            height: root.isPlaying ? Math.max(3, root.bandLevel(1 + index * 11, 10 + index * 11) * 11) : 3
 
                             Behavior on height {
                                 NumberAnimation {
@@ -688,12 +740,13 @@ BarPill {
 
                 }
 
-                SvgIcon {
+                Icon {
                     anchors.centerIn: parent
                     visible: root.player === null
-                    path: root.noteGlyph
-                    tint: Theme.accent
-                    glyphSize: 14
+                    name: "music_note"
+                    size: 16
+                    fill: 1
+                    color: Theme.accent
                 }
 
             }
@@ -701,7 +754,7 @@ BarPill {
             Item {
                 id: compactTitleSlot
 
-                width: root.volumeFlash ? volumeFlashRow.implicitWidth : Math.min(160, Math.max(60, compactTitle.naturalWidth))
+                width: root.volumeFlash ? volumeFlashRow.implicitWidth : Math.min(170, Math.max(60, compactTitle.naturalWidth))
                 height: 18
                 anchors.verticalCenter: parent.verticalCenter
 
@@ -732,20 +785,20 @@ BarPill {
                     spacing: 5
                     opacity: root.volumeFlash ? 1 : 0
 
-                    SvgIcon {
+                    Icon {
                         anchors.verticalCenter: parent.verticalCenter
-                        path: root.volumeGlyphFor(root.playerVolume)
-                        tint: Theme.accent
-                        glyphSize: 13
+                        name: root.playerVolume <= 0 ? "volume_off" : (root.playerVolume < 0.5 ? "volume_down" : "volume_up")
+                        size: 16
+                        fill: 1
+                        color: Theme.accent
                     }
 
-                    Text {
+                    LText {
                         anchors.verticalCenter: parent.verticalCenter
+                        role: "labelLarge"
+                        size: Theme.fs(13)
+                        weight: 640
                         text: Math.round(root.playerVolume * 100) + "%"
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        font.pixelSize: Theme.fs(13)
                     }
 
                     Behavior on opacity {
@@ -759,15 +812,40 @@ BarPill {
 
             }
 
-            IconBtn {
+            Rectangle {
+                width: 24
+                height: 24
+                radius: playArea.pressed ? 8 : 12
                 anchors.verticalCenter: parent.verticalCenter
-                diameter: 22
-                glyphSize: 13
-                filled: true
-                path: root.isPlaying ? root.pauseGlyph : root.playGlyph
-                tint: Theme.fgAccent
-                enabledAction: root.player !== null && root.player.canTogglePlaying
-                onActivated: root.togglePlay()
+                color: Theme.accent
+                opacity: root.player !== null && root.player.canTogglePlaying ? 1 : 0.4
+
+                Behavior on radius {
+                    NumberAnimation {
+                        duration: Theme.durFastSpatial
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.curveDefaultSpatial
+                    }
+
+                }
+
+                Icon {
+                    anchors.centerIn: parent
+                    name: root.isPlaying ? "pause" : "play_arrow"
+                    size: 16
+                    fill: 1
+                    color: Theme.fgAccent
+                }
+
+                StateLayer {
+                    id: playArea
+
+                    radius: parent.radius
+                    tint: Theme.fgAccent
+                    disabled: !(root.player !== null && root.player.canTogglePlaying)
+                    onClicked: root.togglePlay()
+                }
+
             }
 
         }
@@ -777,21 +855,20 @@ BarPill {
     Item {
         id: playerPage
 
-        anchors.fill: parent
-        anchors.margins: 14
-        opacity: (root.expanded && root.page === "player") ? 1 : 0
-        visible: opacity > 0.01
+        // anchors would pin x, so the page is placed and sized by hand
+        y: 0
+        width: parent.width
+        height: parent.height
+        x: root.page === "player" ? 0 : -root.panelWidth
+        visible: playerPage.x > -root.panelWidth + 0.5
 
-        transform: Translate {
-            x: root.page === "player" ? 0 : -26
+        Behavior on x {
+            enabled: root.pageSwitching
 
-            Behavior on x {
-                NumberAnimation {
-                    duration: Theme.barDurLong
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: root.easeEmphasized
-                }
-
+            NumberAnimation {
+                duration: root.morphDuration
+                easing.type: Easing.Bezier
+                easing.bezierCurve: root.morphEasing
             }
 
         }
@@ -799,25 +876,27 @@ BarPill {
         Column {
             id: playerColumn
 
+            x: 14
+            y: 14
             width: root.contentWidth
-            spacing: 12
+            spacing: 10
 
             Row {
                 width: root.contentWidth
-                height: 96
-                spacing: 14
+                height: 84
+                spacing: 12
 
                 Item {
                     id: artwork
 
-                    width: 96
-                    height: 96
+                    width: 84
+                    height: 84
 
                     RoundedArt {
                         anchors.fill: parent
                         source: root.artUrl
                         shapeRadius: Theme.radiusLg
-                        fallbackGlyph: 34
+                        fallbackGlyph: 30
                     }
 
                     Rectangle {
@@ -865,8 +944,8 @@ BarPill {
                 }
 
                 Item {
-                    width: root.contentWidth - 96 - 14
-                    height: 96
+                    width: root.contentWidth - 84 - 12
+                    height: 84
 
                     Column {
                         anchors.top: parent.top
@@ -890,24 +969,10 @@ BarPill {
                             pixelSize: Theme.fontBody
                         }
 
-                        Text {
-                            width: parent.width
-                            visible: root.metaLine !== ""
-                            text: root.metaLine
-                            color: Theme.subtextDim
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontLabel
-                            elide: Text.ElideRight
-                        }
-
                     }
 
                     Row {
                         id: volumeRow
-
-                        readonly property real fraction: Math.max(0, Math.min(1, root.playerVolume))
-                        readonly property int handleWidth: 4
-                        readonly property int handleGap: 6
 
                         anchors.bottom: parent.bottom
                         anchors.left: parent.left
@@ -919,106 +984,23 @@ BarPill {
                         SvgIcon {
                             anchors.verticalCenter: parent.verticalCenter
                             path: root.volumeGlyphFor(root.playerVolume)
-                            tint: volArea.containsMouse ? Theme.accent : Theme.subtext
+                            tint: Theme.subtext
                             glyphSize: 14
                         }
 
-                        Item {
+                        Slider {
                             id: volTrack
 
-                            readonly property real handleX: volumeRow.fraction * (volTrack.width - volumeRow.handleWidth)
-
-                            width: parent.width - 14 - volPct.width - 16
-                            height: 22
+                            width: parent.width - 22
                             anchors.verticalCenter: parent.verticalCenter
-
-                            Rectangle {
-                                id: volInactive
-
-                                anchors.right: parent.right
-                                anchors.verticalCenter: parent.verticalCenter
-                                x: volTrack.handleX + volumeRow.handleWidth + volumeRow.handleGap
-                                height: 10
-                                radius: height / 2
-                                color: Theme.withBlur(Theme.bgHigh)
-                            }
-
-                            Rectangle {
-                                id: volActive
-
-                                anchors.left: parent.left
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: Math.max(0, volTrack.handleX - volumeRow.handleGap)
-                                height: 10
-                                radius: height / 2
-                                color: Theme.accent
-                            }
-
-                            Rectangle {
-                                anchors.right: parent.right
-                                anchors.rightMargin: 3
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 4
-                                height: 4
-                                radius: 999
-                                color: Theme.accent
-                                opacity: volumeRow.fraction > 0.94 ? 0 : 0.55
-                            }
-
-                            Rectangle {
-                                id: volHandle
-
-                                x: volTrack.handleX
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: volumeRow.handleWidth
-                                height: volArea.pressed ? 14 : 20
-                                radius: 999
-                                color: Theme.accent
-
-                                Behavior on height {
-                                    NumberAnimation {
-                                        duration: Theme.barDurQuick
-                                        easing.type: Theme.easeStandard
-                                    }
-
-                                }
+                            value: root.playerVolume
+                            showValue: false
+                            inactiveColor: Theme.withBlur(Theme.surfaceHighest)
+                            onMoved: (v) => {
+                                if (root.player)
+                                    root.player.volume = v;
 
                             }
-
-                            MouseArea {
-                                id: volArea
-
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                preventStealing: true
-                                onPressed: (mouse) => {
-                                    if (root.player)
-                                        root.player.volume = Math.max(0, Math.min(1, mouse.x / volTrack.width));
-
-                                }
-                                onPositionChanged: (mouse) => {
-                                    if (pressed && root.player)
-                                        root.player.volume = Math.max(0, Math.min(1, mouse.x / volTrack.width));
-
-                                }
-                                onWheel: (wheel) => {
-                                    return root.nudgeVolume(wheel.angleDelta.y > 0 ? 0.05 : -0.05);
-                                }
-                            }
-
-                        }
-
-                        Text {
-                            id: volPct
-
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 30
-                            horizontalAlignment: Text.AlignRight
-                            text: Math.round(root.playerVolume * 100) + "%"
-                            color: Theme.subtextDim
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontLabel
                         }
 
                     }
@@ -1031,7 +1013,7 @@ BarPill {
                 id: vizStrip
 
                 width: root.contentWidth
-                height: 28
+                height: 20
                 opacity: root.isPlaying ? 1 : 0.75
 
                 Row {
@@ -1259,6 +1241,7 @@ BarPill {
                             color: Theme.subtext
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel
+                            font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                         }
 
                         Text {
@@ -1270,6 +1253,7 @@ BarPill {
                             color: lenArea.containsMouse ? Theme.text : Theme.subtext
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel
+                            font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
 
                             MouseArea {
                                 id: lenArea
@@ -1293,14 +1277,17 @@ BarPill {
                     visible: !root.hasDuration
 
                     Rectangle {
+                        id: liveDot
+
                         width: 6
                         height: 6
                         radius: 999
                         color: Theme.accent
                         anchors.verticalCenter: parent.verticalCenter
 
+                        // visible is the effective one: a closed panel stops the pulse
                         SequentialAnimation on opacity {
-                            running: root.isPlaying
+                            running: root.isPlaying && liveDot.visible
                             loops: Animation.Infinite
 
                             NumberAnimation {
@@ -1326,6 +1313,7 @@ BarPill {
                         font.family: Theme.fontFamily
                         font.bold: true
                         font.pixelSize: Theme.fontLabel
+                        font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
                         font.letterSpacing: 0.5
                     }
 
@@ -1380,15 +1368,6 @@ BarPill {
                                 root.player.raise();
 
                         }
-                    }
-
-                    IconBtn {
-                        ghost: true
-                        diameter: 28
-                        glyphSize: 16
-                        path: root.collapseGlyph
-                        tint: Theme.subtextDim
-                        onActivated: root.expanded = false
                     }
 
                 }
@@ -1469,41 +1448,24 @@ BarPill {
 
         }
 
-        Behavior on opacity {
-            SequentialAnimation {
-                PauseAnimation {
-                    duration: root.pageFadePause
-                }
-
-                NumberAnimation {
-                    duration: Theme.barMs(220)
-                    easing.type: Easing.OutCubic
-                }
-
-            }
-
-        }
-
     }
 ,
     Item {
         id: shazamPage
 
-        anchors.fill: parent
-        anchors.margins: 14
-        opacity: (root.expanded && root.page === "shazam") ? 1 : 0
-        visible: opacity > 0.01
+        y: 0
+        width: parent.width
+        height: parent.height
+        x: root.page === "shazam" ? 0 : root.panelWidth
+        visible: shazamPage.x < root.panelWidth - 0.5
 
-        transform: Translate {
-            x: root.page === "shazam" ? 0 : 26
+        Behavior on x {
+            enabled: root.pageSwitching
 
-            Behavior on x {
-                NumberAnimation {
-                    duration: Theme.barDurLong
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: root.easeEmphasized
-                }
-
+            NumberAnimation {
+                duration: root.morphDuration
+                easing.type: Easing.Bezier
+                easing.bezierCurve: root.morphEasing
             }
 
         }
@@ -1511,6 +1473,8 @@ BarPill {
         Column {
             id: shazamColumn
 
+            x: 14
+            y: 14
             width: root.contentWidth
             spacing: 12
 
@@ -1530,7 +1494,7 @@ BarPill {
                         anchors.verticalCenter: parent.verticalCenter
                         path: root.backGlyph
                         tint: Theme.subtext
-                        onActivated: root.page = "player"
+                        onActivated: root.setPage("player")
                     }
 
                     Text {
@@ -1540,6 +1504,7 @@ BarPill {
                         font.family: Theme.fontFamily
                         font.bold: true
                         font.pixelSize: Theme.fontLabel
+                        font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
                         font.letterSpacing: 0.5
                     }
 
@@ -1767,6 +1732,7 @@ BarPill {
                             font.family: Theme.fontFamily
                             font.bold: true
                             font.pixelSize: Theme.fontTitle
+                            font.variableAxes: Theme.axes(Theme.fontTitle, 640, 0)
                         }
 
                         Text {
@@ -1787,6 +1753,7 @@ BarPill {
                             color: Theme.subtextDim
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel
+                            font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                             elide: Text.ElideRight
                         }
 
@@ -1852,6 +1819,7 @@ BarPill {
                                 color: Theme.subtextDim
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontLabel
+                                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                                 elide: Text.ElideRight
                             }
 
@@ -1926,6 +1894,7 @@ BarPill {
                         font.family: Theme.fontFamily
                         font.bold: true
                         font.pixelSize: Theme.fontLabel
+                        font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
                         font.letterSpacing: 0.5
                     }
 
@@ -1996,6 +1965,7 @@ BarPill {
                                 font.family: Theme.fontFamily
                                 font.bold: true
                                 font.pixelSize: Theme.fontBody
+                                font.variableAxes: Theme.axes(Theme.fontBody, 640, 0)
                                 elide: Text.ElideRight
                             }
 
@@ -2005,6 +1975,7 @@ BarPill {
                                 color: Theme.subtext
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontLabel
+                                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                                 elide: Text.ElideRight
                             }
 
@@ -2019,6 +1990,7 @@ BarPill {
                             color: Theme.subtextDim
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel
+                            font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                         }
 
                         MouseArea {
@@ -2032,21 +2004,6 @@ BarPill {
 
                     }
 
-                }
-
-            }
-
-        }
-
-        Behavior on opacity {
-            SequentialAnimation {
-                PauseAnimation {
-                    duration: root.pageFadePause
-                }
-
-                NumberAnimation {
-                    duration: Theme.barMs(220)
-                    easing.type: Easing.OutCubic
                 }
 
             }
@@ -2106,7 +2063,20 @@ BarPill {
         width: icon.glyphSize
         height: icon.glyphSize
 
+        readonly property bool named: /^[a-z0-9_]+$/.test(icon.path)
+        property real fill: 1
+
+        Icon {
+            visible: icon.named
+            anchors.centerIn: parent
+            name: icon.named ? icon.path : ""
+            size: Math.round(icon.glyphSize * 1.15)
+            fill: icon.fill
+            color: icon.tint
+        }
+
         Shape {
+            visible: !icon.named
             width: 24
             height: 24
             scale: icon.glyphSize / 24
@@ -2169,6 +2139,7 @@ BarPill {
             font.family: Theme.fontFamily
             font.bold: mq.bold
             font.pixelSize: mq.pixelSize
+            font.variableAxes: Theme.axes(mq.pixelSize, (mq.bold) ? 640 : 420, 0)
         }
 
         Text {
@@ -2179,6 +2150,7 @@ BarPill {
             font.family: Theme.fontFamily
             font.bold: mq.bold
             font.pixelSize: mq.pixelSize
+            font.variableAxes: Theme.axes(mq.pixelSize, (mq.bold) ? 640 : 420, 0)
         }
 
         SequentialAnimation {
@@ -2239,6 +2211,7 @@ BarPill {
                         font.family: Theme.fontFamily
                         font.bold: mq.bold
                         font.pixelSize: mq.pixelSize
+                        font.variableAxes: Theme.axes(mq.pixelSize, (mq.bold) ? 640 : 420, 0)
                     }
 
                     Text {
@@ -2247,6 +2220,7 @@ BarPill {
                         font.family: Theme.fontFamily
                         font.bold: mq.bold
                         font.pixelSize: mq.pixelSize
+                        font.variableAxes: Theme.axes(mq.pixelSize, (mq.bold) ? 640 : 420, 0)
                         visible: mq.overflowing
                     }
 
@@ -2383,6 +2357,7 @@ BarPill {
                 font.family: Theme.fontFamily
                 font.bold: true
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
                 font.letterSpacing: 0.1
             }
 

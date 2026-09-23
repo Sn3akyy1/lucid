@@ -123,6 +123,7 @@ Item {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontHeadlineSm
+                font.variableAxes: Theme.axes(Theme.fontHeadlineSm, 520, 0)
                 font.weight: Font.Medium
             }
 
@@ -132,6 +133,7 @@ Item {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyMd
+                font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
                 lineHeight: 1.3
                 wrapMode: Text.WordWrap
             }
@@ -170,6 +172,7 @@ Item {
                         color: Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontLabelSm
+                        font.variableAxes: Theme.axes(Theme.fontLabelSm, 420, 0)
                     }
 
                     Text {
@@ -181,6 +184,7 @@ Item {
                         color: clearArea.containsMouse ? Theme.error : Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontLabelSm
+                        font.variableAxes: Theme.axes(Theme.fontLabelSm, 420, 0)
 
                         Behavior on color {
                             ColorAnimation {

@@ -10,7 +10,7 @@ Item {
 
     property var notification: null
     property int size: 28
-    readonly property string img: avatar.notification ? avatar.notification.image : ""
+    readonly property string img: avatar.notification ? (avatar.notification.image || "") : ""
     readonly property string themeIconName: {
         if (!avatar.notification)
             return "";
@@ -59,6 +59,7 @@ Item {
             font.family: Theme.fontFamily
             font.bold: true
             font.pixelSize: Math.round(avatar.size * 0.45)
+            font.variableAxes: Theme.axes(Math.round(avatar.size * 0.45), 640, 0)
         }
 
     }

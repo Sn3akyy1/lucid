@@ -142,6 +142,7 @@ Column {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontTitle
+                font.variableAxes: Theme.axes(Theme.fontTitle, 640, 0)
                 font.bold: true
                 elide: Text.ElideRight
             }
@@ -152,6 +153,7 @@ Column {
                 color: dev.isConnected ? Theme.accent : Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                 elide: Text.ElideRight
             }
 
@@ -176,6 +178,7 @@ Column {
                     color: dev.batteryPct < 20 ? Theme.error : Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabel
+                    font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                 }
 
                 Rectangle {
@@ -204,6 +207,7 @@ Column {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBody
+                font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
                 rotation: dev.expanded ? 180 : 0
 
                 Behavior on rotation {
@@ -330,6 +334,7 @@ Column {
                 color: Theme.error
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                 wrapMode: Text.WordWrap
             }
 
@@ -343,6 +348,7 @@ Column {
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabelLg
+                    font.variableAxes: Theme.axes(Theme.fontLabelLg, 520, 0)
                     font.weight: Font.Medium
                 }
 
@@ -372,6 +378,7 @@ Column {
                                 color: prof.selected ? Theme.fgAccentContainer : Theme.subtext
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontLabel
+                                font.variableAxes: Theme.axes(Theme.fontLabel, (prof.selected) ? 640 : 420, 0)
                                 font.bold: prof.selected
                             }
 

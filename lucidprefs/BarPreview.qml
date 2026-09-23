@@ -238,6 +238,7 @@ Rectangle {
         color: Theme.subtext
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontLabel
+        font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
         font.bold: true
     }
 

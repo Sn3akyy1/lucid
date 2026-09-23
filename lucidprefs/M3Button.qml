@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 import qs
+import qs.lucidui
 
 // m3 expressive common button: full-shape at rest, corners morph in under press
 Item {
@@ -60,9 +61,9 @@ Item {
 
         Behavior on radius {
             NumberAnimation {
-                duration: Theme.durMedium
-                easing.type: Theme.easeEmphasized
-                easing.overshoot: Theme.emphasizedOvershoot
+                duration: Theme.durFastSpatial
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.curveDefaultSpatial
             }
 
         }
@@ -82,11 +83,19 @@ Item {
         anchors.centerIn: parent
         spacing: 8
 
+        Icon {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: /^[a-z0-9_]+$/.test(btn.iconPath)
+            name: visible ? btn.iconPath : ""
+            size: 19
+            color: btn.labelColor
+        }
+
         Shape {
-            width: btn.iconPath === "" ? 0 : 18
+            width: btn.iconPath === "" || /^[a-z0-9_]+$/.test(btn.iconPath) ? 0 : 18
             height: 18
             anchors.verticalCenter: parent.verticalCenter
-            visible: btn.iconPath !== ""
+            visible: btn.iconPath !== "" && !/^[a-z0-9_]+$/.test(btn.iconPath)
             preferredRendererType: Shape.CurveRenderer
 
             ShapePath {
@@ -113,6 +122,7 @@ Item {
             color: btn.labelColor
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabelLg
+            font.variableAxes: Theme.axes(Theme.fontLabelLg, 520, 0)
             font.weight: Font.Medium
             font.letterSpacing: 0.1
 

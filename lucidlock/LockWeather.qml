@@ -40,6 +40,7 @@ Item {
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontHeadlineMd
+                font.variableAxes: Theme.axes(Theme.fontHeadlineMd, 520, 0)
                 font.weight: Font.Medium
             }
 
@@ -59,6 +60,7 @@ Item {
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodyMd
+                    font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
                 }
 
                 Text {
@@ -71,6 +73,7 @@ Item {
                     color: Theme.subtextDim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabelMd
+                    font.variableAxes: Theme.axes(Theme.fontLabelMd, 420, 0)
                 }
 
             }

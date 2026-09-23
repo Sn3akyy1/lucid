@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import qs
+import qs.lucidui
 
 PanelWindow {
     id: toastWindow
@@ -23,14 +24,16 @@ PanelWindow {
 
     // named icons so a caller (or a shell script over ipc) need not pass svg
     readonly property var icons: ({
-        "copy": "M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z",
-        "check": "M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z",
-        "alert": "M13,14H11V9H13M13,18H11V16H13M1,21H23L12,2L1,21Z",
-        "info": "M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
-        "text": "M5,4V7H10.5V19H13.5V7H19V4H5Z",
-        "game": "M7.97,16L5,19C4.67,19.3 4.23,19.5 3.75,19.5A1.75,1.75 0 0,1 2,17.75V17.5L3,10.12C3.21,8.35 4.73,7 6.5,7H17.5C19.27,7 20.79,8.35 21,10.12L22,17.5V17.75A1.75,1.75 0 0,1 20.25,19.5C19.77,19.5 19.33,19.3 19,19L16.03,16H7.97M7,9V11H5V13H7V15H9V13H11V11H9V9H7M16.5,9A1.5,1.5 0 0,0 15,10.5A1.5,1.5 0 0,0 16.5,12A1.5,1.5 0 0,0 18,10.5A1.5,1.5 0 0,0 16.5,9M19.5,12A1.5,1.5 0 0,0 18,13.5A1.5,1.5 0 0,0 19.5,15A1.5,1.5 0 0,0 21,13.5A1.5,1.5 0 0,0 19.5,12Z",
-        "camera": "M9,2L7.17,4H4A2,2 0 0,0 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6A2,2 0 0,0 20,4H16.83L15,2H9M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"
+        "copy": "content_copy",
+        "check": "check_circle",
+        "alert": "warning",
+        "info": "info",
+        "text": "text_fields",
+        "game": "sports_esports",
+        "camera": "photo_camera"
     })
+    // m3 snackbars sit on the inverse surface, so they read apart from every panel
+    readonly property color warnTone: Theme.atTone(Theme.cError, Theme.isLight ? 80 : 40)
 
     // a picked colour shows as itself rather than as an icon
     function popupSwatch(hex, text) {
@@ -122,7 +125,7 @@ PanelWindow {
         height: toastWindow.pillHeight
         width: leadIcon.width + toastWindow.iconGap + Math.ceil(labelMetrics.advanceWidth) + toastWindow.pillPad * 2
         radius: Theme.shapeFull
-        color: Theme.bg
+        color: Theme.inverseSurface
         opacity: toastWindow.shown ? 1 : 0
         scale: toastWindow.shown ? 1 : 0.92
 
@@ -133,6 +136,7 @@ PanelWindow {
             font.family: Theme.fontFamily
             font.bold: true
             font.pixelSize: Theme.fontBodyMd
+            font.variableAxes: Theme.axes(Theme.fontBodyMd, 640, 0)
         }
 
         Behavior on y {
@@ -184,13 +188,22 @@ PanelWindow {
                 height: parent.height
                 radius: Theme.shapeFull
                 color: toastWindow.swatch
-                // a near-black pick would vanish into the pill without this
-                border.color: Theme.alpha(Theme.text, 0.25)
+                // a pick close to the pill's own colour would vanish without this
+                border.color: Theme.alpha(Theme.fgInverseSurface, 0.3)
                 border.width: 1
             }
 
+            Icon {
+                visible: !toastWindow.hasSwatch && /^[a-z0-9_]+$/.test(toastWindow.iconPath)
+                anchors.centerIn: parent
+                name: visible ? toastWindow.iconPath : ""
+                size: toastWindow.glyphSize + 2
+                fill: 1
+                color: toastWindow.warn ? toastWindow.warnTone : Theme.inversePrimary
+            }
+
             Shape {
-                visible: !toastWindow.hasSwatch
+                visible: !toastWindow.hasSwatch && !/^[a-z0-9_]+$/.test(toastWindow.iconPath)
                 width: 24
                 height: 24
                 scale: toastWindow.glyphSize / 24
@@ -198,11 +211,11 @@ PanelWindow {
                 preferredRendererType: Shape.CurveRenderer
 
                 ShapePath {
-                    fillColor: toastWindow.warn ? Theme.error : Theme.accent
+                    fillColor: toastWindow.warn ? toastWindow.warnTone : Theme.inversePrimary
                     strokeWidth: 0
 
                     PathSvg {
-                        path: toastWindow.iconPath
+                        path: /^[a-z0-9_]+$/.test(toastWindow.iconPath) ? "" : toastWindow.iconPath
                     }
 
                 }
@@ -216,10 +229,11 @@ PanelWindow {
             anchors.leftMargin: toastWindow.iconGap
             anchors.verticalCenter: parent.verticalCenter
             text: toastWindow.label
-            color: Theme.text
+            color: Theme.fgInverseSurface
             font.family: Theme.fontFamily
             font.bold: true
             font.pixelSize: Theme.fontBodyMd
+            font.variableAxes: Theme.axes(Theme.fontBodyMd, 640, 0)
         }
 
     }

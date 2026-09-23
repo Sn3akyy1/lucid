@@ -46,9 +46,64 @@ Region {
         height: Math.max(0, reg.hi(reg.by + reg.bh - reg.rad) - reg.lo(reg.by + reg.rad))
     }
 
+    // a module with several overlay parts hands them over as rects; anything else
+    // still gets the single-item region below
+    readonly property var oparts: {
+        if (!reg.mod || !reg.mod.overlayOpen || reg.mod.overlayRects === undefined)
+            return [];
+
+        if (reg.blur && reg.mod.overlayBlurReady !== true)
+            return [];
+
+        return reg.mod.overlayRects;
+    }
+    readonly property var op0: reg.oparts.length > 0 ? reg.oparts[0] : null
+    readonly property var op1: reg.oparts.length > 1 ? reg.oparts[1] : null
+    readonly property real o0x: reg.op0 ? reg.mod.x + reg.op0.x : 0
+    readonly property real o0y: reg.op0 ? reg.mod.y + reg.op0.y : 0
+    readonly property real o1x: reg.op1 ? reg.mod.x + reg.op1.x : 0
+    readonly property real o1y: reg.op1 ? reg.mod.y + reg.op1.y : 0
+
     Region {
-        item: (reg.mod && reg.mod.overlayOpen) ? reg.mod.overlayItem : null
+        item: (reg.mod && reg.mod.overlayOpen && reg.mod.overlayRects === undefined) ? reg.mod.overlayItem : null
         radius: Theme.radiusSm
+    }
+
+    Region {
+        x: reg.op0 ? reg.lo(reg.o0x + reg.inset) : 0
+        y: reg.op0 ? reg.lo(reg.o0y + reg.inset) : 0
+        width: reg.op0 ? Math.max(0, reg.hi(reg.o0x + reg.op0.w - reg.inset) - reg.lo(reg.o0x + reg.inset)) : 0
+        height: reg.op0 ? Math.max(0, reg.hi(reg.o0y + reg.op0.h - reg.inset) - reg.lo(reg.o0y + reg.inset)) : 0
+        radius: reg.op0 ? Math.max(0, reg.op0.r - reg.inset) : 0
+    }
+
+    Region {
+        x: reg.op0 ? reg.lo(reg.o0x + reg.op0.r) : 0
+        y: reg.op0 ? reg.lo(reg.o0y) : 0
+        width: (reg.blur && reg.op0) ? Math.max(0, reg.hi(reg.o0x + reg.op0.w - reg.op0.r) - reg.lo(reg.o0x + reg.op0.r)) : 0
+        height: reg.op0 ? Math.max(0, reg.hi(reg.o0y + reg.op0.h) - reg.lo(reg.o0y)) : 0
+    }
+
+    Region {
+        x: reg.op0 ? reg.lo(reg.o0x) : 0
+        y: reg.op0 ? reg.lo(reg.o0y + reg.op0.r) : 0
+        width: (reg.blur && reg.op0) ? Math.max(0, reg.hi(reg.o0x + reg.op0.w) - reg.lo(reg.o0x)) : 0
+        height: reg.op0 ? Math.max(0, reg.hi(reg.o0y + reg.op0.h - reg.op0.r) - reg.lo(reg.o0y + reg.op0.r)) : 0
+    }
+
+    Region {
+        x: reg.op1 ? reg.lo(reg.o1x + reg.inset) : 0
+        y: reg.op1 ? reg.lo(reg.o1y + reg.inset) : 0
+        width: reg.op1 ? Math.max(0, reg.hi(reg.o1x + reg.op1.w - reg.inset) - reg.lo(reg.o1x + reg.inset)) : 0
+        height: reg.op1 ? Math.max(0, reg.hi(reg.o1y + reg.op1.h - reg.inset) - reg.lo(reg.o1y + reg.inset)) : 0
+        radius: reg.op1 ? Math.max(0, reg.op1.r - reg.inset) : 0
+    }
+
+    Region {
+        x: reg.op1 ? reg.lo(reg.o1x + reg.op1.r) : 0
+        y: reg.op1 ? reg.lo(reg.o1y) : 0
+        width: (reg.blur && reg.op1) ? Math.max(0, reg.hi(reg.o1x + reg.op1.w - reg.op1.r) - reg.lo(reg.o1x + reg.op1.r)) : 0
+        height: reg.op1 ? Math.max(0, reg.hi(reg.o1y + reg.op1.h) - reg.lo(reg.o1y)) : 0
     }
 
     readonly property var pop: (reg.mod && reg.mod.popupOpen) ? reg.mod.popupItem : null

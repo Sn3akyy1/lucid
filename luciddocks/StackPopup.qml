@@ -5,9 +5,19 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import qs
 
-PopupWindow {
+// the dock's window previews. a layer window of its own, like the right-click
+// menu: hyprland only frosts layer surfaces, never popups
+Item {
     id: popup
 
+    property var grabWindow: null
+    property real originX: 0
+    property real originY: 0
+    readonly property real cardW2: row.implicitWidth + 24
+    readonly property real cardH2: popup.cardH + 66
+    readonly property real cardX: Math.max(8, Math.min(popup.width - popup.cardW2 - 8, popup.originX + popup.anchorLocalX - popup.cardW2 / 2))
+    readonly property real cardY: Math.max(8, popup.originY + popup.anchorLocalY - popup.cardH2 - 12)
+    readonly property bool showing: popup.popupVisible || fadeAnim.running
     property bool popupVisible: false
     property string appId: ""
     property string iconName: ""
@@ -17,7 +27,6 @@ PopupWindow {
     property var hostWindow: null
     property real anchorLocalX: 0
     property real anchorLocalY: 0
-
     readonly property int cardW: 172
     readonly property int cardH: 106
     readonly property bool showOpenHere: {
@@ -28,14 +37,8 @@ PopupWindow {
         }
         return true;
     }
-
     property int fadeDuration: Theme.durEnter
     property var fadeEasing: Theme.easeEmphasizedDecel
-
-    onPopupVisibleChanged: {
-        popup.fadeDuration = popup.popupVisible ? Theme.durEnter : Theme.durExit;
-        popup.fadeEasing = popup.popupVisible ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
-    }
 
     function normalizeAddress(a) {
         a = (a || "").toLowerCase();
@@ -51,18 +54,13 @@ PopupWindow {
         return s === "" || s === "special" ? "Scratchpad" : "Scratchpad · " + s;
     }
 
-    anchor.window: popup.hostWindow
-    anchor.rect.x: popup.anchorLocalX - popup.width / 2
-    anchor.rect.y: popup.anchorLocalY - popup.height - 12
-    color: "transparent"
-    implicitWidth: row.implicitWidth + 24
-    implicitHeight: popup.cardH + 66
-    visible: popup.popupVisible || fadeAnim.running
+    onPopupVisibleChanged: {
+        popup.fadeDuration = popup.popupVisible ? Theme.durEnter : Theme.durExit;
+        popup.fadeEasing = popup.popupVisible ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
+    }
 
     HyprlandFocusGrab {
-        id: focusGrab
-
-        windows: [popup]
+        windows: popup.grabWindow ? [popup.grabWindow] : []
         active: popup.popupVisible
         onActiveChanged: {
             if (!active)
@@ -74,7 +72,10 @@ PopupWindow {
     Rectangle {
         id: contentRoot
 
-        anchors.fill: parent
+        x: popup.cardX
+        y: popup.cardY
+        width: popup.cardW2
+        height: popup.cardH2
         radius: Theme.radiusXl
         color: Theme.bg
         opacity: popup.popupVisible ? 1 : 0
@@ -94,7 +95,6 @@ PopupWindow {
                     id: entry
 
                     required property var modelData
-
                     readonly property bool hovered: hoverHandler.hovered
                     readonly property var toplevel: {
                         var want = popup.normalizeAddress(entry.modelData.address);
@@ -218,6 +218,7 @@ PopupWindow {
                             color: Theme.fgAccent
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fs(10)
+                            font.variableAxes: Theme.axes(Theme.fs(10), 600, 0)
                             font.weight: Font.DemiBold
                         }
 
@@ -236,6 +237,7 @@ PopupWindow {
                             color: entry.hovered ? Theme.text : Theme.subtext
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel
+                            font.variableAxes: Theme.axes(Theme.fontLabel, 520, 0)
                             font.weight: Font.Medium
                             elide: Text.ElideRight
                             horizontalAlignment: Text.AlignHCenter
@@ -255,6 +257,7 @@ PopupWindow {
                             color: Theme.subtextDim
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel
+                            font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                             horizontalAlignment: Text.AlignHCenter
                         }
 
@@ -334,6 +337,7 @@ PopupWindow {
                     color: openHereEntry.hovered ? Theme.text : Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabel
+                    font.variableAxes: Theme.axes(Theme.fontLabel, 520, 0)
                     font.weight: Font.Medium
 
                     Behavior on color {

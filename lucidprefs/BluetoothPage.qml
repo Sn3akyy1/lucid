@@ -10,6 +10,14 @@ Column {
     readonly property var adapter: Bt.adapter
     readonly property bool on: Bt.on
     readonly property bool discovering: !!(page.adapter && page.adapter.discovering)
+    // only a scan this page started is ours to stop; bluez refuses the rest
+    property bool ownScan: false
+
+    onDiscoveringChanged: {
+        if (!page.discovering)
+            page.ownScan = false;
+
+    }
     readonly property var visibleDevices: {
         if (!page.adapter || !page.adapter.devices)
             return [];
@@ -62,15 +70,17 @@ Column {
     spacing: 26
     Component.onCompleted: {
         Bt.refresh();
-        if (Prefs.btScanOnOpen && page.on && page.adapter)
+        if (Prefs.btScanOnOpen && page.on && page.adapter && !page.discovering) {
+            page.ownScan = true;
             page.adapter.discovering = true;
+        }
 
     }
 
     // scanning burns radio and battery, so it stops itself
     Timer {
         interval: 45000
-        running: page.discovering
+        running: page.discovering && page.ownScan
         onTriggered: {
             if (page.adapter)
                 page.adapter.discovering = false;
@@ -197,8 +207,11 @@ Column {
                     enabled: page.on
                     text: page.discovering ? "Stop" : "Search"
                     onClicked: {
-                        if (page.adapter)
-                            page.adapter.discovering = !page.adapter.discovering;
+                        if (!page.adapter)
+                            return ;
+
+                        page.ownScan = !page.discovering;
+                        page.adapter.discovering = !page.discovering;
 
                     }
                 }
@@ -292,6 +305,7 @@ Column {
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBody
+                font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
             }
 
         }
@@ -302,6 +316,7 @@ Column {
         color: Theme.subtext
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontTitleSm
+        font.variableAxes: Theme.axes(Theme.fontTitleSm, 600, 0)
         font.weight: Font.DemiBold
         font.letterSpacing: 0.1
         leftPadding: 22

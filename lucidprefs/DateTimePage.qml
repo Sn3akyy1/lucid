@@ -1,5 +1,7 @@
 import QtQuick
+import Quickshell
 import qs
+import qs.lucidui
 
 Column {
     id: page
@@ -119,6 +121,7 @@ Column {
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontTitle
+                        font.variableAxes: Theme.axes(Theme.fontTitle, 640, 0)
                         font.bold: true
                     }
 
@@ -127,6 +130,7 @@ Column {
                         color: Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontLabel
+                        font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
                     }
 
                 }
@@ -199,13 +203,203 @@ Column {
             title: "Show date"
             resetKey: "clockShowDate"
             description: "Keep the weekday and day-of-month beside the time in the bar."
-            showDivider: false
 
             M3Switch {
                 checked: Prefs.clockShowDate
                 onToggled: (v) => {
                     return Prefs.clockShowDate = v;
                 }
+            }
+
+        }
+
+        SettingRow {
+            title: "Show seconds"
+            resetKey: "clockShowSeconds"
+            description: "Tick the seconds in the bar. Off, the colon blinks instead."
+
+            M3Switch {
+                checked: Prefs.clockShowSeconds
+                onToggled: (v) => {
+                    return Prefs.clockShowSeconds = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Weather beside the time"
+            resetKey: "clockShowWeather"
+            description: "A small icon and the temperature, taken from the Weather service."
+
+            M3Switch {
+                checked: Prefs.clockShowWeather
+                onToggled: (v) => {
+                    return Prefs.clockShowWeather = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Running timer in the bar"
+            resetKey: "clockShowTimer"
+            description: "While a timer, pomodoro or stopwatch is counting, show it as a chip with a ring."
+
+            M3Switch {
+                checked: Prefs.clockShowTimer
+                onToggled: (v) => {
+                    return Prefs.clockShowTimer = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Week starts on"
+            resetKey: "weekStartMonday"
+            description: "For the clock's calendar and the calendar widgets."
+
+            M3Segmented {
+                width: 200
+                options: [{
+                    "key": "mon",
+                    "label": "Monday"
+                }, {
+                    "key": "sun",
+                    "label": "Sunday"
+                }]
+                current: Prefs.weekStartMonday ? "mon" : "sun"
+                onChosen: (k) => {
+                    return Prefs.weekStartMonday = k === "mon";
+                }
+            }
+
+        }
+
+    }
+
+    SettingCard {
+        title: "TIMERS"
+
+        SettingRow {
+            title: "Focus length"
+            resetKey: "pomodoroFocus"
+            description: "One pomodoro focus session."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 5
+                to: 90
+                stepSize: 5
+                suffix: " min"
+                value: Prefs.pomodoroFocus
+                onMoved: (v) => {
+                    return Prefs.pomodoroFocus = Math.round(v);
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Short break"
+            resetKey: "pomodoroShort"
+            description: "The break after each focus session."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 1
+                to: 30
+                stepSize: 1
+                suffix: " min"
+                value: Prefs.pomodoroShort
+                onMoved: (v) => {
+                    return Prefs.pomodoroShort = Math.round(v);
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Long break"
+            resetKey: "pomodoroLong"
+            description: "The break after a full set of rounds."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 5
+                to: 60
+                stepSize: 5
+                suffix: " min"
+                value: Prefs.pomodoroLong
+                onMoved: (v) => {
+                    return Prefs.pomodoroLong = Math.round(v);
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Rounds before a long break"
+            resetKey: "pomodoroRounds"
+            description: "How many focus sessions make a set."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 2
+                to: 8
+                stepSize: 1
+                suffix: ""
+                value: Prefs.pomodoroRounds
+                onMoved: (v) => {
+                    return Prefs.pomodoroRounds = Math.round(v);
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Start the next phase on its own"
+            resetKey: "pomodoroAutoStart"
+            description: "Off, the pomodoro waits for you between focus and break."
+
+            M3Switch {
+                checked: Prefs.pomodoroAutoStart
+                onToggled: (v) => {
+                    return Prefs.pomodoroAutoStart = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Sound when time is up"
+            resetKey: "timerSound"
+            description: "Plays the alarm-clock sound alongside the notification."
+
+            M3Switch {
+                checked: Prefs.timerSound
+                onToggled: (v) => {
+                    return Prefs.timerSound = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "World clocks"
+            description: "Add and remove cities from the World tab of the clock, opened from the time in the bar."
+
+            Button {
+                variant: "tonal"
+                size: "xs"
+                icon: "public"
+                text: "Open"
+                onClicked: Quickshell.execDetached(["qs", "ipc", "call", "--", "clock", "open", "world"])
             }
 
         }
