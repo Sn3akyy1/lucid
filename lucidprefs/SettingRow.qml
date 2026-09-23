@@ -25,8 +25,8 @@ Item {
     property string warning: ""
     default property alias control: holder.data
     readonly property string activeDescription: (!row.enabled && row.disabledReason !== "") ? row.disabledReason : row.description
-    readonly property int outerRadius: 26
-    readonly property int innerRadius: 6
+    readonly property int outerRadius: Theme.rad(26)
+    readonly property int innerRadius: Theme.rad(6)
     readonly property int padH: 22
     readonly property int padV: 16
     // the SettingCard this row belongs to, if any

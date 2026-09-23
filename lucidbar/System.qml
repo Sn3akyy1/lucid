@@ -983,7 +983,7 @@ BarPill {
                 anchors.verticalCenter: parent.verticalCenter
                 width: kbText.implicitWidth + 10
                 height: 18
-                radius: 9
+                radius: Theme.rad(9)
                 color: kbArea.containsMouse ? Theme.alpha(Theme.text, 0.1) : "transparent"
 
                 Text {

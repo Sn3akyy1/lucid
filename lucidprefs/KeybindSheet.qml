@@ -224,7 +224,7 @@ PanelWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     width: Math.min(320, Math.max(180, card.width * 0.26))
                     height: 44
-                    radius: height / 2
+                    radius: Theme.pill(height)
                     color: Theme.bgSunken
                     border.width: searchInput.activeFocus ? 2 : 1
                     border.color: searchInput.activeFocus ? Theme.accent : Theme.outline

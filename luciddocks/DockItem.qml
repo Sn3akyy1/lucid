@@ -114,7 +114,7 @@ Item {
             id: tile
 
             anchors.fill: parent
-            radius: dockItem.sc(14)
+            radius: dockItem.sc(Theme.rad(14))
             color: Theme.withBlur(Theme.bgTile)
             visible: Prefs.dockIconTiles
         }
@@ -123,7 +123,7 @@ Item {
             id: stateLayer
 
             anchors.fill: parent
-            radius: dockItem.sc(14)
+            radius: dockItem.sc(Theme.rad(14))
             color: Theme.text
             opacity: dockItem.pressed ? Theme.statePressed : (dockItem.hovered ? Theme.stateHover : (dockItem.toggleActive ? Theme.stateFocus : 0))
 
@@ -151,7 +151,7 @@ Item {
 
             anchors.fill: parent
             anchors.margins: dockItem.sc(5)
-            radius: dockItem.sc(11)
+            radius: dockItem.sc(Theme.rad(11))
             color: Theme.bgHigh
             visible: dockItem.iconContent === null && dockItem.iconSource === ""
 

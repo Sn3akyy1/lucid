@@ -665,7 +665,7 @@ WidgetBody {
 
         implicitWidth: chipRow.implicitWidth + 24
         implicitHeight: 30
-        radius: height / 2
+        radius: Theme.pill(height)
         opacity: chip.busy ? 0.6 : 1
         color: chip.on ? Theme.accent : Theme.alpha(Theme.text, chipArea.containsMouse ? 0.13 : 0.07)
 

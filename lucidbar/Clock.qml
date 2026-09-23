@@ -342,7 +342,7 @@ BarPill {
     altOpen: root.showingNotify
     altWidth: 270
     altHeight: 78
-    expandedRadius: 20
+    expandedRadius: Theme.rad(20)
 
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
