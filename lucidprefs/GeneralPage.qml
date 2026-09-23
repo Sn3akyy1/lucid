@@ -33,6 +33,74 @@ Column {
         }
 
         SettingRow {
+            title: "OSD style"
+            description: "Where volume, brightness and lock-key changes show up. Islands float above the bottom edge; Notches rise out of it."
+
+            M3Segmented {
+                width: 260
+                current: Prefs.osdStyle
+                options: [{
+                    "key": "island",
+                    "label": "Islands"
+                }, {
+                    "key": "notch",
+                    "label": "Notches"
+                }]
+                onChosen: (key) => {
+                    return Prefs.osdStyle = key;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "OSD width"
+            resetKey: "osdNotchWidth"
+            description: "How wide the notched OSD is; the volume and brightness track takes up the difference. Caps Lock, Num Lock and the microphone use the same width unless their label needs more room. Dragging shows the OSD at its new size."
+            enabled: Prefs.osdNotch
+            disabledReason: "Only the notched OSD has a set size - switch OSD style to Notches above."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: Prefs.osdNotch
+                from: 240
+                to: 640
+                stepSize: 10
+                suffix: " px"
+                value: Prefs.osdNotchWidth
+                onMoved: (v) => {
+                    return Prefs.osdNotchWidth = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "OSD height"
+            resetKey: "osdNotchHeight"
+            description: "How tall the notched OSD is, from a slim strip to a roomier card."
+            enabled: Prefs.osdNotch
+            disabledReason: "Only the notched OSD has a set size - switch OSD style to Notches above."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: Prefs.osdNotch
+                from: 60
+                to: 110
+                stepSize: 2
+                suffix: " px"
+                value: Prefs.osdNotchHeight
+                onMoved: (v) => {
+                    return Prefs.osdNotchHeight = v;
+                }
+            }
+
+        }
+
+
+        SettingRow {
             title: "Dock style"
             description: "The same choice for the dock, against the bottom edge."
             showDivider: false
