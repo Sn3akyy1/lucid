@@ -61,6 +61,8 @@ BarPill {
     readonly property real lenSec: root.player ? root.player.length : 0
     readonly property bool hasDuration: root.lenSec > 0
     property real livePosSec: root.posSec
+    // set by the system pill while its media card is on screen
+    property bool posWanted: false
     property real posBase: root.posSec
     property double posTimestamp: Date.now()
     property int jumpDuration: 0
@@ -493,8 +495,11 @@ BarPill {
         }
     }
 
+    // livePosSec is read only by this pill's own panel and the system pill's
+    // media card, both closed most of the time. a per-frame interpolation behind
+    // a closed panel measured ~18% of a core, so it waits until something shows it
     FrameAnimation {
-        running: root.isPlaying && !trackHitArea.dragging
+        running: root.isPlaying && !trackHitArea.dragging && (root.expanded || root.posWanted)
         onTriggered: root.livePosSec = Math.min(root.lenSec, root.posBase + (Date.now() - root.posTimestamp) / 1000)
     }
 

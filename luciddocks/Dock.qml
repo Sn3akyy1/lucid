@@ -43,7 +43,7 @@ PanelWindow {
     // the one way in from outside the dock — the launcher's modes are its
     // own search prefixes, so callers pass the prefix they want
     function openLauncher(query) {
-        launcherFace.searchText = query;
+        dockWindow.setSearchText(query);
         dockWindow.menuOpen = true;
     }
 
@@ -56,8 +56,27 @@ PanelWindow {
     property bool snapPlacement: false
     property int contentFadeDelay: 0
     property bool menuOpen: false
+    // the launcher face is ~64mb of delegates and nothing shows it until the
+    // menu opens, so it is built on the first open and then kept
+    property bool launcherBuilt: false
+    // mirrors LauncherFace's own chrome; owned here so the geometry bindings
+    // below do not have to read a face that may not exist yet
+    readonly property int launcherSearchH: 46
+    readonly property int launcherChipsH: 32
+    readonly property int launcherChrome: dockWindow.launcherSearchH + dockWindow.launcherChipsH + 22
+
+    // every write to the search field goes through here, so the face is built
+    // before anything tries to set text on it
+    function setSearchText(text) {
+        dockWindow.launcherBuilt = true;
+        if (launcherLoader.item)
+            launcherLoader.item.searchText = text;
+    }
 
     onMenuOpenChanged: {
+        if (dockWindow.menuOpen)
+            dockWindow.launcherBuilt = true;
+
         dockWindow.pulseMorph();
         dockWindow.contentFadeDelay = dockWindow.menuOpen ? 190 : 0;
         if (dockWindow.menuOpen) {
@@ -162,7 +181,7 @@ PanelWindow {
 
     onClientsDataChanged: dockWindow.syncRunningApps()
 
-    readonly property string rawQuery: launcherFace.searchText
+    readonly property string rawQuery: launcherLoader.item ? launcherLoader.item.searchText : ""
 
     function modeFor(raw) {
         var q = raw.toLowerCase();
@@ -226,7 +245,8 @@ PanelWindow {
     onRawQueryChanged: {
         dockWindow.rebuildResults();
         // the face already reset itself, but against the pre-rebuild rows
-        launcherFace.resetSelection();
+        if (launcherLoader.item)
+            launcherLoader.item.resetSelection();
     }
     onModeChanged: {
         if (dockWindow.mode === "wallpaper") {
@@ -358,7 +378,7 @@ PanelWindow {
         return 460;
     }
     property real resultsHeight: 0
-    readonly property real menuContentMax: (dockWindow.mode === "commands" ? dockWindow.commandMaxHeight : dockWindow.menuMaxHeight) - dockWindow.panelPadding - launcherFace.chromeHeight
+    readonly property real menuContentMax: (dockWindow.mode === "commands" ? dockWindow.commandMaxHeight : dockWindow.menuMaxHeight) - dockWindow.panelPadding - dockWindow.launcherChrome
     readonly property real menuHeight: {
         var content;
         if (dockWindow.mode === "wallpaper")
@@ -368,7 +388,7 @@ PanelWindow {
             content = Math.min(dockWindow.menuContentMax, 420);
         else
             content = Math.max(70, Math.min(dockWindow.resultsHeight, dockWindow.menuContentMax));
-        return Math.round(dockWindow.panelPadding + launcherFace.chromeHeight + content);
+        return Math.round(dockWindow.panelPadding + dockWindow.launcherChrome + content);
     }
 
     readonly property var classIndex: {
@@ -608,7 +628,7 @@ PanelWindow {
     }
 
     function rebuildResults() {
-        var raw = launcherFace.searchText;
+        var raw = dockWindow.rawQuery;
         var mode = dockWindow.modeFor(raw);
         var rows = [];
         var q = dockWindow.queryFor(raw).toLowerCase();
@@ -742,7 +762,8 @@ PanelWindow {
             resultsModel.remove(rows.length, resultsModel.count - rows.length);
 
         dockWindow.resultsHeight = dockWindow.measure(rows);
-        launcherFace.resultsChanged();
+        if (launcherLoader.item)
+            launcherLoader.item.resultsChanged();
     }
 
     function measure(rows) {
@@ -822,14 +843,14 @@ PanelWindow {
 
     function runCommand(id) {
         if (id === "wallpaper") {
-            launcherFace.searchText = ">wallpaper";
+            dockWindow.setSearchText(">wallpaper");
         } else if (id === "theme") {
-            launcherFace.searchText = ">theme";
+            dockWindow.setSearchText(">theme");
         } else if (id === "power") {
             dockWindow.menuOpen = false;
             dockWindow.openSession();
         } else if (id === "clipboard") {
-            launcherFace.searchText = ">clip";
+            dockWindow.setSearchText(">clip");
         } else if (id === "shuffle") {
             wallpaperShuffle.pick();
             dockWindow.menuOpen = false;
@@ -843,11 +864,11 @@ PanelWindow {
             dockWindow.menuOpen = false;
             Prefs.settingsRequested("widgets");
         } else if (id === "emoji") {
-            launcherFace.searchText = ":";
+            dockWindow.setSearchText(":");
         } else if (id === "run") {
-            launcherFace.searchText = "$";
+            dockWindow.setSearchText("$");
         } else if (id === "web") {
-            launcherFace.searchText = "?";
+            dockWindow.setSearchText("?");
         }
     }
 
@@ -887,7 +908,9 @@ PanelWindow {
     function syncStripToCurrent() {
         for (var i = 0; i < wallpapersModel.count; i++) {
             if (wallpapersModel.get(i).path === wallpaperState.current) {
-                launcherFace.setWallpaperIndex(i);
+                if (launcherLoader.item)
+                    launcherLoader.item.setWallpaperIndex(i);
+
                 return;
             }
         }
@@ -1251,7 +1274,7 @@ PanelWindow {
 
         function toggle(): void {
             if (!dockWindow.menuOpen)
-                launcherFace.searchText = "";
+                dockWindow.setSearchText("");
 
             dockWindow.menuOpen = !dockWindow.menuOpen;
         }
@@ -1296,7 +1319,7 @@ PanelWindow {
         }
 
         function command(): void {
-            launcherFace.searchText = ">";
+            dockWindow.setSearchText(">");
             dockWindow.menuOpen = true;
         }
 
@@ -1305,7 +1328,7 @@ PanelWindow {
         }
 
         function search(q: string): void {
-            launcherFace.searchText = q;
+            dockWindow.setSearchText(q);
             dockWindow.menuOpen = true;
         }
 
@@ -1740,7 +1763,8 @@ PanelWindow {
                         break;
                     }
                 }
-                launcherFace.setWallpaperIndex(idx);
+                if (launcherLoader.item)
+                    launcherLoader.item.setWallpaperIndex(idx);
             }
         }
 
@@ -2021,7 +2045,7 @@ PanelWindow {
                     }
                     onRequestToggle: {
                         if (!dockWindow.menuOpen)
-                            launcherFace.searchText = "";
+                            dockWindow.setSearchText("");
 
                         dockWindow.menuOpen = !dockWindow.menuOpen;
                     }
@@ -2098,47 +2122,52 @@ PanelWindow {
 
         }
 
-        LauncherFace {
-            id: launcherFace
+        Loader {
+            id: launcherLoader
 
+            active: dockWindow.launcherBuilt
             width: dockWindow.menuWidth - dockWindow.panelPadding
             height: dockWindow.menuHeight - dockWindow.panelPadding
-
-            targetWidth: dockWindow.menuWidth - dockWindow.panelPadding
-            targetHeight: dockWindow.menuHeight - dockWindow.panelPadding
-            mode: dockWindow.mode
-            model: resultsModel
-            wallpaperModel: wallpapersModel
-            wallHeroW: dockWindow.wallHeroW
-            wallHeroH: dockWindow.wallHeroH
-            wallMidW: dockWindow.wallMidW
-            wallMidH: dockWindow.wallMidH
-            wallSmallW: dockWindow.wallSmallW
-            wallSmallH: dockWindow.wallSmallH
-            wallCardGap: dockWindow.wallCardGap
-            appliedWallpaper: dockWindow.appliedWallpaper
-            highlightQuery: dockWindow.filterQuery
-            onActivated: (index) => dockWindow.activateResult(index)
-            onCloseRequested: dockWindow.menuOpen = false
-            onBackRequested: launcherFace.searchText = dockWindow.mode === "commands" ? "" : ">"
-            onModeRequested: (m) => {
-                if (m === "power") {
-                    dockWindow.menuOpen = false;
-                    dockWindow.openSession();
-                    return ;
-                }
-                launcherFace.searchText = dockWindow.prefixFor(m);
-            }
-            onDeleteRequested: (index) => dockWindow.deleteResult(index)
-            onClearRequested: Clip.wipe()
-            onWallpaperPreviewed: (path) => dockWindow.requestWallpaper(path)
-            onWallpaperChosen: (path) => {
-                dockWindow.applyWallpaper(path);
-                dockWindow.menuOpen = false;
-            }
             anchors.centerIn: parent
             opacity: dockWindow.menuOpen ? 1 : 0
-            visible: launcherFace.opacity > 0
+            visible: launcherLoader.opacity > 0
+
+            sourceComponent: LauncherFace {
+                searchHeight: dockWindow.launcherSearchH
+                chipsHeight: dockWindow.launcherChipsH
+                targetWidth: dockWindow.menuWidth - dockWindow.panelPadding
+                targetHeight: dockWindow.menuHeight - dockWindow.panelPadding
+                mode: dockWindow.mode
+                model: resultsModel
+                wallpaperModel: wallpapersModel
+                wallHeroW: dockWindow.wallHeroW
+                wallHeroH: dockWindow.wallHeroH
+                wallMidW: dockWindow.wallMidW
+                wallMidH: dockWindow.wallMidH
+                wallSmallW: dockWindow.wallSmallW
+                wallSmallH: dockWindow.wallSmallH
+                wallCardGap: dockWindow.wallCardGap
+                appliedWallpaper: dockWindow.appliedWallpaper
+                highlightQuery: dockWindow.filterQuery
+                onActivated: (index) => dockWindow.activateResult(index)
+                onCloseRequested: dockWindow.menuOpen = false
+                onBackRequested: dockWindow.setSearchText(dockWindow.mode === "commands" ? "" : ">")
+                onModeRequested: (m) => {
+                    if (m === "power") {
+                        dockWindow.menuOpen = false;
+                        dockWindow.openSession();
+                        return ;
+                    }
+                    dockWindow.setSearchText(dockWindow.prefixFor(m));
+                }
+                onDeleteRequested: (index) => dockWindow.deleteResult(index)
+                onClearRequested: Clip.wipe()
+                onWallpaperPreviewed: (path) => dockWindow.requestWallpaper(path)
+                onWallpaperChosen: (path) => {
+                    dockWindow.applyWallpaper(path);
+                    dockWindow.menuOpen = false;
+                }
+            }
 
             Behavior on width {
                 enabled: shell.shellReady

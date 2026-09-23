@@ -268,10 +268,11 @@ Singleton {
         return r[2];
     }
 
-    // qt builds a font engine per distinct axis tuple and mmaps the whole 4mb
-    // flex file for each one, so a free-running opsz costs ~2.4mb of rss per
-    // pixel size in use. opsz only picks the optical master, never the rendered
-    // size, so snapping it to a ladder is invisible and collapses the engines
+    // qt builds a font engine per distinct axis tuple and mmaps the whole flex
+    // file for each one, so a free-running opsz costs rss per pixel size in use.
+    // opsz only picks the optical master, never the rendered size, so snapping
+    // it to a ladder is invisible and collapses the engines. the shipped file is
+    // pinned to the three axes below, so GRAD and wdth are no longer asked for
     readonly property var _opszStops: [9, 13, 18, 28, 48, 96]
 
     function _snap(px) {
@@ -294,8 +295,7 @@ Singleton {
         return ({
             "wght": Math.round((wght || 400) / 25) * 25,
             "opsz": root._snap(px),
-            "ROND": Math.round((rond || 0) / 10) * 10,
-            "GRAD": root.isLight ? 0 : -10
+            "ROND": Math.round((rond || 0) / 10) * 10
         });
     }
 

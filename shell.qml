@@ -383,7 +383,7 @@ ShellRoot {
         id: keyboardMod
     }
 
-    Settings {
+    SettingsHost {
         id: settingsMod
     }
 

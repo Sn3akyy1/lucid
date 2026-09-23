@@ -440,19 +440,26 @@ PanelWindow {
         onClicked: mojiWindow.open = false
     }
 
-    MojiFace {
-        id: face
+    // the face and its gif pane are ~1700 lines of delegates; build them on the
+    // first open rather than at startup, same gate the emoji data already uses
+    Loader {
+        id: faceLoader
 
-        host: mojiWindow
+        active: mojiWindow.dataRequested
         x: mojiWindow.panelX
         y: mojiWindow.panelY
         width: mojiWindow.panelW
         height: mojiWindow.panelH
-        onCloseRequested: mojiWindow.open = false
-        onDragged: (dx, dy) => {
-            st.panelX = Math.max(0, Math.min(mojiWindow.width - mojiWindow.panelW, mojiWindow.panelX + dx));
-            st.panelY = Math.max(0, Math.min(mojiWindow.height - mojiWindow.panelH, mojiWindow.panelY + dy));
+
+        sourceComponent: MojiFace {
+            host: mojiWindow
+            onCloseRequested: mojiWindow.open = false
+            onDragged: (dx, dy) => {
+                st.panelX = Math.max(0, Math.min(mojiWindow.width - mojiWindow.panelW, mojiWindow.panelX + dx));
+                st.panelY = Math.max(0, Math.min(mojiWindow.height - mojiWindow.panelH, mojiWindow.panelY + dy));
+            }
         }
+
     }
 
     BackgroundEffect.blurRegion: Theme.blurAmount > 0 && mojiWindow.open ? panelBlurRegion : null
@@ -460,10 +467,10 @@ PanelWindow {
     Region {
         id: panelBlurRegion
 
-        x: Math.ceil(face.x - 0.002)
-        y: Math.ceil(face.y - 0.002)
-        width: Math.max(0, Math.floor(face.x + face.width + 0.002) - Math.ceil(face.x - 0.002))
-        height: Math.max(0, Math.floor(face.y + face.height + 0.002) - Math.ceil(face.y - 0.002))
+        x: Math.ceil(mojiWindow.panelX - 0.002)
+        y: Math.ceil(mojiWindow.panelY - 0.002)
+        width: Math.max(0, Math.floor(mojiWindow.panelX + mojiWindow.panelW + 0.002) - Math.ceil(mojiWindow.panelX - 0.002))
+        height: Math.max(0, Math.floor(mojiWindow.panelY + mojiWindow.panelH + 0.002) - Math.ceil(mojiWindow.panelY - 0.002))
         radius: Theme.radiusXl
     }
 

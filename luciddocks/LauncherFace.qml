@@ -29,8 +29,8 @@ Item {
     property real targetWidth: width
     property real targetHeight: height
 
-    readonly property int searchHeight: 46
-    readonly property int chipsHeight: 32
+    property int searchHeight: 46
+    property int chipsHeight: 32
     readonly property int chromeHeight: face.searchHeight + face.chipsHeight + 22
     // the launcher's modes, reachable by prefix or by chip
     readonly property var modes: [

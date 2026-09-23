@@ -25,6 +25,7 @@ set -euo pipefail
 : "${LUCID_NVIDIA_VERSION_FILE:=/proc/driver/nvidia/version}"
 : "${LUCID_DRM_DIR:=/sys/class/drm}"
 : "${LUCID_VULKAN_ICD_DIR:=/usr/share/vulkan/icd.d}"
+: "${LUCID_EGL_VENDOR_DIR:=/usr/share/glvnd/egl_vendor.d}"
 
 # oldest driver branch trusted for Wayland Vulkan — 555 is where NVIDIA shipped
 # explicit sync. the legacy 470/390 branches stay on the OpenGL path
@@ -147,6 +148,52 @@ wants_vulkan() {
     return 0
 }
 
+egl_reason="left alone"
+
+# libglvnd loads every installed egl vendor icd to query it, and nvidia's sorts
+# ahead of mesa, so an unused nvidia-utils drags ~88mb of driver into every gl
+# process on an intel or amd box. no nvidia kernel module means no nvidia gpu to
+# render on, so drop its icd from the search list
+trim_egl_vendors() {
+    if [[ -n ${__EGL_VENDOR_LIBRARY_FILENAMES:-} ]]; then
+        egl_reason="__EGL_VENDOR_LIBRARY_FILENAMES was already set"
+        return 0
+    fi
+    if [[ -r $LUCID_NVIDIA_VERSION_FILE ]]; then
+        egl_reason="nvidia driver is loaded, every icd kept"
+        return 0
+    fi
+    if [[ ! -d $LUCID_EGL_VENDOR_DIR ]]; then
+        return 0
+    fi
+
+    local keep=() dropped=0 f
+    for f in "$LUCID_EGL_VENDOR_DIR"/*.json; do
+        if [[ ! -e $f ]]; then
+            continue
+        fi
+        if [[ ${f##*/} == *nvidia* ]]; then
+            dropped=1
+            continue
+        fi
+        keep+=("$f")
+    done
+
+    # never narrow the list to nothing, and do not bother when there was no
+    # nvidia icd to drop in the first place
+    if [[ $dropped -eq 0 || ${#keep[@]} -eq 0 ]]; then
+        return 0
+    fi
+
+    local joined
+    printf -v joined '%s:' "${keep[@]}"
+    export __EGL_VENDOR_LIBRARY_FILENAMES="${joined%:}"
+    egl_reason="dropped nvidia's egl icd, its kernel module is not loaded"
+    return 0
+}
+
+trim_egl_vendors || true
+
 backend=""
 if [[ -n ${QSG_RHI_BACKEND:-} ]]; then
     backend="$QSG_RHI_BACKEND"
@@ -178,6 +225,7 @@ fi
 if [[ ${1:-} == --explain ]]; then
     printf 'backend: %s\n' "${backend:-opengl (Qt default)}"
     printf 'reason:  %s\n' "$reason"
+    printf 'egl:     %s\n' "$egl_reason"
     exit 0
 fi
 

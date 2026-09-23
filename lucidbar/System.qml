@@ -16,6 +16,16 @@ BarPill {
     // wired from shell.qml
     property var mprisMod: null
 
+    // the media card interpolates the mpris position per frame; tell the media
+    // pill to run that only while this panel is actually up
+    Binding {
+        target: root.mprisMod
+        property: "posWanted"
+        value: root.expanded
+        when: root.mprisMod !== null
+        restoreMode: Binding.RestoreBindingOrValue
+    }
+
     property string view: "main"
     readonly property bool inSubView: root.view !== "main"
 
