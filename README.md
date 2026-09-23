@@ -647,6 +647,24 @@ every template on the last change, with matugen's error for the ones that
 failed. `~/.config/lucid/render-templates.sh` is what renders them, for the
 wallpaper and the fixed palettes alike.
 
+**Settings → Theme** shows the same thing without opening the file:
+
+- **App templates** lists every template with the file it writes and how the
+  last change went, matugen's reason included when one failed. A switch turns
+  a template off (its block stays in the config, commented out) or back on, in
+  which case it renders at once with the current colours. *Render again* redoes
+  all of them without touching the wallpaper.
+- **Add an app** offers the templates Lucid ships for applications you have
+  installed but that aren't wired up yet — installed after Lucid, say.
+- **Your own template** adds one from a file or an `https://` link. *Try it*
+  shows what it writes with your colours, or why it can't, before it's added.
+  Below it, every colour role of the current palette: click one to copy the
+  variable that writes it, as `#rrggbb`, `rrggbb`, `rgb()`, `rgba()` or `hsl()`.
+
+`~/.config/lucid/templates.py` does the editing, and runs from a terminal too
+(`templates.py list`, `set <name> on|off`, `add`, `remove`, `try`). The config
+is copied to `config.toml.lucid-backup` before each change.
+
 ### Adding your own theme
 
 **Settings → Theme** takes the URL of any colour-scheme repo, clones it, reads

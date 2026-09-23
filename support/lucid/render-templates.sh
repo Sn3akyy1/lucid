@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # render-templates.sh <colours.json> <dark|light> <source> [--skip <output>]...
+# render-templates.sh --again [--only <name>]
 #
 # renders every template in the matugen config from one set of colours: the
 # json matugen dumps for a scheme (matugen ... --dry-run --json hex). the
@@ -16,6 +17,9 @@
 #     reads its colours on a reload
 #   - --skip leaves out the template that writes a given file, for files the
 #     caller writes itself
+#   - the colours are kept in ~/.cache/lucid/colours.json, so --again renders
+#     with the last ones without redoing the scheme: every template, or with
+#     --only just one (Settings does that when a template is switched on)
 #
 # runs are serialised, so after two quick changes of theme or wallpaper the
 # older run can never finish last and leave its colours behind.
@@ -24,18 +28,30 @@
 
 set -uo pipefail
 
-USAGE="usage: render-templates.sh <colours.json> <dark|light> <source> [--skip <output>]..."
-COLOURS="${1:?$USAGE}"
-MODE="${2:?$USAGE}"
-SOURCE="${3:?$USAGE}"
-shift 3
-
+USAGE="usage: render-templates.sh <colours.json> <dark|light> <source> [--skip <output>]...
+       render-templates.sh --again [--only <name>]"
+AGAIN=0
+ONLY=""
 SKIP=()
+if [[ "${1:-}" == "--again" ]]; then
+    AGAIN=1
+    shift
+else
+    COLOURS="${1:?$USAGE}"
+    MODE="${2:?$USAGE}"
+    SOURCE="${3:?$USAGE}"
+    shift 3
+fi
 while (( $# )); do
     case "$1" in
     --skip)
-        [[ $# -ge 2 ]] || { echo "$USAGE" >&2; exit 1; }
+        [[ $# -ge 2 && $AGAIN == 0 ]] || { echo "$USAGE" >&2; exit 1; }
         SKIP+=("${2/#\~/$HOME}")
+        shift 2
+        ;;
+    --only)
+        [[ $# -ge 2 && $AGAIN == 1 ]] || { echo "$USAGE" >&2; exit 1; }
+        ONLY="$2"
         shift 2
         ;;
     *)
@@ -45,14 +61,6 @@ while (( $# )); do
     esac
 done
 
-if [[ "$MODE" != "dark" && "$MODE" != "light" ]]; then
-    echo "error: mode must be dark or light (got: $MODE)" >&2
-    exit 1
-fi
-if [[ ! -f "$COLOURS" ]]; then
-    echo "error: no colours at $COLOURS" >&2
-    exit 1
-fi
 for tool in matugen jq; do
     command -v "$tool" &>/dev/null || { echo "error: $tool is required" >&2; exit 1; }
 done
@@ -61,10 +69,36 @@ CFG="$HOME/.config/matugen/config.toml"
 CFG_DIR="$(dirname "$CFG")"
 STATE_DIR="$HOME/.cache/lucid"
 STATE="$STATE_DIR/templates.json"
+KEPT="$STATE_DIR/colours.json"
 mkdir -p "$STATE_DIR"
 
 exec 9> "$STATE_DIR/templates.lock"
 flock 9
+
+if (( AGAIN )); then
+    # the colours, mode, source and skips of the last change
+    if [[ ! -f "$KEPT" || ! -f "$STATE" ]]; then
+        echo "error: nothing rendered yet to render again" >&2
+        exit 1
+    fi
+    COLOURS="$KEPT"
+    MODE=$(jq -r '.mode // "dark"' "$STATE")
+    SOURCE=$(jq -r '.source // ""' "$STATE")
+    mapfile -t SKIP < <(jq -r '.skip // [] | .[]' "$STATE")
+fi
+
+if [[ "$MODE" != "dark" && "$MODE" != "light" ]]; then
+    echo "error: mode must be dark or light (got: $MODE)" >&2
+    exit 1
+fi
+if [[ ! -f "$COLOURS" ]]; then
+    echo "error: no colours at $COLOURS" >&2
+    exit 1
+fi
+if (( ! AGAIN )); then
+    cp "$COLOURS" "$KEPT.tmp" && mv "$KEPT.tmp" "$KEPT"
+    COLOURS="$KEPT"
+fi
 
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
@@ -140,6 +174,7 @@ explain() {
 FAILED=()
 HYPR=0
 while IFS=$'\037' read -r i name input output; do
+    [[ -n "$ONLY" && "$name" != "$ONLY" ]] && continue
     out=$(resolve "$output")
     in=$(resolve "$input")
     state=ok
@@ -169,14 +204,29 @@ while IFS=$'\037' read -r i name input output; do
     printf '%s\t%s\t%s\t%s\n' "$name" "$out" "$state" "$error" >> "$WORK/results"
 done < "$WORK/list"
 
-jq -R -s --arg source "$SOURCE" --arg mode "$MODE" --argjson time "$(date +%s)" '
-    {
-        time: $time,
-        source: $source,
-        mode: $mode,
-        templates: [split("\n")[] | select(length > 0) | split("\t")
-                    | {name: .[0], output: .[1], state: .[2], error: (.[3] // "")}]
-    }' "$WORK/results" > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+if [[ -n "$ONLY" && ! -s "$WORK/results" ]]; then
+    echo "error: no template named $ONLY" >&2
+    exit 1
+fi
+
+jq -R -s '[split("\n")[] | select(length > 0) | split("\t")
+           | {name: .[0], output: .[1], state: .[2], error: (.[3] // "")}]' \
+    "$WORK/results" > "$WORK/results.json"
+if [[ -n "$ONLY" ]]; then
+    # one template again: its entry changes, the rest of the record stays
+    jq --slurpfile new "$WORK/results.json" '
+        $new[0][0] as $e
+        | .templates = (if any(.templates[]; .name == $e.name)
+                        then [.templates[] | if .name == $e.name then $e else . end]
+                        else .templates + [$e] end)' \
+        "$STATE" > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+else
+    jq -n --slurpfile t "$WORK/results.json" --arg source "$SOURCE" --arg mode "$MODE" \
+        --argjson time "$(date +%s)" \
+        --argjson skip "$(printf '%s\n' "${SKIP[@]}" | jq -R -s 'split("\n") | map(select(length > 0))')" '
+        {time: $time, source: $source, mode: $mode, skip: $skip, templates: $t[0]}' \
+        > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+fi
 
 (( HYPR )) && { hyprctl reload &>/dev/null || true; }
 
