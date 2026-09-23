@@ -664,6 +664,7 @@ if [[ $WITH_THEMING -eq 1 ]]; then
 
     cp -r "$SRC/support/lucid/themes/." "$LUCID_DIR/themes/"
     install -m755 "$SRC/support/lucid/apply-theme.sh"      "$LUCID_DIR/apply-theme.sh"
+    install -m755 "$SRC/support/lucid/render-templates.sh" "$LUCID_DIR/render-templates.sh"
     install -m755 "$SRC/support/lucid/gen-pywal-palette.py" "$LUCID_DIR/gen-pywal-palette.py"
     install -m755 "$SRC/support/lucid/add-theme.py"        "$LUCID_DIR/add-theme.py"
     install -m755 "$SRC/support/lucid/gen-light-palette.py" "$LUCID_DIR/gen-light-palette.py"

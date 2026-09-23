@@ -641,8 +641,11 @@ Templates use [matugen's syntax](https://github.com/InioX/matugen) —
 `{{colors.primary.default.hex}}` and so on. A fixed palette fills every role it
 defines with its own colour; the few it doesn't (the `*_fixed` family, the
 tonal palettes, base16) come from a scheme matugen derives from its primary.
-With a fixed palette each template renders on its own, so one that fails to
-render doesn't hold the rest back.
+Each template renders on its own, so one that fails doesn't hold the rest back:
+a toast names it, and `~/.cache/lucid/templates.json` keeps what happened to
+every template on the last change, with matugen's error for the ones that
+failed. `~/.config/lucid/render-templates.sh` is what renders them, for the
+wallpaper and the fixed palettes alike.
 
 ### Adding your own theme
 

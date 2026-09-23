@@ -338,96 +338,42 @@ if [[ -f "$STARSHIP" ]]; then
 fi
 
 # every other app with a matugen template. matugen only renders its templates
-# from a wallpaper, so under a fixed theme or pywal they kept the last
-# wallpaper's colours, and so did every template the user added. matugen json
-# renders them from a palette handed to it instead: a scheme matugen derives
-# from this theme's primary fills the context (tonal palettes, base16, the
-# roles older palettes never defined) and the theme's own roles replace its
-# colours, so a template gets this theme's exact colours wherever it has them.
-#
-# templates for a file this script writes above are skipped — it has its own
-# writer, and starship's template would replace the whole prompt where this
-# script only swaps the palette. each template renders on its own: matugen
-# stops at the first one that fails, so one broken template would otherwise
-# leave a random share of the others unrendered.
+# from a wallpaper, so here they get this theme's colours instead: a scheme
+# matugen derives from the theme's primary fills the context (tonal palettes,
+# base16, the roles older palettes never defined) and the theme's own roles
+# replace its colours, so a template gets this theme's exact colours wherever
+# it has them. render-templates.sh does the rendering, as it does for the
+# wallpaper. templates for a file this script writes above are skipped — it
+# has its own writer, and starship's template would replace the whole prompt
+# where this script only swaps the palette.
 render_templates() {
-    local cfg="$HOME/.config/matugen/config.toml"
-    command -v matugen &>/dev/null && [[ -f "$cfg" && -n "$PRIMARY" ]] || return 0
+    local renderer="$HOME/.config/lucid/render-templates.sh"
+    command -v matugen &>/dev/null && [[ -x "$renderer" && -n "$PRIMARY" ]] || return 0
 
     local work
     work=$(mktemp -d)
-    local empty="$work/empty.toml"
-    printf '[config]\n\n[templates]\n' > "$empty"
-    if ! matugen -c "$empty" color hex "$PRIMARY" -m "$MODE" --dry-run --json hex -q > "$work/scheme.json" 2>/dev/null ||
-        ! jq --slurpfile p "$PALETTE" --arg mode "$MODE" \
+    printf '[config]\n\n[templates]\n' > "$work/empty.toml"
+    if matugen -c "$work/empty.toml" color hex "$PRIMARY" -m "$MODE" --dry-run --json hex -q \
+            > "$work/scheme.json" 2>/dev/null &&
+        jq --slurpfile p "$PALETTE" --arg mode "$MODE" \
             --arg image "$(cat "$HOME/.cache/current_wallpaper" 2>/dev/null || true)" '
             .colors += ($p[0] | with_entries(select(.value | type == "string" and startswith("#"))
                 | .value = {dark: {color: .value}, light: {color: .value}, default: {color: .value}}))
             | .mode = $mode | .is_dark_mode = ($mode == "dark") | .image = $image' \
-            "$work/scheme.json" > "$work/palette.json" 2>/dev/null; then
-        echo "warning: could not build a palette for the matugen templates" >&2
-        rm -rf "$work"
-        return 0
+            "$work/scheme.json" > "$work/colours.json" 2>/dev/null; then
+        "$renderer" "$work/colours.json" "$MODE" "$THEME" \
+            --skip "$HOME/.cache/quickshell/matugen.json" \
+            --skip "$HOME/.config/kitty/matugen-colors.conf" \
+            --skip "$HOME/.cache/matugen/vscode-colors" \
+            --skip "$HOME/.cache/matugen/vscode-colors.json" \
+            --skip "$HOME/.config/vesktop/themes/midnight-discord.css" \
+            --skip "$HOME/.config/gtk-3.0/colors.css" \
+            --skip "$HOME/.config/gtk-4.0/colors.css" \
+            --skip "$HOME/.config/starship.toml" || true
+    else
+        echo "warning: could not build the colours for the matugen templates" >&2
     fi
-
-    # split the config into what every template shares and one file per
-    # template; [templates.x.y] belongs to x
-    : > "$work/common"
-    awk -v dir="$work" '
-        /^[ \t]*\[/ {
-            h = $0
-            sub(/^[ \t]*\[+/, "", h); sub(/\].*$/, "", h); gsub(/[ \t]/, "", h)
-            if (h ~ /^templates\./) {
-                name = substr(h, 11)
-                sub(/\..*$/, "", name)
-                if (!(name in idx)) { idx[name] = ++n; names[n] = name }
-                cur = idx[name]
-            } else {
-                cur = 0
-            }
-        }
-        { print > (dir "/" (cur ? "t" cur : "common")) }
-        cur && /^[ \t]*output_path[ \t]*=/ {
-            v = $0
-            sub(/^[^=]*=[ \t]*/, "", v)
-            q = substr(v, 1, 1)
-            v = substr(v, 2)
-            sub(q ".*$", "", v)
-            out[cur] = v
-        }
-        END { for (i = 1; i <= n; i++) printf "%d\t%s\t%s\n", i, names[i], out[i] > (dir "/list") }
-    ' "$cfg"
-    if ! grep -q '^[[:space:]]*\[config\]' "$work/common"; then
-        { printf '[config]\n'; cat "$work/common"; } > "$work/common.new"
-        mv "$work/common.new" "$work/common"
-    fi
-
-    local own=("$HOME/.cache/quickshell/matugen.json" "$HOME/.config/kitty/matugen-colors.conf"
-               "$HOME/.cache/matugen/vscode-colors" "$HOME/.cache/matugen/vscode-colors.json"
-               "$HOME/.config/vesktop/themes/midnight-discord.css" "$HOME/.config/gtk-3.0/colors.css"
-               "$HOME/.config/gtk-4.0/colors.css" "$HOME/.config/starship.toml")
-    local failed=() hypr=0 i name out o skip one
-    while IFS=$'\t' read -r i name out; do
-        out="${out/#\~/$HOME}"
-        skip=0
-        for o in "${own[@]}"; do [[ "$out" == "$o" ]] && skip=1; done
-        (( skip )) && continue
-        # beside the real config, so relative paths in it resolve the same
-        one=$(mktemp "$(dirname "$cfg")/.lucid-template-XXXXXX.toml")
-        cat "$work/common" "$work/t$i" > "$one"
-        if matugen -c "$one" json "$work/palette.json" -m "$MODE" -q >/dev/null 2>&1; then
-            [[ "$out" == "$HOME/.config/hypr/"* ]] && hypr=1
-        else
-            failed+=("$name")
-        fi
-        rm -f "$one"
-    done < <(cat "$work/list" 2>/dev/null)
     rm -rf "$work"
-
-    (( ${#failed[@]} )) && echo "warning: matugen templates that did not render: ${failed[*]}" >&2
-    # hyprland only reads its colours on a reload, as after a wallpaper change
-    (( hypr )) && hyprctl reload &>/dev/null
-    return 0
 }
 render_templates || true
 

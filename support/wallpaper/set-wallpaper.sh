@@ -3,7 +3,8 @@
 #
 # sets the wallpaper, then regenerates colours if the active theme derives
 # them from the image. ~/.cache/current_theme decides:
-#   matugen  — matugen regenerates every template it is configured for
+#   matugen  — matugen works out the scheme, render-templates.sh renders every
+#              template in its config from it
 #   pywal    — wal extracts, gen-pywal-palette.py maps it to material roles
 #   anything else — a static theme owns its palette, so colours are left alone
 #
@@ -121,11 +122,25 @@ matugen)
     fi
     # --source-color-index keeps it non-interactive, so it can't hang on a
     # picker prompt it will never receive from a keybind
-    matugen image "$WALLPAPER" -m "$MODE" --source-color-index 0
+    if [[ -x "$LUCID_DIR/render-templates.sh" ]]; then
+        # matugen only works out the scheme; render-templates.sh renders the
+        # templates from it one at a time, and reloads hyprland if one of them
+        # wrote its colours
+        COLOURS=$(mktemp)
+        if matugen image "$WALLPAPER" -m "$MODE" --source-color-index 0 \
+                --dry-run --json hex --include-image-in-json true -q > "$COLOURS"; then
+            "$LUCID_DIR/render-templates.sh" "$COLOURS" "$MODE" matugen || true
+        else
+            echo "warning: matugen could not read $WALLPAPER, colours unchanged" >&2
+        fi
+        rm -f "$COLOURS"
+    else
+        matugen image "$WALLPAPER" -m "$MODE" --source-color-index 0
+        hyprctl reload &>/dev/null || true
+    fi
     # matugen writes the palette from its own templates and never reaches
     # apply-theme.sh, so this is the only place the login screen can follow it
     "$LUCID_DIR/sync-sddm.sh" 2>/dev/null || true
-    hyprctl reload &>/dev/null || true
     ;;
 pywal)
     if ! command -v wal &>/dev/null; then
