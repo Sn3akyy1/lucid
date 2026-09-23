@@ -12,7 +12,7 @@
     { "id": "keybinds-sheet", "keys": "SUPER + slash", "desc": "Show keybinds", "category": "Lucid", "type": "exec", "cmd": "qs ipc call keybinds toggle" },
     { "id": "overview", "keys": "SUPER + W", "desc": "Workspace overview", "category": "Lucid", "type": "exec", "cmd": "qs ipc call workspaces toggle" },
     { "id": "close", "keys": "SUPER + C", "desc": "Close window", "category": "Windows", "type": "lua", "lua": "hl.dsp.window.close()" },
-    { "id": "exit", "keys": "SUPER + M", "desc": "Exit Hyprland", "category": "Windows", "type": "exec", "cmd": "command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit" },
+    { "id": "exit", "keys": "SUPER + M", "desc": "Exit Hyprland", "category": "Windows", "type": "exec", "cmd": "command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'" },
     { "id": "files", "keys": "SUPER + E", "desc": "File manager", "category": "Apps", "type": "exec", "cmd": "nautilus" },
     { "id": "float", "keys": "SUPER + V", "desc": "Toggle floating", "category": "Windows", "type": "lua", "lua": "hl.dsp.window.float({ action = \"toggle\" })" },
     { "id": "split", "keys": "SUPER + J", "desc": "Toggle split direction", "category": "Windows", "type": "lua", "lua": "hl.dsp.layout(\"togglesplit\")" },
