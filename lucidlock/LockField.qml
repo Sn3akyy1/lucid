@@ -96,7 +96,7 @@ Item {
         id: pill
 
         anchors.fill: parent
-        radius: height / 2
+        radius: Theme.pill(height)
         color: field.good ? Theme.alpha(Theme.success, 0.16) : (field.bad ? Theme.alpha(Theme.error, 0.14) : Lockscreen.cardHigh)
         border.width: Lockscreen.focused || field.bad || field.good ? 2 : 1
         border.color: field.good ? Theme.success : (field.bad ? Theme.error : (Lockscreen.focused ? Theme.accent : Theme.outlineStrong))
@@ -389,7 +389,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: 44
             height: 44
-            radius: Theme.radiusPill
+            radius: Theme.pill(width)
             color: field.good ? Theme.success : (field.canSubmit || Lockscreen.busy ? (submitArea.hovered ? Theme.accentHover : Theme.accent) : Theme.alpha(Theme.outlineStrong, 0.35))
             scale: submitTap.pressed ? 0.9 : 1
 

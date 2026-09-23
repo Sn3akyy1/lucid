@@ -322,7 +322,7 @@ Item {
 
                         width: (netItem.isTrusted && !netItem.showPasswordInput) ? (parent.width - 8) / 2 : parent.width
                         height: parent.height
-                        radius: Theme.radiusPill
+                        radius: Theme.pill(height)
                         color: netItem.isConnecting ? Theme.withBlur(Theme.outlineStrong) : (netItem.isConnected ? Theme.accentContainer : (connectArea.containsMouse ? Theme.accentHover : Theme.accent))
                         scale: connectArea.pressed ? 0.96 : 1
 
@@ -383,7 +383,7 @@ Item {
                         visible: netItem.isTrusted && !netItem.showPasswordInput
                         width: (parent.width - 8) / 2
                         height: parent.height
-                        radius: Theme.radiusPill
+                        radius: Theme.pill(height)
                         color: forgetArea.containsMouse ? Theme.withBlur(Theme.outlineStrong) : "transparent"
                         border.width: 1
                         border.color: Theme.outlineStrong
@@ -1018,7 +1018,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 78
                 height: 26
-                radius: Theme.radiusPill
+                radius: Theme.pill(height)
                 color: ethDisconnectArea.containsMouse ? Theme.outlineStrong : "transparent"
                 border.width: 1
                 border.color: Theme.outlineStrong
@@ -1077,13 +1077,13 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 32
                 height: 18
-                radius: Theme.radiusPill
+                radius: Theme.pill(height)
                 color: Networking.wifiEnabled ? Theme.accent : Theme.outlineStrong
 
                 Rectangle {
                     width: 14
                     height: 14
-                    radius: 7
+                    radius: Theme.pill(width)
                     color: Theme.bg
                     anchors.verticalCenter: parent.verticalCenter
                     x: Networking.wifiEnabled ? parent.width - width - 2 : 2
@@ -1456,7 +1456,7 @@ Item {
                         Rectangle {
                             width: 90
                             height: parent.height
-                            radius: Theme.radiusPill
+                            radius: Theme.pill(height)
                             color: hiddenConnectArea.containsMouse ? Theme.accentHover : Theme.accent
 
                             Text {
@@ -1482,7 +1482,7 @@ Item {
                         Rectangle {
                             width: 70
                             height: parent.height
-                            radius: Theme.radiusPill
+                            radius: Theme.pill(height)
                             color: "transparent"
                             border.width: 1
                             border.color: Theme.outlineStrong

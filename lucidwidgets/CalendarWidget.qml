@@ -313,7 +313,7 @@ WidgetBody {
                         anchors.centerIn: parent
                         width: cell.span - 6
                         height: cell.span - 6
-                        radius: width / 2
+                        radius: Theme.pill(width)
                         color: (!cell.marked && cellHover.hovered) ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent"
 
                         Behavior on color {
@@ -418,7 +418,7 @@ WidgetBody {
                         anchors.centerIn: parent
                         width: Math.min(parent.width - 4, 42)
                         height: Math.min(parent.height, 58)
-                        radius: width / 2
+                        radius: Theme.pill(width)
                         scale: weekHover.hovered ? 1.06 : 1
                         color: wcell.marked ? Theme.accent : (weekHover.hovered ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent")
 

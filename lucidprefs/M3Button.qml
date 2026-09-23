@@ -38,7 +38,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: area.pressed ? Theme.shapeMd : height / 2
+        radius: area.pressed ? Theme.shapeMd : Theme.pill(height)
         color: btn.baseColor
         border.width: btn.variant === "outlined" ? 1 : 0
         border.color: Theme.outlineStrong

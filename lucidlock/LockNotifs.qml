@@ -49,7 +49,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.max(22, countText.implicitWidth + 14)
                 height: 22
-                radius: Theme.radiusPill
+                radius: Theme.pill(height)
                 color: Theme.accent
                 visible: !panel.empty
 

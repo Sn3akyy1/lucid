@@ -94,7 +94,7 @@ Column {
         SettingRow {
             title: "Corner rounding"
             resetKey: "radiusScale"
-            description: "Scales every rounded corner in the shell at once — pills, panels, the dock, cards and buttons. 100% is the shipped shape; 0% squares everything off. Pill-shaped controls stay pill-shaped until you reach 0."
+            description: "Scales every rounded corner in the shell at once — pills, panels, the dock, cards and buttons. 100% is the shipped shape; 0% squares everything off. Pills and round buttons stay fully round from 100% up and square off with the rest below it."
             stacked: true
 
             M3Slider {

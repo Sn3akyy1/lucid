@@ -500,7 +500,7 @@ Item {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: width / 2
+                    radius: Theme.pill(width)
                     color: dropHover.hovered ? Theme.error : Theme.text
                     opacity: dropTap.pressed ? Theme.statePressed : (dropHover.hovered ? Theme.stateHover : 0)
 

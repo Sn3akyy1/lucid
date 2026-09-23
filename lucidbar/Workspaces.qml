@@ -1730,7 +1730,7 @@ Item {
                         y: dragHandler.active ? thumb.dragOriginY + dragHandler.translation.y : thumb.restY
                         width: thumb.restW
                         height: thumb.restH
-                        radius: 6
+                        radius: Theme.rad(6)
                         color: Theme.withBlur(Theme.bgSunken)
                         border.width: dragHandler.active || thumb.isSwapTarget || thumb.focused ? 2 : 1
                         border.color: thumb.isSwapTarget || dragHandler.active || thumb.focused ? Theme.accent : Theme.alpha(Theme.text, 0.25)

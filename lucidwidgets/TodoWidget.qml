@@ -264,7 +264,7 @@ WidgetBody {
             anchors.fill: parent
             anchors.leftMargin: -6
             anchors.rightMargin: -4
-            radius: height / 2
+            radius: Theme.pill(height)
             color: w.editing ? Theme.alpha(Theme.accent, 0.1) : (addArea.containsMouse ? Theme.alpha(Theme.text, 0.05) : "transparent")
 
             Behavior on color {
@@ -352,7 +352,7 @@ WidgetBody {
 
         Rectangle {
             anchors.fill: parent
-            radius: width / 2
+            radius: Theme.pill(width)
             color: tick.done ? Theme.accent : "transparent"
             border.width: tick.done ? 0 : 1.8
             border.color: tickArea.containsMouse ? Theme.accent : Theme.alpha(Theme.text, 0.35)

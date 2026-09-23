@@ -173,7 +173,7 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         height: face.searchHeight
-        radius: Theme.radiusPill
+        radius: Theme.pill(height)
         color: Theme.withBlur(Theme.bgTile)
 
         Item {
@@ -189,7 +189,7 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                radius: width / 2
+                radius: Theme.pill(width)
                 color: Theme.text
                 opacity: leadingButton.isBack ? (leadTap.pressed ? Theme.statePressed : (leadHover.hovered ? Theme.stateHover : 0)) : 0
 
@@ -314,7 +314,7 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                radius: width / 2
+                radius: Theme.pill(height)
                 color: Theme.text
                 opacity: clearTap.pressed ? Theme.statePressed : (clearHover.hovered ? Theme.stateHover : 0)
 

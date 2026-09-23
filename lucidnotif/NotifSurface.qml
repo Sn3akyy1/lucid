@@ -60,7 +60,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: Math.max(18, countText.implicitWidth + 12)
                         height: 18
-                        radius: height / 2
+                        radius: Theme.pill(height)
                         color: Theme.bgHigh
 
                         Text {

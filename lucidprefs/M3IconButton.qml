@@ -42,7 +42,7 @@ Item {
 
         anchors.fill: parent
         // shape morph: full -> medium while held
-        radius: area.pressed ? Theme.shapeMd : btn.size / 2
+        radius: area.pressed ? Theme.shapeMd : Theme.pill(btn.size)
         color: btn.baseColor
         border.width: btn.variant === "outlined" ? 1 : 0
         border.color: Theme.outlineStrong

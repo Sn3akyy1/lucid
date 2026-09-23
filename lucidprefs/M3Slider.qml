@@ -68,7 +68,7 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            radius: height / 2
+            radius: Theme.pill(height)
             color: slider.dragging ? Theme.accent : Theme.bgHigh
 
             Behavior on color {
@@ -137,8 +137,8 @@ Item {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             color: Theme.accent
-            topLeftRadius: track.trackHeight / 2
-            bottomLeftRadius: track.trackHeight / 2
+            topLeftRadius: Theme.pill(track.trackHeight)
+            bottomLeftRadius: Theme.pill(track.trackHeight)
             topRightRadius: 2
             bottomRightRadius: 2
 
@@ -160,8 +160,8 @@ Item {
             color: track.hovering ? Theme.bgActive : Theme.bgHigh
             topLeftRadius: 2
             bottomLeftRadius: 2
-            topRightRadius: track.trackHeight / 2
-            bottomRightRadius: track.trackHeight / 2
+            topRightRadius: Theme.pill(track.trackHeight)
+            bottomRightRadius: Theme.pill(track.trackHeight)
 
             Behavior on x {
                 NumberAnimation {

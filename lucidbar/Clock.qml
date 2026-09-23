@@ -669,7 +669,7 @@ BarPill {
 
                         height: 24
                         width: snoozeLabel.implicitWidth + 16
-                        radius: Theme.radiusPill
+                        radius: Theme.pill(height)
                         color: snoozeArea.containsMouse ? Theme.withBlur(Theme.bgHigh) : Theme.withBlur(Theme.cContainer)
                         scale: snoozeArea.pressed ? 0.92 : 1
 
@@ -712,7 +712,7 @@ BarPill {
 
                         height: 24
                         width: closeLabel.implicitWidth + 16
-                        radius: Theme.radiusPill
+                        radius: Theme.pill(height)
                         color: closeArea.containsMouse ? Theme.accentHover : Theme.accent
                         scale: closeArea.pressed ? 0.92 : 1
 
@@ -888,7 +888,7 @@ BarPill {
                             Rectangle {
                                 width: 40
                                 height: 40
-                                radius: Theme.radiusPill
+                                radius: Theme.pill(width)
                                 color: Theme.accentContainer
                                 anchors.verticalCenter: parent.verticalCenter
 
@@ -1296,13 +1296,13 @@ BarPill {
 
                                 width: 62
                                 height: 26
-                                radius: Theme.radiusPill
+                                radius: Theme.pill(height)
                                 color: Theme.withBlur(Theme.cContainer)
 
                                 Rectangle {
                                     width: parent.width / 2
                                     height: parent.height
-                                    radius: Theme.radiusPill
+                                    radius: Theme.pill(height)
                                     color: Theme.accent
                                     x: root.reminderMeridiem === "AM" ? 0 : parent.width / 2
 
@@ -1393,7 +1393,7 @@ BarPill {
                                 anchors.right: parent.right
                                 height: 26
                                 width: addLabel.implicitWidth + 20
-                                radius: Theme.radiusPill
+                                radius: Theme.pill(height)
                                 color: addArea.containsMouse ? Theme.accentHover : Theme.accent
                                 scale: addArea.pressed ? 0.92 : 1
 
@@ -1497,7 +1497,7 @@ BarPill {
 
         Rectangle {
             anchors.fill: parent
-            radius: Theme.radiusPill
+            radius: Theme.pill(width)
             color: Theme.text
             opacity: navArea.containsMouse ? Theme.stateHover : 0
 

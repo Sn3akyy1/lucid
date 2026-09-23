@@ -103,7 +103,7 @@ Item {
 
             width: parent.width - sendButton.width - parent.spacing
             height: 32
-            radius: height / 2
+            radius: Theme.pill(height)
             color: Theme.bgSunken
             border.width: 1
             border.color: replyInput.activeFocus ? Theme.accent : Theme.bgHigh
@@ -151,7 +151,7 @@ Item {
 
             width: 32
             height: 32
-            radius: sendArea.pressed ? Theme.shapeMd : width / 2
+            radius: sendArea.pressed ? Theme.shapeMd : Theme.pill(width)
             color: replyInput.text.length > 0 ? Theme.accent : Theme.bgHigh
 
             NotifIcon {

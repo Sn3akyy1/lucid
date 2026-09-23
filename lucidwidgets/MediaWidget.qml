@@ -128,7 +128,7 @@ WidgetBody {
             anchors.right: parent.right
             anchors.top: parent.top
             height: width
-            corner: 16
+            corner: Theme.rad(16)
         }
 
         Column {
@@ -203,7 +203,7 @@ WidgetBody {
             height: width
             anchors.left: parent.left
             anchors.top: parent.top
-            corner: 13
+            corner: Theme.rad(13)
         }
 
         Column {
@@ -432,7 +432,7 @@ WidgetBody {
     component Artwork: ClippingRectangle {
         id: art
 
-        property real corner: 14
+        property real corner: Theme.rad(14)
 
         radius: art.corner
         color: Theme.alpha(Theme.text, 0.07)

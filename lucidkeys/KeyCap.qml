@@ -38,7 +38,7 @@ Item {
 
         return cap.role === "key" ? Theme.text : Theme.subtext;
     }
-    readonly property real restRadius: Math.max(Theme.shapeSm, Math.round(cap.unit * 0.26))
+    readonly property real restRadius: Math.max(Theme.shapeSm, Theme.rad(cap.unit * 0.26))
 
     signal fired()
 
@@ -50,7 +50,7 @@ Item {
 
         anchors.fill: parent
         color: cap.capFace
-        radius: cap.pressedDown ? Math.round(cap.unit * 0.44) : cap.restRadius
+        radius: cap.pressedDown ? Theme.rad(cap.unit * 0.44) : cap.restRadius
         scale: cap.pressedDown ? 0.94 : 1
 
         Behavior on color {

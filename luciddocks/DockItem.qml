@@ -183,7 +183,7 @@ Item {
         visible: dockItem.windowCount > 3
         width: dockItem.sc(16)
         height: dockItem.sc(16)
-        radius: width / 2
+        radius: Theme.pill(width)
         color: Theme.accent
         anchors.right: parent.right
         anchors.top: parent.top

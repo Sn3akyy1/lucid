@@ -131,6 +131,11 @@ Singleton {
     function rad(px) {
         return Math.round(px * root.radiusScale);
     }
+    // a pill or a circle, by its short side: fully round up to 1, and below
+    // that it squares off with the rest (radiusPill would stay a pill until 0)
+    function pill(size) {
+        return Math.round(size / 2 * Math.min(1, root.radiusScale));
+    }
     readonly property int radiusPill: root.rad(999)
     readonly property int radiusXs: root.rad(8)
     readonly property int radiusSm: root.rad(12)

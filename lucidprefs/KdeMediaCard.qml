@@ -212,7 +212,7 @@ SettingCard {
 
         width: btn.primary ? 48 : 40
         height: btn.primary ? 48 : 40
-        radius: width / 2
+        radius: Theme.pill(width)
         anchors.verticalCenter: parent ? parent.verticalCenter : undefined
         color: btn.primary ? (btnArea.containsMouse ? Theme.accentHover : Theme.accent) : (btnArea.containsMouse ? Theme.bgHover : Theme.bgSunken)
         scale: btnArea.pressed ? 0.94 : 1

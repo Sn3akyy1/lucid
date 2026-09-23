@@ -16,7 +16,7 @@ Row {
         default property alias extra: slot.data
 
         height: 36
-        radius: Theme.radiusPill
+        radius: Theme.pill(height)
         color: Lockscreen.card
         width: content.implicitWidth + 30
 

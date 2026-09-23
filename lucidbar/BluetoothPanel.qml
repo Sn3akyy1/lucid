@@ -236,13 +236,13 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 28
                 height: 16
-                radius: Theme.radiusPill
+                radius: Theme.pill(height)
                 color: (root.adapter && root.adapter.discoverable) ? Theme.accent : Theme.outlineStrong
 
                 Rectangle {
                     width: 12
                     height: 12
-                    radius: 6
+                    radius: Theme.pill(width)
                     color: Theme.bg
                     anchors.verticalCenter: parent.verticalCenter
                     x: (root.adapter && root.adapter.discoverable) ? parent.width - width - 2 : 2
@@ -892,7 +892,7 @@ Item {
 
                         width: devItem.group === "nearby" ? parent.width : (parent.width - 8) / 2
                         height: parent.height
-                        radius: Theme.radiusPill
+                        radius: Theme.pill(height)
                         color: busy ? Theme.withBlur(Theme.outlineStrong) : (devItem.isConnected ? Theme.accentContainer : (primaryArea.containsMouse ? Theme.accentHover : Theme.accent))
                         opacity: busy ? 0.7 : 1
                         scale: primaryArea.pressed ? 0.96 : 1
@@ -958,7 +958,7 @@ Item {
                         visible: devItem.group !== "nearby"
                         width: (parent.width - 8) / 2
                         height: parent.height
-                        radius: Theme.radiusPill
+                        radius: Theme.pill(height)
                         color: forgetArea.containsMouse ? Theme.withBlur(Theme.outlineStrong) : "transparent"
                         border.width: 1
                         border.color: Theme.outlineStrong

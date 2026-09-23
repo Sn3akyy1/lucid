@@ -1605,7 +1605,7 @@ BarPill {
                                 anchors.centerIn: parent
                                 width: 64
                                 height: 64
-                                radius: Theme.radiusPill
+                                radius: Theme.pill(width)
                                 color: "transparent"
                                 border.width: 2
                                 border.color: Theme.accent
@@ -1657,7 +1657,7 @@ BarPill {
                             anchors.centerIn: parent
                             width: 64
                             height: 64
-                            radius: Theme.radiusPill
+                            radius: Theme.pill(width)
                             color: Theme.accent
                             scale: listenArea.pressed ? 0.94 : (listenArea.containsMouse ? 1.05 : 1)
 
@@ -2284,7 +2284,7 @@ BarPill {
 
         width: btn.diameter
         height: btn.diameter
-        radius: Theme.radiusPill
+        radius: Theme.pill(btn.diameter)
         color: btn.filled ? Theme.accent : (btn.ghost ? "transparent" : Theme.withBlur(Theme.bgHigh))
         opacity: btn.enabledAction ? 1 : 0.3
         scale: btnArea.pressed ? 0.9 : (btnArea.containsMouse ? 1.07 : 1)
@@ -2358,7 +2358,7 @@ BarPill {
 
         implicitWidth: pillRow.implicitWidth + 26
         height: 30
-        radius: Theme.radiusPill
+        radius: Theme.pill(height)
         color: pill.accented ? Theme.accent : Theme.withBlur(Theme.bgHigh)
         scale: pillArea.pressed ? 0.94 : (pillArea.containsMouse ? 1.04 : 1)
 

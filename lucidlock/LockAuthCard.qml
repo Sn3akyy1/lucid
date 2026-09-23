@@ -237,7 +237,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     width: capsRow.implicitWidth + 16
                     height: 20
-                    radius: Theme.radiusPill
+                    radius: Theme.pill(height)
                     color: Theme.alpha(Theme.warning, 0.18)
                     visible: Lockscreen.capsLock
 
@@ -272,7 +272,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     width: layoutText.implicitWidth + 18
                     height: 20
-                    radius: Theme.radiusPill
+                    radius: Theme.pill(height)
                     color: Lockscreen.cardHigh
                     visible: Lockscreen.layoutShort !== "" && Lockscreen.focused
 
