@@ -213,36 +213,17 @@ Column {
     }
 
     SettingCard {
-        title: "CLIPBOARD"
+        title: "LAUNCHER"
 
         SettingRow {
-            title: "Clipboard history"
-            description: "Keeps what you copy so the launcher can hand it back. Type > clip in the launcher, or pick Clipboard History from the command list. Needs cliphist installed."
-            enabled: Clip.available
-            disabledReason: "cliphist is not installed. Install it and the history starts recording straight away."
-
-            M3Switch {
-                checked: Prefs.clipboardEnabled && Clip.available
-                enabled: Clip.available
-                onToggled: (v) => {
-                    return Prefs.clipboardEnabled = v;
-                }
-            }
-
-        }
-
-        SettingRow {
-            title: "Clear clipboard history"
-            description: "Discards every entry cliphist has stored, including images."
-            enabled: Clip.available
+            title: "Launcher settings"
+            description: "The dock opens into the launcher. Its size, what a search finds, the power buttons, favourite and hidden apps and the clipboard history are on a page of their own."
             showDivider: false
 
             M3Button {
-                text: "Clear history"
-                variant: "text"
-                destructive: true
-                enabled: Clip.available
-                onClicked: Prefs.askConfirm("Clear clipboard history?", "Every entry cliphist has stored is discarded, images included. This cannot be undone.", "Clear", Prefs.clearClipboardToken)
+                text: "Launcher…"
+                variant: "tonal"
+                onClicked: Prefs.settingsRequested("launcher")
             }
 
         }

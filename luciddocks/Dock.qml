@@ -56,10 +56,31 @@ PanelWindow {
     property bool snapPlacement: false
     property int contentFadeDelay: 0
     property bool menuOpen: false
+    // true while the launcher is folding away, so the surface outlives
+    // menuOpen long enough to show it — with the dock disabled it would
+    // otherwise vanish on the same frame
+    property bool launcherClosing: false
 
     onMenuOpenChanged: {
         dockWindow.pulseMorph();
         dockWindow.contentFadeDelay = dockWindow.menuOpen ? 190 : 0;
+        if (dockWindow.menuOpen) {
+            launcherCloseTimer.stop();
+            shellFadeOut.stop();
+            dockWindow.launcherClosing = false;
+            shell.opacity = 1;
+            // window titles only reach lastIpcObject on a refresh, and search reads them
+            toplevelRefresh.restart();
+        } else {
+            powerDisarm.stop();
+            dockWindow.armedPower = "";
+            dockWindow.launcherClosing = true;
+            launcherCloseTimer.restart();
+            // no dock to morph back into: fade the whole surface as it shrinks
+            if (!Prefs.dockEnabled)
+                shellFadeOut.restart();
+
+        }
         if (dockWindow.menuOpen) {
             dockWindow.launcherFromHidden = Prefs.dockAutoHide && !dockWindow.heldByPointer;
             dockWindow.closingFromHidden = false;
@@ -71,6 +92,34 @@ PanelWindow {
         } else {
             dockWindow.launcherFromHidden = false;
         }
+    }
+
+    Timer {
+        id: launcherCloseTimer
+
+        interval: Math.max(Theme.ms(520), Theme.durLong) + 40
+        onTriggered: {
+            dockWindow.launcherClosing = false;
+            shell.opacity = 1;
+        }
+    }
+
+    SequentialAnimation {
+        id: shellFadeOut
+
+        PauseAnimation {
+            duration: Theme.ms(140)
+        }
+
+        NumberAnimation {
+            target: shell
+            property: "opacity"
+            to: 0
+            duration: Theme.ms(340)
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.easeEmphasizedAccel
+        }
+
     }
 
     Timer {
@@ -104,7 +153,8 @@ PanelWindow {
     }
 
     property string fallbackWallpaper: Qt.resolvedUrl("../assets/fallback.jpg").toString().replace("file://", "")
-    property var scannedApps: []
+    // every app, hidden ones included: the dock still has to put icons on their windows
+    readonly property var scannedApps: Apps.list
     readonly property string currentTheme: Prefs.currentTheme
     property string pendingWallpaper: ""
     property string appliedWallpaper: ""
@@ -160,7 +210,13 @@ PanelWindow {
         onTriggered: Hyprland.refreshToplevels()
     }
 
-    onClientsDataChanged: dockWindow.syncRunningApps()
+    onClientsDataChanged: {
+        dockWindow.syncRunningApps();
+        // open windows are search results too
+        if (dockWindow.menuOpen && dockWindow.mode === "apps" && dockWindow.filterQuery !== "")
+            dockWindow.rebuildResults();
+
+    }
 
     readonly property string rawQuery: launcherFace.searchText
 
@@ -211,6 +267,10 @@ PanelWindow {
     readonly property string filterQuery: dockWindow.queryFor(dockWindow.rawQuery)
 
     onRawQueryChanged: {
+        // a new query never inherits an armed restart
+        powerDisarm.stop();
+        dockWindow.armedPower = "";
+        launcherFace.beginFilter();
         dockWindow.rebuildResults();
         // the face already reset itself, but against the pre-rebuild rows
         launcherFace.resetSelection();
@@ -269,6 +329,149 @@ PanelWindow {
         "desc": "Open Lucid's settings",
         "glyph": DockIcons.settings
     }]
+    // found by plain search, not listed under > (the power screen covers that).
+    // runPowerAction ids; restart, shut down and log out want a second Return
+    readonly property var powerCommands: [{
+        "id": "lock",
+        "name": "Lock Screen",
+        "desc": "Lock the session",
+        "keywords": "",
+        "confirm": "",
+        "glyph": DockIcons.lock
+    }, {
+        "id": "suspend",
+        "name": "Suspend",
+        "desc": "Sleep, keeping the session in memory",
+        "keywords": "sleep",
+        "confirm": "",
+        "glyph": DockIcons.suspend
+    }, {
+        "id": "hibernate",
+        "name": "Hibernate",
+        "desc": "Save the session to disk and power off",
+        "keywords": "sleep",
+        "confirm": "",
+        "glyph": DockIcons.hibernate
+    }, {
+        "id": "logout",
+        "name": "Log Out",
+        "desc": "End the session",
+        "keywords": "logout sign out exit",
+        "confirm": "log out",
+        "glyph": DockIcons.logout
+    }, {
+        "id": "reboot",
+        "name": "Restart",
+        "desc": "Reboot the computer",
+        "keywords": "reboot",
+        "confirm": "restart",
+        "glyph": DockIcons.reboot
+    }, {
+        "id": "shutdown",
+        "name": "Shut Down",
+        "desc": "Power the computer off",
+        "keywords": "shutdown poweroff power off",
+        "confirm": "shut down",
+        "glyph": DockIcons.power
+    }]
+
+    // 100 at the start, 90 at a word start, 80 anywhere, -1 when absent
+    function textScore(text, q) {
+        var at = text.indexOf(q);
+        if (at === -1)
+            return -1;
+
+        if (at === 0)
+            return 100;
+
+        return text.indexOf(" " + q) !== -1 ? 90 : 80;
+    }
+
+    // every word of the query somewhere in the text, in any order
+    function wordsIn(text, q) {
+        var words = q.split(/\s+/);
+        for (var i = 0; i < words.length; i++) {
+            if (words[i] !== "" && text.indexOf(words[i]) === -1)
+                return false;
+
+        }
+        return true;
+    }
+
+    // short queries only match names, or every command would turn up for one letter
+    function commandScore(cmd, q) {
+        if (q.length < 2)
+            return -1;
+
+        var s = dockWindow.textScore(cmd.name.toLowerCase(), q);
+        if (s === 80 && q.length < 3)
+            s = -1;
+
+        if (s >= 0)
+            return s;
+
+        if (q.length < 3)
+            return -1;
+
+        return dockWindow.wordsIn((cmd.name + " " + cmd.desc + " " + (cmd.keywords || "")).toLowerCase(), q) ? 60 : -1;
+    }
+
+    function windowScore(client, app, q) {
+        var best = -1;
+        if (app) {
+            // no loose letter-by-letter hits: a window is there to be switched to on purpose
+            var byApp = dockWindow.matchScore(app, q);
+            if (byApp >= 50)
+                best = byApp;
+
+        } else {
+            best = dockWindow.textScore(client.class.toLowerCase(), q);
+        }
+        var title = (client.title || "").toLowerCase();
+        if (q.length >= 2) {
+            var byTitle = dockWindow.textScore(title, q);
+            // a title hit ranks under the same hit on the app's own name
+            if (byTitle >= 0)
+                best = Math.max(best, byTitle - 15);
+            else if (q.length >= 3 && dockWindow.wordsIn(title, q))
+                best = Math.max(best, 55);
+        }
+        // the window behind the launcher is the one least likely wanted
+        if (best >= 0 && client.address === dockWindow.focusedAddress)
+            best -= 25;
+
+        return best;
+    }
+
+    // something that reads as an address, ready for xdg-open; "" otherwise
+    function urlFor(text) {
+        var t = text.trim();
+        if (t === "" || /\s/.test(t))
+            return "";
+
+        if (/^https?:\/\/\S+$/i.test(t))
+            return t;
+
+        if (/^localhost(:\d+)?(\/\S*)?$/i.test(t))
+            return "http://" + t;
+
+        if (/^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}(:\d+)?(\/\S*)?$/i.test(t))
+            return "https://" + t;
+
+        return "";
+    }
+
+    function webSearchUrl(text) {
+        var tpl = Prefs.launcherSearchUrl.trim() !== "" ? Prefs.launcherSearchUrl.trim() : "https://duckduckgo.com/?q=%s";
+        var q = encodeURIComponent(text);
+        return tpl.indexOf("%s") !== -1 ? tpl.split("%s").join(q) : tpl + q;
+    }
+
+    function webSearchHost() {
+        var m = dockWindow.webSearchUrl("").match(/^[a-z]+:\/\/(www\.)?([^\/?#]+)/i);
+        return m ? m[2] : "";
+    }
+
     // shared with the settings app, see Prefs.themeCatalogue
     readonly property var allThemes: Prefs.themeCatalogue
 
@@ -278,7 +481,10 @@ PanelWindow {
     readonly property real maxDockWidth: dockWindow.screen ? dockWindow.screen.width : 1920
     property real dragHeadroom: 220
 
-    readonly property int menuMaxHeight: 560
+    // Settings -> Launcher -> Visible results
+    readonly property int maxRows: Math.max(3, Math.min(12, Prefs.launcherMaxRows))
+    // room for maxRows of the tallest ordinary row (58 + spacing), inside the screen
+    readonly property int menuMaxHeight: Math.min((dockWindow.screen ? dockWindow.screen.height : 1080) - 40, Math.max(560, dockWindow.panelPadding + launcherFace.chromeHeight + 8 + dockWindow.maxRows * 60))
     // the command palette is a short fixed list, so it caps tighter than the app launcher
     readonly property int commandMaxHeight: 452
     // how much of the panel is chrome, not results
@@ -301,8 +507,10 @@ PanelWindow {
         if (dockWindow.mode === "power")
             return 660;
 
-        return 420;
+        return dockWindow.launcherWidth;
     }
+    // Settings -> Launcher; kept inside the screen however wide prefs.json says
+    readonly property real launcherWidth: Math.min(Math.max(420, Prefs.launcherWidth), dockWindow.maxDockWidth - 48)
     property real resultsHeight: 0
     readonly property real menuContentMax: (dockWindow.mode === "commands" ? dockWindow.commandMaxHeight : dockWindow.menuMaxHeight) - dockWindow.panelPadding - launcherFace.chromeHeight
     readonly property real menuHeight: {
@@ -420,6 +628,8 @@ PanelWindow {
             "thumb": opts.thumb || "",
             "disabled": opts.disabled === true,
             "selectable": opts.selectable !== false,
+            "nested": opts.nested === true,
+            "starred": opts.starred === true,
             "payload": opts.payload || ""
         };
     }
@@ -463,9 +673,16 @@ PanelWindow {
         var scored = [];
         for (var i = 0; i < dockWindow.scannedApps.length; i++) {
             var app = dockWindow.scannedApps[i];
+            if (Apps.isHidden(app))
+                continue;
+
             var score = q !== "" ? dockWindow.matchScore(app, q) : 0;
             if (q !== "" && score < 0)
                 continue;
+
+            // a favourite goes first among matches as good as it, never past a better one
+            if (q !== "" && Apps.isFav(app))
+                score += 5;
 
             scored.push({
                 "app": app,
@@ -486,9 +703,206 @@ PanelWindow {
     }
 
     function rowForApp(app) {
-        return dockWindow.makeRow("app", "app-" + app.name, app.name, "", {
+        return dockWindow.makeRow("app", "app-" + app.name, app.name, Prefs.launcherAppDescriptions ? (app.desc || "") : "", {
             "iconName": app.iconName,
+            "starred": Apps.isFav(app),
             "payload": app.command
+        });
+    }
+
+    // right-click on an app row; the row key carries the name, and names are unique in Apps.list
+    function toggleFavAt(index) {
+        var row = resultsModel.get(index);
+        if (!row || row.kind !== "app")
+            return;
+
+        Apps.toggleFav(Apps.byName(row.key.substring(4)));
+    }
+
+    readonly property var kindRank: ({
+        "window": 0,
+        "app": 1,
+        "command": 2,
+        "power": 3,
+        "action": 4
+    })
+
+    // score, then kind, then each kind's own order (carried in tie, since sort isn't guaranteed stable)
+    function byRank(items) {
+        return items.sort(function(x, y) {
+            if (x.score !== y.score)
+                return y.score - x.score;
+
+            var k = dockWindow.kindRank[x.kind] - dockWindow.kindRank[y.kind];
+            return k !== 0 ? k : x.tie - y.tie;
+        });
+    }
+
+    // a typed query: windows, apps, commands and app actions in one ranking,
+    // then an address to open and a web search to fall back on
+    function searchRows(text, q, rows, scoredApps) {
+        var ranked = [];
+        for (var a = 0; a < scoredApps.length; a++) ranked.push({
+            "kind": "app",
+            "score": scoredApps[a].score,
+            "tie": a,
+            "app": scoredApps[a].app
+        });
+        if (Prefs.launcherWindows) {
+            var wins = [];
+            for (var w = 0; w < dockWindow.clientsData.length; w++) {
+                var c = dockWindow.clientsData[w];
+                if (!c.address)
+                    continue;
+
+                var owner = dockWindow.entryForClass(c.class);
+                var ws = dockWindow.windowScore(c, owner, q);
+                if (ws >= 0)
+                    wins.push({
+                        "kind": "window",
+                        "score": ws,
+                        // most recently focused first
+                        "tie": c.focusHistoryID === undefined ? 999 : c.focusHistoryID,
+                        "client": c,
+                        "app": owner
+                    });
+
+            }
+            ranked = ranked.concat(dockWindow.byRank(wins).slice(0, 6));
+        }
+        for (var m = 0; m < dockWindow.allCommands.length; m++) {
+            var cs = dockWindow.commandScore(dockWindow.allCommands[m], q);
+            if (cs >= 0)
+                ranked.push({
+                    "kind": "command",
+                    "score": cs,
+                    "tie": m,
+                    "cmd": dockWindow.allCommands[m]
+                });
+
+        }
+        // never from two letters: "re" shouldn't put Restart one Return away
+        if (Prefs.launcherPowerSearch && q.length >= 3) {
+            for (var pw = 0; pw < dockWindow.powerCommands.length; pw++) {
+                var ps = dockWindow.commandScore(dockWindow.powerCommands[pw], q);
+                if (ps >= 0)
+                    ranked.push({
+                        "kind": "power",
+                        "score": ps,
+                        "tie": pw,
+                        "cmd": dockWindow.powerCommands[pw]
+                    });
+
+            }
+        }
+        ranked = dockWindow.byRank(ranked);
+        // the leading app, on a real name hit, lists its actions right under it
+        var expanded = null;
+        for (var r = 0; r < ranked.length; r++) {
+            if (ranked[r].kind !== "app")
+                continue;
+
+            if (ranked[r].score >= 90 && ranked[r].app.actions.length > 0)
+                expanded = ranked[r].app;
+
+            break;
+        }
+        if (q.length >= 3) {
+            var acts = [];
+            for (var p = 0; p < dockWindow.scannedApps.length; p++) {
+                var host = dockWindow.scannedApps[p];
+                if (host === expanded || Apps.isHidden(host))
+                    continue;
+
+                for (var x = 0; x < host.actions.length; x++) {
+                    var act = host.actions[x];
+                    var actScore = dockWindow.textScore(act.name.toLowerCase(), q);
+                    // "zen private" finds Zen's New Private Window
+                    if (actScore < 0 && dockWindow.wordsIn((host.name + " " + act.name).toLowerCase(), q))
+                        actScore = 65;
+
+                    // below the apps: "new" is mostly a way to find an app
+                    if (actScore >= 0)
+                        acts.push({
+                            "kind": "action",
+                            "score": actScore - 20,
+                            "tie": acts.length,
+                            "app": host,
+                            "action": act
+                        });
+
+                }
+            }
+            ranked = dockWindow.byRank(ranked.concat(dockWindow.byRank(acts).slice(0, 5)));
+        }
+        var url = dockWindow.urlFor(text);
+        var urlRow = url === "" ? null : dockWindow.makeRow("url", "url", "Open " + url.replace(/^https?:\/\//i, ""), url, {
+            "glyph": DockIcons.link,
+            "payload": url
+        });
+        // an address beats weak name matches, not a real hit
+        var urlFirst = urlRow !== null && (ranked.length === 0 || ranked[0].score < 80);
+        if (urlFirst)
+            rows.push(urlRow);
+
+        for (var i = 0; i < ranked.length; i++) {
+            var it = ranked[i];
+            if (it.kind === "window") {
+                rows.push(dockWindow.rowForWindow(it.client, it.app));
+            } else if (it.kind === "app") {
+                rows.push(dockWindow.rowForApp(it.app));
+                if (it.app === expanded) {
+                    for (var n = 0; n < Math.min(5, expanded.actions.length); n++) rows.push(dockWindow.rowForAction(expanded, expanded.actions[n], true))
+                }
+            } else if (it.kind === "action") {
+                rows.push(dockWindow.rowForAction(it.app, it.action, false));
+            } else if (it.kind === "command") {
+                rows.push(dockWindow.makeRow("command", "cmd-" + it.cmd.id, it.cmd.name, it.cmd.desc, {
+                    "glyph": it.cmd.glyph,
+                    "payload": it.cmd.id
+                }));
+            } else if (it.kind === "power") {
+                var armed = dockWindow.armedPower === it.cmd.id;
+                rows.push(dockWindow.makeRow("power", "pow-" + it.cmd.id, it.cmd.name, armed ? "Press Return again to " + it.cmd.confirm : it.cmd.desc, {
+                    "glyph": it.cmd.glyph,
+                    "payload": it.cmd.id
+                }));
+            }
+        }
+        if (urlRow !== null && !urlFirst)
+            rows.push(urlRow);
+
+        if (Prefs.launcherWebSearch)
+            rows.push(dockWindow.makeRow("web", "web", "Search the web for “" + text + "”", dockWindow.webSearchHost(), {
+                "glyph": DockIcons.globe,
+                "payload": dockWindow.webSearchUrl(text)
+            }));
+
+    }
+
+    function rowForWindow(client, app) {
+        var name = app ? app.name : client.class;
+        var ws = client.workspace ? client.workspace.name : "";
+        // special workspaces keep their "special:" name, numbered ones read as words
+        if (ws !== "" && client.workspace.id > 0)
+            ws = "Workspace " + ws;
+
+        return dockWindow.makeRow("window", "win-" + client.address, client.title && client.title !== "" ? client.title : name, ws !== "" ? name + " · " + ws : name, {
+            "iconName": app ? app.iconName : client.class,
+            "payload": client.address
+        });
+    }
+
+    // nested rows sit under their app, so they drop the icon and the app name
+    function rowForAction(app, action, nested) {
+        return dockWindow.makeRow("action", "act-" + app.name + "-" + action.name, action.name, nested ? "" : app.name, {
+            "iconName": nested ? "" : app.iconName,
+            "glyph": nested ? DockIcons.subItem : "",
+            "nested": nested,
+            "payload": JSON.stringify({
+                "app": app.name,
+                "command": action.command
+            })
         });
     }
 
@@ -507,20 +921,28 @@ PanelWindow {
 
             var scored = dockWindow.appRows(q);
             if (q === "") {
+                var favs = Apps.favApps;
+                if (favs.length > 0) {
+                    rows.push(dockWindow.headerRow("Favourites"));
+                    for (var v = 0; v < favs.length; v++) rows.push(dockWindow.rowForApp(favs[v]));
+                }
+                // the favourites are already on show above
                 var frequent = scored.filter(function(s) {
-                    return s.uses > 0;
+                    return s.uses > 0 && !Apps.isFav(s.app);
                 }).slice(0, 5);
                 if (frequent.length > 0) {
                     rows.push(dockWindow.headerRow("Frequent"));
                     for (var f = 0; f < frequent.length; f++) rows.push(dockWindow.rowForApp(frequent[f].app));
-                    rows.push(dockWindow.headerRow("All applications"));
                 }
+                if (favs.length > 0 || frequent.length > 0)
+                    rows.push(dockWindow.headerRow("All applications"));
+
                 var rest = scored.slice().sort(function(a, b) {
                     return a.app.name.toLowerCase() < b.app.name.toLowerCase() ? -1 : 1;
                 });
                 for (var r = 0; r < rest.length; r++) rows.push(dockWindow.rowForApp(rest[r].app));
             } else {
-                for (var s2 = 0; s2 < scored.length; s2++) rows.push(dockWindow.rowForApp(scored[s2].app));
+                dockWindow.searchRows(dockWindow.queryFor(raw), q, rows, scored);
             }
         } else if (mode === "commands") {
             for (var c = 0; c < dockWindow.allCommands.length; c++) {
@@ -603,9 +1025,14 @@ PanelWindow {
 
         // the loop adds one spacing too many; 8 is the view's bottom margin
         var h = 8 - 2;
-        for (var i = 0; i < rows.length; i++) {
-            h += rows[i].kind === "header" ? 30 : (rows[i].subtitle !== "" ? 58 : 48);
+        // grow until maxRows results show, then the list scrolls; headers ride along
+        var shown = 0;
+        for (var i = 0; i < rows.length && shown < dockWindow.maxRows; i++) {
+            h += launcherFace.rowHeightFor(rows[i].kind, rows[i].subtitle);
             h += 2;
+            if (rows[i].selectable)
+                shown++;
+
         }
         return h;
     }
@@ -629,7 +1056,60 @@ PanelWindow {
             dockWindow.switchTheme(row.payload);
         } else if (row.kind === "command") {
             dockWindow.runCommand(row.payload);
+        } else if (row.kind === "window") {
+            dockWindow.menuOpen = false;
+            windowFocus.address = row.payload;
+            windowFocus.restart();
+        } else if (row.kind === "action") {
+            var act = JSON.parse(row.payload);
+            Quickshell.execDetached(["sh", "-c", act.command]);
+            dockWindow.recordLaunch(act.app);
+            dockWindow.menuOpen = false;
+        } else if (row.kind === "power") {
+            dockWindow.requestPower(row.payload);
+        } else if (row.kind === "web" || row.kind === "url") {
+            Quickshell.execDetached(["xdg-open", row.payload]);
+            dockWindow.menuOpen = false;
         }
+    }
+
+    // after the launcher lets go of the keyboard, or its focus grab can hand focus back behind us
+    Timer {
+        id: windowFocus
+
+        property string address: ""
+
+        interval: 60
+        onTriggered: Hyprland.dispatch("hl.dsp.focus({window='address:" + windowFocus.address + "'})")
+    }
+
+    // the power action waiting on a second press; one at a time, for rows and chips alike
+    property string armedPower: ""
+
+    onArmedPowerChanged: {
+        if (dockWindow.menuOpen && dockWindow.mode === "apps" && dockWindow.filterQuery !== "")
+            dockWindow.rebuildResults();
+
+    }
+
+    Timer {
+        id: powerDisarm
+
+        interval: 3000
+        onTriggered: dockWindow.armedPower = ""
+    }
+
+    // restart, shut down and log out lose unsaved work: the first press only arms them
+    function requestPower(id) {
+        var risky = id === "reboot" || id === "shutdown" || id === "logout";
+        if (risky && dockWindow.armedPower !== id) {
+            dockWindow.armedPower = id;
+            powerDisarm.restart();
+            return;
+        }
+        powerDisarm.stop();
+        dockWindow.armedPower = "";
+        dockWindow.runPowerAction(id);
     }
 
     // clipboard rows are the only removable ones
@@ -1036,7 +1516,24 @@ PanelWindow {
         if (dockWindow.appliedWallpaper === "")
             dockWindow.applyWallpaper(dockWindow.fallbackWallpaper);
 
-        appScanner.running = true;
+        Apps.rescan();
+    }
+
+    Connections {
+        function onScanned() {
+            dockWindow.rebuildResults();
+            dockWindow.syncRunningApps();
+        }
+
+        function onHiddenIdsChanged() {
+            dockWindow.rebuildResults();
+        }
+
+        function onFavIdsChanged() {
+            dockWindow.rebuildResults();
+        }
+
+        target: Apps
     }
 
     Connections {
@@ -1054,6 +1551,18 @@ PanelWindow {
 
         function onDockShowRunningChanged() {
             dockWindow.syncRunningApps();
+        }
+
+        function onLauncherAppDescriptionsChanged() {
+            dockWindow.rebuildResults();
+        }
+
+        function onLauncherMaxRowsChanged() {
+            dockWindow.rebuildResults();
+        }
+
+        function onLauncherPowerSearchChanged() {
+            dockWindow.rebuildResults();
         }
 
         function onPinnedResetRequested() {
@@ -1297,59 +1806,6 @@ PanelWindow {
     }
 
     Process {
-        id: appScanner
-
-        command: ["sh", "-c", "for d in /usr/share/applications \"$HOME/.local/share/applications\" " + "/var/lib/flatpak/exports/share/applications \"$HOME/.local/share/flatpak/exports/share/applications\" " + "/var/lib/snapd/desktop/applications; do " + "[ -d \"$d\" ] && find \"$d\" -maxdepth 1 -name '*.desktop' -print0; " + "done | xargs -0 -r awk '" + "function clean(v) { gsub(/\\|/, \" \", v); gsub(/\\r/, \"\", v); return v } " + "function flush(   n, e) { " + "n = clean(name); e = clean(ex); " + "if (nodisp || hidden) return; " + "if (type != \"\" && type != \"Application\") return; " + "if (n == \"\" || e == \"\") return; " + "gsub(/ ?%[a-zA-Z]/, \"\", e); sub(/[ \\t]+$/, \"\", e); " + "if (term == \"true\") e = \"kitty -e \" e; " + "print n \"|\" clean(icon) \"|\" clean(kw \" \" gen \" \" com \" \" cats) \"|\" e \"|\" clean(wm) \"|\" base } " + "BEGINFILE { name=\"\"; icon=\"\"; ex=\"\"; kw=\"\"; gen=\"\"; com=\"\"; cats=\"\"; wm=\"\"; type=\"\"; term=\"\"; nodisp=0; hidden=0; insec=0; " + "base=FILENAME; sub(/.*\\//, \"\", base); sub(/\\.desktop$/, \"\", base) } " + "/^[ \\t]*\\[/ { insec = ($0 ~ /^\\[Desktop Entry\\]/) ? 1 : 0; next } " + "!insec { next } " + "/^Name=/ { if (name == \"\") name = substr($0, 6) } " + "/^Icon=/ { if (icon == \"\") icon = substr($0, 6) } " + "/^Exec=/ { if (ex == \"\") ex = substr($0, 6) } " + "/^Keywords=/ { if (kw == \"\") { kw = substr($0, 10); gsub(/;/, \" \", kw) } } " + "/^GenericName=/ { if (gen == \"\") gen = substr($0, 13) } " + "/^Comment=/ { if (com == \"\") com = substr($0, 9) } " + "/^Categories=/ { if (cats == \"\") { cats = substr($0, 12); gsub(/;/, \" \", cats) } } " + "/^StartupWMClass=/ { if (wm == \"\") wm = substr($0, 16) } " + "/^Type=/ { if (type == \"\") type = substr($0, 6) } " + "/^Terminal=/ { if (term == \"\") term = substr($0, 10) } " + "/^NoDisplay=true/ { nodisp = 1 } " + "/^Hidden=true/ { hidden = 1 } " + "ENDFILE { flush() }'"]
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var lines = text.split("\n");
-                var seen = {};
-                var arr = [];
-                for (var i = 0; i < lines.length; i++) {
-                    if (lines[i].trim() === "")
-                        continue;
-
-                    var p = lines[i].split("|");
-                    if (p.length < 6)
-                        continue;
-
-                    var name = p[0];
-                    var key = name.toLowerCase();
-                    if (seen[key])
-                        continue;
-
-                    seen[key] = true;
-                    // first letter of each word, for acronym matching
-                    var initials = name.split(/[\s\-_]+/).map(function(w) {
-                        return w.charAt(0);
-                    }).join("").toLowerCase();
-                    arr.push({
-                        "name": name,
-                        "iconName": p[1],
-                        "search": (name + " " + p[2] + " " + p[5]).toLowerCase(),
-                        "initials": initials,
-                        "command": p[3],
-                        "wmClass": p[4],
-                        "base": p[5]
-                    });
-                }
-                dockWindow.scannedApps = arr;
-                dockWindow.rebuildResults();
-                dockWindow.syncRunningApps();
-            }
-        }
-
-    }
-
-    Timer {
-        interval: 20000
-        running: true
-        repeat: true
-        onTriggered: appScanner.running = true
-    }
-
-    Process {
         id: pinLookup
 
         property string pendingClass: ""
@@ -1589,7 +2045,7 @@ PanelWindow {
         property bool dropActive: false
         property bool shellReady: false
 
-        visible: Prefs.dockEnabled || dockWindow.menuOpen
+        visible: Prefs.dockEnabled || dockWindow.menuOpen || dockWindow.launcherClosing
         clip: dockWindow.menuOpen || dockWindow.morphing
         anchors.bottom: parent.bottom
         anchors.bottomMargin: dockWindow.hiddenOffset + dockWindow.placementMargin
@@ -1866,12 +2322,17 @@ PanelWindow {
             onCloseRequested: dockWindow.menuOpen = false
             onBackRequested: launcherFace.searchText = dockWindow.mode === "commands" ? "" : ">"
             onDeleteRequested: (index) => dockWindow.deleteResult(index)
+            onFavToggleRequested: (index) => dockWindow.toggleFavAt(index)
             onWallpaperPreviewed: (path) => dockWindow.requestWallpaper(path)
             onWallpaperChosen: (path) => {
                 dockWindow.applyWallpaper(path);
                 dockWindow.menuOpen = false;
             }
             onPowerActionChosen: (id) => dockWindow.runPowerAction(id)
+            showPowerChips: Prefs.launcherPowerChips
+            powerButtons: Prefs.powerButtonList
+            armedPower: dockWindow.armedPower
+            onPowerChipTapped: (id) => dockWindow.requestPower(id)
 
             Behavior on width {
                 enabled: shell.shellReady
@@ -1960,6 +2421,7 @@ PanelWindow {
             x: isRight ? shell.x + shell.width : shell.x - width
             y: shell.y + shell.height - height
             z: shell.z
+            opacity: shell.opacity
             visible: dockWindow.renderAsNotch && shell.visible
         }
 
