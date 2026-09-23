@@ -34,6 +34,7 @@ PanelWindow {
     // state, not news, so it seeds this instead of showing anything
     property int kbdLast: -1
     property int kbdLevel: 0
+    property bool kbdFileWritten: false
     // a handful of steps reads better as blocks than as a bar; a keyboard with
     // a fine-grained level keeps the track
     readonly property bool kbdSegmented: osdWindow.kbdMax > 0 && osdWindow.kbdMax <= 6
@@ -311,8 +312,12 @@ PanelWindow {
     }
     // both sources land here: the watcher for the key, the file for a level
     // set by anything that writes it
-    function reportKbdLevel(level) {
-        if (level < 0 || level === osdWindow.kbdLast)
+    // `written` marks a level read after a write to the file. that is news
+    // even when it matches the level the card last showed: the key may have
+    // moved the led since without the card hearing of it, if the watcher is
+    // not there to report it
+    function reportKbdLevel(level, written) {
+        if (level < 0 || (level === osdWindow.kbdLast && !written))
             return ;
 
         const seeding = osdWindow.kbdLast < 0;
@@ -483,8 +488,14 @@ PanelWindow {
         // the driver sets the led out of line with the write, so the file
         // still reads the old level right after the change lands; the reread
         // waits for it to settle
-        onFileChanged: kbdSettleTimer.restart()
-        onLoaded: osdWindow.reportKbdLevel(parseInt(text()) || 0)
+        onFileChanged: {
+            osdWindow.kbdFileWritten = true;
+            kbdSettleTimer.restart();
+        }
+        onLoaded: {
+            osdWindow.reportKbdLevel(parseInt(text()) || 0, osdWindow.kbdFileWritten);
+            osdWindow.kbdFileWritten = false;
+        }
     }
 
     Timer {
@@ -504,7 +515,7 @@ PanelWindow {
             onRead: (line) => {
                 const level = parseInt(line.trim());
                 if (!isNaN(level))
-                    osdWindow.reportKbdLevel(level);
+                    osdWindow.reportKbdLevel(level, false);
 
             }
         }

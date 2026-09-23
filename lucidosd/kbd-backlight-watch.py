@@ -11,6 +11,7 @@ file for those.
 Usage: kbd-backlight-watch.py /sys/class/leds/<device>
 """
 import ctypes
+import errno
 import os
 import select
 import signal
@@ -44,6 +45,30 @@ def read_level(path):
         return None
 
 
+def arm(fd):
+    """Read the notification file, which re-arms poll() for the next change.
+
+    Returns the level the hardware last set, or None when it has not set one
+    yet: until the first hardware change since boot the read fails with
+    ENODATA (Documentation/ABI/testing/sysfs-class-led). That is the normal
+    state right after a reboot, and the read arms poll() all the same -
+    kernfs takes the event count before it asks the attribute - so it is not
+    an error here. Anything else, such as the led going away with its driver,
+    is left to raise.
+    """
+    os.lseek(fd, 0, os.SEEK_SET)
+    try:
+        data = os.read(fd, 64)
+    except OSError as err:
+        if err.errno == errno.ENODATA:
+            return None
+        raise
+    try:
+        return int(data.strip())
+    except ValueError:
+        return None
+
+
 def main():
     if len(sys.argv) < 2:
         return 2
@@ -62,13 +87,12 @@ def main():
     # not every driver exposes it; without it the key is invisible here and
     # the file watch on the caller's side is all there is
     try:
-        notify = open(hw_changed)
+        notify = os.open(hw_changed, os.O_RDONLY)
     except OSError:
         return 0
 
-    with notify:
-        # the first read arms the notification
-        notify.read()
+    try:
+        arm(notify)
         poller = select.poll()
         poller.register(notify, select.POLLPRI | select.POLLERR)
         while True:
@@ -78,16 +102,18 @@ def main():
             # the notification carries the level the hardware just set, so
             # it needs no reread of brightness, which the driver may not have
             # caught up with yet
-            notify.seek(0)
-            try:
-                current = int(notify.read().strip())
-            except ValueError:
+            current = arm(notify)
+            if current is None:
                 current = read_level(brightness)
             if current is not None and current != level:
                 level = current
                 print(level, flush=True)
-
-    return 0
+    except OSError:
+        # the led went away with its driver: every poll() would now return
+        # at once, so leave rather than spin
+        return 1
+    finally:
+        os.close(notify)
 
 
 if __name__ == "__main__":
