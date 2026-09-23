@@ -481,7 +481,7 @@ PanelWindow {
     readonly property real maxDockWidth: dockWindow.screen ? dockWindow.screen.width : 1920
     property real dragHeadroom: 220
 
-    // Settings -> Dock -> Launcher -> Visible results
+    // Settings -> Launcher -> Visible results
     readonly property int maxRows: Math.max(3, Math.min(12, Prefs.launcherMaxRows))
     // room for maxRows of the tallest ordinary row (58 + spacing), inside the screen
     readonly property int menuMaxHeight: Math.min((dockWindow.screen ? dockWindow.screen.height : 1080) - 40, Math.max(560, dockWindow.panelPadding + launcherFace.chromeHeight + 8 + dockWindow.maxRows * 60))
@@ -509,7 +509,7 @@ PanelWindow {
 
         return dockWindow.launcherWidth;
     }
-    // Settings -> Dock -> Launcher; kept inside the screen however wide prefs.json says
+    // Settings -> Launcher; kept inside the screen however wide prefs.json says
     readonly property real launcherWidth: Math.min(Math.max(420, Prefs.launcherWidth), dockWindow.maxDockWidth - 48)
     property real resultsHeight: 0
     readonly property real menuContentMax: (dockWindow.mode === "commands" ? dockWindow.commandMaxHeight : dockWindow.menuMaxHeight) - dockWindow.panelPadding - launcherFace.chromeHeight

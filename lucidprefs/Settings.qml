@@ -38,7 +38,7 @@ FloatingWindow {
         { "key": "environment", "group": "Appearance", "label": "Environment", "title": "Environment", "blurb": "Cursors, icons, fonts and application themes, across GTK, Qt and Hyprland alike" },
         { "key": "bar", "group": "Desktop", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
         { "key": "dock", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
-        { "key": "apps", "group": "Desktop", "label": "Apps", "title": "Applications", "blurb": "What the launcher lists: the ones you starred come first, the ones you hid never come up" },
+        { "key": "launcher", "group": "Desktop", "label": "Launcher", "title": "Launcher", "blurb": "What it lists and in what order, what a search finds, and the clipboard history it hands back" },
         { "key": "widgets", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
         { "key": "workspaces", "group": "Desktop", "label": "Workspaces", "title": "Special Workspaces", "blurb": "Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key" },
         { "key": "keybinds", "group": "Desktop", "label": "Keybinds", "title": "Keybinds", "blurb": "Every Hyprland shortcut: change one, switch it off or add your own" },
@@ -212,8 +212,8 @@ FloatingWindow {
             win.show("dock");
         }
 
-        function apps(): void {
-            win.show("apps");
+        function launcher(): void {
+            win.show("launcher");
         }
 
         function environment(): void {
@@ -1019,8 +1019,8 @@ FloatingWindow {
                                 return "BarPage.qml";
                             case "dock":
                                 return "DockPage.qml";
-                            case "apps":
-                                return "AppsPage.qml";
+                            case "launcher":
+                                return "LauncherPage.qml";
                             case "widgets":
                                 return "WidgetsPage.qml";
                             case "workspaces":

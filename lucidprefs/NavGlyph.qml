@@ -218,7 +218,7 @@ Item {
         anchors.centerIn: parent
         width: 22
         height: 22
-        visible: glyph.kind === "apps"
+        visible: glyph.kind === "launcher"
         preferredRendererType: Shape.CurveRenderer
 
         ShapePath {

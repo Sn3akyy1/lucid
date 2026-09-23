@@ -262,12 +262,16 @@ The launcher is one search field over six modes:
 
 Type `=` in the search field for a calculator (`=2^3^2`, right-associative).
 
+Its options have a page of their own, **Settings → Launcher**: how wide it opens
+and how many results it shows, what a search finds, the power buttons, the
+clipboard history, and the applications you starred or hid.
+
 Clipboard mode keeps what you copy and hands it back: pick an entry to put it
 back on the clipboard, `Delete` (or the button on the row) to drop one, and
-*Clear history* on the Dock settings page to drop the lot. Images are kept too
+*Clear history* on the Launcher settings page to drop the lot. Images are kept too
 and preview in the row. `cliphist` is the store; the shell owns the `wl-paste`
 watchers that feed it, so history records for as long as the shell is running.
-Turn the whole thing off with the switch on the Dock page.
+Turn the whole thing off with the switch on the Launcher page.
 
 <img src="assets/prev2.webp" alt="The wallpaper carousel inside the launcher">
 
@@ -673,7 +677,7 @@ you know what's being pulled in.
 | `tesseract`, `tesseract-data-eng` | The Text mode's OCR. Without them Text mode says so and copies nothing. Add `tesseract-data-<lang>` and set `ocrLang` in `lucidshot/Screenshot.qml` for another language |
 | `python-pillow`, `python-numpy`, `python-fonttools` | Emoji in copied text. Without them the text still copies, minus the emoji. The glyph atlas is built once and cached in `~/.cache/lucidshot-ocr`; `lucidshot/emoji-ocr.py --atlas` builds it up front so the first copy is not slow |
 | `wl-clipboard`, `wtype` | Emoji and GIF pasting |
-| `cliphist` | Clipboard history. Without it the launcher's Clipboard mode says so and the Dock page's switch is greyed out |
+| `cliphist` | Clipboard history. Without it the launcher's Clipboard mode says so and the Launcher page's switch is greyed out |
 | `cava` | Audio visualisers — the media panel's strip (its config is installed to `~/.config/cava/quickshell.conf`; the strip needs that file's raw-ascii output settings) and the desktop widget, which writes its own `~/.cache/quickshell/lucid-cava.conf` at whatever band count the widest card asks for |
 | `songrec` | Song identification |
 | `curl` | Weather, location lookup and GIF search |
@@ -745,7 +749,7 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | Target | Functions |
 | --- | --- |
 | `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `clipboard` `search <query>` |
-| `settings` | `toggle` `open` `close` `show <page>` `general` `users` `glass` `bar` `dock` `environment` `displays` `widgets` `workspaces` `notifications` `sound` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
+| `settings` | `toggle` `open` `close` `show <page>` `general` `users` `glass` `bar` `dock` `launcher` `environment` `displays` `widgets` `workspaces` `notifications` `sound` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
 | `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
 | `network` | `status` `list` `rescan` |
 | `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |

@@ -5,7 +5,7 @@ pragma Singleton
 
 // every application with a desktop entry, read the way the launcher lists it.
 // the dock matches running windows against all of them; the launcher leaves out
-// the ones hidden in Settings > Apps and puts the favourites first
+// the ones hidden in Settings > Launcher and puts the favourites first
 Singleton {
     id: root
 
