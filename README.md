@@ -563,7 +563,10 @@ Hyprland reload.
   with `qs ipc call settings glass`
 - **Settings** — a GUI for all of the above, no config file editing. Seventeen
   pages behind a collapsible rail, grouped-list cards, an app bar that collapses
-  as you scroll, and a reset arrow on anything you have moved off its default
+  as you scroll, and a reset arrow on anything you have moved off its default.
+  The search field at the head of the rail finds any option by its name or its
+  description and opens its page scrolled to it; `Ctrl+F`, or just start typing.
+  Scriptable with `qs ipc call -- settings search <words>`
 
 <img src="assets/prev6.webp" alt="The Lucid lock screen: a large clock on the left, and the sign-in card, the song playing and notifications on the right">
 

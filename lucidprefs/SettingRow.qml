@@ -39,6 +39,11 @@ Item {
         return null;
     }
 
+    // lights the row up for a moment; Settings search does it to the row it opened
+    function flash() {
+        flashPulse.restart();
+    }
+
     implicitWidth: parent ? parent.width : 400
     implicitHeight: Math.max(60, (row.stacked ? labels.implicitHeight + holder.implicitHeight + 14 : Math.max(labels.implicitHeight, holder.implicitHeight)) + row.padV * 2)
     onVisibleChanged: {
@@ -79,6 +84,52 @@ Item {
         // pointer feedback only; must never swallow clicks meant for the control
         HoverHandler {
             id: hover
+        }
+
+        Rectangle {
+            id: flashLayer
+
+            anchors.fill: parent
+            topLeftRadius: parent.topLeftRadius
+            topRightRadius: parent.topRightRadius
+            bottomLeftRadius: parent.bottomLeftRadius
+            bottomRightRadius: parent.bottomRightRadius
+            color: Theme.accent
+            opacity: 0
+        }
+
+        SequentialAnimation {
+            id: flashPulse
+
+            NumberAnimation {
+                target: flashLayer
+                property: "opacity"
+                to: 0.24
+                duration: Theme.ms(200)
+            }
+
+            NumberAnimation {
+                target: flashLayer
+                property: "opacity"
+                to: 0.08
+                duration: Theme.ms(320)
+            }
+
+            NumberAnimation {
+                target: flashLayer
+                property: "opacity"
+                to: 0.24
+                duration: Theme.ms(320)
+            }
+
+            NumberAnimation {
+                target: flashLayer
+                property: "opacity"
+                to: 0
+                duration: Theme.ms(900)
+                easing.type: Easing.InOutQuad
+            }
+
         }
 
         Behavior on topLeftRadius {
