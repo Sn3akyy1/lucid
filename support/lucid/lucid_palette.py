@@ -9,6 +9,9 @@ M3 "tone" is CIE L*, so re-toning in linear light lands a role at the
 lightness the spec asks for while holding the hue it came in with.
 """
 import colorsys
+import json
+import os
+import re
 
 
 # ---- tone engine ----
@@ -266,6 +269,32 @@ def build_palette(bg, fg, accents, hints=None, reserve_red_for_error=False,
     }
 
 
+# a dark scheme's ground and ink, and the tone M3 puts an accent at on top of
+# it: gen-light-palette.py's window for a light scheme, mirrored. The ink gets
+# a window too, where the text of Lucid's dark themes sits; a light ground
+# taken whole would glare
+DARK_SURFACE_MIN, DARK_SURFACE_MAX = 6.0, 12.0
+DARK_INK_MIN, DARK_INK_MAX = 85.0, 90.0
+DARK_ACCENT_TONE = 80.0
+
+
+def dark_side(pal):
+    """A light palette (the 36 roles) -> the same palette as a dark scheme.
+
+    gen-light-palette.py the other way round, for a scheme authored light:
+    its ink becomes the ground and its ground the ink, each clamped into the
+    window Lucid's dark themes sit in, which keeps the neutral hues that make
+    the scheme recognisable. The accents keep their hue and chroma and move to
+    the tone M3 gives them on a dark ground.
+    """
+    light_bg, light_fg = pal["surface"], pal["on_surface"]
+    bg = hx(at_tone(light_fg, min(DARK_SURFACE_MAX, max(DARK_SURFACE_MIN, tone(light_fg)))))
+    fg = hx(at_tone(light_bg, min(DARK_INK_MAX, max(DARK_INK_MIN, tone(light_bg)))))
+    hints = {role: hx(at_tone(pal[role], DARK_ACCENT_TONE))
+             for role in ("primary", "secondary", "tertiary", "error") if pal.get(role)}
+    return build_palette(bg, fg, list(hints.values()), hints, mode="dark")
+
+
 # hue bands, named the way a theme author would
 _HUE_NAMES = [(15, "red"), (40, "orange"), (62, "amber"), (85, "olive"),
               (160, "green"), (188, "teal"), (205, "cyan"), (225, "blue"),
@@ -282,6 +311,11 @@ def hue_name(h):
 
 def _surface_word(c):
     t, (h, s) = tone(c), hue_sat(c)
+    if t >= 50:
+        # a light scheme's ground
+        if s < 0.10:
+            return "white" if t >= 95 else "light grey"
+        return f"{'pale' if t >= 90 else 'light'} {hue_name(h)}"
     if s < 0.10:
         return "near-black" if t < 8 else ("charcoal" if t < 16 else "slate")
     shade = "deep" if t < 12 else ("dark" if t < 22 else "dim")
@@ -310,5 +344,62 @@ def describe(pal):
     # "dark blue with blue accents" says nothing; name the lift instead
     if hue_name(hue_sat(pal["surface"])[0]) in acc and hue_sat(pal["surface"])[1] >= 0.10:
         lift = tone(pal["primary"]) - tone(pal["surface"])
-        acc = ("brighter " if lift > 45 else "lifted ") + acc.split()[-1]
+        # on a light ground the accent sits below it
+        if lift < 0:
+            acc = "deeper " + acc.split()[-1]
+        else:
+            acc = ("brighter " if lift > 45 else "lifted ") + acc.split()[-1]
     return f"{surf.capitalize()} with {acc} accents"
+
+
+# ---- a finished palette as a theme ----
+# the roles a palette cannot be without; the shell reads these on every surface
+CORE_ROLES = ("surface", "on_surface", "primary", "secondary", "tertiary", "error")
+
+
+def save_theme(theme_dir, name, pal, mode="dark", source="", detected=""):
+    """Write a palette that is already complete (edited, or a Lucid palette
+    file) as <theme_dir>/<id>/ and return its meta.json.
+
+    A theme is authored dark and apply-theme.sh derives its light side. A
+    palette made in light is kept as quickshell-light.json, the way an
+    imported light scheme is, and its dark side is dark_side() of it. The
+    light file is written after the dark one, so apply-theme.sh finds it
+    fresh and uses it as it is.
+    """
+    base = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "theme"
+    tid, n = base, 2
+    while os.path.exists(f"{theme_dir}/{tid}"):
+        tid, n = f"{base}-{n}", n + 1
+    os.makedirs(f"{theme_dir}/{tid}")
+    face = dark_side(pal) if mode == "light" else pal
+    with open(f"{theme_dir}/{tid}/quickshell.json", "w") as f:
+        json.dump(face, f, indent=2)
+    if mode == "light":
+        with open(f"{theme_dir}/{tid}/quickshell-light.json", "w") as f:
+            json.dump(pal, f, indent=2)
+    # the swatch and the description are the palette as it was made, light
+    # or dark, like an imported scheme's
+    meta = {"id": tid, "name": name, "desc": describe(pal), "swatchBg": pal["surface"],
+            "swatchAccent": pal["primary"], "source": source, "detected": detected, "user": True}
+    with open(f"{theme_dir}/{tid}/meta.json", "w") as f:
+        json.dump(meta, f, indent=2)
+    return meta
+
+
+def read_lucid_palette(path):
+    """A palette file Lucid wrote (Settings -> Palettes -> Export), or None.
+    It holds every role already, so it goes back in as it is, unbuilt."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(data, dict) or data.get("lucid") != "palette" or not isinstance(data.get("palette"), dict):
+        return None
+    pal = {k: v.lower() for k, v in data["palette"].items()
+           if isinstance(v, str) and re.fullmatch(r"#[0-9a-fA-F]{6}", v)}
+    if any(r not in pal for r in CORE_ROLES):
+        return None
+    mode = "light" if data.get("mode") == "light" else "dark"
+    return {"name": str(data.get("name") or "").strip(), "mode": mode, "palette": pal}

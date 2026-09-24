@@ -3,7 +3,8 @@
 #
 # copies a theme's palette into the cache Lucid reads, then mirrors it into
 # kitty, spicetify's Sleek theme, VSCodium, Vesktop, GTK, starship and Steam —
-# each one only if it is actually installed. pywal comes through here once
+# each one only if it is actually installed — and renders every other template
+# in the matugen config with the theme's colours. pywal comes through here once
 # gen-pywal-palette.py has written its palette; matugen does not — it drives
 # those same apps from its own templates.
 #
@@ -335,6 +336,46 @@ if [[ -f "$STARSHIP" ]]; then
         done
     fi
 fi
+
+# every other app with a matugen template. matugen only renders its templates
+# from a wallpaper, so here they get this theme's colours instead: a scheme
+# matugen derives from the theme's primary fills the context (tonal palettes,
+# base16, the roles older palettes never defined) and the theme's own roles
+# replace its colours, so a template gets this theme's exact colours wherever
+# it has them. render-templates.sh does the rendering, as it does for the
+# wallpaper. templates for a file this script writes above are skipped — it
+# has its own writer, and starship's template would replace the whole prompt
+# where this script only swaps the palette.
+render_templates() {
+    local renderer="$HOME/.config/lucid/render-templates.sh"
+    command -v matugen &>/dev/null && [[ -x "$renderer" && -n "$PRIMARY" ]] || return 0
+
+    local work
+    work=$(mktemp -d)
+    printf '[config]\n\n[templates]\n' > "$work/empty.toml"
+    if matugen -c "$work/empty.toml" color hex "$PRIMARY" -m "$MODE" --dry-run --json hex -q \
+            > "$work/scheme.json" 2>/dev/null &&
+        jq --slurpfile p "$PALETTE" --arg mode "$MODE" \
+            --arg image "$(cat "$HOME/.cache/current_wallpaper" 2>/dev/null || true)" '
+            .colors += ($p[0] | with_entries(select(.value | type == "string" and startswith("#"))
+                | .value = {dark: {color: .value}, light: {color: .value}, default: {color: .value}}))
+            | .mode = $mode | .is_dark_mode = ($mode == "dark") | .image = $image' \
+            "$work/scheme.json" > "$work/colours.json" 2>/dev/null; then
+        "$renderer" "$work/colours.json" "$MODE" "$THEME" \
+            --skip "$HOME/.cache/quickshell/matugen.json" \
+            --skip "$HOME/.config/kitty/matugen-colors.conf" \
+            --skip "$HOME/.cache/matugen/vscode-colors" \
+            --skip "$HOME/.cache/matugen/vscode-colors.json" \
+            --skip "$HOME/.config/vesktop/themes/midnight-discord.css" \
+            --skip "$HOME/.config/gtk-3.0/colors.css" \
+            --skip "$HOME/.config/gtk-4.0/colors.css" \
+            --skip "$HOME/.config/starship.toml" || true
+    else
+        echo "warning: could not build the colours for the matugen templates" >&2
+    fi
+    rm -rf "$work"
+}
+render_templates || true
 
 # steam — millennium's material theme has its own matugen config
 if command -v matugen &>/dev/null && [[ -f "$HOME/.config/matugen-steam/config.toml" ]]; then

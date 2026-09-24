@@ -708,6 +708,13 @@ PanelWindow {
     }
 
     function switchTheme(id) {
+        // built from one colour rather than from a picture, so the wallpaper
+        // stays as it is and there is no folder to look in
+        if (id === "colour") {
+            Quickshell.execDetached(["sh", "-c", "echo colour > \"$0/.cache/current_theme\" && \"$0/.config/lucid/apply-colour.sh\"", Quickshell.env("HOME")]);
+            dockWindow.menuOpen = false;
+            return ;
+        }
         themeSwitchProbe.pendingId = id;
         themeSwitchProbe.command = ["sh", "-c", "d=\"" + Prefs.wallpaperDirFor(id) + "\"; " + "[ -d \"$d\" ] && find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | sort | head -n1; true"];
         themeSwitchProbe.running = true;

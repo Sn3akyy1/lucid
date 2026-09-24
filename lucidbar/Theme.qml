@@ -12,7 +12,7 @@ Singleton {
     readonly property bool isLight: root.toneOf(root.cSurface) > 50
     // +1 dark, -1 light. every "lighter means more elevated" derivation flips on it
     readonly property int _dir: root.isLight ? -1 : 1
-    property real pillDarkness: pf.surfaceDarkness >= 0 ? pf.surfaceDarkness : (themeName === "matugen" && !root.isLight ? 0.45 : 0)
+    property real pillDarkness: pf.surfaceDarkness >= 0 ? pf.surfaceDarkness : ((themeName === "matugen" || themeName === "colour") && !root.isLight ? 0.45 : 0)
     // light surfaces come out of matugen near-white, so the accent is what keeps
     // them from reading as flat paper. auto is off in dark: pills stay flat there.
     // 0.7 is not a taste call — it is the smallest value that clears the chroma
