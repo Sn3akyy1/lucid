@@ -19,7 +19,7 @@ Column {
     }]
     // the two wallpaper-derived themes re-extract; everything else is authored
     // dark and gets a light variant built from its own colours
-    readonly property string modeHint: page.currentTheme === "matugen" || page.currentTheme === "pywal" ? "Re-derives the palette from your wallpaper in the mode you pick. Applications are asked to match." : "Builds a light palette from this theme's own colours. Applications are asked to match."
+    readonly property string modeHint: page.currentTheme === "matugen" || page.currentTheme === "pywal" ? "Re-derives the palette from your wallpaper in the mode you pick. Applications are asked to match." : (page.currentTheme === "colour" ? "Builds the palette from your colour again in the mode you pick. Applications are asked to match." : "Builds a light palette from this theme's own colours. Applications are asked to match.")
     property string appliedWallpaper: ""
     // same folder the dock's wallpaper strip browses
     readonly property string wallpaperDir: Prefs.wallpaperDir
@@ -664,6 +664,24 @@ Column {
 
                 }
 
+            }
+
+        }
+
+    }
+
+    SettingCard {
+        title: "COLOURS"
+
+        SettingRow {
+            title: "Palettes and applications"
+            description: "How Matugen and Your colour build a palette, which applications follow it, and templates of your own are on a page of their own."
+            showDivider: false
+
+            M3Button {
+                text: "Open"
+                variant: "tonal"
+                onClicked: Prefs.settingsRequested("colours")
             }
 
         }

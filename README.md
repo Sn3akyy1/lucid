@@ -579,21 +579,39 @@ into Appearance, Desktop and Devices.*
 
 ## Theming
 
-Colours come from one of seven palettes, picked in Settings or via the
+Colours come from one of eight palettes, picked in Settings or via the
 launcher's Theme mode:
 
 **Matugen** and **Pywal** generate a palette from your current wallpaper.
-**Catppuccin Mocha**, **Gruvbox**, **Nightfox**, **Nord** and **Tokyo Night**
+**Your colour** builds one from a single colour you pick, and leaves the
+wallpaper alone. **Catppuccin Mocha**, **Gruvbox**, **Nightfox**, **Nord** and **Tokyo Night**
 are fixed palettes that don't change with the wallpaper. Anything you import
 sits alongside them, and the whole list can be dragged into the order you want.
 
 Every palette has a light mode too — **Light or dark** on the Theme page.
-Matugen and Pywal re-extract the wallpaper in the mode you pick; the fixed
+Matugen and Pywal re-extract the wallpaper in the mode you pick, Your colour is
+built again from its colour; the fixed
 palettes get a light version built from their own colours, so Nord lands on its
 own Snow Storm and Gruvbox on its own cream. Light surfaces carry a trace of the
 accent, and *Accent tint* on the General page sets how much. The mode is
 remembered beside the theme, and GTK and Qt applications follow it, switching to
 the light or dark counterpart of their theme where one is installed.
+
+**Generated palettes**, at the top of **Settings → Colours**, shapes what
+Matugen and Your colour build:
+
+- **Your colour** — the colour itself: typed as hex, picked from anywhere on
+  screen (with `hyprpicker`), or one of a handful to start from.
+- **Style** — matugen's nine scheme types, from the calm *Tonal* it uses by
+  default through *Vibrant*, *Expressive* and *Fidelity* to *Neutral* and
+  *Monochrome*.
+- **Contrast** — from −100 % to +100 %; 0 is the design as specified.
+- **Colour from the wallpaper** — Matugen starts from the wallpaper's most
+  dominant colour. This shows the others it finds (up to four), each as the
+  accent it would give, to start from instead. The pick belongs to that
+  wallpaper: change the picture and it starts from its most dominant again.
+
+Changes apply as you make them, to the shell and every app template.
 
 <img src="assets/prev7.webp" alt="Lucid in light mode: pale green widgets, bar and dock over a night-time street">
 
@@ -623,6 +641,48 @@ outputs, left to right.
 If you already use matugen, the installer **appends** its Quickshell template
 to your `config.toml` and backs up the original — your existing templates are
 left alone.
+
+Every template in `~/.config/matugen/config.toml` follows whichever palette is
+active, not only the wallpaper ones: picking Nord or Catppuccin renders them
+with that theme's colours. That makes the config the place to theme any other
+application — put a template in `~/.config/matugen/templates/` and add a block
+for it:
+
+```toml
+[templates.myapp]
+input_path = '~/.config/matugen/templates/myapp.css'
+output_path = '~/.config/myapp/colors.css'
+post_hook = 'pkill -USR1 myapp'   # optional: tell the app to reload
+```
+
+Templates use [matugen's syntax](https://github.com/InioX/matugen) —
+`{{colors.primary.default.hex}}` and so on. A fixed palette fills every role it
+defines with its own colour; the few it doesn't (the `*_fixed` family, the
+tonal palettes, base16) come from a scheme matugen derives from its primary.
+Each template renders on its own, so one that fails doesn't hold the rest back:
+a toast names it, and `~/.cache/lucid/templates.json` keeps what happened to
+every template on the last change, with matugen's error for the ones that
+failed. `~/.config/lucid/render-templates.sh` is what renders them, for the
+wallpaper and the fixed palettes alike.
+
+**Settings → Colours** (`qs ipc call settings colours`) shows the same thing
+without opening the file:
+
+- **App templates** lists every template with the file it writes and how the
+  last change went, matugen's reason included when one failed. A switch turns
+  a template off (its block stays in the config, commented out) or back on, in
+  which case it renders at once with the current colours. *Render again* redoes
+  all of them without touching the wallpaper.
+- **Add an app** offers the templates Lucid ships for applications you have
+  installed but that aren't wired up yet — installed after Lucid, say.
+- **Your own template** adds one from a file or an `https://` link. *Try it*
+  shows what it writes with your colours, or why it can't, before it's added.
+  Below it, every colour role of the current palette: click one to copy the
+  variable that writes it, as `#rrggbb`, `rrggbb`, `rgb()`, `rgba()` or `hsl()`.
+
+`~/.config/lucid/templates.py` does the editing, and runs from a terminal too
+(`templates.py list`, `set <name> on|off`, `add`, `remove`, `try`). The config
+is copied to `config.toml.lucid-backup` before each change.
 
 ### Adding your own theme
 
