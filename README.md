@@ -579,21 +579,39 @@ into Appearance, Desktop and Devices.*
 
 ## Theming
 
-Colours come from one of seven palettes, picked in Settings or via the
+Colours come from one of eight palettes, picked in Settings or via the
 launcher's Theme mode:
 
 **Matugen** and **Pywal** generate a palette from your current wallpaper.
-**Catppuccin Mocha**, **Gruvbox**, **Nightfox**, **Nord** and **Tokyo Night**
+**Your colour** builds one from a single colour you pick, and leaves the
+wallpaper alone. **Catppuccin Mocha**, **Gruvbox**, **Nightfox**, **Nord** and **Tokyo Night**
 are fixed palettes that don't change with the wallpaper. Anything you import
 sits alongside them, and the whole list can be dragged into the order you want.
 
 Every palette has a light mode too — **Light or dark** on the Theme page.
-Matugen and Pywal re-extract the wallpaper in the mode you pick; the fixed
+Matugen and Pywal re-extract the wallpaper in the mode you pick, Your colour is
+built again from its colour; the fixed
 palettes get a light version built from their own colours, so Nord lands on its
 own Snow Storm and Gruvbox on its own cream. Light surfaces carry a trace of the
 accent, and *Accent tint* on the General page sets how much. The mode is
 remembered beside the theme, and GTK and Qt applications follow it, switching to
 the light or dark counterpart of their theme where one is installed.
+
+**Generated palettes**, at the top of **Settings → Colours**, shapes what
+Matugen and Your colour build:
+
+- **Your colour** — the colour itself: typed as hex, picked from anywhere on
+  screen (with `hyprpicker`), or one of a handful to start from.
+- **Style** — matugen's nine scheme types, from the calm *Tonal* it uses by
+  default through *Vibrant*, *Expressive* and *Fidelity* to *Neutral* and
+  *Monochrome*.
+- **Contrast** — from −100 % to +100 %; 0 is the design as specified.
+- **Colour from the wallpaper** — Matugen starts from the wallpaper's most
+  dominant colour. This shows the others it finds (up to four), each as the
+  accent it would give, to start from instead. The pick belongs to that
+  wallpaper: change the picture and it starts from its most dominant again.
+
+Changes apply as you make them, to the shell and every app template.
 
 <img src="assets/prev7.webp" alt="Lucid in light mode: pale green widgets, bar and dock over a night-time street">
 

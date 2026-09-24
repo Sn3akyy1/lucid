@@ -54,6 +54,16 @@ Singleton {
     property alias wallpaperFolder: s.wallpaperFolder
     // bracket writes on the adapter are dropped, so this must go through the alias
     property alias themeOrder: s.themeOrder
+    // how matugen builds a palette, from the wallpaper or from themeColour: its
+    // scheme type, contrast from -1 to 1, and which of the wallpaper's dominant
+    // colours to start from (the index holds for matugenSourceImage only; any
+    // other wallpaper starts from its most dominant)
+    property alias matugenScheme: s.matugenScheme
+    property alias matugenContrast: s.matugenContrast
+    property alias matugenSourceImage: s.matugenSourceImage
+    property alias matugenSourceIndex: s.matugenSourceIndex
+    // the one colour the "colour" theme is built from
+    property alias themeColour: s.themeColour
     property string currentTheme: "matugen"
     readonly property string wallpaperDir: root.wallpaperDirFor(root.currentTheme)
     // "dark" | "light". kept in ~/.cache/current_mode beside current_theme
@@ -249,7 +259,8 @@ Singleton {
         { "id": "gruvbox", "name": "Gruvbox", "desc": "Retro groove warm palette", "swatchBg": "#282828", "swatchAccent": "#83a598" },
         { "id": "nightfox", "name": "Nightfox", "desc": "Deep navy with muted blue accents", "swatchBg": "#192330", "swatchAccent": "#719cd6" },
         { "id": "nord", "name": "Nord", "desc": "Arctic blue-grey palette", "swatchBg": "#232831", "swatchAccent": "#88c0d0" },
-        { "id": "tokyo-night", "name": "Tokyo Night", "desc": "Dark blues and violets", "swatchBg": "#1a1b26", "swatchAccent": "#7aa2f7" }
+        { "id": "tokyo-night", "name": "Tokyo Night", "desc": "Dark blues and violets", "swatchBg": "#1a1b26", "swatchAccent": "#7aa2f7" },
+        { "id": "colour", "name": "Your colour", "desc": "A palette built from one colour you pick", "swatchBg": "#14121a", "swatchAccent": root.themeColour }
     ]
     // themes imported from a scheme repo, read back from their meta.json
     property var userThemes: []
@@ -295,6 +306,11 @@ Singleton {
         "fontScale": 1,
         "wallpaperFolder": "",
         "themeOrder": "",
+        "matugenScheme": "scheme-tonal-spot",
+        "matugenContrast": 0,
+        "matugenSourceImage": "",
+        "matugenSourceIndex": 0,
+        "themeColour": "#6750a4",
         "barEnabled": true,
         "barPopupMode": false,
         "barPopupGap": 10,
@@ -721,6 +737,11 @@ Singleton {
             property real fontScale: 1
             property string wallpaperFolder: ""
             property string themeOrder: ""
+            property string matugenScheme: "scheme-tonal-spot"
+            property real matugenContrast: 0
+            property string matugenSourceImage: ""
+            property int matugenSourceIndex: 0
+            property string themeColour: "#6750a4"
             property bool barEnabled: true
             property bool barPopupMode: false
             property int barPopupGap: 10

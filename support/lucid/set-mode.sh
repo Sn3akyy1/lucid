@@ -5,6 +5,8 @@
 # way the theme that is active builds it normally:
 #   matugen / pywal — wallpaper-derived, so the generator is re-run in the new
 #                     mode and every template it owns is rewritten with it
+#   colour          — built from one colour, so apply-colour.sh builds it again
+#                     in the new mode
 #   anything else   — a static palette, so apply-theme.sh picks (or synthesises)
 #                     the theme's light variant
 #
@@ -37,6 +39,10 @@ matugen | pywal)
     # re-setting the same image is a no-op on screen; the point is the
     # regeneration it drives
     "$HOME/.config/hypr/scripts/wallpaper/set-wallpaper.sh" "$WALLPAPER" "$MODE"
+    ;;
+colour)
+    # one colour, built again in the new mode
+    "$LUCID_DIR/apply-colour.sh" "$MODE"
     ;;
 *)
     "$LUCID_DIR/apply-theme.sh" "$THEME" "$MODE"
