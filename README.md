@@ -624,6 +624,29 @@ If you already use matugen, the installer **appends** its Quickshell template
 to your `config.toml` and backs up the original — your existing templates are
 left alone.
 
+Every template in `~/.config/matugen/config.toml` follows whichever palette is
+active, not only the wallpaper ones: picking Nord or Catppuccin renders them
+with that theme's colours. That makes the config the place to theme any other
+application — put a template in `~/.config/matugen/templates/` and add a block
+for it:
+
+```toml
+[templates.myapp]
+input_path = '~/.config/matugen/templates/myapp.css'
+output_path = '~/.config/myapp/colors.css'
+post_hook = 'pkill -USR1 myapp'   # optional: tell the app to reload
+```
+
+Templates use [matugen's syntax](https://github.com/InioX/matugen) —
+`{{colors.primary.default.hex}}` and so on. A fixed palette fills every role it
+defines with its own colour; the few it doesn't (the `*_fixed` family, the
+tonal palettes, base16) come from a scheme matugen derives from its primary.
+Each template renders on its own, so one that fails doesn't hold the rest back:
+a toast names it, and `~/.cache/lucid/templates.json` keeps what happened to
+every template on the last change, with matugen's error for the ones that
+failed. `~/.config/lucid/render-templates.sh` is what renders them, for the
+wallpaper and the fixed palettes alike.
+
 ### Adding your own theme
 
 **Settings → Theme** takes the URL of any colour-scheme repo, clones it, reads
