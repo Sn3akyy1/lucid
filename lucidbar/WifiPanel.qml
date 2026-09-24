@@ -159,7 +159,7 @@ Item {
                         anchors.margins: -1
 
                         SequentialAnimation on opacity {
-                            running: netItem.isConnected
+                            running: netItem.isConnected && root.active
                             loops: Animation.Infinite
 
                             NumberAnimation {

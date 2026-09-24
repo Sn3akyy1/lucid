@@ -732,7 +732,7 @@ Item {
                         anchors.margins: -2
 
                         SequentialAnimation on opacity {
-                            running: devItem.isConnected
+                            running: devItem.isConnected && root.active
                             loops: Animation.Infinite
 
                             NumberAnimation {
