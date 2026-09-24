@@ -389,6 +389,7 @@ BarPill {
             expandedTimeText.text = Loc.now().toLocaleTimeString(Qt.locale(), root.fullTimeFormat);
             expandedDateText.text = Loc.now().toLocaleDateString(Qt.locale(), "dddd, MMMM d");
             root.clockTick++;
+            clockColonText.opacity = clockColonText.opacity < 1 ? 1 : 0.45;
             root.checkReminders();
         }
     }
@@ -425,7 +426,7 @@ BarPill {
 
                     SequentialAnimation on opacity {
                         loops: Animation.Infinite
-                        running: true
+                        running: false
 
                         NumberAnimation {
                             from: 1
@@ -894,6 +895,7 @@ BarPill {
 
                                 WeatherIcon {
                                     anchors.centerIn: parent
+                                    animate: root.expanded
                                     kind: WeatherSource.kindFor(root.weatherCode, root.isNight)
                                     // meteocons keeps more padding in its canvas than the old glyph did
                                     size: 26
