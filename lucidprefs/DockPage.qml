@@ -213,6 +213,179 @@ Column {
     }
 
     SettingCard {
+        title: "LAUNCHER"
+
+        SettingRow {
+            title: "Launcher width"
+            resetKey: "launcherWidth"
+            description: "How wide the application launcher opens - also the command, theme and clipboard lists. The wallpaper strip and power menu keep their own size."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 420
+                to: 1000
+                stepSize: 10
+                suffix: " px"
+                value: Prefs.launcherWidth
+                onMoved: (v) => {
+                    return Prefs.launcherWidth = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Visible results"
+            resetKey: "launcherMaxRows"
+            description: "How many results the launcher shows before the list scrolls. It grows up to that many rows and shrinks when there are fewer."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 3
+                to: 12
+                stepSize: 1
+                suffix: " rows"
+                value: Prefs.launcherMaxRows
+                onMoved: (v) => {
+                    return Prefs.launcherMaxRows = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "App descriptions"
+            resetKey: "launcherAppDescriptions"
+            description: "A line under each application saying what it is, taken from its desktop entry."
+
+            M3Switch {
+                checked: Prefs.launcherAppDescriptions
+                onToggled: (v) => {
+                    return Prefs.launcherAppDescriptions = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Open windows in results"
+            resetKey: "launcherWindows"
+            description: "Searching also finds windows that are already open, by title or application. Return switches to the window instead of starting the app again."
+
+            M3Switch {
+                checked: Prefs.launcherWindows
+                onToggled: (v) => {
+                    return Prefs.launcherWindows = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Power buttons"
+            resetKey: "launcherPowerChips"
+            description: "Buttons next to the search field to lock, suspend, restart or shut down. The ones that end the session ask for a second click."
+
+            M3Switch {
+                checked: Prefs.launcherPowerChips
+                onToggled: (v) => {
+                    return Prefs.launcherPowerChips = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Buttons to show"
+            resetKey: "launcherPowerButtons"
+            description: "Each one you pick takes a little room from the search field."
+            stacked: true
+            enabled: Prefs.launcherPowerChips
+            disabledReason: "Turn on power buttons to choose which ones appear."
+
+            M3Chips {
+                width: parent.width
+                multi: true
+                enabled: Prefs.launcherPowerChips
+                selectedKeys: Prefs.powerButtonList
+                options: [{
+                    "key": "lock",
+                    "label": "Lock"
+                }, {
+                    "key": "logout",
+                    "label": "Log out"
+                }, {
+                    "key": "suspend",
+                    "label": "Suspend"
+                }, {
+                    "key": "hibernate",
+                    "label": "Hibernate"
+                }, {
+                    "key": "reboot",
+                    "label": "Restart"
+                }, {
+                    "key": "shutdown",
+                    "label": "Shut down"
+                }]
+                onChosen: (k) => {
+                    return Prefs.setPowerButton(k, Prefs.powerButtonList.indexOf(k) === -1);
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Power actions in search"
+            resetKey: "launcherPowerSearch"
+            description: "Typing at least three letters of lock, suspend, restart, shut down and the like offers them as results. Restart, shut down and log out still want a second Return."
+
+            M3Switch {
+                checked: Prefs.launcherPowerSearch
+                onToggled: (v) => {
+                    return Prefs.launcherPowerSearch = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Web search"
+            resetKey: "launcherWebSearch"
+            description: "The last result offers to search the web for what you typed, and an address like example.org opens straight away."
+
+            M3Switch {
+                checked: Prefs.launcherWebSearch
+                onToggled: (v) => {
+                    return Prefs.launcherWebSearch = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Search address"
+            resetKey: "launcherSearchUrl"
+            description: "Opened in the default browser, with %s replaced by the search. DuckDuckGo also understands bangs like !yt or !gh."
+            showDivider: false
+            stacked: true
+            opacity: Prefs.launcherWebSearch ? 1 : 0.5
+
+            M3TextField {
+                width: parent.width
+                placeholder: "https://duckduckgo.com/?q=%s"
+                text: Prefs.launcherSearchUrl
+                onAccepted: (v) => {
+                    return Prefs.launcherSearchUrl = v;
+                }
+            }
+
+        }
+
+    }
+
+    SettingCard {
         title: "CLIPBOARD"
 
         SettingRow {
