@@ -441,6 +441,9 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: rowItem.swatchBg !== ""
                     color: rowItem.swatchBg !== "" ? rowItem.swatchBg : "transparent"
+                    // a copied colour can be the panel's own; theme swatches never are
+                    border.width: rowItem.kind === "clip" ? 1 : 0
+                    border.color: Theme.alpha(Theme.text, 0.2)
                     clip: true
 
                     Rectangle {

@@ -28,6 +28,15 @@ Item {
 
     property string displayMode: "apps"
     readonly property bool listVisible: face.displayMode !== "wallpaper" && face.displayMode !== "power"
+    // clipboard: the first Ctrl+Shift+Del arms clearing everything, a second within 3 s does it
+    property bool clearArmed: false
+    // bumped whenever the dock rewrites the results, so the preview re-reads the selected row
+    property int resultsRevision: 0
+    readonly property string clipEntryId: {
+        face.resultsRevision;
+        const r = face.displayMode === "clipboard" ? resultList.rowAt(resultList.currentIndex) : null;
+        return r && r.selectable && r.kind === "clip" ? r.payload : "";
+    }
     property bool justOpened: false
 
     signal activated(int index)
@@ -37,6 +46,7 @@ Item {
     signal powerActionChosen(string id)
     signal backRequested()
     signal deleteRequested(int index)
+    signal clearRequested()
 
     function setWallpaperIndex(i) {
         wallStrip.setIndexImmediate(i);
@@ -49,10 +59,30 @@ Item {
 
     function resultsChanged() {
         resultList.ensureSelectable();
+        face.resultsRevision++;
+    }
+
+    function armOrClear() {
+        if (face.clearArmed) {
+            face.clearArmed = false;
+            disarmTimer.stop();
+            face.clearRequested();
+        } else {
+            face.clearArmed = true;
+            disarmTimer.restart();
+        }
+    }
+
+    Timer {
+        id: disarmTimer
+
+        interval: 3000
+        onTriggered: face.clearArmed = false
     }
 
     function syncDisplayMode() {
         face.displayMode = face.mode;
+        face.clearArmed = false;
         face.resetSelection();
     }
 
@@ -115,7 +145,11 @@ Item {
         LauncherList {
             id: resultList
 
-            anchors.fill: parent
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            // the clipboard shares the width with its preview
+            width: face.displayMode === "clipboard" ? Math.round(parent.width * 0.54) : parent.width
             visible: face.listVisible
             model: face.model
             query: face.highlightQuery
@@ -134,6 +168,17 @@ Item {
             }
             onActivated: (index) => face.activated(index)
             onDeleteRequested: (index) => face.deleteRequested(index)
+        }
+
+        ClipPreview {
+            anchors.left: resultList.right
+            anchors.leftMargin: 12
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            visible: face.displayMode === "clipboard"
+            entryId: face.clipEntryId
+            clearArmed: face.clearArmed
         }
 
         WallpaperStrip {
@@ -277,7 +322,10 @@ Item {
                 }
             }
             Keys.onDeletePressed: (event) => {
-                if (face.displayMode === "clipboard" && resultList.isSelectable(resultList.currentIndex)) {
+                if (face.displayMode === "clipboard" && (event.modifiers & Qt.ControlModifier) && (event.modifiers & Qt.ShiftModifier)) {
+                    face.armOrClear();
+                    event.accepted = true;
+                } else if (face.displayMode === "clipboard" && resultList.isSelectable(resultList.currentIndex)) {
                     face.deleteRequested(resultList.currentIndex);
                     event.accepted = true;
                 } else {
