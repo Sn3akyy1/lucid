@@ -699,8 +699,9 @@ makes it one of your themes, and *Use*, which also switches to it.
 The same page takes the URL of any colour-scheme repo, or a scheme file you
 already have, clones or reads it, and builds a full Material 3 palette out of
 what it finds. Scheme repos
-agree on no common format, so detection is tiered: base16 and base24 YAML and
-name-keyed JSON (Catppuccin and friends) are read exactly, and anything else
+agree on no common format, so detection is tiered: base16 and base24 YAML,
+name-keyed JSON (Catppuccin and friends) and palettes Lucid exported are read
+exactly, and anything else
 falls back to harvesting hex codes and sorting them by tone and chroma. A repo
 carrying several variants lists them so you can pick one, and wallpapers in the
 repo come along with it.
@@ -716,6 +717,21 @@ The importer runs from a terminal too, on a repo URL or a local file or folder:
 ```sh
 python3 ~/.config/lucid/add-theme.py <repo-url|file|folder> [--list] [--variant <name>] [--name <label>]
 python3 ~/.config/lucid/scheme-gallery.py update    # the gallery, downloaded and indexed
+```
+
+Further down the page, the **editor** works on the palette on screen. Six key
+colours (background, text, primary, secondary, tertiary, error) each rebuild
+the whole palette the way an imported scheme is built, and every other role can
+be set by itself; the shell wears the draft while you work, and *Save as theme*
+keeps it (*Discard*, or closing Settings, puts the palette back). **Export**
+writes the palette on screen to a file: a *Lucid palette*, which keeps every
+role and imports back exactly, or *base16 YAML* for tinted-theming's tools and
+anything else that reads base16.
+
+The exporter runs from a terminal too:
+
+```sh
+python3 ~/.config/lucid/palette-edit.py export ~/.cache/quickshell/matugen.json <lucid|base16> <file> [<name>]
 ```
 
 ## Requirements

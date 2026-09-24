@@ -5,7 +5,8 @@ import qs
 
 // where palettes come from beyond the ones Lucid ships: the tinted-theming
 // gallery, a scheme repo, or a single file. add-theme.py turns each into a
-// theme; scheme-gallery.py keeps the gallery
+// theme; scheme-gallery.py keeps the gallery. the palette on screen can also
+// be edited here and written out (palette-edit.py)
 Column {
     id: page
 
@@ -53,6 +54,26 @@ Column {
     property var addResult: null
     property string repoUrl: ""
     property string filePath: ""
+
+    // the name the palette on screen goes by: a fixed theme's own, and none
+    // for the ones made from a wallpaper or a colour
+    readonly property string themeLabel: {
+        if (["matugen", "pywal", "colour"].indexOf(page.currentTheme) >= 0)
+            return "";
+
+        var list = Prefs.themeCatalogue || [];
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].id === page.currentTheme)
+                return list[i].name;
+
+        }
+        return "";
+    }
+    // export: lucid | base16, and idle | working | done | error
+    property string exportFormat: "lucid"
+    property string exportState: "idle"
+    property string exportMessage: ""
+    readonly property string exportName: paletteEditor.editing ? paletteEditor.themeName : (page.themeLabel || "My palette")
 
     function applyTheme(id) {
         if (id !== page.currentTheme)
@@ -208,6 +229,41 @@ Column {
     }
 
     Process {
+        id: exportPicker
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var dest = text.trim();
+                if (dest === "") {
+                    page.exportState = "idle";
+                    return ;
+                }
+                exporter.running = false;
+                exporter.command = ["python3", page.home + "/.config/lucid/palette-edit.py", "export", paletteEditor.palettePath, page.exportFormat, dest, page.exportName, Prefs.colorMode];
+                exporter.running = true;
+            }
+        }
+
+    }
+
+    Process {
+        id: exporter
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var r = null;
+                try {
+                    r = JSON.parse(text.trim());
+                } catch (e) {
+                }
+                page.exportState = r && r.ok ? "done" : "error";
+                page.exportMessage = r ? (r.ok ? "Written to " + r.file.replace(page.home, "~") + "." : r.error) : "The palette could not be written.";
+            }
+        }
+
+    }
+
+    Process {
         id: filePicker
 
         stdout: StdioCollector {
@@ -319,7 +375,7 @@ Column {
 
         SettingRow {
             title: "Import a scheme"
-            description: "From a colour-scheme repo, or a file you have. base16 and base24 YAML and name-keyed JSON (Catppuccin and friends) are read exactly; anything else gives up its hex codes, sorted by tone. A repo's wallpapers come along with it."
+            description: "From a colour-scheme repo, or a file you have. base16 and base24 YAML, name-keyed JSON (Catppuccin and friends) and palettes Lucid exported are read exactly; anything else gives up its hex codes, sorted by tone. A repo's wallpapers come along with it."
             showDivider: false
             stacked: true
 
@@ -499,6 +555,92 @@ Column {
 
                     }
 
+                }
+
+            }
+
+        }
+
+    }
+
+    SettingCard {
+        title: "EDITOR"
+        subtitle: "The palette on screen, one colour at a time. The shell wears the draft while you work on it."
+
+        SettingRow {
+            title: "Edit the palette"
+            description: "Pick a key colour and change it: the rest of the palette is built again from the six, the way an imported scheme is, and a colour that would not read against the background is moved to one that does. Any other role can be set by itself. Nothing is kept until you save it as a theme."
+            showDivider: false
+            stacked: true
+
+            PaletteEditor {
+                id: paletteEditor
+
+                width: parent.width
+                baseName: page.themeLabel
+            }
+
+        }
+
+    }
+
+    SettingCard {
+        title: "EXPORT"
+
+        SettingRow {
+            title: "Save the palette to a file"
+            description: "The palette on screen, draft included. A Lucid palette keeps every role and imports back exactly as it is; base16 YAML works with tinted-theming's tools and templates, and anything else that reads base16."
+            showDivider: false
+            stacked: true
+
+            Column {
+                width: parent.width
+                spacing: 12
+
+                Row {
+                    spacing: 10
+
+                    M3Segmented {
+                        width: 300
+                        anchors.verticalCenter: parent.verticalCenter
+                        current: page.exportFormat
+                        options: [{
+                            "key": "lucid",
+                            "label": "Lucid palette"
+                        }, {
+                            "key": "base16",
+                            "label": "base16 YAML"
+                        }]
+                        onChosen: (key) => {
+                            return page.exportFormat = key;
+                        }
+                    }
+
+                    M3Button {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: page.exportState === "working" ? "Saving..." : "Save as..."
+                        variant: "filled"
+                        enabled: page.exportState !== "working"
+                        onClicked: {
+                            page.exportState = "working";
+                            page.exportMessage = "";
+                            var file = page.exportName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "palette";
+                            exportPicker.running = false;
+                            exportPicker.command = ["sh", "-c", "zenity --file-selection --save --title='Export the palette' --filename=\"$1\" 2>/dev/null || true", "sh", page.home + "/" + file + (page.exportFormat === "lucid" ? ".json" : ".yaml")];
+                            exportPicker.running = true;
+                        }
+                    }
+
+                }
+
+                Text {
+                    width: parent.width
+                    visible: page.exportMessage !== ""
+                    text: page.exportMessage
+                    color: page.exportState === "error" ? Theme.error : Theme.subtext
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontBody
+                    wrapMode: Text.WordWrap
                 }
 
             }

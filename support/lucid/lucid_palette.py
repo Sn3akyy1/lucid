@@ -9,6 +9,9 @@ M3 "tone" is CIE L*, so re-toning in linear light lands a role at the
 lightness the spec asks for while holding the hue it came in with.
 """
 import colorsys
+import json
+import os
+import re
 
 
 # ---- tone engine ----
@@ -347,3 +350,56 @@ def describe(pal):
         else:
             acc = ("brighter " if lift > 45 else "lifted ") + acc.split()[-1]
     return f"{surf.capitalize()} with {acc} accents"
+
+
+# ---- a finished palette as a theme ----
+# the roles a palette cannot be without; the shell reads these on every surface
+CORE_ROLES = ("surface", "on_surface", "primary", "secondary", "tertiary", "error")
+
+
+def save_theme(theme_dir, name, pal, mode="dark", source="", detected=""):
+    """Write a palette that is already complete (edited, or a Lucid palette
+    file) as <theme_dir>/<id>/ and return its meta.json.
+
+    A theme is authored dark and apply-theme.sh derives its light side. A
+    palette made in light is kept as quickshell-light.json, the way an
+    imported light scheme is, and its dark side is dark_side() of it. The
+    light file is written after the dark one, so apply-theme.sh finds it
+    fresh and uses it as it is.
+    """
+    base = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "theme"
+    tid, n = base, 2
+    while os.path.exists(f"{theme_dir}/{tid}"):
+        tid, n = f"{base}-{n}", n + 1
+    os.makedirs(f"{theme_dir}/{tid}")
+    face = dark_side(pal) if mode == "light" else pal
+    with open(f"{theme_dir}/{tid}/quickshell.json", "w") as f:
+        json.dump(face, f, indent=2)
+    if mode == "light":
+        with open(f"{theme_dir}/{tid}/quickshell-light.json", "w") as f:
+            json.dump(pal, f, indent=2)
+    # the swatch and the description are the palette as it was made, light
+    # or dark, like an imported scheme's
+    meta = {"id": tid, "name": name, "desc": describe(pal), "swatchBg": pal["surface"],
+            "swatchAccent": pal["primary"], "source": source, "detected": detected, "user": True}
+    with open(f"{theme_dir}/{tid}/meta.json", "w") as f:
+        json.dump(meta, f, indent=2)
+    return meta
+
+
+def read_lucid_palette(path):
+    """A palette file Lucid wrote (Settings -> Palettes -> Export), or None.
+    It holds every role already, so it goes back in as it is, unbuilt."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(data, dict) or data.get("lucid") != "palette" or not isinstance(data.get("palette"), dict):
+        return None
+    pal = {k: v.lower() for k, v in data["palette"].items()
+           if isinstance(v, str) and re.fullmatch(r"#[0-9a-fA-F]{6}", v)}
+    if any(r not in pal for r in CORE_ROLES):
+        return None
+    mode = "light" if data.get("mode") == "light" else "dark"
+    return {"name": str(data.get("name") or "").strip(), "mode": mode, "palette": pal}

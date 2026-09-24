@@ -8,7 +8,8 @@ chroma. The exact tiers name the roles they know - which slot is red - so
 build_palette does not have to guess them.
 
 Nothing from the repo is ever executed; only text is parsed and only images
-are copied. A local file or folder is read the same way, in place of a clone.
+are copied. A local file or folder is read the same way, in place of a clone,
+and a palette file Lucid exported goes back in exactly as it was.
 
 Writes  ~/.config/lucid/themes/<id>/{quickshell.json,meta.json}
         ~/.config/lucid/themes/<id>/quickshell-light.json   (a light scheme)
@@ -18,7 +19,7 @@ Prints  a JSON result for the settings UI.
 import json, os, re, shutil, subprocess, sys, tempfile, argparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lucid_palette import build_palette, dark_side, describe, tone, hue_sat, hx
+from lucid_palette import build_palette, dark_side, describe, read_lucid_palette, save_theme, tone, hue_sat, hx
 
 HOME = os.path.expanduser('~')
 THEME_DIR = f'{HOME}/.config/lucid/themes'
@@ -279,6 +280,14 @@ def main():
     url = a.url.strip()
     local = os.path.expanduser(url)
     is_local = os.path.exists(local)
+    # a palette Lucid exported has every role already; building it again
+    # from its key colours would only lose the ones set by hand
+    own = read_lucid_palette(local) if is_local and os.path.isfile(local) else None
+    if own and not a.list:
+        meta = save_theme(THEME_DIR, a.name.strip() or own['name'] or os.path.splitext(os.path.basename(local))[0],
+                          own['palette'], own['mode'], source=a.source or os.path.abspath(local), detected='lucid')
+        print(json.dumps({'ok': True, **meta, 'wallpapers': 0, 'variants': [meta['name']]}))
+        return 0
     if not is_local:
         if not re.match(r'^(https?://|git@)[\w.@:/~-]+$', url):
             return fail('That is neither a scheme file nor a git URL.')
