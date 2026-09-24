@@ -671,6 +671,7 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     install -m644 "$SRC/support/lucid/matugen-options.sh" "$LUCID_DIR/matugen-options.sh"
     install -m755 "$SRC/support/lucid/gen-pywal-palette.py" "$LUCID_DIR/gen-pywal-palette.py"
     install -m755 "$SRC/support/lucid/add-theme.py"        "$LUCID_DIR/add-theme.py"
+    install -m755 "$SRC/support/lucid/scheme-gallery.py"   "$LUCID_DIR/scheme-gallery.py"
     install -m755 "$SRC/support/lucid/gen-light-palette.py" "$LUCID_DIR/gen-light-palette.py"
     install -m755 "$SRC/support/lucid/set-mode.sh"         "$LUCID_DIR/set-mode.sh"
     install -m755 "$SRC/support/lucid/sync-sddm.sh"        "$LUCID_DIR/sync-sddm.sh"

@@ -23,12 +23,6 @@ Column {
     property string appliedWallpaper: ""
     // same folder the dock's wallpaper strip browses
     readonly property string wallpaperDir: Prefs.wallpaperDir
-    // idle | working | done | error
-    property string addState: "idle"
-    property string addMessage: ""
-    property var addResult: null
-    property string repoUrl: ""
-
     function applyTheme(id) {
         if (id === page.currentTheme)
             return ;
@@ -43,60 +37,9 @@ Column {
         Quickshell.execDetached([page.home + "/.config/hypr/scripts/wallpaper/set-wallpaper.sh", path]);
     }
 
-    function importTheme() {
-        var url = page.repoUrl.trim();
-        if (url === "" || page.addState === "working")
-            return;
-
-        page.addState = "working";
-        page.addMessage = "Cloning and reading the scheme...";
-        page.addResult = null;
-        themeImport.running = false;
-        themeImport.command = ["python3", page.home + "/.config/lucid/add-theme.py", url];
-        themeImport.running = true;
-    }
-
     spacing: 26
 
     onWallpaperDirChanged: wallpaperScan.restart()
-
-    Process {
-        id: themeImport
-
-        property string errText: ""
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var r = null;
-                try {
-                    r = JSON.parse(text.trim());
-                } catch (e) {
-                    r = null;
-                }
-                if (!r) {
-                    page.addState = "error";
-                    // a crash leaves stdout empty, so the traceback is the only clue
-                    page.addMessage = themeImport.errText.trim().split("\n").pop() || "Import failed.";
-                    return ;
-                }
-                if (!r.ok) {
-                    page.addState = "error";
-                    page.addMessage = r.error;
-                    return ;
-                }
-                page.addState = "done";
-                page.addResult = r;
-                // the generated description is the point; the wallpaper count is an aside
-                page.addMessage = r.desc + (r.wallpapers > 0 ? "  \u00b7  " + r.wallpapers + " wallpapers" : "  \u00b7  no wallpapers, fallback used");
-                Prefs.rescanThemes();
-            }
-        }
-
-        stderr: StdioCollector {
-            onStreamFinished: themeImport.errText = text
-        }
-
-    }
 
     Process {
         id: themeDelete
@@ -521,167 +464,29 @@ Column {
     }
 
     SettingCard {
-        title: "THEME ADDER"
+        title: "MORE ON COLOUR"
 
         SettingRow {
-            title: "Import from a repo"
-            description: "Paste a colour-scheme repo. Its palette is read and mapped onto Lucid's roles, and a wallpaper folder is made for it."
-            showDivider: false
-            stacked: true
+            title: "Palettes and applications"
+            description: "How Matugen and Your colour build a palette, which applications follow it, and templates of your own."
 
-            Column {
-                width: parent.width
-                spacing: 14
-
-                Row {
-                    spacing: 10
-
-                    M3TextField {
-                        width: 330
-                        text: page.repoUrl
-                        placeholder: "https://github.com/catppuccin/palette"
-                        enabled: page.addState !== "working"
-                        onEdited: (v) => {
-                            return page.repoUrl = v;
-                        }
-                        onAccepted: (v) => {
-                            page.repoUrl = v;
-                            page.importTheme();
-                        }
-                    }
-
-                    M3Button {
-                        text: page.addState === "working" ? "Importing..." : "Import"
-                        variant: "filled"
-                        enabled: page.repoUrl.trim() !== "" && page.addState !== "working"
-                        iconPath: "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z"
-                        onClicked: page.importTheme()
-                    }
-
-                }
-
-                Rectangle {
-                    width: parent.width
-                    height: status.implicitHeight + 24
-                    radius: Theme.radiusSm
-                    color: Theme.bgSunken
-                    visible: page.addState !== "idle"
-
-                    Row {
-                        id: status
-
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.leftMargin: 14
-                        anchors.rightMargin: 14
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 12
-
-                        Rectangle {
-                            width: 34
-                            height: 34
-                            radius: 17
-                            anchors.verticalCenter: parent.verticalCenter
-                            visible: page.addState === "done" && page.addResult !== null
-                            color: page.addResult ? page.addResult.swatchBg : "transparent"
-
-                            Rectangle {
-                                width: 14
-                                height: 14
-                                radius: 7
-                                anchors.centerIn: parent
-                                color: page.addResult ? page.addResult.swatchAccent : "transparent"
-                            }
-
-                        }
-
-                        Rectangle {
-                            width: 34
-                            height: 34
-                            radius: 17
-                            anchors.verticalCenter: parent.verticalCenter
-                            visible: page.addState !== "done"
-                            color: page.addState === "error" ? Theme.alpha(Theme.error, 0.18) : Theme.alpha(Theme.accent, 0.18)
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: page.addState === "error" ? "!" : "..."
-                                color: page.addState === "error" ? Theme.error : Theme.accent
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontTitle
-                                font.bold: true
-                            }
-
-                        }
-
-                        Column {
-                            width: status.width - 180
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 3
-
-                            Text {
-                                text: {
-                                    if (page.addState === "working")
-                                        return "Importing...";
-
-                                    if (page.addState === "error")
-                                        return "Could not import that repo";
-
-                                    return page.addResult ? page.addResult.name : "";
-                                }
-                                color: Theme.text
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontLabel
-                                font.bold: true
-                                elide: Text.ElideRight
-                                width: parent.width
-                            }
-
-                            Text {
-                                text: page.addMessage
-                                color: page.addState === "error" ? Theme.error : Theme.subtext
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontBody
-                                wrapMode: Text.WordWrap
-                                width: parent.width
-                            }
-
-                        }
-
-                        M3Button {
-                            text: "Apply"
-                            variant: "filled"
-                            anchors.verticalCenter: parent.verticalCenter
-                            visible: page.addState === "done" && page.addResult !== null
-                            onClicked: {
-                                page.applyTheme(page.addResult.id);
-                                page.addState = "idle";
-                                page.repoUrl = "";
-                            }
-                        }
-
-                    }
-
-                }
-
+            M3Button {
+                text: "Colours"
+                variant: "tonal"
+                onClicked: Prefs.settingsRequested("colours")
             }
 
         }
 
-    }
-
-    SettingCard {
-        title: "COLOURS"
-
         SettingRow {
-            title: "Palettes and applications"
-            description: "How Matugen and Your colour build a palette, which applications follow it, and templates of your own are on a page of their own."
+            title: "More themes"
+            description: "A gallery of hundreds of schemes, and importing one from a repo or a file."
             showDivider: false
 
             M3Button {
-                text: "Open"
+                text: "Palettes"
                 variant: "tonal"
-                onClicked: Prefs.settingsRequested("colours")
+                onClicked: Prefs.settingsRequested("palettes")
             }
 
         }

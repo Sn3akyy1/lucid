@@ -686,8 +686,17 @@ is copied to `config.toml.lucid-backup` before each change.
 
 ### Adding your own theme
 
-**Settings → Theme** takes the URL of any colour-scheme repo, clones it, reads
-it, and builds a full Material 3 palette out of what it finds. Scheme repos
+**Settings → Palettes** (`qs ipc call settings palettes`) has a **gallery** of
+the few hundred base16 and base24 schemes that
+[tinted-theming](https://github.com/tinted-theming/schemes) collects, each drawn
+in its own colours, searchable, and split into dark and light. *Download* fetches
+the whole collection once (about half a megabyte, kept in
+`~/.cache/lucid/schemes`); after that, hovering a scheme offers *Add*, which
+makes it one of your themes, and *Use*, which also switches to it.
+
+The same page takes the URL of any colour-scheme repo, or a scheme file you
+already have, clones or reads it, and builds a full Material 3 palette out of
+what it finds. Scheme repos
 agree on no common format, so detection is tiered: base16 and base24 YAML and
 name-keyed JSON (Catppuccin and friends) are read exactly, and anything else
 falls back to harvesting hex codes and sorting them by tone and chroma. A repo
@@ -700,10 +709,11 @@ are copied.
 It writes `~/.config/lucid/themes/<id>/{quickshell.json,meta.json}` and
 `~/Pictures/wallpapers/<id>/`, which you can also do by hand: a
 `quickshell.json` with the same keys as the bundled palettes is all a theme is.
-The importer runs from a terminal too:
+The importer runs from a terminal too, on a repo URL or a local file or folder:
 
 ```sh
-python3 ~/.config/lucid/add-theme.py <repo-url> [--list] [--variant <name>] [--name <label>]
+python3 ~/.config/lucid/add-theme.py <repo-url|file|folder> [--list] [--variant <name>] [--name <label>]
+python3 ~/.config/lucid/scheme-gallery.py update    # the gallery, downloaded and indexed
 ```
 
 ## Requirements

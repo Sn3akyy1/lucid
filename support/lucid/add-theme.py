@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Import a colour-scheme repo as a Lucid theme.
+"""Import a colour-scheme repo, folder or file as a Lucid theme.
 
 Scheme repos have no common format, so detection is tiered: base16/base24
 YAML and name-keyed JSON (Catppuccin and friends) are read exactly, and
@@ -8,7 +8,7 @@ chroma. The exact tiers name the roles they know - which slot is red - so
 build_palette does not have to guess them.
 
 Nothing from the repo is ever executed; only text is parsed and only images
-are copied.
+are copied. A local file or folder is read the same way, in place of a clone.
 
 Writes  ~/.config/lucid/themes/<id>/{quickshell.json,meta.json}
         ~/Pictures/wallpapers/<id>/   (empty is fine - the shell falls back)
@@ -267,28 +267,39 @@ def copy_wallpapers(root, dest):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('url')
+    ap.add_argument('url', help='a git URL, or a local scheme file or folder')
     ap.add_argument('--name', default='')
     ap.add_argument('--variant', default='')
     ap.add_argument('--list', action='store_true')
+    # where it came from, for meta.json; the gallery marks what it added by it
+    ap.add_argument('--source', default='')
     a = ap.parse_args()
 
     url = a.url.strip()
-    if not re.match(r'^(https?://|git@)[\w.@:/~-]+$', url):
-        return fail('That does not look like a git URL.')
-    if not shutil.which('git'):
-        return fail('git is not installed.')
+    local = os.path.expanduser(url)
+    is_local = os.path.exists(local)
+    if not is_local:
+        if not re.match(r'^(https?://|git@)[\w.@:/~-]+$', url):
+            return fail('That is neither a scheme file nor a git URL.')
+        if not shutil.which('git'):
+            return fail('git is not installed.')
 
     with tempfile.TemporaryDirectory() as tmp:
         clone = os.path.join(tmp, 'repo')
-        r = run(['git', 'clone', '--depth', '1', '--quiet', url, clone],
-                env={**os.environ, 'GIT_TERMINAL_PROMPT': '0'}, timeout=180)
-        if r.returncode != 0:
-            return fail('Could not clone that repo. ' + r.stderr.strip().split('\n')[-1][:160])
+        if is_local and os.path.isdir(local):
+            clone = local
+        elif is_local:
+            os.makedirs(clone)
+            shutil.copy(local, clone)
+        else:
+            r = run(['git', 'clone', '--depth', '1', '--quiet', url, clone],
+                    env={**os.environ, 'GIT_TERMINAL_PROMPT': '0'}, timeout=180)
+            if r.returncode != 0:
+                return fail('Could not clone that repo. ' + r.stderr.strip().split('\n')[-1][:160])
 
         schemes = detect(clone)
         if not schemes:
-            return fail('No colour scheme found in that repo.')
+            return fail('No colour scheme found in that ' + ('file.' if is_local and not os.path.isdir(local) else ('folder.' if is_local else 'repo.')))
 
         if a.list:
             print(json.dumps({'ok': True, 'variants': [s['name'] for s in schemes]}))
@@ -305,6 +316,8 @@ def main():
 
         parts = re.sub(r'\.git$', '', url.rstrip('/')).replace(':', '/').split('/')
         repo_name = parts[-1]
+        if is_local and not os.path.isdir(local):
+            repo_name = os.path.splitext(repo_name)[0]
         owner = parts[-2] if len(parts) > 1 else ''
         if repo_name.lower() in GENERIC_REPO and owner:
             repo_name = owner
@@ -312,6 +325,9 @@ def main():
         label = a.name.strip() or (f'{repo_name} {sname}'
                                    if sname and sname.lower() not in repo_name.lower()
                                    else repo_name)
+        # a single file names its scheme itself; its file name only repeats it
+        if not a.name.strip() and is_local and not os.path.isdir(local) and sname:
+            label = sname
         tid = slug(label)
         base_id = tid
         n = 2
@@ -325,10 +341,12 @@ def main():
 
         walls = copy_wallpapers(clone, f'{WALL_DIR}/{tid}')
 
-        meta = {'id': tid, 'name': label.title(),
+        # a name given is kept as written; one made up from a repo is title-cased
+        meta = {'id': tid, 'name': a.name.strip() or label.title(),
                 'desc': describe(pal),
                 'swatchBg': pal['surface'], 'swatchAccent': pal['primary'],
-                'source': url, 'detected': scheme['kind'], 'user': True}
+                'source': a.source or (os.path.abspath(local) if is_local else url),
+                'detected': scheme['kind'], 'user': True}
         with open(f'{THEME_DIR}/{tid}/meta.json', 'w') as f:
             json.dump(meta, f, indent=2)
 
