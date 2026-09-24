@@ -592,7 +592,9 @@ Every palette has a light mode too — **Light or dark** on the Theme page.
 Matugen and Pywal re-extract the wallpaper in the mode you pick, Your colour is
 built again from its colour; the fixed
 palettes get a light version built from their own colours, so Nord lands on its
-own Snow Storm and Gruvbox on its own cream. Light surfaces carry a trace of the
+own Snow Storm and Gruvbox on its own cream. An imported light scheme goes the
+other way: light mode keeps it exactly as its author made it, and its dark mode
+is built from its own colours. Light surfaces carry a trace of the
 accent, and *Accent tint* on the General page sets how much. The mode is
 remembered beside the theme, and GTK and Qt applications follow it, switching to
 the light or dark counterpart of their theme where one is installed.

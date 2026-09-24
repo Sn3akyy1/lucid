@@ -11,13 +11,14 @@ Nothing from the repo is ever executed; only text is parsed and only images
 are copied. A local file or folder is read the same way, in place of a clone.
 
 Writes  ~/.config/lucid/themes/<id>/{quickshell.json,meta.json}
+        ~/.config/lucid/themes/<id>/quickshell-light.json   (a light scheme)
         ~/Pictures/wallpapers/<id>/   (empty is fine - the shell falls back)
 Prints  a JSON result for the settings UI.
 """
 import json, os, re, shutil, subprocess, sys, tempfile, argparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lucid_palette import build_palette, describe, tone, hue_sat, hx
+from lucid_palette import build_palette, dark_side, describe, tone, hue_sat, hx
 
 HOME = os.path.expanduser('~')
 THEME_DIR = f'{HOME}/.config/lucid/themes'
@@ -311,8 +312,15 @@ def main():
                           scheme)
 
         bg, fg, accents, hints = to_palette(scheme)
+        # a light scheme is its theme's light side, as its author made it, and
+        # the dark side is built from that: the other way round from a dark
+        # scheme, whose light side gen-light-palette.py builds. Built as a dark
+        # palette, it would sit on a light ground in dark mode, and light mode
+        # would invert it into a light palette of Lucid's own making
+        light = not is_dark(bg)
         pal = build_palette(bg, fg, accents, hints,
-                            reserve_red_for_error=(scheme['kind'] == 'harvest'))
+                            reserve_red_for_error=(scheme['kind'] == 'harvest'),
+                            mode='light' if light else 'dark')
 
         parts = re.sub(r'\.git$', '', url.rstrip('/')).replace(':', '/').split('/')
         repo_name = parts[-1]
@@ -337,7 +345,12 @@ def main():
 
         os.makedirs(f'{THEME_DIR}/{tid}', exist_ok=True)
         with open(f'{THEME_DIR}/{tid}/quickshell.json', 'w') as f:
-            json.dump(pal, f, indent=2)
+            json.dump(dark_side(pal) if light else pal, f, indent=2)
+        if light:
+            # after the dark side: apply-theme.sh builds a light side again
+            # when it is older than the dark one
+            with open(f'{THEME_DIR}/{tid}/quickshell-light.json', 'w') as f:
+                json.dump(pal, f, indent=2)
 
         walls = copy_wallpapers(clone, f'{WALL_DIR}/{tid}')
 

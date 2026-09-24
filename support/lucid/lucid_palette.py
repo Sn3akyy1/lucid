@@ -266,6 +266,32 @@ def build_palette(bg, fg, accents, hints=None, reserve_red_for_error=False,
     }
 
 
+# a dark scheme's ground and ink, and the tone M3 puts an accent at on top of
+# it: gen-light-palette.py's window for a light scheme, mirrored. The ink gets
+# a window too, where the text of Lucid's dark themes sits; a light ground
+# taken whole would glare
+DARK_SURFACE_MIN, DARK_SURFACE_MAX = 6.0, 12.0
+DARK_INK_MIN, DARK_INK_MAX = 85.0, 90.0
+DARK_ACCENT_TONE = 80.0
+
+
+def dark_side(pal):
+    """A light palette (the 36 roles) -> the same palette as a dark scheme.
+
+    gen-light-palette.py the other way round, for a scheme authored light:
+    its ink becomes the ground and its ground the ink, each clamped into the
+    window Lucid's dark themes sit in, which keeps the neutral hues that make
+    the scheme recognisable. The accents keep their hue and chroma and move to
+    the tone M3 gives them on a dark ground.
+    """
+    light_bg, light_fg = pal["surface"], pal["on_surface"]
+    bg = hx(at_tone(light_fg, min(DARK_SURFACE_MAX, max(DARK_SURFACE_MIN, tone(light_fg)))))
+    fg = hx(at_tone(light_bg, min(DARK_INK_MAX, max(DARK_INK_MIN, tone(light_bg)))))
+    hints = {role: hx(at_tone(pal[role], DARK_ACCENT_TONE))
+             for role in ("primary", "secondary", "tertiary", "error") if pal.get(role)}
+    return build_palette(bg, fg, list(hints.values()), hints, mode="dark")
+
+
 # hue bands, named the way a theme author would
 _HUE_NAMES = [(15, "red"), (40, "orange"), (62, "amber"), (85, "olive"),
               (160, "green"), (188, "teal"), (205, "cyan"), (225, "blue"),
@@ -282,6 +308,11 @@ def hue_name(h):
 
 def _surface_word(c):
     t, (h, s) = tone(c), hue_sat(c)
+    if t >= 50:
+        # a light scheme's ground
+        if s < 0.10:
+            return "white" if t >= 95 else "light grey"
+        return f"{'pale' if t >= 90 else 'light'} {hue_name(h)}"
     if s < 0.10:
         return "near-black" if t < 8 else ("charcoal" if t < 16 else "slate")
     shade = "deep" if t < 12 else ("dark" if t < 22 else "dim")
@@ -310,5 +341,9 @@ def describe(pal):
     # "dark blue with blue accents" says nothing; name the lift instead
     if hue_name(hue_sat(pal["surface"])[0]) in acc and hue_sat(pal["surface"])[1] >= 0.10:
         lift = tone(pal["primary"]) - tone(pal["surface"])
-        acc = ("brighter " if lift > 45 else "lifted ") + acc.split()[-1]
+        # on a light ground the accent sits below it
+        if lift < 0:
+            acc = "deeper " + acc.split()[-1]
+        else:
+            acc = ("brighter " if lift > 45 else "lifted ") + acc.split()[-1]
     return f"{surf.capitalize()} with {acc} accents"
