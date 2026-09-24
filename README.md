@@ -647,7 +647,8 @@ every template on the last change, with matugen's error for the ones that
 failed. `~/.config/lucid/render-templates.sh` is what renders them, for the
 wallpaper and the fixed palettes alike.
 
-**Settings → Theme** shows the same thing without opening the file:
+**Settings → Colours** (`qs ipc call settings colours`) shows the same thing
+without opening the file:
 
 - **App templates** lists every template with the file it writes and how the
   last change went, matugen's reason included when one failed. A switch turns

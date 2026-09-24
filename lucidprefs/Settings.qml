@@ -35,6 +35,7 @@ FloatingWindow {
         { "key": "general", "group": "Appearance", "label": "General", "title": "General", "blurb": "Shape, colour and motion across the whole shell" },
         { "key": "glass", "group": "Appearance", "label": "Glass", "title": "Glass", "blurb": "How far the desktop shows through the shell, the terminal and your windows" },
         { "key": "theme", "group": "Appearance", "label": "Theme", "title": "Theme and Appearance", "blurb": "Colour schemes, wallpapers and themes you import" },
+        { "key": "colours", "group": "Appearance", "label": "Colours", "title": "Colours", "blurb": "The applications that follow the palette, and templates of your own" },
         { "key": "environment", "group": "Appearance", "label": "Environment", "title": "Environment", "blurb": "Cursors, icons, fonts and application themes, across GTK, Qt and Hyprland alike" },
         { "key": "bar", "group": "Desktop", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
         { "key": "dock", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
@@ -213,6 +214,10 @@ FloatingWindow {
 
         function environment(): void {
             win.show("environment");
+        }
+
+        function colours(): void {
+            win.show("colours");
         }
 
         function keybinds(): void {
@@ -1004,6 +1009,8 @@ FloatingWindow {
                                 return "GlassPage.qml";
                             case "theme":
                                 return "ThemePage.qml";
+                            case "colours":
+                                return "ColoursPage.qml";
                             case "environment":
                                 return "EnvironmentPage.qml";
                             case "keybinds":
