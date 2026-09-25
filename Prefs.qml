@@ -35,6 +35,16 @@ Singleton {
     readonly property int effectiveDockBottomMargin: root.dockNotch ? 0 : root.dockBottomMargin
     readonly property bool anyBarModuleEnabled: root.showWorkspaces || root.showMedia || root.showTray || root.showClock || root.showNotifications || root.showSystem
     readonly property var barModuleKeys: ["showWorkspaces", "showMedia", "showTray", "showClock", "showNotifications", "showSystem"]
+    // the ids barLayout names the modules by, each with the group it starts in
+    readonly property var barModuleHome: ({
+        "workspaces": "left",
+        "media": "left",
+        "tray": "left",
+        "clock": "center",
+        "notifications": "right",
+        "system": "right"
+    })
+    readonly property var barLayoutGroups: root.parseBarLayout(root.barLayout)
     readonly property var widgetKeys: ["widgetsEnabled", "widgetSnap", "widgetLockAll", "widgetHideFullscreen", "widgetOnTop"]
     readonly property var idleKeys: ["idleDim", "idleDimAfter", "idleDimLevel", "idleDimKeyboard", "idleLock", "idleLockAfter", "idleScreenOff", "idleScreenOffAfter", "idleSuspend", "idleSuspendAfter", "idleSuspendOnAc", "idleLockBeforeSleep", "idleWakeAfterSleep", "idleRespectInhibitors", "idleWhileMedia"]
     readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envCursorShadow", "envIconTheme", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
@@ -84,6 +94,7 @@ Singleton {
     property alias barSideMargin: s.barSideMargin
     property alias barSpacing: s.barSpacing
     property alias barHoverGrow: s.barHoverGrow
+    property alias barLayout: s.barLayout
     property alias showWorkspaces: s.showWorkspaces
     property alias showMedia: s.showMedia
     property alias showTray: s.showTray
@@ -303,6 +314,7 @@ Singleton {
         "barSideMargin": 17,
         "barSpacing": 8,
         "barHoverGrow": 3,
+        "barLayout": "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}",
         "showWorkspaces": true,
         "showMedia": true,
         "showTray": true,
@@ -489,6 +501,48 @@ Singleton {
         if (!root.anyBarModuleEnabled && root.barEnabled)
             root.barEnabled = false;
 
+    }
+
+    // barLayout is JSON: {"left": [...], "center": [...], "right": [...]}, each
+    // list in order from the screen's left edge. a module it leaves out (a hand
+    // edit, a module added later) goes back to the end of its home group and an
+    // unknown or repeated id is skipped, so every module always has a place
+    function parseBarLayout(text) {
+        let parsed = null;
+        try {
+            parsed = JSON.parse(text);
+        } catch (e) {
+        }
+        const out = {
+            "left": [],
+            "center": [],
+            "right": []
+        };
+        const seen = {};
+        for (const side of ["left", "center", "right"]) {
+            const ids = parsed && Array.isArray(parsed[side]) ? parsed[side] : [];
+            for (const id of ids) {
+                if (root.barModuleHome[id] === undefined || seen[id])
+                    continue;
+
+                seen[id] = true;
+                out[side].push(id);
+            }
+        }
+        for (const id in root.barModuleHome) {
+            if (!seen[id])
+                out[root.barModuleHome[id]].push(id);
+
+        }
+        return out;
+    }
+
+    function setBarLayout(groups) {
+        root.barLayout = JSON.stringify({
+            "left": groups.left,
+            "center": groups.center,
+            "right": groups.right
+        });
     }
 
     function setAllBarModules(v) {
@@ -729,6 +783,7 @@ Singleton {
             property int barSideMargin: 17
             property int barSpacing: 8
             property int barHoverGrow: 3
+            property string barLayout: "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}"
             property bool showWorkspaces: true
             property bool showMedia: true
             property bool showTray: true

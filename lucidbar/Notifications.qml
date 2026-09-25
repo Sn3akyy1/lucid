@@ -387,10 +387,10 @@ BarPill {
                     stackSheet.heldY = stackSheet.liveY;
 
             }
-            // the pill is right-aligned in the bar, so its right edge is the one
-            // fixed point: anchoring there keeps the sheet still while the pill
-            // collapses and slides right underneath it
-            x: root.width - stackSheet.width
+            // the pill's outer edge (the one on the side its group sits against)
+            // is its fixed point: anchoring there keeps the sheet still while
+            // the pill collapses and slides underneath it
+            x: root.popupAlign === "left" ? 0 : (root.popupAlign === "center" ? (root.width - stackSheet.width) / 2 : root.width - stackSheet.width)
             // frozen while fading, or it flies up after the shrinking pill
             y: root.overlayOpen ? stackSheet.liveY : stackSheet.heldY
             width: root.altWidth

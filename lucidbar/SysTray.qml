@@ -293,7 +293,8 @@ BarPill {
 
                 width: 196
                 height: Math.min(menuSheet.wanted, root.screenH - 80)
-                x: root.menuX
+                // kept on screen, whichever side of the bar the tray sits on
+                x: Math.max(10 - root.x, Math.min(root.menuX, menuLayer.width - menuSheet.width - 10))
                 y: root.menuY
                 radius: Theme.radiusSm
                 color: Theme.bgOpaque
