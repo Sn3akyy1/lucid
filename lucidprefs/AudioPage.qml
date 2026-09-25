@@ -179,7 +179,7 @@ Column {
         SettingRow {
             title: "Play a sound when the volume changes"
             resetKey: "soundVolumeFeedback"
-            description: "A short tick once the output volume settles, from the keys, the bar or anywhere else, so you can hear the new level."
+            description: "A click on every step, like turning a dial, from the keys, the bar or anywhere else, so you can hear the new level."
 
             M3Switch {
                 checked: Prefs.soundVolumeFeedback
