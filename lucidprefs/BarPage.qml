@@ -217,6 +217,21 @@ Column {
     SettingCard {
         title: "MODULES"
 
+        SettingRow {
+            title: "Arrangement"
+            resetKey: "barLayout"
+            description: "Drag a module along its group or into another one. Left and right sit against the screen's edges and the centre stays in the middle; a module switched off below keeps its place."
+            enabled: Prefs.barEnabled
+            disabledReason: "The bar is switched off, so there is nothing to arrange."
+            stacked: true
+
+            BarLayoutEditor {
+                width: parent.width
+                enabled: Prefs.barEnabled
+            }
+
+        }
+
         Repeater {
             model: page.moduleList
 
