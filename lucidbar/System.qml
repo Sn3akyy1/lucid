@@ -701,33 +701,38 @@ BarPill {
     Process {
         id: lsblkProc
 
-        command: ["lsblk", "-b", "-n", "-o", "NAME,SIZE,TYPE"]
+        command: ["lsblk", "-b", "-J", "-o", "NAME,KNAME,PATH,SIZE,TYPE"]
 
         stdout: StdioCollector {
             onStreamFinished: {
-                const lines = this.text.trim().split("\n").filter((l) => {
-                    return l.length > 0;
-                });
-                const disks = [];
-                for (const line of lines) {
-                    const parts = line.trim().split(/\s+/);
-                    if (parts.length < 3)
-                        continue;
-
-                    const name = parts[0].replace(/^[\s│├└─]+/, "");
-                    const size = parseInt(parts[1]);
-                    const type = parts[2];
-                    const isWholeDisk = type === "disk" && !/^(zram|loop)/.test(name);
-                    const isExtraPartition = type === "part" && root.extraDiskPartitions.includes(name);
-                    if (!isWholeDisk && !isExtraPartition)
-                        continue;
-
-                    disks.push({
-                        "name": name,
-                        "size": size,
-                        "used": 0
-                    });
+                let tree = [];
+                try {
+                    tree = JSON.parse(this.text).blockdevices || [];
+                } catch (e) {
                 }
+                // lvm, luks and raid volumes sit below a partition, so a disk owns every path under it
+                const pathsUnder = (dev) => {
+                    let out = [dev.path, "/dev/" + dev.kname];
+                    for (const c of dev.children || [])
+                        out = out.concat(pathsUnder(c));
+                    return out;
+                };
+                const disks = [];
+                const visit = (dev) => {
+                    const isWholeDisk = dev.type === "disk" && !/^(zram|loop)/.test(dev.name);
+                    const isExtraPartition = dev.type === "part" && root.extraDiskPartitions.includes(dev.name);
+                    if (isWholeDisk || isExtraPartition)
+                        disks.push({
+                            "name": dev.name,
+                            "size": parseInt(dev.size),
+                            "paths": pathsUnder(dev)
+                        });
+
+                    for (const c of dev.children || [])
+                        visit(c);
+                };
+                for (const dev of tree)
+                    visit(dev);
                 root._lsblkDisks = disks;
                 dfProc.running = true;
             }
@@ -751,43 +756,24 @@ BarPill {
                         "mounted": false
                     });
                 });
+                // btrfs subvolumes and bind mounts repeat the same source
+                const seen = {};
                 for (const line of lines) {
                     const parts = line.trim().split(/\s+/);
                     if (parts.length < 2)
                         continue;
 
                     const source = parts[0];
-                    if (!source.startsWith("/dev/"))
-                        continue;
-
                     const used = parseInt(parts[1]);
-                    if (isNaN(used))
+                    if (!source.startsWith("/dev/") || isNaN(used) || seen[source])
                         continue;
 
-                    const devName = source.slice(5);
-                    const exactDisk = disks.find((d) => {
-                        return d.name === devName;
-                    });
-                    if (exactDisk) {
-                        exactDisk.used += used;
-                        exactDisk.mounted = true;
-                    }
-                    let base = devName;
-                    let m = devName.match(/^(nvme\d+n\d+|mmcblk\d+)p\d+$/);
-                    if (m) {
-                        base = m[1];
-                    } else {
-                        m = devName.match(/^([a-z]+)\d+$/);
-                        if (m)
-                            base = m[1];
-
-                    }
-                    const disk = disks.find((d) => {
-                        return d.name === base;
-                    });
-                    if (disk && disk !== exactDisk) {
-                        disk.used += used;
-                        disk.mounted = true;
+                    seen[source] = true;
+                    for (let i = 0; i < disks.length; i++) {
+                        if (root._lsblkDisks[i].paths.includes(source)) {
+                            disks[i].used += used;
+                            disks[i].mounted = true;
+                        }
                     }
                 }
                 root.diskList = disks;
