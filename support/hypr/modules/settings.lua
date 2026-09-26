@@ -55,6 +55,8 @@ local base = {}
 -- options something later in the config set again, left alone on a live apply
 local skip = {}
 local failed = {}
+-- rules cannot be removed, only switched off, so each apply retires the last set
+local rules = {}
 
 -- a value as JSON for Settings: gaps as one number (or "t r b l"), colours as
 -- "aarrggbb,…@angle"
@@ -118,6 +120,20 @@ function M.apply(live)
             else
                 failed[k] = tostring(err)
             end
+        end
+    end
+    for _, r in ipairs(rules) do r:set_enabled(false) end
+    rules = {}
+    -- a window alone on its workspace, or maximised, takes the whole work
+    -- area: no gaps, no border, square corners
+    if cfg.solo == true then
+        for _, ws in ipairs({ "w[tv1]", "f[1]" }) do
+            rules[#rules + 1] = hl.workspace_rule({ workspace = ws, gaps_out = 0, gaps_in = 0 })
+            rules[#rules + 1] = hl.window_rule({
+                match       = { float = false, workspace = ws },
+                border_size = 0,
+                rounding    = 0,
+            })
         end
     end
     write_status()

@@ -18,7 +18,7 @@ Singleton {
     property bool moduleProbed: false
 
     // every option a page shows, read back in one hyprctl call
-    readonly property var keys: ["general.gaps_in", "general.gaps_out", "general.border_size", "general.col.active_border", "general.col.inactive_border", "decoration.rounding", "decoration.rounding_power", "decoration.shadow.enabled", "decoration.shadow.range", "decoration.shadow.render_power", "decoration.dim_inactive", "decoration.dim_strength"]
+    readonly property var keys: ["general.gaps_in", "general.gaps_out", "general.border_size", "general.col.active_border", "general.col.inactive_border", "decoration.rounding", "decoration.rounding_power", "decoration.shadow.enabled", "decoration.shadow.range", "decoration.shadow.render_power", "decoration.dim_inactive", "decoration.dim_strength", "general.layout", "dwindle.split_width_multiplier", "dwindle.force_split", "dwindle.default_split_ratio", "dwindle.preserve_split", "master.orientation", "master.mfact", "master.new_status", "master.new_on_top", "scrolling.column_width", "scrolling.fullscreen_on_one_column"]
     // not Hyprland options but choices Lucid turns into some
     readonly property var borderModes: [{
         "key": "none",
@@ -190,7 +190,12 @@ Singleton {
     readonly property string rendered: {
         const w = root.wanted;
         let out = "-- written by Lucid Settings > Windows, and rewritten on every change there\n";
-        out += "return {\n    options = {\n";
+        out += "return {\n";
+        // rules rather than options: a window alone on its workspace goes edge to edge
+        if (root.mine["lucid.solo"] === true)
+            out += "    solo = true,\n";
+
+        out += "    options = {\n";
         for (const k of Object.keys(w).sort())
             out += "        [" + root.luaStr(k) + "] = " + root.luaValue(w[k]) + ",\n";
         out += "    },\n}\n";

@@ -349,7 +349,12 @@ preview drawn from the values in force: the gaps between windows and around the
 screen, border width and colour (none, your palette's accent, or a gradient
 through three of its colours, which follows the theme as it changes), a faint
 border on the other windows, how round the corners are and their shape, a
-shadow, and dimming the windows you are not in.
+shadow, and dimming the windows you are not in. Under *Tiling*: the layout
+(dwindle, master or scrolling) and each one's own options — which way dwindle
+splits and where a new window goes, the master's side and size, the width of a
+scrolling column — with a preview of the whole screen for one to five windows,
+and a switch that takes a lone window edge to edge, without gaps, border or
+rounded corners.
 
 Only what you change there is Lucid's. It goes to
 `~/.config/hypr/lucid-settings.lua`, which `modules/settings.lua` applies without
