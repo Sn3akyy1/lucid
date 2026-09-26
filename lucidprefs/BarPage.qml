@@ -4,14 +4,61 @@ import qs
 Column {
     id: page
 
-    readonly property var moduleList: [
-        { "key": "showWorkspaces", "name": "Workspaces", "desc": "Workspace pills and the expanded overview" },
-        { "key": "showMedia", "name": "Media", "desc": "Now-playing pill and player controls" },
-        { "key": "showTray", "name": "System tray", "desc": "Status icons from running applications" },
-        { "key": "showClock", "name": "Clock", "desc": "Time, date and the calendar panel" },
-        { "key": "showNotifications", "name": "Notifications", "desc": "Toasts and the notification list" },
-        { "key": "showSystem", "name": "System", "desc": "Battery, volume, brightness and quick settings" }
-    ]
+    readonly property var moduleList: Prefs.barModules
+    // the module whose card shows: the one a right click on the bar asked for,
+    // or the first
+    property string selectedModule: ""
+
+    function paneFlick() {
+        let p = page.parent;
+        while (p) {
+            if (p.contentY !== undefined && p.contentHeight !== undefined)
+                return p;
+
+            p = p.parent;
+        }
+        return null;
+    }
+
+    // brings the module's card into view, for a right click on the bar
+    function revealModule() {
+        const flick = page.paneFlick();
+        if (!flick)
+            return ;
+
+        const y = moduleCard.mapToItem(flick.contentItem, 0, 0).y;
+        flick.contentY = Math.max(0, Math.min(Math.max(0, flick.contentHeight - flick.height), y - 90));
+    }
+
+    Component.onCompleted: {
+        page.selectedModule = Prefs.barModuleFocus !== "" ? Prefs.barModuleFocus : Prefs.barModules[0].id;
+        if (Prefs.barModuleFocus !== "")
+            revealLater.start();
+
+    }
+
+    Timer {
+        id: revealLater
+
+        interval: 120
+        onTriggered: {
+            page.revealModule();
+            Prefs.barModuleFocus = "";
+        }
+    }
+
+    // asked again while the page is already up
+    Connections {
+        function onBarModuleFocusChanged() {
+            if (Prefs.barModuleFocus === "")
+                return ;
+
+            page.selectedModule = Prefs.barModuleFocus;
+            revealLater.restart();
+        }
+
+        target: Prefs
+    }
 
     spacing: 26
 
@@ -220,7 +267,7 @@ Column {
         SettingRow {
             title: "Arrangement"
             resetKey: "barLayout"
-            description: "Drag a module along its group or into another one. Left and right sit against the screen's edges and the centre stays in the middle; a module switched off below keeps its place."
+            description: "Tap a module to set it up below, or drag it along its group or into another one. Left and right sit against the screen's edges and the centre stays in the middle; a module switched off keeps its place, and an outlined one is on but has nothing to show right now."
             enabled: Prefs.barEnabled
             disabledReason: "The bar is switched off, so there is nothing to arrange."
             stacked: true
@@ -228,37 +275,20 @@ Column {
             BarLayoutEditor {
                 width: parent.width
                 enabled: Prefs.barEnabled
-            }
-
-        }
-
-        Repeater {
-            model: page.moduleList
-
-            SettingRow {
-                id: modRow
-
-                required property var modelData
-                required property int index
-
-                title: modRow.modelData.name
-                description: modRow.modelData.desc
-                enabled: Prefs.barEnabled
-                disabledReason: "The bar is switched off, so this module has nothing to appear in."
-                showDivider: modRow.index < page.moduleList.length - 1
-
-                M3Switch {
-                    checked: Prefs[modRow.modelData.key]
-                    enabled: Prefs.barEnabled
-                    onToggled: (v) => {
-                        return Prefs[modRow.modelData.key] = v;
-                    }
+                selected: page.selectedModule
+                onChosen: (id) => {
+                    return page.selectedModule = id;
                 }
-
             }
 
         }
 
+    }
+
+    BarModuleCard {
+        id: moduleCard
+
+        moduleId: page.selectedModule
     }
 
     SettingCard {

@@ -1019,10 +1019,17 @@ Item {
             scale: root.popupMode || !root.expanded ? 1 : 0.94
             visible: opacity > 0.01
 
+            // the middle button opens the overview; the right one, this
+            // module's card in Settings, as on the other modules
             MouseArea {
                 anchors.fill: parent
-                acceptedButtons: Qt.MiddleButton
-                onClicked: root.expanded = !root.expanded
+                acceptedButtons: Qt.MiddleButton | Qt.RightButton
+                onClicked: (mouse) => {
+                    if (mouse.button === Qt.RightButton)
+                        Prefs.openBarModule("workspaces");
+                    else
+                        root.expanded = !root.expanded;
+                }
             }
 
             WheelHandler {

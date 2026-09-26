@@ -33,17 +33,88 @@ Singleton {
     readonly property int barPillRadius: Math.min(18, Math.round(root.barHeight / 2))
     readonly property int effectiveBarTopMargin: root.barNotch ? 0 : root.barTopMargin
     readonly property int effectiveDockBottomMargin: root.dockNotch ? 0 : root.dockBottomMargin
-    readonly property bool anyBarModuleEnabled: root.showWorkspaces || root.showMedia || root.showTray || root.showClock || root.showNotifications || root.showSystem
-    readonly property var barModuleKeys: ["showWorkspaces", "showMedia", "showTray", "showClock", "showNotifications", "showSystem"]
-    // the ids barLayout names the modules by, each with the group it starts in
-    readonly property var barModuleHome: ({
-        "workspaces": "left",
-        "media": "left",
-        "tray": "left",
-        "clock": "center",
-        "notifications": "right",
-        "system": "right"
+    // every bar module, in one place: the id barLayout arranges it by, the
+    // show* pref that switches it on, the group it starts in, how Settings
+    // names it, the prefs its card on the Bar page sets (options), and where
+    // any settings it has elsewhere live (more, page), and, for one that leaves
+    // the bar while it has nothing to show, when it is there (when). a new module is an entry
+    // here, a pill in shell.qml and its rows in BarModuleCard
+    readonly property var barModules: [{
+        "id": "workspaces",
+        "key": "showWorkspaces",
+        "home": "left",
+        "name": "Workspaces",
+        "desc": "Workspace pills and the expanded overview",
+        "more": "Special workspaces, which it shows as well, have a page of their own.",
+        "page": "workspaces"
+    }, {
+        "id": "media",
+        "key": "showMedia",
+        "home": "left",
+        "name": "Media",
+        "desc": "Now-playing pill and player controls"
+    }, {
+        "id": "tray",
+        "key": "showTray",
+        "home": "left",
+        "name": "Tray",
+        "desc": "Status icons from running applications",
+        "when": "while an app has an icon in the tray"
+    }, {
+        "id": "clock",
+        "key": "showClock",
+        "home": "center",
+        "name": "Clock",
+        "desc": "Time, date and the calendar panel",
+        "more": "The time format and the time zone are on the Date & Time page.",
+        "page": "datetime"
+    }, {
+        "id": "notifications",
+        "key": "showNotifications",
+        "home": "right",
+        "name": "Notifications",
+        "desc": "Toasts and the notification list",
+        "more": "Do not disturb is just below; popups, sounds and quiet hours are on the Notifications page.",
+        "page": "notifications"
+    }, {
+        "id": "system",
+        "key": "showSystem",
+        "home": "right",
+        "name": "System",
+        "desc": "Battery, volume, brightness and quick settings",
+        "more": "Its tiles and the keyboard layout sign are in System module, further down this page.",
+        "page": ""
+    }]
+    readonly property bool anyBarModuleEnabled: root.barModules.some((m) => {
+        return root[m.key] === true;
     })
+    readonly property var barModuleKeys: root.barModules.map((m) => {
+        return m.key;
+    })
+    readonly property var barModuleHome: {
+        const out = {};
+        for (const m of root.barModules)
+            out[m.id] = m.home;
+        return out;
+    }
+    // the module the Bar page opens on, set by a right click on its pill
+    property string barModuleFocus: ""
+    // the ids of the modules switched on that the bar leaves out right now,
+    // having nothing to show (an empty tray); the bar keeps it up to date, and
+    // a module's "when" in barModules says when it comes back
+    property var barModulesAway: []
+
+    function openBarModule(id) {
+        root.barModuleFocus = id;
+        root.settingsRequested("bar");
+    }
+
+    readonly property var barModuleById: {
+        const out = {};
+        for (const m of root.barModules)
+            out[m.id] = m;
+        return out;
+    }
     readonly property var barLayoutGroups: root.parseBarLayout(root.barLayout)
     readonly property var widgetKeys: ["widgetsEnabled", "widgetSnap", "widgetLockAll", "widgetHideFullscreen", "widgetOnTop"]
     readonly property var idleKeys: ["idleDim", "idleDimAfter", "idleDimLevel", "idleDimKeyboard", "idleLock", "idleLockAfter", "idleScreenOff", "idleScreenOffAfter", "idleSuspend", "idleSuspendAfter", "idleSuspendOnAc", "idleLockBeforeSleep", "idleWakeAfterSleep", "idleRespectInhibitors", "idleWhileMedia"]
@@ -545,13 +616,10 @@ Singleton {
         });
     }
 
+    // on means the modules that ship switched on; one that ships off stays off
     function setAllBarModules(v) {
-        root.showWorkspaces = v;
-        root.showMedia = v;
-        root.showTray = v;
-        root.showClock = v;
-        root.showNotifications = v;
-        root.showSystem = v;
+        for (const m of root.barModules)
+            root[m.key] = v && root.defaults[m.key] === true;
     }
 
     function setSurface(key, v) {

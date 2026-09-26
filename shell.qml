@@ -66,8 +66,7 @@ ShellRoot {
         }
 
         property real wsCollapse: (workspacesMod.expanded && !Prefs.barPopupMode) ? 0 : 1
-        readonly property var modules: [workspacesMod, mprisMod, sysTrayMod, clockMod, notifMod, systemMod]
-        // the ids Prefs.barLayout arranges the modules by
+        // the pill for each id in Prefs.barModules
         readonly property var moduleById: ({
             "workspaces": workspacesMod,
             "media": mprisMod,
@@ -76,6 +75,23 @@ ShellRoot {
             "notifications": notifMod,
             "system": systemMod
         })
+        readonly property var modules: Prefs.barModules.map((m) => {
+            return bar.moduleById[m.id];
+        })
+
+        // which modules switched on have left the bar for now, for the Bar
+        // page's arrangement
+        Binding {
+            target: Prefs
+            property: "barModulesAway"
+            value: Prefs.barModules.filter((m) => {
+                const mod = bar.moduleById[m.id];
+                return Prefs[m.key] === true && mod && !mod.shown;
+            }).map((m) => {
+                return m.id;
+            })
+        }
+
         // the least room kept between the centre group and either side group
         readonly property int centerGap: 28
         // every module's x and each group's width, worked out in one pass from
@@ -223,6 +239,9 @@ ShellRoot {
 
         }
 
+
+
+
         Repeater {
             model: Prefs.barNotch ? bar.modules : []
 
@@ -359,6 +378,9 @@ ShellRoot {
                 mod: systemMod
             }
 
+
+
+
         }
 
         BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && bar.laidOut) ? barBlurRegion : null
@@ -395,6 +417,9 @@ ShellRoot {
                 blur: true
                 mod: systemMod
             }
+
+
+
 
         }
 

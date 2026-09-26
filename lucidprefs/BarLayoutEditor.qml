@@ -14,32 +14,12 @@ Item {
         "center": "Centre",
         "right": "Right"
     })
-    readonly property var modules: ({
-        "workspaces": {
-            "name": "Workspaces",
-            "key": "showWorkspaces"
-        },
-        "media": {
-            "name": "Media",
-            "key": "showMedia"
-        },
-        "tray": {
-            "name": "System tray",
-            "key": "showTray"
-        },
-        "clock": {
-            "name": "Clock",
-            "key": "showClock"
-        },
-        "notifications": {
-            "name": "Notifications",
-            "key": "showNotifications"
-        },
-        "system": {
-            "name": "System",
-            "key": "showSystem"
-        }
-    })
+    readonly property var modules: Prefs.barModuleById
+    // the module whose card the page shows; a tap on its chip picks it
+    // the module whose card shows below; the page owns it, a tap asks by chosen()
+    property string selected: ""
+
+    signal chosen(string id)
     readonly property int labelWidth: 64
     readonly property int laneHeight: 48
     readonly property int laneGap: 8
@@ -355,17 +335,21 @@ Item {
                 "w": 0
             })
             readonly property bool shown: Prefs[editor.modules[chip.mid].key] === true
+            // on, but out of the bar for now with nothing to show: an outline
+            readonly property bool away: chip.shown && Prefs.barModulesAway.indexOf(chip.mid) !== -1
+            readonly property bool picked: editor.selected === chip.mid
+            readonly property color ink: chip.picked && !chipDrag.active ? Theme.fgAccent : (chip.activeFocus || chipDrag.active ? Theme.fgAccentContainer : Theme.text)
 
             width: chip.slot.w
             height: editor.chipHeight
             radius: Theme.shapeFull
             z: chipDrag.active ? 10 : 1
             scale: chipDrag.active ? 1.05 : 1
-            color: chipDrag.active || chip.activeFocus ? Theme.accentContainer : Theme.bgActive
-            border.width: chip.activeFocus && !chipDrag.active ? 2 : 0
-            border.color: Theme.accent
-            // switched off in the list below: still placed, just quieter
-            opacity: chip.shown || chipDrag.active ? 1 : 0.5
+            color: chipDrag.active ? Theme.accentContainer : (chip.picked ? Theme.accent : (chip.activeFocus ? Theme.accentContainer : (chip.away ? "transparent" : Theme.bgActive)))
+            border.width: chip.activeFocus && !chipDrag.active && !chip.picked ? 2 : (chip.away && !chipDrag.active && !chip.picked ? 1 : 0)
+            border.color: chip.away && !chip.activeFocus ? Theme.outlineStrong : Theme.accent
+            // switched off: still placed, just quieter
+            opacity: chip.shown || chipDrag.active || chip.picked ? 1 : 0.5
             onXChanged: {
                 if (chipDrag.active)
                     editor.reorder(chip.mid, chip.x + chip.width / 2, chip.y + chip.height / 2);
@@ -427,7 +411,7 @@ Item {
                         width: 2
                         height: 2
                         radius: 1
-                        color: chip.activeFocus || chipDrag.active ? Theme.fgAccentContainer : Theme.subtext
+                        color: chip.picked || chip.activeFocus || chipDrag.active ? chip.ink : Theme.subtext
                     }
 
                 }
@@ -441,7 +425,7 @@ Item {
                 anchors.rightMargin: 16
                 anchors.verticalCenter: parent.verticalCenter
                 text: editor.modules[chip.mid].name
-                color: chip.activeFocus || chipDrag.active ? Theme.fgAccentContainer : Theme.text
+                color: chip.ink
                 font: metrics.font
                 elide: Text.ElideRight
             }
@@ -453,7 +437,10 @@ Item {
             }
 
             TapHandler {
-                onTapped: chip.forceActiveFocus()
+                onTapped: {
+                    chip.forceActiveFocus();
+                    editor.chosen(chip.mid);
+                }
             }
 
             DragHandler {
@@ -470,6 +457,7 @@ Item {
                     if (chipDrag.active) {
                         editor.dragSide = chip.side;
                         chip.forceActiveFocus();
+                        editor.chosen(chip.mid);
                     } else {
                         Prefs.setBarLayout(editor.groups());
                     }
