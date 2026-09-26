@@ -327,6 +327,91 @@ SettingCard {
 
     }
 
+    // active window
+    SettingRow {
+        id: windowText
+
+        visible: card.moduleId === "window"
+        title: "Shows"
+        resetKey: "windowModuleText"
+        description: "What the pill reads in the bar. The panel always has both."
+        stacked: true
+        showDivider: false
+
+        M3Segmented {
+            width: Math.min(parent.width, 360)
+            current: Prefs.windowModuleText
+            options: [{
+                "key": "title",
+                "label": "Title"
+            }, {
+                "key": "app",
+                "label": "App name"
+            }, {
+                "key": "both",
+                "label": "Both"
+            }]
+            onChosen: (key) => {
+                return Prefs.windowModuleText = key;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "window"
+        title: "Longest it gets"
+        resetKey: "windowModuleWidth"
+        description: "A longer title is cut short with an ellipsis."
+        stacked: true
+        showDivider: false
+
+        M3Slider {
+            width: parent.width
+            from: 120
+            to: 480
+            stepSize: 10
+            suffix: " px"
+            value: Prefs.windowModuleWidth
+            onMoved: (v) => {
+                return Prefs.windowModuleWidth = Math.round(v);
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "window"
+        title: "Scroll to switch windows"
+        resetKey: "windowModuleScroll"
+        description: "The wheel over the pill moves the focus through the windows on the workspace."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.windowModuleScroll
+            onToggled: (v) => {
+                return Prefs.windowModuleScroll = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "window"
+        title: "Middle click closes it"
+        resetKey: "windowModuleMiddleClose"
+        description: "Like closing a browser tab: the window in focus closes on a middle click on the pill."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.windowModuleMiddleClose
+            onToggled: (v) => {
+                return Prefs.windowModuleMiddleClose = v;
+            }
+        }
+
+    }
+
     SettingRow {
         visible: card.options.length > 0
         title: "Reset this module"

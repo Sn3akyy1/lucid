@@ -75,7 +75,8 @@ ShellRoot {
             "notifications": notifMod,
             "system": systemMod,
             "privacy": privacyMod,
-            "power": powerMod
+            "power": powerMod,
+            "window": windowMod
         })
         readonly property var modules: Prefs.barModules.map((m) => {
             return bar.moduleById[m.id];
@@ -265,6 +266,16 @@ ShellRoot {
 
         }
 
+        ActiveWindow {
+            id: windowMod
+
+            popupAlign: bar.alignOf("window")
+
+            hostWindow: bar
+            x: bar.xOf("window")
+            anchors.top: parent.top
+
+        }
 
         Repeater {
             model: Prefs.barNotch ? bar.modules : []
@@ -410,6 +421,9 @@ ShellRoot {
                 mod: powerMod
             }
 
+            ModuleRegion {
+                mod: windowMod
+            }
 
         }
 
@@ -458,6 +472,10 @@ ShellRoot {
                 mod: powerMod
             }
 
+            ModuleRegion {
+                blur: true
+                mod: windowMod
+            }
 
         }
 

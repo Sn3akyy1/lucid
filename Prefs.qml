@@ -99,6 +99,14 @@ Singleton {
         "name": "Power",
         "desc": "Lock, suspend, log out, restart or shut down, the ones you pick in the order you pick",
         "options": ["powerModuleActions", "powerModuleConfirm", "powerModuleUptime"]
+    }, {
+        "id": "window",
+        "key": "showWindow",
+        "home": "left",
+        "name": "Active window",
+        "desc": "The focused window's icon and title; open it to float, pin, fullscreen, move or close it, or switch to another window on the workspace",
+        "when": "while a window on this workspace has the focus",
+        "options": ["windowModuleText", "windowModuleWidth", "windowModuleScroll", "windowModuleMiddleClose"]
     }]
     readonly property bool anyBarModuleEnabled: root.barModules.some((m) => {
         return root[m.key] === true;
@@ -204,6 +212,11 @@ Singleton {
     property alias powerModuleActions: s.powerModuleActions
     property alias powerModuleConfirm: s.powerModuleConfirm
     property alias powerModuleUptime: s.powerModuleUptime
+    property alias showWindow: s.showWindow
+    property alias windowModuleText: s.windowModuleText
+    property alias windowModuleWidth: s.windowModuleWidth
+    property alias windowModuleScroll: s.windowModuleScroll
+    property alias windowModuleMiddleClose: s.windowModuleMiddleClose
     property alias clock24h: s.clock24h
     property alias clockShowDate: s.clockShowDate
     property alias gpsEnabled: s.gpsEnabled
@@ -427,6 +440,11 @@ Singleton {
         "powerModuleActions": "lock,suspend,hibernate,logout,reboot,shutdown",
         "powerModuleConfirm": true,
         "powerModuleUptime": true,
+        "showWindow": false,
+        "windowModuleText": "title",
+        "windowModuleWidth": 260,
+        "windowModuleScroll": true,
+        "windowModuleMiddleClose": false,
         "clock24h": false,
         "clockShowDate": true,
         "gpsEnabled": false,
@@ -901,6 +919,11 @@ Singleton {
             property string powerModuleActions: "lock,suspend,hibernate,logout,reboot,shutdown"
             property bool powerModuleConfirm: true
             property bool powerModuleUptime: true
+            property bool showWindow: false
+            property string windowModuleText: "title"
+            property int windowModuleWidth: 260
+            property bool windowModuleScroll: true
+            property bool windowModuleMiddleClose: false
             property bool clock24h: false
             property bool clockShowDate: true
             property bool gpsEnabled: false
