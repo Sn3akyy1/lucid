@@ -379,7 +379,10 @@ your config sets are kept — key repeat delay and speed, and Num Lock at sign-i
 with a field to try it all out. Then the mouse — pointer speed, acceleration,
 natural scrolling, scroll speed, left-handed buttons — and, when there is one,
 the touchpad: tap to click, natural scrolling, scroll speed, off while typing,
-two-finger right click, tap and drag, and a middle click from both buttons.
+two-finger right click, tap and drag, and a middle click from both buttons —
+and the swipe between workspaces: how far the fingers travel, which way, how
+fast a flick switches anyway, how far along letting go still switches, going
+past the neighbour and making a new workspace at the end.
 
 ### Everything else
 

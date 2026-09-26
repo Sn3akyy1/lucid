@@ -7,7 +7,8 @@ Column {
 
     readonly property var keyboardKeys: ["input.kb_layout", "input.kb_variant", "input.kb_options", "input.repeat_rate", "input.repeat_delay", "input.numlock_by_default"]
     readonly property var pointerKeys: ["input.sensitivity", "input.accel_profile", "input.natural_scroll", "input.scroll_factor", "input.left_handed", "input.touchpad.tap-to-click", "input.touchpad.natural_scroll", "input.touchpad.scroll_factor", "input.touchpad.disable_while_typing", "input.touchpad.clickfinger_behavior", "input.touchpad.tap-and-drag", "input.touchpad.middle_button_emulation"]
-    readonly property var pageKeys: page.keyboardKeys.concat(page.pointerKeys)
+    readonly property var gestureKeys: ["gestures.workspace_swipe_distance", "gestures.workspace_swipe_invert", "gestures.workspace_swipe_cancel_ratio", "gestures.workspace_swipe_min_speed_to_force", "gestures.workspace_swipe_forever", "gestures.workspace_swipe_create_new"]
+    readonly property var pageKeys: page.keyboardKeys.concat(page.pointerKeys, page.gestureKeys)
     // the touchpad card only shows when Hyprland has one
     property bool hasTouchpad: false
     readonly property var layouts: HyprConfig.layoutList()
@@ -592,6 +593,133 @@ Column {
                 checked: HyprConfig.bool("input.touchpad.middle_button_emulation", false)
                 onToggled: (v) => {
                     return HyprConfig.set("input.touchpad.middle_button_emulation", v);
+                }
+            }
+
+        }
+
+    }
+
+    SettingCard {
+        visible: page.hasTouchpad
+        title: "SWIPING BETWEEN WORKSPACES"
+        subtitle: "How the touchpad swipe to another workspace feels. How many fingers it takes is set by the gestures in your Hyprland config."
+
+        HyprRow {
+            id: swipeDistance
+
+            title: "Swipe length"
+            option: "gestures.workspace_swipe_distance"
+            description: "How far the fingers travel for a whole workspace. Shorter is quicker, longer is more precise."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: swipeDistance.enabled
+                from: 100
+                to: 800
+                stepSize: 25
+                suffix: " px"
+                value: HyprConfig.num("gestures.workspace_swipe_distance", 300)
+                onMoved: (v) => {
+                    return HyprConfig.set("gestures.workspace_swipe_distance", Math.round(v));
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: swipeCancel
+
+            title: "Switch once you are past"
+            option: "gestures.workspace_swipe_cancel_ratio"
+            description: "How much of the way you need to get before letting go switches; short of it, the workspace slides back."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: swipeCancel.enabled
+                from: 5
+                to: 90
+                stepSize: 5
+                suffix: "%"
+                value: Math.round(HyprConfig.num("gestures.workspace_swipe_cancel_ratio", 0.5) * 100)
+                onMoved: (v) => {
+                    return HyprConfig.set("gestures.workspace_swipe_cancel_ratio", Math.round(v) / 100);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: swipeFlick
+
+            title: "A flick switches from"
+            option: "gestures.workspace_swipe_min_speed_to_force"
+            description: "How fast a short swipe has to be to switch anyway. At 0 only the distance counts."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: swipeFlick.enabled
+                from: 0
+                to: 60
+                stepSize: 1
+                value: HyprConfig.num("gestures.workspace_swipe_min_speed_to_force", 30)
+                onMoved: (v) => {
+                    return HyprConfig.set("gestures.workspace_swipe_min_speed_to_force", Math.round(v));
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: swipeInvert
+
+            title: "Invert the swipe"
+            option: "gestures.workspace_swipe_invert"
+            description: "Hyprland has this on unless told otherwise. If a swipe takes you the opposite way from the one you expect, flip it."
+
+            M3Switch {
+                enabled: swipeInvert.enabled
+                checked: HyprConfig.bool("gestures.workspace_swipe_invert", true)
+                onToggled: (v) => {
+                    return HyprConfig.set("gestures.workspace_swipe_invert", v);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: swipeForever
+
+            title: "Keep going past the next one"
+            option: "gestures.workspace_swipe_forever"
+            description: "One long swipe can travel several workspaces instead of stopping at the neighbour."
+
+            M3Switch {
+                enabled: swipeForever.enabled
+                checked: HyprConfig.bool("gestures.workspace_swipe_forever", false)
+                onToggled: (v) => {
+                    return HyprConfig.set("gestures.workspace_swipe_forever", v);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: swipeNew
+
+            title: "A new workspace at the end"
+            option: "gestures.workspace_swipe_create_new"
+            description: "Swiping past the last workspace makes a new, empty one."
+            showDivider: false
+
+            M3Switch {
+                enabled: swipeNew.enabled
+                checked: HyprConfig.bool("gestures.workspace_swipe_create_new", true)
+                onToggled: (v) => {
+                    return HyprConfig.set("gestures.workspace_swipe_create_new", v);
                 }
             }
 
