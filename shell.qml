@@ -73,7 +73,8 @@ ShellRoot {
             "tray": sysTrayMod,
             "clock": clockMod,
             "notifications": notifMod,
-            "system": systemMod
+            "system": systemMod,
+            "privacy": privacyMod
         })
         readonly property var modules: Prefs.barModules.map((m) => {
             return bar.moduleById[m.id];
@@ -239,6 +240,18 @@ ShellRoot {
 
         }
 
+        Privacy {
+            id: privacyMod
+
+            popupAlign: bar.alignOf("privacy")
+
+            hostWindow: bar
+            recorder: snapMod
+            toast: toastMod
+            x: bar.xOf("privacy")
+            anchors.top: parent.top
+
+        }
 
 
 
@@ -378,6 +391,9 @@ ShellRoot {
                 mod: systemMod
             }
 
+            ModuleRegion {
+                mod: privacyMod
+            }
 
 
 
@@ -418,6 +434,10 @@ ShellRoot {
                 mod: systemMod
             }
 
+            ModuleRegion {
+                blur: true
+                mod: privacyMod
+            }
 
 
 

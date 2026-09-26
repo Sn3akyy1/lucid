@@ -9,6 +9,7 @@ SettingCard {
 
     property string moduleId: ""
     readonly property var mod: Prefs.barModuleById[card.moduleId] || null
+    readonly property var options: card.mod && card.mod.options ? card.mod.options : []
     readonly property string groupName: {
         const g = Prefs.barLayoutGroups;
         if (g.left.indexOf(card.moduleId) !== -1)
@@ -61,6 +62,98 @@ SettingCard {
             text: card.mod && card.pageNames[card.mod.page] ? "Open " + card.pageNames[card.mod.page] : "Open"
             variant: "tonal"
             onClicked: Prefs.settingsRequested(card.mod.page)
+        }
+
+    }
+
+    // privacy
+    SettingRow {
+        visible: card.moduleId === "privacy"
+        title: "Watch"
+        resetKey: "privacyWatch"
+        description: "What makes the module show up. At least one stays on."
+        stacked: true
+        showDivider: false
+
+        M3Chips {
+            width: parent.width
+            multi: true
+            selectedKeys: String(Prefs.privacyWatch).split(",").filter((k) => {
+                return k !== "";
+            })
+            options: [{
+                "key": "mic",
+                "label": "Microphone"
+            }, {
+                "key": "camera",
+                "label": "Camera"
+            }, {
+                "key": "screen",
+                "label": "Screen"
+            }]
+            onChosen: (key) => {
+                const list = String(Prefs.privacyWatch).split(",").filter((k) => {
+                    return k !== "";
+                });
+                const at = list.indexOf(key);
+                if (at === -1)
+                    list.push(key);
+                else if (list.length > 1)
+                    list.splice(at, 1);
+                Prefs.privacyWatch = ["mic", "camera", "screen"].filter((k) => {
+                    return list.indexOf(k) !== -1;
+                }).join(",");
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "privacy"
+        title: "Tell me when something starts"
+        resetKey: "privacyToast"
+        description: "A toast names the app the moment it starts using the microphone, the camera or the screen. Lucid's own recording, which you start yourself, is left out."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.privacyToast
+            onToggled: (v) => {
+                return Prefs.privacyToast = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "privacy"
+        title: "Keep its place in the bar"
+        resetKey: "privacyAlwaysShown"
+        description: "A quiet shield stays when nothing is in use, so the modules beside it never shift."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.privacyAlwaysShown
+            onToggled: (v) => {
+                return Prefs.privacyAlwaysShown = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.options.length > 0
+        title: "Reset this module"
+        description: "Its options above go back to how they ship. Whether it shows and where it sits stay as they are."
+        showDivider: false
+
+        M3Button {
+            text: "Reset"
+            variant: "text"
+            destructive: true
+            enabled: card.options.some((k) => {
+                return Prefs.isModified(k);
+            })
+            onClicked: Prefs.resetKeys(card.options)
         }
 
     }

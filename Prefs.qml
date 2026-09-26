@@ -84,6 +84,14 @@ Singleton {
         "desc": "Battery, volume, brightness and quick settings",
         "more": "Its tiles and the keyboard layout sign are in System module, further down this page.",
         "page": ""
+    }, {
+        "id": "privacy",
+        "key": "showPrivacy",
+        "home": "right",
+        "name": "Privacy",
+        "desc": "Shows up only while an app uses the microphone, the camera or the screen, and says which",
+        "when": "while an app uses the microphone, the camera or the screen",
+        "options": ["privacyWatch", "privacyToast", "privacyAlwaysShown"]
     }]
     readonly property bool anyBarModuleEnabled: root.barModules.some((m) => {
         return root[m.key] === true;
@@ -181,6 +189,10 @@ Singleton {
     property alias showClock: s.showClock
     property alias showNotifications: s.showNotifications
     property alias showSystem: s.showSystem
+    property alias showPrivacy: s.showPrivacy
+    property alias privacyWatch: s.privacyWatch
+    property alias privacyToast: s.privacyToast
+    property alias privacyAlwaysShown: s.privacyAlwaysShown
     property alias clock24h: s.clock24h
     property alias clockShowDate: s.clockShowDate
     property alias gpsEnabled: s.gpsEnabled
@@ -396,6 +408,10 @@ Singleton {
         "showClock": true,
         "showNotifications": true,
         "showSystem": true,
+        "showPrivacy": false,
+        "privacyWatch": "mic,camera,screen",
+        "privacyToast": true,
+        "privacyAlwaysShown": false,
         "clock24h": false,
         "clockShowDate": true,
         "gpsEnabled": false,
@@ -862,6 +878,10 @@ Singleton {
             property bool showClock: true
             property bool showNotifications: true
             property bool showSystem: true
+            property bool showPrivacy: false
+            property string privacyWatch: "mic,camera,screen"
+            property bool privacyToast: true
+            property bool privacyAlwaysShown: false
             property bool clock24h: false
             property bool clockShowDate: true
             property bool gpsEnabled: false
