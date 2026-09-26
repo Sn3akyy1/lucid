@@ -7,7 +7,8 @@ Column {
     // every option this page sets, for its reset
     readonly property var lookKeys: ["general.gaps_in", "general.gaps_out", "general.border_size", "general.col.active_border", "lucid.border", "general.col.inactive_border", "lucid.inactive_border", "decoration.rounding", "decoration.rounding_power", "decoration.shadow.enabled", "decoration.shadow.range", "decoration.shadow.render_power", "decoration.dim_inactive", "decoration.dim_strength"]
     readonly property var tilingKeys: ["general.layout", "dwindle.split_width_multiplier", "dwindle.force_split", "dwindle.default_split_ratio", "dwindle.preserve_split", "master.orientation", "master.mfact", "master.new_status", "master.new_on_top", "scrolling.column_width", "scrolling.fullscreen_on_one_column", "lucid.solo"]
-    readonly property var pageKeys: page.lookKeys.concat(page.tilingKeys)
+    readonly property var behaviourKeys: ["input.follow_mouse", "misc.focus_on_activate", "cursor.no_warps", "cursor.warp_on_change_workspace", "general.resize_on_border", "general.extend_border_grab_area", "general.snap.enabled", "general.snap.window_gap", "general.snap.monitor_gap", "cursor.hide_on_key_press", "cursor.inactive_timeout", "animations.enabled"]
+    readonly property var pageKeys: page.lookKeys.concat(page.tilingKeys, page.behaviourKeys)
     readonly property string layout: String(HyprConfig.value("general.layout") || "dwindle")
     // how many windows the layout preview lays out; the preview's own, not a setting
     property int previewCount: 3
@@ -668,6 +669,272 @@ Column {
                         HyprConfig.set("lucid.solo", true);
                     else
                         HyprConfig.resetKeys(["lucid.solo"]);
+                }
+            }
+
+        }
+
+    }
+
+    SettingCard {
+        title: "FOCUS"
+
+        HyprRow {
+            id: followMouse
+
+            title: "A window takes the focus"
+            option: "input.follow_mouse"
+            description: HyprConfig.num("input.follow_mouse", 1) === 2 ? "The window under the cursor scrolls and takes clicks, but your typing stays where you clicked last." : (HyprConfig.num("input.follow_mouse", 1) === 0 ? "Moving the cursor changes nothing; a window takes the focus when you click it." : "Moving the cursor onto a window gives it the focus.")
+            stacked: true
+
+            M3Segmented {
+                width: Math.min(parent.width, 480)
+                enabled: followMouse.enabled
+                current: HyprConfig.num("input.follow_mouse", 1)
+                options: [{
+                    "key": 0,
+                    "label": "On click"
+                }, {
+                    "key": 1,
+                    "label": "On hover"
+                }, {
+                    "key": 2,
+                    "label": "Hover, typing on click"
+                }]
+                onChosen: (key) => {
+                    return HyprConfig.set("input.follow_mouse", key);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: focusOnActivate
+
+            title: "Apps can take the focus"
+            option: "misc.focus_on_activate"
+            description: "When an app asks to be brought forward — a link opened in the browser, say — it gets the focus. Off, it only asks for your attention."
+
+            M3Switch {
+                enabled: focusOnActivate.enabled
+                checked: HyprConfig.bool("misc.focus_on_activate", false)
+                onToggled: (v) => {
+                    return HyprConfig.set("misc.focus_on_activate", v);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: warps
+
+            title: "The cursor follows the focus"
+            option: "cursor.no_warps"
+            description: "When a key moves the focus to another window, the cursor jumps into it."
+
+            M3Switch {
+                enabled: warps.enabled
+                checked: !HyprConfig.bool("cursor.no_warps", false)
+                onToggled: (v) => {
+                    return HyprConfig.set("cursor.no_warps", !v);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: warpWorkspace
+
+            title: "Also when switching workspace"
+            option: "cursor.warp_on_change_workspace"
+            description: "Switching workspace puts the cursor back on the window you were last in there."
+            available: !HyprConfig.bool("cursor.no_warps", false)
+            unavailableReason: "The cursor stays put while it does not follow the focus."
+            showDivider: false
+
+            M3Switch {
+                enabled: warpWorkspace.enabled
+                checked: HyprConfig.num("cursor.warp_on_change_workspace", 0) > 0
+                onToggled: (v) => {
+                    return HyprConfig.set("cursor.warp_on_change_workspace", v ? 1 : 0);
+                }
+            }
+
+        }
+
+    }
+
+    SettingCard {
+        title: "MOVING AND RESIZING"
+
+        HyprRow {
+            id: resizeBorder
+
+            title: "Resize by the edges"
+            option: "general.resize_on_border"
+            description: "Drag a window's edge or corner to resize it, with no key held."
+
+            M3Switch {
+                enabled: resizeBorder.enabled
+                checked: HyprConfig.bool("general.resize_on_border", false)
+                onToggled: (v) => {
+                    return HyprConfig.set("general.resize_on_border", v);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: grabArea
+
+            title: "Grab area"
+            option: "general.extend_border_grab_area"
+            description: "How far outside the window an edge can still be caught."
+            available: HyprConfig.bool("general.resize_on_border", false)
+            unavailableReason: "Resizing by the edges is off."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: grabArea.enabled
+                from: 0
+                to: 40
+                stepSize: 1
+                suffix: " px"
+                value: HyprConfig.num("general.extend_border_grab_area", 15)
+                onMoved: (v) => {
+                    return HyprConfig.set("general.extend_border_grab_area", Math.round(v));
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: snapOn
+
+            title: "Snap floating windows"
+            option: "general.snap.enabled"
+            description: "A floating window you drag clicks into place against the other windows and the edges of the screen."
+
+            M3Switch {
+                enabled: snapOn.enabled
+                checked: HyprConfig.bool("general.snap.enabled", false)
+                onToggled: (v) => {
+                    return HyprConfig.set("general.snap.enabled", v);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: snapWindows
+
+            title: "Snap to windows from"
+            option: "general.snap.window_gap"
+            available: HyprConfig.bool("general.snap.enabled", false)
+            unavailableReason: "Snapping is off."
+            description: "How close to another window it has to come."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: snapWindows.enabled
+                from: 0
+                to: 50
+                stepSize: 1
+                suffix: " px"
+                value: HyprConfig.num("general.snap.window_gap", 10)
+                onMoved: (v) => {
+                    return HyprConfig.set("general.snap.window_gap", Math.round(v));
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: snapScreen
+
+            title: "Snap to the screen from"
+            option: "general.snap.monitor_gap"
+            available: HyprConfig.bool("general.snap.enabled", false)
+            unavailableReason: "Snapping is off."
+            description: "How close to an edge of the screen it has to come."
+            stacked: true
+            showDivider: false
+
+            M3Slider {
+                width: parent.width
+                enabled: snapScreen.enabled
+                from: 0
+                to: 50
+                stepSize: 1
+                suffix: " px"
+                value: HyprConfig.num("general.snap.monitor_gap", 10)
+                onMoved: (v) => {
+                    return HyprConfig.set("general.snap.monitor_gap", Math.round(v));
+                }
+            }
+
+        }
+
+    }
+
+    SettingCard {
+        title: "CURSOR AND MOTION"
+
+        HyprRow {
+            id: hideTyping
+
+            title: "Hide the cursor while typing"
+            option: "cursor.hide_on_key_press"
+            description: "It comes back as soon as the mouse moves."
+
+            M3Switch {
+                enabled: hideTyping.enabled
+                checked: HyprConfig.bool("cursor.hide_on_key_press", false)
+                onToggled: (v) => {
+                    return HyprConfig.set("cursor.hide_on_key_press", v);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: idleCursor
+
+            title: "Hide an idle cursor after"
+            option: "cursor.inactive_timeout"
+            description: "A cursor left still disappears after this long. At 0 it never does."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: idleCursor.enabled
+                from: 0
+                to: 30
+                stepSize: 1
+                suffix: " s"
+                value: HyprConfig.num("cursor.inactive_timeout", 0)
+                onMoved: (v) => {
+                    return HyprConfig.set("cursor.inactive_timeout", Math.round(v));
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: animationsOn
+
+            title: "Window animations"
+            option: "animations.enabled"
+            description: "Windows and workspaces slide and fade as they open, close and change. Off, everything is instant. The shell's own motion is on the General page."
+            showDivider: false
+
+            M3Switch {
+                enabled: animationsOn.enabled
+                checked: HyprConfig.bool("animations.enabled", true)
+                onToggled: (v) => {
+                    return HyprConfig.set("animations.enabled", v);
                 }
             }
 

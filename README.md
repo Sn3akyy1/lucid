@@ -354,7 +354,11 @@ shadow, and dimming the windows you are not in. Under *Tiling*: the layout
 splits and where a new window goes, the master's side and size, the width of a
 scrolling column — with a preview of the whole screen for one to five windows,
 and a switch that takes a lone window edge to edge, without gaps, border or
-rounded corners.
+rounded corners. Under *Behaviour*: whether focus follows the cursor or waits
+for a click, whether an app may take the focus when it asks, the cursor jumping
+with the focus, resizing a window by its edges, floating windows snapping to
+each other and to the screen, hiding the cursor while typing or after a while,
+and window animations.
 
 Only what you change there is Lucid's. It goes to
 `~/.config/hypr/lucid-settings.lua`, which `modules/settings.lua` applies without
