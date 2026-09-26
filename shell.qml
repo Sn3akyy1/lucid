@@ -74,7 +74,8 @@ ShellRoot {
             "clock": clockMod,
             "notifications": notifMod,
             "system": systemMod,
-            "privacy": privacyMod
+            "privacy": privacyMod,
+            "power": powerMod
         })
         readonly property var modules: Prefs.barModules.map((m) => {
             return bar.moduleById[m.id];
@@ -253,6 +254,16 @@ ShellRoot {
 
         }
 
+        SessionMenu {
+            id: powerMod
+
+            popupAlign: bar.alignOf("power")
+
+            hostWindow: bar
+            x: bar.xOf("power")
+            anchors.top: parent.top
+
+        }
 
 
         Repeater {
@@ -395,6 +406,9 @@ ShellRoot {
                 mod: privacyMod
             }
 
+            ModuleRegion {
+                mod: powerMod
+            }
 
 
         }
@@ -439,6 +453,10 @@ ShellRoot {
                 mod: privacyMod
             }
 
+            ModuleRegion {
+                blur: true
+                mod: powerMod
+            }
 
 
         }

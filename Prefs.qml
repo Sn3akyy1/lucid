@@ -92,6 +92,13 @@ Singleton {
         "desc": "Shows up only while an app uses the microphone, the camera or the screen, and says which",
         "when": "while an app uses the microphone, the camera or the screen",
         "options": ["privacyWatch", "privacyToast", "privacyAlwaysShown"]
+    }, {
+        "id": "power",
+        "key": "showPower",
+        "home": "right",
+        "name": "Power",
+        "desc": "Lock, suspend, log out, restart or shut down, the ones you pick in the order you pick",
+        "options": ["powerModuleActions", "powerModuleConfirm", "powerModuleUptime"]
     }]
     readonly property bool anyBarModuleEnabled: root.barModules.some((m) => {
         return root[m.key] === true;
@@ -193,6 +200,10 @@ Singleton {
     property alias privacyWatch: s.privacyWatch
     property alias privacyToast: s.privacyToast
     property alias privacyAlwaysShown: s.privacyAlwaysShown
+    property alias showPower: s.showPower
+    property alias powerModuleActions: s.powerModuleActions
+    property alias powerModuleConfirm: s.powerModuleConfirm
+    property alias powerModuleUptime: s.powerModuleUptime
     property alias clock24h: s.clock24h
     property alias clockShowDate: s.clockShowDate
     property alias gpsEnabled: s.gpsEnabled
@@ -412,6 +423,10 @@ Singleton {
         "privacyWatch": "mic,camera,screen",
         "privacyToast": true,
         "privacyAlwaysShown": false,
+        "showPower": false,
+        "powerModuleActions": "lock,suspend,hibernate,logout,reboot,shutdown",
+        "powerModuleConfirm": true,
+        "powerModuleUptime": true,
         "clock24h": false,
         "clockShowDate": true,
         "gpsEnabled": false,
@@ -882,6 +897,10 @@ Singleton {
             property string privacyWatch: "mic,camera,screen"
             property bool privacyToast: true
             property bool privacyAlwaysShown: false
+            property bool showPower: false
+            property string powerModuleActions: "lock,suspend,hibernate,logout,reboot,shutdown"
+            property bool powerModuleConfirm: true
+            property bool powerModuleUptime: true
             property bool clock24h: false
             property bool clockShowDate: true
             property bool gpsEnabled: false
