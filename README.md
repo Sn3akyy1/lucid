@@ -376,7 +376,10 @@ config wins: your layouts in order (the first is the one every keyboard starts
 with), each picked by name from the system's list of layouts and variants, the
 key that switches between them, what Caps Lock does — the other keyboard options
 your config sets are kept — key repeat delay and speed, and Num Lock at sign-in,
-with a field to try it all out.
+with a field to try it all out. Then the mouse — pointer speed, acceleration,
+natural scrolling, scroll speed, left-handed buttons — and, when there is one,
+the touchpad: tap to click, natural scrolling, scroll speed, off while typing,
+two-finger right click, tap and drag, and a middle click from both buttons.
 
 ### Everything else
 
