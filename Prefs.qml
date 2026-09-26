@@ -49,7 +49,18 @@ Singleton {
         "name": "Workspaces",
         "desc": "Workspace pills and the expanded overview",
         "more": "Special workspaces, which it shows as well, have a page of their own.",
-        "page": "workspaces"
+        "page": "workspaces",
+        "options": ["workspacesShown", "workspacesWheel"],
+        "style": "workspacesStyle",
+        "styles": [{
+            "key": "dots",
+            "name": "Dots",
+            "blurb": "A dot for each, the numbers on hover"
+        }, {
+            "key": "numbers",
+            "name": "Numbers",
+            "blurb": "Each one's number, the empty ones quieter"
+        }]
     }, {
         "id": "media",
         "key": "showMedia",
@@ -244,6 +255,9 @@ Singleton {
     property alias barHoverGrow: s.barHoverGrow
     property alias barLayout: s.barLayout
     property alias showWorkspaces: s.showWorkspaces
+    property alias workspacesStyle: s.workspacesStyle
+    property alias workspacesShown: s.workspacesShown
+    property alias workspacesWheel: s.workspacesWheel
     property alias showMedia: s.showMedia
     property alias mediaStyle: s.mediaStyle
     property alias mediaPanelStyle: s.mediaPanelStyle
@@ -490,6 +504,9 @@ Singleton {
         "barHoverGrow": 3,
         "barLayout": "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}",
         "showWorkspaces": true,
+        "workspacesStyle": "dots",
+        "workspacesShown": 6,
+        "workspacesWheel": true,
         "showMedia": true,
         "mediaStyle": "playing",
         "mediaPanelStyle": "side",
@@ -982,6 +999,9 @@ Singleton {
             property int barHoverGrow: 3
             property string barLayout: "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}"
             property bool showWorkspaces: true
+            property string workspacesStyle: "dots"
+            property int workspacesShown: 6
+            property bool workspacesWheel: true
             property bool showMedia: true
             property string mediaStyle: "playing"
             property string mediaPanelStyle: "side"

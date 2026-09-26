@@ -22,7 +22,9 @@ Item {
         "media/cover": mediaCover,
         "media/compact": mediaCompact,
         "media/panel/side": mediaPanelSide,
-        "media/panel/cover": mediaPanelCover
+        "media/panel/cover": mediaPanelCover,
+        "workspaces/dots": workspacesDots,
+        "workspaces/numbers": workspacesNumbers
     })
     // what the samples show: the time and date as the bar would
     readonly property string timeText: {
@@ -320,6 +322,65 @@ Item {
 
                 MiniTrack {
                     width: parent.width
+                }
+
+            }
+
+        }
+
+    }
+
+    Component {
+        id: workspacesDots
+
+        Row {
+            spacing: 6
+
+            Repeater {
+                model: Math.min(Prefs.workspacesShown, 6)
+
+                Rectangle {
+                    required property int index
+
+                    width: index === 0 ? 24 : 10
+                    height: 10
+                    radius: height / 2
+                    color: index === 0 ? Theme.accent : Theme.withBlur(Theme._darken(Theme.subtext, 0.45))
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+            }
+
+        }
+
+    }
+
+    Component {
+        id: workspacesNumbers
+
+        Row {
+            spacing: 6
+
+            Repeater {
+                model: Math.min(Prefs.workspacesShown, 6)
+
+                Rectangle {
+                    required property int index
+
+                    width: index === 0 ? 30 : 20
+                    height: 20
+                    radius: height / 2
+                    color: index === 0 ? Theme.accent : "transparent"
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    BarText {
+                        anchors.centerIn: parent
+                        text: index + 1
+                        font.pixelSize: Theme.fs(12)
+                        color: index === 0 ? Theme.bgOpaque : Theme.subtext
+                        opacity: index < 3 ? 1 : 0.5
+                    }
+
                 }
 
             }

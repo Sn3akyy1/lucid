@@ -144,6 +144,44 @@ SettingCard {
 
     }
 
+    // workspaces
+    SettingRow {
+        visible: card.moduleId === "workspaces"
+        title: "How many"
+        resetKey: "workspacesShown"
+        description: "The ones it always shows. A workspace past them still shows up while it exists."
+        stacked: true
+        showDivider: false
+
+        M3Slider {
+            width: parent.width
+            from: 1
+            to: 10
+            stepSize: 1
+            value: Prefs.workspacesShown
+            onMoved: (v) => {
+                return Prefs.workspacesShown = Math.round(v);
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "workspaces"
+        title: "Wheel to switch"
+        resetKey: "workspacesWheel"
+        description: "The wheel over it moves to the next or the previous workspace."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.workspacesWheel
+            onToggled: (v) => {
+                return Prefs.workspacesWheel = v;
+            }
+        }
+
+    }
+
     // clock
     SettingRow {
         visible: card.moduleId === "clock"

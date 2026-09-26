@@ -60,7 +60,7 @@ Item {
         }
         return max;
     }
-    readonly property int maxWorkspaces: 6
+    readonly property int maxWorkspaces: Prefs.workspacesShown
     readonly property int slotCount: Math.max(root.maxWorkspaces, root.highestWorkspaceId)
     readonly property var specialList: {
         const out = [];
@@ -146,6 +146,11 @@ Item {
     readonly property int compactHeight: Prefs.barHeight
     property int hoveredSlot: -1
     readonly property bool rowHovered: rowHover.hovered && !root.expanded
+    // numbered keeps the numbers the hover shows, in slots a size down
+    readonly property bool numbered: Prefs.workspacesStyle === "numbers"
+    readonly property bool spread: root.rowHovered || root.numbered
+    readonly property int spreadSize: root.rowHovered ? root.hoverDotSize : 20
+    readonly property int spreadActiveWidth: root.rowHovered ? root.hoverActiveDotWidth : 30
     readonly property int litSlot: root.rowHovered && root.hoveredSlot !== -1 ? root.hoveredSlot : root.activeSlot
     onLitSlotChanged: activePill.retarget()
     readonly property bool litIndexValid: root.litSlot >= 0 && root.litSlot < root.totalSlots
@@ -354,8 +359,8 @@ Item {
         if (index >= root.slotCount)
             return root.chipWidth(index);
 
-        if (root.rowHovered)
-            return root.litSlot === index ? root.hoverActiveDotWidth : root.hoverDotSize;
+        if (root.spread)
+            return root.litSlot === index ? root.spreadActiveWidth : root.spreadSize;
 
         const ws = root.wsAt(index);
         const wide = index === root.activeSlot || (ws && (ws.active || ws.urgent));
@@ -369,8 +374,8 @@ Item {
         if (index >= root.slotCount)
             return root.chipOpen(index) ? root.hoverDotSize : root.stashIcon;
 
-        if (root.rowHovered)
-            return root.hoverDotSize;
+        if (root.spread)
+            return root.spreadSize;
 
         return root.sunk ? root.sunkDotSize : root.dotSize;
     }
@@ -1030,11 +1035,13 @@ Item {
                     else
                         root.expanded = !root.expanded;
                 }
-            }
-
-            WheelHandler {
-                enabled: !root.expanded
+                // the wheel is taken here: a WheelHandler on this item never
+                // heard it past the MouseArea, so the wheel did nothing
                 onWheel: (event) => {
+                    if (root.expanded || !Prefs.workspacesWheel) {
+                        event.accepted = false;
+                        return ;
+                    }
                     root.wheelAccum += event.angleDelta.y;
                     while (root.wheelAccum >= 120) {
                         root.wheelAccum -= 120;
@@ -1182,23 +1189,24 @@ Item {
                         readonly property var wsObj: root.wsAt(dot.index)
                         readonly property bool isActive: dot.wsObj ? dot.wsObj.active : false
                         readonly property bool isUrgent: dot.wsObj ? dot.wsObj.urgent : false
-                        readonly property bool isLit: root.rowHovered && root.pillCovers(dot.x, dot.width)
+                        readonly property bool isLit: root.spread && root.pillCovers(dot.x, dot.width)
 
                         x: root.slotX(dot.index)
                         y: (parent.height - height) / 2
                         width: root.slotWidth(dot.index)
                         height: root.slotHeight(dot.index)
                         radius: 999
-                        color: dot.isUrgent ? Theme.error : (root.rowHovered || dot.index === root.activeSlot ? "transparent" : Theme.withBlur(Theme._darken(Theme.subtext, 0.45)))
+                        color: dot.isUrgent ? Theme.error : (root.spread || dot.index === root.activeSlot ? "transparent" : Theme.withBlur(Theme._darken(Theme.subtext, 0.45)))
 
                         Text {
                             anchors.centerIn: parent
                             text: dot.wsId
-                            opacity: root.rowHovered ? 1 : 0
+                            // numbered, an empty workspace's number is quieter
+                            opacity: root.spread ? (root.numbered && !root.rowHovered && !(dot.wsObj && dot.wsObj.toplevels.values.length > 0) && !dot.isActive ? 0.5 : 1) : 0
                             color: dot.isLit ? Theme.bgOpaque : Theme.subtext
                             font.family: Theme.fontFamily
                             font.bold: true
-                            font.pixelSize: Theme.fs(13)
+                            font.pixelSize: Theme.fs(root.rowHovered ? 13 : 12)
 
                             Behavior on opacity {
                                 NumberAnimation {
