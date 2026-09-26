@@ -73,8 +73,6 @@ Item {
                 moduleId: tile.moduleId
                 styleKey: tile.key
                 panel: tile.panel
-                width: tile.panel ? parent.width : implicitWidth
-                height: tile.panel ? parent.height : implicitHeight
             }
 
         }

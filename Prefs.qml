@@ -69,8 +69,33 @@ Singleton {
         "home": "center",
         "name": "Clock",
         "desc": "Time, date and the calendar panel",
-        "more": "The time format and the time zone are on the Date & Time page.",
-        "page": "datetime"
+        "more": "The time format, whether the date shows and the time zone are on the Date & Time page.",
+        "page": "datetime",
+        "options": ["clockSeconds", "clockBlink", "clockDateFormat", "clockWeather"],
+        "style": "clockStyle",
+        "styles": [{
+            "key": "inline",
+            "name": "One line",
+            "blurb": "The time, then the date"
+        }, {
+            "key": "stacked",
+            "name": "Two lines",
+            "blurb": "The date small under the time"
+        }, {
+            "key": "accent",
+            "name": "Accent",
+            "blurb": "The time on a chip in the accent colour"
+        }],
+        "panelStyle": "clockPanelStyle",
+        "panelStyles": [{
+            "key": "full",
+            "name": "Full",
+            "blurb": "The time, the weather, what is next and the calendar"
+        }, {
+            "key": "calendar",
+            "name": "Calendar",
+            "blurb": "Only the calendar, in a narrow panel"
+        }]
     }, {
         "id": "notifications",
         "key": "showNotifications",
@@ -222,6 +247,12 @@ Singleton {
     property alias windowModuleMiddleClose: s.windowModuleMiddleClose
     property alias clock24h: s.clock24h
     property alias clockShowDate: s.clockShowDate
+    property alias clockStyle: s.clockStyle
+    property alias clockPanelStyle: s.clockPanelStyle
+    property alias clockSeconds: s.clockSeconds
+    property alias clockBlink: s.clockBlink
+    property alias clockDateFormat: s.clockDateFormat
+    property alias clockWeather: s.clockWeather
     property alias gpsEnabled: s.gpsEnabled
     property alias locationName: s.locationName
     property alias locationLabel: s.locationLabel
@@ -450,6 +481,12 @@ Singleton {
         "windowModuleMiddleClose": false,
         "clock24h": false,
         "clockShowDate": true,
+        "clockStyle": "inline",
+        "clockPanelStyle": "full",
+        "clockSeconds": false,
+        "clockBlink": true,
+        "clockDateFormat": "short",
+        "clockWeather": false,
         "gpsEnabled": false,
         "locationName": "",
         "locationLabel": "",
@@ -929,6 +966,12 @@ Singleton {
             property bool windowModuleMiddleClose: false
             property bool clock24h: false
             property bool clockShowDate: true
+            property string clockStyle: "inline"
+            property string clockPanelStyle: "full"
+            property bool clockSeconds: false
+            property bool clockBlink: true
+            property string clockDateFormat: "short"
+            property bool clockWeather: false
             property bool gpsEnabled: false
             property string locationName: ""
             property string locationLabel: ""

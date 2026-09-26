@@ -10,7 +10,12 @@ BarPill {
     id: root
 
     readonly property string hourFormat: Prefs.clock24h ? "HH" : "hh AP"
-    readonly property string minuteFormat: Prefs.clock24h ? "mm" : "mm AP"
+    readonly property string minuteFormat: (Prefs.clockSeconds ? "mm:ss" : "mm") + (Prefs.clock24h ? "" : " AP")
+    // the face's looks, from its card on the Bar page
+    readonly property bool stacked: Prefs.clockStyle === "stacked"
+    readonly property bool accentFace: Prefs.clockStyle === "accent"
+    readonly property bool calendarOnly: Prefs.clockPanelStyle === "calendar"
+    readonly property string dateFormat: Prefs.clockDateFormat === "long" ? "ddd d MMM" : (Prefs.clockDateFormat === "numeric" ? Qt.locale().dateFormat(Locale.ShortFormat) : "ddd d")
     readonly property string fullTimeFormat: Prefs.clock24h ? "H:mm:ss" : "h:mm:ss AP"
     readonly property int horizontalPadding: 17
     readonly property int temp: WeatherSource.report ? WeatherSource.report.tempC : 0
@@ -336,7 +341,7 @@ BarPill {
 
     shown: Prefs.showClock
     compactWidth: compactRow.implicitWidth + root.horizontalPadding * 2
-    panelWidth: Math.min(620, root.screenW - 34)
+    panelWidth: Math.min(root.calendarOnly ? 360 : 620, root.screenW - 34)
     panelHeight: Math.min(root.maxPanelHeight, expandedRow.implicitHeight + 32)
     // reminder toast, on BarPill's alt surface
     altOpen: root.showingNotify
@@ -385,7 +390,7 @@ BarPill {
         onTriggered: {
             clockHourText.text = Loc.now().toLocaleTimeString(Qt.locale(), root.hourFormat).replace(/\s*[AP]M/i, "");
             clockMinuteText.text = Loc.now().toLocaleTimeString(Qt.locale(), root.minuteFormat);
-            dateText.text = Loc.now().toLocaleDateString(Qt.locale(), "ddd d");
+            dateText.text = Loc.now().toLocaleDateString(Qt.locale(), root.dateFormat);
             expandedTimeText.text = Loc.now().toLocaleTimeString(Qt.locale(), root.fullTimeFormat);
             expandedDateText.text = Loc.now().toLocaleDateString(Qt.locale(), "dddd, MMMM d");
             root.clockTick++;
@@ -394,38 +399,56 @@ BarPill {
     }
 
     compactContent: [
-        Row {
+        // the accent chip the time sits on
+        Rectangle {
+            visible: root.accentFace
+            x: compactRow.x + timeRow.x - 8
+            y: compactRow.y + timeRow.y + (timeRow.height - height) / 2
+            width: timeRow.width + 16
+            height: Math.min(24, parent.height - 6)
+            radius: height / 2
+            color: Theme.accent
+        },
+        // one line, or the time over the date
+        Grid {
             id: compactRow
 
             anchors.centerIn: parent
-            spacing: 8
+            columns: root.stacked ? 1 : 5
+            // the chip reaches 8 px past the time, so the date keeps clear of it
+            columnSpacing: root.accentFace ? 14 : 8
+            rowSpacing: -2
+            horizontalItemAlignment: Grid.AlignHCenter
+            verticalItemAlignment: Grid.AlignVCenter
 
             Row {
-                anchors.verticalCenter: parent.verticalCenter
+                id: timeRow
+
                 spacing: 1
 
                 Text {
                     id: clockHourText
 
                     text: Loc.now().toLocaleTimeString(Qt.locale(), root.hourFormat).replace(/\s*[AP]M/i, "")
-                    color: Theme.text
+                    color: root.accentFace ? Theme.fgAccent : Theme.text
                     font.family: Theme.fontFamily
                     font.bold: true
-                    font.pixelSize: Theme.fs(13)
+                    font.pixelSize: Theme.fs(root.stacked ? 12 : 13)
                 }
 
                 Text {
                     id: clockColonText
 
                     text: ":"
-                    color: Theme.text
+                    color: root.accentFace ? Theme.fgAccent : Theme.text
                     font.family: Theme.fontFamily
                     font.bold: true
-                    font.pixelSize: Theme.fs(13)
+                    font.pixelSize: Theme.fs(root.stacked ? 12 : 13)
 
                     SequentialAnimation on opacity {
                         loops: Animation.Infinite
-                        running: true
+                        running: Prefs.clockBlink
+                        onStopped: clockColonText.opacity = 1
 
                         NumberAnimation {
                             from: 1
@@ -449,29 +472,39 @@ BarPill {
                     id: clockMinuteText
 
                     text: Loc.now().toLocaleTimeString(Qt.locale(), root.minuteFormat)
-                    color: Theme.text
+                    color: root.accentFace ? Theme.fgAccent : Theme.text
                     font.family: Theme.fontFamily
                     font.bold: true
-                    font.pixelSize: Theme.fs(13)
+                    font.pixelSize: Theme.fs(root.stacked ? 12 : 13)
                 }
 
             }
 
+            // the dot between time and date; the accent chip sets the time apart already
             Rectangle {
-                visible: Prefs.clockShowDate
+                visible: Prefs.clockShowDate && !root.stacked && !root.accentFace
                 width: 3
                 height: 3
                 radius: 1.5
                 color: Theme.subtextDim
-                anchors.verticalCenter: parent.verticalCenter
             }
 
             Text {
                 id: dateText
 
-                anchors.verticalCenter: parent.verticalCenter
-                text: Loc.now().toLocaleDateString(Qt.locale(), "ddd d")
+                text: Loc.now().toLocaleDateString(Qt.locale(), root.dateFormat)
                 visible: Prefs.clockShowDate
+                // under the time there is no room for the bell: the date
+                // takes the accent instead while a reminder is coming up
+                color: root.stacked && root.hasUpcomingReminder ? Theme.accent : Theme.subtextDim
+                font.family: Theme.fontFamily
+                font.bold: true
+                font.pixelSize: Theme.fs(root.stacked ? 10 : 13)
+            }
+
+            Text {
+                visible: Prefs.clockWeather && WeatherSource.report !== null && !root.stacked
+                text: root.temp + "°"
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.bold: true
@@ -481,10 +514,9 @@ BarPill {
             Item {
                 id: bellIcon
 
-                visible: root.hasUpcomingReminder
+                visible: root.hasUpcomingReminder && !root.stacked
                 width: 12
                 height: 12
-                anchors.verticalCenter: parent.verticalCenter
 
                 Shape {
                     id: bellShape
@@ -771,6 +803,7 @@ BarPill {
                 Column {
                     id: leftRail
 
+                    visible: !root.calendarOnly
                     width: 250
                     spacing: 14
 
@@ -996,7 +1029,7 @@ BarPill {
                 }
 
                 Column {
-                    width: parent.width - leftRail.width - parent.spacing
+                    width: parent.width - (leftRail.visible ? leftRail.width + parent.spacing : 0)
                     spacing: 10
 
                     Column {

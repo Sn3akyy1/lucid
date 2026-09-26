@@ -144,6 +144,90 @@ SettingCard {
 
     }
 
+    // clock
+    SettingRow {
+        visible: card.moduleId === "clock"
+        title: "Seconds"
+        resetKey: "clockSeconds"
+        description: "The seconds after the minutes."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.clockSeconds
+            onToggled: (v) => {
+                return Prefs.clockSeconds = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "clock"
+        title: "Breathing colon"
+        resetKey: "clockBlink"
+        description: "The colon between the hours and the minutes fades in and out once a second."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.clockBlink
+            onToggled: (v) => {
+                return Prefs.clockBlink = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        id: clockDate
+
+        visible: card.moduleId === "clock"
+        title: "Date"
+        resetKey: "clockDateFormat"
+        description: "How the date reads beside or under the time."
+        enabled: Prefs.clockShowDate
+        disabledReason: "The date is switched off on the Date & Time page."
+        stacked: true
+        showDivider: false
+
+        M3Segmented {
+            width: Math.min(parent.width, 420)
+            enabled: clockDate.enabled
+            current: Prefs.clockDateFormat
+            options: [{
+                "key": "short",
+                "label": Loc.now().toLocaleDateString(Qt.locale(), "ddd d")
+            }, {
+                "key": "long",
+                "label": Loc.now().toLocaleDateString(Qt.locale(), "ddd d MMM")
+            }, {
+                "key": "numeric",
+                "label": Loc.now().toLocaleDateString(Qt.locale(), Qt.locale().dateFormat(Locale.ShortFormat))
+            }]
+            onChosen: (key) => {
+                return Prefs.clockDateFormat = key;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "clock"
+        title: "Temperature"
+        resetKey: "clockWeather"
+        description: "The temperature outside after the date, from the weather Lucid already reads. One line only: two lines have no room for it."
+        enabled: Prefs.clockStyle !== "stacked"
+        disabledReason: "Two lines have no room for it."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.clockWeather
+            onToggled: (v) => {
+                return Prefs.clockWeather = v;
+            }
+        }
+
+    }
+
     // privacy
     SettingRow {
         visible: card.moduleId === "privacy"
