@@ -39,6 +39,7 @@ FloatingWindow {
         { "key": "bar", "group": "Desktop", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
         { "key": "dock", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
         { "key": "widgets", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
+        { "key": "windows", "group": "Desktop", "label": "Windows", "title": "Windows", "blurb": "How Hyprland draws your windows: gaps, borders, corners, shadow and dimming" },
         { "key": "workspaces", "group": "Desktop", "label": "Workspaces", "title": "Special Workspaces", "blurb": "Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key" },
         { "key": "keybinds", "group": "Desktop", "label": "Keybinds", "title": "Keybinds", "blurb": "Every Hyprland shortcut: change one, switch it off or add your own" },
         { "key": "displays", "group": "Devices", "label": "Displays", "title": "Displays", "blurb": "Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on" },
@@ -232,6 +233,10 @@ FloatingWindow {
             win.show("widgets");
         }
 
+        function windows(): void {
+            win.show("windows");
+        }
+
         function workspaces(): void {
             win.show("workspaces");
         }
@@ -311,6 +316,8 @@ FloatingWindow {
                 Prefs.resetKeys(Prefs.glassKeys);
             else if (action === Prefs.resetMonitorsToken)
                 Prefs.resetKeys(Prefs.monitorKeys);
+            else if (action.indexOf("hypr:") === 0)
+                HyprConfig.resetKeys(action.substring(5).split(","));
             else if (action.indexOf("keybind-delete:") === 0) {
                 Keybinds.remove(action.substring(15));
                 keybindEditor.dismiss();
@@ -1016,6 +1023,8 @@ FloatingWindow {
                                 return "DockPage.qml";
                             case "widgets":
                                 return "WidgetsPage.qml";
+                            case "windows":
+                                return "WindowsPage.qml";
                             case "workspaces":
                                 return "WorkspacesPage.qml";
                             case "notifications":

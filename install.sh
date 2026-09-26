@@ -1032,6 +1032,8 @@ TRAPWINCH() { zle && { zle reset-prompt; zle -R } }'    zsh
             # per-app glass rides along: Settings > Glass writes lucid-glass.lua
             # and this is the module that reads it
             cp "$SRC/support/hypr/modules/glass.lua" "$HYPR_DIR/modules/glass.lua"
+            # and so do the options Settings > Windows sets, in lucid-settings.lua
+            cp "$SRC/support/hypr/modules/settings.lua" "$HYPR_DIR/modules/settings.lua"
             if grep -q 'require("modules.lucid-look")' "$HYPR_DIR/hyprland.lua"; then
                 say "  ${dim}hyprland.lua already requires modules.lucid-look${r}"
             else
@@ -1046,6 +1048,14 @@ TRAPWINCH() { zle && { zle reset-prompt; zle -R } }'    zsh
                     || cp "$HYPR_DIR/hyprland.lua" "$HYPR_DIR/hyprland.lua.backup-$STAMP"
                 printf '\nrequire("modules.glass")\n' >> "$HYPR_DIR/hyprland.lua"
                 say "  hyprland.lua now requires modules.glass"
+            fi
+            if grep -q 'require("modules.settings")' "$HYPR_DIR/hyprland.lua"; then
+                say "  ${dim}hyprland.lua already requires modules.settings${r}"
+            else
+                [[ -f "$HYPR_DIR/hyprland.lua.backup-$STAMP" ]] \
+                    || cp "$HYPR_DIR/hyprland.lua" "$HYPR_DIR/hyprland.lua.backup-$STAMP"
+                printf '\nrequire("modules.settings")\n' >> "$HYPR_DIR/hyprland.lua"
+                say "  hyprland.lua now requires modules.settings"
             fi
         elif [[ -f "$HYPR_DIR/hyprland.conf" ]]; then
             cp "$SRC/support/look/lucid-look.conf" "$HYPR_DIR/lucid-look.conf"

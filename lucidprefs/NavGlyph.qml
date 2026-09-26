@@ -358,6 +358,31 @@ Item {
 
     }
 
+
+    // three tiled windows: one tall on the left, two stacked on the right
+    Shape {
+        anchors.centerIn: parent
+        width: 22
+        height: 22
+        visible: glyph.kind === "windows"
+        preferredRendererType: Shape.CurveRenderer
+
+        ShapePath {
+            strokeWidth: 0
+            fillColor: glyph.color
+
+            PathSvg {
+                path: "M5 3h5a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z M14 3h5a2 2 0 0 1 2 2v5a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z M14 13h6a1 1 0 0 1 1 1v5a2 2 0 0 1-2 2h-5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Z"
+            }
+
+        }
+
+        transform: Scale {
+            xScale: 22 / 24
+            yScale: 22 / 24
+        }
+
+    }
     Shape {
         anchors.centerIn: parent
         width: 22
