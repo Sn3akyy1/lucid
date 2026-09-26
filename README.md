@@ -368,6 +368,16 @@ before anything of your own, so a file you add after it — `hypr-user.lua`,
 HyprMod's `hyprland-gui` — still wins: the row says which file sets the option
 and stays shut until it is taken out there.
 
+### Input
+
+**Settings → Input** holds the keyboard side of Hyprland, through the same
+`lucid-settings.lua` as the Windows page and with the same rule that your own
+config wins: your layouts in order (the first is the one every keyboard starts
+with), each picked by name from the system's list of layouts and variants, the
+key that switches between them, what Caps Lock does — the other keyboard options
+your config sets are kept — key repeat delay and speed, and Num Lock at sign-in,
+with a field to try it all out.
+
 ### Everything else
 
 - **Users and accounts** — the card at the top of the Settings rail opens a
@@ -771,7 +781,7 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | Target | Functions |
 | --- | --- |
 | `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `clipboard` `search <query>` |
-| `settings` | `toggle` `open` `close` `show <page>` `general` `users` `glass` `bar` `dock` `environment` `displays` `widgets` `windows` `workspaces` `notifications` `sound` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
+| `settings` | `toggle` `open` `close` `show <page>` `general` `users` `glass` `bar` `dock` `environment` `input` `displays` `widgets` `windows` `workspaces` `notifications` `sound` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
 | `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
 | `network` | `status` `list` `rescan` |
 | `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |

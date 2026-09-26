@@ -4,7 +4,7 @@ import Quickshell.Hyprland
 import Quickshell.Io
 pragma Singleton
 
-// the Hyprland options Settings > Windows changes: kept in Prefs.hyprOptions,
+// the Hyprland options Settings > Windows and Input change: kept in Prefs.hyprOptions,
 // rendered into lucid-settings.lua for modules/settings.lua, and read back
 // from Hyprland so a page shows what is really in force
 Singleton {
@@ -18,7 +18,7 @@ Singleton {
     property bool moduleProbed: false
 
     // every option a page shows, read back in one hyprctl call
-    readonly property var keys: ["general.gaps_in", "general.gaps_out", "general.border_size", "general.col.active_border", "general.col.inactive_border", "decoration.rounding", "decoration.rounding_power", "decoration.shadow.enabled", "decoration.shadow.range", "decoration.shadow.render_power", "decoration.dim_inactive", "decoration.dim_strength", "general.layout", "dwindle.split_width_multiplier", "dwindle.force_split", "dwindle.default_split_ratio", "dwindle.preserve_split", "master.orientation", "master.mfact", "master.new_status", "master.new_on_top", "scrolling.column_width", "scrolling.fullscreen_on_one_column", "input.follow_mouse", "misc.focus_on_activate", "cursor.no_warps", "cursor.warp_on_change_workspace", "general.resize_on_border", "general.extend_border_grab_area", "general.snap.enabled", "general.snap.window_gap", "general.snap.monitor_gap", "cursor.hide_on_key_press", "cursor.inactive_timeout", "animations.enabled"]
+    readonly property var keys: ["general.gaps_in", "general.gaps_out", "general.border_size", "general.col.active_border", "general.col.inactive_border", "decoration.rounding", "decoration.rounding_power", "decoration.shadow.enabled", "decoration.shadow.range", "decoration.shadow.render_power", "decoration.dim_inactive", "decoration.dim_strength", "general.layout", "dwindle.split_width_multiplier", "dwindle.force_split", "dwindle.default_split_ratio", "dwindle.preserve_split", "master.orientation", "master.mfact", "master.new_status", "master.new_on_top", "scrolling.column_width", "scrolling.fullscreen_on_one_column", "input.follow_mouse", "misc.focus_on_activate", "cursor.no_warps", "cursor.warp_on_change_workspace", "general.resize_on_border", "general.extend_border_grab_area", "general.snap.enabled", "general.snap.window_gap", "general.snap.monitor_gap", "cursor.hide_on_key_press", "cursor.inactive_timeout", "animations.enabled", "input.kb_layout", "input.kb_variant", "input.kb_options", "input.repeat_rate", "input.repeat_delay", "input.numlock_by_default"]
     // not Hyprland options but choices Lucid turns into some
     readonly property var borderModes: [{
         "key": "none",
@@ -189,7 +189,7 @@ Singleton {
 
     readonly property string rendered: {
         const w = root.wanted;
-        let out = "-- written by Lucid Settings > Windows, and rewritten on every change there\n";
+        let out = "-- written by Lucid Settings > Windows and Input, and rewritten on every change there\n";
         out += "return {\n";
         // rules rather than options: a window alone on its workspace goes edge to edge
         if (root.mine["lucid.solo"] === true)
@@ -300,6 +300,93 @@ Singleton {
         Prefs.hyprOptions = JSON.stringify(m);
     }
 
+    // several at once, so the file is written once and they land together;
+    // all of them back at your config's values hands them all back
+    function setMany(values) {
+        const keys = Object.keys(values);
+        if (keys.every((k) => {
+            return root.sameAsBase(k, values[k]);
+        })) {
+            root.resetKeys(keys);
+            return ;
+        }
+        Prefs.hyprOptions = JSON.stringify(Object.assign({}, root.mine, values));
+    }
+
+    // --- keyboard
+
+    signal layoutPickerRequested(var taken)
+
+    // kb_layout and kb_variant as pairs; the variants line up with the layouts
+    function layoutList() {
+        const layouts = String(root.value("input.kb_layout") || "us").split(",");
+        const variants = String(root.value("input.kb_variant") || "").split(",");
+        const out = [];
+        for (let i = 0; i < layouts.length; i++) {
+            const l = layouts[i].trim();
+            if (l !== "")
+                out.push({
+                "layout": l,
+                "variant": (variants[i] || "").trim()
+            });
+
+        }
+        return out;
+    }
+
+    function setLayouts(list) {
+        if (list.length === 0)
+            return ;
+
+        root.setMany({
+            "input.kb_layout": list.map((e) => {
+                return e.layout;
+            }).join(","),
+            "input.kb_variant": list.some((e) => {
+                return e.variant !== "";
+            }) ? list.map((e) => {
+                return e.variant;
+            }).join(",") : ""
+        });
+    }
+
+    function layoutId(e) {
+        return e.variant !== "" ? e.layout + "(" + e.variant + ")" : e.layout;
+    }
+
+    function kbOptions() {
+        return String(root.value("input.kb_options") || "").split(",").map((o) => {
+            return o.trim();
+        }).filter((o) => {
+            return o !== "";
+        });
+    }
+
+    // the option of a group in force, "" for none; caps covers ctrl:nocaps too
+    function inGroup(group, o) {
+        if (group === "caps")
+            return o.indexOf("caps:") === 0 || o === "ctrl:nocaps" || o === "ctrl:swapcaps";
+
+        return o.indexOf(group + ":") === 0;
+    }
+
+    function kbOption(group) {
+        return root.kbOptions().find((o) => {
+            return root.inGroup(group, o);
+        }) || "";
+    }
+
+    // swaps one group's option and keeps every other option as it was
+    function setKbOption(group, option) {
+        const rest = root.kbOptions().filter((o) => {
+            return !root.inGroup(group, o);
+        });
+        if (option !== "")
+            rest.push(option);
+
+        root.set("input.kb_options", rest.join(","));
+    }
+
     // options whose own value is known go back to it live; the rest take a reload
     property var restoreQueue: []
 
@@ -349,6 +436,10 @@ Singleton {
                     return p === parts[0];
                 }) ? parts[0] : String(o.css);
             }
+            // an empty string nobody set reads back as a marker
+            if (t === "str" && o.str === "[[EMPTY]]")
+                return "";
+
             return o[t];
         }
         return undefined;

@@ -42,6 +42,7 @@ FloatingWindow {
         { "key": "windows", "group": "Desktop", "label": "Windows", "title": "Windows", "blurb": "How Hyprland draws your windows, tiles them and hands them the focus" },
         { "key": "workspaces", "group": "Desktop", "label": "Workspaces", "title": "Special Workspaces", "blurb": "Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key" },
         { "key": "keybinds", "group": "Desktop", "label": "Keybinds", "title": "Keybinds", "blurb": "Every Hyprland shortcut: change one, switch it off or add your own" },
+        { "key": "input", "group": "Devices", "label": "Input", "title": "Input", "blurb": "Keyboard layouts, the key that switches them, Caps Lock and key repeat" },
         { "key": "displays", "group": "Devices", "label": "Displays", "title": "Displays", "blurb": "Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on" },
         { "key": "sound", "group": "Devices", "label": "Sound", "title": "Sound", "blurb": "Which speakers play and which microphone listens, what each application is using, and how loud any of it is" },
         { "key": "network", "group": "Devices", "label": "Network", "title": "Network", "blurb": "Wi-Fi, wired, VPN and how this machine gets its address" },
@@ -137,6 +138,7 @@ FloatingWindow {
             envPicker.dismiss();
             keybindEditor.dismiss();
             appPicker.dismiss();
+            layoutPicker.dismiss();
             avatarPicker.dismiss();
             passwordDialog.dismiss();
             newUserDialog.dismiss();
@@ -222,6 +224,10 @@ FloatingWindow {
 
         function displays(): void {
             win.show("displays");
+        }
+
+        function input(): void {
+            win.show("input");
         }
 
         // the page is about monitors; both names reach it
@@ -409,6 +415,26 @@ FloatingWindow {
         }
     }
 
+    LayoutPicker {
+        id: layoutPicker
+
+        z: 100
+        onChosen: (layout, variant) => {
+            return HyprConfig.setLayouts(HyprConfig.layoutList().concat([{
+                "layout": layout,
+                "variant": variant
+            }]));
+        }
+    }
+
+    Connections {
+        function onLayoutPickerRequested(taken) {
+            layoutPicker.open(taken);
+        }
+
+        target: HyprConfig
+    }
+
     AvatarPicker {
         id: avatarPicker
 
@@ -516,6 +542,8 @@ FloatingWindow {
                 timeZonePicker.dismiss();
             else if (appPicker.shown)
                 appPicker.dismiss();
+            else if (layoutPicker.shown)
+                layoutPicker.dismiss();
             else if (confirmDialog.shown)
                 confirmDialog.dismiss();
             else if (keybindEditor.shown)
@@ -1017,6 +1045,8 @@ FloatingWindow {
                                 return "KeybindsPage.qml";
                             case "displays":
                                 return "MonitorsPage.qml";
+                            case "input":
+                                return "InputPage.qml";
                             case "bar":
                                 return "BarPage.qml";
                             case "dock":

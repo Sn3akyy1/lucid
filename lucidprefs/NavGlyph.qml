@@ -383,6 +383,32 @@ Item {
         }
 
     }
+
+    // a mouse with its two buttons, for keyboard and mouse
+    Shape {
+        anchors.centerIn: parent
+        width: 22
+        height: 22
+        visible: glyph.kind === "input"
+        preferredRendererType: Shape.CurveRenderer
+
+        ShapePath {
+            strokeWidth: 0
+            fillColor: glyph.color
+            fillRule: ShapePath.OddEvenFill
+
+            PathSvg {
+                path: "M12 2a6 6 0 0 0-6 6v8a6 6 0 0 0 12 0V8a6 6 0 0 0-6-6Z M11 4.13V10H8V8a4 4 0 0 1 3-3.87Z M13 4.13A4 4 0 0 1 16 8v2h-3V4.13Z M8 12h8v4a4 4 0 0 1-8 0v-4Z"
+            }
+
+        }
+
+        transform: Scale {
+            xScale: 22 / 24
+            yScale: 22 / 24
+        }
+
+    }
     Shape {
         anchors.centerIn: parent
         width: 22
