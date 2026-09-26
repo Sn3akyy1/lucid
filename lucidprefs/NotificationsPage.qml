@@ -361,14 +361,14 @@ Column {
             resetKey: "notifSoundName"
             enabled: Prefs.notifSound
             disabledReason: "Sound is switched off."
-            description: "From the sounds your desktop theme ships."
+            description: "From the sounds your desktop theme ships, or the click the volume makes."
             stacked: true
 
             Row {
                 spacing: 12
 
                 M3Segmented {
-                    width: 360
+                    width: 450
                     enabled: Prefs.notifSound
                     current: Prefs.notifSoundEntry(Prefs.notifSoundName).key
                     options: Prefs.notifSounds

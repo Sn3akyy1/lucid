@@ -26,6 +26,8 @@ PanelWindow {
     property bool capsLock: false
     property bool numLock: false
     property bool kbInitialized: false
+    readonly property string clickSound: Qt.resolvedUrl("../assets/volume-click.wav").toString().replace("file://", "")
+    property double lastClickAt: 0
 
     // m3 shape, spacing and slider metrics, shared with lucidbar/System.qml
     readonly property int cardPadX: 16
@@ -146,6 +148,18 @@ PanelWindow {
             nudgeAnim.restart();
     }
 
+    // a click on every step, like the notches of a dial: each press, each
+    // repeat of a held key, and a drag no more often than every 35 ms, so it
+    // stays a ratchet rather than a buzz
+    function volumeClick() {
+        const now = Date.now();
+        if (now - osdWindow.lastClickAt < 35)
+            return ;
+
+        osdWindow.lastClickAt = now;
+        Quickshell.execDetached(["pw-play", osdWindow.clickSound]);
+    }
+
     function showVolume() {
         osdWindow.oscType = "volume";
         osdWindow.levelValue = osdWindow.volumePercent;
@@ -196,6 +210,9 @@ PanelWindow {
     onVolumePercentChanged: {
         if (!osdWindow.ready)
             return ;
+
+        if (Prefs.soundVolumeFeedback && !osdWindow.volMuted)
+            osdWindow.volumeClick();
 
         osdWindow.showVolume();
     }

@@ -169,6 +169,7 @@ Singleton {
     property alias btScanOnOpen: s.btScanOnOpen
     property alias btShowUnnamed: s.btShowUnnamed
     property alias audioMoveStreams: s.audioMoveStreams
+    property alias soundVolumeFeedback: s.soundVolumeFeedback
     property alias kdeConnectEnabled: s.kdeConnectEnabled
     property alias updateCheck: s.updateCheck
 
@@ -379,6 +380,7 @@ Singleton {
         "btScanOnOpen": true,
         "btShowUnnamed": false,
         "audioMoveStreams": true,
+        "soundVolumeFeedback": false,
         "kdeConnectEnabled": true,
         "updateCheck": true,
         "idleEnabled": false,
@@ -583,12 +585,14 @@ Singleton {
     }
 
     // the freedesktop set spreads ~17 dB between its own files, so each carries a
-    // trim that lands its peak in roughly the same place
+    // trim that lands its peak in roughly the same place. click is the volume
+    // feedback's own, shipped with the shell rather than the sound theme
     readonly property var notifSounds: [
         { "key": "message", "label": "Message", "gain": 1.24 },
         { "key": "bell", "label": "Bell", "gain": 2.11 },
         { "key": "complete", "label": "Chime", "gain": 0.9 },
-        { "key": "suspend-error", "label": "Alert", "gain": 0.71 }
+        { "key": "suspend-error", "label": "Alert", "gain": 0.71 },
+        { "key": "click", "label": "Click", "gain": 1.15, "file": Qt.resolvedUrl("assets/volume-click.wav").toString().replace("file://", "") }
     ]
 
     function notifSoundEntry(name) {
@@ -600,7 +604,10 @@ Singleton {
         return root.notifSounds[0];
     }
 
-    readonly property string notifSoundPath: "/usr/share/sounds/freedesktop/stereo/" + root.notifSoundEntry(root.notifSoundName).key + ".oga"
+    readonly property string notifSoundPath: {
+        var e = root.notifSoundEntry(root.notifSoundName);
+        return e.file || "/usr/share/sounds/freedesktop/stereo/" + e.key + ".oga";
+    }
     // paplay's --volume rides PulseAudio's cubic scale, so a bare 0.6 is a 13 dB
     // cut rather than six tenths of the loudness; cube-root it back
     readonly property int notifSoundPaVolume: {
@@ -805,6 +812,7 @@ Singleton {
             property bool btScanOnOpen: true
             property bool btShowUnnamed: false
             property bool audioMoveStreams: true
+            property bool soundVolumeFeedback: false
             property bool kdeConnectEnabled: true
             property bool updateCheck: true
             property bool idleEnabled: false
