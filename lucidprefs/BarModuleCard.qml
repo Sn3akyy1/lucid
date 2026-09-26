@@ -9,7 +9,8 @@ SettingCard {
 
     property string moduleId: ""
     readonly property var mod: Prefs.barModuleById[card.moduleId] || null
-    readonly property var options: card.mod && card.mod.options ? card.mod.options : []
+    // what Reset puts back: its own options and its styles
+    readonly property var options: card.mod ? (card.mod.options || []).concat(card.mod.style ? [card.mod.style] : [], card.mod.panelStyle ? [card.mod.panelStyle] : []) : []
     readonly property string groupName: {
         const g = Prefs.barLayoutGroups;
         if (g.left.indexOf(card.moduleId) !== -1)
@@ -85,19 +86,60 @@ SettingCard {
 
     }
 
+    // how it looks, closed in the bar and opened; the bar changes as you pick
     SettingRow {
-        id: moreRow
-
-        visible: !!card.mod && !!card.mod.more
-        title: "More settings"
-        description: card.mod && card.mod.more ? card.mod.more : ""
+        visible: !!card.mod && !!card.mod.styles
+        title: "In the bar"
+        description: "How it looks until you open it."
+        stacked: true
         showDivider: false
 
-        M3Button {
-            visible: !!card.mod && !!card.mod.page
-            text: card.mod && card.pageNames[card.mod.page] ? "Open " + card.pageNames[card.mod.page] : "Open"
-            variant: "tonal"
-            onClicked: Prefs.settingsRequested(card.mod.page)
+        Flow {
+            width: parent.width
+            spacing: 10
+
+            Repeater {
+                model: card.mod && card.mod.styles ? card.mod.styles : []
+
+                BarStyleTile {
+                    required property var modelData
+
+                    moduleId: card.moduleId
+                    prefKey: card.mod ? card.mod.style : ""
+                    style: modelData
+                }
+
+            }
+
+        }
+
+    }
+
+    SettingRow {
+        visible: !!card.mod && !!card.mod.panelStyles
+        title: "Opened"
+        description: "How its panel looks."
+        stacked: true
+        showDivider: false
+
+        Flow {
+            width: parent.width
+            spacing: 10
+
+            Repeater {
+                model: card.mod && card.mod.panelStyles ? card.mod.panelStyles : []
+
+                BarStyleTile {
+                    required property var modelData
+
+                    moduleId: card.moduleId
+                    prefKey: card.mod ? card.mod.panelStyle : ""
+                    style: modelData
+                    panel: true
+                }
+
+            }
+
         }
 
     }
@@ -408,6 +450,23 @@ SettingCard {
             onToggled: (v) => {
                 return Prefs.windowModuleMiddleClose = v;
             }
+        }
+
+    }
+
+    SettingRow {
+        id: moreRow
+
+        visible: !!card.mod && !!card.mod.more
+        title: "More settings"
+        description: card.mod && card.mod.more ? card.mod.more : ""
+        showDivider: false
+
+        M3Button {
+            visible: !!card.mod && !!card.mod.page
+            text: card.mod && card.pageNames[card.mod.page] ? "Open " + card.pageNames[card.mod.page] : "Open"
+            variant: "tonal"
+            onClicked: Prefs.settingsRequested(card.mod.page)
         }
 
     }

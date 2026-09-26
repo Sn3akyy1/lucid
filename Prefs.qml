@@ -37,8 +37,11 @@ Singleton {
     // show* pref that switches it on, the group it starts in, how Settings
     // names it, the prefs its card on the Bar page sets (options), and where
     // any settings it has elsewhere live (more, page), and, for one that leaves
-    // the bar while it has nothing to show, when it is there (when). a new module is an entry
-    // here, a pill in shell.qml and its rows in BarModuleCard
+    // the bar while it has nothing to show, when it is there (when). A module
+    // with looks to pick names the pref that holds its bar face (style) and its
+    // panel (panelStyle), and the choices, each {key, name, blurb} (styles,
+    // panelStyles); BarStyleSample draws a sample of each. a new module is an
+    // entry here, a pill in shell.qml and its rows in BarModuleCard
     readonly property var barModules: [{
         "id": "workspaces",
         "key": "showWorkspaces",
