@@ -336,7 +336,12 @@ scratchpad key also puts away whichever workspace is up, so one key always
 returns you to what you were doing.
 
 **Settings → Workspaces** picks each one's apps, turns any of them off, and sets
-how far the screen behind dims and whether switching workspace puts them away.
+how far the screen behind dims, whether it blurs too, how much margin the windows
+keep from the screen's edges, and whether switching workspace puts them away.
+*New workspace* makes one of your own, with a name, a mark for the bar and any
+apps; its key goes into `keybinds.json` like any other, so it shows on the
+cheatsheet and is changed on the Keybinds page. Deleting it brings its windows
+back to the workspace you are on.
 *Add an app* offers everything installed, not only the catalogue above, and
 works out what to match its window by. It writes `~/.config/hypr/lucid-specials.lua`, which
 `modules/specials.lua` reads on every key press, so a change applies without a
