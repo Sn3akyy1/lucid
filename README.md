@@ -342,6 +342,48 @@ works out what to match its window by. It writes `~/.config/hypr/lucid-specials.
 `modules/specials.lua` reads on every key press, so a change applies without a
 Hyprland reload.
 
+### Windows
+
+**Settings → Windows** changes how Hyprland draws your windows, live, with a
+preview drawn from the values in force: the gaps between windows and around the
+screen, border width and colour (none, your palette's accent, or a gradient
+through three of its colours, which follows the theme as it changes), a faint
+border on the other windows, how round the corners are and their shape, a
+shadow, and dimming the windows you are not in. Under *Tiling*: the layout
+(dwindle, master or scrolling) and each one's own options — which way dwindle
+splits and where a new window goes, the master's side and size, the width of a
+scrolling column — with a preview of the whole screen for one to five windows,
+and a switch that takes a lone window edge to edge, without gaps, border or
+rounded corners. Under *Behaviour*: whether focus follows the cursor or waits
+for a click, whether an app may take the focus when it asks, the cursor jumping
+with the focus, resizing a window by its edges, floating windows snapping to
+each other and to the screen, hiding the cursor while typing or after a while,
+and window animations.
+
+Only what you change there is Lucid's. It goes to
+`~/.config/hypr/lucid-settings.lua`, which `modules/settings.lua` applies without
+a reload; everything else stays as your Hyprland config has it, and each row's
+reset hands its option back to your config. `hyprland.lua` requires the module
+before anything of your own, so a file you add after it — `hypr-user.lua`,
+HyprMod's `hyprland-gui` — still wins: the row says which file sets the option
+and stays shut until it is taken out there.
+
+### Input
+
+**Settings → Input** holds the keyboard side of Hyprland, through the same
+`lucid-settings.lua` as the Windows page and with the same rule that your own
+config wins: your layouts in order (the first is the one every keyboard starts
+with), each picked by name from the system's list of layouts and variants, the
+key that switches between them, what Caps Lock does — the other keyboard options
+your config sets are kept — key repeat delay and speed, and Num Lock at sign-in,
+with a field to try it all out. Then the mouse — pointer speed, acceleration,
+natural scrolling, scroll speed, left-handed buttons — and, when there is one,
+the touchpad: tap to click, natural scrolling, scroll speed, off while typing,
+two-finger right click, tap and drag, and a middle click from both buttons —
+and the swipe between workspaces: how far the fingers travel, which way, how
+fast a flick switches anyway, how far along letting go still switches, going
+past the neighbour and making a new workspace at the end.
+
 ### Everything else
 
 - **Users and accounts** — the card at the top of the Settings rail opens a
@@ -745,7 +787,7 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | Target | Functions |
 | --- | --- |
 | `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `clipboard` `search <query>` |
-| `settings` | `toggle` `open` `close` `show <page>` `general` `users` `glass` `bar` `dock` `environment` `displays` `widgets` `workspaces` `notifications` `sound` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
+| `settings` | `toggle` `open` `close` `show <page>` `general` `users` `glass` `bar` `dock` `environment` `input` `displays` `widgets` `windows` `workspaces` `notifications` `sound` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
 | `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
 | `network` | `status` `list` `rescan` |
 | `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |

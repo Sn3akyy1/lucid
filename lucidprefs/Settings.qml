@@ -39,8 +39,10 @@ FloatingWindow {
         { "key": "bar", "group": "Desktop", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
         { "key": "dock", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
         { "key": "widgets", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
+        { "key": "windows", "group": "Desktop", "label": "Windows", "title": "Windows", "blurb": "How Hyprland draws your windows, tiles them and hands them the focus" },
         { "key": "workspaces", "group": "Desktop", "label": "Workspaces", "title": "Special Workspaces", "blurb": "Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key" },
         { "key": "keybinds", "group": "Desktop", "label": "Keybinds", "title": "Keybinds", "blurb": "Every Hyprland shortcut: change one, switch it off or add your own" },
+        { "key": "input", "group": "Devices", "label": "Input", "title": "Input", "blurb": "Keyboard layouts and key repeat, the mouse, the touchpad and its gestures" },
         { "key": "displays", "group": "Devices", "label": "Displays", "title": "Displays", "blurb": "Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on" },
         { "key": "sound", "group": "Devices", "label": "Sound", "title": "Sound", "blurb": "Which speakers play and which microphone listens, what each application is using, and how loud any of it is" },
         { "key": "network", "group": "Devices", "label": "Network", "title": "Network", "blurb": "Wi-Fi, wired, VPN and how this machine gets its address" },
@@ -136,6 +138,7 @@ FloatingWindow {
             envPicker.dismiss();
             keybindEditor.dismiss();
             appPicker.dismiss();
+            layoutPicker.dismiss();
             avatarPicker.dismiss();
             passwordDialog.dismiss();
             newUserDialog.dismiss();
@@ -223,6 +226,10 @@ FloatingWindow {
             win.show("displays");
         }
 
+        function input(): void {
+            win.show("input");
+        }
+
         // the page is about monitors; both names reach it
         function monitors(): void {
             win.show("displays");
@@ -230,6 +237,10 @@ FloatingWindow {
 
         function widgets(): void {
             win.show("widgets");
+        }
+
+        function windows(): void {
+            win.show("windows");
         }
 
         function workspaces(): void {
@@ -311,6 +322,8 @@ FloatingWindow {
                 Prefs.resetKeys(Prefs.glassKeys);
             else if (action === Prefs.resetMonitorsToken)
                 Prefs.resetKeys(Prefs.monitorKeys);
+            else if (action.indexOf("hypr:") === 0)
+                HyprConfig.resetKeys(action.substring(5).split(","));
             else if (action.indexOf("keybind-delete:") === 0) {
                 Keybinds.remove(action.substring(15));
                 keybindEditor.dismiss();
@@ -400,6 +413,26 @@ FloatingWindow {
         onChosen: (workspace, entryId) => {
             return Specials.addApp(workspace, entryId);
         }
+    }
+
+    LayoutPicker {
+        id: layoutPicker
+
+        z: 100
+        onChosen: (layout, variant) => {
+            return HyprConfig.setLayouts(HyprConfig.layoutList().concat([{
+                "layout": layout,
+                "variant": variant
+            }]));
+        }
+    }
+
+    Connections {
+        function onLayoutPickerRequested(taken) {
+            layoutPicker.open(taken);
+        }
+
+        target: HyprConfig
     }
 
     AvatarPicker {
@@ -509,6 +542,8 @@ FloatingWindow {
                 timeZonePicker.dismiss();
             else if (appPicker.shown)
                 appPicker.dismiss();
+            else if (layoutPicker.shown)
+                layoutPicker.dismiss();
             else if (confirmDialog.shown)
                 confirmDialog.dismiss();
             else if (keybindEditor.shown)
@@ -1010,12 +1045,16 @@ FloatingWindow {
                                 return "KeybindsPage.qml";
                             case "displays":
                                 return "MonitorsPage.qml";
+                            case "input":
+                                return "InputPage.qml";
                             case "bar":
                                 return "BarPage.qml";
                             case "dock":
                                 return "DockPage.qml";
                             case "widgets":
                                 return "WidgetsPage.qml";
+                            case "windows":
+                                return "WindowsPage.qml";
                             case "workspaces":
                                 return "WorkspacesPage.qml";
                             case "notifications":

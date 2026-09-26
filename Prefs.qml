@@ -185,6 +185,8 @@ Singleton {
     property alias specialKeepApps: s.specialKeepApps
     property alias specialHideOnSwitch: s.specialHideOnSwitch
     property alias specialDim: s.specialDim
+    // Hyprland options set from Settings > Windows, as JSON { "general.gaps_in": 8, ... }
+    property alias hyprOptions: s.hyprOptions
 
     property alias glassApps: s.glassApps
     property alias glassValues: s.glassValues
@@ -433,6 +435,7 @@ Singleton {
         "specialKeepApps": true,
         "specialHideOnSwitch": false,
         "specialDim": 0.2,
+        "hyprOptions": "{}",
         "glassApps": "vscodium",
         "glassValues": "vscodium=0.9",
         "monitorSetups": "{}",
@@ -859,6 +862,7 @@ Singleton {
             property bool specialKeepApps: true
             property bool specialHideOnSwitch: false
             property real specialDim: 0.2
+            property string hyprOptions: "{}"
             // the apps on the Glass page, and the ones given their own value
             property string glassApps: "vscodium"
             property string glassValues: "vscodium=0.9"
