@@ -22,7 +22,8 @@ ShellRoot {
     // idle daemon, which owns hypridle.conf, the environment, which owns
     // the gtk and qt appearance files, and the special workspaces, which own
     // lucid-specials.lua, the glass mirror, which owns kitty's opacity file,
-    // the displays, which own lucid-monitors.lua,
+    // the displays, which own lucid-monitors.lua, the Hyprland options,
+    // which own lucid-settings.lua and follow the palette in border colours,
     // the update check, which runs whether or not the settings app is
     // ever opened, and the clipboard, which owns the wl-paste watchers and so
     // has to be up long before the launcher is first opened
@@ -35,6 +36,7 @@ ShellRoot {
         void Specials.moduleProbed;
         void Glass.probed;
         void Monitors.probed;
+        void HyprConfig.moduleProbed;
         void Updates.current;
         void Notifs.count;
         void Clip.probed;
