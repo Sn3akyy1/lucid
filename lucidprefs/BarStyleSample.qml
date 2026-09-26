@@ -17,7 +17,12 @@ Item {
         "clock/stacked": clockStacked,
         "clock/accent": clockAccent,
         "clock/panel/full": clockPanelFull,
-        "clock/panel/calendar": clockPanelCalendar
+        "clock/panel/calendar": clockPanelCalendar,
+        "media/playing": mediaPlaying,
+        "media/cover": mediaCover,
+        "media/compact": mediaCompact,
+        "media/panel/side": mediaPanelSide,
+        "media/panel/cover": mediaPanelCover
     })
     // what the samples show: the time and date as the bar would
     readonly property string timeText: {
@@ -185,6 +190,224 @@ Item {
                 anchors.margins: 8
             }
 
+        }
+
+    }
+
+    Component {
+        id: mediaPlaying
+
+        Row {
+            spacing: 8
+
+            MiniBars {
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            BarText {
+                text: Prefs.mediaArtist ? "Artist  -  Song" : "Song"
+            }
+
+            MiniPlay {
+                visible: Prefs.mediaPlayButton
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+        }
+
+    }
+
+    Component {
+        id: mediaCover
+
+        Row {
+            spacing: 8
+
+            Rectangle {
+                width: 22
+                height: 22
+                radius: 6
+                color: Theme.accentContainer
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            BarText {
+                text: Prefs.mediaArtist ? "Artist  -  Song" : "Song"
+            }
+
+            MiniPlay {
+                visible: Prefs.mediaPlayButton
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+        }
+
+    }
+
+    Component {
+        id: mediaCompact
+
+        Row {
+            spacing: 8
+
+            MiniBars {
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            MiniPlay {
+                visible: Prefs.mediaPlayButton
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+        }
+
+    }
+
+    Component {
+        id: mediaPanelSide
+
+        MiniPanel {
+            Row {
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 8
+
+                Rectangle {
+                    width: 44
+                    height: 44
+                    radius: Theme.radiusSm
+                    color: Theme.accentContainer
+                }
+
+                MiniLines {
+                    width: parent.width - 52
+                }
+
+            }
+
+            MiniTrack {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: 8
+            }
+
+        }
+
+    }
+
+    Component {
+        id: mediaPanelCover
+
+        MiniPanel {
+            height: 104
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 6
+
+                Rectangle {
+                    width: parent.width
+                    height: 46
+                    radius: Theme.radiusSm
+                    color: Theme.accentContainer
+                }
+
+                MiniLines {
+                    width: parent.width
+                }
+
+                MiniTrack {
+                    width: parent.width
+                }
+
+            }
+
+        }
+
+    }
+
+    // the media module's moving bars, standing still
+    component MiniBars: Row {
+        spacing: 2.5
+
+        Repeater {
+            model: [7, 14, 10]
+
+            Rectangle {
+                required property int modelData
+
+                width: 2.5
+                height: modelData
+                radius: 1.25
+                color: Theme.accent
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+        }
+
+    }
+
+    // a play button: a triangle on the accent
+    component MiniPlay: Rectangle {
+        width: 22
+        height: 22
+        radius: height / 2
+        color: Theme.accent
+
+        Canvas {
+            property color ink: Theme.fgAccent
+
+            anchors.fill: parent
+            onInkChanged: requestPaint()
+            onPaint: {
+                const c = getContext("2d");
+                c.reset();
+                c.fillStyle = ink;
+                c.beginPath();
+                c.moveTo(8.5, 6.5);
+                c.lineTo(16, 11);
+                c.lineTo(8.5, 15.5);
+                c.closePath();
+                c.fill();
+            }
+        }
+
+    }
+
+    // a title and a line under it
+    component MiniLines: Column {
+        spacing: 5
+
+        Rectangle {
+            width: parent.width * 0.8
+            height: 7
+            radius: 3.5
+            color: Theme.text
+            opacity: 0.8
+        }
+
+        Rectangle {
+            width: parent.width * 0.5
+            height: 6
+            radius: 3
+            color: Theme.subtextDim
+        }
+
+    }
+
+    // a progress track, part played
+    component MiniTrack: Rectangle {
+        height: 4
+        radius: 2
+        color: Theme.bgHigh
+
+        Rectangle {
+            width: parent.width * 0.4
+            height: parent.height
+            radius: 2
+            color: Theme.accent
         }
 
     }

@@ -56,7 +56,11 @@ BarPill {
     readonly property string artist: root.player ? root.player.trackArtist : ""
     readonly property string album: root.player ? root.player.trackAlbum : ""
     readonly property string artUrl: root.player ? root.player.trackArtUrl : ""
-    readonly property string displayTitle: (root.player && root.artist) ? root.artist + "  -  " + root.title : root.title
+    readonly property string displayTitle: (root.player && root.artist && Prefs.mediaArtist) ? root.artist + "  -  " + root.title : root.title
+    // the face's looks, from its card on the Bar page
+    readonly property bool coverFace: Prefs.mediaStyle === "cover"
+    readonly property bool compactFace: Prefs.mediaStyle === "compact"
+    readonly property bool coverPanel: Prefs.mediaPanelStyle === "cover"
     readonly property string sourceName: root.player ? (root.player.identity || "Media") : ""
     readonly property string metaLine: {
         if (!root.player)
@@ -412,7 +416,7 @@ BarPill {
         root.cancelListening();
     }
 
-    shown: Prefs.showMedia
+    shown: Prefs.showMedia && !(Prefs.mediaHideIdle && root.player === null)
     compactWidth: compactRow.implicitWidth + 20
     panelWidth: Math.min(400, root.screenW - 34)
     panelHeight: 28 + (root.page === "player" ? playerColumn.implicitHeight : shazamColumn.implicitHeight)
@@ -642,7 +646,11 @@ BarPill {
                     root.openPanel("player");
             }
             onWheel: (wheel) => {
-                return root.nudgeVolume(wheel.angleDelta.y > 0 ? 0.05 : -0.05);
+                if (!Prefs.mediaWheelVolume) {
+                    wheel.accepted = false;
+                    return ;
+                }
+                root.nudgeVolume(wheel.angleDelta.y > 0 ? 0.05 : -0.05);
             }
         },
 
@@ -653,14 +661,23 @@ BarPill {
             spacing: 8
 
             Item {
-                width: 14
-                height: 18
+                width: root.coverFace ? 22 : 14
+                height: root.coverFace ? 22 : 18
                 anchors.verticalCenter: parent.verticalCenter
+
+                // the cover, in its own style
+                RoundedArt {
+                    anchors.fill: parent
+                    visible: root.coverFace && root.player !== null
+                    source: root.artUrl
+                    shapeRadius: 6
+                    fallbackGlyph: 12
+                }
 
                 Row {
                     anchors.centerIn: parent
                     spacing: 2.5
-                    visible: root.player !== null
+                    visible: root.player !== null && !root.coverFace
 
                     Repeater {
                         model: 3
@@ -701,7 +718,8 @@ BarPill {
             Item {
                 id: compactTitleSlot
 
-                width: root.volumeFlash ? volumeFlashRow.implicitWidth : Math.min(160, Math.max(60, compactTitle.naturalWidth))
+                visible: !root.compactFace || root.volumeFlash
+                width: root.volumeFlash ? volumeFlashRow.implicitWidth : Math.min(Prefs.mediaTitleWidth, Math.max(60, compactTitle.naturalWidth))
                 height: 18
                 anchors.verticalCenter: parent.verticalCenter
 
@@ -760,6 +778,7 @@ BarPill {
             }
 
             IconBtn {
+                visible: Prefs.mediaPlayButton
                 anchors.verticalCenter: parent.verticalCenter
                 diameter: 22
                 glyphSize: 13
@@ -802,16 +821,18 @@ BarPill {
             width: root.contentWidth
             spacing: 12
 
-            Row {
+            // the cover beside the track, or large above it
+            Grid {
                 width: root.contentWidth
-                height: 96
-                spacing: 14
+                columns: root.coverPanel ? 1 : 2
+                columnSpacing: 14
+                rowSpacing: 12
 
                 Item {
                     id: artwork
 
-                    width: 96
-                    height: 96
+                    width: root.coverPanel ? root.contentWidth : 96
+                    height: root.coverPanel ? Math.round(root.contentWidth * 0.62) : 96
 
                     RoundedArt {
                         anchors.fill: parent
@@ -865,8 +886,8 @@ BarPill {
                 }
 
                 Item {
-                    width: root.contentWidth - 96 - 14
-                    height: 96
+                    width: root.coverPanel ? root.contentWidth : root.contentWidth - 96 - 14
+                    height: root.coverPanel ? 78 : 96
 
                     Column {
                         anchors.top: parent.top

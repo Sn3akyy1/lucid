@@ -228,6 +228,96 @@ SettingCard {
 
     }
 
+    // media
+    SettingRow {
+        visible: card.moduleId === "media"
+        title: "Hide it when nothing plays"
+        resetKey: "mediaHideIdle"
+        description: "Off, it says Nothing playing; on, it leaves the bar until a player starts."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.mediaHideIdle
+            onToggled: (v) => {
+                return Prefs.mediaHideIdle = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "media"
+        title: "Artist before the title"
+        resetKey: "mediaArtist"
+        description: "The panel always names both."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.mediaArtist
+            onToggled: (v) => {
+                return Prefs.mediaArtist = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "media"
+        title: "Longest the track gets"
+        resetKey: "mediaTitleWidth"
+        description: "A longer one scrolls while it plays."
+        enabled: Prefs.mediaStyle !== "compact"
+        disabledReason: "Compact shows no track."
+        stacked: true
+        showDivider: false
+
+        M3Slider {
+            width: parent.width
+            enabled: Prefs.mediaStyle !== "compact"
+            from: 80
+            to: 320
+            stepSize: 10
+            suffix: " px"
+            value: Prefs.mediaTitleWidth
+            onMoved: (v) => {
+                return Prefs.mediaTitleWidth = Math.round(v);
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "media"
+        title: "Play button"
+        resetKey: "mediaPlayButton"
+        description: "Off, a click opens the player and the panel has the buttons."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.mediaPlayButton
+            onToggled: (v) => {
+                return Prefs.mediaPlayButton = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "media"
+        title: "Wheel for the volume"
+        resetKey: "mediaWheelVolume"
+        description: "The wheel over it turns the player's own volume up or down."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.mediaWheelVolume
+            onToggled: (v) => {
+                return Prefs.mediaWheelVolume = v;
+            }
+        }
+
+    }
+
     // privacy
     SettingRow {
         visible: card.moduleId === "privacy"

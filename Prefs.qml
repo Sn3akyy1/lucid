@@ -55,7 +55,33 @@ Singleton {
         "key": "showMedia",
         "home": "left",
         "name": "Media",
-        "desc": "Now-playing pill and player controls"
+        "desc": "Now-playing pill and player controls",
+        "when": "while something plays",
+        "options": ["mediaHideIdle", "mediaArtist", "mediaTitleWidth", "mediaPlayButton", "mediaWheelVolume"],
+        "style": "mediaStyle",
+        "styles": [{
+            "key": "playing",
+            "name": "Playing",
+            "blurb": "Bars that move with the music, then the track"
+        }, {
+            "key": "cover",
+            "name": "Cover",
+            "blurb": "The album's cover, then the track"
+        }, {
+            "key": "compact",
+            "name": "Compact",
+            "blurb": "Only the bars and the play button"
+        }],
+        "panelStyle": "mediaPanelStyle",
+        "panelStyles": [{
+            "key": "side",
+            "name": "Side by side",
+            "blurb": "The cover beside the track"
+        }, {
+            "key": "cover",
+            "name": "Large cover",
+            "blurb": "The cover across the panel, the track under it"
+        }]
     }, {
         "id": "tray",
         "key": "showTray",
@@ -219,6 +245,13 @@ Singleton {
     property alias barLayout: s.barLayout
     property alias showWorkspaces: s.showWorkspaces
     property alias showMedia: s.showMedia
+    property alias mediaStyle: s.mediaStyle
+    property alias mediaPanelStyle: s.mediaPanelStyle
+    property alias mediaHideIdle: s.mediaHideIdle
+    property alias mediaArtist: s.mediaArtist
+    property alias mediaTitleWidth: s.mediaTitleWidth
+    property alias mediaPlayButton: s.mediaPlayButton
+    property alias mediaWheelVolume: s.mediaWheelVolume
     property alias showTray: s.showTray
     property alias showKbLayout: s.showKbLayout
     property alias gameModeOnCmd: s.gameModeOnCmd
@@ -458,6 +491,13 @@ Singleton {
         "barLayout": "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}",
         "showWorkspaces": true,
         "showMedia": true,
+        "mediaStyle": "playing",
+        "mediaPanelStyle": "side",
+        "mediaHideIdle": false,
+        "mediaArtist": true,
+        "mediaTitleWidth": 160,
+        "mediaPlayButton": true,
+        "mediaWheelVolume": true,
         "showTray": true,
         "showKbLayout": true,
         "gameModeOnCmd": "",
@@ -943,6 +983,13 @@ Singleton {
             property string barLayout: "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}"
             property bool showWorkspaces: true
             property bool showMedia: true
+            property string mediaStyle: "playing"
+            property string mediaPanelStyle: "side"
+            property bool mediaHideIdle: false
+            property bool mediaArtist: true
+            property int mediaTitleWidth: 160
+            property bool mediaPlayButton: true
+            property bool mediaWheelVolume: true
             property bool showTray: true
             property bool showKbLayout: true
             property string gameModeOnCmd: ""
