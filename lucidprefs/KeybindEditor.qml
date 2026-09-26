@@ -76,10 +76,19 @@ Item {
     signal dismissed()
 
     function open(id) {
+        var b = id !== "" ? Keybinds.find(id) : null;
+        editor.openWith(b, b ? b.id : "");
+    }
+
+    // a new bind with some fields already filled in; saving adds it
+    function openNew(preset) {
+        editor.openWith(preset || null, "");
+    }
+
+    function openWith(b, id) {
         // off whatever field had it, so the fields below take their new text
         editor.forceActiveFocus();
-        var b = id !== "" ? Keybinds.find(id) : null;
-        editor.editingId = b ? b.id : "";
+        editor.editingId = id;
         editor.keys = b ? String(b.keys || "") : "";
         editor.desc = b ? String(b.desc || "") : "";
         editor.category = b ? String(b.category || "") : "";

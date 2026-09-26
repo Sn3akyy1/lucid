@@ -311,6 +311,8 @@ FloatingWindow {
                 Prefs.resetKeys(Prefs.glassKeys);
             else if (action === Prefs.resetMonitorsToken)
                 Prefs.resetKeys(Prefs.monitorKeys);
+            else if (action.indexOf("special-delete:") === 0)
+                Specials.remove(action.substring(15));
             else if (action.indexOf("keybind-delete:") === 0) {
                 Keybinds.remove(action.substring(15));
                 keybindEditor.dismiss();
@@ -368,6 +370,10 @@ FloatingWindow {
     Connections {
         function onEditRequested(id) {
             keybindEditor.open(id);
+        }
+
+        function onNewRequested(preset) {
+            keybindEditor.openNew(preset);
         }
 
         target: Keybinds
