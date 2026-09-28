@@ -387,7 +387,12 @@ Hyprland reload.
 - **Emoji picker** — emoji, kaomoji and GIFs (Giphy or Tenor), with recents,
   favourites and skin-tone variants; pastes into the focused window
 - **Screenshots** — region select, full screen, and screen recording with
-  optional mic and system audio
+  optional mic and system audio. What you took then floats in the corner as a
+  card: click it to open, drag it straight into a chat or a file manager, or
+  copy, mark it up, show it in its folder or send it to the trash. It slides
+  away after a few seconds, or stays while the pointer rests on it; a
+  recording gets the same card with a frame from the video. General →
+  Screenshots swaps the card for the old notification, or for nothing
 - **Text copier** — the *Text* mode in the screenshot toolbar. Drag a box over
   anything on screen — an image, a video still, a PDF, an error dialog, a
   window that will not let you select its text — and the words inside it land
@@ -401,8 +406,7 @@ Hyprland reload.
   vanish on release: the toolbar, the shade and the box you drew all stay, and
   a beam sweeps the selection until the text is on the clipboard, at which
   point it closes itself. The result lands as a toast under the bar rather
-  than a desktop notification -- screenshots keep theirs, because that one
-  carries an "Open" action a toast cannot
+  than a desktop notification
 - **Colour picker** -- the *Colour* mode hands off to `hyprpicker`. Choosing it
   drops the freeze, the shade and the crosshair and lets clicks through, so the
   toolbar is left floating over a live, usable desktop. Pick HEX, RGB or HSL,
@@ -680,7 +684,7 @@ you know what's being pulled in.
 | `polkit` | Every administrator prompt. The shell registers itself as the session's authentication agent and drives polkit's own setuid helper, so no separate agent is needed — and no other agent should be started, as only one can hold the session |
 | `accountsservice` | The Users and Accounts page. Every change goes through it, so the shell's own polkit dialog asks and nothing runs as root |
 | `libnotify` | Notification actions |
-| `swappy` | The "Open" action on a screenshot notification |
+| `swappy` | Marking up a screenshot, from its preview card or notification |
 | `hyprpicker` | The Colour mode. Without it the mode says so and picks nothing |
 | `xdg-utils` | Opening links and files from the shell |
 | `librsvg` | Turning the pointer's shadow off — the cursor theme is rendered again from its vector sources |

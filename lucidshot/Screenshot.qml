@@ -9,6 +9,46 @@ PanelWindow {
 
     property string saveDir: Quickshell.env("HOME") + "/Pictures/screenshots"
     signal captured()
+    // a capture or recording landed on disk; the preview card shows it
+    signal saved(string file, string kind)
+    // the card, so a live grab can clear it off the screen first
+    property var shotPreview: null
+    property var afterClear: null
+
+    // true when the card was up: it is gone now, and fn runs a frame later
+    function clearFirst(fn) {
+        if (!flashWindow.shotPreview || !flashWindow.shotPreview.onScreen)
+            return false;
+        flashWindow.shotPreview.hideNow();
+        flashWindow.afterClear = fn;
+        clearTimer.restart();
+        return true;
+    }
+
+    Timer {
+        id: clearTimer
+
+        interval: 80
+        onTriggered: {
+            var fn = flashWindow.afterClear;
+            flashWindow.afterClear = null;
+            if (fn)
+                fn();
+        }
+    }
+
+    // what follows a saved capture, per Prefs.shotPreview: the preview card,
+    // the notification it replaces, or nothing (it is on the clipboard already)
+    function announce(file, kind) {
+        if (Prefs.shotPreview === "preview") {
+            flashWindow.saved(file, kind);
+        } else if (Prefs.shotPreview === "notify") {
+            if (kind === "video")
+                Quickshell.execDetached(["notify-send", "Recording saved", "Saved to " + file]);
+            else
+                Quickshell.execDetached(["sh", "-c", "ACTION=$(notify-send 'Screenshot taken!' \"Saved to $1\" -i \"$1\" -A 'open=Open Screenshot' --wait) && [ \"$ACTION\" = open ] && swappy -f \"$1\"; true", "sh", file]);
+        }
+    }
 
     // grim with no -o stitches every display into one image, and the flash
     // belongs on the display that was captured, so both follow the focus
@@ -51,6 +91,8 @@ PanelWindow {
             showFlash = true;
         if (grimProcess.running)
             return;
+        if (!source && flashWindow.clearFirst(() => flashWindow.captureFull(showFlash, source)))
+            return;
         flashWindow.aimHere();
         var file = flashWindow.timestampedPath();
         grimProcess.targetFile = file;
@@ -62,6 +104,8 @@ PanelWindow {
         if (showFlash === undefined)
             showFlash = true;
         if (grimProcess.running)
+            return;
+        if (!source && flashWindow.clearFirst(() => flashWindow.captureRegion(x, y, w, h, showFlash, source, scale)))
             return;
         if (!(scale > 0))
             scale = 1;
@@ -80,20 +124,22 @@ PanelWindow {
         grimProcess.running = true;
     }
     function captureWindow(x, y, w, h, radius) {
+        if (windowProcess.running)
+            return;
         var file = flashWindow.timestampedPath();
         var geometry = Math.round(x) + "," + Math.round(y) + " " + Math.round(w) + "x" + Math.round(h);
         var maxX = Math.round(w) - 1;
         var maxY = Math.round(h) - 1;
         var r = Math.round(radius);
-        Quickshell.execDetached(["sh", "-c",
+        windowProcess.targetFile = file;
+        windowProcess.command = ["sh", "-c",
             "mkdir -p '" + flashWindow.saveDir + "' && " +
             "command -v magick >/dev/null 2>&1 && IM=magick || IM=convert; " +
             "grim -g '" + geometry + "' '" + file + "' && " +
             "$IM '" + file + "' \\( +clone -alpha extract -fill black -colorize 100 -fill white -draw \"roundrectangle 0,0 " + maxX + "," + maxY + " " + r + "," + r + "\" \\) -alpha off -compose CopyOpacity -composite '" + file + "' && " +
-            "wl-copy < '" + file + "' && " +
-            "ACTION=$(notify-send 'Screenshot taken!' 'Saved to " + file + "' -i '" + file + "' -A 'open=Open Screenshot' --wait) && " +
-            "[ \"$ACTION\" = \"open\" ] && swappy -f '" + file + "'; true"
-        ]);
+            "wl-copy < '" + file + "'"
+        ];
+        windowProcess.running = true;
     }
 
     property string ocrLang: "eng"
@@ -109,6 +155,8 @@ PanelWindow {
     // longer result wins so light-on-dark UI text reads as well as dark-on-light
     function copyText(x, y, w, h, source, scale) {
         if (ocrProcess.running)
+            return;
+        if (!source && flashWindow.clearFirst(() => flashWindow.copyText(x, y, w, h, source, scale)))
             return;
         if (!(scale > 0))
             scale = 1;
@@ -272,12 +320,19 @@ PanelWindow {
             if (grimProcess.showFlash)
                 flashAnim.restart();
             flashWindow.captured();
-            Quickshell.execDetached(["sh", "-c",
-                "wl-copy < '" + grimProcess.targetFile + "' && " +
-                "ACTION=$(notify-send 'Screenshot taken!' 'Saved to " + grimProcess.targetFile + "' -i '" + grimProcess.targetFile + "' -A 'open=Open Screenshot' --wait) && " +
-                "[ \"$ACTION\" = \"open\" ] && swappy -f '" + grimProcess.targetFile + "'; " +
-                "true"
-            ]);
+            Quickshell.execDetached(["sh", "-c", "wl-copy < \"$1\"", "sh", grimProcess.targetFile]);
+            flashWindow.announce(grimProcess.targetFile, "image");
+        }
+    }
+
+    Process {
+        id: windowProcess
+
+        property string targetFile: ""
+
+        onExited: (code) => {
+            if (code === 0)
+                flashWindow.announce(windowProcess.targetFile, "image");
         }
     }
 

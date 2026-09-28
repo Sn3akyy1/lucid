@@ -220,6 +220,8 @@ Singleton {
 
     property alias desktopSelection: s.desktopSelection
     property alias desktopMenu: s.desktopMenu
+    property alias shotPreview: s.shotPreview
+    property alias shotPreviewSeconds: s.shotPreviewSeconds
 
     // one-shot: the machine's own gtk/qt/cursor settings are read in once
     property alias envAdopted: s.envAdopted
@@ -402,6 +404,8 @@ Singleton {
         "idleWhileMedia": true,
         "desktopSelection": true,
         "desktopMenu": true,
+        "shotPreview": "preview",
+        "shotPreviewSeconds": 6,
         "envAdopted": false,
         "envCursorTheme": "",
         "envCursorSize": 24,
@@ -828,6 +832,8 @@ Singleton {
             property bool idleWhileMedia: true
             property bool desktopSelection: true
             property bool desktopMenu: true
+            property string shotPreview: "preview"
+            property int shotPreviewSeconds: 6
             property bool envAdopted: false
             property string envCursorTheme: ""
             property int envCursorSize: 24
