@@ -11,6 +11,7 @@ Column {
     property string psk: ""
     property bool failed: false
     property bool wasBusy: false
+    property bool sharing: false
 
     readonly property bool isConnected: net.modelData.connected
     readonly property bool known: net.modelData.known
@@ -44,6 +45,11 @@ Column {
     signal expandRequested()
 
     width: parent ? parent.width : 400
+    onExpandedChanged: {
+        if (!net.expanded)
+            net.sharing = false;
+
+    }
 
     // a refused password shows up only as a bounce back to disconnected
     Connections {
@@ -291,11 +297,30 @@ Column {
                 }
 
                 M3Button {
+                    variant: net.sharing ? "tonal" : "text"
+                    visible: net.known
+                    text: "Share"
+                    iconPath: "M3,11H5V13H3V11M11,5H13V9H11V5M9,11H13V15H11V13H9V11M15,11H17V13H19V11H21V13H19V15H21V19H19V21H17V19H13V21H11V17H15V15H17V13H15V11M19,19V15H17V19H19M15,3H21V9H15V3M17,5V7H19V5H17M3,3H9V9H3V3M5,5V7H7V5H5M3,15H9V21H3V15M5,17V19H7V17H5Z"
+                    onClicked: net.sharing = !net.sharing
+                }
+
+                M3Button {
                     variant: "text"
                     destructive: true
                     visible: net.known
                     text: "Forget"
                     onClicked: Prefs.askConfirm("Forget " + net.modelData.name + "?", "The saved password goes with it, so joining again means typing it in.", "Forget", "wifi-forget:" + net.modelData.name)
+                }
+
+            }
+
+            Loader {
+                width: parent.width - 76
+                active: net.sharing && net.expanded
+                visible: active
+
+                sourceComponent: WifiShare {
+                    ssid: net.modelData.name
                 }
 
             }

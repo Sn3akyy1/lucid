@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell.Io
 import Quickshell.Networking
 import qs
+import "../lucidprefs"
 
 Item {
     id: root
@@ -73,9 +74,14 @@ Item {
         readonly property bool showPasswordInput: uiState.showPasswordInput
         readonly property string failReason: uiState.failReason
         readonly property bool isConnecting: modelData.state === ConnectionState.Connecting || (root.pendingNetworkName === modelData.name)
+        readonly property bool canShare: netItem.isTrusted && !netItem.showPasswordInput
+        property bool sharing: false
 
         width: parent.width
         onIsExpandedChanged: {
+            if (!isExpanded)
+                netItem.sharing = false;
+
             if (isExpanded && netItem.isTrusted)
                 root.fetchAutoConnect(modelData.name);
             else if (!isExpanded && !netItem.isConnected && !netItem.isConnecting)
@@ -320,7 +326,7 @@ Item {
                     Rectangle {
                         id: connectBtn
 
-                        width: (netItem.isTrusted && !netItem.showPasswordInput) ? (parent.width - 8) / 2 : parent.width
+                        width: netItem.canShare ? (parent.width - shareBtn.width - 16) / 2 : parent.width
                         height: parent.height
                         radius: 999
                         color: netItem.isConnecting ? Theme.withBlur(Theme.outlineStrong) : (netItem.isConnected ? Theme.accentContainer : (connectArea.containsMouse ? Theme.accentHover : Theme.accent))
@@ -380,8 +386,8 @@ Item {
                     Rectangle {
                         id: forgetBtn
 
-                        visible: netItem.isTrusted && !netItem.showPasswordInput
-                        width: (parent.width - 8) / 2
+                        visible: netItem.canShare
+                        width: (parent.width - shareBtn.width - 16) / 2
                         height: parent.height
                         radius: 999
                         color: forgetArea.containsMouse ? Theme.withBlur(Theme.outlineStrong) : "transparent"
@@ -435,6 +441,64 @@ Item {
 
                         }
 
+                    }
+
+                    Rectangle {
+                        id: shareBtn
+
+                        visible: netItem.canShare
+                        width: 30
+                        height: 30
+                        radius: 999
+                        color: netItem.sharing ? Theme.accentContainer : (shareArea.containsMouse ? Theme.withBlur(Theme.outlineStrong) : "transparent")
+                        border.width: netItem.sharing ? 0 : 1
+                        border.color: Theme.outlineStrong
+                        scale: shareArea.pressed ? 0.94 : 1
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰐲"
+                            color: netItem.sharing ? Theme.accent : Theme.text
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fs(15)
+                        }
+
+                        MouseArea {
+                            id: shareArea
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: netItem.sharing = !netItem.sharing
+                        }
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.barMs(120)
+                            }
+
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: Theme.barMs(90)
+                                easing.type: Easing.OutQuad
+                            }
+
+                        }
+
+                    }
+
+                }
+
+                Loader {
+                    width: parent.width - 46
+                    active: netItem.sharing && netItem.isExpanded && root.active
+                    visible: active
+
+                    sourceComponent: WifiShare {
+                        ssid: netItem.modelData.name
+                        compact: true
                     }
 
                 }
