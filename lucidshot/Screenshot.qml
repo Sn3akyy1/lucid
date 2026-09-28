@@ -85,6 +85,11 @@ PanelWindow {
     }
 
     readonly property string imSetup: "command -v magick >/dev/null 2>&1 && IM=magick || IM=convert; "
+    // png compression 3, not the default 6: a full screen saves in about a
+    // third of the time (0.6 s rather than 2.9 through the overlay) for
+    // files about a tenth bigger, and the preview waits on the file
+    readonly property string grimLevel: " -l 3"
+    readonly property string imLevel: " -define png:compression-level=3"
 
     function captureFull(showFlash, source) {
         if (showFlash === undefined)
@@ -97,7 +102,7 @@ PanelWindow {
         var file = flashWindow.timestampedPath();
         grimProcess.targetFile = file;
         grimProcess.showFlash = showFlash;
-        grimProcess.command = ["sh", "-c", "mkdir -p '" + flashWindow.saveDir + "' && " + (source ? flashWindow.imSetup + "$IM '" + source + "' '" + file + "'" : flashWindow.grimHere + " '" + file + "'")];
+        grimProcess.command = ["sh", "-c", "mkdir -p '" + flashWindow.saveDir + "' && " + (source ? flashWindow.imSetup + "$IM '" + source + "'" + flashWindow.imLevel + " '" + file + "'" : flashWindow.grimHere + flashWindow.grimLevel + " '" + file + "'")];
         grimProcess.running = true;
     }
     function captureRegion(x, y, w, h, showFlash, source, scale) {
@@ -116,9 +121,9 @@ PanelWindow {
         var capture;
         if (source) {
             var crop = Math.round(w * scale) + "x" + Math.round(h * scale) + "+" + Math.round(x * scale) + "+" + Math.round(y * scale);
-            capture = flashWindow.imSetup + "$IM '" + source + "' -crop " + crop + " +repage '" + file + "'";
+            capture = flashWindow.imSetup + "$IM '" + source + "' -crop " + crop + " +repage" + flashWindow.imLevel + " '" + file + "'";
         } else {
-            capture = "grim -g '" + Math.round(x) + "," + Math.round(y) + " " + Math.round(w) + "x" + Math.round(h) + "' '" + file + "'";
+            capture = "grim" + flashWindow.grimLevel + " -g '" + Math.round(x) + "," + Math.round(y) + " " + Math.round(w) + "x" + Math.round(h) + "' '" + file + "'";
         }
         grimProcess.command = ["sh", "-c", "mkdir -p '" + flashWindow.saveDir + "' && " + capture];
         grimProcess.running = true;
@@ -135,8 +140,8 @@ PanelWindow {
         windowProcess.command = ["sh", "-c",
             "mkdir -p '" + flashWindow.saveDir + "' && " +
             "command -v magick >/dev/null 2>&1 && IM=magick || IM=convert; " +
-            "grim -g '" + geometry + "' '" + file + "' && " +
-            "$IM '" + file + "' \\( +clone -alpha extract -fill black -colorize 100 -fill white -draw \"roundrectangle 0,0 " + maxX + "," + maxY + " " + r + "," + r + "\" \\) -alpha off -compose CopyOpacity -composite '" + file + "' && " +
+            "grim" + flashWindow.grimLevel + " -g '" + geometry + "' '" + file + "' && " +
+            "$IM '" + file + "' \\( +clone -alpha extract -fill black -colorize 100 -fill white -draw \"roundrectangle 0,0 " + maxX + "," + maxY + " " + r + "," + r + "\" \\) -alpha off -compose CopyOpacity -composite" + flashWindow.imLevel + " '" + file + "' && " +
             "wl-copy < '" + file + "'"
         ];
         windowProcess.running = true;
