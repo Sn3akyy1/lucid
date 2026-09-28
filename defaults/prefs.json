@@ -54,6 +54,8 @@
     "notificationsStyle": "badge",
     "notificationsHideEmpty": false,
     "showSystem": true,
+    "systemStyle": "values",
+    "systemIndicators": "wifi,bluetooth,volume,mic,battery",
     "showPrivacy": false,
     "privacyWatch": "mic,camera,screen",
     "privacyToast": true,

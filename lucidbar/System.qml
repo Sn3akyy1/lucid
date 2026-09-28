@@ -139,6 +139,14 @@ BarPill {
         { "max": 100, "path": "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" }
     ]
 
+    // the face's looks and the indicators it shows, from its card on the Bar page
+    readonly property bool showValues: Prefs.systemStyle !== "icons"
+    readonly property var indicators: String(Prefs.systemIndicators).split(",")
+
+    function indicatorOn(key) {
+        return root.indicators.indexOf(key) !== -1;
+    }
+
     readonly property string micIconPath: "M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"
     readonly property string btIconPath: "M17.71 7.71L12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"
     readonly property string chevronPath: "M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
@@ -1011,6 +1019,7 @@ BarPill {
             Item {
                 id: wifiIcon
 
+                visible: root.indicatorOn("wifi")
                 width: 16
                 height: 16
                 anchors.verticalCenter: parent.verticalCenter
@@ -1072,7 +1081,7 @@ BarPill {
             SvgIcon {
                 id: btIcon
 
-                visible: root.btEnabled
+                visible: root.btEnabled && root.indicatorOn("bluetooth")
                 anchors.verticalCenter: parent.verticalCenter
                 path: root.btIconPath
                 tint: btPanel.connectedDevices.length > 0 ? Theme.accent : Theme.subtext
@@ -1082,6 +1091,8 @@ BarPill {
             StatusIndicator {
                 id: volIndicator
 
+                visible: root.indicatorOn("volume")
+                showLabel: root.showValues
                 svgPath: root.volumeIconFor(root.volumePercent)
                 labelText: root.volMuted ? "Muted" : root.volumePercent
                 isMuted: root.volMuted
@@ -1090,6 +1101,8 @@ BarPill {
             StatusIndicator {
                 id: micIndicator
 
+                visible: root.indicatorOn("mic")
+                showLabel: root.showValues
                 svgPath: root.micIconPath
                 labelText: root.micMuted ? "Off" : "On"
                 isMuted: root.micMuted
@@ -1102,7 +1115,7 @@ BarPill {
 
                 spacing: 6
                 anchors.verticalCenter: parent.verticalCenter
-                visible: root.batteryPresent
+                visible: root.batteryPresent && root.indicatorOn("battery")
 
                 Item {
                     id: batteryIcon
@@ -1198,6 +1211,7 @@ BarPill {
                 }
 
                 Text {
+                    visible: root.showValues
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.batteryPercent + "%"
                     color: Theme.text
@@ -3127,6 +3141,7 @@ BarPill {
         property string svgPath: ""
         property string labelText: ""
         property bool isMuted: false
+        property bool showLabel: true
 
         spacing: 4
         anchors.verticalCenter: parent.verticalCenter
@@ -3167,6 +3182,7 @@ BarPill {
         }
 
         Text {
+            visible: showLabel
             anchors.verticalCenter: parent.verticalCenter
             text: labelText
             color: Theme.text

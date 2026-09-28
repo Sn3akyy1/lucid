@@ -28,7 +28,9 @@ Item {
         "workspaces/numbers": workspacesNumbers,
         "notifications/badge": notificationsBadge,
         "notifications/dot": notificationsDot,
-        "notifications/chip": notificationsChip
+        "notifications/chip": notificationsChip,
+        "system/values": systemValues,
+        "system/icons": systemIcons
     })
     // what the samples show: the time and date as the bar would
     readonly property string timeText: {
@@ -496,6 +498,133 @@ Item {
 
                 PathSvg {
                     path: Notifs.icons.notifications
+                }
+
+            }
+
+        }
+
+    }
+
+    Component {
+        id: systemValues
+
+        MiniSystem {
+            values: true
+        }
+
+    }
+
+    Component {
+        id: systemIcons
+
+        MiniSystem {
+            values: false
+        }
+
+    }
+
+    // the system module's face: volume, microphone and battery, as picked
+    component MiniSystem: Row {
+        property bool values: true
+        readonly property var on: String(Prefs.systemIndicators).split(",")
+
+        spacing: 10
+
+        Row {
+            visible: parent.on.indexOf("volume") !== -1
+            spacing: 4
+            anchors.verticalCenter: parent.verticalCenter
+
+            MiniGlyph {
+                path: "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            BarText {
+                visible: values
+                text: "75"
+                font.pixelSize: Theme.fontLabelLg
+            }
+
+        }
+
+        Row {
+            visible: parent.on.indexOf("mic") !== -1
+            spacing: 4
+            anchors.verticalCenter: parent.verticalCenter
+
+            MiniGlyph {
+                path: "M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            BarText {
+                visible: values
+                text: "On"
+                font.pixelSize: Theme.fontLabelLg
+            }
+
+        }
+
+        Row {
+            visible: parent.on.indexOf("battery") !== -1
+            spacing: 6
+            anchors.verticalCenter: parent.verticalCenter
+
+            Rectangle {
+                width: 22
+                height: 12
+                radius: 3
+                color: "transparent"
+                border.width: 1.5
+                border.color: Theme.subtext
+                anchors.verticalCenter: parent.verticalCenter
+
+                Rectangle {
+                    x: 2.5
+                    y: 2.5
+                    width: (parent.width - 5) * 0.8
+                    height: parent.height - 5
+                    radius: 1
+                    color: Theme.subtext
+                }
+
+            }
+
+            BarText {
+                visible: values
+                text: "80%"
+                font.pixelSize: Theme.fontLabelLg
+            }
+
+        }
+
+    }
+
+    // a 24-unit glyph at the bar's icon size
+    component MiniGlyph: Item {
+        id: glyph
+
+        property string path: ""
+        property color ink: Theme.text
+
+        implicitWidth: 14
+        implicitHeight: 14
+
+        Shape {
+            width: 24
+            height: 24
+            scale: 14 / 24
+            anchors.centerIn: parent
+            preferredRendererType: Shape.CurveRenderer
+
+            ShapePath {
+                fillColor: glyph.ink
+                strokeWidth: 0
+
+                PathSvg {
+                    path: glyph.path
                 }
 
             }

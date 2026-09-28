@@ -164,7 +164,18 @@ Singleton {
         "name": "System",
         "desc": "Battery, volume, brightness and quick settings",
         "more": "Its tiles and the keyboard layout sign are in System module, further down this page.",
-        "page": ""
+        "page": "",
+        "options": ["systemIndicators"],
+        "style": "systemStyle",
+        "styles": [{
+            "key": "values",
+            "name": "Icons and values",
+            "blurb": "The volume, microphone and battery read out"
+        }, {
+            "key": "icons",
+            "name": "Icons",
+            "blurb": "Only the icons, narrower"
+        }]
     }, {
         "id": "privacy",
         "key": "showPrivacy",
@@ -297,6 +308,8 @@ Singleton {
     property alias notificationsStyle: s.notificationsStyle
     property alias notificationsHideEmpty: s.notificationsHideEmpty
     property alias showSystem: s.showSystem
+    property alias systemStyle: s.systemStyle
+    property alias systemIndicators: s.systemIndicators
     property alias showPrivacy: s.showPrivacy
     property alias privacyWatch: s.privacyWatch
     property alias privacyToast: s.privacyToast
@@ -543,6 +556,8 @@ Singleton {
         "notificationsStyle": "badge",
         "notificationsHideEmpty": false,
         "showSystem": true,
+        "systemStyle": "values",
+        "systemIndicators": "wifi,bluetooth,volume,mic,battery",
         "showPrivacy": false,
         "privacyWatch": "mic,camera,screen",
         "privacyToast": true,
@@ -1040,6 +1055,8 @@ Singleton {
             property string notificationsStyle: "badge"
             property bool notificationsHideEmpty: false
             property bool showSystem: true
+            property string systemStyle: "values"
+            property string systemIndicators: "wifi,bluetooth,volume,mic,battery"
             property bool showPrivacy: false
             property string privacyWatch: "mic,camera,screen"
             property bool privacyToast: true

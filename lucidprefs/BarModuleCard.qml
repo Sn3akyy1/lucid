@@ -373,6 +373,54 @@ SettingCard {
 
     }
 
+    // system
+    SettingRow {
+        visible: card.moduleId === "system"
+        title: "Indicators"
+        resetKey: "systemIndicators"
+        description: "The ones it shows before you open it. The panel has them all either way. At least one stays."
+        stacked: true
+        showDivider: false
+
+        M3Chips {
+            width: parent.width
+            multi: true
+            selectedKeys: String(Prefs.systemIndicators).split(",").filter((k) => {
+                return k !== "";
+            })
+            options: [{
+                "key": "wifi",
+                "label": "Network"
+            }, {
+                "key": "bluetooth",
+                "label": "Bluetooth"
+            }, {
+                "key": "volume",
+                "label": "Volume"
+            }, {
+                "key": "mic",
+                "label": "Microphone"
+            }, {
+                "key": "battery",
+                "label": "Battery"
+            }]
+            onChosen: (key) => {
+                const list = String(Prefs.systemIndicators).split(",").filter((k) => {
+                    return k !== "";
+                });
+                const at = list.indexOf(key);
+                if (at === -1)
+                    list.push(key);
+                else if (list.length > 1)
+                    list.splice(at, 1);
+                Prefs.systemIndicators = ["wifi", "bluetooth", "volume", "mic", "battery"].filter((k) => {
+                    return list.indexOf(k) !== -1;
+                }).join(",");
+            }
+        }
+
+    }
+
     // privacy
     SettingRow {
         visible: card.moduleId === "privacy"
