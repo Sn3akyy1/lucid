@@ -24,8 +24,9 @@ ShellRoot {
     // lucid-specials.lua, the glass mirror, which owns kitty's opacity file,
     // the displays, which own lucid-monitors.lua,
     // the update check, which runs whether or not the settings app is
-    // ever opened, and the clipboard, which owns the wl-paste watchers and so
-    // has to be up long before the launcher is first opened
+    // ever opened, the clipboard, which owns the wl-paste watchers and so
+    // has to be up long before the launcher is first opened, and night
+    // light, whose schedule runs whether or not the System pill is shown
     Component.onCompleted: {
         void KdeConnect.installed;
         void Bt.present;
@@ -40,6 +41,7 @@ ShellRoot {
         void Clip.probed;
         void Users.probed;
         void Polkit.registered;
+        void NightLight.active;
     }
 
     PanelWindow {

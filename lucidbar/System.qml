@@ -90,6 +90,9 @@ BarPill {
         if (root.view === "power")
             return powerPanel.implicitHeight + root.viewChrome;
 
+        if (root.view === "nightlight")
+            return nightPanel.implicitHeight + root.viewChrome;
+
         return mainColumn.implicitHeight + root.viewChrome;
     }
 
@@ -142,6 +145,8 @@ BarPill {
     readonly property string micIconPath: "M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"
     readonly property string btIconPath: "M17.71 7.71L12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"
     readonly property string chevronPath: "M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+    // weather-night, material design icons
+    readonly property string moonPath: "M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95Z"
     readonly property string chevronLeftPath: "M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
     readonly property string checkPath: "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
     readonly property string expandPath: "M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"
@@ -1457,9 +1462,15 @@ BarPill {
                                     width: parent.width
                                     iconLevels: root.brightnessIconLevels
                                     value: root.brightnessPercent
+                                    showToggle: true
+                                    togglePath: root.moonPath
+                                    toggleOn: NightLight.active
+                                    showPicker: true
                                     onMoved: (v) => {
                                         return root.setBrightness(v);
                                     }
+                                    onToggleClicked: NightLight.toggle()
+                                    onPickerRequested: root.showView("nightlight")
                                 }
 
                                 SliderRow {
@@ -2044,6 +2055,8 @@ BarPill {
                                 return "Output device";
                             case "power":
                                 return "Power profile";
+                            case "nightlight":
+                                return "Night light";
                             }
                             return "";
                         }
@@ -2056,11 +2069,13 @@ BarPill {
                     M3Switch {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        visible: root.view === "bluetooth" || root.view === "wifi"
-                        checked: root.view === "wifi" ? Networking.wifiEnabled : root.btEnabled
+                        visible: root.view === "bluetooth" || root.view === "wifi" || root.view === "nightlight"
+                        checked: root.view === "wifi" ? Networking.wifiEnabled : (root.view === "nightlight" ? NightLight.active : root.btEnabled)
                         onToggled: {
                             if (root.view === "wifi")
                                 Networking.wifiEnabled = !Networking.wifiEnabled;
+                            else if (root.view === "nightlight")
+                                NightLight.toggle();
                             else
                                 Bt.setEnabled(!root.btEnabled);
                         }
@@ -2088,6 +2103,8 @@ BarPill {
                             return outputList.implicitHeight;
                         case "power":
                             return powerPanel.implicitHeight;
+                        case "nightlight":
+                            return nightPanel.implicitHeight;
                         }
                         return wifiPanel.implicitHeight;
                     }
@@ -2116,6 +2133,17 @@ BarPill {
                         width: subScroll.width
                         visible: root.view === "power"
                         gameModeOn: root.gameModeOn
+                    }
+
+                    NightLightPanel {
+                        id: nightPanel
+
+                        width: subScroll.width
+                        visible: root.view === "nightlight"
+                        onSettingsRequested: {
+                            root.expanded = false;
+                            Prefs.settingsRequested("displays");
+                        }
                     }
 
                     DeviceList {
@@ -2638,11 +2666,16 @@ BarPill {
         property bool muted: false
         property bool showMute: false
         property bool showPicker: false
+        // a small on/off beside the readout, like night light on brightness
+        property bool showToggle: false
+        property string togglePath: ""
+        property bool toggleOn: false
         readonly property real displayValue: sliderTrack.liveValue
 
         signal moved(real v)
         signal muteToggled()
         signal pickerRequested()
+        signal toggleClicked()
 
         height: 40
 
@@ -2712,7 +2745,7 @@ BarPill {
 
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: 74
+            width: 104
             height: 28
 
             Text {
@@ -2725,6 +2758,28 @@ BarPill {
                 font.family: Theme.fontFamily
                 font.bold: true
                 font.pixelSize: Theme.fontLabelMd
+            }
+
+            IconButton {
+                anchors.right: parent.right
+                anchors.rightMargin: 30
+                anchors.verticalCenter: parent.verticalCenter
+                visible: sliderRow.showToggle
+                path: sliderRow.togglePath
+                bg: sliderRow.toggleOn ? Theme.accent : "transparent"
+                tint: sliderRow.toggleOn ? Theme.fgAccent : Theme.subtext
+                layerTint: sliderRow.toggleOn ? Theme.fgAccent : Theme.text
+                diameter: 28
+                iconSize: 15
+                onTapped: sliderRow.toggleClicked()
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Theme.barMs(150)
+                    }
+
+                }
+
             }
 
             IconButton {

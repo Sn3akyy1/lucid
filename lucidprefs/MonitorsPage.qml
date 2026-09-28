@@ -570,6 +570,133 @@ Column {
     }
 
     SettingCard {
+        title: "NIGHT LIGHT"
+
+        SettingRow {
+            title: "Night light"
+            description: NightLight.available ? NightLight.status + ". Warms every display so evenings are easier on the eyes; hyprsunset does the tinting." : ""
+            warning: NightLight.available ? "" : "hyprsunset is not installed, so there is nothing to warm the screen with."
+
+            M3Switch {
+                checked: NightLight.active
+                onToggled: (v) => {
+                    return NightLight.set(v);
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Warmth"
+            resetKey: "nightLightTemp"
+            description: NightLight.temperature + " K. Lower is warmer; 6500 K would leave the screen as it is."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 0
+                to: (NightLight.maxTemp - NightLight.minTemp) / 100
+                stepSize: 1
+                showReadout: false
+                value: (NightLight.maxTemp - NightLight.temperature) / 100
+                onMoved: (v) => {
+                    return Prefs.nightLightTemp = NightLight.maxTemp - Math.round(v) * 100;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Schedule"
+            resetKey: "nightLightSchedule"
+            description: {
+                if (Prefs.nightLightSchedule === "sun") {
+                    if (NightLight.sun.polar)
+                        return "The sun doesn't set where you are today, so it runs 9 pm to 7 am.";
+
+                    return "Sunset " + NightLight.clock(NightLight.sun.set) + ", sunrise " + NightLight.clock(NightLight.sun.rise) + (Loc.place !== "" ? " in " + Loc.place : "") + ". The place is the one Date and Time keeps.";
+                }
+                if (Prefs.nightLightSchedule === "custom")
+                    return "On and off at the hours below.";
+
+                return "Only when you turn it on. Turning it on or off during a schedule holds until the schedule next changes.";
+            }
+            stacked: true
+
+            M3Segmented {
+                width: Math.min(parent.width, 460)
+                current: Prefs.nightLightSchedule
+                options: [{
+                    "key": "off",
+                    "label": "By hand"
+                }, {
+                    "key": "sun",
+                    "label": "Sunset to sunrise"
+                }, {
+                    "key": "custom",
+                    "label": "Set hours"
+                }]
+                onChosen: (key) => {
+                    return Prefs.nightLightSchedule = key;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Between"
+            visible: Prefs.nightLightSchedule === "custom"
+            description: "Written as 21:00. An end earlier than the start runs through midnight."
+            showDivider: false
+
+            Row {
+                spacing: 10
+
+                M3TextField {
+                    id: nightFrom
+
+                    width: 96
+                    placeholder: "21:00"
+                    text: Prefs.minutesText(Prefs.nightLightFrom)
+                    onAccepted: (v) => {
+                        var m = Prefs.parseMinutes(v);
+                        if (m >= 0)
+                            Prefs.nightLightFrom = m;
+
+                        nightFrom.text = Prefs.minutesText(Prefs.nightLightFrom);
+                    }
+                }
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "to"
+                    color: Theme.subtext
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontBody
+                }
+
+                M3TextField {
+                    id: nightTo
+
+                    width: 96
+                    placeholder: "07:00"
+                    text: Prefs.minutesText(Prefs.nightLightTo)
+                    onAccepted: (v) => {
+                        var m = Prefs.parseMinutes(v);
+                        if (m >= 0)
+                            Prefs.nightLightTo = m;
+
+                        nightTo.text = Prefs.minutesText(Prefs.nightLightTo);
+                    }
+                }
+
+            }
+
+        }
+
+    }
+
+    SettingCard {
         title: "RESET"
         visible: Monitors.liveCount > 0
 

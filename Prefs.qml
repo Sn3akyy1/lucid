@@ -106,6 +106,11 @@ Singleton {
     property alias locationLabel: s.locationLabel
     property alias locationLat: s.locationLat
     property alias locationLon: s.locationLon
+    property alias nightLight: s.nightLight
+    property alias nightLightTemp: s.nightLightTemp
+    property alias nightLightSchedule: s.nightLightSchedule
+    property alias nightLightFrom: s.nightLightFrom
+    property alias nightLightTo: s.nightLightTo
     property alias locationTz: s.locationTz
     property alias timeZoneAuto: s.timeZoneAuto
     property alias doNotDisturb: s.doNotDisturb
@@ -320,6 +325,11 @@ Singleton {
         "locationLabel": "",
         "locationLat": 52.4083,
         "locationLon": 16.9336,
+        "nightLight": false,
+        "nightLightTemp": 4000,
+        "nightLightSchedule": "off",
+        "nightLightFrom": 1260,
+        "nightLightTo": 420,
         "locationTz": "",
         "timeZoneAuto": true,
         "doNotDisturb": false,
@@ -746,6 +756,11 @@ Singleton {
             property string locationLabel: ""
             property real locationLat: 52.4083
             property real locationLon: 16.9336
+            property bool nightLight: false
+            property int nightLightTemp: 4000
+            property string nightLightSchedule: "off"
+            property int nightLightFrom: 1260
+            property int nightLightTo: 420
             property string locationTz: ""
             property bool timeZoneAuto: true
             property bool doNotDisturb: false
