@@ -139,8 +139,24 @@ Singleton {
         "home": "right",
         "name": "Notifications",
         "desc": "Toasts and the notification list",
+        "when": "while a notification is waiting",
         "more": "Do not disturb is just below; popups, sounds and quiet hours are on the Notifications page.",
-        "page": "notifications"
+        "page": "notifications",
+        "options": ["notificationsHideEmpty"],
+        "style": "notificationsStyle",
+        "styles": [{
+            "key": "badge",
+            "name": "Count",
+            "blurb": "The bell and how many are waiting"
+        }, {
+            "key": "dot",
+            "name": "Dot",
+            "blurb": "The bell with a dot while any are waiting"
+        }, {
+            "key": "chip",
+            "name": "Accent",
+            "blurb": "Bell and count on the accent while any wait"
+        }]
     }, {
         "id": "system",
         "key": "showSystem",
@@ -278,6 +294,8 @@ Singleton {
     }
     property alias showClock: s.showClock
     property alias showNotifications: s.showNotifications
+    property alias notificationsStyle: s.notificationsStyle
+    property alias notificationsHideEmpty: s.notificationsHideEmpty
     property alias showSystem: s.showSystem
     property alias showPrivacy: s.showPrivacy
     property alias privacyWatch: s.privacyWatch
@@ -522,6 +540,8 @@ Singleton {
         "gameModeStatusCmd": "",
         "showClock": true,
         "showNotifications": true,
+        "notificationsStyle": "badge",
+        "notificationsHideEmpty": false,
         "showSystem": true,
         "showPrivacy": false,
         "privacyWatch": "mic,camera,screen",
@@ -1017,6 +1037,8 @@ Singleton {
             property string gameModeStatusCmd: ""
             property bool showClock: true
             property bool showNotifications: true
+            property string notificationsStyle: "badge"
+            property bool notificationsHideEmpty: false
             property bool showSystem: true
             property bool showPrivacy: false
             property string privacyWatch: "mic,camera,screen"

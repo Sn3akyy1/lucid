@@ -16,6 +16,11 @@ BarPill {
     readonly property bool anyCritical: Notifs.criticalCount > 0
     readonly property color badgeColor: root.anyCritical ? Theme.error : Theme.accent
     readonly property color badgeTextColor: root.anyCritical ? Theme.fgError : Theme.fgAccent
+    // the face's looks, from its card on the Bar page: the count on a badge,
+    // a dot instead, or the bell and the count together on a chip
+    readonly property bool dotFace: Prefs.notificationsStyle === "dot"
+    readonly property bool chipFace: Prefs.notificationsStyle === "chip" && root.notifCount > 0
+    readonly property bool badgeShown: root.notifCount > 0 && !root.dotFace
     readonly property int horizontalPadding: 10
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
@@ -28,7 +33,7 @@ BarPill {
     readonly property var restPopups: root.popups.length > 1 ? root.popups.slice(1) : []
     readonly property int popupOverflow: Math.max(0, Notifs.count - root.popups.length)
 
-    shown: Prefs.showNotifications
+    shown: Prefs.showNotifications && !(Prefs.notificationsHideEmpty && root.notifCount === 0 && !root.silenced)
     compactWidth: compactRow.implicitWidth + root.horizontalPadding * 2
     panelWidth: Math.min(380, root.screenW - 34)
     panelHeight: Math.min(root.maxPanelHeight, mainColumn.implicitHeight + 28)
@@ -149,6 +154,24 @@ BarPill {
     }
 
     compactContent: [
+        Rectangle {
+            anchors.centerIn: compactRow
+            width: compactRow.width + 14
+            height: Math.min(24, parent.height - 6)
+            radius: height / 2
+            color: root.badgeColor
+            opacity: root.chipFace ? 1 : 0
+            visible: opacity > 0.01
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Theme.barMs(220)
+                    easing.type: Easing.OutCubic
+                }
+
+            }
+
+        },
         Row {
             id: compactRow
 
@@ -164,7 +187,7 @@ BarPill {
                     anchors.centerIn: parent
                     size: 17
                     path: Notifs.icons.notifications
-                    color: Theme.text
+                    color: root.chipFace ? root.badgeTextColor : Theme.text
                     opacity: root.silenced ? 0 : 1
                     scale: root.silenced ? 0.55 : 1
                     rotation: root.silenced ? -30 : 0
@@ -232,6 +255,31 @@ BarPill {
 
                 }
 
+                // the dot face: something is waiting, without the count
+                Rectangle {
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.rightMargin: -1
+                    width: 7
+                    height: 7
+                    radius: 3.5
+                    color: root.badgeColor
+                    border.width: 1.5
+                    border.color: Theme.bg
+                    opacity: root.dotFace && root.notifCount > 0 && !root.silenced ? 1 : 0
+                    scale: opacity > 0 ? 1 : 0.4
+                    visible: opacity > 0.01
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Theme.barMs(220)
+                            easing.type: Easing.OutCubic
+                        }
+
+                    }
+
+                }
+
             }
 
             Rectangle {
@@ -239,11 +287,11 @@ BarPill {
 
                 anchors.verticalCenter: parent.verticalCenter
                 height: 16
-                width: root.notifCount > 0 ? Math.max(16, badgeText.implicitWidth + 8) : 0
+                width: root.badgeShown ? Math.max(16, badgeText.implicitWidth + 8) : 0
                 radius: 999
-                color: root.badgeColor
-                opacity: root.notifCount > 0 ? 1 : 0
-                scale: root.notifCount > 0 ? 1 : 0.4
+                color: root.chipFace ? "transparent" : root.badgeColor
+                opacity: root.badgeShown ? 1 : 0
+                scale: root.badgeShown ? 1 : 0.4
                 clip: true
 
                 Text {

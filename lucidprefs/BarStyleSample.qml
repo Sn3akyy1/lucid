@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Shapes
 import qs
 
 // a small stand-in for a bar module in one of its styles, drawn with the
@@ -24,7 +25,10 @@ Item {
         "media/panel/side": mediaPanelSide,
         "media/panel/cover": mediaPanelCover,
         "workspaces/dots": workspacesDots,
-        "workspaces/numbers": workspacesNumbers
+        "workspaces/numbers": workspacesNumbers,
+        "notifications/badge": notificationsBadge,
+        "notifications/dot": notificationsDot,
+        "notifications/chip": notificationsChip
     })
     // what the samples show: the time and date as the bar would
     readonly property string timeText: {
@@ -381,6 +385,117 @@ Item {
                         opacity: index < 3 ? 1 : 0.5
                     }
 
+                }
+
+            }
+
+        }
+
+    }
+
+    Component {
+        id: notificationsBadge
+
+        Row {
+            spacing: 5
+
+            MiniBell {
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Rectangle {
+                width: 16
+                height: 16
+                radius: height / 2
+                color: Theme.accent
+                anchors.verticalCenter: parent.verticalCenter
+
+                BarText {
+                    anchors.centerIn: parent
+                    text: "3"
+                    color: Theme.fgAccent
+                    font.pixelSize: Theme.fs(11)
+                }
+
+            }
+
+        }
+
+    }
+
+    Component {
+        id: notificationsDot
+
+        MiniBell {
+            Rectangle {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.rightMargin: -1
+                width: 7
+                height: 7
+                radius: 3.5
+                color: Theme.accent
+                border.width: 1.5
+                border.color: Theme.bg
+            }
+
+        }
+
+    }
+
+    Component {
+        id: notificationsChip
+
+        Rectangle {
+            implicitWidth: chipRow.implicitWidth + 14
+            implicitHeight: 24
+            radius: height / 2
+            color: Theme.accent
+
+            Row {
+                id: chipRow
+
+                anchors.centerIn: parent
+                spacing: 5
+
+                MiniBell {
+                    ink: Theme.fgAccent
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                BarText {
+                    text: "3"
+                    color: Theme.fgAccent
+                    font.pixelSize: Theme.fs(12)
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+            }
+
+        }
+
+    }
+
+    // a bell: the notifications module's own glyph
+    component MiniBell: Item {
+        property color ink: Theme.text
+
+        implicitWidth: 17
+        implicitHeight: 17
+
+        Shape {
+            width: 24
+            height: 24
+            scale: 17 / 24
+            anchors.centerIn: parent
+            preferredRendererType: Shape.CurveRenderer
+
+            ShapePath {
+                fillColor: ink
+                strokeWidth: 0
+
+                PathSvg {
+                    path: Notifs.icons.notifications
                 }
 
             }

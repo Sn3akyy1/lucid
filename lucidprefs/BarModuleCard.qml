@@ -356,6 +356,23 @@ SettingCard {
 
     }
 
+    // notifications
+    SettingRow {
+        visible: card.moduleId === "notifications"
+        title: "Hide it while nothing is waiting"
+        resetKey: "notificationsHideEmpty"
+        description: "It comes back with the first notification, and stays while Do not disturb is on so you can see it is."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.notificationsHideEmpty
+            onToggled: (v) => {
+                return Prefs.notificationsHideEmpty = v;
+            }
+        }
+
+    }
+
     // privacy
     SettingRow {
         visible: card.moduleId === "privacy"

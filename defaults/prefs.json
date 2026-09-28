@@ -51,6 +51,8 @@
     "mediaPlayButton": true,
     "mediaWheelVolume": true,
     "showNotifications": true,
+    "notificationsStyle": "badge",
+    "notificationsHideEmpty": false,
     "showSystem": true,
     "showPrivacy": false,
     "privacyWatch": "mic,camera,screen",
