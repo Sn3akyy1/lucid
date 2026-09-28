@@ -30,7 +30,9 @@ Item {
         "notifications/dot": notificationsDot,
         "notifications/chip": notificationsChip,
         "system/values": systemValues,
-        "system/icons": systemIcons
+        "system/icons": systemIcons,
+        "tray/collapsed": trayCollapsed,
+        "tray/icons": trayIcons
     })
     // what the samples show: the time and date as the bar would
     readonly property string timeText: {
@@ -615,7 +617,7 @@ Item {
         Shape {
             width: 24
             height: 24
-            scale: 14 / 24
+            scale: glyph.width / 24
             anchors.centerIn: parent
             preferredRendererType: Shape.CurveRenderer
 
@@ -625,6 +627,64 @@ Item {
 
                 PathSvg {
                     path: glyph.path
+                }
+
+            }
+
+        }
+
+    }
+
+    Component {
+        id: trayCollapsed
+
+        Row {
+            spacing: 4
+
+            MiniGlyph {
+                path: "M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z"
+                implicitWidth: 16
+                implicitHeight: 16
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Rectangle {
+                width: 16
+                height: 16
+                radius: height / 2
+                color: Theme.accent
+                anchors.verticalCenter: parent.verticalCenter
+
+                BarText {
+                    anchors.centerIn: parent
+                    text: "3"
+                    color: Theme.bgOpaque
+                    font.pixelSize: Theme.fs(11)
+                }
+
+            }
+
+        }
+
+    }
+
+    Component {
+        id: trayIcons
+
+        Row {
+            spacing: 6
+
+            Repeater {
+                model: [Theme.accent, Theme.subtext, Theme.accentContainer]
+
+                Rectangle {
+                    required property color modelData
+
+                    width: 16
+                    height: 16
+                    radius: 4
+                    color: modelData
+                    anchors.verticalCenter: parent.verticalCenter
                 }
 
             }

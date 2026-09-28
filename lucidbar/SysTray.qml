@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Services.SystemTray
@@ -9,11 +10,17 @@ BarPill {
     id: root
 
     readonly property var hiddenKeywords: ["blueman"]
+    // the ones picked away on the module's card, by their id
+    readonly property var hiddenIds: String(Prefs.trayHidden).split(",").filter((id) => {
+        return id !== "";
+    })
+    // the face's looks, from its card on the Bar page
+    readonly property bool iconFace: Prefs.trayStyle === "icons"
     readonly property var trayItems: {
         const raw = SystemTray.items ? SystemTray.items.values : [];
         const visible = raw.filter((i) => {
             const key = ((i.id || "") + " " + (i.title || "")).toLowerCase();
-            return !root.hiddenKeywords.some((kw) => {
+            return root.hiddenIds.indexOf(i.id || "") === -1 && !root.hiddenKeywords.some((kw) => {
                 return key.indexOf(kw) !== -1;
             });
         });
@@ -78,9 +85,85 @@ BarPill {
             id: compactRow
 
             anchors.centerIn: parent
-            spacing: 4
+            spacing: root.iconFace ? 6 : 4
+
+            // the icons style: each item in the bar, clicked as in the panel
+            Repeater {
+                model: root.iconFace ? root.trayItems : []
+
+                Item {
+                    id: inline
+
+                    required property var modelData
+
+                    width: 18
+                    height: 18
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    IconImage {
+                        id: inlineIcon
+
+                        anchors.fill: parent
+                        source: root.resolveIconSource(inline.modelData.icon)
+                        asynchronous: true
+                        visible: status === Image.Ready
+                        layer.enabled: Prefs.trayIconColor !== "original"
+                        layer.effect: TrayTint {}
+                    }
+
+                    Text {
+                        visible: !inlineIcon.visible
+                        anchors.centerIn: parent
+                        text: (inline.modelData.title || inline.modelData.id || "?").charAt(0).toUpperCase()
+                        color: Theme.subtext
+                        font.family: Theme.fontFamily
+                        font.bold: true
+                        font.pixelSize: Theme.fs(12)
+                    }
+
+                    // one asking for attention
+                    Rectangle {
+                        visible: inline.modelData.status === Status.NeedsAttention
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.top: parent.bottom
+                        anchors.topMargin: 2
+                        width: 4
+                        height: 4
+                        radius: 2
+                        color: Theme.accent
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        anchors.margins: -3
+                        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: (mouse) => {
+                            if (mouse.button === Qt.RightButton) {
+                                // its menu, from the pill's own panel
+                                root.expanded = true;
+                                const p = menuLayer.mapFromItem(inline, 0, inline.height + 6);
+                                root.menuItem = inline.modelData;
+                                root.menuX = p.x;
+                                root.menuY = p.y;
+                            } else if (mouse.button === Qt.MiddleButton) {
+                                inline.modelData.secondaryActivate();
+                            } else {
+                                inline.modelData.activate();
+                            }
+                        }
+                        onWheel: (wheel) => {
+                            inline.modelData.scroll(wheel.angleDelta.y, false);
+                            wheel.accepted = true;
+                        }
+                    }
+
+                }
+
+            }
 
             Item {
+                visible: !root.iconFace
                 width: 16
                 height: 16
                 anchors.verticalCenter: parent.verticalCenter
@@ -111,6 +194,7 @@ BarPill {
 
                 anchors.verticalCenter: parent.verticalCenter
                 height: 16
+                visible: !root.iconFace
                 width: root.trayCount > 0 ? Math.max(16, countText.implicitWidth + 8) : 0
                 radius: 999
                 color: Theme.accent
@@ -438,6 +522,18 @@ BarPill {
     ]
 
 
+    // an app's icon in the shell's colours: its light and shade kept, the hue
+    // taken from the text (grey) or from one of the palette's colours
+    component TrayTint: MultiEffect {
+        readonly property color role: Prefs.trayIconColor === "accent" ? Theme.cPrimary : (Prefs.trayIconColor === "tertiary" ? Theme.cTertiary : Theme.cSecondary)
+
+        // lifted first, so a mid-tone icon reads on the bar like its text
+        brightness: 0.4
+        colorization: 1
+        // the palette colour at a tone that reads on the bar, keeping its hue
+        colorizationColor: Prefs.trayIconColor === "grey" ? Theme.text : Theme.atTone(role, Theme.isLight ? 40 : 80)
+    }
+
     component TrayCard: Rectangle {
         id: card
 
@@ -560,6 +656,8 @@ BarPill {
                     source: card.resolvedIcon
                     asynchronous: true
                     visible: status === Image.Ready
+                    layer.enabled: Prefs.trayIconColor !== "original"
+                    layer.effect: TrayTint {}
                 }
 
                 Rectangle {

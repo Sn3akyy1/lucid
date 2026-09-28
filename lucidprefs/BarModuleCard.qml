@@ -1,4 +1,6 @@
 import QtQuick
+import Quickshell.Services.SystemTray
+import Quickshell.Widgets
 import qs
 
 // one bar module's card on the Bar page: whether it shows, where the rest of
@@ -417,6 +419,127 @@ SettingCard {
                     return list.indexOf(k) !== -1;
                 }).join(",");
             }
+        }
+
+    }
+
+    // system tray
+    SettingRow {
+        visible: card.moduleId === "tray"
+        title: "Icon colours"
+        resetKey: "trayIconColor"
+        description: "As each app draws them, or in the shell's colours: grey from the text, or one of the palette's colours. Their light and shade stay either way."
+        stacked: true
+        showDivider: false
+
+        M3Segmented {
+            width: Math.min(parent.width, 600)
+            current: Prefs.trayIconColor
+            options: [{
+                "key": "original",
+                "label": "Original"
+            }, {
+                "key": "grey",
+                "label": "Grey"
+            }, {
+                "key": "secondary",
+                "label": "Secondary"
+            }, {
+                "key": "tertiary",
+                "label": "Tertiary"
+            }, {
+                "key": "accent",
+                "label": "Accent"
+            }]
+            onChosen: (key) => {
+                return Prefs.trayIconColor = key;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "tray"
+        title: "Apps in the tray"
+        resetKey: "trayHidden"
+        description: SystemTray.items.values.length > 0 ? "The ones running now. One switched off stays out of the bar and the panel until you switch it back on." : "Nothing is in the tray right now. Apps show up here while they run."
+        stacked: true
+        showDivider: false
+
+        Column {
+            width: parent.width
+            spacing: 6
+
+            Repeater {
+                model: SystemTray.items.values
+
+                Rectangle {
+                    id: trayRow
+
+                    required property var modelData
+                    readonly property bool shownInBar: String(Prefs.trayHidden).split(",").indexOf(trayRow.modelData.id) === -1
+
+                    width: parent.width
+                    height: 48
+                    radius: Theme.radiusMd
+                    color: Theme.bgSunken
+
+                    IconImage {
+                        id: trayRowIcon
+
+                        anchors.left: parent.left
+                        anchors.leftMargin: 14
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 20
+                        height: 20
+                        opacity: trayRow.shownInBar ? 1 : 0.4
+                        source: {
+                            const raw = trayRow.modelData.icon || "";
+                            const q = raw.indexOf("?path=");
+                            if (q === -1)
+                                return raw;
+
+                            const name = raw.substring(0, q);
+                            return "file://" + raw.substring(q + 6) + "/" + name.substring(name.lastIndexOf("/") + 1);
+                        }
+                        asynchronous: true
+                    }
+
+                    Text {
+                        anchors.left: trayRowIcon.right
+                        anchors.leftMargin: 12
+                        anchors.right: trayRowSwitch.left
+                        anchors.rightMargin: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: trayRow.modelData.title || trayRow.modelData.tooltipTitle || trayRow.modelData.id
+                        color: trayRow.shownInBar ? Theme.text : Theme.subtextDim
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontBodyLg
+                        elide: Text.ElideRight
+                    }
+
+                    M3Switch {
+                        id: trayRowSwitch
+
+                        anchors.right: parent.right
+                        anchors.rightMargin: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        checked: trayRow.shownInBar
+                        onToggled: (v) => {
+                            const list = String(Prefs.trayHidden).split(",").filter((id) => {
+                                return id !== "" && id !== trayRow.modelData.id;
+                            });
+                            if (!v)
+                                list.push(trayRow.modelData.id);
+
+                            Prefs.trayHidden = list.join(",");
+                        }
+                    }
+
+                }
+
+            }
+
         }
 
     }

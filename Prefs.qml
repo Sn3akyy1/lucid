@@ -99,7 +99,18 @@ Singleton {
         "home": "left",
         "name": "Tray",
         "desc": "Status icons from running applications",
-        "when": "while an app has an icon in the tray"
+        "when": "while an app has an icon in the tray",
+        "options": ["trayHidden", "trayIconColor"],
+        "style": "trayStyle",
+        "styles": [{
+            "key": "collapsed",
+            "name": "Collapsed",
+            "blurb": "One icon and how many are running"
+        }, {
+            "key": "icons",
+            "name": "Icons",
+            "blurb": "Each app's icon in the bar"
+        }]
     }, {
         "id": "clock",
         "key": "showClock",
@@ -294,6 +305,9 @@ Singleton {
     property alias mediaPlayButton: s.mediaPlayButton
     property alias mediaWheelVolume: s.mediaWheelVolume
     property alias showTray: s.showTray
+    property alias trayStyle: s.trayStyle
+    property alias trayHidden: s.trayHidden
+    property alias trayIconColor: s.trayIconColor
     property alias showKbLayout: s.showKbLayout
     property alias gameModeOnCmd: s.gameModeOnCmd
     property alias gameModeOffCmd: s.gameModeOffCmd
@@ -547,6 +561,9 @@ Singleton {
         "mediaPlayButton": true,
         "mediaWheelVolume": true,
         "showTray": true,
+        "trayStyle": "collapsed",
+        "trayHidden": "",
+        "trayIconColor": "original",
         "showKbLayout": true,
         "gameModeOnCmd": "",
         "gameModeOffCmd": "",
@@ -1046,6 +1063,9 @@ Singleton {
             property bool mediaPlayButton: true
             property bool mediaWheelVolume: true
             property bool showTray: true
+            property string trayStyle: "collapsed"
+            property string trayHidden: ""
+            property string trayIconColor: "original"
             property bool showKbLayout: true
             property string gameModeOnCmd: ""
             property string gameModeOffCmd: ""
