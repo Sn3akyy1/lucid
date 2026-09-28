@@ -32,8 +32,18 @@ Item {
         "system/values": systemValues,
         "system/icons": systemIcons,
         "tray/collapsed": trayCollapsed,
-        "tray/icons": trayIcons
+        "tray/icons": trayIcons,
+        "privacy/marks": privacyMarks,
+        "privacy/dot": privacyDot,
+        "power/icon": powerIcon,
+        "power/accent": powerAccent,
+        "power/panel/list": powerPanelList,
+        "power/panel/grid": powerPanelGrid,
+        "window/plain": windowPlain,
+        "window/chip": windowChip
     })
+    readonly property string powerPath: "M11 3h2v10h-2V3Zm6.36 2.64 1.42-1.42A9.96 9.96 0 0 1 22 12c0 5.52-4.48 10-10 10S2 17.52 2 12c0-2.76 1.12-5.26 2.93-7.07l1.42 1.42A7.96 7.96 0 0 0 4 12c0 4.42 3.58 8 8 8s8-3.58 8-8c0-2.21-.9-4.21-2.64-5.36Z"
+    readonly property string micPath: "M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"
     // what the samples show: the time and date as the bar would
     readonly property string timeText: {
         const now = Loc.now();
@@ -685,6 +695,238 @@ Item {
                     radius: 4
                     color: modelData
                     anchors.verticalCenter: parent.verticalCenter
+                }
+
+            }
+
+        }
+
+    }
+
+    Component {
+        id: privacyMarks
+
+        Row {
+            spacing: 4
+
+            Repeater {
+                model: [{
+                    "ink": Theme.warning,
+                    "path": sample.micPath
+                }, {
+                    "ink": Theme.error,
+                    "path": "M4 17q-.825 0-1.412-.587T2 15V5q0-.825.588-1.412T4 3h16q.825 0 1.413.588T22 5v10q0 .825-.587 1.413T20 17h-5v2h2v2H7v-2h2v-2H4Z"
+                }]
+
+                Rectangle {
+                    required property var modelData
+
+                    width: 26
+                    height: 22
+                    radius: height / 2
+                    color: Theme.alpha(modelData.ink, 0.2)
+
+                    MiniGlyph {
+                        anchors.centerIn: parent
+                        path: parent.modelData.path
+                        ink: parent.modelData.ink
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    Component {
+        id: privacyDot
+
+        Rectangle {
+            implicitWidth: 10
+            implicitHeight: 10
+            radius: 5
+            color: Theme.error
+        }
+
+    }
+
+    Component {
+        id: powerIcon
+
+        MiniGlyph {
+            path: sample.powerPath
+            implicitWidth: 17
+            implicitHeight: 17
+        }
+
+    }
+
+    Component {
+        id: powerAccent
+
+        Rectangle {
+            implicitWidth: 24
+            implicitHeight: 24
+            radius: height / 2
+            color: Theme.accent
+
+            MiniGlyph {
+                anchors.centerIn: parent
+                path: sample.powerPath
+                ink: Theme.fgAccent
+            }
+
+        }
+
+    }
+
+    Component {
+        id: powerPanelList
+
+        MiniPanel {
+            width: 110
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 5
+
+                Repeater {
+                    model: 5
+
+                    Row {
+                        required property int index
+
+                        spacing: 6
+
+                        Rectangle {
+                            width: 11
+                            height: 11
+                            radius: height / 2
+                            color: index > 2 ? Theme.errorContainer : Theme.accentContainer
+                        }
+
+                        Rectangle {
+                            width: 50
+                            height: 5
+                            radius: 2.5
+                            color: Theme.subtextDim
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    Component {
+        id: powerPanelGrid
+
+        MiniPanel {
+            width: 130
+            height: 80
+
+            Grid {
+                anchors.centerIn: parent
+                columns: 3
+                spacing: 8
+
+                Repeater {
+                    model: 6
+
+                    Column {
+                        required property int index
+
+                        spacing: 4
+
+                        Rectangle {
+                            width: 20
+                            height: 20
+                            radius: height / 2
+                            color: index > 3 ? Theme.errorContainer : Theme.accentContainer
+                        }
+
+                        Rectangle {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: 16
+                            height: 4
+                            radius: 2
+                            color: Theme.subtextDim
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    Component {
+        id: windowPlain
+
+        Row {
+            spacing: 8
+
+            Rectangle {
+                width: 17
+                height: 17
+                radius: 4
+                color: Theme.accentContainer
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            BarText {
+                text: Prefs.windowModuleText === "icon" ? "" : "Window title"
+                visible: text !== ""
+                font.pixelSize: Theme.fontLabelLg
+                font.weight: Font.Medium
+                font.bold: false
+            }
+
+        }
+
+    }
+
+    Component {
+        id: windowChip
+
+        Rectangle {
+            implicitWidth: chipRow.implicitWidth + (Prefs.windowModuleText === "icon" ? 12 : 18)
+            implicitHeight: 26
+            radius: height / 2
+            color: Theme.accentContainer
+
+            Row {
+                id: chipRow
+
+                anchors.centerIn: parent
+                spacing: 8
+
+                Rectangle {
+                    width: 17
+                    height: 17
+                    radius: 4
+                    color: Theme.accent
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                BarText {
+                    text: Prefs.windowModuleText === "icon" ? "" : "Window title"
+                    visible: text !== ""
+                    color: Theme.fgAccentContainer
+                    font.pixelSize: Theme.fontLabelLg
+                    font.weight: Font.Medium
+                    font.bold: false
                 }
 
             }

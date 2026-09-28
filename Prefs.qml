@@ -194,14 +194,44 @@ Singleton {
         "name": "Privacy",
         "desc": "Shows up only while an app uses the microphone, the camera or the screen, and says which",
         "when": "while an app uses the microphone, the camera or the screen",
-        "options": ["privacyWatch", "privacyToast", "privacyAlwaysShown"]
+        "options": ["privacyWatch", "privacyToast", "privacyAlwaysShown"],
+        "style": "privacyStyle",
+        "styles": [{
+            "key": "marks",
+            "name": "Marks",
+            "blurb": "A tinted mark for each thing in use"
+        }, {
+            "key": "dot",
+            "name": "Dot",
+            "blurb": "One small dot, red while the screen is shared"
+        }]
     }, {
         "id": "power",
         "key": "showPower",
         "home": "right",
         "name": "Power",
         "desc": "Lock, suspend, log out, restart or shut down, the ones you pick in the order you pick",
-        "options": ["powerModuleActions", "powerModuleConfirm", "powerModuleUptime"]
+        "options": ["powerModuleActions", "powerModuleConfirm", "powerModuleUptime"],
+        "style": "powerModuleStyle",
+        "styles": [{
+            "key": "icon",
+            "name": "Icon",
+            "blurb": "The power symbol"
+        }, {
+            "key": "accent",
+            "name": "Accent",
+            "blurb": "The symbol on a circle in the accent"
+        }],
+        "panelStyle": "powerModulePanelStyle",
+        "panelStyles": [{
+            "key": "list",
+            "name": "List",
+            "blurb": "One action to a row"
+        }, {
+            "key": "grid",
+            "name": "Grid",
+            "blurb": "Three to a row, the name under each"
+        }]
     }, {
         "id": "window",
         "key": "showWindow",
@@ -209,7 +239,17 @@ Singleton {
         "name": "Active window",
         "desc": "The focused window's icon and title; open it to float, pin, fullscreen, move or close it, or switch to another window on the workspace",
         "when": "while a window on this workspace has the focus",
-        "options": ["windowModuleText", "windowModuleWidth", "windowModuleScroll", "windowModuleMiddleClose"]
+        "options": ["windowModuleText", "windowModuleWidth", "windowModuleScroll", "windowModuleMiddleClose"],
+        "style": "windowModuleStyle",
+        "styles": [{
+            "key": "plain",
+            "name": "Plain",
+            "blurb": "The icon and the text on the bar"
+        }, {
+            "key": "chip",
+            "name": "Chip",
+            "blurb": "The same on a chip tinted with the accent"
+        }]
     }]
     readonly property bool anyBarModuleEnabled: root.barModules.some((m) => {
         return root[m.key] === true;
@@ -328,15 +368,19 @@ Singleton {
     property alias privacyWatch: s.privacyWatch
     property alias privacyToast: s.privacyToast
     property alias privacyAlwaysShown: s.privacyAlwaysShown
+    property alias privacyStyle: s.privacyStyle
     property alias showPower: s.showPower
     property alias powerModuleActions: s.powerModuleActions
     property alias powerModuleConfirm: s.powerModuleConfirm
     property alias powerModuleUptime: s.powerModuleUptime
+    property alias powerModuleStyle: s.powerModuleStyle
+    property alias powerModulePanelStyle: s.powerModulePanelStyle
     property alias showWindow: s.showWindow
     property alias windowModuleText: s.windowModuleText
     property alias windowModuleWidth: s.windowModuleWidth
     property alias windowModuleScroll: s.windowModuleScroll
     property alias windowModuleMiddleClose: s.windowModuleMiddleClose
+    property alias windowModuleStyle: s.windowModuleStyle
     property alias clock24h: s.clock24h
     property alias clockShowDate: s.clockShowDate
     property alias clockStyle: s.clockStyle
@@ -579,15 +623,19 @@ Singleton {
         "privacyWatch": "mic,camera,screen",
         "privacyToast": true,
         "privacyAlwaysShown": false,
+        "privacyStyle": "marks",
         "showPower": false,
         "powerModuleActions": "lock,suspend,hibernate,logout,reboot,shutdown",
         "powerModuleConfirm": true,
         "powerModuleUptime": true,
+        "powerModuleStyle": "icon",
+        "powerModulePanelStyle": "list",
         "showWindow": false,
         "windowModuleText": "title",
         "windowModuleWidth": 260,
         "windowModuleScroll": true,
         "windowModuleMiddleClose": false,
+        "windowModuleStyle": "plain",
         "clock24h": false,
         "clockShowDate": true,
         "clockStyle": "inline",
@@ -1081,15 +1129,19 @@ Singleton {
             property string privacyWatch: "mic,camera,screen"
             property bool privacyToast: true
             property bool privacyAlwaysShown: false
+            property string privacyStyle: "marks"
             property bool showPower: false
             property string powerModuleActions: "lock,suspend,hibernate,logout,reboot,shutdown"
             property bool powerModuleConfirm: true
             property bool powerModuleUptime: true
+            property string powerModuleStyle: "icon"
+            property string powerModulePanelStyle: "list"
             property bool showWindow: false
             property string windowModuleText: "title"
             property int windowModuleWidth: 260
             property bool windowModuleScroll: true
             property bool windowModuleMiddleClose: false
+            property string windowModuleStyle: "plain"
             property bool clock24h: false
             property bool clockShowDate: true
             property string clockStyle: "inline"

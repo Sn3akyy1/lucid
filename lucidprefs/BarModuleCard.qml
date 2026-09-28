@@ -776,12 +776,12 @@ SettingCard {
         visible: card.moduleId === "window"
         title: "Shows"
         resetKey: "windowModuleText"
-        description: "What the pill reads in the bar. The panel always has both."
+        description: "What the pill reads in the bar, or only the app's icon. The panel always has both."
         stacked: true
         showDivider: false
 
         M3Segmented {
-            width: Math.min(parent.width, 360)
+            width: Math.min(parent.width, 480)
             current: Prefs.windowModuleText
             options: [{
                 "key": "title",
@@ -792,6 +792,9 @@ SettingCard {
             }, {
                 "key": "both",
                 "label": "Both"
+            }, {
+                "key": "icon",
+                "label": "Icon only"
             }]
             onChosen: (key) => {
                 return Prefs.windowModuleText = key;
@@ -805,11 +808,14 @@ SettingCard {
         title: "Longest it gets"
         resetKey: "windowModuleWidth"
         description: "A longer title is cut short with an ellipsis."
+        enabled: Prefs.windowModuleText !== "icon"
+        disabledReason: "It shows only the icon."
         stacked: true
         showDivider: false
 
         M3Slider {
             width: parent.width
+            enabled: Prefs.windowModuleText !== "icon"
             from: 120
             to: 480
             stepSize: 10

@@ -95,9 +95,13 @@ BarPill {
 
     }
 
+    // the looks, from its card on the Bar page
+    readonly property bool accentFace: Prefs.powerModuleStyle === "accent"
+    readonly property bool gridPanel: Prefs.powerModulePanelStyle === "grid"
+
     shown: Prefs.showPower
-    compactWidth: 18 + root.horizontalPadding * 2
-    panelWidth: 260
+    compactWidth: (root.accentFace ? 24 : 18) + root.horizontalPadding * 2
+    panelWidth: root.gridPanel ? 300 : 260
     panelHeight: panelColumn.implicitHeight + 32
     expandedRadius: Theme.shapeXl
     onExpandedChanged: {
@@ -137,11 +141,19 @@ BarPill {
     }
 
     compactContent: [
+        Rectangle {
+            anchors.centerIn: parent
+            width: 24
+            height: 24
+            radius: height / 2
+            color: Theme.accent
+            visible: root.accentFace
+        },
         NotifIcon {
             anchors.centerIn: parent
-            size: 17
+            size: root.accentFace ? 15 : 17
             path: root.icons.power
-            color: Theme.text
+            color: root.accentFace ? Theme.fgAccent : Theme.text
         }
     ]
 
@@ -193,66 +205,71 @@ BarPill {
 
             }
 
-            Repeater {
-                model: root.actions
+            // a list, or three to a row with the label under the icon
+            Grid {
+                columns: root.gridPanel ? 3 : 1
+                spacing: root.gridPanel ? 8 : 4
 
-                Rectangle {
-                    id: actionRow
-
-                    required property var modelData
-                    readonly property bool isArmed: root.armed === actionRow.modelData.id
-                    readonly property bool danger: actionRow.modelData.id === "reboot" || actionRow.modelData.id === "shutdown"
-
-                    width: panelColumn.width
-                    height: 48
-                    radius: Theme.radiusMd
-                    color: actionRow.isArmed ? Theme.alpha(Theme.error, 0.9) : (actionArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent")
+                Repeater {
+                    model: root.actions
 
                     Rectangle {
-                        id: actionIcon
+                        id: actionRow
 
-                        anchors.left: parent.left
-                        anchors.leftMargin: 8
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 34
-                        height: 34
-                        radius: 17
-                        color: actionRow.isArmed ? Theme.alpha(Theme.fgError, 0.18) : (actionRow.danger ? Theme.errorContainer : Theme.accentContainer)
+                        required property var modelData
+                        readonly property bool isArmed: root.armed === actionRow.modelData.id
+                        readonly property bool danger: actionRow.modelData.id === "reboot" || actionRow.modelData.id === "shutdown"
 
-                        NotifIcon {
-                            anchors.centerIn: parent
-                            size: 18
-                            path: root.icons[actionRow.modelData.icon]
-                            color: actionRow.isArmed ? Theme.fgError : (actionRow.danger ? Theme.fgErrorContainer : Theme.fgAccentContainer)
+                        width: root.gridPanel ? (panelColumn.width - 16) / 3 : panelColumn.width
+                        height: root.gridPanel ? 84 : 48
+                        radius: Theme.radiusMd
+                        color: actionRow.isArmed ? Theme.alpha(Theme.error, 0.9) : (actionArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent")
+
+                        Rectangle {
+                            id: actionIcon
+
+                            x: root.gridPanel ? (parent.width - width) / 2 : 8
+                            y: root.gridPanel ? 12 : (parent.height - height) / 2
+                            width: 34
+                            height: 34
+                            radius: 17
+                            color: actionRow.isArmed ? Theme.alpha(Theme.fgError, 0.18) : (actionRow.danger ? Theme.errorContainer : Theme.accentContainer)
+
+                            NotifIcon {
+                                anchors.centerIn: parent
+                                size: 18
+                                path: root.icons[actionRow.modelData.icon]
+                                color: actionRow.isArmed ? Theme.fgError : (actionRow.danger ? Theme.fgErrorContainer : Theme.fgAccentContainer)
+                            }
+
                         }
 
-                    }
+                        Text {
+                            x: root.gridPanel ? 6 : actionIcon.x + actionIcon.width + 12
+                            y: root.gridPanel ? actionIcon.y + actionIcon.height + 8 : (parent.height - height) / 2
+                            width: parent.width - x - (root.gridPanel ? 6 : 12)
+                            horizontalAlignment: root.gridPanel ? Text.AlignHCenter : Text.AlignLeft
+                            text: actionRow.isArmed ? actionRow.modelData.label + (root.gridPanel ? "?" : "? Click again") : actionRow.modelData.label
+                            color: actionRow.isArmed ? Theme.fgError : Theme.text
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontBodyLg
+                            elide: Text.ElideRight
+                        }
 
-                    Text {
-                        anchors.left: actionIcon.right
-                        anchors.leftMargin: 12
-                        anchors.right: parent.right
-                        anchors.rightMargin: 12
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: actionRow.isArmed ? actionRow.modelData.label + "? Click again" : actionRow.modelData.label
-                        color: actionRow.isArmed ? Theme.fgError : Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontBodyLg
-                        elide: Text.ElideRight
-                    }
+                        MouseArea {
+                            id: actionArea
 
-                    MouseArea {
-                        id: actionArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.run(actionRow.modelData.id)
+                        }
 
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.run(actionRow.modelData.id)
-                    }
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.durShort
+                            }
 
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Theme.durShort
                         }
 
                     }

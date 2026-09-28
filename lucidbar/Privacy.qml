@@ -128,6 +128,15 @@ BarPill {
         return out;
     }
 
+    // the dot face: one mark, in the colour of the most telling use
+    readonly property bool dotFace: Prefs.privacyStyle === "dot"
+    readonly property string topKind: {
+        const kinds = root.rows.map((r) => {
+            return r.kind;
+        });
+        return kinds.indexOf("screen") !== -1 ? "screen" : (kinds.indexOf("camera") !== -1 ? "camera" : (kinds.length > 0 ? kinds[0] : ""));
+    }
+
     function colourOf(kind) {
         return kind === "screen" ? Theme.error : (kind === "camera" ? Theme.success : Theme.warning);
     }
@@ -233,8 +242,38 @@ BarPill {
                 color: Theme.subtextDim
             }
 
+            Rectangle {
+                id: dot
+
+                visible: root.dotFace && root.rows.length > 0
+                anchors.verticalCenter: parent.verticalCenter
+                width: 10
+                height: 10
+                radius: 5
+                color: root.colourOf(root.topKind)
+
+                SequentialAnimation on opacity {
+                    loops: Animation.Infinite
+                    running: dot.visible
+
+                    NumberAnimation {
+                        to: 0.45
+                        duration: 1100
+                        easing.type: Easing.InOutSine
+                    }
+
+                    NumberAnimation {
+                        to: 1
+                        duration: 1100
+                        easing.type: Easing.InOutSine
+                    }
+
+                }
+
+            }
+
             Repeater {
-                model: root.rows
+                model: root.dotFace ? [] : root.rows
 
                 Rectangle {
                     id: mark
