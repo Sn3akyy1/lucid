@@ -77,22 +77,8 @@ BarPill {
         }
         root.armed = "";
         root.expanded = false;
-        if (id === "lock") {
-            Lockscreen.lock();
-            return ;
-        }
-        const cmds = {
-            // uwsm only stops a session it started, so fall back to hyprland; a
-            // lua config reads a dispatch as lua, where a bare "exit" is none
-            "logout": ["sh", "-c", "uwsm stop 2>/dev/null || hyprctl dispatch 'hl.dsp.exit()' || hyprctl dispatch exit"],
-            "suspend": ["systemctl", "suspend"],
-            "hibernate": ["systemctl", "hibernate"],
-            "reboot": ["systemctl", "reboot"],
-            "shutdown": ["systemctl", "poweroff"]
-        };
-        if (cmds[id])
-            Quickshell.execDetached(cmds[id]);
-
+        // the same actions as the session screen and the lock screen, from one place
+        Power.run(id);
     }
 
     // the looks, from its card on the Bar page
