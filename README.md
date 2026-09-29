@@ -524,7 +524,10 @@ Hyprland reload.
 - **Network** — a *Network* page covering what NetworkManager can do. Wi-Fi
   radio, a live network list grouped into connected, saved and nearby, with a
   filter, a scan you can stop, per-network join with password, forget and
-  join-automatically, and a form for hidden networks. Below that: wired devices
+  join-automatically, and a form for hidden networks. **Share** on a saved
+  network shows it as a QR code a phone camera joins from, with the password
+  beside it, dotted until you ask and copied without landing in clipboard
+  history; the Wi-Fi panel in the bar has the same code behind a button. Below that: wired devices
   with link speed, VPN and WireGuard profiles to connect and disconnect, a
   Wi-Fi hotspot to share the connection, and every saved profile with its
   autoconnect switch. Each device also gets its addressing — IPv4, IPv6,
@@ -746,6 +749,7 @@ you know what's being pulled in.
 | `awww` | Setting the wallpaper |
 | `python-pywal` | The Pywal theme |
 | `networkmanager` | Wi-Fi panel |
+| `qrencode` | The QR code that shares a saved Wi-Fi network. Without it the password still shows, with no code |
 | `bluez`, `bluez-utils` | Bluetooth panel and the Bluetooth settings page |
 | `kdeconnect`, `python-gobject` | The KDE Connect page. The daemon is the backend and starts itself; `python-gobject` backs the bridge Lucid talks to it through. Without either the page says so and does nothing else |
 | `libpulse`, `wireplumber` | Volume, audio devices |
