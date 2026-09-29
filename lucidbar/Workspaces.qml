@@ -1023,8 +1023,15 @@ Item {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                acceptedButtons: Qt.MiddleButton
-                onClicked: root.expanded = !root.expanded
+                // the middle button opens the overview; the right one, this
+                // module's card in Settings, as on the other modules
+                acceptedButtons: Qt.MiddleButton | Qt.RightButton
+                onClicked: (mouse) => {
+                    if (mouse.button === Qt.RightButton)
+                        Prefs.openBarModule("workspaces");
+                    else
+                        root.expanded = !root.expanded;
+                }
             }
 
             WheelHandler {

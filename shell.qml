@@ -80,17 +80,35 @@ ShellRoot {
 
         property real wsCollapse: (workspacesMod.expanded && !Prefs.barPopupMode) ? 0 : 1
 
-        // the six modules are addressed by key; the three zone lists in Prefs
-        // decide which slot each one lands in
+        // the modules are addressed by their id in Prefs.barModules; the
+        // groups in Prefs.barLayout decide which slot each one lands in
         readonly property var pillFor: ({
             "workspaces": workspacesMod,
             "media": mprisMod,
             "tray": sysTrayMod,
             "clock": clockMod,
             "notifications": notifMod,
-            "system": systemMod
+            "system": systemMod,
+            "privacy": privacyMod,
+            "power": powerMod,
+            "window": windowMod
         })
-        readonly property var modules: [workspacesMod, mprisMod, sysTrayMod, clockMod, notifMod, systemMod]
+        // what BarPill looks itself up in, for a right click to its card
+        readonly property var moduleById: bar.pillFor
+        readonly property var modules: [workspacesMod, mprisMod, sysTrayMod, clockMod, notifMod, systemMod, privacyMod, powerMod, windowMod]
+
+        // which modules switched on have left the bar for now, for the Bar
+        // page's arrangement
+        Binding {
+            target: Prefs
+            property: "barModulesAway"
+            value: Prefs.barModules.filter((m) => {
+                const mod = bar.pillFor[m.id];
+                return Prefs[m.key] === true && mod && !mod.shown;
+            }).map((m) => {
+                return m.id;
+            })
+        }
 
         // a module on its way out of the bar keeps the slot it had until its
         // pill has finished emptying, so its neighbours close the gap at the
@@ -308,6 +326,74 @@ ShellRoot {
 
             hostWindow: bar
             x: bar.placeFor("notifications")
+            anchors.top: parent.top
+
+            Behavior on x {
+                enabled: bar.laidOut && bar.shuffling
+
+                NumberAnimation {
+                    duration: Theme.barDurEnter
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.easeEmphasizedDecel
+                }
+
+            }
+
+        }
+
+        Privacy {
+            id: privacyMod
+
+            popupAlign: bar.alignOf("privacy")
+            recorder: snapMod
+            toast: toastMod
+
+            hostWindow: bar
+            x: bar.placeFor("privacy")
+            anchors.top: parent.top
+
+            Behavior on x {
+                enabled: bar.laidOut && bar.shuffling
+
+                NumberAnimation {
+                    duration: Theme.barDurEnter
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.easeEmphasizedDecel
+                }
+
+            }
+
+        }
+
+        SessionMenu {
+            id: powerMod
+
+            popupAlign: bar.alignOf("power")
+
+            hostWindow: bar
+            x: bar.placeFor("power")
+            anchors.top: parent.top
+
+            Behavior on x {
+                enabled: bar.laidOut && bar.shuffling
+
+                NumberAnimation {
+                    duration: Theme.barDurEnter
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.easeEmphasizedDecel
+                }
+
+            }
+
+        }
+
+        ActiveWindow {
+            id: windowMod
+
+            popupAlign: bar.alignOf("window")
+
+            hostWindow: bar
+            x: bar.placeFor("window")
             anchors.top: parent.top
 
             Behavior on x {

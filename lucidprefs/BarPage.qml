@@ -5,77 +5,60 @@ import qs.lucidui
 Column {
     id: page
 
-    readonly property var zoneTitles: ({
-        "left": "LEFT",
-        "centre": "MIDDLE",
-        "right": "RIGHT"
-    })
-    readonly property var zoneBlurbs: ({
-        "left": "Runs outward from the left edge.",
-        "centre": "Centred on the screen, and pushed aside when the sides run long.",
-        "right": "Runs inward from the right edge."
-    })
+    readonly property var moduleList: Prefs.barModules
+    // the module whose card shows: the one a right click on the bar asked for,
+    // or the first
+    property string selectedModule: ""
 
-    // a drag never touches the arrangement until it is dropped: the list keeps
-    // its order and shows where the row will land instead, so the row being
-    // dragged is never destroyed out from under the pointer
-    property string dragKey: ""
-    property string dragFrom: ""
-    property string dropZone: ""
-    property int dropIndex: -1
+    function paneFlick() {
+        let p = page.parent;
+        while (p) {
+            if (p.contentY !== undefined && p.contentHeight !== undefined)
+                return p;
 
-    function beginDrag(key, from) {
-        page.dragKey = key;
-        page.dragFrom = from;
-        page.dropZone = "";
-        page.dropIndex = -1;
-    }
-
-    function aimDrop(zone, index) {
-        if (page.dragKey === "")
-            return ;
-
-        page.dropZone = zone;
-        page.dropIndex = index;
-    }
-
-    function endDrag() {
-        const key = page.dragKey;
-        const zone = page.dropZone;
-        const at = page.dropIndex;
-        page.dragKey = "";
-        page.dragFrom = "";
-        page.dropZone = "";
-        page.dropIndex = -1;
-        if (key === "" || zone === "")
-            return ;
-
-        // the write rebuilds the repeaters and destroys the row that is calling
-        // this, so it cannot happen inside that row's own release handler
-        page.pendingDrop = ({ "key": key, "zone": zone, "at": at });
-        Qt.callLater(page.applyDrop);
-    }
-
-    property var pendingDrop: null
-
-    function applyDrop() {
-        const d = page.pendingDrop;
-        page.pendingDrop = null;
-        if (!d)
-            return ;
-
-        if (d.zone === "spare") {
-            Prefs.barRemove(d.key);
-            return ;
+            p = p.parent;
         }
-        // barMove takes the key out of its zone first, so a target below where
-        // it already sits in that same zone shifts up by one
-        const cur = Prefs.barKeysOf(d.zone).indexOf(d.key);
-        const target = (cur >= 0 && cur < d.at) ? d.at - 1 : d.at;
-        if (cur === target)
+        return null;
+    }
+
+    // brings the module's card into view, for a right click on the bar
+    function revealModule() {
+        const flick = page.paneFlick();
+        if (!flick)
             return ;
 
-        Prefs.barMove(d.key, d.zone, target);
+        const y = moduleCard.mapToItem(flick.contentItem, 0, 0).y;
+        flick.contentY = Math.max(0, Math.min(Math.max(0, flick.contentHeight - flick.height), y - 90));
+    }
+
+    Component.onCompleted: {
+        page.selectedModule = Prefs.barModuleFocus !== "" ? Prefs.barModuleFocus : Prefs.barModules[0].id;
+        if (Prefs.barModuleFocus !== "")
+            revealLater.start();
+
+    }
+
+    Timer {
+        id: revealLater
+
+        interval: 120
+        onTriggered: {
+            page.revealModule();
+            Prefs.barModuleFocus = "";
+        }
+    }
+
+    // asked again while the page is already up
+    Connections {
+        function onBarModuleFocusChanged() {
+            if (Prefs.barModuleFocus === "")
+                return ;
+
+            page.selectedModule = Prefs.barModuleFocus;
+            revealLater.restart();
+        }
+
+        target: Prefs
     }
 
     spacing: 26
@@ -280,13 +263,32 @@ Column {
     }
 
     SettingCard {
-        title: "MODULE LAYOUT"
-        subtitle: "Each zone lays its modules out in the order below, left to right."
+        title: "MODULES"
+
+        SettingRow {
+            title: "Arrangement"
+            resetKey: "barLayout"
+            description: "Tap a module to set it up below, or drag it along its group or into another one. Left and right sit against the screen's edges and the centre stays in the middle; a module switched off keeps its place, and an outlined one is on but has nothing to show right now."
+            enabled: Prefs.barEnabled
+            disabledReason: "The bar is switched off, so there is nothing to arrange."
+            stacked: true
+
+            BarLayoutEditor {
+                width: parent.width
+                enabled: Prefs.barEnabled
+                selected: page.selectedModule
+                onChosen: (id) => {
+                    return page.selectedModule = id;
+                }
+            }
+
+        }
 
         SettingRow {
             title: "Middle clearance"
             resetKey: "barZoneGap"
             description: "How close the middle may come to either side before it gives way and slides along."
+            showDivider: false
             stacked: true
 
             M3Slider {
@@ -303,173 +305,12 @@ Column {
 
         }
 
-        SettingRow {
-            title: "Restore the shipped arrangement"
-            description: "Puts every module back where Lucid ships it: workspaces, media and the tray on the left, the clock in the middle, notifications and system on the right."
-
-            M3Button {
-                text: "Restore"
-                variant: "tonal"
-                onClicked: Prefs.setBarDefaults()
-            }
-
-        }
-
     }
 
-    Repeater {
-        model: Prefs.barZones
+    BarModuleCard {
+        id: moduleCard
 
-        // the card is wrapped so an empty zone still has something to aim at,
-        // and so the zone a row came from can be lifted above its neighbours
-        // while that row is dragged across them
-        Item {
-            id: zoneHolder
-
-            required property var modelData
-
-            readonly property var keys: Prefs.barKeysOf(zoneHolder.modelData)
-
-            width: parent.width
-            implicitHeight: zoneCard.implicitHeight
-            height: implicitHeight
-            z: page.dragFrom === zoneHolder.modelData ? 5 : 0
-
-            SettingCard {
-                id: zoneCard
-
-                width: parent.width
-                title: page.zoneTitles[zoneHolder.modelData]
-                subtitle: page.zoneBlurbs[zoneHolder.modelData]
-
-                Repeater {
-                    model: zoneHolder.keys
-
-                    BarModuleRow {
-                        required property var modelData
-                        required property int index
-
-                        host: page
-                        zone: zoneHolder.modelData
-                        slot: index
-                        moduleKey: modelData
-                        placed: true
-                        first: index === 0
-                        last: index === zoneHolder.keys.length - 1
-                    }
-
-                }
-
-                // an empty zone still has to say so, or the card reads as broken
-                Rectangle {
-                    visible: zoneHolder.keys.length === 0
-                    width: parent.width
-                    height: 54
-                    radius: 22
-                    color: page.dropZone === zoneHolder.modelData ? Theme.alpha(Theme.accent, 0.2) : Theme.bgTile
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Theme.durFastEffects
-                        }
-
-                    }
-
-                    LText {
-                        anchors.centerIn: parent
-                        role: "bodyMedium"
-                        color: Theme.subtextDim
-                        text: page.dropZone === zoneHolder.modelData ? "Drop it here" : "Nothing here yet"
-                    }
-
-                }
-
-            }
-
-            DropArea {
-                anchors.fill: parent
-                keys: ["lucid-bar-module"]
-                // the rows aim for themselves; this only catches an empty zone
-                enabled: zoneHolder.keys.length === 0
-
-                onEntered: page.aimDrop(zoneHolder.modelData, 0)
-                onPositionChanged: page.aimDrop(zoneHolder.modelData, 0)
-            }
-
-        }
-
-    }
-
-    Item {
-        id: spareHolder
-
-        readonly property bool targeted: page.dropZone === "spare"
-
-        width: parent.width
-        implicitHeight: spareCard.implicitHeight
-        height: implicitHeight
-        visible: Prefs.barUnusedKeys.length > 0 || page.dragKey !== ""
-        z: page.dragFrom === "spare" ? 5 : 0
-
-        SettingCard {
-            id: spareCard
-
-            width: parent.width
-            title: "NOT IN THE BAR"
-            subtitle: "Drag a module down here to take it out, or back up into a zone to put it in. The arrows and the buttons do the same thing."
-
-            Repeater {
-                model: Prefs.barUnusedKeys
-
-                BarModuleRow {
-                    required property var modelData
-                    required property int index
-
-                    host: page
-                    zone: "spare"
-                    slot: index
-                    moduleKey: modelData
-                    placed: false
-                    first: index === 0
-                    last: index === Prefs.barUnusedKeys.length - 1
-                }
-
-            }
-
-            // somewhere to aim when every module is already in the bar
-            Rectangle {
-                visible: Prefs.barUnusedKeys.length === 0
-                width: parent.width
-                height: 54
-                radius: 22
-                color: spareHolder.targeted ? Theme.alpha(Theme.error, 0.2) : Theme.bgTile
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.durFastEffects
-                    }
-
-                }
-
-                LText {
-                    anchors.centerIn: parent
-                    role: "bodyMedium"
-                    color: Theme.subtextDim
-                    text: spareHolder.targeted ? "Drop it here to take it out of the bar" : "Every module is in the bar"
-                }
-
-            }
-
-        }
-
-        DropArea {
-            anchors.fill: parent
-            keys: ["lucid-bar-module"]
-
-            onEntered: page.aimDrop("spare", 0)
-            onPositionChanged: page.aimDrop("spare", 0)
-        }
-
+        moduleId: page.selectedModule
     }
 
     SettingCard {

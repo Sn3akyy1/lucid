@@ -35,39 +35,30 @@ Singleton {
     readonly property int effectiveDockBottomMargin: root.dockNotch ? 0 : root.dockBottomMargin
     readonly property int dockItemRadius: Math.min(root.dockRadius, Math.round(root.dockIconSize / 2))
     readonly property int dockIconInset: Math.max(0, Math.min(root.dockIconPadding, Math.floor(root.dockIconSize / 2) - 6))
-    // every module the bar can carry, and the order they appear in the layout
-    // editor's spare list
-    readonly property var barModules: [
-        { "key": "workspaces", "icon": "grid_view", "name": "Workspaces", "desc": "Workspace pills and the expanded overview" },
-        { "key": "media", "icon": "music_note", "name": "Media", "desc": "Now playing, with the full player behind it" },
-        { "key": "tray", "icon": "widgets", "name": "System tray", "desc": "Status icons from running applications" },
-        { "key": "clock", "icon": "schedule", "name": "Clock", "desc": "Time and date, with the calendar, timers and world clocks behind them" },
-        { "key": "notifications", "icon": "notifications", "name": "Notifications", "desc": "Unread count, and the notification centre" },
-        { "key": "system", "icon": "tune", "name": "System", "desc": "Network, sound, brightness and the quick settings panel" }
-    ]
+    // the bar's layout reads through these: the groups in barLayout, keeping
+    // only the modules switched on. the names are the zones' from before the
+    // bar page's arrangement editor, so the bar itself needn't know the difference
     readonly property var barZones: ["left", "centre", "right"]
-    readonly property var barLayoutKeys: ["barLeft", "barCentre", "barRight"]
+    readonly property var barLayoutKeys: ["barLayout"]
 
     function barModuleAt(key) {
-        for (var i = 0; i < root.barModules.length; i++) {
-            if (root.barModules[i].key === key)
-                return root.barModules[i];
-
-        }
-        return null;
+        return root.barModuleById[key] || null;
     }
 
-    function barParse(raw) {
-        return String(raw).split(",").map((x) => {
-            return x.trim();
-        }).filter((x, i, all) => {
-            return x !== "" && all.indexOf(x) === i && root.barModuleAt(x) !== null;
-        });
+    function barShown(id) {
+        const m = root.barModuleById[id];
+        return !!m && root[m.key] === true;
     }
 
-    readonly property var barLeftKeys: root.barParse(root.barLeft)
-    readonly property var barCentreKeys: root.barParse(root.barCentre)
-    readonly property var barRightKeys: root.barParse(root.barRight)
+    readonly property var barLeftKeys: root.barLayoutGroups.left.filter((id) => {
+        return root.barShown(id);
+    })
+    readonly property var barCentreKeys: root.barLayoutGroups.center.filter((id) => {
+        return root.barShown(id);
+    })
+    readonly property var barRightKeys: root.barLayoutGroups.right.filter((id) => {
+        return root.barShown(id);
+    })
 
     function barKeysOf(zone) {
         return zone === "left" ? root.barLeftKeys : (zone === "centre" ? root.barCentreKeys : root.barRightKeys);
@@ -86,87 +77,18 @@ Singleton {
         return root.barZoneOf(key) !== "";
     }
 
-    function setBarKeys(zone, keys) {
-        const joined = keys.join(",");
-        if (zone === "left")
-            root.barLeft = joined;
-        else if (zone === "centre")
-            root.barCentre = joined;
-        else
-            root.barRight = joined;
-    }
-
-    // moving a module anywhere is one call: it leaves whatever zone it was in
-    // first, so it can never appear twice. a target index past the end appends
-    function barMove(key, zone, index) {
-        if (root.barModuleAt(key) === null)
+    // switching a module on or off; one going off keeps its slot until its
+    // pill has emptied, so the neighbours close the gap at the rate it shrinks
+    function setBarModuleShown(id, v) {
+        const m = root.barModuleById[id];
+        if (!m || (root[m.key] === true) === v)
             return ;
 
-        const from = root.barZoneOf(key);
-        // must precede the writes, or the x bindings re-evaluate before the
-        // bar knows this one is worth easing
-        if (from !== "")
-            root.barReorderTick++;
+        const zone = root.barZoneOf(id);
+        if (!v && zone !== "")
+            root.barRetiring = ({ "key": id, "zone": zone, "at": root.barKeysOf(zone).indexOf(id) });
 
-        if (from !== "" && from !== zone)
-            root.setBarKeys(from, root.barKeysOf(from).filter((k) => {
-                return k !== key;
-            }));
-
-        const rest = root.barKeysOf(zone).filter((k) => {
-            return k !== key;
-        });
-        const at = index < 0 ? rest.length : Math.min(index, rest.length);
-        rest.splice(at, 0, key);
-        root.setBarKeys(zone, rest);
-    }
-
-    function barRemove(key) {
-        const from = root.barZoneOf(key);
-        if (from === "")
-            return ;
-
-        // the key leaves the list at once while the pill itself takes a moment
-        // to empty, so the bar is told to keep the slot until it has
-        root.barRetiring = ({ "key": key, "zone": from, "at": root.barKeysOf(from).indexOf(key) });
-        root.setBarKeys(from, root.barKeysOf(from).filter((k) => {
-            return k !== key;
-        }));
-    }
-
-    // one pair of buttons reaches every position: stepping off either end of a
-    // zone carries the module into the next one
-    function barStep(key, delta) {
-        const zone = root.barZoneOf(key);
-        if (zone === "")
-            return ;
-
-        const list = root.barKeysOf(zone);
-        const to = list.indexOf(key) + delta;
-        if (to >= 0 && to < list.length) {
-            root.barMove(key, zone, to);
-            return ;
-        }
-        const zi = root.barZones.indexOf(zone) + delta;
-        if (zi < 0 || zi >= root.barZones.length)
-            return ;
-
-        const next = root.barZones[zi];
-        root.barMove(key, next, delta > 0 ? 0 : root.barKeysOf(next).length);
-    }
-
-    function barCanStep(key, delta) {
-        const zone = root.barZoneOf(key);
-        if (zone === "")
-            return false;
-
-        const list = root.barKeysOf(zone);
-        const to = list.indexOf(key) + delta;
-        if (to >= 0 && to < list.length)
-            return true;
-
-        const zi = root.barZones.indexOf(zone) + delta;
-        return zi >= 0 && zi < root.barZones.length;
+        root[m.key] = v;
     }
 
     readonly property var barPlacedKeys: root.barLeftKeys.concat(root.barCentreKeys, root.barRightKeys)
@@ -176,9 +98,9 @@ Singleton {
     }
 
     // bumped just before an arrangement change that only moves modules about,
-    // so the bar can ease the pills across. an add or a remove is deliberately
-    // not bumped: those animate the pill's own width, and every neighbour's x
-    // already follows that frame by frame
+    // so the bar can ease the pills across. switching one on or off is
+    // deliberately not bumped: that animates the pill's own width, and every
+    // neighbour's x already follows that frame by frame
     property int barReorderTick: 0
 
     // the module that has just left the bar, and the slot it had. the bar draws
@@ -189,12 +111,6 @@ Singleton {
     function barClearRetiring() {
         root.barRetiring = null;
     }
-
-    readonly property var barUnusedKeys: root.barModules.filter((m) => {
-        return !root.barHas(m.key);
-    }).map((m) => {
-        return m.key;
-    })
 
     // every tile the system panel's grid can carry. the panel shows the ones
     // named in systemTiles, in that order, and its editor offers the rest
@@ -247,10 +163,148 @@ Singleton {
         root.systemTiles = keys.join(",");
     }
 
-    readonly property bool anyBarModuleEnabled: root.barLeftKeys.length + root.barCentreKeys.length + root.barRightKeys.length > 0
-    // the notification page's own header switch, which is really "is the module
-    // in the bar at all"
-    readonly property bool barNotifications: root.barHas("notifications")
+    // every bar module, in one place: the id barLayout arranges it by, the
+    // show* pref that switches it on, the group it starts in, how Settings
+    // names it, and where any settings it has elsewhere live (more, page), and,
+    // for one that leaves the bar while it has nothing to show, when it is
+    // there (when). the modules that came with the privacy, power and window
+    // pills also name their options and looks (options, style, panelStyle);
+    // BarStyleSample draws a sample of each look
+    readonly property var barModules: [
+    {
+        "id": "workspaces",
+        "key": "showWorkspaces",
+        "home": "left",
+        "name": "Workspaces",
+        "desc": "Workspace pills and the expanded overview",
+        "more": "Special workspaces, which it shows as well, have a page of their own.",
+        "page": "workspaces"
+    },
+    {
+        "id": "media",
+        "key": "showMedia",
+        "home": "left",
+        "name": "Media",
+        "desc": "Now-playing pill and player controls",
+        "when": "while something plays"
+    },
+    {
+        "id": "tray",
+        "key": "showTray",
+        "home": "left",
+        "name": "Tray",
+        "desc": "Status icons from running applications",
+        "when": "while an app has an icon in the tray"
+    },
+    {
+        "id": "clock",
+        "key": "showClock",
+        "home": "center",
+        "name": "Clock",
+        "desc": "Time, date and the calendar panel",
+        "more": "The time format, whether the date shows and the time zone are on the Date & Time page.",
+        "page": "datetime"
+    },
+    {
+        "id": "notifications",
+        "key": "showNotifications",
+        "home": "right",
+        "name": "Notifications",
+        "desc": "Toasts and the notification list",
+        "when": "while a notification is waiting",
+        "more": "Do not disturb is just below; popups, sounds and quiet hours are on the Notifications page.",
+        "page": "notifications"
+    },
+    {
+        "id": "system",
+        "key": "showSystem",
+        "home": "right",
+        "name": "System",
+        "desc": "Battery, volume, brightness and quick settings",
+        "more": "Its tiles are set with Edit tiles in the control centre itself; the keyboard layout sign and game mode are in System module, further down this page.",
+        "page": ""
+    },
+    {
+        "id": "privacy",
+        "key": "showPrivacy",
+        "home": "right",
+        "name": "Privacy",
+        "desc": "Shows up only while an app uses the microphone, the camera or the screen, and says which",
+        "when": "while an app uses the microphone, the camera or the screen",
+        "options": ["privacyWatch", "privacyToast", "privacyAlwaysShown"],
+        "style": "privacyStyle",
+        "styles": [
+            {"key": "marks", "name": "Marks", "blurb": "A tinted mark for each thing in use"},
+            {"key": "dot", "name": "Dot", "blurb": "One small dot, red while the screen is shared"}
+        ]
+    },
+    {
+        "id": "power",
+        "key": "showPower",
+        "home": "right",
+        "name": "Power",
+        "desc": "Lock, suspend, log out, restart or shut down, the ones you pick in the order you pick",
+        "options": ["powerModuleActions", "powerModuleConfirm", "powerModuleUptime"],
+        "style": "powerModuleStyle",
+        "styles": [
+            {"key": "icon", "name": "Icon", "blurb": "The power symbol"},
+            {"key": "accent", "name": "Accent", "blurb": "The symbol on a circle in the accent"}
+        ],
+        "panelStyle": "powerModulePanelStyle",
+        "panelStyles": [
+            {"key": "list", "name": "List", "blurb": "One action to a row"},
+            {"key": "grid", "name": "Grid", "blurb": "Three to a row, the name under each"}
+        ]
+    },
+    {
+        "id": "window",
+        "key": "showWindow",
+        "home": "left",
+        "name": "Active window",
+        "desc": "The focused window's icon and title; open it to float, pin, fullscreen, move or close it, or switch to another window on the workspace",
+        "when": "while a window on this workspace has the focus",
+        "options": ["windowModuleText", "windowModuleWidth", "windowModuleScroll", "windowModuleMiddleClose"],
+        "style": "windowModuleStyle",
+        "styles": [
+            {"key": "plain", "name": "Plain", "blurb": "The icon and the text on the bar"},
+            {"key": "chip", "name": "Chip", "blurb": "The same on a chip tinted with the accent"}
+        ]
+    }
+    ]
+
+    // the notification page's own header switch, which is the module's
+    readonly property bool barNotifications: root.showNotifications
+    readonly property bool anyBarModuleEnabled: root.barModules.some((m) => {
+        return root[m.key] === true;
+    })
+    readonly property var barModuleKeys: root.barModules.map((m) => {
+        return m.key;
+    })
+    readonly property var barModuleHome: {
+        const out = {};
+        for (const m of root.barModules)
+            out[m.id] = m.home;
+        return out;
+    }
+    // the module the Bar page opens on, set by a right click on its pill
+    property string barModuleFocus: ""
+    // the ids of the modules switched on that the bar leaves out right now,
+    // having nothing to show (an empty tray); the bar keeps it up to date, and
+    // a module's "when" in barModules says when it comes back
+    property var barModulesAway: []
+
+    function openBarModule(id) {
+        root.barModuleFocus = id;
+        root.settingsRequested("bar");
+    }
+
+    readonly property var barModuleById: {
+        const out = {};
+        for (const m of root.barModules)
+            out[m.id] = m;
+        return out;
+    }
+    readonly property var barLayoutGroups: root.parseBarLayout(root.barLayout)
     readonly property var widgetKeys: ["widgetsEnabled", "widgetSnap", "widgetLockAll", "widgetHideFullscreen", "widgetOnTop"]
     readonly property var idleKeys: ["idleDim", "idleDimAfter", "idleDimLevel", "idleDimKeyboard", "idleLock", "idleLockAfter", "idleScreenOff", "idleScreenOffAfter", "idleSuspend", "idleSuspendAfter", "idleSuspendOnAc", "idleLockBeforeSleep", "idleWakeAfterSleep", "idleRespectInhibitors", "idleWhileMedia"]
     readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envCursorShadow", "envIconTheme", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
@@ -311,10 +365,11 @@ Singleton {
     property alias barSpacing: s.barSpacing
     property alias barHoverGrow: s.barHoverGrow
     property alias barZoneGap: s.barZoneGap
-    property alias barLeft: s.barLeft
-    property alias barCentre: s.barCentre
-    property alias barRight: s.barRight
     property alias systemTiles: s.systemTiles
+    property alias barLayout: s.barLayout
+    property alias showWorkspaces: s.showWorkspaces
+    property alias showMedia: s.showMedia
+    property alias showTray: s.showTray
     property alias showKbLayout: s.showKbLayout
     property alias gameModeOnCmd: s.gameModeOnCmd
     property alias gameModeOffCmd: s.gameModeOffCmd
@@ -324,6 +379,26 @@ Singleton {
         const m = /(?:test|\[)\s+-[ef]\s+(\S+)/.exec(root.gameModeStatusCmd || "");
         return m ? m[1].replace(/^['"]|['"]$/g, "") : "";
     }
+    property alias showClock: s.showClock
+    property alias showNotifications: s.showNotifications
+    property alias showSystem: s.showSystem
+    property alias showPrivacy: s.showPrivacy
+    property alias privacyWatch: s.privacyWatch
+    property alias privacyToast: s.privacyToast
+    property alias privacyAlwaysShown: s.privacyAlwaysShown
+    property alias privacyStyle: s.privacyStyle
+    property alias showPower: s.showPower
+    property alias powerModuleActions: s.powerModuleActions
+    property alias powerModuleConfirm: s.powerModuleConfirm
+    property alias powerModuleUptime: s.powerModuleUptime
+    property alias powerModuleStyle: s.powerModuleStyle
+    property alias powerModulePanelStyle: s.powerModulePanelStyle
+    property alias showWindow: s.showWindow
+    property alias windowModuleText: s.windowModuleText
+    property alias windowModuleWidth: s.windowModuleWidth
+    property alias windowModuleScroll: s.windowModuleScroll
+    property alias windowModuleMiddleClose: s.windowModuleMiddleClose
+    property alias windowModuleStyle: s.windowModuleStyle
     property alias clock24h: s.clock24h
     property alias clockShowDate: s.clockShowDate
     property alias gpsEnabled: s.gpsEnabled
@@ -639,14 +714,35 @@ Singleton {
         "barSpacing": 8,
         "barHoverGrow": 3,
         "barZoneGap": 26,
-        "barLeft": "workspaces,media,tray",
-        "barCentre": "clock",
-        "barRight": "notifications,system",
         "systemTiles": "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session",
+        "barLayout": "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}",
+        "showWorkspaces": true,
+        "showMedia": true,
+        "showTray": true,
         "showKbLayout": true,
         "gameModeOnCmd": "",
         "gameModeOffCmd": "",
         "gameModeStatusCmd": "",
+        "showClock": true,
+        "showNotifications": true,
+        "showSystem": true,
+        "showPrivacy": false,
+        "privacyWatch": "mic,camera,screen",
+        "privacyToast": true,
+        "privacyAlwaysShown": false,
+        "privacyStyle": "marks",
+        "showPower": false,
+        "powerModuleActions": "lock,suspend,hibernate,logout,reboot,shutdown",
+        "powerModuleConfirm": true,
+        "powerModuleUptime": true,
+        "powerModuleStyle": "icon",
+        "powerModulePanelStyle": "list",
+        "showWindow": false,
+        "windowModuleText": "title",
+        "windowModuleWidth": 260,
+        "windowModuleScroll": true,
+        "windowModuleMiddleClose": false,
+        "windowModuleStyle": "plain",
         "clock24h": false,
         "clockShowDate": true,
         "gpsEnabled": false,
@@ -864,19 +960,60 @@ Singleton {
     // emptying the bar switches it off, so putting the modules back has to
     // switch it on again or the restore looks like it did nothing
     function setBarDefaults() {
-        const after = root.barParse(root.defaults.barLeft).concat(root.barParse(root.defaults.barCentre), root.barParse(root.defaults.barRight));
-        if (root.barSignature(root.barPlacedKeys) === root.barSignature(after))
-            root.barReorderTick++;
-
-        root.resetKeys(root.barLayoutKeys);
+        root.barReorderTick++;
+        root.resetKeys(root.barLayoutKeys.concat(root.barModuleKeys));
         root.barEnabled = true;
     }
 
+    // barLayout is JSON: {"left": [...], "center": [...], "right": [...]}, each
+    // list in order from the screen's left edge. a module it leaves out (a hand
+    // edit, a module added later) goes back to the end of its home group and an
+    // unknown or repeated id is skipped, so every module always has a place
+    function parseBarLayout(text) {
+        let parsed = null;
+        try {
+            parsed = JSON.parse(text);
+        } catch (e) {
+        }
+        const out = {
+            "left": [],
+            "center": [],
+            "right": []
+        };
+        const seen = {};
+        for (const side of ["left", "center", "right"]) {
+            const ids = parsed && Array.isArray(parsed[side]) ? parsed[side] : [];
+            for (const id of ids) {
+                if (root.barModuleHome[id] === undefined || seen[id])
+                    continue;
+
+                seen[id] = true;
+                out[side].push(id);
+            }
+        }
+        for (const id in root.barModuleHome) {
+            if (!seen[id])
+                out[root.barModuleHome[id]].push(id);
+
+        }
+        return out;
+    }
+
+    function setBarLayout(groups) {
+        // before the write, or the x bindings re-evaluate before the bar knows
+        // this one is worth easing
+        root.barReorderTick++;
+        root.barLayout = JSON.stringify({
+            "left": groups.left,
+            "center": groups.center,
+            "right": groups.right
+        });
+    }
+
+    // on means the modules that ship switched on; one that ships off stays off
     function setAllBarModules(v) {
-        if (v)
-            root.resetKeys(root.barLayoutKeys);
-        else
-            for (var i = 0; i < root.barZones.length; i++) root.setBarKeys(root.barZones[i], [])
+        for (const m of root.barModules)
+            root[m.key] = v && root.defaults[m.key] === true;
     }
 
     function setSurface(key, v) {
@@ -892,10 +1029,7 @@ Singleton {
         } else if (key === "kdeConnectEnabled") {
             root.kdeConnectEnabled = v;
         } else if (key === "barNotifications") {
-            if (v)
-                root.barMove("notifications", "right", -1);
-            else
-                root.barRemove("notifications");
+            root.setBarModuleShown("notifications", v);
         } else if (key === "idleEnabled") {
             root.idleEnabled = v;
         }
@@ -1147,14 +1281,35 @@ Singleton {
             property int barSpacing: 8
             property int barHoverGrow: 3
             property int barZoneGap: 26
-            property string barLeft: "workspaces,media,tray"
-            property string barCentre: "clock"
-            property string barRight: "notifications,system"
             property string systemTiles: "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session"
+            property string barLayout: "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}"
+            property bool showWorkspaces: true
+            property bool showMedia: true
+            property bool showTray: true
             property bool showKbLayout: true
             property string gameModeOnCmd: ""
             property string gameModeOffCmd: ""
             property string gameModeStatusCmd: ""
+            property bool showClock: true
+            property bool showNotifications: true
+            property bool showSystem: true
+            property bool showPrivacy: false
+            property string privacyWatch: "mic,camera,screen"
+            property bool privacyToast: true
+            property bool privacyAlwaysShown: false
+            property string privacyStyle: "marks"
+            property bool showPower: false
+            property string powerModuleActions: "lock,suspend,hibernate,logout,reboot,shutdown"
+            property bool powerModuleConfirm: true
+            property bool powerModuleUptime: true
+            property string powerModuleStyle: "icon"
+            property string powerModulePanelStyle: "list"
+            property bool showWindow: false
+            property string windowModuleText: "title"
+            property int windowModuleWidth: 260
+            property bool windowModuleScroll: true
+            property bool windowModuleMiddleClose: false
+            property string windowModuleStyle: "plain"
             property bool clock24h: false
             property bool clockShowDate: true
             property bool gpsEnabled: false
