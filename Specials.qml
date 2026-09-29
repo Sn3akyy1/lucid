@@ -12,8 +12,8 @@ Singleton {
     property bool moduleInstalled: false
     property bool moduleProbed: false
 
-    // the keys match modules/binds.lua
-    readonly property var spaces: [
+    // the keys match modules/binds.lua, and show until keybinds.json is read
+    readonly property var builtinSpaces: [
         { "key": "special", "glyph": "layers", "label": "Scratchpad", "pref": "specialScratchpad", "apps": "", "keys": ["Super", "Shift", "S"] },
         { "key": "music", "glyph": "music_note", "label": "Music", "pref": "specialMusic", "apps": "specialMusicApps", "keys": ["Super", "Shift", "M"] },
         { "key": "comms", "glyph": "chat", "label": "Comms", "pref": "specialComms", "apps": "specialCommsApps", "keys": ["Super", "Shift", "D"] },
@@ -21,6 +21,39 @@ Singleton {
         { "key": "sysmon", "glyph": "monitor_heart", "label": "System", "pref": "specialSysmon", "apps": "specialSysmonApps", "keys": ["Ctrl", "Shift", "Escape"] }
     ]
     readonly property var stashKeys: ["Super", "Alt", "S"]
+    // the ones made in settings, after the ones lucid ships
+    readonly property var ownSpaces: {
+        let list = [];
+        try {
+            list = JSON.parse(Prefs.specialCustom || "[]");
+        } catch (e) {
+            list = [];
+        }
+        if (!Array.isArray(list))
+            return [];
+
+        const seen = {};
+        return list.filter((w) => {
+            if (!w || typeof w.key !== "string" || !root.keyPattern.test(w.key) || root.reserved.indexOf(w.key) !== -1 || seen[w.key])
+                return false;
+
+            seen[w.key] = true;
+            return true;
+        }).map((w) => {
+            return {
+                "key": w.key,
+                "glyph": root.glyphs[w.glyph] ? w.glyph : "apps",
+                "label": String(w.label || w.key),
+                "on": w.on !== false,
+                "apps": typeof w.apps === "string" ? w.apps : "",
+                "own": true
+            };
+        });
+    }
+    readonly property var spaces: root.builtinSpaces.concat(root.ownSpaces)
+    // a key is also the lua table key and the hyprland name, special:<key>
+    readonly property var keyPattern: /^[a-z][a-z0-9_]{0,23}$/
+    readonly property var reserved: ["special", "music", "comms", "todo", "sysmon", "minimized", "scratchpad"]
     // apps the catalogue below does not know are stored as entry:<desktop id>
     readonly property string customPrefix: "entry:"
     // wrappers, so an added app's class guess does not take the launcher for the app
@@ -270,23 +303,162 @@ Singleton {
 
     function isOn(key) {
         const s = root.space(key);
+        if (s && s.own)
+            return s.on;
+
         return s ? Prefs[s.pref] !== false : true;
     }
 
     function setOn(key, on) {
         const s = root.space(key);
-        if (s)
+        if (s && s.own)
+            root.editOwn(key, {
+            "on": on
+        });
+        else if (s)
             Prefs.set(s.pref, on);
+    }
 
+    function isOwn(key) {
+        const s = root.space(key);
+        return s !== null && s.own === true;
+    }
+
+    function saveOwn(list) {
+        Prefs.specialCustom = JSON.stringify(list.map((w) => {
+            return {
+                "key": w.key,
+                "label": w.label,
+                "glyph": w.glyph,
+                "on": w.on,
+                "apps": w.apps
+            };
+        }));
+    }
+
+    function editOwn(key, change) {
+        root.saveOwn(root.ownSpaces.map((w) => {
+            return w.key === key ? Object.assign({}, w, change) : w;
+        }));
+    }
+
+    // Música -> musica; anything with no latin letters falls back to space
+    function keyFor(label) {
+        let base = String(label || "");
+        try {
+            base = base.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        } catch (e) {
+        }
+        base = base.toLowerCase().replace(/[^a-z0-9]+/g, "_").substring(0, 20).replace(/^[^a-z]+|_+$/g, "");
+        if (base === "")
+            base = "space";
+
+        let key = base;
+        for (let n = 2; root.space(key) !== null || root.reserved.indexOf(key) !== -1; n++) key = base + n
+        return key;
+    }
+
+    // returns the new workspace's key
+    function create(label, glyph) {
+        const name = String(label || "").trim();
+        if (name === "")
+            return "";
+
+        const key = root.keyFor(name);
+        root.saveOwn(root.ownSpaces.concat([{
+            "key": key,
+            "label": name,
+            "glyph": root.glyphs[glyph] ? glyph : "apps",
+            "on": true,
+            "apps": ""
+        }]));
+        return key;
+    }
+
+    // the key stays, so the workspace and its bind carry over a rename
+    function rename(key, label, glyph) {
+        const name = String(label || "").trim();
+        if (name === "" || !root.isOwn(key))
+            return ;
+
+        const old = root.space(key).label;
+        root.editOwn(key, {
+            "label": name,
+            "glyph": root.glyphs[glyph] ? glyph : "apps"
+        });
+        // a description you wrote yourself is left alone
+        const b = root.bindOf(key);
+        if (b && b.desc === root.bindDesc(old))
+            Keybinds.upsert(Object.assign({}, b, {
+            "desc": root.bindDesc(name)
+        }));
+
+    }
+
+    // its windows come back to the workspace you are on, and its key goes with it
+    function remove(key) {
+        if (!root.isOwn(key))
+            return ;
+
+        Quickshell.execDetached(["hyprctl", "eval", "if LucidSpecials then LucidSpecials.release(" + root.luaStr(key) + ") end"]);
+        const b = root.bindOf(key);
+        if (b)
+            Keybinds.remove(b.id);
+
+        root.saveOwn(root.ownSpaces.filter((w) => {
+            return w.key !== key;
+        }));
+    }
+
+    function bindDesc(label) {
+        return label + " workspace";
+    }
+
+    function bindLua(key) {
+        return key === "special" ? "specials.scratchpad()" : "specials.toggle(" + JSON.stringify(key) + ")";
+    }
+
+    // the bind that opens a workspace, found by what it runs so an edited or
+    // hand-written one counts too
+    function bindOf(key) {
+        const want = root.bindLua(key).replace(/\s+/g, "").replace(/'/g, "\"");
+        for (const b of Keybinds.binds) {
+            if (b.type === "lua" && String(b.lua || "").replace(/\s+/g, "").replace(/'/g, "\"") === want)
+                return b;
+
+        }
+        return null;
+    }
+
+    // a bind for the key editor to start from, keys still to be pressed
+    function newBind(key) {
+        const s = root.space(key);
+        return {
+            "keys": "",
+            "desc": root.bindDesc(s ? s.label : key),
+            "category": "Workspaces",
+            "type": "lua",
+            "lua": root.bindLua(key)
+        };
+    }
+
+    // what opens it, as keycaps: [] when nothing does
+    function keysOf(key) {
+        const s = root.space(key);
+        if (!Keybinds.loaded || Keybinds.missing)
+            return s && s.keys ? s.keys : [];
+
+        const b = root.bindOf(key);
+        return b && b.enabled !== false && b.keys ? Keybinds.tokens(b.keys) : [];
     }
 
     // "auto" means the first one installed
     function chosen(ws) {
         const s = root.space(ws);
-        if (!s || s.apps === "")
+        if (!s || (s.apps === "" && !s.own))
             return [];
 
-        const raw = Prefs[s.apps];
+        const raw = s.own ? s.apps : Prefs[s.apps];
         const avail = root.available[ws] || [];
         if (raw === "auto")
             return avail.length > 0 ? [avail[0].id] : [];
@@ -307,7 +479,7 @@ Singleton {
 
     function setChosen(ws, id, on) {
         const s = root.space(ws);
-        if (!s || s.apps === "")
+        if (!s || (s.apps === "" && !s.own))
             return ;
 
         const list = root.chosen(ws).filter((x) => {
@@ -327,7 +499,13 @@ Singleton {
         const added = list.filter((x) => {
             return order.indexOf(x) === -1;
         });
-        Prefs.set(s.apps, known.concat(added).join(","));
+        const value = known.concat(added).join(",");
+        if (s.own)
+            root.editOwn(ws, {
+            "apps": value
+        });
+        else
+            Prefs.set(s.apps, value);
     }
 
     function chosenNames(ws) {
@@ -457,6 +635,8 @@ Singleton {
         out += "    keep = " + (Prefs.specialKeepApps ? "true" : "false") + ",\n";
         out += "    hide_on_switch = " + (Prefs.specialHideOnSwitch ? "true" : "false") + ",\n";
         out += "    dim = " + Math.round(Prefs.specialDim * 100) / 100 + ",\n";
+        out += "    blur = " + (Prefs.specialBlur ? "true" : "false") + ",\n";
+        out += "    gaps = " + Math.max(0, Math.round(Prefs.specialGaps)) + ",\n";
         out += "    workspaces = {\n";
         for (const s of root.spaces) {
             const apps = root.chosen(s.key).map((id) => {

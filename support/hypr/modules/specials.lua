@@ -57,11 +57,14 @@ end
 
 -- rules cannot be removed, only switched off, so each apply retires the last set
 local rules = {}
+local ws_rules = {}
 
 function M.apply()
     local cfg = config()
     for _, r in ipairs(rules) do r:set_enabled(false) end
     rules = {}
+    for _, r in ipairs(ws_rules) do r:set_enabled(false) end
+    ws_rules = {}
     if cfg.keep ~= false then
         for name, ws in pairs(cfg.workspaces) do
             if type(ws) == "table" and ws.enabled ~= false then
@@ -78,12 +81,28 @@ function M.apply()
             end
         end
     end
+    -- a wider margin than a normal workspace's, so what is underneath shows
+    -- around the windows like a card
+    local gaps = math.floor(tonumber(cfg.gaps) or 0)
+    if gaps > 0 then
+        for name, ws in pairs(cfg.workspaces) do
+            if type(ws) == "table" and ws.enabled ~= false then
+                ws_rules[#ws_rules + 1] = hl.workspace_rule({
+                    workspace = "special:" .. name,
+                    gaps_out  = gaps,
+                })
+            end
+        end
+    end
     local opts = {}
     if type(cfg.hide_on_switch) == "boolean" then
         opts["binds.hide_special_on_workspace_change"] = cfg.hide_on_switch
     end
     if tonumber(cfg.dim) then
         opts["decoration.dim_special"] = tonumber(cfg.dim)
+    end
+    if type(cfg.blur) == "boolean" then
+        opts["decoration.blur.special"] = cfg.blur
     end
     if next(opts) then hl.config(opts) end
 end
@@ -148,6 +167,22 @@ function M.stash()
             end
         elseif space(config(), "special").enabled ~= false then
             hl.dispatch(hl.dsp.window.move({ window = w, workspace = "special:special", follow = false }))
+        end
+    end
+end
+
+-- a workspace deleted in settings hands its windows to the one you are on
+function M.release(name)
+    local target = "special:" .. name
+    local shown = hl.get_active_special_workspace()
+    if shown and shown.name == target then
+        hl.dispatch(hl.dsp.workspace.toggle_special(name))
+    end
+    local under = hl.get_active_workspace()
+    if not under then return end
+    for _, w in ipairs(hl.get_windows() or {}) do
+        if w.workspace and w.workspace.name == target then
+            hl.dispatch(hl.dsp.window.move({ window = w, workspace = under.id, follow = false }))
         end
     end
 end

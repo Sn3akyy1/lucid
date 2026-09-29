@@ -222,6 +222,8 @@ Singleton {
     readonly property var modifierScans: [37, 50, 62, 64, 66, 105, 108, 133, 134]
 
     signal editRequested(string id)
+    // a bind that is not saved yet, for the editor to open filled in
+    signal newRequested(var preset)
     signal sheetRequested()
 
     function categoryOf(b) {
