@@ -111,6 +111,9 @@ BarPill {
         if (root.view === "profile")
             return powerPanel.implicitHeight + root.viewChrome;
 
+        if (root.view === "nightlight")
+            return nightPanel.implicitHeight + root.viewChrome;
+
         return mainColumn.implicitHeight + root.viewChrome;
     }
 
@@ -1029,6 +1032,8 @@ BarPill {
             return Capture.active ? "stop_circle" : "screen_record";
         case "profile":
             return Power.symbol(Power.profile);
+        case "nightlight":
+            return NightLight.active ? "nightlight" : "bedtime";
         }
         const t = Prefs.systemTileAt(key);
         return t ? t.icon : "";
@@ -1076,6 +1081,8 @@ BarPill {
             return root.gameModeOn;
         case "profile":
             return Power.profile !== PowerProfile.Balanced;
+        case "nightlight":
+            return NightLight.active;
         }
         return false;
     }
@@ -1149,6 +1156,10 @@ BarPill {
         case "profile":
             // a tap steps to the next profile; a right click lists them all
             Power.cycle();
+            break;
+        case "nightlight":
+            // a right click opens the warmth and the schedule
+            NightLight.toggle();
             break;
         }
     }
@@ -1646,9 +1657,9 @@ BarPill {
                                     icon: root.tileIcon(modelData)
                                     label: root.tileLabel(modelData)
                                     checked: root.tileChecked(modelData)
-                                    hasMore: modelData === "profile"
+                                    hasMore: modelData === "profile" || modelData === "nightlight"
                                     onToggled: root.tileAct(modelData)
-                                    onMore: root.showView("profile")
+                                    onMore: root.showView(modelData)
                                 }
 
                             }
@@ -1964,6 +1975,8 @@ BarPill {
                                 return "Edit tiles";
                             case "profile":
                                 return "Power profile";
+                            case "nightlight":
+                                return "Night light";
                             }
                             return "";
                         }
@@ -1982,11 +1995,13 @@ BarPill {
                     Switch {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        visible: root.view === "bluetooth" || root.view === "wifi"
-                        checked: root.view === "wifi" ? Networking.wifiEnabled : root.btEnabled
+                        visible: root.view === "bluetooth" || root.view === "wifi" || root.view === "nightlight"
+                        checked: root.view === "wifi" ? Networking.wifiEnabled : (root.view === "nightlight" ? NightLight.active : root.btEnabled)
                         onToggled: {
                             if (root.view === "wifi")
                                 Networking.wifiEnabled = !Networking.wifiEnabled;
+                            else if (root.view === "nightlight")
+                                NightLight.toggle();
                             else
                                 Bt.setEnabled(!root.btEnabled);
                         }
@@ -2018,6 +2033,8 @@ BarPill {
                             return tileEditor.implicitHeight;
                         case "profile":
                             return powerPanel.implicitHeight;
+                        case "nightlight":
+                            return nightPanel.implicitHeight;
                         }
                         return wifiPanel.implicitHeight;
                     }
@@ -2038,6 +2055,17 @@ BarPill {
                         width: subScroll.width
                         active: root.expanded && root.view === "bluetooth"
                         visible: root.view === "bluetooth"
+                    }
+
+                    NightLightPanel {
+                        id: nightPanel
+
+                        width: subScroll.width
+                        visible: root.view === "nightlight"
+                        onSettingsRequested: {
+                            root.expanded = false;
+                            Prefs.settingsRequested("displays");
+                        }
                     }
 
                     PowerPanel {

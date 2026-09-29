@@ -122,7 +122,7 @@ PKG_FEATURES=(
     matugen jq imagemagick
     networkmanager qrencode bluez bluez-utils
     kdeconnect python-gobject
-    libpulse wireplumber brightnessctl upower hypridle
+    libpulse wireplumber brightnessctl upower hypridle hyprsunset
     grim wf-recorder ffmpeg wl-clipboard wtype cliphist
     tesseract tesseract-data-eng hyprpicker
     python-pillow python-numpy python-fonttools

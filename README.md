@@ -240,10 +240,14 @@ them and reordered inside them, or taken out of the bar entirely.
   Bluetooth panels and a switcher for the audio output and input. Two rows of
   tiles underneath: the toggles (silence, awake, dark, airplane, location, mic)
   and the tools (capture, record, colour picker, keyboard, timer, session);
-  Edit tiles adds more, such as the power profile and game mode. The compact
-  strip shows the keyboard layout (click it to switch). Hover any icon there
-  and it names itself; click it and the panel opens on the page that icon
-  belongs to
+  Edit tiles adds more, such as the power profile, game mode and **night
+  light**, which warms the screen through hyprsunset, fading in and out, by
+  hand or from sunset to sunrise where you are (worked out locally, no
+  network) or between set hours. Right-click its tile to pick how warm and
+  when; Settings → Displays has the same. Turning it on or off while a
+  schedule runs holds until the schedule next changes. The compact strip shows
+  the keyboard layout (click it to switch). Hover any icon there and it names
+  itself; click it and the panel opens on the page that icon belongs to
 
 Two shapes, set in Settings: **island** (floating rounded pills) or **notch**
 (flush to the screen edge, with flares that blend into it).
@@ -754,6 +758,7 @@ you know what's being pulled in.
 | `kdeconnect`, `python-gobject` | The KDE Connect page. The daemon is the backend and starts itself; `python-gobject` backs the bridge Lucid talks to it through. Without either the page says so and does nothing else |
 | `libpulse`, `wireplumber` | Volume, audio devices |
 | `brightnessctl`, `upower` | Brightness, battery |
+| `hyprsunset` | Night light. Lucid starts it when night light first comes on and talks to it over `hyprctl hyprsunset`; one you already run is used as it is, and never reset unless Lucid warmed it |
 | `hypridle` | The Idle page: dimming, locking, screen off and suspend when you walk away. Without it the page says so and writes nothing |
 | `grim`, `wf-recorder`, `ffmpeg`, `imagemagick` | Screenshots and recording |
 | `tesseract`, `tesseract-data-eng` | The Text mode's OCR. Without them Text mode says so and copies nothing. Add `tesseract-data-<lang>` and set `ocrLang` in `lucidshot/Screenshot.qml` for another language |
@@ -834,6 +839,7 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | `settings` | `toggle` `open` `close` `show <page>` `general` `users` `glass` `bar` `dock` `environment` `keybinds` `displays` `widgets` `workspaces` `notifications` `sound` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
 | `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
 | `network` | `status` `list` `rescan` |
+| `nightlight` | `toggle` `on` `off` `status` |
 | `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |
 | `widgets` | `add <type> <variant>` `remove <uid>` `clear` `toggle` `lock` `unlock` `list` `catalogue` `settings` `resize <uid> <w> <h>` |
 | `moji` | `toggle` `open` `close` `emoji` `kaomoji` `gif` `center` |
