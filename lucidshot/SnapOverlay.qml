@@ -57,6 +57,10 @@ PanelWindow {
     signal regionRequested(real x, real y, real w, real h)
     signal textRequested(real x, real y, real w, real h)
     signal colorPickRequested(string format)
+    // the finished recording is on disk
+    signal recordingSaved(string file)
+    // the screenshot card; the freeze waits for it to be off the screen
+    property var shotPreview: null
 
     color: "transparent"
     exclusiveZone: -1
@@ -172,10 +176,41 @@ function stopRecordingBackend() {
             "done; " +
             "rm -f " + snapWindow.recordPidFile + "; " +
             mergeCmd +
-            finalCmd + "; " +
+            finalCmd + "; OK=$?; " +
             "rm -f '" + listFile + "' " + cleanupSegs + " " + cleanupMerged + "; " +
-            "notify-send 'Recording saved' 'Saved to " + file + "'"
+            "[ $OK -eq 0 ] && printf '%s\\t%s\\n' \"$(date +%s%N)\" '" + file + "' > '" + snapWindow.savedMark + "'"
         ]);
+    }
+
+    // stopping hands the segments to ffmpeg, detached so a shell reload
+    // can't cut an encode short. the job leaves a line here when it is done,
+    // and that is when the recording counts as saved. straight in the runtime
+    // dir: a FileView can't watch for a file whose folder isn't there yet
+    readonly property string savedMark: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/lucid-recording-saved"
+
+    FileView {
+        id: savedView
+
+        // what was there before this shell started is old news
+        property string seen: ""
+        property bool primed: false
+
+        path: snapWindow.savedMark
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            const line = text().trim();
+            if (savedView.primed && line !== "" && line !== savedView.seen) {
+                const tab = line.indexOf("\t");
+                if (tab > 0)
+                    snapWindow.recordingSaved(line.substring(tab + 1));
+
+            }
+            savedView.seen = line;
+            savedView.primed = true;
+        }
+        onLoadFailed: savedView.primed = true
     }
 
     function recorderLaunchCmd(segFile) {
@@ -340,12 +375,24 @@ function stopRecordingBackend() {
             return;
         if (snapWindow.open && !snapWindow.toolbarHidden)
             return;
+        if (snapWindow.shotPreview && snapWindow.shotPreview.onScreen) {
+            snapWindow.shotPreview.hideNow();
+            clearDelay.restart();
+            return;
+        }
         // pinned to the display in use, so the freeze grim takes and the one
         // the overlay is drawn on are the same display
         if (Monitors.focusedScreen)
             snapWindow.screen = Monitors.focusedScreen;
 
         freezeProcess.running = true;
+    }
+
+    Timer {
+        id: clearDelay
+
+        interval: 80
+        onTriggered: snapWindow.beginOpen()
     }
 
     function resetToFreshSession() {

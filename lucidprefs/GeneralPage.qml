@@ -227,4 +227,57 @@ Column {
 
     }
 
+    SettingCard {
+        title: "SCREENSHOTS"
+
+        SettingRow {
+            title: "After a capture"
+            resetKey: "shotPreview"
+            description: Prefs.shotPreview === "preview" ? "A card in the corner shows it, to open, mark up, drag into an app, find in its folder or delete. Recordings get one too." : (Prefs.shotPreview === "notify" ? "A notification says where it went. Screenshots are on the clipboard either way." : "Nothing shows. Screenshots are still copied to the clipboard.")
+
+            M3Segmented {
+                width: 300
+                current: Prefs.shotPreview
+                options: [{
+                    "key": "preview",
+                    "label": "Preview"
+                }, {
+                    "key": "notify",
+                    "label": "Notification"
+                }, {
+                    "key": "none",
+                    "label": "Nothing"
+                }]
+                onChosen: (key) => {
+                    return Prefs.shotPreview = key;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Preview stays for"
+            resetKey: "shotPreviewSeconds"
+            enabled: Prefs.shotPreview === "preview"
+            description: "Resting the pointer on the card holds it for as long as you like."
+            showDivider: false
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: Prefs.shotPreview === "preview"
+                from: 3
+                to: 20
+                stepSize: 1
+                suffix: " s"
+                value: Prefs.shotPreviewSeconds
+                onMoved: (v) => {
+                    return Prefs.shotPreviewSeconds = v;
+                }
+            }
+
+        }
+
+    }
+
 }
