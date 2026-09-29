@@ -31,8 +31,9 @@ Singleton {
             return ;
         }
         if (id === "logout") {
-            // uwsm only stops a session it started; hyprland 0.56 takes lua dispatches only
-            Quickshell.execDetached(["sh", "-c", "uwsm stop 2>/dev/null || hyprctl dispatch 'hl.dsp.exit()'"]);
+            // uwsm only stops a session it started; a lua config reads a dispatch as
+            // lua, where a bare "exit" is no dispatcher, and a hyprlang one wants it bare
+            Quickshell.execDetached(["sh", "-c", "uwsm stop 2>/dev/null || hyprctl dispatch 'hl.dsp.exit()' || hyprctl dispatch exit"]);
             return ;
         }
         var cmds = {
