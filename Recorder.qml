@@ -82,7 +82,10 @@ Singleton {
             // under a second means it never really started
             if (took < 1000)
                 Quickshell.execDetached(["notify-send", "-a", "Screen recorder", "-i", "media-record", "Recording failed", "wf-recorder stopped straight away"]);
-            else
+            else if (Prefs.shotPreview === "preview")
+                // the same hand-off the overlay's recordings use, so the preview card shows it
+                Quickshell.execDetached(["sh", "-c", "printf '%s\\t%s\\n' \"$(date +%s%N)\" \"$1\" > \"$2\"", "sh", root.file, (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/lucid-recording-saved"]);
+            else if (Prefs.shotPreview === "notify")
                 Quickshell.execDetached(["notify-send", "-a", "Screen recorder", "-i", "media-record", "Recording saved", root.file.replace(Quickshell.env("HOME"), "~") + "  ·  " + root.clock(took)]);
         }
     }
