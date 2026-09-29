@@ -175,6 +175,13 @@ Scope {
             Prefs.fontPickerRequested();
         }
 
+        // qs ipc call -- settings search "night light"
+        function search(query: string): void {
+            window.active = true;
+            if (window.item)
+                window.item.search(query);
+        }
+
         function reset(): void {
             host.show("");
             Prefs.askReset("Reset every setting?", "Every setting on every page goes back to the value it ships with. Your theme, wallpaper, pinned applications and placed widgets are not touched.", Prefs.resetAllToken);

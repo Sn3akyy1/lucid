@@ -20,7 +20,7 @@ FloatingWindow {
     readonly property int railNarrow: 88
     readonly property int railWide: 268
     property bool railWanted: true
-    readonly property bool railExpanded: win.railWanted && surface.width >= 880
+    readonly property bool railExpanded: (win.railWanted && surface.width >= 880) || railSearch.focused || win.searching
     // 0 collapsed .. 1 expanded, tracked through the width animation itself so
     // everything inside the rail can interpolate rather than jump
     readonly property real railT: Math.max(0, Math.min(1, (rail.width - win.railNarrow) / (win.railWide - win.railNarrow)))
@@ -35,31 +35,23 @@ FloatingWindow {
     // grouped, and the rail draws a heading above the first page of each group.
     // a hidden page still gets a pane and a header; it just has no rail entry,
     // because something else on screen already leads to it
-    readonly property var pages: Prefs.settingsPages
+    // plus the results page, which only exists while something is typed
+    readonly property var pages: Prefs.settingsPages.concat([{
+        "key": "search",
+        "group": "",
+        "label": "Search",
+        "title": "Search",
+        "blurb": "",
+        "hidden": true
+    }])
 
-    // what the rail actually lists; a search narrows it to the pages that match
-    property string navQuery: ""
-    readonly property bool searching: win.navQuery.trim() !== ""
+    // what the rail actually lists
     readonly property var navPages: win.pages.filter((p) => {
-        return (p.hidden !== true || win.searching) && win.matchesQuery(p);
+        return p.hidden !== true;
     })
-
-    function matchesQuery(p) {
-        const q = win.navQuery.trim().toLowerCase();
-        if (q === "")
-            return true;
-
-        const hay = (p.label + " " + p.title + " " + p.blurb + " " + (p.keys || "")).toLowerCase();
-        return q.split(/\s+/).every((t) => {
-            return hay.indexOf(t) >= 0;
-        });
-    }
 
     // "" unless this page opens its group
     function groupAt(i) {
-        if (win.searching)
-            return i === 0 ? "Results" : "";
-
         const g = win.navPages[i] ? win.navPages[i].group : "";
         return i === 0 || win.navPages[i - 1].group !== g ? g : "";
     }
@@ -68,8 +60,130 @@ FloatingWindow {
         return p.key === win.page;
     })
 
+    // search: typing in the rail's field swaps the page for the results, and
+    // emptying it goes back to the page it replaced
+    readonly property string searchQuery: railSearch.text.trim()
+    readonly property bool searching: win.searchQuery !== ""
+    readonly property bool searchReady: searchIndex.rows.length > 0
+    readonly property var searchResults: win.searching ? searchIndex.find(win.searchQuery) : []
+    readonly property int searchRowCount: win.searchResults.filter((r) => {
+        return r.kind === "row";
+    }).length
+    readonly property string searchSummary: {
+        const n = win.searchRowCount;
+        if (win.searchResults.length === 0)
+            return win.searchReady ? "Nothing matches “" + win.searchQuery + "”" : "";
+
+        return n === 0 ? "Pages matching “" + win.searchQuery + "”" : (n === 1 ? "1 setting" : n + " settings") + " matching “" + win.searchQuery + "”";
+    }
+    property int searchSel: 0
+    property string searchReturn: "general"
+    // typing starts a search only when no dialog is taking the keys
+    readonly property bool dialogOpen: passwordDialog.shown || newUserDialog.shown || deleteUserDialog.shown || avatarPicker.shown || fontPicker.shown || envPicker.shown || timeZonePicker.shown || appPicker.shown || confirmDialog.shown || keybindEditor.shown || layoutPicker.shown
+
+    onSearchResultsChanged: {
+        // the first row, unless the page itself is what was asked for
+        const r = win.searchResults;
+        win.searchSel = r.length > 1 && !r[0].matched ? 1 : 0;
+    }
+    onPageChanged: {
+        if (win.page !== "search" && railSearch.text !== "")
+            railSearch.clear();
+
+    }
+
+    // reads the field itself: this runs before the bindings on it catch up
+    function searchTextChanged() {
+        if (railSearch.text.trim() !== "") {
+            searchIndex.ensure();
+            if (win.page !== "search") {
+                win.searchReturn = win.page;
+                win.page = "search";
+            }
+        } else if (win.page === "search") {
+            win.page = win.searchReturn;
+        }
+    }
+
+    function moveSearchSel(by) {
+        const n = win.searchResults.length;
+        if (n > 0)
+            win.searchSel = (win.searchSel + by + n) % n;
+
+    }
+
+    // a page opens at the top; a row opens its page scrolled to it, and flashes
+    function openResult(r) {
+        if (!r)
+            return ;
+
+        win.page = r.key;
+        focusSink.forceActiveFocus();
+        if (r.kind === "row") {
+            revealTimer.target = r;
+            revealTimer.restart();
+        }
+    }
+
+    function findRow(item, r) {
+        const kids = item.children;
+        for (let i = 0; i < kids.length; i++) {
+            const c = kids[i];
+            if (c.isGroupItem === true && c.title === r.title && c.visible && (c.group ? c.group.title === r.card : r.card === ""))
+                return c;
+
+            const deeper = win.findRow(c, r);
+            if (deeper)
+                return deeper;
+
+        }
+        return null;
+    }
+
+    function revealRow(r) {
+        const pane = panes.itemAt(win.pages.findIndex((p) => {
+            return p.key === r.key;
+        }));
+        const row = pane && pane.pageItem ? win.findRow(pane.pageItem, r) : null;
+        if (!row)
+            return ;
+
+        pane.scrollToItem(row);
+        row.flash();
+    }
+
+    // one frame for the page to load and lay out before measuring where the row is
+    Timer {
+        id: revealTimer
+
+        property var target: null
+
+        interval: 80
+        onTriggered: win.revealRow(revealTimer.target)
+    }
+
+    SettingsIndex {
+        id: searchIndex
+
+        pages: win.pages
+        fileOf: (key) => {
+            const pane = panes.itemAt(win.pages.findIndex((p) => {
+                return p.key === key;
+            }));
+            return pane ? pane.pageFile : "";
+        }
+    }
+
+    // qs ipc call -- settings search "night light"
+    function search(query) {
+        win.show("");
+        railSearch.text = query;
+        railSearch.focusInput();
+    }
+
     function show(p) {
-        if (p !== "")
+        // the results page only exists while something is typed
+        if (p !== "" && p !== "search")
             win.page = p;
 
         win.visible = true;
@@ -128,8 +242,13 @@ FloatingWindow {
 
     onVisibleChanged: {
         if (win.visible) {
-            focusSink.forceActiveFocus();
+            // opened with a search already typed (the ipc call): stay in the field
+            if (railSearch.text !== "")
+                railSearch.focusInput();
+            else
+                focusSink.forceActiveFocus();
         } else {
+            railSearch.clear();
             // otherwise a picker left open is still there on the next open
             confirmDialog.dismiss();
             fontPicker.dismiss();
@@ -419,6 +538,18 @@ FloatingWindow {
         }
         Keys.onReturnPressed: confirmDialog.confirm()
         Keys.onEnterPressed: confirmDialog.confirm()
+        Keys.onPressed: (event) => {
+            if (win.dialogOpen)
+                return ;
+
+            if (event.key === Qt.Key_F && (event.modifiers & Qt.ControlModifier)) {
+                railSearch.focusInput();
+                event.accepted = true;
+            } else if (event.text.length === 1 && event.text.charCodeAt(0) > 32 && event.text.charCodeAt(0) !== 127 && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) {
+                railSearch.focusInput(event.text);
+                event.accepted = true;
+            }
+        }
     }
 
     Item {
@@ -525,28 +656,24 @@ FloatingWindow {
                 onClicked: win.page = "users"
             }
 
-            TextField {
-                id: navSearch
+            SettingsSearch {
+                id: railSearch
 
                 x: rail.pad
                 width: rail.width - rail.pad * 2
                 anchors.top: userCard.bottom
-                anchors.topMargin: 10
-                variant: "search"
-                placeholder: "Search settings"
-                containerColor: Theme.withBlur(Theme.surfaceHigh)
-                opacity: Math.max(0, (win.railT - 0.55) / 0.45)
-                visible: opacity > 0.01
-                height: visible ? implicitHeight : 0
-                onTextEdited: win.navQuery = navSearch.text
-                onAccepted: {
-                    if (win.navPages.length > 0)
-                        win.page = win.navPages[0].key;
-
+                anchors.topMargin: 8
+                railT: win.railT
+                onTextChanged: win.searchTextChanged()
+                onMoved: (by) => {
+                    return win.moveSearchSel(by);
                 }
+                onAccepted: win.openResult(win.searchResults[win.searchSel])
                 onEscaped: {
-                    navSearch.text = "";
-                    win.navQuery = "";
+                    if (railSearch.text !== "")
+                        railSearch.clear();
+                    else
+                        focusSink.forceActiveFocus();
                 }
             }
 
@@ -556,8 +683,8 @@ FloatingWindow {
 
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.top: navSearch.visible ? navSearch.bottom : userCard.bottom
-                anchors.topMargin: 10
+                anchors.top: railSearch.bottom
+                anchors.topMargin: 6
                 anchors.bottom: railFoot.top
                 anchors.bottomMargin: 8
                 contentWidth: width
@@ -816,6 +943,8 @@ FloatingWindow {
             clip: true
 
             Repeater {
+                id: panes
+
                 model: win.pages
 
                 Flickable {
@@ -824,6 +953,20 @@ FloatingWindow {
                     required property var modelData
 
                     readonly property bool active: win.page === pane.modelData.key
+                    readonly property Item pageItem: paneLoader.item
+                    // the file, known before the page is ever opened
+                    readonly property string pageFile: paneLoader.source.toString().split("/").pop()
+
+                    // measured against where the page settles, not where its
+                    // entrance has it right now
+                    function scrollToItem(target) {
+                        const y = win.barTall + 10 + target.mapToItem(paneLoader.item, 0, 0).y;
+                        const maxY = Math.max(0, pane.contentHeight - pane.height);
+                        paneScroll.stop();
+                        paneScroll.from = pane.contentY;
+                        paneScroll.to = Math.max(0, Math.min(maxY, y - win.barShort - 40));
+                        paneScroll.start();
+                    }
 
                     anchors.fill: parent
                     contentWidth: width
@@ -971,6 +1114,8 @@ FloatingWindow {
                                 return "IdlePage.qml";
                             case "datetime":
                                 return "DateTimePage.qml";
+                            case "search":
+                                return "SearchPage.qml";
                             default:
                                 return "AboutPage.qml";
                             }
@@ -1062,7 +1207,7 @@ FloatingWindow {
 
                     Text {
                         width: parent.width
-                        text: win.current ? win.current.blurb : ""
+                        text: win.page === "search" ? win.searchSummary : (win.current ? win.current.blurb : "")
                         color: Theme.subtext
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBodyMd
