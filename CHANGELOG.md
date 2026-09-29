@@ -2,6 +2,211 @@
 
 All notable changes to Lucid are recorded here, newest first.
 
+## v1.20 — unreleased
+
+Lucid 2. Every surface is redrawn in Material You Expressive on one shared kit
+of controls, the clock grows into an app, the launcher learns new modes and the
+control centre's tiles are yours to arrange. On top of that sits a release's
+worth of new features, most of them from **Ciro Rivera**, who wrote seventeen of
+the pull requests in this one. Thank you, Ciro.
+
+<img src="assets/prev1.webp" alt="The Lucid desktop: the bar along the top, calendar, weather, clock and music widgets on the wallpaper, and the dock along the bottom">
+
+<img src="assets/prev4.webp" alt="The System panel: toggles, sliders, media, and system stats">
+
+<img src="assets/prev3.webp" alt="The Lucid settings app on the General page">
+
+### Lucid 2
+
+- **Material You Expressive, everywhere.** The bar, dock, launcher, control
+  centre, clock, widgets, OSD, toasts, lock screen and settings now share one
+  kit of controls (`lucidui/`): buttons, chips, sliders, switches, tabs, text
+  fields, list items, loading indicators and the expressive shapes. Icons are
+  Material Symbols drawn from Google's own paths, and text is set in Google Sans
+  Flex, bundled under its OFL licence.
+- **Progress waves.** Timers, the stopwatch, the media disc and the session
+  screen draw their rings the M3 Expressive way: the active arc waves, the track
+  stays still.
+- **A session screen.** SUPER+Escape opens lock, suspend, log out, restart and
+  shut down in one full-screen sheet. The three that end the session need a
+  second press within four seconds.
+- **The clock is an app.** Behind the pill: Today, with the weather and what is
+  next; a month calendar with reminders; countdown timers and a pomodoro; a
+  stopwatch with laps; and world clocks. Whatever is counting shows on the pill
+  as a chip with a ring, and the timers are shared with the Timer widget and the
+  control centre's Timer tile.
+- **Every widget is rebuilt**, and four new ones join them: Timer, At a Glance,
+  Photo and Fetch. A widget's right-click menu is a new sheet with live previews
+  of its looks.
+- **The launcher** gains a head band with its modes, the calculator's answer as
+  a card at the top of the results, and prefixes: `>win` for open windows, `?`
+  for the web, `$` to run a command in your terminal and `:` for emoji. Apps can
+  be hidden from it, and it has a page of its own in Settings.
+- **Control centre tiles are yours to arrange.** *Edit tiles* lets you drag
+  them into any order and add or remove them from a shelf of spares; the
+  sliders ease as they move.
+- **Switching wallpaper no longer stalls the desktop.** The colours are worked
+  out at low priority, one run at a time with the newest request winning, and
+  the shell crossfades its own palette alongside the picture.
+- **Window borders follow the palette**, and the starship prompt takes the
+  palette's colours without its format being replaced.
+
+### From Ciro Rivera
+
+Ciro wrote everything in this section, and a good deal of 1.10.5 besides. The
+pull requests arrived tested, explained and ready, and the shell is better in
+places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
+
+#### Settings
+
+- **Search every setting.** A field at the head of the settings rail searches
+  every row on every page, not just the page names: the results say which card
+  a row sits in, and opening one scrolls to the row and flashes it. `Ctrl+F`
+  focuses the field, typing anywhere starts a search, and
+  `qs ipc call -- settings search <words>` opens Settings with the search typed.
+  It replaces the rail's filter. By Ciro Rivera in #34.
+- **A Windows page for Hyprland.** Gaps, border width and colour (none, the
+  accent, or a gradient through the palette, which follows the theme), corners
+  and their shape, shadow, dimming; the tiling layout with each layout's own
+  options and a live preview; and focus, the cursor, resizing, snapping and
+  animations. Only what you change belongs to Lucid, it applies without a
+  reload, each row's reset hands the option back to your own config, and a file
+  of yours required after Lucid's still wins, with the row saying so. By Ciro
+  Rivera in #46.
+- **An Input page for Hyprland.** Keyboard layouts in order, picked from every
+  layout and variant the system knows; the key that switches them; what Caps
+  Lock does; key repeat and Num Lock. Mouse speed, acceleration, scrolling and
+  left-handed buttons; the touchpad's tapping, scrolling and palm rejection; and
+  how the workspace swipe feels. By Ciro Rivera in #47.
+
+#### Colours and palettes
+
+- **Templates follow every palette.** The matugen templates that carry the
+  palette into other applications (Hyprland, Zen, rofi, waybar, pywalfox and
+  your own) used to follow only the wallpaper; the fixed themes and pywal reach
+  them too now. They render one at a time, so one broken template no longer
+  breaks the others, and what happened to each is recorded, with a toast naming
+  any that failed. By Ciro Rivera in #36.
+- **A Colours page.** Matugen's scheme style (nine of them, from Tonal to
+  Monochrome), its contrast, and which of the wallpaper's dominant colours the
+  palette starts from. **Your colour** is a new theme built from a single colour,
+  typed as hex, picked off the screen or chosen from a few. Below that, every app
+  template with how its last render went, a switch for each, the apps that are
+  installed but not wired up yet, and a form for a template of your own that you
+  can try before adding. By Ciro Rivera in #38.
+- **A Palettes page.** A gallery of the 560 base16 and base24 schemes
+  tinted-theming collects, drawn in their own colours, searchable and filtered
+  by dark or light, one click to add or use. Themes import from a repo or a
+  file, light schemes are finally kept light (with a dark side worked out for
+  them), and the palette on screen can be edited live and exported as a Lucid
+  palette or base16 YAML. By Ciro Rivera in #40.
+
+#### Bar
+
+- **Arrange the bar from Settings.** *Settings → Bar → Modules* shows the bar's
+  three groups as lanes: drag a module along its lane or into another one, or
+  use the arrow keys. Each module has a card with its switch, the group it sits
+  in and a way to the rest of its settings, and a right click on a module in the
+  bar opens its card. By Ciro Rivera in #44 and #50.
+- **Three new modules**, all off until you switch them on. **Privacy** appears
+  only while something uses the microphone, the camera or the screen, says which
+  app, and can raise a toast as it starts. **Power** holds lock, suspend,
+  hibernate, log out, restart and shut down, in the order you pick, under the
+  machine's uptime. **Active window** shows the focused window and, opened,
+  floats, pins, fullscreens, moves or closes it, or switches to another window
+  on the workspace. By Ciro Rivera in #50.
+
+#### Control centre
+
+- **Night light.** hyprsunset warms the screen, fading in and out, by hand, from
+  sunset to sunrise where you are (worked out locally, with no network) or
+  between hours you set. Switching it while a schedule runs holds until the
+  schedule next changes. Add the *Night light* tile with *Edit tiles*;
+  right-click it for the warmth and the schedule. Settings → Displays and
+  `qs ipc call nightlight` reach it too. By Ciro Rivera in #53.
+- **The disk card counts LVM and LUKS volumes.** A root on LVM read as
+  *0 / 477 GB*; volumes now count toward the disk they live on, and a btrfs
+  partition with several subvolumes mounted is counted once rather than once
+  per subvolume. By Ciro Rivera in #27.
+
+#### Screenshots and recording
+
+- **A preview card after each capture**, in the corner of the display you
+  captured: click to open, drag it into any app that takes files, or copy, mark
+  up, show in its folder or delete (twice) from its buttons. Recordings get one
+  too, with their length. Settings → General → Screenshots picks the card, the
+  old notification or nothing. Screenshots also save about three times faster.
+  By Ciro Rivera in #52.
+
+#### Network, workspaces and the clipboard
+
+- **Share a Wi-Fi network as a QR code**, from its row in Settings → Network or
+  the bar's Wi-Fi panel, the way phones do it. The password shows on request and
+  copies without landing in the clipboard history. By Ciro Rivera in #51.
+- **Special workspaces** can blur what is behind them, keep a margin from the
+  screen's edges so they sit like a card, and be made by you: a name, a mark,
+  the apps it brings up and a key of its own. By Ciro Rivera in #45.
+- **The clipboard history has a preview pane**: an image at full size, text in
+  full, a colour as a large swatch. Entries are sorted into images, colours,
+  links, addresses and text, and `Ctrl+Shift+Del` twice clears the lot. By Ciro
+  Rivera in #10.
+
+#### Fixed
+
+- **The charger and low-battery toasts never fired**, and the *Preview* button
+  under Notifications → System events did nothing. By Ciro Rivera in #25.
+- **Log out did nothing on a Lua config**, from the session screen, the lock
+  screen or SUPER+M: `hyprctl dispatch exit` is not a dispatcher there. It tries
+  `hl.dsp.exit()` first now. By Ciro Rivera in #30.
+- **The bar clock's AM/PM** is the locale's own now ("P.M.", "午後"). Ciro found
+  it doubled outside English locales in #29.
+
+### Performance
+
+- **About 150 MB less memory at rest** (790 to 639 MB resident on an Iris Xe
+  laptop). The bundled font keeps only the three axes the shell varies, 4.15 MB
+  down to 569 KB; the launcher, the settings window and the emoji picker are
+  built the first time they are used rather than at start-up; and an unused
+  NVIDIA driver is no longer loaded on a machine without an NVIDIA card.
+- **The bar no longer redraws at 60 fps on an idle desktop.** Every looping
+  animation in it now stops while it cannot be seen. Thanks to
+  @theheavenlyhacker, whose measurements in #43 showed what it was costing.
+- **Hyprland no longer freezes for five seconds while a window resizes.** The
+  OSD asked Hyprland for the lock keys; it reads the keyboard's own LEDs now.
+
+### Installer
+
+- New packages: `hyprsunset` (night light), `qrencode` (Wi-Fi codes) and
+  `xdg-terminal-exec` (the launcher's `$` mode).
+- **Google Sans Flex** is installed to `~/.local/share/fonts/lucid` for the apps
+  the Environment page dresses, and beside the SDDM theme, which now draws in it
+  the way the lock screen does.
+- **Hyprland:** `modules/settings.lua` applies what the Windows and Input pages
+  set, and `modules/plugins.lua` holds plugin settings, each applying only while
+  its plugin is loaded. It ships with the tilting cursor of
+  [hypr-dynamic-cursors](https://github.com/virtcode/hypr-dynamic-cursors); the
+  installer prints the two `hyprpm` commands that add the plugin.
+- The theme scripts behind the Colours and Palettes pages go into
+  `~/.config/lucid` with the rest.
+
+### Upgrading
+
+```sh
+git pull
+./install.sh
+```
+
+- **Your bar keeps its layout.** The six module switches from 1.10.5 carry over,
+  and every module stays in the group it was in until you move it.
+- **Your keybinds are yours**: the installer only seeds `keybinds.json` when it
+  is missing, so two shipped changes need adding by hand under Settings →
+  Keybinds. SUPER+Escape opens the session screen (`qs ipc call session
+  toggle`), and SUPER+M should run
+  `command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'`.
+- **A Hyprland config of your own** gets `require("modules.settings")`
+  appended, the same way `modules.glass` is, so the Windows and Input pages can
+  apply what they set.
+
 ## v1.10.5 — 2026-09-22
 
 The shell disappeared after a restart. This release fixes that.
@@ -15,6 +220,32 @@ The shell disappeared after a restart. This release fixes that.
   Hyprland reads a command that opens with `[...]` as exec rules (as in
   `[workspace 2] kitty`), so it ran nothing, silently. It uses `test -x` now.
   Found by @ciroenrique4-eng in #28.
+
+### Contributed
+
+These came in with 1.10.5 as well, all written by Ciro Rivera
+(@ciroenrique4-eng).
+
+- **Edit Hyprland's binds from Settings.** `modules/binds.lua` reads its binds
+  from `~/.config/lucid/keybinds.json`, one entry per line, so a broken entry
+  costs that bind rather than every bind; a missing file binds a small
+  emergency set. *Settings → Keybinds* lists, searches, edits, adds, disables
+  and deletes them, and SUPER+/ shows the whole sheet over the screen. #23
+- **Toasts for what the machine does on its own**: the keyboard layout, game
+  mode, the charger and the battery, Bluetooth devices, Wi-Fi, the audio output,
+  displays and the power profile, each with a switch under Notifications →
+  System events. The toast queues them rather than letting one cut off another.
+  #21
+- **Four widgets**: Thermals (the graphics card, its fans and the power
+  profile), Network (a minute of traffic, the connection in detail, or down and
+  up), Games (your Steam library, one click from playing) and a Timer. #20
+- **The control centre** shows the keyboard layout on its compact strip (click
+  it to switch), and gains a power profile tile and a game mode tile. #19
+- **Workspaces that belong to a display**: shared as before, or one display per
+  workspace, split evenly or picked by hand, under Settings → Displays. #13
+- **Pick a display off the map**: the arrangement map shows with one display
+  too, a click scrolls to that display's settings, and *Identify* puts its
+  number, name and mode on the screen itself. #12
 
 ### Upgrading
 
