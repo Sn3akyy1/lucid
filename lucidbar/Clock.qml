@@ -332,7 +332,8 @@ BarPill {
                         role: "labelMedium"
                         weight: 600
                         color: Theme.alpha(Theme.fgAccent, 0.7)
-                        text: root.now.getHours() < 12 ? "AM" : "PM"
+                        // the locale's own meridiem ("PM", "P.M.", "午後")
+                        text: root.now.toLocaleTimeString(Qt.locale(), "AP")
                     }
 
                 }
