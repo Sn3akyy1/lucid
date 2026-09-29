@@ -25,6 +25,13 @@ Item {
         field.text = "";
     }
 
+    // text from outside, which reaches the input even while it has focus.
+    // like typing it, it is announced through edited
+    function set(value) {
+        input.text = value;
+        field.text = value;
+    }
+
     function focusInput() {
         input.forceActiveFocus();
         input.selectAll();

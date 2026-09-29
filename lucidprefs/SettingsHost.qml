@@ -91,6 +91,14 @@ Scope {
             host.show("dock");
         }
 
+        function colours(): void {
+            host.show("colours");
+        }
+
+        function palettes(): void {
+            host.show("palettes");
+        }
+
         function environment(): void {
             host.show("environment");
         }

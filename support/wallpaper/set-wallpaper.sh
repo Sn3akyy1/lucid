@@ -3,7 +3,8 @@
 #
 # sets the wallpaper, then regenerates colours if the active theme derives
 # them from the image. ~/.cache/current_theme decides:
-#   matugen  — matugen regenerates every template it is configured for
+#   matugen  — matugen works out the scheme, render-templates.sh renders every
+#              template in its config from it
 #   pywal    — wal extracts, gen-pywal-palette.py maps it to material roles
 #   anything else — a static theme owns its palette, so colours are left alone
 #
@@ -255,13 +256,39 @@ derive_colours() {
         superseded && { SKIPPED=1; return 0; }
         # --source-color-index keeps it non-interactive, so it can't hang on a
         # picker prompt it will never receive from a keybind
-        "${LOW[@]}" matugen image "$wallpaper" -m "$mode" --source-color-index 0
+        if [[ -x "$LUCID_DIR/render-templates.sh" ]]; then
+            # the scheme type, contrast and starting colour set in Settings -> Colours
+            local MATUGEN_SCHEME=scheme-tonal-spot MATUGEN_CONTRAST=0 SOURCE_INDEX=0 colours
+            if [[ -f "$LUCID_DIR/matugen-options.sh" ]]; then
+                # shellcheck source=../lucid/matugen-options.sh
+                . "$LUCID_DIR/matugen-options.sh"
+                SOURCE_INDEX=$(matugen_source_index "$wallpaper")
+            fi
+            # matugen only works out the scheme; render-templates.sh renders the
+            # templates from it one at a time, and reloads hyprland if one of them
+            # wrote its colours
+            colours=$(mktemp)
+            scheme_from() {
+                "${LOW[@]}" matugen image "$wallpaper" -m "$mode" -t "$MATUGEN_SCHEME" --contrast "$MATUGEN_CONTRAST" \
+                    --source-color-index "$1" --dry-run --json hex --include-image-in-json true -q > "$colours"
+            }
+            # an index past the colours this image has falls back to its most
+            # dominant, quietly: matugen's complaint about it is expected
+            if { [[ "$SOURCE_INDEX" != 0 ]] && scheme_from "$SOURCE_INDEX" 2>/dev/null; } || scheme_from 0; then
+                "${LOW[@]}" "$LUCID_DIR/render-templates.sh" "$colours" "$mode" matugen || true
+            else
+                echo "warning: matugen could not read $wallpaper, colours unchanged" >&2
+            fi
+            rm -f "$colours"
+        else
+            "${LOW[@]}" matugen image "$wallpaper" -m "$mode" --source-color-index 0
+            hyprctl reload &>/dev/null || true
+        fi
         # matugen writes the palette from its own templates and never reaches
         # apply-theme.sh, so this is the only place the login screen can follow it
         "${LOW[@]}" "$LUCID_DIR/sync-sddm.sh" 2>/dev/null || true
         # the prompt too: a template would own the whole file, this only its palette
         "${LOW[@]}" "$LUCID_DIR/sync-starship.sh" 2>/dev/null || true
-        hyprctl reload &>/dev/null || true
         ;;
     pywal)
         if ! command -v wal &>/dev/null; then

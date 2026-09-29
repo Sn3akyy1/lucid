@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Import a colour-scheme repo as a Lucid theme.
+"""Import a colour-scheme repo, folder or file as a Lucid theme.
 
 Scheme repos have no common format, so detection is tiered: base16/base24
 YAML and name-keyed JSON (Catppuccin and friends) are read exactly, and
@@ -8,16 +8,18 @@ chroma. The exact tiers name the roles they know - which slot is red - so
 build_palette does not have to guess them.
 
 Nothing from the repo is ever executed; only text is parsed and only images
-are copied.
+are copied. A local file or folder is read the same way, in place of a clone,
+and a palette file Lucid exported goes back in exactly as it was.
 
 Writes  ~/.config/lucid/themes/<id>/{quickshell.json,meta.json}
+        ~/.config/lucid/themes/<id>/quickshell-light.json   (a light scheme)
         ~/Pictures/wallpapers/<id>/   (empty is fine - the shell falls back)
 Prints  a JSON result for the settings UI.
 """
 import json, os, re, shutil, subprocess, sys, tempfile, argparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lucid_palette import build_palette, describe, tone, hue_sat, hx
+from lucid_palette import build_palette, dark_side, describe, read_lucid_palette, save_theme, tone, hue_sat, hx
 
 HOME = os.path.expanduser('~')
 THEME_DIR = f'{HOME}/.config/lucid/themes'
@@ -267,28 +269,47 @@ def copy_wallpapers(root, dest):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('url')
+    ap.add_argument('url', help='a git URL, or a local scheme file or folder')
     ap.add_argument('--name', default='')
     ap.add_argument('--variant', default='')
     ap.add_argument('--list', action='store_true')
+    # where it came from, for meta.json; the gallery marks what it added by it
+    ap.add_argument('--source', default='')
     a = ap.parse_args()
 
     url = a.url.strip()
-    if not re.match(r'^(https?://|git@)[\w.@:/~-]+$', url):
-        return fail('That does not look like a git URL.')
-    if not shutil.which('git'):
-        return fail('git is not installed.')
+    local = os.path.expanduser(url)
+    is_local = os.path.exists(local)
+    # a palette Lucid exported has every role already; building it again
+    # from its key colours would only lose the ones set by hand
+    own = read_lucid_palette(local) if is_local and os.path.isfile(local) else None
+    if own and not a.list:
+        meta = save_theme(THEME_DIR, a.name.strip() or own['name'] or os.path.splitext(os.path.basename(local))[0],
+                          own['palette'], own['mode'], source=a.source or os.path.abspath(local), detected='lucid')
+        print(json.dumps({'ok': True, **meta, 'wallpapers': 0, 'variants': [meta['name']]}))
+        return 0
+    if not is_local:
+        if not re.match(r'^(https?://|git@)[\w.@:/~-]+$', url):
+            return fail('That is neither a scheme file nor a git URL.')
+        if not shutil.which('git'):
+            return fail('git is not installed.')
 
     with tempfile.TemporaryDirectory() as tmp:
         clone = os.path.join(tmp, 'repo')
-        r = run(['git', 'clone', '--depth', '1', '--quiet', url, clone],
-                env={**os.environ, 'GIT_TERMINAL_PROMPT': '0'}, timeout=180)
-        if r.returncode != 0:
-            return fail('Could not clone that repo. ' + r.stderr.strip().split('\n')[-1][:160])
+        if is_local and os.path.isdir(local):
+            clone = local
+        elif is_local:
+            os.makedirs(clone)
+            shutil.copy(local, clone)
+        else:
+            r = run(['git', 'clone', '--depth', '1', '--quiet', url, clone],
+                    env={**os.environ, 'GIT_TERMINAL_PROMPT': '0'}, timeout=180)
+            if r.returncode != 0:
+                return fail('Could not clone that repo. ' + r.stderr.strip().split('\n')[-1][:160])
 
         schemes = detect(clone)
         if not schemes:
-            return fail('No colour scheme found in that repo.')
+            return fail('No colour scheme found in that ' + ('file.' if is_local and not os.path.isdir(local) else ('folder.' if is_local else 'repo.')))
 
         if a.list:
             print(json.dumps({'ok': True, 'variants': [s['name'] for s in schemes]}))
@@ -300,11 +321,20 @@ def main():
                           scheme)
 
         bg, fg, accents, hints = to_palette(scheme)
+        # a light scheme is its theme's light side, as its author made it, and
+        # the dark side is built from that: the other way round from a dark
+        # scheme, whose light side gen-light-palette.py builds. Built as a dark
+        # palette, it would sit on a light ground in dark mode, and light mode
+        # would invert it into a light palette of Lucid's own making
+        light = not is_dark(bg)
         pal = build_palette(bg, fg, accents, hints,
-                            reserve_red_for_error=(scheme['kind'] == 'harvest'))
+                            reserve_red_for_error=(scheme['kind'] == 'harvest'),
+                            mode='light' if light else 'dark')
 
         parts = re.sub(r'\.git$', '', url.rstrip('/')).replace(':', '/').split('/')
         repo_name = parts[-1]
+        if is_local and not os.path.isdir(local):
+            repo_name = os.path.splitext(repo_name)[0]
         owner = parts[-2] if len(parts) > 1 else ''
         if repo_name.lower() in GENERIC_REPO and owner:
             repo_name = owner
@@ -312,6 +342,9 @@ def main():
         label = a.name.strip() or (f'{repo_name} {sname}'
                                    if sname and sname.lower() not in repo_name.lower()
                                    else repo_name)
+        # a single file names its scheme itself; its file name only repeats it
+        if not a.name.strip() and is_local and not os.path.isdir(local) and sname:
+            label = sname
         tid = slug(label)
         base_id = tid
         n = 2
@@ -321,14 +354,21 @@ def main():
 
         os.makedirs(f'{THEME_DIR}/{tid}', exist_ok=True)
         with open(f'{THEME_DIR}/{tid}/quickshell.json', 'w') as f:
-            json.dump(pal, f, indent=2)
+            json.dump(dark_side(pal) if light else pal, f, indent=2)
+        if light:
+            # after the dark side: apply-theme.sh builds a light side again
+            # when it is older than the dark one
+            with open(f'{THEME_DIR}/{tid}/quickshell-light.json', 'w') as f:
+                json.dump(pal, f, indent=2)
 
         walls = copy_wallpapers(clone, f'{WALL_DIR}/{tid}')
 
-        meta = {'id': tid, 'name': label.title(),
+        # a name given is kept as written; one made up from a repo is title-cased
+        meta = {'id': tid, 'name': a.name.strip() or label.title(),
                 'desc': describe(pal),
                 'swatchBg': pal['surface'], 'swatchAccent': pal['primary'],
-                'source': url, 'detected': scheme['kind'], 'user': True}
+                'source': a.source or (os.path.abspath(local) if is_local else url),
+                'detected': scheme['kind'], 'user': True}
         with open(f'{THEME_DIR}/{tid}/meta.json', 'w') as f:
             json.dump(meta, f, indent=2)
 

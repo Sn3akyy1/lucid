@@ -270,6 +270,16 @@ Singleton {
     property alias wallpaperFolder: s.wallpaperFolder
     // bracket writes on the adapter are dropped, so this must go through the alias
     property alias themeOrder: s.themeOrder
+    // how matugen builds a palette, from the wallpaper or from themeColour: its
+    // scheme type, contrast from -1 to 1, and which of the wallpaper's dominant
+    // colours to start from (the index holds for matugenSourceImage only; any
+    // other wallpaper starts from its most dominant)
+    property alias matugenScheme: s.matugenScheme
+    property alias matugenContrast: s.matugenContrast
+    property alias matugenSourceImage: s.matugenSourceImage
+    property alias matugenSourceIndex: s.matugenSourceIndex
+    // the one colour the "colour" theme is built from
+    property alias themeColour: s.themeColour
     property string currentTheme: "matugen"
     readonly property string wallpaperDir: root.wallpaperDirFor(root.currentTheme)
     // "dark" | "light". kept in ~/.cache/current_mode beside current_theme
@@ -528,6 +538,8 @@ Singleton {
         { "key": "general", "icon": "tune", "keys": "style islands notches accent darkness surface tint motion animation speed font scale typography", "group": "Appearance", "label": "General", "title": "General", "blurb": "Shape, colour and motion across the whole shell" },
         { "key": "glass", "icon": "blur_on", "keys": "blur transparency opacity translucent frosted kitty terminal windows", "group": "Appearance", "label": "Glass", "title": "Glass", "blurb": "How far the desktop shows through the shell, the terminal and your windows" },
         { "key": "theme", "icon": "palette", "keys": "colour color scheme wallpaper matugen pywal catppuccin gruvbox nord dark light mode import", "group": "Appearance", "label": "Theme", "title": "Theme and Appearance", "blurb": "Colour schemes, wallpapers and themes you import" },
+        { "key": "colours", "icon": "format_color_fill", "keys": "matugen style scheme contrast your colour hex picker templates apps render variables", "group": "Appearance", "label": "Colours", "title": "Colours", "blurb": "How Matugen and Your colour build a palette, the applications that follow it, and templates of your own" },
+        { "key": "palettes", "icon": "swatchbook", "keys": "gallery schemes base16 base24 tinted import repo file editor export", "group": "Appearance", "label": "Palettes", "title": "Palettes", "blurb": "A gallery of colour schemes, and themes from a repo or a file" },
         { "key": "environment", "icon": "format_paint", "keys": "cursor icons gtk qt fonts application theme", "group": "Appearance", "label": "Environment", "title": "Environment", "blurb": "Cursors, icons, fonts and application themes, across GTK, Qt and Hyprland alike" },
         { "key": "bar", "icon": "toolbar", "keys": "status height margin spacing modules workspaces clock media tray system popup", "group": "Desktop", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
         { "key": "dock", "icon": "dock_to_bottom", "keys": "icons size magnify autohide pinned running indicators tooltips windows notch radius corners rounding padding inset", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
@@ -562,7 +574,8 @@ Singleton {
         { "id": "gruvbox", "name": "Gruvbox", "desc": "Retro groove warm palette", "swatchBg": "#282828", "swatchAccent": "#83a598" },
         { "id": "nightfox", "name": "Nightfox", "desc": "Deep navy with muted blue accents", "swatchBg": "#192330", "swatchAccent": "#719cd6" },
         { "id": "nord", "name": "Nord", "desc": "Arctic blue-grey palette", "swatchBg": "#232831", "swatchAccent": "#88c0d0" },
-        { "id": "tokyo-night", "name": "Tokyo Night", "desc": "Dark blues and violets", "swatchBg": "#1a1b26", "swatchAccent": "#7aa2f7" }
+        { "id": "tokyo-night", "name": "Tokyo Night", "desc": "Dark blues and violets", "swatchBg": "#1a1b26", "swatchAccent": "#7aa2f7" },
+        { "id": "colour", "name": "Your colour", "desc": "A palette built from one colour you pick", "swatchBg": "#14121a", "swatchAccent": root.themeColour }
     ]
     // themes imported from a scheme repo, read back from their meta.json
     property var userThemes: []
@@ -608,6 +621,11 @@ Singleton {
         "fontScale": 1,
         "wallpaperFolder": "",
         "themeOrder": "",
+        "matugenScheme": "scheme-tonal-spot",
+        "matugenContrast": 0,
+        "matugenSourceImage": "",
+        "matugenSourceIndex": 0,
+        "themeColour": "#6750a4",
         "barEnabled": true,
         "barPopupMode": false,
         "barPopupGap": 10,
@@ -1110,6 +1128,11 @@ Singleton {
             property real fontScale: 1
             property string wallpaperFolder: ""
             property string themeOrder: ""
+            property string matugenScheme: "scheme-tonal-spot"
+            property real matugenContrast: 0
+            property string matugenSourceImage: ""
+            property int matugenSourceIndex: 0
+            property string themeColour: "#6750a4"
             property bool barEnabled: true
             property bool barPopupMode: false
             property int barPopupGap: 10

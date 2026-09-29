@@ -908,6 +908,10 @@ FloatingWindow {
                                 return "GlassPage.qml";
                             case "theme":
                                 return "ThemePage.qml";
+                            case "colours":
+                                return "ColoursPage.qml";
+                            case "palettes":
+                                return "PalettesPage.qml";
                             case "environment":
                                 return "EnvironmentPage.qml";
                             case "keybinds":
