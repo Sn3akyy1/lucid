@@ -16,7 +16,7 @@ Rectangle {
     readonly property real zoom: screen.width / (preview.screenW * preview.viewFraction)
     readonly property real gapsIn: HyprConfig.num("general.gaps_in", 5)
     readonly property real gapsOut: HyprConfig.num("general.gaps_out", 20)
-    readonly property real border: HyprConfig.num("general.border_size", 2)
+    readonly property real borderSize: HyprConfig.num("general.border_size", 2)
     readonly property real rounding: HyprConfig.num("decoration.rounding", 10)
     readonly property bool shadowOn: HyprConfig.bool("decoration.shadow.enabled", false)
     readonly property real shadowRange: HyprConfig.num("decoration.shadow.range", 20)
@@ -191,7 +191,7 @@ Rectangle {
 
                 required property var modelData
                 readonly property var colours: win.modelData.active ? preview.activeColours : preview.inactiveColours
-                readonly property real b: (preview.solo ? 0 : preview.border) * preview.zoom
+                readonly property real b: (preview.solo ? 0 : preview.borderSize) * preview.zoom
                 readonly property real r: (preview.solo ? 0 : preview.rounding) * preview.zoom
 
                 x: win.modelData.x * preview.zoom

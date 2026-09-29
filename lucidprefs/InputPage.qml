@@ -70,7 +70,7 @@ Column {
         return out;
     }
 
-    function move(i, by) {
+    function moveLayout(i, by) {
         const list = page.layouts.slice();
         const j = i + by;
         if (j < 0 || j >= list.length)
@@ -195,14 +195,14 @@ Column {
                                 size: 36
                                 enabled: layoutsRow.enabled && layoutItem.index > 0
                                 iconPath: "M11 20V7.825l-5.6 5.6L4 12l8-8l8 8l-1.4 1.425l-5.6-5.6V20h-2Z"
-                                onClicked: page.move(layoutItem.index, -1)
+                                onClicked: page.moveLayout(layoutItem.index, -1)
                             }
 
                             M3IconButton {
                                 size: 36
                                 enabled: layoutsRow.enabled && layoutItem.index < page.layouts.length - 1
                                 iconPath: "M11 4v12.175l-5.6-5.6L4 12l8 8l8-8l-1.4-1.425l-5.6 5.6V4h-2Z"
-                                onClicked: page.move(layoutItem.index, 1)
+                                onClicked: page.moveLayout(layoutItem.index, 1)
                             }
 
                             M3IconButton {
