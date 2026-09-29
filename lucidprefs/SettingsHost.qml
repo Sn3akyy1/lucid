@@ -107,6 +107,10 @@ Scope {
             host.show("keybinds");
         }
 
+        function input(): void {
+            host.show("input");
+        }
+
         function displays(): void {
             host.show("displays");
         }
@@ -114,6 +118,10 @@ Scope {
         // the page is about monitors; both names reach it
         function monitors(): void {
             host.show("displays");
+        }
+
+        function windows(): void {
+            host.show("windows");
         }
 
         function widgets(): void {

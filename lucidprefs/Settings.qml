@@ -137,6 +137,7 @@ FloatingWindow {
             envPicker.dismiss();
             keybindEditor.dismiss();
             appPicker.dismiss();
+            layoutPicker.dismiss();
             avatarPicker.dismiss();
             passwordDialog.dismiss();
             newUserDialog.dismiss();
@@ -183,6 +184,8 @@ FloatingWindow {
                 Prefs.resetKeys(Prefs.monitorKeys);
             else if (action.indexOf("special-delete:") === 0)
                 Specials.remove(action.substring(15));
+            else if (action.indexOf("hypr:") === 0)
+                HyprConfig.resetKeys(action.substring(5).split(","));
             else if (action.indexOf("keybind-delete:") === 0) {
                 Keybinds.remove(action.substring(15));
                 keybindEditor.dismiss();
@@ -276,6 +279,26 @@ FloatingWindow {
         onChosen: (workspace, entryId) => {
             return Specials.addApp(workspace, entryId);
         }
+    }
+
+    LayoutPicker {
+        id: layoutPicker
+
+        z: 100
+        onChosen: (layout, variant) => {
+            return HyprConfig.setLayouts(HyprConfig.layoutList().concat([{
+                "layout": layout,
+                "variant": variant
+            }]));
+        }
+    }
+
+    Connections {
+        function onLayoutPickerRequested(taken) {
+            layoutPicker.open(taken);
+        }
+
+        target: HyprConfig
     }
 
     AvatarPicker {
@@ -385,6 +408,8 @@ FloatingWindow {
                 timeZonePicker.dismiss();
             else if (appPicker.shown)
                 appPicker.dismiss();
+            else if (layoutPicker.shown)
+                layoutPicker.dismiss();
             else if (confirmDialog.shown)
                 confirmDialog.dismiss();
             else if (keybindEditor.shown)
@@ -918,6 +943,8 @@ FloatingWindow {
                                 return "KeybindsPage.qml";
                             case "displays":
                                 return "MonitorsPage.qml";
+                            case "input":
+                                return "InputPage.qml";
                             case "bar":
                                 return "BarPage.qml";
                             case "dock":
@@ -926,6 +953,8 @@ FloatingWindow {
                                 return "LauncherPage.qml";
                             case "widgets":
                                 return "WidgetsPage.qml";
+                            case "windows":
+                                return "WindowsPage.qml";
                             case "workspaces":
                                 return "WorkspacesPage.qml";
                             case "notifications":

@@ -35,3 +35,8 @@ require("modules.binds")
 require("modules.windowrules")
 require("modules.layerrules")
 require("modules.glass")
+-------------------------------
+---- SETTINGS FROM LUCID   ----
+-------------------------------
+-- what Settings > Windows changes; anything required after this line wins
+require("modules.settings")

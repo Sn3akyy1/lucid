@@ -229,7 +229,8 @@ Singleton {
     // only has to tell it the cache has changed since. once at startup too, in
     // case it changed while the shell was down
     function syncBorders() {
-        Quickshell.execDetached(["hyprctl", "eval", "if LucidBorders then LucidBorders.apply() end"]);
+        // a border set in Settings > Windows goes back on top, so the two never race
+        Quickshell.execDetached(["hyprctl", "eval", "if LucidBorders then LucidBorders.apply() end if LucidSettings then LucidSettings.apply(true) end"]);
     }
 
     Component.onCompleted: root.syncBorders()
