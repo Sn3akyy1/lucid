@@ -215,7 +215,10 @@ Scope {
     readonly property var battery: UPower.displayDevice
     readonly property bool hasBattery: !!root.battery && root.battery.isPresent
     readonly property int batteryPct: root.hasBattery ? Math.round(root.battery.percentage * 100) : -1
-    readonly property bool onBattery: UPower.onBattery
+    // not "onBattery": next to the battery property above, QML reads that name
+    // as battery's change handler and silently drops the binding, so it stayed
+    // false and neither the charger nor the low battery toasts ever fired
+    readonly property bool unplugged: UPower.onBattery
     readonly property bool batteryFull: root.hasBattery && root.battery.state === UPowerDeviceState.FullyCharged
     property int chargerState: -1
     // the lowest threshold already warned about on this discharge
@@ -233,7 +236,7 @@ Scope {
     }
 
     function checkLow() {
-        if (!root.hasBattery || !root.onBattery)
+        if (!root.hasBattery || !root.unplugged)
             return ;
 
         const t = root.thresholdFor(root.batteryPct);
@@ -249,9 +252,9 @@ Scope {
     }
 
     onBatteryPctChanged: root.checkLow()
-    onOnBatteryChanged: chargerSettle.restart()
+    onUnpluggedChanged: chargerSettle.restart()
     onBatteryFullChanged: {
-        if (!root.batteryFull || root.fullAnnounced || root.onBattery)
+        if (!root.batteryFull || root.fullAnnounced || root.unplugged)
             return ;
 
         root.fullAnnounced = true;
@@ -266,18 +269,27 @@ Scope {
 
         interval: 800
         onTriggered: {
-            const s = root.onBattery ? 0 : 1;
+            const s = root.unplugged ? 0 : 1;
             if (!root.hasBattery || s === root.chargerState)
                 return ;
 
             root.chargerState = s;
+            // plugged in with nothing left to charge: say so, and let that stand
+            // in for the "Fully charged" toast that would follow a moment later
+            const full = s === 1 && (root.batteryFull || root.batteryPct >= 100);
             if (s === 1)
                 root.lowWarned = 101;
             else
                 root.fullAnnounced = false;
-            if (Prefs.toastOnBattery)
-                root.send("charger", s === 1 ? root.chargingPath : root.batteryPath(root.batteryPct), s === 1 ? "Charging" : "On battery", root.batteryPct + "%");
+            if (full)
+                root.fullAnnounced = true;
 
+            if (Prefs.toastOnBattery) {
+                if (s === 0)
+                    root.send("charger", root.batteryPath(root.batteryPct), "On battery", root.batteryPct + "%");
+                else
+                    root.send("charger", root.chargingPath, full ? "Plugged in" : "Charging", full ? "Fully charged" : root.batteryPct + "%");
+            }
             root.checkLow();
         }
     }
