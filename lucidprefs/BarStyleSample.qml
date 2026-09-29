@@ -48,13 +48,13 @@ Item {
     readonly property string timeText: {
         const now = Loc.now();
         if (Prefs.clock24h)
-            return now.toLocaleTimeString(Qt.locale(), Prefs.clockSeconds ? "HH:mm:ss" : "HH:mm");
+            return now.toLocaleTimeString(Qt.locale(), "HH:mm");
 
         // h only counts to 12 next to AP; the bar leaves the AM/PM out
-        const t = now.toLocaleTimeString(Qt.locale(), Prefs.clockSeconds ? "hh:mm:ss AP" : "hh:mm AP");
+        const t = now.toLocaleTimeString(Qt.locale(), "hh:mm AP");
         return t.replace(now.toLocaleTimeString(Qt.locale(), "AP"), "").trim();
     }
-    readonly property string dateText: Loc.now().toLocaleDateString(Qt.locale(), Prefs.clockDateFormat === "long" ? "ddd d MMM" : (Prefs.clockDateFormat === "numeric" ? Qt.locale().dateFormat(Locale.ShortFormat) : "ddd d"))
+    readonly property string dateText: Loc.now().toLocaleDateString(Qt.locale(), "ddd d")
 
     implicitWidth: loader.item ? loader.item.implicitWidth : 0
     implicitHeight: loader.item ? loader.item.implicitHeight : 0
@@ -225,11 +225,11 @@ Item {
             }
 
             BarText {
-                text: Prefs.mediaArtist ? "Artist  -  Song" : "Song"
+                text: "Artist  -  Song"
             }
 
             MiniPlay {
-                visible: Prefs.mediaPlayButton
+                visible: true
                 anchors.verticalCenter: parent.verticalCenter
             }
 
@@ -252,11 +252,11 @@ Item {
             }
 
             BarText {
-                text: Prefs.mediaArtist ? "Artist  -  Song" : "Song"
+                text: "Artist  -  Song"
             }
 
             MiniPlay {
-                visible: Prefs.mediaPlayButton
+                visible: true
                 anchors.verticalCenter: parent.verticalCenter
             }
 
@@ -275,7 +275,7 @@ Item {
             }
 
             MiniPlay {
-                visible: Prefs.mediaPlayButton
+                visible: true
                 anchors.verticalCenter: parent.verticalCenter
             }
 
@@ -355,7 +355,7 @@ Item {
             spacing: 6
 
             Repeater {
-                model: Math.min(Prefs.workspacesShown, 6)
+                model: 6
 
                 Rectangle {
                     required property int index
@@ -380,7 +380,7 @@ Item {
             spacing: 6
 
             Repeater {
-                model: Math.min(Prefs.workspacesShown, 6)
+                model: 6
 
                 Rectangle {
                     required property int index
@@ -539,7 +539,7 @@ Item {
     // the system module's face: volume, microphone and battery, as picked
     component MiniSystem: Row {
         property bool values: true
-        readonly property var on: String(Prefs.systemIndicators).split(",")
+        readonly property var on: ["wifi", "bluetooth", "volume", "mic", "battery"]
 
         spacing: 10
 
