@@ -138,6 +138,8 @@ PKG_FEATURES=(
     # the file chooser kde connect sends files with comes from the gtk portal.
     # librsvg renders a cursor theme again when its shadow is turned off
     gsettings-desktop-schemas qt6ct xdg-desktop-portal-gtk librsvg
+    # the launcher's $ mode runs a command in the user's terminal through this
+    xdg-terminal-exec
 )
 # invoked by the shipped Hyprland binds and the Lucid look. without these the
 # config installs fine but its keys do nothing and the prompt renders as boxes
@@ -323,6 +325,18 @@ else
         --exclude='./lucidwidgets/widgets.json' \
         . | tar -C "$SHELL_DIR" -xf -
     say "  shell files -> $SHELL_DIR"
+fi
+
+# the shell loads its bundled font itself, but the apps the environment page
+# dresses (and its font picker) only see what fontconfig knows. google sans
+# flex is the OFL release, so it may ship; the proprietary google sans may not
+if [[ -f "$SRC/assets/fonts/GoogleSansFlex.ttf" ]]; then
+    FONT_DIR="$HOME/.local/share/fonts/lucid"
+    mkdir -p "$FONT_DIR"
+    install -m644 "$SRC/assets/fonts/GoogleSansFlex.ttf" "$FONT_DIR/GoogleSansFlex.ttf"
+    install -m644 "$SRC/assets/fonts/OFL-GoogleSansFlex.txt" "$FONT_DIR/OFL-GoogleSansFlex.txt"
+    fc-cache -f "$FONT_DIR" &>/dev/null || true
+    say "  google sans flex -> $FONT_DIR"
 fi
 
 # the launcher sits outside the shell tree so autostart can reach it whether or
@@ -643,6 +657,13 @@ if [[ $WITH_HYPR -eq 1 ]]; then
             say "  keybinds -> $LUCID_DIR/keybinds.json"
         fi
 
+        # modules/plugins.lua carries the settings for Hyprland plugins; each
+        # block only applies while its plugin is loaded, so without one it is inert
+        if command -v hyprpm &>/dev/null && ! hyprpm list 2>/dev/null | grep -q 'dynamic-cursors'; then
+            say "  ${dim}for the cursor that tilts as it moves (modules/plugins.lua):${r}"
+            say "  ${dim}  hyprpm add https://github.com/virtcode/hypr-dynamic-cursors && hyprpm enable dynamic-cursors${r}"
+        fi
+
         # the binds shell out to these, so a missing one is a dead key rather
         # than a visible error. worth saying now, not after the first F-key
         for c in kitty nautilus playerctl gnome-calculator wpctl brightnessctl; do
@@ -687,7 +708,11 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     if [[ -d /usr/share/sddm/themes ]]; then
         SDDM_THEME_DIR=/usr/share/sddm/themes/lucid
         if sudo install -d -m755 "$SDDM_THEME_DIR" 2>/dev/null \
-           && sudo cp -r "$SRC/support/sddm/lucid/." "$SDDM_THEME_DIR/"; then
+           && sudo cp -r "$SRC/support/sddm/lucid/." "$SDDM_THEME_DIR/" \
+           && sudo install -Dm644 "$SRC/assets/fonts/GoogleSansFlex.ttf" "$SDDM_THEME_DIR/fonts/GoogleSansFlex.ttf" \
+           && sudo install -Dm644 "$SRC/assets/fonts/OFL-GoogleSansFlex.txt" "$SDDM_THEME_DIR/fonts/OFL-GoogleSansFlex.txt"; then
+            # the greeter runs as its own user, so the font it draws in rides
+            # along with the theme rather than in anyone's home
             # sync-sddm.sh repaints this on every theme change, and it must be
             # able to do that without asking for a password every time
             sudo chown -R "$USER" "$SDDM_THEME_DIR"

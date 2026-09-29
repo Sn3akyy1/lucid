@@ -50,7 +50,15 @@ QtObject {
     readonly property color card: root.alpha(root.bgOpaque, root.isLight ? 0.62 : 0.52)
     readonly property color cardHigh: root.alpha(root.bgHigh, root.isLight ? 0.55 : 0.45)
 
-    readonly property string fontFamily: root.conf("fontFamily", "Google Sans")
+    // the flex cut the shell bundles, installed beside the theme. "Google Sans"
+    // is what the shell called it before, and a greeter without it gets this
+    readonly property FontLoader flex: FontLoader {
+        source: Qt.resolvedUrl("../fonts/GoogleSansFlex.ttf")
+    }
+    readonly property string fontFamily: {
+        const f = root.conf("fontFamily", "Google Sans");
+        return (f === "Google Sans" && root.flex.status === FontLoader.Ready) ? root.flex.name : f;
+    }
     readonly property real fontScale: root.num("fontScale", 0.9)
     readonly property real motionScale: root.num("motionScale", 1.125)
 
