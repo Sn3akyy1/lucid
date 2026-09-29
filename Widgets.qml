@@ -278,6 +278,113 @@ Singleton {
             }]
         }]
     }, {
+        "id": "thermal",
+        "name": "Thermals",
+        "blurb": "The graphics card, the fans, and how hot it is all running.",
+        "variants": [{
+            "id": "detail",
+            "name": "Detail",
+            "blurb": "The graphics card in full, each fan, and the power profile.",
+            "w": 308,
+            "h": 236
+        }, {
+            "id": "rings",
+            "name": "Rings",
+            "blurb": "GPU heat and load, CPU heat and the fans as arc gauges.",
+            "w": 316,
+            "h": 158
+        }, {
+            "id": "compact",
+            "name": "Compact",
+            "blurb": "Two temperatures and a fan speed, in a row.",
+            "w": 236,
+            "h": 90
+        }],
+        "options": [{
+            "key": "showFans",
+            "label": "Fans",
+            "type": "bool",
+            "def": true
+        }, {
+            "key": "showControls",
+            "label": "Power profile and game mode",
+            "type": "bool",
+            "def": true,
+            "variants": ["detail"]
+        }, {
+            "key": "interval",
+            "label": "Refresh",
+            "type": "choice",
+            "def": "2",
+            "choices": [{
+                "key": "2",
+                "label": "2s"
+            }, {
+                "key": "5",
+                "label": "5s"
+            }, {
+                "key": "10",
+                "label": "10s"
+            }]
+        }]
+    }, {
+        "id": "network",
+        "name": "Network",
+        "blurb": "Which connection you are on, and what is moving over it.",
+        "variants": [{
+            "id": "graph",
+            "name": "Graph",
+            "blurb": "A minute of download and upload, drawn.",
+            "w": 308,
+            "h": 186
+        }, {
+            "id": "detail",
+            "name": "Detail",
+            "blurb": "Address, signal, VPN and whether the internet answers.",
+            "w": 292,
+            "h": 204
+        }, {
+            "id": "compact",
+            "name": "Compact",
+            "blurb": "Down and up, as two numbers.",
+            "w": 236,
+            "h": 90
+        }],
+        "options": [{
+            "key": "units",
+            "label": "Units",
+            "type": "choice",
+            "def": "bytes",
+            "choices": [{
+                "key": "bytes",
+                "label": "MB/s"
+            }, {
+                "key": "bits",
+                "label": "Mbit/s"
+            }]
+        }, {
+            "key": "showAddress",
+            "label": "Show addresses",
+            "type": "bool",
+            "def": true,
+            "variants": ["detail"]
+        }, {
+            "key": "interval",
+            "label": "Refresh",
+            "type": "choice",
+            "def": "1",
+            "choices": [{
+                "key": "1",
+                "label": "1s"
+            }, {
+                "key": "2",
+                "label": "2s"
+            }, {
+                "key": "5",
+                "label": "5s"
+            }]
+        }]
+    }, {
         "id": "battery",
         "name": "Battery",
         "blurb": "Charge, and how long it has left.",
@@ -453,6 +560,53 @@ Singleton {
             "label": "Hide when silent",
             "type": "bool",
             "def": true
+        }]
+    }, {
+        "id": "games",
+        "name": "Games",
+        "blurb": "Your installed Steam games, one click from playing.",
+        "variants": [{
+            "id": "shelf",
+            "name": "Shelf",
+            "blurb": "Covers in a row, last played first. Drag an edge to fit more.",
+            "w": 452,
+            "h": 236,
+            "resizable": true,
+            "minW": 160,
+            "minH": 190,
+            "maxW": 3840,
+            "maxH": 560
+        }, {
+            "id": "hero",
+            "name": "Last played",
+            "blurb": "The game you played last, over its artwork.",
+            "w": 364,
+            "h": 172
+        }, {
+            "id": "list",
+            "name": "List",
+            "blurb": "One row per game.",
+            "w": 300,
+            "h": 280
+        }],
+        "options": [{
+            "key": "order",
+            "label": "Order",
+            "type": "choice",
+            "def": "recent",
+            "variants": ["shelf", "list"],
+            "choices": [{
+                "key": "recent",
+                "label": "Last played"
+            }, {
+                "key": "name",
+                "label": "A–Z"
+            }]
+        }, {
+            "key": "gameModeOnLaunch",
+            "label": "Game mode on launch",
+            "type": "bool",
+            "def": false
         }]
     }, {
         "id": "weather",
@@ -1291,6 +1445,26 @@ Singleton {
             return ;
 
         opts[key] = value;
+        instances.setProperty(i, "optsJson", JSON.stringify(opts));
+        root.save();
+    }
+
+    function setOptions(uid, changes) {
+        var i = root.indexOf(uid);
+        if (i < 0)
+            return ;
+
+        var opts = JSON.parse(instances.get(i).optsJson);
+        var dirty = false;
+        for (var k in changes) {
+            if (opts[k] !== changes[k]) {
+                opts[k] = changes[k];
+                dirty = true;
+            }
+        }
+        if (!dirty)
+            return ;
+
         instances.setProperty(i, "optsJson", JSON.stringify(opts));
         root.save();
     }

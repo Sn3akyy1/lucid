@@ -57,7 +57,8 @@ Row {
         HoverHandler {
             id: hover
 
-            enabled: chip.interactive
+            // a pointer handler ignores Item.enabled unless told to
+            enabled: chip.interactive && chip.enabled
             cursorShape: Qt.PointingHandCursor
         }
 

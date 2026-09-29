@@ -211,6 +211,8 @@ Singleton {
         { "key": "keyboard", "icon": "keyboard", "name": "Keyboard" },
         { "key": "timer", "icon": "timer", "name": "Timer" },
         { "key": "session", "icon": "power_settings_new", "name": "Session" },
+        { "key": "profile", "icon": "speed", "name": "Power" },
+        { "key": "gamemode", "icon": "sports_esports", "name": "Game mode" },
         { "key": "clipboard", "icon": "content_paste", "name": "Clipboard" },
         { "key": "emoji", "icon": "mood", "name": "Emoji" },
         { "key": "wallpaper", "icon": "wallpaper", "name": "Wallpaper" },
@@ -253,7 +255,7 @@ Singleton {
     readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envCursorShadow", "envIconTheme", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
     readonly property var specialKeys: ["specialScratchpad", "specialMusic", "specialComms", "specialTodo", "specialSysmon", "specialMusicApps", "specialCommsApps", "specialTodoApps", "specialSysmonApps", "specialKeepApps", "specialHideOnSwitch", "specialDim"]
     readonly property var glassKeys: ["glassApps", "glassValues"]
-    readonly property var monitorKeys: ["monitorSetups", "monitorShellScreen", "monitorBarScreen", "monitorDockScreen"]
+    readonly property var monitorKeys: ["monitorSetups", "monitorShellScreen", "monitorBarScreen", "monitorDockScreen", "monitorWorkspaces"]
     readonly property var notifKeys: ["toastEnabled", "toastTimeout", "toastUseAppTimeout", "toastCriticalSticky", "toastShowBody", "toastShowActions", "toastBodyLines", "notifShowIcons", "notifMaxHistory", "doNotDisturb", "dndAllowCritical", "dndFullscreen", "quietHours", "quietFrom", "quietTo", "notifSound", "notifSoundName", "notifSoundVolume", "notifSoundUrgentOnly", "notifMutedApps", "notifGrouping", "notifTimestamps", "notifProgress", "notifInlineReply", "toastMaxVisible"]
 
     property alias barStyle: s.barStyle
@@ -302,6 +304,15 @@ Singleton {
     property alias barCentre: s.barCentre
     property alias barRight: s.barRight
     property alias systemTiles: s.systemTiles
+    property alias showKbLayout: s.showKbLayout
+    property alias gameModeOnCmd: s.gameModeOnCmd
+    property alias gameModeOffCmd: s.gameModeOffCmd
+    property alias gameModeStatusCmd: s.gameModeStatusCmd
+
+    readonly property string gameModeStateFile: {
+        const m = /(?:test|\[)\s+-[ef]\s+(\S+)/.exec(root.gameModeStatusCmd || "");
+        return m ? m[1].replace(/^['"]|['"]$/g, "") : "";
+    }
     property alias clock24h: s.clock24h
     property alias clockShowDate: s.clockShowDate
     property alias gpsEnabled: s.gpsEnabled
@@ -313,6 +324,14 @@ Singleton {
     property alias timeZoneAuto: s.timeZoneAuto
     property alias doNotDisturb: s.doNotDisturb
     property alias toastTimeout: s.toastTimeout
+    property alias toastOnLayout: s.toastOnLayout
+    property alias toastOnGameMode: s.toastOnGameMode
+    property alias toastOnBattery: s.toastOnBattery
+    property alias toastOnBluetooth: s.toastOnBluetooth
+    property alias toastOnWifi: s.toastOnWifi
+    property alias toastOnAudio: s.toastOnAudio
+    property alias toastOnDisplays: s.toastOnDisplays
+    property alias toastOnPower: s.toastOnPower
     property alias toastEnabled: s.toastEnabled
     property alias toastUseAppTimeout: s.toastUseAppTimeout
     property alias toastCriticalSticky: s.toastCriticalSticky
@@ -392,6 +411,7 @@ Singleton {
     // empty means the bar or dock goes wherever the shell went
     property alias monitorBarScreen: s.monitorBarScreen
     property alias monitorDockScreen: s.monitorDockScreen
+    property alias monitorWorkspaces: s.monitorWorkspaces
 
     property alias idleEnabled: s.idleEnabled
     property alias idleAutostart: s.idleAutostart
@@ -502,6 +522,7 @@ Singleton {
         { "key": "launcher", "icon": "search", "keys": "launcher search spotlight apps results width density rows chips modes prefix engine web emoji run clipboard calculator frequent recent", "group": "Desktop", "label": "Launcher", "title": "Launcher", "blurb": "The search panel the dock opens into: how wide it is, how its results read, and what it looks through" },
         { "key": "widgets", "icon": "widgets", "keys": "desktop cards clock calendar weather presets", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
         { "key": "workspaces", "icon": "workspaces", "keys": "special scratchpad music chat todo sysmon", "group": "Desktop", "label": "Workspaces", "title": "Special Workspaces", "blurb": "Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key" },
+        { "key": "keybinds", "icon": "keyboard", "keys": "shortcuts hotkeys keys bindings hyprland super binds", "group": "Desktop", "label": "Keybinds", "title": "Keybinds", "blurb": "Every Hyprland shortcut: change one, switch it off or add your own" },
         { "key": "displays", "icon": "desktop_windows", "keys": "monitor screen resolution refresh rate scale vrr arrangement", "group": "Devices", "label": "Displays", "title": "Displays", "blurb": "Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on" },
         { "key": "sound", "icon": "volume_up", "keys": "audio volume speakers microphone output input devices", "group": "Devices", "label": "Sound", "title": "Sound", "blurb": "Which speakers play and which microphone listens, what each application is using, and how loud any of it is" },
         { "key": "network", "icon": "wifi", "keys": "wifi ethernet vpn dns ip proxy internet", "group": "Devices", "label": "Network", "title": "Network", "blurb": "Wi-Fi, wired, VPN and how this machine gets its address" },
@@ -588,6 +609,10 @@ Singleton {
         "barCentre": "clock",
         "barRight": "notifications,system",
         "systemTiles": "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session",
+        "showKbLayout": true,
+        "gameModeOnCmd": "",
+        "gameModeOffCmd": "",
+        "gameModeStatusCmd": "",
         "clock24h": false,
         "clockShowDate": true,
         "gpsEnabled": false,
@@ -599,6 +624,14 @@ Singleton {
         "timeZoneAuto": true,
         "doNotDisturb": false,
         "toastTimeout": 5,
+        "toastOnLayout": true,
+        "toastOnGameMode": true,
+        "toastOnBattery": true,
+        "toastOnBluetooth": true,
+        "toastOnWifi": true,
+        "toastOnAudio": true,
+        "toastOnDisplays": true,
+        "toastOnPower": true,
         "toastEnabled": true,
         "toastUseAppTimeout": true,
         "toastCriticalSticky": true,
@@ -730,7 +763,8 @@ Singleton {
         "launcherCalculator": true,
         "launcherSettingsResults": true,
         "launcherContentScale": 1,
-        "launcherHiddenApps": ""
+        "launcherHiddenApps": "",
+        "monitorWorkspaces": "{}"
     })
 
     // what the bar module is holding right now, so the settings page can offer
@@ -1067,6 +1101,10 @@ Singleton {
             property string barCentre: "clock"
             property string barRight: "notifications,system"
             property string systemTiles: "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session"
+            property bool showKbLayout: true
+            property string gameModeOnCmd: ""
+            property string gameModeOffCmd: ""
+            property string gameModeStatusCmd: ""
             property bool clock24h: false
             property bool clockShowDate: true
             property bool gpsEnabled: false
@@ -1078,6 +1116,14 @@ Singleton {
             property bool timeZoneAuto: true
             property bool doNotDisturb: false
             property int toastTimeout: 5
+            property bool toastOnLayout: true
+            property bool toastOnGameMode: true
+            property bool toastOnBattery: true
+            property bool toastOnBluetooth: true
+            property bool toastOnWifi: true
+            property bool toastOnAudio: true
+            property bool toastOnDisplays: true
+            property bool toastOnPower: true
             property bool toastEnabled: true
             property bool toastUseAppTimeout: true
             property bool toastCriticalSticky: true
@@ -1212,6 +1258,7 @@ Singleton {
             property bool launcherSettingsResults: true
             property real launcherContentScale: 1
             property string launcherHiddenApps: ""
+            property string monitorWorkspaces: "{}"
         }
 
     }

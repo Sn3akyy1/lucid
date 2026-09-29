@@ -12,16 +12,18 @@ Item {
     // a resting fill, for the one button on a card that is the point of it
     property color baseColor: "transparent"
     property color hoverColor: Theme.text
-    property bool enabled: true
+    // this button's own state. Item.enabled stays the real, ancestor-aware
+    // one, so a disabled block can switch the whole thing off
+    property bool actionable: true
     property string tooltip: ""
-    readonly property bool hovered: hover.hovered && btn.enabled
-    readonly property bool pressed: tap.pressed && btn.enabled
+    readonly property bool hovered: hover.hovered && btn.actionable
+    readonly property bool pressed: tap.pressed && btn.actionable
 
     signal clicked()
 
     implicitWidth: Math.round(btn.diameter)
     implicitHeight: Math.round(btn.diameter)
-    opacity: btn.enabled ? 1 : 0.38
+    opacity: btn.actionable ? 1 : 0.38
     scale: btn.pressed ? 0.88 : 1
 
     Behavior on scale {
@@ -70,17 +72,26 @@ Item {
 
     }
 
+    // a disabled button still swallows its own click. letting it through would
+    // reach the surface underneath, which drops focus and wipes what was typed
+    MouseArea {
+        anchors.fill: parent
+        enabled: !btn.actionable
+        acceptedButtons: Qt.LeftButton
+    }
+
     HoverHandler {
         id: hover
 
-        enabled: btn.enabled
+        // gated on both: a pointer handler ignores Item.enabled on its own
+        enabled: btn.actionable && btn.enabled
         cursorShape: Qt.PointingHandCursor
     }
 
     TapHandler {
         id: tap
 
-        enabled: btn.enabled
+        enabled: btn.actionable && btn.enabled
         onTapped: btn.clicked()
     }
 

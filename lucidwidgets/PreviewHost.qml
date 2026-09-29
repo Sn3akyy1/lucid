@@ -43,4 +43,7 @@ QtObject {
     function setOpt(key, value) {
     }
 
+    function setOpts(changes) {
+    }
+
 }

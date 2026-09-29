@@ -135,6 +135,7 @@ FloatingWindow {
             fontPicker.dismiss();
             timeZonePicker.dismiss();
             envPicker.dismiss();
+            keybindEditor.dismiss();
             appPicker.dismiss();
             avatarPicker.dismiss();
             passwordDialog.dismiss();
@@ -180,7 +181,10 @@ FloatingWindow {
                 Prefs.resetKeys(Prefs.glassKeys);
             else if (action === Prefs.resetMonitorsToken)
                 Prefs.resetKeys(Prefs.monitorKeys);
-            else if (action.indexOf("wifi-forget:") === 0)
+            else if (action.indexOf("keybind-delete:") === 0) {
+                Keybinds.remove(action.substring(15));
+                keybindEditor.dismiss();
+            } else if (action.indexOf("wifi-forget:") === 0)
                 Net.forgetSsid(action.substring(12));
             else if (action.indexOf("net-delete:") === 0)
                 Net.forget(action.substring(11));
@@ -221,6 +225,22 @@ FloatingWindow {
         onChosen: (name) => {
             return win.applyEnvChoice(name);
         }
+    }
+
+    // under the confirm dialog, which asks before a delete from inside it
+    KeybindEditor {
+        id: keybindEditor
+
+        z: 90
+        onDismissed: focusSink.forceActiveFocus()
+    }
+
+    Connections {
+        function onEditRequested(id) {
+            keybindEditor.open(id);
+        }
+
+        target: Keybinds
     }
 
     Connections {
@@ -361,6 +381,8 @@ FloatingWindow {
                 appPicker.dismiss();
             else if (confirmDialog.shown)
                 confirmDialog.dismiss();
+            else if (keybindEditor.shown)
+                keybindEditor.dismiss();
             else
                 win.visible = false;
         }
@@ -882,6 +904,8 @@ FloatingWindow {
                                 return "ThemePage.qml";
                             case "environment":
                                 return "EnvironmentPage.qml";
+                            case "keybinds":
+                                return "KeybindsPage.qml";
                             case "displays":
                                 return "MonitorsPage.qml";
                             case "bar":

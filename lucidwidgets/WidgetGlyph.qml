@@ -1,11 +1,12 @@
 import QtQuick
+import QtQuick.Shapes
 import qs
 import qs.lucidui
 
 Item {
     id: glyph
 
-    // every path below is authored on material's 24x24 grid
+    // widget glyph names, as the material symbols they draw
     readonly property var symbols: ({
         "clock": "schedule",
         "calendar": "calendar_month",
@@ -45,9 +46,23 @@ Item {
         "bolt": "bolt",
         "drop": "water_drop",
         "wind": "air",
-        "widgets": "widgets"
+        "widgets": "widgets",
+        "thermal": "thermostat",
+        "network": "swap_vert",
+        "games": "sports_esports",
+        "fan": "mode_fan",
+        "bell": "notifications",
+        "folder": "folder",
+        "wifi": "wifi",
+        "lan": "lan",
+        "shield": "shield",
+        "down": "arrow_downward",
+        "up": "arrow_upward",
+        "flag": "flag"
     })
     property string name: "clock"
+    // raw 24x24 path data, for an icon that lives in another singleton (Power)
+    property string path: ""
     property color color: Theme.subtext
     property real size: 18
 
@@ -55,11 +70,35 @@ Item {
     implicitHeight: glyph.size
 
     Icon {
+        visible: glyph.path === ""
         anchors.centerIn: parent
         name: glyph.symbols[glyph.name] || glyph.name
         size: Math.round(glyph.size * 1.1)
         fill: 1
         color: glyph.color
+    }
+
+    // raw path data from elsewhere (Power's profile icons) draws as it comes
+    Shape {
+        visible: glyph.path !== ""
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+
+        ShapePath {
+            strokeWidth: 0
+            fillColor: glyph.color
+
+            PathSvg {
+                path: glyph.path
+            }
+
+        }
+
+        transform: Scale {
+            xScale: glyph.size / 24
+            yScale: glyph.size / 24
+        }
+
     }
 
 }

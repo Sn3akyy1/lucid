@@ -2,6 +2,40 @@
 
 All notable changes to Lucid are recorded here, newest first.
 
+## v1.10.5 — 2026-09-22
+
+The shell disappeared after a restart. This release fixes that.
+
+### Fixed
+
+- **The shell starts on login again.** After a reboot or a new login, the
+  wallpaper came back but the bar, dock and widgets did not, and re-running
+  `install.sh` was the only way to get them back. The line in
+  `modules/autostart.lua` that starts the shell opened with `[ -x … ]`, and
+  Hyprland reads a command that opens with `[...]` as exec rules (as in
+  `[workspace 2] kitty`), so it ran nothing, silently. It uses `test -x` now.
+  Found by @ciroenrique4-eng in #28.
+
+### Upgrading
+
+Pull and re-run. The installer replaces `~/.config/hypr/modules/autostart.lua`
+with the fixed one.
+
+```sh
+git pull
+./install.sh
+```
+
+If you kept your own Hyprland config when the installer asked, nothing in it
+starts Lucid. Add this to `~/.config/hypr/hyprland.lua`:
+
+```lua
+hl.on("hyprland.start", function ()
+    local launcher = os.getenv("HOME") .. "/.config/lucid/launch-shell.sh"
+    hl.exec_cmd("test -x '" .. launcher .. "' && exec '" .. launcher .. "' || exec quickshell")
+end)
+```
+
 ## v1.1.0 — 2026-09-17
 
 Everything the shell asks you for, it now asks for itself: a lock screen that
@@ -38,7 +72,12 @@ built rather than inverted.
   greeting, weather, media, notifications. Touch the keyboard and it focuses —
   the wallpaper blurs further, the clock shrinks out of the way, everything
   that is not the field steps back, and the sign-in card is all that is lit.
-  It drifts back to the glance after half a minute of quiet.
+  **What steps back also goes inert** — while the field has the screen, the
+  media card, the notifications, the power bar and the glance chips take
+  neither clicks nor hover: no pill opens, no button lights up, and a click out
+  there buys the focus back rather than pressing whatever was under the
+  pointer. It drifts back to the glance after half a
+  minute of quiet.
 - **The password field is an M3 outlined field**: a focus ring in the accent,
   beads that pop in per character, a reveal toggle, and a submit button that
   turns into a proper indeterminate spinner while PAM thinks and a tick when it
@@ -242,7 +281,10 @@ built rather than inverted.
   two-tone clock, the same palette, the same wallpaper, blurred once in advance
   so the login screen is not running a blur on a cold GPU. The user and session
   pickers take the place of the glance chips, and the weather, media and
-  notifications drop out, there being no session yet to read them from.
+  notifications drop out, there being no session yet to read them from. It
+  carries the lock's two faces too, including going inert while the field has
+  the screen: the pickers and the power bar take neither clicks nor hover until
+  a click hands the focus back.
 - It is painted from the running shell's own resolved colours, so it follows a
   theme or wallpaper change like everything else does, and repaints without
   asking for a password.

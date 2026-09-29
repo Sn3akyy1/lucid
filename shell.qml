@@ -552,6 +552,10 @@ ShellRoot {
         id: toastMod
     }
 
+    ToastEvents {
+        toast: toastMod
+    }
+
     Lock {
         id: lockMod
     }
@@ -564,8 +568,16 @@ ShellRoot {
         id: keyboardMod
     }
 
+    KeybindSheet {
+        id: keybindSheetMod
+    }
+
     SettingsHost {
         id: settingsMod
+    }
+
+    // the numbers the Displays page puts on every screen
+    DisplayIdentify {
     }
 
     Auth {
@@ -632,7 +644,7 @@ ShellRoot {
     }
 
     Instantiator {
-        model: [osdMod, toastMod, keyboardMod, polkitMod]
+        model: [osdMod, toastMod, keyboardMod, polkitMod, keybindSheetMod]
 
         Binding {
             required property var modelData

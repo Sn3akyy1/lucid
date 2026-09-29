@@ -77,6 +77,10 @@ Item {
         }
         return Theme.fgAccent;
     }
+    // every output keeps its own copy of each card, visible only on the one it
+    // belongs to. a body that polls, notifies or writes on its own should only do
+    // it from that copy, or two monitors would do everything twice
+    readonly property bool live: body.host !== null && !body.preview && body.host.onThisScreen === true
 
     function beginEdit() {
         Widgets.editUid = body.uid;
@@ -95,6 +99,13 @@ Item {
     function setOpt(key, value) {
         if (body.host)
             body.host.setOpt(key, value);
+
+    }
+
+    // several keys in one write, so bindings never see half of a change
+    function setOpts(changes) {
+        if (body.host)
+            body.host.setOpts(changes);
 
     }
 

@@ -112,7 +112,7 @@ Rectangle {
             glyphSize: 19
             glyph: "prev"
             glyphColor: Theme.subtext
-            enabled: !!media.player && media.player.canGoPrevious
+            actionable: !!media.player && media.player.canGoPrevious
             onClicked: media.player.previous()
         }
 
@@ -121,7 +121,7 @@ Rectangle {
             glyphSize: 22
             glyph: media.playing ? "pause" : "play"
             glyphColor: Theme.accent
-            enabled: !!media.player && media.player.canTogglePlaying
+            actionable: !!media.player && media.player.canTogglePlaying
             onClicked: media.player.togglePlaying()
         }
 
@@ -130,7 +130,7 @@ Rectangle {
             glyphSize: 19
             glyph: "next"
             glyphColor: Theme.subtext
-            enabled: !!media.player && media.player.canGoNext
+            actionable: !!media.player && media.player.canGoNext
             onClicked: media.player.next()
         }
 

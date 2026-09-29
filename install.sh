@@ -633,6 +633,16 @@ if [[ $WITH_HYPR -eq 1 ]]; then
             fi
         fi
 
+        # modules/binds.lua binds from this list, which Settings -> Keybinds
+        # edits. an existing one is yours and survives the refresh
+        mkdir -p "$LUCID_DIR"
+        if [[ -s "$LUCID_DIR/keybinds.json" ]]; then
+            say "  ${dim}keeping existing $LUCID_DIR/keybinds.json${r}"
+        else
+            cp "$SRC/support/hypr/keybinds.json" "$LUCID_DIR/keybinds.json"
+            say "  keybinds -> $LUCID_DIR/keybinds.json"
+        fi
+
         # the binds shell out to these, so a missing one is a dead key rather
         # than a visible error. worth saying now, not after the first F-key
         for c in kitty nautilus playerctl gnome-calculator wpctl brightnessctl; do

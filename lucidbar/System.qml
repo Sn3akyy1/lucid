@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Bluetooth
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Networking
 import Quickshell.Services.Pipewire
@@ -106,6 +107,9 @@ BarPill {
 
         if (root.view === "tiles")
             return tileEditor.implicitHeight + root.viewChrome;
+
+        if (root.view === "profile")
+            return powerPanel.implicitHeight + root.viewChrome;
 
         return mainColumn.implicitHeight + root.viewChrome;
     }
@@ -560,7 +564,10 @@ BarPill {
     compactCollapseScale: 0.94
     surfaceLayered: true
 
-    Component.onCompleted: findDeviceProc.running = true
+    Component.onCompleted: {
+        findDeviceProc.running = true;
+        root.refreshGameMode();
+    }
     onBacklightDeviceChanged: {
         if (backlightDevice !== "")
             readMaxProc.running = true;
@@ -577,6 +584,7 @@ BarPill {
     onExpandedChanged: {
         if (expanded) {
             root.tipClose();
+            root.refreshGameMode();
             statsTimer.restart();
             lsblkProc.running = true;
         } else {
@@ -872,6 +880,110 @@ BarPill {
         objects: [root.sink, root.source]
     }
 
+    // keyboard layout: the main keyboard's active xkb layout, re-read whenever
+    // hyprland reports a switch (the event only carries the long name)
+    property string kbLayout: ""
+    property string kbLayoutName: ""
+
+    Process {
+        id: kbLayoutProc
+
+        command: ["hyprctl", "devices", "-j"]
+        running: true
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const kbs = JSON.parse(this.text).keyboards || [];
+                    const kb = kbs.find((k) => {
+                        return k.main;
+                    }) || kbs[0];
+                    if (!kb)
+                        return ;
+
+                    const codes = String(kb.layout).split(",");
+                    const code = (codes[kb.active_layout_index] || codes[0] || "").trim();
+                    root.kbLayout = (code.length <= 3 ? code : code.slice(0, 2)).toUpperCase();
+                    root.kbLayoutName = kb.active_keymap || "";
+                } catch (e) {
+                }
+            }
+        }
+
+    }
+
+    Connections {
+        function onRawEvent(event) {
+            if (event.name === "activelayout")
+                kbLayoutProc.running = true;
+
+        }
+
+        target: Hyprland
+    }
+
+    Process {
+        id: kbSwitchProc
+
+        command: ["hyprctl", "switchxkblayout", "all", "next"]
+    }
+
+    // game mode: whatever the user put in Settings → Bar → Game mode, run
+    // through bash; the optional status command (exit 0 = on) keeps the tile in
+    // step with changes made elsewhere, e.g. a keybind
+    property bool gameModeOn: false
+    property bool gameModeBusy: false
+    property bool gameModeFailed: false
+    readonly property bool gameModeConfigured: Prefs.gameModeOnCmd.trim() !== "" && Prefs.gameModeOffCmd.trim() !== ""
+
+    function setGameMode(on) {
+        if (!root.gameModeConfigured || root.gameModeBusy)
+            return ;
+
+        root.gameModeFailed = false;
+        root.gameModeBusy = true;
+        root.gameModeOn = on;
+        gameModeProc.command = ["bash", "-c", on ? Prefs.gameModeOnCmd : Prefs.gameModeOffCmd];
+        gameModeProc.running = true;
+    }
+
+    function refreshGameMode() {
+        if (Prefs.gameModeStatusCmd.trim() === "" || root.gameModeBusy || gameModeStatusProc.running)
+            return ;
+
+        gameModeStatusProc.command = ["bash", "-c", Prefs.gameModeStatusCmd];
+        gameModeStatusProc.running = true;
+    }
+
+    Process {
+        id: gameModeProc
+
+        onExited: (code) => {
+            root.gameModeBusy = false;
+            if (code !== 0) {
+                root.gameModeFailed = true;
+                root.gameModeOn = !root.gameModeOn;
+            }
+            root.refreshGameMode();
+        }
+    }
+
+    Process {
+        id: gameModeStatusProc
+
+        onExited: (code) => {
+            return root.gameModeOn = code === 0;
+        }
+    }
+
+    Connections {
+        function onGameModeStatusCmdChanged() {
+            root.refreshGameMode();
+        }
+
+        target: Prefs
+    }
+
     // only bound while the picker is up, so idle devices stay untracked
     PwObjectTracker {
         objects: root.view === "output" ? root.outputNodes : []
@@ -929,6 +1041,8 @@ BarPill {
             return root.micMuted ? "mic_off" : "mic";
         case "record":
             return Capture.active ? "stop_circle" : "screen_record";
+        case "profile":
+            return Power.symbol(Power.profile);
         }
         const t = Prefs.systemTileAt(key);
         return t ? t.icon : "";
@@ -942,6 +1056,11 @@ BarPill {
             return Capture.active ? Capture.clock(Capture.seconds) : "Record";
         case "timer":
             return Chrono.headline ? Chrono.countdown(Chrono.headline.left) : "Timer";
+        case "gamemode":
+            if (root.gameModeBusy)
+                return root.gameModeOn ? "Starting" : "Stopping";
+
+            return root.gameModeFailed ? "Failed" : "Game mode";
         }
         const t = Prefs.systemTileAt(key);
         return t ? t.name : "";
@@ -967,6 +1086,10 @@ BarPill {
             return Chrono.headline !== null && Chrono.headline.running;
         case "widgets":
             return Prefs.widgetsEnabled;
+        case "gamemode":
+            return root.gameModeOn;
+        case "profile":
+            return Power.profile !== PowerProfile.Balanced;
         }
         return false;
     }
@@ -1028,6 +1151,18 @@ BarPill {
         case "session":
             root.expanded = false;
             Quickshell.execDetached(["qs", "ipc", "call", "session", "open"]);
+            break;
+        case "gamemode":
+            if (!root.gameModeConfigured) {
+                root.expanded = false;
+                Prefs.settingsRequested("bar");
+            } else {
+                root.setGameMode(!root.gameModeOn);
+            }
+            break;
+        case "profile":
+            // a tap steps to the next profile; a right click lists them all
+            Power.cycle();
             break;
         }
     }
@@ -1170,6 +1305,39 @@ BarPill {
 
             anchors.centerIn: parent
             spacing: 10
+
+            // the active keyboard layout; a click steps to the next one, the
+            // rest of the pill still opens the panel
+            Rectangle {
+                id: kbIndicator
+
+                visible: Prefs.showKbLayout && root.kbLayout !== ""
+                anchors.verticalCenter: parent.verticalCenter
+                width: kbText.implicitWidth + 10
+                height: 20
+                radius: height / 2
+                color: kbArea.containsMouse ? Theme.alpha(Theme.text, 0.1) : "transparent"
+
+                LText {
+                    id: kbText
+
+                    anchors.centerIn: parent
+                    role: "labelMedium"
+                    weight: 620
+                    text: root.kbLayout
+                    color: Theme.text
+                }
+
+                MouseArea {
+                    id: kbArea
+
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: kbSwitchProc.running = true
+                }
+
+            }
 
             Icon {
                 id: wifiIcon
@@ -1492,7 +1660,9 @@ BarPill {
                                     icon: root.tileIcon(modelData)
                                     label: root.tileLabel(modelData)
                                     checked: root.tileChecked(modelData)
+                                    hasMore: modelData === "profile"
                                     onToggled: root.tileAct(modelData)
+                                    onMore: root.showView("profile")
                                 }
 
                             }
@@ -1806,6 +1976,8 @@ BarPill {
                                 return "Power";
                             case "tiles":
                                 return "Edit tiles";
+                            case "profile":
+                                return "Power profile";
                             }
                             return "";
                         }
@@ -1858,6 +2030,8 @@ BarPill {
                             return powerList.implicitHeight;
                         case "tiles":
                             return tileEditor.implicitHeight;
+                        case "profile":
+                            return powerPanel.implicitHeight;
                         }
                         return wifiPanel.implicitHeight;
                     }
@@ -1878,6 +2052,14 @@ BarPill {
                         width: subScroll.width
                         active: root.expanded && root.view === "bluetooth"
                         visible: root.view === "bluetooth"
+                    }
+
+                    PowerPanel {
+                        id: powerPanel
+
+                        width: subScroll.width
+                        visible: root.view === "profile"
+                        gameModeOn: root.gameModeOn
                     }
 
                     Column {
@@ -2583,8 +2765,11 @@ BarPill {
         property string icon: ""
         property string label: ""
         property bool checked: false
+        // a right click asks for more than the tap does
+        property bool hasMore: false
 
         signal toggled()
+        signal more()
 
         width: root.tileW
         height: root.tileH
@@ -2616,7 +2801,13 @@ BarPill {
             StateLayer {
                 radius: sq.radius
                 tint: st.checked ? Theme.fgPrimary : Theme.text
-                onClicked: st.toggled()
+                acceptedButtons: st.hasMore ? (Qt.LeftButton | Qt.RightButton) : Qt.LeftButton
+                onClicked: (mouse) => {
+                    if (mouse.button === Qt.RightButton)
+                        st.more();
+                    else
+                        st.toggled();
+                }
             }
 
             Icon {

@@ -95,6 +95,10 @@ Scope {
             host.show("environment");
         }
 
+        function keybinds(): void {
+            host.show("keybinds");
+        }
+
         function displays(): void {
             host.show("displays");
         }

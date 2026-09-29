@@ -19,6 +19,11 @@ IpcHandler {
         return Monitors.aimSurfaceLabel("dock", where);
     }
 
+    // a number on every screen, the one its box carries on the page
+    function identify(): void {
+        Monitors.identify();
+    }
+
     function list(): string {
         return Monitors.rundown();
     }

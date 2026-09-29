@@ -19,22 +19,22 @@ your wallpaper.
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/VERSION-v1.1.0-FF7F50?style=for-the-badge&labelColor=14100E">
+  <img alt="Version" src="https://img.shields.io/badge/VERSION-v1.10.5-FF7F50?style=for-the-badge&labelColor=14100E">
   <img alt="Platform" src="https://img.shields.io/badge/PLATFORM-ARCH%20LINUX-FFAB91?style=for-the-badge&logo=archlinux&logoColor=FFAB91&labelColor=14100E">
   <img alt="Compositor" src="https://img.shields.io/badge/COMPOSITOR-HYPRLAND-80CBC4?style=for-the-badge&labelColor=14100E">
   <a href="https://quickshell.org"><img alt="Built on Quickshell" src="https://img.shields.io/badge/BUILT%20ON-QUICKSHELL-FFC46B?style=for-the-badge&labelColor=14100E"></a>
 </p>
 
-<img src="assets/prev1.webp" alt="The Lucid desktop: bar at the top, dock at the bottom">
+<img src="assets/prev1.webp" alt="The Lucid desktop: the bar along the top, calendar, weather, clock and music widgets on the wallpaper, and the dock along the bottom">
 
 </div>
 
 ---
 
-> **v1.0.5 — multiple displays, special workspaces and widget presets.** It's
-> what I use daily. Everything that landed in it, and in v1.0.0 before it, is in
-> the [changelog](CHANGELOG.md). Rough edges are still possible and bug reports
-> are welcome.
+> **v1.1.0 — lock screen, polkit, accounts and light mode.** It's what I use
+> daily. Everything that landed in it, and in every version before it, is in the
+> [changelog](CHANGELOG.md). Rough edges are still possible and bug reports are
+> welcome.
 
 > **To hear about new versions**, press **Watch → Custom → Releases** at the top
 > of this page. Lucid also checks for itself: once a day it asks GitHub for the
@@ -220,10 +220,12 @@ bar has a left, a middle and a right zone, and every module can be moved between
 them and reordered inside them, or taken out of the bar entirely.
 
 - **Workspaces** — live window previews per workspace, click to switch.
-  Scratchpads (special workspaces) sit beside the dots as a greyed stack of the
-  apps stashed in them; opening one sinks the dots and lifts the stack into the
-  accent with its name. Click an icon to jump to that window, or drag windows in
-  and out from the overview's scratchpad row
+  Scratchpads (special workspaces) sit beside the dots as a greyed chip marked
+  with a glyph for what is stashed in them — a terminal for a terminal, a note
+  for an editor, read off each app's own categories. Opening one sinks the dots,
+  fans the glyphs out and lifts them into the accent with its name. Click a
+  glyph to jump to that window, or drag windows in and out from the overview's
+  scratchpad row
 - **Media** — MPRIS controls, seek bar, art, and Shazam-style song ID (`songrec`)
 - **Tray** — SNI system tray with working context menus
 - **Clock** — the date beside the time, the time itself in a filled chip, and a
@@ -231,12 +233,17 @@ them and reordered inside them, or taken out of the bar entirely.
   and what is next, a month calendar with reminders that toast when they are
   due, countdown timers and a pomodoro, a stopwatch with laps, and world
   clocks. Whatever is counting shows in the pill as a chip with a ring
-- **Notifications** — arrival toasts, history, do-not-disturb
+- **Notifications** — grouped by application, with inline reply for chat apps
+  and progress bars for transfers. New ones stack under the bar, the newest
+  growing out of the pill itself; do-not-disturb holds them back
 - **System** — volume, brightness, battery, disk stats, plus full Wi-Fi and
-  Bluetooth panels. Two rows of tiles underneath: the toggles (silence, awake,
-  dark, airplane, location, mic) and the tools (capture, record, colour picker,
-  keyboard, timer, session). Hover any icon on the compact strip and it names
-  itself; click it and the panel opens on the page that icon belongs to
+  Bluetooth panels and a switcher for the audio output and input. Two rows of
+  tiles underneath: the toggles (silence, awake, dark, airplane, location, mic)
+  and the tools (capture, record, colour picker, keyboard, timer, session);
+  Edit tiles adds more, such as the power profile and game mode. The compact
+  strip shows the keyboard layout (click it to switch). Hover any icon there
+  and it names itself; click it and the panel opens on the page that icon
+  belongs to
 
 Two shapes, set in Settings: **island** (floating rounded pills) or **notch**
 (flush to the screen edge, with flares that blend into it).
@@ -250,8 +257,9 @@ it.
 <img src="assets/prev4.webp" alt="The System panel: toggles, sliders, media, and system stats">
 
 *The System pill opens into a control centre — Wi-Fi and Bluetooth with full
-panels behind them, brightness and volume, battery, RAM, CPU and per-disk usage,
-with notifications underneath.*
+panels behind them, quick toggles like Caffeine and Do Not Disturb, brightness
+and volume with the audio devices behind those, what is playing, and CPU, RAM,
+battery and per-disk usage.*
 
 The small tiles are yours to arrange, the way a phone's quick settings are. The
 pencil in the panel's header opens *Edit tiles*: drag a tile to move it, tap its
@@ -321,12 +329,12 @@ Cards you place on the wallpaper yourself. Open **Settings → Widgets**, click 
 tile, and it lands on the desktop; drag it anywhere, pin it so it stops moving,
 and it comes back where you left it after a reboot.
 
-<img src="assets/prev5.webp" alt="Desktop widgets on the wallpaper: calendar, weather, clock and media">
+<img src="assets/prev5.webp" alt="Clock, calendar, to-do and note widgets on a lakeside wallpaper, with the volume popup above the dock">
 
-*A month calendar, the weather, a stacked clock and the media card, with a
-full-width visualiser running under the dock.*
+*A clock, the month, a to-do list and a sticky note, with the volume popup
+showing above the dock and a visualiser running under it.*
 
-Fourteen kinds, forty-odd looks between them — every category ships several
+Eighteen kinds, sixty-one looks between them — every category ships several
 variants of the same data:
 
 | Widget | Looks |
@@ -344,7 +352,11 @@ variants of the same data:
 | At a Glance | The date and weather, and under them the one thing worth knowing now: a running timer, your next reminder, what is playing, a low battery, sunset, or rain |
 | Photo | A frame that turns over your pictures on its own — filling the card, cut to a shape, or as a print with the date under it |
 | Fetch | Your machine the way a fetch script prints it, as a card or as terminal output |
+| Thermals | The graphics card in full with each fan and the power profile, arc gauges for GPU and CPU heat and the fans, or two temperatures and a fan speed in a row |
+| Network | A minute of download and upload drawn as a graph, the connection in detail (address, signal, VPN and whether the internet answers), or down and up as two numbers |
+| Games | Your installed Steam games, one click from playing: covers on a shelf, the last one you played over its artwork, or a list |
 | Palette | The Material roles the shell is currently built from, click one to copy the hex |
+| Phone | Card, compact row, or a remote — the paired phone's battery and signal, with ring, ping, send a file and send the clipboard a click away; the remote drives whatever the phone is playing |
 
 Every widget has its own sheet — right-click it, or use the gear that appears on
 hover. It draws every style of that widget as a live thumbnail, so you pick the
@@ -381,14 +393,24 @@ scratchpad and, pressed inside a special workspace, sends it back. The
 scratchpad key also puts away whichever workspace is up, so one key always
 returns you to what you were doing.
 
-**Settings → Workspaces** picks each one's apps from what is installed, turns any
-of them off, and sets how far the screen behind dims and whether switching
-workspace puts them away. It writes `~/.config/hypr/lucid-specials.lua`, which
+**Settings → Workspaces** picks each one's apps, turns any of them off, and sets
+how far the screen behind dims and whether switching workspace puts them away.
+*Add an app* offers everything installed, not only the catalogue above, and
+works out what to match its window by. It writes `~/.config/hypr/lucid-specials.lua`, which
 `modules/specials.lua` reads on every key press, so a change applies without a
 Hyprland reload.
 
 ### Everything else
 
+- **Users and accounts** — the card at the top of the Settings rail opens a
+  *Users and Accounts* page for every account on the machine: full name,
+  username, account type, login shell, email and location, with the guards that
+  matter — the last administrator cannot demote themselves and a signed-in
+  account cannot be renamed. Set a password or have the account choose its own
+  at the next sign-in, add and remove accounts, toggle supplementary groups, and
+  pick a picture from the stock faces or any image. It all goes through
+  AccountsService, so the shell's own polkit dialog does the asking and nothing
+  runs as root
 - **Account picture history** — changing your account picture keeps the old one
   on a shelf in the picker, newest first, so any picture you have worn is a
   click away. It holds twelve or 8 MB, drops the oldest as new ones arrive,
@@ -466,8 +488,12 @@ Hyprland reload.
   its own timeout, how much of the message and how many action buttons show,
   do-not-disturb with quiet hours between two times and a rule for fullscreen
   windows, a notification sound with its own volume, how many the list keeps,
-  and per-application muting
-- **OSD** — volume and brightness overlays
+  per-application muting, and switches for grouping by application, showing how
+  long ago each arrived, progress bars, inline reply, and how many popups stack
+  at once
+- **OSD** — volume, brightness and microphone, each a badge and a level; Caps
+  Lock and Num Lock get one too, showing the letters the next keystroke will
+  make — `ABC` against `abc` — rather than the words on and off
 - **Desktop** — drag across empty desktop and a translucent accent box follows
   the cursor, the way it does on Windows and macOS; it is cosmetic and selects
   nothing. Right-click the desktop for wallpaper, theme, your placed widgets,
@@ -603,10 +629,17 @@ Hyprland reload.
   pages behind a collapsible rail, grouped-list cards, an app bar that collapses
   as you scroll, and a reset arrow on anything you have moved off its default
 
-<img src="assets/prev3.webp" alt="The Lucid settings app on the Dock page">
+<img src="assets/prev6.webp" alt="The Lucid lock screen: a large clock on the left, and the sign-in card, the song playing and notifications on the right">
 
-*Settings, with a live preview of whatever you are adjusting. Every control
-shows a reset arrow once it differs from the default.*
+*The lock screen — the clock in the wallpaper's own colour, the weather,
+battery, network and Bluetooth at a glance, what is playing, the notifications,
+and the power bar in the corner.*
+
+<img src="assets/prev3.webp" alt="The Lucid settings app on the General page">
+
+*Settings on the General page — the shape of the bar and the dock, glass, and
+how strongly the accent and the surfaces are tinted. The rail groups the pages
+into Appearance, Desktop and Devices.*
 
 ## Theming
 
@@ -617,6 +650,19 @@ launcher's Theme mode:
 **Catppuccin Mocha**, **Gruvbox**, **Nightfox**, **Nord** and **Tokyo Night**
 are fixed palettes that don't change with the wallpaper. Anything you import
 sits alongside them, and the whole list can be dragged into the order you want.
+
+Every palette has a light mode too — **Light or dark** on the Theme page.
+Matugen and Pywal re-extract the wallpaper in the mode you pick; the fixed
+palettes get a light version built from their own colours, so Nord lands on its
+own Snow Storm and Gruvbox on its own cream. Light surfaces carry a trace of the
+accent, and *Accent tint* on the General page sets how much. The mode is
+remembered beside the theme, and GTK and Qt applications follow it, switching to
+the light or dark counterpart of their theme where one is installed.
+
+<img src="assets/prev7.webp" alt="Lucid in light mode: pale green widgets, bar and dock over a night-time street">
+
+*Light mode, with the palette taken from the wallpaper. The bar, the dock and
+every widget follow it.*
 
 Whichever is active, the shell reads `~/.cache/quickshell/matugen.json` — a
 flat map of Material 3 colour roles. Changing your wallpaper through Lucid
@@ -705,10 +751,12 @@ you know what's being pulled in.
 | `songrec` | Song identification |
 | `curl` | Weather, location lookup and GIF search |
 | `polkit` | Every administrator prompt. The shell registers itself as the session's authentication agent and drives polkit's own setuid helper, so no separate agent is needed — and no other agent should be started, as only one can hold the session |
+| `accountsservice` | The Users and Accounts page. Every change goes through it, so the shell's own polkit dialog asks and nothing runs as root |
 | `libnotify` | Notification actions |
 | `swappy` | The "Open" action on a screenshot notification |
 | `hyprpicker` | The Colour mode. Without it the mode says so and picks nothing |
 | `xdg-utils` | Opening links and files from the shell |
+| `librsvg` | Turning the pointer's shadow off — the cursor theme is rendered again from its vector sources |
 | `noto-fonts-emoji` | Emoji rendering |
 
 **The Hyprland config and the look** — installed unless you pass `--no-hypr`
@@ -770,7 +818,7 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | Target | Functions |
 | --- | --- |
 | `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `clipboard` `emoji` `search <query>` `hide <id>` `unhide <id>` `hidden` |
-| `settings` | `toggle` `open` `close` `show <page>` `general` `bar` `dock` `environment` `widgets` `workspaces` `notifications` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
+| `settings` | `toggle` `open` `close` `show <page>` `general` `users` `glass` `bar` `dock` `environment` `keybinds` `displays` `widgets` `workspaces` `notifications` `sound` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
 | `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
 | `network` | `status` `list` `rescan` |
 | `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |
