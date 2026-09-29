@@ -969,7 +969,7 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | Target | Functions |
 | --- | --- |
 | `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `clipboard` `emoji` `search <query>` `hide <id>` `unhide <id>` `hidden` |
-| `settings` | `toggle` `open` `close` `show <page>` `general` `users` `glass` `bar` `dock` `colours` `palettes` `environment` `keybinds` `input` `displays` `widgets` `windows` `workspaces` `notifications` `sound` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
+| `settings` | `toggle` `open` `close` `show <page>` `general` `users` `glass` `bar` `dock` `colours` `palettes` `environment` `keybinds` `input` `displays` `widgets` `windows` `workspaces` `notifications` `sound` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `search <words>` `reset` |
 | `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
 | `network` | `status` `list` `rescan` |
 | `nightlight` | `toggle` `on` `off` `status` |
