@@ -27,7 +27,7 @@ Rectangle {
             width: icons.width + 12
             height: icons.height + 20 * bar.scaleFactor
             color: Theme.bgOpaque
-            radius: Math.min(Theme.radiusXl * bar.scaleFactor, bar.height / 2)
+            radius: Math.min(Prefs.dockRadius * bar.scaleFactor, bar.height / 2)
             bottomLeftRadius: Prefs.dockNotch ? 0 : bar.radius
             bottomRightRadius: Prefs.dockNotch ? 0 : bar.radius
 
@@ -56,8 +56,8 @@ Rectangle {
 
                         Rectangle {
                             anchors.fill: parent
-                            anchors.margins: 1
-                            radius: width * 0.24
+                            anchors.margins: Math.max(1, Prefs.dockIconInset * bar.scaleFactor)
+                            radius: Math.min(Math.max(1, (Prefs.dockItemRadius - Prefs.dockIconInset) * bar.scaleFactor), width / 2)
                             scale: Prefs.dockMagnify && parent.index === 2 ? 1.35 : 1
                             color: Theme.alpha(Theme.text, parent.index === 2 ? 0.5 : 0.28)
 

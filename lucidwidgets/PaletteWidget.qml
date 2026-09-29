@@ -40,19 +40,20 @@ WidgetBody {
         "shape": "gem"
     }]
     readonly property var tones: [95, 90, 80, 70, 60, 50, 40, 30, 20, 10]
-    // key colours walked down their tones, the way the theme builder lays them out
+    // the roles the shell actually paints with, each a step apart on the wheel
+    // but all inside the pinks
     readonly property var families: [{
         "name": "Primary",
-        "seed": Theme.cPrimary
+        "seed": Theme.primary
     }, {
         "name": "Secondary",
-        "seed": Theme.cSecondary
+        "seed": Theme.secondary
     }, {
         "name": "Tertiary",
-        "seed": Theme.cTertiary
+        "seed": Theme.tertiary
     }, {
-        "name": "Neutral",
-        "seed": Theme.withSat(Theme.cSurface, 0.22)
+        "name": "Error",
+        "seed": Theme.error
     }]
     property string copied: ""
 
@@ -221,7 +222,7 @@ WidgetBody {
 
                     required property int modelData
                     required property int index
-                    readonly property color c: Theme.atTone(Theme.cPrimary, stop.modelData)
+                    readonly property color c: Theme.tonal(Theme.primary, stop.modelData)
                     readonly property bool hot: stopTap.containsMouse
 
                     width: (parent.width - 3 * (w.tones.length - 1)) / w.tones.length
@@ -290,7 +291,10 @@ WidgetBody {
                 id: fam
 
                 required property var modelData
-                readonly property var steps: [90, 70, 50, 30, 10]
+                // the chromatic middle of the scale. run the full 90..10 and every
+                // family converges on the same near-white at the top and the same
+                // near-black at the bottom, so four hues read as one column
+                readonly property var steps: [75, 62, 50, 38, 28]
 
                 width: (scheme.width - scheme.spacing * 3) / 4
                 spacing: 2
@@ -311,7 +315,7 @@ WidgetBody {
 
                         required property int modelData
                         required property int index
-                        readonly property color c: Theme.atTone(fam.modelData.seed, chip.modelData)
+                        readonly property color c: Theme.tonal(fam.modelData.seed, chip.modelData)
 
                         width: fam.width
                         height: (scheme.height - 18 - 8) / 5

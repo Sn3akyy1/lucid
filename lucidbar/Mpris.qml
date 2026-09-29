@@ -419,7 +419,7 @@ BarPill {
         root.cancelListening();
     }
 
-    shown: Prefs.showMedia
+    shown: Prefs.barHas("media")
     compactWidth: compactRow.implicitWidth + 20
     panelWidth: Math.min(400, root.screenW - 34)
     panelHeight: 28 + (root.page === "player" ? playerColumn.implicitHeight : shazamColumn.implicitHeight)

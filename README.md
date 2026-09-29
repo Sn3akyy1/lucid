@@ -215,8 +215,9 @@ on argument-free calls, so using it everywhere saves you the surprise.
 
 ### Bar
 
-Six modules, each a pill that expands into a panel. Every one can be turned
-off in Settings.
+Six modules, each a pill that expands into a panel. Settings lays them out: the
+bar has a left, a middle and a right zone, and every module can be moved between
+them and reordered inside them, or taken out of the bar entirely.
 
 - **Workspaces** — live window previews per workspace, click to switch.
   Scratchpads (special workspaces) sit beside the dots as a greyed stack of the
@@ -225,7 +226,8 @@ off in Settings.
   and out from the overview's scratchpad row
 - **Media** — MPRIS controls, seek bar, art, and Shazam-style song ID (`songrec`)
 - **Tray** — SNI system tray with working context menus
-- **Clock** — a five-page clock app behind the time: the day with the weather
+- **Clock** — the date beside the time, the time itself in a filled chip, and a
+  five-page clock app behind them: the day with the weather
   and what is next, a month calendar with reminders that toast when they are
   due, countdown timers and a pomodoro, a stopwatch with laps, and world
   clocks. Whatever is counting shows in the pill as a chip with a ring
@@ -234,10 +236,16 @@ off in Settings.
   Bluetooth panels. Two rows of tiles underneath: the toggles (silence, awake,
   dark, airplane, location, mic) and the tools (capture, record, colour picker,
   keyboard, timer, session). Hover any icon on the compact strip and it names
-  itself
+  itself; click it and the panel opens on the page that icon belongs to
 
 Two shapes, set in Settings: **island** (floating rounded pills) or **notch**
 (flush to the screen edge, with flares that blend into it).
+
+Drag a module by its handle to move it within a zone or into another one, or
+down into *Not in the bar* to take it out; the arrows and buttons beside it do
+the same thing. Also in Settings: how close the middle may come to either side
+before it gives way, and a button that puts every module back where Lucid ships
+it.
 
 <img src="assets/prev4.webp" alt="The System panel: toggles, sliders, media, and system stats">
 
@@ -245,14 +253,22 @@ Two shapes, set in Settings: **island** (floating rounded pills) or **notch**
 panels behind them, brightness and volume, battery, RAM, CPU and per-disk usage,
 with notifications underneath.*
 
+The small tiles are yours to arrange, the way a phone's quick settings are. The
+pencil in the panel's header opens *Edit tiles*: drag a tile to move it, tap its
+− or drag it below the line to take it out, and tap anything under *Tap to add*
+to put it in. Clipboard, Emoji, Wallpaper, Theme, Widgets and Clear wait there
+to begin with, and Reset brings back the set Lucid ships.
+
 ### Dock and launcher
 
 A floating M3 toolbar that grows into the launcher rather than opening a
 second window over it. Pinned apps, running-window indicators, drag to
 reorder, optional magnification and auto-hide.
 
-The launcher is one search field over eight modes, each with a prefix you can
-type (or a chip you can click):
+The launcher opens with a head that carries the Lucida mark, the modes as one
+row of pills, and what the results add up to. It is one search field over eight
+modes, each reachable by a pill, by `Ctrl` and its number, by `Tab`, or by a
+prefix you can type:
 
 | Mode | Prefix | What it does |
 | --- | --- | --- |
@@ -265,21 +281,34 @@ type (or a chip you can click):
 | Wallpaper | `>wallpaper` | Carousel of your wallpaper folder |
 | Clipboard | `>clip` | What you copied earlier, images included — pick one to put it back on the clipboard |
 
-Type `=` in the search field for a calculator (`=2^3^2`, right-associative).
+Type a sum in the search field for a calculator (`2^3^2`, right-associative).
+The answer takes a card above the results, set in display type; Return copies it.
 
-The **Power** chip, and the Power row in the command palette, hand over to the
+Applications with a window already open carry the dock's own running mark
+beside their name, and the selected row says what Return will do with it. A
+search that finds nothing offers the four prefixes as chips you can click.
+
+The application list follows the desktop-entry spec properly: `~/.local/share/
+applications` overrides `/usr/share/applications` entry for entry, so an
+override marked `NoDisplay` really does hide the system copy, and `OnlyShowIn` /
+`NotShowIn` are honoured against `XDG_CURRENT_DESKTOP`. Whatever is left that
+you still do not want, hover it and press the eye on the right of the row — the
+Launcher settings page lists everything you hid and brings any of it back.
+Hidden applications still launch from the dock and still name their windows.
+
+The **Power** pill, and the Power row in the command palette, hand over to the
 full-screen session screen — the same one `SUPER` + `Esc` raises.
 
 Searching apps ends with a **web search** row, so one field covers "open it"
-and "look it up". It is a switch on the Dock settings page, along with the
+and "look it up". It is a switch on the Launcher settings page, along with the
 search engine — DuckDuckGo, Google, Brave, Startpage or Kagi.
 
 Clipboard mode keeps what you copy and hands it back: pick an entry to put it
 back on the clipboard, `Delete` (or the button on the row) to drop one, and
-*Clear history* on the Dock settings page to drop the lot. Images are kept too
-and preview in the row. `cliphist` is the store; the shell owns the `wl-paste`
-watchers that feed it, so history records for as long as the shell is running.
-Turn the whole thing off with the switch on the Dock page.
+*Clear history* on the Launcher settings page to drop the lot. Images are kept
+too and preview in the row. `cliphist` is the store; the shell owns the
+`wl-paste` watchers that feed it, so history records for as long as the shell
+is running. Turn the whole thing off with the switch on the Launcher page.
 
 <img src="assets/prev2.webp" alt="The wallpaper carousel inside the launcher">
 
@@ -594,6 +623,15 @@ flat map of Material 3 colour roles. Changing your wallpaper through Lucid
 runs `~/.config/hypr/scripts/wallpaper/set-wallpaper.sh`, which sets the
 wallpaper and then regenerates that file if the active theme is wallpaper-derived.
 
+Hyprland's window borders follow it as well. `modules/decorations.lua` reads the
+same file, primary for the focused window and surface container for the rest,
+and the shell re-applies it every time the palette changes, light mode included.
+
+So does the starship prompt, without Lucid owning it: only the `[palettes.colors]`
+table in `~/.config/starship.toml` is repainted, so a prompt you have designed
+yourself keeps its shape. Point its styles at `color1` to `color9` (the comment
+above that table says which colour each one carries) and they follow every theme.
+
 Every display gets the same picture, cropped to fill. To treat one differently —
 a portrait screen that should letterbox rather than crop, or a second screen
 with a picture of its own — put a rule in `~/.config/lucid/wallpaper-outputs.conf`,
@@ -662,7 +700,7 @@ you know what's being pulled in.
 | `tesseract`, `tesseract-data-eng` | The Text mode's OCR. Without them Text mode says so and copies nothing. Add `tesseract-data-<lang>` and set `ocrLang` in `lucidshot/Screenshot.qml` for another language |
 | `python-pillow`, `python-numpy`, `python-fonttools` | Emoji in copied text. Without them the text still copies, minus the emoji. The glyph atlas is built once and cached in `~/.cache/lucidshot-ocr`; `lucidshot/emoji-ocr.py --atlas` builds it up front so the first copy is not slow |
 | `wl-clipboard`, `wtype` | Emoji and GIF pasting |
-| `cliphist` | Clipboard history. Without it the launcher's Clipboard mode says so and the Dock page's switch is greyed out |
+| `cliphist` | Clipboard history. Without it the launcher's Clipboard mode says so and the Launcher page's switch is greyed out |
 | `cava` | Audio visualisers — the media panel's strip (its config is installed to `~/.config/cava/quickshell.conf`; the strip needs that file's raw-ascii output settings) and the desktop widget, which writes its own `~/.cache/quickshell/lucid-cava.conf` at whatever band count the widest card asks for |
 | `songrec` | Song identification |
 | `curl` | Weather, location lookup and GIF search |
@@ -731,7 +769,7 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 
 | Target | Functions |
 | --- | --- |
-| `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `clipboard` `emoji` `search <query>` |
+| `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `clipboard` `emoji` `search <query>` `hide <id>` `unhide <id>` `hidden` |
 | `settings` | `toggle` `open` `close` `show <page>` `general` `bar` `dock` `environment` `widgets` `workspaces` `notifications` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `reset` |
 | `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
 | `network` | `status` `list` `rescan` |

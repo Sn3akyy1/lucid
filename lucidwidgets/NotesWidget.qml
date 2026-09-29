@@ -156,7 +156,7 @@ WidgetBody {
             verticalAlignment: w.headline ? TextEdit.AlignVCenter : TextEdit.AlignTop
             selectByMouse: true
             selectionColor: w.inkAccent
-            selectedTextColor: w.onInkAccent
+            selectedTextColor: w.fgInkAccent
             persistentSelection: true
             onTextChanged: {
                 if (editor.text !== w.stored)

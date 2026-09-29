@@ -88,12 +88,12 @@ Item {
             id: timeCol
 
             anchors.centerIn: parent
-            anchors.verticalCenterOffset: 12
-            spacing: -18
+            anchors.verticalCenterOffset: 2
+            spacing: -16
 
             LText {
                 anchors.horizontalCenter: parent.horizontalCenter
-                size: Theme.fs(84)
+                size: Theme.fs(74)
                 weight: 620
                 rounded: 100
                 color: Theme.fgPrimaryContainer
@@ -104,12 +104,28 @@ Item {
             }
 
             LText {
+                id: minuteText
+
                 anchors.horizontalCenter: parent.horizontalCenter
-                size: Theme.fs(84)
+                size: Theme.fs(74)
                 weight: 620
                 rounded: 100
                 color: Theme.primary
                 text: String(page.now.getMinutes()).padStart(2, "0")
+
+                // a third line under the stack, anchored so the column keeps its axis
+                LText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: parent.bottom
+                    anchors.topMargin: -16
+                    size: Theme.fs(26)
+                    weight: 620
+                    rounded: 100
+                    tabular: true
+                    color: Theme.alpha(Theme.fgPrimaryContainer, 0.55)
+                    text: String(page.now.getSeconds()).padStart(2, "0")
+                }
+
             }
 
         }

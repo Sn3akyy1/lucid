@@ -754,7 +754,7 @@ Item {
         }
     }
     Component.onCompleted: root.syncWindowModel()
-    readonly property bool shown: Prefs.showWorkspaces
+    readonly property bool shown: Prefs.barHas("workspaces")
     property bool showTransition: false
 
     onShownChanged: {
@@ -1022,6 +1022,7 @@ Item {
 
             MouseArea {
                 anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
                 acceptedButtons: Qt.MiddleButton
                 onClicked: root.expanded = !root.expanded
             }

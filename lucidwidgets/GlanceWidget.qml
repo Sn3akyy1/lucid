@@ -42,7 +42,7 @@ WidgetBody {
             "text": h.label + " · " + Chrono.countdown(h.left)
         };
 
-        Agenda.tick;
+        Agenda.minuteKey;
         var next = Agenda.upcoming(1);
         if (next.length && next[0].at - w.now < 12 * 3600000) {
             var mins = Math.round((next[0].at - w.now) / 60000);

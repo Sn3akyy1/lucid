@@ -50,9 +50,13 @@ ShellRoot {
     PanelWindow {
         id: bar
 
+        PaletteFade {
+            active: bar.visible
+        }
+
         visible: Prefs.loaded && Prefs.barEnabled && Monitors.surfacesUp
         property bool laidOut: false
-        readonly property bool anyModuleShown: bar.leftGroupWidth + clockMod.width + bar.rightGroupWidth > 0.5
+        readonly property bool anyModuleShown: bar.leftGroupWidth + bar.centreGroupWidth + bar.rightGroupWidth > 0.5
         function placeGroup(widths, originX) {
             const gap = Prefs.barSpacing;
             const out = [];
@@ -71,14 +75,127 @@ ShellRoot {
         }
 
         property real wsCollapse: (workspacesMod.expanded && !Prefs.barPopupMode) ? 0 : 1
-        readonly property var leftWidths: [workspacesMod.width * bar.wsCollapse, mprisMod.width, sysTrayMod.width]
-        readonly property var rightWidths: [notifMod.width, systemMod.width]
+
+        // the six modules are addressed by key; the three zone lists in Prefs
+        // decide which slot each one lands in
+        readonly property var pillFor: ({
+            "workspaces": workspacesMod,
+            "media": mprisMod,
+            "tray": sysTrayMod,
+            "clock": clockMod,
+            "notifications": notifMod,
+            "system": systemMod
+        })
         readonly property var modules: [workspacesMod, mprisMod, sysTrayMod, clockMod, notifMod, systemMod]
+
+        // a module on its way out of the bar keeps the slot it had until its
+        // pill has finished emptying, so its neighbours close the gap at the
+        // rate it shrinks rather than dropping into it
+        function zoneKeys(zone) {
+            const live = Prefs.barKeysOf(zone);
+            const r = Prefs.barRetiring;
+            if (!r || r.zone !== zone || Prefs.barHas(r.key))
+                return live;
+
+            const out = live.slice();
+            out.splice(Math.min(r.at, out.length), 0, r.key);
+            return out;
+        }
+
+        readonly property var retiring: Prefs.barRetiring
+
+        onRetiringChanged: {
+            if (bar.retiring)
+                retireTimer.restart();
+
+        }
+
+        Timer {
+            id: retireTimer
+
+            interval: Theme.barMs(560)
+            onTriggered: Prefs.barClearRetiring()
+        }
+
+        // key -> which zone it sits in and how far along
+        readonly property var placeMap: {
+            const out = ({});
+            for (var z = 0; z < Prefs.barZones.length; z++) {
+                const zone = Prefs.barZones[z];
+                const keys = bar.zoneKeys(zone);
+                for (var i = 0; i < keys.length; i++) out[keys[i]] = ({ "zone": zone, "at": i })
+            }
+            return out;
+        }
+
+        // workspaces empties its slot as it flies to the screen centre, so the
+        // rest of its zone closes up behind it
+        function widthOf(key) {
+            const it = bar.pillFor[key];
+            if (!it)
+                return 0;
+
+            return it === workspacesMod ? it.width * bar.wsCollapse : it.width;
+        }
+
+        function widthsOf(zone) {
+            return bar.zoneKeys(zone).map(bar.widthOf);
+        }
+
+        function placesOf(zone) {
+            return zone === "left" ? bar.leftPlaces : (zone === "centre" ? bar.centrePlaces : bar.rightPlaces);
+        }
+
+        function alignFor(zone) {
+            return zone === "centre" ? "center" : (zone === "right" ? "right" : "left");
+        }
+
+        function placeFor(key) {
+            const at = bar.placeMap[key];
+            if (!at)
+                return 0;
+
+            const places = bar.placesOf(at.zone);
+            return at.at < places.length ? places[at.at] : 0;
+        }
+
+        function alignOf(key) {
+            const at = bar.placeMap[key];
+            return bar.alignFor(at ? at.zone : "left");
+        }
+
+        readonly property var leftWidths: bar.widthsOf("left")
+        readonly property var centreWidths: bar.widthsOf("centre")
+        readonly property var rightWidths: bar.widthsOf("right")
         readonly property real leftGroupWidth: bar.placeGroup(bar.leftWidths, 0)[bar.leftWidths.length]
+        readonly property real centreGroupWidth: bar.placeGroup(bar.centreWidths, 0)[bar.centreWidths.length]
         readonly property real rightGroupWidth: bar.placeGroup(bar.rightWidths, 0)[bar.rightWidths.length]
+        readonly property int zoneGap: Prefs.barZoneGap
+
+        // pills ease to their new slots only while the arrangement is changing.
+        // a Behavior left on all the time would sit on top of the width
+        // animations a panel opening or a tray icon arriving already drive, and
+        // one that restarts every frame never arrives
+        readonly property int reorderTick: Prefs.barReorderTick
+        property bool shuffling: false
+
+        onReorderTickChanged: {
+            bar.shuffling = true;
+            shuffleTimer.restart();
+        }
+
+        Timer {
+            id: shuffleTimer
+
+            interval: Theme.barMs(520)
+            onTriggered: bar.shuffling = false
+        }
+
         readonly property real leftOriginX: bar.sideMargin
         readonly property real rightOriginX: bar.width - bar.rightGroupWidth - bar.sideMargin
+        readonly property real centreOriginX: Math.min(Math.max((bar.width - bar.centreGroupWidth) / 2, bar.leftOriginX + bar.leftGroupWidth + bar.zoneGap), bar.rightOriginX - bar.centreGroupWidth - bar.zoneGap)
         readonly property var leftPlaces: bar.placeGroup(bar.leftWidths, bar.leftOriginX)
+        readonly property var centrePlaces: bar.placeGroup(bar.centreWidths, bar.centreOriginX)
         readonly property var rightPlaces: bar.placeGroup(bar.rightWidths, bar.rightOriginX)
 
         Behavior on wsCollapse {
@@ -117,58 +234,111 @@ ShellRoot {
         Mpris {
             id: mprisMod
 
-            popupAlign: "left"
+            popupAlign: bar.alignOf("media")
 
             hostWindow: bar
-            x: bar.leftPlaces[1]
+            x: bar.placeFor("media")
             anchors.top: parent.top
+
+            Behavior on x {
+                enabled: bar.laidOut && bar.shuffling
+
+                NumberAnimation {
+                    duration: Theme.barDurEnter
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.easeEmphasizedDecel
+                }
+
+            }
 
         }
 
         SysTray {
             id: sysTrayMod
 
-            popupAlign: "left"
+            popupAlign: bar.alignOf("tray")
 
             hostWindow: bar
-            x: bar.leftPlaces[2]
+            x: bar.placeFor("tray")
             anchors.top: parent.top
+
+            Behavior on x {
+                enabled: bar.laidOut && bar.shuffling
+
+                NumberAnimation {
+                    duration: Theme.barDurEnter
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.easeEmphasizedDecel
+                }
+
+            }
 
         }
 
         Clock {
             id: clockMod
 
-            popupAlign: "center"
-
-            readonly property int sideGap: 28
+            popupAlign: bar.alignOf("clock")
 
             hostWindow: bar
             anchors.top: parent.top
-            x: Math.min(Math.max((parent.width - width) / 2, bar.sideMargin + bar.leftGroupWidth + sideGap), bar.width - bar.rightGroupWidth - bar.sideMargin - width - sideGap)
+            x: bar.placeFor("clock")
+
+            Behavior on x {
+                enabled: bar.laidOut && bar.shuffling
+
+                NumberAnimation {
+                    duration: Theme.barDurEnter
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.easeEmphasizedDecel
+                }
+
+            }
 
         }
 
         Notifications {
             id: notifMod
 
-            popupAlign: "right"
+            popupAlign: bar.alignOf("notifications")
 
             hostWindow: bar
-            x: bar.rightPlaces[0]
+            x: bar.placeFor("notifications")
             anchors.top: parent.top
+
+            Behavior on x {
+                enabled: bar.laidOut && bar.shuffling
+
+                NumberAnimation {
+                    duration: Theme.barDurEnter
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.easeEmphasizedDecel
+                }
+
+            }
 
         }
 
         System {
             id: systemMod
 
-            popupAlign: "right"
+            popupAlign: bar.alignOf("system")
 
             hostWindow: bar
             mprisMod: mprisMod
-            x: bar.rightPlaces[1]
+            x: bar.placeFor("system")
             anchors.top: parent.top
+
+            Behavior on x {
+                enabled: bar.laidOut && bar.shuffling
+
+                NumberAnimation {
+                    duration: Theme.barDurEnter
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.easeEmphasizedDecel
+                }
+
+            }
 
         }
 
@@ -277,8 +447,19 @@ ShellRoot {
 
             hostWindow: bar
             dockMod: dock
-            restX: bar.leftPlaces[0]
+            restX: bar.placeFor("workspaces")
             restY: 0
+
+            Behavior on restX {
+                enabled: bar.laidOut && bar.shuffling
+
+                NumberAnimation {
+                    duration: Theme.barDurEnter
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.easeEmphasizedDecel
+                }
+
+            }
 
         }
 

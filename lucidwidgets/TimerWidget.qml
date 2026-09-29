@@ -71,14 +71,14 @@ WidgetBody {
             name: fab.icon
             size: fab.d * 0.46
             fill: 1
-            color: fab.quiet ? w.ink : w.onInkAccent
+            color: fab.quiet ? w.ink : w.fgInkAccent
         }
 
         StateLayer {
             id: fabTap
 
             radius: parent.radius
-            tint: fab.quiet ? w.ink : w.onInkAccent
+            tint: fab.quiet ? w.ink : w.fgInkAccent
             onClicked: fab.tapped()
         }
 

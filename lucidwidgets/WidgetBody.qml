@@ -107,7 +107,7 @@ Item {
     property color fill: body.toneFill
     property color ink: body.toneInk
     property color inkAccent: body.toneInkAccent
-    property color onInkAccent: body.toneOnInkAccent
+    property color fgInkAccent: body.toneOnInkAccent
     property bool ownInk: false
     readonly property color inkDim: body.tonal || body.ownInk ? Theme.alpha(body.ink, 0.78) : Theme.subtext
     readonly property color inkFaint: body.tonal || body.ownInk ? Theme.alpha(body.ink, 0.56) : Theme.subtextDim

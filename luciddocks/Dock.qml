@@ -1,13 +1,17 @@
 import QtQuick
-import QtQuick.Shapes
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import qs
+import qs.lucidprefs as LP
 
 PanelWindow {
     id: dockWindow
+
+    PaletteFade {
+        active: dockWindow.visible
+    }
 
     property bool morphing: false
     property bool closingFromHidden: false
@@ -59,11 +63,6 @@ PanelWindow {
     // the launcher face is ~64mb of delegates and nothing shows it until the
     // menu opens, so it is built on the first open and then kept
     property bool launcherBuilt: false
-    // mirrors LauncherFace's own chrome; owned here so the geometry bindings
-    // below do not have to read a face that may not exist yet
-    readonly property int launcherSearchH: 46
-    readonly property int launcherChipsH: 32
-    readonly property int launcherChrome: dockWindow.launcherSearchH + dockWindow.launcherChipsH + 22
 
     // every write to the search field goes through here, so the face is built
     // before anything tries to set text on it
@@ -180,6 +179,41 @@ PanelWindow {
     }
 
     onClientsDataChanged: dockWindow.syncRunningApps()
+
+    // every one of these changes the rows or their measured height, and the
+    // height is cached rather than bound
+    Connections {
+        target: Prefs
+
+        function onLauncherDensityChanged() {
+            dockWindow.rebuildResults();
+        }
+
+        function onLauncherContentScaleChanged() {
+            dockWindow.rebuildResults();
+        }
+
+        function onLauncherFrequentFirstChanged() {
+            dockWindow.rebuildResults();
+        }
+
+        function onLauncherCalculatorChanged() {
+            dockWindow.rebuildResults();
+        }
+
+        function onLauncherSettingsResultsChanged() {
+            dockWindow.rebuildResults();
+        }
+
+        function onLauncherWebRowChanged() {
+            dockWindow.rebuildResults();
+        }
+
+        function onLauncherHiddenAppsChanged() {
+            dockWindow.rebuildResults();
+        }
+
+    }
 
     readonly property string rawQuery: launcherLoader.item ? launcherLoader.item.searchText : ""
 
@@ -352,8 +386,6 @@ PanelWindow {
     property real dragHeadroom: 220
 
     readonly property int menuMaxHeight: 610
-    // the command palette is a short fixed list, so it caps tighter than the app launcher
-    readonly property int commandMaxHeight: 500
     // how much of the panel is chrome, not results
     readonly property int panelPadding: 36
     readonly property int wallCardCount: 5
@@ -373,22 +405,23 @@ PanelWindow {
 
         // the list plus its preview pane
         if (dockWindow.mode === "clipboard")
-            return Math.min(780, dockWindow.maxDockWidth - 48);
+            return Math.min(Math.round(Prefs.launcherPanelWidth * 1.4), dockWindow.maxDockWidth - 48);
 
-        return 460;
+        return Math.min(Prefs.launcherPanelWidth, dockWindow.maxDockWidth - 48);
     }
     property real resultsHeight: 0
-    readonly property real menuContentMax: (dockWindow.mode === "commands" ? dockWindow.commandMaxHeight : dockWindow.menuMaxHeight) - dockWindow.panelPadding - dockWindow.launcherChrome
+    property int resultCount: 0
+    readonly property real menuContentMax: dockWindow.menuMaxHeight - dockWindow.panelPadding - Prefs.launcherChromeH
     readonly property real menuHeight: {
         var content;
         if (dockWindow.mode === "wallpaper")
             content = dockWindow.wallHeroH + 70;
         // fixed, so deleting entries doesn't shrink the preview under the cursor
         else if (dockWindow.mode === "clipboard")
-            content = Math.min(dockWindow.menuContentMax, 420);
+            content = dockWindow.menuContentMax;
         else
             content = Math.max(70, Math.min(dockWindow.resultsHeight, dockWindow.menuContentMax));
-        return Math.round(dockWindow.panelPadding + dockWindow.launcherChrome + content);
+        return Math.round(dockWindow.panelPadding + Prefs.launcherChromeH + content);
     }
 
     readonly property var classIndex: {
@@ -460,26 +493,6 @@ PanelWindow {
         return ids;
     }
 
-    function arcPath(cx, cy, r, a0, a1) {
-        var t0 = a0 * Math.PI / 180, t1 = a1 * Math.PI / 180;
-        var large = Math.abs(a1 - a0) > 180 ? 1 : 0;
-        var sweep = a1 > a0 ? 0 : 1;
-        return "M" + (cx + r * Math.cos(t0)).toFixed(2) + "," + (cy - r * Math.sin(t0)).toFixed(2) + " A" + r + "," + r + " 0 " + large + " " + sweep + " " + (cx + r * Math.cos(t1)).toFixed(2) + "," + (cy - r * Math.sin(t1)).toFixed(2);
-    }
-
-    function sparklePath(x, y, s) {
-        var k = s * 0.3, j = s * 0.13;
-        return "M" + x + "," + (y - s) + " C" + (x + j) + "," + (y - k) + " " + (x + k) + "," + (y - j) + " " + (x + s) + "," + y + " C" + (x + k) + "," + (y + j) + " " + (x + j) + "," + (y + k) + " " + x + "," + (y + s) + " C" + (x - j) + "," + (y + k) + " " + (x - k) + "," + (y + j) + " " + (x - s) + "," + y + " C" + (x - k) + "," + (y - j) + " " + (x - j) + "," + (y - k) + " " + x + "," + (y - s) + " Z";
-    }
-
-    function circlePath(cx, cy, r) {
-        return "M" + (cx - r) + "," + cy + " A" + r + "," + r + " 0 1 0 " + (cx + r) + "," + cy + " A" + r + "," + r + " 0 1 0 " + (cx - r) + "," + cy + " Z";
-    }
-
-    readonly property string lucidaRing: dockWindow.arcPath(12, 12, 7.4, 58, 340)
-    readonly property string lucidaStar: dockWindow.sparklePath(12, 12, 4.6)
-    readonly property string lucidaCompanion: dockWindow.circlePath(21, 9.4, 1)
-
     function makeRow(kind, key, title, subtitle, opts) {
         opts = opts || {};
         return {
@@ -489,10 +502,12 @@ PanelWindow {
             "subtitle": subtitle,
             "iconName": opts.iconName || "",
             "glyph": opts.glyph || "",
+            "emoji": opts.emoji || "",
             "swatchBg": opts.swatchBg || "",
             "swatchAccent": opts.swatchAccent || "",
             "trailing": opts.trailing || "",
             "thumb": opts.thumb || "",
+            "running": opts.running === true,
             "disabled": opts.disabled === true,
             "selectable": opts.selectable !== false,
             "payload": opts.payload || ""
@@ -538,6 +553,9 @@ PanelWindow {
         var scored = [];
         for (var i = 0; i < dockWindow.scannedApps.length; i++) {
             var app = dockWindow.scannedApps[i];
+            if (Prefs.isLauncherHidden(app.base))
+                continue;
+
             var score = q !== "" ? dockWindow.matchScore(app, q) : 0;
             if (q !== "" && score < 0)
                 continue;
@@ -585,10 +603,30 @@ PanelWindow {
         return out;
     }
 
+    // the names of every application with a window open, so a result can carry
+    // the dock's own running mark
+    readonly property var runningAppNames: {
+        var out = {};
+        for (var i = 0; i < dockWindow.clientsData.length; i++) {
+            var entry = dockWindow.entryForClass(dockWindow.clientsData[i].class);
+            if (entry)
+                out[entry.name] = true;
+
+        }
+        return out;
+    }
+
+    onRunningAppNamesChanged: {
+        if (dockWindow.menuOpen)
+            dockWindow.rebuildResults();
+
+    }
+
     function rowForApp(app) {
         return dockWindow.makeRow("app", "app-" + app.name, app.name, "", {
             "iconName": app.iconName,
-            "payload": app.command
+            "payload": app.command,
+            "running": dockWindow.runningAppNames[app.name] === true
         });
     }
 
@@ -620,7 +658,8 @@ PanelWindow {
             }))
                 continue;
 
-            out.push(dockWindow.makeRow("emoji", "emoji-" + i, em.e + "   " + em.n, "", {
+            out.push(dockWindow.makeRow("emoji", "emoji-" + i, em.n, "", {
+                "emoji": em.e,
                 "payload": em.e
             }));
         }
@@ -633,9 +672,9 @@ PanelWindow {
         var rows = [];
         var q = dockWindow.queryFor(raw).toLowerCase();
         if (mode === "apps") {
-            var calc = DockCalc.evaluate(dockWindow.queryFor(raw));
+            var calc = Prefs.launcherCalculator ? DockCalc.evaluate(dockWindow.queryFor(raw)) : "";
             if (calc !== "")
-                rows.push(dockWindow.makeRow("calc", "calc", "= " + calc, "Press Return to copy", {
+                rows.push(dockWindow.makeRow("calc", "calc", calc, dockWindow.queryFor(raw), {
                     "glyph": DockIcons.equals,
                     "payload": calc
                 }));
@@ -645,10 +684,24 @@ PanelWindow {
                 var rest = scored.slice().sort(function(a, b) {
                     return a.app.name.toLowerCase() < b.app.name.toLowerCase() ? -1 : 1;
                 });
+                var often = Prefs.launcherFrequentFirst ? scored.filter(function(x) {
+                    return x.uses > 0;
+                }).sort(function(a, b) {
+                    return b.uses - a.uses;
+                }).slice(0, 5) : [];
+                // one frequent app ahead of a full alphabet is not worth the break
+                if (often.length < 2)
+                    often = [];
+
+                if (often.length > 0) {
+                    rows.push(dockWindow.headerRow("Frequent"));
+                    for (var f = 0; f < often.length; f++) rows.push(dockWindow.rowForApp(often[f].app));
+                    rows.push(dockWindow.headerRow("All apps"));
+                }
                 for (var r = 0; r < rest.length; r++) rows.push(dockWindow.rowForApp(rest[r].app));
             } else {
                 for (var s2 = 0; s2 < scored.length; s2++) rows.push(dockWindow.rowForApp(scored[s2].app));
-                var pages = dockWindow.settingRows(q, 3);
+                var pages = Prefs.launcherSettingsResults ? dockWindow.settingRows(q, 3) : [];
                 if (pages.length > 0) {
                     rows.push(dockWindow.headerRow("Settings"));
                     rows = rows.concat(pages);
@@ -669,7 +722,7 @@ PanelWindow {
 
             }
             if (q !== "") {
-                var found = dockWindow.settingRows(q, 6);
+                var found = Prefs.launcherSettingsResults ? dockWindow.settingRows(q, 6) : [];
                 if (found.length > 0) {
                     rows.push(dockWindow.headerRow("Settings"));
                     rows = rows.concat(found);
@@ -762,21 +815,52 @@ PanelWindow {
             resultsModel.remove(rows.length, resultsModel.count - rows.length);
 
         dockWindow.resultsHeight = dockWindow.measure(rows);
+        var pickable = 0;
+        for (var n = 0; n < rows.length; n++) {
+            if (rows[n].selectable)
+                pickable++;
+
+        }
+        dockWindow.resultCount = pickable;
         if (launcherLoader.item)
             launcherLoader.item.resultsChanged();
     }
 
+    // must agree with LauncherList.rowHeight()
     function measure(rows) {
         if (rows.length === 0)
             return 0;
 
-        // the loop adds one spacing too many; 8 is the view's bottom margin
-        var h = 8 - 2;
+        // the loop adds one gap too many; the pad is the view's bottom margin
+        var gap = Prefs.launcherRowGap;
+        var h = Prefs.launcherListPad - gap;
         for (var i = 0; i < rows.length; i++) {
-            h += rows[i].kind === "header" ? 34 : (rows[i].subtitle !== "" ? 58 : 50);
-            h += 2;
+            if (rows[i].kind === "header")
+                h += Prefs.launcherRowHeader;
+            else if (rows[i].kind === "calc")
+                h += Prefs.launcherRowCalc;
+            else
+                h += rows[i].subtitle !== "" ? Prefs.launcherRowTwo : Prefs.launcherRowOne;
+            h += gap;
         }
         return h;
+    }
+
+    function hideResult(index) {
+        var row = resultsModel.get(index);
+        if (!row || row.kind !== "app")
+            return ;
+
+        var app = null;
+        for (var i = 0; i < dockWindow.scannedApps.length; i++) {
+            if (dockWindow.scannedApps[i].name === row.title) {
+                app = dockWindow.scannedApps[i];
+                break;
+            }
+        }
+        if (app)
+            Prefs.setLauncherHidden(app.base, true);
+
     }
 
     function activateResult(index) {
@@ -1287,6 +1371,28 @@ PanelWindow {
             dockWindow.menuOpen = false;
         }
 
+        // the hidden-applications list, by desktop file id, for scripting the
+        // same thing the row's button and the settings page do
+        function hide(id: string): string {
+            if (id === "")
+                return "usage: hide <desktop-file-id>";
+
+            Prefs.setLauncherHidden(id, true);
+            return "hidden: " + id;
+        }
+
+        function unhide(id: string): string {
+            if (id === "")
+                return "usage: unhide <desktop-file-id>";
+
+            Prefs.setLauncherHidden(id, false);
+            return "shown: " + id;
+        }
+
+        function hidden(): string {
+            return Prefs.hiddenLauncherApps.join("\n");
+        }
+
         function wallpaper(): void {
             dockWindow.openLauncher(">wallpaper");
         }
@@ -1580,7 +1686,7 @@ PanelWindow {
     Process {
         id: appScanner
 
-        command: ["sh", "-c", "for d in /usr/share/applications \"$HOME/.local/share/applications\" " + "/var/lib/flatpak/exports/share/applications \"$HOME/.local/share/flatpak/exports/share/applications\" " + "/var/lib/snapd/desktop/applications; do " + "[ -d \"$d\" ] && find \"$d\" -maxdepth 1 -name '*.desktop' -print0; " + "done | xargs -0 -r awk '" + "function clean(v) { gsub(/\\|/, \" \", v); gsub(/\\r/, \"\", v); return v } " + "function flush(   n, e) { " + "n = clean(name); e = clean(ex); " + "if (nodisp || hidden) return; " + "if (type != \"\" && type != \"Application\") return; " + "if (n == \"\" || e == \"\") return; " + "gsub(/ ?%[a-zA-Z]/, \"\", e); sub(/[ \\t]+$/, \"\", e); " + "if (term == \"true\") e = \"kitty -e \" e; " + "print n \"|\" clean(icon) \"|\" clean(kw \" \" gen \" \" com \" \" cats) \"|\" e \"|\" clean(wm) \"|\" base } " + "BEGINFILE { name=\"\"; icon=\"\"; ex=\"\"; kw=\"\"; gen=\"\"; com=\"\"; cats=\"\"; wm=\"\"; type=\"\"; term=\"\"; nodisp=0; hidden=0; insec=0; " + "base=FILENAME; sub(/.*\\//, \"\", base); sub(/\\.desktop$/, \"\", base) } " + "/^[ \\t]*\\[/ { insec = ($0 ~ /^\\[Desktop Entry\\]/) ? 1 : 0; next } " + "!insec { next } " + "/^Name=/ { if (name == \"\") name = substr($0, 6) } " + "/^Icon=/ { if (icon == \"\") icon = substr($0, 6) } " + "/^Exec=/ { if (ex == \"\") ex = substr($0, 6) } " + "/^Keywords=/ { if (kw == \"\") { kw = substr($0, 10); gsub(/;/, \" \", kw) } } " + "/^GenericName=/ { if (gen == \"\") gen = substr($0, 13) } " + "/^Comment=/ { if (com == \"\") com = substr($0, 9) } " + "/^Categories=/ { if (cats == \"\") { cats = substr($0, 12); gsub(/;/, \" \", cats) } } " + "/^StartupWMClass=/ { if (wm == \"\") wm = substr($0, 16) } " + "/^Type=/ { if (type == \"\") type = substr($0, 6) } " + "/^Terminal=/ { if (term == \"\") term = substr($0, 10) } " + "/^NoDisplay=true/ { nodisp = 1 } " + "/^Hidden=true/ { hidden = 1 } " + "ENDFILE { flush() }'"]
+        command: ["sh", "-c", "for d in \"$HOME/.local/share/applications\" \"$HOME/.local/share/flatpak/exports/share/applications\" /var/lib/flatpak/exports/share/applications /usr/local/share/applications /usr/share/applications /var/lib/snapd/desktop/applications; do [ -d \"$d\" ] && find \"$d\" -maxdepth 1 -name '*.desktop' -print0; done | awk -v RS='\\0' -F/ '!seen[$NF]++ { printf \"%s%c\", $0, 0 }' | xargs -0 -r awk -v de=\"${XDG_CURRENT_DESKTOP:-Hyprland}\" 'function clean(v) { gsub(/\\|/, \" \", v); gsub(/\\r/, \"\", v); return v } function inde(l,   i, j, n, m, a, b) { n = split(l, a, \";\"); m = split(de, b, \":\"); for (i = 1; i <= n; i++) { if (a[i] == \"\") continue; for (j = 1; j <= m; j++) if (a[i] == b[j]) return 1 } return 0 } function flush(   n, e) { n = clean(name); e = clean(ex); if (nodisp || hidden) return; if (type != \"\" && type != \"Application\") return; if (only != \"\" && !inde(only)) return; if (notin != \"\" && inde(notin)) return; if (n == \"\" || e == \"\") return; gsub(/ ?%[a-zA-Z]/, \"\", e); sub(/[ \\t]+$/, \"\", e); if (term == \"true\") e = \"kitty -e \" e; print n \"|\" clean(icon) \"|\" clean(kw \" \" gen \" \" com \" \" cats) \"|\" e \"|\" clean(wm) \"|\" base } BEGINFILE { name=\"\"; icon=\"\"; ex=\"\"; kw=\"\"; gen=\"\"; com=\"\"; cats=\"\"; wm=\"\"; type=\"\"; term=\"\"; only=\"\"; notin=\"\"; nodisp=0; hidden=0; insec=0; base=FILENAME; sub(/.*\\//, \"\", base); sub(/\\.desktop$/, \"\", base) } /^[ \\t]*\\[/ { insec = ($0 ~ /^\\[Desktop Entry\\]/) ? 1 : 0; next } !insec { next } /^Name=/ { if (name == \"\") name = substr($0, 6) } /^Icon=/ { if (icon == \"\") icon = substr($0, 6) } /^Exec=/ { if (ex == \"\") ex = substr($0, 6) } /^Keywords=/ { if (kw == \"\") { kw = substr($0, 10); gsub(/;/, \" \", kw) } } /^GenericName=/ { if (gen == \"\") gen = substr($0, 13) } /^Comment=/ { if (com == \"\") com = substr($0, 9) } /^Categories=/ { if (cats == \"\") { cats = substr($0, 12); gsub(/;/, \" \", cats) } } /^StartupWMClass=/ { if (wm == \"\") wm = substr($0, 16) } /^Type=/ { if (type == \"\") type = substr($0, 6) } /^Terminal=/ { if (term == \"\") term = substr($0, 10) } /^OnlyShowIn=/ { if (only == \"\") only = substr($0, 12) } /^NotShowIn=/ { if (notin == \"\") notin = substr($0, 11) } /^NoDisplay=true/ { nodisp = 1 } /^Hidden=true/ { hidden = 1 } ENDFILE { flush() }'"]
 
         stdout: StdioCollector {
             onStreamFinished: {
@@ -1616,6 +1722,9 @@ PanelWindow {
                     });
                 }
                 dockWindow.scannedApps = arr;
+                var names = {};
+                for (var n = 0; n < arr.length; n++) names[arr[n].base] = arr[n].name
+                Prefs.launcherAppNames = names;
                 dockWindow.rebuildResults();
                 dockWindow.syncRunningApps();
             }
@@ -1880,7 +1989,7 @@ PanelWindow {
         implicitHeight: dockWindow.iconSlot + 20
         width: dockWindow.menuOpen ? dockWindow.menuWidth : shell.implicitWidth
         height: dockWindow.menuOpen ? dockWindow.menuHeight : shell.implicitHeight
-        radius: Math.min(Theme.radiusXl, Math.round(shell.height / 2))
+        radius: Math.min(Prefs.dockRadius, Math.round(shell.height / 2))
         color: Theme.bg
         // corners meeting the screen edge square off in notch mode
         bottomLeftRadius: dockWindow.renderAsNotch ? 0 : shell.radius
@@ -2000,46 +2109,7 @@ PanelWindow {
                     pointerInside: dockWindow.pointerOnDock
                     toggleActive: dockWindow.menuOpen
                     iconContent: Component {
-                        Shape {
-                            preferredRendererType: Shape.CurveRenderer
-
-                            ShapePath {
-                                strokeColor: Theme.accent
-                                strokeWidth: 3
-                                fillColor: "transparent"
-                                capStyle: ShapePath.RoundCap
-
-                                PathSvg {
-                                    path: dockWindow.lucidaRing
-                                }
-
-                            }
-
-                            ShapePath {
-                                strokeWidth: 0
-                                fillColor: Theme.text
-
-                                PathSvg {
-                                    path: dockWindow.lucidaStar
-                                }
-
-                            }
-
-                            ShapePath {
-                                strokeWidth: 0
-                                fillColor: Theme.accent
-
-                                PathSvg {
-                                    path: dockWindow.lucidaCompanion
-                                }
-
-                            }
-
-                            transform: Scale {
-                                xScale: width / 24
-                                yScale: height / 24
-                            }
-
+                        LP.LucidaMark {
                         }
 
                     }
@@ -2133,12 +2203,11 @@ PanelWindow {
             visible: launcherLoader.opacity > 0
 
             sourceComponent: LauncherFace {
-                searchHeight: dockWindow.launcherSearchH
-                chipsHeight: dockWindow.launcherChipsH
                 targetWidth: dockWindow.menuWidth - dockWindow.panelPadding
                 targetHeight: dockWindow.menuHeight - dockWindow.panelPadding
                 mode: dockWindow.mode
                 model: resultsModel
+                resultCount: dockWindow.resultCount
                 wallpaperModel: wallpapersModel
                 wallHeroW: dockWindow.wallHeroW
                 wallHeroH: dockWindow.wallHeroH
@@ -2161,6 +2230,7 @@ PanelWindow {
                     dockWindow.setSearchText(dockWindow.prefixFor(m));
                 }
                 onDeleteRequested: (index) => dockWindow.deleteResult(index)
+                onHideRequested: (index) => dockWindow.hideResult(index)
                 onClearRequested: Clip.wipe()
                 onWallpaperPreviewed: (path) => dockWindow.requestWallpaper(path)
                 onWallpaperChosen: (path) => {

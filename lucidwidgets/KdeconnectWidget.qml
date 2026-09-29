@@ -125,7 +125,7 @@ WidgetBody {
             name: w.connected ? w.glyph : "phonelink_off"
             size: mk.d * 0.48
             fill: 1
-            color: w.connected ? w.onInkAccent : w.inkDim
+            color: w.connected ? w.fgInkAccent : w.inkDim
         }
 
     }
@@ -425,14 +425,14 @@ WidgetBody {
                         name: w.isPlaying ? "pause" : "play_arrow"
                         size: 22
                         fill: 1
-                        color: w.onInkAccent
+                        color: w.fgInkAccent
                     }
 
                     StateLayer {
                         id: npTap
 
                         radius: parent.radius
-                        tint: w.onInkAccent
+                        tint: w.fgInkAccent
                         disabled: !w.hasMedia
                         onClicked: KdeConnect.mpris(w.dev.id, "PlayPause")
                     }

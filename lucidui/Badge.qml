@@ -16,11 +16,27 @@ Rectangle {
     radius: height / 2
     color: b.tone
 
+    // digits sit on the baseline, so centring the line box leaves the number
+    // riding high. place the baseline instead, so the cap-height box centres
+    TextMetrics {
+        id: cap
+
+        font: num.font
+        text: "7"
+    }
+
+    FontMetrics {
+        id: fm
+
+        font: num.font
+    }
+
     LText {
         id: num
 
         visible: !b.dot
-        anchors.centerIn: parent
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: (b.height - cap.tightBoundingRect.height) / 2 - cap.tightBoundingRect.y - fm.ascent
         role: "labelSmall"
         weight: 650
         size: Theme.fs(10.5)

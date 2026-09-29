@@ -10,6 +10,46 @@ Singleton {
     // false until the palette file has actually been parsed; every colour below
     // is a fallback until then
     property bool paletteLoaded: false
+    // palette swaps crossfade: PaletteFade snapshots each window on
+    // recolourRequested, holding the swap until its grab lands, then fades the
+    // snapshot out on recoloured. one wallpaper fade long, to move with it
+    readonly property int recolourMs: pf.motionScale > 0 ? 1000 : 0
+    property int _recolourHolds: 0
+    property bool recolourPending: false
+
+    signal recolourRequested()
+    signal recoloured()
+
+    function holdRecolour() {
+        root._recolourHolds++;
+    }
+
+    function releaseRecolour() {
+        root._recolourHolds--;
+        if (root._recolourHolds <= 0 && root.recolourPending)
+            root._commitRecolour();
+    }
+
+    function _beginRecolour() {
+        if (!root.paletteLoaded || root.recolourMs <= 0) {
+            paletteFile.reload();
+            return;
+        }
+        root.recolourPending = true;
+        root._recolourHolds = 0;
+        root.recolourRequested();
+        if (root._recolourHolds <= 0)
+            root._commitRecolour();
+        else
+            recolourTimeout.restart();
+    }
+
+    function _commitRecolour() {
+        recolourTimeout.stop();
+        root.recolourPending = false;
+        root._recolourHolds = 0;
+        paletteFile.reload();
+    }
     // read off the palette, never off the pref: whatever is in the cache decides,
     // so the shell never renders light rules against a palette still being regenerated
     readonly property bool isLight: root.toneOf(root.cSurface) > 50
@@ -34,6 +74,30 @@ Singleton {
     readonly property real _toneShift: root.pillDarkness * 3
     readonly property real _tintLift: 10
     readonly property real _tintTarget: 0.13
+    // the raw containers come back as muddy mid-tones, so the family is rebuilt:
+    // hue and chroma from the palette's own container - not the surface, which on
+    // pywal can sit a quadrant off the accent and put a violet card beside rose
+    // digits - dropped to a deep tone with pale ink over it
+    readonly property color _containerSeed: m.primary_container !== "" ? root.cPrimaryContainer : root.cSurface
+    readonly property real _containerHue: 0
+    // the card has to beat the panel it lands on, and a palette that keeps its
+    // colour in the surface family rather than the accent leaves a fixed tone and
+    // chroma reading as a dark dull patch on a bright one. both are held a step
+    // off the ramp's own top rung instead, which lands back on the old constants
+    // wherever that ramp is the near-neutral dark one the shell assumes
+    readonly property real _containerSatFloor: 0.22
+    // only the card fill has to keep up with a vivid panel. the same lift applied
+    // to everything containerFill builds sent tertiary neon at tone 80
+    readonly property real _cardSatFloor: root.isLight ? root._containerSatFloor : Math.min(1, Math.max(root._containerSatFloor, root.mHigh.hslSaturation * 1.15))
+    readonly property real _containerTone: root.isLight ? 30 : Math.max(30, root.toneOf(root.mHigh) + 2)
+    readonly property real _containerInkTone: Math.min(98, Math.max(90, root._containerTone + 45))
+    // tertiary keeps its own identity a step warm of the accent, so the three
+    // container roles are still telling apart without leaving the pinks
+    readonly property real _tertiaryHue: 14
+    // the accent families still fan out for anything drawn as ink or a mark, but
+    // every filled container is one colour: three hues of card on one screen is
+    // what made the badge, the button and the card look unrelated
+    readonly property real _secondaryHue: -20
     readonly property real _rampShift: root.surfaceTint <= 0 ? 0 : (root.isLight ? Math.max(0, root.toneOf(root.cLowest) - (100 - root.surfaceTint * root._tintLift)) : -(root.surfaceTint * root._tintLift))
 
     readonly property color cPrimary: m.primary
@@ -93,37 +157,44 @@ Singleton {
     readonly property color dockItem: root.atTone(root.bgOpaque, root.toneOf(root.bgOpaque) + root._dir * 4)
     readonly property color text: root.cOnSurface
     readonly property color subtext: root.cOnSurfaceVariant
-    readonly property color subtextDim: root.atTone(root.cOnSurfaceVariant, root.isLight ? 50 : 65)
+    readonly property color subtextDim: root.tint(root.atTone(root.cOnSurfaceVariant, root.isLight ? 50 : 65), 1.5)
     readonly property color accent: root.accentPunch === 1 ? root.cPrimary : root.atTone(root.cPrimary, root.toneOf(root.cPrimary) + root._dir * (root.accentPunch - 1) * 9)
     readonly property color accentHover: root.atTone(root.accent, Math.max(0, Math.min(100, root.toneOf(root.accent) + root._dir * 6)))
     readonly property color accentPressed: root.atTone(root.accent, Math.max(0, Math.min(100, root.toneOf(root.accent) - root._dir * 6)))
     // NB: these cannot be named on<Role>. A property `onFoo` declared beside a
     // property `foo` is parsed as a signal-handler assignment, so the binding is
     // silently dropped and the colour stays black. Keep the fg prefix.
-    readonly property color fgAccent: root.cOnPrimary
-    readonly property color accentContainer: root.shade(root.cPrimaryContainer, root._toneShift)
-    readonly property color fgAccentContainer: root.cOnPrimaryContainer
+    // one ink for everything sitting on a filled surface, so a badge, a chip and
+    // the clock all read as the same family. taking it from each fill's own hue
+    // gave every one of them a different dark colour. the surface hue at a deep
+    // tone, never the raw surface, which is near-black on some palettes
+    readonly property color fgOnFill: root.containerFill(root._containerSeed, root.isLight ? 98 : 20)
+    readonly property color fgAccent: root.fgOnFill
+    readonly property color accentContainer: root.containerFill(root._containerSeed, root._containerTone, root._cardSatFloor)
+    readonly property color fgAccentContainer: root.containerInk(root._containerSeed)
     readonly property color accentMuted: root.atTone(root.withSat(root.cPrimary, 0.55), (root.toneOf(root.cPrimary) + root.toneOf(root.cOnSurfaceVariant)) / 2)
     readonly property color accentBorder: root.alpha(root.accent, 0.45)
     readonly property bool hasTonalContainers: m.on_secondary_container !== ""
-    readonly property color secondaryContainer: root.hasTonalContainers ? root.shade(root.cSecondaryContainer, root._toneShift) : root.atTone(root.withSat(root.cPrimary, 0.45), root.isLight ? 88 : 30)
-    readonly property color fgSecondaryContainer: root.hasTonalContainers ? root.cOnSecondaryContainer : root.atTone(root.cPrimary, root.isLight ? 12 : 92)
-    readonly property color tertiaryContainer: root.hasTonalContainers ? root.shade(root.cTertiaryContainer, root._toneShift) : root.atTone(root.withSat(root.cTertiary, 0.6), root.isLight ? 88 : 30)
-    readonly property color fgTertiaryContainer: root.hasTonalContainers ? root.cOnTertiaryContainer : root.atTone(root.cTertiary, root.isLight ? 12 : 92)
-    readonly property color outline: root.cOutlineVariant
-    readonly property color outlineStrong: root.cOutline
+    readonly property color secondaryContainer: root.accentContainer
+    readonly property color fgSecondaryContainer: root.fgAccentContainer
+    readonly property color tertiaryContainer: root.accentContainer
+    readonly property color fgTertiaryContainer: root.fgAccentContainer
+    readonly property color outline: root.tint(root.cOutlineVariant, 1.8)
+    // the wallpaper's neutrals come back grey, which is the one thing on screen
+    // with no colour in it. pull them onto the accent's hue, tone held
+    readonly property color outlineStrong: root.tint(root.cOutline, 1.8)
     readonly property color error: root.cError
-    readonly property color fgError: root.cOnError
-    readonly property color errorContainer: root.hasTonalContainers ? root.shade(root.cErrorContainer, root._toneShift) : root.atTone(root.cError, root.isLight ? 90 : 28)
-    readonly property color fgErrorContainer: root.hasTonalContainers ? root.cOnErrorContainer : root.atTone(root.cError, root.isLight ? 12 : 92)
+    readonly property color fgError: root.fgOnFill
+    readonly property color errorContainer: root.containerFill(root.cError, root._containerTone, root._cardSatFloor)
+    readonly property color fgErrorContainer: root.containerInk(root.cError)
     readonly property color success: root.isGreenish(root.cTertiary) ? root.cTertiary : root.statusHue(145)
-    readonly property color fgSuccess: root.atTone(root.success, root.isLight ? 100 : 20)
+    readonly property color fgSuccess: root.fgOnFill
     readonly property color warning: root.statusHue(45)
-    readonly property color fgWarning: root.atTone(root.warning, root.isLight ? 100 : 20)
+    readonly property color fgWarning: root.fgOnFill
     readonly property color shadow: root.cShadow
     readonly property color scrim: root.alpha(root.cScrim, 0.5)
     readonly property color inverseSurface: root.cInverseSurface
-    readonly property color fgInverseSurface: root.cInverseOnSurface
+    readonly property color fgInverseSurface: root.tint(root.cInverseOnSurface, 1.6)
     readonly property color inversePrimary: root.cInversePrimary
 
     // m3 role names for new code; every surface above is one of these
@@ -131,10 +202,10 @@ Singleton {
     readonly property color fgPrimary: root.fgAccent
     readonly property color primaryContainer: root.accentContainer
     readonly property color fgPrimaryContainer: root.fgAccentContainer
-    readonly property color secondary: root.cSecondary
-    readonly property color fgSecondary: root.cOnSecondary
-    readonly property color tertiary: root.cTertiary
-    readonly property color fgTertiary: root.cOnTertiary
+    readonly property color secondary: root.containerFill(root.withHue(root.cPrimary, root._secondaryHue), root.toneOf(root.cSecondary))
+    readonly property color fgSecondary: root.fgOnFill
+    readonly property color tertiary: root.containerFill(root.withHue(root.cPrimary, root._tertiaryHue), root.isLight ? 42 : 80)
+    readonly property color fgTertiary: root.fgOnFill
     // a hairline between siblings on one surface
     readonly property color divider: root.alpha(root.cOutlineVariant, root.isLight ? 0.7 : 0.55)
 
@@ -331,6 +402,32 @@ Singleton {
     }
 
     // color -> m3 tone (0..100)
+    // digits sit on the baseline, so centring a Text's line box leaves a number
+    // riding high inside a badge. this is the correction as a fraction of the
+    // pixel size, measured off whatever font is loaded
+    readonly property real digitCenterOffset: {
+        const tight = root._digitInk.tightBoundingRect;
+        if (tight.height <= 0)
+            return 0;
+
+        return (((root._digitBox.descent - root._digitBox.ascent) / 2) - tight.y - tight.height / 2) / 100;
+    }
+
+    property TextMetrics _digitInk: TextMetrics {
+        font.family: root.fontFamily
+        font.pixelSize: 100
+        font.bold: true
+        // a flat-bottomed digit: round ones overshoot the baseline by design and
+        // would drag the correction the wrong way
+        text: "7"
+    }
+
+    property FontMetrics _digitBox: FontMetrics {
+        font.family: root.fontFamily
+        font.pixelSize: 100
+        font.bold: true
+    }
+
     function toneOf(c) {
         var y = root._y(c);
         return y <= 0.008856 ? y * 903.2963 : 116 * Math.pow(y, 1 / 3) - 16;
@@ -360,6 +457,23 @@ Singleton {
             lb += (1 - lb) * w;
         }
         return Qt.rgba(root._gam(lr), root._gam(lg), root._gam(lb), c.a);
+    }
+
+    // one step of a tonal ramp. atTone on its own scales luminance, which bleeds
+    // the colour out as it descends: a pink ends up a grey-brown and then black.
+    // rebuilding the hue at mid lightness first keeps the ramp coloured all the
+    // way down, and a neutral seed stays neutral because its saturation is kept
+    function tonal(c, tone) {
+        var h = c.hslHue;
+        if (h < 0)
+            return root.atTone(c, tone);
+
+        // a faint seed has so little colour left by the bottom of the ramp that
+        // it reads as charcoal, so the dark half gets its chroma back. a seed
+        // already at full saturation clamps here and is untouched
+        var lift = 1 + Math.max(0, (50 - tone) / 50) * 3;
+        var s = Math.min(1, c.hslSaturation * lift);
+        return root.atTone(Qt.hsla(h, s, 0.5, c.a), tone);
     }
 
     function shade(c, tones) {
@@ -397,6 +511,40 @@ Singleton {
     // extreme it sits against, because a tone carries no hue there
     function surface(c, tones) {
         return root.tint(root.shade(c, tones + root._rampShift), root.surfaceTint);
+    }
+
+    // spin a colour round the wheel, holding its tone and chroma
+    function withHue(c, deg) {
+        var h = c.hslHue;
+        if (h < 0 || deg === 0)
+            return c;
+
+        var nh = (h + deg / 360) % 1;
+        if (nh < 0)
+            nh += 1;
+        return root.atTone(Qt.hsla(nh, c.hslSaturation, c.hslLightness, c.a), root.toneOf(c));
+    }
+
+    // the container family. the colour is rebuilt at full chroma and only then
+    // dropped to its tone: scaling a wallpaper colour's saturation in place is
+    // what turns these into mud
+    function containerFill(c, tone, floor) {
+        var h = c.hslHue;
+        if (h < 0)
+            return root.atTone(c, tone);
+
+        var hh = (h + root._containerHue / 360) % 1;
+        if (hh < 0)
+            hh += 1;
+        // the palette's own colourfulness, floored so a washed-out wallpaper still
+        // gets a tinted card instead of a grey one. pinning this at full chroma
+        // made the card shout over every surface around it
+        var s = Math.max(c.hslSaturation, floor === undefined ? root._containerSatFloor : floor);
+        return root.atTone(Qt.hsla(hh, s, 0.5, c.a), tone);
+    }
+
+    function containerInk(c) {
+        return root.containerFill(c, root._containerInkTone);
     }
 
     // scale chroma, hold tone
@@ -458,15 +606,33 @@ Singleton {
         source: "file://" + Quickshell.env("HOME") + "/.config/quickshell/assets/fonts/GoogleSansFlex.ttf"
     }
 
+    // a window whose grab never lands must not hold the palette back
+    Timer {
+        id: recolourTimeout
+
+        interval: 300
+        onTriggered: root._commitRecolour()
+    }
+
     FileView {
+        id: paletteFile
+
         path: Quickshell.env("HOME") + "/.cache/quickshell/matugen.json"
         watchChanges: true
-        onFileChanged: reload()
+        onFileChanged: root._beginRecolour()
         // the adapter below lands an event loop turn after this singleton is
         // built, so a one-shot reader must wait for this rather than read
         // straight through and get the fallbacks
-        onLoaded: root.paletteLoaded = true
-        onLoadFailed: root.paletteLoaded = true
+        onLoaded: {
+            const first = !root.paletteLoaded;
+            root.paletteLoaded = true;
+            if (!first)
+                Qt.callLater(root.recoloured);
+        }
+        onLoadFailed: {
+            root.paletteLoaded = true;
+            Qt.callLater(root.recoloured);
+        }
 
         adapter: JsonAdapter {
             id: m

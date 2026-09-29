@@ -293,48 +293,8 @@ if [[ "$(gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null)" != ""
     gsettings set org.gnome.desktop.interface gtk-theme "${GTK_THEME_NAME//\'/}" 2>/dev/null || true
 fi
 
-# starship — only the palette is rewritten, the prompt format stays the user's.
-# roles mirror matugen's starship template so both paths land on the same look.
-STARSHIP="$HOME/.config/starship.toml"
-if [[ -f "$STARSHIP" ]]; then
-    SP_NAME=$(sed -n "s/^[[:space:]]*palette[[:space:]]*=[[:space:]]*['\"]\([^'\"]*\)['\"].*/\1/p" "$STARSHIP" | head -1)
-    if [[ -n "$SP_NAME" ]] && grep -q "^\[palettes\.$SP_NAME\]" "$STARSHIP"; then
-        awk -v table="[palettes.$SP_NAME]" -v q="'" \
-            -v c1="$PRIMARY_FIXED_DIM" \
-            -v c2="$ON_PRIMARY" \
-            -v c3="$(c on_surface_variant)" \
-            -v c4="$(c surface_container)" \
-            -v c5="$ON_PRIMARY" \
-            -v c6="$SURFACE_DIM" \
-            -v c7="$SURFACE" \
-            -v c8="$PRIMARY" \
-            -v c9="$PRIMARY" '
-            BEGIN {
-                m["color1"] = c1; m["color2"] = c2; m["color3"] = c3
-                m["color4"] = c4; m["color5"] = c5; m["color6"] = c6
-                m["color7"] = c7; m["color8"] = c8; m["color9"] = c9
-                re = "=[ \t]*[" q "\"][^" q "\"]*[" q "\"]"
-            }
-            {
-                t = $0
-                gsub(/^[ \t]+|[ \t]+$/, "", t)
-                if (substr(t, 1, 1) == "[") { inside = (t == table); print; next }
-                if (inside && match($0, /^[ \t]*color[1-9][ \t]*=/)) {
-                    k = t
-                    sub(/[ \t]*=.*/, "", k)
-                    if (k in m && m[k] != "")
-                        sub(re, "= " q m[k] q, $0)
-                }
-                print
-            }' "$STARSHIP" > "$STARSHIP.lucid-tmp" && mv "$STARSHIP.lucid-tmp" "$STARSHIP"
-
-        # repaint running shells so open terminals recolour without reopening.
-        # SIGWINCH is a redraw nudge, not fatal, so it is safe to broadcast.
-        for sh in fish bash zsh; do
-            pkill -WINCH -x "$sh" 2>/dev/null || true
-        done
-    fi
-fi
+# starship — only its palette table is repainted, the prompt stays the user's
+"$HOME/.config/lucid/sync-starship.sh" "$PALETTE" || echo "warning: could not repaint starship" >&2
 
 # steam — millennium's material theme has its own matugen config
 if command -v matugen &>/dev/null && [[ -f "$HOME/.config/matugen-steam/config.toml" ]]; then

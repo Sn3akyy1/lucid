@@ -114,7 +114,7 @@ Item {
             id: tile
 
             anchors.fill: parent
-            radius: dockItem.sc(14)
+            radius: Prefs.dockItemRadius
             color: Theme.withBlur(Theme.bgTile)
             visible: Prefs.dockIconTiles
         }
@@ -123,7 +123,7 @@ Item {
             id: stateLayer
 
             anchors.fill: parent
-            radius: dockItem.sc(14)
+            radius: Prefs.dockItemRadius
             color: Theme.text
             opacity: dockItem.pressed ? Theme.statePressed : (dockItem.hovered ? Theme.stateHover : (dockItem.toggleActive ? Theme.stateFocus : 0))
 
@@ -141,7 +141,7 @@ Item {
             id: iconImg
 
             anchors.fill: parent
-            anchors.margins: dockItem.sc(5)
+            anchors.margins: Prefs.dockIconInset
             visible: dockItem.iconContent === null && dockItem.iconSource !== ""
             source: dockItem.iconSource
         }
@@ -150,8 +150,8 @@ Item {
             id: monogramTile
 
             anchors.fill: parent
-            anchors.margins: dockItem.sc(5)
-            radius: dockItem.sc(11)
+            anchors.margins: Prefs.dockIconInset
+            radius: Math.max(0, Prefs.dockItemRadius - Prefs.dockIconInset)
             color: Theme.bgHigh
             visible: dockItem.iconContent === null && dockItem.iconSource === ""
 
@@ -171,7 +171,7 @@ Item {
             id: iconLoader
 
             anchors.fill: parent
-            anchors.margins: dockItem.sc(5)
+            anchors.margins: Prefs.dockIconInset
             active: dockItem.iconContent !== null
             sourceComponent: dockItem.iconContent
         }
@@ -193,8 +193,25 @@ Item {
         z: 20
         scale: dockItem.windowCount > 3 ? 1 : 0
 
+        TextMetrics {
+            id: dockCountCap
+
+            font: dockCountText.font
+            text: "7"
+        }
+
+        FontMetrics {
+            id: dockCountFm
+
+            font: dockCountText.font
+        }
+
         Text {
-            anchors.centerIn: parent
+            id: dockCountText
+
+            anchors.horizontalCenter: parent.horizontalCenter
+            // centre the cap-height box, not the line box
+            y: (countBadge.height - dockCountCap.tightBoundingRect.height) / 2 - dockCountCap.tightBoundingRect.y - dockCountFm.ascent
             text: dockItem.windowCount
             color: Theme.fgAccent
             font.family: Theme.fontFamily

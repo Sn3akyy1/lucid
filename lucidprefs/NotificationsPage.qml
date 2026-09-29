@@ -54,13 +54,13 @@ Column {
         SettingRow {
             title: "Show popups"
             resetKey: "toastEnabled"
-            enabled: Prefs.showNotifications
+            enabled: Prefs.barNotifications
             disabledReason: "Notifications are switched off, so nothing is shown or collected."
             description: "Slide a notification out of the bar as it arrives. With this off they go straight to the list."
 
             M3Switch {
                 checked: Prefs.toastEnabled
-                enabled: Prefs.showNotifications
+                enabled: Prefs.barNotifications
                 onToggled: (v) => {
                     return Prefs.toastEnabled = v;
                 }
@@ -71,7 +71,7 @@ Column {
         SettingRow {
             title: "How many at once"
             resetKey: "toastMaxVisible"
-            enabled: Prefs.showNotifications && Prefs.toastEnabled
+            enabled: Prefs.barNotifications && Prefs.toastEnabled
             disabledReason: "Popups are switched off."
             description: "A burst of notifications stacks under the bar. Anything past this waits in the list instead."
             stacked: true
@@ -81,7 +81,7 @@ Column {
                 from: 1
                 to: 6
                 stepSize: 1
-                enabled: Prefs.showNotifications && Prefs.toastEnabled
+                enabled: Prefs.barNotifications && Prefs.toastEnabled
                 value: Prefs.toastMaxVisible
                 onMoved: (v) => {
                     return Prefs.toastMaxVisible = v;
@@ -93,7 +93,7 @@ Column {
         SettingRow {
             title: "How long one stays"
             resetKey: "toastTimeout"
-            enabled: Prefs.showNotifications && Prefs.toastEnabled
+            enabled: Prefs.barNotifications && Prefs.toastEnabled
             disabledReason: "Popups are switched off."
             description: "The time a popup is left on screen when the application does not ask for something else."
             stacked: true
@@ -104,7 +104,7 @@ Column {
                 to: 30
                 stepSize: 1
                 suffix: " s"
-                enabled: Prefs.showNotifications && Prefs.toastEnabled
+                enabled: Prefs.barNotifications && Prefs.toastEnabled
                 value: Prefs.toastTimeout
                 onMoved: (v) => {
                     return Prefs.toastTimeout = v;
@@ -116,13 +116,13 @@ Column {
         SettingRow {
             title: "Let applications set their own"
             resetKey: "toastUseAppTimeout"
-            enabled: Prefs.showNotifications && Prefs.toastEnabled
+            enabled: Prefs.barNotifications && Prefs.toastEnabled
             disabledReason: "Popups are switched off."
             description: "Most applications name a duration when they send a notification. Turn this off to give every popup the same time above."
 
             M3Switch {
                 checked: Prefs.toastUseAppTimeout
-                enabled: Prefs.showNotifications && Prefs.toastEnabled
+                enabled: Prefs.barNotifications && Prefs.toastEnabled
                 onToggled: (v) => {
                     return Prefs.toastUseAppTimeout = v;
                 }
@@ -133,13 +133,13 @@ Column {
         SettingRow {
             title: "Keep urgent ones up"
             resetKey: "toastCriticalSticky"
-            enabled: Prefs.showNotifications && Prefs.toastEnabled
+            enabled: Prefs.barNotifications && Prefs.toastEnabled
             disabledReason: "Popups are switched off."
             description: "A notification marked urgent — a low battery, a failed backup — waits for you instead of timing out."
 
             M3Switch {
                 checked: Prefs.toastCriticalSticky
-                enabled: Prefs.showNotifications && Prefs.toastEnabled
+                enabled: Prefs.barNotifications && Prefs.toastEnabled
                 onToggled: (v) => {
                     return Prefs.toastCriticalSticky = v;
                 }
@@ -150,13 +150,13 @@ Column {
         SettingRow {
             title: "Show the message"
             resetKey: "toastShowBody"
-            enabled: Prefs.showNotifications && Prefs.toastEnabled
+            enabled: Prefs.barNotifications && Prefs.toastEnabled
             disabledReason: "Popups are switched off."
             description: "With this off a popup carries the title alone, and the body waits in the list."
 
             M3Switch {
                 checked: Prefs.toastShowBody
-                enabled: Prefs.showNotifications && Prefs.toastEnabled
+                enabled: Prefs.barNotifications && Prefs.toastEnabled
                 onToggled: (v) => {
                     return Prefs.toastShowBody = v;
                 }
@@ -167,7 +167,7 @@ Column {
         SettingRow {
             title: "Lines of message"
             resetKey: "toastBodyLines"
-            enabled: Prefs.showNotifications && Prefs.toastEnabled && Prefs.toastShowBody
+            enabled: Prefs.barNotifications && Prefs.toastEnabled && Prefs.toastShowBody
             disabledReason: "The message body is hidden."
             description: "How far a long message is allowed to run before it is cut short."
             stacked: true
@@ -177,7 +177,7 @@ Column {
                 from: 1
                 to: 10
                 stepSize: 1
-                enabled: Prefs.showNotifications && Prefs.toastEnabled && Prefs.toastShowBody
+                enabled: Prefs.barNotifications && Prefs.toastEnabled && Prefs.toastShowBody
                 value: Prefs.toastBodyLines
                 onMoved: (v) => {
                     return Prefs.toastBodyLines = v;
@@ -189,13 +189,13 @@ Column {
         SettingRow {
             title: "Show buttons"
             resetKey: "toastShowActions"
-            enabled: Prefs.showNotifications && Prefs.toastEnabled
+            enabled: Prefs.barNotifications && Prefs.toastEnabled
             disabledReason: "Popups are switched off."
             description: "Reply, Open, Snooze — whatever the application offers, on the popup itself. They are always in the list."
 
             M3Switch {
                 checked: Prefs.toastShowActions
-                enabled: Prefs.showNotifications && Prefs.toastEnabled
+                enabled: Prefs.barNotifications && Prefs.toastEnabled
                 onToggled: (v) => {
                     return Prefs.toastShowActions = v;
                 }
@@ -206,14 +206,14 @@ Column {
         SettingRow {
             title: "Reply without switching"
             resetKey: "notifInlineReply"
-            enabled: Prefs.showNotifications
+            enabled: Prefs.barNotifications
             disabledReason: "Notifications are switched off, so nothing is shown or collected."
             description: "Chat applications that support it get a message box on the notification itself, so you can answer without leaving what you are doing."
             showDivider: false
 
             M3Switch {
                 checked: Prefs.notifInlineReply
-                enabled: Prefs.showNotifications
+                enabled: Prefs.barNotifications
                 onToggled: (v) => {
                     return Prefs.notifInlineReply = v;
                 }

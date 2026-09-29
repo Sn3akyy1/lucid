@@ -2,6 +2,9 @@ import QtQuick
 import qs
 import qs.lucidui
 
+// the launcher's face, on the m3 search anatomy: a head that carries the mark
+// and the modes, the results under it, and a 56dp search bar at whichever end
+// the settings put it
 Item {
     id: face
 
@@ -19,30 +22,73 @@ Item {
     property int wallCardGap: 10
     property alias searchText: searchInput.text
     property string highlightQuery: ""
+    // how many rows can actually be picked, set by the dock as it builds them
+    property int resultCount: 0
     readonly property string placeholder: ({
         "clipboard": "Search clipboard history",
         "web": "Search the web",
         "run": "Type a command line",
         "emoji": "Find an emoji",
-        "commands": "Search commands"
-    })[face.displayMode] || "Search apps, or type > : ? $"
+        "commands": "Search commands",
+        "theme": "Search themes",
+        "wallpaper": "Search wallpapers"
+    })[face.displayMode] || "Search apps and settings"
+    readonly property string modeIcon: ({
+        "commands": "terminal",
+        "clipboard": "content_paste",
+        "wallpaper": "wallpaper",
+        "theme": "palette",
+        "web": "travel_explore",
+        "run": "terminal",
+        "emoji": "mood"
+    })[face.displayMode] || "search"
+    // the head's trailing readout: what the panel is holding right now
+    readonly property string countLabel: {
+        if (face.displayMode === "wallpaper" || face.resultCount === 0)
+            return "";
+
+        if (face.displayMode === "apps" && face.highlightQuery === "")
+            return face.resultCount + (face.resultCount === 1 ? " app" : " apps");
+
+        return face.resultCount + (face.resultCount === 1 ? " result" : " results");
+    }
     property real targetWidth: width
     property real targetHeight: height
-
-    property int searchHeight: 46
-    property int chipsHeight: 32
-    readonly property int chromeHeight: face.searchHeight + face.chipsHeight + 22
-    // the launcher's modes, reachable by prefix or by chip
-    readonly property var modes: [
-        { "key": "apps", "label": "Apps", "icon": "apps" },
-        { "key": "commands", "label": "Commands", "icon": "terminal" },
-        { "key": "clipboard", "label": "Clipboard", "icon": "content_paste" },
-        { "key": "wallpaper", "label": "Wallpapers", "icon": "wallpaper" },
-        { "key": "theme", "label": "Themes", "icon": "palette" },
-        { "key": "power", "label": "Power", "icon": "power_settings_new" }
-    ]
+    // m3 metrics, shared with the dock's geometry through Prefs
+    readonly property real cs: Prefs.launcherScale
+    readonly property int searchHeight: Prefs.launcherSearchH
+    readonly property int headHeight: Prefs.launcherHeadH
+    readonly property bool headOn: Prefs.launcherModeBar
+    readonly property bool searchTop: Prefs.launcherSearchTop
+    readonly property int chromeHeight: Prefs.launcherChromeH
+    readonly property int headBlock: face.headOn ? face.headHeight + Prefs.launcherHeadGap : 0
+    // the launcher's modes, reachable by prefix, by pill or by Ctrl and a digit
+    readonly property var modes: [{
+        "key": "apps",
+        "label": "Apps",
+        "icon": "apps"
+    }, {
+        "key": "commands",
+        "label": "Commands",
+        "icon": "terminal"
+    }, {
+        "key": "clipboard",
+        "label": "Clipboard",
+        "icon": "content_paste"
+    }, {
+        "key": "wallpaper",
+        "label": "Wallpapers",
+        "icon": "wallpaper"
+    }, {
+        "key": "theme",
+        "label": "Themes",
+        "icon": "palette"
+    }, {
+        "key": "power",
+        "label": "Power",
+        "icon": "power_settings_new"
+    }]
     readonly property real stableContentHeight: Math.max(0, face.targetHeight - face.chromeHeight)
-
     property string displayMode: "apps"
     readonly property bool listVisible: face.displayMode !== "wallpaper"
     // clipboard: the first Ctrl+Shift+Del arms clearing everything, a second within 3 s does it
@@ -63,6 +109,7 @@ Item {
     signal backRequested()
     signal modeRequested(string mode)
     signal deleteRequested(int index)
+    signal hideRequested(int index)
     signal clearRequested()
 
     function setWallpaperIndex(i) {
@@ -89,13 +136,6 @@ Item {
         }
     }
 
-    Timer {
-        id: disarmTimer
-
-        interval: 3000
-        onTriggered: face.clearArmed = false
-    }
-
     function syncDisplayMode() {
         face.displayMode = face.mode;
         face.clearArmed = false;
@@ -105,22 +145,54 @@ Item {
     function requestModeTransition() {
         if (!face.visible || face.justOpened) {
             face.syncDisplayMode();
-            return;
+            return ;
         }
         modeFade.restart();
+    }
+
+    // Tab walks the mode set, so every mode is one key away from the keyboard too
+    function cycleMode(delta) {
+        var at = -1;
+        for (var i = 0; i < face.modes.length; i++) {
+            if (face.modes[i].key === face.displayMode)
+                at = i;
+
+        }
+        if (at === -1)
+            at = 0;
+
+        var next = face.modes[(at + delta + face.modes.length) % face.modes.length];
+        face.modeRequested(next.key);
+    }
+
+    function submit() {
+        if (face.displayMode === "wallpaper")
+            wallStrip.activateCurrent();
+        else
+            resultList.activateCurrent();
     }
 
     onModeChanged: face.requestModeTransition()
     onVisibleChanged: {
         if (!face.visible)
-            return;
+            return ;
 
         face.justOpened = true;
         face.syncDisplayMode();
         searchInput.forceActiveFocus();
         face.justOpened = false;
+        headBand.playEntrance();
     }
 
+    Timer {
+        id: disarmTimer
+
+        interval: 3000
+        onTriggered: face.clearArmed = false
+    }
+
+    // m3 fade through: the old mode leaves on the accelerating curve, the new
+    // one grows back in rather than cross-fading over it
     SequentialAnimation {
         id: modeFade
 
@@ -128,22 +200,76 @@ Item {
             target: contentArea
             property: "opacity"
             to: 0
-            duration: Theme.ms(120)
+            duration: Theme.ms(90)
             easing.type: Easing.Bezier
             easing.bezierCurve: Theme.easeEmphasizedAccel
         }
 
         ScriptAction {
-            script: face.syncDisplayMode()
+            script: {
+                contentArea.scale = 0.94;
+                face.syncDisplayMode();
+            }
         }
 
-        NumberAnimation {
-            target: contentArea
-            property: "opacity"
-            to: 1
-            duration: Theme.ms(240)
-            easing.type: Easing.Bezier
-            easing.bezierCurve: Theme.easeEmphasizedDecel
+        ParallelAnimation {
+            NumberAnimation {
+                target: contentArea
+                property: "opacity"
+                to: 1
+                duration: Theme.ms(210)
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easeEmphasizedDecel
+            }
+
+            NumberAnimation {
+                target: contentArea
+                property: "scale"
+                to: 1
+                duration: Theme.ms(210)
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easeEmphasizedDecel
+            }
+
+        }
+
+    }
+
+    LauncherHead {
+        id: headBand
+
+        x: 0
+        y: 0
+        width: face.width
+        height: face.headHeight
+        visible: face.headOn
+        modes: face.modes
+        current: face.displayMode
+        countLabel: face.countLabel
+        onChosen: (key) => {
+            face.modeRequested(key);
+            searchInput.forceActiveFocus();
+        }
+        onHomeRequested: {
+            face.modeRequested("apps");
+            searchInput.forceActiveFocus();
+        }
+    }
+
+    Rectangle {
+        x: 0
+        y: face.headHeight + Math.round(Prefs.launcherHeadGap / 2)
+        width: face.width
+        height: 1
+        color: Theme.divider
+        visible: face.headOn && !face.searchTop
+        opacity: resultList.scrolled && resultList.visible ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Theme.durFastEffects
+            }
+
         }
 
     }
@@ -151,11 +277,12 @@ Item {
     Item {
         id: contentArea
 
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.bottom: chipRow.top
-        anchors.bottomMargin: 10
+        // explicit y, not a conditional anchor: an anchor once set never lets go
+        x: 0
+        y: face.headBlock + (face.searchTop ? face.searchHeight + Prefs.launcherContentGap : 0)
+        width: face.width
+        height: face.stableContentHeight
+        transformOrigin: Item.Center
         clip: true
 
         LauncherList {
@@ -181,12 +308,34 @@ Item {
                     return "No emoji match";
 
                 if (face.displayMode === "clipboard")
-                    return Clip.available ? "Clipboard history is empty" : "Install cliphist to keep clipboard history";
+                    return Clip.available ? "Nothing copied yet" : "Clipboard history is off";
 
-                return "No apps found";
+                return "Nothing matches that";
             }
-            onActivated: (index) => face.activated(index)
-            onDeleteRequested: (index) => face.deleteRequested(index)
+            emptyHint: {
+                if (face.displayMode === "clipboard")
+                    return Clip.available ? "Anything you copy from here on shows up in this list." : "Install cliphist and what you copy is kept for you.";
+
+                if (face.displayMode === "apps")
+                    return "Try a shorter word, or start with one of these:";
+
+                return "";
+            }
+            // the prefixes, offered where an empty result is the moment they help
+            showPrefixes: face.displayMode === "apps"
+            onPrefixChosen: (p) => {
+                searchInput.text = p;
+                searchInput.forceActiveFocus();
+            }
+            onActivated: (index) => {
+                return face.activated(index);
+            }
+            onDeleteRequested: (index) => {
+                return face.deleteRequested(index);
+            }
+            onHideRequested: (index) => {
+                return face.hideRequested(index);
+            }
         }
 
         ClipPreview {
@@ -215,120 +364,44 @@ Item {
             itemGap: face.wallCardGap
             appliedPath: face.appliedWallpaper
             stableHeight: face.stableContentHeight
-            onChosen: (path) => face.wallpaperChosen(path)
-            onPreviewed: (path) => face.wallpaperPreviewed(path)
-        }
-
-    }
-
-    Row {
-        id: chipRow
-
-        anchors.left: parent.left
-        anchors.leftMargin: 2
-        anchors.bottom: searchBar.top
-        anchors.bottomMargin: 10
-        height: face.chipsHeight
-        spacing: 6
-
-        Repeater {
-            model: face.modes
-
-            Rectangle {
-                id: chip
-
-                required property var modelData
-                readonly property bool on: face.displayMode === chip.modelData.key
-
-                height: face.chipsHeight
-                width: chip.on ? chipLabel.implicitWidth + 44 : face.chipsHeight + 8
-                radius: height / 2
-                color: chip.on ? Theme.withBlur(Theme.secondaryContainer) : "transparent"
-                border.width: chip.on ? 0 : 1
-                border.color: Theme.outline
-                clip: true
-
-                Behavior on width {
-                    NumberAnimation {
-                        duration: Theme.durDefaultSpatial
-                        easing.type: Easing.Bezier
-                        easing.bezierCurve: Theme.curveDefaultSpatial
-                    }
-
-                }
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.durDefaultEffects
-                    }
-
-                }
-
-                StateLayer {
-                    radius: chip.radius
-                    tint: chip.on ? Theme.fgSecondaryContainer : Theme.text
-                    onClicked: {
-                        face.modeRequested(chip.modelData.key);
-                        searchInput.forceActiveFocus();
-                    }
-                }
-
-                Icon {
-                    id: chipIcon
-
-                    x: 12
-                    anchors.verticalCenter: parent.verticalCenter
-                    name: chip.modelData.icon
-                    size: 18
-                    fill: chip.on ? 1 : 0
-                    color: chip.on ? Theme.fgSecondaryContainer : Theme.subtext
-                }
-
-                LText {
-                    id: chipLabel
-
-                    anchors.left: chipIcon.right
-                    anchors.leftMargin: 6
-                    anchors.verticalCenter: parent.verticalCenter
-                    role: "labelLarge"
-                    text: chip.modelData.label
-                    color: Theme.fgSecondaryContainer
-                    opacity: chip.on ? 1 : 0
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Theme.durDefaultEffects
-                        }
-
-                    }
-
-                }
-
+            onChosen: (path) => {
+                return face.wallpaperChosen(path);
             }
-
+            onPreviewed: (path) => {
+                return face.wallpaperPreviewed(path);
+            }
         }
 
     }
 
+    // m3 search bar: 56dp tall, fully rounded, on surface container high
     Rectangle {
         id: searchBar
 
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
+        readonly property bool typing: searchInput.text !== ""
+
+        x: 0
+        y: face.searchTop ? face.headBlock : face.height - face.searchHeight
+        width: face.width
         height: face.searchHeight
-        radius: Theme.radiusPill
-        color: Theme.withBlur(Theme.surfaceHighest)
+        radius: Theme.shapeFull
+        color: searchBar.typing ? Theme.withBlur(Theme.surfaceHighest) : Theme.withBlur(Theme.surfaceHigh)
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Theme.durDefaultEffects
+            }
+
+        }
 
         Item {
             id: leadingButton
 
             readonly property bool isBack: face.mode !== "apps"
 
-            width: 34
-            height: 34
-            anchors.left: parent.left
-            anchors.leftMargin: 5
+            width: Math.round(40 * face.cs)
+            height: Math.round(40 * face.cs)
+            x: 8
             anchors.verticalCenter: parent.verticalCenter
 
             Rectangle {
@@ -346,12 +419,11 @@ Item {
 
             }
 
-            DockGlyph {
+            Icon {
                 anchors.centerIn: parent
-                width: 17
-                height: 17
-                pathData: leadingButton.isBack ? DockIcons.arrowBack : DockIcons.search
-                glyphColor: leadingButton.isBack ? Theme.accent : Theme.subtext
+                name: leadingButton.isBack ? "arrow_back" : face.modeIcon
+                size: Math.round(24 * face.cs)
+                color: Theme.primary
             }
 
             HoverHandler {
@@ -372,22 +444,23 @@ Item {
         TextInput {
             id: searchInput
 
+            // m3 InputTextFont: body large, on surface
+            readonly property int typeSize: Math.round(Theme.typeSize("bodyLarge") * face.cs)
+
             anchors.left: leadingButton.right
-            anchors.leftMargin: 6
+            anchors.leftMargin: 8
             anchors.right: clearButton.left
-            anchors.rightMargin: 6
+            anchors.rightMargin: 8
             anchors.verticalCenter: parent.verticalCenter
             color: Theme.text
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontBody
-            font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
-            font.weight: Font.Medium
+            font.pixelSize: searchInput.typeSize
+            font.variableAxes: Theme.axes(searchInput.typeSize, Theme.typeWeight("bodyLarge"), 0)
             clip: true
             focus: true
             selectByMouse: true
             selectionColor: Theme.alpha(Theme.accent, 0.35)
             selectedTextColor: Theme.text
-
             onTextChanged: face.resetSelection()
             Keys.onUpPressed: {
                 if (face.listVisible)
@@ -426,21 +499,67 @@ Item {
                     event.accepted = false;
                 }
             }
+            Keys.onTabPressed: (event) => {
+                face.cycleMode(event.modifiers & Qt.ShiftModifier ? -1 : 1);
+                event.accepted = true;
+            }
+            // Ctrl and a digit jumps straight to a mode, in the order the head shows them
+            Keys.onPressed: (event) => {
+                if (!(event.modifiers & Qt.ControlModifier) || event.key < Qt.Key_1 || event.key > Qt.Key_9) {
+                    event.accepted = false;
+                    return ;
+                }
+                var at = event.key - Qt.Key_1;
+                if (at < face.modes.length)
+                    face.modeRequested(face.modes[at].key);
+
+                event.accepted = true;
+            }
             Keys.onEscapePressed: face.closeRequested()
             Keys.onReturnPressed: face.submit()
             Keys.onEnterPressed: face.submit()
 
-            Text {
+            // the placeholder rolls over when the mode changes, rather than cutting
+            LText {
+                id: ghost
+
                 anchors.verticalCenter: parent.verticalCenter
                 x: 2
+                role: "bodyLarge"
+                size: searchInput.typeSize
                 text: face.placeholder
-                color: Theme.subtextDim
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontBody
-                font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
-                font.weight: Font.Medium
+                color: Theme.subtext
                 visible: searchInput.text === ""
                 z: -1
+
+                onTextChanged: rollIn.restart()
+
+                SequentialAnimation {
+                    id: rollIn
+
+                    ParallelAnimation {
+                        NumberAnimation {
+                            target: ghost
+                            property: "opacity"
+                            from: 0
+                            to: 1
+                            duration: Theme.durEnter
+                        }
+
+                        NumberAnimation {
+                            target: ghost
+                            property: "anchors.verticalCenterOffset"
+                            from: 7
+                            to: 0
+                            duration: Theme.durEnter
+                            easing.type: Easing.Bezier
+                            easing.bezierCurve: Theme.easeEmphasizedDecel
+                        }
+
+                    }
+
+                }
+
             }
 
         }
@@ -448,12 +567,12 @@ Item {
         Item {
             id: clearButton
 
-            width: searchInput.text !== "" ? 34 : 0
-            height: 34
+            width: searchBar.typing ? Math.round(40 * face.cs) : 0
+            height: Math.round(40 * face.cs)
             anchors.right: parent.right
-            anchors.rightMargin: searchInput.text !== "" ? 5 : 0
+            anchors.rightMargin: searchBar.typing ? 8 : 0
             anchors.verticalCenter: parent.verticalCenter
-            visible: searchInput.text !== ""
+            visible: searchBar.typing
 
             Rectangle {
                 anchors.fill: parent
@@ -470,12 +589,11 @@ Item {
 
             }
 
-            DockGlyph {
+            Icon {
                 anchors.centerIn: parent
-                width: 15
-                height: 15
-                pathData: DockIcons.close
-                glyphColor: clearHover.hovered ? Theme.text : Theme.subtext
+                name: "close"
+                size: Math.round(22 * face.cs)
+                color: clearHover.hovered ? Theme.text : Theme.subtext
             }
 
             HoverHandler {
@@ -501,13 +619,6 @@ Item {
 
         }
 
-    }
-
-    function submit() {
-        if (face.displayMode === "wallpaper")
-            wallStrip.activateCurrent();
-        else
-            resultList.activateCurrent();
     }
 
 }

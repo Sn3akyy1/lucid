@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls.Basic
 import QtQuick.Shapes
 import qs
 import qs.lucidui
@@ -10,6 +11,8 @@ Item {
     property var host: null
     property date now: Loc.now()
     readonly property var results: Zones.search(addField.text, 6)
+    // one notch clears a card row and then some, like the settings panes
+    readonly property int wheelStep: 190
 
     function pick(city) {
         addField.text = "";
@@ -32,6 +35,10 @@ Item {
     }
 
     Flickable {
+        id: cards
+
+        readonly property bool scrollable: cards.contentHeight > cards.height
+
         anchors.top: parent.top
         anchors.bottom: adder.top
         anchors.bottomMargin: 12
@@ -39,11 +46,64 @@ Item {
         contentHeight: grid.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        flickDeceleration: 6000
+        maximumFlickVelocity: 9000
+
+        // without this the grid falls back to Flickable's own wheel steps,
+        // which crawl. the panes' step, on the panes' curve
+        WheelHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onWheel: (event) => {
+                event.accepted = true;
+                const maxY = Math.max(0, cards.contentHeight - cards.height);
+                const base = cardScroll.running ? cardScroll.to : cards.contentY;
+                const target = Math.max(0, Math.min(maxY, base - (event.angleDelta.y / 120) * page.wheelStep));
+                if (target === base)
+                    return ;
+
+                cardScroll.stop();
+                cardScroll.from = cards.contentY;
+                cardScroll.to = target;
+                cardScroll.start();
+            }
+        }
+
+        NumberAnimation {
+            id: cardScroll
+
+            target: cards
+            property: "contentY"
+            duration: Theme.ms(170)
+            easing.type: Easing.OutCubic
+        }
+
+        ScrollBar.vertical: ScrollBar {
+            policy: cards.scrollable ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+
+            contentItem: Rectangle {
+                implicitWidth: 3
+                radius: width / 2
+                color: Theme.accent
+                opacity: cards.scrollable ? 1 : 0
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Theme.barMs(180)
+                    }
+
+                }
+
+            }
+
+            background: Item {
+            }
+
+        }
 
         Grid {
             id: grid
 
-            width: parent.width
+            width: cards.width - (cards.scrollable ? 10 : 0)
             columns: 3
             spacing: 12
 

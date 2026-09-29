@@ -53,7 +53,7 @@ BarPill {
         return Prefs.clock24h ? String(h).padStart(2, "0") : String(h % 12 === 0 ? 12 : h % 12);
     }
 
-    shown: Prefs.showClock
+    shown: Prefs.barHas("clock")
     compactWidth: compactRow.implicitWidth + 30
     panelWidth: Math.min(720, root.screenW - 34)
     panelHeight: Math.min(root.screenH - 60, root.pad + tabsBar.height + 10 + 404 + root.pad)
@@ -245,90 +245,98 @@ BarPill {
 
             }
 
-            Row {
-                id: timeRow
-
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 0
-
-                LText {
-                    id: hourText
-
-                    role: "labelLarge"
-                    size: Theme.fs(13.5)
-                    weight: 690
-                    rounded: 100
-                    tabular: true
-                    text: root.hourText(root.now)
-                }
-
-                LText {
-                    role: "labelLarge"
-                    size: Theme.fs(13.5)
-                    weight: 690
-                    rounded: 100
-                    color: Theme.primary
-                    text: ":"
-                    opacity: root.now.getSeconds() % 2 === 0 || Prefs.clockShowSeconds ? 1 : 0.35
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Theme.barMs(400)
-                        }
-
-                    }
-
-                }
-
-                LText {
-                    role: "labelLarge"
-                    size: Theme.fs(13.5)
-                    weight: 690
-                    rounded: 100
-                    tabular: true
-                    text: String(root.now.getMinutes()).padStart(2, "0")
-                }
-
-                LText {
-                    visible: Prefs.clockShowSeconds
-                    anchors.baseline: hourText.baseline
-                    leftPadding: 2
-                    role: "labelMedium"
-                    weight: 600
-                    tabular: true
-                    color: Theme.subtext
-                    text: String(root.now.getSeconds()).padStart(2, "0")
-                }
-
-                LText {
-                    visible: !Prefs.clock24h
-                    anchors.baseline: hourText.baseline
-                    leftPadding: 4
-                    role: "labelMedium"
-                    weight: 600
-                    color: Theme.subtext
-                    text: root.now.getHours() < 12 ? "AM" : "PM"
-                }
-
-            }
-
-            Rectangle {
-                visible: Prefs.clockShowDate
-                anchors.verticalCenter: parent.verticalCenter
-                width: 4
-                height: 4
-                radius: 2
-                color: Theme.accent
-            }
-
+            // the date reads as context, the time as the thing itself: an accent
+            // chip is the one fill the bar carries on live data
             LText {
                 visible: Prefs.clockShowDate
                 anchors.verticalCenter: parent.verticalCenter
                 role: "labelLarge"
-                size: Theme.fs(13.5)
-                weight: 540
+                size: Theme.fs(12.5)
+                weight: 560
                 color: Theme.subtext
-                text: root.now.toLocaleDateString(Qt.locale(), "ddd d")
+                text: root.now.toLocaleDateString(Qt.locale(), "ddd, dd/MM")
+            }
+
+            Rectangle {
+                id: timeChip
+
+                anchors.verticalCenter: parent.verticalCenter
+                width: timeRow.implicitWidth + 17
+                height: Math.min(parent.height, Math.round(Prefs.barHeight * 0.66))
+                radius: height / 2
+                color: Theme.primary
+
+                // the ink on an accent fill, not the deepest surface tone: that one is
+                // near-black on most palettes and carries none of their hue
+                Row {
+                    id: timeRow
+
+                    anchors.centerIn: parent
+                    spacing: 0
+
+                    LText {
+                        id: hourText
+
+                        role: "labelLarge"
+                        size: Theme.fs(13.5)
+                        weight: 700
+                        rounded: 100
+                        tabular: true
+                        color: Theme.fgAccent
+                        text: root.hourText(root.now)
+                    }
+
+                    LText {
+                        role: "labelLarge"
+                        size: Theme.fs(13.5)
+                        weight: 700
+                        rounded: 100
+                        color: Theme.fgAccent
+                        text: ":"
+                        opacity: root.now.getSeconds() % 2 === 0 || Prefs.clockShowSeconds ? 1 : 0.35
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.barMs(400)
+                            }
+
+                        }
+
+                    }
+
+                    LText {
+                        role: "labelLarge"
+                        size: Theme.fs(13.5)
+                        weight: 700
+                        rounded: 100
+                        tabular: true
+                        color: Theme.fgAccent
+                        text: String(root.now.getMinutes()).padStart(2, "0")
+                    }
+
+                    LText {
+                        visible: Prefs.clockShowSeconds
+                        anchors.baseline: hourText.baseline
+                        leftPadding: 2
+                        role: "labelMedium"
+                        weight: 600
+                        tabular: true
+                        color: Theme.alpha(Theme.fgAccent, 0.7)
+                        text: String(root.now.getSeconds()).padStart(2, "0")
+                    }
+
+                    LText {
+                        visible: !Prefs.clock24h
+                        anchors.baseline: hourText.baseline
+                        leftPadding: 4
+                        role: "labelMedium"
+                        weight: 600
+                        color: Theme.alpha(Theme.fgAccent, 0.7)
+                        text: root.now.getHours() < 12 ? "AM" : "PM"
+                    }
+
+                }
+
             }
 
             Row {

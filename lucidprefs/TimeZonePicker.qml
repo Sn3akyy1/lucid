@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls.Basic
 import Quickshell.Io
 import qs
+import qs.lucidui
 
 Item {
     id: picker
@@ -249,7 +250,7 @@ Item {
                 width: list.width - 14
                 height: 48
                 radius: height / 2
-                color: zoneRow.current ? Theme.accentContainer : (rowArea.containsMouse ? Theme.bgHover : "transparent")
+                color: zoneRow.current ? Theme.accentContainer : "transparent"
 
                 Text {
                     anchors.left: parent.left
@@ -265,12 +266,8 @@ Item {
                     elide: Text.ElideRight
                 }
 
-                MouseArea {
-                    id: rowArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
+                StateLayer {
+                    radius: parent.radius
                     onClicked: picker.choose(zoneRow.modelData)
                 }
 

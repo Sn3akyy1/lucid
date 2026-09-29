@@ -62,6 +62,7 @@ Item {
                 wtype: tile.wtype
                 wvariant: tile.variant ? tile.variant.id : ""
                 hovered: area.containsMouse
+                staggered: true
             }
 
         }

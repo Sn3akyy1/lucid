@@ -8,6 +8,10 @@ import qs.lucidui
 FloatingWindow {
     id: win
 
+    PaletteFade {
+        active: win.visible
+    }
+
     readonly property int wheelStep: 190
     readonly property int flickDecel: 6000
     readonly property int maxFlick: 9000
@@ -863,7 +867,6 @@ FloatingWindow {
 
                         property bool everActive: false
 
-                        width: pane.width - 76
                         x: 34
                         y: win.barTall + 10 + (pane.active ? 0 : 14)
                         active: paneLoader.everActive
@@ -885,6 +888,8 @@ FloatingWindow {
                                 return "BarPage.qml";
                             case "dock":
                                 return "DockPage.qml";
+                            case "launcher":
+                                return "LauncherPage.qml";
                             case "widgets":
                                 return "WidgetsPage.qml";
                             case "workspaces":
@@ -916,6 +921,16 @@ FloatingWindow {
 
                         }
 
+                    }
+
+                    // only the page on screen follows the window; every page ever
+                    // visited re-laying out on each resize step froze the window
+                    Binding {
+                        target: paneLoader
+                        property: "width"
+                        value: pane.width - 76
+                        when: pane.active
+                        restoreMode: Binding.RestoreNone
                     }
 
                     onActiveChanged: {

@@ -20,7 +20,7 @@ Item {
     property color ink: Theme.text
     property color inkDim: Theme.subtext
     property color accent: Theme.primary
-    property color onAccent: Theme.fgPrimary
+    property color fgAccent: Theme.fgPrimary
     property color pickFill: Theme.secondaryContainer
     property color pickInk: Theme.fgSecondaryContainer
     property color markColor: Theme.tertiary
@@ -30,7 +30,7 @@ Item {
     }
     readonly property var weekdays: month.mondayFirst ? ["M", "T", "W", "T", "F", "S", "S"] : ["S", "M", "T", "W", "T", "F", "S"]
     readonly property var cells: {
-        Agenda.tick;
+        Agenda.checkedDay;
         const now = Loc.now();
         const lead = (new Date(month.year, month.monthIndex, 1).getDay() + (month.mondayFirst ? 6 : 0)) % 7;
         const first = new Date(month.year, month.monthIndex, 1 - lead);
@@ -224,20 +224,35 @@ Item {
 
                         }
 
-                        MaterialShape {
-                            visible: c.modelData.today
+                        // one cell in 42 shows it, and each costs a JS-built curve
+                        Loader {
                             anchors.centerIn: parent
-                            width: month.cell
-                            height: month.cell
-                            shape: "pentagon"
-                            color: month.accent
-                            scale: area.pressed ? 0.88 : (area.containsMouse ? 1.06 : 1)
+                            active: c.modelData.today
 
-                            Behavior on scale {
-                                NumberAnimation {
-                                    duration: Theme.durFastSpatial
-                                    easing.type: Easing.Bezier
-                                    easing.bezierCurve: Theme.curveFastSpatial
+                            sourceComponent: MaterialShape {
+                                width: month.cell
+                                height: month.cell
+                                shape: "pentagon"
+                                color: month.accent
+                                scale: todayArea.pressed ? 0.92 : (todayArea.containsMouse ? 1.1 : 1)
+                                rotation: todayArea.containsMouse ? -12 : 0
+
+                                Behavior on scale {
+                                    NumberAnimation {
+                                        duration: Theme.durFastSpatial
+                                        easing.type: Easing.Bezier
+                                        easing.bezierCurve: Theme.curveFastSpatial
+                                    }
+
+                                }
+
+                                Behavior on rotation {
+                                    NumberAnimation {
+                                        duration: Theme.durDefaultSpatial
+                                        easing.type: Easing.Bezier
+                                        easing.bezierCurve: Theme.curveDefaultSpatial
+                                    }
+
                                 }
 
                             }
@@ -256,19 +271,46 @@ Item {
                             onClicked: month.picked(c.modelData.year, c.modelData.month, c.modelData.day)
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
+                        StateLayer {
+                            id: todayArea
+
+                            anchors.fill: undefined
+                            anchors.centerIn: parent
+                            width: month.cell - 4
+                            height: month.cell - 4
+                            radius: width / 2
                             visible: c.modelData.today
-                            cursorShape: Qt.PointingHandCursor
+                            // today answers with the shape's own tilt and swell, so the
+                            // layer is here for the click and the cursor only
+                            hoverOpacity: 0
+                            pressOpacity: 0
+                            ripple: false
                             onClicked: month.picked(c.modelData.year, c.modelData.month, c.modelData.day)
                         }
 
+                        TextMetrics {
+                            id: dayCap
+
+                            font: dayText.font
+                            text: "7"
+                        }
+
+                        FontMetrics {
+                            id: dayFm
+
+                            font: dayText.font
+                        }
+
                         LText {
-                            anchors.centerIn: parent
+                            id: dayText
+
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            // centre the cap-height box, not the line box
+                            y: (c.height - dayCap.tightBoundingRect.height) / 2 - dayCap.tightBoundingRect.y - dayFm.ascent
                             role: "bodyMedium"
                             weight: c.modelData.today || c.isSelected ? 650 : 440
                             rounded: c.modelData.today ? 100 : 0
-                            color: c.modelData.today ? month.onAccent : (c.isSelected ? month.pickInk : month.ink)
+                            color: c.modelData.today ? month.fgAccent : (c.isSelected ? month.pickInk : month.ink)
                             opacity: c.modelData.other ? 0.35 : 1
                             text: c.modelData.day
                         }
@@ -281,7 +323,7 @@ Item {
                             width: 5
                             height: 5
                             radius: 2.5
-                            color: c.modelData.today ? month.onAccent : month.markColor
+                            color: c.modelData.today ? month.fgAccent : month.markColor
                         }
 
                     }

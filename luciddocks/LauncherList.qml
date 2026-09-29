@@ -5,6 +5,8 @@ import Quickshell.Widgets
 import qs
 import qs.lucidui
 
+// the launcher's results, on the m3 list item scale: a 40dp leading slot, 16dp
+// of space either side and 12dp between, one line at 56dp and two at 72dp
 Item {
     id: list
 
@@ -13,14 +15,19 @@ Item {
     // what to embolden in each title
     property string query: ""
     property string emptyLabel: "No results"
+    property string emptyHint: ""
+    // an empty apps search is where the prefixes are worth teaching
+    property bool showPrefixes: false
     // the settled view height; view.height is mid-animation while the panel resizes
     property real stableHeight: 0
-    signal activated(int index)
-    signal deleteRequested(int index)
-
     // the view consumes these; reading them back off `view` re-entered the layout
-    readonly property int rowSpacing: 2
-    readonly property int bottomPad: 8
+    readonly property int rowSpacing: Prefs.launcherRowGap
+    readonly property int bottomPad: Prefs.launcherListPad
+    // m3 list item metrics, taken through the launcher's content scale
+    readonly property real cs: Prefs.launcherScale
+    readonly property int leadSlot: Prefs.launcherLeadSlot
+    readonly property int edgeSpace: Prefs.launcherEdgeSpace
+    readonly property int betweenSpace: Prefs.launcherBetweenSpace
     readonly property real viewport: list.stableHeight > 0 ? list.stableHeight : list.height
     // summed from the model, so it never depends on the layout it feeds
     readonly property real contentExtent: {
@@ -28,7 +35,7 @@ Item {
             return 0;
 
         var h = 0;
-        for (var i = 0; i < list.model.count; i++) h += list.rowHeight(i) + list.rowSpacing;
+        for (var i = 0; i < list.model.count; i++) h += list.rowHeight(i) + list.rowSpacing
         return h - list.rowSpacing + list.bottomPad;
     }
     readonly property real maxScroll: Math.max(0, list.contentExtent - list.viewport)
@@ -36,25 +43,74 @@ Item {
     readonly property bool needsScrollbar: list.contentExtent > list.viewport
     // only give up the gutter when the scrollbar is actually there
     readonly property int rowWidth: Math.max(0, view.width - (list.needsScrollbar ? 14 : 0))
+    // the head only earns its rule once something is hidden above
+    readonly property bool scrolled: view.contentY > 1
     readonly property real selectionY: list.rowY(list.currentIndex)
     readonly property real selectionHeight: list.rowHeight(list.currentIndex)
+    readonly property int hoveredIndex: {
+        if (!listHover.hovered)
+            return -1;
+
+        var y = listHover.point.position.y + view.contentY;
+        return view.indexAt(view.width / 2, y);
+    }
+
+    signal activated(int index)
+    signal deleteRequested(int index)
+    signal hideRequested(int index)
+    signal prefixChosen(string prefix)
+
+    // a type role at the launcher's own size
+    function ts(role) {
+        return Math.round(Theme.typeSize(role) * list.cs);
+    }
 
     function rowAt(index) {
         return list.model && index >= 0 && index < list.model.count ? list.model.get(index) : null;
     }
 
-    // must match the delegate's height expression below
+    // must match the delegate's height expression below, and Dock.measure()
     function rowHeight(index) {
         var r = list.rowAt(index);
         if (!r)
             return 0;
 
-        return r.kind === "header" ? 34 : (r.subtitle !== "" ? 58 : 50);
+        if (r.kind === "header")
+            return Prefs.launcherRowHeader;
+
+        if (r.kind === "calc")
+            return Prefs.launcherRowCalc;
+
+        return r.subtitle !== "" ? Prefs.launcherRowTwo : Prefs.launcherRowOne;
+    }
+
+    // the m3 trailing supporting text: what Return will do with this row
+    function actionFor(kind) {
+        switch (kind) {
+        case "app":
+        case "command":
+            return "Open";
+        case "setting":
+            return "Settings";
+        case "web":
+            return "Browser";
+        case "run":
+            return "Run";
+        case "runterm":
+            return "Terminal";
+        case "calc":
+        case "emoji":
+        case "clip":
+            return "Copy";
+        case "theme":
+            return "Apply";
+        }
+        return "";
     }
 
     function rowY(index) {
         var y = 0;
-        for (var i = 0; i < index; i++) y += list.rowHeight(i) + list.rowSpacing;
+        for (var i = 0; i < index; i++) y += list.rowHeight(i) + list.rowSpacing
         return y;
     }
 
@@ -65,18 +121,18 @@ Item {
 
     function step(delta) {
         if (!list.model || list.model.count === 0)
-            return;
+            return ;
 
         var i = list.currentIndex;
         for (var n = 0; n < list.model.count; n++) {
             i += delta;
             if (i < 0 || i >= list.model.count)
-                return;
+                return ;
 
             if (list.isSelectable(i)) {
                 list.currentIndex = i;
                 list.scrollToCurrent();
-                return;
+                return ;
             }
         }
     }
@@ -88,6 +144,7 @@ Item {
         for (var i = 0; i < list.model.count; i++) {
             if (list.isSelectable(i))
                 return i;
+
         }
         return 0;
     }
@@ -114,11 +171,10 @@ Item {
         else if (bottom > cur + list.viewport)
             target = bottom - list.viewport;
         else
-            return;
-
+            return ;
         target = Math.max(0, Math.min(list.maxScroll, target));
         if (Math.abs(target - cur) < 0.5)
-            return;
+            return ;
 
         scrollAnim.stop();
         scrollAnim.from = view.contentY;
@@ -132,18 +188,24 @@ Item {
 
     }
 
-    readonly property int hoveredIndex: {
-        if (!listHover.hovered)
-            return -1;
+    function highlight(title) {
+        var q = list.query.trim();
+        if (q === "")
+            return title;
 
-        var y = listHover.point.position.y + view.contentY;
-        return view.indexAt(view.width / 2, y);
+        var idx = title.toLowerCase().indexOf(q.toLowerCase());
+        if (idx === -1)
+            return title;
+
+        return title.substring(0, idx) + "<font color=\"" + Theme.toHex(Theme.accent) + "\">" + title.substring(idx, idx + q.length) + "</font>" + title.substring(idx + q.length);
     }
 
     HoverHandler {
         id: listHover
     }
 
+    // one shape that slides between rows, rather than a highlight blinking on
+    // and off in place. m3 selects a list item with the secondary container
     Rectangle {
         id: selection
 
@@ -154,8 +216,8 @@ Item {
         y: selection.slot - view.contentY
         width: list.rowWidth
         height: selection.slotHeight
-        radius: Theme.radiusLg
-        color: Theme.withBlur(Theme.secondaryContainer)
+        radius: Theme.shapeXl
+        color: Theme.withBlur(Theme.primaryContainer)
         visible: view.count > 0 && list.isSelectable(list.currentIndex)
         z: 0
 
@@ -208,7 +270,7 @@ Item {
                 var base = scrollAnim.running ? scrollAnim.to : view.contentY;
                 var target = Math.max(0, Math.min(list.maxScroll, base - (event.angleDelta.y / 120) * 60));
                 if (target === base)
-                    return;
+                    return ;
 
                 scrollAnim.stop();
                 scrollAnim.from = view.contentY;
@@ -229,20 +291,30 @@ Item {
         }
 
         populate: Transition {
-            NumberAnimation {
-                properties: "opacity"
-                from: 0
-                to: 1
-                duration: Theme.ms(200)
-                easing.type: Easing.OutCubic
-            }
+            SequentialAnimation {
+                PauseAnimation {
+                    duration: Theme.ms(Math.max(0, Math.min(view.ViewTransition.index, 9)) * 22)
+                }
 
-            NumberAnimation {
-                properties: "y"
-                from: 10
-                duration: Theme.durEnter
-                easing.type: Easing.Bezier
-                easing.bezierCurve: Theme.easeEmphasizedDecel
+                ParallelAnimation {
+                    NumberAnimation {
+                        properties: "opacity"
+                        from: 0
+                        to: 1
+                        duration: Theme.ms(200)
+                        easing.type: Easing.OutCubic
+                    }
+
+                    NumberAnimation {
+                        properties: "y"
+                        from: view.ViewTransition.destination.y + 12
+                        duration: Theme.durEnter
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.easeEmphasizedDecel
+                    }
+
+                }
+
             }
 
         }
@@ -311,22 +383,30 @@ Item {
             required property string subtitle
             required property string iconName
             required property string glyph
+            required property string emoji
             required property string swatchBg
             required property string swatchAccent
             required property string trailing
             required property string thumb
+            required property bool running
             required property bool disabled
             required property bool selectable
             required property string payload
             required property int index
-
             readonly property bool isHeader: rowItem.kind === "header"
+            readonly property bool isCalc: rowItem.kind === "calc"
             readonly property bool selected: list.currentIndex === rowItem.index && rowItem.selectable
             readonly property bool hovering: list.hoveredIndex === rowItem.index && rowItem.selectable && !rowItem.disabled
-
-            width: list.rowWidth
-            height: rowItem.isHeader ? 34 : (rowItem.subtitle !== "" ? 58 : 50)
-            opacity: rowItem.disabled ? 0.4 : 1
+            readonly property bool hasLead: rowItem.iconName !== "" || rowItem.glyph !== "" || rowItem.emoji !== "" || rowItem.swatchBg !== "" || rowItem.thumb !== ""
+            readonly property color content: rowItem.selected ? Theme.fgPrimaryContainer : Theme.text
+            readonly property color support: rowItem.selected ? Theme.alpha(Theme.fgPrimaryContainer, 0.76) : Theme.subtext
+            // a symbol needs a container to sit on; an application icon brings its own
+            readonly property bool needsTile: rowItem.glyph !== "" || rowItem.emoji !== ""
+            readonly property color tile: rowItem.selected ? Theme.alpha(Theme.fgPrimaryContainer, 0.14) : Theme.withBlur(Theme.bgTile)
+            readonly property bool showsDrop: rowItem.kind === "clip" && (rowItem.hovering || rowItem.selected)
+            // an application the pointer is on can be sent out of the launcher
+            readonly property bool showsHide: rowItem.kind === "app" && rowItem.hovering
+            readonly property bool showsHint: Prefs.launcherActionHints && rowItem.selected && !rowItem.isHeader && !rowItem.isCalc && rowItem.trailing === ""
 
             function askThumb() {
                 if (rowItem.thumb !== "")
@@ -334,59 +414,191 @@ Item {
 
             }
 
+            width: list.rowWidth
+            height: rowItem.isHeader ? Prefs.launcherRowHeader : (rowItem.isCalc ? Prefs.launcherRowCalc : (rowItem.subtitle !== "" ? Prefs.launcherRowTwo : Prefs.launcherRowOne))
+            opacity: rowItem.disabled ? Theme.disabledContent : 1
             onThumbChanged: rowItem.askThumb()
             Component.onCompleted: rowItem.askThumb()
 
-            LText {
-                anchors.left: parent.left
-                anchors.leftMargin: 16
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 8
+            // m3 list subheader, with the group's rule carried out to the edge
+            // so a run of results reads as one block rather than a loose stack
+            Item {
+                anchors.fill: parent
                 visible: rowItem.isHeader
-                role: "labelLarge"
-                color: Theme.primary
-                text: rowItem.title
+
+                LText {
+                    id: headerLabel
+
+                    x: list.edgeSpace
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: Math.round(9 * list.cs)
+                    role: "labelLarge"
+                    size: list.ts("labelLarge")
+                    color: Theme.primary
+                    text: rowItem.title
+                }
+
+                Rectangle {
+                    anchors.left: headerLabel.right
+                    anchors.leftMargin: Math.round(12 * list.cs)
+                    anchors.right: parent.right
+                    anchors.rightMargin: list.edgeSpace
+                    anchors.verticalCenter: headerLabel.verticalCenter
+                    height: 1
+                    color: Theme.divider
+                }
+
             }
 
+            // the calculator answers in display type on its own card, rather
+            // than passing for one more result row
             Rectangle {
-                anchors.fill: parent
-                radius: Theme.radiusLg
-                color: Theme.text
-                opacity: rowItem.hovering ? Theme.stateHover : 0
-                visible: !rowItem.isHeader
+                id: calcCard
 
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.durQuick
+                anchors.fill: parent
+                visible: rowItem.isCalc
+                radius: Theme.shapeXl
+                color: rowItem.selected ? Theme.withBlur(Theme.primaryContainer) : Theme.withBlur(Theme.surfaceHigh)
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Theme.durFastEffects
+                    }
+
+                }
+
+                Column {
+                    x: list.edgeSpace + Math.round(4 * list.cs)
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - x - Math.round(72 * list.cs)
+                    spacing: Math.round(2 * list.cs)
+
+                    LText {
+                        width: parent.width
+                        elide: Text.ElideRight
+                        role: "labelMedium"
+                        size: list.ts("labelMedium")
+                        text: rowItem.subtitle
+                        color: rowItem.selected ? Theme.alpha(Theme.fgPrimaryContainer, 0.7) : Theme.subtextDim
+                    }
+
+                    LText {
+                        width: parent.width
+                        elide: Text.ElideRight
+                        tabular: true
+                        role: "headlineMedium"
+                        size: list.ts("headlineMedium")
+                        text: rowItem.title
+                        color: rowItem.selected ? Theme.fgPrimaryContainer : Theme.primary
+                    }
+
+                }
+
+                Column {
+                    anchors.right: parent.right
+                    anchors.rightMargin: list.edgeSpace + Math.round(4 * list.cs)
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Math.round(4 * list.cs)
+
+                    Icon {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        name: "content_paste"
+                        size: Math.round(20 * list.cs)
+                        color: rowItem.selected ? Theme.alpha(Theme.fgPrimaryContainer, 0.8) : Theme.subtextDim
+                    }
+
+                    LText {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        role: "labelSmall"
+                        size: list.ts("labelSmall")
+                        text: "Return"
+                        color: rowItem.selected ? Theme.alpha(Theme.fgPrimaryContainer, 0.7) : Theme.subtextDim
                     }
 
                 }
 
             }
 
-            Row {
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left
-                anchors.leftMargin: 14
-                anchors.right: parent.right
-                anchors.rightMargin: 14
-                spacing: 14
+            // m3 expressive state shapes: the container rounds further as the
+            // pointer settles on it, from extra small at rest to large pressed
+            Rectangle {
+                id: stateShape
+
+                anchors.fill: parent
+                radius: rowTap.pressed ? Theme.shapeXl : (rowItem.hovering ? Theme.shapeLg : Theme.shapeSm)
+                color: Theme.text
+                opacity: rowItem.hovering ? (rowTap.pressed ? Theme.statePressed : Theme.stateHover) : 0
                 visible: !rowItem.isHeader
 
+                Behavior on radius {
+                    NumberAnimation {
+                        duration: Theme.durFastSpatial
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.curveDefaultSpatial
+                    }
+
+                }
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Theme.durFastEffects
+                    }
+
+                }
+
+            }
+
+            // the 40dp leading slot every kind of row shares, so titles line up
+            // no matter what is standing in front of them
+            Item {
+                id: lead
+
+                x: list.edgeSpace
+                anchors.verticalCenter: parent.verticalCenter
+                width: list.leadSlot
+                height: list.leadSlot
+                visible: !rowItem.isHeader && !rowItem.isCalc && rowItem.hasLead
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: Math.round(parent.width * 0.35)
+                    color: rowItem.tile
+                    visible: rowItem.needsTile
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Theme.durFastEffects
+                        }
+
+                    }
+
+                }
+
+                // an application icon is already a shape and a colour of its
+                // own; standing it on a tile only muddies both
                 IconImage {
-                    width: 32
-                    height: 32
-                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.centerIn: parent
+                    width: Math.round(list.leadSlot * 0.88)
+                    height: Math.round(list.leadSlot * 0.88)
                     visible: rowItem.iconName !== ""
                     source: rowItem.iconName === "" ? "" : (IconTheme.generation >= 0 && IconTheme.pathFor(rowItem.iconName) !== "" ? IconTheme.pathFor(rowItem.iconName) : Quickshell.iconPath(rowItem.iconName, true))
                 }
 
+                Text {
+                    anchors.centerIn: parent
+                    visible: rowItem.emoji !== ""
+                    text: rowItem.emoji
+                    font.pixelSize: Math.round(list.leadSlot * 0.6)
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+
                 Rectangle {
-                    width: 40
-                    height: 30
-                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.centerIn: parent
+                    width: list.leadSlot
+                    height: Math.round(list.leadSlot * 0.75)
                     visible: rowItem.thumb !== ""
-                    radius: Theme.radiusSm
+                    radius: Theme.shapeSm
                     color: Theme.bgTile
                     clip: true
 
@@ -405,7 +617,7 @@ Item {
                         // the next request decodes again
                         onStatusChanged: {
                             if (thumbImage.status !== Image.Error)
-                                return;
+                                return ;
 
                             // a failed decode caches "" instead, so this
                             // settles rather than loops
@@ -426,19 +638,19 @@ Item {
                 }
 
                 DockGlyph {
-                    width: 22
-                    height: 22
-                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.centerIn: parent
+                    width: Math.round(list.leadSlot * 0.58)
+                    height: Math.round(list.leadSlot * 0.58)
                     visible: rowItem.glyph !== ""
                     pathData: rowItem.glyph
-                    glyphColor: rowItem.selected ? Theme.fgSecondaryContainer : Theme.accent
+                    glyphColor: rowItem.selected ? Theme.fgPrimaryContainer : Theme.primary
                 }
 
                 Rectangle {
-                    width: 32
-                    height: 32
-                    radius: 16
-                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.centerIn: parent
+                    width: Math.round(36 * list.cs)
+                    height: Math.round(36 * list.cs)
+                    radius: width / 2
                     visible: rowItem.swatchBg !== ""
                     color: rowItem.swatchBg !== "" ? rowItem.swatchBg : "transparent"
                     // a copied colour can be the panel's own; theme swatches never are
@@ -448,37 +660,117 @@ Item {
                     Rectangle {
                         visible: rowItem.swatchAccent !== ""
                         anchors.centerIn: parent
-                        width: 14
-                        height: 14
-                        radius: 7
+                        width: Math.round(15 * list.cs)
+                        height: Math.round(15 * list.cs)
+                        radius: width / 2
                         color: rowItem.swatchAccent !== "" ? rowItem.swatchAccent : "transparent"
                     }
 
                 }
 
-                Column {
-                    // the leading icon is 32 wide; clip rows keep room for their delete button
-                    width: parent.width - 32 - parent.spacing - (rowItem.kind === "clip" || rowItem.trailing !== "" ? 36 : 0)
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+            }
+
+            Column {
+                id: textCol
+
+                x: rowItem.hasLead ? list.edgeSpace + list.leadSlot + list.betweenSpace : list.edgeSpace
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.max(0, parent.width - textCol.x - list.edgeSpace - trailRoom.width)
+                visible: !rowItem.isHeader && !rowItem.isCalc
+                spacing: 2
+
+                // an eliding Text reports its elided width, so the run the dot
+                // follows has to be measured off the unelided string
+                TextMetrics {
+                    id: titleMetrics
+
+                    font: titleText.font
+                    text: rowItem.title
+                }
+
+                Row {
+                    width: parent.width
+                    spacing: Math.round(7 * list.cs)
 
                     LText {
-                        width: parent.width
+                        id: titleText
+
+                        width: Math.min(Math.ceil(titleMetrics.width) + 2, Math.max(0, parent.width - (dotMark.visible ? dotMark.width + parent.spacing : 0)))
                         elide: Text.ElideRight
                         textFormat: Text.StyledText
                         role: "bodyLarge"
-                        weight: 500
+                        size: list.ts("bodyLarge")
                         text: list.highlight(rowItem.title)
-                        color: rowItem.selected ? Theme.fgSecondaryContainer : Theme.text
+                        color: rowItem.content
                     }
 
-                    LText {
-                        width: parent.width
-                        elide: Text.ElideRight
-                        role: "bodySmall"
-                        text: rowItem.subtitle
-                        color: rowItem.selected ? Theme.alpha(Theme.fgSecondaryContainer, 0.78) : Theme.subtext
-                        visible: rowItem.subtitle !== ""
+                    // the dock's running mark, said once more where the app is found
+                    Rectangle {
+                        id: dotMark
+
+                        anchors.verticalCenter: titleText.verticalCenter
+                        width: Math.round(6 * list.cs)
+                        height: dotMark.width
+                        radius: dotMark.width / 2
+                        visible: rowItem.running
+                        color: rowItem.selected ? Theme.fgPrimaryContainer : Theme.accent
+                    }
+
+                }
+
+                LText {
+                    width: parent.width
+                    elide: Text.ElideRight
+                    role: "bodyMedium"
+                    size: list.ts("bodyMedium")
+                    text: rowItem.subtitle
+                    color: rowItem.support
+                    visible: rowItem.subtitle !== ""
+                }
+
+            }
+
+            // whatever the title has to keep clear of on the trailing edge
+            Item {
+                id: trailRoom
+
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: rowItem.showsDrop || rowItem.showsHide ? Math.round(38 * list.cs) : (rowItem.trailing !== "" ? Math.round(28 * list.cs) : (rowItem.showsHint ? hint.implicitWidth + Math.round(26 * list.cs) : 0))
+                height: 1
+            }
+
+            // m3 trailing supporting text: what Return does with the row under it
+            Row {
+                id: hintRow
+
+                anchors.right: parent.right
+                anchors.rightMargin: list.edgeSpace
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Math.round(5 * list.cs)
+                visible: rowItem.showsHint && !rowItem.showsDrop && !rowItem.showsHide
+                opacity: hintRow.visible ? 1 : 0
+
+                Icon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: "keyboard_return"
+                    size: Math.round(15 * list.cs)
+                    color: Theme.alpha(Theme.fgPrimaryContainer, 0.65)
+                }
+
+                LText {
+                    id: hint
+
+                    anchors.verticalCenter: parent.verticalCenter
+                    role: "labelSmall"
+                    size: list.ts("labelSmall")
+                    text: list.actionFor(rowItem.kind)
+                    color: Theme.alpha(Theme.fgPrimaryContainer, 0.75)
+                }
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Theme.durFastEffects
                     }
 
                 }
@@ -486,25 +778,71 @@ Item {
             }
 
             DockGlyph {
-                width: 18
-                height: 18
+                width: Math.round(20 * list.cs)
+                height: Math.round(20 * list.cs)
                 anchors.right: parent.right
-                anchors.rightMargin: 14
+                anchors.rightMargin: list.edgeSpace
                 anchors.verticalCenter: parent.verticalCenter
                 visible: rowItem.trailing === "check"
                 pathData: DockIcons.check
-                glyphColor: rowItem.selected ? Theme.fgSecondaryContainer : Theme.accent
+                glyphColor: rowItem.selected ? Theme.fgPrimaryContainer : Theme.primary
+            }
+
+            // hide this application from the launcher. the settings page keeps
+            // the list, so nothing here is one-way
+            Item {
+                id: hideButton
+
+                width: Math.round(32 * list.cs)
+                height: Math.round(32 * list.cs)
+                anchors.right: parent.right
+                anchors.rightMargin: 8
+                anchors.verticalCenter: parent.verticalCenter
+                visible: rowItem.showsHide
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: width / 2
+                    color: Theme.text
+                    opacity: hideTap.pressed ? Theme.statePressed : (hideHover.hovered ? Theme.stateHover : 0)
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Theme.durQuick
+                        }
+
+                    }
+
+                }
+
+                Icon {
+                    anchors.centerIn: parent
+                    name: "visibility_off"
+                    size: Math.round(18 * list.cs)
+                    color: hideHover.hovered ? Theme.text : Theme.subtext
+                }
+
+                HoverHandler {
+                    id: hideHover
+                }
+
+                TapHandler {
+                    id: hideTap
+
+                    onTapped: list.hideRequested(rowItem.index)
+                }
+
             }
 
             Item {
                 id: dropButton
 
-                width: 30
-                height: 30
+                width: Math.round(32 * list.cs)
+                height: Math.round(32 * list.cs)
                 anchors.right: parent.right
                 anchors.rightMargin: 8
                 anchors.verticalCenter: parent.verticalCenter
-                visible: rowItem.kind === "clip" && (rowItem.hovering || rowItem.selected)
+                visible: rowItem.showsDrop
 
                 Rectangle {
                     anchors.fill: parent
@@ -523,8 +861,8 @@ Item {
 
                 DockGlyph {
                     anchors.centerIn: parent
-                    width: 15
-                    height: 15
+                    width: 16
+                    height: 16
                     pathData: DockIcons.trash
                     glyphColor: dropHover.hovered ? Theme.error : Theme.subtext
                 }
@@ -542,6 +880,8 @@ Item {
             }
 
             TapHandler {
+                id: rowTap
+
                 enabled: rowItem.selectable && !rowItem.disabled
                 onTapped: {
                     list.currentIndex = rowItem.index;
@@ -553,41 +893,146 @@ Item {
 
     }
 
-    function highlight(title) {
-        var q = list.query.trim();
-        if (q === "")
-            return title;
-
-        var idx = title.toLowerCase().indexOf(q.toLowerCase());
-        if (idx === -1)
-            return title;
-
-        return title.substring(0, idx) + "<font color=\"" + Theme.toHex(Theme.accent) + "\">" + title.substring(idx, idx + q.length) + "</font>" + title.substring(idx + q.length);
-    }
-
+    // nothing found: say so, then hand over the four prefixes that reach
+    // everything the plain search does not
     Column {
-        anchors.centerIn: parent
-        spacing: 10
-        visible: view.count === 0
-        opacity: visible ? 1 : 0
+        id: empty
 
-        DockGlyph {
-            width: 26
-            height: 26
+        anchors.centerIn: parent
+        width: Math.min(parent.width - Math.round(48 * list.cs), Math.round(360 * list.cs))
+        spacing: Math.round(10 * list.cs)
+        visible: view.count === 0
+        opacity: empty.visible ? 1 : 0
+
+        Item {
             anchors.horizontalCenter: parent.horizontalCenter
-            opacity: 0.5
-            pathData: DockIcons.search
-            glyphColor: Theme.subtext
+            width: Math.round(58 * list.cs)
+            height: empty.width > 0 ? Math.round(58 * list.cs) : 0
+
+            Rectangle {
+                anchors.fill: parent
+                radius: Theme.shapeXl
+                color: Theme.withBlur(Theme.surfaceHigh)
+            }
+
+            Icon {
+                anchors.centerIn: parent
+                name: "search"
+                size: Math.round(28 * list.cs)
+                color: Theme.primary
+            }
+
         }
 
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
+        LText {
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            role: "titleMedium"
+            size: list.ts("titleMedium")
             text: list.emptyLabel
-            color: Theme.subtext
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontBody
-            font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
-            font.weight: Font.Medium
+            color: Theme.text
+        }
+
+        LText {
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            role: "bodyMedium"
+            size: list.ts("bodyMedium")
+            text: list.emptyHint
+            color: Theme.subtextDim
+            visible: list.emptyHint !== ""
+        }
+
+        Item {
+            width: 1
+            height: Math.round(4 * list.cs)
+        }
+
+        Row {
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: Math.round(8 * list.cs)
+            visible: list.showPrefixes
+
+            Repeater {
+                model: [{
+                    "prefix": ">",
+                    "label": "Commands"
+                }, {
+                    "prefix": "?",
+                    "label": "Web"
+                }, {
+                    "prefix": "$",
+                    "label": "Run"
+                }, {
+                    "prefix": ":",
+                    "label": "Emoji"
+                }]
+
+                Item {
+                    id: prefixChip
+
+                    required property var modelData
+
+                    width: keyBox.width + gapPad.width + chipLabel.implicitWidth + Math.round(14 * list.cs)
+                    height: Math.round(32 * list.cs)
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Theme.shapeFull
+                        color: Theme.withBlur(Theme.surfaceHigh)
+
+                        StateLayer {
+                            radius: Theme.shapeFull
+                            tint: Theme.text
+                            onClicked: list.prefixChosen(prefixChip.modelData.prefix)
+                        }
+
+                    }
+
+                    Rectangle {
+                        id: keyBox
+
+                        x: Math.round(5 * list.cs)
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.round(22 * list.cs)
+                        height: Math.round(22 * list.cs)
+                        radius: Theme.shapeSm
+                        color: Theme.alpha(Theme.accent, 0.18)
+
+                        LText {
+                            anchors.centerIn: parent
+                            role: "labelLarge"
+                            size: list.ts("labelLarge")
+                            text: prefixChip.modelData.prefix
+                            color: Theme.accent
+                        }
+
+                    }
+
+                    Item {
+                        id: gapPad
+
+                        width: Math.round(7 * list.cs)
+                        height: 1
+                    }
+
+                    LText {
+                        id: chipLabel
+
+                        anchors.left: keyBox.right
+                        anchors.leftMargin: gapPad.width
+                        anchors.verticalCenter: parent.verticalCenter
+                        role: "labelMedium"
+                        size: list.ts("labelMedium")
+                        text: prefixChip.modelData.label
+                        color: Theme.subtext
+                    }
+
+                }
+
+            }
+
         }
 
         Behavior on opacity {

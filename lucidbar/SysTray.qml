@@ -56,7 +56,7 @@ BarPill {
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
     readonly property int maxPanelHeight: Math.min(380, Math.max(180, root.screenH - 40))
 
-    shown: Prefs.showTray && root.trayCount > 0
+    shown: Prefs.barHas("tray") && root.trayCount > 0
     compactWidth: compactRow.implicitWidth + root.horizontalPadding * 2
     panelWidth: Math.min(300, root.screenW - 34)
     panelHeight: Math.min(root.maxPanelHeight, expandedColumn.implicitHeight + 28)
@@ -108,10 +108,25 @@ BarPill {
                 scale: root.trayCount > 0 ? 1 : 0.4
                 clip: true
 
+                TextMetrics {
+                    id: countCap
+
+                    font: countText.font
+                    text: "7"
+                }
+
+                FontMetrics {
+                    id: countFm
+
+                    font: countText.font
+                }
+
                 Text {
                     id: countText
 
-                    anchors.centerIn: parent
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    // centre the cap-height box, not the line box
+                    y: (countBadge.height - countCap.tightBoundingRect.height) / 2 - countCap.tightBoundingRect.y - countFm.ascent
                     text: root.trayCount > 9 ? "9+" : String(root.trayCount)
                     color: Theme.fgAccent
                     font.family: Theme.fontFamily

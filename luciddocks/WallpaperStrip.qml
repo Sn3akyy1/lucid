@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 Item {
     id: strip
@@ -202,7 +203,7 @@ Item {
                     }
 
                 }
-                radius: slot.tier === 0 ? Theme.radiusXl : (slot.tier === 1 ? Theme.radiusLg : Theme.radiusMd)
+                radius: slot.tier === 0 ? Theme.shapeXlInc : (slot.tier === 1 ? Theme.shapeLgInc : Theme.shapeMd)
                 color: Theme.bgTile
                 opacity: (slot.tier === 0 || slot.hovered) ? 1 : (slot.tier === 1 ? 0.78 : 0.5)
 
@@ -246,43 +247,26 @@ Item {
 
                 }
 
-                Rectangle {
-                    anchors.fill: parent
-                    radius: card.radius
-                    color: "transparent"
-                    border.color: Theme.accent
-                    border.width: slot.isCurrent ? 3 : 0
-                    visible: slot.isCurrent
-                }
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: card.radius
-                    color: "transparent"
-                    border.color: Theme.alpha(Theme.text, 0.55)
-                    border.width: 2
-                    opacity: (slot.hovered && !slot.isCurrent) ? 1 : 0
-                    visible: opacity > 0.01
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Theme.durShort
-                        }
-
-                    }
-
-                }
-
             }
 
             Rectangle {
                 anchors.right: card.right
                 anchors.top: card.top
                 anchors.margins: 10
-                width: 24
-                height: 24
-                radius: 12
+                width: 26
+                height: 26
+                radius: width / 2
                 color: Theme.accent
+                scale: slot.isApplied ? 1 : 0.4
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: Theme.durFastSpatial
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.curveDefaultSpatial
+                    }
+
+                }
                 opacity: slot.isApplied ? 1 : 0
                 visible: opacity > 0.01
 
@@ -339,38 +323,58 @@ Item {
         visible: view.visible
 
         Row {
+            id: capRow
+
+            readonly property int at: strip.hoveredIndex >= 0 ? strip.hoveredIndex : view.currentIndex
+            readonly property var entry: strip.model && capRow.at >= 0 && capRow.at < strip.model.count ? strip.model.get(capRow.at) : null
+
             anchors.centerIn: parent
             spacing: 10
 
-            Text {
+            LText {
+                id: capName
+
                 anchors.verticalCenter: parent.verticalCenter
-                text: {
-                    if (!strip.model)
-                        return "";
-
-                    var i = strip.hoveredIndex >= 0 ? strip.hoveredIndex : view.currentIndex;
-                    if (i < 0 || i >= strip.model.count)
-                        return "";
-
-                    var item = strip.model.get(i);
-                    return item ? item.name : "";
-                }
+                role: "titleSmall"
+                text: capRow.entry ? capRow.entry.name : ""
                 color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontBody
-                font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
-                font.weight: Font.Medium
                 elide: Text.ElideRight
-                width: Math.min(implicitWidth, strip.width - 200)
+                width: Math.min(capMetrics.width + 2, Math.max(0, strip.width - 220))
+
+                TextMetrics {
+                    id: capMetrics
+
+                    font: capName.font
+                    text: capName.text
+                }
+
             }
 
-            Text {
+            Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
-                text: strip.model && strip.model.count > 0 ? ((strip.hoveredIndex >= 0 ? strip.hoveredIndex : view.currentIndex) + 1) + " / " + strip.model.count : ""
+                width: appliedLabel.implicitWidth + 16
+                height: 22
+                radius: Theme.shapeFull
+                color: Theme.accent
+                visible: capRow.entry !== null && strip.appliedPath !== "" && strip.appliedPath === capRow.entry.path
+
+                LText {
+                    id: appliedLabel
+
+                    anchors.centerIn: parent
+                    role: "labelSmall"
+                    text: "On the desktop"
+                    color: Theme.fgAccent
+                }
+
+            }
+
+            LText {
+                anchors.verticalCenter: parent.verticalCenter
+                role: "labelMedium"
+                tabular: true
+                text: strip.model && strip.model.count > 0 ? (capRow.at + 1) + " / " + strip.model.count : ""
                 color: Theme.subtextDim
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontLabel
-                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
             }
 
         }
@@ -383,26 +387,37 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: Math.max(0, (strip.stableHeight - emptyState.implicitHeight) / 2)
         anchors.horizontalCenter: parent.horizontalCenter
-        spacing: 10
+        spacing: 12
         visible: !strip.model || strip.model.count === 0
 
-        DockGlyph {
-            width: 32
-            height: 32
+        Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
-            opacity: 0.5
-            pathData: DockIcons.brokenImage
-            glyphColor: Theme.subtext
+            width: 58
+            height: 58
+            radius: Theme.shapeXl
+            color: Theme.withBlur(Theme.surfaceHigh)
+
+            Icon {
+                anchors.centerIn: parent
+                name: "wallpaper"
+                size: 28
+                color: Theme.primary
+            }
+
         }
 
-        Text {
+        LText {
             anchors.horizontalCenter: parent.horizontalCenter
+            role: "titleMedium"
             text: "No wallpapers in this folder"
-            color: Theme.subtext
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontBody
-            font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
-            font.weight: Font.Medium
+            color: Theme.text
+        }
+
+        LText {
+            anchors.horizontalCenter: parent.horizontalCenter
+            role: "bodyMedium"
+            text: "Drop images into the theme's wallpaper folder and they show up here."
+            color: Theme.subtextDim
         }
 
     }

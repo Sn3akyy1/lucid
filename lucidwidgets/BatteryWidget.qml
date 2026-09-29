@@ -350,7 +350,7 @@ WidgetBody {
                     name: "bolt"
                     size: 20
                     fill: 1
-                    color: w.level > 0.25 ? w.onInkAccent : w.ink
+                    color: w.level > 0.25 ? w.fgInkAccent : w.ink
                 }
 
                 LText {
@@ -359,7 +359,7 @@ WidgetBody {
                     weight: 700
                     rounded: 100
                     tabular: true
-                    color: w.level > 0.25 ? (w.low ? Theme.fgError : w.onInkAccent) : w.ink
+                    color: w.level > 0.25 ? (w.low ? Theme.fgError : w.fgInkAccent) : w.ink
                     text: w.present ? w.percent + "%" : "No battery"
                 }
 

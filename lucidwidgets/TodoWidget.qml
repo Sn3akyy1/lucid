@@ -150,7 +150,7 @@ WidgetBody {
                 name: "check"
                 size: 16
                 weight: 700
-                color: w.onInkAccent
+                color: w.fgInkAccent
                 opacity: ck.on ? 1 : 0
                 scale: ck.on ? 1 : 0.4
 
@@ -411,7 +411,7 @@ WidgetBody {
                 icon: "check"
                 text: "Done"
                 containerOverride: w.inkAccent
-                contentOverride: w.onInkAccent
+                contentOverride: w.fgInkAccent
                 onClicked: w.toggleAt(w.nextUp.at)
             }
 
@@ -484,7 +484,7 @@ WidgetBody {
             font.variableAxes: Theme.axes(Theme.typeSize("bodyMedium"), 420, 0)
             selectByMouse: true
             selectionColor: w.inkAccent
-            selectedTextColor: w.onInkAccent
+            selectedTextColor: w.fgInkAccent
             clip: true
             onActiveFocusChanged: {
                 if (adder.activeFocus)

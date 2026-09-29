@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import qs
+import qs.lucidui
 
 // the shared list behind every picker on the Environment page
 Item {
@@ -252,7 +253,7 @@ Item {
                 width: list.width - 14
                 height: 50
                 radius: height / 2
-                color: themeRow.isCurrent ? Theme.accentContainer : (rowArea.containsMouse ? Theme.bgHover : "transparent")
+                color: themeRow.isCurrent ? Theme.accentContainer : "transparent"
 
                 Image {
                     id: swatch
@@ -285,12 +286,8 @@ Item {
                     elide: Text.ElideRight
                 }
 
-                MouseArea {
-                    id: rowArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
+                StateLayer {
+                    radius: parent.radius
                     onClicked: picker.choose(themeRow.modelData)
                 }
 

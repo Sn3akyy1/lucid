@@ -327,7 +327,7 @@ WidgetBody {
                 weight: 640
                 rounded: 100
                 tabular: true
-                color: w.onInkAccent
+                color: w.fgInkAccent
                 text: w.hourOf(w.now) + ":" + w.two(w.now.getMinutes())
             }
 
@@ -335,7 +335,7 @@ WidgetBody {
                 visible: w.showDate
                 anchors.horizontalCenter: parent.horizontalCenter
                 role: "labelLarge"
-                color: Theme.alpha(w.onInkAccent, 0.8)
+                color: Theme.alpha(w.fgInkAccent, 0.8)
                 text: w.now.toLocaleDateString(Qt.locale(), "ddd d MMM")
             }
 

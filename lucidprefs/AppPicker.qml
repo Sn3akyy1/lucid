@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import qs
+import qs.lucidui
 
 // every installed app, for the workspaces page to put one in a special workspace
 Item {
@@ -245,7 +246,7 @@ Item {
                 width: list.width - 14
                 height: 54
                 radius: Theme.shapeLg
-                color: rowArea.containsMouse ? Theme.bgHover : "transparent"
+                color: "transparent"
 
                 Image {
                     id: appIcon
@@ -296,20 +297,9 @@ Item {
 
                 }
 
-                MouseArea {
-                    id: rowArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
+                StateLayer {
+                    radius: parent.radius
                     onClicked: picker.choose(appRow.modelData.id)
-                }
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.durQuick
-                    }
-
                 }
 
             }

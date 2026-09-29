@@ -89,13 +89,18 @@ PY
     rm -f "$TMP"
 
     # the greeter must not run a 64px blur over 1080p on a cold gpu at boot,
-    # so the resting blur is baked in here. downscale/upscale rather than a
-    # straight -blur: same look, a fraction of the work
+    # so the resting blur is baked in here. blurring small and growing back is
+    # the same look for a fraction of the work, and jpeg:size lets libjpeg do
+    # the first downscale while it decodes. this runs on every wallpaper change,
+    # and at the source's own size it cost ~4 s of cpu across every core - the
+    # picture is blurred, so 1920 wide is as much as the login screen can show
     WALL=$(cat "$HOME/.cache/current_wallpaper" 2>/dev/null || true)
     if [[ -n "$WALL" && -f "$WALL" ]]; then
         IM=$(command -v magick || command -v convert || true)
         if [[ -n "$IM" ]]; then
-            "$IM" "$WALL" -strip -resize 25% -blur 0x8 -resize 400% \
+            MAGICK_THREAD_LIMIT="${MAGICK_THREAD_LIMIT:-2}" \
+                "$IM" -define jpeg:size=1920x1920 "$WALL" -strip \
+                  -resize 480x480 -blur 0x3.4 -resize 1920x1920 \
                   -quality 88 "$DIR/background.jpg"
         else
             cp "$WALL" "$DIR/background.jpg"

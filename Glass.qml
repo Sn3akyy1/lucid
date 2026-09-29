@@ -4,7 +4,8 @@ import Quickshell.Io
 pragma Singleton
 
 // the glass slider and what it reaches: kitty's own opacity file, and the
-// per-app window rules in lucid-glass.lua for modules/glass.lua
+// per-app window rules in lucid-glass.lua for modules/glass.lua. also keeps
+// hyprland's window borders on the palette, for modules/decorations.lua
 Singleton {
     id: root
 
@@ -222,6 +223,23 @@ Singleton {
         }
 
         target: Prefs
+    }
+
+    // decorations.lua reads the palette cache itself at config load, so this
+    // only has to tell it the cache has changed since. once at startup too, in
+    // case it changed while the shell was down
+    function syncBorders() {
+        Quickshell.execDetached(["hyprctl", "eval", "if LucidBorders then LucidBorders.apply() end"]);
+    }
+
+    Component.onCompleted: root.syncBorders()
+
+    Connections {
+        function onRecoloured() {
+            root.syncBorders();
+        }
+
+        target: Theme
     }
 
     FileView {

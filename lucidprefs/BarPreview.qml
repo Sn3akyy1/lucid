@@ -12,6 +12,27 @@ Rectangle {
         id: screen
 
         readonly property real unit: screen.height / 100
+
+        // a rough width per module, so the sketch keeps the real proportions
+        readonly property var pillSpan: ({
+            "workspaces": 0.1,
+            "media": 0.14,
+            "tray": 0.06,
+            "clock": 0.115,
+            "notifications": 0.04,
+            "system": 0.115
+        })
+
+        function cellSpan(key) {
+            return screen.pillSpan[key] || 0.06;
+        }
+
+        function zoneSpan(zone) {
+            const keys = Prefs.barKeysOf(zone);
+            var w = 0;
+            for (var i = 0; i < keys.length; i++) w += screen.cellSpan(keys[i]) * screen.width + (i > 0 ? screen.gap : 0)
+            return w;
+        }
         readonly property real modH: screen.unit * 11
         readonly property real barY: Prefs.barNotch ? 0 : screen.unit * 7
         readonly property real sideM: screen.unit * 4
@@ -63,12 +84,12 @@ Rectangle {
             }
 
             Repeater {
-                model: [0.09, 0.16]
+                model: Prefs.barKeysOf("left")
 
                 Rectangle {
-                    required property real modelData
+                    required property var modelData
 
-                    width: screen.width * modelData
+                    width: screen.width * screen.cellSpan(modelData)
                     height: screen.modH
                     color: Theme.bgOpaque
                     topLeftRadius: Prefs.barNotch ? 0 : height / 2
@@ -89,18 +110,12 @@ Rectangle {
 
         }
 
-        Rectangle {
-            id: centreMod
+        Row {
+            id: centreRow
 
-            x: Math.round((screen.width - width) / 2)
+            x: Math.round((screen.width - screen.zoneSpan("centre")) / 2)
             y: screen.barY
-            width: screen.width * 0.13
-            height: screen.modH
-            color: Theme.bgOpaque
-            topLeftRadius: Prefs.barNotch ? 0 : height / 2
-            topRightRadius: Prefs.barNotch ? 0 : height / 2
-            bottomLeftRadius: height / 2
-            bottomRightRadius: height / 2
+            spacing: screen.gap
 
             Behavior on y {
                 NumberAnimation {
@@ -110,9 +125,27 @@ Rectangle {
 
             }
 
-            Behavior on color {
-                ColorAnimation {
-                    duration: Theme.durShort
+            Repeater {
+                model: Prefs.barKeysOf("centre")
+
+                Rectangle {
+                    required property var modelData
+
+                    width: screen.width * screen.cellSpan(modelData)
+                    height: screen.modH
+                    color: Theme.bgOpaque
+                    topLeftRadius: Prefs.barNotch ? 0 : height / 2
+                    topRightRadius: Prefs.barNotch ? 0 : height / 2
+                    bottomLeftRadius: height / 2
+                    bottomRightRadius: height / 2
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Theme.durShort
+                        }
+
+                    }
+
                 }
 
             }
@@ -135,12 +168,12 @@ Rectangle {
             }
 
             Repeater {
-                model: [0.07, 0.07, 0.05]
+                model: Prefs.barKeysOf("right")
 
                 Rectangle {
-                    required property real modelData
+                    required property var modelData
 
-                    width: screen.width * modelData
+                    width: screen.width * screen.cellSpan(modelData)
                     height: screen.modH
                     color: Theme.bgOpaque
                     topLeftRadius: Prefs.barNotch ? 0 : height / 2

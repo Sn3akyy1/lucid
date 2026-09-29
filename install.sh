@@ -659,6 +659,7 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     install -m755 "$SRC/support/lucid/gen-light-palette.py" "$LUCID_DIR/gen-light-palette.py"
     install -m755 "$SRC/support/lucid/set-mode.sh"         "$LUCID_DIR/set-mode.sh"
     install -m755 "$SRC/support/lucid/sync-sddm.sh"        "$LUCID_DIR/sync-sddm.sh"
+    install -m755 "$SRC/support/lucid/sync-starship.sh"    "$LUCID_DIR/sync-starship.sh"
     install -m644 "$SRC/support/lucid/lucid_palette.py"    "$LUCID_DIR/lucid_palette.py"
     install -m755 "$SRC/support/wallpaper/set-wallpaper.sh" "$WALL_SCRIPT_DIR/set-wallpaper.sh"
     # rules you wrote are yours: only ever placed when there are none
@@ -696,6 +697,20 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     TPL='~/.config/matugen/templates'
     MG_ADDED=(); MG_KEPT=(); MG_SKIPPED=()
 
+    # older installs gave starship a matugen template, which wrote the whole
+    # starship.toml and so replaced any prompt the user had made. only its
+    # palette is repainted now (sync-starship.sh), so Lucid's own block goes;
+    # a starship block pointing anywhere else is the user's and stays
+    if grep -q '^\[templates\.starship\]' "$MATUGEN_CFG"; then
+        awk '
+            function flush() { if (!(inblk && lucid)) printf "%s", blk; blk = ""; inblk = 0; lucid = 0 }
+            /^\[/ { flush(); if ($0 ~ /^\[templates\.starship\]/) inblk = 1 }
+            { blk = blk $0 "\n"; if (inblk && $0 ~ /starship-colors\.toml/) lucid = 1 }
+            END { flush() }
+        ' "$MATUGEN_CFG" > "$MATUGEN_CFG.lucid-tmp" && cat "$MATUGEN_CFG.lucid-tmp" > "$MATUGEN_CFG"
+        rm -f "$MATUGEN_CFG.lucid-tmp"
+    fi
+
     # a block is only added when the app it themes is actually present, so
     # matugen never writes colours into a config directory that isn't there.
     # an existing block is always left alone - this config is the user's.
@@ -720,14 +735,11 @@ if [[ $WITH_THEMING -eq 1 ]]; then
         MG_ADDED+=("$name")
     }
 
-    STARSHIP_HOOK='for sh in fish bash zsh; do pkill -WINCH -x "$sh" 2>/dev/null; done; true'
-
     add_template quickshell     "$TPL/quickshell-colors.json"  '~/.cache/quickshell/matugen.json'
     add_template vscode-raw     "$TPL/vscode-colors"           '~/.cache/matugen/vscode-colors'
     add_template vscode-json    "$TPL/vscode-colors.json"      '~/.cache/matugen/vscode-colors.json'
     add_template hyprland       "$TPL/hyprland-colors.lua"     '~/.config/hypr/colors.conf'    "dir:$HOME/.config/hypr"
     add_template kitty          "$TPL/kitty.conf"              '~/.config/kitty/matugen-colors.conf' "cmd:kitty" 'killall -SIGUSR1 kitty 2>/dev/null || true'
-    add_template starship       "$TPL/starship-colors.toml"    '~/.config/starship.toml'       "cmd:starship" "$STARSHIP_HOOK"
     # no dir: guard on these two. gtk only creates ~/.config/gtk-{3,4}.0 once
     # an app writes a setting there, so on a fresh machine the guard skipped
     # both templates, matugen never wrote colors.css, and nautilus kept its
@@ -956,9 +968,9 @@ if [[ $WITH_THEMING -eq 1 ]]; then
         vscode_wire code     "$HOME/.config/Code/User/settings.json"
         vscode_wire code-oss "$HOME/.config/Code - OSS/User/settings.json"
 
-        # starship - the prompt shape ships here; matugen and apply-theme.sh
-        # rewrite only its [palettes.colors] block on every theme change, so
-        # this file is what makes the prompt look like Lucid's
+        # starship - the prompt shape ships here; sync-starship.sh rewrites
+        # only its [palettes.colors] block on every theme change, so this
+        # file is what makes the prompt look like Lucid's
         STARSHIP_CFG="$HOME/.config/starship.toml"
         if [[ ! -f "$STARSHIP_CFG" ]]; then
             cp "$SRC/support/look/starship.toml" "$STARSHIP_CFG"

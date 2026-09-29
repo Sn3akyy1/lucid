@@ -33,8 +33,221 @@ Singleton {
     readonly property int barPillRadius: Math.min(18, Math.round(root.barHeight / 2))
     readonly property int effectiveBarTopMargin: root.barNotch ? 0 : root.barTopMargin
     readonly property int effectiveDockBottomMargin: root.dockNotch ? 0 : root.dockBottomMargin
-    readonly property bool anyBarModuleEnabled: root.showWorkspaces || root.showMedia || root.showTray || root.showClock || root.showNotifications || root.showSystem
-    readonly property var barModuleKeys: ["showWorkspaces", "showMedia", "showTray", "showClock", "showNotifications", "showSystem"]
+    readonly property int dockItemRadius: Math.min(root.dockRadius, Math.round(root.dockIconSize / 2))
+    readonly property int dockIconInset: Math.max(0, Math.min(root.dockIconPadding, Math.floor(root.dockIconSize / 2) - 6))
+    // every module the bar can carry, and the order they appear in the layout
+    // editor's spare list
+    readonly property var barModules: [
+        { "key": "workspaces", "icon": "grid_view", "name": "Workspaces", "desc": "Workspace pills and the expanded overview" },
+        { "key": "media", "icon": "music_note", "name": "Media", "desc": "Now playing, with the full player behind it" },
+        { "key": "tray", "icon": "widgets", "name": "System tray", "desc": "Status icons from running applications" },
+        { "key": "clock", "icon": "schedule", "name": "Clock", "desc": "Time and date, with the calendar, timers and world clocks behind them" },
+        { "key": "notifications", "icon": "notifications", "name": "Notifications", "desc": "Unread count, and the notification centre" },
+        { "key": "system", "icon": "tune", "name": "System", "desc": "Network, sound, brightness and the quick settings panel" }
+    ]
+    readonly property var barZones: ["left", "centre", "right"]
+    readonly property var barLayoutKeys: ["barLeft", "barCentre", "barRight"]
+
+    function barModuleAt(key) {
+        for (var i = 0; i < root.barModules.length; i++) {
+            if (root.barModules[i].key === key)
+                return root.barModules[i];
+
+        }
+        return null;
+    }
+
+    function barParse(raw) {
+        return String(raw).split(",").map((x) => {
+            return x.trim();
+        }).filter((x, i, all) => {
+            return x !== "" && all.indexOf(x) === i && root.barModuleAt(x) !== null;
+        });
+    }
+
+    readonly property var barLeftKeys: root.barParse(root.barLeft)
+    readonly property var barCentreKeys: root.barParse(root.barCentre)
+    readonly property var barRightKeys: root.barParse(root.barRight)
+
+    function barKeysOf(zone) {
+        return zone === "left" ? root.barLeftKeys : (zone === "centre" ? root.barCentreKeys : root.barRightKeys);
+    }
+
+    function barZoneOf(key) {
+        for (var i = 0; i < root.barZones.length; i++) {
+            if (root.barKeysOf(root.barZones[i]).indexOf(key) >= 0)
+                return root.barZones[i];
+
+        }
+        return "";
+    }
+
+    function barHas(key) {
+        return root.barZoneOf(key) !== "";
+    }
+
+    function setBarKeys(zone, keys) {
+        const joined = keys.join(",");
+        if (zone === "left")
+            root.barLeft = joined;
+        else if (zone === "centre")
+            root.barCentre = joined;
+        else
+            root.barRight = joined;
+    }
+
+    // moving a module anywhere is one call: it leaves whatever zone it was in
+    // first, so it can never appear twice. a target index past the end appends
+    function barMove(key, zone, index) {
+        if (root.barModuleAt(key) === null)
+            return ;
+
+        const from = root.barZoneOf(key);
+        // must precede the writes, or the x bindings re-evaluate before the
+        // bar knows this one is worth easing
+        if (from !== "")
+            root.barReorderTick++;
+
+        if (from !== "" && from !== zone)
+            root.setBarKeys(from, root.barKeysOf(from).filter((k) => {
+                return k !== key;
+            }));
+
+        const rest = root.barKeysOf(zone).filter((k) => {
+            return k !== key;
+        });
+        const at = index < 0 ? rest.length : Math.min(index, rest.length);
+        rest.splice(at, 0, key);
+        root.setBarKeys(zone, rest);
+    }
+
+    function barRemove(key) {
+        const from = root.barZoneOf(key);
+        if (from === "")
+            return ;
+
+        // the key leaves the list at once while the pill itself takes a moment
+        // to empty, so the bar is told to keep the slot until it has
+        root.barRetiring = ({ "key": key, "zone": from, "at": root.barKeysOf(from).indexOf(key) });
+        root.setBarKeys(from, root.barKeysOf(from).filter((k) => {
+            return k !== key;
+        }));
+    }
+
+    // one pair of buttons reaches every position: stepping off either end of a
+    // zone carries the module into the next one
+    function barStep(key, delta) {
+        const zone = root.barZoneOf(key);
+        if (zone === "")
+            return ;
+
+        const list = root.barKeysOf(zone);
+        const to = list.indexOf(key) + delta;
+        if (to >= 0 && to < list.length) {
+            root.barMove(key, zone, to);
+            return ;
+        }
+        const zi = root.barZones.indexOf(zone) + delta;
+        if (zi < 0 || zi >= root.barZones.length)
+            return ;
+
+        const next = root.barZones[zi];
+        root.barMove(key, next, delta > 0 ? 0 : root.barKeysOf(next).length);
+    }
+
+    function barCanStep(key, delta) {
+        const zone = root.barZoneOf(key);
+        if (zone === "")
+            return false;
+
+        const list = root.barKeysOf(zone);
+        const to = list.indexOf(key) + delta;
+        if (to >= 0 && to < list.length)
+            return true;
+
+        const zi = root.barZones.indexOf(zone) + delta;
+        return zi >= 0 && zi < root.barZones.length;
+    }
+
+    readonly property var barPlacedKeys: root.barLeftKeys.concat(root.barCentreKeys, root.barRightKeys)
+
+    function barSignature(keys) {
+        return keys.slice().sort().join(",");
+    }
+
+    // bumped just before an arrangement change that only moves modules about,
+    // so the bar can ease the pills across. an add or a remove is deliberately
+    // not bumped: those animate the pill's own width, and every neighbour's x
+    // already follows that frame by frame
+    property int barReorderTick: 0
+
+    // the module that has just left the bar, and the slot it had. the bar draws
+    // it there until its pill has emptied, so the neighbours close the gap at
+    // the rate it shrinks instead of dropping into it
+    property var barRetiring: null
+
+    function barClearRetiring() {
+        root.barRetiring = null;
+    }
+
+    readonly property var barUnusedKeys: root.barModules.filter((m) => {
+        return !root.barHas(m.key);
+    }).map((m) => {
+        return m.key;
+    })
+
+    // every tile the system panel's grid can carry. the panel shows the ones
+    // named in systemTiles, in that order, and its editor offers the rest
+    readonly property var systemTileCatalog: [
+        { "key": "dnd", "icon": "do_not_disturb_on", "name": "Silence" },
+        { "key": "awake", "icon": "coffee", "name": "Awake" },
+        { "key": "dark", "icon": "dark_mode", "name": "Dark" },
+        { "key": "airplane", "icon": "flight", "name": "Airplane" },
+        { "key": "location", "icon": "location_on", "name": "Location" },
+        { "key": "mic", "icon": "mic", "name": "Mic" },
+        { "key": "capture", "icon": "screenshot_region", "name": "Capture" },
+        { "key": "record", "icon": "screen_record", "name": "Record" },
+        { "key": "picker", "icon": "colorize", "name": "Picker" },
+        { "key": "keyboard", "icon": "keyboard", "name": "Keyboard" },
+        { "key": "timer", "icon": "timer", "name": "Timer" },
+        { "key": "session", "icon": "power_settings_new", "name": "Session" },
+        { "key": "clipboard", "icon": "content_paste", "name": "Clipboard" },
+        { "key": "emoji", "icon": "mood", "name": "Emoji" },
+        { "key": "wallpaper", "icon": "wallpaper", "name": "Wallpaper" },
+        { "key": "theme", "icon": "palette", "name": "Theme" },
+        { "key": "widgets", "icon": "widgets", "name": "Widgets" },
+        { "key": "clear", "icon": "clear_all", "name": "Clear" }
+    ]
+
+    function systemTileAt(key) {
+        for (var i = 0; i < root.systemTileCatalog.length; i++) {
+            if (root.systemTileCatalog[i].key === key)
+                return root.systemTileCatalog[i];
+
+        }
+        return null;
+    }
+
+    // same rules as the bar zones: no repeats, nothing the catalogue lacks
+    readonly property var systemTileKeys: String(root.systemTiles).split(",").map((x) => {
+        return x.trim();
+    }).filter((x, i, all) => {
+        return x !== "" && all.indexOf(x) === i && root.systemTileAt(x) !== null;
+    })
+    readonly property var systemTileSpare: root.systemTileCatalog.filter((t) => {
+        return root.systemTileKeys.indexOf(t.key) < 0;
+    }).map((t) => {
+        return t.key;
+    })
+
+    function setSystemTiles(keys) {
+        root.systemTiles = keys.join(",");
+    }
+
+    readonly property bool anyBarModuleEnabled: root.barLeftKeys.length + root.barCentreKeys.length + root.barRightKeys.length > 0
+    // the notification page's own header switch, which is really "is the module
+    // in the bar at all"
+    readonly property bool barNotifications: root.barHas("notifications")
     readonly property var widgetKeys: ["widgetsEnabled", "widgetSnap", "widgetLockAll", "widgetHideFullscreen", "widgetOnTop"]
     readonly property var idleKeys: ["idleDim", "idleDimAfter", "idleDimLevel", "idleDimKeyboard", "idleLock", "idleLockAfter", "idleScreenOff", "idleScreenOffAfter", "idleSuspend", "idleSuspendAfter", "idleSuspendOnAc", "idleLockBeforeSleep", "idleWakeAfterSleep", "idleRespectInhibitors", "idleWhileMedia"]
     readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envCursorShadow", "envIconTheme", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
@@ -84,12 +297,11 @@ Singleton {
     property alias barSideMargin: s.barSideMargin
     property alias barSpacing: s.barSpacing
     property alias barHoverGrow: s.barHoverGrow
-    property alias showWorkspaces: s.showWorkspaces
-    property alias showMedia: s.showMedia
-    property alias showTray: s.showTray
-    property alias showClock: s.showClock
-    property alias showNotifications: s.showNotifications
-    property alias showSystem: s.showSystem
+    property alias barZoneGap: s.barZoneGap
+    property alias barLeft: s.barLeft
+    property alias barCentre: s.barCentre
+    property alias barRight: s.barRight
+    property alias systemTiles: s.systemTiles
     property alias clock24h: s.clock24h
     property alias clockShowDate: s.clockShowDate
     property alias gpsEnabled: s.gpsEnabled
@@ -130,6 +342,8 @@ Singleton {
     property alias dockEnabled: s.dockEnabled
     property alias dockIconSize: s.dockIconSize
     property alias dockSpacing: s.dockSpacing
+    property alias dockRadius: s.dockRadius
+    property alias dockIconPadding: s.dockIconPadding
     property alias dockBottomMargin: s.dockBottomMargin
     property alias dockMagnify: s.dockMagnify
     property alias dockHoverEffect: s.dockHoverEffect
@@ -236,6 +450,45 @@ Singleton {
     property alias weekStartMonday: s.weekStartMonday
     property alias launcherSearchEngine: s.launcherSearchEngine
     property alias launcherWebRow: s.launcherWebRow
+    property alias launcherWidth: s.launcherWidth
+    property alias launcherSearchPosition: s.launcherSearchPosition
+    property alias launcherDensity: s.launcherDensity
+    property alias launcherModeBar: s.launcherModeBar
+    property alias launcherActionHints: s.launcherActionHints
+    property alias launcherFrequentFirst: s.launcherFrequentFirst
+    property alias launcherCalculator: s.launcherCalculator
+    property alias launcherSettingsResults: s.launcherSettingsResults
+    property alias launcherContentScale: s.launcherContentScale
+    property alias launcherHiddenApps: s.launcherHiddenApps
+
+    // the launcher's m3 metrics, read by the dock's geometry and the face alike
+    // how large the launcher draws itself, apart from the shell-wide font scale
+    readonly property real launcherScale: Math.max(0.8, Math.min(1.4, root.launcherContentScale))
+    readonly property int launcherBaseWidth: root.launcherWidth === "compact" ? 460 : (root.launcherWidth === "wide" ? 680 : 560)
+    readonly property int launcherPanelWidth: Math.round(root.launcherBaseWidth * root.launcherScale)
+    readonly property bool launcherDense: root.launcherDensity === "compact"
+    readonly property bool launcherSearchTop: root.launcherSearchPosition === "top"
+    // m3 list item container heights, one line and two
+    readonly property int launcherRowOne: Math.round((root.launcherDense ? 48 : 56) * root.launcherScale)
+    readonly property int launcherRowTwo: Math.round((root.launcherDense ? 62 : 72) * root.launcherScale)
+    readonly property int launcherRowHeader: Math.round((root.launcherDense ? 32 : 38) * root.launcherScale)
+    // the calculator's answer takes a display-type hero rather than a list row
+    readonly property int launcherRowCalc: Math.round((root.launcherDense ? 84 : 96) * root.launcherScale)
+    // m3 ItemLeadingAvatarSize, the slot every kind of leading element shares.
+    // a compact row at a small content size is shorter than 40dp, so it caps
+    readonly property int launcherLeadSlot: Math.max(24, Math.min(Math.round(40 * root.launcherScale), root.launcherRowOne - 8))
+    readonly property int launcherEdgeSpace: Math.round(16 * root.launcherScale)
+    readonly property int launcherBetweenSpace: Math.round(12 * root.launcherScale)
+    readonly property int launcherRowGap: root.launcherDense ? 2 : 4
+    readonly property int launcherListPad: 8
+    // m3 search bar container height
+    readonly property int launcherSearchH: Math.round(56 * root.launcherScale)
+    // the head band: the mark, the mode set and the count
+    readonly property int launcherHeadH: Math.round(38 * root.launcherScale)
+    readonly property int launcherHeadGap: Math.round(10 * root.launcherScale)
+    readonly property int launcherContentGap: 12
+
+    readonly property int launcherChromeH: root.launcherSearchH + (root.launcherModeBar ? root.launcherHeadH + root.launcherHeadGap : 0) + root.launcherContentGap
 
     // every settings page, for the app's rail and for the launcher's search
     readonly property var settingsPages: [
@@ -245,7 +498,8 @@ Singleton {
         { "key": "theme", "icon": "palette", "keys": "colour color scheme wallpaper matugen pywal catppuccin gruvbox nord dark light mode import", "group": "Appearance", "label": "Theme", "title": "Theme and Appearance", "blurb": "Colour schemes, wallpapers and themes you import" },
         { "key": "environment", "icon": "format_paint", "keys": "cursor icons gtk qt fonts application theme", "group": "Appearance", "label": "Environment", "title": "Environment", "blurb": "Cursors, icons, fonts and application themes, across GTK, Qt and Hyprland alike" },
         { "key": "bar", "icon": "toolbar", "keys": "status height margin spacing modules workspaces clock media tray system popup", "group": "Desktop", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
-        { "key": "dock", "icon": "dock_to_bottom", "keys": "icons size magnify autohide pinned running indicators tooltips launcher search engine web emoji windows run prefix", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
+        { "key": "dock", "icon": "dock_to_bottom", "keys": "icons size magnify autohide pinned running indicators tooltips windows notch radius corners rounding padding inset", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
+        { "key": "launcher", "icon": "search", "keys": "launcher search spotlight apps results width density rows chips modes prefix engine web emoji run clipboard calculator frequent recent", "group": "Desktop", "label": "Launcher", "title": "Launcher", "blurb": "The search panel the dock opens into: how wide it is, how its results read, and what it looks through" },
         { "key": "widgets", "icon": "widgets", "keys": "desktop cards clock calendar weather presets", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
         { "key": "workspaces", "icon": "workspaces", "keys": "special scratchpad music chat todo sysmon", "group": "Desktop", "label": "Workspaces", "title": "Special Workspaces", "blurb": "Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key" },
         { "key": "displays", "icon": "desktop_windows", "keys": "monitor screen resolution refresh rate scale vrr arrangement", "group": "Devices", "label": "Displays", "title": "Displays", "blurb": "Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on" },
@@ -253,7 +507,7 @@ Singleton {
         { "key": "network", "icon": "wifi", "keys": "wifi ethernet vpn dns ip proxy internet", "group": "Devices", "label": "Network", "title": "Network", "blurb": "Wi-Fi, wired, VPN and how this machine gets its address" },
         { "key": "bluetooth", "icon": "bluetooth", "keys": "devices pair headphones", "group": "Devices", "label": "Bluetooth", "title": "Bluetooth and Devices", "blurb": "The radio, what it is paired with, and the phone you connect to it" },
         { "key": "kdeconnect", "icon": "smartphone", "keys": "phone kde connect files notifications clipboard", "group": "Devices", "label": "Phone", "title": "Phone", "blurb": "Your phone on this machine over KDE Connect: files, notifications, clipboard and a remote", "toggle": "kdeConnectEnabled" },
-        { "key": "notifications", "icon": "notifications", "keys": "popups toasts do not disturb dnd quiet hours sound muted apps", "group": "System", "label": "Notifications", "title": "Notifications", "blurb": "Popups, quiet hours, sound and which applications may interrupt you", "toggle": "showNotifications" },
+        { "key": "notifications", "icon": "notifications", "keys": "popups toasts do not disturb dnd quiet hours sound muted apps", "group": "System", "label": "Notifications", "title": "Notifications", "blurb": "Popups, quiet hours, sound and which applications may interrupt you", "toggle": "barNotifications" },
         { "key": "idle", "icon": "bedtime", "keys": "sleep suspend lock dim screen off hypridle caffeine", "group": "System", "label": "Idle", "title": "Idle and Sleep", "blurb": "What happens when you walk away: dimming, locking, screen off and suspend", "toggle": "idleEnabled" },
         { "key": "datetime", "icon": "schedule", "keys": "clock time zone location 24 hour seconds week monday sunday timer pomodoro focus break alarm world", "group": "System", "label": "Date & Time", "title": "Date and Time", "blurb": "Where you are, the clock, and its timers" },
         { "key": "about", "icon": "info", "keys": "version update lucid", "group": "System", "label": "About", "title": "About", "blurb": "Lucid" }
@@ -329,12 +583,11 @@ Singleton {
         "barSideMargin": 17,
         "barSpacing": 8,
         "barHoverGrow": 3,
-        "showWorkspaces": true,
-        "showMedia": true,
-        "showTray": true,
-        "showClock": true,
-        "showNotifications": true,
-        "showSystem": true,
+        "barZoneGap": 26,
+        "barLeft": "workspaces,media,tray",
+        "barCentre": "clock",
+        "barRight": "notifications,system",
+        "systemTiles": "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session",
         "clock24h": false,
         "clockShowDate": true,
         "gpsEnabled": false,
@@ -373,6 +626,8 @@ Singleton {
         "dockEnabled": true,
         "dockIconSize": 41,
         "dockSpacing": 10,
+        "dockRadius": 28,
+        "dockIconPadding": 5,
         "dockBottomMargin": 20,
         "dockMagnify": true,
         "dockHoverEffect": 1,
@@ -465,7 +720,17 @@ Singleton {
         "timerSound": true,
         "weekStartMonday": true,
         "launcherSearchEngine": "duckduckgo",
-        "launcherWebRow": true
+        "launcherWebRow": true,
+        "launcherWidth": "standard",
+        "launcherSearchPosition": "bottom",
+        "launcherDensity": "comfortable",
+        "launcherModeBar": true,
+        "launcherActionHints": true,
+        "launcherFrequentFirst": true,
+        "launcherCalculator": true,
+        "launcherSettingsResults": true,
+        "launcherContentScale": 1,
+        "launcherHiddenApps": ""
     })
 
     // what the bar module is holding right now, so the settings page can offer
@@ -517,13 +782,22 @@ Singleton {
 
     }
 
+    // emptying the bar switches it off, so putting the modules back has to
+    // switch it on again or the restore looks like it did nothing
+    function setBarDefaults() {
+        const after = root.barParse(root.defaults.barLeft).concat(root.barParse(root.defaults.barCentre), root.barParse(root.defaults.barRight));
+        if (root.barSignature(root.barPlacedKeys) === root.barSignature(after))
+            root.barReorderTick++;
+
+        root.resetKeys(root.barLayoutKeys);
+        root.barEnabled = true;
+    }
+
     function setAllBarModules(v) {
-        root.showWorkspaces = v;
-        root.showMedia = v;
-        root.showTray = v;
-        root.showClock = v;
-        root.showNotifications = v;
-        root.showSystem = v;
+        if (v)
+            root.resetKeys(root.barLayoutKeys);
+        else
+            for (var i = 0; i < root.barZones.length; i++) root.setBarKeys(root.barZones[i], [])
     }
 
     function setSurface(key, v) {
@@ -538,8 +812,11 @@ Singleton {
             root.widgetsEnabled = v;
         } else if (key === "kdeConnectEnabled") {
             root.kdeConnectEnabled = v;
-        } else if (key === "showNotifications") {
-            root.showNotifications = v;
+        } else if (key === "barNotifications") {
+            if (v)
+                root.barMove("notifications", "right", -1);
+            else
+                root.barRemove("notifications");
         } else if (key === "idleEnabled") {
             root.idleEnabled = v;
         }
@@ -644,6 +921,36 @@ Singleton {
     // every app that has sent a notification since the list was last cleared, so
     // the settings page can offer them instead of asking you to type a name
     readonly property var seenApps: root.splitList(root.notifSeenApps)
+
+    // desktop-file ids the launcher leaves out. the scan itself already drops
+    // anything NoDisplay or shown only in another desktop; this is the rest,
+    // whatever you decided you never want to see
+    readonly property var hiddenLauncherApps: root.splitList(root.launcherHiddenApps)
+    // base -> display name, published by the dock's scan so the settings page
+    // can name what it is offering to bring back
+    property var launcherAppNames: ({})
+
+    function isLauncherHidden(base) {
+        return base !== "" && root.hiddenLauncherApps.indexOf(base) !== -1;
+    }
+
+    function setLauncherHidden(base, on) {
+        if (base === "")
+            return ;
+
+        var list = root.hiddenLauncherApps.filter((x) => {
+            return x !== base;
+        });
+        if (on)
+            list.push(base);
+
+        root.launcherHiddenApps = list.sort().join(",");
+    }
+
+    function launcherAppLabel(base) {
+        var n = root.launcherAppNames[base];
+        return n !== undefined && n !== "" ? n : base;
+    }
 
     function isMuted(app) {
         return app !== "" && root.mutedApps.indexOf(app) !== -1;
@@ -755,12 +1062,11 @@ Singleton {
             property int barSideMargin: 17
             property int barSpacing: 8
             property int barHoverGrow: 3
-            property bool showWorkspaces: true
-            property bool showMedia: true
-            property bool showTray: true
-            property bool showClock: true
-            property bool showNotifications: true
-            property bool showSystem: true
+            property int barZoneGap: 26
+            property string barLeft: "workspaces,media,tray"
+            property string barCentre: "clock"
+            property string barRight: "notifications,system"
+            property string systemTiles: "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session"
             property bool clock24h: false
             property bool clockShowDate: true
             property bool gpsEnabled: false
@@ -799,6 +1105,8 @@ Singleton {
             property bool dockEnabled: true
             property int dockIconSize: 41
             property int dockSpacing: 10
+            property int dockRadius: 28
+            property int dockIconPadding: 5
             property int dockBottomMargin: 20
             property bool dockMagnify: true
             property real dockHoverEffect: 1
@@ -894,6 +1202,16 @@ Singleton {
             property bool weekStartMonday: true
             property string launcherSearchEngine: "duckduckgo"
             property bool launcherWebRow: true
+            property string launcherWidth: "standard"
+            property string launcherSearchPosition: "bottom"
+            property string launcherDensity: "comfortable"
+            property bool launcherModeBar: true
+            property bool launcherActionHints: true
+            property bool launcherFrequentFirst: true
+            property bool launcherCalculator: true
+            property bool launcherSettingsResults: true
+            property real launcherContentScale: 1
+            property string launcherHiddenApps: ""
         }
 
     }

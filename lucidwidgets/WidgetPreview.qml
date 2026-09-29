@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import "Stagger.js" as Stagger
 
 Item {
     id: pv
@@ -12,6 +13,10 @@ Item {
     property real bodyW: 0
     property real bodyH: 0
     property var opts: ({})
+    // waits for a free frame before building, so a page of previews fills in
+    // one card at a time rather than freezing while it builds them all at once
+    property bool staggered: false
+    property bool _woke: !pv.staggered
 
     readonly property var info: Widgets.variantAt(pv.wtype, pv.wvariant)
     readonly property real natW: pv.bodyW > 0 ? pv.bodyW : (pv.info ? pv.info.w : 200)
@@ -20,6 +25,23 @@ Item {
     readonly property bool bare: card.item !== null && card.item.bare === true
 
     clip: true
+
+    Timer {
+        id: wake
+
+        interval: 1
+        running: !pv._woke
+        onTriggered: {
+            const w = Stagger.wait();
+            if (w > 0) {
+                wake.interval = w;
+                wake.restart();
+                return;
+            }
+            pv._woke = true;
+            Stagger.ran();
+        }
+    }
 
     PreviewHost {
         id: host
@@ -44,7 +66,7 @@ Item {
             id: card
 
             anchors.fill: parent
-            active: pv.live && pv.wtype !== ""
+            active: pv.live && pv._woke && pv.wtype !== ""
             source: pv.wtype === "" ? "" : pv.wtype.charAt(0).toUpperCase() + pv.wtype.slice(1) + "Widget.qml"
         }
 

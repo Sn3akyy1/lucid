@@ -18,6 +18,8 @@ Singleton {
     property var snoozedUntil: ({})
     property var dismissedAt: ({})
     property string checkedDay: ""
+    // changes once a minute; what the countdown text needs, instead of every tick
+    property string minuteKey: ""
 
     readonly property var next: {
         root.tick;
@@ -58,19 +60,26 @@ Singleton {
     }
 
     // the next time a reminder rings at or after `from`
+    // `next` re-reads this every second for every reminder, so it must not walk
+    // the calendar: a one-off happens on exactly its own date, and daily,
+    // weekdays and weekly all come round inside a week of whichever is later,
+    // today or the date the repeat starts from
     function nextAt(r, from) {
-        var probe = root.dayStart(from.getFullYear(), from.getMonth(), from.getDate());
-        for (var i = 0; i < 400; i++) {
+        if (!r.repeat) {
+            var at = new Date(r.year, r.month, r.day, r.hour, r.minute, 0, 0);
+            return at >= from ? at : null;
+        }
+        var fromDay = root.dayStart(from.getFullYear(), from.getMonth(), from.getDate());
+        var startDay = root.dayStart(r.year, r.month, r.day);
+        var probe = startDay > fromDay ? startDay : fromDay;
+        for (var i = 0; i < 8; i++) {
             if (root.occursOn(r, probe.getFullYear(), probe.getMonth(), probe.getDate())) {
-                var at = new Date(probe.getFullYear(), probe.getMonth(), probe.getDate(), r.hour, r.minute, 0, 0);
-                if (at >= from)
-                    return at;
+                var a = new Date(probe.getFullYear(), probe.getMonth(), probe.getDate(), r.hour, r.minute, 0, 0);
+                if (a >= from)
+                    return a;
 
             }
             probe.setDate(probe.getDate() + 1);
-            if (!r.repeat && probe > root.dayStart(r.year, r.month, r.day))
-                return null;
-
         }
         return null;
     }
@@ -99,7 +108,6 @@ Singleton {
     }
 
     function hasOn(y, m, d) {
-        root.tick;
         for (var i = 0; i < root.items.length; i++) {
             if (root.occursOn(root.items[i], y, m, d))
                 return true;
@@ -216,6 +224,10 @@ Singleton {
             root.prune(now);
             root.checkedDay = key;
         }
+        var mkey = key + "-" + now.getHours() + "-" + now.getMinutes();
+        if (root.minuteKey !== mkey)
+            root.minuteKey = mkey;
+
         for (var i = 0; i < root.items.length; i++) {
             var r = root.items[i];
             if (root.ringing.some((q) => {

@@ -34,6 +34,26 @@ Column {
         }
 
         SettingRow {
+            title: "Icon padding"
+            resetKey: "dockIconPadding"
+            description: "How far each icon is inset inside its own slot. More padding shrinks the icon without moving the dock."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 0
+                to: 16
+                stepSize: 1
+                suffix: " px"
+                value: Prefs.dockIconPadding
+                onMoved: (v) => {
+                    return Prefs.dockIconPadding = v;
+                }
+            }
+
+        }
+
+        SettingRow {
             title: "Icon spacing"
             resetKey: "dockSpacing"
             description: "The gap between neighbouring icons."
@@ -48,6 +68,26 @@ Column {
                 value: Prefs.dockSpacing
                 onMoved: (v) => {
                     return Prefs.dockSpacing = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Dock radius"
+            resetKey: "dockRadius"
+            description: "How round the dock's corners are. Each icon's own corners follow it, up to a full circle."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 0
+                to: 40
+                stepSize: 1
+                suffix: " px"
+                value: Prefs.dockRadius
+                onMoved: (v) => {
+                    return Prefs.dockRadius = v;
                 }
             }
 
@@ -216,90 +256,14 @@ Column {
         title: "LAUNCHER"
 
         SettingRow {
-            title: "Prefixes"
-            description: "> commands  ·  : emoji  ·  ? the web  ·  $ run a command line. The calculator answers any sum you type."
-            stacked: true
-        }
-
-        SettingRow {
-            title: "Offer a web search"
-            resetKey: "launcherWebRow"
-            description: "End every search with a row that looks it up on the web, or opens it if it is an address."
-
-            M3Switch {
-                checked: Prefs.launcherWebRow
-                onToggled: (v) => {
-                    return Prefs.launcherWebRow = v;
-                }
-            }
-
-        }
-
-        SettingRow {
-            title: "Search engine"
-            resetKey: "launcherSearchEngine"
-            description: "Used by the web row and the ? prefix."
-            stacked: true
-
-            M3Segmented {
-                width: parent.width
-                current: Prefs.launcherSearchEngine
-                options: [{
-                    "key": "duckduckgo",
-                    "label": "DuckDuckGo"
-                }, {
-                    "key": "google",
-                    "label": "Google"
-                }, {
-                    "key": "brave",
-                    "label": "Brave"
-                }, {
-                    "key": "startpage",
-                    "label": "Startpage"
-                }, {
-                    "key": "kagi",
-                    "label": "Kagi"
-                }]
-                onChosen: (k) => {
-                    return Prefs.launcherSearchEngine = k;
-                }
-            }
-
-        }
-
-    }
-
-    SettingCard {
-        title: "CLIPBOARD"
-
-        SettingRow {
-            title: "Clipboard history"
-            description: "Keeps what you copy so the launcher can hand it back. Type > clip in the launcher, or pick Clipboard History from the command list. Needs cliphist installed."
-            enabled: Clip.available
-            disabledReason: "cliphist is not installed. Install it and the history starts recording straight away."
-
-            M3Switch {
-                checked: Prefs.clipboardEnabled && Clip.available
-                enabled: Clip.available
-                onToggled: (v) => {
-                    return Prefs.clipboardEnabled = v;
-                }
-            }
-
-        }
-
-        SettingRow {
-            title: "Clear clipboard history"
-            description: "Discards every entry cliphist has stored, including images."
-            enabled: Clip.available
+            title: "Launcher"
+            description: "The search panel the dock opens into, its modes, prefixes and the clipboard behind them now has a page of its own."
             showDivider: false
 
             M3Button {
-                text: "Clear history"
-                variant: "text"
-                destructive: true
-                enabled: Clip.available
-                onClicked: Prefs.askConfirm("Clear clipboard history?", "Every entry cliphist has stored is discarded, images included. This cannot be undone.", "Clear", Prefs.clearClipboardToken)
+                text: "Launcher\u2026"
+                variant: "tonal"
+                onClicked: Prefs.settingsRequested("launcher")
             }
 
         }

@@ -8,7 +8,7 @@ WidgetBody {
     readonly property bool mondayFirst: Prefs.weekStartMonday
     property date now: Loc.now()
     readonly property var week: {
-        Agenda.tick;
+        Agenda.checkedDay;
         const lead = (w.now.getDay() + (w.mondayFirst ? 6 : 0)) % 7;
         const out = [];
         for (let i = 0; i < 7; i++) {
@@ -22,11 +22,11 @@ WidgetBody {
         return out;
     }
     readonly property var coming: {
-        Agenda.tick;
+        Agenda.minuteKey;
         return Agenda.upcoming(8);
     }
     readonly property int todayCount: {
-        Agenda.tick;
+        Agenda.checkedDay;
         return Agenda.forDay(w.now.getFullYear(), w.now.getMonth(), w.now.getDate()).length;
     }
 
@@ -49,7 +49,7 @@ WidgetBody {
         ink: w.ink
         inkDim: w.inkDim
         accent: w.inkAccent
-        onAccent: w.onInkAccent
+        fgAccent: w.fgInkAccent
         pickFill: Theme.alpha(w.ink, 0.1)
         pickInk: w.ink
         markColor: w.inkAccent
@@ -94,7 +94,7 @@ WidgetBody {
                         LText {
                             anchors.horizontalCenter: parent.horizontalCenter
                             role: "labelSmall"
-                            color: modelData.today ? Theme.alpha(w.onInkAccent, 0.8) : w.inkDim
+                            color: modelData.today ? Theme.alpha(w.fgInkAccent, 0.8) : w.inkDim
                             text: modelData.d.toLocaleDateString(Qt.locale(), "ddd").slice(0, 2)
                         }
 
@@ -103,7 +103,7 @@ WidgetBody {
                             role: "titleLarge"
                             weight: modelData.today ? 680 : 500
                             rounded: 100
-                            color: modelData.today ? w.onInkAccent : w.ink
+                            color: modelData.today ? w.fgInkAccent : w.ink
                             text: modelData.d.getDate()
                         }
 
@@ -112,7 +112,7 @@ WidgetBody {
                             width: 5
                             height: 5
                             radius: 2.5
-                            color: modelData.today ? w.onInkAccent : w.inkAccent
+                            color: modelData.today ? w.fgInkAccent : w.inkAccent
                             opacity: modelData.marked ? 1 : 0
                         }
 

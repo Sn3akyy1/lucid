@@ -10,7 +10,15 @@ Item {
     property bool charging: false
     property bool low: bp.percent <= 20 && !bp.charging
     property bool showText: true
-    readonly property color fillColor: bp.charging ? Theme.success : (bp.low ? Theme.error : Theme.text)
+    // charging reads on the accent, only capped: a fill level with the grey one
+    // beside it out-shouts the whole bar, so a light accent is brought under it
+    // and a dark one is left alone
+    readonly property color chargeColor: {
+        const cap = Theme.toneOf(Theme.text) + (Theme.isLight ? 14 : -14);
+        const t = Theme.toneOf(Theme.accent);
+        return Theme.atTone(Theme.accent, Theme.isLight ? Math.max(t, cap) : Math.min(t, cap));
+    }
+    readonly property color fillColor: bp.charging ? bp.chargeColor : (bp.low ? Theme.error : Theme.text)
     readonly property color emptyColor: Theme.alpha(Theme.text, 0.28)
     readonly property real level: Math.max(0, Math.min(1, bp.percent / 100))
 

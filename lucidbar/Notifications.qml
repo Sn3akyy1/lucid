@@ -28,7 +28,7 @@ BarPill {
     readonly property var restPopups: root.popups.length > 1 ? root.popups.slice(1) : []
     readonly property int popupOverflow: Math.max(0, Notifs.count - root.popups.length)
 
-    shown: Prefs.showNotifications
+    shown: Prefs.barHas("notifications")
     compactWidth: compactRow.implicitWidth + root.horizontalPadding * 2
     panelWidth: Math.min(380, root.screenW - 34)
     panelHeight: Math.min(root.maxPanelHeight, mainColumn.implicitHeight + 28)
@@ -276,14 +276,29 @@ BarPill {
                 scale: root.notifCount > 0 ? 1 : 0.4
                 clip: true
 
+                TextMetrics {
+                    id: badgeCap
+
+                    font: badgeText.font
+                    text: "7"
+                }
+
+                FontMetrics {
+                    id: badgeFm
+
+                    font: badgeText.font
+                }
+
                 Text {
                     id: badgeText
 
                     property string displayedText: ""
                     property real morphOffset: 0
 
-                    anchors.centerIn: parent
-                    anchors.verticalCenterOffset: badgeText.morphOffset
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    // the cap-height box is what should centre, not the line box:
+                    // digits sit on the baseline and otherwise ride high
+                    y: (badge.height - badgeCap.tightBoundingRect.height) / 2 - badgeCap.tightBoundingRect.y - badgeFm.ascent + badgeText.morphOffset
                     text: badgeText.displayedText
                     color: root.badgeTextColor
                     font.family: Theme.fontFamily
@@ -389,6 +404,7 @@ BarPill {
         // left click opens the shade through BarPill; this only wants the right
         MouseArea {
             anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
             acceptedButtons: Qt.RightButton
             onClicked: Notifs.toggleDnd()
         }

@@ -27,14 +27,16 @@ PanelWindow {
     property bool capsLock: false
     property bool numLock: false
     property bool kbInitialized: false
+    property int pendingBrightness: -1
 
     // m3 shape, spacing and slider metrics, shared with lucidbar/System.qml
-    readonly property int cardPadX: 16
-    readonly property int badgeSize: 44
-    readonly property int cardGap: 14
-    readonly property int trackWidth: 200
-    readonly property int readoutWidth: 50
-    readonly property int glyphSize: 22
+    readonly property int cardPadX: 12
+    readonly property int badgeSize: 36
+    readonly property int cardGap: 10
+    readonly property int glyphSize: 18
+    // the level card's own, tighter slider metrics
+    readonly property int levelTrackH: 30
+    readonly property int levelHandleH: 38
 
     readonly property string levelIcon: {
         if (osdWindow.oscType === "brightness")
@@ -124,12 +126,37 @@ PanelWindow {
     function trigger() {
         osdWindow.setCardVisible(true);
         hideTimer.restart();
-        if (osdWindow.isLevelType)
-            levelPulseAnim.restart();
-        else if (osdWindow.oscType === "mic")
+        if (osdWindow.isLevelType) {
+            if (!levelTrack.dragging)
+                levelPulseAnim.restart();
+
+        } else if (osdWindow.oscType === "mic") {
             pulseAnim.restart();
-        else
+        } else {
             nudgeAnim.restart();
+        }
+    }
+
+    function setBrightness(percent) {
+        osdWindow.pendingBrightness = Math.max(0, Math.min(100, Math.round(percent)));
+        brightnessDebounce.restart();
+    }
+
+    function applyLevel(v) {
+        hideTimer.restart();
+        osdWindow.levelValue = v;
+        if (osdWindow.oscType === "brightness") {
+            osdWindow.setBrightness(v);
+            return ;
+        }
+        if (!osdWindow.sink || !osdWindow.sink.audio)
+            return ;
+
+        if (osdWindow.sink.audio.muted)
+            osdWindow.sink.audio.muted = false;
+
+        osdWindow.levelMuted = false;
+        osdWindow.sink.audio.volume = Math.max(0, Math.min(1, v / 100));
     }
 
     function showVolume() {
@@ -223,7 +250,13 @@ PanelWindow {
         id: hideTimer
 
         interval: 1600
-        onTriggered: osdWindow.setCardVisible(false)
+        onTriggered: {
+            if (levelTrack.dragging || levelTrack.hovered) {
+                hideTimer.restart();
+                return ;
+            }
+            osdWindow.setCardVisible(false);
+        }
     }
 
     Process {
@@ -235,6 +268,23 @@ PanelWindow {
             onStreamFinished: osdWindow.backlightDevice = this.text.trim().replace(/[@/*=|]$/, "")
         }
 
+    }
+
+    Timer {
+        id: brightnessDebounce
+
+        interval: 60
+        onTriggered: {
+            if (osdWindow.pendingBrightness >= 0)
+                setBrightnessProc.running = true;
+
+        }
+    }
+
+    Process {
+        id: setBrightnessProc
+
+        command: osdWindow.pendingBrightness >= 0 ? ["brightnessctl", "set", osdWindow.pendingBrightness + "%"] : []
     }
 
     Process {
@@ -256,70 +306,74 @@ PanelWindow {
         onFileChanged: reload()
     }
 
-    // lock keys have no hyprland event, so this has to be asked for. going through
-    // the request socket rather than spawning hyprctl keeps it to a sub-millisecond
-    // round trip: forking the shell 2.5 times a second was costing real cpu
-    Socket {
-        id: kbSock
+    // lock keys have no hyprland event, but the kernel's keyboard leds carry the
+    // same state and reading them never touches hyprland. polling its request
+    // socket instead deadlocked it against a resizing window for 5 s at a time
+    function readLocks() {
+        var caps = false;
+        var num = false;
+        var files = ledFiles.instances;
+        for (var i = 0; i < files.length; i++) {
+            files[i].reload();
+            var on = parseInt(files[i].text()) > 0;
+            if (files[i].isCaps)
+                caps = caps || on;
+            else
+                num = num || on;
+        }
+        if (osdWindow.kbInitialized && osdWindow.ready) {
+            if (caps !== osdWindow.capsLock) {
+                osdWindow.capsLock = caps;
+                osdWindow.showCaps(caps);
+            }
+            if (num !== osdWindow.numLock) {
+                osdWindow.numLock = num;
+                osdWindow.showNum(num);
+            }
+        } else {
+            osdWindow.capsLock = caps;
+            osdWindow.numLock = num;
+        }
+        osdWindow.kbInitialized = true;
+    }
 
-        path: Quickshell.env("XDG_RUNTIME_DIR") + "/hypr/" + Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") + "/.socket.sock"
-        onConnectedChanged: {
-            if (kbSock.connected)
-                kbSock.write("j/devices");
+    // every keyboard that has the leds, so a lock on any of them counts
+    Process {
+        id: ledScan
 
+        running: true
+        command: ["sh", "-c", "ls -d /sys/class/leds/*::capslock /sys/class/leds/*::numlock 2>/dev/null"]
+
+        stdout: StdioCollector {
+            onStreamFinished: ledFiles.model = this.text.split("\n").filter((p) => {
+                return p !== "";
+            })
         }
 
-        parser: SplitParser {
-            splitMarker: ""
-            onRead: (chunk) => {
-                // hyprland closes once it has answered; drop our end first so an
-                // early return below cannot leave the socket dialled and stall the poll
-                kbSock.connected = false;
-                try {
-                    var data = JSON.parse(chunk);
-                    var kbs = data.keyboards || [];
-                    var main = null;
-                    for (var i = 0; i < kbs.length; i++) {
-                        if (kbs[i].main) {
-                            main = kbs[i];
-                            break;
-                        }
-                    }
-                    if (!main && kbs.length > 0)
-                        main = kbs[0];
+    }
 
-                    if (!main)
-                        return ;
+    Variants {
+        id: ledFiles
 
-                    var newCaps = !!main.capsLock;
-                    var newNum = !!main.numLock;
-                    if (osdWindow.kbInitialized && osdWindow.ready) {
-                        if (newCaps !== osdWindow.capsLock) {
-                            osdWindow.capsLock = newCaps;
-                            osdWindow.showCaps(newCaps);
-                        }
-                        if (newNum !== osdWindow.numLock) {
-                            osdWindow.numLock = newNum;
-                            osdWindow.showNum(newNum);
-                        }
-                    } else {
-                        osdWindow.capsLock = newCaps;
-                        osdWindow.numLock = newNum;
-                    }
-                    osdWindow.kbInitialized = true;
-                } catch (e) {
-                }
-            }
+        model: []
+
+        FileView {
+            required property string modelData
+            readonly property bool isCaps: modelData.endsWith("::capslock")
+
+            path: modelData + "/brightness"
+            blockLoading: true
+            printErrors: false
         }
 
     }
 
     Timer {
         interval: 400
-        running: true
+        running: osdWindow.ready && ledFiles.instances.length > 0
         repeat: true
         triggeredOnStart: true
-        onTriggered: kbSock.connected = true
+        onTriggered: osdWindow.readLocks()
     }
 
     Region {
@@ -340,12 +394,12 @@ PanelWindow {
     Rectangle {
         id: card
 
-        readonly property int levelWidth: 372
+        readonly property int levelWidth: 260
         readonly property int toggleWidth: osdWindow.cardPadX * 2 + osdWindow.badgeSize + osdWindow.cardGap + Math.ceil(Math.max(labelMetrics.advanceWidth, stateFlip.width)) + 6
 
         anchors.centerIn: parent
         anchors.verticalCenterOffset: osdWindow.cardVisible ? 0 : 16
-        height: osdWindow.isLevelType ? 62 : 76
+        height: osdWindow.isLevelType ? 50 : 56
         width: osdWindow.isLevelType ? card.levelWidth : card.toggleWidth
         radius: height / 2
         color: Theme.bg
@@ -358,69 +412,45 @@ PanelWindow {
 
             text: osdWindow.currentLabel
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.typeSize("labelMedium")
-            font.variableAxes: Theme.axes(Theme.typeSize("labelMedium"), 560, 0)
+            font.pixelSize: Theme.typeSize("labelSmall")
+            font.variableAxes: Theme.axes(Theme.typeSize("labelSmall"), 560, 0)
         }
 
         Slider {
             id: levelTrack
 
             visible: osdWindow.isLevelType
-            enabled: false
             anchors.left: parent.left
-            anchors.leftMargin: 12
-            anchors.right: readout.left
-            anchors.rightMargin: 12
+            anchors.leftMargin: 10
+            anchors.right: parent.right
+            anchors.rightMargin: 10
             anchors.verticalCenter: parent.verticalCenter
             size: "m"
+            trackH: osdWindow.levelTrackH
+            handleH: osdWindow.levelHandleH
+            // a full stadium cap, as round as the card behind it
+            outerR: osdWindow.levelTrackH / 2
+            iconSize: 18
             from: 0
             to: 100
             value: osdWindow.levelMuted ? 0 : osdWindow.levelValue
             icon: osdWindow.levelIcon
             showValue: false
+            inlineValue: true
+            valueText: (v) => {
+                return osdWindow.levelMuted ? "Off" : Math.round(v) + "%";
+            }
             activeColor: osdWindow.levelMuted ? Theme.outlineStrong : Theme.primary
             inactiveColor: Theme.withBlur(Theme.surfaceHighest)
-
-            Behavior on live {
-                enabled: card.visible
-
-                NumberAnimation {
-                    duration: Theme.durFastSpatial
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: Theme.curveStandard
-                }
-
+            easeValue: card.visible
+            onMoved: (v) => {
+                return osdWindow.applyLevel(v);
             }
+            onReleased: hideTimer.restart()
+            onHoveredChanged: {
+                if (!levelTrack.hovered)
+                    hideTimer.restart();
 
-        }
-
-        Row {
-            id: readout
-
-            visible: osdWindow.isLevelType
-            anchors.right: parent.right
-            anchors.rightMargin: 20
-            anchors.verticalCenter: parent.verticalCenter
-            width: 48
-            layoutDirection: Qt.RightToLeft
-            spacing: 1
-
-            LText {
-                anchors.baseline: pctNum.baseline
-                role: "labelMedium"
-                color: Theme.subtext
-                text: osdWindow.levelMuted ? "" : "%"
-            }
-
-            LText {
-                id: pctNum
-
-                anchors.verticalCenter: parent.verticalCenter
-                role: "headlineSmall"
-                weight: 640
-                rounded: 100
-                color: osdWindow.levelMuted ? Theme.error : Theme.text
-                text: osdWindow.levelMuted ? "Off" : Math.round(osdWindow.levelValue)
             }
 
         }
@@ -479,7 +509,7 @@ PanelWindow {
                 visible: osdWindow.showMuteSlash
                 anchors.centerIn: parent
                 width: osdWindow.glyphSize * 1.3 + 4
-                height: 5
+                height: Math.round(osdWindow.glyphSize * 0.22)
                 rotation: 45
                 color: iconBadge.fillColor
             }
@@ -488,7 +518,7 @@ PanelWindow {
                 visible: osdWindow.showMuteSlash
                 anchors.centerIn: parent
                 width: osdWindow.glyphSize * 1.3
-                height: 1.8
+                height: osdWindow.glyphSize * 0.082
                 radius: 1
                 rotation: 45
                 color: Theme.error
@@ -504,7 +534,7 @@ PanelWindow {
             spacing: 2
 
             LText {
-                role: "labelMedium"
+                role: "labelSmall"
                 color: Theme.subtext
                 text: osdWindow.currentLabel
             }
@@ -524,8 +554,8 @@ PanelWindow {
 
                     text: osdWindow.toggleOnText
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.typeSize("titleLarge")
-                    font.variableAxes: Theme.axes(Theme.typeSize("titleLarge"), 640, 60)
+                    font.pixelSize: Theme.typeSize("titleMedium")
+                    font.variableAxes: Theme.axes(Theme.typeSize("titleMedium"), 640, 60)
                 }
 
                 TextMetrics {
@@ -533,8 +563,8 @@ PanelWindow {
 
                     text: osdWindow.toggleOffText
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.typeSize("titleLarge")
-                    font.variableAxes: Theme.axes(Theme.typeSize("titleLarge"), 640, 60)
+                    font.pixelSize: Theme.typeSize("titleMedium")
+                    font.variableAxes: Theme.axes(Theme.typeSize("titleMedium"), 640, 60)
                 }
 
                 Column {
@@ -544,7 +574,7 @@ PanelWindow {
                     LText {
                         width: parent.width
                         height: stateFlip.lineHeight
-                        role: "titleLarge"
+                        role: "titleMedium"
                         weight: 640
                         rounded: 60
                         text: osdWindow.toggleOffText
@@ -554,7 +584,7 @@ PanelWindow {
                     LText {
                         width: parent.width
                         height: stateFlip.lineHeight
-                        role: "titleLarge"
+                        role: "titleMedium"
                         weight: 640
                         rounded: 60
                         text: osdWindow.toggleOnText
@@ -583,7 +613,7 @@ PanelWindow {
 
             target: toggleGlyph
             property: "anchors.verticalCenterOffset"
-            from: osdWindow.toggleState ? 7 : -7
+            from: osdWindow.toggleState ? 6 : -6
             to: 0
             duration: Theme.durLong
             easing.type: Easing.OutBack
@@ -613,12 +643,12 @@ PanelWindow {
 
         }
 
-        // the readout answers the keypress
+        // the reading answers the keypress
         SequentialAnimation {
             id: levelPulseAnim
 
             NumberAnimation {
-                target: pctNum
+                target: levelTrack.valueItem
                 property: "scale"
                 to: 1.12
                 duration: Theme.durQuick
@@ -627,7 +657,7 @@ PanelWindow {
             }
 
             NumberAnimation {
-                target: pctNum
+                target: levelTrack.valueItem
                 property: "scale"
                 to: 1
                 duration: Theme.durMedium
@@ -695,6 +725,14 @@ PanelWindow {
     }
 
     mask: Region {
+        // only the level card takes the pointer; the toggle toasts stay click-through
+        readonly property bool grabs: card.visible && osdWindow.isLevelType
+
+        x: grabs ? Math.round(osdBlurRegion.paintedX) : 0
+        y: grabs ? Math.round(osdBlurRegion.paintedY) : 0
+        width: grabs ? Math.round(osdBlurRegion.paintedWidth) : 0
+        height: grabs ? Math.round(osdBlurRegion.paintedHeight) : 0
+        radius: Math.round(card.radius * card.scale)
     }
 
 }

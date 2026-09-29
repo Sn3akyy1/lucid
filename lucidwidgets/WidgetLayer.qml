@@ -17,6 +17,10 @@ Variants {
         PanelWindow {
             id: layer
 
+            PaletteFade {
+                active: layer.visible
+            }
+
             readonly property bool suppressed: Prefs.widgetHideFullscreen && layer.fullscreenUp
             readonly property bool fullscreenUp: {
                 var t = Hyprland.activeToplevel;

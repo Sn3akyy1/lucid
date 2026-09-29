@@ -190,6 +190,9 @@ WidgetBody {
             source: w.wallpaper === "" ? "" : "file://" + w.wallpaper
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
+            // it only ever gets blurred, so decoding a 4k wallpaper in full is
+            // wasted work on every wallpaper change
+            sourceSize.width: Math.round(w.boardW)
             visible: false
         }
 

@@ -103,7 +103,7 @@ WidgetBody {
     fill: w.artTint ? Theme.withBlur(Theme.atTone(w.seedVivid, Theme.isLight ? 90 : 22)) : w.toneFill
     ink: w.artTint ? Theme.atTone(w.seedVivid, Theme.isLight ? 12 : 94) : w.toneInk
     inkAccent: w.artTint ? Theme.atTone(w.seedVivid, Theme.isLight ? 40 : 80) : w.toneInkAccent
-    onInkAccent: w.artTint ? Theme.atTone(w.seedVivid, Theme.isLight ? 98 : 16) : w.toneOnInkAccent
+    fgInkAccent: w.artTint ? Theme.atTone(w.seedVivid, Theme.isLight ? 98 : 16) : w.toneOnInkAccent
     Behavior on fill {
         ColorAnimation {
             duration: Theme.durSlowEffects
@@ -125,7 +125,7 @@ WidgetBody {
 
     }
 
-    Behavior on onInkAccent {
+    Behavior on fgInkAccent {
         ColorAnimation {
             duration: Theme.durSlowEffects
         }
@@ -252,6 +252,18 @@ WidgetBody {
             radius: playTap.pressed ? tr.big * 0.28 : tr.big / 2
             color: w.inkAccent
             opacity: w.has ? 1 : 0.4
+            // the state layer alone barely shows on a saturated fill, so the pill
+            // swells under the pointer as well
+            scale: playTap.pressed ? 0.96 : (playTap.containsMouse ? 1.05 : 1)
+
+            Behavior on scale {
+                NumberAnimation {
+                    duration: Theme.durFastSpatial
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.curveFastSpatial
+                }
+
+            }
 
             Behavior on radius {
                 NumberAnimation {
@@ -267,14 +279,14 @@ WidgetBody {
                 name: w.playing ? "pause" : "play_arrow"
                 size: tr.big * 0.5
                 fill: 1
-                color: w.onInkAccent
+                color: w.fgInkAccent
             }
 
             StateLayer {
                 id: playTap
 
                 radius: parent.radius
-                tint: w.onInkAccent
+                tint: w.fgInkAccent
                 disabled: !w.has
                 onClicked: w.toggle()
             }
@@ -519,20 +531,30 @@ WidgetBody {
             height: 48
             radius: artTap.pressed ? 14 : 24
             color: w.inkAccent
+            scale: artTap.pressed ? 0.96 : (artTap.containsMouse ? 1.05 : 1)
+
+            Behavior on scale {
+                NumberAnimation {
+                    duration: Theme.durFastSpatial
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.curveFastSpatial
+                }
+
+            }
 
             Icon {
                 anchors.centerIn: parent
                 name: w.playing ? "pause" : "play_arrow"
                 size: 26
                 fill: 1
-                color: w.onInkAccent
+                color: w.fgInkAccent
             }
 
             StateLayer {
                 id: artTap
 
                 radius: parent.radius
-                tint: w.onInkAccent
+                tint: w.fgInkAccent
                 onClicked: w.toggle()
             }
 
@@ -626,14 +648,14 @@ WidgetBody {
                 name: w.playing ? "pause" : "play_arrow"
                 size: 30
                 fill: 1
-                color: w.onInkAccent
+                color: w.fgInkAccent
             }
 
             StateLayer {
                 id: discTap
 
                 radius: parent.radius
-                tint: w.onInkAccent
+                tint: w.fgInkAccent
                 onClicked: w.toggle()
             }
 

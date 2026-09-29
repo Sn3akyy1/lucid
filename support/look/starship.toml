@@ -4,6 +4,11 @@ $character'''
 
 palette = 'colors'
 
+# repainted by Lucid on every theme change (~/.config/lucid/sync-starship.sh).
+# only these values are rewritten, so the rest of this file stays yours
+#   color1  primary, fixed dim   color4  surface container   color7  surface
+#   color2  on primary           color5  on primary          color8  primary
+#   color3  on surface variant   color6  surface dim         color9  primary
 [palettes.colors]
 mustard = '#af8700' # example
 color1 = '#88c0d0'
