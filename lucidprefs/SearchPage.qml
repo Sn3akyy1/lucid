@@ -1,6 +1,6 @@
 import QtQuick
-import QtQuick.Shapes
 import qs
+import qs.lucidui
 
 // Settings search: every page with a hit, and under it the rows that matched.
 // loaded into a pane like the other pages, so `win` is Settings itself; the
@@ -161,7 +161,7 @@ Column {
 
                     NavGlyph {
                         anchors.fill: parent
-                        visible: item.modelData.key !== "about" && item.modelData.key !== "users"
+                        visible: item.modelData.key !== "about"
                         kind: item.modelData.key
                         color: item.selected ? item.fg : Theme.accent
                     }
@@ -172,28 +172,6 @@ Column {
                         visible: item.modelData.key === "about"
                         ringColor: item.selected ? item.fg : Theme.accent
                         starColor: item.selected ? item.fg : Theme.accent
-                    }
-
-                    Shape {
-                        anchors.fill: parent
-                        visible: item.modelData.key === "users"
-                        preferredRendererType: Shape.CurveRenderer
-
-                        ShapePath {
-                            strokeWidth: 0
-                            fillColor: item.selected ? item.fg : Theme.accent
-
-                            PathSvg {
-                                path: "M12 19.2c-2.5 0-4.71-1.28-6-3.2.03-2 4-3.1 6-3.1s5.97 1.1 6 3.1a7.232 7.232 0 0 1-6 3.2M12 5a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3m0-3A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10c0-5.53-4.5-10-10-10Z"
-                            }
-
-                        }
-
-                        transform: Scale {
-                            xScale: 22 / 24
-                            yScale: 22 / 24
-                        }
-
                     }
 
                 }
@@ -277,32 +255,16 @@ Column {
 
             }
 
-            Shape {
+            Icon {
                 id: chevron
 
                 anchors.right: parent.right
                 anchors.rightMargin: 18
                 anchors.verticalCenter: parent.verticalCenter
-                width: 20
-                height: 20
                 visible: !item.isPage
-                preferredRendererType: Shape.CurveRenderer
-
-                ShapePath {
-                    strokeWidth: 0
-                    fillColor: item.selected ? item.fg : Theme.subtextDim
-
-                    PathSvg {
-                        path: "M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41Z"
-                    }
-
-                }
-
-                transform: Scale {
-                    xScale: 20 / 24
-                    yScale: 20 / 24
-                }
-
+                name: "chevron_right"
+                size: 20
+                color: item.selected ? item.fg : Theme.subtextDim
             }
 
             MouseArea {

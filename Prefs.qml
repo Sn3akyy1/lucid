@@ -128,13 +128,25 @@ Singleton {
         { "key": "timer", "icon": "timer", "name": "Timer" },
         { "key": "session", "icon": "power_settings_new", "name": "Session" },
         { "key": "profile", "icon": "speed", "name": "Power" },
-        { "key": "gamemode", "icon": "sports_esports", "name": "Game mode" },
+        { "key": "gamemode", "icon": "sports_esports", "name": "Game" },
         { "key": "nightlight", "icon": "nightlight", "name": "Night light" },
+        { "key": "sound", "icon": "volume_up", "name": "Sound" },
+        { "key": "vpn", "icon": "vpn_key", "name": "VPN" },
+        { "key": "dock", "icon": "dock_to_bottom", "name": "Dock" },
         { "key": "clipboard", "icon": "content_paste", "name": "Clipboard" },
         { "key": "emoji", "icon": "mood", "name": "Emoji" },
         { "key": "wallpaper", "icon": "wallpaper", "name": "Wallpaper" },
         { "key": "theme", "icon": "palette", "name": "Theme" },
         { "key": "widgets", "icon": "widgets", "name": "Widgets" },
+        { "key": "lock", "icon": "lock", "name": "Lock" },
+        { "key": "screenshot", "icon": "screenshot_monitor", "name": "Screen" },
+        { "key": "ocr", "icon": "document_scanner", "name": "Scan text" },
+        { "key": "overview", "icon": "grid_view", "name": "Overview" },
+        { "key": "scratchpad", "icon": "stacks", "name": "Scratch" },
+        { "key": "stopwatch", "icon": "av_timer", "name": "Stopwatch" },
+        { "key": "phone", "icon": "phonelink_ring", "name": "Phone" },
+        { "key": "keybinds", "icon": "keyboard_command_key", "name": "Shortcuts" },
+        { "key": "settings", "icon": "settings", "name": "Settings" },
         { "key": "clear", "icon": "clear_all", "name": "Clear" }
     ]
 
@@ -375,8 +387,29 @@ Singleton {
     property alias gameModeOffCmd: s.gameModeOffCmd
     property alias gameModeStatusCmd: s.gameModeStatusCmd
 
+    // game mode, as the tile, the thermals card and the games widget run it. with
+    // both commands left empty it is Lucid's own: animations, blur, shadows,
+    // rounding and gaps off, their values kept inside hyprland and put back after,
+    // so turning it off needs no reload (which would reset the keyboard layout)
+    readonly property var gameModeKeys: ["animations.enabled", "decoration.blur.enabled", "decoration.shadow.enabled", "decoration.rounding", "general.gaps_in", "general.gaps_out"]
+    readonly property string gameModeMarker: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/lucid-gamemode"
+    readonly property bool gameModeUsesDefault: root.gameModeOnCmd.trim() === "" && root.gameModeOffCmd.trim() === ""
+    readonly property string gameModeDefaultOn: {
+        const keys = root.gameModeKeys.map((k) => {
+            return JSON.stringify(k);
+        }).join(", ");
+        const off = "[\"animations.enabled\"] = false, [\"decoration.blur.enabled\"] = false, [\"decoration.shadow.enabled\"] = false, [\"decoration.rounding\"] = 0, [\"general.gaps_in\"] = 0, [\"general.gaps_out\"] = 0";
+        const lua = "LucidGameMode = LucidGameMode or {} for _, k in ipairs({ " + keys + " }) do if LucidGameMode[k] == nil then local ok, v = pcall(hl.get_config, k) if ok then LucidGameMode[k] = v end end end hl.config({ " + off + " })";
+        return "hyprctl eval '" + lua + "' && touch '" + root.gameModeMarker + "'";
+    }
+    readonly property string gameModeDefaultOff: "rm -f '" + root.gameModeMarker + "'; hyprctl eval 'if LucidGameMode then for k, v in pairs(LucidGameMode) do pcall(hl.config, { [k] = v }) end LucidGameMode = nil end'"
+    readonly property string gameModeOnRun: root.gameModeUsesDefault ? root.gameModeDefaultOn : root.gameModeOnCmd
+    readonly property string gameModeOffRun: root.gameModeUsesDefault ? root.gameModeDefaultOff : root.gameModeOffCmd
+    readonly property string gameModeStatusRun: root.gameModeStatusCmd.trim() !== "" ? root.gameModeStatusCmd : (root.gameModeUsesDefault ? "test -f '" + root.gameModeMarker + "'" : "")
+    readonly property bool gameModeConfigured: root.gameModeUsesDefault || (root.gameModeOnCmd.trim() !== "" && root.gameModeOffCmd.trim() !== "")
+
     readonly property string gameModeStateFile: {
-        const m = /(?:test|\[)\s+-[ef]\s+(\S+)/.exec(root.gameModeStatusCmd || "");
+        const m = /(?:test|\[)\s+-[ef]\s+(\S+)/.exec(root.gameModeStatusRun || "");
         return m ? m[1].replace(/^['"]|['"]$/g, "") : "";
     }
     property alias showClock: s.showClock
@@ -423,6 +456,8 @@ Singleton {
     property alias toastOnAudio: s.toastOnAudio
     property alias toastOnDisplays: s.toastOnDisplays
     property alias toastOnPower: s.toastOnPower
+    property alias toastOnUsb: s.toastOnUsb
+    property alias toastOnCamera: s.toastOnCamera
     property alias toastEnabled: s.toastEnabled
     property alias toastUseAppTimeout: s.toastUseAppTimeout
     property alias toastCriticalSticky: s.toastCriticalSticky
@@ -440,6 +475,18 @@ Singleton {
     property alias notifSoundName: s.notifSoundName
     property alias notifSoundVolume: s.notifSoundVolume
     property alias notifSoundUrgentOnly: s.notifSoundUrgentOnly
+    property alias sysSounds: s.sysSounds
+    property alias sysSoundVolume: s.sysSoundVolume
+    property alias soundOnUsb: s.soundOnUsb
+    property alias soundOnBluetooth: s.soundOnBluetooth
+    property alias soundOnCharger: s.soundOnCharger
+    property alias soundOnBattery: s.soundOnBattery
+    property alias soundOnCapture: s.soundOnCapture
+    property alias soundOnCamera: s.soundOnCamera
+    property alias soundOnVolume: s.soundOnVolume
+    property alias soundOnBrightness: s.soundOnBrightness
+    property alias soundOnCaps: s.soundOnCaps
+    property alias soundOnMic: s.soundOnMic
     // comma-joined; bracket writes on the adapter are dropped, so both go through the alias
     property alias notifMutedApps: s.notifMutedApps
     property alias notifSeenApps: s.notifSeenApps
@@ -565,7 +612,12 @@ Singleton {
     property alias pomodoroLong: s.pomodoroLong
     property alias pomodoroRounds: s.pomodoroRounds
     property alias pomodoroAutoStart: s.pomodoroAutoStart
+    property alias pomodoroAutoFocus: s.pomodoroAutoFocus
+    property alias pomodoroRepeat: s.pomodoroRepeat
+    property alias pomodoroSilence: s.pomodoroSilence
+    property alias pomodoroGoal: s.pomodoroGoal
     property alias timerSound: s.timerSound
+    property alias reminderSound: s.reminderSound
     property alias weekStartMonday: s.weekStartMonday
     property alias launcherSearchEngine: s.launcherSearchEngine
     property alias launcherWebRow: s.launcherWebRow
@@ -627,7 +679,7 @@ Singleton {
         { "key": "keybinds", "icon": "keyboard", "keys": "shortcuts hotkeys keys bindings hyprland super binds", "group": "Desktop", "label": "Keybinds", "title": "Keybinds", "blurb": "Every Hyprland shortcut: change one, switch it off or add your own" },
         { "key": "input", "icon": "mouse", "keys": "keyboard layout layouts xkb caps lock repeat numlock mouse pointer speed acceleration touchpad tap natural scroll gestures swipe", "group": "Devices", "label": "Input", "title": "Input", "blurb": "Keyboard layouts and key repeat, the mouse, the touchpad and its gestures" },
         { "key": "displays", "icon": "desktop_windows", "keys": "monitor screen resolution refresh rate scale vrr arrangement", "group": "Devices", "label": "Displays", "title": "Displays", "blurb": "Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on" },
-        { "key": "sound", "icon": "volume_up", "keys": "audio volume speakers microphone output input devices", "group": "Devices", "label": "Sound", "title": "Sound", "blurb": "Which speakers play and which microphone listens, what each application is using, and how loud any of it is" },
+        { "key": "sound", "icon": "volume_up", "keys": "audio volume speakers microphone output input devices system sounds chime usb bluetooth charger battery screenshot camera", "group": "Devices", "label": "Sound", "title": "Sound", "blurb": "Which speakers play and which microphone listens, what each application is using, and how loud any of it is" },
         { "key": "network", "icon": "wifi", "keys": "wifi ethernet vpn dns ip proxy internet", "group": "Devices", "label": "Network", "title": "Network", "blurb": "Wi-Fi, wired, VPN and how this machine gets its address" },
         { "key": "bluetooth", "icon": "bluetooth", "keys": "devices pair headphones", "group": "Devices", "label": "Bluetooth", "title": "Bluetooth and Devices", "blurb": "The radio, what it is paired with, and the phone you connect to it" },
         { "key": "kdeconnect", "icon": "smartphone", "keys": "phone kde connect files notifications clipboard", "group": "Devices", "label": "Phone", "title": "Phone", "blurb": "Your phone on this machine over KDE Connect: files, notifications, clipboard and a remote", "toggle": "kdeConnectEnabled" },
@@ -767,6 +819,8 @@ Singleton {
         "toastOnAudio": true,
         "toastOnDisplays": true,
         "toastOnPower": true,
+        "toastOnUsb": true,
+        "toastOnCamera": true,
         "toastEnabled": true,
         "toastUseAppTimeout": true,
         "toastCriticalSticky": true,
@@ -781,9 +835,21 @@ Singleton {
         "quietFrom": 1320,
         "quietTo": 420,
         "notifSound": false,
-        "notifSoundName": "message",
+        "notifSoundName": "glint",
         "notifSoundVolume": 0.6,
         "notifSoundUrgentOnly": false,
+        "sysSounds": true,
+        "sysSoundVolume": 0.6,
+        "soundOnUsb": true,
+        "soundOnBluetooth": true,
+        "soundOnCharger": true,
+        "soundOnBattery": true,
+        "soundOnCapture": true,
+        "soundOnCamera": true,
+        "soundOnVolume": true,
+        "soundOnBrightness": true,
+        "soundOnCaps": true,
+        "soundOnMic": true,
         "notifMutedApps": "",
         "notifSeenApps": "",
         "notifGrouping": true,
@@ -891,19 +957,24 @@ Singleton {
         "pomodoroLong": 15,
         "pomodoroRounds": 4,
         "pomodoroAutoStart": true,
+        "pomodoroAutoFocus": true,
+        "pomodoroRepeat": true,
+        "pomodoroSilence": false,
+        "pomodoroGoal": 0,
         "timerSound": true,
+        "reminderSound": true,
         "weekStartMonday": true,
         "launcherSearchEngine": "duckduckgo",
         "launcherWebRow": true,
         "launcherWidth": "standard",
         "launcherSearchPosition": "bottom",
-        "launcherDensity": "comfortable",
+        "launcherDensity": "compact",
         "launcherModeBar": true,
         "launcherActionHints": true,
         "launcherFrequentFirst": true,
         "launcherCalculator": true,
         "launcherSettingsResults": true,
-        "launcherContentScale": 1,
+        "launcherContentScale": 0.8,
         "launcherHiddenApps": "",
         "monitorWorkspaces": "{}"
     })
@@ -1096,32 +1167,6 @@ Singleton {
             return -1;
 
         return h * 60 + mi;
-    }
-
-    // the freedesktop set spreads ~17 dB between its own files, so each carries a
-    // trim that lands its peak in roughly the same place
-    readonly property var notifSounds: [
-        { "key": "message", "label": "Message", "gain": 1.24 },
-        { "key": "bell", "label": "Bell", "gain": 2.11 },
-        { "key": "complete", "label": "Chime", "gain": 0.9 },
-        { "key": "suspend-error", "label": "Alert", "gain": 0.71 }
-    ]
-
-    function notifSoundEntry(name) {
-        for (var i = 0; i < root.notifSounds.length; i++) {
-            if (root.notifSounds[i].key === name)
-                return root.notifSounds[i];
-
-        }
-        return root.notifSounds[0];
-    }
-
-    readonly property string notifSoundPath: "/usr/share/sounds/freedesktop/stereo/" + root.notifSoundEntry(root.notifSoundName).key + ".oga"
-    // paplay's --volume rides PulseAudio's cubic scale, so a bare 0.6 is a 13 dB
-    // cut rather than six tenths of the loudness; cube-root it back
-    readonly property int notifSoundPaVolume: {
-        var g = Math.max(0, Math.min(2.5, root.notifSoundVolume * root.notifSoundEntry(root.notifSoundName).gain));
-        return Math.round(65536 * Math.cbrt(g));
     }
 
     function splitList(v) {
@@ -1334,6 +1379,8 @@ Singleton {
             property bool toastOnAudio: true
             property bool toastOnDisplays: true
             property bool toastOnPower: true
+            property bool toastOnUsb: true
+            property bool toastOnCamera: true
             property bool toastEnabled: true
             property bool toastUseAppTimeout: true
             property bool toastCriticalSticky: true
@@ -1348,9 +1395,21 @@ Singleton {
             property int quietFrom: 1320
             property int quietTo: 420
             property bool notifSound: false
-            property string notifSoundName: "message"
+            property string notifSoundName: "glint"
             property real notifSoundVolume: 0.6
             property bool notifSoundUrgentOnly: false
+            property bool sysSounds: true
+            property real sysSoundVolume: 0.6
+            property bool soundOnUsb: true
+            property bool soundOnBluetooth: true
+            property bool soundOnCharger: true
+            property bool soundOnBattery: true
+            property bool soundOnCapture: true
+            property bool soundOnCamera: true
+            property bool soundOnVolume: true
+            property bool soundOnBrightness: true
+            property bool soundOnCaps: true
+            property bool soundOnMic: true
             property string notifMutedApps: ""
             property string notifSeenApps: ""
             property bool notifGrouping: true
@@ -1460,19 +1519,24 @@ Singleton {
             property int pomodoroLong: 15
             property int pomodoroRounds: 4
             property bool pomodoroAutoStart: true
+            property bool pomodoroAutoFocus: true
+            property bool pomodoroRepeat: true
+            property bool pomodoroSilence: false
+            property int pomodoroGoal: 0
             property bool timerSound: true
+            property bool reminderSound: true
             property bool weekStartMonday: true
             property string launcherSearchEngine: "duckduckgo"
             property bool launcherWebRow: true
             property string launcherWidth: "standard"
             property string launcherSearchPosition: "bottom"
-            property string launcherDensity: "comfortable"
+            property string launcherDensity: "compact"
             property bool launcherModeBar: true
             property bool launcherActionHints: true
             property bool launcherFrequentFirst: true
             property bool launcherCalculator: true
             property bool launcherSettingsResults: true
-            property real launcherContentScale: 1
+            property real launcherContentScale: 0.8
             property string launcherHiddenApps: ""
             property string monitorWorkspaces: "{}"
         }

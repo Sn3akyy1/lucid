@@ -1,6 +1,6 @@
 import QtQuick
-import QtQuick.Shapes
 import qs
+import qs.lucidui
 
 // m3 basic dialog: extra-large shape, hero icon, headline, actions bottom-right
 Item {
@@ -76,27 +76,11 @@ Item {
             spacing: 12
 
             // m3 puts a hero icon above a destructive headline
-            Shape {
-                width: 26
-                height: 26
+            Icon {
                 anchors.horizontalCenter: parent.horizontalCenter
-                preferredRendererType: Shape.CurveRenderer
-
-                ShapePath {
-                    strokeWidth: 0
-                    fillColor: Theme.error
-
-                    PathSvg {
-                        path: "M12 2 1 21h22L12 2Zm0 5 7.5 12.9h-15L12 7Zm-1 4v5h2v-5h-2Zm0 6v2h2v-2h-2Z"
-                    }
-
-                }
-
-                transform: Scale {
-                    xScale: 26 / 24
-                    yScale: 26 / 24
-                }
-
+                name: "warning"
+                size: 26
+                color: Theme.error
             }
 
             Text {

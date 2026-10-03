@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.lucidui
 
 // Prefs.barLayout as three lanes, one per group of the bar, each lined up the
 // way the bar lines it up: against the left edge, around the middle, against
@@ -395,25 +396,19 @@ Item {
 
             }
 
-            // a two-by-three grip of dots, the sign that this one moves
-            Grid {
+            Item {
                 id: grip
 
                 x: 14
                 anchors.verticalCenter: parent.verticalCenter
-                columns: 2
-                spacing: 2
+                width: 6
+                height: 10
 
-                Repeater {
-                    model: 6
-
-                    Rectangle {
-                        width: 2
-                        height: 2
-                        radius: 1
-                        color: chip.picked || chip.activeFocus || chipDrag.active ? chip.ink : Theme.subtext
-                    }
-
+                Icon {
+                    anchors.centerIn: parent
+                    name: "drag_indicator"
+                    size: 16
+                    color: chip.picked || chip.activeFocus || chipDrag.active ? chip.ink : Theme.subtext
                 }
 
             }

@@ -284,6 +284,9 @@ PanelWindow {
     }
     onModeChanged: {
         if (dockWindow.mode === "wallpaper") {
+            // the cards outlive the menu, so the strip is on the current picture
+            // from the first frame rather than once the rescan lands
+            dockWindow.syncStripToCurrent();
             wallpaperScanner.scan();
             dockWindow.wallpaperArmed = false;
             wallpaperArmTimer.restart();
@@ -322,8 +325,8 @@ PanelWindow {
         "glyph": DockIcons.power
     }, {
         "id": "widgets",
-        "name": "Desktop Widgets",
-        "desc": "Place clocks, meters and notes on the desktop",
+        "name": "Widget Panel",
+        "desc": "Drag clocks, meters and notes onto the desktop, or take them off",
         "glyph": DockIcons.widgets
     }, {
         "id": "keyboard",
@@ -339,7 +342,7 @@ PanelWindow {
         "id": "run",
         "name": "Run a Command",
         "desc": "Type $ and a command line",
-        "glyph": "terminal"
+        "glyph": "terminal_2"
     }, {
         "id": "web",
         "name": "Search the Web",
@@ -412,6 +415,8 @@ PanelWindow {
     property real resultsHeight: 0
     property int resultCount: 0
     readonly property real menuContentMax: dockWindow.menuMaxHeight - dockWindow.panelPadding - Prefs.launcherChromeH
+    // with no rows the panel is as tall as the empty state, not a fixed floor that cut it
+    readonly property real menuContentMin: dockWindow.resultsHeight > 0 || !launcherLoader.item ? 70 : Math.max(70, launcherLoader.item.emptyHeight)
     readonly property real menuHeight: {
         var content;
         if (dockWindow.mode === "wallpaper")
@@ -420,7 +425,7 @@ PanelWindow {
         else if (dockWindow.mode === "clipboard")
             content = dockWindow.menuContentMax;
         else
-            content = Math.max(70, Math.min(dockWindow.resultsHeight, dockWindow.menuContentMax));
+            content = Math.max(dockWindow.menuContentMin, Math.min(dockWindow.resultsHeight, dockWindow.menuContentMax));
         return Math.round(dockWindow.panelPadding + Prefs.launcherChromeH + content);
     }
 
@@ -742,7 +747,7 @@ PanelWindow {
                     "payload": line
                 }));
                 rows.push(dockWindow.makeRow("runterm", "run-term", "Run in a terminal", "Keeps the window open to read the output", {
-                    "glyph": "terminal",
+                    "glyph": "terminal_2",
                     "payload": line
                 }));
             } else {
@@ -945,8 +950,7 @@ PanelWindow {
             dockWindow.menuOpen = false;
             Prefs.settingsRequested("");
         } else if (id === "widgets") {
-            dockWindow.menuOpen = false;
-            Prefs.settingsRequested("widgets");
+            dockWindow.openWidgetPanel();
         } else if (id === "emoji") {
             dockWindow.setSearchText(":");
         } else if (id === "run") {
@@ -1012,6 +1016,11 @@ PanelWindow {
         themeSwitchProbe.command = ["sh", "-c", "d=\"" + Prefs.wallpaperDirFor(id) + "\"; " + "[ -d \"$d\" ] && find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | sort | head -n1; true"];
         themeSwitchProbe.running = true;
         dockWindow.menuOpen = false;
+    }
+
+    function openWidgetPanel() {
+        dockWindow.menuOpen = false;
+        Widgets.openPanel(dockWindow.screen ? dockWindow.screen.name : "");
     }
 
     function openSession() {
@@ -1320,6 +1329,9 @@ PanelWindow {
             dockWindow.applyWallpaper(dockWindow.fallbackWallpaper);
 
         appScanner.running = true;
+        if (Prefs.loaded)
+            wallpaperScanner.scan(false);
+
     }
 
     Connections {
@@ -1333,6 +1345,13 @@ PanelWindow {
 
         function onWallpaperDirChanged() {
             wallpaperScanner.scan(false);
+        }
+
+        // the strip's cards and thumbnails are ready before it first opens
+        function onLoadedChanged() {
+            if (Prefs.loaded)
+                wallpaperScanner.scan(false);
+
         }
 
         function onDockShowRunningChanged() {
@@ -1841,28 +1860,53 @@ PanelWindow {
 
         // typing a folder that turns up empty shouldn't swap the desktop out
         property bool applyFallbackIfEmpty: true
+        readonly property string script: Qt.resolvedUrl("./wallpaper-thumbs.sh").toString().replace("file://", "")
 
         function scan(applyFallback) {
             wallpaperScanner.applyFallbackIfEmpty = applyFallback !== false;
             wallpaperScanner.running = false;
-            wallpaperScanner.command = ["sh", "-c", "d=\"" + Prefs.wallpaperDir + "\"; " + "[ -d \"$d\" ] || exit 0; " + "find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | sort"];
+            wallpaperScanner.command = [wallpaperScanner.script, Prefs.wallpaperDir];
             wallpaperScanner.running = true;
         }
 
         stdout: StdioCollector {
             onStreamFinished: {
-                wallpapersModel.clear();
+                // path, then the small copy the strip decodes, or "" until it exists
+                var rows = [];
                 var lines = text.split("\n");
                 for (var i = 0; i < lines.length; i++) {
-                    var p = lines[i].trim();
-                    if (p === "")
-                        continue;
+                    var cols = lines[i].split("\t");
+                    var p = cols[0].trim();
+                    if (p !== "")
+                        rows.push({
+                        "path": p,
+                        "thumb": cols.length > 1 ? cols[1].trim() : ""
+                    });
 
-                    var base = p.substring(p.lastIndexOf("/") + 1);
+                }
+                // the same pictures keep their cards, and with them their decoded
+                // images: a rebuild decoded every one again on each open
+                var same = rows.length > 0 && rows.length === wallpapersModel.count;
+                for (var j = 0; same && j < rows.length; j++) {
+                    same = wallpapersModel.get(j).path === rows[j].path;
+                }
+                if (same) {
+                    for (var m = 0; m < rows.length; m++) {
+                        if (wallpapersModel.get(m).thumb !== rows[m].thumb)
+                            wallpapersModel.setProperty(m, "thumb", rows[m].thumb);
+
+                    }
+                    // the open already put the strip on the current picture
+                    return;
+                }
+                wallpapersModel.clear();
+                for (var r = 0; r < rows.length; r++) {
+                    var base = rows[r].path.substring(rows[r].path.lastIndexOf("/") + 1);
                     var dot = base.lastIndexOf(".");
                     wallpapersModel.append({
-                        "path": p,
-                        "name": dot > 0 ? base.substring(0, dot) : base
+                        "path": rows[r].path,
+                        "name": dot > 0 ? base.substring(0, dot) : base,
+                        "thumb": rows[r].thumb
                     });
                 }
                 if (wallpapersModel.count === 0) {
@@ -2232,6 +2276,10 @@ PanelWindow {
                     if (m === "power") {
                         dockWindow.menuOpen = false;
                         dockWindow.openSession();
+                        return ;
+                    }
+                    if (m === "widgets") {
+                        dockWindow.openWidgetPanel();
                         return ;
                     }
                     dockWindow.setSearchText(dockWindow.prefixFor(m));

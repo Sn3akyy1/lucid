@@ -10,6 +10,7 @@ import "./lucidpolkit"
 import "./lucidprefs"
 import "./lucidsession"
 import "./lucidshot"
+import "./lucidswitch"
 import "./lucidwidgets"
 import QtQuick
 import Quickshell
@@ -28,7 +29,8 @@ ShellRoot {
     // the update check, which runs whether or not the settings app is
     // ever opened, the clipboard, which owns the wl-paste watchers and so
     // has to be up long before the launcher is first opened, and night
-    // light, whose schedule runs whether or not the System pill is shown
+    // light, whose schedule runs whether or not the System pill is shown, and
+    // the sounds, so their ipc target answers before anything has played
     Component.onCompleted: {
         void KdeConnect.installed;
         void Bt.present;
@@ -49,6 +51,7 @@ ShellRoot {
         void Zones.offsets;
         void Capture.state;
         void NightLight.active;
+        void Sounds.dir;
     }
 
     PanelWindow {
@@ -591,6 +594,18 @@ ShellRoot {
                 mod: systemMod
             }
 
+            ModuleRegion {
+                mod: privacyMod
+            }
+
+            ModuleRegion {
+                mod: powerMod
+            }
+
+            ModuleRegion {
+                mod: windowMod
+            }
+
         }
 
         BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && bar.laidOut) ? barBlurRegion : null
@@ -626,6 +641,21 @@ ShellRoot {
             ModuleRegion {
                 blur: true
                 mod: systemMod
+            }
+
+            ModuleRegion {
+                blur: true
+                mod: privacyMod
+            }
+
+            ModuleRegion {
+                blur: true
+                mod: powerMod
+            }
+
+            ModuleRegion {
+                blur: true
+                mod: windowMod
             }
 
         }
@@ -688,6 +718,12 @@ ShellRoot {
 
     Session {
         id: sessionMod
+    }
+
+    Switcher {
+        id: switcherMod
+
+        dockMod: dock
     }
 
     Connections {

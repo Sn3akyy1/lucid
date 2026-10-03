@@ -9,7 +9,7 @@ Item {
     // every path below is authored on material's 24x24 grid
     readonly property var symbols: ({
         "shield": "shield_lock",
-        "terminal": "terminal",
+        "terminal": "terminal_2",
         "drive": "hard_drive",
         "power": "power_settings_new",
         "network": "wifi",

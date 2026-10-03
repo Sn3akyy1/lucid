@@ -161,6 +161,7 @@ installing to pick them up.
 | `SUPER` + `.` | Emoji picker |
 | `SUPER` + `K` | On-screen keyboard |
 | `SUPER` + `W` | Workspace overview (also: three-finger swipe) |
+| `CTRL` + `ALT` + `TAB` | Window switcher — every window on every workspace, newest first (`+SHIFT` steps back) |
 | `SUPER` + `Esc` | Session screen — lock, sleep, log out, restart, shut down |
 | `SUPER` + `D` / `Print` | Region screenshot |
 | `SUPER` + `Print` | Full screenshot |
@@ -232,7 +233,10 @@ them and reordered inside them, or taken out of the bar entirely.
   five-page clock app behind them: the day with the weather
   and what is next, a month calendar with reminders that toast when they are
   due, countdown timers and a pomodoro, a stopwatch with laps, and world
-  clocks. Whatever is counting shows in the pill as a chip with a ring
+  clocks. Whatever is counting shows in the pill as a chip with a ring. The
+  pomodoro card opens onto its own options: presets, every length, a daily
+  goal, whether breaks and focus sessions start by themselves, and
+  do-not-disturb for as long as you are focusing
 - **Notifications** — grouped by application, with inline reply for chat apps
   and progress bars for transfers. New ones stack under the bar, the newest
   growing out of the pill itself; do-not-disturb holds them back
@@ -329,9 +333,18 @@ on the second press.*
 
 ### Desktop widgets
 
-Cards you place on the wallpaper yourself. Open **Settings → Widgets**, click a
-tile, and it lands on the desktop; drag it anywhere, pin it so it stops moving,
-and it comes back where you left it after a reboot.
+Cards you place on the wallpaper yourself. Right-click the desktop and pick
+**Widget Panel**, or pick Widgets in the launcher's mode bar, and a sheet slides
+in with every widget drawn live: drag one straight out to where it should sit,
+or click it to drop it in the first free spot. Drag it anywhere afterwards, pin
+it so it stops moving, and it comes back where you left it after a reboot.
+
+The panel searches by name or by what a widget does, filters by kind, lists
+what is already out on *On desktop* — hover a row to find its card, click it
+for the card's sheet, lock or remove it there — and switches layouts on
+*Layouts*. While it is open your widgets come up over the windows with a − on
+each, and a card dragged back onto the sheet is taken off the desktop.
+**Settings → Widgets** holds the same gallery and every preset.
 
 <img src="assets/prev5.webp" alt="Clock, calendar, to-do and note widgets on a lakeside wallpaper, with the volume popup above the dock">
 
@@ -542,16 +555,20 @@ past the neighbour and making a new workspace at the end.
   popups appear at all, how long one stays and whether an application may set
   its own timeout, how much of the message and how many action buttons show,
   do-not-disturb with quiet hours between two times and a rule for fullscreen
-  windows, a notification sound with its own volume, how many the list keeps,
-  per-application muting, and switches for grouping by application, showing how
-  long ago each arrived, progress bars, inline reply, and how many popups stack
-  at once
+  windows, a notification sound picked from Lucid's own eight with its own
+  volume, how many the list keeps, per-application muting, and switches for
+  grouping by application, showing how long ago each arrived, progress bars,
+  inline reply, and how many popups stack at once. Its *System events* card
+  picks what the machine itself gets a toast for: the keyboard layout, game
+  mode, the charger and battery, Bluetooth and USB devices (the laptop's
+  built-in parts stay quiet), the camera turning on and off with the app using
+  it, Wi-Fi, the sound output, displays and the power profile
 - **OSD** — volume, brightness and microphone, each a badge and a level; Caps
   Lock and Num Lock get one too, showing the letters the next keystroke will
   make — `ABC` against `abc` — rather than the words on and off
 - **Desktop** — drag across empty desktop and a translucent accent box follows
   the cursor, the way it does on Windows and macOS; it is cosmetic and selects
-  nothing. Right-click the desktop for wallpaper, theme, your placed widgets,
+  nothing. Right-click the desktop for wallpaper, theme, the widget panel,
   a screenshot and settings. Both are switches on the General page
 - **Date and time** — a *Date & Time* page in Settings holds where the shell
   thinks it is. Turn on **Auto-detect location** — the same switch as the GPS
@@ -594,7 +611,17 @@ past the neighbour and making a new workspace at the end.
   rest stay put. A visualiser or a screen recorder sitting on a monitor is left
   where it is rather than dragged onto a microphone. It reads PipeWire directly
   and hears about changes as they happen, so it agrees with `pavucontrol` and
-  with whatever else you use. Scriptable with `qs ipc call settings sound`
+  with whatever else you use. **System sounds** mark a USB or Bluetooth device
+  coming and going, the charger, low battery, the camera turning on and off and
+  a screenshot, each with its own switch and a button to hear it, under one
+  volume; they keep quiet while you are silenced, apart from the battery
+  warnings. Tiny ticks answer the volume, brightness, Caps Lock and microphone
+  keys — once where a drag or a held key starts and once where it stops.
+  The sounds are synthesised by `support/sounds/build-sounds.py` into
+  `assets/sounds`; the ticks start from [Kenney](https://kenney.nl)'s Interface
+  Sounds, which are CC0. Scriptable with
+  `qs ipc call settings sound`, and `qs ipc call sounds play <name>` plays any
+  of them
 - **Bluetooth** — a *Bluetooth* page in Settings is a full manager: the radio,
   discoverability, whether the machine accepts pairing requests, and the name
   other devices see. Below it every device the adapter knows, grouped into
@@ -889,7 +916,8 @@ you know what's being pulled in.
 | `qrencode` | The QR code that shares a saved Wi-Fi network. Without it the password still shows, with no code |
 | `bluez`, `bluez-utils` | Bluetooth panel and the Bluetooth settings page |
 | `kdeconnect`, `python-gobject` | The KDE Connect page. The daemon is the backend and starts itself; `python-gobject` backs the bridge Lucid talks to it through. Without either the page says so and does nothing else |
-| `libpulse`, `wireplumber` | Volume, audio devices |
+| `libpulse`, `wireplumber` | Volume, audio devices, and playing Lucid's sounds |
+| `inotify-tools` | The camera on/off toast and sound. Without it the camera is never watched; nothing else changes |
 | `brightnessctl`, `upower` | Brightness, battery |
 | `hyprsunset` | Night light. Lucid starts it when night light first comes on and talks to it over `hyprctl hyprsunset`; one you already run is used as it is, and never reset unless Lucid warmed it |
 | `hypridle` | The Idle page: dimming, locking, screen off and suspend when you walk away. Without it the page says so and writes nothing |
@@ -974,16 +1002,18 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | `network` | `status` `list` `rescan` |
 | `nightlight` | `toggle` `on` `off` `status` |
 | `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |
-| `widgets` | `add <type> <variant>` `remove <uid>` `clear` `toggle` `lock` `unlock` `list` `catalogue` `settings` `resize <uid> <w> <h>` |
+| `widgets` | `panel` `openPanel <screen>` `closePanel` `add <type> <variant>` `remove <uid>` `clear` `toggle` `lock` `unlock` `list` `catalogue` `settings` `resize <uid> <w> <h>` |
 | `moji` | `toggle` `open` `close` `emoji` `kaomoji` `gif` `center` |
 | `keyboard` | `toggle` `open` `close` `letters` `fnkeys` `center` `bigger` `smaller` |
 | `notifs` | `toggle` `open` `close` `clear` `toggleDnd` `expandAll` `settings` `count` |
 | `lock` | `lock` `unlock` `isLocked` `status` — nothing here bypasses the password; PAM is the only way in |
 | `snap` | `toggle` `open` `close` `text` `color` `video` |
 | `session` | `toggle` `open` `close` |
-| `timer` | `start <seconds>` `stopwatch` `pomodoro` `status` |
+| `switcher` | `next` `prev` `toggle` `open` `close` `status` — `next`/`prev` open it when it is closed |
+| `timer` | `start <seconds>` `stopwatch` `pomodoro` `pomodoroSkip` `pomodoroStop` `pomodoroAdd <minutes>` `status` |
 | `clock` | `open <tab>` `toggle` `close` — *tab* is `today`, `calendar`, `timer`, `stopwatch` or `world` |
 | `toast` | `show <icon> <label>` `warn <icon> <label>` |
+| `sounds` | `play <name>` `list` — at the system-sound volume |
 | `screenshot` | `full` `text` |
 | `media` | `toggle` `open` `close` `identify` `playPause` `next` `previous` |
 | `workspaces` | `toggle` `open` `close` |

@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Shapes
 import qs
 import qs.lucidui
 
@@ -10,6 +9,7 @@ Item {
     property string variant: "standard" // "standard" | "tonal" | "filled" | "outlined"
     property int size: 40
     property int iconSize: Math.round(btn.size * 0.55)
+    // a material symbol name
     property string iconPath: ""
     property bool enabled: true
     property bool destructive: false
@@ -83,35 +83,9 @@ Item {
 
     Icon {
         anchors.centerIn: parent
-        visible: /^[a-z0-9_]+$/.test(btn.iconPath)
-        name: visible ? btn.iconPath : ""
+        name: btn.iconPath
         size: Math.round(btn.iconSize * 1.08)
         color: btn.fgColor
-    }
-
-    Shape {
-        anchors.centerIn: parent
-        width: btn.iconSize
-        height: btn.iconSize
-        visible: btn.iconPath !== "" && !/^[a-z0-9_]+$/.test(btn.iconPath)
-        preferredRendererType: Shape.CurveRenderer
-
-        ShapePath {
-            strokeWidth: 0
-            fillColor: btn.fgColor
-
-            PathSvg {
-                path: btn.iconPath
-            }
-
-        }
-
-        // icons are authored on a 24x24 grid
-        transform: Scale {
-            xScale: btn.iconSize / 24
-            yScale: btn.iconSize / 24
-        }
-
     }
 
     MouseArea {

@@ -20,6 +20,14 @@ Item {
     property bool showPrefixes: false
     // the settled view height; view.height is mid-animation while the panel resizes
     property real stableHeight: 0
+    // the model's count, not the view's: the view only announces a count that
+    // differs from its last layout, so 11 rows to none to 11 never reached us
+    readonly property int count: list.model ? list.model.count : 0
+    readonly property bool hasSelection: list.count > 0 && list.isSelectable(list.currentIndex)
+    // where the pill is this frame; the rows light by it
+    readonly property real pillY: selection.slot
+    // what the empty state needs, for the dock to size the panel to
+    readonly property real emptyExtent: empty.implicitHeight + 2 * Math.round(16 * list.cs)
     // the view consumes these; reading them back off `view` re-entered the layout
     readonly property int rowSpacing: Prefs.launcherRowGap
     readonly property int bottomPad: Prefs.launcherListPad
@@ -63,6 +71,18 @@ Item {
     // a type role at the launcher's own size
     function ts(role) {
         return Math.round(Theme.typeSize(role) * list.cs);
+    }
+
+    // blended on premultiplied channels. straight rgba between an opaque fill
+    // and a faint one passes through a colour brighter than either
+    function mix(a, b, t) {
+        var wa = a.a * (1 - t);
+        var wb = b.a * t;
+        var al = wa + wb;
+        if (al <= 0)
+            return Qt.rgba(0, 0, 0, 0);
+
+        return Qt.rgba((a.r * wa + b.r * wb) / al, (a.g * wa + b.g * wb) / al, (a.b * wa + b.b * wb) / al, al);
     }
 
     function rowAt(index) {
@@ -218,12 +238,12 @@ Item {
         height: selection.slotHeight
         radius: Theme.shapeXl
         color: Theme.withBlur(Theme.primaryContainer)
-        visible: view.count > 0 && list.isSelectable(list.currentIndex)
+        visible: list.hasSelection
         z: 0
 
         Behavior on slot {
             NumberAnimation {
-                duration: Theme.ms(220)
+                duration: Theme.ms(180)
                 easing.type: Easing.OutCubic
             }
 
@@ -231,7 +251,7 @@ Item {
 
         Behavior on slotHeight {
             NumberAnimation {
-                duration: Theme.ms(220)
+                duration: Theme.ms(180)
                 easing.type: Easing.OutCubic
             }
 
@@ -398,15 +418,19 @@ Item {
             readonly property bool selected: list.currentIndex === rowItem.index && rowItem.selectable
             readonly property bool hovering: list.hoveredIndex === rowItem.index && rowItem.selectable && !rowItem.disabled
             readonly property bool hasLead: rowItem.iconName !== "" || rowItem.glyph !== "" || rowItem.emoji !== "" || rowItem.swatchBg !== "" || rowItem.thumb !== ""
-            readonly property color content: rowItem.selected ? Theme.fgPrimaryContainer : Theme.text
-            readonly property color support: rowItem.selected ? Theme.alpha(Theme.fgPrimaryContainer, 0.76) : Theme.subtext
+            // how much of the pill is under this row this frame. everything that
+            // marks the selection is coloured by it, so none of it leads or trails
+            readonly property real lit: list.hasSelection && rowItem.selectable ? Math.max(0, 1 - Math.abs(list.pillY - rowItem.y) / Math.max(1, rowItem.height)) : 0
+            readonly property color content: list.mix(Theme.text, Theme.fgPrimaryContainer, rowItem.lit)
+            readonly property color support: list.mix(Theme.subtext, Theme.alpha(Theme.fgPrimaryContainer, 0.76), rowItem.lit)
+            readonly property color mark: list.mix(Theme.primary, Theme.fgPrimaryContainer, rowItem.lit)
             // a symbol needs a container to sit on; an application icon brings its own
             readonly property bool needsTile: rowItem.glyph !== "" || rowItem.emoji !== ""
-            readonly property color tile: rowItem.selected ? Theme.alpha(Theme.fgPrimaryContainer, 0.14) : Theme.withBlur(Theme.bgTile)
+            readonly property color tile: list.mix(Theme.withBlur(Theme.bgTile), Theme.alpha(Theme.fgPrimaryContainer, 0.14), rowItem.lit)
             readonly property bool showsDrop: rowItem.kind === "clip" && (rowItem.hovering || rowItem.selected)
             // an application the pointer is on can be sent out of the launcher
             readonly property bool showsHide: rowItem.kind === "app" && rowItem.hovering
-            readonly property bool showsHint: Prefs.launcherActionHints && rowItem.selected && !rowItem.isHeader && !rowItem.isCalc && rowItem.trailing === ""
+            readonly property bool showsHint: Prefs.launcherActionHints && rowItem.lit > 0 && !rowItem.isHeader && !rowItem.isCalc && rowItem.trailing === ""
 
             function askThumb() {
                 if (rowItem.thumb !== "")
@@ -458,14 +482,7 @@ Item {
                 anchors.fill: parent
                 visible: rowItem.isCalc
                 radius: Theme.shapeXl
-                color: rowItem.selected ? Theme.withBlur(Theme.primaryContainer) : Theme.withBlur(Theme.surfaceHigh)
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.durFastEffects
-                    }
-
-                }
+                color: list.mix(Theme.withBlur(Theme.surfaceHigh), Theme.withBlur(Theme.primaryContainer), rowItem.lit)
 
                 Column {
                     x: list.edgeSpace + Math.round(4 * list.cs)
@@ -479,7 +496,7 @@ Item {
                         role: "labelMedium"
                         size: list.ts("labelMedium")
                         text: rowItem.subtitle
-                        color: rowItem.selected ? Theme.alpha(Theme.fgPrimaryContainer, 0.7) : Theme.subtextDim
+                        color: list.mix(Theme.subtextDim, Theme.alpha(Theme.fgPrimaryContainer, 0.7), rowItem.lit)
                     }
 
                     LText {
@@ -489,7 +506,7 @@ Item {
                         role: "headlineMedium"
                         size: list.ts("headlineMedium")
                         text: rowItem.title
-                        color: rowItem.selected ? Theme.fgPrimaryContainer : Theme.primary
+                        color: rowItem.mark
                     }
 
                 }
@@ -504,7 +521,8 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         name: "content_paste"
                         size: Math.round(20 * list.cs)
-                        color: rowItem.selected ? Theme.alpha(Theme.fgPrimaryContainer, 0.8) : Theme.subtextDim
+                        color: list.mix(Theme.subtextDim, Theme.alpha(Theme.fgPrimaryContainer, 0.8), rowItem.lit)
+                        animateColor: false
                     }
 
                     LText {
@@ -512,7 +530,7 @@ Item {
                         role: "labelSmall"
                         size: list.ts("labelSmall")
                         text: "Return"
-                        color: rowItem.selected ? Theme.alpha(Theme.fgPrimaryContainer, 0.7) : Theme.subtextDim
+                        color: list.mix(Theme.subtextDim, Theme.alpha(Theme.fgPrimaryContainer, 0.7), rowItem.lit)
                     }
 
                 }
@@ -564,14 +582,6 @@ Item {
                     radius: Math.round(parent.width * 0.35)
                     color: rowItem.tile
                     visible: rowItem.needsTile
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Theme.durFastEffects
-                        }
-
-                    }
-
                 }
 
                 // an application icon is already a shape and a colour of its
@@ -643,7 +653,8 @@ Item {
                     height: Math.round(list.leadSlot * 0.58)
                     visible: rowItem.glyph !== ""
                     pathData: rowItem.glyph
-                    glyphColor: rowItem.selected ? Theme.fgPrimaryContainer : Theme.primary
+                    glyphColor: rowItem.mark
+                    animateColor: false
                 }
 
                 Rectangle {
@@ -713,7 +724,7 @@ Item {
                         height: dotMark.width
                         radius: dotMark.width / 2
                         visible: rowItem.running
-                        color: rowItem.selected ? Theme.fgPrimaryContainer : Theme.accent
+                        color: rowItem.mark
                     }
 
                 }
@@ -749,7 +760,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Math.round(5 * list.cs)
                 visible: rowItem.showsHint && !rowItem.showsDrop && !rowItem.showsHide
-                opacity: hintRow.visible ? 1 : 0
+                opacity: rowItem.lit
 
                 Icon {
                     anchors.verticalCenter: parent.verticalCenter
@@ -768,13 +779,6 @@ Item {
                     color: Theme.alpha(Theme.fgPrimaryContainer, 0.75)
                 }
 
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.durFastEffects
-                    }
-
-                }
-
             }
 
             DockGlyph {
@@ -785,7 +789,8 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: rowItem.trailing === "check"
                 pathData: DockIcons.check
-                glyphColor: rowItem.selected ? Theme.fgPrimaryContainer : Theme.primary
+                glyphColor: rowItem.mark
+                animateColor: false
             }
 
             // hide this application from the launcher. the settings page keeps
@@ -901,7 +906,7 @@ Item {
         anchors.centerIn: parent
         width: Math.min(parent.width - Math.round(48 * list.cs), Math.round(360 * list.cs))
         spacing: Math.round(10 * list.cs)
-        visible: view.count === 0
+        visible: list.count === 0
         opacity: empty.visible ? 1 : 0
 
         Item {
@@ -947,6 +952,7 @@ Item {
         Item {
             width: 1
             height: Math.round(4 * list.cs)
+            visible: list.showPrefixes
         }
 
         Row {

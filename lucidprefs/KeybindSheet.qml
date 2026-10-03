@@ -1,9 +1,9 @@
 import QtQuick
-import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import qs
+import qs.lucidui
 
 // every keybind at a glance, over whatever is on screen. ipc target "keybinds";
 // Hyprland reaches it through the "keybinds-sheet" entry in keybinds.json
@@ -229,30 +229,14 @@ PanelWindow {
                     border.width: searchInput.activeFocus ? 2 : 1
                     border.color: searchInput.activeFocus ? Theme.accent : Theme.outline
 
-                    Shape {
+                    Icon {
                         id: searchIcon
 
                         x: 14
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 20
-                        height: 20
-                        preferredRendererType: Shape.CurveRenderer
-
-                        ShapePath {
-                            strokeWidth: 0
-                            fillColor: Theme.subtext
-
-                            PathSvg {
-                                path: "M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5Zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14Z"
-                            }
-
-                        }
-
-                        transform: Scale {
-                            xScale: 20 / 24
-                            yScale: 20 / 24
-                        }
-
+                        name: "search"
+                        size: 20
+                        color: Theme.subtext
                     }
 
                     TextInput {
@@ -295,7 +279,7 @@ PanelWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "Edit keybinds"
                     variant: "filled"
-                    iconPath: "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"
+                    iconPath: "edit"
                     onClicked: sheet.edit()
                 }
 
@@ -303,7 +287,7 @@ PanelWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     size: 40
                     iconSize: 21
-                    iconPath: "M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"
+                    iconPath: "close"
                     onClicked: sheet.hide()
                 }
 

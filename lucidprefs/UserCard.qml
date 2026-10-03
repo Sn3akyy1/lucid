@@ -1,6 +1,6 @@
 import QtQuick
-import QtQuick.Shapes
 import qs
+import qs.lucidui
 
 // the account strip at the top of the rail: a picture, a name, and the way in
 // to everything about the account. collapses to the picture alone with the rail
@@ -107,33 +107,17 @@ Item {
 
     }
 
-    Shape {
+    Icon {
         id: chevron
 
         anchors.right: parent.right
         anchors.rightMargin: 16
         anchors.verticalCenter: parent.verticalCenter
-        width: 16
-        height: 16
         opacity: card.labelFade * 0.7
         visible: opacity > 0.01
-        preferredRendererType: Shape.CurveRenderer
-
-        ShapePath {
-            strokeWidth: 0
-            fillColor: card.fg
-
-            PathSvg {
-                path: "M8.6 16.6 13.2 12 8.6 7.4 10 6l6 6-6 6-1.4-1.4Z"
-            }
-
-        }
-
-        transform: Scale {
-            xScale: 16 / 24
-            yScale: 16 / 24
-        }
-
+        name: "chevron_right"
+        size: 18
+        color: card.fg
     }
 
     MouseArea {

@@ -12,6 +12,8 @@
     { "id": "keybinds-sheet", "keys": "SUPER + slash", "desc": "Show keybinds", "category": "Lucid", "type": "exec", "cmd": "qs ipc call keybinds toggle" },
     { "id": "overview", "keys": "SUPER + W", "desc": "Workspace overview", "category": "Lucid", "type": "exec", "cmd": "qs ipc call workspaces toggle" },
     { "id": "session", "keys": "SUPER + Escape", "desc": "Session screen: lock, sleep, log out, restart, shut down", "category": "Lucid", "type": "exec", "cmd": "qs ipc call session toggle" },
+    { "id": "switcher", "keys": "CTRL + ALT + Tab", "desc": "Window switcher, every workspace", "category": "Windows", "type": "exec", "cmd": "qs ipc call switcher next" },
+    { "id": "switcher-back", "keys": "CTRL + ALT + SHIFT + Tab", "desc": "Window switcher, stepping back", "category": "Windows", "type": "exec", "cmd": "qs ipc call switcher prev" },
     { "id": "close", "keys": "SUPER + C", "desc": "Close window", "category": "Windows", "type": "lua", "lua": "hl.dsp.window.close()" },
     { "id": "exit", "keys": "SUPER + M", "desc": "Exit Hyprland", "category": "Windows", "type": "exec", "cmd": "command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'" },
     { "id": "files", "keys": "SUPER + E", "desc": "File manager", "category": "Apps", "type": "exec", "cmd": "nautilus" },

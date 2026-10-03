@@ -16,6 +16,31 @@ Item {
     property var current: ""
     property bool enabled: true
     property int gap: 2
+    // breathing room either side of a segment's check and label
+    property int padding: 16
+    readonly property real _gaps: seg.gap * Math.max(0, seg.options.length - 1)
+    readonly property real _widest: {
+        var w = 0;
+        for (var i = 0; i < row.children.length; i++) {
+            var c = row.children[i];
+            if (c.content !== undefined)
+                w = Math.max(w, c.content);
+
+        }
+        return w;
+    }
+    readonly property real _contentSum: {
+        var s = 0;
+        for (var i = 0; i < row.children.length; i++) {
+            var c = row.children[i];
+            if (c.content !== undefined)
+                s += c.content;
+
+        }
+        return s;
+    }
+    // narrowest width that keeps every segment padded at equal widths
+    readonly property real fitWidth: (Math.ceil(seg._widest) + seg.padding * 2) * seg.options.length + seg._gaps
 
     signal chosen(var key)
 
@@ -43,9 +68,22 @@ Item {
                 readonly property real outer: seg.height / 2
                 readonly property real inner: cell.selected ? seg.height / 2 : Theme.shapeSm
                 readonly property real squeeze: area.pressed ? 4 : 0
+                // check and label at selected weight, so a pick never shifts widths
+                readonly property real content: 18 + 6 + probe.implicitWidth
 
-                width: seg.options.length > 0 ? (seg.width - seg.gap * (seg.options.length - 1)) / seg.options.length : 0
+                // equal widths when they fit; too tight, each sizes to its label
+                // and the spare room is shared out as padding
+                width: seg.options.length === 0 ? 0 : seg.width >= seg.fitWidth ? (seg.width - seg._gaps) / seg.options.length : cell.content + (seg.width - seg._gaps - seg._contentSum) / seg.options.length
                 height: seg.height
+
+                LText {
+                    id: probe
+
+                    visible: false
+                    role: "labelLarge"
+                    weight: 620
+                    text: cell.modelData.label
+                }
 
                 Rectangle {
                     id: box

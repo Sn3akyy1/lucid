@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.lucidui
 
 SettingCard {
     id: card
@@ -167,21 +168,10 @@ SettingCard {
 
                         }
 
-                        Rectangle {
-                            width: 13
-                            height: 1.6
-                            radius: 1
+                        Icon {
                             anchors.centerIn: parent
-                            rotation: 45
-                            color: Theme.subtext
-                        }
-
-                        Rectangle {
-                            width: 13
-                            height: 1.6
-                            radius: 1
-                            anchors.centerIn: parent
-                            rotation: -45
+                            name: "close"
+                            size: 18
                             color: Theme.subtext
                         }
 

@@ -288,6 +288,25 @@ Singleton {
         return root.mine[key] !== undefined ? root.mine[key] : "";
     }
 
+    // the border mode chosen, or the one your config's own colour matches
+    function borderMode() {
+        const c = root.choice("lucid.border");
+        const v = root.live["general.col.active_border"];
+        if (c !== "" || v === undefined)
+            return c;
+
+        const key = (x) => {
+            return root.coloursOf(x).map((q) => {
+                return q.a === 0 ? "clear" : root.rgba(q, q.a);
+            }).join(" ");
+        };
+        const now = key(v);
+        const m = root.borderModes.find((b) => {
+            return key(root.targetOf("lucid.border", b.key).value) === now;
+        });
+        return m ? m.key : "";
+    }
+
     // putting an option back to what your config gives it hands it back
     function set(key, v) {
         const t = root.targetOf(key, v);
@@ -503,6 +522,15 @@ Singleton {
         }
 
         target: Hyprland
+    }
+
+    // Glass repaints the border from the new palette; read it back after
+    Connections {
+        function onRecoloured() {
+            refreshAgain.restart();
+        }
+
+        target: Theme
     }
 
     Process {

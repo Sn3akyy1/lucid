@@ -1,7 +1,7 @@
 import QtQuick
-import QtQuick.Shapes
 import Quickshell.Services.UPower
 import qs
+import qs.lucidui
 
 // the power tile's sub-view: one row per profile the daemon offers
 Item {
@@ -43,23 +43,12 @@ Item {
                         radius: 9
                         color: Theme.alpha(Theme.accent, option.selected ? 0.22 : 0.12)
 
-                        Shape {
+                        Icon {
                             anchors.centerIn: parent
-                            width: 24
-                            height: 24
-                            scale: 16 / 24
-                            preferredRendererType: Shape.CurveRenderer
-
-                            ShapePath {
-                                strokeWidth: 0
-                                fillColor: Theme.accent
-
-                                PathSvg {
-                                    path: Power.icon(option.modelData)
-                                }
-
-                            }
-
+                            name: Power.symbol(option.modelData)
+                            size: 18
+                            fill: 1
+                            color: Theme.accent
                         }
 
                         Behavior on color {

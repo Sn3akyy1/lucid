@@ -7,7 +7,8 @@ Item {
 
     readonly property alias text: input.text
     property bool reveal: false
-    readonly property bool canSubmit: input.text.length > 0 && Lock.acceptsInput
+    // an account without a password logs in on an empty field
+    readonly property bool canSubmit: (input.text.length > 0 || !Lock.needsPassword) && Lock.acceptsInput && Lock.userName !== ""
     readonly property bool bad: Lock.phase === "failed"
     readonly property bool good: Lock.granted
 
@@ -83,6 +84,11 @@ Item {
             field.focusInput();
         }
 
+        function onSwitched() {
+            field.clear();
+            field.reveal = false;
+        }
+
         target: Lock
     }
 
@@ -96,8 +102,8 @@ Item {
         anchors.fill: parent
         radius: height / 2
         color: field.good ? Theme.alpha(Theme.success, 0.16) : (field.bad ? Theme.alpha(Theme.error, 0.14) : Theme.cardHigh)
-        border.width: Lock.focused || field.bad || field.good ? 2 : 1
-        border.color: field.good ? Theme.success : (field.bad ? Theme.error : (Lock.focused ? Theme.accent : Theme.outlineStrong))
+        border.width: Lock.focused || field.bad || field.good ? 2 : 0
+        border.color: field.good ? Theme.success : (field.bad ? Theme.error : Theme.accent)
 
         Behavior on color {
             ColorAnimation {
@@ -139,11 +145,12 @@ Item {
         anchors.left: leading.right
         anchors.leftMargin: 14
         anchors.verticalCenter: parent.verticalCenter
-        text: "Password"
+        text: Lock.needsPassword ? "Password" : "No password needed"
         color: Theme.subtextDim
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg
-        opacity: input.text.length === 0 && !Lock.busy && !Lock.focused ? 1 : 0
+        font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
+        opacity: input.text.length === 0 && !Lock.busy && (!Lock.focused || !Lock.needsPassword) ? 1 : 0
         visible: opacity > 0.01
 
         Behavior on opacity {
@@ -299,6 +306,7 @@ Item {
         selectedTextColor: Theme.text
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg
+        font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
         selectByMouse: false
         clip: true
         activeFocusOnPress: true

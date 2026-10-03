@@ -1,6 +1,6 @@
 import QtQuick
-import QtQuick.Shapes
 import qs
+import qs.lucidui
 
 Item {
     id: check
@@ -45,33 +45,18 @@ Item {
 
         }
 
-        Shape {
+        Icon {
             anchors.centerIn: parent
-            width: 14
-            height: 14
+            name: "check"
+            size: 16
             opacity: check.checked ? 1 : 0
-            preferredRendererType: Shape.CurveRenderer
+            color: check.danger ? Theme.fgError : Theme.fgAccent
 
             Behavior on opacity {
                 NumberAnimation {
                     duration: Theme.durQuick
                 }
 
-            }
-
-            ShapePath {
-                strokeWidth: 0
-                fillColor: check.danger ? Theme.fgError : Theme.fgAccent
-
-                PathSvg {
-                    path: "M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"
-                }
-
-            }
-
-            transform: Scale {
-                xScale: 14 / 24
-                yScale: 14 / 24
             }
 
         }

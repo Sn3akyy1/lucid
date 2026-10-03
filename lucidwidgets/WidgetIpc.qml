@@ -90,6 +90,19 @@ IpcHandler {
         Prefs.settingsRequested("widgets");
     }
 
+    // qs ipc call widgets panel, on the focused screen; a second call shuts it
+    function panel(): void {
+        Widgets.togglePanel("");
+    }
+
+    function openPanel(screen: string): void {
+        Widgets.openPanel(screen);
+    }
+
+    function closePanel(): void {
+        Widgets.closePanel();
+    }
+
     function list(): string {
         var out = [];
         for (var i = 0; i < Widgets.model.count; i++) {

@@ -923,7 +923,7 @@ BarPill {
     property bool gameModeOn: false
     property bool gameModeBusy: false
     property bool gameModeFailed: false
-    readonly property bool gameModeConfigured: Prefs.gameModeOnCmd.trim() !== "" && Prefs.gameModeOffCmd.trim() !== ""
+    readonly property bool gameModeConfigured: Prefs.gameModeConfigured
 
     function setGameMode(on) {
         if (!root.gameModeConfigured || root.gameModeBusy)
@@ -932,15 +932,15 @@ BarPill {
         root.gameModeFailed = false;
         root.gameModeBusy = true;
         root.gameModeOn = on;
-        gameModeProc.command = ["bash", "-c", on ? Prefs.gameModeOnCmd : Prefs.gameModeOffCmd];
+        gameModeProc.command = ["bash", "-c", on ? Prefs.gameModeOnRun : Prefs.gameModeOffRun];
         gameModeProc.running = true;
     }
 
     function refreshGameMode() {
-        if (Prefs.gameModeStatusCmd.trim() === "" || root.gameModeBusy || gameModeStatusProc.running)
+        if (Prefs.gameModeStatusRun === "" || root.gameModeBusy || gameModeStatusProc.running)
             return ;
 
-        gameModeStatusProc.command = ["bash", "-c", Prefs.gameModeStatusCmd];
+        gameModeStatusProc.command = ["bash", "-c", Prefs.gameModeStatusRun];
         gameModeStatusProc.running = true;
     }
 
@@ -1034,6 +1034,10 @@ BarPill {
             return Power.symbol(Power.profile);
         case "nightlight":
             return NightLight.active ? "nightlight" : "bedtime";
+        case "sound":
+            return root.volMuted ? "volume_off" : "volume_up";
+        case "vpn":
+            return Net.activeVpn ? "vpn_key" : "vpn_key_off";
         }
         const t = Prefs.systemTileAt(key);
         return t ? t.icon : "";
@@ -1051,7 +1055,7 @@ BarPill {
             if (root.gameModeBusy)
                 return root.gameModeOn ? "Starting" : "Stopping";
 
-            return root.gameModeFailed ? "Failed" : "Game mode";
+            return root.gameModeFailed ? "Failed" : "Game";
         }
         const t = Prefs.systemTileAt(key);
         return t ? t.name : "";
@@ -1083,6 +1087,14 @@ BarPill {
             return Power.profile !== PowerProfile.Balanced;
         case "nightlight":
             return NightLight.active;
+        case "sound":
+            return !root.volMuted;
+        case "vpn":
+            return Net.activeVpn !== null;
+        case "dock":
+            return Prefs.dockEnabled;
+        case "stopwatch":
+            return Chrono.swRunning;
         }
         return false;
     }
@@ -1095,7 +1107,13 @@ BarPill {
         "clipboard": "qs ipc call launcher clipboard",
         "emoji": "qs ipc call moji open",
         "wallpaper": "qs ipc call launcher wallpaper",
-        "theme": "qs ipc call launcher theme"
+        "theme": "qs ipc call launcher theme",
+        "screenshot": "qs ipc call screenshot full",
+        "ocr": "qs ipc call snap text",
+        "overview": "qs ipc call workspaces toggle",
+        "scratchpad": "hyprctl eval 'if LucidSpecials then LucidSpecials.scratchpad() end'",
+        "stopwatch": "qs ipc call -- clock open stopwatch",
+        "keybinds": "qs ipc call keybinds open"
     })
 
     function tileAct(key) {
@@ -1160,6 +1178,40 @@ BarPill {
         case "nightlight":
             // a right click opens the warmth and the schedule
             NightLight.toggle();
+            break;
+        case "sound":
+            root.toggleVolMute();
+            break;
+        case "vpn":
+            // one at a time, the way NetworkManager does it; none set up opens its page
+            if (Net.activeVpn) {
+                Net.down(Net.activeVpn.uuid);
+            } else if (Net.vpns.length > 0) {
+                Net.up(Net.vpns[0].uuid);
+            } else {
+                root.expanded = false;
+                Prefs.settingsRequested("network");
+            }
+            break;
+        case "dock":
+            Prefs.dockEnabled = !Prefs.dockEnabled;
+            break;
+        case "lock":
+            root.expanded = false;
+            Lockscreen.lock();
+            break;
+        case "phone":
+            // rings the phone that is in reach; with none, the phone page says why
+            if (KdeConnect.reachable.length > 0) {
+                KdeConnect.ring(KdeConnect.reachable[0].id);
+            } else {
+                root.expanded = false;
+                Prefs.settingsRequested("kdeconnect");
+            }
+            break;
+        case "settings":
+            root.expanded = false;
+            Prefs.settingsRequested("");
             break;
         }
     }
@@ -2532,13 +2584,16 @@ BarPill {
                         return ;
 
                     root.tipDragging = true;
-                    root.tipSetVolume(tipSlider.valueAt(sp.x));
+                    tipSlider.live = tipSlider.valueAt(sp.x);
+                    root.tipSetVolume(tipSlider.live);
                 }
+                // the slider shows the pointer, not pipewire's echo of it, which lags
                 onPositionChanged: (mouse) => {
                     if (!root.tipDragging)
                         return ;
 
-                    root.tipSetVolume(tipSlider.valueAt(tipSlider.mapFromItem(tipCardArea, mouse.x, mouse.y).x));
+                    tipSlider.live = tipSlider.valueAt(tipSlider.mapFromItem(tipCardArea, mouse.x, mouse.y).x);
+                    root.tipSetVolume(tipSlider.live);
                 }
                 onReleased: root.tipDragging = false
                 onCanceled: root.tipDragging = false
@@ -2620,6 +2675,7 @@ BarPill {
                     inactiveColor: Theme.surfaceHighest
                     // the card's own drag drives it directly, so only the rest is eased
                     easeValue: tipCard.visible && !root.tipDragging
+                    held: root.tipDragging
                 }
 
             }
@@ -2838,11 +2894,14 @@ BarPill {
             anchors.top: sq.bottom
             anchors.topMargin: 4
             anchors.horizontalCenter: parent.horizontalCenter
-            width: st.width + 6
+            // the gutter is the label's too; past that it shrinks a little before it elides
+            width: root.tileStepX
             horizontalAlignment: Text.AlignHCenter
             role: "labelSmall"
             color: st.checked ? Theme.text : Theme.subtext
             text: st.label
+            fontSizeMode: Text.HorizontalFit
+            minimumPixelSize: Math.max(8, size - 2)
             elide: Text.ElideRight
         }
 
@@ -2939,11 +2998,13 @@ BarPill {
             anchors.top: esq.bottom
             anchors.topMargin: 4
             anchors.horizontalCenter: parent.horizontalCenter
-            width: et.width + 6
+            width: root.tileStepX
             horizontalAlignment: Text.AlignHCenter
             role: "labelSmall"
             color: et.adding ? Theme.subtext : Theme.text
             text: et.label
+            fontSizeMode: Text.HorizontalFit
+            minimumPixelSize: Math.max(8, size - 2)
             elide: Text.ElideRight
         }
 

@@ -474,14 +474,8 @@ Singleton {
         if (Prefs.notifSoundUrgentOnly && n.urgency !== NotificationUrgency.Critical)
             return ;
 
-        soundProc.running = false;
-        soundProc.running = true;
-    }
-
-    Process {
-        id: soundProc
-
-        command: ["paplay", "--volume=" + Prefs.notifSoundPaVolume, Prefs.notifSoundPath]
+        // a chat sending a run of messages chimes once, not once a message
+        Sounds.play(Sounds.notifKey(Prefs.notifSoundName), Prefs.notifSoundVolume, 800);
     }
 
     // startup is noisy: let the session settle before anything pops

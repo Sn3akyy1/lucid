@@ -25,6 +25,21 @@ Singleton {
     property alias pomoRunning: store.pomoRunning
     property alias pomoEndsAt: store.pomoEndsAt
     property alias pomoLeft: store.pomoLeft
+    // the phase's full length in ms, which adding time stretches
+    property alias pomoSpan: store.pomoSpan
+    // set while the pomodoro is what switched do not disturb on
+    property alias pomoQuiet: store.pomoQuiet
+    // focus sessions finished on pomoDay, and how long they ran
+    property alias pomoDay: store.pomoDay
+    property alias pomoDone: store.pomoDone
+    property alias pomoFocusMs: store.pomoFocusMs
+    property string today: root.dayKey()
+    readonly property var pomoPresets: [
+        { "key": "classic", "name": "Classic", "label": "25 / 5", "focus": 25, "short": 5, "long": 15, "rounds": 4 },
+        { "key": "deep", "name": "Deep work", "label": "50 / 10", "focus": 50, "short": 10, "long": 30, "rounds": 3 },
+        { "key": "sprint", "name": "Sprint", "label": "15 / 3", "focus": 15, "short": 3, "long": 10, "rounds": 4 },
+        { "key": "long", "name": "Long haul", "label": "90 / 20", "focus": 90, "short": 20, "long": 30, "rounds": 2 }
+    ]
 
     readonly property bool anyTimerRunning: root.timers.some((t) => {
         return t.running;
@@ -32,8 +47,22 @@ Singleton {
     readonly property real swElapsed: root.swRunning ? root.swBank + (root.now - root.swStart) : root.swBank
     readonly property bool swActive: root.swRunning || root.swBank > 0
     readonly property real pomoRemaining: root.pomoRunning ? Math.max(0, root.pomoEndsAt - root.now) : root.pomoLeft
-    readonly property real pomoTotal: root.phaseMinutes(root.pomoPhase) * 60000
+    readonly property real pomoTotal: root.pomoSpan > 0 ? root.pomoSpan : root.phaseMinutes(root.pomoPhase) * 60000
     readonly property bool pomoActive: root.pomoPhase !== "idle"
+    readonly property int pomoToday: root.pomoDay === root.today ? root.pomoDone : 0
+    readonly property real pomoTodayMs: root.pomoDay === root.today ? root.pomoFocusMs : 0
+    readonly property bool pomoGoalMet: Prefs.pomodoroGoal > 0 && root.pomoToday >= Prefs.pomodoroGoal
+    readonly property bool pomoWantsQuiet: Prefs.pomodoroSilence && root.pomoPhase === "focus" && root.pomoRunning
+    // "" when the lengths match none of them
+    readonly property string pomoPreset: {
+        for (var i = 0; i < root.pomoPresets.length; i++) {
+            var p = root.pomoPresets[i];
+            if (p.focus === Prefs.pomodoroFocus && p.short === Prefs.pomodoroShort && p.long === Prefs.pomodoroLong && p.rounds === Prefs.pomodoroRounds)
+                return p.key;
+
+        }
+        return "";
+    }
 
     // what the bar shows: the timer closest to done, else the pomodoro, else the stopwatch
     readonly property var headline: {
@@ -235,10 +264,69 @@ Singleton {
         root.laps = [];
     }
 
+    function dayKey() {
+        return Qt.formatDate(Loc.now(), "yyyy-MM-dd");
+    }
+
+    function rollDay() {
+        var d = root.dayKey();
+        if (d !== root.today)
+            root.today = d;
+
+    }
+
+    function pomoUsePreset(key) {
+        var p = root.pomoPresets.find((x) => {
+            return x.key === key;
+        });
+        if (!p)
+            return ;
+
+        Prefs.pomodoroFocus = p.focus;
+        Prefs.pomodoroShort = p.short;
+        Prefs.pomodoroLong = p.long;
+        Prefs.pomodoroRounds = p.rounds;
+    }
+
+    function pomoLog(ms) {
+        root.rollDay();
+        if (root.pomoDay !== root.today) {
+            root.pomoDay = root.today;
+            root.pomoDone = 0;
+            root.pomoFocusMs = 0;
+        }
+        root.pomoDone = root.pomoDone + 1;
+        root.pomoFocusMs = root.pomoFocusMs + ms;
+    }
+
+    // only ever hands back a do not disturb it switched on itself
+    function pomoSyncQuiet() {
+        if (!Prefs.loaded)
+            return ;
+
+        if (root.pomoWantsQuiet && !root.pomoQuiet && !Prefs.doNotDisturb) {
+            root.pomoQuiet = true;
+            Prefs.doNotDisturb = true;
+        } else if (!root.pomoWantsQuiet && root.pomoQuiet) {
+            root.pomoQuiet = false;
+            Prefs.doNotDisturb = false;
+        }
+    }
+
+    // a phase still waiting to be started takes a new length straight away
+    function pomoResync() {
+        if (!root.pomoActive || root.pomoRunning || root.pomoLeft !== root.pomoSpan)
+            return ;
+
+        root.pomoSpan = root.phaseMinutes(root.pomoPhase) * 60000;
+        root.pomoLeft = root.pomoSpan;
+    }
+
     function pomoBegin(phase) {
         root.now = Date.now();
         root.pomoPhase = phase;
-        root.pomoLeft = root.phaseMinutes(phase) * 60000;
+        root.pomoSpan = root.phaseMinutes(phase) * 60000;
+        root.pomoLeft = root.pomoSpan;
         root.pomoEndsAt = root.now + root.pomoLeft;
         root.pomoRunning = true;
     }
@@ -261,25 +349,61 @@ Singleton {
         }
     }
 
+    // add or take off time from the phase in hand
+    function pomoExtend(sec) {
+        if (!root.pomoActive)
+            return ;
+
+        root.now = Date.now();
+        var total = root.pomoTotal;
+        var d = sec * 1000;
+        if (root.pomoRunning) {
+            var end = Math.max(root.now + 1000, root.pomoEndsAt + d);
+            d = end - root.pomoEndsAt;
+            root.pomoEndsAt = end;
+        } else {
+            var left = Math.max(1000, root.pomoLeft + d);
+            d = left - root.pomoLeft;
+            root.pomoLeft = left;
+        }
+        root.pomoSpan = Math.max(1000, total + d);
+    }
+
     // the phase after this one, counting focus rounds toward the long break
     function pomoAdvance(announce) {
-        var next;
-        if (root.pomoPhase === "focus") {
+        var was = root.pomoPhase;
+        var next = "focus";
+        var title = "Break's over";
+        if (was === "focus") {
             root.pomoRound = root.pomoRound + 1;
             next = root.pomoRound % Math.max(1, Prefs.pomodoroRounds) === 0 ? "long" : "short";
-        } else {
-            next = "focus";
-        }
-        if (announce)
-            root.finished(root.pomoPhase === "focus" ? "Focus session done" : "Break's over", next === "focus" ? "Time to focus for " + Prefs.pomodoroFocus + " minutes" : root.phaseLabel(next) + " — " + root.phaseMinutes(next) + " minutes");
+            title = "Focus session done";
+            if (announce) {
+                root.pomoLog(root.pomoTotal);
+                if (Prefs.pomodoroGoal > 0 && root.pomoToday === Prefs.pomodoroGoal)
+                    title = "Daily goal reached";
 
-        if (Prefs.pomodoroAutoStart || !announce) {
+            }
+        }
+        if (was === "long" && !Prefs.pomodoroRepeat) {
+            root.pomoStop();
+            if (announce)
+                root.finished("Pomodoro set done", "Start another when you are ready");
+
+            return ;
+        }
+        if (!announce || (next === "focus" ? Prefs.pomodoroAutoFocus : Prefs.pomodoroAutoStart)) {
             root.pomoBegin(next);
         } else {
             root.pomoPhase = next;
-            root.pomoLeft = root.phaseMinutes(next) * 60000;
+            root.pomoSpan = root.phaseMinutes(next) * 60000;
+            root.pomoLeft = root.pomoSpan;
             root.pomoRunning = false;
         }
+        // after the phase change, so a focus that held do not disturb has let go
+        if (announce)
+            root.finished(title, next === "focus" ? "Time to focus for " + Prefs.pomodoroFocus + " minutes" : root.phaseLabel(next) + " — " + root.phaseMinutes(next) + " minutes");
+
     }
 
     function pomoSkip() {
@@ -293,9 +417,14 @@ Singleton {
         root.pomoRunning = false;
         root.pomoRound = 0;
         root.pomoLeft = 0;
+        root.pomoSpan = 0;
     }
 
     function check() {
+        // until Prefs has loaded, its lengths are the defaults and a write to it is lost
+        if (!Prefs.loaded)
+            return ;
+
         var done = [];
         for (var i = 0; i < root.timers.length; i++) {
             var t = root.timers[i];
@@ -319,10 +448,11 @@ Singleton {
 
     }
 
+    onPomoWantsQuietChanged: root.pomoSyncQuiet()
     onFinished: (title, body) => {
         Quickshell.execDetached(["notify-send", "-a", "Clock", "-i", "alarm-symbolic", "-u", "critical", title, body]);
         if (Prefs.timerSound)
-            Quickshell.execDetached(["paplay", "/usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga"]);
+            Sounds.play("alarm", 1);
 
     }
 
@@ -335,6 +465,35 @@ Singleton {
             root.now = Date.now();
             root.check();
         }
+    }
+
+    Connections {
+        function onPomodoroFocusChanged() {
+            root.pomoResync();
+        }
+
+        function onPomodoroShortChanged() {
+            root.pomoResync();
+        }
+
+        function onPomodoroLongChanged() {
+            root.pomoResync();
+        }
+
+        // switched off by hand mid-focus: it is no longer the pomodoro's to undo
+        function onDoNotDisturbChanged() {
+            if (Prefs.loaded && !Prefs.doNotDisturb)
+                root.pomoQuiet = false;
+
+        }
+
+        function onLoadedChanged() {
+            root.now = Date.now();
+            root.check();
+            root.pomoSyncQuiet();
+        }
+
+        target: Prefs
     }
 
     IpcHandler {
@@ -351,6 +510,19 @@ Singleton {
 
         function pomodoro(): void {
             root.pomoToggle();
+        }
+
+        function pomodoroSkip(): void {
+            root.pomoSkip();
+        }
+
+        function pomodoroStop(): void {
+            root.pomoStop();
+        }
+
+        // qs ipc call -- timer pomodoroAdd 5
+        function pomodoroAdd(minutes: int): void {
+            root.pomoExtend(minutes * 60);
         }
 
         function status(): string {
@@ -393,6 +565,11 @@ Singleton {
             property bool pomoRunning: false
             property real pomoEndsAt: 0
             property real pomoLeft: 0
+            property real pomoSpan: 0
+            property bool pomoQuiet: false
+            property string pomoDay: ""
+            property int pomoDone: 0
+            property real pomoFocusMs: 0
         }
 
     }

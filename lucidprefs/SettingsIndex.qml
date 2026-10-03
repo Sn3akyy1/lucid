@@ -29,11 +29,11 @@ Item {
         "workspaces": "scratchpad special",
         "keybinds": "shortcuts hotkeys keys keyboard",
         "displays": "monitor monitors screen resolution refresh scale hdmi",
-        "sound": "audio volume speakers headphones microphone",
+        "sound": "audio volume speakers headphones microphone system sounds chime beep usb charger camera",
         "network": "internet ethernet wired wireless",
         "bluetooth": "pair headphones airpods",
         "kdeconnect": "kde connect android",
-        "notifications": "dnd popups",
+        "notifications": "dnd popups toast usb camera",
         "idle": "lock suspend screen off timeout hypridle",
         "datetime": "clock timezone time zone",
         "about": "version update"

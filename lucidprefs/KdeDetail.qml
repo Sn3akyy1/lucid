@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.lucidui
 
 Column {
     id: detail
@@ -42,13 +43,11 @@ Column {
 
             }
 
-            Text {
+            Icon {
                 anchors.centerIn: parent
-                text: "‹"
+                name: "arrow_back"
+                size: 20
                 color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(20)
-                font.variableAxes: Theme.axes(Theme.fs(20), 420, 0)
             }
 
             MouseArea {
@@ -111,14 +110,25 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 14
 
-            Text {
+            Row {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: detail.sig !== undefined && detail.sig.strength >= 0
-                text: detail.sig ? detail.sig.type + " " + "▮".repeat(Math.max(0, detail.sig.strength)) : ""
-                color: Theme.subtext
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontLabel
-                font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
+                spacing: 6
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: detail.sig ? detail.sig.type : ""
+                    color: Theme.subtext
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontLabel
+                    font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
+                }
+
+                SignalBars {
+                    anchors.verticalCenter: parent.verticalCenter
+                    strength: detail.sig ? detail.sig.strength * 25 : 0
+                }
+
             }
 
             BatteryPip {

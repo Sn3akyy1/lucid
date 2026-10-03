@@ -1,6 +1,6 @@
 import QtQuick
-import QtQuick.Shapes
 import qs
+import qs.lucidui
 
 SettingCard {
     id: card
@@ -235,38 +235,23 @@ SettingCard {
 
         }
 
-        Shape {
+        Icon {
             anchors.centerIn: parent
-            width: 20
-            height: 20
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-                strokeWidth: 0
-                fillColor: btn.primary ? Theme.fgAccent : Theme.text
-
-                PathSvg {
-                    path: {
-                        switch (btn.kind) {
-                        case "play":
-                            return "M8,5.14V19.14L19,12.14L8,5.14Z";
-                        case "pause":
-                            return "M14,19H18V5H14M6,19H10V5H6V19Z";
-                        case "next":
-                            return "M16,18H18V6H16M6,18L14.5,12L6,6V18Z";
-                        default:
-                            return "M6,18V6H8V18H6M9.5,12L18,6V18L9.5,12Z";
-                        }
-                    }
+            name: {
+                switch (btn.kind) {
+                case "play":
+                    return "play_arrow";
+                case "pause":
+                    return "pause";
+                case "next":
+                    return "skip_next";
+                default:
+                    return "skip_previous";
                 }
-
             }
-
-            transform: Scale {
-                xScale: 20 / 24
-                yScale: 20 / 24
-            }
-
+            size: 22
+            fill: 1
+            color: btn.primary ? Theme.fgAccent : Theme.text
         }
 
         MouseArea {

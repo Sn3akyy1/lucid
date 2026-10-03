@@ -199,7 +199,7 @@ Column {
         SettingRow {
             title: "Selection box"
             resetKey: "desktopSelection"
-            description: "Drag across empty desktop and a translucent box follows the cursor, the way it does on Windows and macOS. It is decoration only \u2014 nothing gets selected, and dragging inside a window or on a widget is untouched."
+            description: "Drag across empty desktop to draw a box, the way it does on Windows and macOS. Widgets it touches are selected and move together when you drag any one of them; pinned widgets are left out. Click the desktop to let go."
 
             M3Switch {
                 checked: Prefs.desktopSelection
@@ -236,7 +236,7 @@ Column {
             description: Prefs.shotPreview === "preview" ? "A card in the corner shows it, to open, mark up, drag into an app, find in its folder or delete. Recordings get one too." : (Prefs.shotPreview === "notify" ? "A notification says where it went. Screenshots are on the clipboard either way." : "Nothing shows. Screenshots are still copied to the clipboard.")
 
             M3Segmented {
-                width: 300
+                width: Math.max(300, fitWidth)
                 current: Prefs.shotPreview
                 options: [{
                     "key": "preview",

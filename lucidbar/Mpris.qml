@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Shapes
 import Quickshell
 import Quickshell.Hyprland._FocusGrab
 import Quickshell.Io
@@ -2068,36 +2067,14 @@ BarPill {
         width: icon.glyphSize
         height: icon.glyphSize
 
-        readonly property bool named: /^[a-z0-9_]+$/.test(icon.path)
         property real fill: 1
 
         Icon {
-            visible: icon.named
             anchors.centerIn: parent
-            name: icon.named ? icon.path : ""
+            name: icon.path
             size: Math.round(icon.glyphSize * 1.15)
             fill: icon.fill
             color: icon.tint
-        }
-
-        Shape {
-            visible: !icon.named
-            width: 24
-            height: 24
-            scale: icon.glyphSize / 24
-            anchors.centerIn: parent
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-                fillColor: icon.tint
-                strokeWidth: 0
-
-                PathSvg {
-                    path: icon.path
-                }
-
-            }
-
         }
 
     }

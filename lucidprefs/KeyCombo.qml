@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.lucidui
 
 // a key combination as a row of keycaps: "SUPER + SHIFT + left" -> [Super][Shift][←]
 Row {
@@ -20,7 +21,7 @@ Row {
 
         Rectangle {
             required property string modelData
-            // arrows sit tiny in most ui fonts, so they get a size up
+            // an arrow key draws as its symbol; the hidden text still sizes the cap
             readonly property bool arrow: /^[←→↑↓]$/.test(modelData)
 
             anchors.verticalCenter: parent.verticalCenter
@@ -48,11 +49,26 @@ Row {
 
                 anchors.centerIn: parent
                 anchors.verticalCenterOffset: -1
+                visible: !parent.arrow
                 text: parent.modelData
                 color: combo.textColor
                 font.family: Theme.fontFamily
                 font.pixelSize: parent.arrow ? Math.round(combo.fontSize * 1.45) : combo.fontSize
                 font.weight: parent.arrow ? Font.Bold : Font.DemiBold
+            }
+
+            Icon {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: -1
+                visible: parent.arrow
+                name: ({
+                    "←": "arrow_back",
+                    "→": "arrow_forward",
+                    "↑": "arrow_upward",
+                    "↓": "arrow_downward"
+                })[parent.modelData] || ""
+                size: Math.round(combo.fontSize * 1.3)
+                color: combo.textColor
             }
 
         }

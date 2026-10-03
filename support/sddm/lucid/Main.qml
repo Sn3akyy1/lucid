@@ -104,6 +104,7 @@ Item {
 
         delegate: QtObject {
             required property string name
+            required property string comment
         }
 
         onObjectAdded: surface.syncSessions()
@@ -131,7 +132,10 @@ Item {
         for (var i = 0; i < sessions.count; i++) {
             var o = sessions.objectAt(i);
             if (o)
-                out.push(o.name);
+                out.push({
+                    "name": o.name,
+                    "comment": o.comment || ""
+                });
 
         }
         Lock.sessions = out;
@@ -149,6 +153,10 @@ Item {
         }
         if (sessionModel.lastIndex >= 0 && sessionModel.lastIndex < Lock.sessions.length)
             Lock.sessionIndex = sessionModel.lastIndex;
+
+        // sddm can be told to list nobody; then every login is typed by hand
+        if (Lock.accounts.length === 0)
+            Lock.manual = true;
 
         surface.t = 0;
         surface.out = 1;
@@ -361,6 +369,7 @@ Item {
                     color: Theme.subtextDim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodyMd
+                    font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
                 }
 
             }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apply-theme.sh <theme-id> [dark|light]
+# apply-theme.sh [--shell-only|--apps-only] <theme-id> [dark|light]
 #
 # copies a theme's palette into the cache Lucid reads, then mirrors it into
 # kitty, spicetify's Sleek theme, VSCodium, Vesktop, GTK, starship and Steam —
@@ -12,10 +12,21 @@
 # generated itself (from `wal -l`); every other theme is authored dark, so
 # gen-light-palette.py inverts it in tone space the first time it is needed and
 # again whenever the dark palette it came from has changed under it.
+#
+# --shell-only writes just the palette Lucid reads and --apps-only everything
+# else. set-wallpaper.sh splits the two, so a wallpaper being browsed recolours
+# the shell but leaves the other apps, and the gtk theme bounce that restyles
+# every window, until the browsing stops.
 
 set -euo pipefail
 
-THEME="${1:?usage: apply-theme.sh <theme-id> [dark|light]}"
+STAGE=all
+case "${1:-}" in
+--shell-only) STAGE=shell; shift ;;
+--apps-only) STAGE=apps; shift ;;
+esac
+
+THEME="${1:?usage: apply-theme.sh [--shell-only|--apps-only] <theme-id> [dark|light]}"
 MODE="${2:-$(cat "$HOME/.cache/current_mode" 2>/dev/null || echo dark)}"
 THEME_DIR="$HOME/.config/lucid/themes/$THEME"
 PALETTE="$THEME_DIR/quickshell.json"
@@ -51,6 +62,16 @@ if ! command -v jq &>/dev/null; then
     exit 1
 fi
 
+# lucid — the only required output
+if [[ "$STAGE" != apps ]]; then
+    mkdir -p "$HOME/.cache/quickshell"
+    cp "$PALETTE" "$HOME/.cache/quickshell/matugen.json"
+fi
+if [[ "$STAGE" == shell ]]; then
+    echo "applied theme '$THEME' to the shell"
+    exit 0
+fi
+
 c() { jq -r --arg k "$1" '.[$k] // empty' "$PALETTE"; }
 strip() { echo "${1#\#}"; }
 
@@ -81,10 +102,6 @@ INVERSE_PRIMARY=$(c inverse_primary); INVERSE_PRIMARY="${INVERSE_PRIMARY:-$SECON
 TERTIARY_CONTAINER=$(c tertiary_container); TERTIARY_CONTAINER="${TERTIARY_CONTAINER:-$SECONDARY_CONTAINER}"
 SURFACE_BRIGHT=$(c surface_bright); SURFACE_BRIGHT="${SURFACE_BRIGHT:-$SURFACE_CONTAINER_HIGH}"
 PRIMARY_FIXED_DIM=$(c primary_fixed_dim); PRIMARY_FIXED_DIM="${PRIMARY_FIXED_DIM:-$PRIMARY}"
-
-# lucid — the only required output
-mkdir -p "$HOME/.cache/quickshell"
-cp "$PALETTE" "$HOME/.cache/quickshell/matugen.json"
 
 # kitty — 16 ansi slots over fewer roles, so some slots repeat
 if [[ -d "$HOME/.config/kitty" ]]; then

@@ -18,6 +18,8 @@ Singleton {
     property var snoozedUntil: ({})
     property var dismissedAt: ({})
     property string checkedDay: ""
+    // when this copy of the shell started, so a reload does not ring out loud
+    readonly property real bornAt: Date.now()
     // changes once a minute; what the countdown text needs, instead of every tick
     property string minuteKey: ""
 
@@ -228,6 +230,7 @@ Singleton {
         if (root.minuteKey !== mkey)
             root.minuteKey = mkey;
 
+        var fresh = false;
         for (var i = 0; i < root.items.length; i++) {
             var r = root.items[i];
             if (root.ringing.some((q) => {
@@ -256,7 +259,16 @@ Singleton {
                 continue;
 
             root.ringing = root.ringing.concat([r]);
+            // a reload forgets dismissals, so one already overdue as the shell
+            // starts rings without a sound; after that, one that came due while
+            // the machine slept still gets it
+            if (until || Date.now() - root.bornAt > 5000 || now.getTime() - due.getTime() < 60000)
+                fresh = true;
+
         }
+        if (fresh && Prefs.reminderSound)
+            Sounds.play("reminder", 1);
+
         root.tick++;
     }
 

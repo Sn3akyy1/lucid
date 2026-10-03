@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.lucidui
 
 // one output or input: the whole row picks it, the chevron opens what the
 // device itself can be told to do — its profile, its socket and its own volume
@@ -77,14 +78,11 @@ Column {
                 border.width: 2
                 border.color: Theme.bgTile
 
-                Text {
+                Icon {
                     anchors.centerIn: parent
-                    text: "✓"
+                    name: "check"
+                    size: 10
                     color: Theme.fgSuccess
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 8
-                    font.variableAxes: Theme.axes(8, 680, 0)
-                    font.weight: Font.Bold
                 }
 
             }
@@ -144,7 +142,7 @@ Column {
                 size: 32
                 iconSize: 18
                 rotation: dev.expanded ? 180 : 0
-                iconPath: "M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41Z"
+                iconPath: "expand_more"
                 onClicked: dev.expandRequested()
 
                 Behavior on rotation {
@@ -205,7 +203,7 @@ Column {
                     size: 36
                     iconSize: 19
                     variant: dev.muted ? "tonal" : "standard"
-                    iconPath: dev.muted ? "M12 4 9.91 6.09 12 8.18V4ZM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06a8.94 8.94 0 0 0 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3ZM19 12c0 .82-.15 1.61-.41 2.34l1.53 1.53A8.9 8.9 0 0 0 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71Zm-2.5 0c0-1.77-1.02-3.29-2.5-4.03v1.79l2.48 2.48c.01-.08.02-.16.02-.24Z" : "M3 9v6h4l5 5V4L7 9H3Zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02ZM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77Z"
+                    iconPath: dev.muted ? "volume_off" : "volume_up"
                     onClicked: Audio.toggleMute(dev.modelData)
                 }
 

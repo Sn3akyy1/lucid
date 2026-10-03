@@ -194,14 +194,14 @@ Column {
                             M3IconButton {
                                 size: 36
                                 enabled: layoutsRow.enabled && layoutItem.index > 0
-                                iconPath: "M11 20V7.825l-5.6 5.6L4 12l8-8l8 8l-1.4 1.425l-5.6-5.6V20h-2Z"
+                                iconPath: "arrow_upward"
                                 onClicked: page.moveLayout(layoutItem.index, -1)
                             }
 
                             M3IconButton {
                                 size: 36
                                 enabled: layoutsRow.enabled && layoutItem.index < page.layouts.length - 1
-                                iconPath: "M11 4v12.175l-5.6-5.6L4 12l8 8l8-8l-1.4-1.425l-5.6 5.6V4h-2Z"
+                                iconPath: "arrow_downward"
                                 onClicked: page.moveLayout(layoutItem.index, 1)
                             }
 
@@ -209,7 +209,7 @@ Column {
                                 size: 36
                                 enabled: layoutsRow.enabled && page.layouts.length > 1
                                 destructive: true
-                                iconPath: "M6.4 19L5 17.6l5.6-5.6L5 6.4L6.4 5l5.6 5.6L17.6 5L19 6.4L13.4 12l5.6 5.6l-1.4 1.4l-5.6-5.6L6.4 19Z"
+                                iconPath: "close"
                                 onClicked: page.removeAt(layoutItem.index)
                             }
 
@@ -222,7 +222,7 @@ Column {
                 M3Button {
                     text: "Add a layout"
                     variant: "text"
-                    iconPath: "M11 13H5v-2h6V5h2v6h6v2h-6v6h-2v-6Z"
+                    iconPath: "add"
                     enabled: layoutsRow.enabled && Xkb.loaded
                     onClicked: HyprConfig.layoutPickerRequested(page.layouts.map(HyprConfig.layoutId))
                 }

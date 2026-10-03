@@ -1,6 +1,8 @@
 singleton Theme 1.0 Theme.qml
 singleton Lock 1.0 Lock.qml
 Glyph 1.0 Glyph.qml
+Cookie 1.0 Cookie.qml
+Avatar 1.0 Avatar.qml
 Spinner 1.0 Spinner.qml
 IconButton 1.0 IconButton.qml
 Clock 1.0 Clock.qml

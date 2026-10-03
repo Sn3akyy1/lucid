@@ -1,6 +1,6 @@
 import QtQuick
-import QtQuick.Shapes
 import qs
+import qs.lucidui
 
 // the search field at the head of the rail. with the rail folded it is only the
 // magnifier, and focusing it opens the rail for as long as the search lasts
@@ -67,28 +67,12 @@ Item {
         onClicked: field.focusInput()
     }
 
-    Shape {
+    Icon {
         x: field.iconX
         anchors.verticalCenter: parent.verticalCenter
-        width: 22
-        height: 22
-        preferredRendererType: Shape.CurveRenderer
-
-        ShapePath {
-            strokeWidth: 0
-            fillColor: input.activeFocus ? Theme.accent : Theme.subtext
-
-            PathSvg {
-                path: "M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"
-            }
-
-        }
-
-        transform: Scale {
-            xScale: 22 / 24
-            yScale: 22 / 24
-        }
-
+        name: "search"
+        size: 22
+        color: input.activeFocus ? Theme.accent : Theme.subtext
     }
 
     // kept visible while folded: a hidden item cannot take the focus, and taking
@@ -141,7 +125,7 @@ Item {
         iconSize: 18
         opacity: field.labelFade
         visible: input.text !== "" && opacity > 0.01
-        iconPath: "M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"
+        iconPath: "close"
         onClicked: {
             field.clear();
             input.forceActiveFocus();

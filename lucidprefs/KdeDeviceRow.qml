@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.lucidui
 
 Column {
     id: dev
@@ -153,7 +154,6 @@ Column {
 
                 SignalBars {
                     anchors.verticalCenter: parent.verticalCenter
-                    unit: 3
                     strength: dev.sig ? dev.sig.strength * 25 : 0
                 }
 
@@ -165,13 +165,11 @@ Column {
                 charging: !!(dev.battery && dev.battery.charging)
             }
 
-            Text {
+            Icon {
                 anchors.verticalCenter: parent.verticalCenter
-                text: dev.opens ? "›" : "▾"
+                name: dev.opens ? "chevron_right" : "expand_more"
+                size: 18
                 color: Theme.subtext
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(16)
-                font.variableAxes: Theme.axes(Theme.fs(16), 420, 0)
                 rotation: !dev.opens && dev.expanded ? 180 : 0
 
                 Behavior on rotation {

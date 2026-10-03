@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Shapes
 import qs
 import qs.lucidui
 
@@ -11,6 +10,7 @@ Item {
     property string variant: "tonal" // "filled" | "tonal" | "outlined" | "text"
     property bool enabled: true
     property bool destructive: false
+    // a material symbol name
     property string iconPath: ""
     readonly property color baseColor: {
         if (btn.variant === "filled")
@@ -85,35 +85,10 @@ Item {
 
         Icon {
             anchors.verticalCenter: parent.verticalCenter
-            visible: /^[a-z0-9_]+$/.test(btn.iconPath)
-            name: visible ? btn.iconPath : ""
+            visible: btn.iconPath !== ""
+            name: btn.iconPath
             size: 19
             color: btn.labelColor
-        }
-
-        Shape {
-            width: btn.iconPath === "" || /^[a-z0-9_]+$/.test(btn.iconPath) ? 0 : 18
-            height: 18
-            anchors.verticalCenter: parent.verticalCenter
-            visible: btn.iconPath !== "" && !/^[a-z0-9_]+$/.test(btn.iconPath)
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-                strokeWidth: 0
-                fillColor: btn.labelColor
-
-                PathSvg {
-                    path: btn.iconPath
-                }
-
-            }
-
-            // authored on a 24x24 grid
-            transform: Scale {
-                xScale: 18 / 24
-                yScale: 18 / 24
-            }
-
         }
 
         Text {

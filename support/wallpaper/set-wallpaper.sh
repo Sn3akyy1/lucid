@@ -60,7 +60,6 @@ if ! "$WP_CLI" query &>/dev/null; then
 fi
 
 FADE=1
-PREV_WALLPAPER="$(cat "$CURRENT_WALL_FILE" 2>/dev/null || true)"
 
 # the daemon decodes the whole original on every switch, 0.36 s for an 8k jpeg
 # before the fade can even start. a copy scaled to the screen decodes in a
@@ -181,36 +180,44 @@ mkdir -p "$CACHE_DIR"
 printf '%s' "$WALLPAPER" > "$CURRENT_WALL_FILE"
 printf '%s' "$MODE" > "$CURRENT_MODE_FILE"
 
-# when this picture's fade finishes. the shell crossfades its own colours
-# alongside it (PaletteFade), so only the login screen's blur, which nobody sees,
-# waits it out rather than compete with it. the same picture again has no fade
-COLOUR_FADE="$CACHE_DIR/lucid-colours.fade"
-if [[ "$PREV_WALLPAPER" == "$WALLPAPER" ]]; then
-    printf '0' > "$COLOUR_FADE"
-else
-    awk -v now="$EPOCHREALTIME" -v f="$FADE" 'BEGIN { printf "%.3f", now + f }' > "$COLOUR_FADE"
-fi
-
 if [[ ${#FIT_TODO[@]} -gt 0 ]]; then
-    # after the fade, so it never competes with it
-    ( sleep "$FADE"; nice -n 19 ionice -c 3 env MAGICK_THREAD_LIMIT=2 \
+    # once a browse has moved on, and one picture at a time: a burst through the
+    # strip used to start a full-size resize for every picture it passed
+    mkdir -p "$FIT_DIR"
+    ( sleep 3; flock "$FIT_DIR/.lock" nice -n 19 ionice -c 3 env MAGICK_THREAD_LIMIT=2 \
         bash -c "$(declare -f fit_key make_fit_copies); FIT_DIR='$FIT_DIR' FIT_SIZE='$FIT_SIZE' make_fit_copies \"\$@\"" _ "${FIT_TODO[@]}" \
     ) &>/dev/null &
 fi
 
 # the picture is up; everything below only re-derives colours, and that is what
-# used to stutter the whole desktop for a second or two. three guards:
+# stuttered the whole desktop. browsing the wallpaper strip sets a picture every
+# half second or so, so the work is split by who is looking at it:
+#
+#   colours   the palette the shell reads, worked out once no new picture has
+#             been asked for in COLOUR_SETTLE. a picture only passed through
+#             never reaches imagemagick
+#   apps      everything else: kitty, vscodium, discord, spotify, steam, the gtk
+#             theme bounce (which restyles every gtk, firefox and electron
+#             window there is) and the login screen. nobody sees those while
+#             browsing, so they wait for APPS_SETTLE of quiet and run once
+#
+# and three guards on both:
 #
 #   low priority, two threads   imagemagick takes every core by default, and
 #                               eight busy cores starve hyprland and the shell
 #                               of frames however cheap their own work is
-#   one at a time, newest wins  browsing the wallpaper strip fires this per
-#                               picture, and overlapping runs multiplied it
-#   skip when nothing moved     same theme, mode and picture means the palette
-#                               on disk is already the right one
+#   one at a time, newest wins  overlapping runs multiplied the work
+#   skip when nothing moved     same theme, mode and picture means the colours
+#                               on disk are already the right ones
 COLOUR_LOCK="$CACHE_DIR/lucid-colours.lock"
 COLOUR_WANT="$CACHE_DIR/lucid-colours.want"
 COLOUR_DONE="$CACHE_DIR/lucid-colours.done"
+APPS_DONE="$CACHE_DIR/lucid-colours.apps"
+# matugen's scheme for the picture last derived, which the apps stage renders from
+SCHEME="$CACHE_DIR/lucid/wallpaper-scheme.json"
+SHELL_PALETTE="$CACHE_DIR/quickshell/matugen.json"
+COLOUR_SETTLE=0.9
+APPS_SETTLE=3
 
 export MAGICK_THREAD_LIMIT="${MAGICK_THREAD_LIMIT:-2}"
 export OMP_NUM_THREADS="${OMP_NUM_THREADS:-2}"
@@ -218,19 +225,30 @@ LOW=(nice -n 19)
 command -v ionice &>/dev/null && LOW+=(ionice -c 3)
 
 # the mtime is in there so that overwriting a wallpaper in place still counts
-# as a change; nothing else about the request can move the palette
+# as a change; nothing else about the request can move the palette. the file's
+# own mtime is when the newest request came in, which is what settle waits on
 {
     printf '%s\n' "$CURRENT_THEME" "$MODE"
     stat -c %Y "$WALLPAPER" 2>/dev/null || echo 0
     printf '%s\n' "$WALLPAPER"
 } > "$COLOUR_WANT"
 
-wait_for_fade() {
+settle() {
+    # returns once nothing new has been asked for in $1 seconds
     local left
-    left=$(awk -v now="$EPOCHREALTIME" -v end="$(cat "$COLOUR_FADE" 2>/dev/null || echo 0)" \
-        'BEGIN { d = end - now; printf "%.3f", (d > 0 && d < 10) ? d : 0 }')
-    [[ "$left" != "0.000" ]] && sleep "$left"
-    return 0
+    while :; do
+        left=$(awk -v now="$EPOCHREALTIME" -v s="$1" \
+            -v at="$(stat -c %.3Y "$COLOUR_WANT" 2>/dev/null || echo 0)" \
+            'BEGIN { d = at + s - now; printf "%.3f", (d > 0 && d <= s) ? d : 0 }')
+        [[ "$left" == "0.000" ]] && return 0
+        sleep "$left"
+    done
+}
+
+same_picture() {
+    # the newest request keeps the picture last derived and only moves the theme
+    # or the mode: a single click rather than a browse, so it need not wait
+    [[ -f "$COLOUR_DONE" && "$(sed -n '3,4p' "$COLOUR_WANT")" == "$(sed -n '3,4p' "$COLOUR_DONE")" ]]
 }
 
 superseded() {
@@ -258,37 +276,36 @@ derive_colours() {
         # picker prompt it will never receive from a keybind
         if [[ -x "$LUCID_DIR/render-templates.sh" ]]; then
             # the scheme type, contrast and starting colour set in Settings -> Colours
-            local MATUGEN_SCHEME=scheme-tonal-spot MATUGEN_CONTRAST=0 SOURCE_INDEX=0 colours
+            local MATUGEN_SCHEME=scheme-tonal-spot MATUGEN_CONTRAST=0 SOURCE_INDEX=0
             if [[ -f "$LUCID_DIR/matugen-options.sh" ]]; then
                 # shellcheck source=../lucid/matugen-options.sh
                 . "$LUCID_DIR/matugen-options.sh"
                 SOURCE_INDEX=$(matugen_source_index "$wallpaper")
             fi
-            # matugen only works out the scheme; render-templates.sh renders the
-            # templates from it one at a time, and reloads hyprland if one of them
-            # wrote its colours
-            colours=$(mktemp)
+            # matugen only works out the scheme. the shell's own template is
+            # rendered from it here, every other one in the apps stage
+            mkdir -p "$(dirname "$SCHEME")"
             scheme_from() {
                 "${LOW[@]}" matugen image "$wallpaper" -m "$mode" -t "$MATUGEN_SCHEME" --contrast "$MATUGEN_CONTRAST" \
-                    --source-color-index "$1" --dry-run --json hex --include-image-in-json true -q > "$colours"
+                    --source-color-index "$1" --dry-run --json hex --include-image-in-json true -q > "$SCHEME.tmp"
             }
             # an index past the colours this image has falls back to its most
             # dominant, quietly: matugen's complaint about it is expected
             if { [[ "$SOURCE_INDEX" != 0 ]] && scheme_from "$SOURCE_INDEX" 2>/dev/null; } || scheme_from 0; then
-                "${LOW[@]}" "$LUCID_DIR/render-templates.sh" "$colours" "$mode" matugen || true
+                mv -f "$SCHEME.tmp" "$SCHEME"
+                superseded && { SKIPPED=1; return 0; }
+                "${LOW[@]}" "$LUCID_DIR/render-templates.sh" "$SCHEME" "$mode" matugen \
+                    --only-output "$SHELL_PALETTE" || true
             else
+                rm -f "$SCHEME.tmp" "$SCHEME"
                 echo "warning: matugen could not read $wallpaper, colours unchanged" >&2
             fi
-            rm -f "$colours"
         else
+            # no renderer: matugen renders every template in one go, so the
+            # apps stage is left only the login screen and the prompt
             "${LOW[@]}" matugen image "$wallpaper" -m "$mode" --source-color-index 0
             hyprctl reload &>/dev/null || true
         fi
-        # matugen writes the palette from its own templates and never reaches
-        # apply-theme.sh, so this is the only place the login screen can follow it
-        "${LOW[@]}" "$LUCID_DIR/sync-sddm.sh" 2>/dev/null || true
-        # the prompt too: a template would own the whole file, this only its palette
-        "${LOW[@]}" "$LUCID_DIR/sync-starship.sh" 2>/dev/null || true
         ;;
     pywal)
         if ! command -v wal &>/dev/null; then
@@ -303,16 +320,44 @@ derive_colours() {
         "${LOW[@]}" wal "${wal_args[@]}" || echo "warning: wal failed" >&2
         if "${LOW[@]}" "$LUCID_DIR/gen-pywal-palette.py" "$mode"; then
             superseded && { SKIPPED=1; return 0; }
-            "${LOW[@]}" "$LUCID_DIR/apply-theme.sh" pywal "$mode"
+            "${LOW[@]}" "$LUCID_DIR/apply-theme.sh" --shell-only pywal "$mode" \
+                || echo "warning: could not apply the pywal palette" >&2
         else
             echo "warning: pywal palette generation failed" >&2
         fi
+        ;;
+    *)
+        # a static theme owns its palette; only the login screen's copy of the
+        # wallpaper moves, and that is the apps stage's
+        echo "static theme ($theme) — colours unchanged"
+        ;;
+    esac
+}
+
+apply_apps() {
+    local theme="$1" mode="$2"
+
+    case "$theme" in
+    matugen)
+        if [[ -x "$LUCID_DIR/render-templates.sh" && -s "$SCHEME" ]]; then
+            # every template, the shell's again among them: an identical palette
+            # costs the shell nothing, and the record Settings shows stays whole.
+            # the renderer reloads hyprland if a template wrote its colours
+            "${LOW[@]}" "$LUCID_DIR/render-templates.sh" "$SCHEME" "$mode" matugen || true
+        fi
+        # matugen writes the palette from its own templates and never reaches
+        # apply-theme.sh, so this is the only place the login screen can follow it
+        "${LOW[@]}" "$LUCID_DIR/sync-sddm.sh" 2>/dev/null || true
+        # the prompt too: a template would own the whole file, this only its palette
+        "${LOW[@]}" "$LUCID_DIR/sync-starship.sh" 2>/dev/null || true
+        ;;
+    pywal)
+        "${LOW[@]}" "$LUCID_DIR/apply-theme.sh" --apps-only pywal "$mode" \
+            || echo "warning: could not mirror the pywal palette" >&2
         hyprctl reload &>/dev/null || true
         ;;
     *)
-        echo "static theme ($theme) — colours unchanged"
         # the palette stays put but the login screen still carries the wallpaper
-        wait_for_fade
         "${LOW[@]}" "$LUCID_DIR/sync-sddm.sh" 2>/dev/null || true
         ;;
     esac
@@ -327,26 +372,36 @@ if ! flock -w 120 9; then
 fi
 
 # no palette on disk at all means the record of what was derived is worthless
-[[ -f "$CACHE_DIR/quickshell/matugen.json" ]] || rm -f "$COLOUR_DONE"
+[[ -f "$SHELL_PALETTE" ]] || rm -f "$COLOUR_DONE" "$APPS_DONE"
 
-# whoever holds the lock derives the newest request, not its own, so a burst of
-# previews costs one run plus one, not one run each
+# whoever holds the lock works on the newest request, not its own, so a burst
+# of previews costs one run of each stage, not one run each
 SNAP=""
 trap 'rm -f "$SNAP"' EXIT
-while ! cmp -s "$COLOUR_WANT" "$COLOUR_DONE"; do
-    SNAP=$(mktemp "$CACHE_DIR/lucid-colours.XXXXXX")
-    cp "$COLOUR_WANT" "$SNAP"
-    mapfile -t WANT < "$SNAP"
+while :; do
+    while ! cmp -s "$COLOUR_WANT" "$COLOUR_DONE"; do
+        same_picture || settle "$COLOUR_SETTLE"
+        SNAP=$(mktemp "$CACHE_DIR/lucid-colours.XXXXXX")
+        cp "$COLOUR_WANT" "$SNAP"
+        mapfile -t WANT < "$SNAP"
+        derive_colours "${WANT[0]}" "${WANT[1]}" "${WANT[3]}" 9>&-
+        if [[ $SKIPPED -eq 1 ]]; then
+            # wal already rewrote its cache for the skipped picture, so even a
+            # request matching the last applied one has to be derived again
+            rm -f "$SNAP" "$COLOUR_DONE"
+        else
+            mv "$SNAP" "$COLOUR_DONE"
+        fi
+    done
+    cmp -s "$COLOUR_DONE" "$APPS_DONE" && break
+    settle "$APPS_SETTLE"
+    # a newer picture came in meanwhile, and its colours come first
+    cmp -s "$COLOUR_WANT" "$COLOUR_DONE" || continue
+    mapfile -t DONE < "$COLOUR_DONE"
     # 9>&- so that whatever apply-theme.sh leaves running in the background
     # (spicetify, matugen for steam) cannot hold the lock open after this exits
-    derive_colours "${WANT[0]}" "${WANT[1]}" "${WANT[3]}" 9>&-
-    if [[ $SKIPPED -eq 1 ]]; then
-        # wal already rewrote its cache for the skipped picture, so even a
-        # request matching the last applied one has to be derived again
-        rm -f "$SNAP" "$COLOUR_DONE"
-    else
-        mv "$SNAP" "$COLOUR_DONE"
-    fi
+    apply_apps "${DONE[0]}" "${DONE[1]}" 9>&-
+    cp "$COLOUR_DONE" "$APPS_DONE"
 done
 
 echo "done: $WALLPAPER ($MODE, theme: $CURRENT_THEME)"

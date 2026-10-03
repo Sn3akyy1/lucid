@@ -392,23 +392,22 @@ BarPill {
 
                                 }
 
-                                Rectangle {
+                                Icon {
                                     id: tick
 
                                     visible: !entryRow.isSep && entryRow.entry.checkState !== Qt.Unchecked
                                     anchors.left: parent.left
-                                    anchors.leftMargin: 8
+                                    anchors.leftMargin: 4
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: 5
-                                    height: 5
-                                    radius: 999
+                                    name: "check"
+                                    size: 14
                                     color: Theme.accent
                                 }
 
                                 Text {
                                     visible: !entryRow.isSep
                                     anchors.left: parent.left
-                                    anchors.leftMargin: tick.visible ? 19 : 10
+                                    anchors.leftMargin: tick.visible ? 22 : 10
                                     anchors.right: parent.right
                                     anchors.rightMargin: 10
                                     anchors.verticalCenter: parent.verticalCenter

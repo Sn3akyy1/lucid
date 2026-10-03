@@ -37,15 +37,18 @@ Item {
         id: thumb
 
         property real d: area.pressed && !sw.disabled ? 26 : (sw.checked || sw.icons ? 22 : 14)
+        // the travel eases on its own; an eased x that also followed the easing
+        // size restarted every frame and sat still until the size had settled
+        property real pos: sw.checked ? 1 : 0
 
         width: thumb.d
         height: thumb.d
         radius: thumb.d / 2
         anchors.verticalCenter: parent.verticalCenter
-        x: sw.checked ? sw.width - 3 - 22 + (22 - thumb.d) / 2 : 3 + (22 - thumb.d) / 2
+        x: 3 + (22 - thumb.d) / 2 + thumb.pos * (sw.width - 28)
         color: sw.checked ? Theme.fgPrimary : Theme.outlineStrong
 
-        Behavior on x {
+        Behavior on pos {
             NumberAnimation {
                 duration: Theme.durFastSpatial
                 easing.type: Easing.Bezier

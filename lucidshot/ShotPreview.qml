@@ -1,10 +1,10 @@
 import QtQuick
-import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 // the card that floats in the corner after a screenshot or a recording is
 // saved: the capture itself, and what to do with it next. it slides away on
@@ -52,14 +52,14 @@ PanelWindow {
     }).join("/")
     readonly property string thumbDir: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/lucid-shot"
 
-    // named icons, 24x24 material design paths
+    // material symbol names, by action
     readonly property var icons: ({
-        "copy": "M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z",
-        "edit": "M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z",
-        "folder": "M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z",
-        "delete": "M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z",
-        "close": "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z",
-        "play": "M8,5.14V19.14L19,12.14L8,5.14Z"
+        "copy": "content_copy",
+        "edit": "edit",
+        "folder": "folder_open",
+        "delete": "delete",
+        "close": "close",
+        "play": "play_arrow"
     })
 
     function show(path, what, where) {
@@ -337,10 +337,9 @@ PanelWindow {
 
                     Glyph {
                         anchors.centerIn: parent
-                        anchors.horizontalCenterOffset: 2
-                        path: preview.icons.play
-                        size: 26
-                        fill: "#ffffff"
+                        name: preview.icons.play
+                        size: 28
+                        tint: "#ffffff"
                     }
 
                 }
@@ -402,9 +401,9 @@ PanelWindow {
 
                     Glyph {
                         anchors.centerIn: parent
-                        path: preview.icons.close
+                        name: preview.icons.close
                         size: 16
-                        fill: "#ffffff"
+                        tint: "#ffffff"
                     }
 
                     MouseArea {
@@ -545,26 +544,22 @@ PanelWindow {
 
     }
 
-    component Glyph: Shape {
+    component Glyph: Item {
         id: glyph
 
-        property string path: ""
+        property string name: ""
         property int size: 18
-        property color fill: Theme.text
+        property color tint: Theme.text
 
         width: 24
         height: 24
-        scale: glyph.size / 24
-        preferredRendererType: Shape.CurveRenderer
 
-        ShapePath {
-            fillColor: glyph.fill
-            strokeWidth: 0
-
-            PathSvg {
-                path: glyph.path
-            }
-
+        Icon {
+            anchors.centerIn: parent
+            name: glyph.name
+            size: Math.round(glyph.size * 1.1)
+            fill: 1
+            color: glyph.tint
         }
 
     }
@@ -584,9 +579,9 @@ PanelWindow {
 
         Glyph {
             anchors.centerIn: parent
-            path: preview.icons[btn.action] || ""
+            name: preview.icons[btn.action] || ""
             size: 18
-            fill: btn.danger && (btn.armed || btnArea.containsMouse) ? Theme.error : Theme.subtext
+            tint: btn.danger && (btn.armed || btnArea.containsMouse) ? Theme.error : Theme.subtext
         }
 
         MouseArea {

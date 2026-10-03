@@ -14,8 +14,8 @@ Variants {
         required property var modelData
 
         function run(id) {
-            if (id === "addWidget")
-                Prefs.settingsRequested("widgets");
+            if (id === "widgetPanel")
+                Widgets.openPanel(unit.modelData.name);
             else if (id === "settings")
                 Prefs.settingsRequested("");
             else if (id === "keyboard")
@@ -29,6 +29,9 @@ Variants {
         PanelWindow {
             id: layer
 
+            // up on the overlay from the press until the box has faded, see below
+            readonly property bool lifted: field.lift && (field.armed || box.visible)
+
             screen: unit.modelData
             visible: Prefs.loaded && (Prefs.desktopSelection || Prefs.desktopMenu)
             color: "transparent"
@@ -36,9 +39,18 @@ Variants {
             // strips, so the box can be dragged edge to edge
             exclusionMode: ExclusionMode.Ignore
             // the bottom-most layer, so a press only reaches here when nothing —
-            // no window, no widget, no panel — is sitting over that pixel
-            WlrLayershell.layer: WlrLayer.Background
+            // no window, no widget, no panel — is sitting over that pixel. with a
+            // window focused hyprland keeps a held drag here, so the box stays under
+            // the windows; with nothing focused it hands the drag to any surface it
+            // crosses, so only then does a left press lift the layer over the bar,
+            // the dock and the widgets
+            WlrLayershell.layer: layer.lifted ? WlrLayer.Overlay : WlrLayer.Background
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+            // click-through while the box fades out up there
+            mask: Region {
+                width: (field.armed || !layer.lifted) ? layer.width : 0
+                height: (field.armed || !layer.lifted) ? layer.height : 0
+            }
 
             anchors {
                 top: true
@@ -58,6 +70,8 @@ Variants {
                 property bool dragging: false
                 // only a left press arms the box; a right press opens the menu
                 property bool armed: false
+                // taken at the press, see the layer
+                property bool lift: false
                 // a plain click should not flash a box, so wait for real travel
                 readonly property int threshold: 4
 
@@ -65,12 +79,25 @@ Variants {
                     field.dragging = true;
                     fade.stop();
                     box.opacity = 1;
+                    field.publish();
+                }
+
+                // widget cards sit on the same screen-sized board, so they read the box as is
+                function publish() {
+                    Widgets.marquee = {
+                        "screen": layer.screen ? layer.screen.name : "",
+                        "x": Math.min(field.ax, field.bx),
+                        "y": Math.min(field.ay, field.by),
+                        "w": Math.abs(field.bx - field.ax),
+                        "h": Math.abs(field.by - field.ay)
+                    };
                 }
 
                 function finish() {
-                    if (field.dragging)
+                    if (field.dragging) {
                         fade.restart();
-
+                        Widgets.marquee = null;
+                    }
                     field.dragging = false;
                     field.armed = false;
                 }
@@ -78,6 +105,8 @@ Variants {
                 anchors.fill: parent
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onPressed: (m) => {
+                    // any press on bare desktop lets the selected widgets go
+                    Widgets.clearSelection();
                     if (m.button === Qt.RightButton) {
                         field.armed = false;
                         if (Prefs.desktopMenu)
@@ -85,6 +114,7 @@ Variants {
 
                         return ;
                     }
+                    field.lift = !ToplevelManager.activeToplevel;
                     field.armed = Prefs.desktopSelection;
                     field.ax = m.x;
                     field.ay = m.y;
@@ -100,9 +130,10 @@ Variants {
 
                     field.bx = Math.max(0, Math.min(field.width, m.x));
                     field.by = Math.max(0, Math.min(field.height, m.y));
-                    if (!field.dragging && (Math.abs(field.bx - field.ax) > field.threshold || Math.abs(field.by - field.ay) > field.threshold))
+                    if (field.dragging)
+                        field.publish();
+                    else if (Math.abs(field.bx - field.ax) > field.threshold || Math.abs(field.by - field.ay) > field.threshold)
                         field.begin();
-
                 }
                 onReleased: field.finish()
                 onCanceled: field.finish()

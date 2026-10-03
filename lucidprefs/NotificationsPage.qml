@@ -1,6 +1,5 @@
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import qs
 
 Column {
@@ -41,12 +40,6 @@ Column {
         running: Prefs.quietHours
         triggeredOnStart: true
         onTriggered: page.tick++
-    }
-
-    Process {
-        id: soundTest
-
-        command: ["paplay", "--volume=" + Prefs.notifSoundPaVolume, Prefs.notifSoundPath]
     }
 
     SettingCard {
@@ -363,29 +356,31 @@ Column {
             resetKey: "notifSoundName"
             enabled: Prefs.notifSound
             disabledReason: "Sound is switched off."
-            description: "From the sounds your desktop theme ships."
+            description: "Lucid's own set. Picking one plays it."
             stacked: true
 
             Row {
+                width: parent.width
                 spacing: 12
 
-                M3Segmented {
-                    width: 360
+                M3Chips {
+                    width: parent.width - playSound.width - 12
                     enabled: Prefs.notifSound
-                    current: Prefs.notifSoundEntry(Prefs.notifSoundName).key
-                    options: Prefs.notifSounds
+                    current: Sounds.notifKey(Prefs.notifSoundName)
+                    options: Sounds.notifSounds
                     onChosen: (key) => {
                         Prefs.notifSoundName = key;
-                        soundTest.running = true;
+                        Sounds.play(key, Prefs.notifSoundVolume);
                     }
                 }
 
                 M3Button {
-                    anchors.verticalCenter: parent.verticalCenter
+                    id: playSound
+
                     text: "Play"
                     variant: "tonal"
                     enabled: Prefs.notifSound
-                    onClicked: soundTest.running = true
+                    onClicked: Sounds.play(Sounds.notifKey(Prefs.notifSoundName), Prefs.notifSoundVolume)
                 }
 
             }
@@ -655,6 +650,34 @@ Column {
                 checked: Prefs.toastOnBluetooth
                 onToggled: (v) => {
                     return Prefs.toastOnBluetooth = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "USB devices"
+            resetKey: "toastOnUsb"
+            description: "Something plugged into a USB port, or pulled out. The machine's own built-in parts, like the camera, stay quiet."
+
+            M3Switch {
+                checked: Prefs.toastOnUsb
+                onToggled: (v) => {
+                    return Prefs.toastOnUsb = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Camera"
+            resetKey: "toastOnCamera"
+            description: "Camera on, with the app using it, and camera off again once it lets go."
+
+            M3Switch {
+                checked: Prefs.toastOnCamera
+                onToggled: (v) => {
+                    return Prefs.toastOnCamera = v;
                 }
             }
 

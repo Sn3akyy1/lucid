@@ -130,25 +130,12 @@ WidgetBody {
 
     }
 
-    // four bars, lit up to the phone's reported strength
-    component Bars: Row {
-        spacing: 2
-
-        Repeater {
-            model: 4
-
-            Rectangle {
-                required property int index
-
-                anchors.bottom: parent.bottom
-                width: 4
-                height: 5 + index * 3
-                radius: 2
-                color: index < w.sigStrength ? w.ink : Theme.alpha(w.ink, 0.2)
-            }
-
-        }
-
+    // the phone's reception, as the cellular symbol that matches it
+    component Bars: Icon {
+        name: ["signal_cellular_0_bar", "signal_cellular_1_bar", "signal_cellular_2_bar", "signal_cellular_3_bar", "signal_cellular_4_bar"][Math.max(0, Math.min(4, w.sigStrength))]
+        size: 18
+        fill: 1
+        color: w.ink
     }
 
     component BatteryRing: Item {

@@ -9,15 +9,26 @@ QtObject {
     id: root
 
     // ── who is being asked ─────────────────────────────────────────────────
+    // {name, realName, icon, needsPassword}, in sddm's own order
     property var accounts: []
     property int index: 0
-    readonly property var account: (root.index >= 0 && root.index < root.accounts.length) ? root.accounts[root.index] : null
-    readonly property string userName: root.account ? root.account.name : ""
-    readonly property string displayName: root.account ? (root.account.realName !== "" ? root.account.realName : root.account.name) : ""
+    // "other account": someone sddm does not list, typed in by hand
+    property bool manual: false
+    property string manualName: ""
+    readonly property var account: (!root.manual && root.index >= 0 && root.index < root.accounts.length) ? root.accounts[root.index] : null
+    readonly property string userName: root.manual ? root.manualName.trim() : (root.account ? root.account.name : "")
+    readonly property string displayName: root.account ? root.nameOf(root.account) : ""
     readonly property string avatar: root.account ? root.account.icon : ""
     readonly property bool needsPassword: root.account ? root.account.needsPassword : true
-    readonly property string initials: {
-        var n = root.displayName;
+    readonly property string initials: root.initialsOf(root.displayName)
+    // a picker is only worth offering when there is a choice to make
+    readonly property bool canSwitchUser: root.accounts.length > 1 || root.manual
+
+    function nameOf(a) {
+        return a.realName !== "" ? a.realName : a.name;
+    }
+
+    function initialsOf(n) {
         if (n === "")
             return "?";
 
@@ -32,14 +43,55 @@ QtObject {
         if (i < 0 || i >= root.accounts.length)
             return ;
 
+        root.manual = false;
         root.index = i;
+        root.fresh();
+    }
+
+    function pickOther() {
+        root.manual = true;
+        root.manualName = "";
+        root.fresh();
+    }
+
+    // a new account starts with a clean slate: no verdict, no tally
+    function fresh() {
+        root.attempts = 0;
         root.reset();
+        root.closeSheet();
+        root.switched();
     }
 
     // ── session ────────────────────────────────────────────────────────────
+    // {name, comment}, in sddm's own order
     property var sessions: []
     property int sessionIndex: 0
-    readonly property string sessionName: (root.sessionIndex >= 0 && root.sessionIndex < root.sessions.length) ? root.sessions[root.sessionIndex] : "Session"
+    readonly property var session: (root.sessionIndex >= 0 && root.sessionIndex < root.sessions.length) ? root.sessions[root.sessionIndex] : null
+    readonly property string sessionName: root.session ? root.session.name : "Session"
+
+    function pickSession(i) {
+        if (i >= 0 && i < root.sessions.length)
+            root.sessionIndex = i;
+
+        root.closeSheet();
+    }
+
+    // ── the card's sheets ──────────────────────────────────────────────────
+    // "" | "users" | "sessions": what the card has turned over to show
+    property string sheet: ""
+
+    function openSheet(kind) {
+        if (!root.acceptsInput)
+            return ;
+
+        root.engage();
+        root.sheet = kind;
+    }
+
+    function closeSheet() {
+        root.sheet = "";
+    }
+
     property bool focused: false
 
     // ── auth ───────────────────────────────────────────────────────────────
@@ -53,6 +105,8 @@ QtObject {
     readonly property bool acceptsInput: !root.busy && !root.granted
 
     signal failed()
+    // the account changed under the field, so whatever was typed is stale
+    signal switched()
 
     function reset() {
         root.phase = "idle";
@@ -63,6 +117,7 @@ QtObject {
         if (!root.acceptsInput || root.userName === "")
             return ;
 
+        root.closeSheet();
         root.message = "";
         root.phase = "checking";
         sddm.login(root.userName, text, root.sessionIndex);
@@ -77,6 +132,7 @@ QtObject {
 
     function disengage() {
         root.focused = false;
+        root.closeSheet();
         idleBack.stop();
         if (root.phase === "failed")
             root.phase = "idle";
@@ -106,6 +162,9 @@ QtObject {
         if (root.phase === "failed") {
             if (root.message !== "")
                 return root.message;
+
+            if (root.manual)
+                return "Unknown account or wrong password";
 
             return root.attempts > 1 ? "Incorrect password — " + root.attempts + " attempts" : "Incorrect password";
         }
@@ -199,9 +258,10 @@ QtObject {
 
         interval: 25000
         onTriggered: {
-            if (!root.busy)
+            if (!root.busy) {
                 root.focused = false;
-
+                root.closeSheet();
+            }
         }
     }
 

@@ -28,6 +28,7 @@ WITH_LOOK=1
 WITH_HYPR=1
 WITH_APPS=1
 WITH_WALLPAPERS=1
+WITH_PLUGINS=1
 HYPR_FORCE=0
 HYPR_LUA_INSTALLED=0
 ASSUME_YES=0
@@ -58,6 +59,8 @@ ${b}Lucid $VERSION installer${r}
                  ~/Pictures/wallpapers
   --with-hypr    reinstall Lucid's Hyprland config even when one
                  is already in place
+  --no-plugins   don't build the tilting-cursor Hyprland plugin
+                 (hypr-dynamic-cursors)
   --skip-deps    don't install packages, only check for them
   -y, --yes      don't prompt, accept every default
   -h, --help     this message
@@ -73,6 +76,7 @@ while [[ $# -gt 0 ]]; do
         --no-apps)    WITH_APPS=0 ;;
         --no-wallpapers) WITH_WALLPAPERS=0 ;;
         --with-hypr)  WITH_HYPR=1; HYPR_FORCE=1 ;;
+        --no-plugins) WITH_PLUGINS=0 ;;
         --skip-deps)  SKIP_DEPS=1 ;;
         -y|--yes)     ASSUME_YES=1 ;;
         -h|--help)    usage ;;
@@ -140,6 +144,8 @@ PKG_FEATURES=(
     gsettings-desktop-schemas qt6ct xdg-desktop-portal-gtk librsvg
     # the launcher's $ mode runs a command in the user's terminal through this
     xdg-terminal-exec
+    # the camera on/off toast hears /dev/video* opened and closed through this
+    inotify-tools
 )
 # invoked by the shipped Hyprland binds and the Lucid look. without these the
 # config installs fine but its keys do nothing and the prompt renders as boxes
@@ -561,6 +567,76 @@ fi
 HYPR_DIR="$HOME/.config/hypr"
 HYPR_LUA_INSTALLED=0
 
+# the cursor that tilts as it moves is a Hyprland plugin (hypr-dynamic-cursors).
+# scripts/cursor-plugin.sh compiles it against the headers the hyprland package
+# itself installs, so the build always matches the Hyprland it is for, and
+# modules/autostart.lua runs the same script on login to load it - rebuilding
+# first when Hyprland has changed. hyprpm is not involved: it keeps its own
+# copy of the headers, calls them current as long as the commit matches, and
+# after a library update under the same Hyprland builds plugins that are
+# refused with "version mismatch" until it is forced. none of this is fatal:
+# a failed build leaves a cursor that simply does not tilt
+CURSOR_PLUGIN="$HYPR_DIR/scripts/cursor-plugin.sh"
+setup_cursor_plugin() {
+    local so="${XDG_DATA_HOME:-$HOME/.local/share}/lucid/plugins/dynamic-cursors.so"
+    local in_hypr=0
+    [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && in_hypr=1
+
+    # built on an earlier run: bring it up to date, which is a no-op when it is
+    if [[ -f "$so" ]]; then
+        if [[ $in_hypr -eq 1 ]]; then
+            if "$CURSOR_PLUGIN" ensure; then
+                say "  cursor plugin up to date and loaded"
+            else
+                warn "  the cursor plugin did not load — see: $CURSOR_PLUGIN status"
+            fi
+        else
+            say "  ${dim}cursor plugin already built; it is loaded on login${r}"
+        fi
+        return 0
+    fi
+
+    say "  modules/plugins.lua is set up for a cursor that tilts as it moves"
+    say "  (hypr-dynamic-cursors). it is compiled here, for your Hyprland."
+    ask "  Build it now (about a minute, no password needed)?" || {
+        say "  ${dim}skipped — later: $CURSOR_PLUGIN build && $CURSOR_PLUGIN load${r}"
+        return 0
+    }
+
+    # the plugin's makefile, and the clone before it
+    local need=() p
+    { command -v make && command -v g++ && command -v pkg-config; } &>/dev/null || need+=(base-devel)
+    command -v git &>/dev/null || need+=(git)
+    if (( ${#need[@]} )); then
+        if [[ $SKIP_DEPS -eq 1 ]]; then
+            warn "  the cursor plugin needs ${need[*]} (--skip-deps, not installing)"
+            return 0
+        fi
+        sudo pacman -S --needed --noconfirm "${need[@]}" || {
+            warn "  could not install ${need[*]} — the cursor plugin is left out"
+            return 0
+        }
+    fi
+
+    "$CURSOR_PLUGIN" build || {
+        warn "  the cursor plugin did not build — everything else is unaffected"
+        return 0
+    }
+    if [[ $in_hypr -eq 0 ]]; then
+        say "  cursor plugin built; modules/autostart.lua loads it on login"
+    elif "$CURSOR_PLUGIN" load; then
+        say "  cursor plugin loaded; modules/autostart.lua loads it on every login"
+    else
+        warn "  the cursor plugin built but did not load — see: $CURSOR_PLUGIN status"
+    fi
+
+    # a copy hyprpm still has would be loaded a second time by anyone who
+    # runs hyprpm reload at login
+    if [[ -f "/var/cache/hyprpm/$USER/dynamic-cursors/state.toml" ]]; then
+        say "  ${dim}hyprpm has a copy of this plugin too; it is no longer needed (hyprpm remove dynamic-cursors)${r}"
+    fi
+}
+
 if [[ $WITH_HYPR -eq 1 ]]; then
     step "Setting up Hyprland"
 
@@ -615,6 +691,7 @@ if [[ $WITH_HYPR -eq 1 ]]; then
         cp "$SRC/support/hypr/hyprland.lua" "$HYPR_DIR/hyprland.lua"
         cp "$SRC/support/hypr/modules/"*.lua "$HYPR_DIR/modules/"
         install -m755 "$SRC/support/hypr/scripts/reload.sh" "$HYPR_DIR/scripts/reload.sh"
+        install -m755 "$SRC/support/hypr/scripts/cursor-plugin.sh" "$HYPR_DIR/scripts/cursor-plugin.sh"
         # a hyprland.conf left beside hyprland.lua is ambiguous - Hyprland
         # reads one of them and you cannot tell which, so the install looks
         # like it did nothing. the full directory is already backed up above
@@ -659,9 +736,10 @@ if [[ $WITH_HYPR -eq 1 ]]; then
 
         # modules/plugins.lua carries the settings for Hyprland plugins; each
         # block only applies while its plugin is loaded, so without one it is inert
-        if command -v hyprpm &>/dev/null && ! hyprpm list 2>/dev/null | grep -q 'dynamic-cursors'; then
-            say "  ${dim}for the cursor that tilts as it moves (modules/plugins.lua):${r}"
-            say "  ${dim}  hyprpm add https://github.com/virtcode/hypr-dynamic-cursors && hyprpm enable dynamic-cursors${r}"
+        if [[ $WITH_PLUGINS -eq 1 ]]; then
+            setup_cursor_plugin
+        else
+            say "  ${dim}cursor plugin skipped (--no-plugins)${r}"
         fi
 
         # the binds shell out to these, so a missing one is a dead key rather

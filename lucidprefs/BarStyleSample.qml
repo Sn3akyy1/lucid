@@ -1,6 +1,6 @@
 import QtQuick
-import QtQuick.Shapes
 import qs
+import qs.lucidui
 
 // a small stand-in for a bar module in one of its styles, drawn with the
 // bar's own fonts and colours, for the style tiles on the module's card.
@@ -42,8 +42,6 @@ Item {
         "window/plain": windowPlain,
         "window/chip": windowChip
     })
-    readonly property string powerPath: "M11 3h2v10h-2V3Zm6.36 2.64 1.42-1.42A9.96 9.96 0 0 1 22 12c0 5.52-4.48 10-10 10S2 17.52 2 12c0-2.76 1.12-5.26 2.93-7.07l1.42 1.42A7.96 7.96 0 0 0 4 12c0 4.42 3.58 8 8 8s8-3.58 8-8c0-2.21-.9-4.21-2.64-5.36Z"
-    readonly property string micPath: "M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"
     // what the samples show: the time and date as the bar would
     readonly property string timeText: {
         const now = Loc.now();
@@ -497,23 +495,12 @@ Item {
         implicitWidth: 17
         implicitHeight: 17
 
-        Shape {
-            width: 24
-            height: 24
-            scale: 17 / 24
+        Icon {
             anchors.centerIn: parent
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-                fillColor: ink
-                strokeWidth: 0
-
-                PathSvg {
-                    path: Notifs.icons.notifications
-                }
-
-            }
-
+            name: "notifications"
+            size: 19
+            fill: 1
+            color: ink
         }
 
     }
@@ -549,7 +536,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
 
             MiniGlyph {
-                path: "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"
+                name: "volume_up"
                 anchors.verticalCenter: parent.verticalCenter
             }
 
@@ -567,7 +554,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
 
             MiniGlyph {
-                path: "M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"
+                name: "mic"
                 anchors.verticalCenter: parent.verticalCenter
             }
 
@@ -614,33 +601,22 @@ Item {
 
     }
 
-    // a 24-unit glyph at the bar's icon size
+    // a material symbol at the bar's icon size
     component MiniGlyph: Item {
         id: glyph
 
-        property string path: ""
+        property string name: ""
         property color ink: Theme.text
 
         implicitWidth: 14
         implicitHeight: 14
 
-        Shape {
-            width: 24
-            height: 24
-            scale: glyph.width / 24
+        Icon {
             anchors.centerIn: parent
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-                fillColor: glyph.ink
-                strokeWidth: 0
-
-                PathSvg {
-                    path: glyph.path
-                }
-
-            }
-
+            name: glyph.name
+            size: Math.round(glyph.width * 1.15)
+            fill: 1
+            color: glyph.ink
         }
 
     }
@@ -652,7 +628,7 @@ Item {
             spacing: 4
 
             MiniGlyph {
-                path: "M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z"
+                name: "dashboard"
                 implicitWidth: 16
                 implicitHeight: 16
                 anchors.verticalCenter: parent.verticalCenter
@@ -712,10 +688,10 @@ Item {
             Repeater {
                 model: [{
                     "ink": Theme.warning,
-                    "path": sample.micPath
+                    "name": "mic"
                 }, {
                     "ink": Theme.error,
-                    "path": "M4 17q-.825 0-1.412-.587T2 15V5q0-.825.588-1.412T4 3h16q.825 0 1.413.588T22 5v10q0 .825-.587 1.413T20 17h-5v2h2v2H7v-2h2v-2H4Z"
+                    "name": "screen_share"
                 }]
 
                 Rectangle {
@@ -728,7 +704,7 @@ Item {
 
                     MiniGlyph {
                         anchors.centerIn: parent
-                        path: parent.modelData.path
+                        name: parent.modelData.name
                         ink: parent.modelData.ink
                     }
 
@@ -756,7 +732,7 @@ Item {
         id: powerIcon
 
         MiniGlyph {
-            path: sample.powerPath
+            name: "power_settings_new"
             implicitWidth: 17
             implicitHeight: 17
         }
@@ -774,7 +750,7 @@ Item {
 
             MiniGlyph {
                 anchors.centerIn: parent
-                path: sample.powerPath
+                name: "power_settings_new"
                 ink: Theme.fgAccent
             }
 
@@ -956,29 +932,19 @@ Item {
 
     }
 
-    // a play button: a triangle on the accent
+    // a play button on the accent
     component MiniPlay: Rectangle {
         width: 22
         height: 22
         radius: height / 2
         color: Theme.accent
 
-        Canvas {
-            property color ink: Theme.fgAccent
-
-            anchors.fill: parent
-            onInkChanged: requestPaint()
-            onPaint: {
-                const c = getContext("2d");
-                c.reset();
-                c.fillStyle = ink;
-                c.beginPath();
-                c.moveTo(8.5, 6.5);
-                c.lineTo(16, 11);
-                c.lineTo(8.5, 15.5);
-                c.closePath();
-                c.fill();
-            }
+        Icon {
+            anchors.centerIn: parent
+            name: "play_arrow"
+            size: 18
+            fill: 1
+            color: Theme.fgAccent
         }
 
     }

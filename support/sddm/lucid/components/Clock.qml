@@ -37,9 +37,10 @@ Item {
             height: Math.round(clock.unit * 0.82)
             verticalAlignment: Text.AlignVCenter
             text: Lock.hourText
-            color: Theme.text
+            color: Theme.clockHour
             font.family: Theme.fontFamily
             font.pixelSize: Math.round(clock.unit)
+            font.variableAxes: Theme.axes(Math.round(clock.unit), 560, 100)
             font.weight: Font.DemiBold
             font.letterSpacing: -Math.round(clock.unit * 0.03)
         }
@@ -51,9 +52,10 @@ Item {
             height: Math.round(clock.unit * 0.82)
             verticalAlignment: Text.AlignVCenter
             text: Lock.minuteText
-            color: Theme.accentMuted
+            color: Theme.accent
             font.family: Theme.fontFamily
             font.pixelSize: Math.round(clock.unit)
+            font.variableAxes: Theme.axes(Math.round(clock.unit), 560, 100)
             font.weight: Font.DemiBold
             font.letterSpacing: -Math.round(clock.unit * 0.03)
         }
@@ -70,6 +72,7 @@ Item {
             color: Theme.alpha(Theme.accentMuted, 0.7)
             font.family: Theme.fontFamily
             font.pixelSize: Math.round(clock.unit * 0.16)
+            font.variableAxes: Theme.axes(Math.round(clock.unit * 0.16), 520, 0)
             font.weight: Font.Medium
         }
 
@@ -87,6 +90,7 @@ Item {
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontTitleLg
+            font.variableAxes: Theme.axes(Theme.fontTitleLg, 520, 0)
             font.weight: Font.Medium
         }
 
@@ -95,6 +99,7 @@ Item {
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyLg
+            font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
         }
 
     }

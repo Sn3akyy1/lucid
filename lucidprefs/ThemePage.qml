@@ -1,9 +1,9 @@
 import QtQuick
-import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 Column {
     id: page
@@ -425,20 +425,11 @@ Column {
 
                             }
 
-                            Repeater {
-                                model: [45, -45]
-
-                                Rectangle {
-                                    required property int modelData
-
-                                    width: 10
-                                    height: 1.8
-                                    radius: 0.9
-                                    anchors.centerIn: parent
-                                    color: delHover.hovered ? Theme.fgError : "white"
-                                    rotation: modelData
-                                }
-
+                            Icon {
+                                anchors.centerIn: parent
+                                name: "close"
+                                size: 16
+                                color: delHover.hovered ? Theme.fgError : "white"
                             }
 
                             HoverHandler {
@@ -610,134 +601,12 @@ Column {
 
                                 }
 
-                                Item {
-                                    id: bin
-
-                                    readonly property color glyph: delArea.containsMouse ? Theme.fgError : "white"
-                                    // authored on a 24x24 grid, drawn at 16
-                                    readonly property real unit: 16 / 24
-                                    readonly property real stroke: 2.4
-                                    property real lidAngle: delArea.containsMouse ? 32 : 0
-                                    property real lidLift: delArea.containsMouse ? -1.4 : 0
-
+                                Icon {
                                     anchors.centerIn: parent
-                                    width: 16
-                                    height: 16
-
-                                    Behavior on lidAngle {
-                                        NumberAnimation {
-                                            duration: Theme.durMedium
-                                            easing.type: Theme.easeEmphasized
-                                            easing.overshoot: 1.5
-                                        }
-
-                                    }
-
-                                    Behavior on lidLift {
-                                        NumberAnimation {
-                                            duration: Theme.durMedium
-                                            easing.type: Theme.easeEmphasized
-                                            easing.overshoot: 1.5
-                                        }
-
-                                    }
-
-                                    Shape {
-                                        anchors.fill: parent
-                                        preferredRendererType: Shape.CurveRenderer
-
-                                        ShapePath {
-                                            strokeColor: bin.glyph
-                                            strokeWidth: bin.stroke
-                                            fillColor: "transparent"
-                                            capStyle: ShapePath.RoundCap
-                                            joinStyle: ShapePath.RoundJoin
-
-                                            PathSvg {
-                                                path: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"
-                                            }
-
-                                        }
-
-                                        ShapePath {
-                                            strokeColor: bin.glyph
-                                            strokeWidth: bin.stroke
-                                            fillColor: "transparent"
-                                            capStyle: ShapePath.RoundCap
-
-                                            PathSvg {
-                                                path: "M10 11v6"
-                                            }
-
-                                        }
-
-                                        ShapePath {
-                                            strokeColor: bin.glyph
-                                            strokeWidth: bin.stroke
-                                            fillColor: "transparent"
-                                            capStyle: ShapePath.RoundCap
-
-                                            PathSvg {
-                                                path: "M14 11v6"
-                                            }
-
-                                        }
-
-                                        transform: Scale {
-                                            xScale: bin.unit
-                                            yScale: bin.unit
-                                        }
-
-                                    }
-
-                                    Item {
-                                        anchors.fill: parent
-
-                                        transform: Rotation {
-                                            origin.x: 21 * bin.unit
-                                            origin.y: 6 * bin.unit
-                                            angle: bin.lidAngle
-                                        }
-
-                                        Shape {
-                                            anchors.fill: parent
-                                            y: bin.lidLift
-                                            preferredRendererType: Shape.CurveRenderer
-
-                                            ShapePath {
-                                                strokeColor: bin.glyph
-                                                strokeWidth: bin.stroke
-                                                fillColor: "transparent"
-                                                capStyle: ShapePath.RoundCap
-
-                                                PathSvg {
-                                                    path: "M3 6h18"
-                                                }
-
-                                            }
-
-                                            ShapePath {
-                                                strokeColor: bin.glyph
-                                                strokeWidth: bin.stroke
-                                                fillColor: "transparent"
-                                                capStyle: ShapePath.RoundCap
-                                                joinStyle: ShapePath.RoundJoin
-
-                                                PathSvg {
-                                                    path: "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                                                }
-
-                                            }
-
-                                            transform: Scale {
-                                                xScale: bin.unit
-                                                yScale: bin.unit
-                                            }
-
-                                        }
-
-                                    }
-
+                                    name: "delete"
+                                    size: 18
+                                    fill: delArea.containsMouse ? 1 : 0
+                                    color: delArea.containsMouse ? Theme.fgError : "white"
                                 }
 
                                 MouseArea {
@@ -772,7 +641,7 @@ Column {
                     M3Button {
                         text: "Add wallpaper..."
                         variant: "filled"
-                        iconPath: "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z"
+                        iconPath: "add"
                         onClicked: {
                             wallpaperPicker.command = ["sh", "-c", "zenity --file-selection --title='Add wallpaper' --file-filter='Images | *.jpg *.jpeg *.png *.webp *.JPG *.PNG' 2>/dev/null || true"];
                             wallpaperPicker.running = true;

@@ -49,11 +49,10 @@ PanelWindow {
     }
     readonly property bool isLevelType: osdWindow.oscType === "volume" || osdWindow.oscType === "brightness"
     readonly property bool badgeActive: osdWindow.toggleState
-    readonly property bool showMuteSlash: (osdWindow.oscType === "mic" && !osdWindow.toggleState) || (osdWindow.oscType === "volume" && osdWindow.levelMuted)
     readonly property string toggleIcon: {
         switch (osdWindow.oscType) {
         case "mic":
-            return "mic";
+            return osdWindow.toggleState ? "mic" : "mic_off";
         case "capslock":
             return "keyboard_capslock";
         case "numlock":
@@ -206,29 +205,42 @@ PanelWindow {
             readMaxProc.running = true;
 
     }
+    // muting is its own answer; the tick is heard at the level just set
     onVolumePercentChanged: {
         if (!osdWindow.ready)
             return ;
 
         osdWindow.showVolume();
+        if (!osdWindow.volMuted)
+            osdWindow.levelTick("volume");
+
     }
     onVolMutedChanged: {
         if (!osdWindow.ready)
             return ;
 
         osdWindow.showVolume();
+        if (!osdWindow.volMuted)
+            osdWindow.levelTick("volume");
+
     }
+    // idle dimming moves the backlight too: nothing ticks while you are away,
+    // or as it comes back up when you return
     onBrightnessPercentChanged: {
         if (!osdWindow.ready)
             return ;
 
         osdWindow.showBrightness();
+        if (!idleWatch.isIdle && Date.now() - osdWindow.activeSince > 1500)
+            osdWindow.levelTick("brightness");
+
     }
     onMicMutedChanged: {
         if (!osdWindow.ready)
             return ;
 
         osdWindow.showMic();
+        Sounds.feedback(osdWindow.micMuted ? "mic-off" : "mic-on", Prefs.soundOnMic);
     }
     BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && card.visible) ? osdBlurRegion : null
 
@@ -244,6 +256,48 @@ PanelWindow {
         interval: 800
         running: true
         onTriggered: osdWindow.ready = true
+    }
+
+    // a level ticks at its first change, then once more where a drag or a held
+    // key comes to rest, rather than at every step on the way
+    property string tickPending: ""
+    property real activeSince: 0
+
+    function levelTick(key) {
+        if (tickSettle.running)
+            osdWindow.tickPending = key;
+        else
+            osdWindow.tick(key);
+        tickSettle.restart();
+    }
+
+    function tick(key) {
+        Sounds.feedback(key, key === "volume" ? Prefs.soundOnVolume : Prefs.soundOnBrightness);
+    }
+
+    Timer {
+        id: tickSettle
+
+        interval: 220
+        onTriggered: {
+            if (osdWindow.tickPending !== "")
+                osdWindow.tick(osdWindow.tickPending);
+
+            osdWindow.tickPending = "";
+        }
+    }
+
+    // idle a little short of the dim, so the dim and its undo both find it idle
+    IdleMonitor {
+        id: idleWatch
+
+        timeout: Prefs.idleEnabled && Prefs.idleDim ? Math.max(5, Prefs.idleDimAfter - 3) : 60
+        respectInhibitors: false
+        onIsIdleChanged: {
+            if (!idleWatch.isIdle)
+                osdWindow.activeSince = Date.now();
+
+        }
     }
 
     Timer {
@@ -325,6 +379,7 @@ PanelWindow {
             if (caps !== osdWindow.capsLock) {
                 osdWindow.capsLock = caps;
                 osdWindow.showCaps(caps);
+                Sounds.feedback(caps ? "caps-on" : "caps-off", Prefs.soundOnCaps);
             }
             if (num !== osdWindow.numLock) {
                 osdWindow.numLock = num;
@@ -501,27 +556,6 @@ PanelWindow {
                 size: osdWindow.glyphSize + 2
                 fill: osdWindow.badgeActive ? 1 : 0
                 color: osdWindow.badgeActive ? Theme.fgAccent : Theme.text
-            }
-
-            // a cut in the badge colour, so the slash reads as a gap
-            // through the glyph rather than a line laid over it
-            Rectangle {
-                visible: osdWindow.showMuteSlash
-                anchors.centerIn: parent
-                width: osdWindow.glyphSize * 1.3 + 4
-                height: Math.round(osdWindow.glyphSize * 0.22)
-                rotation: 45
-                color: iconBadge.fillColor
-            }
-
-            Rectangle {
-                visible: osdWindow.showMuteSlash
-                anchors.centerIn: parent
-                width: osdWindow.glyphSize * 1.3
-                height: osdWindow.glyphSize * 0.082
-                radius: 1
-                rotation: 45
-                color: Theme.error
             }
 
         }

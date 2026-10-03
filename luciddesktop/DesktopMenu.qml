@@ -30,14 +30,12 @@ Item {
             "glyph": DockIcons.palette,
             "divider": false
         });
-        if (Prefs.widgetsEnabled)
-            arr.push({
-            "id": "addWidget",
-            "label": "Add a Widget",
+        arr.push({
+            "id": "widgetPanel",
+            "label": "Widget Panel",
             "glyph": DockIcons.widgets,
             "divider": true
         });
-
         if (Widgets.count > 0)
             arr.push(Prefs.widgetsEnabled ? {
             "id": "hideWidgets",
@@ -48,7 +46,7 @@ Item {
             "id": "showWidgets",
             "label": "Show Widgets",
             "glyph": DockIcons.visible,
-            "divider": true
+            "divider": false
         });
 
         arr.push({

@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.lucidui
 
 Item {
     id: frame
@@ -47,7 +48,23 @@ Item {
     readonly property bool bare: body.item !== null && body.item.bare === true
     // ... or for nothing at all. never while you are working on the card, and the
     // fade to zero takes it out of the mask on its own, since visible follows opacity
-    readonly property bool blanked: body.item !== null && body.item.hidden === true && !frame.dragging && !frame.resizing && !frame.menuOpen
+    readonly property bool blanked: body.item !== null && body.item.hidden === true && !frame.dragging && !frame.resizing && !frame.menuOpen && !frame.selected
+    // the desktop's box is over this card right now; a pinned or unseen card never counts
+    readonly property bool marked: {
+        var m = Widgets.marquee;
+        if (!m || frame.locked || frame.closing || !frame.visible || !frame.board || m.screen !== frame.board.screenName)
+            return false;
+
+        return m.x < frame.x + frame.width && m.x + m.w > frame.x && m.y < frame.y + frame.height && m.y + m.h > frame.y;
+    }
+    readonly property bool selected: !frame.locked && Widgets.selection[frame.uid] === true
+    // the widget panel is pointing at this card from its list
+    readonly property bool spotted: Widgets.spotUid !== "" && Widgets.spotUid === frame.uid
+    // dropped here from the panel: it settles where the ghost was rather than popping in
+    readonly property bool landed: Widgets.landingUid !== "" && Widgets.landingUid === frame.uid
+    readonly property bool editMode: frame.board !== null && frame.board.panelUp === true
+    // held over the open widget panel, where letting go takes it off the desktop
+    readonly property bool overBin: frame.dragging && frame.editMode && frame.board.binHit(frame.pointerX, frame.pointerY)
 
     property bool dragging: false
     property bool resizing: false
@@ -62,6 +79,14 @@ Item {
     property real grabY: 0
     property real guideX: -1
     property real guideY: -1
+    // the pointer during a drag, in board coordinates
+    property real pointerX: -1
+    property real pointerY: -1
+    // the other selected cards riding along with this one's drag
+    property var crew: []
+    // where the card sat when the drag began
+    property real homeX: 0
+    property real homeY: 0
     // -1 / 0 / 1 for the edge the held grip pulls on
     property int gripH: 0
     property int gripV: 0
@@ -104,10 +129,6 @@ Item {
         "v": 0
     }]
 
-    readonly property real snapPad: 20
-    readonly property real snapGap: 16
-    readonly property real snapDist: 9
-
     function opt(key) {
         var v = frame.opts[key];
         return v !== undefined ? v : Widgets.defaultOptions(frame.wtype)[key];
@@ -136,25 +157,12 @@ Item {
 
         for (var i = 0; i < frame.board.frameCount; i++) {
             var f = frame.board.frameAt(i);
-            if (f && f !== frame && f.visible && !f.closing)
+            // a card riding along in the same drag is no edge to snap to
+            if (f && f !== frame && f.visible && !f.closing && !f.dragging)
                 out.push(f);
 
         }
         return out;
-    }
-
-    // v is where the edge would land, g is the line to draw when it does
-    function bestSnap(pos, cands) {
-        var best = null;
-        var bd = frame.snapDist;
-        for (var i = 0; i < cands.length; i++) {
-            var d = Math.abs(pos - cands[i].v);
-            if (d < bd) {
-                bd = d;
-                best = cands[i];
-            }
-        }
-        return best;
     }
 
     function snapTo(nx, ny) {
@@ -166,80 +174,50 @@ Item {
                 "y": ny
             });
         }
-        var W = frame.board.width;
-        var H = frame.board.height;
-        var xs = [{
-            "v": frame.snapPad,
-            "g": frame.snapPad
-        }, {
-            "v": W - frame.snapPad - frame.cardW,
-            "g": W - frame.snapPad
-        }, {
-            "v": (W - frame.cardW) / 2,
-            "g": W / 2
-        }];
-        var ys = [{
-            "v": frame.snapPad,
-            "g": frame.snapPad
-        }, {
-            "v": H - frame.snapPad - frame.cardH,
-            "g": H - frame.snapPad
-        }, {
-            "v": (H - frame.cardH) / 2,
-            "g": H / 2
-        }];
-        var sib = frame.siblings();
-        for (var i = 0; i < sib.length; i++) {
-            var f = sib[i];
-            xs.push({
-                "v": f.x,
-                "g": f.x
-            }, {
-                "v": f.x + f.width - frame.cardW,
-                "g": f.x + f.width
-            }, {
-                "v": f.x + (f.width - frame.cardW) / 2,
-                "g": f.x + f.width / 2
-            }, {
-                "v": f.x + f.width + frame.snapGap,
-                "g": -1
-            }, {
-                "v": f.x - frame.snapGap - frame.cardW,
-                "g": -1
-            });
-            ys.push({
-                "v": f.y,
-                "g": f.y
-            }, {
-                "v": f.y + f.height - frame.cardH,
-                "g": f.y + f.height
-            }, {
-                "v": f.y + (f.height - frame.cardH) / 2,
-                "g": f.y + f.height / 2
-            }, {
-                "v": f.y + f.height + frame.snapGap,
-                "g": -1
-            }, {
-                "v": f.y - frame.snapGap - frame.cardH,
-                "g": -1
-            });
-        }
-        var sx = frame.bestSnap(nx, xs);
-        var sy = frame.bestSnap(ny, ys);
-        frame.guideX = sx ? sx.g : -1;
-        frame.guideY = sy ? sy.g : -1;
+        var s = Widgets.snapBox(frame.board.width, frame.board.height, frame.cardW, frame.cardH, nx, ny, frame.siblings());
+        frame.guideX = s.gx;
+        frame.guideY = s.gy;
         return ({
-            "x": sx ? sx.v : nx,
-            "y": sy ? sy.v : ny
+            "x": s.x,
+            "y": s.y
         });
     }
 
     function beginDrag(mx, my) {
+        // a card outside the selection moves on its own and lets the rest go
+        if (!frame.selected)
+            Widgets.clearSelection();
+
         if (frame.locked)
             return ;
 
+        var crew = [];
+        if (frame.selected) {
+            for (var i = 0; frame.board && i < frame.board.frameCount; i++) {
+                var f = frame.board.frameAt(i);
+                if (f && f !== frame && f.selected && f.visible && !f.closing)
+                    crew.push(f);
+
+            }
+            // lifted in their current stacking order, under the one in hand
+            crew.sort((a, b) => {
+                return a.zOrder - b.zOrder;
+            });
+        }
+        for (var j = 0; j < crew.length; j++) {
+            var c = crew[j];
+            c.homeX = c.x;
+            c.homeY = c.y;
+            c.dragX = c.x;
+            c.dragY = c.y;
+            c.dragging = true;
+            Widgets.raise(c.uid);
+        }
+        frame.crew = crew;
         frame.grabX = mx;
         frame.grabY = my;
+        frame.homeX = frame.x;
+        frame.homeY = frame.y;
         frame.dragX = frame.x;
         frame.dragY = frame.y;
         frame.dragging = true;
@@ -254,15 +232,52 @@ Item {
         if (!frame.dragging)
             return ;
 
+        if (frame.board) {
+            var at = frame.mapToItem(frame.board, mx, my);
+            frame.pointerX = at.x;
+            frame.pointerY = at.y;
+        }
         var snapped = frame.snapTo(frame.dragX + (mx - frame.grabX), frame.dragY + (my - frame.grabY));
-        frame.dragX = frame.clampX(snapped.x);
-        frame.dragY = frame.clampY(snapped.y);
+        var dx = snapped.x - frame.homeX;
+        var dy = snapped.y - frame.homeY;
+        if (frame.board) {
+            // the group stops at an edge as one, so its shape never changes
+            var l = frame.homeX;
+            var t = frame.homeY;
+            var r = frame.homeX + frame.cardW;
+            var b = frame.homeY + frame.cardH;
+            for (var i = 0; i < frame.crew.length; i++) {
+                var c = frame.crew[i];
+                if (!c)
+                    continue;
+
+                l = Math.min(l, c.homeX);
+                t = Math.min(t, c.homeY);
+                r = Math.max(r, c.homeX + c.width);
+                b = Math.max(b, c.homeY + c.height);
+            }
+            dx = Math.max(-l, Math.min(frame.board.width - r, dx));
+            dy = Math.max(-t, Math.min(frame.board.height - b, dy));
+        }
+        frame.dragX = frame.homeX + dx;
+        frame.dragY = frame.homeY + dy;
+        for (var j = 0; j < frame.crew.length; j++) {
+            var m = frame.crew[j];
+            if (!m)
+                continue;
+
+            m.dragX = m.homeX + dx;
+            m.dragY = m.homeY + dy;
+        }
     }
 
     function endDrag() {
         if (!frame.dragging)
             return ;
 
+        var binned = frame.overBin;
+        var crew = frame.crew;
+        frame.crew = [];
         frame.dragging = false;
         frame.guideX = -1;
         frame.guideY = -1;
@@ -272,7 +287,33 @@ Item {
         if (Widgets.dragUid === frame.uid)
             Widgets.dragUid = "";
 
+        frame.pointerX = -1;
+        frame.pointerY = -1;
+        // dropped on the panel: the card and whatever rode along with it go
+        if (binned) {
+            for (var b = 0; b < crew.length; b++) {
+                if (crew[b]) {
+                    crew[b].dragging = false;
+                    Widgets.close(crew[b].uid);
+                }
+            }
+            Widgets.clearSelection();
+            Widgets.close(frame.uid);
+            return ;
+        }
         Widgets.setPos(frame.uid, frame.dragX, frame.dragY);
+        for (var i = 0; i < crew.length; i++) {
+            var c = crew[i];
+            if (!c)
+                continue;
+
+            Widgets.setPos(c.uid, c.dragX, c.dragY);
+            c.dragging = false;
+        }
+        // a click that went nowhere lets the selection go
+        if (frame.dragX === frame.homeX && frame.dragY === frame.homeY)
+            Widgets.clearSelection();
+
     }
 
     function beginResize(hx, vy, px, py) {
@@ -385,12 +426,24 @@ Item {
     z: frame.zOrder
     x: frame.resizing ? frame.resX : (frame.dragging ? frame.dragX : frame.clampX(frame.wx))
     y: frame.resizing ? frame.resY : (frame.dragging ? frame.dragY : frame.clampY(frame.wy))
-    opacity: (frame.closing || frame.blanked) ? 0 : (frame.appeared ? 1 : 0)
-    scale: frame.closing ? 0.9 : (frame.appeared ? (frame.dragging ? 1.025 : 1) : (frame.born ? 0.86 : 0.97))
+    opacity: (frame.closing || frame.blanked) ? 0 : (frame.appeared ? (frame.overBin ? 0.4 : 1) : 0)
+    scale: frame.closing ? 0.9 : (frame.appeared ? (frame.overBin ? 0.94 : (frame.dragging ? 1.025 : 1)) : (frame.landed ? 1 : (frame.born ? 0.86 : 0.97)))
 
     property bool appeared: false
 
     Component.onCompleted: appearTimer.start()
+    // the box picks cards up and drops them live; letting it go keeps what it held
+    onMarkedChanged: {
+        if (Widgets.marquee !== null)
+            Widgets.select(frame.uid, frame.marked);
+
+    }
+    onLockedChanged: {
+        if (frame.locked)
+            Widgets.select(frame.uid, false);
+
+    }
+
     Connections {
         function onMenuUidChanged() {
             if (Widgets.menuUid !== frame.uid)
@@ -611,6 +664,27 @@ Item {
         }
     }
 
+    // what the desktop's box caught, shown live while the box is still out, and the
+    // card the widget panel's list is pointing at
+    Rectangle {
+        anchors.fill: parent
+        z: 7
+        radius: frame.radius
+        color: Theme.alpha(Theme.accent, 0.1)
+        border.width: 2
+        border.color: Theme.accent
+        opacity: (frame.selected || frame.spotted) ? 1 : 0
+        visible: opacity > 0.01
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Theme.durShort
+            }
+
+        }
+
+    }
+
     // a resizable card has no other affordance, so outline it while it is under
     // the pointer - the bare variants have no container to hint at an edge
     Item {
@@ -700,6 +774,72 @@ Item {
             }
             onReleased: frame.endResize()
             onCanceled: frame.endResize()
+        }
+
+    }
+
+    // while the widget panel is open every card carries a way off the desktop,
+    // pulled inside the screen when the card sits right on its edge
+    Item {
+        id: removeBadge
+
+        readonly property bool shown: frame.editMode && !frame.closing && !frame.dragging && !frame.resizing
+
+        z: 9
+        width: 26
+        height: 26
+        x: Math.max(-9, 4 - frame.x)
+        y: Math.max(-9, 4 - frame.y)
+        opacity: removeBadge.shown ? 1 : 0
+        scale: removeBadge.shown ? 1 : 0.5
+        visible: opacity > 0.01
+
+        Rectangle {
+            anchors.fill: parent
+            radius: width / 2
+            color: badgeArea.containsMouse ? Theme.error : Theme.surfaceHighest
+            border.width: 1
+            border.color: Theme.alpha(Theme.text, 0.12)
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.durFastEffects
+                }
+
+            }
+
+        }
+
+        Icon {
+            anchors.centerIn: parent
+            name: "remove"
+            size: 18
+            color: badgeArea.containsMouse ? Theme.fgError : Theme.text
+        }
+
+        StateLayer {
+            id: badgeArea
+
+            radius: width / 2
+            ripple: false
+            tint: Theme.fgError
+            onClicked: Widgets.close(frame.uid)
+        }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Theme.durFastEffects
+            }
+
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Theme.durFastSpatial
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.curveFastSpatial
+            }
+
         }
 
     }

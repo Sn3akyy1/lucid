@@ -236,14 +236,16 @@ Item {
             visible: !preview.clearArmed
 
             Repeater {
+                // a key with a symbol of its own draws it in place of a legend
                 model: [{
-                    "key": "\u21b5",
+                    "symbol": "keyboard_return",
+                    "key": "",
                     "label": "Copy"
                 }, {
                     "key": "Del",
                     "label": "Delete"
                 }, {
-                    "key": "Ctrl\u21e7Del",
+                    "key": "Ctrl+Shift+Del",
                     "label": "Clear"
                 }]
 
@@ -267,6 +269,14 @@ Item {
                             anchors.centerIn: parent
                             role: "labelSmall"
                             text: keyHint.modelData.key
+                            color: Theme.subtext
+                        }
+
+                        Icon {
+                            anchors.centerIn: parent
+                            visible: !!keyHint.modelData.symbol
+                            name: keyHint.modelData.symbol || ""
+                            size: 14
                             color: Theme.subtext
                         }
 

@@ -1,6 +1,6 @@
 import QtQuick
-import QtQuick.Shapes
 import qs
+import qs.lucidui
 
 Column {
     id: page
@@ -136,7 +136,7 @@ Column {
                     M3IconButton {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: spaceRow.space.own === true
-                        iconPath: "M5 19h1.425L16.2 9.225L14.775 7.8L5 17.575V19Zm-2 2v-4.25L16.2 3.575q0.3-0.275 0.6625-0.425t0.7625-0.15q0.4 0 0.775 0.15t0.65 0.45L20.425 5q0.3 0.275 0.4375 0.65T21 6.4q0 0.4-0.1375 0.7625T20.425 7.825L7.25 21H3ZM15.475 8.525l-0.7-0.725L16.2 9.225l-0.725-0.7Z"
+                        iconPath: "edit"
                         onClicked: page.openForm(spaceRow.modelData)
                     }
 
@@ -144,7 +144,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: spaceRow.space.own === true
                         destructive: true
-                        iconPath: "M7 21q-0.825 0-1.4125-0.5875T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 0.825-0.5875 1.4125T17 21H7ZM17 6H7v13h10V6ZM9 17h2V8H9v9Zm4 0h2V8h-2v9ZM7 6v13V6Z"
+                        iconPath: "delete"
                         onClicked: Prefs.askConfirm("Delete " + spaceRow.space.label + "?", "Its windows come back to the workspace you are on" + (spaceRow.bind ? ", and its key (" + Keybinds.tokens(spaceRow.bind.keys).join(" + ") + ") is removed from keybinds.json" : "") + ".", "Delete", "special-delete:" + spaceRow.modelData)
                     }
 
@@ -171,7 +171,7 @@ Column {
             M3Button {
                 text: "New workspace"
                 variant: "tonal"
-                iconPath: "M11 13H5v-2h6V5h2v6h6v2h-6v6h-2v-6Z"
+                iconPath: "add"
                 onClicked: page.openForm("+")
             }
 
@@ -226,33 +226,12 @@ Column {
                             radius: Theme.radiusSm
                             color: glyphTile.picked ? Theme.accent : (glyphArea.containsMouse ? Theme.bgHover : Theme.bgTile)
 
-                            Item {
+                            Icon {
                                 anchors.centerIn: parent
-                                width: 22
-                                height: 22
-
-                                Shape {
-                                    width: 24
-                                    height: 24
-                                    preferredRendererType: Shape.CurveRenderer
-
-                                    ShapePath {
-                                        strokeWidth: 0
-                                        fillColor: glyphTile.picked ? Theme.fgAccent : Theme.subtext
-
-                                        PathSvg {
-                                            path: Specials.glyphPath(glyphTile.modelData)
-                                        }
-
-                                    }
-
-                                    transform: Scale {
-                                        xScale: 22 / 24
-                                        yScale: 22 / 24
-                                    }
-
-                                }
-
+                                name: Specials.glyphName(glyphTile.modelData)
+                                size: 22
+                                fill: 1
+                                color: glyphTile.picked ? Theme.fgAccent : Theme.subtext
                             }
 
                             MouseArea {
@@ -357,7 +336,7 @@ Column {
                     M3Button {
                         text: "Add an app"
                         variant: "text"
-                        iconPath: "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z"
+                        iconPath: "add"
                         enabled: appsRow.enabled
                         onClicked: Prefs.appPickerRequested(appsRow.modelData)
                     }

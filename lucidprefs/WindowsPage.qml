@@ -126,7 +126,7 @@ Column {
             title: "Border colour"
             option: "general.col.active_border"
             extraKeys: ["lucid.border"]
-            description: HyprConfig.choice("lucid.border") === "" ? "The window you are in. Right now your Hyprland config picks the colour; these follow your palette and change with it." : "The window you are in. Accent is your palette's main colour, and the gradient runs through three of its colours."
+            description: HyprConfig.borderMode() === "" ?"The window you are in. Right now your Hyprland config picks the colour; these follow your palette and change with it." : "The window you are in. Accent is your palette's main colour, and the gradient runs through three of its colours."
             available: HyprConfig.num("general.border_size", 2) > 0
             unavailableReason: "There is no border to colour at 0 px."
             stacked: true
@@ -134,7 +134,7 @@ Column {
             M3Segmented {
                 width: Math.min(parent.width, 360)
                 enabled: borderColour.enabled
-                current: HyprConfig.choice("lucid.border")
+                current: HyprConfig.borderMode()
                 options: HyprConfig.borderModes
                 onChosen: (key) => {
                     return HyprConfig.set("lucid.border", key);

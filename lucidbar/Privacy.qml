@@ -14,11 +14,12 @@ BarPill {
     property var recorder: null
     property var toast: null
     readonly property bool recording: !!root.recorder && root.recorder.recordingState !== "idle"
+    // material symbols, as NotifIcon draws them
     readonly property var icons: ({
-        "mic": "M12 14q-1.25 0-2.125-.875T9 11V5q0-1.25.875-2.125T12 2q1.25 0 2.125.875T15 5v6q0 1.25-.875 2.125T12 14Zm-1 7v-3.075q-2.6-.35-4.3-2.325T5 11h2q0 2.075 1.463 3.538T12 16q2.075 0 3.538-1.463T17 11h2q0 2.6-1.7 4.6T13 17.925V21h-2Z",
-        "camera": "M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h12q.825 0 1.413.588T18 6v4.5l4-4v11l-4-4V18q0 .825-.587 1.413T16 20H4Z",
-        "screen": "M4 17q-.825 0-1.412-.587T2 15V5q0-.825.588-1.412T4 3h16q.825 0 1.413.588T22 5v10q0 .825-.587 1.413T20 17h-5v2h2v2H7v-2h2v-2H4Z",
-        "shield": "M12 22q-3.475-.875-5.738-3.988T4 11.1V5l8-3l8 3v6.1q0 3.8-2.262 6.913T12 22Z"
+        "mic": "mic",
+        "camera": "videocam",
+        "screen": "screen_share",
+        "shield": "shield"
     })
     readonly property var nouns: ({
         "mic": "the microphone",

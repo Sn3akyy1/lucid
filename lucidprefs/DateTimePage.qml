@@ -21,6 +21,12 @@ Column {
         return bits.join("  ·  ");
     }
 
+    readonly property var goalLabels: {
+        var out = ["Off"];
+        for (var i = 1; i <= 16; i++) out.push(i + (i === 1 ? " session" : " sessions"))
+        return out;
+    }
+
     function agoText(ms) {
         var mins = Math.floor(ms / 60000);
         if (mins < 1)
@@ -280,7 +286,28 @@ Column {
     }
 
     SettingCard {
-        title: "TIMERS"
+        title: "POMODORO"
+
+        SettingRow {
+            title: "Preset"
+            description: "Sets the focus, break and long break lengths and the rounds together."
+            stacked: true
+
+            M3Chips {
+                width: parent.width
+                current: Chrono.pomoPreset
+                options: Chrono.pomoPresets.map((p) => {
+                    return {
+                        "key": p.key,
+                        "label": p.name + " · " + p.label
+                    };
+                })
+                onChosen: (k) => {
+                    return Chrono.pomoUsePreset(k);
+                }
+            }
+
+        }
 
         SettingRow {
             title: "Focus length"
@@ -363,9 +390,9 @@ Column {
         }
 
         SettingRow {
-            title: "Start the next phase on its own"
+            title: "Start breaks on their own"
             resetKey: "pomodoroAutoStart"
-            description: "Off, the pomodoro waits for you between focus and break."
+            description: "Off, the break waits for you when a focus session ends."
 
             M3Switch {
                 checked: Prefs.pomodoroAutoStart
@@ -377,15 +404,120 @@ Column {
         }
 
         SettingRow {
-            title: "Sound when time is up"
-            resetKey: "timerSound"
-            description: "Plays the alarm-clock sound alongside the notification."
+            title: "Start focus on its own"
+            resetKey: "pomodoroAutoFocus"
+            description: "Off, the next focus session waits for you when a break ends."
 
             M3Switch {
-                checked: Prefs.timerSound
+                checked: Prefs.pomodoroAutoFocus
                 onToggled: (v) => {
-                    return Prefs.timerSound = v;
+                    return Prefs.pomodoroAutoFocus = v;
                 }
+            }
+
+        }
+
+        SettingRow {
+            title: "Repeat sets"
+            resetKey: "pomodoroRepeat"
+            description: "Off, the pomodoro stops after the long break instead of starting over."
+
+            M3Switch {
+                checked: Prefs.pomodoroRepeat
+                onToggled: (v) => {
+                    return Prefs.pomodoroRepeat = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Do not disturb while focusing"
+            resetKey: "pomodoroSilence"
+            description: "Holds notifications back during a focus session and lets them through again for the break."
+
+            M3Switch {
+                checked: Prefs.pomodoroSilence
+                onToggled: (v) => {
+                    return Prefs.pomodoroSilence = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Daily goal"
+            resetKey: "pomodoroGoal"
+            description: "Focus sessions to aim for each day. The clock counts them and tells you when you get there."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 0
+                to: 16
+                stepSize: 1
+                stepLabels: page.goalLabels
+                value: Prefs.pomodoroGoal
+                onMoved: (v) => {
+                    return Prefs.pomodoroGoal = Math.round(v);
+                }
+            }
+
+        }
+
+    }
+
+    SettingCard {
+        title: "TIMERS"
+
+        SettingRow {
+            title: "Sound when time is up"
+            resetKey: "timerSound"
+            description: "Plays Lucid's alarm alongside the notification, whatever the system sound settings say."
+
+            Row {
+                spacing: 4
+
+                M3IconButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconPath: "play_arrow"
+                    onClicked: Sounds.play("alarm", 1)
+                }
+
+                M3Switch {
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: Prefs.timerSound
+                    onToggled: (v) => {
+                        return Prefs.timerSound = v;
+                    }
+                }
+
+            }
+
+        }
+
+        SettingRow {
+            title: "Sound for reminders"
+            resetKey: "reminderSound"
+            description: "A chime as a reminder comes due, and again when a snoozed one comes back. Like the alarm, it plays even while you are silenced."
+
+            Row {
+                spacing: 4
+
+                M3IconButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconPath: "play_arrow"
+                    onClicked: Sounds.play("reminder", 1)
+                }
+
+                M3Switch {
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: Prefs.reminderSound
+                    onToggled: (v) => {
+                        return Prefs.reminderSound = v;
+                    }
+                }
+
             }
 
         }

@@ -34,12 +34,12 @@ Item {
         "wallpaper": "Search wallpapers"
     })[face.displayMode] || "Search apps and settings"
     readonly property string modeIcon: ({
-        "commands": "terminal",
+        "commands": "keyboard_command_key",
         "clipboard": "content_paste",
         "wallpaper": "wallpaper",
         "theme": "palette",
         "web": "travel_explore",
-        "run": "terminal",
+        "run": "terminal_2",
         "emoji": "mood"
     })[face.displayMode] || "search"
     // the head's trailing readout: what the panel is holding right now
@@ -70,7 +70,7 @@ Item {
     }, {
         "key": "commands",
         "label": "Commands",
-        "icon": "terminal"
+        "icon": "keyboard_command_key"
     }, {
         "key": "clipboard",
         "label": "Clipboard",
@@ -84,11 +84,19 @@ Item {
         "label": "Themes",
         "icon": "palette"
     }, {
+        "key": "widgets",
+        "label": "Widgets",
+        "icon": "widgets",
+        "leaves": true
+    }, {
         "key": "power",
         "label": "Power",
-        "icon": "power_settings_new"
+        "icon": "power_settings_new",
+        "leaves": true
     }]
     readonly property real stableContentHeight: Math.max(0, face.targetHeight - face.chromeHeight)
+    // what the empty state needs, so the dock never sizes the panel under it
+    readonly property real emptyHeight: resultList.emptyExtent
     property string displayMode: "apps"
     readonly property bool listVisible: face.displayMode !== "wallpaper"
     // clipboard: the first Ctrl+Shift+Del arms clearing everything, a second within 3 s does it
@@ -150,18 +158,22 @@ Item {
         modeFade.restart();
     }
 
-    // Tab walks the mode set, so every mode is one key away from the keyboard too
+    // Tab walks the mode set, so every mode is one key away from the keyboard too.
+    // the entries that leave the launcher for a panel of their own are skipped
     function cycleMode(delta) {
+        var stops = face.modes.filter((m) => {
+            return m.leaves !== true;
+        });
         var at = -1;
-        for (var i = 0; i < face.modes.length; i++) {
-            if (face.modes[i].key === face.displayMode)
+        for (var i = 0; i < stops.length; i++) {
+            if (stops[i].key === face.displayMode)
                 at = i;
 
         }
         if (at === -1)
             at = 0;
 
-        var next = face.modes[(at + delta + face.modes.length) % face.modes.length];
+        var next = stops[(at + delta + stops.length) % stops.length];
         face.modeRequested(next.key);
     }
 

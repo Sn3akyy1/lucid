@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs
+import qs.lucidui
 
 // the dominant colours matugen finds in the wallpaper, each shown as the
 // accent it would give with the current style and contrast (and the colour it
@@ -111,13 +112,13 @@ Column {
                         border.color: Theme.alpha("#000000", 0.25)
                     }
 
-                    Text {
+                    Icon {
                         anchors.centerIn: parent
                         visible: cand.selected
-                        text: "✓"
+                        name: "check"
+                        size: 24
                         color: Theme.toneOf(Qt.color(cand.modelData.primary)) > 60 ? "#000000" : "#ffffff"
-                        font.pixelSize: 20
-                        font.bold: true
+                        animateColor: false
                     }
 
                     MouseArea {

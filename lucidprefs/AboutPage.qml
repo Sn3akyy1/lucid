@@ -5,8 +5,6 @@ import qs
 Column {
     id: page
 
-    readonly property string version: Updates.currentLabel
-    readonly property bool beta: true
     readonly property var components: [{
         "name": "lucidbar",
         "desc": "Status bar - workspaces, media, tray, clock, bluetooth, network, notifications, system"
@@ -55,106 +53,21 @@ Column {
         "desc": "Power menu"
     }]
 
+    // set by Settings while the page is on screen
+    property bool pageShown: false
+
     spacing: 26
+    onPageShownChanged: {
+        if (page.pageShown)
+            hero.enter();
 
-    Rectangle {
+    }
+
+    AboutHero {
+        id: hero
+
         width: parent.width
-        height: 164
-        radius: Theme.radiusXl
-        color: Theme.bgTile
-
-        Row {
-            anchors.centerIn: parent
-            spacing: 22
-
-            LucidaMark {
-                width: 68
-                height: 68
-                strokeWidth: 2.6
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 4
-
-                Row {
-                    spacing: 10
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "Lucid"
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fs(30)
-                        font.variableAxes: Theme.axes(Theme.fs(30), 640, 0)
-                        font.bold: true
-                    }
-
-                    Rectangle {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: page.beta
-                        width: betaLabel.implicitWidth + 16
-                        height: 22
-                        radius: 11
-                        color: "transparent"
-                        border.width: 1
-                        border.color: Theme.accent
-
-                        Text {
-                            id: betaLabel
-
-                            anchors.centerIn: parent
-                            text: "BETA"
-                            color: Theme.accent
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(10)
-                            font.variableAxes: Theme.axes(Theme.fs(10), 640, 0)
-                            font.bold: true
-                            font.letterSpacing: 1
-                        }
-
-                    }
-
-                }
-
-                Row {
-                    spacing: 8
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: page.version
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontBody
-                        font.variableAxes: Theme.axes(Theme.fontBody, 640, 0)
-                        font.bold: true
-                    }
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "·"
-                        color: Theme.subtextDim
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontBody
-                        font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
-                    }
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "The brightest thing in your setup."
-                        color: Theme.subtext
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontBody
-                        font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
-                    }
-
-                }
-
-            }
-
-        }
-
+        live: page.pageShown
     }
 
     SettingCard {

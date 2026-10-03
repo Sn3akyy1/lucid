@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs
+import qs.lucidui
 
 // where palettes come from beyond the ones Lucid ships: the tinted-theming
 // gallery, a scheme repo, or a single file. add-theme.py turns each into a
@@ -306,10 +307,13 @@ Column {
                 spacing: 14
 
                 Row {
+                    id: galleryBar
+
+                    width: parent.width
                     spacing: 10
 
                     M3TextField {
-                        width: 280
+                        width: galleryBar.width - galleryFilter.width - galleryBar.spacing
                         placeholder: "Search by name or author"
                         onEdited: (v) => {
                             return page.query = v;
@@ -317,7 +321,9 @@ Column {
                     }
 
                     M3Segmented {
-                        width: 250
+                        id: galleryFilter
+
+                        width: Math.min(250, Math.round(galleryBar.width * 0.45))
                         anchors.verticalCenter: parent.verticalCenter
                         current: page.variant
                         options: [{
@@ -380,6 +386,11 @@ Column {
             stacked: true
 
             Column {
+                id: importRows
+
+                // the file row carries two buttons, so its field sets the width both use
+                readonly property real fieldWidth: Math.max(160, importRows.width - chooseButton.width - importFileButton.width - 20)
+
                 width: parent.width
                 spacing: 12
 
@@ -389,7 +400,7 @@ Column {
                     M3TextField {
                         id: repoField
 
-                        width: 360
+                        width: importRows.fieldWidth
                         placeholder: "https://github.com/catppuccin/palette"
                         enabled: page.addState !== "working"
                         onEdited: (v) => {
@@ -406,7 +417,7 @@ Column {
                         text: "Import repo"
                         variant: "filled"
                         enabled: page.repoUrl.trim() !== "" && page.addState !== "working"
-                        iconPath: "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z"
+                        iconPath: "add"
                         onClicked: page.importFrom(page.repoUrl, "Cloning and reading the scheme...")
                     }
 
@@ -418,7 +429,7 @@ Column {
                     M3TextField {
                         id: fileField
 
-                        width: 360
+                        width: importRows.fieldWidth
                         placeholder: "A scheme file, like ~/Downloads/nord.yaml"
                         enabled: page.addState !== "working"
                         onEdited: (v) => {
@@ -431,6 +442,8 @@ Column {
                     }
 
                     M3Button {
+                        id: chooseButton
+
                         anchors.verticalCenter: parent.verticalCenter
                         text: "Choose..."
                         enabled: page.addState !== "working"
@@ -441,11 +454,13 @@ Column {
                     }
 
                     M3Button {
+                        id: importFileButton
+
                         anchors.verticalCenter: parent.verticalCenter
                         text: "Import file"
                         variant: "filled"
                         enabled: page.filePath.trim() !== "" && page.addState !== "working"
-                        iconPath: "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z"
+                        iconPath: "add"
                         onClicked: page.importFrom(page.filePath, "Reading the scheme...")
                     }
 
@@ -495,13 +510,11 @@ Column {
                             visible: page.addState !== "done"
                             color: page.addState === "error" ? Theme.alpha(Theme.error, 0.18) : Theme.alpha(Theme.accent, 0.18)
 
-                            Text {
+                            Icon {
                                 anchors.centerIn: parent
-                                text: page.addState === "error" ? "!" : "..."
+                                name: page.addState === "error" ? "priority_high" : "more_horiz"
+                                size: 20
                                 color: page.addState === "error" ? Theme.error : Theme.accent
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontTitle
-                                font.bold: true
                             }
 
                         }

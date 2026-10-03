@@ -12,6 +12,9 @@ Item {
     // under the pointer, so a drag would only run away with its position
     readonly property bool movable: Monitors.liveCount > 1
     property string held: ""
+    // the view as it stood when the drag began; refitting under the pointer
+    // would carry the plate away from it
+    property var heldBounds: null
     // the display the page is pointed at
     property string selected: ""
 
@@ -62,9 +65,12 @@ Item {
         };
     }
 
-    readonly property real fit: Math.min((frame.width - 20) / map.bounds.w, (frame.height - 20) / map.bounds.h)
-    readonly property real offX: frame.width / 2 - (map.bounds.x + map.bounds.w / 2) * map.fit
-    readonly property real offY: frame.height / 2 - (map.bounds.y + map.bounds.h / 2) * map.fit
+    readonly property var view: map.heldBounds || map.bounds
+    readonly property real fit: Math.min((frame.width - 20) / map.view.w, (frame.height - 20) / map.view.h)
+    readonly property real offX: frame.width / 2 - (map.view.x + map.view.w / 2) * map.fit
+    readonly property real offY: frame.height / 2 - (map.view.y + map.view.h / 2) * map.fit
+
+    onHeldChanged: map.heldBounds = map.held !== "" ? map.bounds : null
 
     // the nearest edge alignment to where an output was dropped
     function settle(key, wantX, wantY) {
@@ -106,7 +112,7 @@ Item {
         Monitors.setPos(key, x, y);
     }
 
-    implicitHeight: Math.max(180, Math.min(420, map.width * map.bounds.h / map.bounds.w))
+    implicitHeight: Math.max(180, Math.min(420, map.width * map.view.h / map.view.w))
 
     Rectangle {
         id: frame

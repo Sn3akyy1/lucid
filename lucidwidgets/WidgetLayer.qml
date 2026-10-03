@@ -31,14 +31,15 @@ Variants {
             }
 
             screen: unit.modelData
-            visible: Prefs.loaded && Widgets.loaded && Prefs.widgetsEnabled && Widgets.count > 0 && !layer.suppressed
+            visible: Prefs.loaded && Widgets.loaded && (deck.panelLive || (Prefs.widgetsEnabled && Widgets.count > 0 && !layer.suppressed))
             color: "transparent"
             // reserves nothing and refuses to be shrunk into the bar and dock's strips,
             // so a card can be dragged to a true screen edge and sit under the dock.
             // setting exclusiveZone at all would silently undo this
             exclusionMode: ExclusionMode.Ignore
-            WlrLayershell.layer: Prefs.widgetOnTop ? WlrLayer.Top : WlrLayer.Bottom
-            WlrLayershell.keyboardFocus: deck.wantsKeyboard ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+            // the widget panel lifts the whole board over the windows until it has slid away
+            WlrLayershell.layer: deck.panelLive ? WlrLayer.Overlay : (Prefs.widgetOnTop ? WlrLayer.Top : WlrLayer.Bottom)
+            WlrLayershell.keyboardFocus: deck.panelUp ? WlrKeyboardFocus.Exclusive : (deck.wantsKeyboard ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None)
 
             anchors {
                 top: true
@@ -76,6 +77,9 @@ Variants {
 
                 readonly property string screenName: layer.screen ? layer.screen.name : ""
                 readonly property bool isPrimary: layer.screen !== null && layer.screen === Monitors.mainScreen
+                // the widget panel is open on this screen, and still on its way out
+                readonly property bool panelUp: Widgets.panelScreen !== "" && Widgets.panelScreen === deck.screenName
+                readonly property bool panelLive: deck.panelUp || panel.shown
                 readonly property int frameCount: rep.count
                 readonly property bool editing: Widgets.editUid !== "" && deck.editFrame !== null
                 // only ask for keys at all once something you can type into is placed;
@@ -117,6 +121,21 @@ Variants {
                     return (i >= 0 && i < rep.count) ? rep.itemAt(i) : null;
                 }
 
+                function frameFor(uid) {
+                    for (var i = 0; i < rep.count; i++) {
+                        var f = rep.itemAt(i);
+                        if (f && f.uid === uid)
+                            return f;
+
+                    }
+                    return null;
+                }
+
+                // a board point over the open panel, where a dragged card is let go of
+                function binHit(px, py) {
+                    return deck.panelUp && panel.sheetHit(px, py);
+                }
+
                 // the topmost card under a board point, for the menu overlay: it
                 // covers the screen while it is up, so the cards never see the press
                 function frameUnder(px, py) {
@@ -139,8 +158,13 @@ Variants {
                 anchors.fill: parent
                 focus: true
                 Keys.onEscapePressed: {
+                    var busy = Widgets.editUid !== "" || Widgets.menuUid !== "" || Object.keys(Widgets.selection).length > 0;
                     Widgets.editUid = "";
                     Widgets.menuUid = "";
+                    Widgets.clearSelection();
+                    if (!busy && deck.panelUp)
+                        Widgets.closePanel();
+
                 }
                 onWidthChanged: deck.report()
                 onHeightChanged: deck.report()
@@ -153,26 +177,56 @@ Variants {
                     }
                 }
 
-                // click-through everywhere except the cards, so this only fires for the open menu
+                // the dim behind the cards while the widget panel is open, and the way out of it
+                Rectangle {
+                    anchors.fill: parent
+                    color: Theme.alpha(Theme.cScrim, Theme.blurAmount > 0 ? 0.3 : 0.5)
+                    opacity: panel.reveal
+                    visible: opacity > 0.01
+
+                    WheelHandler {
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                        enabled: deck.panelUp
+                        onWheel: (event) => {
+                            return event.accepted = true;
+                        }
+                    }
+
+                }
+
+                // click-through everywhere except the cards, so this only fires for the
+                // open menu, a note being typed in, or the widget panel
                 MouseArea {
                     anchors.fill: parent
-                    enabled: deck.grabbing
+                    enabled: deck.grabbing || deck.panelUp
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                     onPressed: {
+                        var busy = Widgets.menuUid !== "" || Widgets.editUid !== "";
                         Widgets.menuUid = "";
                         Widgets.editUid = "";
+                        if (!busy && deck.panelUp) {
+                            Widgets.clearSelection();
+                            Widgets.closePanel();
+                        }
+
                     }
                 }
 
-                Repeater {
-                    id: rep
+                // the cards stack among themselves, under the guides and the panel
+                Item {
+                    anchors.fill: parent
 
-                    model: Widgets.model
-                    onItemAdded: deck.rev++
-                    onItemRemoved: deck.rev++
+                    Repeater {
+                        id: rep
 
-                    WidgetFrame {
-                        board: deck
+                        model: Widgets.model
+                        onItemAdded: deck.rev++
+                        onItemRemoved: deck.rev++
+
+                        WidgetFrame {
+                            board: deck
+                        }
+
                     }
 
                 }
@@ -213,13 +267,21 @@ Variants {
 
                 }
 
+                WidgetPanel {
+                    id: panel
+
+                    anchors.fill: parent
+                    z: 1000
+                    board: deck
+                }
+
             }
 
             mask: Region {
                 x: 0
                 y: 0
-                width: deck.grabbing ? layer.width : 0
-                height: deck.grabbing ? layer.height : 0
+                width: (deck.grabbing || deck.panelUp) ? layer.width : 0
+                height: (deck.grabbing || deck.panelUp) ? layer.height : 0
 
             WidgetRegion {
                 frame: deck.frameAt(0)
@@ -303,7 +365,15 @@ Variants {
 
             }
 
-            BackgroundEffect.blurRegion: Theme.blurAmount > 0 ? widgetBlur : null
+            // the open panel frosts the whole screen behind its dim, cards and sheet alike
+            BackgroundEffect.blurRegion: Theme.blurAmount > 0 ? (deck.panelUp ? wholeBlur : widgetBlur) : null
+
+            Region {
+                id: wholeBlur
+
+                width: layer.width
+                height: layer.height
+            }
 
             Region {
                 id: widgetBlur

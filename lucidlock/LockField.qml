@@ -98,8 +98,8 @@ Item {
         anchors.fill: parent
         radius: height / 2
         color: field.good ? Theme.alpha(Theme.success, 0.16) : (field.bad ? Theme.alpha(Theme.error, 0.14) : Lockscreen.cardHigh)
-        border.width: Lockscreen.focused || field.bad || field.good ? 2 : 1
-        border.color: field.good ? Theme.success : (field.bad ? Theme.error : (Lockscreen.focused ? Theme.accent : Theme.outlineStrong))
+        border.width: Lockscreen.focused || field.bad || field.good ? 2 : 0
+        border.color: field.good ? Theme.success : (field.bad ? Theme.error : Theme.accent)
 
         Behavior on color {
             ColorAnimation {

@@ -52,6 +52,8 @@ fi
 printf '\n%sDone.%s Left in place, each with a timestamped backup beside it:\n' "$b" "$r"
 printf '  ~/.config/matugen/config.toml   the [templates.*] blocks Lucid added\n'
 printf '  ~/.config/hypr                  the lua config, binds and rules\n'
+printf '  ~/.local/share/lucid/plugins    the tilting cursor plugin that config\n'
+printf '                                  loads (scripts/cursor-plugin.sh remove)\n'
 printf '  ~/.config/starship.toml         the prompt, and its init line in\n'
 printf '                                  .bashrc / .zshrc / config.fish\n'
 printf '  ~/.config/kitty/kitty.conf      the matugen-colors.conf and\n'

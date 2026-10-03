@@ -32,6 +32,7 @@ ShellRoot {
                 "accentHover": Theme.accentHover.toString(),
                 "fgAccent": Theme.fgAccent.toString(),
                 "accentMuted": Theme.accentMuted.toString(),
+                "clockHour": Theme.atTone(Theme.cPrimary, Theme.isLight ? 25 : 92).toString(),
                 "accentContainer": Theme.accentContainer.toString(),
                 "fgAccentContainer": Theme.fgAccentContainer.toString(),
                 "bgOpaque": Theme.bgOpaque.toString(),

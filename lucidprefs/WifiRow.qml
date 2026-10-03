@@ -1,7 +1,7 @@
 import QtQuick
-import QtQuick.Shapes
 import Quickshell.Networking
 import qs
+import qs.lucidui
 
 Column {
     id: net
@@ -155,37 +155,20 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 10
 
-            Shape {
+            Icon {
                 anchors.verticalCenter: parent.verticalCenter
-                width: 14
-                height: 14
                 visible: net.secured
-                preferredRendererType: Shape.CurveRenderer
-
-                ShapePath {
-                    strokeWidth: 0
-                    fillColor: Theme.subtextDim
-
-                    PathSvg {
-                        path: "M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"
-                    }
-
-                }
-
-                transform: Scale {
-                    xScale: 14 / 24
-                    yScale: 14 / 24
-                }
-
+                name: "lock"
+                size: 14
+                fill: 1
+                color: Theme.subtextDim
             }
 
-            Text {
+            Icon {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "▾"
+                name: "expand_more"
+                size: 18
                 color: Theme.subtext
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontBody
-                font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
                 rotation: net.expanded ? 180 : 0
 
                 Behavior on rotation {
@@ -303,7 +286,7 @@ Column {
                     variant: net.sharing ? "tonal" : "text"
                     visible: net.known
                     text: "Share"
-                    iconPath: "M3,11H5V13H3V11M11,5H13V9H11V5M9,11H13V15H11V13H9V11M15,11H17V13H19V11H21V13H19V15H21V19H19V21H17V19H13V21H11V17H15V15H17V13H15V11M19,19V15H17V19H19M15,3H21V9H15V3M17,5V7H19V5H17M3,3H9V9H3V3M5,5V7H7V5H5M3,15H9V21H3V15M5,17V19H7V17H5Z"
+                    iconPath: "qr_code"
                     onClicked: net.sharing = !net.sharing
                 }
 

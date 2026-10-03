@@ -365,12 +365,12 @@ Column {
         SettingRow {
             title: "Game mode: turn on"
             resetKey: "gameModeOnCmd"
-            description: "Shell command the Game mode tile runs to switch it on (add the tile under Edit tiles in the control centre). Runs through bash, so pipes and && work."
+            description: "Left empty, with the command below, game mode is Lucid's own: animations, blur, shadows, rounded corners and gaps go off, and come back as they were. Or give a shell command of your own for the Game mode tile (under Edit tiles in the control centre); it runs through bash, so pipes and && work."
             stacked: true
 
             M3TextField {
                 width: parent.width
-                placeholder: "e.g. sudo -n g15-gamemode on"
+                placeholder: "Lucid's own, or e.g. sudo -n g15-gamemode on"
                 text: Prefs.gameModeOnCmd
                 onAccepted: (v) => {
                     return Prefs.gameModeOnCmd = v;
@@ -382,12 +382,12 @@ Column {
         SettingRow {
             title: "Game mode: turn off"
             resetKey: "gameModeOffCmd"
-            description: "Shell command run to switch game mode off again."
+            description: "The command that switches your own game mode off again. Leave both empty for Lucid's."
             stacked: true
 
             M3TextField {
                 width: parent.width
-                placeholder: "e.g. sudo -n g15-gamemode off"
+                placeholder: "Lucid's own, or e.g. sudo -n g15-gamemode off"
                 text: Prefs.gameModeOffCmd
                 onAccepted: (v) => {
                     return Prefs.gameModeOffCmd = v;
@@ -399,7 +399,7 @@ Column {
         SettingRow {
             title: "Game mode: status check"
             resetKey: "gameModeStatusCmd"
-            description: "Optional. Exits 0 while game mode is on, so the toggle stays right when something else (a keybind, a script) changes it. Checked whenever the panel opens."
+            description: "Optional, and not needed for Lucid's own. Exits 0 while your game mode is on, so the toggle stays right when something else (a keybind, a script) changes it. Checked whenever the panel opens."
             showDivider: false
             stacked: true
 

@@ -9,13 +9,14 @@ import "../lucidnotif"
 BarPill {
     id: root
 
+    // material symbols, as NotifIcon draws them
     readonly property var icons: ({
-        "power": "M13 3h-2v10h2V3Zm4.83 2.17-1.42 1.42A6.98 6.98 0 0 1 19 12a7 7 0 1 1-11.66-5.24L5.92 5.34A9 9 0 1 0 21 12a8.97 8.97 0 0 0-3.17-6.83Z",
-        "lock": "M6 10V8a6 6 0 1 1 12 0v2h1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V11a1 1 0 0 1 1-1h1Zm2 0h8V8a4 4 0 1 0-8 0v2Zm4 4a1.5 1.5 0 0 1 1 2.63V18a1 1 0 1 1-2 0v-1.37A1.5 1.5 0 0 1 12 14Z",
-        "logout": "M10 17v-2H3v-6h7V7l5 5-5 5Zm9 3H12v-2h7V6h-7V4h7a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2Z",
-        "suspend": "M12 3a9 9 0 1 0 8.94 10.06.5.5 0 0 0-.66-.54A7 7 0 1 1 11.48 3.72a.5.5 0 0 0-.54-.66A9.06 9.06 0 0 0 12 3Z",
-        "hibernate": "M9.37 5.51A7.5 7.5 0 0 0 9.1 20.94a7.5 7.5 0 0 0 9.32-5.05.5.5 0 0 0-.58-.65 6 6 0 0 1-7.4-7.4.5.5 0 0 0-.07-.33.5.5 0 0 0-.62-.22 7.53 7.53 0 0 0-.38.22Z",
-        "reboot": "M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8Z"
+        "power": "power_settings_new",
+        "lock": "lock",
+        "logout": "logout",
+        "suspend": "bedtime",
+        "hibernate": "mode_standby",
+        "reboot": "restart_alt"
     })
     // hibernate only where logind says it can
     property bool canHibernate: false

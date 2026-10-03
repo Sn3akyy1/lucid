@@ -260,6 +260,7 @@ approval_delegation
 approval_delegation_off
 apps
 apps_outage
+apps_plus
 aq
 aq_indoor
 ar_on_you
@@ -772,6 +773,7 @@ chat_bubble
 chat_bubble_off
 chat_bubble_outline
 chat_dashed
+chat_display
 chat_error
 chat_info
 chat_paste_go
@@ -852,6 +854,7 @@ close_small
 closed_caption
 closed_caption_add
 closed_caption_disabled
+closed_caption_display
 closed_caption_off
 cloud
 cloud_alert
@@ -1154,6 +1157,7 @@ dishwasher
 dishwasher_gen
 display_add
 display_external_input
+display_group
 display_settings
 distance
 diversity_1
@@ -1181,6 +1185,7 @@ docs_add_on
 docs_apps_script
 document_scanner
 document_search
+document_share
 domain
 domain_add
 domain_disabled
@@ -1267,6 +1272,7 @@ edit_attributes
 edit_audio
 edit_calendar
 edit_document
+edit_line
 edit_location
 edit_location_alt
 edit_note
@@ -1473,6 +1479,7 @@ filter_alt
 filter_alt_off
 filter_arrow_right
 filter_b_and_w
+filter_cancel
 filter_center_focus
 filter_drama
 filter_frames
@@ -1481,6 +1488,7 @@ filter_list
 filter_list_alt
 filter_list_off
 filter_none
+filter_plus
 filter_retrolux
 filter_tilt_shift
 filter_vintage
@@ -1668,6 +1676,7 @@ fullscreen
 fullscreen_exit
 fullscreen_portrait
 function
+function_search
 functions
 funicular
 g_mobiledata
@@ -1774,6 +1783,7 @@ grid_view
 grocery
 group
 group_add
+group_eye
 group_off
 group_remove
 group_search
@@ -1962,6 +1972,7 @@ imagesmode
 immunology
 import_contacts
 import_export
+import_spark
 important_devices
 in_home_mode
 inactive_order
@@ -2291,8 +2302,11 @@ mark_email_read
 mark_email_unread
 mark_unread_chat_alt
 markdown
+markdown_convert
 markdown_copy
+markdown_document
 markdown_paste
+markdown_spark
 markunread
 markunread_mailbox
 masked_transitions
@@ -3346,6 +3360,7 @@ share_off
 share_reviews
 share_windows
 shaved_ice
+sheets_column_swap
 sheets_rtl
 shelf_auto_hide
 shelf_position

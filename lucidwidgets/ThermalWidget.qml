@@ -26,7 +26,7 @@ WidgetBody {
     readonly property bool hasGpu: w.gpuState !== ""
     readonly property bool gpuAwake: w.gpuState === "on"
     readonly property bool showFans: w.opt("showFans") !== false && w.fans.length > 0
-    readonly property bool gameModeConfigured: Prefs.gameModeOnCmd.trim() !== "" && Prefs.gameModeOffCmd.trim() !== ""
+    readonly property bool gameModeConfigured: Prefs.gameModeConfigured
     readonly property string gpuShort: w.gpuName.replace(/^NVIDIA\s+(GeForce\s+)?/, "").replace(/\s+Laptop GPU$/, " Laptop")
     readonly property real fanRpm: w.fans.length > 0 ? w.fans.reduce((a, f) => {
         return a + f.rpm;
@@ -278,15 +278,15 @@ WidgetBody {
 
         w.gameModeBusy = true;
         w.gameModeOn = on;
-        gameModeRun.command = ["bash", "-c", on ? Prefs.gameModeOnCmd : Prefs.gameModeOffCmd];
+        gameModeRun.command = ["bash", "-c", on ? Prefs.gameModeOnRun : Prefs.gameModeOffRun];
         gameModeRun.running = true;
     }
 
     function checkGameMode() {
-        if (w.preview || Prefs.gameModeStatusCmd.trim() === "" || gameModeStatus.running)
+        if (w.preview || Prefs.gameModeStatusRun === "" || gameModeStatus.running)
             return ;
 
-        gameModeStatus.command = ["bash", "-c", Prefs.gameModeStatusCmd];
+        gameModeStatus.command = ["bash", "-c", Prefs.gameModeStatusRun];
         gameModeStatus.running = true;
     }
 
@@ -480,7 +480,7 @@ WidgetBody {
             spacing: 8
 
             Chip {
-                path: Power.icon(Power.profile)
+                icon: Power.symbol(Power.profile)
                 label: Power.name(Power.profile)
                 onClicked: {
                     if (!w.preview)
@@ -656,7 +656,6 @@ WidgetBody {
         id: chip
 
         property string icon: ""
-        property string path: ""
         property string label: ""
         property bool on: false
         property bool busy: false
@@ -678,7 +677,6 @@ WidgetBody {
             WidgetGlyph {
                 anchors.verticalCenter: parent.verticalCenter
                 name: chip.icon
-                path: chip.path
                 size: 15
                 color: chip.on ? Theme.fgAccent : Theme.text
             }

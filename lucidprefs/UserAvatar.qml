@@ -1,7 +1,7 @@
 import QtQuick
-import QtQuick.Shapes
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 // a round account picture, falling back to initials on a tonal disc
 Item {
@@ -84,28 +84,15 @@ Item {
 
         }
 
-        Shape {
+        Icon {
             anchors.centerIn: parent
-            width: Math.round(av.size * 0.34)
-            height: Math.round(av.size * 0.34)
             opacity: av.editable && hover.hovered ? 1 : 0
             visible: opacity > 0.01
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-                strokeWidth: 0
-                fillColor: "white"
-
-                PathSvg {
-                    path: "M9 2 7.17 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3.17L15 2H9Zm3 5a6 6 0 1 1 0 12 6 6 0 0 1 0-12Zm0 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"
-                }
-
-            }
-
-            transform: Scale {
-                xScale: Math.round(av.size * 0.34) / 24
-                yScale: Math.round(av.size * 0.34) / 24
-            }
+            name: "photo_camera"
+            size: Math.round(av.size * 0.36)
+            fill: 1
+            color: "white"
+            animateColor: false
 
             Behavior on opacity {
                 NumberAnimation {
@@ -125,7 +112,7 @@ Item {
 
     }
 
-    // a small key on the corner marks an account that can administer the machine
+    // a small shield on the corner marks an account that can administer the machine
     Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -141,27 +128,12 @@ Item {
             border.color: Theme.bgTile
         }
 
-        Shape {
+        Icon {
             anchors.centerIn: parent
-            width: parent.width * 0.62
-            height: parent.height * 0.62
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-                strokeWidth: 0
-                fillColor: Theme.fgAccent
-
-                PathSvg {
-                    path: "M12 1 4 4.5v6c0 5 3.4 9.7 8 10.9 4.6-1.2 8-5.9 8-10.9v-6L12 1Zm0 2.2 6 2.6v4.7c0 3.9-2.5 7.6-6 8.8-3.5-1.2-6-4.9-6-8.8V5.8l6-2.6Z"
-                }
-
-            }
-
-            transform: Scale {
-                xScale: (av.size * 0.36 * 0.62) / 24
-                yScale: (av.size * 0.36 * 0.62) / 24
-            }
-
+            name: "shield"
+            size: Math.round(parent.width * 0.7)
+            fill: 1
+            color: Theme.fgAccent
         }
 
     }

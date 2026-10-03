@@ -118,8 +118,8 @@ WidgetBody {
         if (w.preview || !g || w.launch.length === 0)
             return ;
 
-        if (w.opt("gameModeOnLaunch") === true && Prefs.gameModeOnCmd.trim() !== "")
-            Quickshell.execDetached(["bash", "-c", Prefs.gameModeOnCmd]);
+        if (w.opt("gameModeOnLaunch") === true && Prefs.gameModeConfigured)
+            Quickshell.execDetached(["bash", "-c", Prefs.gameModeOnRun]);
 
         Quickshell.execDetached(w.launch.concat(["steam://rungameid/" + g.id]));
         w.launchingId = g.id;

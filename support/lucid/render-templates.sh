@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # render-templates.sh <colours.json> <dark|light> <source> [--skip <output>]...
+# render-templates.sh <colours.json> <dark|light> <source> --only-output <output>
 # render-templates.sh --again [--only <name>]
 #
 # renders every template in the matugen config from one set of colours: the
@@ -20,6 +21,10 @@
 #   - the colours are kept in ~/.cache/lucid/colours.json, so --again renders
 #     with the last ones without redoing the scheme: every template, or with
 #     --only just one (Settings does that when a template is switched on)
+#   - --only-output renders just the template that writes one file, and leaves
+#     the record, the kept colours and hyprland alone. set-wallpaper.sh puts
+#     the shell's palette up with it while a wallpaper is browsed, then renders
+#     everything once the browsing stops
 #
 # runs are serialised, so after two quick changes of theme or wallpaper the
 # older run can never finish last and leave its colours behind.
@@ -29,9 +34,11 @@
 set -uo pipefail
 
 USAGE="usage: render-templates.sh <colours.json> <dark|light> <source> [--skip <output>]...
+       render-templates.sh <colours.json> <dark|light> <source> --only-output <output>
        render-templates.sh --again [--only <name>]"
 AGAIN=0
 ONLY=""
+ONLY_OUTPUT=""
 SKIP=()
 if [[ "${1:-}" == "--again" ]]; then
     AGAIN=1
@@ -52,6 +59,11 @@ while (( $# )); do
     --only)
         [[ $# -ge 2 && $AGAIN == 1 ]] || { echo "$USAGE" >&2; exit 1; }
         ONLY="$2"
+        shift 2
+        ;;
+    --only-output)
+        [[ $# -ge 2 && $AGAIN == 0 ]] || { echo "$USAGE" >&2; exit 1; }
+        ONLY_OUTPUT="${2/#\~/$HOME}"
         shift 2
         ;;
     *)
@@ -95,7 +107,7 @@ if [[ ! -f "$COLOURS" ]]; then
     echo "error: no colours at $COLOURS" >&2
     exit 1
 fi
-if (( ! AGAIN )); then
+if (( ! AGAIN )) && [[ -z "$ONLY_OUTPUT" ]]; then
     cp "$COLOURS" "$KEPT.tmp" && mv "$KEPT.tmp" "$KEPT"
     COLOURS="$KEPT"
 fi
@@ -176,6 +188,7 @@ HYPR=0
 while IFS=$'\037' read -r i name input output; do
     [[ -n "$ONLY" && "$name" != "$ONLY" ]] && continue
     out=$(resolve "$output")
+    [[ -n "$ONLY_OUTPUT" && "$out" != "$ONLY_OUTPUT" ]] && continue
     in=$(resolve "$input")
     state=ok
     error=""
@@ -203,6 +216,12 @@ while IFS=$'\037' read -r i name input output; do
     [[ "$state" == failed ]] && FAILED+=("$name")
     printf '%s\t%s\t%s\t%s\n' "$name" "$out" "$state" "$error" >> "$WORK/results"
 done < "$WORK/list"
+
+# a quick render of one file: the full one after it keeps the books
+if [[ -n "$ONLY_OUTPUT" ]]; then
+    (( ${#FAILED[@]} )) && exit 2
+    exit 0
+fi
 
 if [[ -n "$ONLY" && ! -s "$WORK/results" ]]; then
     echo "error: no template named $ONLY" >&2

@@ -11,6 +11,10 @@ PanelWindow {
     readonly property real panelW: 520
     readonly property real panelH: 600
     property bool open: false
+    // stays true through the exit animation
+    property bool rendered: false
+    // how far below its spot the panel sits while hidden
+    property real rise: 16
     property bool dataRequested: false
     property var emojiGroups: []
     property var emojiData: []
@@ -266,7 +270,7 @@ PanelWindow {
     }
 
     color: "transparent"
-    visible: open
+    visible: rendered
     exclusiveZone: -1
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: open && !handingOff ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
@@ -280,8 +284,87 @@ PanelWindow {
     }
 
     onOpenChanged: {
-        if (mojiWindow.open)
+        if (mojiWindow.open) {
             mojiWindow.dataRequested = true;
+            faceExit.stop();
+            mojiWindow.rendered = true;
+            faceEnter.restart();
+        } else {
+            faceEnter.stop();
+            faceExit.restart();
+        }
+    }
+
+    // clicks fall through while it animates out
+    mask: mojiWindow.open ? null : closedMask
+
+    Region {
+        id: closedMask
+    }
+
+    ParallelAnimation {
+        id: faceEnter
+
+        NumberAnimation {
+            target: faceLoader
+            property: "opacity"
+            to: 1
+            duration: Theme.durEnter
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.easeEmphasizedDecel
+        }
+
+        NumberAnimation {
+            target: faceLoader
+            property: "scale"
+            to: 1
+            duration: Theme.durEnter
+            easing.type: Easing.OutBack
+            easing.overshoot: Theme.emphasizedOvershoot
+        }
+
+        NumberAnimation {
+            target: mojiWindow
+            property: "rise"
+            to: 0
+            duration: Theme.durEnter
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.easeEmphasizedDecel
+        }
+
+    }
+
+    ParallelAnimation {
+        id: faceExit
+
+        onFinished: mojiWindow.rendered = false
+
+        NumberAnimation {
+            target: faceLoader
+            property: "opacity"
+            to: 0
+            duration: Theme.durExit
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.easeEmphasizedAccel
+        }
+
+        NumberAnimation {
+            target: faceLoader
+            property: "scale"
+            to: 0.92
+            duration: Theme.durExit
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.easeEmphasizedAccel
+        }
+
+        NumberAnimation {
+            target: mojiWindow
+            property: "rise"
+            to: 16
+            duration: Theme.durExit
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.easeEmphasizedAccel
+        }
 
     }
 
@@ -447,9 +530,11 @@ PanelWindow {
 
         active: mojiWindow.dataRequested
         x: mojiWindow.panelX
-        y: mojiWindow.panelY
+        y: mojiWindow.panelY + mojiWindow.rise
         width: mojiWindow.panelW
         height: mojiWindow.panelH
+        opacity: 0
+        scale: 0.92
 
         sourceComponent: MojiFace {
             host: mojiWindow
@@ -462,16 +547,23 @@ PanelWindow {
 
     }
 
-    BackgroundEffect.blurRegion: Theme.blurAmount > 0 && mojiWindow.open ? panelBlurRegion : null
+    // a region cannot fade, so it only exists once the panel has some body
+    BackgroundEffect.blurRegion: Theme.blurAmount > 0 && mojiWindow.rendered && faceLoader.opacity > 0.15 ? panelBlurRegion : null
 
+    // the painted rect: scale and rise included, or the frost leads the panel
     Region {
         id: panelBlurRegion
 
-        x: Math.ceil(mojiWindow.panelX - 0.002)
-        y: Math.ceil(mojiWindow.panelY - 0.002)
-        width: Math.max(0, Math.floor(mojiWindow.panelX + mojiWindow.panelW + 0.002) - Math.ceil(mojiWindow.panelX - 0.002))
-        height: Math.max(0, Math.floor(mojiWindow.panelY + mojiWindow.panelH + 0.002) - Math.ceil(mojiWindow.panelY - 0.002))
-        radius: Theme.radiusXl
+        readonly property real paintedWidth: mojiWindow.panelW * faceLoader.scale
+        readonly property real paintedHeight: mojiWindow.panelH * faceLoader.scale
+        readonly property real paintedX: mojiWindow.panelX + (mojiWindow.panelW - panelBlurRegion.paintedWidth) / 2
+        readonly property real paintedY: mojiWindow.panelY + mojiWindow.rise + (mojiWindow.panelH - panelBlurRegion.paintedHeight) / 2
+
+        x: Math.ceil(panelBlurRegion.paintedX - 0.002)
+        y: Math.ceil(panelBlurRegion.paintedY - 0.002)
+        width: Math.max(0, Math.floor(panelBlurRegion.paintedX + panelBlurRegion.paintedWidth + 0.002) - Math.ceil(panelBlurRegion.paintedX - 0.002))
+        height: Math.max(0, Math.floor(panelBlurRegion.paintedY + panelBlurRegion.paintedHeight + 0.002) - Math.ceil(panelBlurRegion.paintedY - 0.002))
+        radius: Math.round(Theme.radiusXl * faceLoader.scale)
     }
 
     IpcHandler {

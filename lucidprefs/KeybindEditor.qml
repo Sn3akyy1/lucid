@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.lucidui
 
 // add or change one keybind, laid over the Settings window
 Item {
@@ -384,7 +385,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         text: editor.recording ? "Stop" : "Record"
                         variant: editor.recording ? "filled" : "tonal"
-                        iconPath: "M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2Zm-9 3h2v2h-2V8Zm0 3h2v2h-2v-2ZM8 8h2v2H8V8Zm0 3h2v2H8v-2Zm-1 2H5v-2h2v2Zm0-3H5V8h2v2Zm9 7H8v-2h8v2Zm0-4h-2v-2h2v2Zm0-3h-2V8h2v2Zm3 3h-2v-2h2v2Zm0-3h-2V8h2v2Z"
+                        iconPath: "keyboard"
                         onClicked: editor.recording ? editor.stopRecording() : editor.startRecording()
                     }
 
@@ -717,13 +718,12 @@ Item {
             anchors.centerIn: parent
             spacing: 6
 
-            Text {
+            Icon {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: chip.selected
-                text: "✓"
+                name: "check"
+                size: 16
                 color: Theme.fgSecondaryContainer
-                font.pixelSize: Theme.fontLabelLg
-                font.weight: Font.Bold
             }
 
             Text {

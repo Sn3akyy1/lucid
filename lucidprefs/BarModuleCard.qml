@@ -298,7 +298,7 @@ SettingCard {
                             anchors.verticalCenter: parent.verticalCenter
                             size: 34
                             enabled: powerItem.on && powerItem.at > 0
-                            iconPath: "M11 20V7.825l-5.6 5.6L4 12l8-8l8 8l-1.4 1.425l-5.6-5.6V20h-2Z"
+                            iconPath: "arrow_upward"
                             onClicked: {
                                 const l = card.powerOn.slice();
                                 l.splice(powerItem.at, 1);
@@ -311,7 +311,7 @@ SettingCard {
                             anchors.verticalCenter: parent.verticalCenter
                             size: 34
                             enabled: powerItem.on && powerItem.at < card.powerOn.length - 1
-                            iconPath: "M11 4v12.175l-5.6-5.6L4 12l8 8l8-8l-1.4-1.425l-5.6 5.6V4h-2Z"
+                            iconPath: "arrow_downward"
                             onClicked: {
                                 const l = card.powerOn.slice();
                                 l.splice(powerItem.at, 1);

@@ -18,14 +18,58 @@ Item {
     }
     property int newHour: 9
     property int newMinute: 0
+    // the hour is freshTime's next-hour guess, not one anybody chose
+    property bool hourGuessed: false
     property string newRepeat: ""
     readonly property bool pm: page.newHour >= 12
     readonly property int shownHour: Prefs.clock24h ? page.newHour : (page.newHour % 12 === 0 ? 12 : page.newHour % 12)
+    // a one-off set before now would never ring
+    readonly property bool past: {
+        Agenda.minuteKey;
+        return page.newRepeat === "" && page.gone(page.newHour, page.newMinute);
+    }
+    readonly property bool shown: page.visible && (!page.host || page.host.expanded)
+
+    onShownChanged: if (page.shown)
+        page.freshTime()
 
     function selectToday() {
         const n = Loc.now();
         page.selected = { "year": n.getFullYear(), "month": n.getMonth(), "day": n.getDate() };
         month.goToday();
+        page.freshTime();
+    }
+
+    // earlier than the minute we are in, on the picked day
+    function gone(hour, minute) {
+        const n = Loc.now();
+        return new Date(page.selected.year, page.selected.month, page.selected.day, hour, minute) < new Date(n.getFullYear(), n.getMonth(), n.getDate(), n.getHours(), n.getMinutes());
+    }
+
+    // 9:00, or the next hour once 9:00 has gone today; a time already set for a name stays
+    function freshTime() {
+        if (nameField.text !== "")
+            return ;
+
+        page.newHour = 9;
+        page.newMinute = 0;
+        page.hourGuessed = false;
+        const next = Loc.now().getHours() + 1;
+        if (page.gone(9, 0) && next < 24 && !page.gone(next, 0)) {
+            page.newHour = next;
+            page.hourGuessed = true;
+        }
+    }
+
+    // a typed 12-hour time means the half still to come: 12:04 at noon is pm
+    function preferUpcoming() {
+        if (Prefs.clock24h || !page.past)
+            return ;
+
+        const flipped = (page.newHour + 12) % 24;
+        if (!page.gone(flipped, page.newMinute))
+            page.newHour = flipped;
+
     }
 
     function focusName() {
@@ -34,7 +78,7 @@ Item {
 
     function submit() {
         const name = nameField.text.trim();
-        if (name === "")
+        if (name === "" || page.past)
             return ;
 
         Agenda.add(page.selected.year, page.selected.month, page.selected.day, page.newHour, page.newMinute, name, page.newRepeat);
@@ -43,6 +87,7 @@ Item {
     }
 
     function step(minutes) {
+        page.hourGuessed = false;
         let t = (page.newHour * 60 + page.newMinute + minutes + 1440) % 1440;
         page.newHour = Math.floor(t / 60);
         page.newMinute = t % 60;
@@ -50,17 +95,31 @@ Item {
 
     // typed hours are 0-23, or 1-12 next to the am/pm toggle
     function typeHour(h) {
+        page.hourGuessed = false;
         if (Prefs.clock24h)
             page.newHour = Math.min(23, h);
         else
             page.newHour = Math.min(12, h) % 12 + (page.pm ? 12 : 0);
+        page.preferUpcoming();
     }
 
+    // minutes typed under the guessed hour mean the next time the clock shows
+    // them: at 12:19, 20 is 12:20 rather than 1:20
     function typeMinute(m) {
         page.newMinute = Math.min(59, m);
+        const today = page.gone(0, 0) && !page.gone(23, 59);
+        if (page.hourGuessed && today) {
+            const h = Loc.now().getHours();
+            if (!page.gone(h, page.newMinute))
+                page.newHour = h;
+            else if (h + 1 < 24)
+                page.newHour = h + 1;
+        }
+        page.preferUpcoming();
     }
 
     function setPm(wantPm) {
+        page.hourGuessed = false;
         page.newHour = page.newHour % 12 + (wantPm ? 12 : 0);
     }
 
@@ -309,6 +368,7 @@ Item {
                     width: parent.width
                     label: "New reminder"
                     placeholder: "What should it say?"
+                    supporting: page.past && nameField.text.trim() !== "" ? (page.gone(0, 0) && !page.gone(23, 59) ? Agenda.timeText({ "hour": page.newHour, "minute": page.newMinute }) + " has already gone by today" : "That day has already gone by") : ""
                     containerColor: Theme.withBlur(Theme.surfaceHighest)
                     onAccepted: page.submit()
                 }
@@ -424,7 +484,7 @@ Item {
                         size: "xs"
                         icon: "add"
                         text: "Add"
-                        disabled: nameField.text.trim() === ""
+                        disabled: nameField.text.trim() === "" || page.past
                         onClicked: page.submit()
                     }
 

@@ -13,6 +13,8 @@ Item {
     property real fill: 0
     property color color: Theme.text
     property bool animateFill: true
+    // off where the colour is already driven frame by frame
+    property bool animateColor: true
     // kept so older callers still parse; the svgs come in one weight
     property real weight: 400
     property real grade: 0
@@ -36,6 +38,8 @@ Item {
     }
 
     Behavior on color {
+        enabled: icon.animateColor
+
         ColorAnimation {
             duration: Theme.durFastEffects
         }

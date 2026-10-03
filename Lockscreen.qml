@@ -21,10 +21,9 @@ Singleton {
     // glance shows the day; focus shows the field. typing crosses over
     property bool focused: false
     // ── surfaces ───────────────────────────────────────────────────────────
-    // the lock draws over a blurred wallpaper, so its cards stay translucent
-    // and let the colour of the day through instead of sitting on flat black
-    readonly property color card: Theme.alpha(Theme.bgOpaque, Theme.isLight ? 0.62 : 0.52)
-    readonly property color cardHigh: Theme.alpha(Theme.bgHigh, Theme.isLight ? 0.55 : 0.45)
+    // solid m3 containers, so a busy wallpaper never reads through a card
+    readonly property color card: Theme.surfaceContainer
+    readonly property color cardHigh: Theme.surfaceHighest
     readonly property color hairline: Theme.alpha(Theme.outline, 0.45)
 
     // ── who is being asked ─────────────────────────────────────────────────

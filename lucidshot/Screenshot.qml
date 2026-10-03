@@ -40,6 +40,9 @@ PanelWindow {
     // what follows a saved capture, per Prefs.shotPreview: the preview card,
     // the notification it replaces, or nothing (it is on the clipboard already)
     function announce(file, kind) {
+        if (kind !== "video")
+            Sounds.event("capture", Prefs.soundOnCapture);
+
         if (Prefs.shotPreview === "preview") {
             flashWindow.saved(file, kind);
         } else if (Prefs.shotPreview === "notify") {

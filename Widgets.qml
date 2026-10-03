@@ -25,6 +25,10 @@ Singleton {
     // uid of the card currently held by the pointer, and of the one showing its menu
     property string dragUid: ""
     property string menuUid: ""
+    // the desktop's selection box while it is out, {screen, x, y, w, h} in board coords
+    property var marquee: null
+    // uid -> true for every card the box caught; they drag as one
+    property var selection: ({})
     // the preset on the desktop right now, "" once the arrangement is your own
     property string presetId: ""
     // presets saved from your own desktop, in the same shape as the built-in ones
@@ -35,6 +39,13 @@ Singleton {
     property var stash: []
     // the primary screen's cards as plain entries, for drawing it small
     property var desktopLayout: []
+    // the screen the widget panel is open on, "" while it is shut
+    property string panelScreen: ""
+    readonly property bool panelOpen: root.panelScreen !== ""
+    // a card the panel is pointing at, outlined on the desktop
+    property string spotUid: ""
+    // the card a drop from the panel made, so it settles in place instead of popping up
+    property string landingUid: ""
     // the last layout only has somewhere to go back to while something else is showing
     readonly property bool canRestore: root.lastLayout.length > 0 && (root.presetId !== "" || instances.count === 0)
 
@@ -1212,19 +1223,39 @@ Singleton {
         return n;
     }
 
-    // walks a coarse grid for the first slot that clears everything already placed
-    function freeSpot(w, h) {
+    // walks a coarse grid for the first slot that clears everything already placed.
+    // `where` is optional: {screen, w, h, avoid}, for a screen other than the main one
+    // and a rect, such as the widget panel, that a fresh card should not land under
+    function freeSpot(w, h, where) {
+        var o = where || ({});
+        var W = o.w || root.canvasW;
+        var H = o.h || root.canvasH;
         var pad = 28;
         var step = 24;
         var top = root.spawnTop + pad;
-        var maxX = Math.max(pad, root.canvasW - w - pad);
-        var maxY = Math.max(top, root.canvasH - root.spawnBottom - h - pad);
+        var maxX = Math.max(pad, W - w - pad);
+        var maxY = Math.max(top, H - root.spawnBottom - h - pad);
+        var taken = [];
+        for (var i = 0; i < instances.count; i++) {
+            var e = instances.get(i);
+            if (!e.closing && (o.screen === undefined || root.isOnScreen(e, o.screen)))
+                taken.push({
+                "x": e.wx,
+                "y": e.wy,
+                "w": e.bw * e.zoom,
+                "h": e.bh * e.zoom
+            });
+
+        }
+        if (o.avoid)
+            taken.push(o.avoid);
+
         for (var y = top; y <= maxY; y += step) {
             for (var x = pad; x <= maxX; x += step) {
                 var clear = true;
-                for (var i = 0; i < instances.count && clear; i++) {
-                    var e = instances.get(i);
-                    if (x < e.wx + e.bw * e.zoom + 18 && x + w + 18 > e.wx && y < e.wy + e.bh * e.zoom + 18 && y + h + 18 > e.wy)
+                for (var k = 0; k < taken.length && clear; k++) {
+                    var t = taken[k];
+                    if (x < t.x + t.w + 18 && x + w + 18 > t.x && y < t.y + t.h + 18 && y + h + 18 > t.y)
                         clear = false;
 
                 }
@@ -1237,10 +1268,105 @@ Singleton {
             }
         }
         var n = instances.count;
+        var left = o.avoid ? Math.min(maxX, o.avoid.x + o.avoid.w + pad) : pad;
         return ({
-            "x": Math.min(maxX, pad + (n % 8) * 34),
+            "x": Math.min(maxX, left + (n % 8) * 34),
             "y": Math.min(maxY, top + (n % 8) * 34)
         });
+    }
+
+    // a card with no screen of its own follows the main one
+    function isOnScreen(e, name) {
+        if (e.screenName !== "")
+            return e.screenName === name;
+
+        var scr = root.primaryScreen();
+        return scr !== null && scr.name === name;
+    }
+
+    // where a card dragged to nx, ny settles: the screen's edges and centre lines and
+    // the other cards' edges, centres and a gap beside them. `others` are items with
+    // x, y, width, height. gx/gy are the guide lines to draw, -1 for none
+    function snapBox(W, H, w, h, nx, ny, others) {
+        var pad = 20;
+        var gap = 16;
+        var xs = [{
+            "v": pad,
+            "g": pad
+        }, {
+            "v": W - pad - w,
+            "g": W - pad
+        }, {
+            "v": (W - w) / 2,
+            "g": W / 2
+        }];
+        var ys = [{
+            "v": pad,
+            "g": pad
+        }, {
+            "v": H - pad - h,
+            "g": H - pad
+        }, {
+            "v": (H - h) / 2,
+            "g": H / 2
+        }];
+        for (var i = 0; i < others.length; i++) {
+            var f = others[i];
+            xs.push({
+                "v": f.x,
+                "g": f.x
+            }, {
+                "v": f.x + f.width - w,
+                "g": f.x + f.width
+            }, {
+                "v": f.x + (f.width - w) / 2,
+                "g": f.x + f.width / 2
+            }, {
+                "v": f.x + f.width + gap,
+                "g": -1
+            }, {
+                "v": f.x - gap - w,
+                "g": -1
+            });
+            ys.push({
+                "v": f.y,
+                "g": f.y
+            }, {
+                "v": f.y + f.height - h,
+                "g": f.y + f.height
+            }, {
+                "v": f.y + (f.height - h) / 2,
+                "g": f.y + f.height / 2
+            }, {
+                "v": f.y + f.height + gap,
+                "g": -1
+            }, {
+                "v": f.y - gap - h,
+                "g": -1
+            });
+        }
+        var sx = root.nearestSnap(nx, xs);
+        var sy = root.nearestSnap(ny, ys);
+        return ({
+            "x": sx ? sx.v : nx,
+            "y": sy ? sy.v : ny,
+            "gx": sx ? sx.g : -1,
+            "gy": sy ? sy.g : -1
+        });
+    }
+
+    // v is where the edge would land, g is the line to draw when it does
+    function nearestSnap(pos, cands) {
+        var best = null;
+        var bd = 9;
+        for (var i = 0; i < cands.length; i++) {
+            var d = Math.abs(pos - cands[i].v);
+            if (d < bd) {
+                bd = d;
+                best = cands[i];
+            }
+        }
+        return best;
     }
 
     function spawn(typeId, variantId) {
@@ -1249,21 +1375,33 @@ Singleton {
             return "";
 
         var spot = root.freeSpot(v.w, v.h);
+        return root.spawnAt(typeId, v.id, spot.x, spot.y, "", false);
+    }
+
+    // a card at a given spot; `landed` is a drop from the panel, already in place
+    function spawnAt(typeId, variantId, x, y, screenName, landed) {
+        var v = root.variantAt(typeId, variantId);
+        if (!v || root.full)
+            return "";
+
         var uid = "w" + root.nextId;
         root.nextId += 1;
         root.topZ += 1;
+        if (landed === true)
+            root.landingUid = uid;
+
         instances.append({
             "uid": uid,
             "wtype": typeId,
             "wvariant": v.id,
-            "wx": spot.x,
-            "wy": spot.y,
+            "wx": Math.round(x),
+            "wy": Math.round(y),
             "bw": v.w,
             "bh": v.h,
             "pinned": false,
             "zoom": 1,
             "zOrder": root.topZ,
-            "screenName": "",
+            "screenName": screenName || "",
             "optsJson": JSON.stringify(root.defaultOptions(typeId)),
             "closing": false,
             "born": true
@@ -1272,6 +1410,35 @@ Singleton {
         root.save();
         root.spawned(uid);
         return uid;
+    }
+
+    function openPanel(screenName) {
+        var name = screenName || "";
+        if (name === "") {
+            var scr = Monitors.focusedScreen || root.primaryScreen();
+            name = scr ? scr.name : "";
+        }
+        if (name === "")
+            return ;
+
+        // the panel is where widgets are put out, so they come back with it
+        Prefs.widgetsEnabled = true;
+        root.menuUid = "";
+        root.editUid = "";
+        root.clearSelection();
+        root.panelScreen = name;
+    }
+
+    function closePanel() {
+        root.panelScreen = "";
+        root.spotUid = "";
+    }
+
+    function togglePanel(screenName) {
+        if (root.panelOpen)
+            root.closePanel();
+        else
+            root.openPanel(screenName);
     }
 
     function close(uid) {
@@ -1467,6 +1634,25 @@ Singleton {
 
         instances.setProperty(i, "optsJson", JSON.stringify(opts));
         root.save();
+    }
+
+    // a fresh object each time, or the var never signals
+    function select(uid, on) {
+        if ((root.selection[uid] === true) === on)
+            return ;
+
+        var next = Object.assign({}, root.selection);
+        if (on)
+            next[uid] = true;
+        else
+            delete next[uid];
+        root.selection = next;
+    }
+
+    function clearSelection() {
+        if (Object.keys(root.selection).length > 0)
+            root.selection = ({});
+
     }
 
     function raise(uid) {
@@ -1823,6 +2009,7 @@ Singleton {
     function arrange(plan) {
         root.menuUid = "";
         root.editUid = "";
+        root.clearSelection();
         var live = [];
         for (var i = 0; i < instances.count; i++) {
             var r = instances.get(i);

@@ -74,7 +74,7 @@ Column {
             text: screenPick.running ? "Picking..." : "Pick from screen"
             enabled: !screenPick.running
             // eyedropper
-            iconPath: "M19.35 11.72 17.22 13.85 15.81 12.43 8.1 20.14 3.5 22 2 20.5 3.86 15.9 11.57 8.19 10.15 6.78 12.28 4.65zM16.76 3c.39-.39 1.02-.39 1.41 0l2.83 2.83c.39.39.39 1.02 0 1.41l-1.42 1.42-4.24-4.24z"
+            iconPath: "colorize"
             onClicked: {
                 // no -q: in hyprpicker it silences the colour itself too
                 screenPick.command = ["hyprpicker", "-f", "hex", "-b", "-l"];

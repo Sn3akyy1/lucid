@@ -24,10 +24,9 @@ Item {
     property color pickFill: Theme.secondaryContainer
     property color pickInk: Theme.fgSecondaryContainer
     property color markColor: Theme.tertiary
-    readonly property bool isCurrent: {
-        const n = Loc.now();
-        return month.year === n.getFullYear() && month.monthIndex === n.getMonth();
-    }
+    // this month as year * 12 + month, moved on by the day tick
+    property int thisMonth: Loc.now().getFullYear() * 12 + Loc.now().getMonth()
+    readonly property bool isCurrent: month.year * 12 + month.monthIndex === month.thisMonth
     readonly property var weekdays: month.mondayFirst ? ["M", "T", "W", "T", "F", "S", "S"] : ["S", "M", "T", "W", "T", "F", "S"]
     readonly property var cells: {
         Agenda.checkedDay;
@@ -78,6 +77,24 @@ Item {
 
     implicitWidth: month.cell * 7
     implicitHeight: (month.showHeader ? head.height + 6 : 0) + weekRow.height + month.cell * 6
+
+    // a view left on this month follows midnight into the next one
+    Connections {
+        function onCheckedDayChanged() {
+            const n = Loc.now();
+            const now = n.getFullYear() * 12 + n.getMonth();
+            if (now === month.thisMonth)
+                return;
+
+            if (month.isCurrent) {
+                month.year = n.getFullYear();
+                month.monthIndex = n.getMonth();
+            }
+            month.thisMonth = now;
+        }
+
+        target: Agenda
+    }
 
     NumberAnimation {
         id: slideIn
@@ -311,7 +328,7 @@ Item {
                             weight: c.modelData.today || c.isSelected ? 650 : 440
                             rounded: c.modelData.today ? 100 : 0
                             color: c.modelData.today ? month.fgAccent : (c.isSelected ? month.pickInk : month.ink)
-                            opacity: c.modelData.other ? 0.35 : 1
+                            opacity: c.modelData.other && !c.modelData.today ? 0.35 : 1
                             text: c.modelData.day
                         }
 

@@ -67,18 +67,7 @@ Singleton {
         return "Speed and battery life kept in step";
     }
 
-    // a bolt, a leaf and a gauge
-    function icon(p) {
-        if (p === PowerProfile.Performance)
-            return "M13 2 4 14h7l-1 8 9-12h-7l1-8Z";
-
-        if (p === PowerProfile.PowerSaver)
-            return "M20 4C11 4 4 8 4 16c0 1.1.2 2.1.5 3L3 20.5 4.4 22l1.6-1.6c.9.4 2 .6 3 .6 8 0 11-8 11-17Z";
-
-        return "M12 4A10 10 0 0 0 2 14a9.9 9.9 0 0 0 1.35 5h17.3A9.9 9.9 0 0 0 22 14 10 10 0 0 0 12 4Zm1.41 11.41a2 2 0 1 1-2.82-2.82L17 9Z";
-    }
-
-    // the same three as material symbol names, for the Icon surfaces
+    // a bolt, a leaf and a gauge, as material symbol names
     function symbol(p) {
         if (p === PowerProfile.Performance)
             return "bolt";

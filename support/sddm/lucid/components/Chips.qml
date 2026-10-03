@@ -1,30 +1,56 @@
 import QtQuick
 
 // the glance chips. a greeter has no session to read wifi or battery out of,
-// so this slot carries the two choices sddm actually offers: who is logging
-// in, and into what
+// so the group carries what sddm does know: the machine, and the keymap. one
+// connected group like the lock's, round at its ends and tight in between
 Row {
     id: chips
 
-    spacing: 8
+    readonly property var layouts: keyboard.layouts || []
+    readonly property bool canCycle: chips.layouts.length > 1
+    readonly property string layoutName: {
+        var l = chips.layouts[keyboard.currentLayout];
+        if (!l)
+            return "";
+
+        return l.longName !== undefined && l.longName !== "" ? l.longName : String(l.shortName || "").toUpperCase();
+    }
+
+    spacing: 3
 
     component Chip: Rectangle {
         id: chip
 
         property string label: ""
         property string glyph: ""
-        property bool interactive: true
+        property bool interactive: false
+        property bool lead: false
+        property bool tail: false
 
         signal activated()
 
-        implicitWidth: row.implicitWidth + 28
-        implicitHeight: 36
-        radius: 999
-        color: hover.hovered && chip.interactive ? Theme.cardHigh : Theme.card
+        implicitWidth: row.implicitWidth + 32
+        implicitHeight: 40
+        color: Theme.card
+        topLeftRadius: chip.lead ? height / 2 : Theme.shapeSm
+        bottomLeftRadius: chip.lead ? height / 2 : Theme.shapeSm
+        topRightRadius: chip.tail ? height / 2 : Theme.shapeSm
+        bottomRightRadius: chip.tail ? height / 2 : Theme.shapeSm
 
-        Behavior on color {
-            ColorAnimation {
-                duration: Theme.ms(160)
+        Rectangle {
+            anchors.fill: parent
+            topLeftRadius: parent.topLeftRadius
+            bottomLeftRadius: parent.bottomLeftRadius
+            topRightRadius: parent.topRightRadius
+            bottomRightRadius: parent.bottomRightRadius
+            color: Theme.text
+            opacity: tap.pressed ? Theme.statePressed : (hover.hovered ? Theme.stateHover : 0)
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Theme.ms(120)
+                }
+
             }
 
         }
@@ -33,12 +59,12 @@ Row {
             id: row
 
             anchors.centerIn: parent
-            spacing: 7
+            spacing: 9
 
             Glyph {
                 anchors.verticalCenter: parent.verticalCenter
                 name: chip.glyph
-                size: 15
+                size: 18
                 color: Theme.subtext
                 visible: chip.glyph !== ""
             }
@@ -46,9 +72,10 @@ Row {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: chip.label
-                color: Theme.subtext
+                color: Theme.text
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontLabelSm
+                font.pixelSize: Theme.fontLabelLg
+                font.variableAxes: Theme.axes(Theme.fontLabelLg, 520, 0)
                 font.weight: Font.Medium
             }
 
@@ -63,25 +90,31 @@ Row {
         }
 
         TapHandler {
+            id: tap
+
             enabled: chip.interactive
             onTapped: chip.activated()
         }
 
     }
 
-    // only worth offering when there is more than one of them
     Chip {
-        label: Lock.displayName
-        glyph: "user"
-        visible: Lock.accounts.length > 1
-        onActivated: Lock.pick((Lock.index + 1) % Lock.accounts.length)
+        lead: true
+        tail: !chips.canCycle
+        glyph: "host"
+        label: sddm.hostName
+        visible: sddm.hostName !== ""
     }
 
+    // one tap per layout, round and round
     Chip {
-        label: Lock.sessionName
-        glyph: "apps"
-        visible: Lock.sessions.length > 1
-        onActivated: Lock.sessionIndex = (Lock.sessionIndex + 1) % Lock.sessions.length
+        lead: sddm.hostName === ""
+        tail: true
+        glyph: "keyboard"
+        label: chips.layoutName
+        interactive: true
+        visible: chips.canCycle
+        onActivated: keyboard.currentLayout = (keyboard.currentLayout + 1) % chips.layouts.length
     }
 
 }

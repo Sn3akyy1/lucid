@@ -243,7 +243,7 @@ Item {
             size: 42
             variant: "filled"
             enabled: tile.draft.trim() !== ""
-            iconPath: "M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17Z"
+            iconPath: "check"
             onClicked: tile.commit()
         }
 

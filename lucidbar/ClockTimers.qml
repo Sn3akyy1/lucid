@@ -26,6 +26,13 @@ Item {
     }
     readonly property real remainMs: page.focused ? Chrono.remaining(page.focused) : page.setup * 1000
     readonly property real totalMs: page.focused ? page.focused.total : page.setup * 1000
+    readonly property bool shown: page.visible && (!page.host || page.host.expanded)
+
+    // 50 min, 1 h 15 min
+    function spanText(ms) {
+        const m = Math.round(ms / 60000);
+        return m >= 60 ? Math.floor(m / 60) + " h" + (m % 60 ? " " + (m % 60) + " min" : "") : m + " min";
+    }
 
     function nudgeSetup(sec) {
         page.setup = Math.max(10, Math.min(24 * 3600, page.setup + sec));
@@ -37,6 +44,83 @@ Item {
     }
 
     implicitHeight: 404
+    onShownChanged: {
+        if (page.shown)
+            Chrono.rollDay();
+        else
+            pomo.tuning = false;
+    }
+
+    component Stepper: Item {
+        id: st
+
+        property string label: ""
+        property int value: 0
+        property int from: 0
+        property int to: 10
+        property int step: 1
+        // what a value of 0 reads as, when it means something other than none
+        property string zeroText: ""
+
+        signal moved(int v)
+
+        function nudge(by) {
+            const v = Math.max(st.from, Math.min(st.to, st.value + by * st.step));
+            if (v !== st.value)
+                st.moved(v);
+
+        }
+
+        implicitHeight: 30
+
+        LText {
+            anchors.verticalCenter: parent.verticalCenter
+            role: "bodyMedium"
+            text: st.label
+        }
+
+        Row {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+
+            IconButton {
+                anchors.verticalCenter: parent.verticalCenter
+                size: "xs"
+                widthKind: "narrow"
+                icon: "remove"
+                disabled: st.value <= st.from
+                onClicked: st.nudge(-1)
+            }
+
+            LText {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 30
+                horizontalAlignment: Text.AlignHCenter
+                role: "titleSmall"
+                weight: 640
+                rounded: 100
+                tabular: true
+                text: st.value === 0 && st.zeroText !== "" ? st.zeroText : String(st.value)
+            }
+
+            IconButton {
+                anchors.verticalCenter: parent.verticalCenter
+                size: "xs"
+                widthKind: "narrow"
+                icon: "add"
+                disabled: st.value >= st.to
+                onClicked: st.nudge(1)
+            }
+
+        }
+
+        WheelHandler {
+            onWheel: (e) => {
+                st.nudge(e.angleDelta.y > 0 ? 1 : -1);
+            }
+        }
+
+    }
 
     Rectangle {
         id: dialCard
@@ -230,16 +314,23 @@ Item {
     Rectangle {
         id: pomo
 
-        readonly property color ink: Chrono.pomoActive ? Theme.fgTertiaryContainer : Theme.text
+        // opened over the timer list, showing its options
+        property bool tuning: false
+        // 0 closed .. 1 open
+        readonly property real t: Math.max(0, Math.min(1, (pomo.height - 176) / Math.max(1, page.height - 176)))
+        readonly property bool tinted: Chrono.pomoActive && !pomo.tuning
+        readonly property color ink: pomo.tinted ? Theme.fgTertiaryContainer : Theme.text
 
         anchors.left: dialCard.right
         anchors.leftMargin: 12
         anchors.right: parent.right
-        height: 176
+        height: pomo.tuning ? page.height : 176
         radius: Theme.shapeXl
-        color: Chrono.pomoActive ? Theme.withBlur(Theme.tertiaryContainer) : Theme.withBlur(Theme.surfaceHigh)
+        color: pomo.tinted ? Theme.withBlur(Theme.tertiaryContainer) : Theme.withBlur(Theme.surfaceHigh)
 
         Column {
+            id: pomoHead
+
             x: 20
             y: 16
             spacing: 2
@@ -271,13 +362,177 @@ Item {
                 text: Prefs.pomodoroFocus + " min focus · " + Prefs.pomodoroShort + " min break · long break every " + Prefs.pomodoroRounds
             }
 
+            LText {
+                visible: Prefs.pomodoroGoal > 0 || Chrono.pomoToday > 0
+                role: "bodySmall"
+                weight: Chrono.pomoGoalMet ? 600 : 400
+                color: Theme.alpha(pomo.ink, Chrono.pomoGoalMet ? 1 : 0.75)
+                text: {
+                    const n = Chrono.pomoToday;
+                    const bits = [Prefs.pomodoroGoal > 0 ? n + " of " + Prefs.pomodoroGoal + " today" : n + (n === 1 ? " session today" : " sessions today")];
+                    if (Chrono.pomoTodayMs > 0)
+                        bits.push(page.spanText(Chrono.pomoTodayMs) + " focused");
+
+                    return bits.join(" · ");
+                }
+            }
+
+        }
+
+        IconButton {
+            anchors.right: parent.right
+            anchors.rightMargin: 10
+            y: 10
+            icon: pomo.tuning ? "close" : "tune"
+            tintOverride: pomo.ink
+            onClicked: pomo.tuning = !pomo.tuning
+        }
+
+        Item {
+            anchors.top: pomoHead.bottom
+            anchors.topMargin: 10
+            anchors.bottom: pomoCount.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: 20
+            anchors.rightMargin: 20
+            visible: opacity > 0
+            opacity: Math.max(0, (pomo.t - 0.4) / 0.6)
+            clip: true
+
+            Column {
+                width: parent.width
+                spacing: 8
+
+                Row {
+                    spacing: 6
+
+                    Repeater {
+                        model: Chrono.pomoPresets
+
+                        Chip {
+                            required property var modelData
+
+                            kind: "filter"
+                            selected: Chrono.pomoPreset === modelData.key
+                            text: modelData.label
+                            onClicked: Chrono.pomoUsePreset(modelData.key)
+                        }
+
+                    }
+
+                }
+
+                Grid {
+                    id: lengths
+
+                    readonly property real cell: (width - columnSpacing) / 2
+
+                    width: parent.width
+                    columns: 2
+                    columnSpacing: 16
+                    rowSpacing: 2
+
+                    Stepper {
+                        width: lengths.cell
+                        label: "Focus"
+                        from: 5
+                        to: 90
+                        step: 5
+                        value: Prefs.pomodoroFocus
+                        onMoved: (v) => {
+                            return Prefs.pomodoroFocus = v;
+                        }
+                    }
+
+                    Stepper {
+                        width: lengths.cell
+                        label: "Rounds"
+                        from: 2
+                        to: 8
+                        value: Prefs.pomodoroRounds
+                        onMoved: (v) => {
+                            return Prefs.pomodoroRounds = v;
+                        }
+                    }
+
+                    Stepper {
+                        width: lengths.cell
+                        label: "Break"
+                        from: 1
+                        to: 30
+                        value: Prefs.pomodoroShort
+                        onMoved: (v) => {
+                            return Prefs.pomodoroShort = v;
+                        }
+                    }
+
+                    Stepper {
+                        width: lengths.cell
+                        label: "Long break"
+                        from: 5
+                        to: 60
+                        step: 5
+                        value: Prefs.pomodoroLong
+                        onMoved: (v) => {
+                            return Prefs.pomodoroLong = v;
+                        }
+                    }
+
+                    Stepper {
+                        width: lengths.cell
+                        label: "Daily goal"
+                        to: 16
+                        zeroText: "Off"
+                        value: Prefs.pomodoroGoal
+                        onMoved: (v) => {
+                            return Prefs.pomodoroGoal = v;
+                        }
+                    }
+
+                }
+
+                Flow {
+                    width: parent.width
+                    spacing: 6
+
+                    Chip {
+                        text: "Auto breaks"
+                        selected: Prefs.pomodoroAutoStart
+                        onClicked: Prefs.pomodoroAutoStart = !Prefs.pomodoroAutoStart
+                    }
+
+                    Chip {
+                        text: "Auto focus"
+                        selected: Prefs.pomodoroAutoFocus
+                        onClicked: Prefs.pomodoroAutoFocus = !Prefs.pomodoroAutoFocus
+                    }
+
+                    Chip {
+                        text: "Repeat sets"
+                        selected: Prefs.pomodoroRepeat
+                        onClicked: Prefs.pomodoroRepeat = !Prefs.pomodoroRepeat
+                    }
+
+                    Chip {
+                        text: "Do not disturb"
+                        selected: Prefs.pomodoroSilence
+                        onClicked: Prefs.pomodoroSilence = !Prefs.pomodoroSilence
+                    }
+
+                }
+
+            }
+
         }
 
         LText {
+            id: pomoCount
+
             x: 20
             anchors.bottom: dots.top
             anchors.bottomMargin: 6
-            size: Theme.fs(42)
+            size: Theme.fs(text.length > 5 ? 34 : 42)
             weight: 620
             rounded: 100
             tabular: true
@@ -332,6 +587,14 @@ Item {
             IconButton {
                 visible: Chrono.pomoActive
                 anchors.verticalCenter: parent.verticalCenter
+                icon: "more_time"
+                tintOverride: pomo.ink
+                onClicked: Chrono.pomoExtend(60)
+            }
+
+            IconButton {
+                visible: Chrono.pomoActive
+                anchors.verticalCenter: parent.verticalCenter
                 icon: "stop"
                 tintOverride: pomo.ink
                 onClicked: Chrono.pomoStop()
@@ -356,6 +619,15 @@ Item {
 
         }
 
+        Behavior on height {
+            NumberAnimation {
+                duration: Theme.durDefaultSpatial
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.curveStandard
+            }
+
+        }
+
         Behavior on color {
             ColorAnimation {
                 duration: Theme.durSlowEffects
@@ -372,6 +644,8 @@ Item {
         anchors.top: pomo.bottom
         anchors.topMargin: 12
         anchors.bottom: parent.bottom
+        visible: opacity > 0
+        opacity: 1 - Math.min(1, pomo.t * 2.5)
         radius: Theme.shapeXl
         color: Theme.withBlur(Theme.surfaceHigh)
 

@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Bluetooth
 import qs
+import qs.lucidui
 
 Column {
     id: dev
@@ -201,13 +202,11 @@ Column {
 
             }
 
-            Text {
+            Icon {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "▾"
+                name: "expand_more"
+                size: 18
                 color: Theme.subtext
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontBody
-                font.variableAxes: Theme.axes(Theme.fontBody, 420, 0)
                 rotation: dev.expanded ? 180 : 0
 
                 Behavior on rotation {

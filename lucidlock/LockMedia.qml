@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell.Services.Mpris
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 // whatever is playing, with just enough control to skip a track without
 // unlocking the machine
@@ -36,7 +37,7 @@ Rectangle {
     visible: media.player !== null
     radius: Theme.shapeXl
     color: Lockscreen.card
-    implicitHeight: 116
+    implicitHeight: 124
 
     Connections {
         function onPositionChanged() {
@@ -73,15 +74,15 @@ Rectangle {
         anchors.left: parent.left
         anchors.leftMargin: 18
         anchors.verticalCenter: parent.verticalCenter
-        width: 64
-        height: 64
-        radius: Theme.shapeMd
+        width: 80
+        height: 80
+        radius: Theme.shapeLg
         color: Theme.accentContainer
 
         LockGlyph {
             anchors.centerIn: parent
             name: "music"
-            size: 26
+            size: 30
             color: Theme.fgAccentContainer
             visible: cover.status !== Image.Ready
         }
@@ -92,8 +93,8 @@ Rectangle {
             anchors.fill: parent
             source: media.player && media.player.trackArtUrl ? media.player.trackArtUrl : ""
             fillMode: Image.PreserveAspectCrop
-            sourceSize.width: 128
-            sourceSize.height: 128
+            sourceSize.width: 160
+            sourceSize.height: 160
             asynchronous: true
         }
 
@@ -167,59 +168,54 @@ Rectangle {
 
         Item {
             width: parent.width
-            height: 9
+            height: 6
             visible: media.length > 0
         }
 
-        // m3 linear progress: two tracks with a gap, and a stop at the end
-        Item {
-            id: track
-
+        // m3 expressive: the played part rides a wave while the track plays
+        LinearProgress {
             width: parent.width
-            height: 4
+            value: media.progress
+            wavy: true
+            animated: media.playing
+            // livePos already arrives every 50 ms; easing it again only lags
+            valueAnimated: false
+            trackColor: Theme.alpha(Theme.subtext, 0.22)
+            visible: media.length > 0
+        }
+
+        Item {
+            width: parent.width
+            height: times.implicitHeight
             visible: media.length > 0
 
-            Rectangle {
-                width: Math.max(0, track.width * media.progress - 3)
-                height: parent.height
-                radius: 2
-                color: Theme.accent
+            Text {
+                id: times
+
+                text: media.fmt(media.livePos)
+                color: Theme.subtextDim
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontLabelSm
+                font.variableAxes: Theme.axes(Theme.fontLabelSm, 480, 0)
+                font.features: ({
+                    "tnum": 1
+                })
             }
 
-            Rectangle {
-                x: track.width * media.progress + 3
-                width: Math.max(0, track.width - x - 6)
-                height: parent.height
-                radius: 2
-                color: Theme.alpha(Theme.outlineStrong, 0.6)
-            }
-
-            Rectangle {
+            Text {
                 anchors.right: parent.right
-                width: 4
-                height: 4
-                radius: 2
-                color: Theme.accent
+                text: media.fmt(media.length)
+                color: Theme.subtextDim
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontLabelSm
+                font.variableAxes: Theme.axes(Theme.fontLabelSm, 480, 0)
+                font.features: ({
+                    "tnum": 1
+                })
             }
 
-        }
-
-        Item {
-            width: parent.width
-            height: 4
-            visible: media.length > 0
-        }
-
-        Text {
-            text: media.length > 0 ? media.fmt(media.livePos) + " / " + media.fmt(media.length) : ""
-            color: Theme.subtextDim
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontLabelSm
-            font.variableAxes: Theme.axes(Theme.fontLabelSm, 420, 0)
-            visible: media.length > 0
         }
 
     }
-
 
 }

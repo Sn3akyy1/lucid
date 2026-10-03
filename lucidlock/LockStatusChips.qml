@@ -1,11 +1,15 @@
 import QtQuick
 import qs
 
-// the glanceable half of a status bar, for a screen that has no bar
+// the glanceable half of a status bar, for a screen that has no bar. one
+// connected group: round at its two ends, tight joins in between
 Row {
     id: chips
 
-    spacing: 10
+    readonly property bool btShown: !!Lockscreen.btAdapter
+    readonly property bool dndShown: Notifs.dnd
+
+    spacing: 3
 
     component Chip: Rectangle {
         id: chip
@@ -13,12 +17,17 @@ Row {
         property string glyph: ""
         property string label: ""
         property color tone: Theme.subtext
-        default property alias extra: slot.data
+        // which ends of the group this chip closes
+        property bool lead: false
+        property bool tail: false
 
-        height: 36
-        radius: 999
+        height: 40
+        width: content.implicitWidth + 32
         color: Lockscreen.card
-        width: content.implicitWidth + 30
+        topLeftRadius: chip.lead ? height / 2 : Theme.shapeSm
+        bottomLeftRadius: chip.lead ? height / 2 : Theme.shapeSm
+        topRightRadius: chip.tail ? height / 2 : Theme.shapeSm
+        bottomRightRadius: chip.tail ? height / 2 : Theme.shapeSm
 
         Row {
             id: content
@@ -26,21 +35,11 @@ Row {
             anchors.centerIn: parent
             spacing: 9
 
-            Item {
-                id: slot
-
-                anchors.verticalCenter: parent.verticalCenter
-                width: childrenRect.width
-                height: 18
-                visible: chip.glyph === ""
-            }
-
             LockGlyph {
                 anchors.verticalCenter: parent.verticalCenter
                 name: chip.glyph
-                size: 17
+                size: 18
                 color: chip.tone
-                visible: chip.glyph !== ""
             }
 
             Text {
@@ -59,85 +58,41 @@ Row {
 
     Chip {
         visible: Lockscreen.hasBattery
-        label: Lockscreen.batteryPercent + "%"
-        tone: Lockscreen.batteryLow ? Theme.error : Theme.subtext
+        lead: true
+        // the battery symbol that matches the level, in eighths like the bar's
+        glyph: {
+            if (Lockscreen.charging)
+                return "battery_charging_full";
 
-        // a real gauge reads faster than a glyph that never changes
-        Item {
-            anchors.verticalCenter: parent.verticalCenter
-            width: 26
-            height: 14
-
-            Rectangle {
-                id: shell
-
-                width: 22
-                height: 13
-                radius: 4
-                color: "transparent"
-                border.width: 1.5
-                border.color: Lockscreen.batteryLow ? Theme.error : Theme.subtext
-
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 2.5
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Math.max(2, (parent.width - 5) * Lockscreen.batteryPercent / 100)
-                    height: parent.height - 5
-                    radius: 2
-                    color: Lockscreen.batteryLow ? Theme.error : (Lockscreen.charging ? Theme.success : Theme.text)
-
-                    Behavior on width {
-                        NumberAnimation {
-                            duration: Theme.ms(400)
-                            easing.type: Easing.OutCubic
-                        }
-
-                    }
-
-                }
-
-            }
-
-            Rectangle {
-                anchors.left: shell.right
-                anchors.verticalCenter: shell.verticalCenter
-                width: 2
-                height: 5
-                radius: 1
-                color: Lockscreen.batteryLow ? Theme.error : Theme.subtext
-            }
-
-            LockGlyph {
-                anchors.centerIn: shell
-                name: "batteryCharge"
-                size: 13
-                color: Theme.fgSuccess
-                visible: Lockscreen.charging
-            }
-
+            const steps = ["battery_0_bar", "battery_1_bar", "battery_2_bar", "battery_3_bar", "battery_4_bar", "battery_5_bar", "battery_6_bar", "battery_full"];
+            return steps[Math.max(0, Math.min(7, Math.floor(Lockscreen.batteryPercent / 100 * 8)))];
         }
-
+        label: Lockscreen.batteryPercent + "%"
+        tone: Lockscreen.batteryLow ? Theme.error : (Lockscreen.charging ? Theme.success : Theme.subtext)
     }
 
     Chip {
+        lead: !Lockscreen.hasBattery
+        tail: !chips.btShown && !chips.dndShown
         glyph: Lockscreen.netGlyph
         label: Lockscreen.netLabel
         tone: (Lockscreen.ethernet || Lockscreen.wifiUp) ? Theme.accent : Theme.subtextDim
     }
 
     Chip {
+        tail: !chips.dndShown
         glyph: Lockscreen.btOn ? "bluetooth" : "bluetoothOff"
         label: Lockscreen.btLabel
         tone: Lockscreen.btDevices.length > 0 ? Theme.accent : Theme.subtextDim
-        visible: !!Lockscreen.btAdapter
+        visible: chips.btShown
     }
 
     Chip {
+        tail: true
         glyph: "bellOff"
         label: "Do not disturb"
         tone: Theme.warning
-        visible: Notifs.dnd
+        visible: chips.dndShown
     }
 
 }

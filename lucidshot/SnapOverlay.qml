@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -30,6 +29,10 @@ PanelWindow {
     property string currentCrop: ""
     property bool toolbarHidden: false
     property bool hiddenRecording: false
+    // mapped through the exit fade after open drops
+    property bool closing: false
+    property double unmappedAt: 0
+    readonly property bool toolbarWanted: open && contentVisible && !toolbarHidden
 
 
     property real selStartX: 0
@@ -64,7 +67,7 @@ PanelWindow {
 
     color: "transparent"
     exclusiveZone: -1
-    visible: open
+    visible: open || closing
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
@@ -85,6 +88,119 @@ PanelWindow {
 
     Region {
         id: emptyMask
+    }
+
+    onVisibleChanged: {
+        if (!snapWindow.visible)
+            snapWindow.unmappedAt = Date.now();
+
+    }
+
+    // a capture hides everything first, so it never lingers; a dismissal fades
+    onOpenChanged: {
+        if (snapWindow.open) {
+            sceneFade.stop();
+            snapWindow.closing = false;
+            snapWindow.contentItem.opacity = 1;
+        } else if (snapWindow.contentVisible && !snapWindow.toolbarHidden) {
+            snapWindow.closing = true;
+            snapWindow.mask = emptyMask;
+            sceneFade.restart();
+        }
+    }
+
+    onToolbarWantedChanged: {
+        toolbarEnter.stop();
+        toolbarExit.stop();
+        if (!snapWindow.animateContent) {
+            toolbar.opacity = snapWindow.toolbarWanted ? 1 : 0;
+            toolbar.scale = 1;
+            toolbar.rise = 0;
+        } else if (snapWindow.toolbarWanted) {
+            if (toolbar.opacity === 0) {
+                toolbar.scale = 0.9;
+                toolbar.rise = -18;
+            }
+            toolbarEnter.restart();
+        } else {
+            toolbarExit.restart();
+        }
+    }
+
+    NumberAnimation {
+        id: sceneFade
+
+        target: snapWindow.contentItem
+        property: "opacity"
+        to: 0
+        duration: Theme.durExit
+        easing.type: Easing.Bezier
+        easing.bezierCurve: Theme.easeEmphasizedAccel
+        onFinished: snapWindow.closing = false
+    }
+
+    ParallelAnimation {
+        id: toolbarEnter
+
+        NumberAnimation {
+            target: toolbar
+            property: "opacity"
+            to: 1
+            duration: Theme.durEnter
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.easeEmphasizedDecel
+        }
+
+        NumberAnimation {
+            target: toolbar
+            property: "scale"
+            to: 1
+            duration: Theme.durEnter
+            easing.type: Easing.OutBack
+            easing.overshoot: Theme.emphasizedOvershoot
+        }
+
+        NumberAnimation {
+            target: toolbar
+            property: "rise"
+            to: 0
+            duration: Theme.durEnter
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.easeEmphasizedDecel
+        }
+
+    }
+
+    ParallelAnimation {
+        id: toolbarExit
+
+        NumberAnimation {
+            target: toolbar
+            property: "opacity"
+            to: 0
+            duration: Theme.durExit
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.easeEmphasizedAccel
+        }
+
+        NumberAnimation {
+            target: toolbar
+            property: "scale"
+            to: 0.94
+            duration: Theme.durExit
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.easeEmphasizedAccel
+        }
+
+        NumberAnimation {
+            target: toolbar
+            property: "rise"
+            to: -12
+            duration: Theme.durExit
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.easeEmphasizedAccel
+        }
+
     }
 
     onDesktopExposedChanged: {
@@ -375,6 +491,18 @@ function stopRecordingBackend() {
             return;
         if (snapWindow.open && !snapWindow.toolbarHidden)
             return;
+        // the last overlay, hyprland's own fade included, has to be off the
+        // screen before grim runs, or the freeze photographs it
+        if (snapWindow.closing) {
+            sceneFade.stop();
+            snapWindow.closing = false;
+        }
+        var settle = 220 - (Date.now() - snapWindow.unmappedAt);
+        if (!snapWindow.open && settle > 0) {
+            settleDelay.interval = Math.ceil(settle);
+            settleDelay.restart();
+            return;
+        }
         if (snapWindow.shotPreview && snapWindow.shotPreview.onScreen) {
             snapWindow.shotPreview.hideNow();
             clearDelay.restart();
@@ -395,11 +523,18 @@ function stopRecordingBackend() {
         onTriggered: snapWindow.beginOpen()
     }
 
+    Timer {
+        id: settleDelay
+
+        onTriggered: snapWindow.beginOpen()
+    }
+
     function resetToFreshSession() {
         // a hidden recording is still running, so reopening has to land back on it
         var mode = snapWindow.hiddenRecording ? "video" : snapWindow.openMode;
-        snapWindow.contentVisible = true;
+        // animate first, so the toolbar's entrance plays
         snapWindow.animateContent = true;
+        snapWindow.contentVisible = true;
         snapWindow.activeTool = mode === "video" ? "fullscreen" : "select";
         snapWindow.pendingAction = "";
         snapWindow.captureMode = mode;
@@ -797,14 +932,21 @@ function stopRecordingBackend() {
             x: (snapWindow.width - width) / 2
             y: toolbar.restY
 
+            // the entrance drops it this far from above
+            property real rise: 0
+
             radius: height / 2
             color: Theme.bgOpaque
             border.color: Theme.alpha(Theme.text, toolbarHover.hovered ? 0.12 : 0.07)
             border.width: 1
             width: toolRow.implicitWidth + 24
             height: 60
-            opacity: (snapWindow.contentVisible && !snapWindow.toolbarHidden) ? 1 : 0
+            opacity: 0
             visible: opacity > 0
+
+            transform: Translate {
+                y: toolbar.rise
+            }
 
             HoverHandler {
                 id: toolbarHover
@@ -815,13 +957,6 @@ function stopRecordingBackend() {
             Behavior on border.color {
                 ColorAnimation {
                     duration: Theme.ms(150)
-                }
-            }
-
-            Behavior on opacity {
-                enabled: snapWindow.animateContent
-                NumberAnimation {
-                    duration: Theme.ms(120)
                 }
             }
 
@@ -1115,42 +1250,12 @@ function stopRecordingBackend() {
                 }
 
                 Icon {
-                    visible: /^[a-z0-9_]+$/.test(action.iconPath)
                     anchors.centerIn: parent
-                    name: visible ? action.iconPath : ""
+                    name: action.iconPath
                     size: 22
                     fill: action.active ? 1 : 0
                     opacity: action.disabled ? 0.35 : 1
                     color: action.active ? Theme.fgAccent : (hover.hovered ? Theme.text : Theme.subtext)
-                }
-
-                Shape {
-                    visible: !/^[a-z0-9_]+$/.test(action.iconPath)
-                    width: 20
-                    height: 20
-                    anchors.centerIn: parent
-                    opacity: action.disabled ? 0.35 : 1
-                    preferredRendererType: Shape.CurveRenderer
-
-                    ShapePath {
-                        fillColor: action.active ? Theme.fgAccent : (hover.hovered ? Theme.accent : Theme.subtext)
-                        strokeWidth: 0
-
-                        PathSvg {
-                            path: action.iconPath
-                        }
-
-                        Behavior on fillColor {
-                            ColorAnimation {
-                                duration: Theme.ms(120)
-                            }
-                        }
-                    }
-
-                    transform: Scale {
-                        xScale: 20 / 24
-                        yScale: 20 / 24
-                    }
                 }
             }
 
@@ -1263,34 +1368,6 @@ function stopRecordingBackend() {
                     size: 18
                     fill: seg.active ? 1 : 0
                     color: seg.active ? Theme.fgAccent : Theme.subtext
-                }
-
-                Shape {
-                    visible: false
-                    width: 14
-                    height: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    preferredRendererType: Shape.CurveRenderer
-
-                    ShapePath {
-                        fillColor: seg.active ? Theme.fgAccent : Theme.subtext
-                        strokeWidth: 0
-
-                        PathSvg {
-                            path: seg.iconPath
-                        }
-
-                        Behavior on fillColor {
-                            ColorAnimation {
-                                duration: Theme.ms(120)
-                            }
-                        }
-                    }
-
-                    transform: Scale {
-                        xScale: 14 / 24
-                        yScale: 14 / 24
-                    }
                 }
 
                 Text {

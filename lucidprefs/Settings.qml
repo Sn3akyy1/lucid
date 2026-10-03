@@ -90,6 +90,57 @@ FloatingWindow {
         if (win.page !== "search" && railSearch.text !== "")
             railSearch.clear();
 
+        win.record();
+    }
+
+    // pages visited since the window opened; search results never count
+    property var backStack: []
+    property var forwardStack: []
+    property string lastPage: ""
+    property bool stepping: false
+    readonly property bool canGoBack: win.page === "search" || win.backStack.length > 0
+    readonly property bool canGoForward: win.forwardStack.length > 0
+
+    function record() {
+        if (!win.visible || win.page === "search" || win.page === win.lastPage)
+            return ;
+
+        if (!win.stepping && win.lastPage !== "") {
+            win.backStack = win.backStack.concat([win.lastPage]).slice(-50);
+            win.forwardStack = [];
+        }
+        win.lastPage = win.page;
+    }
+
+    function step(p) {
+        win.stepping = true;
+        win.page = p;
+        win.stepping = false;
+    }
+
+    // backing out of search results just clears the search
+    function goBack() {
+        if (win.page === "search") {
+            railSearch.clear();
+            return ;
+        }
+        const b = win.backStack;
+        if (b.length === 0)
+            return ;
+
+        win.backStack = b.slice(0, -1);
+        win.forwardStack = win.forwardStack.concat([win.lastPage]);
+        win.step(b[b.length - 1]);
+    }
+
+    function goForward() {
+        const f = win.forwardStack;
+        if (f.length === 0)
+            return ;
+
+        win.forwardStack = f.slice(0, -1);
+        win.backStack = win.backStack.concat([win.lastPage]);
+        win.step(f[f.length - 1]);
     }
 
     // reads the field itself: this runs before the bindings on it catch up
@@ -241,6 +292,9 @@ FloatingWindow {
     }
 
     onVisibleChanged: {
+        win.backStack = [];
+        win.forwardStack = [];
+        win.lastPage = win.page === "search" ? win.searchReturn : win.page;
         if (win.visible) {
             // opened with a search already typed (the ipc call): stay in the field
             if (railSearch.text !== "")
@@ -542,13 +596,34 @@ FloatingWindow {
             if (win.dialogOpen)
                 return ;
 
-            if (event.key === Qt.Key_F && (event.modifiers & Qt.ControlModifier)) {
+            const altOnly = (event.modifiers & Qt.AltModifier) && !(event.modifiers & (Qt.ControlModifier | Qt.ShiftModifier | Qt.MetaModifier));
+            if (event.key === Qt.Key_Back || (altOnly && event.key === Qt.Key_Left)) {
+                win.goBack();
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Forward || (altOnly && event.key === Qt.Key_Right)) {
+                win.goForward();
+                event.accepted = true;
+            } else if (event.key === Qt.Key_F && (event.modifiers & Qt.ControlModifier)) {
                 railSearch.focusInput();
                 event.accepted = true;
             } else if (event.text.length === 1 && event.text.charCodeAt(0) > 32 && event.text.charCodeAt(0) !== 127 && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) {
                 railSearch.focusInput(event.text);
                 event.accepted = true;
             }
+        }
+    }
+
+    // the mouse's side buttons
+    MouseArea {
+        anchors.fill: parent
+        z: 200
+        enabled: !win.dialogOpen
+        acceptedButtons: Qt.BackButton | Qt.ForwardButton
+        onPressed: (mouse) => {
+            if (mouse.button === Qt.BackButton)
+                win.goBack();
+            else
+                win.goForward();
         }
     }
 
@@ -919,7 +994,7 @@ FloatingWindow {
                     destructive: true
                     opacity: 1 - Math.min(1, win.railT * 2)
                     visible: opacity > 0.01
-                    iconPath: "M17.65 6.35A7.958 7.958 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35Z"
+                    iconPath: "refresh"
                     onClicked: Prefs.askReset("Reset every setting?", "Every setting on every page goes back to the value it ships with. Your theme, wallpaper, pinned applications and placed widgets are not touched.", Prefs.resetAllToken)
                 }
 
@@ -1141,6 +1216,17 @@ FloatingWindow {
                         restoreMode: Binding.RestoreNone
                     }
 
+                    // a page with a pageShown property is told when it comes on and off screen
+                    readonly property bool showing: pane.active && win.visible
+
+                    onShowingChanged: {
+                        if (pane.showing)
+                            paneLoader.everActive = true;
+
+                        if (paneLoader.item && paneLoader.item.pageShown !== undefined)
+                            paneLoader.item.pageShown = pane.showing;
+
+                    }
                     onActiveChanged: {
                         if (pane.active) {
                             paneLoader.everActive = true;
@@ -1183,13 +1269,41 @@ FloatingWindow {
                     onPressed: win.startSystemMove()
                 }
 
+                Row {
+                    id: leading
+
+                    anchors.left: parent.left
+                    anchors.leftMargin: 18
+                    anchors.top: parent.top
+                    anchors.topMargin: 13
+                    spacing: 2
+
+                    M3IconButton {
+                        size: 40
+                        iconSize: 21
+                        iconPath: "arrow_back"
+                        enabled: win.canGoBack
+                        onClicked: win.goBack()
+                    }
+
+                    M3IconButton {
+                        size: 40
+                        iconSize: 21
+                        iconPath: "arrow_forward"
+                        enabled: win.canGoForward
+                        onClicked: win.goForward()
+                    }
+
+                }
+
                 Column {
                     id: headText
 
-                    x: 34
+                    // slides in beside the arrows as the bar collapses to one row
+                    x: 34 + (leading.x + leading.width + 14 - 34) * win.collapse
                     // an anchored Column would take its width from children that
                     // in turn bind to it, so measure against the trailing row
-                    width: Math.max(0, trailing.x - 34 - 24)
+                    width: Math.max(0, trailing.x - headText.x - 24)
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 19
                     spacing: 3
@@ -1245,7 +1359,7 @@ FloatingWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         size: 40
                         iconSize: 21
-                        iconPath: "M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"
+                        iconPath: "close"
                         onClicked: win.visible = false
                     }
 

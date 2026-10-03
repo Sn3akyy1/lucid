@@ -1,6 +1,6 @@
 import QtQuick
-import QtQuick.Shapes
 import qs
+import qs.lucidui
 
 // one item of an m3 grouped list: its own container, rounded large where the
 // group ends and small where it meets a neighbour
@@ -206,7 +206,7 @@ Item {
                 enabled: row.resetVisible
                 opacity: row.resetVisible ? 1 : 0
                 visible: opacity > 0.01
-                iconPath: "M17.65 6.35A7.958 7.958 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35Z"
+                iconPath: "refresh"
                 onClicked: Prefs.askReset("Reset " + row.resetTitle.toLowerCase() + "?", row.resetBody, row.resetAction)
 
                 Behavior on width {
@@ -249,31 +249,16 @@ Item {
             visible: row.warning !== ""
             opacity: row.enabled ? 1 : 0.5
 
-            Shape {
+            Icon {
                 id: warnMark
 
                 anchors.left: parent.left
                 anchors.top: parent.top
                 anchors.topMargin: 1
-                width: 15
-                height: 15
-                preferredRendererType: Shape.CurveRenderer
-
-                ShapePath {
-                    strokeWidth: 0
-                    fillColor: Theme.error
-
-                    PathSvg {
-                        path: "M12 2 1 21h22L12 2Zm0 5 7.5 12.9h-15L12 7Zm-1 4v5h2v-5h-2Zm0 6v2h2v-2h-2Z"
-                    }
-
-                }
-
-                transform: Scale {
-                    xScale: 15 / 24
-                    yScale: 15 / 24
-                }
-
+                name: "warning"
+                size: 15
+                fill: 1
+                color: Theme.error
             }
 
             Text {

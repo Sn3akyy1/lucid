@@ -100,7 +100,10 @@ Item {
 
         }
 
+        // only a value from elsewhere glides; the pointer's own is followed outright
         Behavior on x {
+            enabled: !slider.dragging
+
             NumberAnimation {
                 duration: Theme.ms(150)
                 easing.type: Easing.OutCubic
@@ -144,6 +147,8 @@ Item {
             bottomRightRadius: 2
 
             Behavior on width {
+                enabled: !slider.dragging
+
                 NumberAnimation {
                     duration: Theme.ms(150)
                     easing.type: Easing.OutCubic
@@ -165,6 +170,8 @@ Item {
             bottomRightRadius: track.trackHeight / 2
 
             Behavior on x {
+                enabled: !slider.dragging
+
                 NumberAnimation {
                     duration: Theme.ms(150)
                     easing.type: Easing.OutCubic
@@ -173,6 +180,8 @@ Item {
             }
 
             Behavior on width {
+                enabled: !slider.dragging
+
                 NumberAnimation {
                     duration: Theme.ms(150)
                     easing.type: Easing.OutCubic
@@ -231,6 +240,8 @@ Item {
             scale: track.hovering ? 1.12 : 1
 
             Behavior on x {
+                enabled: !slider.dragging
+
                 NumberAnimation {
                     duration: Theme.ms(150)
                     easing.type: Easing.OutCubic

@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.lucidui
 
 Row {
     id: pip
@@ -14,11 +15,20 @@ Row {
 
     Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: pip.charge + "%" + (pip.charging ? " ⚡" : "")
+        text: pip.charge + "%"
         color: pip.low ? Theme.error : Theme.subtext
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontLabel
         font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
+    }
+
+    Icon {
+        anchors.verticalCenter: parent.verticalCenter
+        visible: pip.charging
+        name: "bolt"
+        size: 14
+        fill: 1
+        color: Theme.accent
     }
 
     Rectangle {

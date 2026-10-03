@@ -11,7 +11,7 @@ PanelWindow {
 
     property bool shown: false
     property string iconPath: ""
-    // a nerd font glyph, for the icons that only exist as one (wi-fi)
+    // a single character a script sent in place of an icon
     property string iconGlyph: ""
     property string label: ""
     // a quieter second part, after the label
@@ -45,8 +45,8 @@ PanelWindow {
         "game": "sports_esports",
         "camera": "photo_camera"
     })
-    // m3 snackbars sit on the inverse surface, so they read apart from every panel
-    readonly property color warnTone: Theme.atTone(Theme.cError, Theme.isLight ? 80 : 40)
+    // the same surface as the osd and the panels, so it follows the mode like they do
+    readonly property color warnTone: Theme.error
 
     // entry: { icon, label, detail, warn, swatch, key, ms }. icon is a name from
     // the list above, raw svg path data, or a single glyph
@@ -206,7 +206,7 @@ PanelWindow {
         height: toastWindow.pillHeight
         width: leadIcon.width + toastWindow.iconGap + labelText.width + (detailText.visible ? toastWindow.iconGap + detailText.width : 0) + toastWindow.pillPad * 2
         radius: Theme.shapeFull
-        color: Theme.inverseSurface
+        color: Theme.bg
         opacity: toastWindow.shown ? 1 : 0
         scale: toastWindow.shown ? 1 : 0.92
 
@@ -278,7 +278,7 @@ PanelWindow {
                 radius: Theme.shapeFull
                 color: toastWindow.swatch
                 // a pick close to the pill's own colour would vanish without this
-                border.color: Theme.alpha(Theme.fgInverseSurface, 0.3)
+                border.color: Theme.alpha(Theme.text, 0.3)
                 border.width: 1
             }
 
@@ -288,14 +288,14 @@ PanelWindow {
                 name: visible ? toastWindow.iconPath : ""
                 size: toastWindow.glyphSize + 2
                 fill: 1
-                color: toastWindow.warn ? toastWindow.warnTone : Theme.inversePrimary
+                color: toastWindow.warn ? toastWindow.warnTone : Theme.accent
             }
 
             Text {
                 visible: !toastWindow.hasSwatch && toastWindow.iconGlyph !== ""
                 anchors.centerIn: parent
                 text: toastWindow.iconGlyph
-                color: toastWindow.warn ? toastWindow.warnTone : Theme.inversePrimary
+                color: toastWindow.warn ? toastWindow.warnTone : Theme.accent
                 font.family: Theme.fontFamily
                 font.pixelSize: toastWindow.glyphSize
             }
@@ -309,7 +309,7 @@ PanelWindow {
                 preferredRendererType: Shape.CurveRenderer
 
                 ShapePath {
-                    fillColor: toastWindow.warn ? toastWindow.warnTone : Theme.inversePrimary
+                    fillColor: toastWindow.warn ? toastWindow.warnTone : Theme.accent
                     strokeWidth: 0
 
                     PathSvg {
@@ -331,7 +331,7 @@ PanelWindow {
             width: Math.min(Math.ceil(labelMetrics.advanceWidth), toastWindow.labelMax)
             elide: Text.ElideRight
             text: toastWindow.label
-            color: Theme.fgInverseSurface
+            color: Theme.text
             font.family: Theme.fontFamily
             font.bold: true
             font.pixelSize: Theme.fontBodyMd
@@ -348,7 +348,7 @@ PanelWindow {
             width: Math.min(Math.ceil(detailMetrics.advanceWidth), toastWindow.detailMax)
             elide: Text.ElideRight
             text: toastWindow.detail
-            color: Theme.alpha(Theme.fgInverseSurface, 0.72)
+            color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyMd
         }

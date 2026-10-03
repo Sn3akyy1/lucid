@@ -30,14 +30,36 @@ the pull requests in this one. Thank you, Ciro.
 - **A session screen.** SUPER+Escape opens lock, suspend, log out, restart and
   shut down in one full-screen sheet. The three that end the session need a
   second press within four seconds.
+- **A window switcher.** CTRL+ALT+TAB lays out every open window on every
+  workspace, the special ones included, newest first and with live previews.
+  As on Windows it stays up once the keys are let go: Tab or the arrows move,
+  Enter switches, Delete closes the window and Esc backs out. CTRL+ALT+TAB
+  again steps on; with SHIFT it steps back.
 - **The clock is an app.** Behind the pill: Today, with the weather and what is
   next; a month calendar with reminders; countdown timers and a pomodoro; a
   stopwatch with laps; and world clocks. Whatever is counting shows on the pill
   as a chip with a ring, and the timers are shared with the Timer widget and the
   control centre's Timer tile.
+- **The pomodoro has options of its own.** The tune button on its card opens
+  them in place: four presets (25 / 5, 50 / 10, 15 / 3, 90 / 20), a stepper for
+  each length and for the rounds, and a daily goal the card counts toward.
+  Breaks and focus sessions can each start by themselves or wait for you, a set
+  can stop after its long break instead of repeating, and do-not-disturb can be
+  held for as long as a focus session runs. A phase in hand takes another
+  minute from the card, or any number over IPC (`timer pomodoroAdd`, beside
+  `pomodoroSkip` and `pomodoroStop`). The same options sit under *Pomodoro*
+  on Settings' Date & Time page.
 - **Every widget is rebuilt**, and four new ones join them: Timer, At a Glance,
   Photo and Fetch. A widget's right-click menu is a new sheet with live previews
   of its looks.
+- **A widget panel.** Right-click the desktop and choose *Widget Panel*, or pick
+  Widgets in the launcher's mode bar: a sheet slides in with every widget drawn
+  live. Drag one straight out to where it should sit — it snaps like any card —
+  or click it into the first free spot. It searches by name or by what a widget
+  does, lists what is already out (hover to find a card, click for its sheet,
+  lock or remove it) and switches layouts. While it is open the cards come up
+  over your windows with a − on each, and a card dragged onto the sheet is
+  taken off. `qs ipc call widgets panel` toggles it.
 - **The launcher** gains a head band with its modes, the calculator's answer as
   a card at the top of the results, and prefixes: `>win` for open windows, `?`
   for the web, `$` to run a command in your terminal and `:` for emoji. Apps can
@@ -50,6 +72,39 @@ the pull requests in this one. Thank you, Ciro.
   the shell crossfades its own palette alongside the picture.
 - **Window borders follow the palette**, and the starship prompt takes the
   palette's colours without its format being replaced.
+
+### Sounds
+
+- **Lucid has sounds of its own.** The freedesktop bells and drops are gone;
+  every sound is synthesised — FM bells, plucks, blips and sweeps, nothing
+  recorded — by `support/sounds/build-sounds.py`, all in one key and levelled
+  to one loudness, so a volume you set means the same thing for each.
+- **Eight notification sounds**: Glint, Pulse, Chime, Tap, Orbit, Halo, Beacon
+  and Alert, picked from chips that play as you choose. A saved freedesktop
+  choice carries over to its nearest match.
+- **System sounds** for a USB or Bluetooth device connecting and leaving, the
+  charger going in and out, a full charge, low and critical battery, the camera
+  turning on and off, and a screenshot. *Settings → Sound → System sounds* has
+  a switch and a play button for each, and one volume for all of them. They
+  keep quiet while you are silenced, apart from the battery warnings. The timer
+  and pomodoro alarm is new as well, and **reminders ring out loud** now —
+  they used to arrive in silence — with a switch and a play button for each
+  under *Settings → Date & Time → Timers*.
+- **Tiny ticks for your own keys**: volume and brightness tick at the level
+  just set — where a drag or a held key starts and where it stops, not at every
+  step — and Caps Lock and the microphone answer on and off. Dimming while you
+  are away stays quiet. They start from [Kenney](https://kenney.nl)'s Interface
+  Sounds (CC0).
+- **A toast for USB devices**, named and drawn as what they are — a phone, a
+  mouse, a drive. The laptop's own built-in parts stay quiet, a hub full of
+  devices is one toast, and a device that drops and comes straight back is not
+  news.
+- **Camera on and camera off**, with the app using it, the way Windows 11 says
+  so. Nothing polls for it: the camera's device is watched for being opened and
+  closed. With the Privacy module on the bar, its own camera toast folds into
+  the same pill.
+- `qs ipc call -- sounds play <name>` plays any of them; `sounds list` names
+  them all.
 
 ### From Ciro Rivera
 
@@ -176,8 +231,9 @@ places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
 
 ### Installer
 
-- New packages: `hyprsunset` (night light), `qrencode` (Wi-Fi codes) and
-  `xdg-terminal-exec` (the launcher's `$` mode).
+- New packages: `hyprsunset` (night light), `qrencode` (Wi-Fi codes),
+  `xdg-terminal-exec` (the launcher's `$` mode) and `inotify-tools` (the camera
+  on/off toast).
 - **Google Sans Flex** is installed to `~/.local/share/fonts/lucid` for the apps
   the Environment page dresses, and beside the SDDM theme, which now draws in it
   the way the lock screen does.
@@ -185,7 +241,11 @@ places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
   set, and `modules/plugins.lua` holds plugin settings, each applying only while
   its plugin is loaded. It ships with the tilting cursor of
   [hypr-dynamic-cursors](https://github.com/virtcode/hypr-dynamic-cursors); the
-  installer prints the two `hyprpm` commands that add the plugin.
+  installer offers to build it (`--no-plugins` skips that) with
+  `scripts/cursor-plugin.sh`, against the headers the hyprland package installs
+  and without root. `modules/autostart.lua` runs the same script on every login,
+  so the cursor is still there after a restart, and is rebuilt by itself after a
+  Hyprland update.
 - The theme scripts behind the Colours and Palettes pages go into
   `~/.config/lucid` with the rest.
 
@@ -199,9 +259,11 @@ git pull
 - **Your bar keeps its layout.** The six module switches from 1.10.5 carry over,
   and every module stays in the group it was in until you move it.
 - **Your keybinds are yours**: the installer only seeds `keybinds.json` when it
-  is missing, so two shipped changes need adding by hand under Settings →
+  is missing, so three shipped changes need adding by hand under Settings →
   Keybinds. SUPER+Escape opens the session screen (`qs ipc call session
-  toggle`), and SUPER+M should run
+  toggle`), CTRL+ALT+TAB opens the window switcher (`qs ipc call switcher
+  next`, and `qs ipc call switcher prev` on CTRL+ALT+SHIFT+TAB), and SUPER+M
+  should run
   `command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'`.
 - **A Hyprland config of your own** gets `require("modules.settings")`
   appended, the same way `modules.glass` is, so the Windows and Input pages can

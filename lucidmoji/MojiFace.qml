@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import qs
+import qs.lucidui
 
 Item {
     id: face
@@ -43,16 +44,17 @@ Item {
         return m;
     }
 
-    // one icon per group, in json group order
-    readonly property var emojiGroupIcons: ["😀", "🧑", "🐻", "🍔", "✈️", "⚽", "💡", "❤️", "🏁"]
+    // one mark per group, in json group order: a material symbol for emoji,
+    // a face of its own kind for kaomoji
+    readonly property var emojiGroupIcons: ["mood", "emoji_people", "emoji_nature", "emoji_food_beverage", "emoji_transportation", "emoji_events", "emoji_objects", "emoji_symbols", "emoji_flags"]
     readonly property var kaomojiGroupIcons: ["^▽^", "♡‿♡", "T_T", "ಠ_ಠ", "・_・", "⊙_⊙", "^-^ﾉ", "･ᴥ･", "ᕕᐛᕗ", "◕‿◕", "°ʖ°", "【】"]
 
     readonly property var rail: {
         var out = [{
-            "icon": face.isKaomoji ? "↺" : "🕘",
+            "symbol": "schedule",
             "name": "Recent"
         }, {
-            "icon": face.isKaomoji ? "★" : "⭐",
+            "symbol": "star",
             "name": "Favourites"
         }];
         if (!face.host)
@@ -62,7 +64,8 @@ Item {
         var icons = face.isKaomoji ? face.kaomojiGroupIcons : face.emojiGroupIcons;
         for (var i = 0; i < groups.length; i++) {
             out.push({
-                "icon": icons[i] || "•",
+                "symbol": face.isKaomoji ? "" : (icons[i] || "category"),
+                "icon": face.isKaomoji ? (icons[i] || "•") : "",
                 "name": groups[i]
             });
         }
@@ -407,12 +410,11 @@ Item {
                 anchors.rightMargin: 14
                 spacing: 8
 
-                Text {
+                Icon {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "🔍"
-                    font.family: "Noto Color Emoji"
-                    font.pixelSize: Theme.fs(12)
-                    opacity: 0.65
+                    name: "search"
+                    size: 17
+                    color: Theme.subtext
                 }
 
                 TextInput {
@@ -493,14 +495,34 @@ Item {
                 width: 34
                 height: 30
 
+                Icon {
+                    anchors.centerIn: parent
+                    anchors.verticalCenterOffset: -2
+                    visible: !!railItem.modelData.symbol
+                    name: railItem.modelData.symbol || ""
+                    size: 19
+                    fill: railItem.selected ? 1 : 0
+                    color: Theme.text
+                    opacity: railItem.selected ? 1 : (railHover.hovered ? 0.8 : 0.45)
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Theme.durQuick
+                        }
+
+                    }
+
+                }
+
                 Text {
                     anchors.centerIn: parent
                     anchors.verticalCenterOffset: -2
-                    text: railItem.modelData.icon
+                    visible: !railItem.modelData.symbol
+                    text: railItem.modelData.icon || ""
                     color: Theme.text
-                    font.family: face.isKaomoji ? Theme.fontFamily : "Noto Color Emoji"
-                    font.pixelSize: face.isKaomoji ? 13 : 15
-                    font.bold: face.isKaomoji
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 13
+                    font.bold: true
                     opacity: railItem.selected ? 1 : (railHover.hovered ? 0.8 : 0.45)
 
                     Behavior on opacity {
@@ -743,20 +765,20 @@ Item {
                 visible: !face.isGif && face.entries.length === 0
                 opacity: visible ? 1 : 0
 
-                Text {
+                Icon {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: {
+                    name: {
                         if (face.searching)
-                            return "🫥";
+                            return "search_off";
 
                         if (face.catIndex === 0)
-                            return "🕘";
+                            return "schedule";
 
-                        return "⭐";
+                        return "star";
                     }
-                    font.family: "Noto Color Emoji"
-                    font.pixelSize: Theme.fs(26)
-                    opacity: 0.5
+                    size: Math.round(Theme.fs(30))
+                    color: Theme.subtext
+                    opacity: 0.6
                 }
 
                 Text {
@@ -926,17 +948,16 @@ Item {
 
             }
 
-            Text {
+            Icon {
                 id: starButton
 
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 visible: !face.isGif && face.current !== null
-                text: face.current && face.isFav(face.current.d) ? "★" : "☆"
+                name: "star"
+                size: Math.round(Theme.fs(19))
+                fill: face.current && face.isFav(face.current.d) ? 1 : 0
                 color: face.current && face.isFav(face.current.d) ? Theme.accent : Theme.subtext
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fs(17)
-                font.variableAxes: Theme.axes(Theme.fs(17), 420, 0)
 
                 HoverHandler {
                     cursorShape: Qt.PointingHandCursor

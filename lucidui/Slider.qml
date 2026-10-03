@@ -28,6 +28,9 @@ Item {
     // eases a value that arrives from elsewhere, a key or another control, so
     // the fill travels to it. never while the pointer is the source
     property bool easeValue: false
+    // a drag the slider does not own, like the bar tooltip's card: it writes live
+    // itself, and value cannot pull live back until it lets go
+    property bool held: false
 
     property bool iconClickable: false
 
@@ -67,13 +70,13 @@ Item {
     }
 
     onValueChanged: {
-        if (!area.pressed)
+        if (!area.pressed && !sl.held)
             sl.live = sl.value;
 
     }
 
     Behavior on live {
-        enabled: sl.easeValue && !area.pressed
+        enabled: sl.easeValue && !area.pressed && !sl.held
 
         NumberAnimation {
             duration: Theme.durFastSpatial

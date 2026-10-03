@@ -21,6 +21,8 @@ Item {
     property string appliedPath: ""
     property real stableHeight: height
     readonly property real rowHeight: strip.heroH + 62
+    // the hero card at the screen's own density: every tier is drawn from it
+    readonly property size decodeSize: Qt.size(Math.ceil(strip.heroW * Math.max(1, Screen.devicePixelRatio)), Math.ceil(strip.heroH * Math.max(1, Screen.devicePixelRatio)))
 
     property int previewInterval: 300
     property string pendingPreviewPath: ""
@@ -147,6 +149,7 @@ Item {
 
             required property string path
             required property string name
+            required property string thumb
             required property int index
 
             readonly property bool isCurrent: view.currentIndex === slot.index
@@ -224,13 +227,16 @@ Item {
                 }
 
 
+                // the small copy decodes in a millisecond, so it is read in step and
+                // is up on the card's first frame; an original still waiting for
+                // one stays off the gui thread
                 Image {
                     anchors.fill: parent
-                    source: "file://" + slot.path
+                    source: "file://" + (slot.thumb !== "" ? slot.thumb : slot.path)
                     fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
+                    asynchronous: slot.thumb === ""
                     cache: true
-                    sourceSize.width: strip.heroW * 2
+                    sourceSize: strip.decodeSize
                 }
 
                 Rectangle {

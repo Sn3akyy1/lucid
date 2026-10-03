@@ -8,6 +8,19 @@ Item {
     property color ringColor: Theme.accent
     property color starColor: Theme.text
     property real strokeWidth: 3
+    // intro progress, 0..1 each; the resting mark is all three at 1
+    property real ringT: 1
+    property real starT: 1
+    property real dotT: 1
+    readonly property real dotRestA: Math.atan2(2.6, 9)
+    readonly property real dotRestR: Math.sqrt(9 * 9 + 2.6 * 2.6)
+
+    function play() {
+        mark.ringT = 0;
+        mark.starT = 0;
+        mark.dotT = 0;
+        intro.restart();
+    }
 
     function arcPath(cx, cy, r, a0, a1) {
         var t0 = a0 * Math.PI / 180, t1 = a1 * Math.PI / 180;
@@ -16,9 +29,13 @@ Item {
         return "M" + (cx + r * Math.cos(t0)).toFixed(2) + "," + (cy - r * Math.sin(t0)).toFixed(2) + " A" + r + "," + r + " 0 " + large + " " + sweep + " " + (cx + r * Math.cos(t1)).toFixed(2) + "," + (cy - r * Math.sin(t1)).toFixed(2);
     }
 
-    function sparklePath(x, y, s) {
+    function sparklePath(x, y, s, deg) {
         var k = s * 0.3, j = s * 0.13;
-        return "M" + x + "," + (y - s) + " C" + (x + j) + "," + (y - k) + " " + (x + k) + "," + (y - j) + " " + (x + s) + "," + y + " C" + (x + k) + "," + (y + j) + " " + (x + j) + "," + (y + k) + " " + x + "," + (y + s) + " C" + (x - j) + "," + (y + k) + " " + (x - k) + "," + (y + j) + " " + (x - s) + "," + y + " C" + (x - k) + "," + (y - j) + " " + (x - j) + "," + (y - k) + " " + x + "," + (y - s) + " Z";
+        var c = Math.cos(deg * Math.PI / 180), n = Math.sin(deg * Math.PI / 180);
+        var pt = function(dx, dy) {
+            return (x + dx * c - dy * n).toFixed(3) + "," + (y + dx * n + dy * c).toFixed(3);
+        };
+        return "M" + pt(0, -s) + " C" + pt(j, -k) + " " + pt(k, -j) + " " + pt(s, 0) + " C" + pt(k, j) + " " + pt(j, k) + " " + pt(0, s) + " C" + pt(-j, k) + " " + pt(-k, j) + " " + pt(-s, 0) + " C" + pt(-k, -j) + " " + pt(-j, -k) + " " + pt(0, -s) + " Z";
     }
 
     function circlePath(cx, cy, r) {
@@ -27,6 +44,55 @@ Item {
 
     implicitWidth: 24
     implicitHeight: 24
+
+    // ring swings round as it draws, star twinkles open, companion flung into orbit
+    ParallelAnimation {
+        id: intro
+
+        NumberAnimation {
+            target: mark
+            property: "ringT"
+            from: 0
+            to: 1
+            duration: Theme.ms(950)
+            easing.type: Easing.OutCubic
+        }
+
+        SequentialAnimation {
+            PauseAnimation {
+                duration: Theme.ms(220)
+            }
+
+            NumberAnimation {
+                target: mark
+                property: "starT"
+                from: 0
+                to: 1
+                duration: Theme.durSlowSpatial
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.curveFastSpatial
+            }
+
+        }
+
+        SequentialAnimation {
+            PauseAnimation {
+                duration: Theme.ms(620)
+            }
+
+            NumberAnimation {
+                target: mark
+                property: "dotT"
+                from: 0
+                to: 1
+                duration: Theme.durDefaultSpatial
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.curveDefaultSpatial
+            }
+
+        }
+
+    }
 
     Shape {
         anchors.fill: parent
@@ -39,7 +105,7 @@ Item {
             capStyle: ShapePath.RoundCap
 
             PathSvg {
-                path: mark.arcPath(12, 12, 7.4, 58, 340)
+                path: mark.ringT <= 0 ? "" : mark.arcPath(12, 12, 7.4, 58 - 200 * (1 - mark.ringT), 58 - 200 * (1 - mark.ringT) + 282 * mark.ringT)
             }
 
         }
@@ -49,7 +115,7 @@ Item {
             fillColor: mark.starColor
 
             PathSvg {
-                path: mark.sparklePath(12, 12, 4.6)
+                path: mark.starT <= 0 ? "" : mark.sparklePath(12, 12, 4.6 * mark.starT, 90 * (1 - mark.starT))
             }
 
         }
@@ -59,7 +125,14 @@ Item {
             fillColor: mark.ringColor
 
             PathSvg {
-                path: mark.circlePath(21, 9.4, 1)
+                path: {
+                    if (mark.dotT <= 0)
+                        return "";
+
+                    var a = mark.dotRestA - 0.7 * (1 - mark.dotT);
+                    var r = 7.4 + (mark.dotRestR - 7.4) * mark.dotT;
+                    return mark.circlePath(12 + r * Math.cos(a), 12 - r * Math.sin(a), mark.dotT);
+                }
             }
 
         }

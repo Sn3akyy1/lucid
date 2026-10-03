@@ -3,6 +3,7 @@ import QtQuick.Controls
 import Quickshell.Io
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 Item {
     id: pane
@@ -384,18 +385,31 @@ Item {
         anchors.right: parent.right
         height: 16
 
-        Text {
+        Row {
             id: backLabel
 
             anchors.left: parent.left
-            anchors.leftMargin: 6
+            anchors.leftMargin: pane.mode === "results" ? 2 : 6
             anchors.verticalCenter: parent.verticalCenter
-            text: pane.mode === "results" ? "‹  " + pane.resultsTitle : (pane.loading ? "Loading…" : "Browse")
-            color: pane.errorText !== "" ? Theme.error : Theme.subtext
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontLabel
-            font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
-            font.bold: true
+            spacing: 2
+
+            Icon {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: pane.mode === "results"
+                name: "chevron_left"
+                size: 16
+                color: pane.errorText !== "" ? Theme.error : Theme.subtext
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: pane.mode === "results" ? pane.resultsTitle : (pane.loading ? "Loading…" : "Browse")
+                color: pane.errorText !== "" ? Theme.error : Theme.subtext
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
+                font.bold: true
+            }
 
             HoverHandler {
                 id: backHover
@@ -601,16 +615,15 @@ Item {
                                 visible: cellHover.hovered
                             }
 
-                            Text {
+                            Icon {
                                 anchors.top: parent.top
                                 anchors.right: parent.right
-                                anchors.topMargin: 5
-                                anchors.rightMargin: 6
-                                text: pane.host && pane.host.isFavGif(gifCell.modelData.url) ? "★" : "☆"
+                                anchors.topMargin: 4
+                                anchors.rightMargin: 4
+                                name: "star"
+                                size: 18
+                                fill: pane.host && pane.host.isFavGif(gifCell.modelData.url) ? 1 : 0
                                 color: pane.host && pane.host.isFavGif(gifCell.modelData.url) ? Theme.accent : "white"
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fs(15)
-                                font.variableAxes: Theme.axes(Theme.fs(15), 420, 0)
                                 visible: cellHover.hovered || (pane.host && pane.host.isFavGif(gifCell.modelData.url))
 
                                 HoverHandler {
@@ -673,14 +686,28 @@ Item {
         spacing: 2
         visible: pane.mode === "browse" && !pane.hasKey
 
-        Text {
+        Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "🔑  Add a Giphy key for Trending and search"
-            color: Theme.subtext
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontLabel
-            font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
-            font.bold: true
+            spacing: 6
+
+            Icon {
+                anchors.verticalCenter: parent.verticalCenter
+                name: "key"
+                size: 15
+                fill: 1
+                color: Theme.subtext
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Add a Giphy key for Trending and search"
+                color: Theme.subtext
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontLabel
+                font.variableAxes: Theme.axes(Theme.fontLabel, 640, 0)
+                font.bold: true
+            }
+
         }
 
         Text {
@@ -700,12 +727,12 @@ Item {
         spacing: 8
         visible: !pane.loading && pane.mode === "results" && pane.entries.length === 0
 
-        Text {
+        Icon {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: pane.hasKey ? "🫥" : "🔑"
-            font.family: "Noto Color Emoji"
-            font.pixelSize: Theme.fs(26)
-            opacity: 0.5
+            name: pane.hasKey ? "search_off" : "key"
+            size: Math.round(Theme.fs(30))
+            color: Theme.subtext
+            opacity: 0.6
         }
 
         Text {
@@ -720,7 +747,7 @@ Item {
                     return pane.errorText;
 
                 if (pane.resultsKind === "fav")
-                    return "Hover a GIF and hit ☆ to keep it here";
+                    return "Hover a GIF and hit the star to keep it here";
 
                 if (pane.resultsKind === "recent")
                     return "GIFs you send show up here";

@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.lucidui
 
 // one scheme from the gallery, drawn in its own colours: its background, its
 // text, and its eight accents along the bottom. the buttons wear the scheme
@@ -158,18 +159,17 @@ Rectangle {
     }
 
     // already a theme: a tick in the scheme's green
-    Text {
+    Icon {
         id: tick
 
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.rightMargin: 10
+        anchors.rightMargin: 9
         anchors.topMargin: 8
         visible: card.added && !card.showActions
-        text: "✓"
+        name: "check"
+        size: 16
         color: card.c[11] || Theme.accent
-        font.pixelSize: Theme.fontLabel
-        font.bold: true
     }
 
 }

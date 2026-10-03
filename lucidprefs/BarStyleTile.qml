@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.lucidui
 
 // one of a bar module's styles, on its card: a sample of how it looks on a
 // strip of bar (or, for a panel style, a small panel), its name and a line
@@ -124,26 +125,10 @@ Item {
             scale: tile.picked ? 1 : 0.6
             visible: opacity > 0.01
 
-            // the same check the segmented buttons draw
-            Rectangle {
-                x: 4.5
-                y: 10
-                width: 5
-                height: 2
-                radius: 1
-                rotation: 45
-                transformOrigin: Item.Left
-                color: Theme.fgAccent
-            }
-
-            Rectangle {
-                x: 7
-                y: 12.6
-                width: 8
-                height: 2
-                radius: 1
-                rotation: -45
-                transformOrigin: Item.Left
+            Icon {
+                anchors.centerIn: parent
+                name: "check"
+                size: 16
                 color: Theme.fgAccent
             }
 

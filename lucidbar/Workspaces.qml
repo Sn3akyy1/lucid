@@ -1,6 +1,5 @@
 import QtQml.Models
 import QtQuick
-import QtQuick.Shapes
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Hyprland._FocusGrab
@@ -8,6 +7,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 Item {
     id: root
@@ -1346,25 +1346,13 @@ Item {
                                     opacity: stashed.shown ? 1 : 0
                                     scale: stashedArea.containsMouse ? 1.15 : 1
 
-                                    Shape {
-                                        anchors.fill: parent
-                                        preferredRendererType: Shape.CurveRenderer
-
-                                        ShapePath {
-                                            strokeWidth: 0
-                                            fillColor: chip.lit ? Theme.fgPrimary : Theme.text
-
-                                            PathSvg {
-                                                path: Specials.glyphPath(stashed.glyph)
-                                            }
-
-                                        }
-
-                                        transform: Scale {
-                                            xScale: root.stashIcon / 24
-                                            yScale: root.stashIcon / 24
-                                        }
-
+                                    Icon {
+                                        anchors.centerIn: parent
+                                        name: Specials.glyphName(stashed.glyph)
+                                        size: root.stashIcon
+                                        fill: 1
+                                        color: chip.lit ? Theme.fgPrimary : Theme.text
+                                        animateColor: false
                                     }
 
                                     MouseArea {
@@ -1622,15 +1610,12 @@ Item {
                             }
                             scale: tileClick.pressed ? 0.985 : (tile.highlighted ? 1.03 : 1)
 
-                            Text {
+                            Icon {
                                 anchors.centerIn: parent
                                 visible: !tile.wsObj
-                                text: "+"
+                                name: "add"
+                                size: Math.round(root.plusFontSize * 1.1)
                                 color: Theme.accent
-                                font.family: Theme.fontFamily
-                                font.pixelSize: root.plusFontSize
-                                font.variableAxes: Theme.axes(root.plusFontSize, 640, 0)
-                                font.bold: true
                             }
 
                             Behavior on color {
