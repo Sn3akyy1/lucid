@@ -43,13 +43,21 @@ Item {
         }
         return m;
     }
+    // every display has a workspace up, so the one in use is the focused display's
     readonly property int activeWsId: {
+        let shown = -1;
         for (const w of Hyprland.workspaces.values) {
-            if (w.active)
+            if (w.id <= 0)
+                continue;
+
+            if (w.focused)
                 return w.id;
 
+            if (w.active && shown === -1)
+                shown = w.id;
+
         }
-        return -1;
+        return shown;
     }
     readonly property int highestWorkspaceId: {
         let max = 0;
@@ -62,6 +70,25 @@ Item {
     }
     readonly property int maxWorkspaces: 6
     readonly property int slotCount: Math.max(root.maxWorkspaces, root.highestWorkspaceId)
+    // with more than one display, each workspace shows which one it is on,
+    // numbered as the Displays page and its Identify overlay number them
+    readonly property bool multiDisplay: Monitors.workspaceKeys.length > 1
+    // per regular slot: the display it is on now, or, before it exists, the one
+    // the per-display plan sends it to. "" opens wherever you are
+    readonly property var slotDisplays: {
+        const out = [];
+        for (let i = 0; i < root.slotCount; i++) {
+            const ws = root.wsById[i + 1];
+            const mon = ws ? ws.monitor : null;
+            let key = mon ? Monitors.keyFor(mon.name, mon.description) : "";
+            if (!mon && Monitors.workspacesSplit) {
+                const planned = Monitors.workspacePlan.assign[String(i + 1)] || "";
+                key = Monitors.workspaceKeys.indexOf(planned) !== -1 ? planned : "";
+            }
+            out.push(key);
+        }
+        return out;
+    }
     readonly property var specialList: {
         const out = [];
         for (const w of Hyprland.workspaces.values) {
@@ -134,6 +161,8 @@ Item {
     readonly property int horizontalPadding: 10
     readonly property int dotGap: 6
     readonly property int specialGap: 6
+    readonly property int displayGap: 6
+    readonly property int badgeSize: 20
     readonly property int dotSize: 10
     readonly property int activeDotWidth: 24
     readonly property int hoverDotSize: 24
@@ -183,29 +212,91 @@ Item {
     readonly property int baseCardPadding: 22
     readonly property int baseLabelGap: 6
     readonly property int baseLabelHeight: 16
+    readonly property int baseGroupGap: 40
+    // the overview's blocks: one per display, left to right as they stand on the
+    // desk, or a single one with no heading. a workspace that belongs nowhere yet
+    // opens on the display in use, so it sits with that one
+    readonly property var overviewGroups: {
+        if (!root.multiDisplay) {
+            const all = [];
+            for (let i = 0; i < Math.max(1, root.slotCount); i++) all.push(i)
+            return [{
+                "key": "",
+                "slots": all
+            }];
+        }
+        const keys = Monitors.workspaceKeys;
+        const fm = Hyprland.focusedMonitor;
+        const fk = fm ? Monitors.keyFor(fm.name, fm.description) : "";
+        const here = keys.indexOf(fk) !== -1 ? fk : keys[0];
+        const out = [];
+        for (const k of keys) {
+            const slots = [];
+            for (let i = 0; i < root.slotCount; i++) {
+                const d = root.slotDisplays[i];
+                if ((keys.indexOf(d) !== -1 ? d : here) === k)
+                    slots.push(i);
+
+            }
+            if (slots.length > 0)
+                out.push({
+                "key": k,
+                "slots": slots
+            });
+
+        }
+        return out;
+    }
     readonly property var gridPlan: {
-        const n = Math.max(1, root.slotCount);
+        const groups = root.overviewGroups;
+        const sizes = groups.map((g) => {
+            return g.slots.length;
+        });
+        const most = Math.max(1, ...sizes);
         const availW = root.screenW * 0.86 - root.baseCardPadding * 2;
         const availH = root.screenH * 0.78 - root.baseCardPadding * 2;
         const labelBlock = root.baseLabelGap + root.baseLabelHeight;
+        const head = root.multiDisplay ? labelBlock : 0;
         const basePreviewW = root.basePreviewH * root.tileAspect;
+        // the spacing between a block's own columns, and the wider gap between blocks
+        const fixedWidth = (total) => {
+            return (total - groups.length) * root.baseTileSpacing + (groups.length - 1) * root.baseGroupGap;
+        };
+        // a lone block tries every width; several keep their rows level, each
+        // as narrow as that allows
+        const candidates = [];
+        for (let k = 1; k <= most; k++) {
+            if (groups.length === 1)
+                candidates.push([k]);
+            else
+                candidates.push(sizes.map((n) => {
+                return Math.ceil(n / k);
+            }));
+        }
         let best = null;
-        for (let cols = 1; cols <= n; cols++) {
-            const rows = Math.ceil(n / cols);
-            const wLimit = (availW - (cols - 1) * root.baseTileSpacing) / cols;
-            const hLimit = (availH - (rows - 1) * root.baseTileSpacing) / rows - labelBlock;
+        for (const cols of candidates) {
+            let total = 0;
+            let rows = 1;
+            for (let g = 0; g < cols.length; g++) {
+                total += cols[g];
+                rows = Math.max(rows, Math.ceil(sizes[g] / cols[g]));
+            }
+            const wLimit = (availW - fixedWidth(total)) / total;
+            const hLimit = (availH - head - (rows - 1) * root.baseTileSpacing) / rows - labelBlock;
             if (wLimit <= 24 || hLimit <= 16)
                 continue;
 
             const previewW = Math.min(wLimit, hLimit * root.tileAspect, basePreviewW);
             const scale = previewW / basePreviewW;
-            const gw = cols * previewW + (cols - 1) * root.baseTileSpacing;
-            const gh = rows * (previewW / root.tileAspect + labelBlock) + (rows - 1) * root.baseTileSpacing;
+            const gw = total * previewW + fixedWidth(total);
+            const gh = head + rows * (previewW / root.tileAspect + labelBlock) + (rows - 1) * root.baseTileSpacing;
             const shapePenalty = Math.abs(Math.log(gw / gh / root.tileAspect));
             const score = scale - shapePenalty * 0.08;
             if (!best || score > best.score)
                 best = {
+                "groups": groups,
                 "cols": cols,
+                "total": total,
                 "rows": rows,
                 "previewW": previewW,
                 "scale": scale,
@@ -215,7 +306,11 @@ Item {
         }
         if (!best)
             best = {
-            "cols": n,
+            "groups": groups,
+            "cols": sizes,
+            "total": sizes.reduce((a, b) => {
+                return a + b;
+            }, 0),
             "rows": 1,
             "previewW": 90,
             "scale": 0.5,
@@ -224,14 +319,16 @@ Item {
 
         // columns come from the regular grid alone, so specials only ever add rows below it
         if (root.specialCount > 0) {
-            const rows = Math.ceil(n / best.cols) + Math.ceil(root.specialCount / best.cols);
-            const wLimit = (availW - (best.cols - 1) * root.baseTileSpacing) / best.cols;
-            const hLimit = (availH - (rows - 0.5) * root.baseTileSpacing - labelBlock) / rows - labelBlock;
+            const rows = best.rows + Math.ceil(root.specialCount / best.total);
+            const wLimit = (availW - fixedWidth(best.total)) / best.total;
+            const hLimit = (availH - head - (rows - 0.5) * root.baseTileSpacing - labelBlock) / rows - labelBlock;
             const previewW = Math.min(wLimit, hLimit * root.tileAspect, basePreviewW);
             if (previewW > 24)
                 best = {
+                "groups": groups,
                 "cols": best.cols,
-                "rows": rows,
+                "total": best.total,
+                "rows": best.rows,
                 "previewW": previewW,
                 "scale": previewW / basePreviewW,
                 "score": best.score
@@ -240,8 +337,8 @@ Item {
         }
         return best;
     }
-    readonly property int gridColumns: root.gridPlan.cols
-    readonly property int regularRows: Math.ceil(Math.max(1, root.slotCount) / root.gridColumns)
+    readonly property int gridColumns: root.gridPlan.total
+    readonly property int regularRows: root.gridPlan.rows
     readonly property int specialRows: Math.ceil(root.specialCount / root.gridColumns)
     readonly property real gridScale: Math.max(0.5, root.gridPlan.scale)
     readonly property int previewW: Math.round(root.gridPlan.previewW)
@@ -252,8 +349,62 @@ Item {
     readonly property int tileH: root.previewH + root.labelGap + root.labelHeight
     readonly property int tileSpacing: Math.max(8, Math.round(root.baseTileSpacing * root.gridScale))
     readonly property int cardPadding: Math.max(12, Math.round(root.baseCardPadding * Math.min(1, root.gridScale + 0.25)))
-    readonly property int gridWidth: root.gridColumns * root.tileW + (root.gridColumns - 1) * root.tileSpacing
-    readonly property int regularBottom: root.regularRows * (root.tileH + root.tileSpacing) - root.tileSpacing
+    readonly property int groupGap: Math.max(16, Math.round(root.baseGroupGap * root.gridScale))
+    readonly property int groupHead: root.multiDisplay ? root.labelHeight + root.labelGap : 0
+    // where each display's block starts, and how wide it runs
+    readonly property var groupBoxes: {
+        const out = [];
+        let x = 0;
+        for (const c of root.gridPlan.cols) {
+            const w = c * root.tileW + (c - 1) * root.tileSpacing;
+            out.push({
+                "x": x,
+                "w": w
+            });
+            x += w + root.groupGap;
+        }
+        return out;
+    }
+    // every slot's place in the grid, regular ones in their display's block
+    readonly property var slotPos: {
+        const out = [];
+        const stepX = root.tileW + root.tileSpacing;
+        const stepY = root.tileH + root.tileSpacing;
+        const plan = root.gridPlan;
+        for (let g = 0; g < plan.groups.length; g++) {
+            const c = Math.max(1, plan.cols[g]);
+            const box = root.groupBoxes[g];
+            const slots = plan.groups[g].slots;
+            for (let p = 0; p < slots.length; p++) out[slots[p]] = {
+                "x": (box ? box.x : 0) + p % c * stepX,
+                "y": root.groupHead + Math.floor(p / c) * stepY
+            }
+        }
+        for (let j = 0; j < root.specialCount; j++) out[root.slotCount + j] = {
+            "x": j % root.gridColumns * stepX,
+            "y": root.specialTop + Math.floor(j / root.gridColumns) * stepY
+        }
+        return out;
+    }
+    // the slots as the eye reads them, row by row across the blocks
+    readonly property var visualOrder: {
+        const order = [];
+        for (let i = 0; i < root.totalSlots; i++) order.push(i)
+        return order.sort((a, b) => {
+            return root.slotPosY(a) - root.slotPosY(b) || root.slotPosX(a) - root.slotPosX(b);
+        });
+    }
+    readonly property var visualRank: {
+        const rank = [];
+        for (let k = 0; k < root.visualOrder.length; k++) rank[root.visualOrder[k]] = k
+        return rank;
+    }
+    readonly property int gridWidth: {
+        const boxes = root.groupBoxes;
+        const last = boxes.length > 0 ? boxes[boxes.length - 1] : null;
+        return last ? last.x + last.w : 0;
+    }
+    readonly property int regularBottom: root.groupHead + root.regularRows * (root.tileH + root.tileSpacing) - root.tileSpacing
     readonly property int captionY: root.regularBottom + Math.round(root.tileSpacing * 1.5)
     readonly property int specialTop: root.captionY + root.labelHeight + root.labelGap
     readonly property int gridHeight: root.specialRows > 0 ? root.specialTop + root.specialRows * (root.tileH + root.tileSpacing) - root.tileSpacing : root.regularBottom
@@ -423,10 +574,29 @@ Item {
         return p;
     }
 
+    function displayNumber(index) {
+        const key = index >= 0 && index < root.slotCount ? root.slotDisplays[index] : "";
+        return root.multiDisplay && key !== "" ? Monitors.numberFor(key) : "";
+    }
+
+    // a run of workspaces on one display starts wherever the display changes
+    function startsGroup(index) {
+        return root.multiDisplay && index >= 0 && index < root.slotCount && (index === 0 || root.slotDisplays[index] !== root.slotDisplays[index - 1]);
+    }
+
+    // the room ahead of a run: a gap from the run before, and on hover its badge
+    function leadWidth(index) {
+        if (!root.startsGroup(index))
+            return 0;
+
+        const gap = index > 0 ? root.displayGap : 0;
+        return gap + (root.rowHovered && root.displayNumber(index) !== "" ? root.badgeSize + root.dotGap : 0);
+    }
+
     function slotX(index) {
-        let x = 0;
+        let x = root.leadWidth(0);
         for (let i = 0; i < index; i++) {
-            x += root.slotWidth(i) + root.dotGap;
+            x += root.slotWidth(i) + root.dotGap + root.leadWidth(i + 1);
             if (i + 1 >= root.slotCount && i + 1 < root.totalSlots)
                 x += root.specialGap;
 
@@ -435,15 +605,20 @@ Item {
     }
 
     function slotPosX(index) {
-        const i = index < root.slotCount ? index : index - root.slotCount;
-        return i % root.gridColumns * (root.tileW + root.tileSpacing);
+        const p = root.slotPos[index];
+        return p ? p.x : 0;
     }
 
     function slotPosY(index) {
-        if (index < root.slotCount)
-            return Math.floor(index / root.gridColumns) * (root.tileH + root.tileSpacing);
+        const p = root.slotPos[index];
+        return p ? p.y : 0;
+    }
 
-        return root.specialTop + Math.floor((index - root.slotCount) / root.gridColumns) * (root.tileH + root.tileSpacing);
+    // a display's model reads best on its own; the full label is the fallback
+    function displayTitle(key) {
+        const o = Monitors.output(key);
+        const model = o ? o.model : "";
+        return model !== "" && model.indexOf("0x") !== 0 ? model : Monitors.labelFor(key);
     }
 
     function slotAt(px, py) {
@@ -461,8 +636,10 @@ Item {
         return best;
     }
 
+    // tiles come in the order they are read, not by number
     function stagger(index, extra) {
-        const start = 0.18 + index / Math.max(1, root.totalSlots) * 0.4 + extra;
+        const rank = root.visualRank[index];
+        const start = 0.18 + (rank !== undefined ? rank : index) / Math.max(1, root.totalSlots) * 0.4 + extra;
         const t = (root.reveal - start) / 0.3;
         const c = t < 0 ? 0 : (t > 1 ? 1 : t);
         return 1 - (1 - c) * (1 - c) * (1 - c);
@@ -702,8 +879,11 @@ Item {
         if (cur < 0)
             cur = Math.max(0, Math.min(n - 1, root.activeSlot));
 
+        // across the blocks as they are laid out, not by number
         if (dx !== 0) {
-            root.selectedIndex = ((cur + dx) % n + n) % n;
+            const order = root.visualOrder;
+            const at = Math.max(0, order.indexOf(cur));
+            root.selectedIndex = order[((at + dx) % n + n) % n];
             return ;
         }
         // rows can be ragged, so step to the nearest tile in the next row
@@ -1173,9 +1353,10 @@ Item {
                         required property int index
                         readonly property int wsId: dot.index + 1
                         readonly property var wsObj: root.wsAt(dot.index)
-                        readonly property bool isActive: dot.wsObj ? dot.wsObj.active : false
+                        readonly property bool isFocused: dot.wsId === root.activeWsId
                         readonly property bool isUrgent: dot.wsObj ? dot.wsObj.urgent : false
                         readonly property bool isLit: root.rowHovered && root.pillCovers(dot.x, dot.width)
+                        readonly property string displayNumber: root.startsGroup(dot.index) ? root.displayNumber(dot.index) : ""
 
                         x: root.slotX(dot.index)
                         y: (parent.height - height) / 2
@@ -1203,6 +1384,25 @@ Item {
 
                         }
 
+                        // the display this run is on, ahead of its first dot
+                        DisplayBadge {
+                            x: -root.badgeSize - root.dotGap
+                            anchors.verticalCenter: parent.verticalCenter
+                            size: root.badgeSize
+                            number: dot.displayNumber
+                            visible: dot.displayNumber !== "" && opacity > 0.01
+                            opacity: root.rowHovered ? 1 : 0
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Theme.barMs(300)
+                                    easing.type: Easing.OutCubic
+                                }
+
+                            }
+
+                        }
+
                         HoverHandler {
                             onHoveredChanged: {
                                 if (hovered)
@@ -1215,9 +1415,9 @@ Item {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                if (dot.isActive && root.shownSpecial !== "")
+                                if (dot.isFocused && root.shownSpecial !== "")
                                     root.hideSpecial();
-                                else if (dot.isActive)
+                                else if (dot.isFocused)
                                     root.expanded = true;
                                 else
                                     root.focusWorkspace(dot.wsId);
@@ -1555,6 +1755,50 @@ Item {
                     font.bold: true
                     font.pixelSize: Math.max(8, 10 * root.gridScale)
                     font.letterSpacing: 1.2
+                }
+
+                // each display's number and name over its block
+                Repeater {
+                    model: root.multiDisplay ? root.gridPlan.groups : []
+
+                    Item {
+                        id: groupHeading
+
+                        required property var modelData
+                        required property int index
+                        readonly property var box: root.groupBoxes[groupHeading.index] || null
+
+                        x: groupHeading.box ? groupHeading.box.x : 0
+                        width: groupHeading.box ? groupHeading.box.w : 0
+                        height: root.labelHeight
+                        opacity: root.stagger(groupHeading.modelData.slots[0], 0)
+
+                        DisplayBadge {
+                            id: headingBadge
+
+                            anchors.verticalCenter: parent.verticalCenter
+                            size: root.labelHeight
+                            number: Monitors.numberFor(groupHeading.modelData.key)
+                            tint: Theme.subtextDim
+                        }
+
+                        Text {
+                            anchors.left: headingBadge.right
+                            anchors.leftMargin: Math.round(root.labelHeight * 0.4)
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.displayTitle(groupHeading.modelData.key)
+                            elide: Text.ElideRight
+                            color: Theme.subtextDim
+                            font.family: Theme.fontFamily
+                            font.bold: true
+                            font.pixelSize: Math.max(8, 10 * root.gridScale)
+                            font.letterSpacing: 1.2
+                            font.capitalization: Font.AllUppercase
+                        }
+
+                    }
+
                 }
 
                 Repeater {
@@ -1972,4 +2216,55 @@ Item {
 
         }
     ]
+
+    // a display's number on a small screen, the number the Displays page gives it
+    component DisplayBadge: Item {
+        id: badge
+
+        property string number: ""
+        property color tint: Theme.subtext
+        property int size: 20
+
+        width: badge.size
+        height: badge.size
+
+        Rectangle {
+            id: badgeScreen
+
+            y: Math.round(badge.size * 0.08)
+            width: badge.size
+            height: Math.round(badge.size * 0.72)
+            radius: Math.max(2, badge.size * 0.16)
+            color: "transparent"
+            border.width: Math.max(1, badge.size / 14)
+            border.color: badge.tint
+
+            Text {
+                anchors.centerIn: parent
+                text: badge.number
+                color: badge.tint
+                font.family: Theme.fontFamily
+                font.bold: true
+                font.pixelSize: Math.max(8, Math.round(badge.size * 0.52))
+            }
+
+        }
+
+        Rectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: badgeScreen.y + badgeScreen.height + Math.max(1, Math.round(badge.size * 0.06))
+            width: Math.round(badge.size * 0.4)
+            height: Math.max(1.5, badge.size / 12)
+            radius: height / 2
+            color: badge.tint
+        }
+
+        Behavior on tint {
+            ColorAnimation {
+                duration: Theme.barMs(150)
+            }
+
+        }
+
+    }
 }

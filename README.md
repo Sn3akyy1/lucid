@@ -217,6 +217,9 @@ Six modules, each a pill that expands into a panel. Every one can be turned
 off in Settings.
 
 - **Workspaces** — live window previews per workspace, click to switch.
+  With more than one display the dots gather into a run per display, marked
+  on hover with its number from Settings → Displays, and the overview lays
+  out a block per display, left to right as they stand on the desk.
   Scratchpads (special workspaces) sit beside the dots as a greyed chip marked
   with a glyph for what is stashed in them — a terminal for a terminal, a note
   for an editor, read off each app's own categories. Opening one sinks the dots,
