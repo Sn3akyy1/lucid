@@ -234,7 +234,7 @@ Column {
             resetKey: "btReceiveFolder"
 
             Row {
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 M3Button {
                     text: "Open"
@@ -281,7 +281,7 @@ Column {
                 description: "From " + modelData.device + " · " + page.ago(modelData.time)
 
                 Row {
-                    spacing: 8
+                    spacing: Theme.dp(8)
 
                     M3Button {
                         text: "Show in folder"
