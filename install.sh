@@ -788,6 +788,12 @@ if [[ $WITH_THEMING -eq 1 ]]; then
         SDDM_THEME_DIR=/usr/share/sddm/themes/lucid
         if sudo bash "$SRC/support/sddm/install-theme.sh" "$SDDM_THEME_DIR"; then
             say "  sddm theme      -> $SDDM_THEME_DIR"
+            # the theme no longer carries a shared wallpaper, so paint this
+            # account's corner now rather than at its next login. it reads
+            # the palette through qs, which needs the session's display
+            if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+                "$LUCID_DIR/sync-sddm.sh" --missing &>/dev/null || true
+            fi
             # /etc/sddm.conf outranks /etc/sddm.conf.d, so point at the file
             # that actually wins rather than at the tidier-looking drop-in
             say "    enable it with: Current=lucid under [Theme] in /etc/sddm.conf"
@@ -1245,7 +1251,13 @@ if qs list 2>/dev/null | grep -F "$SHELL_DIR/shell.qml" >/dev/null; then
     if ask "  Lucid is running on the old files. Restart it now?"; then
         qs kill -p "$SHELL_DIR" 2>/dev/null || true
         sleep 1
-        (setsid qs -d >/dev/null 2>&1 &) || true
+        # through the launcher, as autostart does, so the new instance gets
+        # the same render backend and driver choice as one started at login
+        if [[ -x "$LUCID_DIR/launch-shell.sh" ]]; then
+            (setsid "$LUCID_DIR/launch-shell.sh" -d >/dev/null 2>&1 &) || true
+        else
+            (setsid qs -d >/dev/null 2>&1 &) || true
+        fi
         say "  restarted"
     fi
 fi
@@ -1272,6 +1284,7 @@ if [[ $HYPR_LUA_INSTALLED -eq 1 ]]; then
     SUPER+C          close window    SUPER+V      float
     SUPER+D / Print  screenshot      F10          lock
     SUPER+R          reload hypr     F9           terminal
+    SUPER+Escape     session         CTRL+ALT+TAB switch windows
 
   Special workspaces slide over whatever you are on; the same keys hide them:
 

@@ -2,7 +2,7 @@
 
 All notable changes to Lucid are recorded here, newest first.
 
-## v1.20 — unreleased
+## v1.20 — 2026-10-06
 
 Lucid 2. Every surface is redrawn in Material You Expressive on one shared kit
 of controls, the clock grows into an app, the launcher learns new modes and the
@@ -22,8 +22,14 @@ the pull requests in this one. Thank you, Ciro.
   centre, clock, widgets, OSD, toasts, lock screen and settings now share one
   kit of controls (`lucidui/`): buttons, chips, sliders, switches, tabs, text
   fields, list items, loading indicators and the expressive shapes. Icons are
-  Material Symbols drawn from Google's own paths, and text is set in Google Sans
-  Flex, bundled under its OFL licence.
+  Material Symbols drawn from Google's own paths, multisampled so they stay
+  clean at the smallest sizes, and text is set in Google Sans Flex, bundled
+  under its OFL licence.
+- **Interface size.** *Settings → General → Size* scales the whole shell at
+  once, from 75 to 125 %: the bar, dock, panels, menus, desktop widgets and the
+  text in them. Apps and the monitor's own scale are left as they are. Widgets
+  keep their place against the edge or corner they sit nearest, and the new
+  size applies when the slider is let go.
 - **Progress waves.** Timers, the stopwatch, the media disc and the session
   screen draw their rings the M3 Expressive way: the active arc waves, the track
   stays still.
@@ -35,6 +41,10 @@ the pull requests in this one. Thank you, Ciro.
   As on Windows it stays up once the keys are let go: Tab or the arrows move,
   Enter switches, Delete closes the window and Esc backs out. CTRL+ALT+TAB
   again steps on; with SHIFT it steps back.
+- **Password beads.** On the lock screen, in the polkit prompt and on the login
+  screen, each character typed drops a Material Expressive shape that melts
+  into a dot. A selection gathers its beads into one band, and Ctrl+A sweeps it
+  across from the left.
 - **The clock is an app.** Behind the pill: Today, with the weather and what is
   next; a month calendar with reminders; countdown timers and a pomodoro; a
   stopwatch with laps; and world clocks. Whatever is counting shows on the pill
@@ -69,7 +79,11 @@ the pull requests in this one. Thank you, Ciro.
   sliders ease as they move.
 - **Switching wallpaper no longer stalls the desktop.** The colours are worked
   out at low priority, one run at a time with the newest request winning, and
-  the shell crossfades its own palette alongside the picture.
+  the shell crossfades its own palette alongside the picture. Browsing the
+  wallpaper strip works out colours only for the picture you stop on, and
+  kitty, VSCodium, Discord, Spotify, Steam, GTK and the login screen follow
+  once, a few seconds later. The strip opens from small cached copies rather
+  than decoding every original, 8K ones included, each time.
 - **Window borders follow the palette**, and the starship prompt takes the
   palette's colours without its format being replaced.
 
@@ -260,6 +274,8 @@ places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
   They now open the desktop's own chooser through the XDG portal, with zenity
   and kdialog as fallbacks and a notification when none is there, and they float
   instead of tiling.
+- Restarting the shell at the end of an install goes through `launch-shell.sh`,
+  as a login does, so it comes up on the same render backend.
 
 ### Upgrading
 
@@ -281,9 +297,11 @@ git pull
   appended, the same way `modules.glass` is, so the Windows and Input pages can
   apply what they set.
 - **The login screen** needs the theme reinstalled once, as root, to move to
-  per-account copies: `./install.sh` does it, or on its own
-  `sudo support/sddm/install-theme.sh`. Each account then shows up as itself
-  after its next login or wallpaper change.
+  per-account copies: `./install.sh` does it and paints your own account
+  straight away, or on its own `sudo support/sddm/install-theme.sh`. Any other
+  account that uses Lucid needs `./install.sh` run once as itself too, since
+  an older `sync-sddm.sh` cannot write to the new theme. Each account then
+  shows up as itself after its next login or wallpaper change.
 
 ## v1.10.5 — 2026-09-22
 
