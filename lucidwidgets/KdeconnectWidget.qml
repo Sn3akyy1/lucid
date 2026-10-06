@@ -21,9 +21,19 @@ WidgetBody {
         }
     })
 
+    // every phone this machine is paired with, reachable or not
+    readonly property var paired: w.preview ? [w.sampleDev] : KdeConnect.reachable.concat(KdeConnect.offline)
+    // the one this card was pinned to, when there is more than one
+    readonly property string pinnedId: String(w.opt("deviceId") || "")
     readonly property var dev: {
         if (w.preview)
             return w.sampleDev;
+        if (w.pinnedId !== "") {
+            const pinned = KdeConnect.device(w.pinnedId);
+            if (pinned)
+                return pinned;
+
+        }
         if (KdeConnect.reachable && KdeConnect.reachable.length > 0)
             return KdeConnect.reachable[0];
         if (KdeConnect.devices && KdeConnect.devices.length > 0)
@@ -49,11 +59,18 @@ WidgetBody {
     readonly property bool showShare: w.opt("showShare") !== false
     readonly property bool showRing: w.opt("showRing") !== false
     readonly property bool showClipboard: w.opt("showClipboard") !== false
+    readonly property bool showBrowse: w.opt("showBrowse") !== false
+    readonly property bool manyPhones: !w.preview && w.paired.length > 1
+    // what an action just did, in the status line for a moment
+    property string flash: ""
 
     readonly property string glyph: w.dev && w.dev.type === "tablet" ? "tablet_android" : "smartphone"
     readonly property string statusLine: {
         if (!w.connected)
             return "";
+
+        if (w.flash !== "")
+            return w.flash;
 
         var bits = ["Connected"];
         if (w.netType !== "")
@@ -70,43 +87,107 @@ WidgetBody {
             out.push({
             "icon": "upload_file",
             "tip": "Send a file",
-            "run": "share"
+            "run": "share",
+            "plugin": "kdeconnect_share",
+            "off": "Sharing is off on the phone"
         });
 
         if (w.showRing)
             out.push({
             "icon": "ring_volume",
             "tip": "Ring it",
-            "run": "ring"
+            "run": "ring",
+            "plugin": "kdeconnect_findmyphone",
+            "off": "Find my phone is off on the phone"
         });
 
         if (w.showClipboard)
             out.push({
             "icon": "content_paste_go",
             "tip": "Send the clipboard",
-            "run": "clip"
+            "run": "clip",
+            "plugin": "kdeconnect_clipboard",
+            "off": "Clipboard sharing is off on the phone"
+        });
+
+        if (w.showBrowse && w.variant !== "compact")
+            out.push({
+            "icon": "folder_open",
+            "tip": "Browse its files",
+            "run": "browse",
+            "plugin": "kdeconnect_sftp",
+            "off": "File browsing is off on the phone"
         });
 
         out.push({
             "icon": "notifications_active",
             "tip": "Ping",
-            "run": "ping"
+            "run": "ping",
+            "plugin": "kdeconnect_ping",
+            "off": "Ping is off on the phone"
         });
+        // only worth a button when there is somewhere else to go
+        if (w.manyPhones)
+            out.push({
+            "icon": "swap_horiz",
+            "tip": "Another phone",
+            "run": "next",
+            "plugin": ""
+        });
+
         return out;
+    }
+
+    // a phone answers an action only while its own plugin is on
+    function can(plugin) {
+        return w.preview || plugin === "" || (w.connected && KdeConnect.pluginOn(w.dev, plugin));
+    }
+
+    function say(text) {
+        w.flash = text;
+        flashTimer.restart();
+    }
+
+    function nextDevice() {
+        if (!w.manyPhones || !w.dev)
+            return ;
+
+        const at = w.paired.findIndex((d) => {
+            return d.id === w.dev.id;
+        });
+        w.setOpts({
+            "deviceId": w.paired[(at + 1) % w.paired.length].id
+        });
     }
 
     function run(what) {
         if (!w.dev || w.preview)
             return ;
 
-        if (what === "share")
+        if (what === "share") {
             KdeConnect.pickFiles(w.dev.id, "Send to " + w.dev.name);
-        else if (what === "ring")
+        } else if (what === "ring") {
             KdeConnect.ring(w.dev.id);
-        else if (what === "clip")
+            w.say("Ringing " + w.dev.name);
+        } else if (what === "clip") {
             KdeConnect.sendClipboard(w.dev.id);
-        else if (what === "ping")
+            w.say("Clipboard sent");
+        } else if (what === "browse") {
+            KdeConnect.browse(w.dev.id);
+            w.say("Opening its files");
+        } else if (what === "ping") {
             KdeConnect.ping(w.dev.id, "Ping from Lucid");
+            w.say("Pinged");
+        } else if (what === "next") {
+            w.nextDevice();
+        }
+    }
+
+    Timer {
+        id: flashTimer
+
+        interval: 2200
+        onTriggered: w.flash = ""
     }
 
     // the phone's mark: its glyph inside a scalloped shape
@@ -179,6 +260,8 @@ WidgetBody {
                 required property int index
                 readonly property bool firstOne: act.index === 0
                 readonly property bool lastOne: act.index === w.actions.length - 1
+                // greyed while the phone has the plugin off; a tap says why
+                readonly property bool usable: w.can(act.modelData.plugin)
 
                 width: ag.btn
                 height: ag.btn
@@ -193,6 +276,7 @@ WidgetBody {
                     name: act.modelData.icon
                     size: Theme.dp(20)
                     color: w.ink
+                    opacity: act.usable ? 1 : 0.38
                 }
 
                 StateLayer {
@@ -200,7 +284,7 @@ WidgetBody {
 
                     radius: Theme.dp(10)
                     tint: w.ink
-                    onClicked: w.run(act.modelData.run)
+                    onClicked: act.usable ? w.run(act.modelData.run) : w.say(act.modelData.off)
                 }
 
             }
@@ -496,6 +580,8 @@ WidgetBody {
             icon: "ring_volume"
             containerOverride: Theme.alpha(w.ink, 0.1)
             tintOverride: w.ink
+            disabled: !w.can("kdeconnect_findmyphone")
+            tooltip: cRing.disabled ? "Find my phone is off on the phone" : "Ring it"
             onClicked: w.run("ring")
         }
 
