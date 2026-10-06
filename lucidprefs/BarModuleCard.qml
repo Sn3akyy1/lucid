@@ -147,11 +147,293 @@ SettingCard {
     }
 
     // workspaces
+    SettingRow {
+        visible: card.moduleId === "workspaces"
+        title: "How many"
+        resetKey: "workspacesShown"
+        description: "The ones it always shows. A workspace past them still shows up while it exists."
+        stacked: true
+        showDivider: false
+
+        M3Slider {
+            width: parent.width
+            from: 1
+            to: 10
+            stepSize: 1
+            value: Prefs.workspacesShown
+            onMoved: (v) => {
+                return Prefs.workspacesShown = Math.round(v);
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "workspaces"
+        title: "Wheel to switch"
+        resetKey: "workspacesWheel"
+        description: "The wheel over it moves to the next or the previous workspace."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.workspacesWheel
+            onToggled: (v) => {
+                return Prefs.workspacesWheel = v;
+            }
+        }
+
+    }
+
     // clock
+    SettingRow {
+        id: clockDate
+
+        visible: card.moduleId === "clock"
+        title: "Date"
+        resetKey: "clockDateFormat"
+        description: "How the date reads beside or under the time."
+        enabled: Prefs.clockShowDate
+        disabledReason: "The date is switched off on the Date & Time page."
+        stacked: true
+        showDivider: false
+
+        M3Segmented {
+            width: Math.min(parent.width, Theme.dp(520))
+            enabled: clockDate.enabled
+            current: Prefs.clockDateFormat
+            options: [{
+                "key": "dayMonth",
+                "label": Loc.now().toLocaleDateString(Qt.locale(), "ddd, dd/MM")
+            }, {
+                "key": "short",
+                "label": Loc.now().toLocaleDateString(Qt.locale(), "ddd d")
+            }, {
+                "key": "long",
+                "label": Loc.now().toLocaleDateString(Qt.locale(), "ddd d MMM")
+            }, {
+                "key": "numeric",
+                "label": Loc.now().toLocaleDateString(Qt.locale(), Qt.locale().dateFormat(Locale.ShortFormat))
+            }]
+            onChosen: (key) => {
+                return Prefs.clockDateFormat = key;
+            }
+        }
+
+    }
+
     // media
+    SettingRow {
+        visible: card.moduleId === "media"
+        title: "Hide it when nothing plays"
+        resetKey: "mediaHideIdle"
+        description: "Off, it says Nothing playing; on, it leaves the bar until a player starts."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.mediaHideIdle
+            onToggled: (v) => {
+                return Prefs.mediaHideIdle = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "media"
+        title: "Artist before the title"
+        resetKey: "mediaArtist"
+        description: "The panel always names both."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.mediaArtist
+            onToggled: (v) => {
+                return Prefs.mediaArtist = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "media"
+        title: "Longest the track gets"
+        resetKey: "mediaTitleWidth"
+        description: "A longer one scrolls while it plays."
+        enabled: Prefs.mediaStyle !== "compact"
+        disabledReason: "Compact shows no track."
+        stacked: true
+        showDivider: false
+
+        M3Slider {
+            width: parent.width
+            enabled: Prefs.mediaStyle !== "compact"
+            from: 80
+            to: 320
+            stepSize: 10
+            suffix: " px"
+            value: Prefs.mediaTitleWidth
+            onMoved: (v) => {
+                return Prefs.mediaTitleWidth = Math.round(v);
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "media"
+        title: "Play button"
+        resetKey: "mediaPlayButton"
+        description: "Off, a click opens the player and the panel has the buttons."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.mediaPlayButton
+            onToggled: (v) => {
+                return Prefs.mediaPlayButton = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "media"
+        title: "Wheel for the volume"
+        resetKey: "mediaWheelVolume"
+        description: "The wheel over it turns the player's own volume up or down."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.mediaWheelVolume
+            onToggled: (v) => {
+                return Prefs.mediaWheelVolume = v;
+            }
+        }
+
+    }
+
     // notifications
     // system
     // system tray
+    SettingRow {
+        visible: card.moduleId === "tray"
+        title: "Icon colours"
+        resetKey: "trayIconColor"
+        description: "As each app draws them, or in the shell's colours: grey from the text, or one of the palette's colours. Their light and shade stay either way."
+        stacked: true
+        showDivider: false
+
+        M3Segmented {
+            width: Math.min(parent.width, Theme.dp(600))
+            current: Prefs.trayIconColor
+            options: [{
+                "key": "original",
+                "label": "Original"
+            }, {
+                "key": "grey",
+                "label": "Grey"
+            }, {
+                "key": "secondary",
+                "label": "Secondary"
+            }, {
+                "key": "tertiary",
+                "label": "Tertiary"
+            }, {
+                "key": "accent",
+                "label": "Accent"
+            }]
+            onChosen: (key) => {
+                return Prefs.trayIconColor = key;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "tray"
+        title: "Apps in the tray"
+        resetKey: "trayHidden"
+        description: SystemTray.items.values.length > 0 ? "The ones running now. One switched off stays out of the bar and the panel until you switch it back on." : "Nothing is in the tray right now. Apps show up here while they run."
+        stacked: true
+        showDivider: false
+
+        Column {
+            width: parent.width
+            spacing: Theme.dp(6)
+
+            Repeater {
+                model: card.moduleId === "tray" ? SystemTray.items.values : []
+
+                Rectangle {
+                    id: trayRow
+
+                    required property var modelData
+                    readonly property bool shownInBar: String(Prefs.trayHidden).split(",").indexOf(trayRow.modelData.id) === -1
+
+                    width: parent.width
+                    height: Theme.dp(48)
+                    radius: Theme.radiusMd
+                    color: Theme.bgSunken
+
+                    IconImage {
+                        id: trayRowIcon
+
+                        anchors.left: parent.left
+                        anchors.leftMargin: Theme.dp(14)
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Theme.dp(20)
+                        height: Theme.dp(20)
+                        opacity: trayRow.shownInBar ? 1 : 0.4
+                        source: {
+                            const raw = trayRow.modelData.icon || "";
+                            const q = raw.indexOf("?path=");
+                            if (q === -1)
+                                return raw;
+
+                            const name = raw.substring(0, q);
+                            return "file://" + raw.substring(q + 6) + "/" + name.substring(name.lastIndexOf("/") + 1);
+                        }
+                        asynchronous: true
+                    }
+
+                    Text {
+                        anchors.left: trayRowIcon.right
+                        anchors.leftMargin: Theme.dp(12)
+                        anchors.right: trayRowSwitch.left
+                        anchors.rightMargin: Theme.dp(12)
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: trayRow.modelData.title || trayRow.modelData.tooltipTitle || trayRow.modelData.id
+                        color: trayRow.shownInBar ? Theme.text : Theme.subtextDim
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontBodyLg
+                        elide: Text.ElideRight
+                    }
+
+                    M3Switch {
+                        id: trayRowSwitch
+
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.dp(12)
+                        anchors.verticalCenter: parent.verticalCenter
+                        checked: trayRow.shownInBar
+                        onToggled: (v) => {
+                            const list = String(Prefs.trayHidden).split(",").filter((id) => {
+                                return id !== "" && id !== trayRow.modelData.id;
+                            });
+                            if (!v)
+                                list.push(trayRow.modelData.id);
+
+                            Prefs.trayHidden = list.join(",");
+                        }
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
     // privacy
     SettingRow {
         visible: card.moduleId === "privacy"

@@ -68,7 +68,7 @@ Item {
         }
         return max;
     }
-    readonly property int maxWorkspaces: 6
+    readonly property int maxWorkspaces: Prefs.workspacesShown
     // the overview has every workspace the keys reach, made yet or not; the bar
     // keeps to the first few and whatever is open past them
     readonly property int slotCount: Math.max(Monitors.workspaceCount, root.highestWorkspaceId)
@@ -178,6 +178,11 @@ Item {
     readonly property int compactHeight: Theme.dp(Prefs.barHeight)
     property int hoveredSlot: -1
     readonly property bool rowHovered: rowHover.hovered && !root.expanded
+    // numbered keeps the numbers the hover shows, in slots a size down
+    readonly property bool numbered: Prefs.workspacesStyle === "numbers"
+    readonly property bool spread: root.rowHovered || root.numbered
+    readonly property int spreadSize: root.rowHovered ? root.hoverDotSize : Theme.dp(20)
+    readonly property int spreadActiveWidth: root.rowHovered ? root.hoverActiveDotWidth : Theme.dp(30)
     readonly property int litSlot: root.rowHovered && root.hoveredSlot !== -1 ? root.hoveredSlot : root.activeSlot
     onLitSlotChanged: activePill.retarget()
     readonly property bool litIndexValid: root.litSlot >= 0 && root.litSlot < root.totalSlots
@@ -529,8 +534,8 @@ Item {
         if (index >= root.slotCount)
             return root.chipWidth(index);
 
-        if (root.rowHovered)
-            return root.litSlot === index ? root.hoverActiveDotWidth : root.hoverDotSize;
+        if (root.spread)
+            return root.litSlot === index ? root.spreadActiveWidth : root.spreadSize;
 
         const ws = root.wsAt(index);
         const wide = index === root.activeSlot || (ws && (ws.active || ws.urgent));
@@ -544,8 +549,8 @@ Item {
         if (index >= root.slotCount)
             return root.chipOpen(index) ? root.hoverDotSize : root.stashIcon;
 
-        if (root.rowHovered)
-            return root.hoverDotSize;
+        if (root.spread)
+            return root.spreadSize;
 
         return root.sunk ? root.sunkDotSize : root.dotSize;
     }
@@ -1282,11 +1287,13 @@ Item {
                     else
                         root.expanded = !root.expanded;
                 }
-            }
-
-            WheelHandler {
-                enabled: !root.expanded
+                // the wheel is taken here: a WheelHandler beside this never
+                // heard it past the MouseArea, so the wheel did nothing
                 onWheel: (event) => {
+                    if (root.expanded || !Prefs.workspacesWheel) {
+                        event.accepted = false;
+                        return ;
+                    }
                     root.wheelAccum += event.angleDelta.y;
                     while (root.wheelAccum >= 120) {
                         root.wheelAccum -= 120;
@@ -1434,7 +1441,7 @@ Item {
                         readonly property var wsObj: root.wsAt(dot.index)
                         readonly property bool isFocused: dot.wsId === root.activeWsId
                         readonly property bool isUrgent: dot.wsObj ? dot.wsObj.urgent : false
-                        readonly property bool isLit: root.rowHovered && root.pillCovers(dot.x, dot.width)
+                        readonly property bool isLit: root.spread && root.pillCovers(dot.x, dot.width)
                         readonly property bool occupied: dot.wsObj ? (dot.wsObj.toplevels ? dot.wsObj.toplevels.values.length > 0 : true) : false
                         readonly property string displayNumber: root.startsGroup(dot.index) ? root.displayNumber(dot.index) : ""
 
@@ -1443,17 +1450,18 @@ Item {
                         width: root.slotWidth(dot.index)
                         height: root.slotHeight(dot.index)
                         radius: Theme.dp(999)
-                        color: dot.isUrgent ? Theme.error : (root.rowHovered || dot.index === root.activeSlot ? "transparent" : Theme.alpha(Theme.subtext, dot.occupied ? 0.72 : 0.24))
+                        color: dot.isUrgent ? Theme.error : (root.spread || dot.index === root.activeSlot ? "transparent" : Theme.alpha(Theme.subtext, dot.occupied ? 0.72 : 0.24))
 
+                        // numbered, an empty workspace's number is the quieter colour
                         Text {
                             anchors.centerIn: parent
                             text: dot.wsId
-                            opacity: root.rowHovered ? 1 : 0
+                            opacity: root.spread ? 1 : 0
                             color: dot.isLit ? Theme.fgPrimary : (dot.occupied ? Theme.text : Theme.subtextDim)
                             font.family: Theme.fontFamily
                             font.bold: true
-                            font.pixelSize: Theme.fs(13)
-                            font.variableAxes: Theme.axes(Theme.fs(13), 680, 100)
+                            font.pixelSize: Theme.fs(root.rowHovered ? 13 : 12)
+                            font.variableAxes: Theme.axes(Theme.fs(root.rowHovered ? 13 : 12), 680, 100)
 
                             Behavior on opacity {
                                 NumberAnimation {

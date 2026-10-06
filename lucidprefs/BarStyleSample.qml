@@ -19,6 +19,7 @@ Item {
         "clock/accent": clockAccent,
         "clock/panel/full": clockPanelFull,
         "clock/panel/calendar": clockPanelCalendar,
+        "media/disc": mediaDisc,
         "media/playing": mediaPlaying,
         "media/cover": mediaCover,
         "media/compact": mediaCompact,
@@ -49,10 +50,21 @@ Item {
             return now.toLocaleTimeString(Qt.locale(), "HH:mm");
 
         // h only counts to 12 next to AP; the bar leaves the AM/PM out
-        const t = now.toLocaleTimeString(Qt.locale(), "hh:mm AP");
+        const t = now.toLocaleTimeString(Qt.locale(), "h:mm AP");
         return t.replace(now.toLocaleTimeString(Qt.locale(), "AP"), "").trim();
     }
-    readonly property string dateText: Loc.now().toLocaleDateString(Qt.locale(), "ddd d")
+    readonly property string dateText: {
+        switch (Prefs.clockDateFormat) {
+        case "short":
+            return Loc.now().toLocaleDateString(Qt.locale(), "ddd d");
+        case "long":
+            return Loc.now().toLocaleDateString(Qt.locale(), "ddd d MMM");
+        case "numeric":
+            return Loc.now().toLocaleDateString(Qt.locale(), Qt.locale().dateFormat(Locale.ShortFormat));
+        default:
+            return Loc.now().toLocaleDateString(Qt.locale(), "ddd, dd/MM");
+        }
+    }
 
     implicitWidth: loader.item ? loader.item.implicitWidth : 0
     implicitHeight: loader.item ? loader.item.implicitHeight : 0
@@ -123,11 +135,18 @@ Item {
         Row {
             spacing: Theme.dp(8)
 
+            BarText {
+                visible: Prefs.clockShowDate
+                anchors.verticalCenter: parent.verticalCenter
+                text: sample.dateText
+                color: Theme.subtext
+            }
+
             Rectangle {
                 width: accentTime.implicitWidth + Theme.dp(16)
                 height: Theme.dp(24)
                 radius: height / 2
-                color: Theme.accent
+                color: Theme.primary
 
                 BarText {
                     id: accentTime
@@ -137,13 +156,6 @@ Item {
                     color: Theme.fgAccent
                 }
 
-            }
-
-            BarText {
-                visible: Prefs.clockShowDate
-                anchors.verticalCenter: parent.verticalCenter
-                text: sample.dateText
-                color: Theme.subtextDim
             }
 
         }
@@ -206,6 +218,47 @@ Item {
             MiniCalendar {
                 anchors.fill: parent
                 anchors.margins: Theme.dp(8)
+            }
+
+        }
+
+    }
+
+    Component {
+        id: mediaDisc
+
+        Row {
+            spacing: Theme.dp(8)
+
+            Item {
+                width: Theme.dp(24)
+                height: Theme.dp(24)
+                anchors.verticalCenter: parent.verticalCenter
+
+                CircularProgress {
+                    anchors.fill: parent
+                    value: 0.4
+                    thickness: 2.5
+                    color: Theme.accent
+                    trackColor: Theme.alpha(Theme.subtext, 0.22)
+                }
+
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: Theme.dp(16)
+                    height: Theme.dp(16)
+                    radius: height / 2
+                    color: Theme.accentContainer
+                }
+
+            }
+
+            BarText {
+                text: "Artist  -  Song"
+            }
+
+            MiniPlay {
+                anchors.verticalCenter: parent.verticalCenter
             }
 
         }

@@ -33,6 +33,25 @@ BarPill {
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
     readonly property int pad: Theme.dp(16)
+    // the look picked on the module's card: the time on an accent chip after
+    // the date, the time then the date in one line, or the date under the time
+    readonly property bool inlineFace: Prefs.clockStyle === "inline"
+    readonly property bool stacked: Prefs.clockStyle === "stacked"
+    readonly property bool accentFace: !root.inlineFace && !root.stacked
+    readonly property color timeInk: root.accentFace ? Theme.fgAccent : Theme.text
+    readonly property string dateFormat: {
+        switch (Prefs.clockDateFormat) {
+        case "short":
+            return "ddd d";
+        case "long":
+            return "ddd d MMM";
+        case "numeric":
+            return Qt.locale().dateFormat(Locale.ShortFormat);
+        default:
+            return "ddd, dd/MM";
+        }
+    }
+    readonly property string dateText: root.now.toLocaleDateString(Qt.locale(), root.dateFormat)
 
     function showTab(t) {
         if (t === root.tab)
@@ -248,96 +267,135 @@ BarPill {
             // the date reads as context, the time as the thing itself: an accent
             // chip is the one fill the bar carries on live data
             LText {
-                visible: Prefs.clockShowDate
+                visible: Prefs.clockShowDate && root.accentFace
                 anchors.verticalCenter: parent.verticalCenter
                 role: "labelLarge"
                 size: Theme.fs(12.5)
                 weight: 560
                 color: Theme.subtext
-                text: root.now.toLocaleDateString(Qt.locale(), "ddd, dd/MM")
+                text: root.dateText
             }
 
             Rectangle {
                 id: timeChip
 
                 anchors.verticalCenter: parent.verticalCenter
-                width: timeRow.implicitWidth + Theme.dp(17)
-                height: Math.min(parent.height, Math.round(Theme.dp(Prefs.barHeight) * 0.66))
+                width: root.accentFace ? timeRow.implicitWidth + Theme.dp(17) : timeStack.implicitWidth
+                height: root.accentFace ? Math.min(parent.height, Math.round(Theme.dp(Prefs.barHeight) * 0.66)) : timeStack.implicitHeight
                 radius: height / 2
-                color: Theme.primary
+                color: root.accentFace ? Theme.primary : "transparent"
 
-                // the ink on an accent fill, not the deepest surface tone: that one is
-                // near-black on most palettes and carries none of their hue
-                Row {
-                    id: timeRow
+                Column {
+                    id: timeStack
 
                     anchors.centerIn: parent
-                    spacing: 0
+                    spacing: -Theme.dp(2)
 
-                    LText {
-                        id: hourText
+                    // the ink on an accent fill, not the deepest surface tone: that one is
+                    // near-black on most palettes and carries none of their hue
+                    Row {
+                        id: timeRow
 
-                        role: "labelLarge"
-                        size: Theme.fs(13.5)
-                        weight: 700
-                        rounded: 100
-                        tabular: true
-                        color: Theme.fgAccent
-                        text: root.hourText(root.now)
-                    }
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: 0
 
-                    LText {
-                        role: "labelLarge"
-                        size: Theme.fs(13.5)
-                        weight: 700
-                        rounded: 100
-                        color: Theme.fgAccent
-                        text: ":"
-                        opacity: root.now.getSeconds() % 2 === 0 || Prefs.clockShowSeconds ? 1 : 0.35
+                        LText {
+                            id: hourText
 
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Theme.barMs(400)
+                            role: "labelLarge"
+                            size: Theme.fs(root.stacked ? 12 : 13.5)
+                            weight: 700
+                            rounded: 100
+                            tabular: true
+                            color: root.timeInk
+                            text: root.hourText(root.now)
+                        }
+
+                        LText {
+                            role: "labelLarge"
+                            size: Theme.fs(root.stacked ? 12 : 13.5)
+                            weight: 700
+                            rounded: 100
+                            color: root.timeInk
+                            text: ":"
+                            opacity: root.now.getSeconds() % 2 === 0 || Prefs.clockShowSeconds ? 1 : 0.35
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Theme.barMs(400)
+                                }
+
                             }
 
                         }
 
+                        LText {
+                            role: "labelLarge"
+                            size: Theme.fs(root.stacked ? 12 : 13.5)
+                            weight: 700
+                            rounded: 100
+                            tabular: true
+                            color: root.timeInk
+                            text: String(root.now.getMinutes()).padStart(2, "0")
+                        }
+
+                        LText {
+                            visible: Prefs.clockShowSeconds
+                            anchors.baseline: hourText.baseline
+                            leftPadding: Theme.dp(2)
+                            role: "labelMedium"
+                            weight: 600
+                            tabular: true
+                            color: Theme.alpha(root.timeInk, 0.7)
+                            text: String(root.now.getSeconds()).padStart(2, "0")
+                        }
+
+                        LText {
+                            visible: !Prefs.clock24h
+                            anchors.baseline: hourText.baseline
+                            leftPadding: Theme.dp(4)
+                            role: "labelMedium"
+                            weight: 600
+                            color: Theme.alpha(root.timeInk, 0.7)
+                            // the locale's own meridiem ("PM", "P.M.", "午後")
+                            text: root.now.toLocaleTimeString(Qt.locale(), "AP")
+                        }
+
                     }
 
+                    // two lines: the date small under the time
                     LText {
-                        role: "labelLarge"
-                        size: Theme.fs(13.5)
-                        weight: 700
-                        rounded: 100
-                        tabular: true
-                        color: Theme.fgAccent
-                        text: String(root.now.getMinutes()).padStart(2, "0")
-                    }
-
-                    LText {
-                        visible: Prefs.clockShowSeconds
-                        anchors.baseline: hourText.baseline
-                        leftPadding: Theme.dp(2)
+                        visible: Prefs.clockShowDate && root.stacked
+                        anchors.horizontalCenter: parent.horizontalCenter
                         role: "labelMedium"
+                        size: Theme.fs(10)
                         weight: 600
-                        tabular: true
-                        color: Theme.alpha(Theme.fgAccent, 0.7)
-                        text: String(root.now.getSeconds()).padStart(2, "0")
-                    }
-
-                    LText {
-                        visible: !Prefs.clock24h
-                        anchors.baseline: hourText.baseline
-                        leftPadding: Theme.dp(4)
-                        role: "labelMedium"
-                        weight: 600
-                        color: Theme.alpha(Theme.fgAccent, 0.7)
-                        // the locale's own meridiem ("PM", "P.M.", "午後")
-                        text: root.now.toLocaleTimeString(Qt.locale(), "AP")
+                        color: Theme.subtext
+                        text: root.dateText
                     }
 
                 }
 
+            }
+
+            // one line: the time, a dot, then the date
+            Rectangle {
+                visible: Prefs.clockShowDate && root.inlineFace
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.dp(3)
+                height: Theme.dp(3)
+                radius: height / 2
+                color: Theme.subtextDim
+            }
+
+            LText {
+                visible: Prefs.clockShowDate && root.inlineFace
+                anchors.verticalCenter: parent.verticalCenter
+                role: "labelLarge"
+                size: Theme.fs(12.5)
+                weight: 560
+                color: Theme.subtext
+                text: root.dateText
             }
 
             Row {

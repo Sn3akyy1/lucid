@@ -190,7 +190,13 @@ Singleton {
         "name": "Workspaces",
         "desc": "Workspace pills and the expanded overview",
         "more": "Special workspaces, which it shows as well, have a page of their own.",
-        "page": "workspaces"
+        "page": "workspaces",
+        "options": ["workspacesShown", "workspacesWheel"],
+        "style": "workspacesStyle",
+        "styles": [
+            {"key": "dots", "name": "Dots", "blurb": "A dot for each, the one you are on drawn out long"},
+            {"key": "numbers", "name": "Numbers", "blurb": "Each one's number, the empty ones quieter"}
+        ]
     },
     {
         "id": "media",
@@ -198,7 +204,19 @@ Singleton {
         "home": "left",
         "name": "Media",
         "desc": "Now-playing pill and player controls",
-        "when": "while something plays"
+        "when": "while something plays",
+        "options": ["mediaHideIdle", "mediaArtist", "mediaTitleWidth", "mediaPlayButton", "mediaWheelVolume"],
+        "style": "mediaStyle",
+        "styles": [
+            {"key": "disc", "name": "Disc", "blurb": "The cover turning in a ring that fills as it plays"},
+            {"key": "cover", "name": "Cover", "blurb": "The album's cover standing still, then the track"},
+            {"key": "compact", "name": "Compact", "blurb": "Only the moving bars and the play button"}
+        ],
+        "panelStyle": "mediaPanelStyle",
+        "panelStyles": [
+            {"key": "side", "name": "Side by side", "blurb": "The cover beside the track"},
+            {"key": "cover", "name": "Large cover", "blurb": "The cover across the panel, the track under it"}
+        ]
     },
     {
         "id": "tray",
@@ -206,7 +224,13 @@ Singleton {
         "home": "left",
         "name": "Tray",
         "desc": "Status icons from running applications",
-        "when": "while an app has an icon in the tray"
+        "when": "while an app has an icon in the tray",
+        "options": ["trayHidden", "trayIconColor"],
+        "style": "trayStyle",
+        "styles": [
+            {"key": "collapsed", "name": "Collapsed", "blurb": "One icon and how many are running"},
+            {"key": "icons", "name": "Icons", "blurb": "Each app's icon in the bar"}
+        ]
     },
     {
         "id": "clock",
@@ -214,8 +238,15 @@ Singleton {
         "home": "center",
         "name": "Clock",
         "desc": "Time, date and the calendar panel",
-        "more": "The time format, whether the date shows and the time zone are on the Date & Time page.",
-        "page": "datetime"
+        "more": "The time format, seconds, the temperature, whether the date shows and the time zone are on the Date & Time page.",
+        "page": "datetime",
+        "options": ["clockDateFormat"],
+        "style": "clockStyle",
+        "styles": [
+            {"key": "accent", "name": "Accent", "blurb": "The date, then the time on an accent chip"},
+            {"key": "inline", "name": "One line", "blurb": "The time, then the date"},
+            {"key": "stacked", "name": "Two lines", "blurb": "The date small under the time"}
+        ]
     },
     {
         "id": "notifications",
@@ -225,7 +256,13 @@ Singleton {
         "desc": "Toasts and the notification list",
         "when": "while a notification is waiting",
         "more": "Do not disturb is just below; popups, sounds and quiet hours are on the Notifications page.",
-        "page": "notifications"
+        "page": "notifications",
+        "style": "notificationsStyle",
+        "styles": [
+            {"key": "badge", "name": "Count", "blurb": "The bell and how many are waiting"},
+            {"key": "dot", "name": "Dot", "blurb": "The bell with a dot while any are waiting"},
+            {"key": "chip", "name": "Accent", "blurb": "Bell and count on the accent while any wait"}
+        ]
     },
     {
         "id": "system",
@@ -439,6 +476,22 @@ Singleton {
     property alias windowModuleMiddleClose: s.windowModuleMiddleClose
     property alias windowModuleStyle: s.windowModuleStyle
     property alias workspacesByDisplay: s.workspacesByDisplay
+    property alias clockStyle: s.clockStyle
+    property alias clockDateFormat: s.clockDateFormat
+    property alias mediaStyle: s.mediaStyle
+    property alias mediaPanelStyle: s.mediaPanelStyle
+    property alias mediaHideIdle: s.mediaHideIdle
+    property alias mediaArtist: s.mediaArtist
+    property alias mediaTitleWidth: s.mediaTitleWidth
+    property alias mediaPlayButton: s.mediaPlayButton
+    property alias mediaWheelVolume: s.mediaWheelVolume
+    property alias workspacesStyle: s.workspacesStyle
+    property alias workspacesShown: s.workspacesShown
+    property alias workspacesWheel: s.workspacesWheel
+    property alias notificationsStyle: s.notificationsStyle
+    property alias trayStyle: s.trayStyle
+    property alias trayIconColor: s.trayIconColor
+    property alias trayHidden: s.trayHidden
     property alias clock24h: s.clock24h
     property alias clockShowDate: s.clockShowDate
     property alias gpsEnabled: s.gpsEnabled
@@ -805,6 +858,22 @@ Singleton {
         "windowModuleMiddleClose": false,
         "windowModuleStyle": "plain",
         "workspacesByDisplay": true,
+        "clockStyle": "accent",
+        "clockDateFormat": "dayMonth",
+        "mediaStyle": "disc",
+        "mediaPanelStyle": "side",
+        "mediaHideIdle": false,
+        "mediaArtist": true,
+        "mediaTitleWidth": 170,
+        "mediaPlayButton": true,
+        "mediaWheelVolume": true,
+        "workspacesStyle": "dots",
+        "workspacesShown": 6,
+        "workspacesWheel": true,
+        "notificationsStyle": "badge",
+        "trayStyle": "collapsed",
+        "trayIconColor": "original",
+        "trayHidden": "",
         "clock24h": false,
         "clockShowDate": true,
         "gpsEnabled": false,
@@ -1368,6 +1437,22 @@ Singleton {
             property bool windowModuleMiddleClose: false
             property string windowModuleStyle: "plain"
             property bool workspacesByDisplay: true
+            property string clockStyle: "accent"
+            property string clockDateFormat: "dayMonth"
+            property string mediaStyle: "disc"
+            property string mediaPanelStyle: "side"
+            property bool mediaHideIdle: false
+            property bool mediaArtist: true
+            property int mediaTitleWidth: 170
+            property bool mediaPlayButton: true
+            property bool mediaWheelVolume: true
+            property string workspacesStyle: "dots"
+            property int workspacesShown: 6
+            property bool workspacesWheel: true
+            property string notificationsStyle: "badge"
+            property string trayStyle: "collapsed"
+            property string trayIconColor: "original"
+            property string trayHidden: ""
             property bool clock24h: false
             property bool clockShowDate: true
             property bool gpsEnabled: false

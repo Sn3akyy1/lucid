@@ -55,7 +55,12 @@ BarPill {
     readonly property string title: root.player ? (root.player.trackTitle || "Unknown") : "Nothing playing"
     readonly property string artist: root.player ? root.player.trackArtist : ""
     readonly property string artUrl: root.player ? root.player.trackArtUrl : ""
-    readonly property string displayTitle: (root.player && root.artist) ? root.artist + "  -  " + root.title : root.title
+    readonly property string displayTitle: (root.player && root.artist && Prefs.mediaArtist) ? root.artist + "  -  " + root.title : root.title
+    // the looks picked on the module's card
+    readonly property bool coverFace: Prefs.mediaStyle === "cover"
+    readonly property bool compactFace: Prefs.mediaStyle === "compact"
+    readonly property bool discFace: !root.coverFace && !root.compactFace
+    readonly property bool coverPanel: Prefs.mediaPanelStyle === "cover"
     readonly property real posSec: root.player ? root.player.position : 0
     readonly property real lenSec: root.player ? root.player.length : 0
     readonly property bool hasDuration: root.lenSec > 0
@@ -418,7 +423,7 @@ BarPill {
         root.cancelListening();
     }
 
-    shown: Prefs.barHas("media")
+    shown: Prefs.barHas("media") && !(Prefs.mediaHideIdle && root.player === null)
     compactWidth: compactRow.implicitWidth + Theme.dp(20)
     panelWidth: Math.min(Theme.dp(400), root.screenW - Theme.dp(34))
     panelHeight: Theme.dp(28) + (root.page === "player" ? playerColumn.implicitHeight : shazamColumn.implicitHeight)
@@ -658,7 +663,11 @@ BarPill {
                     root.openPanel("player");
             }
             onWheel: (wheel) => {
-                return root.nudgeVolume(wheel.angleDelta.y > 0 ? 0.05 : -0.05);
+                if (!Prefs.mediaWheelVolume) {
+                    wheel.accepted = false;
+                    return ;
+                }
+                root.nudgeVolume(wheel.angleDelta.y > 0 ? 0.05 : -0.05);
             }
         },
 
@@ -669,13 +678,13 @@ BarPill {
             spacing: Theme.dp(8)
 
             Item {
-                width: Theme.dp(26)
-                height: Theme.dp(26)
+                width: root.coverFace ? Theme.dp(22) : Theme.dp(26)
+                height: width
                 anchors.verticalCenter: parent.verticalCenter
 
                 CircularProgress {
                     anchors.fill: parent
-                    visible: root.player !== null
+                    visible: root.player !== null && !root.coverFace
                     value: root.lenSec > 0 ? root.posSec / root.lenSec : 0
                     thickness: 2.5
                     color: Theme.accent
@@ -690,13 +699,13 @@ BarPill {
                     height: Theme.dp(18)
                     radius: Theme.dp(9)
                     color: Theme.surfaceHighest
-                    visible: root.player !== null && compactArtImg.status === Image.Ready
+                    visible: root.player !== null && compactArtImg.status === Image.Ready && root.discFace
 
                     Image {
                         id: compactArtImg
 
                         anchors.fill: parent
-                        source: root.artUrl
+                        source: root.discFace ? root.artUrl : ""
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         sourceSize.width: Theme.dp(64)
@@ -713,10 +722,32 @@ BarPill {
 
                 }
 
+                // the cover look: the album art standing still, squared off
+                ClippingRectangle {
+                    id: coverArt
+
+                    anchors.fill: parent
+                    radius: Theme.dp(6)
+                    color: Theme.surfaceHighest
+                    visible: root.player !== null && coverArtImg.status === Image.Ready
+
+                    Image {
+                        id: coverArtImg
+
+                        anchors.fill: parent
+                        source: root.coverFace ? root.artUrl : ""
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        sourceSize.width: Theme.dp(64)
+                        sourceSize.height: Theme.dp(64)
+                    }
+
+                }
+
                 Row {
                     anchors.centerIn: parent
                     spacing: Theme.dp(2)
-                    visible: root.player !== null && !compactArt.visible
+                    visible: root.player !== null && !compactArt.visible && !coverArt.visible
 
                     Repeater {
                         model: 3
@@ -758,7 +789,8 @@ BarPill {
             Item {
                 id: compactTitleSlot
 
-                width: root.volumeFlash ? volumeFlashRow.implicitWidth : Math.min(Theme.dp(170), Math.max(Theme.dp(60), compactTitle.naturalWidth))
+                visible: !root.compactFace || root.volumeFlash
+                width: root.volumeFlash ? volumeFlashRow.implicitWidth : Math.min(Theme.dp(Prefs.mediaTitleWidth), Math.max(Theme.dp(60), compactTitle.naturalWidth))
                 height: Theme.dp(18)
                 anchors.verticalCenter: parent.verticalCenter
 
@@ -817,6 +849,7 @@ BarPill {
             }
 
             Rectangle {
+                visible: Prefs.mediaPlayButton
                 width: Theme.dp(24)
                 height: Theme.dp(24)
                 radius: playArea.pressed ? Theme.dp(8) : Theme.dp(12)
@@ -885,16 +918,18 @@ BarPill {
             width: root.contentWidth
             spacing: Theme.dp(10)
 
-            Row {
+            // the cover beside the track, or across the top above it
+            Grid {
                 width: root.contentWidth
-                height: Theme.dp(84)
-                spacing: Theme.dp(12)
+                columns: root.coverPanel ? 1 : 2
+                columnSpacing: Theme.dp(12)
+                rowSpacing: Theme.dp(12)
 
                 Item {
                     id: artwork
 
-                    width: Theme.dp(84)
-                    height: Theme.dp(84)
+                    width: root.coverPanel ? root.contentWidth : Theme.dp(84)
+                    height: root.coverPanel ? Math.round(root.contentWidth * 0.62) : Theme.dp(84)
 
                     RoundedArt {
                         anchors.fill: parent
@@ -948,8 +983,8 @@ BarPill {
                 }
 
                 Item {
-                    width: root.contentWidth - Theme.dp(84) - Theme.dp(12)
-                    height: Theme.dp(84)
+                    width: root.coverPanel ? root.contentWidth : root.contentWidth - Theme.dp(84) - Theme.dp(12)
+                    height: root.coverPanel ? Theme.dp(78) : Theme.dp(84)
 
                     Column {
                         anchors.top: parent.top
