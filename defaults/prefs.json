@@ -63,6 +63,7 @@
     "windowModuleMiddleClose": false,
     "windowModuleStyle": "plain",
     "workspacesByDisplay": true,
+    "audioMeters": true,
     "clockStyle": "accent",
     "clockDateFormat": "dayMonth",
     "mediaStyle": "disc",

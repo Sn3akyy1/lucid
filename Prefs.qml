@@ -476,6 +476,7 @@ Singleton {
     property alias windowModuleMiddleClose: s.windowModuleMiddleClose
     property alias windowModuleStyle: s.windowModuleStyle
     property alias workspacesByDisplay: s.workspacesByDisplay
+    property alias audioMeters: s.audioMeters
     property alias clockStyle: s.clockStyle
     property alias clockDateFormat: s.clockDateFormat
     property alias mediaStyle: s.mediaStyle
@@ -858,6 +859,7 @@ Singleton {
         "windowModuleMiddleClose": false,
         "windowModuleStyle": "plain",
         "workspacesByDisplay": true,
+        "audioMeters": true,
         "clockStyle": "accent",
         "clockDateFormat": "dayMonth",
         "mediaStyle": "disc",
@@ -1437,6 +1439,7 @@ Singleton {
             property bool windowModuleMiddleClose: false
             property string windowModuleStyle: "plain"
             property bool workspacesByDisplay: true
+            property bool audioMeters: true
             property string clockStyle: "accent"
             property string clockDateFormat: "dayMonth"
             property string mediaStyle: "disc"

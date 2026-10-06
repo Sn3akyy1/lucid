@@ -12,6 +12,11 @@ Column {
     readonly property int volume: Audio.volumeOf(stream.modelData)
     readonly property bool muted: Audio.mutedOf(stream.modelData)
     readonly property var devices: stream.playback ? Audio.outputs : Audio.inputs
+    // sent to a device of its own, rather than following the default
+    readonly property bool pinned: Audio.isPinned(stream.modelData)
+    // recording what an output plays (a visualiser): the default input is a
+    // microphone, so there is no default to hand it back to
+    readonly property bool canFollow: !(!stream.playback && Audio.onMonitor(stream.modelData))
     // a stream that records is muted with a microphone, not with a speaker
     readonly property string icon: {
         if (stream.playback)
@@ -123,7 +128,7 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             size: Theme.dp(32)
             iconSize: Theme.dp(18)
-            enabled: stream.devices.length > 1
+            enabled: stream.devices.length > 1 || (stream.pinned && stream.canFollow)
             rotation: stream.expanded ? 180 : 0
             iconPath: "expand_more"
             onClicked: stream.expandRequested()
@@ -176,14 +181,21 @@ Column {
 
             M3Chips {
                 width: parent.width - Theme.dp(75)
-                current: stream.target ? stream.target.name : ""
-                options: stream.devices.map((d) => {
+                current: (stream.pinned || !stream.canFollow) && stream.target ? stream.target.name : ""
+                options: (stream.canFollow ? [{
+                    "key": "",
+                    "label": "Default device"
+                }] : []).concat(stream.devices.map((d) => {
                     return {
                         "key": d.name,
                         "label": Audio.label(d)
                     };
-                })
+                }))
                 onChosen: (key) => {
+                    if (key === "") {
+                        Audio.followDefault(stream.modelData);
+                        return ;
+                    }
                     const device = stream.devices.find((d) => {
                         return d.name === key;
                     });
