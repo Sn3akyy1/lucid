@@ -94,6 +94,11 @@ PanelWindow {
     readonly property string grimLevel: " -l 3"
     readonly property string imLevel: " -define png:compression-level=3"
 
+    // a live capture takes this window's own monitor. regions come in relative
+    // to that monitor, and grim wants them in the global layout
+    readonly property real originX: flashWindow.screen ? flashWindow.screen.x : 0
+    readonly property real originY: flashWindow.screen ? flashWindow.screen.y : 0
+
     function captureFull(showFlash, source) {
         if (showFlash === undefined)
             showFlash = true;
@@ -126,7 +131,7 @@ PanelWindow {
             var crop = Math.round(w * scale) + "x" + Math.round(h * scale) + "+" + Math.round(x * scale) + "+" + Math.round(y * scale);
             capture = flashWindow.imSetup + "$IM '" + source + "' -crop " + crop + " +repage" + flashWindow.imLevel + " '" + file + "'";
         } else {
-            capture = "grim" + flashWindow.grimLevel + " -g '" + Math.round(x) + "," + Math.round(y) + " " + Math.round(w) + "x" + Math.round(h) + "' '" + file + "'";
+            capture = "grim" + flashWindow.grimLevel + " -g '" + Math.round(x + flashWindow.originX) + "," + Math.round(y + flashWindow.originY) + " " + Math.round(w) + "x" + Math.round(h) + "' '" + file + "'";
         }
         grimProcess.command = ["sh", "-c", "mkdir -p '" + flashWindow.saveDir + "' && " + capture];
         grimProcess.running = true;
@@ -179,7 +184,7 @@ PanelWindow {
         if (source)
             capture = region ? "$IM '" + source + "' -crop " + pw + "x" + Math.round(h * scale) + "+" + Math.round(x * scale) + "+" + Math.round(y * scale) + " +repage '" + shot + "'" : "$IM '" + source + "' '" + shot + "'";
         else
-            capture = region ? "grim -g '" + Math.round(x) + "," + Math.round(y) + " " + Math.round(w) + "x" + Math.round(h) + "' '" + shot + "'" : flashWindow.grimHere + " '" + shot + "'";
+            capture = region ? "grim -g '" + Math.round(x + flashWindow.originX) + "," + Math.round(y + flashWindow.originY) + " " + Math.round(w) + "x" + Math.round(h) + "' '" + shot + "'" : flashWindow.grimHere + " '" + shot + "'";
         // tesseract wants roughly 300dpi text, so blow up anything narrower than a wide crop
         var upscale = (!region || pw >= 1200) ? "" : " -resize 300%";
         ocrProcess.command = ["sh", "-c",
