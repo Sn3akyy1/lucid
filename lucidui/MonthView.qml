@@ -11,7 +11,7 @@ Item {
     property int monthIndex: Loc.now().getMonth()
     // { year, month, day } or null
     property var selected: null
-    property int cell: 40
+    property int cell: Theme.dp(40)
     property real slideX: 0
     property bool mondayFirst: Prefs.weekStartMonday
     property bool showHeader: true
@@ -76,7 +76,7 @@ Item {
     }
 
     implicitWidth: month.cell * 7
-    implicitHeight: (month.showHeader ? head.height + 6 : 0) + weekRow.height + month.cell * 6
+    implicitHeight: (month.showHeader ? head.height + Theme.dp(6) : 0) + weekRow.height + month.cell * 6
 
     // a view left on this month follows midnight into the next one
     Connections {
@@ -112,13 +112,13 @@ Item {
 
         visible: month.showHeader
         width: parent.width
-        height: month.showHeader ? 36 : 0
+        height: month.showHeader ? Theme.dp(36) : 0
 
         Row {
             anchors.left: parent.left
-            anchors.leftMargin: 6
+            anchors.leftMargin: Theme.dp(6)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 6
+            spacing: Theme.dp(6)
 
             LText {
                 anchors.verticalCenter: parent.verticalCenter
@@ -174,7 +174,7 @@ Item {
         id: body
 
         anchors.top: head.bottom
-        anchors.topMargin: month.showHeader ? 6 : 0
+        anchors.topMargin: month.showHeader ? Theme.dp(6) : 0
         width: parent.width
         height: weekRow.height + month.cell * 6
         clip: true
@@ -189,7 +189,7 @@ Item {
                 id: weekRow
 
                 width: parent.width
-                height: 22
+                height: Theme.dp(22)
 
                 Repeater {
                     model: month.weekdays
@@ -227,8 +227,8 @@ Item {
 
                         Rectangle {
                             anchors.centerIn: parent
-                            width: month.cell - 4
-                            height: month.cell - 4
+                            width: month.cell - Theme.dp(4)
+                            height: month.cell - Theme.dp(4)
                             radius: width / 2
                             color: c.isSelected && !c.modelData.today ? month.pickFill : "transparent"
 
@@ -281,8 +281,8 @@ Item {
 
                             anchors.fill: undefined
                             anchors.centerIn: parent
-                            width: month.cell - 4
-                            height: month.cell - 4
+                            width: month.cell - Theme.dp(4)
+                            height: month.cell - Theme.dp(4)
                             radius: width / 2
                             visible: !c.modelData.today
                             onClicked: month.picked(c.modelData.year, c.modelData.month, c.modelData.day)
@@ -293,8 +293,8 @@ Item {
 
                             anchors.fill: undefined
                             anchors.centerIn: parent
-                            width: month.cell - 4
-                            height: month.cell - 4
+                            width: month.cell - Theme.dp(4)
+                            height: month.cell - Theme.dp(4)
                             radius: width / 2
                             visible: c.modelData.today
                             // today answers with the shape's own tilt and swell, so the
@@ -336,9 +336,9 @@ Item {
                             visible: c.modelData.marked
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 5
-                            width: 5
-                            height: 5
+                            anchors.bottomMargin: Theme.dp(5)
+                            width: Theme.dp(5)
+                            height: Theme.dp(5)
                             radius: 2.5
                             color: c.modelData.today ? month.fgAccent : month.markColor
                         }

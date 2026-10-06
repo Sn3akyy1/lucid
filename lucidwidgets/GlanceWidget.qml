@@ -111,18 +111,18 @@ WidgetBody {
     Column {
         id: stack
 
-        x: w.onWall ? 6 : (parent.width - width) / 2
+        x: w.onWall ? Theme.dp(6) : (parent.width - width) / 2
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 6
+        spacing: Theme.dp(6)
 
         Row {
             x: w.onWall ? 0 : (stack.width - width) / 2
-            spacing: 12
+            spacing: Theme.dp(12)
 
             ShadowText {
                 anchors.verticalCenter: parent.verticalCenter
                 shadow: w.onWall
-                pixelSize: 28
+                pixelSize: Theme.dp(28)
                 weight: 560
                 rounded: 60
                 color: w.fg
@@ -133,7 +133,7 @@ WidgetBody {
                 visible: w.report !== null
                 anchors.verticalCenter: parent.verticalCenter
                 width: 1.5
-                height: 22
+                height: Theme.dp(22)
                 radius: 1
                 color: Theme.alpha(w.fg, 0.4)
             }
@@ -141,11 +141,11 @@ WidgetBody {
             Row {
                 visible: w.report !== null
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 WeatherIcon {
                     anchors.verticalCenter: parent.verticalCenter
-                    size: 30
+                    size: Theme.dp(30)
                     kind: w.report ? WeatherSource.kindFor(w.report.code, w.night) : "clear"
                     tint: w.onWall ? "white" : w.inkAccent
                     cloudColor: w.onWall ? Qt.rgba(1, 1, 1, 0.9) : w.inkDim
@@ -155,7 +155,7 @@ WidgetBody {
                 ShadowText {
                     anchors.verticalCenter: parent.verticalCenter
                     shadow: w.onWall
-                    pixelSize: 28
+                    pixelSize: Theme.dp(28)
                     weight: 560
                     rounded: 60
                     color: w.fg
@@ -169,19 +169,19 @@ WidgetBody {
         Row {
             visible: w.context !== null
             x: w.onWall ? 0 : (stack.width - width) / 2
-            spacing: 8
+            spacing: Theme.dp(8)
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
-                width: 26
-                height: 26
-                radius: 13
+                width: Theme.dp(26)
+                height: Theme.dp(26)
+                radius: Theme.dp(13)
                 color: w.onWall ? Qt.rgba(1, 1, 1, 0.2) : Theme.alpha(w.inkAccent, 0.18)
 
                 Icon {
                     anchors.centerIn: parent
                     name: w.context ? w.context.icon : ""
-                    size: 16
+                    size: Theme.dp(16)
                     fill: 1
                     color: w.fgAccent
                 }
@@ -190,10 +190,10 @@ WidgetBody {
 
             ShadowText {
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, w.width - 60)
+                width: Math.min(implicitWidth, w.width - Theme.dp(60))
                 elide: Text.ElideRight
                 shadow: w.onWall
-                pixelSize: 16
+                pixelSize: Theme.dp(16)
                 weight: 480
                 color: w.fgDim
                 text: w.context ? w.context.text : ""

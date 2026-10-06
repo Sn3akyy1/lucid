@@ -7,7 +7,7 @@ Item {
     id: glyph
 
     property string path: ""
-    property int size: 20
+    property int size: Theme.dp(20)
     property color color: Theme.text
     property real fill: 0
 

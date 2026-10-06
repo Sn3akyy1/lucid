@@ -25,18 +25,18 @@ FocusScope {
     signal textEdited()
     signal escaped()
 
-    implicitWidth: 280
-    implicitHeight: box.height + (tf.supporting !== "" ? 20 : 0)
+    implicitWidth: Theme.dp(280)
+    implicitHeight: box.height + (tf.supporting !== "" ? Theme.dp(20) : 0)
 
     Rectangle {
         id: box
 
         width: parent.width
-        height: tf.variant === "search" ? 48 : 52
+        height: tf.variant === "search" ? Theme.dp(48) : Theme.dp(52)
         color: tf.variant === "outlined" ? "transparent" : tf.containerColor
-        radius: tf.variant === "search" ? height / 2 : (tf.variant === "outlined" ? 10 : 0)
-        topLeftRadius: tf.variant === "filled" ? 10 : radius
-        topRightRadius: tf.variant === "filled" ? 10 : radius
+        radius: tf.variant === "search" ? height / 2 : (tf.variant === "outlined" ? Theme.dp(10) : 0)
+        topLeftRadius: tf.variant === "filled" ? Theme.dp(10) : radius
+        topRightRadius: tf.variant === "filled" ? Theme.dp(10) : radius
         border.width: tf.variant === "outlined" ? (tf.active ? 2 : 1) : 0
         border.color: tf.error ? Theme.error : (tf.active ? Theme.primary : Theme.outlineStrong)
 
@@ -50,7 +50,7 @@ FocusScope {
             visible: tf.variant === "filled"
             anchors.bottom: parent.bottom
             width: parent.width
-            height: tf.active ? 2 : 1
+            height: tf.active ? Theme.dp(2) : 1
             color: tf.error ? Theme.error : (tf.active ? Theme.primary : Theme.subtext)
         }
 
@@ -59,10 +59,10 @@ FocusScope {
 
             visible: tf.icon !== ""
             anchors.left: parent.left
-            anchors.leftMargin: tf.variant === "search" ? 16 : 12
+            anchors.leftMargin: tf.variant === "search" ? Theme.dp(16) : Theme.dp(12)
             anchors.verticalCenter: parent.verticalCenter
             name: tf.icon
-            size: 22
+            size: Theme.dp(22)
             color: tf.active && tf.variant !== "search" ? Theme.primary : Theme.subtext
         }
 
@@ -71,7 +71,7 @@ FocusScope {
 
             visible: tf.label !== "" && tf.variant !== "search"
             x: input.x
-            y: tf.raised ? 7 : (box.height - height) / 2
+            y: tf.raised ? Theme.dp(7) : (box.height - height) / 2
             role: tf.raised ? "bodySmall" : "bodyLarge"
             text: tf.label
             color: tf.error ? Theme.error : (tf.active ? Theme.primary : Theme.subtext)
@@ -90,10 +90,10 @@ FocusScope {
             id: input
 
             anchors.left: lead.visible ? lead.right : parent.left
-            anchors.leftMargin: lead.visible ? 12 : 16
+            anchors.leftMargin: lead.visible ? Theme.dp(12) : Theme.dp(16)
             anchors.right: trailRow.left
-            anchors.rightMargin: 8
-            y: tf.label !== "" && tf.variant !== "search" ? 24 : (box.height - height) / 2
+            anchors.rightMargin: Theme.dp(8)
+            y: tf.label !== "" && tf.variant !== "search" ? Theme.dp(24) : (box.height - height) / 2
             focus: true
             clip: true
             color: Theme.text
@@ -122,9 +122,9 @@ FocusScope {
             id: trailRow
 
             anchors.right: parent.right
-            anchors.rightMargin: 6
+            anchors.rightMargin: Theme.dp(6)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 2
+            spacing: Theme.dp(2)
 
             Row {
                 id: trailSlot
@@ -151,8 +151,8 @@ FocusScope {
     LText {
         visible: tf.supporting !== ""
         anchors.top: box.bottom
-        anchors.topMargin: 4
-        x: 16
+        anchors.topMargin: Theme.dp(4)
+        x: Theme.dp(16)
         role: "bodySmall"
         text: tf.supporting
         color: tf.error ? Theme.error : Theme.subtext

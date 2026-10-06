@@ -6,8 +6,8 @@ Item {
     id: cap
 
     property var entry: null
-    property real unit: 46
-    property real gap: 5
+    property real unit: Theme.dp(46)
+    property real gap: Theme.dp(5)
     property bool shifted: false
     // 0 off, 1 one-shot, 2 locked
     property int modState: 0
@@ -119,7 +119,7 @@ Item {
             anchors.bottom: parent.bottom
             anchors.bottomMargin: Math.round(cap.unit * 0.12)
             width: Math.round(cap.unit * 0.3)
-            height: 2
+            height: Theme.dp(2)
             radius: 1
             color: cap.capInk
             opacity: cap.modState === 2 ? 1 : 0

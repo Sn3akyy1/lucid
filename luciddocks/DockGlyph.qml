@@ -11,8 +11,8 @@ Item {
     property real fill: 0
     property bool animateColor: true
 
-    implicitWidth: 24
-    implicitHeight: 24
+    implicitWidth: Theme.dp(24)
+    implicitHeight: Theme.dp(24)
 
     Icon {
         anchors.centerIn: parent

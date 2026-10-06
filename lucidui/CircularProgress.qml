@@ -7,7 +7,7 @@ Item {
     id: cp
 
     property real value: 0
-    property real thickness: 4
+    property real thickness: Theme.dp(4)
     property color color: Theme.primary
     property color trackColor: Theme.secondaryContainer
     property bool showTrack: true
@@ -82,8 +82,8 @@ Item {
         return pts;
     }
 
-    implicitWidth: 40
-    implicitHeight: 40
+    implicitWidth: Theme.dp(40)
+    implicitHeight: Theme.dp(40)
 
     Behavior on _v {
         enabled: cp.animated

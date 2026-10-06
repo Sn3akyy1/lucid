@@ -42,7 +42,7 @@ BarPill {
 
         return root.title;
     }
-    readonly property int horizontalPadding: 11
+    readonly property int horizontalPadding: Theme.dp(11)
     // the looks, from its card on the Bar page
     readonly property bool chipFace: Prefs.windowModuleStyle === "chip"
     readonly property bool iconOnly: Prefs.windowModuleText === "icon"
@@ -136,8 +136,8 @@ BarPill {
 
     shown: Prefs.showWindow && root.active !== null && root.faceText !== ""
     compactWidth: compactRow.implicitWidth + root.horizontalPadding * 2
-    panelWidth: 400
-    panelHeight: panelColumn.implicitHeight + 36
+    panelWidth: Theme.dp(400)
+    panelHeight: panelColumn.implicitHeight + Theme.dp(36)
     expandedRadius: Theme.shapeXl
     onShownChanged: {
         if (!root.shown)
@@ -206,9 +206,9 @@ BarPill {
 
         signal clicked()
 
-        width: buttonLabel.implicitWidth + 28
-        height: 36
-        radius: 18
+        width: buttonLabel.implicitWidth + Theme.dp(28)
+        height: Theme.dp(36)
+        radius: Theme.dp(18)
         color: {
             if (button.danger)
                 return buttonArea.containsMouse ? Theme.error : Theme.errorContainer;
@@ -249,7 +249,7 @@ BarPill {
     }
 
     component SectionLabel: Text {
-        topPadding: 4
+        topPadding: Theme.dp(4)
         color: Theme.accent
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontLabelLg
@@ -261,8 +261,8 @@ BarPill {
         Rectangle {
             visible: root.chipFace
             anchors.centerIn: compactRow
-            width: compactRow.width + (root.iconOnly ? 12 : 18)
-            height: Math.min(26, parent.height - 6)
+            width: compactRow.width + (root.iconOnly ? Theme.dp(12) : Theme.dp(18))
+            height: Math.min(Theme.dp(26), parent.height - Theme.dp(6))
             radius: height / 2
             color: Theme.accentContainer
         },
@@ -270,14 +270,14 @@ BarPill {
             id: compactRow
 
             anchors.centerIn: parent
-            spacing: 8
+            spacing: Theme.dp(8)
 
             Image {
                 anchors.verticalCenter: parent.verticalCenter
-                width: 17
-                height: 17
-                sourceSize.width: 34
-                sourceSize.height: 34
+                width: Theme.dp(17)
+                height: Theme.dp(17)
+                sourceSize.width: Theme.dp(34)
+                sourceSize.height: Theme.dp(34)
                 source: root.iconOf(root.active)
                 asynchronous: true
                 smooth: true
@@ -286,7 +286,7 @@ BarPill {
             Text {
                 visible: !root.iconOnly
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, Prefs.windowModuleWidth)
+                width: Math.min(implicitWidth, Theme.dp(Prefs.windowModuleWidth))
                 text: root.faceText
                 color: root.chipFace ? Theme.fgAccentContainer : Theme.text
                 font.family: Theme.fontFamily
@@ -310,29 +310,29 @@ BarPill {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 18
-            spacing: 12
+            anchors.margins: Theme.dp(18)
+            spacing: Theme.dp(12)
 
             Row {
                 id: headerRow
 
                 width: parent.width
-                spacing: 14
+                spacing: Theme.dp(14)
 
                 Rectangle {
                     id: badge
 
-                    width: 48
-                    height: 48
+                    width: Theme.dp(48)
+                    height: Theme.dp(48)
                     radius: Theme.radiusMd
                     color: Theme.accentContainer
 
                     Image {
                         anchors.centerIn: parent
-                        width: 30
-                        height: 30
-                        sourceSize.width: 60
-                        sourceSize.height: 60
+                        width: Theme.dp(30)
+                        height: Theme.dp(30)
+                        sourceSize.width: Theme.dp(60)
+                        sourceSize.height: Theme.dp(60)
                         source: root.iconOf(root.active)
                         asynchronous: true
                         smooth: true
@@ -341,9 +341,9 @@ BarPill {
                 }
 
                 Column {
-                    width: parent.width - badge.width - 14
+                    width: parent.width - badge.width - Theme.dp(14)
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+                    spacing: Theme.dp(2)
 
                     Text {
                         width: parent.width
@@ -373,7 +373,7 @@ BarPill {
 
             Flow {
                 width: parent.width
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 ActionButton {
                     label: root.info.floating ? "Floating" : "Float"
@@ -423,7 +423,7 @@ BarPill {
 
                 width: parent.width
                 columns: 5
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Repeater {
                     model: 10
@@ -436,8 +436,8 @@ BarPill {
                         readonly property bool current: wsChip.ws === root.currentWs
 
                         width: (wsGrid.width - wsGrid.spacing * 4) / 5
-                        height: 34
-                        radius: 17
+                        height: Theme.dp(34)
+                        radius: Theme.dp(17)
                         color: wsChip.current ? Theme.accent : (wsArea.containsMouse ? Theme.withBlur(Theme.bgHover) : Theme.withBlur(Theme.bgActive))
 
                         Text {
@@ -484,7 +484,7 @@ BarPill {
                     required property var modelData
 
                     width: panelColumn.width
-                    height: 44
+                    height: Theme.dp(44)
                     radius: Theme.radiusMd
                     color: otherArea.containsMouse ? Theme.withBlur(Theme.bgHover) : Theme.withBlur(Theme.bgActive)
 
@@ -492,12 +492,12 @@ BarPill {
                         id: otherIcon
 
                         anchors.left: parent.left
-                        anchors.leftMargin: 12
+                        anchors.leftMargin: Theme.dp(12)
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 20
-                        height: 20
-                        sourceSize.width: 40
-                        sourceSize.height: 40
+                        width: Theme.dp(20)
+                        height: Theme.dp(20)
+                        sourceSize.width: Theme.dp(40)
+                        sourceSize.height: Theme.dp(40)
                         source: root.iconOf(otherRow.modelData)
                         asynchronous: true
                         smooth: true
@@ -505,9 +505,9 @@ BarPill {
 
                     Text {
                         anchors.left: otherIcon.right
-                        anchors.leftMargin: 12
+                        anchors.leftMargin: Theme.dp(12)
                         anchors.right: parent.right
-                        anchors.rightMargin: 12
+                        anchors.rightMargin: Theme.dp(12)
                         anchors.verticalCenter: parent.verticalCenter
                         text: String(otherRow.modelData.title || root.appName(otherRow.modelData))
                         color: Theme.text

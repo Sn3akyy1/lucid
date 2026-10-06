@@ -497,7 +497,9 @@ past the neighbour and making a new workspace at the end.
   itself before you have signed in: the same clock, the same palette and the
   same wallpaper, blurred once in advance rather than on a cold GPU, with the
   user and session pickers where the glance chips sit. It is painted from the
-  running shell's own colours, so it follows a theme change. The installer
+  running shell's own colours, so it follows a theme change. Every account
+  keeps its own wallpaper and palette there, and picking another account
+  crossfades the screen to theirs. The installer
   copies it in when SDDM is present but never switches to it — which theme
   greets you stays your call
 - **Session screen** — `SUPER` + `Esc`, the control centre's Session tile or

@@ -16,12 +16,12 @@ BarPill {
     readonly property bool anyCritical: Notifs.criticalCount > 0
     readonly property color badgeColor: root.anyCritical ? Theme.error : Theme.accent
     readonly property color badgeTextColor: root.anyCritical ? Theme.fgError : Theme.fgAccent
-    readonly property int horizontalPadding: 10
+    readonly property int horizontalPadding: Theme.dp(10)
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
-    readonly property int maxPanelHeight: Math.min(560, Math.max(220, root.screenH - 80))
+    readonly property int maxPanelHeight: Math.min(Theme.dp(560), Math.max(Theme.dp(220), root.screenH - Theme.dp(80)))
     // measured, not guessed, so the list always gets the rest
-    readonly property int chromeHeight: headerRow.height + countRow.height + footerRow.height + mainColumn.spacing * 3 + 28
+    readonly property int chromeHeight: headerRow.height + countRow.height + footerRow.height + mainColumn.spacing * 3 + Theme.dp(28)
 
     readonly property var popups: Notifs.popups
     readonly property var topPopup: root.popups.length > 0 ? root.popups[0] : null
@@ -30,12 +30,12 @@ BarPill {
 
     shown: Prefs.barHas("notifications")
     compactWidth: compactRow.implicitWidth + root.horizontalPadding * 2
-    panelWidth: Math.min(380, root.screenW - 34)
-    panelHeight: Math.min(root.maxPanelHeight, mainColumn.implicitHeight + 28)
+    panelWidth: Math.min(Theme.dp(380), root.screenW - Theme.dp(34))
+    panelHeight: Math.min(root.maxPanelHeight, mainColumn.implicitHeight + Theme.dp(28))
     expandedRadius: Theme.shapeXl
     // the module becomes the newest popup; the older ones stack under it
     altOpen: root.shown && root.topPopup !== null && !root.expanded
-    altWidth: Math.min(344, root.screenW - 34)
+    altWidth: Math.min(Theme.dp(344), root.screenW - Theme.dp(34))
     altHeight: Math.min(root.maxPanelHeight, topCard.implicitHeight)
     overlayOpen: root.altOpen && (root.restPopups.length > 0 || root.popupOverflow > 0)
     overlayItem: stackSheet
@@ -182,16 +182,16 @@ BarPill {
             id: compactRow
 
             anchors.centerIn: parent
-            spacing: 5
+            spacing: Theme.dp(5)
 
             Item {
-                width: 17
-                height: 17
+                width: Theme.dp(17)
+                height: Theme.dp(17)
                 anchors.verticalCenter: parent.verticalCenter
 
                 NotifIcon {
                     anchors.centerIn: parent
-                    size: 17
+                    size: Theme.dp(17)
                     path: Notifs.icons.notifications
                     color: Theme.text
                     fill: root.notifCount > 0 ? 1 : 0
@@ -228,7 +228,7 @@ BarPill {
 
                 NotifIcon {
                     anchors.centerIn: parent
-                    size: 17
+                    size: Theme.dp(17)
                     path: Notifs.icons.bedtime
                     color: Theme.accent
                     opacity: root.silenced ? 1 : 0
@@ -268,9 +268,9 @@ BarPill {
                 id: badge
 
                 anchors.verticalCenter: parent.verticalCenter
-                height: 16
-                width: root.notifCount > 0 ? Math.max(16, badgeText.implicitWidth + 8) : 0
-                radius: 999
+                height: Theme.dp(16)
+                width: root.notifCount > 0 ? Math.max(Theme.dp(16), badgeText.implicitWidth + Theme.dp(8)) : 0
+                radius: Theme.dp(999)
                 color: root.badgeColor
                 opacity: root.notifCount > 0 ? 1 : 0
                 scale: root.notifCount > 0 ? 1 : 0.4
@@ -453,7 +453,7 @@ BarPill {
                 id: stackColumn
 
                 width: parent.width
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 ListView {
                     id: stackList
@@ -461,7 +461,7 @@ BarPill {
                     width: parent.width
                     height: contentHeight
                     interactive: false
-                    spacing: 8
+                    spacing: Theme.dp(8)
                     model: stackModel
 
                     Behavior on height {
@@ -532,7 +532,7 @@ BarPill {
                     id: overflowSlot
 
                     width: parent.width
-                    height: root.popupOverflow > 0 ? 26 : 0
+                    height: root.popupOverflow > 0 ? Theme.dp(26) : 0
                     opacity: root.popupOverflow > 0 ? 1 : 0
                     visible: opacity > 0.01
 
@@ -540,8 +540,8 @@ BarPill {
                         id: overflowPill
 
                         anchors.centerIn: parent
-                        width: overflowRow.implicitWidth + 22
-                        height: 26
+                        width: overflowRow.implicitWidth + Theme.dp(22)
+                        height: Theme.dp(26)
                         radius: height / 2
                         color: overflowArea.containsMouse ? Theme.withBlur(Theme.bgActive) : Theme.withBlur(Theme.bg)
 
@@ -549,7 +549,7 @@ BarPill {
                             id: overflowRow
 
                             anchors.centerIn: parent
-                            spacing: 4
+                            spacing: Theme.dp(4)
 
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
@@ -563,7 +563,7 @@ BarPill {
 
                             NotifIcon {
                                 anchors.verticalCenter: parent.verticalCenter
-                                size: 13
+                                size: Theme.dp(13)
                                 path: Notifs.icons.expand_more
                                 color: Theme.subtext
                             }
@@ -618,14 +618,14 @@ BarPill {
             id: mainColumn
 
             anchors.fill: parent
-            anchors.margins: 14
-            spacing: 8
+            anchors.margins: Theme.dp(14)
+            spacing: Theme.dp(8)
 
             Item {
                 id: headerRow
 
                 width: parent.width
-                height: 30
+                height: Theme.dp(30)
 
                 Text {
                     anchors.left: parent.left
@@ -641,7 +641,7 @@ BarPill {
                 Row {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+                    spacing: Theme.dp(2)
 
                     NotifGhostButton {
                         iconPath: Notifs.icons.bedtime
@@ -666,7 +666,7 @@ BarPill {
                 id: countRow
 
                 width: parent.width
-                height: 22
+                height: Theme.dp(22)
 
                 Text {
                     anchors.left: parent.left
@@ -703,18 +703,18 @@ BarPill {
             // nothing to show: say so properly rather than with a bare line
             Item {
                 width: parent.width
-                height: root.notifCount === 0 ? 132 : 0
+                height: root.notifCount === 0 ? Theme.dp(132) : 0
                 opacity: root.notifCount === 0 ? 1 : 0
                 visible: opacity > 0.01
                 clip: true
 
                 Column {
                     anchors.centerIn: parent
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     NotifIcon {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        size: 34
+                        size: Theme.dp(34)
                         path: Notifs.icons.done_all
                         color: Theme.subtextDim
                     }
@@ -759,7 +759,7 @@ BarPill {
 
                 // the gutter the scrollbar lives in, taken out of the panel's
                 // right margin so the cards keep even margins either side
-                readonly property int gutter: 10
+                readonly property int gutter: Theme.dp(10)
                 readonly property bool scrollable: shadeList.contentHeight > shadeList.height + 1
                 readonly property real maxScroll: Math.max(0, shadeList.contentHeight - shadeList.height)
 
@@ -789,7 +789,7 @@ BarPill {
                     id: rowColumn
 
                     width: shadeList.width - shadeList.gutter
-                    spacing: 6
+                    spacing: Theme.dp(6)
 
                     move: Transition {
                         NumberAnimation {
@@ -823,14 +823,14 @@ BarPill {
                             readonly property bool isHeader: shadeRow.modelData && shadeRow.modelData.kind === "header"
 
                             width: rowColumn.width
-                            implicitHeight: shadeRow.isHeader ? 24 : groupItem.implicitHeight
+                            implicitHeight: shadeRow.isHeader ? Theme.dp(24) : groupItem.implicitHeight
                             height: shadeRow.implicitHeight
 
                             Text {
                                 anchors.left: parent.left
-                                anchors.leftMargin: 4
+                                anchors.leftMargin: Theme.dp(4)
                                 anchors.bottom: parent.bottom
-                                anchors.bottomMargin: 4
+                                anchors.bottomMargin: Theme.dp(4)
                                 visible: shadeRow.isHeader
                                 text: shadeRow.isHeader ? shadeRow.modelData.label : ""
                                 color: Theme.subtextDim
@@ -868,7 +868,7 @@ BarPill {
                     policy: shadeList.scrollable ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
 
                     contentItem: Rectangle {
-                        implicitWidth: 3
+                        implicitWidth: Theme.dp(3)
                         radius: width / 2
                         color: Theme.accent
                         opacity: shadeList.scrollable ? 1 : 0
@@ -894,7 +894,7 @@ BarPill {
                 id: footerRow
 
                 width: parent.width
-                height: 34
+                height: Theme.dp(34)
 
                 Rectangle {
                     anchors.top: parent.top

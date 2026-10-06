@@ -6,7 +6,7 @@ Item {
     id: gauge
 
     property real value: 0
-    property real thickness: 8
+    property real thickness: Theme.dp(8)
     property color trackColor: Theme.alpha(Theme.text, 0.12)
     property color fillColor: Theme.accent
     // where the arc begins, and how much of the circle it walks
@@ -14,8 +14,8 @@ Item {
     property real sweep: 360
     property real animated: gauge.value
 
-    implicitWidth: 72
-    implicitHeight: 72
+    implicitWidth: Theme.dp(72)
+    implicitHeight: Theme.dp(72)
 
     Behavior on animated {
         NumberAnimation {

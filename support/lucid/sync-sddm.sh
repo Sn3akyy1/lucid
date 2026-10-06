@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sync-sddm.sh [--check] [palette.json]
+# sync-sddm.sh [--check] [--missing] [palette.json]
 #
 # paints the active SDDM theme from the palette Lucid last applied. sddm runs
 # before anyone logs in, so it cannot read a per-user palette - the colours
@@ -11,11 +11,18 @@
 #           RUNNING shell (theme-dump.qml), because Theme.qml derives its
 #           colours in L* tone space and that is not reproducible from the
 #           palette file alone. the wallpaper is copied in and pre-blurred.
+#           each account paints only its own users/<name>/, and the greeter
+#           wears whichever account is picked. a theme installed before
+#           users/ existed has one shared copy, painted by whoever owns it.
 #
 #   generic any other theme. rewrites any key whose value is ALREADY a hex
 #           colour and whose name reads as an accent, a background or a
 #           foreground. the hex check is the safety net: a wallpaper path, a
 #           font name or a number is never touched.
+#
+# --missing paints only an account the greeter has nothing for yet. the shell
+# runs it at login, so an account shows up as itself without waiting for its
+# next wallpaper change.
 #
 # --check reports what would happen and writes nothing. it prints one of:
 #   ok lucid <theme>  the Lucid theme is installed and writable
@@ -27,7 +34,15 @@
 set -euo pipefail
 
 CHECK=0
-[[ "${1:-}" == "--check" ]] && { CHECK=1; shift; }
+MISSING=0
+while [[ "${1:-}" == --* ]]; do
+    case "$1" in
+        --check) CHECK=1 ;;
+        --missing) MISSING=1 ;;
+        *) break ;;
+    esac
+    shift
+done
 
 PALETTE="${1:-$HOME/.cache/quickshell/matugen.json}"
 CONFIG_DIR="${LUCID_CONFIG_DIR:-$HOME/.config/quickshell}"
@@ -53,16 +68,41 @@ THEME=$({ grep -rhE '^[[:space:]]*Current=' \
         | tail -1 | cut -d= -f2- | tr -d '[:space:]')
 [[ -n "$THEME" ]] || report notheme
 
-DIR="/usr/share/sddm/themes/$THEME"
+# overridable so the per-account paths can be exercised off a real install
+DIR="${LUCID_SDDM_THEMES:-/usr/share/sddm/themes}/$THEME"
 CONF="$DIR/theme.conf"
 [[ -f "$CONF" ]] || report notheme
-[[ -w "$CONF" ]] || report "readonly $CONF"
 
 # ── lucid's own theme ────────────────────────────────────────────────────────
 # identified by its marker, not its directory name, so a renamed copy still works
 if grep -q '^Theme-Id=lucid$' "$DIR/metadata.desktop" 2>/dev/null; then
-    [[ -w "$DIR" ]] || report "readonly $DIR"
+    # install.sh makes users/ sticky and world-writable, like /tmp: any account
+    # can start its own directory there, and none can touch another's
+    ME=$(id -un)
+    SHARED=0
+    if [[ -d "$DIR/users" && ! -L "$DIR/users" ]]; then
+        OUT="$DIR/users/$ME"
+        if [[ -e "$OUT" || -L "$OUT" ]]; then
+            # only ever write into a directory this account owns outright
+            [[ -d "$OUT" && ! -L "$OUT" && -O "$OUT" && -w "$OUT" ]] || report "readonly $OUT"
+        else
+            [[ -w "$DIR/users" ]] || report "readonly $DIR/users"
+        fi
+    else
+        SHARED=1
+        OUT="$DIR"
+        [[ -w "$CONF" && -w "$DIR" ]] || report "readonly $DIR"
+    fi
     ok "ok lucid $THEME"
+    [[ $MISSING -eq 1 && -s "$OUT/theme.conf" ]] && exit 0
+
+    if [[ $SHARED -eq 0 ]]; then
+        mkdir "$OUT" 2>/dev/null || true
+        # checked again: another account could have taken the name in between
+        [[ -d "$OUT" && ! -L "$OUT" && -O "$OUT" ]] || report "readonly $OUT"
+        # the greeter runs as sddm, whatever this account's umask says
+        chmod 755 "$OUT"
+    fi
 
     # the running shell is the only place the resolved tokens exist
     TOKENS=$(timeout 30 qs -p "$CONFIG_DIR/theme-dump.qml" 2>&1 \
@@ -72,10 +112,22 @@ if grep -q '^Theme-Id=lucid$' "$DIR/metadata.desktop" 2>/dev/null; then
         exit 1
     fi
 
-    TMP=$(mktemp)
+    # written beside the target and moved over it, so a greeter up on another
+    # vt never reads half a file
+    TMPC=""
+    TMPJ=""
+    cleanup() {
+        local f
+        for f in "$TMPC" "$TMPJ"; do
+            [[ -n "$f" ]] && rm -f -- "$f"
+        done
+        return 0
+    }
+    trap cleanup EXIT
+    TMPC=$(mktemp "$OUT/.theme.conf.XXXXXX")
     {
         echo "[General]"
-        echo "# written by sync-sddm.sh from the running shell. edits are overwritten."
+        echo "# written by sync-sddm.sh from $ME's running shell. edits are overwritten."
         echo "background=background.jpg"
         echo
         python3 - "$TOKENS" <<'PY'
@@ -84,9 +136,9 @@ t = json.loads(sys.argv[1])
 for k, v in t.items():
     print("%s=%s" % (k, str(v).lower() if isinstance(v, bool) else v))
 PY
-    } > "$TMP"
-    cp "$TMP" "$CONF"
-    rm -f "$TMP"
+    } > "$TMPC"
+    chmod 644 "$TMPC"
+    mv -f "$TMPC" "$OUT/theme.conf"
 
     # the greeter must not run a 64px blur over 1080p on a cold gpu at boot,
     # so the resting blur is baked in here. blurring small and growing back is
@@ -96,20 +148,24 @@ PY
     # picture is blurred, so 1920 wide is as much as the login screen can show
     WALL=$(cat "$HOME/.cache/current_wallpaper" 2>/dev/null || true)
     if [[ -n "$WALL" && -f "$WALL" ]]; then
+        TMPJ=$(mktemp --suffix=.jpg "$OUT/.background.XXXXXX")
         IM=$(command -v magick || command -v convert || true)
         if [[ -n "$IM" ]]; then
             MAGICK_THREAD_LIMIT="${MAGICK_THREAD_LIMIT:-2}" \
                 "$IM" -define jpeg:size=1920x1920 "$WALL" -strip \
                   -resize 480x480 -blur 0x3.4 -resize 1920x1920 \
-                  -quality 88 "$DIR/background.jpg"
+                  -quality 88 "$TMPJ"
         else
-            cp "$WALL" "$DIR/background.jpg"
+            cp "$WALL" "$TMPJ"
         fi
+        chmod 644 "$TMPJ"
+        mv -f "$TMPJ" "$OUT/background.jpg"
     fi
     exit 0
 fi
 
 # ── any other theme ──────────────────────────────────────────────────────────
+[[ -w "$CONF" ]] || report "readonly $CONF"
 [[ -f "$PALETTE" ]] || report nopalette
 command -v jq &>/dev/null || report nopalette
 

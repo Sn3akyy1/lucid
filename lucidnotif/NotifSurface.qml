@@ -14,7 +14,7 @@ Item {
     property bool interactive: true
 
     property real arrivalGlow: 0
-    readonly property real throwLimit: Math.max(56, item.width * 0.3)
+    readonly property real throwLimit: Math.max(Theme.dp(56), item.width * 0.3)
     readonly property bool grouped: item.groupCount > 1
 
     implicitHeight: surface.height
@@ -29,7 +29,7 @@ Item {
         id: surface
 
         width: item.width
-        height: body.implicitHeight + 22
+        height: body.implicitHeight + Theme.dp(22)
         radius: item.radius
         color: item.arrivalGlow > 0 ? Theme._mix(Theme.bgHover, body.tint, item.arrivalGlow * 0.3) : Theme.bgHover
         opacity: 1 - Math.min(0.85, Math.abs(x) / (item.width * 0.8))
@@ -41,9 +41,9 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.leftMargin: 13
-            anchors.rightMargin: 13
-            anchors.topMargin: 11
+            anchors.leftMargin: Theme.dp(13)
+            anchors.rightMargin: Theme.dp(13)
+            anchors.topMargin: Theme.dp(11)
             notification: item.notification
             interactive: item.interactive
             bodyLines: 6
@@ -53,13 +53,13 @@ Item {
             // the collapsed head of a stack shows how deep it goes
             trailingContent: [
                 Row {
-                    spacing: 2
+                    spacing: Theme.dp(2)
                     visible: item.grouped
 
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: Math.max(18, countText.implicitWidth + 12)
-                        height: 18
+                        width: Math.max(Theme.dp(18), countText.implicitWidth + Theme.dp(12))
+                        height: Theme.dp(18)
                         radius: height / 2
                         color: Theme.bgHigh
 
@@ -79,8 +79,8 @@ Item {
 
                     NotifGhostButton {
                         anchors.verticalCenter: parent.verticalCenter
-                        size: 22
-                        iconSize: 15
+                        size: Theme.dp(22)
+                        iconSize: Theme.dp(15)
                         iconPath: Notifs.icons.expand_more
                         onClicked: Notifs.toggleGroup(item.groupKey)
                     }

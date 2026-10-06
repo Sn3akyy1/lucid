@@ -37,8 +37,8 @@ Item {
         input.selectAll();
     }
 
-    implicitWidth: 220
-    implicitHeight: 46
+    implicitWidth: Theme.dp(220)
+    implicitHeight: Theme.dp(46)
     opacity: field.enabled ? 1 : 0.38
 
     Rectangle {
@@ -61,8 +61,8 @@ Item {
         id: input
 
         anchors.fill: parent
-        anchors.leftMargin: 16
-        anchors.rightMargin: field.password ? 46 : 16
+        anchors.leftMargin: Theme.dp(16)
+        anchors.rightMargin: field.password ? Theme.dp(46) : Theme.dp(16)
         verticalAlignment: TextInput.AlignVCenter
         echoMode: field.password && !field.reveal ? TextInput.Password : TextInput.Normal
         passwordCharacter: "•"
@@ -107,9 +107,9 @@ Item {
 
     Text {
         anchors.left: parent.left
-        anchors.leftMargin: 16
+        anchors.leftMargin: Theme.dp(16)
         anchors.right: parent.right
-        anchors.rightMargin: field.password ? 46 : 16
+        anchors.rightMargin: field.password ? Theme.dp(46) : Theme.dp(16)
         anchors.verticalCenter: parent.verticalCenter
         text: field.placeholder
         color: Theme.subtextDim
@@ -122,10 +122,10 @@ Item {
 
     M3IconButton {
         anchors.right: parent.right
-        anchors.rightMargin: 5
+        anchors.rightMargin: Theme.dp(5)
         anchors.verticalCenter: parent.verticalCenter
-        size: 36
-        iconSize: 19
+        size: Theme.dp(36)
+        iconSize: Theme.dp(19)
         visible: field.password
         iconPath: field.reveal ? "visibility" : "visibility_off"
         onClicked: {

@@ -54,8 +54,8 @@ Item {
         id: card
 
         anchors.centerIn: parent
-        width: Math.min(420, dialog.width - 64)
-        height: cardCol.implicitHeight + 56
+        width: Math.min(Theme.dp(420), dialog.width - Theme.dp(64))
+        height: cardCol.implicitHeight + Theme.dp(56)
         radius: Theme.shapeXl
         color: Theme.bgHigh
         scale: dialog.shown ? 1 : 0.88
@@ -72,14 +72,14 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 28
-            spacing: 12
+            anchors.margins: Theme.dp(28)
+            spacing: Theme.dp(12)
 
             // m3 puts a hero icon above a destructive headline
             Icon {
                 anchors.horizontalCenter: parent.horizontalCenter
                 name: "warning"
-                size: 26
+                size: Theme.dp(26)
                 color: Theme.error
             }
 
@@ -109,12 +109,12 @@ Item {
 
             Item {
                 width: parent.width
-                height: 10
+                height: Theme.dp(10)
             }
 
             Row {
                 anchors.right: parent.right
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 M3Button {
                     text: "Cancel"

@@ -88,7 +88,7 @@ Column {
         HyprConfig.setLayouts(list);
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
     Component.onCompleted: {
         HyprConfig.refresh();
         devicesProc.running = true;
@@ -139,7 +139,7 @@ Column {
 
             Column {
                 width: parent.width
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Repeater {
                     model: page.layouts
@@ -151,17 +151,17 @@ Column {
                         required property int index
 
                         width: parent.width
-                        height: 56
+                        height: Theme.dp(56)
                         radius: Theme.radiusMd
                         color: Theme.bgSunken
 
                         Column {
                             anchors.left: parent.left
-                            anchors.leftMargin: 16
+                            anchors.leftMargin: Theme.dp(16)
                             anchors.right: tools.left
-                            anchors.rightMargin: 10
+                            anchors.rightMargin: Theme.dp(10)
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 2
+                            spacing: Theme.dp(2)
 
                             Text {
                                 width: parent.width
@@ -187,26 +187,26 @@ Column {
                             id: tools
 
                             anchors.right: parent.right
-                            anchors.rightMargin: 8
+                            anchors.rightMargin: Theme.dp(8)
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 2
+                            spacing: Theme.dp(2)
 
                             M3IconButton {
-                                size: 36
+                                size: Theme.dp(36)
                                 enabled: layoutsRow.enabled && layoutItem.index > 0
                                 iconPath: "arrow_upward"
                                 onClicked: page.moveLayout(layoutItem.index, -1)
                             }
 
                             M3IconButton {
-                                size: 36
+                                size: Theme.dp(36)
                                 enabled: layoutsRow.enabled && layoutItem.index < page.layouts.length - 1
                                 iconPath: "arrow_downward"
                                 onClicked: page.moveLayout(layoutItem.index, 1)
                             }
 
                             M3IconButton {
-                                size: 36
+                                size: Theme.dp(36)
                                 enabled: layoutsRow.enabled && page.layouts.length > 1
                                 destructive: true
                                 iconPath: "close"
@@ -343,7 +343,7 @@ Column {
             showDivider: false
 
             M3TextField {
-                width: Math.min(parent.width, 420)
+                width: Math.min(parent.width, Theme.dp(420))
                 placeholder: "Type something"
                 commitOnBlur: false
             }
@@ -387,7 +387,7 @@ Column {
             stacked: true
 
             M3Segmented {
-                width: Math.min(parent.width, 300)
+                width: Math.min(parent.width, Theme.dp(300))
                 enabled: accel.enabled
                 current: String(HyprConfig.value("input.accel_profile") || "") === "flat" ? "flat" : "adaptive"
                 options: [{

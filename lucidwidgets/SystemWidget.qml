@@ -150,10 +150,10 @@ WidgetBody {
                 id: ring
 
                 required property var modelData
-                readonly property real d: Math.min(84, (w.width - 28) / Math.max(1, w.metrics.length) - 10)
+                readonly property real d: Math.min(Theme.dp(84), (w.width - Theme.dp(28)) / Math.max(1, w.metrics.length) - Theme.dp(10))
 
-                width: ring.d + 10
-                height: ring.d + 42
+                width: ring.d + Theme.dp(10)
+                height: ring.d + Theme.dp(42)
 
                 CircularProgress {
                     id: arc
@@ -161,7 +161,7 @@ WidgetBody {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: ring.d
                     height: ring.d
-                    thickness: 8
+                    thickness: Theme.dp(8)
                     value: ring.modelData.value
                     color: w.tint(ring.modelData.key, ring.modelData.value)
                     trackColor: Theme.alpha(w.ink, 0.1)
@@ -177,9 +177,9 @@ WidgetBody {
 
                 Column {
                     anchors.top: arc.bottom
-                    anchors.topMargin: 6
+                    anchors.topMargin: Theme.dp(6)
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: -2
+                    spacing: -Theme.dp(2)
 
                     LText {
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -210,8 +210,8 @@ WidgetBody {
     Column {
         visible: w.variant === "bars"
         anchors.fill: parent
-        anchors.margins: 18
-        spacing: 12
+        anchors.margins: Theme.dp(18)
+        spacing: Theme.dp(12)
 
         Repeater {
             model: w.metrics
@@ -222,25 +222,25 @@ WidgetBody {
                 required property var modelData
 
                 width: parent.width
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Item {
                     width: parent.width
-                    height: 20
+                    height: Theme.dp(20)
 
                     Icon {
                         id: mIcon
 
                         anchors.verticalCenter: parent.verticalCenter
                         name: meter.modelData.icon
-                        size: 18
+                        size: Theme.dp(18)
                         fill: 1
                         color: w.tint(meter.modelData.key, meter.modelData.value)
                     }
 
                     LText {
                         anchors.left: mIcon.right
-                        anchors.leftMargin: 8
+                        anchors.leftMargin: Theme.dp(8)
                         anchors.verticalCenter: parent.verticalCenter
                         role: "labelLarge"
                         color: w.ink
@@ -249,7 +249,7 @@ WidgetBody {
 
                     LText {
                         anchors.right: mVal.left
-                        anchors.rightMargin: 8
+                        anchors.rightMargin: Theme.dp(8)
                         anchors.verticalCenter: parent.verticalCenter
                         role: "labelMedium"
                         color: w.inkFaint
@@ -273,7 +273,7 @@ WidgetBody {
                 LinearProgress {
                     width: parent.width
                     value: meter.modelData.value
-                    thickness: 8
+                    thickness: Theme.dp(8)
                     color: w.tint(meter.modelData.key, meter.modelData.value)
                     trackColor: Theme.alpha(w.ink, 0.1)
                 }
@@ -288,12 +288,12 @@ WidgetBody {
     Item {
         visible: w.variant === "graph"
         anchors.fill: parent
-        anchors.margins: 18
+        anchors.margins: Theme.dp(18)
 
         Column {
             id: gHead
 
-            spacing: -4
+            spacing: -Theme.dp(4)
 
             LText {
                 role: "labelLarge"
@@ -322,9 +322,9 @@ WidgetBody {
 
         Spark {
             anchors.top: gHead.bottom
-            anchors.topMargin: 4
+            anchors.topMargin: Theme.dp(4)
             anchors.bottom: gChips.top
-            anchors.bottomMargin: 10
+            anchors.bottomMargin: Theme.dp(10)
             width: parent.width
             samples: w.cpuHistory
             lineColor: w.tint("cpu", w.cpu)
@@ -335,7 +335,7 @@ WidgetBody {
             id: gChips
 
             anchors.bottom: parent.bottom
-            spacing: 6
+            spacing: Theme.dp(6)
 
             Repeater {
                 model: w.metrics.filter((m) => {
@@ -347,21 +347,21 @@ WidgetBody {
 
                     required property var modelData
 
-                    width: chipRow.implicitWidth + 20
-                    height: 28
-                    radius: 14
+                    width: chipRow.implicitWidth + Theme.dp(20)
+                    height: Theme.dp(28)
+                    radius: Theme.dp(14)
                     color: Theme.alpha(w.ink, 0.08)
 
                     Row {
                         id: chipRow
 
                         anchors.centerIn: parent
-                        spacing: 6
+                        spacing: Theme.dp(6)
 
                         Icon {
                             anchors.verticalCenter: parent.verticalCenter
                             name: chip.modelData.icon
-                            size: 15
+                            size: Theme.dp(15)
                             fill: 1
                             color: w.tint(chip.modelData.key, chip.modelData.value)
                         }
@@ -394,8 +394,8 @@ WidgetBody {
 
         visible: w.variant === "tiles"
         anchors.fill: parent
-        anchors.margins: 10
-        spacing: 6
+        anchors.margins: Theme.dp(10)
+        spacing: Theme.dp(6)
 
         Repeater {
             model: w.metrics
@@ -412,7 +412,7 @@ WidgetBody {
 
                 width: tile.spans ? tiles.width : (tiles.width - tiles.spacing * (tiles.cols - 1)) / Math.max(1, tiles.cols)
                 height: (tiles.height - tiles.spacing * (tiles.rows - 1)) / Math.max(1, tiles.rows)
-                radius: 18
+                radius: Theme.dp(18)
                 color: Theme.alpha(tile.hue, 0.14)
 
                 // the fill rises with the reading
@@ -436,19 +436,19 @@ WidgetBody {
                 }
 
                 Icon {
-                    x: 14
-                    y: 12
+                    x: Theme.dp(14)
+                    y: Theme.dp(12)
                     name: tile.modelData.icon
-                    size: 20
+                    size: Theme.dp(20)
                     fill: 1
                     color: tile.hue
                 }
 
                 Column {
-                    x: 14
+                    x: Theme.dp(14)
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 10
-                    spacing: -3
+                    anchors.bottomMargin: Theme.dp(10)
+                    spacing: -Theme.dp(3)
 
                     LText {
                         role: "headlineSmall"
@@ -477,12 +477,12 @@ WidgetBody {
     Item {
         visible: w.variant === "network"
         anchors.fill: parent
-        anchors.margins: 18
+        anchors.margins: Theme.dp(18)
 
         Row {
             id: nHead
 
-            spacing: 18
+            spacing: Theme.dp(18)
 
             Repeater {
                 model: [{
@@ -502,26 +502,26 @@ WidgetBody {
 
                     required property var modelData
 
-                    spacing: 8
+                    spacing: Theme.dp(8)
 
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 30
-                        height: 30
-                        radius: 15
+                        width: Theme.dp(30)
+                        height: Theme.dp(30)
+                        radius: Theme.dp(15)
                         color: Theme.alpha(rateCell.modelData.c, 0.16)
 
                         Icon {
                             anchors.centerIn: parent
                             name: rateCell.modelData.icon
-                            size: 18
+                            size: Theme.dp(18)
                             color: rateCell.modelData.c
                         }
 
                     }
 
                     Column {
-                        spacing: -3
+                        spacing: -Theme.dp(3)
 
                         LText {
                             role: "titleMedium"
@@ -547,7 +547,7 @@ WidgetBody {
 
         Item {
             anchors.top: nHead.bottom
-            anchors.topMargin: 10
+            anchors.topMargin: Theme.dp(10)
             anchors.bottom: parent.bottom
             width: parent.width
 
@@ -568,7 +568,7 @@ WidgetBody {
                     return v / Math.max(1, downSpark.peak);
                 })
                 lineColor: w.tonal ? w.inkDim : Theme.tertiary
-                lineWidth: 2
+                lineWidth: Theme.dp(2)
                 filled: false
             }
 
@@ -580,7 +580,7 @@ WidgetBody {
     Row {
         visible: w.variant === "compact"
         anchors.centerIn: parent
-        spacing: 16
+        spacing: Theme.dp(16)
 
         Repeater {
             model: w.metrics.slice(0, 3)
@@ -590,16 +590,16 @@ WidgetBody {
 
                 required property var modelData
 
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 Item {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 34
-                    height: 34
+                    width: Theme.dp(34)
+                    height: Theme.dp(34)
 
                     CircularProgress {
                         anchors.fill: parent
-                        thickness: 4
+                        thickness: Theme.dp(4)
                         value: cell.modelData.value
                         color: w.tint(cell.modelData.key, cell.modelData.value)
                         trackColor: Theme.alpha(w.ink, 0.1)
@@ -608,7 +608,7 @@ WidgetBody {
                     Icon {
                         anchors.centerIn: parent
                         name: cell.modelData.icon
-                        size: 15
+                        size: Theme.dp(15)
                         fill: 1
                         color: w.tint(cell.modelData.key, cell.modelData.value)
                     }
@@ -617,7 +617,7 @@ WidgetBody {
 
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: -3
+                    spacing: -Theme.dp(3)
 
                     LText {
                         role: "titleSmall"

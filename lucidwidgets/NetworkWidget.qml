@@ -224,7 +224,7 @@ WidgetBody {
 
         visible: w.variant === "graph"
         anchors.fill: parent
-        anchors.margins: 18
+        anchors.margins: Theme.dp(18)
 
         Head {
             id: graphHead
@@ -239,8 +239,8 @@ WidgetBody {
 
             anchors.left: parent.left
             anchors.top: graphHead.bottom
-            anchors.topMargin: 10
-            spacing: 24
+            anchors.topMargin: Theme.dp(10)
+            spacing: Theme.dp(24)
 
             RateCell {
                 icon: "down"
@@ -262,7 +262,7 @@ WidgetBody {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: graphRates.bottom
-            anchors.topMargin: 10
+            anchors.topMargin: Theme.dp(10)
             anchors.bottom: parent.bottom
             samples: w.downLine
             lineColor: Theme.accent
@@ -273,7 +273,7 @@ WidgetBody {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: graphRates.bottom
-            anchors.topMargin: 10
+            anchors.topMargin: Theme.dp(10)
             anchors.bottom: parent.bottom
             samples: w.upLine
             lineColor: w.upTint
@@ -288,7 +288,7 @@ WidgetBody {
 
         visible: w.variant === "detail"
         anchors.fill: parent
-        anchors.margins: 18
+        anchors.margins: Theme.dp(18)
 
         Head {
             id: detailHead
@@ -302,7 +302,7 @@ WidgetBody {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: detailHead.bottom
-            anchors.topMargin: 10
+            anchors.topMargin: Theme.dp(10)
 
             Repeater {
                 model: w.facts
@@ -313,7 +313,7 @@ WidgetBody {
                     required property var modelData
 
                     width: parent.width
-                    height: 22
+                    height: Theme.dp(22)
 
                     Text {
                         id: factLabel
@@ -323,19 +323,19 @@ WidgetBody {
                         text: fact.modelData.label
                         color: Theme.subtextDim
                         font.family: Theme.fontFamily
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.dp(12)
                     }
 
                     Text {
                         anchors.left: factLabel.right
-                        anchors.leftMargin: 12
+                        anchors.leftMargin: Theme.dp(12)
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         horizontalAlignment: Text.AlignRight
                         text: fact.modelData.value
                         color: Theme.text
                         font.family: Theme.fontFamily
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.dp(12)
                         font.bold: true
                         elide: Text.ElideLeft
                     }
@@ -349,7 +349,7 @@ WidgetBody {
         Row {
             anchors.left: parent.left
             anchors.bottom: parent.bottom
-            spacing: 18
+            spacing: Theme.dp(18)
 
             Repeater {
                 model: [{
@@ -367,12 +367,12 @@ WidgetBody {
 
                     required property var modelData
 
-                    spacing: 4
+                    spacing: Theme.dp(4)
 
                     WidgetGlyph {
                         anchors.verticalCenter: parent.verticalCenter
                         name: footCell.modelData.icon
-                        size: 14
+                        size: Theme.dp(14)
                         color: footCell.modelData.tint
                     }
 
@@ -381,7 +381,7 @@ WidgetBody {
                         text: footCell.modelData.value
                         color: Theme.text
                         font.family: Theme.fontFamily
-                        font.pixelSize: 13
+                        font.pixelSize: Theme.dp(13)
                         font.bold: true
                     }
 
@@ -398,7 +398,7 @@ WidgetBody {
 
         visible: w.variant === "compact"
         anchors.centerIn: parent
-        width: parent.width - 36
+        width: parent.width - Theme.dp(36)
         spacing: 0
 
         RateCell {
@@ -407,7 +407,7 @@ WidgetBody {
             label: "DOWN"
             value: w.rate(w.down)
             tint: Theme.accent
-            big: 20
+            big: Theme.dp(20)
         }
 
         RateCell {
@@ -416,13 +416,13 @@ WidgetBody {
             label: "UP"
             value: w.rate(w.up)
             tint: w.upTint
-            big: 20
+            big: Theme.dp(20)
         }
 
     }
 
     component Head: Item {
-        implicitHeight: 20
+        implicitHeight: Theme.dp(20)
 
         WidgetGlyph {
             id: headIcon
@@ -430,20 +430,20 @@ WidgetBody {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             name: w.wifi ? "wifi" : (w.online ? "lan" : "network")
-            size: 16
+            size: Theme.dp(16)
             color: w.online ? Theme.accent : Theme.subtextDim
         }
 
         Text {
             anchors.left: headIcon.right
-            anchors.leftMargin: 8
+            anchors.leftMargin: Theme.dp(8)
             anchors.right: headBadge.left
-            anchors.rightMargin: 8
+            anchors.rightMargin: Theme.dp(8)
             anchors.verticalCenter: parent.verticalCenter
             text: w.title
             color: w.online ? Theme.text : Theme.subtext
             font.family: Theme.fontFamily
-            font.pixelSize: 14
+            font.pixelSize: Theme.dp(14)
             font.bold: true
             elide: Text.ElideRight
         }
@@ -453,13 +453,13 @@ WidgetBody {
 
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 4
+            spacing: Theme.dp(4)
 
             WidgetGlyph {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: w.vpn !== ""
                 name: "shield"
-                size: 12
+                size: Theme.dp(12)
                 color: Theme.accent
             }
 
@@ -468,7 +468,7 @@ WidgetBody {
                 text: w.vpn !== "" ? w.vpn : (w.signal >= 0 ? w.signal + "%" : "")
                 color: w.vpn !== "" ? Theme.accent : Theme.subtextDim
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Theme.dp(11)
                 font.bold: true
             }
 
@@ -483,17 +483,17 @@ WidgetBody {
         property string label: ""
         property string value: ""
         property color tint: Theme.accent
-        property real big: 22
+        property real big: Theme.dp(22)
 
         spacing: 1
 
         Row {
-            spacing: 3
+            spacing: Theme.dp(3)
 
             WidgetGlyph {
                 anchors.verticalCenter: parent.verticalCenter
                 name: cell.icon
-                size: 11
+                size: Theme.dp(11)
                 color: cell.tint
             }
 
@@ -502,7 +502,7 @@ WidgetBody {
                 text: cell.label
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.dp(10)
                 font.bold: true
                 font.letterSpacing: 1.2
             }

@@ -19,7 +19,7 @@ Item {
         Icon {
             anchors.centerIn: parent
             name: "lan"
-            size: 18
+            size: Theme.dp(18)
             fill: 1
             color: glyph.glyphColor
         }
@@ -36,7 +36,7 @@ Item {
         readonly property int level: wsg.normalizedStrength >= 80 ? 4 : (wsg.normalizedStrength >= 60 ? 3 : (wsg.normalizedStrength >= 40 ? 2 : (wsg.normalizedStrength >= 20 ? 1 : 0)))
 
         name: wsg.showOff ? "signal_wifi_off" : ["signal_wifi_0_bar", "network_wifi_1_bar", "network_wifi_2_bar", "network_wifi_3_bar", "signal_wifi_4_bar"][wsg.level]
-        size: 20
+        size: Theme.dp(20)
         fill: 1
     }
 
@@ -113,8 +113,8 @@ Item {
 
         Rectangle {
             width: parent.width
-            height: 54
-            radius: netItem.isExpanded ? 20 : 14
+            height: Theme.dp(54)
+            radius: netItem.isExpanded ? Theme.dp(20) : Theme.dp(14)
             color: netItem.isExpanded ? Theme.withBlur(Theme.surfaceHighest) : (rowArea.containsMouse ? Theme.withBlur(Theme.layer(Theme.surfaceHigh, Theme.text, Theme.stateHover)) : Theme.withBlur(Theme.surfaceHigh))
 
             Behavior on radius {
@@ -128,13 +128,13 @@ Item {
 
             Row {
                 anchors.fill: parent
-                anchors.leftMargin: 14
-                anchors.rightMargin: 14
-                spacing: 14
+                anchors.leftMargin: Theme.dp(14)
+                anchors.rightMargin: Theme.dp(14)
+                spacing: Theme.dp(14)
 
                 Item {
-                    width: 20
-                    height: 20
+                    width: Theme.dp(20)
+                    height: Theme.dp(20)
                     anchors.verticalCenter: parent.verticalCenter
 
                     WifiStrengthGlyph {
@@ -147,9 +147,9 @@ Item {
                         id: netDot
 
                         visible: netItem.isConnected
-                        width: 6
-                        height: 6
-                        radius: 3
+                        width: Theme.dp(6)
+                        height: Theme.dp(6)
+                        radius: Theme.dp(3)
                         color: Theme.success
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
@@ -180,7 +180,7 @@ Item {
                 }
 
                 Column {
-                    width: parent.width - 20 - 18 - 28
+                    width: parent.width - Theme.dp(20) - Theme.dp(18) - Theme.dp(28)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 1
 
@@ -207,7 +207,7 @@ Item {
 
                 Icon {
                     name: "expand_more"
-                    size: 20
+                    size: Theme.dp(20)
                     color: Theme.subtext
                     anchors.verticalCenter: parent.verticalCenter
                     rotation: netItem.isExpanded ? 180 : 0
@@ -253,28 +253,28 @@ Item {
                 id: expandContent
 
                 width: parent.width
-                leftPadding: 36
-                rightPadding: 14
-                topPadding: 6
-                bottomPadding: 14
-                spacing: 10
-                y: netItem.isExpanded ? 0 : -8
+                leftPadding: Theme.dp(36)
+                rightPadding: Theme.dp(14)
+                topPadding: Theme.dp(6)
+                bottomPadding: Theme.dp(14)
+                spacing: Theme.dp(10)
+                y: netItem.isExpanded ? 0 : -Theme.dp(8)
                 opacity: netItem.isExpanded ? 1 : 0
 
                 Rectangle {
                     id: passwordBox
 
                     visible: netItem.showPasswordInput && !netItem.isConnected
-                    width: parent.width - 46
-                    height: 32
-                    radius: 8
+                    width: parent.width - Theme.dp(46)
+                    height: Theme.dp(32)
+                    radius: Theme.dp(8)
                     color: Theme.withBlur(Theme.bgSunken)
                     border.width: 1
                     border.color: netItem.connectFailed ? Theme.error : (passwordInput.activeFocus ? Theme.accent : Theme.bgHigh)
 
                     Text {
                         anchors.left: parent.left
-                        anchors.leftMargin: 10
+                        anchors.leftMargin: Theme.dp(10)
                         anchors.verticalCenter: parent.verticalCenter
                         text: "Enter password..."
                         color: Theme.outlineStrong
@@ -288,8 +288,8 @@ Item {
                         id: passwordInput
 
                         anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
+                        anchors.leftMargin: Theme.dp(10)
+                        anchors.rightMargin: Theme.dp(10)
                         verticalAlignment: Text.AlignVCenter
                         echoMode: TextInput.Password
                         passwordCharacter: "•"
@@ -315,16 +315,16 @@ Item {
                 }
 
                 Row {
-                    width: parent.width - 46
-                    height: 30
-                    spacing: 8
+                    width: parent.width - Theme.dp(46)
+                    height: Theme.dp(30)
+                    spacing: Theme.dp(8)
 
                     Rectangle {
                         id: connectBtn
 
-                        width: netItem.canShare ? (parent.width - shareBtn.width - 16) / 2 : parent.width
+                        width: netItem.canShare ? (parent.width - shareBtn.width - Theme.dp(16)) / 2 : parent.width
                         height: parent.height
-                        radius: 999
+                        radius: Theme.dp(999)
                         color: netItem.isConnecting ? Theme.withBlur(Theme.outlineStrong) : (netItem.isConnected ? Theme.accentContainer : (connectArea.containsMouse ? Theme.accentHover : Theme.accent))
                         scale: connectArea.pressed ? 0.96 : 1
 
@@ -384,9 +384,9 @@ Item {
                         id: forgetBtn
 
                         visible: netItem.canShare
-                        width: (parent.width - shareBtn.width - 16) / 2
+                        width: (parent.width - shareBtn.width - Theme.dp(16)) / 2
                         height: parent.height
-                        radius: 999
+                        radius: Theme.dp(999)
                         color: forgetArea.containsMouse ? Theme.withBlur(Theme.outlineStrong) : "transparent"
                         border.width: 1
                         border.color: Theme.outlineStrong
@@ -445,9 +445,9 @@ Item {
                         id: shareBtn
 
                         visible: netItem.canShare
-                        width: 30
-                        height: 30
-                        radius: 999
+                        width: Theme.dp(30)
+                        height: Theme.dp(30)
+                        radius: Theme.dp(999)
                         color: netItem.sharing ? Theme.accentContainer : (shareArea.containsMouse ? Theme.withBlur(Theme.outlineStrong) : "transparent")
                         border.width: netItem.sharing ? 0 : 1
                         border.color: Theme.outlineStrong
@@ -456,7 +456,7 @@ Item {
                         Icon {
                             anchors.centerIn: parent
                             name: "qr_code"
-                            size: 16
+                            size: Theme.dp(16)
                             fill: netItem.sharing ? 1 : 0
                             color: netItem.sharing ? Theme.accent : Theme.text
                         }
@@ -490,7 +490,7 @@ Item {
                 }
 
                 Loader {
-                    width: parent.width - 46
+                    width: parent.width - Theme.dp(46)
                     active: netItem.sharing && netItem.isExpanded && root.active
                     visible: active
 
@@ -505,7 +505,7 @@ Item {
                     id: errorText
 
                     visible: netItem.connectFailed && !netItem.isConnected && !netItem.isConnecting
-                    width: parent.width - 46
+                    width: parent.width - Theme.dp(46)
                     text: netItem.failReason || (netItem.attemptedWithNewPassword ? "Incorrect password." : "Connection failed.")
                     color: Theme.error
                     font.family: Theme.fontFamily
@@ -516,16 +516,16 @@ Item {
 
                 Row {
                     visible: netItem.isTrusted
-                    spacing: 8
+                    spacing: Theme.dp(8)
 
                     Rectangle {
                         id: autoBox
 
                         readonly property bool checked: root.isAutoConnectEnabled(netItem.modelData.name)
 
-                        width: 15
-                        height: 15
-                        radius: 4
+                        width: Theme.dp(15)
+                        height: Theme.dp(15)
+                        radius: Theme.dp(4)
                         color: checked ? Theme.accent : "transparent"
                         border.width: 1.5
                         border.color: checked ? Theme.accent : Theme.outlineStrong
@@ -993,12 +993,12 @@ Item {
         id: col
 
         width: root.width
-        spacing: 10
+        spacing: Theme.dp(10)
 
         Item {
             visible: Networking.connectivity === NetworkConnectivity.None || Networking.connectivity === NetworkConnectivity.Portal || Networking.connectivity === NetworkConnectivity.Limited
             width: parent.width
-            height: 20
+            height: Theme.dp(20)
 
             Text {
                 anchors.left: parent.left
@@ -1025,7 +1025,7 @@ Item {
                     id: recheckArea
 
                     anchors.fill: parent
-                    anchors.margins: -4
+                    anchors.margins: -Theme.dp(4)
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Networking.checkConnectivity()
                 }
@@ -1037,13 +1037,13 @@ Item {
         Item {
             visible: root.wiredDevice !== null
             width: parent.width
-            height: 40
+            height: Theme.dp(40)
 
             EthernetGlyph {
                 id: ethIcon
 
-                width: 16
-                height: 16
+                width: Theme.dp(16)
+                height: Theme.dp(16)
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 glyphColor: root.ethernetConnected ? Theme.accent : Theme.subtext
@@ -1051,7 +1051,7 @@ Item {
 
             Column {
                 anchors.left: ethIcon.right
-                anchors.leftMargin: 10
+                anchors.leftMargin: Theme.dp(10)
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 1
 
@@ -1089,9 +1089,9 @@ Item {
                 visible: root.ethernetConnected
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                width: 78
-                height: 26
-                radius: 999
+                width: Theme.dp(78)
+                height: Theme.dp(26)
+                radius: Theme.dp(999)
                 color: ethDisconnectArea.containsMouse ? Theme.outlineStrong : "transparent"
                 border.width: 1
                 border.color: Theme.outlineStrong
@@ -1149,7 +1149,7 @@ Item {
 
             visible: Networking.wifiEnabled && Networking.wifiHardwareEnabled
             width: parent.width
-            height: 44
+            height: Theme.dp(44)
 
             Timer {
                 interval: 400
@@ -1192,13 +1192,13 @@ Item {
 
                 Row {
                     anchors.left: parent.left
-                    anchors.leftMargin: 12
+                    anchors.leftMargin: Theme.dp(12)
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     Item {
-                        width: 24
-                        height: 24
+                        width: Theme.dp(24)
+                        height: Theme.dp(24)
                         anchors.verticalCenter: parent.verticalCenter
 
                         LoadingIndicator {
@@ -1211,7 +1211,7 @@ Item {
                             anchors.centerIn: parent
                             visible: !scanButton.scanning
                             name: "wifi_find"
-                            size: 20
+                            size: Theme.dp(20)
                             color: Theme.subtext
                         }
 
@@ -1228,7 +1228,7 @@ Item {
 
                 LText {
                     anchors.right: parent.right
-                    anchors.rightMargin: 16
+                    anchors.rightMargin: Theme.dp(16)
                     anchors.verticalCenter: parent.verticalCenter
                     visible: scanButton.scanning
                     role: "labelMedium"
@@ -1245,11 +1245,11 @@ Item {
 
             visible: Networking.wifiEnabled && Networking.wifiHardwareEnabled
             width: parent.width
-            spacing: 14
+            spacing: Theme.dp(14)
 
             Column {
                 width: parent.width
-                spacing: 3
+                spacing: Theme.dp(3)
                 visible: root.connectedNetworks.length > 0
 
                 Text {
@@ -1259,8 +1259,8 @@ Item {
                     font.bold: true
                     font.pixelSize: Theme.fs(12)
                     font.variableAxes: Theme.axes(Theme.fs(12), 600, 0)
-                    leftPadding: 4
-                    bottomPadding: 3
+                    leftPadding: Theme.dp(4)
+                    bottomPadding: Theme.dp(3)
                 }
 
                 Repeater {
@@ -1275,7 +1275,7 @@ Item {
 
             Column {
                 width: parent.width
-                spacing: 3
+                spacing: Theme.dp(3)
                 visible: root.savedNetworks.length > 0
 
                 Text {
@@ -1285,8 +1285,8 @@ Item {
                     font.bold: true
                     font.pixelSize: Theme.fs(12)
                     font.variableAxes: Theme.axes(Theme.fs(12), 600, 0)
-                    leftPadding: 4
-                    bottomPadding: 3
+                    leftPadding: Theme.dp(4)
+                    bottomPadding: Theme.dp(3)
                 }
 
                 Repeater {
@@ -1301,7 +1301,7 @@ Item {
 
             Column {
                 width: parent.width
-                spacing: 3
+                spacing: Theme.dp(3)
                 visible: root.nearbyNetworks.length > 0
 
                 Text {
@@ -1311,8 +1311,8 @@ Item {
                     font.bold: true
                     font.pixelSize: Theme.fs(12)
                     font.variableAxes: Theme.axes(Theme.fs(12), 600, 0)
-                    leftPadding: 4
-                    bottomPadding: 3
+                    leftPadding: Theme.dp(4)
+                    bottomPadding: Theme.dp(3)
                 }
 
                 Repeater {
@@ -1328,9 +1328,9 @@ Item {
             Column {
                 width: parent.width
                 visible: root.connectedNetworks.length === 0 && root.savedNetworks.length === 0 && root.nearbyNetworks.length === 0
-                topPadding: 18
-                bottomPadding: 6
-                spacing: 4
+                topPadding: Theme.dp(18)
+                bottomPadding: Theme.dp(6)
+                spacing: Theme.dp(4)
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -1345,8 +1345,8 @@ Item {
 
             Column {
                 width: parent.width
-                spacing: 8
-                topPadding: 2
+                spacing: Theme.dp(8)
+                topPadding: Theme.dp(2)
 
                 Text {
                     visible: !root.hiddenFormOpen
@@ -1356,13 +1356,13 @@ Item {
                     font.pixelSize: Theme.fs(11)
                     font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
                     font.underline: hiddenToggleArea.containsMouse
-                    leftPadding: 4
+                    leftPadding: Theme.dp(4)
 
                     MouseArea {
                         id: hiddenToggleArea
 
                         anchors.fill: parent
-                        anchors.margins: -4
+                        anchors.margins: -Theme.dp(4)
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.hiddenFormOpen = true
                     }
@@ -1372,21 +1372,21 @@ Item {
                 Column {
                     width: parent.width
                     visible: root.hiddenFormOpen
-                    spacing: 6
-                    leftPadding: 4
-                    rightPadding: 4
+                    spacing: Theme.dp(6)
+                    leftPadding: Theme.dp(4)
+                    rightPadding: Theme.dp(4)
 
                     Rectangle {
-                        width: parent.width - 8
-                        height: 30
-                        radius: 8
+                        width: parent.width - Theme.dp(8)
+                        height: Theme.dp(30)
+                        radius: Theme.dp(8)
                         color: Theme.withBlur(Theme.bgSunken)
                         border.width: 1
                         border.color: hiddenSsidInput.activeFocus ? Theme.accent : Theme.bgHigh
 
                         Text {
                             anchors.left: parent.left
-                            anchors.leftMargin: 10
+                            anchors.leftMargin: Theme.dp(10)
                             anchors.verticalCenter: parent.verticalCenter
                             text: "Network name (SSID)"
                             color: Theme.outlineStrong
@@ -1400,8 +1400,8 @@ Item {
                             id: hiddenSsidInput
 
                             anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
+                            anchors.leftMargin: Theme.dp(10)
+                            anchors.rightMargin: Theme.dp(10)
                             verticalAlignment: Text.AlignVCenter
                             color: Theme.text
                             font.family: Theme.fontFamily
@@ -1421,16 +1421,16 @@ Item {
                     }
 
                     Rectangle {
-                        width: parent.width - 8
-                        height: 30
-                        radius: 8
+                        width: parent.width - Theme.dp(8)
+                        height: Theme.dp(30)
+                        radius: Theme.dp(8)
                         color: Theme.withBlur(Theme.bgSunken)
                         border.width: 1
                         border.color: root.hiddenFailed ? Theme.error : (hiddenPskInput.activeFocus ? Theme.accent : Theme.bgHigh)
 
                         Text {
                             anchors.left: parent.left
-                            anchors.leftMargin: 10
+                            anchors.leftMargin: Theme.dp(10)
                             anchors.verticalCenter: parent.verticalCenter
                             text: "Password (leave blank if open)"
                             color: Theme.outlineStrong
@@ -1444,8 +1444,8 @@ Item {
                             id: hiddenPskInput
 
                             anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
+                            anchors.leftMargin: Theme.dp(10)
+                            anchors.rightMargin: Theme.dp(10)
                             verticalAlignment: Text.AlignVCenter
                             echoMode: TextInput.Password
                             passwordCharacter: "•"
@@ -1469,7 +1469,7 @@ Item {
 
                     Text {
                         visible: root.hiddenFailed
-                        width: parent.width - 8
+                        width: parent.width - Theme.dp(8)
                         text: root.hiddenErrorDetail
                         color: Theme.error
                         font.family: Theme.fontFamily
@@ -1479,13 +1479,13 @@ Item {
                     }
 
                     Row {
-                        spacing: 8
-                        height: 28
+                        spacing: Theme.dp(8)
+                        height: Theme.dp(28)
 
                         Rectangle {
-                            width: 90
+                            width: Theme.dp(90)
                             height: parent.height
-                            radius: 999
+                            radius: Theme.dp(999)
                             color: hiddenConnectArea.containsMouse ? Theme.accentHover : Theme.accent
 
                             Text {
@@ -1510,9 +1510,9 @@ Item {
                         }
 
                         Rectangle {
-                            width: 70
+                            width: Theme.dp(70)
                             height: parent.height
-                            radius: 999
+                            radius: Theme.dp(999)
                             color: "transparent"
                             border.width: 1
                             border.color: Theme.outlineStrong

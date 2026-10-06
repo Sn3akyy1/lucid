@@ -23,7 +23,7 @@ Column {
         });
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
     Component.onCompleted: HyprConfig.refresh()
 
     SettingCard {
@@ -75,7 +75,6 @@ Column {
             option: "general.gaps_out"
             description: "Room between the windows and the edges of the screen."
             stacked: true
-            showDivider: false
 
             M3Slider {
                 width: parent.width
@@ -87,6 +86,27 @@ Column {
                 value: HyprConfig.num("general.gaps_out", 20)
                 onMoved: (v) => {
                     return HyprConfig.set("general.gaps_out", Math.round(v));
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "From the bar and dock"
+            resetKey: "shellGap"
+            description: "Extra room the bar and dock keep clear of windows, on top of the gap around the edges."
+            stacked: true
+            showDivider: false
+
+            M3Slider {
+                width: parent.width
+                from: 0
+                to: 60
+                stepSize: 1
+                suffix: " px"
+                value: Prefs.shellGap
+                onMoved: (v) => {
+                    return Prefs.shellGap = Math.round(v);
                 }
             }
 
@@ -132,7 +152,7 @@ Column {
             stacked: true
 
             M3Segmented {
-                width: Math.min(parent.width, 360)
+                width: Math.min(parent.width, Theme.dp(360))
                 enabled: borderColour.enabled
                 current: HyprConfig.borderMode()
                 options: HyprConfig.borderModes
@@ -351,10 +371,10 @@ Column {
 
             Column {
                 width: parent.width
-                spacing: 14
+                spacing: Theme.dp(14)
 
                 M3Segmented {
-                    width: Math.min(parent.width, 300)
+                    width: Math.min(parent.width, Theme.dp(300))
                     current: page.previewCount
                     options: [1, 2, 3, 4, 5].map((n) => {
                         return {
@@ -387,7 +407,7 @@ Column {
             stacked: true
 
             M3Segmented {
-                width: Math.min(parent.width, 360)
+                width: Math.min(parent.width, Theme.dp(360))
                 enabled: layoutRow.enabled
                 current: page.layout
                 options: [{
@@ -441,7 +461,7 @@ Column {
             stacked: true
 
             M3Segmented {
-                width: Math.min(parent.width, 420)
+                width: Math.min(parent.width, Theme.dp(420))
                 enabled: forceSplit.enabled
                 current: HyprConfig.num("dwindle.force_split", 0)
                 options: [{
@@ -513,7 +533,7 @@ Column {
             stacked: true
 
             M3Segmented {
-                width: Math.min(parent.width, 460)
+                width: Math.min(parent.width, Theme.dp(460))
                 enabled: masterSide.enabled
                 current: String(HyprConfig.value("master.orientation") || "left")
                 options: [{
@@ -573,7 +593,7 @@ Column {
             stacked: true
 
             M3Segmented {
-                width: Math.min(parent.width, 420)
+                width: Math.min(parent.width, Theme.dp(420))
                 enabled: newStatus.enabled
                 current: String(HyprConfig.value("master.new_status") || "slave")
                 options: [{
@@ -688,7 +708,7 @@ Column {
             stacked: true
 
             M3Segmented {
-                width: Math.min(parent.width, 480)
+                width: Math.min(parent.width, Theme.dp(480))
                 enabled: followMouse.enabled
                 current: HyprConfig.num("input.follow_mouse", 1)
                 options: [{

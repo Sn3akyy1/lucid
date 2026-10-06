@@ -6,7 +6,39 @@ Column {
     id: page
 
     readonly property string home: Quickshell.env("HOME")
-    spacing: 26
+    spacing: Theme.dp(26)
+
+    SettingCard {
+        title: "SIZE"
+
+        SettingRow {
+            title: "Interface size"
+            resetKey: "uiScale"
+            description: "Scales the whole shell at once: bar, dock, panels, menus and the text in them. Applications and the screen's own scale are not affected."
+            showDivider: false
+            stacked: true
+
+            M3Slider {
+                id: sizeSlider
+
+                width: parent.width
+                from: 0.75
+                to: 1.25
+                stepSize: 0.05
+                stepLabels: ["75%", "80%", "85%", "90%", "95%", "100%", "105%", "110%", "115%", "120%", "125%"]
+                value: Prefs.uiScale
+                // applied on release: resizing live would pull this window out from under the pointer
+                onDraggingChanged: {
+                    var v = Math.round(sizeSlider.dragValue * 100) / 100;
+                    if (!sizeSlider.dragging && v !== Prefs.uiScale)
+                        Prefs.uiScale = v;
+
+                }
+            }
+
+        }
+
+    }
 
     SettingCard {
         title: "SHAPE"
@@ -16,7 +48,7 @@ Column {
             description: "Islands float free of the screen edge. Notches sit flush against it, squaring off the corners that meet it."
 
             M3Segmented {
-                width: 260
+                width: Theme.dp(260)
                 current: Prefs.barStyle
                 options: [{
                     "key": "island",
@@ -38,7 +70,7 @@ Column {
             showDivider: false
 
             M3Segmented {
-                width: 260
+                width: Theme.dp(260)
                 current: Prefs.dockStyle
                 options: [{
                     "key": "island",
@@ -98,11 +130,11 @@ Column {
             stacked: true
 
             Row {
-                spacing: 16
+                spacing: Theme.dp(16)
                 width: parent.width
 
                 M3Slider {
-                    width: parent.width - resetDark.width - 16
+                    width: parent.width - resetDark.width - Theme.dp(16)
                     enabled: Prefs.surfaceDarkness >= 0
                     from: 0
                     to: 0.8
@@ -135,11 +167,11 @@ Column {
             stacked: true
 
             Row {
-                spacing: 16
+                spacing: Theme.dp(16)
                 width: parent.width
 
                 M3Slider {
-                    width: parent.width - resetTint.width - 16
+                    width: parent.width - resetTint.width - Theme.dp(16)
                     enabled: Prefs.surfaceTint >= 0
                     from: 0
                     to: 1
@@ -236,7 +268,7 @@ Column {
             description: Prefs.shotPreview === "preview" ? "A card in the corner shows it, to open, mark up, drag into an app, find in its folder or delete. Recordings get one too." : (Prefs.shotPreview === "notify" ? "A notification says where it went. Screenshots are on the clipboard either way." : "Nothing shows. Screenshots are still copied to the clipboard.")
 
             M3Segmented {
-                width: Math.max(300, fitWidth)
+                width: Math.max(Theme.dp(300), fitWidth)
                 current: Prefs.shotPreview
                 options: [{
                     "key": "preview",

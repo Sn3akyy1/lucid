@@ -33,13 +33,13 @@ Column {
 
     signal expandRequested()
 
-    width: parent ? parent.width : 400
+    width: parent ? parent.width : Theme.dp(400)
 
     Rectangle {
         id: head
 
         width: parent.width
-        height: 62
+        height: Theme.dp(62)
         radius: Theme.radiusMd
         color: stream.expanded ? Theme.bgHover : (headArea.containsMouse ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent")
 
@@ -55,10 +55,10 @@ Column {
             id: muteBtn
 
             anchors.left: parent.left
-            anchors.leftMargin: 13
+            anchors.leftMargin: Theme.dp(13)
             anchors.verticalCenter: parent.verticalCenter
-            size: 36
-            iconSize: 19
+            size: Theme.dp(36)
+            iconSize: Theme.dp(19)
             variant: stream.muted ? "tonal" : "standard"
             iconPath: stream.icon
             onClicked: Audio.toggleMute(stream.modelData)
@@ -68,10 +68,10 @@ Column {
             id: labels
 
             anchors.left: muteBtn.right
-            anchors.leftMargin: 12
+            anchors.leftMargin: Theme.dp(12)
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.round((parent.width - muteBtn.width - 26) * 0.38)
-            spacing: 2
+            width: Math.round((parent.width - muteBtn.width - Theme.dp(26)) * 0.38)
+            spacing: Theme.dp(2)
 
             Text {
                 width: parent.width
@@ -99,9 +99,9 @@ Column {
 
         M3Slider {
             anchors.left: labels.right
-            anchors.leftMargin: 14
+            anchors.leftMargin: Theme.dp(14)
             anchors.right: expandBtn.left
-            anchors.rightMargin: 10
+            anchors.rightMargin: Theme.dp(10)
             anchors.verticalCenter: parent.verticalCenter
             from: 0
             to: 100
@@ -119,10 +119,10 @@ Column {
             id: expandBtn
 
             anchors.right: parent.right
-            anchors.rightMargin: 12
+            anchors.rightMargin: Theme.dp(12)
             anchors.verticalCenter: parent.verticalCenter
-            size: 32
-            iconSize: 18
+            size: Theme.dp(32)
+            iconSize: Theme.dp(18)
             enabled: stream.devices.length > 1
             rotation: stream.expanded ? 180 : 0
             iconPath: "expand_more"
@@ -158,11 +158,11 @@ Column {
             id: body
 
             width: parent.width
-            leftPadding: 61
-            rightPadding: 14
-            topPadding: 4
-            bottomPadding: 16
-            spacing: 7
+            leftPadding: Theme.dp(61)
+            rightPadding: Theme.dp(14)
+            topPadding: Theme.dp(4)
+            bottomPadding: Theme.dp(16)
+            spacing: Theme.dp(7)
             opacity: stream.expanded ? 1 : 0
 
             Text {
@@ -175,7 +175,7 @@ Column {
             }
 
             M3Chips {
-                width: parent.width - 75
+                width: parent.width - Theme.dp(75)
                 current: stream.target ? stream.target.name : ""
                 options: stream.devices.map((d) => {
                     return {

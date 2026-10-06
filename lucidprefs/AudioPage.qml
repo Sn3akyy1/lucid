@@ -31,7 +31,7 @@ Column {
         return Audio.label(page.source) + (detail !== "" ? " · " + detail : "");
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
     Component.onCompleted: Audio.refresh()
 
     SettingCard {
@@ -47,12 +47,12 @@ Column {
 
             Row {
                 width: parent.width
-                spacing: 12
+                spacing: Theme.dp(12)
 
                 M3IconButton {
                     anchors.verticalCenter: parent.verticalCenter
-                    size: 40
-                    iconSize: 21
+                    size: Theme.dp(40)
+                    iconSize: Theme.dp(21)
                     variant: Audio.mutedOf(page.sink) ? "tonal" : "standard"
                     enabled: !!page.sink
                     iconPath: Audio.mutedOf(page.sink) ? "volume_off" : "volume_up"
@@ -60,7 +60,7 @@ Column {
                 }
 
                 M3Slider {
-                    width: parent.width - 52
+                    width: parent.width - Theme.dp(52)
                     anchors.verticalCenter: parent.verticalCenter
                     from: 0
                     to: 100
@@ -95,9 +95,9 @@ Column {
 
         Column {
             width: parent.width
-            topPadding: 4
-            bottomPadding: 8
-            spacing: 2
+            topPadding: Theme.dp(4)
+            bottomPadding: Theme.dp(8)
+            spacing: Theme.dp(2)
 
             GroupLabel {
                 text: "Play sound through"
@@ -118,8 +118,8 @@ Column {
                 width: parent.width
                 visible: Audio.outputs.length === 0
                 horizontalAlignment: Text.AlignHCenter
-                topPadding: 18
-                bottomPadding: 18
+                topPadding: Theme.dp(18)
+                bottomPadding: Theme.dp(18)
                 text: "No outputs. A card switched off in its mode below offers none, and a Bluetooth speaker has to be connected on the Bluetooth page first."
                 color: Theme.subtext
                 font.family: Theme.fontFamily
@@ -145,12 +145,12 @@ Column {
 
             Row {
                 width: parent.width
-                spacing: 12
+                spacing: Theme.dp(12)
 
                 M3IconButton {
                     anchors.verticalCenter: parent.verticalCenter
-                    size: 40
-                    iconSize: 21
+                    size: Theme.dp(40)
+                    iconSize: Theme.dp(21)
                     variant: Audio.mutedOf(page.source) ? "tonal" : "standard"
                     enabled: !!page.source
                     iconPath: Audio.mutedOf(page.source) ? "mic_off" : "mic"
@@ -158,7 +158,7 @@ Column {
                 }
 
                 M3Slider {
-                    width: parent.width - 52
+                    width: parent.width - Theme.dp(52)
                     anchors.verticalCenter: parent.verticalCenter
                     from: 0
                     to: 100
@@ -178,9 +178,9 @@ Column {
 
         Column {
             width: parent.width
-            topPadding: 4
-            bottomPadding: 8
-            spacing: 2
+            topPadding: Theme.dp(4)
+            bottomPadding: Theme.dp(8)
+            spacing: Theme.dp(2)
 
             GroupLabel {
                 text: "Record from"
@@ -201,8 +201,8 @@ Column {
                 width: parent.width
                 visible: Audio.inputs.length === 0
                 horizontalAlignment: Text.AlignHCenter
-                topPadding: 18
-                bottomPadding: 18
+                topPadding: Theme.dp(18)
+                bottomPadding: Theme.dp(18)
                 text: "Nothing to record from. A headset has to be in a mode that includes its microphone before it shows up here."
                 color: Theme.subtext
                 font.family: Theme.fontFamily
@@ -221,9 +221,9 @@ Column {
 
         Column {
             width: parent.width
-            topPadding: 2
-            bottomPadding: 8
-            spacing: 2
+            topPadding: Theme.dp(2)
+            bottomPadding: Theme.dp(8)
+            spacing: Theme.dp(2)
 
             GroupLabel {
                 text: "Playing"
@@ -259,8 +259,8 @@ Column {
                 width: parent.width
                 visible: Audio.playbackStreams.length === 0 && Audio.recordStreams.length === 0
                 horizontalAlignment: Text.AlignHCenter
-                topPadding: 18
-                bottomPadding: 18
+                topPadding: Theme.dp(18)
+                bottomPadding: Theme.dp(18)
                 text: "Nothing is playing or recording."
                 color: Theme.subtext
                 font.family: Theme.fontFamily
@@ -463,7 +463,7 @@ Column {
         property string prefKey: ""
         property var sounds: []
 
-        spacing: 4
+        spacing: Theme.dp(4)
 
         M3IconButton {
             anchors.verticalCenter: parent.verticalCenter
@@ -490,9 +490,9 @@ Column {
         font.variableAxes: Theme.axes(Theme.fontTitleSm, 600, 0)
         font.weight: Font.DemiBold
         font.letterSpacing: 0.1
-        leftPadding: 22
-        topPadding: 14
-        bottomPadding: 6
+        leftPadding: Theme.dp(22)
+        topPadding: Theme.dp(14)
+        bottomPadding: Theme.dp(6)
     }
 
 }

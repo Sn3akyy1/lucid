@@ -44,7 +44,7 @@ Column {
 
     signal expandRequested()
 
-    width: parent ? parent.width : 400
+    width: parent ? parent.width : Theme.dp(400)
     onExpandedChanged: {
         if (!net.expanded)
             net.sharing = false;
@@ -73,7 +73,7 @@ Column {
         id: head
 
         width: parent.width
-        height: 58
+        height: Theme.dp(58)
         radius: Theme.radiusMd
         color: net.expanded ? Theme.bgHover : (headArea.containsMouse ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent")
 
@@ -87,15 +87,15 @@ Column {
         Item {
             id: iconTile
 
-            width: 36
-            height: 36
+            width: Theme.dp(36)
+            height: Theme.dp(36)
             anchors.left: parent.left
-            anchors.leftMargin: 12
+            anchors.leftMargin: Theme.dp(12)
             anchors.verticalCenter: parent.verticalCenter
 
             Rectangle {
                 anchors.fill: parent
-                radius: 12
+                radius: Theme.dp(12)
                 color: Theme.alpha(Theme.accent, net.isConnected ? 0.24 : 0.11)
 
                 Behavior on color {
@@ -109,7 +109,7 @@ Column {
 
             WifiGlyph {
                 anchors.centerIn: parent
-                size: 19
+                size: Theme.dp(19)
                 strength: net.strength
                 color: net.isConnected ? Theme.accent : Theme.subtext
             }
@@ -118,11 +118,11 @@ Column {
 
         Column {
             anchors.left: iconTile.right
-            anchors.leftMargin: 14
+            anchors.leftMargin: Theme.dp(14)
             anchors.right: trailing.left
-            anchors.rightMargin: 12
+            anchors.rightMargin: Theme.dp(12)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 2
+            spacing: Theme.dp(2)
 
             Text {
                 width: parent.width
@@ -151,15 +151,15 @@ Column {
             id: trailing
 
             anchors.right: parent.right
-            anchors.rightMargin: 14
+            anchors.rightMargin: Theme.dp(14)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 10
+            spacing: Theme.dp(10)
 
             Icon {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: net.secured
                 name: "lock"
-                size: 14
+                size: Theme.dp(14)
                 fill: 1
                 color: Theme.subtextDim
             }
@@ -167,7 +167,7 @@ Column {
             Icon {
                 anchors.verticalCenter: parent.verticalCenter
                 name: "expand_more"
-                size: 18
+                size: Theme.dp(18)
                 color: Theme.subtext
                 rotation: net.expanded ? 180 : 0
 
@@ -213,11 +213,11 @@ Column {
             id: body
 
             width: parent.width
-            leftPadding: 62
-            rightPadding: 14
-            topPadding: 4
-            bottomPadding: 16
-            spacing: 12
+            leftPadding: Theme.dp(62)
+            rightPadding: Theme.dp(14)
+            topPadding: Theme.dp(4)
+            bottomPadding: Theme.dp(16)
+            spacing: Theme.dp(12)
             opacity: net.expanded ? 1 : 0
 
             Behavior on opacity {
@@ -228,14 +228,14 @@ Column {
             }
 
             Row {
-                width: parent.width - 76
-                spacing: 10
+                width: parent.width - Theme.dp(76)
+                spacing: Theme.dp(10)
                 visible: net.needsPassword && !net.isConnected
 
                 M3TextField {
                     id: pskField
 
-                    width: parent.width - joinBtn.implicitWidth - 10
+                    width: parent.width - joinBtn.implicitWidth - Theme.dp(10)
                     placeholder: "Network password"
                     onEdited: (v) => {
                         return net.psk = v;
@@ -261,7 +261,7 @@ Column {
             }
 
             Row {
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 M3Button {
                     variant: "filled"
@@ -301,7 +301,7 @@ Column {
             }
 
             Loader {
-                width: parent.width - 76
+                width: parent.width - Theme.dp(76)
                 active: net.sharing && net.expanded
                 visible: active
 
@@ -312,7 +312,7 @@ Column {
             }
 
             Text {
-                width: parent.width - 76
+                width: parent.width - Theme.dp(76)
                 visible: net.failed
                 text: net.secured ? "Could not join. The password may be wrong, or the network out of range." : "Could not join. The network may be out of range."
                 color: Theme.error
@@ -323,9 +323,9 @@ Column {
             }
 
             Flow {
-                width: parent.width - 76
+                width: parent.width - Theme.dp(76)
                 visible: net.profile !== null
-                spacing: 18
+                spacing: Theme.dp(18)
 
                 CheckLine {
                     label: "Join automatically"

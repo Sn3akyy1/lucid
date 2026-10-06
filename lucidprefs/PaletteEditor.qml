@@ -140,7 +140,7 @@ Column {
         saver.running = true;
     }
 
-    spacing: 14
+    spacing: Theme.dp(14)
 
     // closing Settings with a draft on the shell would leave it there
     Connections {
@@ -235,7 +235,7 @@ Column {
     // the six key colours
     Flow {
         width: editor.width
-        spacing: 10
+        spacing: Theme.dp(10)
 
         Repeater {
             model: editor.keys
@@ -247,8 +247,8 @@ Column {
                 readonly property string hex: editor.shown[key.modelData.role] || "#000000"
                 readonly property bool current: editor.selected === key.modelData.role
 
-                width: 112
-                height: 70
+                width: Theme.dp(112)
+                height: Theme.dp(70)
                 radius: Theme.radiusMd
                 color: key.hex
                 border.width: key.current ? 3 : (keyArea.containsMouse ? 2 : 1)
@@ -257,7 +257,7 @@ Column {
                 Column {
                     anchors.left: parent.left
                     anchors.bottom: parent.bottom
-                    anchors.margins: 9
+                    anchors.margins: Theme.dp(9)
                     spacing: 1
 
                     Text {
@@ -272,7 +272,7 @@ Column {
                         text: key.hex
                         color: Theme.toneOf(Qt.color(key.hex)) > 60 ? "#333333" : "#dddddd"
                         font.family: "monospace"
-                        font.pixelSize: Theme.fontLabel - 2
+                        font.pixelSize: Theme.fontLabel - Theme.dp(2)
                     }
 
                 }
@@ -320,7 +320,7 @@ Column {
 
     Flow {
         width: editor.width
-        spacing: 6
+        spacing: Theme.dp(6)
         visible: editor.allRoles
 
         Repeater {
@@ -331,8 +331,8 @@ Column {
 
                 required property string modelData
 
-                width: chipRow.implicitWidth + 20
-                height: 32
+                width: chipRow.implicitWidth + Theme.dp(20)
+                height: Theme.dp(32)
                 radius: height / 2
                 color: editor.selected === chip.modelData ? Theme.bgHigh : (chipArea.containsMouse ? Theme.bgHigh : Theme.bgSunken)
                 border.width: editor.selected === chip.modelData ? 2 : 0
@@ -342,13 +342,13 @@ Column {
                     id: chipRow
 
                     anchors.centerIn: parent
-                    spacing: 8
+                    spacing: Theme.dp(8)
 
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 16
-                        height: 16
-                        radius: 8
+                        width: Theme.dp(16)
+                        height: Theme.dp(16)
+                        radius: Theme.dp(8)
                         color: editor.shown[chip.modelData] || "#000000"
                         border.width: 1
                         border.color: Theme.alpha(Theme.text, 0.2)
@@ -380,13 +380,13 @@ Column {
     }
 
     Row {
-        spacing: 10
+        spacing: Theme.dp(10)
         visible: editor.editing
 
         M3TextField {
             id: nameField
 
-            width: 260
+            width: Theme.dp(260)
             text: editor.themeName
             placeholder: "Name for the theme"
             onEdited: (v) => {

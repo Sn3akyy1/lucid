@@ -211,13 +211,13 @@ PanelWindow {
 
         Column {
             anchors.centerIn: parent
-            spacing: 44
+            spacing: Theme.dp(44)
 
             Column {
                 anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 6
+                spacing: Theme.dp(6)
                 transform: Translate {
-                    y: (1 - ses.reveal) * -24
+                    y: (1 - ses.reveal) * -Theme.dp(24)
                 }
 
                 LText {
@@ -242,7 +242,7 @@ PanelWindow {
 
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 28
+                spacing: Theme.dp(28)
 
                 Repeater {
                     model: ses.actions
@@ -258,8 +258,8 @@ PanelWindow {
                         // each tile rises into place a beat after the one before
                         readonly property real enter: Math.max(0, Math.min(1, ses.reveal * 1.6 - tile.index * 0.12))
 
-                        width: 136
-                        height: 136 + 44
+                        width: Theme.dp(136)
+                        height: Theme.dp(136) + Theme.dp(44)
                         opacity: tile.enter
                         transform: Translate {
                             y: (1 - tile.enter) * 60
@@ -269,8 +269,8 @@ PanelWindow {
                             id: blob
 
                             anchors.horizontalCenter: parent.horizontalCenter
-                            width: 136
-                            height: 136
+                            width: Theme.dp(136)
+                            height: Theme.dp(136)
                             shape: tile.modelData.shape
                             to: "circle"
                             morph: tile.isArmed ? 0 : (tile.hot ? 0.0 : 0.55)
@@ -317,7 +317,7 @@ PanelWindow {
                         Icon {
                             anchors.centerIn: blob
                             name: tile.modelData.icon
-                            size: 46
+                            size: Theme.dp(46)
                             fill: tile.hot || tile.isArmed ? 1 : 0
                             color: tile.isArmed ? Theme.fgError : (tile.hot ? Theme.fgPrimary : Theme.text)
                         }
@@ -326,9 +326,9 @@ PanelWindow {
                         CircularProgress {
                             visible: tile.isArmed
                             anchors.centerIn: blob
-                            width: 156
-                            height: 156
-                            thickness: 4
+                            width: Theme.dp(156)
+                            height: Theme.dp(156)
+                            thickness: Theme.dp(4)
                             showTrack: false
                             animated: false
                             color: Theme.error
@@ -337,9 +337,9 @@ PanelWindow {
 
                         Column {
                             anchors.top: blob.bottom
-                            anchors.topMargin: 14
+                            anchors.topMargin: Theme.dp(14)
                             anchors.horizontalCenter: parent.horizontalCenter
-                            spacing: 2
+                            spacing: Theme.dp(2)
 
                             LText {
                                 anchors.horizontalCenter: parent.horizontalCenter

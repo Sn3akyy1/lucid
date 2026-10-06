@@ -8,10 +8,10 @@ Item {
     property real value: 0
     property color color: Theme.accent
     readonly property real frac: Math.max(0, Math.min(1, bar.value / 100))
-    readonly property int gap: 4
-    readonly property int dot: 4
+    readonly property int gap: Theme.dp(4)
+    readonly property int dot: Theme.dp(4)
 
-    implicitHeight: 4
+    implicitHeight: Theme.dp(4)
 
     Rectangle {
         id: active

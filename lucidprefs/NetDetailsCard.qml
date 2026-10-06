@@ -51,8 +51,8 @@ SettingCard {
         Grid {
             width: parent.width
             columns: 2
-            columnSpacing: 40
-            rowSpacing: 9
+            columnSpacing: Theme.dp(40)
+            rowSpacing: Theme.dp(9)
 
             InfoPair {
                 name: "IPv4"
@@ -104,10 +104,10 @@ SettingCard {
 
         Column {
             width: parent.width
-            spacing: 14
+            spacing: Theme.dp(14)
 
             M3Segmented {
-                width: 300
+                width: Theme.dp(300)
                 enabled: !Net.busy
                 current: card.manual ? "manual" : "auto"
                 options: [{
@@ -130,11 +130,11 @@ SettingCard {
             Column {
                 width: parent.width
                 visible: card.manual || card.editing
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 Row {
                     width: parent.width
-                    spacing: 12
+                    spacing: Theme.dp(12)
 
                     FieldPair {
                         name: "Address and prefix"
@@ -167,7 +167,7 @@ SettingCard {
                 }
 
                 Row {
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     M3Button {
                         variant: "filled"
@@ -192,11 +192,11 @@ SettingCard {
             }
 
             Row {
-                spacing: 10
+                spacing: Theme.dp(10)
                 visible: !card.manual && !card.editing
 
                 FieldPair {
-                    width: 340
+                    width: Theme.dp(340)
                     name: "Use these DNS servers instead of the router's"
                     hint: "leave empty to use the router's"
                     value: Net.detail["ipv4.dns"] || ""
@@ -259,8 +259,8 @@ SettingCard {
         signal edited(string v)
         signal accepted(string v)
 
-        width: 240
-        spacing: 5
+        width: Theme.dp(240)
+        spacing: Theme.dp(5)
 
         Text {
             text: pair.name

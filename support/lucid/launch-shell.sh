@@ -229,6 +229,19 @@ if [[ ${1:-} == --explain ]]; then
     exit 0
 fi
 
+# the login screen keeps every account's own wallpaper and colours, and one it
+# has nothing for yet is painted here: late and niced, so the shell coming up
+# never waits on it. the outer subshell exits at once, so quickshell never
+# inherits a child it would have to reap
+sync_sddm="$HOME/.config/lucid/sync-sddm.sh"
+if [[ -x $sync_sddm ]]; then
+    low=(nice -n 19)
+    if command -v ionice &>/dev/null; then
+        low+=(ionice -c 3)
+    fi
+    ( (sleep 20; exec "${low[@]}" "$sync_sddm" --missing) &>/dev/null & )
+fi
+
 if [[ -n $backend ]]; then
     export QSG_RHI_BACKEND="$backend"
 fi

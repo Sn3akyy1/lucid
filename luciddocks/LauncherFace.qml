@@ -13,13 +13,13 @@ Item {
     property var model: null
     property var wallpaperModel: null
     property string appliedWallpaper: ""
-    property int wallHeroW: 340
-    property int wallHeroH: 211
-    property int wallMidW: 238
-    property int wallMidH: 148
-    property int wallSmallW: 150
-    property int wallSmallH: 93
-    property int wallCardGap: 10
+    property int wallHeroW: Theme.dp(340)
+    property int wallHeroH: Theme.dp(211)
+    property int wallMidW: Theme.dp(238)
+    property int wallMidH: Theme.dp(148)
+    property int wallSmallW: Theme.dp(150)
+    property int wallSmallH: Theme.dp(93)
+    property int wallCardGap: Theme.dp(10)
     property alias searchText: searchInput.text
     property string highlightQuery: ""
     // how many rows can actually be picked, set by the dock as it builds them
@@ -352,7 +352,7 @@ Item {
 
         ClipPreview {
             anchors.left: resultList.right
-            anchors.leftMargin: 12
+            anchors.leftMargin: Theme.dp(12)
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.bottom: parent.bottom
@@ -413,7 +413,7 @@ Item {
 
             width: Math.round(40 * face.cs)
             height: Math.round(40 * face.cs)
-            x: 8
+            x: Theme.dp(8)
             anchors.verticalCenter: parent.verticalCenter
 
             Rectangle {
@@ -460,9 +460,9 @@ Item {
             readonly property int typeSize: Math.round(Theme.typeSize("bodyLarge") * face.cs)
 
             anchors.left: leadingButton.right
-            anchors.leftMargin: 8
+            anchors.leftMargin: Theme.dp(8)
             anchors.right: clearButton.left
-            anchors.rightMargin: 8
+            anchors.rightMargin: Theme.dp(8)
             anchors.verticalCenter: parent.verticalCenter
             color: Theme.text
             font.family: Theme.fontFamily
@@ -536,7 +536,7 @@ Item {
                 id: ghost
 
                 anchors.verticalCenter: parent.verticalCenter
-                x: 2
+                x: Theme.dp(2)
                 role: "bodyLarge"
                 size: searchInput.typeSize
                 text: face.placeholder
@@ -582,7 +582,7 @@ Item {
             width: searchBar.typing ? Math.round(40 * face.cs) : 0
             height: Math.round(40 * face.cs)
             anchors.right: parent.right
-            anchors.rightMargin: searchBar.typing ? 8 : 0
+            anchors.rightMargin: searchBar.typing ? Theme.dp(8) : 0
             anchors.verticalCenter: parent.verticalCenter
             visible: searchBar.typing
 

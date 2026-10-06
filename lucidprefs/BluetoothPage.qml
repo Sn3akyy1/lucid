@@ -67,7 +67,7 @@ Column {
         return "On, with nothing connected.";
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
     Component.onCompleted: {
         Bt.refresh();
         if (Prefs.btScanOnOpen && page.on && page.adapter && !page.discovering) {
@@ -162,7 +162,7 @@ Column {
             showDivider: false
 
             M3TextField {
-                width: 260
+                width: Theme.dp(260)
                 enabled: !!page.adapter && !Bt.aliasBusy
                 placeholder: "this computer"
                 text: Bt.alias
@@ -188,10 +188,10 @@ Column {
 
             Row {
                 width: parent.width
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 M3TextField {
-                    width: parent.width - scanBtn.implicitWidth - unnamedBox.implicitWidth - autoScanBox.implicitWidth - 30
+                    width: parent.width - scanBtn.implicitWidth - unnamedBox.implicitWidth - autoScanBox.implicitWidth - Theme.dp(30)
                     enabled: page.on
                     placeholder: "Filter by name or address"
                     onEdited: (v) => {
@@ -243,9 +243,9 @@ Column {
         Column {
             width: parent.width
             visible: page.on
-            topPadding: 4
-            bottomPadding: 8
-            spacing: 2
+            topPadding: Theme.dp(4)
+            bottomPadding: Theme.dp(8)
+            spacing: Theme.dp(2)
 
             GroupLabel {
                 text: "Connected"
@@ -299,8 +299,8 @@ Column {
                 width: parent.width
                 visible: page.visibleDevices.length === 0
                 horizontalAlignment: Text.AlignHCenter
-                topPadding: 18
-                bottomPadding: 18
+                topPadding: Theme.dp(18)
+                bottomPadding: Theme.dp(18)
                 text: page.filter.trim() !== "" ? "Nothing matches “" + page.filter.trim() + "”." : (page.discovering ? "Looking for devices…" : "No devices yet. Press Search to look for some.")
                 color: Theme.subtext
                 font.family: Theme.fontFamily
@@ -319,9 +319,9 @@ Column {
         font.variableAxes: Theme.axes(Theme.fontTitleSm, 600, 0)
         font.weight: Font.DemiBold
         font.letterSpacing: 0.1
-        leftPadding: 22
-        topPadding: 14
-        bottomPadding: 6
+        leftPadding: Theme.dp(22)
+        topPadding: Theme.dp(14)
+        bottomPadding: Theme.dp(6)
     }
 
 }

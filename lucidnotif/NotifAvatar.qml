@@ -9,7 +9,7 @@ Item {
     id: avatar
 
     property var notification: null
-    property int size: 28
+    property int size: Theme.dp(28)
     readonly property string img: avatar.notification ? (avatar.notification.image || "") : ""
     readonly property string themeIconName: {
         if (!avatar.notification)

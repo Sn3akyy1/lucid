@@ -17,8 +17,8 @@ Item {
     readonly property string key: tile.style ? tile.style.key : ""
     readonly property bool picked: tile.prefKey !== "" && Prefs[tile.prefKey] === tile.key
 
-    implicitWidth: 172
-    implicitHeight: tile.panel ? 196 : 144
+    implicitWidth: Theme.dp(172)
+    implicitHeight: tile.panel ? Theme.dp(196) : Theme.dp(144)
 
     Rectangle {
         id: shell
@@ -51,18 +51,18 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 10
+            anchors.margins: Theme.dp(10)
             // clear of the check in the corner
-            anchors.topMargin: 32
-            height: tile.panel ? 104 : 52
+            anchors.topMargin: Theme.dp(32)
+            height: tile.panel ? Theme.dp(104) : Theme.dp(52)
             clip: true
 
             // a strip of bar, the sample's own width, as the bar shows it
             Rectangle {
                 visible: !tile.panel
                 anchors.centerIn: parent
-                width: Math.min(parent.width, sample.implicitWidth + 24)
-                height: Math.min(34, Prefs.barHeight)
+                width: Math.min(parent.width, sample.implicitWidth + Theme.dp(24))
+                height: Math.min(Theme.dp(34), Theme.dp(Prefs.barHeight))
                 radius: height / 2
                 color: Theme.bg
             }
@@ -84,9 +84,9 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: stage.bottom
-            anchors.leftMargin: 14
-            anchors.rightMargin: 14
-            anchors.topMargin: 8
+            anchors.leftMargin: Theme.dp(14)
+            anchors.rightMargin: Theme.dp(14)
+            anchors.topMargin: Theme.dp(8)
             text: tile.style ? tile.style.name : ""
             color: tile.picked ? Theme.fgAccentContainer : Theme.text
             font.family: Theme.fontFamily
@@ -99,8 +99,8 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: name.bottom
-            anchors.leftMargin: 14
-            anchors.rightMargin: 14
+            anchors.leftMargin: Theme.dp(14)
+            anchors.rightMargin: Theme.dp(14)
             anchors.topMargin: 1
             text: tile.style ? tile.style.blurb : ""
             color: tile.picked ? Theme.fgAccentContainer : Theme.subtextDim
@@ -116,9 +116,9 @@ Item {
         Rectangle {
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 8
-            width: 20
-            height: 20
+            anchors.margins: Theme.dp(8)
+            width: Theme.dp(20)
+            height: Theme.dp(20)
             radius: height / 2
             color: Theme.accent
             opacity: tile.picked ? 1 : 0
@@ -128,7 +128,7 @@ Item {
             Icon {
                 anchors.centerIn: parent
                 name: "check"
-                size: 16
+                size: Theme.dp(16)
                 color: Theme.fgAccent
             }
 

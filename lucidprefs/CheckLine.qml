@@ -15,16 +15,16 @@ Item {
 
     signal toggled()
 
-    implicitWidth: box.width + 9 + (check.icon !== "" ? appIcon.width + 9 : 0) + text.implicitWidth
-    implicitHeight: check.icon !== "" ? 26 : 22
+    implicitWidth: box.width + Theme.dp(9) + (check.icon !== "" ? appIcon.width + Theme.dp(9) : 0) + text.implicitWidth
+    implicitHeight: check.icon !== "" ? Theme.dp(26) : Theme.dp(22)
     opacity: check.enabled ? 1 : 0.38
 
     Rectangle {
         id: box
 
-        width: 18
-        height: 18
-        radius: 5
+        width: Theme.dp(18)
+        height: Theme.dp(18)
+        radius: Theme.dp(5)
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         color: check.checked ? check.mark : "transparent"
@@ -48,7 +48,7 @@ Item {
         Icon {
             anchors.centerIn: parent
             name: "check"
-            size: 16
+            size: Theme.dp(16)
             opacity: check.checked ? 1 : 0
             color: check.danger ? Theme.fgError : Theme.fgAccent
 
@@ -67,10 +67,10 @@ Item {
         id: appIcon
 
         anchors.left: box.right
-        anchors.leftMargin: 10
+        anchors.leftMargin: Theme.dp(10)
         anchors.verticalCenter: parent.verticalCenter
-        width: 22
-        height: 22
+        width: Theme.dp(22)
+        height: Theme.dp(22)
         sourceSize: Qt.size(44, 44)
         source: check.icon
         visible: check.icon !== ""
@@ -82,7 +82,7 @@ Item {
         id: text
 
         anchors.left: check.icon !== "" ? appIcon.right : box.right
-        anchors.leftMargin: 9
+        anchors.leftMargin: Theme.dp(9)
         anchors.verticalCenter: parent.verticalCenter
         text: check.label
         color: check.checked ? Theme.text : Theme.subtext

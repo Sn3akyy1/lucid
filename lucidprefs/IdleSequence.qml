@@ -30,7 +30,7 @@ Rectangle {
         return "";
     }
 
-    implicitHeight: 36 + (rail.empty ? 0 : block.height) + (rail.note !== "" ? noteText.implicitHeight + (rail.empty ? 0 : 12) : 0)
+    implicitHeight: Theme.dp(36) + (rail.empty ? 0 : block.height) + (rail.note !== "" ? noteText.implicitHeight + (rail.empty ? 0 : Theme.dp(12)) : 0)
     radius: Theme.radiusMd
     color: Theme.bgSunken
     clip: true
@@ -41,10 +41,10 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.leftMargin: 18
-        anchors.rightMargin: 18
-        anchors.topMargin: 18
-        height: 76
+        anchors.leftMargin: Theme.dp(18)
+        anchors.rightMargin: Theme.dp(18)
+        anchors.topMargin: Theme.dp(18)
+        height: Theme.dp(76)
         visible: !rail.empty
         opacity: rail.note !== "" ? 0.4 : 1
 
@@ -62,8 +62,8 @@ Rectangle {
 
             x: line.inset
             width: Math.max(0, parent.width - line.inset * 2)
-            y: 4
-            height: 2
+            y: Theme.dp(4)
+            height: Theme.dp(2)
             radius: 1
             color: Theme.alpha(Theme.outline, 0.8)
         }
@@ -83,11 +83,11 @@ Rectangle {
                     height: parent.height
 
                     Rectangle {
-                        width: node.modelData.start ? 9 : 11
+                        width: node.modelData.start ? Theme.dp(9) : Theme.dp(11)
                         height: width
                         radius: width / 2
                         anchors.horizontalCenter: parent.horizontalCenter
-                        y: 5 - height / 2
+                        y: Theme.dp(5) - height / 2
                         color: node.modelData.start ? Theme.bgSunken : Theme.accent
                         border.width: node.modelData.start ? 2 : 0
                         border.color: Theme.subtextDim
@@ -96,9 +96,9 @@ Rectangle {
                     Column {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.top: parent.top
-                        anchors.topMargin: 22
-                        width: parent.width - 8
-                        spacing: 3
+                        anchors.topMargin: Theme.dp(22)
+                        width: parent.width - Theme.dp(8)
+                        spacing: Theme.dp(3)
 
                         Text {
                             width: parent.width
@@ -138,10 +138,10 @@ Rectangle {
 
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: 24
-        anchors.rightMargin: 24
+        anchors.leftMargin: Theme.dp(24)
+        anchors.rightMargin: Theme.dp(24)
         anchors.top: rail.empty ? parent.top : block.bottom
-        anchors.topMargin: rail.empty ? 18 : 12
+        anchors.topMargin: rail.empty ? Theme.dp(18) : Theme.dp(12)
         horizontalAlignment: Text.AlignHCenter
         text: rail.note
         visible: rail.note !== ""

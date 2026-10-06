@@ -8,8 +8,8 @@ Item {
     // true only while the header grip is held
     property bool dragging: false
 
-    readonly property real unit: face.host ? face.host.keySize : 46
-    readonly property real gap: Math.max(3, Math.round(face.unit * 0.11))
+    readonly property real unit: face.host ? face.host.keySize : Theme.dp(46)
+    readonly property real gap: Math.max(Theme.dp(3), Math.round(face.unit * 0.11))
     readonly property real pad: Math.round(face.unit * 0.34)
     readonly property real headerH: Math.round(face.unit * 0.8)
     // every row is authored to the same 15 unit width
@@ -146,15 +146,15 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 name: "grip"
                 glyphColor: Theme.subtextDim
-                width: 18
-                height: 18
+                width: Theme.dp(18)
+                height: Theme.dp(18)
             }
 
             Row {
                 anchors.left: grip.right
-                anchors.leftMargin: 14
+                anchors.leftMargin: Theme.dp(14)
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 18
+                spacing: Theme.dp(18)
 
                 Repeater {
                     model: [{
@@ -200,7 +200,7 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.bottom: parent.bottom
                             width: tabItem.selected ? tabLabel.implicitWidth : 0
-                            height: 2
+                            height: Theme.dp(2)
                             radius: 1
                             color: Theme.accent
 
@@ -229,7 +229,7 @@ Item {
             Row {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 4
+                spacing: Theme.dp(4)
 
                 Repeater {
                     model: [{
@@ -250,8 +250,8 @@ Item {
 
                         readonly property bool dead: (ctl.modelData.act === "smaller" && face.unit <= face.host.minKeySize) || (ctl.modelData.act === "bigger" && face.unit >= face.host.maxKeySize)
 
-                        width: 30
-                        height: 30
+                        width: Theme.dp(30)
+                        height: Theme.dp(30)
                         opacity: ctl.dead ? 0.3 : 1
 
                         Rectangle {
@@ -272,8 +272,8 @@ Item {
                             anchors.centerIn: parent
                             name: ctl.modelData.icon
                             glyphColor: Theme.subtext
-                            width: 17
-                            height: 17
+                            width: Theme.dp(17)
+                            height: Theme.dp(17)
                         }
 
                         HoverHandler {

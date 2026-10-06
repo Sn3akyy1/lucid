@@ -20,8 +20,8 @@ Item {
     signal chosen()
     signal removeRequested()
 
-    implicitWidth: 240
-    implicitHeight: thumb.height + 88
+    implicitWidth: Theme.dp(240)
+    implicitHeight: thumb.height + Theme.dp(88)
 
     Rectangle {
         id: shell
@@ -52,7 +52,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 10
+            anchors.margins: Theme.dp(10)
             height: thumb.implicitHeight
             cards: tile.cards
             wallpaper: tile.wallpaper
@@ -64,9 +64,9 @@ Item {
             anchors.left: parent.left
             anchors.right: count.left
             anchors.top: thumb.bottom
-            anchors.leftMargin: 14
-            anchors.rightMargin: 8
-            anchors.topMargin: 10
+            anchors.leftMargin: Theme.dp(14)
+            anchors.rightMargin: Theme.dp(8)
+            anchors.topMargin: Theme.dp(10)
             text: tile.title
             color: tile.selected ? Theme.fgAccentContainer : Theme.text
             font.family: Theme.fontFamily
@@ -80,7 +80,7 @@ Item {
             id: count
 
             anchors.right: parent.right
-            anchors.rightMargin: 14
+            anchors.rightMargin: Theme.dp(14)
             anchors.baseline: name.baseline
             text: tile.selected ? "In use" : (tile.cards.length + (tile.cards.length === 1 ? " widget" : " widgets"))
             color: tile.selected ? Theme.fgAccentContainer : Theme.subtextDim
@@ -94,10 +94,10 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: name.bottom
-            anchors.leftMargin: 14
-            anchors.rightMargin: 14
-            anchors.topMargin: 3
-            height: 30
+            anchors.leftMargin: Theme.dp(14)
+            anchors.rightMargin: Theme.dp(14)
+            anchors.topMargin: Theme.dp(3)
+            height: Theme.dp(30)
             text: tile.blurb
             color: tile.selected ? Theme.alpha(Theme.fgAccentContainer, 0.75) : Theme.subtextDim
             font.family: Theme.fontFamily
@@ -111,9 +111,9 @@ Item {
         // the promise of the click, over the preview
         Rectangle {
             anchors.centerIn: thumb
-            width: 34
-            height: 34
-            radius: 17
+            width: Theme.dp(34)
+            height: Theme.dp(34)
+            radius: Theme.dp(17)
             color: Theme.accent
             opacity: area.containsMouse && !tile.selected ? 1 : 0
             scale: area.containsMouse && !tile.selected ? 1 : 0.7
@@ -122,7 +122,7 @@ Item {
             WidgetGlyph {
                 anchors.centerIn: parent
                 name: tile.mark
-                size: 20
+                size: Theme.dp(20)
                 color: Theme.fgAccent
             }
 
@@ -162,10 +162,10 @@ Item {
     Rectangle {
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: 16
-        width: 28
-        height: 28
-        radius: 14
+        anchors.margins: Theme.dp(16)
+        width: Theme.dp(28)
+        height: Theme.dp(28)
+        radius: Theme.dp(14)
         color: removeArea.containsMouse ? Theme.errorContainer : Theme.bgOpaque
         opacity: tile.removable && tile.hovered ? 1 : 0
         visible: opacity > 0.01
@@ -173,7 +173,7 @@ Item {
         WidgetGlyph {
             anchors.centerIn: parent
             name: "trash"
-            size: 16
+            size: Theme.dp(16)
             color: removeArea.containsMouse ? Theme.fgErrorContainer : Theme.subtext
         }
 

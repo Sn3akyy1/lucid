@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.lucidui
 
 // the one field that matters: an m3 pill that owns the keyboard for the whole
 // surface, whatever face the lock is currently wearing
@@ -12,9 +13,17 @@ Item {
     // green while the door is opening, red when it just refused
     readonly property bool bad: Lockscreen.phase === "failed" || Lockscreen.phase === "error" || Lockscreen.lockedOut
     readonly property bool good: Lockscreen.granted
+    // the placeholder waits for the last beads to fade before it comes back
+    property bool vacant: true
 
     function focusInput() {
         input.forceActiveFocus();
+    }
+
+    function pin() {
+        if (Lockscreen.secret && input.selectionStart === input.selectionEnd && input.cursorPosition !== input.length)
+            input.cursorPosition = input.length;
+
     }
 
     function clear() {
@@ -29,7 +38,14 @@ Item {
         field.reveal = false;
     }
 
-    implicitHeight: 56
+    implicitHeight: Theme.dp(56)
+
+    Timer {
+        id: vacate
+
+        interval: Theme.durDefaultEffects
+        onTriggered: field.vacant = true
+    }
 
     // pam refusing, drawn as the door not giving
     SequentialAnimation {
@@ -122,9 +138,9 @@ Item {
         id: leading
 
         anchors.left: parent.left
-        anchors.leftMargin: 20
+        anchors.leftMargin: Theme.dp(20)
         anchors.verticalCenter: parent.verticalCenter
-        size: 20
+        size: Theme.dp(20)
         name: field.good ? "lockOpen" : (Lockscreen.phase === "prompting" ? "key" : "lock")
         color: field.good ? Theme.success : (field.bad ? Theme.error : (Lockscreen.focused ? Theme.accent : Theme.subtext))
 
@@ -140,177 +156,79 @@ Item {
     // what to type, when nothing has been
     Text {
         anchors.left: leading.right
-        anchors.leftMargin: 14
+        anchors.leftMargin: Theme.dp(14)
+        anchors.right: trailing.left
+        anchors.rightMargin: Theme.dp(12)
         anchors.verticalCenter: parent.verticalCenter
+        transformOrigin: Item.Left
         text: Lockscreen.lockedOut ? "Locked" : (Lockscreen.phase === "prompting" && Lockscreen.prompt !== "" ? Lockscreen.prompt : "Password")
-        color: Theme.subtextDim
+        color: Lockscreen.focused ? Theme.subtext : Theme.subtextDim
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg
         font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
-        opacity: input.text.length === 0 && !Lockscreen.busy && !Lockscreen.focused ? 1 : 0
+        elide: Text.ElideRight
+        opacity: field.vacant && !Lockscreen.busy ? 1 : 0
+        scale: 0.94 + 0.06 * opacity
         visible: opacity > 0.01
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Theme.ms(140)
+                duration: Theme.durDefaultEffects
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.curveEffects
+            }
+
+        }
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Theme.ms(180)
             }
 
         }
 
     }
 
-    // the typed secret. every character is dropped by the caret: the bead
-    // starts as the caret's own line and settles into a dot where it stood
-    Item {
-        id: beadsClip
-
-        // bead, gap, bead: one character is worth this much room
-        readonly property int pitch: 15
+    // the typed secret: each character lands as a turning shape and melts
+    // into a dot
+    PasswordEcho {
+        id: echo
 
         anchors.left: leading.right
-        anchors.leftMargin: 14
+        anchors.leftMargin: Theme.dp(14)
         anchors.right: trailing.left
-        anchors.rightMargin: 12
+        anchors.rightMargin: Theme.dp(10)
         anchors.verticalCenter: parent.verticalCenter
-        height: 22
-        clip: true
-        visible: Lockscreen.secret && !field.reveal
-
-        Row {
-            id: beads
-
-            // a long password scrolls itself rather than spilling past the pill
-            x: Math.min(0, beadsClip.width - beads.width)
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 6
-            leftPadding: 4
-            rightPadding: 4
-
-            Behavior on x {
-                NumberAnimation {
-                    duration: Theme.ms(180)
-                    easing.type: Easing.OutCubic
-                }
-
-            }
-
-            Repeater {
-                model: input.text.length
-
-                Item {
-                    id: bead
-
-                    // 0 is still a caret line, 1 is a settled dot
-                    property real born: 0
-
-                    width: 9
-                    height: 18
-
-                    NumberAnimation on born {
-                        from: 0
-                        to: 1
-                        duration: Theme.ms(300)
-                        easing.type: Easing.Bezier
-                        easing.bezierCurve: Theme.easeEmphasizedDecel
-                    }
-
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: 2 + 7 * bead.born
-                        height: 18 - 9 * bead.born
-                        radius: width / 2
-                        opacity: 0.45 + 0.55 * bead.born
-                        color: field.good ? Theme.success : (field.bad ? Theme.error : Theme.text)
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.ms(180)
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-        }
-
-        // the caret: it sits where the next character will land, and arrow keys
-        // walk it back through what is already typed so one bead can be redone
-        Rectangle {
-            id: caret
-
-            x: beads.x + input.cursorPosition * beadsClip.pitch
-            anchors.verticalCenter: parent.verticalCenter
-            width: 2
-            height: 18
-            radius: 1
-            color: field.good ? Theme.success : (field.bad ? Theme.error : Theme.accent)
-            visible: Lockscreen.focused && !Lockscreen.busy && !field.good
-
-            Behavior on x {
-                NumberAnimation {
-                    duration: Theme.ms(150)
-                    easing.type: Easing.OutCubic
-                }
-
-            }
-
-            // solid while it is being moved, blinking once it is left alone
-            SequentialAnimation {
-                id: blink
-
-                // the field outlives the lock screen, so blink only while on screen
-                running: caret.visible
-                loops: Animation.Infinite
-
-                PauseAnimation {
-                    duration: 620
-                }
-
-                NumberAnimation {
-                    target: caret
-                    property: "opacity"
-                    to: 0
-                    duration: 130
-                }
-
-                PauseAnimation {
-                    duration: 420
-                }
-
-                NumberAnimation {
-                    target: caret
-                    property: "opacity"
-                    to: 1
-                    duration: 130
-                }
-
-            }
-
-        }
-
+        height: Theme.dp(30)
+        text: input.text
+        reveal: field.reveal
+        busy: Lockscreen.busy
+        selectionStart: input.selectionStart
+        selectionEnd: input.selectionEnd
+        color: field.good ? Theme.success : (field.bad ? Theme.error : Theme.text)
+        edge: pill.color
+        font: input.font
+        visible: Lockscreen.secret
     }
 
     TextInput {
         id: input
 
         anchors.left: leading.right
-        anchors.leftMargin: 14
+        anchors.leftMargin: Theme.dp(14)
         anchors.right: trailing.left
-        anchors.rightMargin: 12
+        anchors.rightMargin: Theme.dp(12)
         anchors.verticalCenter: parent.verticalCenter
         // readOnly rather than disabled: the field must never hand the
         // keyboard back while pam is thinking, or the surface goes deaf
         readOnly: !Lockscreen.acceptsInput
         // the beads stand in for the text unless pam asked something visible
-        echoMode: (Lockscreen.secret && !field.reveal) ? TextInput.Password : TextInput.Normal
+        echoMode: Lockscreen.secret ? TextInput.Password : TextInput.Normal
         passwordCharacter: " "
-        color: (Lockscreen.secret && !field.reveal) ? "transparent" : Theme.text
-        selectionColor: Theme.alpha(Theme.accent, 0.4)
-        selectedTextColor: Theme.text
+        color: Lockscreen.secret ? "transparent" : Theme.text
+        // the beads draw a secret's selection themselves
+        selectionColor: Lockscreen.secret ? "transparent" : Theme.alpha(Theme.accent, 0.4)
+        selectedTextColor: Lockscreen.secret ? "transparent" : Theme.text
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg
         font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
@@ -318,23 +236,25 @@ Item {
         clip: true
         activeFocusOnPress: true
         cursorDelegate: Rectangle {
-            width: 2
+            width: Theme.dp(2)
             radius: 1
             color: Theme.accent
-            visible: !Lockscreen.secret || field.reveal
+            visible: !Lockscreen.secret
         }
 
-        onCursorPositionChanged: {
-            caret.opacity = 1;
-            blink.restart();
-        }
+        // the beads have no caret: a secret is typed at its end, and only a
+        // selection grown back from there may hold the cursor anywhere else
+        onCursorPositionChanged: Qt.callLater(field.pin)
         onAccepted: field.submit()
         // only real typing clears a verdict — emptying the field after a
         // refusal must not wipe the sentence explaining it
         onTextChanged: {
-            if (input.text.length === 0)
+            if (input.text.length === 0) {
+                vacate.restart();
                 return ;
-
+            }
+            vacate.stop();
+            field.vacant = false;
             Lockscreen.engage();
             if (Lockscreen.phase === "failed" || Lockscreen.phase === "error")
                 Lockscreen.phase = "idle";
@@ -367,15 +287,15 @@ Item {
         id: trailing
 
         anchors.right: parent.right
-        anchors.rightMargin: 6
+        anchors.rightMargin: Theme.dp(6)
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 2
+        spacing: Theme.dp(2)
 
         // an eye, but only once there is something worth hiding
         LockIconButton {
             anchors.verticalCenter: parent.verticalCenter
-            diameter: 40
-            glyphSize: 19
+            diameter: Theme.dp(40)
+            glyphSize: Theme.dp(19)
             glyph: field.reveal ? "eyeOff" : "eye"
             glyphColor: Theme.subtext
             tooltip: field.reveal ? "Hide" : "Show"
@@ -390,9 +310,9 @@ Item {
             id: submit
 
             anchors.verticalCenter: parent.verticalCenter
-            width: 44
-            height: 44
-            radius: 999
+            width: Theme.dp(44)
+            height: Theme.dp(44)
+            radius: Theme.dp(999)
             color: field.good ? Theme.success : (field.canSubmit || Lockscreen.busy ? (submitArea.hovered ? Theme.accentHover : Theme.accent) : Theme.alpha(Theme.outlineStrong, 0.35))
             scale: submitTap.pressed ? 0.9 : 1
 
@@ -413,7 +333,7 @@ Item {
 
             LockGlyph {
                 anchors.centerIn: parent
-                size: 20
+                size: Theme.dp(20)
                 name: field.good ? "check" : "arrow"
                 color: field.good ? Theme.fgSuccess : (field.canSubmit ? Theme.fgAccent : Theme.subtextDim)
                 opacity: Lockscreen.busy ? 0 : 1
@@ -429,7 +349,7 @@ Item {
 
             LockSpinner {
                 anchors.centerIn: parent
-                diameter: 22
+                diameter: Theme.dp(22)
                 color: Theme.fgAccent
                 running: Lockscreen.busy
             }

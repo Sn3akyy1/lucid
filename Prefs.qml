@@ -30,11 +30,11 @@ Singleton {
 
     readonly property bool barNotch: root.barStyle === "notch"
     readonly property bool dockNotch: root.dockStyle === "notch"
-    readonly property int barPillRadius: Math.min(18, Math.round(root.barHeight / 2))
-    readonly property int effectiveBarTopMargin: root.barNotch ? 0 : root.barTopMargin
-    readonly property int effectiveDockBottomMargin: root.dockNotch ? 0 : root.dockBottomMargin
-    readonly property int dockItemRadius: Math.min(root.dockRadius, Math.round(root.dockIconSize / 2))
-    readonly property int dockIconInset: Math.max(0, Math.min(root.dockIconPadding, Math.floor(root.dockIconSize / 2) - 6))
+    readonly property int barPillRadius: Math.min(Theme.dp(18), Math.round(Theme.dp(root.barHeight) / 2))
+    readonly property int effectiveBarTopMargin: root.barNotch ? 0 : Theme.dp(root.barTopMargin)
+    readonly property int effectiveDockBottomMargin: root.dockNotch ? 0 : Theme.dp(root.dockBottomMargin)
+    readonly property int dockItemRadius: Math.min(Theme.dp(root.dockRadius), Math.round(Theme.dp(root.dockIconSize) / 2))
+    readonly property int dockIconInset: Math.max(0, Math.min(Theme.dp(root.dockIconPadding), Math.floor(Theme.dp(root.dockIconSize) / 2) - Theme.dp(6)))
     // the bar's layout reads through these: the groups in barLayout, keeping
     // only the modules switched on. the names are the zones' from before the
     // bar page's arrangement editor, so the bar itself needn't know the difference
@@ -333,6 +333,12 @@ Singleton {
     property alias motionScale: s.motionScale
     property alias fontFamily: s.fontFamily
     property alias fontScale: s.fontScale
+    property alias uiScale: s.uiScale
+    // room the bar and dock keep clear of windows, past their own size: added to
+    // their exclusive zones, in real pixels like hyprland's gaps
+    property alias shellGap: s.shellGap
+    // the same clamp Theme.uiScale applies, for code that has to wait on Prefs.loaded
+    readonly property real interfaceScale: Math.max(0.7, Math.min(1.3, root.uiScale || 1))
     property alias wallpaperFolder: s.wallpaperFolder
     // bracket writes on the adapter are dropped, so this must go through the alias
     property alias themeOrder: s.themeOrder
@@ -634,7 +640,7 @@ Singleton {
 
     // the launcher's m3 metrics, read by the dock's geometry and the face alike
     // how large the launcher draws itself, apart from the shell-wide font scale
-    readonly property real launcherScale: Math.max(0.8, Math.min(1.4, root.launcherContentScale))
+    readonly property real launcherScale: Math.max(0.8, Math.min(1.4, root.launcherContentScale)) * Theme.uiScale
     readonly property int launcherBaseWidth: root.launcherWidth === "compact" ? 460 : (root.launcherWidth === "wide" ? 680 : 560)
     readonly property int launcherPanelWidth: Math.round(root.launcherBaseWidth * root.launcherScale)
     readonly property bool launcherDense: root.launcherDensity === "compact"
@@ -647,24 +653,24 @@ Singleton {
     readonly property int launcherRowCalc: Math.round((root.launcherDense ? 84 : 96) * root.launcherScale)
     // m3 ItemLeadingAvatarSize, the slot every kind of leading element shares.
     // a compact row at a small content size is shorter than 40dp, so it caps
-    readonly property int launcherLeadSlot: Math.max(24, Math.min(Math.round(40 * root.launcherScale), root.launcherRowOne - 8))
+    readonly property int launcherLeadSlot: Math.max(Theme.dp(24), Math.min(Math.round(40 * root.launcherScale), root.launcherRowOne - Theme.dp(8)))
     readonly property int launcherEdgeSpace: Math.round(16 * root.launcherScale)
     readonly property int launcherBetweenSpace: Math.round(12 * root.launcherScale)
-    readonly property int launcherRowGap: root.launcherDense ? 2 : 4
-    readonly property int launcherListPad: 8
+    readonly property int launcherRowGap: root.launcherDense ? Theme.dp(2) : Theme.dp(4)
+    readonly property int launcherListPad: Theme.dp(8)
     // m3 search bar container height
     readonly property int launcherSearchH: Math.round(56 * root.launcherScale)
     // the head band: the mark, the mode set and the count
     readonly property int launcherHeadH: Math.round(38 * root.launcherScale)
     readonly property int launcherHeadGap: Math.round(10 * root.launcherScale)
-    readonly property int launcherContentGap: 12
+    readonly property int launcherContentGap: Theme.dp(12)
 
     readonly property int launcherChromeH: root.launcherSearchH + (root.launcherModeBar ? root.launcherHeadH + root.launcherHeadGap : 0) + root.launcherContentGap
 
     // every settings page, for the app's rail and for the launcher's search
     readonly property var settingsPages: [
         { "key": "users", "icon": "account_circle", "keys": "user account password avatar login admin sudo", "group": "Account", "label": "Account", "title": "Users and Accounts", "blurb": "Who may sign in to this machine, what they are called and what they are allowed to do", "hidden": true },
-        { "key": "general", "icon": "tune", "keys": "style islands notches accent darkness surface tint motion animation speed font scale typography", "group": "Appearance", "label": "General", "title": "General", "blurb": "Shape, colour and motion across the whole shell" },
+        { "key": "general", "icon": "tune", "keys": "style islands notches accent darkness surface tint motion animation speed font scale typography interface size zoom smaller bigger density", "group": "Appearance", "label": "General", "title": "General", "blurb": "Size, shape, colour and motion across the whole shell" },
         { "key": "glass", "icon": "blur_on", "keys": "blur transparency opacity translucent frosted kitty terminal windows", "group": "Appearance", "label": "Glass", "title": "Glass", "blurb": "How far the desktop shows through the shell, the terminal and your windows" },
         { "key": "theme", "icon": "palette", "keys": "colour color scheme wallpaper matugen pywal catppuccin gruvbox nord dark light mode import", "group": "Appearance", "label": "Theme", "title": "Theme and Appearance", "blurb": "Colour schemes, wallpapers and themes you import" },
         { "key": "colours", "icon": "format_color_fill", "keys": "matugen style scheme contrast your colour hex picker templates apps render variables", "group": "Appearance", "label": "Colours", "title": "Colours", "blurb": "How Matugen and Your colour build a palette, the applications that follow it, and templates of your own" },
@@ -674,7 +680,7 @@ Singleton {
         { "key": "dock", "icon": "dock_to_bottom", "keys": "icons size magnify autohide pinned running indicators tooltips windows notch radius corners rounding padding inset", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
         { "key": "launcher", "icon": "search", "keys": "launcher search spotlight apps results width density rows chips modes prefix engine web emoji run clipboard calculator frequent recent", "group": "Desktop", "label": "Launcher", "title": "Launcher", "blurb": "The search panel the dock opens into: how wide it is, how its results read, and what it looks through" },
         { "key": "widgets", "icon": "widgets", "keys": "desktop cards clock calendar weather presets", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
-        { "key": "windows", "icon": "select_window", "keys": "hyprland gaps borders border colour rounding corners shadow dim tiling layout dwindle master scrolling focus follow mouse cursor resize snap animations", "group": "Desktop", "label": "Windows", "title": "Windows", "blurb": "How Hyprland draws your windows, tiles them and hands them the focus" },
+        { "key": "windows", "icon": "select_window", "keys": "hyprland gaps exclusive zone reserved distance shell bar dock borders border colour rounding corners shadow dim tiling layout dwindle master scrolling focus follow mouse cursor resize snap animations", "group": "Desktop", "label": "Windows", "title": "Windows", "blurb": "How Hyprland draws your windows, tiles them and hands them the focus" },
         { "key": "workspaces", "icon": "workspaces", "keys": "special scratchpad music chat todo sysmon", "group": "Desktop", "label": "Workspaces", "title": "Special Workspaces", "blurb": "Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key" },
         { "key": "keybinds", "icon": "keyboard", "keys": "shortcuts hotkeys keys bindings hyprland super binds", "group": "Desktop", "label": "Keybinds", "title": "Keybinds", "blurb": "Every Hyprland shortcut: change one, switch it off or add your own" },
         { "key": "input", "icon": "mouse", "keys": "keyboard layout layouts xkb caps lock repeat numlock mouse pointer speed acceleration touchpad tap natural scroll gestures swipe", "group": "Devices", "label": "Input", "title": "Input", "blurb": "Keyboard layouts and key repeat, the mouse, the touchpad and its gestures" },
@@ -750,6 +756,8 @@ Singleton {
         "motionScale": 1,
         "fontFamily": "Google Sans",
         "fontScale": 1,
+        "uiScale": 1,
+        "shellGap": 0,
         "wallpaperFolder": "",
         "themeOrder": "",
         "matugenScheme": "scheme-tonal-spot",
@@ -1310,6 +1318,8 @@ Singleton {
             property real motionScale: 1
             property string fontFamily: "Google Sans"
             property real fontScale: 1
+            property real uiScale: 1
+            property int shellGap: 0
             property string wallpaperFolder: ""
             property string themeOrder: ""
             property string matugenScheme: "scheme-tonal-spot"

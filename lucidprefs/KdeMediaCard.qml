@@ -67,11 +67,11 @@ SettingCard {
 
         Column {
             width: parent.width
-            spacing: 14
+            spacing: Theme.dp(14)
 
             Row {
                 width: parent.width
-                spacing: 12
+                spacing: Theme.dp(12)
                 visible: card.length > 0
 
                 Text {
@@ -84,7 +84,7 @@ SettingCard {
                 }
 
                 M3Slider {
-                    width: parent.width - 130
+                    width: parent.width - Theme.dp(130)
                     anchors.verticalCenter: parent.verticalCenter
                     enabled: !!(card.mpris && card.mpris.canSeek)
                     showReadout: false
@@ -109,7 +109,7 @@ SettingCard {
             }
 
             Row {
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 TransportButton {
                     kind: "prev"
@@ -128,12 +128,12 @@ SettingCard {
                 }
 
                 Item {
-                    width: 10
+                    width: Theme.dp(10)
                     height: 1
                 }
 
                 M3Slider {
-                    width: 190
+                    width: Theme.dp(190)
                     anchors.verticalCenter: parent.verticalCenter
                     visible: !!(card.mpris && card.mpris.volume >= 0)
                     from: 0
@@ -149,7 +149,7 @@ SettingCard {
             }
 
             Row {
-                spacing: 8
+                spacing: Theme.dp(8)
                 visible: !!(card.mpris && card.mpris.players.length > 1)
 
                 Repeater {
@@ -162,9 +162,9 @@ SettingCard {
 
                         readonly property bool selected: card.mpris && card.mpris.player === chip.modelData
 
-                        width: chipText.implicitWidth + 24
-                        height: 30
-                        radius: 15
+                        width: chipText.implicitWidth + Theme.dp(24)
+                        height: Theme.dp(30)
+                        radius: Theme.dp(15)
                         color: chip.selected ? Theme.accentContainer : (chipArea.containsMouse ? Theme.bgHover : Theme.bgSunken)
 
                         Behavior on color {
@@ -213,8 +213,8 @@ SettingCard {
 
         signal pressed()
 
-        width: btn.primary ? 48 : 40
-        height: btn.primary ? 48 : 40
+        width: btn.primary ? Theme.dp(48) : Theme.dp(40)
+        height: btn.primary ? Theme.dp(48) : Theme.dp(40)
         radius: width / 2
         anchors.verticalCenter: parent ? parent.verticalCenter : undefined
         color: btn.primary ? (btnArea.containsMouse ? Theme.accentHover : Theme.accent) : (btnArea.containsMouse ? Theme.bgHover : Theme.bgSunken)
@@ -249,7 +249,7 @@ SettingCard {
                     return "skip_previous";
                 }
             }
-            size: 22
+            size: Theme.dp(22)
             fill: 1
             color: btn.primary ? Theme.fgAccent : Theme.text
         }

@@ -18,7 +18,7 @@ Flow {
 
     signal chosen(var key)
 
-    spacing: 8
+    spacing: Theme.dp(8)
 
     Repeater {
         model: chips.options
@@ -29,8 +29,8 @@ Flow {
             required property var modelData
             readonly property bool selected: chips.multi ? chips.selectedKeys.indexOf(chip.modelData.key) >= 0 : chips.current === chip.modelData.key
 
-            width: label.implicitWidth + 30
-            height: 36
+            width: label.implicitWidth + Theme.dp(30)
+            height: Theme.dp(36)
             radius: Theme.shapeFull
             color: chip.selected ? Theme.accentContainer : Theme.bgSunken
             opacity: chips.enabled ? 1 : 0.38

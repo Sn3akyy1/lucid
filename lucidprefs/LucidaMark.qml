@@ -42,8 +42,8 @@ Item {
         return "M" + (cx - r) + "," + cy + " A" + r + "," + r + " 0 1 0 " + (cx + r) + "," + cy + " A" + r + "," + r + " 0 1 0 " + (cx - r) + "," + cy + " Z";
     }
 
-    implicitWidth: 24
-    implicitHeight: 24
+    implicitWidth: Theme.dp(24)
+    implicitHeight: Theme.dp(24)
 
     // ring swings round as it draws, star twinkles open, companion flung into orbit
     ParallelAnimation {

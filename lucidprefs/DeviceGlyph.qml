@@ -7,7 +7,7 @@ Item {
 
     property string kind: ""
     property color color: Theme.subtext
-    property real size: 20
+    property real size: Theme.dp(20)
 
     readonly property string path: ({
         "headphones": "headphones",

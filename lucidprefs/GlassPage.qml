@@ -36,7 +36,7 @@ Column {
         return Math.round(v * 100) + "%";
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
     Component.onCompleted: Glass.scan()
 
     SettingCard {
@@ -84,7 +84,7 @@ Column {
 
             Column {
                 width: parent.width
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 Repeater {
                     model: [
@@ -97,7 +97,7 @@ Column {
                         required property var modelData
 
                         width: parent.width
-                        height: 20
+                        height: Theme.dp(20)
 
                         Text {
                             anchors.left: parent.left
@@ -111,7 +111,7 @@ Column {
 
                         Text {
                             anchors.right: readout.left
-                            anchors.rightMargin: 12
+                            anchors.rightMargin: Theme.dp(12)
                             anchors.verticalCenter: parent.verticalCenter
                             text: modelData.note
                             color: Theme.subtextDim
@@ -125,7 +125,7 @@ Column {
 
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 46
+                            width: Theme.dp(46)
                             horizontalAlignment: Text.AlignRight
                             text: modelData.value
                             color: Theme.accent
@@ -160,7 +160,7 @@ Column {
 
             Column {
                 width: parent.width
-                spacing: 14
+                spacing: Theme.dp(14)
                 visible: Glass.installed.length > 0
 
                 Repeater {
@@ -195,11 +195,11 @@ Column {
                 stacked: true
 
                 Row {
-                    spacing: 16
+                    spacing: Theme.dp(16)
                     width: parent.width
 
                     M3Slider {
-                        width: parent.width - follow.width - 16
+                        width: parent.width - follow.width - Theme.dp(16)
                         // a window rule takes the text with it; kitty does not
                         from: self ? 0 : 0.3
                         to: 1
@@ -240,7 +240,7 @@ Column {
 
             Column {
                 width: parent.width
-                spacing: 14
+                spacing: Theme.dp(14)
 
                 Repeater {
                     model: page.unlisted

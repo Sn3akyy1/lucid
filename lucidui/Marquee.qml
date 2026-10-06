@@ -13,7 +13,7 @@ Item {
     property bool scrolling: true
     // px per second
     property real speed: 34
-    readonly property real gap: 48
+    readonly property real gap: Theme.dp(48)
     readonly property bool overflowing: probe.implicitWidth > mq.width + 1
     readonly property bool moving: mq.scrolling && mq.overflowing && mq.visible
     property real offset: 0

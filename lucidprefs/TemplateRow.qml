@@ -41,11 +41,11 @@ SettingRow {
     warning: row.t.state === "failed" ? row.t.error : ""
 
     Row {
-        spacing: 6
+        spacing: Theme.dp(6)
 
         M3IconButton {
             anchors.verticalCenter: parent.verticalCenter
-            size: 36
+            size: Theme.dp(36)
             enabled: row.t.inputPath !== ""
             // pencil
             iconPath: "edit"
@@ -54,7 +54,7 @@ SettingRow {
 
         M3IconButton {
             anchors.verticalCenter: parent.verticalCenter
-            size: 36
+            size: Theme.dp(36)
             visible: !row.t.required
             enabled: !row.working
             destructive: row.armed

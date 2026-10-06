@@ -5,7 +5,9 @@
 hl.config({
     dwindle = {
     preserve_split = true,
-    split_width_multiplier = 2 -- lower = favors top/bottom splits more
+    -- a space splits side by side while wider than its height times this, so
+    -- higher stacks sooner. 2 sits right on a 16:9 screen's full-height window
+    split_width_multiplier = 1.5,
 },
 })
 

@@ -10,7 +10,7 @@ Item {
     // 0-100
     property real strength: 0
     property bool off: false
-    property real size: 20
+    property real size: Theme.dp(20)
     property color color: Theme.accent
 
     readonly property var levels: ["signal_wifi_0_bar", "network_wifi_1_bar", "network_wifi_2_bar", "network_wifi_3_bar", "signal_wifi_4_bar"]

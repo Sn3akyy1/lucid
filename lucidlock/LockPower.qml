@@ -28,12 +28,12 @@ Rectangle {
     // 0 showing the five ways out, 1 asking about one of them
     property real morph: bar.pending !== "" ? 1 : 0
 
-    height: 60
-    radius: 999
+    height: Theme.dp(60)
+    radius: Theme.dp(999)
     color: Lockscreen.card
     // no Behavior here on purpose: actions.implicitWidth is already a live,
     // animating number, and easing it again is what put the bar out of step
-    width: (1 - bar.morph) * (actions.implicitWidth + 24) + bar.morph * (confirm.implicitWidth + 28)
+    width: (1 - bar.morph) * (actions.implicitWidth + Theme.dp(24)) + bar.morph * (confirm.implicitWidth + Theme.dp(28))
 
     // a question nobody answers is a question withdrawn
     Timer {
@@ -62,15 +62,15 @@ Rectangle {
         readonly property bool danger: pb.action.id === "shutdown"
         readonly property color tone: pb.danger ? Theme.error : Theme.text
         readonly property color rest: pb.danger ? Theme.alpha(Theme.error, 0.85) : Theme.subtext
-        readonly property real shut: 48
-        readonly property real full: 48 + label.implicitWidth + 16
+        readonly property real shut: Theme.dp(48)
+        readonly property real full: Theme.dp(48) + label.implicitWidth + Theme.dp(16)
         // how far open this pill actually is, read back off the one animation.
         // everything else on the button is a function of this, so nothing can
         // run on a clock of its own
         readonly property real openK: Math.max(0, Math.min(1, (pb.width - pb.shut) / Math.max(1, pb.full - pb.shut)))
 
         width: pb.hot ? pb.full : pb.shut
-        height: 48
+        height: Theme.dp(48)
         clip: true
         scale: tap.pressed ? 0.92 : 1
 
@@ -93,7 +93,7 @@ Rectangle {
 
         Rectangle {
             anchors.fill: parent
-            radius: 999
+            radius: Theme.dp(999)
             color: pb.danger ? Theme.alpha(Theme.error, 0.18) : Theme.alpha(Theme.text, 0.12)
             // ahead of the opening, so the container is there to grow into
             opacity: Math.min(1, pb.openK * 2.6)
@@ -102,10 +102,10 @@ Rectangle {
         LockGlyph {
             id: mark
 
-            x: 14
+            x: Theme.dp(14)
             anchors.verticalCenter: parent.verticalCenter
             name: pb.action.glyph
-            size: 21
+            size: Theme.dp(21)
             color: Theme._mix(pb.rest, pb.tone, Math.min(1, pb.openK * 2.6))
         }
 
@@ -113,7 +113,7 @@ Rectangle {
             id: label
 
             anchors.left: mark.right
-            anchors.leftMargin: 11
+            anchors.leftMargin: Theme.dp(11)
             anchors.verticalCenter: parent.verticalCenter
             text: pb.action.label
             color: pb.tone
@@ -146,7 +146,7 @@ Rectangle {
         id: actions
 
         anchors.centerIn: parent
-        spacing: 2
+        spacing: Theme.dp(2)
         opacity: Math.max(0, 1 - bar.morph * 2.5)
         visible: opacity > 0.01
 
@@ -167,14 +167,14 @@ Rectangle {
         id: confirm
 
         anchors.centerIn: parent
-        spacing: 10
+        spacing: Theme.dp(10)
         opacity: Math.max(0, (bar.morph - 0.45) / 0.55)
         visible: opacity > 0.01
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            leftPadding: 10
-            rightPadding: 4
+            leftPadding: Theme.dp(10)
+            rightPadding: Theme.dp(4)
             text: bar.pendingAction ? bar.pendingAction.label + "?" : ""
             color: Theme.text
             font.family: Theme.fontFamily
@@ -186,9 +186,9 @@ Rectangle {
         // m3 text button
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
-            width: cancelText.implicitWidth + 28
-            height: 40
-            radius: 999
+            width: cancelText.implicitWidth + Theme.dp(28)
+            height: Theme.dp(40)
+            radius: Theme.dp(999)
             color: cancelHover.hovered ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent"
 
             Text {
@@ -219,9 +219,9 @@ Rectangle {
         // m3 filled button, error-toned for the one that ends the session
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
-            width: goText.implicitWidth + 32
-            height: 40
-            radius: 999
+            width: goText.implicitWidth + Theme.dp(32)
+            height: Theme.dp(40)
+            radius: Theme.dp(999)
             color: goHover.hovered ? Theme.atTone(Theme.error, Theme.toneOf(Theme.error) + (Theme.isLight ? -6 : 6)) : Theme.error
             scale: goTap.pressed ? 0.94 : 1
 

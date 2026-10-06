@@ -37,7 +37,7 @@ Item {
     })
     property string name: "lock"
     property color color: Theme.text
-    property real size: 20
+    property real size: Theme.dp(20)
     property real fill: 1
 
     implicitWidth: Math.round(glyph.size)

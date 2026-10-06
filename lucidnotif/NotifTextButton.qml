@@ -11,8 +11,8 @@ Item {
 
     signal clicked()
 
-    implicitWidth: text.implicitWidth + 20
-    implicitHeight: 26
+    implicitWidth: text.implicitWidth + Theme.dp(20)
+    implicitHeight: Theme.dp(26)
     opacity: btn.enabled ? 1 : 0.38
 
     Rectangle {

@@ -21,8 +21,8 @@ Rectangle {
     signal addRequested()
     signal useRequested()
 
-    width: 204
-    height: 108
+    width: Theme.dp(204)
+    height: Theme.dp(108)
     radius: Theme.radiusMd
     color: card.c[0] || Theme.bgHigh
     border.width: card.hovered ? 2 : 1
@@ -36,10 +36,10 @@ Rectangle {
     }
 
     Column {
-        x: 12
-        y: 10
-        width: parent.width - 24 - (actions.visible ? actions.width + 8 : (tick.visible ? 16 : 0))
-        spacing: 2
+        x: Theme.dp(12)
+        y: Theme.dp(10)
+        width: parent.width - Theme.dp(24) - (actions.visible ? actions.width + Theme.dp(8) : (tick.visible ? Theme.dp(16) : 0))
+        spacing: Theme.dp(2)
 
         Text {
             width: parent.width
@@ -58,7 +58,7 @@ Rectangle {
             visible: text !== ""
             color: card.c[4] || Theme.subtext
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontLabel - 2
+            font.pixelSize: Theme.fontLabel - Theme.dp(2)
             elide: Text.ElideRight
         }
 
@@ -66,10 +66,10 @@ Rectangle {
 
     // base08 .. base0F, the scheme's accents
     Row {
-        x: 12
+        x: Theme.dp(12)
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 12
-        spacing: 3
+        anchors.bottomMargin: Theme.dp(12)
+        spacing: Theme.dp(3)
 
         Repeater {
             model: 8
@@ -77,9 +77,9 @@ Rectangle {
             delegate: Rectangle {
                 required property int index
 
-                width: 12
-                height: 12
-                radius: 3
+                width: Theme.dp(12)
+                height: Theme.dp(12)
+                radius: Theme.dp(3)
                 color: card.c[8 + index] || "transparent"
             }
 
@@ -92,14 +92,14 @@ Rectangle {
 
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.rightMargin: 8
-        anchors.topMargin: 8
-        spacing: 6
+        anchors.rightMargin: Theme.dp(8)
+        anchors.topMargin: Theme.dp(8)
+        spacing: Theme.dp(6)
         visible: card.showActions
 
         Rectangle {
-            width: addLabel.implicitWidth + 16
-            height: 24
+            width: addLabel.implicitWidth + Theme.dp(16)
+            height: Theme.dp(24)
             radius: height / 2
             visible: !card.added || card.busy
             color: card.c[2] || Theme.bgSunken
@@ -128,8 +128,8 @@ Rectangle {
         }
 
         Rectangle {
-            width: useLabel.implicitWidth + 16
-            height: 24
+            width: useLabel.implicitWidth + Theme.dp(16)
+            height: Theme.dp(24)
             radius: height / 2
             visible: !card.busy
             color: card.c[13] || Theme.accent
@@ -164,11 +164,11 @@ Rectangle {
 
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.rightMargin: 9
-        anchors.topMargin: 8
+        anchors.rightMargin: Theme.dp(9)
+        anchors.topMargin: Theme.dp(8)
         visible: card.added && !card.showActions
         name: "check"
-        size: 16
+        size: Theme.dp(16)
         color: card.c[11] || Theme.accent
     }
 

@@ -16,7 +16,7 @@ ClippingRectangle {
     readonly property real screenH: thumb.screenInfo ? thumb.screenInfo.height : 1080
     // drawn once at this width into a texture that is then only scaled, so
     // resizing settings never re-lays out the live widgets inside every tile
-    readonly property real drawW: 480
+    readonly property real drawW: Theme.dp(480)
     readonly property real fit: thumb.drawW / thumb.screenW
 
     implicitHeight: Math.round(thumb.width * thumb.screenH / thumb.screenW)
@@ -41,8 +41,8 @@ ClippingRectangle {
             asynchronous: true
             cache: true
             // every tile asks for the same size, so they share one decode
-            sourceSize.width: 480
-            sourceSize.height: 270
+            sourceSize.width: Theme.dp(480)
+            sourceSize.height: Theme.dp(270)
             opacity: status === Image.Ready ? 1 : 0
 
             Behavior on opacity {
@@ -67,8 +67,8 @@ ClippingRectangle {
                         id: card
 
                         required property var modelData
-                        readonly property real cw: card.modelData.bw * card.modelData.zoom * thumb.fit
-                        readonly property real ch: card.modelData.bh * card.modelData.zoom * thumb.fit
+                        readonly property real cw: card.modelData.bw * card.modelData.zoom * card.sizeScale * thumb.fit
+                        readonly property real ch: card.modelData.bh * card.modelData.zoom * card.sizeScale * thumb.fit
 
                         x: Math.max(0, Math.min(stage.width - card.cw, card.modelData.wx * thumb.fit))
                         y: Math.max(0, Math.min(stage.height - card.ch, card.modelData.wy * thumb.fit))
@@ -101,7 +101,7 @@ ClippingRectangle {
                 x: stage.width * modelData[0]
                 y: Prefs.effectiveBarTopMargin * thumb.fit
                 width: stage.width * modelData[1]
-                height: Math.max(2, Prefs.barHeight * thumb.fit)
+                height: Math.max(Theme.dp(2), Theme.dp(Prefs.barHeight) * thumb.fit)
                 radius: height / 2
                 color: Theme.bgOpaque
             }
@@ -113,7 +113,7 @@ ClippingRectangle {
             anchors.bottom: parent.bottom
             anchors.bottomMargin: Prefs.effectiveDockBottomMargin * thumb.fit
             width: stage.width * 0.22
-            height: Math.max(3, (Prefs.dockIconSize + 20) * thumb.fit)
+            height: Math.max(Theme.dp(3), (Theme.dp(Prefs.dockIconSize) + Theme.dp(20)) * thumb.fit)
             radius: height * 0.3
             color: Theme.bgOpaque
             visible: Prefs.dockEnabled && !Prefs.dockAutoHide

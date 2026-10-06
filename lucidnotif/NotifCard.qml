@@ -29,7 +29,7 @@ Item {
 
     readonly property bool critical: card.urgency === NotificationUrgency.Critical
     readonly property color tint: card.critical ? Theme.error : Theme.accent
-    readonly property int textLeft: (Prefs.notifShowIcons && card.showAvatar) ? 38 : 0
+    readonly property int textLeft: (Prefs.notifShowIcons && card.showAvatar) ? Theme.dp(38) : 0
 
     signal replyToggled(bool open)
     signal activated()
@@ -114,11 +114,11 @@ Item {
         id: column
 
         width: parent.width
-        spacing: 3
+        spacing: Theme.dp(3)
 
         Item {
             width: parent.width
-            height: Math.max(headText.visible ? headText.implicitHeight : 0, avatarItem.visible ? 28 : 16)
+            height: Math.max(headText.visible ? headText.implicitHeight : 0, avatarItem.visible ? Theme.dp(28) : Theme.dp(16))
 
             NotifAvatar {
                 id: avatarItem
@@ -126,7 +126,7 @@ Item {
                 anchors.left: parent.left
                 anchors.top: parent.top
                 visible: Prefs.notifShowIcons && card.showAvatar
-                size: 28
+                size: Theme.dp(28)
                 notification: card.notification
             }
 
@@ -137,7 +137,7 @@ Item {
                 anchors.left: parent.left
                 anchors.leftMargin: card.textLeft
                 anchors.right: card.hasTrailing ? trailingHolder.left : (closeButton.visible ? closeButton.left : parent.right)
-                anchors.rightMargin: 6
+                anchors.rightMargin: Theme.dp(6)
                 anchors.verticalCenter: avatarItem.visible ? avatarItem.verticalCenter : undefined
                 visible: card.showApp && text !== ""
                 text: {
@@ -171,13 +171,13 @@ Item {
 
                 anchors.right: parent.right
                 anchors.top: parent.top
-                width: 22
-                height: 22
+                width: Theme.dp(22)
+                height: Theme.dp(22)
                 visible: card.showClose && card.interactive && !card.hasTrailing
 
                 NotifIcon {
                     anchors.centerIn: parent
-                    size: 15
+                    size: Theme.dp(15)
                     path: Notifs.icons.close
                     color: closeArea.containsMouse ? Theme.text : Theme.subtextDim
                     opacity: hover.hovered ? 1 : 0
@@ -195,7 +195,7 @@ Item {
                     id: closeArea
 
                     anchors.fill: parent
-                    anchors.margins: -3
+                    anchors.margins: -Theme.dp(3)
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Notifs.dismiss(card.notification)
@@ -239,7 +239,7 @@ Item {
 
         Item {
             width: parent.width
-            height: 4
+            height: Theme.dp(4)
             visible: card.progress >= 0
         }
 
@@ -253,7 +253,7 @@ Item {
 
         Item {
             width: parent.width
-            height: 6
+            height: Theme.dp(6)
             visible: actionRow.hasAny
         }
 

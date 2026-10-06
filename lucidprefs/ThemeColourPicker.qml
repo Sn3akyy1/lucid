@@ -34,15 +34,15 @@ Column {
         picker.accept(hex);
     }
 
-    spacing: 14
+    spacing: Theme.dp(14)
 
     Row {
-        spacing: 12
+        spacing: Theme.dp(12)
 
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
-            width: 46
-            height: 46
+            width: Theme.dp(46)
+            height: Theme.dp(46)
             radius: Theme.radiusMd
             color: picker.colour
             border.width: 1
@@ -53,7 +53,7 @@ Column {
             id: hexField
 
             anchors.verticalCenter: parent.verticalCenter
-            width: 150
+            width: Theme.dp(150)
             text: picker.colour
             placeholder: "#rrggbb"
             error: picker.invalid
@@ -94,7 +94,7 @@ Column {
 
     Flow {
         width: picker.width
-        spacing: 8
+        spacing: Theme.dp(8)
 
         Repeater {
             model: picker.presets
@@ -105,8 +105,8 @@ Column {
                 required property string modelData
                 readonly property bool current: picker.colour.toLowerCase() === preset.modelData
 
-                width: 34
-                height: 34
+                width: Theme.dp(34)
+                height: Theme.dp(34)
                 radius: height / 2
                 color: preset.modelData
                 border.width: preset.current ? 3 : (presetArea.containsMouse ? 2 : 0)

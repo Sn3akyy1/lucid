@@ -9,7 +9,7 @@ Item {
     property var notification: null
     property color surfaceColor: "transparent"
     property int radius: Theme.radiusLg
-    property int sidePadding: 14
+    property int sidePadding: Theme.dp(14)
     // driven by the pill's swap animation; anchors own y, so this is a transform
     property real swapOffset: 0
 
@@ -39,7 +39,7 @@ Item {
 
     // a replacement at the top should start from rest, not from a stale drag
     onNotificationChanged: sled.y = 0
-    implicitHeight: body.implicitHeight + 22
+    implicitHeight: body.implicitHeight + Theme.dp(22)
     height: popupCard.implicitHeight
     transform: Translate {
         y: popupCard.swapOffset
@@ -66,7 +66,7 @@ Item {
                 anchors.top: parent.top
                 anchors.leftMargin: popupCard.sidePadding
                 anchors.rightMargin: popupCard.sidePadding
-                anchors.topMargin: 11
+                anchors.topMargin: Theme.dp(11)
                 notification: popupCard.notification
                 bodyLines: Prefs.toastBodyLines
                 onReplyToggled: (open) => {

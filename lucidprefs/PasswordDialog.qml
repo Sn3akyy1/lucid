@@ -112,8 +112,8 @@ Item {
         id: card
 
         anchors.centerIn: parent
-        width: Math.min(460, dialog.width - 64)
-        height: cardCol.implicitHeight + 56
+        width: Math.min(Theme.dp(460), dialog.width - Theme.dp(64))
+        height: cardCol.implicitHeight + Theme.dp(56)
         radius: Theme.shapeXl
         color: Theme.bgHigh
         scale: dialog.shown ? 1 : 0.88
@@ -129,8 +129,8 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 28
-            spacing: 10
+            anchors.margins: Theme.dp(28)
+            spacing: Theme.dp(10)
 
             Text {
                 width: parent.width
@@ -157,7 +157,7 @@ Item {
 
             Item {
                 width: parent.width
-                height: 6
+                height: Theme.dp(6)
             }
 
             M3TextField {
@@ -177,7 +177,7 @@ Item {
             // four segments that fill as the password earns them
             Row {
                 width: parent.width
-                spacing: 4
+                spacing: Theme.dp(4)
                 opacity: dialog.pw.length > 0 ? 1 : 0
                 visible: opacity > 0.01
 
@@ -187,9 +187,9 @@ Item {
                     Rectangle {
                         required property int index
 
-                        width: (cardCol.width - 12) / 4
-                        height: 4
-                        radius: 2
+                        width: (cardCol.width - Theme.dp(12)) / 4
+                        height: Theme.dp(4)
+                        radius: Theme.dp(2)
                         color: index < dialog.strength ? dialog.strengthColor : Theme.outline
 
                         Behavior on color {
@@ -270,12 +270,12 @@ Item {
 
             Item {
                 width: parent.width
-                height: 8
+                height: Theme.dp(8)
             }
 
             Row {
                 anchors.right: parent.right
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 M3Button {
                     text: "Cancel"

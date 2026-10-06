@@ -146,20 +146,20 @@ WidgetBody {
         readonly property color hue: dr.value <= 0.2 && !dr.plugged ? Theme.error : w.inkAccent
 
         width: parent ? parent.width : 0
-        height: 48
-        topLeftRadius: dr.first ? 18 : 6
-        topRightRadius: dr.first ? 18 : 6
-        bottomLeftRadius: dr.last ? 18 : 6
-        bottomRightRadius: dr.last ? 18 : 6
+        height: Theme.dp(48)
+        topLeftRadius: dr.first ? Theme.dp(18) : Theme.dp(6)
+        topRightRadius: dr.first ? Theme.dp(18) : Theme.dp(6)
+        bottomLeftRadius: dr.last ? Theme.dp(18) : Theme.dp(6)
+        bottomRightRadius: dr.last ? Theme.dp(18) : Theme.dp(6)
         color: Theme.alpha(w.ink, 0.07)
 
         Item {
             id: drRing
 
-            x: 8
+            x: Theme.dp(8)
             anchors.verticalCenter: parent.verticalCenter
-            width: 34
-            height: 34
+            width: Theme.dp(34)
+            height: Theme.dp(34)
 
             CircularProgress {
                 anchors.fill: parent
@@ -172,7 +172,7 @@ WidgetBody {
             Icon {
                 anchors.centerIn: parent
                 name: dr.glyph
-                size: 17
+                size: Theme.dp(17)
                 fill: 1
                 color: w.ink
             }
@@ -181,9 +181,9 @@ WidgetBody {
 
         LText {
             anchors.left: drRing.right
-            anchors.leftMargin: 12
+            anchors.leftMargin: Theme.dp(12)
             anchors.right: drVal.left
-            anchors.rightMargin: 8
+            anchors.rightMargin: Theme.dp(8)
             anchors.verticalCenter: parent.verticalCenter
             role: "bodyMedium"
             weight: 520
@@ -196,15 +196,15 @@ WidgetBody {
             id: drVal
 
             anchors.right: parent.right
-            anchors.rightMargin: 14
+            anchors.rightMargin: Theme.dp(14)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 2
+            spacing: Theme.dp(2)
 
             Icon {
                 visible: dr.plugged
                 anchors.verticalCenter: parent.verticalCenter
                 name: "bolt"
-                size: 15
+                size: Theme.dp(15)
                 fill: 1
                 color: w.inkAccent
             }
@@ -226,14 +226,14 @@ WidgetBody {
     Item {
         id: ring
 
-        readonly property real d: Math.min(width, height) - 20
+        readonly property real d: Math.min(width, height) - Theme.dp(20)
 
         visible: w.variant === "ring"
         anchors.fill: parent
 
         MaterialShape {
             anchors.centerIn: parent
-            width: ring.d - 34
+            width: ring.d - Theme.dp(34)
             height: width
             shape: w.charging ? "cookie9" : "circle"
             color: Theme.alpha(w.tint, w.charging ? 0.16 : 0.08)
@@ -252,7 +252,7 @@ WidgetBody {
             anchors.centerIn: parent
             width: ring.d
             height: width
-            thickness: 10
+            thickness: Theme.dp(10)
             value: w.level
             color: w.tint
             trackColor: Theme.alpha(w.ink, 0.1)
@@ -260,12 +260,12 @@ WidgetBody {
 
         Column {
             anchors.centerIn: parent
-            spacing: -4
+            spacing: -Theme.dp(4)
 
             Icon {
                 anchors.horizontalCenter: parent.horizontalCenter
                 name: w.charging ? "bolt" : (w.low ? "battery_alert" : "battery_full")
-                size: 20
+                size: Theme.dp(20)
                 fill: 1
                 color: w.tint
             }
@@ -307,24 +307,24 @@ WidgetBody {
     Item {
         visible: w.variant === "bar"
         anchors.fill: parent
-        anchors.margins: 18
+        anchors.margins: Theme.dp(18)
 
         Item {
             id: cell
 
-            width: parent.width - 8
-            height: 46
+            width: parent.width - Theme.dp(8)
+            height: Theme.dp(46)
 
             Rectangle {
                 anchors.fill: parent
-                radius: 16
+                radius: Theme.dp(16)
                 color: Theme.alpha(w.ink, 0.1)
             }
 
             Rectangle {
-                width: Math.max(32, parent.width * w.level)
+                width: Math.max(Theme.dp(32), parent.width * w.level)
                 height: parent.height
-                radius: 16
+                radius: Theme.dp(16)
                 color: w.tint
 
                 Behavior on width {
@@ -340,15 +340,15 @@ WidgetBody {
 
             Row {
                 anchors.left: parent.left
-                anchors.leftMargin: 14
+                anchors.leftMargin: Theme.dp(14)
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Icon {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: w.charging
                     name: "bolt"
-                    size: 20
+                    size: Theme.dp(20)
                     fill: 1
                     color: w.level > 0.25 ? w.fgInkAccent : w.ink
                 }
@@ -370,10 +370,10 @@ WidgetBody {
         // the terminal nub
         Rectangle {
             anchors.left: cell.right
-            anchors.leftMargin: 3
+            anchors.leftMargin: Theme.dp(3)
             anchors.verticalCenter: cell.verticalCenter
-            width: 5
-            height: 18
+            width: Theme.dp(5)
+            height: Theme.dp(18)
             radius: 2.5
             color: w.level >= 0.999 ? w.tint : Theme.alpha(w.ink, 0.1)
         }
@@ -399,24 +399,24 @@ WidgetBody {
     Item {
         visible: w.variant === "detail"
         anchors.fill: parent
-        anchors.margins: 18
+        anchors.margins: Theme.dp(18)
 
         Row {
             id: dHead
 
-            spacing: 12
+            spacing: Theme.dp(12)
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
-                width: 44
-                height: 44
-                radius: 14
+                width: Theme.dp(44)
+                height: Theme.dp(44)
+                radius: Theme.dp(14)
                 color: Theme.alpha(w.tint, 0.16)
 
                 Icon {
                     anchors.centerIn: parent
                     name: w.levelGlyph
-                    size: 24
+                    size: Theme.dp(24)
                     fill: 1
                     color: w.tint
                 }
@@ -425,7 +425,7 @@ WidgetBody {
 
             Column {
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: -4
+                spacing: -Theme.dp(4)
 
                 LText {
                     role: "headlineMedium"
@@ -450,10 +450,10 @@ WidgetBody {
             id: dBar
 
             anchors.top: dHead.bottom
-            anchors.topMargin: 14
+            anchors.topMargin: Theme.dp(14)
             width: parent.width
             value: w.level
-            thickness: 6
+            thickness: Theme.dp(6)
             wavy: w.charging && !w.preview
             color: w.tint
             trackColor: Theme.alpha(w.ink, 0.1)
@@ -500,8 +500,8 @@ WidgetBody {
     Column {
         visible: w.variant === "devices"
         anchors.fill: parent
-        anchors.margins: 14
-        spacing: 4
+        anchors.margins: Theme.dp(14)
+        spacing: Theme.dp(4)
 
         DeviceRow {
             visible: w.present
@@ -533,7 +533,7 @@ WidgetBody {
         LText {
             visible: w.others.length === 0
             width: parent.width
-            topPadding: 6
+            topPadding: Theme.dp(6)
             horizontalAlignment: Text.AlignHCenter
             role: "labelMedium"
             color: w.inkFaint

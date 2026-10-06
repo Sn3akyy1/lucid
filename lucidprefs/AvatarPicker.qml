@@ -39,9 +39,9 @@ Item {
 
         required property var modelData
 
-        width: 62
-        height: 62
-        radius: 31
+        width: Theme.dp(62)
+        height: Theme.dp(62)
+        radius: Theme.dp(31)
         color: Theme.bgSunken
 
         Image {
@@ -49,8 +49,8 @@ Item {
             source: "file://" + choice.modelData.path
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
-            sourceSize.width: 128
-            sourceSize.height: 128
+            sourceSize.width: Theme.dp(128)
+            sourceSize.height: Theme.dp(128)
         }
 
         Rectangle {
@@ -97,8 +97,8 @@ Item {
         id: card
 
         anchors.centerIn: parent
-        width: Math.min(460, picker.width - 64)
-        height: cardCol.implicitHeight + 56
+        width: Math.min(Theme.dp(460), picker.width - Theme.dp(64))
+        height: cardCol.implicitHeight + Theme.dp(56)
         radius: Theme.shapeXl
         color: Theme.bgHigh
         scale: picker.shown ? 1 : 0.88
@@ -114,8 +114,8 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 28
-            spacing: 14
+            anchors.margins: Theme.dp(28)
+            spacing: Theme.dp(14)
 
             Text {
                 width: parent.width
@@ -141,7 +141,7 @@ Item {
             // the machine's own stock faces, when it has any
             Flow {
                 width: parent.width
-                spacing: 10
+                spacing: Theme.dp(10)
                 visible: Users.faces.length > 0
 
                 Repeater {
@@ -158,12 +158,12 @@ Item {
             // changing it. the oldest drop off once the shelf is full
             Column {
                 width: parent.width
-                spacing: 8
+                spacing: Theme.dp(8)
                 visible: Users.avatarHistory.length > 0
 
                 Item {
                     width: parent.width
-                    height: 18
+                    height: Theme.dp(18)
 
                     Text {
                         anchors.left: parent.left
@@ -200,8 +200,8 @@ Item {
 
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.right: parent.right
-                        width: clearLabel.width + 16
-                        height: 24
+                        width: clearLabel.width + Theme.dp(16)
+                        height: Theme.dp(24)
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: Users.clearHistory(picker.user ? picker.user.uid : -1)
@@ -211,7 +211,7 @@ Item {
 
                 Flow {
                     width: parent.width
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     Repeater {
                         model: Users.avatarHistory
@@ -227,19 +227,19 @@ Item {
 
             Item {
                 width: parent.width
-                height: 2
+                height: Theme.dp(2)
             }
 
             Row {
                 width: parent.width
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 M3Button {
                     text: "Choose a picture…"
                     variant: "filled"
                     iconPath: "photo_camera"
                     onClicked: {
-                        browse.command = ["sh", "-c", "zenity --file-selection --title='Choose an account picture' --file-filter='Images | *.jpg *.jpeg *.png *.webp *.JPG *.PNG *.WEBP' 2>/dev/null || true"];
+                        browse.command = ["python3", Qt.resolvedUrl("pickfile.py").toString().replace("file://", ""), "--title", "Choose an account picture", "--filter", "Images=image/jpeg,image/png,image/webp"];
                         browse.running = true;
                     }
                 }
@@ -256,7 +256,7 @@ Item {
 
             Item {
                 width: parent.width
-                height: 4
+                height: Theme.dp(4)
             }
 
             Row {

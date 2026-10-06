@@ -69,7 +69,7 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: footer.top
-        anchors.bottomMargin: 10
+        anchors.bottomMargin: Theme.dp(10)
         radius: Theme.shapeXl
         color: Theme.withBlur(Theme.surfaceHigh)
         clip: true
@@ -81,7 +81,7 @@ Item {
             readonly property real fit: preview.kind === "image" && preview.entry.width > 0 ? Math.min(frame.width / preview.entry.width, frame.height / preview.entry.height, 2) : 1
 
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: Theme.dp(12)
             visible: preview.kind === "image"
 
             ClippingRectangle {
@@ -102,8 +102,8 @@ Item {
                     smooth: true
                     mipmap: true
                     // one decode size for every panel width, so the resize animation never reloads it
-                    sourceSize.width: 720
-                    sourceSize.height: 720
+                    sourceSize.width: Theme.dp(720)
+                    sourceSize.height: Theme.dp(720)
                     opacity: fullImage.status === Image.Ready ? 1 : 0
 
                     Behavior on opacity {
@@ -123,7 +123,7 @@ Item {
             id: textScroll
 
             anchors.fill: parent
-            anchors.margins: 14
+            anchors.margins: Theme.dp(14)
             visible: preview.isTextual
             clip: true
             contentWidth: textScroll.width
@@ -149,7 +149,7 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: Theme.dp(12)
             visible: preview.kind === "color"
             radius: Theme.shapeLg
             color: preview.kind === "color" ? preview.entry.color : "transparent"
@@ -173,20 +173,20 @@ Item {
             readonly property bool imageBroken: preview.kind === "image" && (fullImage.status === Image.Error || Clip.fulls[preview.entry.id] === "")
 
             anchors.centerIn: parent
-            spacing: 12
+            spacing: Theme.dp(12)
             visible: preview.entry === null || preview.kind === "binary" || (preview.kind === "image" && fullImage.status !== Image.Ready)
 
             Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: 52
-                height: 52
+                width: Theme.dp(52)
+                height: Theme.dp(52)
                 radius: Theme.shapeLg
                 color: Theme.withBlur(Theme.surfaceHighest)
 
                 Icon {
                     anchors.centerIn: parent
                     name: preview.kind === "image" ? (holder.imageBroken ? "broken_image" : "wallpaper") : "content_paste"
-                    size: 25
+                    size: Theme.dp(25)
                     color: Theme.primary
                 }
 
@@ -207,11 +207,11 @@ Item {
         id: footer
 
         anchors.left: parent.left
-        anchors.leftMargin: 4
+        anchors.leftMargin: Theme.dp(4)
         anchors.right: parent.right
-        anchors.rightMargin: 4
+        anchors.rightMargin: Theme.dp(4)
         anchors.bottom: parent.bottom
-        spacing: 7
+        spacing: Theme.dp(7)
 
         LText {
             width: parent.width
@@ -232,7 +232,7 @@ Item {
 
         Flow {
             width: parent.width
-            spacing: 10
+            spacing: Theme.dp(10)
             visible: !preview.clearArmed
 
             Repeater {
@@ -254,12 +254,12 @@ Item {
 
                     required property var modelData
 
-                    spacing: 5
+                    spacing: Theme.dp(5)
 
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: Math.max(20, cap.implicitWidth + 10)
-                        height: 20
+                        width: Math.max(Theme.dp(20), cap.implicitWidth + Theme.dp(10))
+                        height: Theme.dp(20)
                         radius: Theme.shapeSm
                         color: Theme.alpha(Theme.text, 0.09)
 
@@ -276,7 +276,7 @@ Item {
                             anchors.centerIn: parent
                             visible: !!keyHint.modelData.symbol
                             name: keyHint.modelData.symbol || ""
-                            size: 14
+                            size: Theme.dp(14)
                             color: Theme.subtext
                         }
 

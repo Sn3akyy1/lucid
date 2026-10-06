@@ -50,7 +50,7 @@ Item {
     // reading view.contentHeight here fed rowWidth back into the layout and looped
     readonly property bool needsScrollbar: list.contentExtent > list.viewport
     // only give up the gutter when the scrollbar is actually there
-    readonly property int rowWidth: Math.max(0, view.width - (list.needsScrollbar ? 14 : 0))
+    readonly property int rowWidth: Math.max(0, view.width - (list.needsScrollbar ? Theme.dp(14) : 0))
     // the head only earns its rule once something is hidden above
     readonly property bool scrolled: view.contentY > 1
     readonly property real selectionY: list.rowY(list.currentIndex)
@@ -364,10 +364,10 @@ Item {
 
             policy: ScrollBar.AsNeeded
             visible: list.needsScrollbar
-            width: 8
+            width: Theme.dp(8)
 
             contentItem: Rectangle {
-                implicitWidth: scrollBar.hovered || scrollBar.pressed ? 8 : 5
+                implicitWidth: scrollBar.hovered || scrollBar.pressed ? Theme.dp(8) : Theme.dp(5)
                 radius: width / 2
                 color: scrollBar.pressed ? Theme.accent : Theme.alpha(Theme.text, scrollBar.hovered ? 0.4 : 0.2)
 
@@ -620,8 +620,8 @@ Item {
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         cache: false
-                        sourceSize.width: 80
-                        sourceSize.height: 60
+                        sourceSize.width: Theme.dp(80)
+                        sourceSize.height: Theme.dp(60)
                         visible: thumbImage.status === Image.Ready
                         // the file went away under the cached path; drop it so
                         // the next request decodes again
@@ -638,8 +638,8 @@ Item {
 
                     DockGlyph {
                         anchors.centerIn: parent
-                        width: 16
-                        height: 16
+                        width: Theme.dp(16)
+                        height: Theme.dp(16)
                         visible: !thumbImage.visible
                         pathData: DockIcons.brokenImage
                         glyphColor: Theme.subtextDim
@@ -688,7 +688,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.max(0, parent.width - textCol.x - list.edgeSpace - trailRoom.width)
                 visible: !rowItem.isHeader && !rowItem.isCalc
-                spacing: 2
+                spacing: Theme.dp(2)
 
                 // an eliding Text reports its elided width, so the run the dot
                 // follows has to be measured off the unelided string
@@ -706,7 +706,7 @@ Item {
                     LText {
                         id: titleText
 
-                        width: Math.min(Math.ceil(titleMetrics.width) + 2, Math.max(0, parent.width - (dotMark.visible ? dotMark.width + parent.spacing : 0)))
+                        width: Math.min(Math.ceil(titleMetrics.width) + Theme.dp(2), Math.max(0, parent.width - (dotMark.visible ? dotMark.width + parent.spacing : 0)))
                         elide: Text.ElideRight
                         textFormat: Text.StyledText
                         role: "bodyLarge"
@@ -801,7 +801,7 @@ Item {
                 width: Math.round(32 * list.cs)
                 height: Math.round(32 * list.cs)
                 anchors.right: parent.right
-                anchors.rightMargin: 8
+                anchors.rightMargin: Theme.dp(8)
                 anchors.verticalCenter: parent.verticalCenter
                 visible: rowItem.showsHide
 
@@ -845,7 +845,7 @@ Item {
                 width: Math.round(32 * list.cs)
                 height: Math.round(32 * list.cs)
                 anchors.right: parent.right
-                anchors.rightMargin: 8
+                anchors.rightMargin: Theme.dp(8)
                 anchors.verticalCenter: parent.verticalCenter
                 visible: rowItem.showsDrop
 
@@ -866,8 +866,8 @@ Item {
 
                 DockGlyph {
                     anchors.centerIn: parent
-                    width: 16
-                    height: 16
+                    width: Theme.dp(16)
+                    height: Theme.dp(16)
                     pathData: DockIcons.trash
                     glyphColor: dropHover.hovered ? Theme.error : Theme.subtext
                 }

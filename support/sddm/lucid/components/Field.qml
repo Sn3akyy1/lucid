@@ -11,9 +11,17 @@ Item {
     readonly property bool canSubmit: (input.text.length > 0 || !Lock.needsPassword) && Lock.acceptsInput && Lock.userName !== ""
     readonly property bool bad: Lock.phase === "failed"
     readonly property bool good: Lock.granted
+    // the placeholder waits for the last beads to fade before it comes back
+    property bool vacant: true
 
     function focusInput() {
         input.forceActiveFocus();
+    }
+
+    function pin() {
+        if (input.selectionStart === input.selectionEnd && input.cursorPosition !== input.length)
+            input.cursorPosition = input.length;
+
     }
 
     function clear() {
@@ -29,6 +37,13 @@ Item {
     }
 
     implicitHeight: 56
+
+    Timer {
+        id: vacate
+
+        interval: Theme.durDefaultEffects
+        onTriggered: field.vacant = true
+    }
 
     // sddm refusing, drawn as the door not giving
     SequentialAnimation {
@@ -141,153 +156,61 @@ Item {
 
     }
 
+    // what to type, when nothing has been
     Text {
         anchors.left: leading.right
         anchors.leftMargin: 14
+        anchors.right: trailing.left
+        anchors.rightMargin: 12
         anchors.verticalCenter: parent.verticalCenter
+        transformOrigin: Item.Left
         text: Lock.needsPassword ? "Password" : "No password needed"
-        color: Theme.subtextDim
+        color: Lock.focused ? Theme.subtext : Theme.subtextDim
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg
         font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
-        opacity: input.text.length === 0 && !Lock.busy && (!Lock.focused || !Lock.needsPassword) ? 1 : 0
+        elide: Text.ElideRight
+        opacity: field.vacant && !Lock.busy ? 1 : 0
+        scale: 0.94 + 0.06 * opacity
         visible: opacity > 0.01
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Theme.ms(140)
+                duration: Theme.durDefaultEffects
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.curveEffects
+            }
+
+        }
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Theme.ms(180)
             }
 
         }
 
     }
 
-    // the typed secret. every character is dropped by the caret: the bead
-    // starts as the caret's own line and settles into a dot where it stood
-    Item {
-        id: beadsClip
-
-        readonly property int pitch: 15
+    // the typed secret: each character lands as a turning shape and melts
+    // into a dot
+    PasswordEcho {
+        id: echo
 
         anchors.left: leading.right
         anchors.leftMargin: 14
         anchors.right: trailing.left
-        anchors.rightMargin: 12
+        anchors.rightMargin: 10
         anchors.verticalCenter: parent.verticalCenter
-        height: 22
-        clip: true
-        visible: !field.reveal
-
-        Row {
-            id: beads
-
-            x: Math.min(0, beadsClip.width - beads.width)
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 6
-            leftPadding: 4
-            rightPadding: 4
-
-            Behavior on x {
-                NumberAnimation {
-                    duration: Theme.ms(180)
-                    easing.type: Easing.OutCubic
-                }
-
-            }
-
-            Repeater {
-                model: input.text.length
-
-                Item {
-                    id: bead
-
-                    property real born: 0
-
-                    width: 9
-                    height: 18
-
-                    NumberAnimation on born {
-                        from: 0
-                        to: 1
-                        duration: Theme.ms(300)
-                        easing.type: Easing.Bezier
-                        easing.bezierCurve: Theme.easeEmphasizedDecel
-                    }
-
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: 2 + 7 * bead.born
-                        height: 18 - 9 * bead.born
-                        radius: width / 2
-                        opacity: 0.45 + 0.55 * bead.born
-                        color: field.good ? Theme.success : (field.bad ? Theme.error : Theme.text)
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.ms(180)
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-        }
-
-        Rectangle {
-            id: caret
-
-            x: beads.x + input.cursorPosition * beadsClip.pitch
-            anchors.verticalCenter: parent.verticalCenter
-            width: 2
-            height: 18
-            radius: 1
-            color: field.good ? Theme.success : (field.bad ? Theme.error : Theme.accent)
-            visible: Lock.focused && !Lock.busy && !field.good
-
-            Behavior on x {
-                NumberAnimation {
-                    duration: Theme.ms(150)
-                    easing.type: Easing.OutCubic
-                }
-
-            }
-
-            SequentialAnimation {
-                id: blink
-
-                running: true
-                loops: Animation.Infinite
-
-                PauseAnimation {
-                    duration: 620
-                }
-
-                NumberAnimation {
-                    target: caret
-                    property: "opacity"
-                    to: 0
-                    duration: 130
-                }
-
-                PauseAnimation {
-                    duration: 420
-                }
-
-                NumberAnimation {
-                    target: caret
-                    property: "opacity"
-                    to: 1
-                    duration: 130
-                }
-
-            }
-
-        }
-
+        height: 30
+        text: input.text
+        reveal: field.reveal
+        busy: Lock.busy
+        selectionStart: input.selectionStart
+        selectionEnd: input.selectionEnd
+        color: field.good ? Theme.success : (field.bad ? Theme.error : Theme.text)
+        edge: pill.color
+        font: input.font
     }
 
     TextInput {
@@ -299,33 +222,31 @@ Item {
         anchors.rightMargin: 12
         anchors.verticalCenter: parent.verticalCenter
         readOnly: !Lock.acceptsInput
-        echoMode: field.reveal ? TextInput.Normal : TextInput.Password
+        echoMode: TextInput.Password
         passwordCharacter: " "
-        color: field.reveal ? Theme.text : "transparent"
-        selectionColor: Theme.alpha(Theme.accent, 0.4)
-        selectedTextColor: Theme.text
+        color: "transparent"
+        selectionColor: "transparent"
+        selectedTextColor: "transparent"
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg
         font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
         selectByMouse: false
         clip: true
         activeFocusOnPress: true
-        cursorDelegate: Rectangle {
-            width: 2
-            radius: 1
-            color: Theme.accent
-            visible: field.reveal
+        cursorDelegate: Item {
         }
 
-        onCursorPositionChanged: {
-            caret.opacity = 1;
-            blink.restart();
-        }
+        // the beads have no caret: the password is typed at its end, and only a
+        // selection grown back from there may hold the cursor anywhere else
+        onCursorPositionChanged: Qt.callLater(field.pin)
         onAccepted: field.submit()
         onTextChanged: {
-            if (input.text.length === 0)
+            if (input.text.length === 0) {
+                vacate.restart();
                 return ;
-
+            }
+            vacate.stop();
+            field.vacant = false;
             Lock.engage();
             if (Lock.phase === "failed")
                 Lock.phase = "idle";

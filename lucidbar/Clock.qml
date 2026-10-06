@@ -32,7 +32,7 @@ BarPill {
     }
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
-    readonly property int pad: 16
+    readonly property int pad: Theme.dp(16)
 
     function showTab(t) {
         if (t === root.tab)
@@ -54,15 +54,15 @@ BarPill {
     }
 
     shown: Prefs.barHas("clock")
-    compactWidth: compactRow.implicitWidth + 30
-    panelWidth: Math.min(720, root.screenW - 34)
-    panelHeight: Math.min(root.screenH - 60, root.pad + tabsBar.height + 10 + 404 + root.pad)
+    compactWidth: compactRow.implicitWidth + Theme.dp(30)
+    panelWidth: Math.min(Theme.dp(720), root.screenW - Theme.dp(34))
+    panelHeight: Math.min(root.screenH - Theme.dp(60), root.pad + tabsBar.height + Theme.dp(10) + Theme.dp(404) + root.pad)
     expandedRadius: Theme.shapeXl
     compactCollapseScale: 0.9
     // a reminder going off rides the pill's alt surface
     altOpen: Agenda.firing !== null && !root.expanded
-    altWidth: 340
-    altHeight: 76
+    altWidth: Theme.dp(340)
+    altHeight: Theme.dp(76)
     onExpandedChanged: {
         if (!root.expanded)
             tabResetTimer.restart();
@@ -117,7 +117,7 @@ BarPill {
             id: compactRow
 
             anchors.centerIn: parent
-            spacing: 8
+            spacing: Theme.dp(8)
 
             // lucidshot is recording; a click brings its toolbar back
             Rectangle {
@@ -125,22 +125,22 @@ BarPill {
 
                 visible: Capture.active
                 anchors.verticalCenter: parent.verticalCenter
-                width: recRow.implicitWidth + 16
-                height: 24
-                radius: 12
+                width: recRow.implicitWidth + Theme.dp(16)
+                height: Theme.dp(24)
+                radius: Theme.dp(12)
                 color: Theme.errorContainer
 
                 Row {
                     id: recRow
 
                     anchors.centerIn: parent
-                    spacing: 6
+                    spacing: Theme.dp(6)
 
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 8
-                        height: 8
-                        radius: 4
+                        width: Theme.dp(8)
+                        height: Theme.dp(8)
+                        radius: Theme.dp(4)
                         color: Theme.error
 
                         SequentialAnimation on opacity {
@@ -188,20 +188,20 @@ BarPill {
 
                 visible: Prefs.clockShowTimer && timerChip.h !== null
                 anchors.verticalCenter: parent.verticalCenter
-                width: chipRow.implicitWidth + 16
-                height: 24
-                radius: 12
+                width: chipRow.implicitWidth + Theme.dp(16)
+                height: Theme.dp(24)
+                radius: Theme.dp(12)
                 color: Theme.secondaryContainer
 
                 Row {
                     id: chipRow
 
                     anchors.centerIn: parent
-                    spacing: 5
+                    spacing: Theme.dp(5)
 
                     Item {
-                        width: 15
-                        height: 15
+                        width: Theme.dp(15)
+                        height: Theme.dp(15)
                         anchors.verticalCenter: parent.verticalCenter
 
                         CircularProgress {
@@ -217,7 +217,7 @@ BarPill {
                             anchors.centerIn: parent
                             visible: timerChip.h !== null && timerChip.h.total <= 0
                             name: "timer"
-                            size: 15
+                            size: Theme.dp(15)
                             fill: 1
                             color: Theme.fgSecondaryContainer
                         }
@@ -261,8 +261,8 @@ BarPill {
                 id: timeChip
 
                 anchors.verticalCenter: parent.verticalCenter
-                width: timeRow.implicitWidth + 17
-                height: Math.min(parent.height, Math.round(Prefs.barHeight * 0.66))
+                width: timeRow.implicitWidth + Theme.dp(17)
+                height: Math.min(parent.height, Math.round(Theme.dp(Prefs.barHeight) * 0.66))
                 radius: height / 2
                 color: Theme.primary
 
@@ -317,7 +317,7 @@ BarPill {
                     LText {
                         visible: Prefs.clockShowSeconds
                         anchors.baseline: hourText.baseline
-                        leftPadding: 2
+                        leftPadding: Theme.dp(2)
                         role: "labelMedium"
                         weight: 600
                         tabular: true
@@ -328,7 +328,7 @@ BarPill {
                     LText {
                         visible: !Prefs.clock24h
                         anchors.baseline: hourText.baseline
-                        leftPadding: 4
+                        leftPadding: Theme.dp(4)
                         role: "labelMedium"
                         weight: 600
                         color: Theme.alpha(Theme.fgAccent, 0.7)
@@ -343,11 +343,11 @@ BarPill {
             Row {
                 visible: Prefs.clockShowWeather && root.wx !== null
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 3
+                spacing: Theme.dp(3)
 
                 WeatherIcon {
                     anchors.verticalCenter: parent.verticalCenter
-                    size: 20
+                    size: Theme.dp(20)
                     animate: false
                     kind: root.wx ? WeatherSource.kindFor(root.wx.code, !root.wx.isDay) : "clear"
                     tint: Theme.accent
@@ -371,7 +371,7 @@ BarPill {
                 visible: Agenda.soon
                 anchors.verticalCenter: parent.verticalCenter
                 name: "notifications_active"
-                size: 15
+                size: Theme.dp(15)
                 fill: 1
                 color: Theme.accent
                 transformOrigin: Item.Top
@@ -419,10 +419,10 @@ BarPill {
             Item {
                 id: bellBox
 
-                x: 14
+                x: Theme.dp(14)
                 anchors.verticalCenter: parent.verticalCenter
-                width: 46
-                height: 46
+                width: Theme.dp(46)
+                height: Theme.dp(46)
 
                 MaterialShape {
                     anchors.fill: parent
@@ -442,7 +442,7 @@ BarPill {
                 Icon {
                     anchors.centerIn: parent
                     name: "notifications_active"
-                    size: 24
+                    size: Theme.dp(24)
                     fill: 1
                     color: Theme.fgPrimaryContainer
                     transformOrigin: Item.Top
@@ -473,9 +473,9 @@ BarPill {
 
             Column {
                 anchors.left: bellBox.right
-                anchors.leftMargin: 12
+                anchors.leftMargin: Theme.dp(12)
                 anchors.right: actions.left
-                anchors.rightMargin: 8
+                anchors.rightMargin: Theme.dp(8)
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 0
 
@@ -498,9 +498,9 @@ BarPill {
                 id: actions
 
                 anchors.right: parent.right
-                anchors.rightMargin: 12
+                anchors.rightMargin: Theme.dp(12)
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Button {
                     variant: "tonal"
@@ -538,7 +538,7 @@ BarPill {
                 id: tabsBar
 
                 x: root.pad
-                y: root.pad - 6
+                y: root.pad - Theme.dp(6)
                 width: parent.width - root.pad * 2
                 inline: true
                 options: root.tabs
@@ -552,12 +552,12 @@ BarPill {
                 id: viewport
 
                 anchors.top: tabsBar.bottom
-                anchors.topMargin: 10
+                anchors.topMargin: Theme.dp(10)
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.leftMargin: root.pad
                 anchors.rightMargin: root.pad
-                height: 404
+                height: Theme.dp(404)
                 clip: true
 
                 // pages side by side; a tab change pushes one out as the next comes in

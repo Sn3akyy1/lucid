@@ -72,7 +72,7 @@ Column {
         return out;
     }
 
-    spacing: 3
+    spacing: Theme.dp(3)
 
     Connections {
         function onSearchSelChanged() {
@@ -90,9 +90,9 @@ Column {
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg
         wrapMode: Text.WordWrap
-        leftPadding: 22
-        rightPadding: 22
-        topPadding: 8
+        leftPadding: Theme.dp(22)
+        rightPadding: Theme.dp(22)
+        topPadding: Theme.dp(8)
     }
 
     Repeater {
@@ -114,17 +114,17 @@ Column {
             readonly property color fg: item.selected ? Theme.fgSecondaryContainer : Theme.text
 
             width: parent.width
-            height: item.isPage ? 46 + (item.index > 0 ? 20 : 0) : Math.max(64, labels.implicitHeight + 28)
+            height: item.isPage ? Theme.dp(46) + (item.index > 0 ? Theme.dp(20) : 0) : Math.max(Theme.dp(64), labels.implicitHeight + Theme.dp(28))
 
             Rectangle {
                 id: container
 
                 anchors.fill: parent
-                anchors.topMargin: item.isPage && item.index > 0 ? 20 : 0
-                topLeftRadius: item.isPage || item.groupFirst ? 26 : 6
-                topRightRadius: item.isPage || item.groupFirst ? 26 : 6
-                bottomLeftRadius: item.isPage || item.groupLast ? 26 : 6
-                bottomRightRadius: item.isPage || item.groupLast ? 26 : 6
+                anchors.topMargin: item.isPage && item.index > 0 ? Theme.dp(20) : 0
+                topLeftRadius: item.isPage || item.groupFirst ? Theme.dp(26) : Theme.dp(6)
+                topRightRadius: item.isPage || item.groupFirst ? Theme.dp(26) : Theme.dp(6)
+                bottomLeftRadius: item.isPage || item.groupLast ? Theme.dp(26) : Theme.dp(6)
+                bottomRightRadius: item.isPage || item.groupLast ? Theme.dp(26) : Theme.dp(6)
                 color: item.selected ? Theme.secondaryContainer : (item.isPage ? "transparent" : Theme.withBlur(Theme.bgTile))
 
                 Behavior on color {
@@ -154,10 +154,10 @@ Column {
                 Item {
                     id: pageMark
 
-                    x: 20
+                    x: Theme.dp(20)
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 22
-                    height: 22
+                    width: Theme.dp(22)
+                    height: Theme.dp(22)
 
                     NavGlyph {
                         anchors.fill: parent
@@ -178,9 +178,9 @@ Column {
 
                 Text {
                     anchors.left: pageMark.right
-                    anchors.leftMargin: 14
+                    anchors.leftMargin: Theme.dp(14)
                     anchors.right: pageGo.left
-                    anchors.rightMargin: 12
+                    anchors.rightMargin: Theme.dp(12)
                     anchors.verticalCenter: parent.verticalCenter
                     text: page.mark(item.modelData.title)
                     textFormat: Text.StyledText
@@ -195,7 +195,7 @@ Column {
                     id: pageGo
 
                     anchors.right: parent.right
-                    anchors.rightMargin: 20
+                    anchors.rightMargin: Theme.dp(20)
                     anchors.verticalCenter: parent.verticalCenter
                     text: "Open page"
                     color: item.selected ? item.fg : Theme.subtextDim
@@ -220,11 +220,11 @@ Column {
                 id: labels
 
                 anchors.left: parent.left
-                anchors.leftMargin: 22
+                anchors.leftMargin: Theme.dp(22)
                 anchors.right: chevron.left
-                anchors.rightMargin: 14
+                anchors.rightMargin: Theme.dp(14)
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 3
+                spacing: Theme.dp(3)
                 visible: !item.isPage
 
                 Text {
@@ -259,11 +259,11 @@ Column {
                 id: chevron
 
                 anchors.right: parent.right
-                anchors.rightMargin: 18
+                anchors.rightMargin: Theme.dp(18)
                 anchors.verticalCenter: parent.verticalCenter
                 visible: !item.isPage
                 name: "chevron_right"
-                size: 20
+                size: Theme.dp(20)
                 color: item.selected ? item.fg : Theme.subtextDim
             }
 

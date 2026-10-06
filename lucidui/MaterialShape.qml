@@ -13,8 +13,8 @@ Shape {
     property color color: Theme.primary
     property real spin: 0
 
-    width: 48
-    height: 48
+    width: Theme.dp(48)
+    height: Theme.dp(48)
     preferredRendererType: Shape.CurveRenderer
 
     ShapePath {

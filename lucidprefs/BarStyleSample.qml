@@ -68,7 +68,7 @@ Item {
         id: clockInline
 
         Row {
-            spacing: 8
+            spacing: Theme.dp(8)
 
             BarText {
                 text: sample.timeText
@@ -76,8 +76,8 @@ Item {
 
             Rectangle {
                 visible: Prefs.clockShowDate
-                width: 3
-                height: 3
+                width: Theme.dp(3)
+                height: Theme.dp(3)
                 radius: 1.5
                 color: Theme.subtextDim
                 anchors.verticalCenter: parent.verticalCenter
@@ -97,7 +97,7 @@ Item {
         id: clockStacked
 
         Column {
-            spacing: -2
+            spacing: -Theme.dp(2)
 
             BarText {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -121,11 +121,11 @@ Item {
         id: clockAccent
 
         Row {
-            spacing: 8
+            spacing: Theme.dp(8)
 
             Rectangle {
-                width: accentTime.implicitWidth + 16
-                height: 24
+                width: accentTime.implicitWidth + Theme.dp(16)
+                height: Theme.dp(24)
                 radius: height / 2
                 color: Theme.accent
 
@@ -156,30 +156,30 @@ Item {
         MiniPanel {
             Row {
                 anchors.fill: parent
-                anchors.margins: 8
-                spacing: 6
+                anchors.margins: Theme.dp(8)
+                spacing: Theme.dp(6)
 
                 Column {
-                    width: (parent.width - 6) * 0.42
-                    spacing: 4
+                    width: (parent.width - Theme.dp(6)) * 0.42
+                    spacing: Theme.dp(4)
 
                     Rectangle {
                         width: parent.width
-                        height: 30
+                        height: Theme.dp(30)
                         radius: Theme.radiusSm
                         color: Theme.accentContainer
                     }
 
                     Rectangle {
                         width: parent.width
-                        height: 22
+                        height: Theme.dp(22)
                         radius: Theme.radiusSm
                         color: Theme.bgHigh
                     }
 
                     Rectangle {
                         width: parent.width
-                        height: 22
+                        height: Theme.dp(22)
                         radius: Theme.radiusSm
                         color: Theme.bgHigh
                     }
@@ -187,7 +187,7 @@ Item {
                 }
 
                 MiniCalendar {
-                    width: (parent.width - 6) * 0.58
+                    width: (parent.width - Theme.dp(6)) * 0.58
                     height: parent.height
                 }
 
@@ -201,11 +201,11 @@ Item {
         id: clockPanelCalendar
 
         MiniPanel {
-            width: 96
+            width: Theme.dp(96)
 
             MiniCalendar {
                 anchors.fill: parent
-                anchors.margins: 8
+                anchors.margins: Theme.dp(8)
             }
 
         }
@@ -216,7 +216,7 @@ Item {
         id: mediaPlaying
 
         Row {
-            spacing: 8
+            spacing: Theme.dp(8)
 
             MiniBars {
                 anchors.verticalCenter: parent.verticalCenter
@@ -239,12 +239,12 @@ Item {
         id: mediaCover
 
         Row {
-            spacing: 8
+            spacing: Theme.dp(8)
 
             Rectangle {
-                width: 22
-                height: 22
-                radius: 6
+                width: Theme.dp(22)
+                height: Theme.dp(22)
+                radius: Theme.dp(6)
                 color: Theme.accentContainer
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -266,7 +266,7 @@ Item {
         id: mediaCompact
 
         Row {
-            spacing: 8
+            spacing: Theme.dp(8)
 
             MiniBars {
                 anchors.verticalCenter: parent.verticalCenter
@@ -287,18 +287,18 @@ Item {
         MiniPanel {
             Row {
                 anchors.fill: parent
-                anchors.margins: 8
-                spacing: 8
+                anchors.margins: Theme.dp(8)
+                spacing: Theme.dp(8)
 
                 Rectangle {
-                    width: 44
-                    height: 44
+                    width: Theme.dp(44)
+                    height: Theme.dp(44)
                     radius: Theme.radiusSm
                     color: Theme.accentContainer
                 }
 
                 MiniLines {
-                    width: parent.width - 52
+                    width: parent.width - Theme.dp(52)
                 }
 
             }
@@ -307,7 +307,7 @@ Item {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                anchors.margins: 8
+                anchors.margins: Theme.dp(8)
             }
 
         }
@@ -318,16 +318,16 @@ Item {
         id: mediaPanelCover
 
         MiniPanel {
-            height: 104
+            height: Theme.dp(104)
 
             Column {
                 anchors.fill: parent
-                anchors.margins: 8
-                spacing: 6
+                anchors.margins: Theme.dp(8)
+                spacing: Theme.dp(6)
 
                 Rectangle {
                     width: parent.width
-                    height: 46
+                    height: Theme.dp(46)
                     radius: Theme.radiusSm
                     color: Theme.accentContainer
                 }
@@ -350,7 +350,7 @@ Item {
         id: workspacesDots
 
         Row {
-            spacing: 6
+            spacing: Theme.dp(6)
 
             Repeater {
                 model: 6
@@ -358,8 +358,8 @@ Item {
                 Rectangle {
                     required property int index
 
-                    width: index === 0 ? 24 : 10
-                    height: 10
+                    width: index === 0 ? Theme.dp(24) : Theme.dp(10)
+                    height: Theme.dp(10)
                     radius: height / 2
                     color: index === 0 ? Theme.accent : Theme.withBlur(Theme._darken(Theme.subtext, 0.45))
                     anchors.verticalCenter: parent.verticalCenter
@@ -375,7 +375,7 @@ Item {
         id: workspacesNumbers
 
         Row {
-            spacing: 6
+            spacing: Theme.dp(6)
 
             Repeater {
                 model: 6
@@ -383,8 +383,8 @@ Item {
                 Rectangle {
                     required property int index
 
-                    width: index === 0 ? 30 : 20
-                    height: 20
+                    width: index === 0 ? Theme.dp(30) : Theme.dp(20)
+                    height: Theme.dp(20)
                     radius: height / 2
                     color: index === 0 ? Theme.accent : "transparent"
                     anchors.verticalCenter: parent.verticalCenter
@@ -409,15 +409,15 @@ Item {
         id: notificationsBadge
 
         Row {
-            spacing: 5
+            spacing: Theme.dp(5)
 
             MiniBell {
                 anchors.verticalCenter: parent.verticalCenter
             }
 
             Rectangle {
-                width: 16
-                height: 16
+                width: Theme.dp(16)
+                height: Theme.dp(16)
                 radius: height / 2
                 color: Theme.accent
                 anchors.verticalCenter: parent.verticalCenter
@@ -443,8 +443,8 @@ Item {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.rightMargin: -1
-                width: 7
-                height: 7
+                width: Theme.dp(7)
+                height: Theme.dp(7)
                 radius: 3.5
                 color: Theme.accent
                 border.width: 1.5
@@ -459,8 +459,8 @@ Item {
         id: notificationsChip
 
         Rectangle {
-            implicitWidth: chipRow.implicitWidth + 14
-            implicitHeight: 24
+            implicitWidth: chipRow.implicitWidth + Theme.dp(14)
+            implicitHeight: Theme.dp(24)
             radius: height / 2
             color: Theme.accent
 
@@ -468,7 +468,7 @@ Item {
                 id: chipRow
 
                 anchors.centerIn: parent
-                spacing: 5
+                spacing: Theme.dp(5)
 
                 MiniBell {
                     ink: Theme.fgAccent
@@ -492,13 +492,13 @@ Item {
     component MiniBell: Item {
         property color ink: Theme.text
 
-        implicitWidth: 17
-        implicitHeight: 17
+        implicitWidth: Theme.dp(17)
+        implicitHeight: Theme.dp(17)
 
         Icon {
             anchors.centerIn: parent
             name: "notifications"
-            size: 19
+            size: Theme.dp(19)
             fill: 1
             color: ink
         }
@@ -528,11 +528,11 @@ Item {
         property bool values: true
         readonly property var on: ["wifi", "bluetooth", "volume", "mic", "battery"]
 
-        spacing: 10
+        spacing: Theme.dp(10)
 
         Row {
             visible: parent.on.indexOf("volume") !== -1
-            spacing: 4
+            spacing: Theme.dp(4)
             anchors.verticalCenter: parent.verticalCenter
 
             MiniGlyph {
@@ -550,7 +550,7 @@ Item {
 
         Row {
             visible: parent.on.indexOf("mic") !== -1
-            spacing: 4
+            spacing: Theme.dp(4)
             anchors.verticalCenter: parent.verticalCenter
 
             MiniGlyph {
@@ -568,13 +568,13 @@ Item {
 
         Row {
             visible: parent.on.indexOf("battery") !== -1
-            spacing: 6
+            spacing: Theme.dp(6)
             anchors.verticalCenter: parent.verticalCenter
 
             Rectangle {
-                width: 22
-                height: 12
-                radius: 3
+                width: Theme.dp(22)
+                height: Theme.dp(12)
+                radius: Theme.dp(3)
                 color: "transparent"
                 border.width: 1.5
                 border.color: Theme.subtext
@@ -583,8 +583,8 @@ Item {
                 Rectangle {
                     x: 2.5
                     y: 2.5
-                    width: (parent.width - 5) * 0.8
-                    height: parent.height - 5
+                    width: (parent.width - Theme.dp(5)) * 0.8
+                    height: parent.height - Theme.dp(5)
                     radius: 1
                     color: Theme.subtext
                 }
@@ -608,8 +608,8 @@ Item {
         property string name: ""
         property color ink: Theme.text
 
-        implicitWidth: 14
-        implicitHeight: 14
+        implicitWidth: Theme.dp(14)
+        implicitHeight: Theme.dp(14)
 
         Icon {
             anchors.centerIn: parent
@@ -625,18 +625,18 @@ Item {
         id: trayCollapsed
 
         Row {
-            spacing: 4
+            spacing: Theme.dp(4)
 
             MiniGlyph {
                 name: "dashboard"
-                implicitWidth: 16
-                implicitHeight: 16
+                implicitWidth: Theme.dp(16)
+                implicitHeight: Theme.dp(16)
                 anchors.verticalCenter: parent.verticalCenter
             }
 
             Rectangle {
-                width: 16
-                height: 16
+                width: Theme.dp(16)
+                height: Theme.dp(16)
                 radius: height / 2
                 color: Theme.accent
                 anchors.verticalCenter: parent.verticalCenter
@@ -658,7 +658,7 @@ Item {
         id: trayIcons
 
         Row {
-            spacing: 6
+            spacing: Theme.dp(6)
 
             Repeater {
                 model: [Theme.accent, Theme.subtext, Theme.accentContainer]
@@ -666,9 +666,9 @@ Item {
                 Rectangle {
                     required property color modelData
 
-                    width: 16
-                    height: 16
-                    radius: 4
+                    width: Theme.dp(16)
+                    height: Theme.dp(16)
+                    radius: Theme.dp(4)
                     color: modelData
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -683,7 +683,7 @@ Item {
         id: privacyMarks
 
         Row {
-            spacing: 4
+            spacing: Theme.dp(4)
 
             Repeater {
                 model: [{
@@ -697,8 +697,8 @@ Item {
                 Rectangle {
                     required property var modelData
 
-                    width: 26
-                    height: 22
+                    width: Theme.dp(26)
+                    height: Theme.dp(22)
                     radius: height / 2
                     color: Theme.alpha(modelData.ink, 0.2)
 
@@ -720,9 +720,9 @@ Item {
         id: privacyDot
 
         Rectangle {
-            implicitWidth: 10
-            implicitHeight: 10
-            radius: 5
+            implicitWidth: Theme.dp(10)
+            implicitHeight: Theme.dp(10)
+            radius: Theme.dp(5)
             color: Theme.error
         }
 
@@ -733,8 +733,8 @@ Item {
 
         MiniGlyph {
             name: "power_settings_new"
-            implicitWidth: 17
-            implicitHeight: 17
+            implicitWidth: Theme.dp(17)
+            implicitHeight: Theme.dp(17)
         }
 
     }
@@ -743,8 +743,8 @@ Item {
         id: powerAccent
 
         Rectangle {
-            implicitWidth: 24
-            implicitHeight: 24
+            implicitWidth: Theme.dp(24)
+            implicitHeight: Theme.dp(24)
             radius: height / 2
             color: Theme.accent
 
@@ -762,12 +762,12 @@ Item {
         id: powerPanelList
 
         MiniPanel {
-            width: 110
+            width: Theme.dp(110)
 
             Column {
                 anchors.fill: parent
-                anchors.margins: 8
-                spacing: 5
+                anchors.margins: Theme.dp(8)
+                spacing: Theme.dp(5)
 
                 Repeater {
                     model: 5
@@ -775,18 +775,18 @@ Item {
                     Row {
                         required property int index
 
-                        spacing: 6
+                        spacing: Theme.dp(6)
 
                         Rectangle {
-                            width: 11
-                            height: 11
+                            width: Theme.dp(11)
+                            height: Theme.dp(11)
                             radius: height / 2
                             color: index > 2 ? Theme.errorContainer : Theme.accentContainer
                         }
 
                         Rectangle {
-                            width: 50
-                            height: 5
+                            width: Theme.dp(50)
+                            height: Theme.dp(5)
                             radius: 2.5
                             color: Theme.subtextDim
                             anchors.verticalCenter: parent.verticalCenter
@@ -806,13 +806,13 @@ Item {
         id: powerPanelGrid
 
         MiniPanel {
-            width: 130
-            height: 80
+            width: Theme.dp(130)
+            height: Theme.dp(80)
 
             Grid {
                 anchors.centerIn: parent
                 columns: 3
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 Repeater {
                     model: 6
@@ -820,20 +820,20 @@ Item {
                     Column {
                         required property int index
 
-                        spacing: 4
+                        spacing: Theme.dp(4)
 
                         Rectangle {
-                            width: 20
-                            height: 20
+                            width: Theme.dp(20)
+                            height: Theme.dp(20)
                             radius: height / 2
                             color: index > 3 ? Theme.errorContainer : Theme.accentContainer
                         }
 
                         Rectangle {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            width: 16
-                            height: 4
-                            radius: 2
+                            width: Theme.dp(16)
+                            height: Theme.dp(4)
+                            radius: Theme.dp(2)
                             color: Theme.subtextDim
                         }
 
@@ -851,12 +851,12 @@ Item {
         id: windowPlain
 
         Row {
-            spacing: 8
+            spacing: Theme.dp(8)
 
             Rectangle {
-                width: 17
-                height: 17
-                radius: 4
+                width: Theme.dp(17)
+                height: Theme.dp(17)
+                radius: Theme.dp(4)
                 color: Theme.accentContainer
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -877,8 +877,8 @@ Item {
         id: windowChip
 
         Rectangle {
-            implicitWidth: chipRow.implicitWidth + (Prefs.windowModuleText === "icon" ? 12 : 18)
-            implicitHeight: 26
+            implicitWidth: chipRow.implicitWidth + (Prefs.windowModuleText === "icon" ? Theme.dp(12) : Theme.dp(18))
+            implicitHeight: Theme.dp(26)
             radius: height / 2
             color: Theme.accentContainer
 
@@ -886,12 +886,12 @@ Item {
                 id: chipRow
 
                 anchors.centerIn: parent
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 Rectangle {
-                    width: 17
-                    height: 17
-                    radius: 4
+                    width: Theme.dp(17)
+                    height: Theme.dp(17)
+                    radius: Theme.dp(4)
                     color: Theme.accent
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -934,15 +934,15 @@ Item {
 
     // a play button on the accent
     component MiniPlay: Rectangle {
-        width: 22
-        height: 22
+        width: Theme.dp(22)
+        height: Theme.dp(22)
         radius: height / 2
         color: Theme.accent
 
         Icon {
             anchors.centerIn: parent
             name: "play_arrow"
-            size: 18
+            size: Theme.dp(18)
             fill: 1
             color: Theme.fgAccent
         }
@@ -951,11 +951,11 @@ Item {
 
     // a title and a line under it
     component MiniLines: Column {
-        spacing: 5
+        spacing: Theme.dp(5)
 
         Rectangle {
             width: parent.width * 0.8
-            height: 7
+            height: Theme.dp(7)
             radius: 3.5
             color: Theme.text
             opacity: 0.8
@@ -963,8 +963,8 @@ Item {
 
         Rectangle {
             width: parent.width * 0.5
-            height: 6
-            radius: 3
+            height: Theme.dp(6)
+            radius: Theme.dp(3)
             color: Theme.subtextDim
         }
 
@@ -972,14 +972,14 @@ Item {
 
     // a progress track, part played
     component MiniTrack: Rectangle {
-        height: 4
-        radius: 2
+        height: Theme.dp(4)
+        radius: Theme.dp(2)
         color: Theme.bgHigh
 
         Rectangle {
             width: parent.width * 0.4
             height: parent.height
-            radius: 2
+            radius: Theme.dp(2)
             color: Theme.accent
         }
 
@@ -987,8 +987,8 @@ Item {
 
     // a panel, shrunk: the frame the panel samples are drawn in
     component MiniPanel: Rectangle {
-        width: 150
-        height: 90
+        width: Theme.dp(150)
+        height: Theme.dp(90)
         radius: Theme.radiusMd
         color: Theme.bg
     }
@@ -1005,9 +1005,9 @@ Item {
             Rectangle {
                 required property int index
 
-                width: 7
-                height: 7
-                radius: 2
+                width: Theme.dp(7)
+                height: Theme.dp(7)
+                radius: Theme.dp(2)
                 color: index === 17 ? Theme.accent : Theme.bgHigh
             }
 

@@ -15,7 +15,7 @@ Item {
     readonly property string appName: group.row ? group.row.appName : ""
     readonly property bool expanded: group.row ? group.row.expanded === true : false
     readonly property bool stacked: group.count > 1 && !group.expanded
-    readonly property int peekDepth: group.stacked ? (group.count > 2 ? 11 : 6) : 0
+    readonly property int peekDepth: group.stacked ? (group.count > 2 ? Theme.dp(11) : Theme.dp(6)) : 0
     readonly property real headHeight: content.implicitHeight
     readonly property int cardRadius: Theme.shapeLg
 
@@ -35,9 +35,9 @@ Item {
         id: peekBack
 
         anchors.top: parent.top
-        x: 14
-        width: Math.max(0, parent.width - 28)
-        height: group.headHeight + 11
+        x: Theme.dp(14)
+        width: Math.max(0, parent.width - Theme.dp(28))
+        height: group.headHeight + Theme.dp(11)
         radius: group.cardRadius
         color: Theme.shade(Theme.bgHover, 6)
         opacity: group.stacked && group.count > 2 ? 1 : 0
@@ -56,9 +56,9 @@ Item {
         id: peekFront
 
         anchors.top: parent.top
-        x: 7
-        width: Math.max(0, parent.width - 14)
-        height: group.headHeight + 6
+        x: Theme.dp(7)
+        width: Math.max(0, parent.width - Theme.dp(14))
+        height: group.headHeight + Theme.dp(6)
         radius: group.cardRadius
         color: Theme.shade(Theme.bgHover, 3)
         opacity: group.stacked ? 1 : 0
@@ -77,12 +77,12 @@ Item {
         id: content
 
         width: parent.width
-        spacing: 6
+        spacing: Theme.dp(6)
 
         // expanded: the app gets a heading with its own clear
         Item {
             width: parent.width
-            height: group.expanded ? 28 : 0
+            height: group.expanded ? Theme.dp(28) : 0
             opacity: group.expanded ? 1 : 0
             visible: opacity > 0.01
             clip: true
@@ -91,15 +91,15 @@ Item {
                 id: groupAvatar
 
                 anchors.left: parent.left
-                anchors.leftMargin: 4
+                anchors.leftMargin: Theme.dp(4)
                 anchors.verticalCenter: parent.verticalCenter
-                size: 20
+                size: Theme.dp(20)
                 notification: group.items.length > 0 ? group.items[0] : null
             }
 
             Text {
                 anchors.left: groupAvatar.right
-                anchors.leftMargin: 8
+                anchors.leftMargin: Theme.dp(8)
                 anchors.verticalCenter: parent.verticalCenter
                 text: group.appName
                 color: Theme.text
@@ -112,7 +112,7 @@ Item {
             Row {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
+                spacing: Theme.dp(2)
 
                 NotifTextButton {
                     anchors.verticalCenter: parent.verticalCenter

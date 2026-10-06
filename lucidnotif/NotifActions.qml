@@ -57,7 +57,7 @@ Item {
         id: chipRow
 
         width: parent.width
-        spacing: 6
+        spacing: Theme.dp(6)
         opacity: actions.replyOpen ? 0 : 1
         visible: opacity > 0.01
 
@@ -94,7 +94,7 @@ Item {
         id: replyRow
 
         width: parent.width
-        spacing: 6
+        spacing: Theme.dp(6)
         opacity: actions.replyOpen ? 1 : 0
         visible: opacity > 0.01
 
@@ -102,7 +102,7 @@ Item {
             id: replyBox
 
             width: parent.width - sendButton.width - parent.spacing
-            height: 32
+            height: Theme.dp(32)
             radius: height / 2
             color: Theme.surfaceHighest
             border.width: 1
@@ -117,7 +117,7 @@ Item {
 
             Text {
                 anchors.left: parent.left
-                anchors.leftMargin: 12
+                anchors.leftMargin: Theme.dp(12)
                 anchors.verticalCenter: parent.verticalCenter
                 visible: replyInput.text.length === 0
                 text: "Message…"
@@ -131,8 +131,8 @@ Item {
                 id: replyInput
 
                 anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
+                anchors.leftMargin: Theme.dp(12)
+                anchors.rightMargin: Theme.dp(12)
                 verticalAlignment: Text.AlignVCenter
                 color: Theme.text
                 font.family: Theme.fontFamily
@@ -151,14 +151,14 @@ Item {
         Rectangle {
             id: sendButton
 
-            width: 32
-            height: 32
+            width: Theme.dp(32)
+            height: Theme.dp(32)
             radius: sendArea.pressed ? Theme.shapeMd : width / 2
             color: replyInput.text.length > 0 ? Theme.accent : Theme.bgHigh
 
             NotifIcon {
                 anchors.centerIn: parent
-                size: 17
+                size: Theme.dp(17)
                 path: Notifs.icons.send
                 color: replyInput.text.length > 0 ? Theme.fgAccent : Theme.subtextDim
             }

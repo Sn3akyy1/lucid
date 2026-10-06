@@ -57,7 +57,7 @@ Column {
     }
     readonly property int visibleCount: page.groups.connected.length + page.groups.saved.length + page.groups.nearby.length
 
-    spacing: 26
+    spacing: Theme.dp(26)
     Component.onCompleted: {
         Net.refresh();
         if (page.wifi && Networking.wifiEnabled)
@@ -136,10 +136,10 @@ Column {
 
             Row {
                 width: parent.width
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 M3TextField {
-                    width: parent.width - scanBox.implicitWidth - hiddenBtn.implicitWidth - 20
+                    width: parent.width - scanBox.implicitWidth - hiddenBtn.implicitWidth - Theme.dp(20)
                     placeholder: "Filter by name"
                     onEdited: (v) => {
                         return page.filter = v;
@@ -181,10 +181,10 @@ Column {
 
             Row {
                 width: parent.width
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 M3TextField {
-                    width: 220
+                    width: Theme.dp(220)
                     placeholder: "Network name"
                     onEdited: (v) => {
                         return page.hiddenSsid = v;
@@ -192,7 +192,7 @@ Column {
                 }
 
                 M3TextField {
-                    width: 220
+                    width: Theme.dp(220)
                     placeholder: "Password, if any"
                     onEdited: (v) => {
                         return page.hiddenPsk = v;
@@ -214,9 +214,9 @@ Column {
         Column {
             width: parent.width
             visible: page.wifiOn
-            topPadding: 4
-            bottomPadding: 8
-            spacing: 2
+            topPadding: Theme.dp(4)
+            bottomPadding: Theme.dp(8)
+            spacing: Theme.dp(2)
 
             GroupLabel {
                 text: "Connected"
@@ -267,8 +267,8 @@ Column {
                 width: parent.width
                 visible: page.visibleCount === 0
                 horizontalAlignment: Text.AlignHCenter
-                topPadding: 18
-                bottomPadding: 18
+                topPadding: Theme.dp(18)
+                bottomPadding: Theme.dp(18)
                 text: page.filter.trim() !== "" ? "Nothing matches that." : "No networks in range."
                 color: Theme.subtext
                 font.family: Theme.fontFamily
@@ -293,10 +293,10 @@ Column {
 
             Row {
                 width: parent.width
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 M3TextField {
-                    width: 220
+                    width: Theme.dp(220)
                     placeholder: "Hotspot name"
                     text: page.hotspotSsid
                     onEdited: (v) => {
@@ -305,7 +305,7 @@ Column {
                 }
 
                 M3TextField {
-                    width: 220
+                    width: Theme.dp(220)
                     placeholder: "Password, 8 characters or more"
                     onEdited: (v) => {
                         return page.hotspotPsk = v;
@@ -354,7 +354,7 @@ Column {
                 showDivider: wiredRow.index < Net.wiredDevices.length - 1
 
                 Row {
-                    spacing: 14
+                    spacing: Theme.dp(14)
 
                     CheckLine {
                         anchors.verticalCenter: parent.verticalCenter
@@ -403,7 +403,7 @@ Column {
                 showDivider: vpnRow.index < Net.vpns.length - 1
 
                 Row {
-                    spacing: 14
+                    spacing: Theme.dp(14)
 
                     CheckLine {
                         anchors.verticalCenter: parent.verticalCenter
@@ -473,7 +473,7 @@ Column {
                 showDivider: profRow.index < Net.profiles.length - 1
 
                 Row {
-                    spacing: 14
+                    spacing: Theme.dp(14)
 
                     CheckLine {
                         anchors.verticalCenter: parent.verticalCenter
@@ -505,9 +505,9 @@ Column {
         font.variableAxes: Theme.axes(Theme.fontTitleSm, 600, 0)
         font.weight: Font.DemiBold
         font.letterSpacing: 0.1
-        leftPadding: 22
-        topPadding: 14
-        bottomPadding: 6
+        leftPadding: Theme.dp(22)
+        topPadding: Theme.dp(14)
+        bottomPadding: Theme.dp(6)
     }
 
 }

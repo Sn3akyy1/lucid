@@ -7,7 +7,7 @@ Item {
     id: btn
 
     property string variant: "standard" // "standard" | "tonal" | "filled" | "outlined"
-    property int size: 40
+    property int size: Theme.dp(40)
     property int iconSize: Math.round(btn.size * 0.55)
     // a material symbol name
     property string iconPath: ""

@@ -109,7 +109,7 @@ Column {
 
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
     Component.onCompleted: Templates.refresh()
 
     FileView {

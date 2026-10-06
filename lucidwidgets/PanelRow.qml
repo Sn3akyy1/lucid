@@ -39,7 +39,7 @@ Item {
     }
 
     width: parent ? parent.width : 0
-    height: row.visible ? 64 : 0
+    height: row.visible ? Theme.dp(64) : 0
     visible: !row.closing && row.panel !== null && row.panel.cardMatches(row.wtype, row.wvariant)
     Component.onDestruction: row.unspot()
     onVisibleChanged: {
@@ -52,10 +52,10 @@ Item {
         id: plate
 
         anchors.fill: parent
-        topLeftRadius: row.first ? 20 : 4
-        topRightRadius: row.first ? 20 : 4
-        bottomLeftRadius: row.last ? 20 : 4
-        bottomRightRadius: row.last ? 20 : 4
+        topLeftRadius: row.first ? Theme.dp(20) : Theme.dp(4)
+        topRightRadius: row.first ? Theme.dp(20) : Theme.dp(4)
+        bottomLeftRadius: row.last ? Theme.dp(20) : Theme.dp(4)
+        bottomRightRadius: row.last ? Theme.dp(20) : Theme.dp(4)
         color: Theme.withBlur(Theme.surfaceHigh)
 
         Rectangle {
@@ -104,17 +104,17 @@ Item {
         id: mark
 
         anchors.left: parent.left
-        anchors.leftMargin: 12
+        anchors.leftMargin: Theme.dp(12)
         anchors.verticalCenter: parent.verticalCenter
-        width: 40
-        height: 40
+        width: Theme.dp(40)
+        height: Theme.dp(40)
         shape: "cookie9"
         color: row.pinned ? Theme.surfaceHighest : Theme.primaryContainer
 
         WidgetGlyph {
             anchors.centerIn: parent
             name: row.wtype
-            size: 19
+            size: Theme.dp(19)
             color: row.pinned ? Theme.subtext : Theme.fgPrimaryContainer
         }
 
@@ -122,9 +122,9 @@ Item {
 
     Column {
         anchors.left: mark.right
-        anchors.leftMargin: 14
+        anchors.leftMargin: Theme.dp(14)
         anchors.right: actions.left
-        anchors.rightMargin: 8
+        anchors.rightMargin: Theme.dp(8)
         anchors.verticalCenter: parent.verticalCenter
         spacing: 0
 
@@ -151,9 +151,9 @@ Item {
         id: actions
 
         anchors.right: parent.right
-        anchors.rightMargin: 8
+        anchors.rightMargin: Theme.dp(8)
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 2
+        spacing: Theme.dp(2)
 
         IconButton {
             size: "s"

@@ -29,7 +29,7 @@ Column {
         return out.join("\n");
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
 
     SettingCard {
         title: "KEYBINDS"
@@ -43,7 +43,7 @@ Column {
 
             Flow {
                 width: parent.width
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 M3Button {
                     text: "Add keybind"
@@ -86,13 +86,13 @@ Column {
 
     Item {
         width: parent.width
-        height: 46
+        height: Theme.dp(46)
         visible: Keybinds.binds.length > 0
 
         M3TextField {
             anchors.left: parent.left
             anchors.right: found.left
-            anchors.rightMargin: found.text === "" ? 0 : 16
+            anchors.rightMargin: found.text === "" ? 0 : Theme.dp(16)
             anchors.verticalCenter: parent.verticalCenter
             placeholder: "Search by key, action or category"
             text: page.query
@@ -105,7 +105,7 @@ Column {
             id: found
 
             anchors.right: parent.right
-            anchors.rightMargin: 6
+            anchors.rightMargin: Theme.dp(6)
             anchors.verticalCenter: parent.verticalCenter
             text: page.query.trim() === "" ? "" : page.shownBinds.length + " found"
             color: Theme.subtext
@@ -123,7 +123,7 @@ Column {
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg
         horizontalAlignment: Text.AlignHCenter
-        topPadding: 12
+        topPadding: Theme.dp(12)
     }
 
     Repeater {

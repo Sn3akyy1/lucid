@@ -10,13 +10,13 @@ Item {
     property color color: Theme.subtext
     property bool active: false
 
-    implicitWidth: 22
-    implicitHeight: 22
+    implicitWidth: Theme.dp(22)
+    implicitHeight: Theme.dp(22)
 
     Icon {
         anchors.centerIn: parent
         name: Prefs.settingsPage(glyph.kind) ? Prefs.settingsPage(glyph.kind).icon : "settings"
-        size: 22
+        size: Theme.dp(22)
         fill: glyph.active ? 1 : 0
         color: glyph.color
     }

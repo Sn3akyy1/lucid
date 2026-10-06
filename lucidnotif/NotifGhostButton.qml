@@ -6,8 +6,8 @@ Item {
     id: btn
 
     property string iconPath: ""
-    property int size: 26
-    property int iconSize: 17
+    property int size: Theme.dp(26)
+    property int iconSize: Theme.dp(17)
     property bool active: false
     property color tint: Theme.subtext
     property color activeTint: Theme.accent

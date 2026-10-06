@@ -78,7 +78,7 @@ BarPill {
 
         return out;
     }
-    readonly property int horizontalPadding: 10
+    readonly property int horizontalPadding: Theme.dp(10)
 
     // one entry per program, in the order they turned up
     function names(list) {
@@ -186,8 +186,8 @@ BarPill {
 
     }
     compactWidth: compactRow.implicitWidth + root.horizontalPadding * 2
-    panelWidth: 320
-    panelHeight: panelColumn.implicitHeight + 32
+    panelWidth: Theme.dp(320)
+    panelHeight: panelColumn.implicitHeight + Theme.dp(32)
     expandedRadius: Theme.shapeXl
 
     // the streams' names only arrive once they are bound; filtered on the type
@@ -232,13 +232,13 @@ BarPill {
             id: compactRow
 
             anchors.centerIn: parent
-            spacing: 4
+            spacing: Theme.dp(4)
 
             // nothing in use, kept in place: a quiet shield
             NotifIcon {
                 visible: root.rows.length === 0
                 anchors.verticalCenter: parent.verticalCenter
-                size: 16
+                size: Theme.dp(16)
                 path: root.icons.shield
                 color: Theme.subtextDim
             }
@@ -248,9 +248,9 @@ BarPill {
 
                 visible: root.dotFace && root.rows.length > 0
                 anchors.verticalCenter: parent.verticalCenter
-                width: 10
-                height: 10
-                radius: 5
+                width: Theme.dp(10)
+                height: Theme.dp(10)
+                radius: Theme.dp(5)
                 color: root.colourOf(root.topKind)
 
                 SequentialAnimation on opacity {
@@ -282,14 +282,14 @@ BarPill {
                     required property var modelData
 
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 26
-                    height: 22
-                    radius: 11
+                    width: Theme.dp(26)
+                    height: Theme.dp(22)
+                    radius: Theme.dp(11)
                     color: Theme.alpha(root.colourOf(mark.modelData.kind), 0.2)
 
                     NotifIcon {
                         anchors.centerIn: parent
-                        size: 15
+                        size: Theme.dp(15)
                         path: root.icons[mark.modelData.kind]
                         color: root.colourOf(mark.modelData.kind)
                     }
@@ -327,8 +327,8 @@ BarPill {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 16
-            spacing: 10
+            anchors.margins: Theme.dp(16)
+            spacing: Theme.dp(10)
 
             Text {
                 text: root.rows.length > 0 ? "In use now" : "Nothing in use"
@@ -357,7 +357,7 @@ BarPill {
                     required property var modelData
 
                     width: panelColumn.width
-                    height: rowColumn.implicitHeight + 20
+                    height: rowColumn.implicitHeight + Theme.dp(20)
                     radius: Theme.radiusMd
                     color: Theme.withBlur(Theme.bgActive)
 
@@ -365,16 +365,16 @@ BarPill {
                         id: badge
 
                         anchors.left: parent.left
-                        anchors.leftMargin: 10
+                        anchors.leftMargin: Theme.dp(10)
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 34
-                        height: 34
-                        radius: 17
+                        width: Theme.dp(34)
+                        height: Theme.dp(34)
+                        radius: Theme.dp(17)
                         color: Theme.alpha(root.colourOf(useRow.modelData.kind), 0.18)
 
                         NotifIcon {
                             anchors.centerIn: parent
-                            size: 18
+                            size: Theme.dp(18)
                             path: root.icons[useRow.modelData.kind]
                             color: root.colourOf(useRow.modelData.kind)
                         }
@@ -385,11 +385,11 @@ BarPill {
                         id: rowColumn
 
                         anchors.left: badge.right
-                        anchors.leftMargin: 12
+                        anchors.leftMargin: Theme.dp(12)
                         anchors.right: stop.visible ? stop.left : parent.right
-                        anchors.rightMargin: 10
+                        anchors.rightMargin: Theme.dp(10)
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
+                        spacing: Theme.dp(2)
 
                         Text {
                             width: parent.width
@@ -419,11 +419,11 @@ BarPill {
 
                         visible: useRow.modelData.kind === "screen" && root.recording
                         anchors.right: parent.right
-                        anchors.rightMargin: 10
+                        anchors.rightMargin: Theme.dp(10)
                         anchors.verticalCenter: parent.verticalCenter
-                        width: stopLabel.implicitWidth + 24
-                        height: 32
-                        radius: 16
+                        width: stopLabel.implicitWidth + Theme.dp(24)
+                        height: Theme.dp(32)
+                        radius: Theme.dp(16)
                         color: stopArea.containsMouse ? Theme.error : Theme.alpha(Theme.error, 0.85)
 
                         Text {

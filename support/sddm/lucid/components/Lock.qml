@@ -23,6 +23,15 @@ QtObject {
     readonly property string initials: root.initialsOf(root.displayName)
     // a picker is only worth offering when there is a choice to make
     readonly property bool canSwitchUser: root.accounts.length > 1 || root.manual
+    // whose wallpaper and colours the greeter wears. a typed, unlisted name
+    // keeps the last account's rather than dropping to the fallback
+    property string lookName: ""
+
+    onAccountChanged: {
+        if (root.account)
+            root.lookName = root.account.name;
+
+    }
 
     function nameOf(a) {
         return a.realName !== "" ? a.realName : a.name;

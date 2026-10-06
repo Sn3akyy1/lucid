@@ -19,16 +19,16 @@ Item {
     property bool selected: false
     property bool disabled: false
     property int supportingLines: 1
-    property real outerRadius: 20
-    property real innerRadius: 5
+    property real outerRadius: Theme.dp(20)
+    property real innerRadius: Theme.dp(5)
     property alias leading: leadSlot.data
     property alias trailing: trailSlot.data
     readonly property bool hasLeading: li.icon !== "" || leadSlot.children.length > 0
 
     signal clicked()
 
-    implicitHeight: Math.max(li.supporting !== "" || li.overline !== "" ? 64 : 52, col.implicitHeight + 20)
-    implicitWidth: 320
+    implicitHeight: Math.max(li.supporting !== "" || li.overline !== "" ? Theme.dp(64) : Theme.dp(52), col.implicitHeight + Theme.dp(20))
+    implicitWidth: Theme.dp(320)
     opacity: li.disabled ? Theme.disabledContent : 1
 
     Rectangle {
@@ -62,17 +62,17 @@ Item {
         id: leadBox
 
         visible: li.hasLeading
-        width: li.hasLeading ? 40 : 0
-        height: 40
+        width: li.hasLeading ? Theme.dp(40) : 0
+        height: Theme.dp(40)
         anchors.left: parent.left
-        anchors.leftMargin: 14
+        anchors.leftMargin: Theme.dp(14)
         anchors.verticalCenter: parent.verticalCenter
 
         Icon {
             visible: li.icon !== ""
             anchors.centerIn: parent
             name: li.icon
-            size: 22
+            size: Theme.dp(22)
             fill: li.selected ? 1 : li.iconFill
             color: li.selected ? Theme.fgSecondaryContainer : li.iconColor
         }
@@ -89,9 +89,9 @@ Item {
         id: col
 
         anchors.left: li.hasLeading ? leadBox.right : parent.left
-        anchors.leftMargin: li.hasLeading ? 12 : 18
+        anchors.leftMargin: li.hasLeading ? Theme.dp(12) : Theme.dp(18)
         anchors.right: trailSlot.left
-        anchors.rightMargin: 12
+        anchors.rightMargin: Theme.dp(12)
         anchors.verticalCenter: parent.verticalCenter
         spacing: 1
 
@@ -130,9 +130,9 @@ Item {
         id: trailSlot
 
         anchors.right: parent.right
-        anchors.rightMargin: 16
+        anchors.rightMargin: Theme.dp(16)
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 8
+        spacing: Theme.dp(8)
     }
 
 }

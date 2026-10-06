@@ -15,7 +15,7 @@ Item {
         id: col
 
         width: root.width
-        spacing: 4
+        spacing: Theme.dp(4)
 
         Repeater {
             model: Power.available
@@ -27,26 +27,26 @@ Item {
                 readonly property bool selected: Power.profile === option.modelData
 
                 width: col.width
-                height: 50
-                radius: 12
+                height: Theme.dp(50)
+                radius: Theme.dp(12)
                 color: option.selected ? Theme.withBlur(Theme.bgActive) : (optionArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent")
 
                 Row {
                     anchors.fill: parent
-                    anchors.margins: 9
-                    spacing: 10
+                    anchors.margins: Theme.dp(9)
+                    spacing: Theme.dp(10)
 
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 30
-                        height: 30
-                        radius: 9
+                        width: Theme.dp(30)
+                        height: Theme.dp(30)
+                        radius: Theme.dp(9)
                         color: Theme.alpha(Theme.accent, option.selected ? 0.22 : 0.12)
 
                         Icon {
                             anchors.centerIn: parent
                             name: Power.symbol(option.modelData)
-                            size: 18
+                            size: Theme.dp(18)
                             fill: 1
                             color: Theme.accent
                         }
@@ -62,7 +62,7 @@ Item {
 
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - 30 - 18 - 20
+                        width: parent.width - Theme.dp(30) - Theme.dp(18) - Theme.dp(20)
                         spacing: 1
 
                         Text {
@@ -88,18 +88,18 @@ Item {
 
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 18
-                        height: 18
-                        radius: 9
+                        width: Theme.dp(18)
+                        height: Theme.dp(18)
+                        radius: Theme.dp(9)
                         color: "transparent"
                         border.width: 2
                         border.color: option.selected ? Theme.accent : Theme.outlineStrong
 
                         Rectangle {
                             anchors.centerIn: parent
-                            width: 8
-                            height: 8
-                            radius: 4
+                            width: Theme.dp(8)
+                            height: Theme.dp(8)
+                            radius: Theme.dp(4)
                             color: Theme.accent
                             scale: option.selected ? 1 : 0
 
@@ -140,9 +140,9 @@ Item {
         Text {
             visible: Power.degradation !== ""
             width: col.width
-            leftPadding: 4
-            rightPadding: 4
-            topPadding: 4
+            leftPadding: Theme.dp(4)
+            rightPadding: Theme.dp(4)
+            topPadding: Theme.dp(4)
             text: Power.degradationText(Power.degradation)
             color: Theme.warning
             font.family: Theme.fontFamily
@@ -153,9 +153,9 @@ Item {
         Text {
             visible: Power.holds.length > 0
             width: col.width
-            leftPadding: 4
-            rightPadding: 4
-            topPadding: 4
+            leftPadding: Theme.dp(4)
+            rightPadding: Theme.dp(4)
+            topPadding: Theme.dp(4)
             text: {
                 const h = Power.holds[0];
                 if (!h)
@@ -173,9 +173,9 @@ Item {
         Text {
             visible: root.gameModeOn
             width: col.width
-            leftPadding: 4
-            rightPadding: 4
-            topPadding: 4
+            leftPadding: Theme.dp(4)
+            rightPadding: Theme.dp(4)
+            topPadding: Theme.dp(4)
             text: "Game mode is on, and may set a profile of its own when it turns off."
             color: Theme.subtext
             font.family: Theme.fontFamily

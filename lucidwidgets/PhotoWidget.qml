@@ -85,8 +85,8 @@ WidgetBody {
             source: w.variant === "frame" ? w.current : ""
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
-            sourceSize.width: 720
-            sourceSize.height: 720
+            sourceSize.width: Theme.dp(720)
+            sourceSize.height: Theme.dp(720)
             opacity: frameImg.status === Image.Ready ? 1 : 0
 
             Behavior on opacity {
@@ -102,10 +102,10 @@ WidgetBody {
             visible: w.caption !== "" && w.opt("showDate") !== false
             anchors.left: parent.left
             anchors.bottom: parent.bottom
-            anchors.margins: 12
-            width: capText.implicitWidth + 20
-            height: 26
-            radius: 13
+            anchors.margins: Theme.dp(12)
+            width: capText.implicitWidth + Theme.dp(20)
+            height: Theme.dp(26)
+            radius: Theme.dp(13)
             color: Theme.alpha(Theme.bgOpaque, 0.78)
 
             LText {
@@ -137,14 +137,14 @@ WidgetBody {
     Item {
         visible: w.variant === "polaroid"
         anchors.fill: parent
-        anchors.margins: 12
+        anchors.margins: Theme.dp(12)
 
         ClippingRectangle {
             id: printCard
 
             width: parent.width
-            height: parent.height - 34
-            radius: 10
+            height: parent.height - Theme.dp(34)
+            radius: Theme.dp(10)
             color: Theme.alpha(w.ink, 0.06)
 
             Image {
@@ -152,15 +152,15 @@ WidgetBody {
                 source: w.variant === "polaroid" ? w.current : ""
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
-                sourceSize.width: 720
-                sourceSize.height: 720
+                sourceSize.width: Theme.dp(720)
+                sourceSize.height: Theme.dp(720)
             }
 
         }
 
         LText {
             anchors.top: printCard.bottom
-            anchors.topMargin: 6
+            anchors.topMargin: Theme.dp(6)
             anchors.horizontalCenter: parent.horizontalCenter
             role: "titleSmall"
             weight: 520
@@ -174,13 +174,13 @@ WidgetBody {
     Column {
         visible: w.count === 0
         anchors.centerIn: parent
-        width: parent.width - 32
-        spacing: 6
+        width: parent.width - Theme.dp(32)
+        spacing: Theme.dp(6)
 
         Icon {
             anchors.horizontalCenter: parent.horizontalCenter
             name: "photo_library"
-            size: 30
+            size: Theme.dp(30)
             color: w.inkFaint
         }
 

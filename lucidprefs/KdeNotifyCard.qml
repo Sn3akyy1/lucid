@@ -20,9 +20,9 @@ SettingCard {
 
     Column {
         width: parent.width
-        spacing: 2
-        topPadding: card.list.length > 0 ? 6 : 0
-        bottomPadding: card.list.length > 0 ? 10 : 0
+        spacing: Theme.dp(2)
+        topPadding: card.list.length > 0 ? Theme.dp(6) : 0
+        bottomPadding: card.list.length > 0 ? Theme.dp(10) : 0
 
         Repeater {
             model: card.list
@@ -38,9 +38,9 @@ SettingCard {
                 width: parent.width
 
                 Rectangle {
-                    width: parent.width - 24
-                    x: 12
-                    height: inner.implicitHeight + 22
+                    width: parent.width - Theme.dp(24)
+                    x: Theme.dp(12)
+                    height: inner.implicitHeight + Theme.dp(22)
                     radius: Theme.radiusMd
                     color: noteArea.containsMouse ? Theme.bgHover : Theme.bgSunken
 
@@ -63,10 +63,10 @@ SettingCard {
 
                         anchors.left: parent.left
                         anchors.right: dismissBtn.left
-                        anchors.leftMargin: 16
-                        anchors.rightMargin: 10
+                        anchors.leftMargin: Theme.dp(16)
+                        anchors.rightMargin: Theme.dp(10)
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 3
+                        spacing: Theme.dp(3)
 
                         Text {
                             width: parent.width
@@ -104,8 +104,8 @@ SettingCard {
                         }
 
                         Row {
-                            spacing: 10
-                            topPadding: 4
+                            spacing: Theme.dp(10)
+                            topPadding: Theme.dp(4)
                             visible: note.canReply && !note.replying
 
                             M3Button {
@@ -118,14 +118,14 @@ SettingCard {
 
                         Row {
                             width: parent.width
-                            spacing: 10
-                            topPadding: 4
+                            spacing: Theme.dp(10)
+                            topPadding: Theme.dp(4)
                             visible: note.replying
 
                             M3TextField {
                                 id: replyField
 
-                                width: parent.width - 100
+                                width: parent.width - Theme.dp(100)
                                 placeholder: "Type a reply…"
                                 onAccepted: (v) => {
                                     if (v.trim() === "")
@@ -151,13 +151,13 @@ SettingCard {
                     Rectangle {
                         id: dismissBtn
 
-                        width: 30
-                        height: 30
-                        radius: 15
+                        width: Theme.dp(30)
+                        height: Theme.dp(30)
+                        radius: Theme.dp(15)
                         anchors.right: parent.right
-                        anchors.rightMargin: 12
+                        anchors.rightMargin: Theme.dp(12)
                         anchors.top: parent.top
-                        anchors.topMargin: 11
+                        anchors.topMargin: Theme.dp(11)
                         visible: note.modelData.dismissable
                         color: dismissArea.containsMouse ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent"
 
@@ -171,7 +171,7 @@ SettingCard {
                         Icon {
                             anchors.centerIn: parent
                             name: "close"
-                            size: 18
+                            size: Theme.dp(18)
                             color: Theme.subtext
                         }
 
@@ -190,7 +190,7 @@ SettingCard {
 
                 Item {
                     width: 1
-                    height: 6
+                    height: Theme.dp(6)
                 }
 
             }

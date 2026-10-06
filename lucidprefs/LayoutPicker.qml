@@ -83,8 +83,8 @@ Item {
         id: card
 
         anchors.centerIn: parent
-        width: Math.min(460, picker.width - 80)
-        height: Math.min(520, picker.height - 80)
+        width: Math.min(Theme.dp(460), picker.width - Theme.dp(80))
+        height: Math.min(Theme.dp(520), picker.height - Theme.dp(80))
         radius: Theme.radiusXl
         color: Theme.bgHigh
         clip: true
@@ -100,7 +100,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 22
+            anchors.margins: Theme.dp(22)
             text: picker.heading
             color: Theme.text
             font.family: Theme.fontFamily
@@ -115,10 +115,10 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: cardTitle.bottom
-            anchors.leftMargin: 22
-            anchors.rightMargin: 22
-            anchors.topMargin: 14
-            height: 46
+            anchors.leftMargin: Theme.dp(22)
+            anchors.rightMargin: Theme.dp(22)
+            anchors.topMargin: Theme.dp(14)
+            height: Theme.dp(46)
             radius: Theme.shapeLg
             color: Theme.bgSunken
             border.width: searchInput.activeFocus ? 2 : 1
@@ -128,8 +128,8 @@ Item {
                 id: searchInput
 
                 anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
+                anchors.leftMargin: Theme.dp(12)
+                anchors.rightMargin: Theme.dp(12)
                 verticalAlignment: TextInput.AlignVCenter
                 color: Theme.text
                 font.family: Theme.fontFamily
@@ -149,7 +149,7 @@ Item {
 
             Text {
                 anchors.left: parent.left
-                anchors.leftMargin: 12
+                anchors.leftMargin: Theme.dp(12)
                 anchors.verticalCenter: parent.verticalCenter
                 text: "Search " + picker.items.length + " layouts and variants"
                 color: Theme.subtextDim
@@ -162,7 +162,7 @@ Item {
 
         Text {
             anchors.centerIn: parent
-            width: card.width - 60
+            width: card.width - Theme.dp(60)
             text: picker.items.length === 0 ? "The layout list could not be read" : "No layouts match “" + picker.filter + "”"
             color: Theme.subtextDim
             font.family: Theme.fontFamily
@@ -179,8 +179,8 @@ Item {
             anchors.right: parent.right
             anchors.top: searchBox.bottom
             anchors.bottom: parent.bottom
-            anchors.margins: 12
-            anchors.topMargin: 10
+            anchors.margins: Theme.dp(12)
+            anchors.topMargin: Theme.dp(10)
             clip: true
             model: picker.matches
             boundsBehavior: Flickable.StopAtBounds
@@ -218,10 +218,10 @@ Item {
                 id: listBar
 
                 policy: ScrollBar.AlwaysOn
-                width: 10
+                width: Theme.dp(10)
 
                 contentItem: Rectangle {
-                    implicitWidth: listBar.hovered || listBar.pressed ? 8 : 5
+                    implicitWidth: listBar.hovered || listBar.pressed ? Theme.dp(8) : Theme.dp(5)
                     radius: width / 2
                     color: listBar.pressed ? Theme.accent : (listBar.hovered ? Theme.alpha(Theme.text, 0.4) : Theme.alpha(Theme.text, 0.2))
 
@@ -245,16 +245,16 @@ Item {
 
                 required property var modelData
 
-                width: list.width - 14
-                height: 54
+                width: list.width - Theme.dp(14)
+                height: Theme.dp(54)
                 radius: Theme.shapeLg
                 color: rowArea.containsMouse ? Theme.bgHover : "transparent"
 
                 Column {
                     anchors.left: parent.left
-                    anchors.leftMargin: 14
+                    anchors.leftMargin: Theme.dp(14)
                     anchors.right: parent.right
-                    anchors.rightMargin: 14
+                    anchors.rightMargin: Theme.dp(14)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 1
 

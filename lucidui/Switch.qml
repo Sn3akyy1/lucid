@@ -11,8 +11,8 @@ Item {
 
     signal toggled(bool value)
 
-    implicitWidth: 48
-    implicitHeight: 28
+    implicitWidth: Theme.dp(48)
+    implicitHeight: Theme.dp(28)
     opacity: sw.disabled ? Theme.disabledContent : 1
 
     Rectangle {
@@ -36,7 +36,7 @@ Item {
     Rectangle {
         id: thumb
 
-        property real d: area.pressed && !sw.disabled ? 26 : (sw.checked || sw.icons ? 22 : 14)
+        property real d: area.pressed && !sw.disabled ? Theme.dp(26) : (sw.checked || sw.icons ? Theme.dp(22) : Theme.dp(14))
         // the travel eases on its own; an eased x that also followed the easing
         // size restarted every frame and sat still until the size had settled
         property real pos: sw.checked ? 1 : 0
@@ -45,7 +45,7 @@ Item {
         height: thumb.d
         radius: thumb.d / 2
         anchors.verticalCenter: parent.verticalCenter
-        x: 3 + (22 - thumb.d) / 2 + thumb.pos * (sw.width - 28)
+        x: Theme.dp(3) + (Theme.dp(22) - thumb.d) / 2 + thumb.pos * (sw.width - Theme.dp(28))
         color: sw.checked ? Theme.fgPrimary : Theme.outlineStrong
 
         Behavior on pos {
@@ -75,9 +75,9 @@ Item {
 
         Rectangle {
             anchors.centerIn: parent
-            width: 38
-            height: 38
-            radius: 19
+            width: Theme.dp(38)
+            height: Theme.dp(38)
+            radius: Theme.dp(19)
             color: sw.checked ? Theme.primary : Theme.text
             opacity: sw.disabled ? 0 : (area.pressed ? Theme.statePressed : (area.containsMouse ? Theme.stateHover : 0))
         }
@@ -86,7 +86,7 @@ Item {
             anchors.centerIn: parent
             visible: sw.icons
             name: sw.checked ? "check" : "close"
-            size: 15
+            size: Theme.dp(15)
             weight: 600
             color: sw.checked ? Theme.fgPrimaryContainer : Theme.surfaceHighest
             opacity: sw.checked ? 1 : 0.9
@@ -98,7 +98,7 @@ Item {
         id: area
 
         anchors.fill: parent
-        anchors.margins: -4
+        anchors.margins: -Theme.dp(4)
         hoverEnabled: true
         enabled: !sw.disabled
         cursorShape: Qt.PointingHandCursor

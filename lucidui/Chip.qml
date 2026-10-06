@@ -19,8 +19,8 @@ Item {
     readonly property bool showLead: (chip.kind === "filter" && chip.selected) || chip.icon !== ""
     readonly property color content: chip.selected ? Theme.fgSecondaryContainer : (chip.kind === "assist" ? Theme.text : Theme.subtext)
 
-    implicitHeight: 30
-    implicitWidth: row.implicitWidth + (chip.showLead ? 10 : 14) + (chip.closable ? 8 : 14)
+    implicitHeight: Theme.dp(30)
+    implicitWidth: row.implicitWidth + (chip.showLead ? Theme.dp(10) : Theme.dp(14)) + (chip.closable ? Theme.dp(8) : Theme.dp(14))
     opacity: chip.disabled ? Theme.disabledContent : 1
 
     Behavior on implicitWidth {
@@ -34,7 +34,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 8
+        radius: Theme.dp(8)
         color: chip.selected ? Theme.secondaryContainer : "transparent"
         border.width: chip.selected ? 0 : 1
         border.color: Theme.outline
@@ -47,7 +47,7 @@ Item {
         }
 
         StateLayer {
-            radius: 8
+            radius: Theme.dp(8)
             tint: chip.content
             disabled: chip.disabled
             onClicked: chip.clicked()
@@ -59,14 +59,14 @@ Item {
         id: row
 
         anchors.verticalCenter: parent.verticalCenter
-        x: chip.showLead ? 8 : 14
-        spacing: 6
+        x: chip.showLead ? Theme.dp(8) : Theme.dp(14)
+        spacing: Theme.dp(6)
 
         Icon {
             visible: chip.showLead
             anchors.verticalCenter: parent.verticalCenter
             name: chip.kind === "filter" && chip.selected ? "check" : chip.icon
-            size: 17
+            size: Theme.dp(17)
             color: chip.selected ? Theme.fgSecondaryContainer : Theme.primary
         }
 
@@ -81,12 +81,12 @@ Item {
             visible: chip.closable
             anchors.verticalCenter: parent.verticalCenter
             name: "close"
-            size: 16
+            size: Theme.dp(16)
             color: chip.content
 
             MouseArea {
                 anchors.fill: parent
-                anchors.margins: -4
+                anchors.margins: -Theme.dp(4)
                 cursorShape: Qt.PointingHandCursor
                 onClicked: chip.closeClicked()
             }

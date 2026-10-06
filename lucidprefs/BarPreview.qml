@@ -6,7 +6,7 @@ Rectangle {
 
     radius: Theme.radiusMd
     color: Theme.bgTile
-    implicitHeight: 150
+    implicitHeight: Theme.dp(150)
 
     Rectangle {
         id: screen
@@ -39,7 +39,7 @@ Rectangle {
         readonly property real gap: screen.unit * 3
 
         anchors.fill: parent
-        anchors.margins: 14
+        anchors.margins: Theme.dp(14)
         radius: Theme.radiusXs
         color: Theme.bgSunken
         clip: true
@@ -264,9 +264,9 @@ Rectangle {
 
     Text {
         anchors.right: parent.right
-        anchors.rightMargin: 22
+        anchors.rightMargin: Theme.dp(22)
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 20
+        anchors.bottomMargin: Theme.dp(20)
         text: (Prefs.barNotch ? "Notches" : "Islands") + "  ·  " + (Prefs.barPopupMode ? "pop-up" : "morph")
         color: Theme.subtext
         font.family: Theme.fontFamily

@@ -9,7 +9,7 @@ Row {
     readonly property bool btShown: !!Lockscreen.btAdapter
     readonly property bool dndShown: Notifs.dnd
 
-    spacing: 3
+    spacing: Theme.dp(3)
 
     component Chip: Rectangle {
         id: chip
@@ -21,8 +21,8 @@ Row {
         property bool lead: false
         property bool tail: false
 
-        height: 40
-        width: content.implicitWidth + 32
+        height: Theme.dp(40)
+        width: content.implicitWidth + Theme.dp(32)
         color: Lockscreen.card
         topLeftRadius: chip.lead ? height / 2 : Theme.shapeSm
         bottomLeftRadius: chip.lead ? height / 2 : Theme.shapeSm
@@ -33,12 +33,12 @@ Row {
             id: content
 
             anchors.centerIn: parent
-            spacing: 9
+            spacing: Theme.dp(9)
 
             LockGlyph {
                 anchors.verticalCenter: parent.verticalCenter
                 name: chip.glyph
-                size: 18
+                size: Theme.dp(18)
                 color: chip.tone
             }
 

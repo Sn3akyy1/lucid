@@ -51,8 +51,8 @@ Item {
         id: card
 
         anchors.centerIn: parent
-        width: Math.min(460, dialog.width - 64)
-        height: cardCol.implicitHeight + 56
+        width: Math.min(Theme.dp(460), dialog.width - Theme.dp(64))
+        height: cardCol.implicitHeight + Theme.dp(56)
         radius: Theme.shapeXl
         color: Theme.bgHigh
         scale: dialog.shown ? 1 : 0.88
@@ -68,13 +68,13 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 28
-            spacing: 12
+            anchors.margins: Theme.dp(28)
+            spacing: Theme.dp(12)
 
             Icon {
                 anchors.horizontalCenter: parent.horizontalCenter
                 name: "warning"
-                size: 26
+                size: Theme.dp(26)
                 color: Theme.error
             }
 
@@ -104,13 +104,13 @@ Item {
 
             Item {
                 width: parent.width
-                height: 2
+                height: Theme.dp(2)
             }
 
             // the files are the half that cannot be undone, so it is its own choice
             Rectangle {
                 width: parent.width
-                height: fileCol.implicitHeight + 32
+                height: fileCol.implicitHeight + Theme.dp(32)
                 radius: Theme.shapeLg
                 color: dialog.removeFiles ? Theme.errorContainer : Theme.bgSunken
 
@@ -127,8 +127,8 @@ Item {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    anchors.margins: 16
-                    spacing: 8
+                    anchors.margins: Theme.dp(16)
+                    spacing: Theme.dp(8)
 
                     CheckLine {
                         label: "Delete their home folder as well"
@@ -154,12 +154,12 @@ Item {
 
             Item {
                 width: parent.width
-                height: 6
+                height: Theme.dp(6)
             }
 
             Row {
                 anchors.right: parent.right
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 M3Button {
                     text: "Cancel"

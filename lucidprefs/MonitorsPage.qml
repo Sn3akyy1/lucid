@@ -81,7 +81,7 @@ Column {
         };
     })
 
-    spacing: 26
+    spacing: Theme.dp(26)
 
     SettingCard {
         visible: Monitors.moduleProbed && !Monitors.moduleInstalled
@@ -118,7 +118,7 @@ Column {
 
             Column {
                 width: parent.width
-                spacing: 16
+                spacing: Theme.dp(16)
 
                 MonitorMap {
                     width: parent.width
@@ -127,7 +127,7 @@ Column {
                 }
 
                 Row {
-                    spacing: 8
+                    spacing: Theme.dp(8)
 
                     M3Button {
                         text: "Arrange automatically"
@@ -167,7 +167,7 @@ Column {
             readonly property bool on: Monitors.isOn(unit.key)
 
             width: parent ? parent.width : 0
-            spacing: 12
+            spacing: Theme.dp(12)
             visible: unit.out !== null
 
             Column {
@@ -175,7 +175,7 @@ Column {
                 spacing: 1
 
                 Text {
-                    leftPadding: 22
+                    leftPadding: Theme.dp(22)
                     text: unit.out ? (Monitors.liveCount > 1 ? Monitors.numberFor(unit.key) + " · " + unit.out.name : unit.out.name) : ""
                     color: Theme.accent
                     font.family: Theme.fontFamily
@@ -186,8 +186,8 @@ Column {
                 }
 
                 Text {
-                    width: parent.width - 44
-                    leftPadding: 22
+                    width: parent.width - Theme.dp(44)
+                    leftPadding: Theme.dp(22)
                     text: page.summary(unit.key)
                     color: Theme.subtext
                     font.family: Theme.fontFamily
@@ -301,7 +301,7 @@ Column {
                     disabledReason: page.offReason
 
                     M3Segmented {
-                        width: Math.min(parent.width, 340)
+                        width: Math.min(parent.width, Theme.dp(340))
                         enabled: unit.on
                         current: Monitors.transformOf(unit.key)
                         options: Monitors.transforms.map((t) => {
@@ -325,7 +325,7 @@ Column {
                     disabledReason: page.offReason
 
                     M3Segmented {
-                        width: Math.min(parent.width, 400)
+                        width: Math.min(parent.width, Theme.dp(400))
                         enabled: unit.on
                         current: Monitors.vrrOf(unit.key)
                         options: [{
@@ -503,7 +503,7 @@ Column {
             stacked: true
 
             M3Segmented {
-                width: Math.min(parent.width, 320)
+                width: Math.min(parent.width, Theme.dp(320))
                 current: Monitors.workspacesSplit ? "split" : "shared"
                 options: [{
                     "key": "shared",
@@ -626,7 +626,7 @@ Column {
             stacked: true
 
             M3Segmented {
-                width: Math.min(parent.width, 460)
+                width: Math.min(parent.width, Theme.dp(460))
                 current: Prefs.nightLightSchedule
                 options: [{
                     "key": "off",
@@ -652,12 +652,12 @@ Column {
             showDivider: false
 
             Row {
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 M3TextField {
                     id: nightFrom
 
-                    width: 96
+                    width: Theme.dp(96)
                     placeholder: "21:00"
                     text: Prefs.minutesText(Prefs.nightLightFrom)
                     onAccepted: (v) => {
@@ -680,7 +680,7 @@ Column {
                 M3TextField {
                     id: nightTo
 
-                    width: 96
+                    width: Theme.dp(96)
                     placeholder: "07:00"
                     text: Prefs.minutesText(Prefs.nightLightTo)
                     onAccepted: (v) => {

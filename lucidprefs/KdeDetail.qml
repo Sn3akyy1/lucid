@@ -20,18 +20,18 @@ Column {
 
     signal back()
 
-    spacing: 26
+    spacing: Theme.dp(26)
 
     Item {
         width: parent.width
-        height: 64
+        height: Theme.dp(64)
 
         Rectangle {
             id: backBtn
 
-            width: 38
-            height: 38
-            radius: 19
+            width: Theme.dp(38)
+            height: Theme.dp(38)
+            radius: Theme.dp(19)
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             color: backArea.containsMouse ? Theme.bgHover : Theme.bgTile
@@ -46,7 +46,7 @@ Column {
             Icon {
                 anchors.centerIn: parent
                 name: "arrow_back"
-                size: 20
+                size: Theme.dp(20)
                 color: Theme.text
             }
 
@@ -65,18 +65,18 @@ Column {
             id: headGlyph
 
             anchors.left: backBtn.right
-            anchors.leftMargin: 18
+            anchors.leftMargin: Theme.dp(18)
             anchors.verticalCenter: parent.verticalCenter
-            size: 26
+            size: Theme.dp(26)
             kind: Bt.glyphKind(detail.dev.type)
             color: Theme.accent
         }
 
         Column {
             anchors.left: headGlyph.right
-            anchors.leftMargin: 14
+            anchors.leftMargin: Theme.dp(14)
             anchors.right: headTrailing.left
-            anchors.rightMargin: 14
+            anchors.rightMargin: Theme.dp(14)
             anchors.verticalCenter: parent.verticalCenter
             spacing: 1
 
@@ -108,12 +108,12 @@ Column {
 
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 14
+            spacing: Theme.dp(14)
 
             Row {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: detail.sig !== undefined && detail.sig.strength >= 0
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
@@ -151,7 +151,7 @@ Column {
             disabledReason: "This device has file sharing turned off."
 
             Row {
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 M3Button {
                     variant: "filled"
@@ -180,12 +180,12 @@ Column {
 
             Row {
                 width: parent.width
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 M3TextField {
                     id: textField
 
-                    width: parent.width - 110
+                    width: parent.width - Theme.dp(110)
                     enabled: detail.has("kdeconnect_share")
                     placeholder: "Type a message or paste a link…"
                     onEdited: (v) => {
@@ -234,7 +234,7 @@ Column {
 
             Flow {
                 width: parent.width
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 M3Button {
                     variant: "tonal"
@@ -332,7 +332,7 @@ Column {
 
             Flow {
                 width: parent.width
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 Repeater {
                     model: detail.dev.commands || []
@@ -364,7 +364,7 @@ Column {
 
             Flow {
                 width: parent.width
-                spacing: 16
+                spacing: Theme.dp(16)
 
                 Repeater {
                     model: detail.dev.supported || []
@@ -395,7 +395,7 @@ Column {
             showDivider: false
 
             Row {
-                spacing: 14
+                spacing: Theme.dp(14)
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter

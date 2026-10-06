@@ -37,7 +37,7 @@ Column {
         reader.running = true;
     }
 
-    spacing: 10
+    spacing: Theme.dp(10)
     onImageChanged: requery.restart()
     onActiveChanged: requery.restart()
     Component.onCompleted: requery.restart()
@@ -76,7 +76,7 @@ Column {
     }
 
     Row {
-        spacing: 12
+        spacing: Theme.dp(12)
         visible: colours.candidates.length > 0
         opacity: !colours.active ? 0.38 : (colours.loading ? 0.5 : 1)
 
@@ -89,11 +89,11 @@ Column {
                 required property var modelData
                 readonly property bool selected: colours.current === cand.modelData.index
 
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Rectangle {
-                    width: 72
-                    height: 52
+                    width: Theme.dp(72)
+                    height: Theme.dp(52)
                     radius: Theme.radiusMd
                     color: cand.modelData.primary
                     border.width: cand.selected ? 3 : (candArea.containsMouse ? 2 : 0)
@@ -103,10 +103,10 @@ Column {
                     Rectangle {
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
-                        anchors.margins: 6
-                        width: 14
-                        height: 14
-                        radius: 7
+                        anchors.margins: Theme.dp(6)
+                        width: Theme.dp(14)
+                        height: Theme.dp(14)
+                        radius: Theme.dp(7)
                         color: cand.modelData.source
                         border.width: 1
                         border.color: Theme.alpha("#000000", 0.25)
@@ -116,7 +116,7 @@ Column {
                         anchors.centerIn: parent
                         visible: cand.selected
                         name: "check"
-                        size: 24
+                        size: Theme.dp(24)
                         color: Theme.toneOf(Qt.color(cand.modelData.primary)) > 60 ? "#000000" : "#ffffff"
                         animateColor: false
                     }
@@ -134,7 +134,7 @@ Column {
                 }
 
                 Text {
-                    width: 72
+                    width: Theme.dp(72)
                     horizontalAlignment: Text.AlignHCenter
                     text: colours.ordinals[cand.modelData.index] || ""
                     color: cand.selected ? Theme.text : Theme.subtext

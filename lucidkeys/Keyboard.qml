@@ -21,8 +21,8 @@ PanelWindow {
     property var targetToplevel: null
     property var queue: []
 
-    readonly property real minKeySize: 32
-    readonly property real maxKeySize: 80
+    readonly property real minKeySize: Theme.dp(32)
+    readonly property real maxKeySize: Theme.dp(80)
     readonly property real keySize: Math.max(kbWindow.minKeySize, Math.min(kbWindow.maxKeySize, st.keySize))
     // -1 on either axis means never placed, i.e. centred above the dock
     readonly property real panelX: kbWindow.clampX(kbWindow.liveX >= 0 ? kbWindow.liveX : (st.panelX >= 0 ? st.panelX : (kbWindow.width - face.width) / 2))
@@ -258,7 +258,7 @@ PanelWindow {
 
             property real panelX: -1
             property real panelY: -1
-            property real keySize: 46
+            property real keySize: Theme.dp(46)
             property string keyLayer: "letters"
         }
 
@@ -269,7 +269,7 @@ PanelWindow {
 
         host: kbWindow
         x: kbWindow.panelX
-        y: kbWindow.panelY + (kbWindow.open ? 0 : 22)
+        y: kbWindow.panelY + (kbWindow.open ? 0 : Theme.dp(22))
         width: implicitWidth
         height: implicitHeight
         opacity: kbWindow.open ? 1 : 0

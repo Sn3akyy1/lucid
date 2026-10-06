@@ -7,11 +7,11 @@ Item {
     property real value: 0
     property color fillColor: Theme.accent
     property color trackColor: Theme.alpha(Theme.text, 0.12)
-    property real thickness: 8
+    property real thickness: Theme.dp(8)
     property real animated: meter.value
 
     implicitHeight: meter.thickness
-    implicitWidth: 120
+    implicitWidth: Theme.dp(120)
 
     Behavior on animated {
         NumberAnimation {

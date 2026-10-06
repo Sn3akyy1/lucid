@@ -23,7 +23,7 @@ Item {
 
     signal addRequested()
 
-    implicitHeight: 404
+    implicitHeight: Theme.dp(404)
 
     Timer {
         interval: 1000
@@ -36,8 +36,8 @@ Item {
     Rectangle {
         id: hero
 
-        width: 250
-        height: 330
+        width: Theme.dp(250)
+        height: Theme.dp(330)
         radius: Theme.shapeXl
         color: Theme.withBlur(Theme.primaryContainer)
         clip: true
@@ -45,8 +45,8 @@ Item {
         // a scalloped dial that turns with the seconds, the way pixel's clock does
         MaterialShape {
             anchors.centerIn: timeCol
-            width: 210
-            height: 210
+            width: Theme.dp(210)
+            height: Theme.dp(210)
             shape: "cookie12"
             color: Theme.alpha(Theme.fgPrimaryContainer, 0.08)
             rotation: page.now.getSeconds() * 6
@@ -66,7 +66,7 @@ Item {
         Column {
             anchors.left: parent.left
             anchors.top: parent.top
-            anchors.margins: 22
+            anchors.margins: Theme.dp(22)
             spacing: 0
 
             LText {
@@ -88,8 +88,8 @@ Item {
             id: timeCol
 
             anchors.centerIn: parent
-            anchors.verticalCenterOffset: 2
-            spacing: -16
+            anchors.verticalCenterOffset: Theme.dp(2)
+            spacing: -Theme.dp(16)
 
             LText {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -117,7 +117,7 @@ Item {
                 LText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.top: parent.bottom
-                    anchors.topMargin: -16
+                    anchors.topMargin: -Theme.dp(16)
                     size: Theme.fs(26)
                     weight: 620
                     rounded: 100
@@ -133,15 +133,15 @@ Item {
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 20
-            spacing: 6
+            anchors.bottomMargin: Theme.dp(20)
+            spacing: Theme.dp(6)
 
             Rectangle {
                 visible: !Prefs.clock24h
                 anchors.verticalCenter: parent.verticalCenter
-                width: ampm.implicitWidth + 16
-                height: 24
-                radius: 12
+                width: ampm.implicitWidth + Theme.dp(16)
+                height: Theme.dp(24)
+                radius: Theme.dp(12)
                 color: Theme.alpha(Theme.fgPrimaryContainer, 0.1)
 
                 LText {
@@ -170,7 +170,7 @@ Item {
         id: weather
 
         anchors.left: hero.right
-        anchors.leftMargin: 12
+        anchors.leftMargin: Theme.dp(12)
         anchors.right: parent.right
         height: hero.height
         radius: Theme.shapeXl
@@ -179,7 +179,7 @@ Item {
         Column {
             visible: page.wx === null
             anchors.centerIn: parent
-            spacing: 10
+            spacing: Theme.dp(10)
 
             LoadingIndicator {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -198,16 +198,16 @@ Item {
         Item {
             visible: page.wx !== null
             anchors.fill: parent
-            anchors.margins: 20
+            anchors.margins: Theme.dp(20)
 
             Row {
                 id: nowRow
 
-                spacing: 14
+                spacing: Theme.dp(14)
 
                 Item {
-                    width: 64
-                    height: 64
+                    width: Theme.dp(64)
+                    height: Theme.dp(64)
 
                     MaterialShape {
                         anchors.fill: parent
@@ -218,7 +218,7 @@ Item {
 
                     WeatherIcon {
                         anchors.centerIn: parent
-                        size: 44
+                        size: Theme.dp(44)
                         kind: page.wx ? WeatherSource.kindFor(page.wx.code, page.night) : "clear"
                         tint: Theme.fgTertiaryContainer
                         cloudColor: Theme.fgTertiaryContainer
@@ -231,7 +231,7 @@ Item {
                     spacing: 0
 
                     Row {
-                        spacing: 2
+                        spacing: Theme.dp(2)
 
                         LText {
                             role: "displaySmall"
@@ -255,7 +255,7 @@ Item {
             LText {
                 anchors.right: parent.right
                 anchors.top: parent.top
-                width: Math.min(implicitWidth, parent.width - nowRow.width - 20)
+                width: Math.min(implicitWidth, parent.width - nowRow.width - Theme.dp(20))
                 horizontalAlignment: Text.AlignRight
                 role: "labelMedium"
                 color: Theme.subtext
@@ -267,9 +267,9 @@ Item {
                 id: chips
 
                 anchors.top: nowRow.bottom
-                anchors.topMargin: 14
+                anchors.topMargin: Theme.dp(14)
                 width: parent.width
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Repeater {
                     model: page.wx ? [["thermostat", "Feels " + page.wx.feelsC + "°"], ["water_drop", page.wx.humidity + "%"], ["air", page.wx.windKmph + " km/h " + (page.wx.windDir || "")], ["umbrella", (page.wx.pop || 0) + "%"], ["light_mode", "UV " + page.wx.uv]] : []
@@ -277,21 +277,21 @@ Item {
                     Rectangle {
                         required property var modelData
 
-                        width: chipRow.implicitWidth + 20
-                        height: 28
-                        radius: 14
+                        width: chipRow.implicitWidth + Theme.dp(20)
+                        height: Theme.dp(28)
+                        radius: Theme.dp(14)
                         color: Theme.withBlur(Theme.surfaceHighest)
 
                         Row {
                             id: chipRow
 
                             anchors.centerIn: parent
-                            spacing: 5
+                            spacing: Theme.dp(5)
 
                             Icon {
                                 anchors.verticalCenter: parent.verticalCenter
                                 name: modelData[0]
-                                size: 15
+                                size: Theme.dp(15)
                                 color: Theme.primary
                             }
 
@@ -314,7 +314,7 @@ Item {
                 id: hourly
 
                 anchors.top: chips.bottom
-                anchors.topMargin: 14
+                anchors.topMargin: Theme.dp(14)
                 width: parent.width
 
                 Repeater {
@@ -325,7 +325,7 @@ Item {
                         required property int index
 
                         width: hourly.width / Math.max(1, page.hours.length)
-                        spacing: 4
+                        spacing: Theme.dp(4)
 
                         LText {
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -336,7 +336,7 @@ Item {
 
                         WeatherIcon {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            size: 26
+                            size: Theme.dp(26)
                             animate: false
                             kind: WeatherSource.kindFor(modelData.code, !modelData.day)
                             tint: Theme.primary
@@ -360,7 +360,7 @@ Item {
                 id: rule
 
                 anchors.top: hourly.bottom
-                anchors.topMargin: 12
+                anchors.topMargin: Theme.dp(12)
                 width: parent.width
                 height: 1
                 color: Theme.divider
@@ -370,7 +370,7 @@ Item {
                 id: daily
 
                 anchors.top: rule.bottom
-                anchors.topMargin: 10
+                anchors.topMargin: Theme.dp(10)
                 width: parent.width
 
                 Repeater {
@@ -380,7 +380,7 @@ Item {
                         required property var modelData
 
                         width: daily.width / 5
-                        spacing: 4
+                        spacing: Theme.dp(4)
 
                         Column {
                             spacing: 0
@@ -400,7 +400,7 @@ Item {
 
                         WeatherIcon {
                             anchors.verticalCenter: parent.verticalCenter
-                            size: 24
+                            size: Theme.dp(24)
                             animate: false
                             kind: WeatherSource.kindFor(modelData.code, false)
                             tint: Theme.primary
@@ -421,21 +421,21 @@ Item {
         id: next
 
         anchors.top: hero.bottom
-        anchors.topMargin: 12
+        anchors.topMargin: Theme.dp(12)
         width: parent.width
-        height: 62
+        height: Theme.dp(62)
         radius: Theme.shapeXl
         color: Theme.withBlur(Theme.surfaceHigh)
 
         Row {
             anchors.left: parent.left
-            anchors.leftMargin: 14
+            anchors.leftMargin: Theme.dp(14)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 12
+            spacing: Theme.dp(12)
 
             Item {
-                width: 38
-                height: 38
+                width: Theme.dp(38)
+                height: Theme.dp(38)
                 anchors.verticalCenter: parent.verticalCenter
 
                 MaterialShape {
@@ -447,7 +447,7 @@ Item {
                 Icon {
                     anchors.centerIn: parent
                     name: Agenda.next ? "notifications_active" : "event_available"
-                    size: 20
+                    size: Theme.dp(20)
                     fill: 1
                     color: Agenda.next ? Theme.fgSecondaryContainer : Theme.subtext
                 }
@@ -475,7 +475,7 @@ Item {
 
         Button {
             anchors.right: parent.right
-            anchors.rightMargin: 12
+            anchors.rightMargin: Theme.dp(12)
             anchors.verticalCenter: parent.verticalCenter
             variant: "tonal"
             icon: "add"

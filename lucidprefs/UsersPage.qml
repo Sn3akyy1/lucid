@@ -31,13 +31,13 @@ Column {
         target: Users
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
 
     // a refused or cancelled polkit prompt is the usual way a change here
     // fails, and it fails silently unless something says so
     Rectangle {
         width: parent.width
-        height: Math.max(52, noteText.implicitHeight + 28)
+        height: Math.max(Theme.dp(52), noteText.implicitHeight + Theme.dp(28))
         radius: Theme.shapeLg
         color: Users.busy || Users.lastErrorKind === "cancelled" ? Theme.bgTile : Theme.errorContainer
         visible: Users.busy || Users.lastError !== ""
@@ -46,9 +46,9 @@ Column {
             id: noteText
 
             anchors.left: parent.left
-            anchors.leftMargin: 20
+            anchors.leftMargin: Theme.dp(20)
             anchors.right: dismissNote.left
-            anchors.rightMargin: 12
+            anchors.rightMargin: Theme.dp(12)
             anchors.verticalCenter: parent.verticalCenter
             // a change that needs an administrator waits on the polkit agent,
             // so say what the wait is for rather than just spinning
@@ -65,10 +65,10 @@ Column {
             id: dismissNote
 
             anchors.right: parent.right
-            anchors.rightMargin: 10
+            anchors.rightMargin: Theme.dp(10)
             anchors.verticalCenter: parent.verticalCenter
-            size: 32
-            iconSize: 17
+            size: Theme.dp(32)
+            iconSize: Theme.dp(17)
             enabled: !Users.busy
             opacity: Users.busy ? 0 : 1
             iconPath: "close"
@@ -80,16 +80,16 @@ Column {
     // the account this page is about: its picture, its names, and what it is
     Rectangle {
         width: parent.width
-        height: Math.max(118, heroCol.implicitHeight + 40)
+        height: Math.max(Theme.dp(118), heroCol.implicitHeight + Theme.dp(40))
         radius: Theme.shapeXl
         color: Theme.withBlur(Theme.bgTile)
 
         UserAvatar {
             id: heroAvatar
 
-            x: 26
+            x: Theme.dp(26)
             anchors.verticalCenter: parent.verticalCenter
-            size: 78
+            size: Theme.dp(78)
             user: page.sel
             editable: page.canEdit
             showAdmin: true
@@ -100,11 +100,11 @@ Column {
             id: heroCol
 
             anchors.left: heroAvatar.right
-            anchors.leftMargin: 22
+            anchors.leftMargin: Theme.dp(22)
             anchors.right: heroActions.left
-            anchors.rightMargin: 18
+            anchors.rightMargin: Theme.dp(18)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 5
+            spacing: Theme.dp(5)
 
             Text {
                 width: parent.width
@@ -129,8 +129,8 @@ Column {
 
             // small status pills, only the ones that are actually true
             Row {
-                spacing: 6
-                topPadding: 3
+                spacing: Theme.dp(6)
+                topPadding: Theme.dp(3)
 
                 Repeater {
                     model: {
@@ -211,9 +211,9 @@ Column {
                             return Theme.subtext;
                         }
 
-                        width: pill.implicitWidth + 20
-                        height: 24
-                        radius: 12
+                        width: pill.implicitWidth + Theme.dp(20)
+                        height: Theme.dp(24)
+                        radius: Theme.dp(12)
                         color: tone
 
                         Text {
@@ -240,9 +240,9 @@ Column {
             id: heroActions
 
             anchors.right: parent.right
-            anchors.rightMargin: 22
+            anchors.rightMargin: Theme.dp(22)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 8
+            spacing: Theme.dp(8)
 
             M3Button {
                 text: "Change picture…"
@@ -274,7 +274,7 @@ Column {
 
             Flow {
                 width: parent.width
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 Repeater {
                     model: Users.users
@@ -285,8 +285,8 @@ Column {
                         required property var modelData
                         readonly property bool active: page.hasSel && page.sel.uid === tile.modelData.uid
 
-                        width: 96
-                        height: 112
+                        width: Theme.dp(96)
+                        height: Theme.dp(112)
                         radius: Theme.shapeLg
                         color: tile.active ? Theme.secondaryContainer : "transparent"
 
@@ -314,17 +314,17 @@ Column {
 
                         Column {
                             anchors.centerIn: parent
-                            spacing: 8
+                            spacing: Theme.dp(8)
 
                             UserAvatar {
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                size: 52
+                                size: Theme.dp(52)
                                 user: tile.modelData
                                 showAdmin: true
                             }
 
                             Text {
-                                width: 84
+                                width: Theme.dp(84)
                                 text: Users.displayName(tile.modelData)
                                 color: tile.active ? Theme.fgSecondaryContainer : Theme.text
                                 font.family: Theme.fontFamily
@@ -352,8 +352,8 @@ Column {
 
                 // the same tile shape, so the row reads as one set of choices
                 Rectangle {
-                    width: 96
-                    height: 112
+                    width: Theme.dp(96)
+                    height: Theme.dp(112)
                     radius: Theme.shapeLg
                     color: "transparent"
                     visible: Users.canAdmin
@@ -375,29 +375,29 @@ Column {
 
                     Column {
                         anchors.centerIn: parent
-                        spacing: 8
+                        spacing: Theme.dp(8)
 
                         Rectangle {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            width: 52
-                            height: 52
-                            radius: 26
+                            width: Theme.dp(52)
+                            height: Theme.dp(52)
+                            radius: Theme.dp(26)
                             color: "transparent"
                             border.width: 1.6
                             border.color: Theme.outlineStrong
 
                             Rectangle {
                                 anchors.centerIn: parent
-                                width: 18
-                                height: 2
+                                width: Theme.dp(18)
+                                height: Theme.dp(2)
                                 radius: 1
                                 color: Theme.subtext
                             }
 
                             Rectangle {
                                 anchors.centerIn: parent
-                                width: 2
-                                height: 18
+                                width: Theme.dp(2)
+                                height: Theme.dp(18)
                                 radius: 1
                                 color: Theme.subtext
                             }
@@ -405,7 +405,7 @@ Column {
                         }
 
                         Text {
-                            width: 84
+                            width: Theme.dp(84)
                             text: "Add"
                             color: Theme.subtext
                             font.family: Theme.fontFamily
@@ -443,7 +443,7 @@ Column {
             disabledReason: "Only an administrator can change another account's name."
 
             M3TextField {
-                width: 260
+                width: Theme.dp(260)
                 enabled: page.canEdit
                 text: page.sel ? page.sel.realName : ""
                 placeholder: page.sel ? page.sel.name : ""
@@ -464,7 +464,7 @@ Column {
             disabledReason: page.sel && page.sel.online ? "This account is signed in; sign it out before renaming it." : "Only an administrator can rename an account."
 
             M3TextField {
-                width: 260
+                width: Theme.dp(260)
                 enabled: Users.canAdmin && page.hasSel && !page.sel.online
                 commitOnBlur: false
                 text: page.sel ? page.sel.name : ""
@@ -487,7 +487,7 @@ Column {
             disabledReason: page.lastAdmin ? "This is the only administrator on the machine. Make another account an administrator first." : "Only an administrator can change this."
 
             M3Segmented {
-                width: 260
+                width: Theme.dp(260)
                 enabled: Users.canAdmin && !page.lastAdmin
                 current: page.sel ? page.sel.accountType : Users.standard
                 options: [{
@@ -514,7 +514,7 @@ Column {
 
             Column {
                 width: parent.width
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 M3Chips {
                     width: parent.width
@@ -556,7 +556,7 @@ Column {
             enabled: page.canEdit
 
             M3TextField {
-                width: 260
+                width: Theme.dp(260)
                 enabled: page.canEdit
                 text: page.sel ? page.sel.email : ""
                 placeholder: "name@example.com"
@@ -576,7 +576,7 @@ Column {
             enabled: page.canEdit
 
             M3TextField {
-                width: 260
+                width: Theme.dp(260)
                 enabled: page.canEdit
                 text: page.sel ? page.sel.location : ""
                 placeholder: "Optional"
@@ -614,7 +614,7 @@ Column {
             enabled: page.canEdit
 
             M3TextField {
-                width: 260
+                width: Theme.dp(260)
                 enabled: page.canEdit
                 text: page.sel ? page.sel.passwordHint : ""
                 placeholder: "Optional"
@@ -703,7 +703,7 @@ Column {
 
             Column {
                 width: parent.width
-                spacing: 12
+                spacing: Theme.dp(12)
 
                 M3Chips {
                     id: groupChips

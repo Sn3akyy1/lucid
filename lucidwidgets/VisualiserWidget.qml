@@ -34,7 +34,7 @@ WidgetBody {
     readonly property real gapRatio: w.density === "fine" ? 0.5 : (w.density === "wide" ? 0.48 : 0.52)
     readonly property real gap: Math.max(1, w.slot * w.gapRatio)
     // a dead band while the rest are moving reads as a dot, not as a gap
-    readonly property real minBar: Math.max(2, Math.min(w.slot - w.gap, w.height * 0.045))
+    readonly property real minBar: Math.max(Theme.dp(2), Math.min(w.slot - w.gap, w.height * 0.045))
     // the uid the demand was filed under, cached so teardown can withdraw it
     property string filed: ""
     // preview tiles have no process behind them, so they run off a clock

@@ -11,7 +11,7 @@ Rectangle {
     readonly property var shown: Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
     readonly property real screenW: preview.shown ? preview.shown.width : 1920
     readonly property real screenH: preview.shown ? preview.shown.height : 1080
-    readonly property real reserved: Prefs.barEnabled ? Prefs.barHeight : 0
+    readonly property real reserved: Prefs.barEnabled ? Theme.dp(Prefs.barHeight) : 0
     // a close look shows the left three fifths, so a 2 px border still shows
     readonly property real zoom: screen.width / (preview.screenW * preview.viewFraction)
     readonly property real gapsIn: HyprConfig.num("general.gaps_in", 5)
@@ -36,9 +36,11 @@ Rectangle {
     readonly property real gapsOutShown: preview.solo ? 0 : preview.gapsOut
     // the work area, in screen pixels
     readonly property real areaX: preview.gapsOutShown
-    readonly property real areaY: preview.reserved + preview.gapsOutShown
+    // the bar's own distance from windows comes on top of hyprland's
+    readonly property real shellGap: Prefs.barEnabled ? Prefs.shellGap : 0
+    readonly property real areaY: preview.reserved + preview.shellGap + preview.gapsOutShown
     readonly property real areaW: preview.screenW - 2 * preview.gapsOutShown
-    readonly property real areaH: preview.screenH - preview.reserved - 2 * preview.gapsOutShown
+    readonly property real areaH: preview.screenH - preview.reserved - preview.shellGap - 2 * preview.gapsOutShown
     readonly property var boxes: {
         const a = {
             "x": preview.areaX,
@@ -148,13 +150,13 @@ Rectangle {
     radius: Theme.radiusMd
     color: Theme.bgTile
     // close up a fixed strip; whole, the screen's own proportions
-    implicitHeight: preview.viewFraction >= 1 ? Math.round((preview.width - 28) * preview.screenH / preview.screenW) + 28 : 230
+    implicitHeight: preview.viewFraction >= 1 ? Math.round((preview.width - Theme.dp(28)) * preview.screenH / preview.screenW) + Theme.dp(28) : Theme.dp(230)
 
     Rectangle {
         id: screen
 
         anchors.fill: parent
-        anchors.margins: 14
+        anchors.margins: Theme.dp(14)
         radius: Theme.radiusXs
         color: Theme.bgSunken
         clip: true
@@ -245,9 +247,9 @@ Rectangle {
                     clip: true
 
                     Column {
-                        x: 14
-                        y: 14
-                        spacing: 8
+                        x: Theme.dp(14)
+                        y: Theme.dp(14)
+                        spacing: Theme.dp(8)
 
                         Repeater {
                             model: [0.55, 0.8, 0.4, 0.7]
@@ -255,9 +257,9 @@ Rectangle {
                             Rectangle {
                                 required property real modelData
 
-                                width: (win.width - 28) * modelData
-                                height: 6
-                                radius: 3
+                                width: (win.width - Theme.dp(28)) * modelData
+                                height: Theme.dp(6)
+                                radius: Theme.dp(3)
                                 color: Theme.alpha(Theme.text, 0.16)
                             }
 

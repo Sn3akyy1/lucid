@@ -15,9 +15,9 @@ Item {
     // key coerces to "0" and then never matches its own option
     property var current: ""
     property bool enabled: true
-    property int gap: 2
+    property int gap: Theme.dp(2)
     // breathing room either side of a segment's check and label
-    property int padding: 16
+    property int padding: Theme.dp(16)
     readonly property real _gaps: seg.gap * Math.max(0, seg.options.length - 1)
     readonly property real _widest: {
         var w = 0;
@@ -44,8 +44,8 @@ Item {
 
     signal chosen(var key)
 
-    implicitHeight: 40
-    implicitWidth: 240
+    implicitHeight: Theme.dp(40)
+    implicitWidth: Theme.dp(240)
     opacity: seg.enabled ? 1 : Theme.disabledContent
 
     Row {
@@ -67,9 +67,9 @@ Item {
                 readonly property bool isLast: cell.index === seg.options.length - 1
                 readonly property real outer: seg.height / 2
                 readonly property real inner: cell.selected ? seg.height / 2 : Theme.shapeSm
-                readonly property real squeeze: area.pressed ? 4 : 0
+                readonly property real squeeze: area.pressed ? Theme.dp(4) : 0
                 // check and label at selected weight, so a pick never shifts widths
-                readonly property real content: 18 + 6 + probe.implicitWidth
+                readonly property real content: Theme.dp(18) + Theme.dp(6) + probe.implicitWidth
 
                 // equal widths when they fit; too tight, each sizes to its label
                 // and the spare room is shared out as padding
@@ -142,18 +142,18 @@ Item {
 
                 Row {
                     anchors.centerIn: parent
-                    spacing: 6
+                    spacing: Theme.dp(6)
 
                     Item {
-                        width: cell.selected ? 18 : 0
-                        height: 18
+                        width: cell.selected ? Theme.dp(18) : 0
+                        height: Theme.dp(18)
                         anchors.verticalCenter: parent.verticalCenter
                         clip: true
 
                         Icon {
                             anchors.centerIn: parent
                             name: "check"
-                            size: 18
+                            size: Theme.dp(18)
                             weight: 600
                             color: Theme.fgPrimary
                             opacity: cell.selected ? 1 : 0

@@ -21,8 +21,8 @@ Item {
     property real dragProgress: 0
     property bool showRemaining: false
 
-    readonly property real trackInset: 8
-    readonly property real waveHeight: 22
+    readonly property real trackInset: Theme.dp(8)
+    readonly property real waveHeight: Theme.dp(22)
     readonly property real progress: seek.length > 0 ? Math.max(0, Math.min(1, seek.position / seek.length)) : 0
     readonly property real shownProgress: seek.dragging ? seek.dragProgress : seek.progress
 
@@ -39,7 +39,7 @@ Item {
         return Math.max(0, Math.min(1, (px - seek.trackInset) / Math.max(1, w - seek.trackInset * 2)));
     }
 
-    implicitHeight: seek.waveHeight + (seek.showTimes ? 4 + posLabel.implicitHeight : 0)
+    implicitHeight: seek.waveHeight + (seek.showTimes ? Theme.dp(4) + posLabel.implicitHeight : 0)
     onAccentChanged: waveCanvas.requestPaint()
     onTrackColorChanged: waveCanvas.requestPaint()
 
@@ -47,14 +47,14 @@ Item {
         id: waveCanvas
 
         property real animatedProgress: seek.shownProgress
-        property real handleHeight: (seek.hovering || seek.dragging) ? 18 : 14
+        property real handleHeight: (seek.hovering || seek.dragging) ? Theme.dp(18) : Theme.dp(14)
         property real amplitude: (seek.hovering || seek.dragging) ? 4.5 : 3.5
 
-        readonly property real trackThickness: 4
-        readonly property real handleWidth: 4
-        readonly property real trackGap: 6
-        readonly property real stopIndicator: 4
-        readonly property real wavelength: 26
+        readonly property real trackThickness: Theme.dp(4)
+        readonly property real handleWidth: Theme.dp(4)
+        readonly property real trackGap: Theme.dp(6)
+        readonly property real stopIndicator: Theme.dp(4)
+        readonly property real wavelength: Theme.dp(26)
 
         function smoothstep(t) {
             t = Math.max(0, Math.min(1, t));
@@ -157,7 +157,7 @@ Item {
 
     MouseArea {
         anchors.fill: waveCanvas
-        anchors.margins: -4
+        anchors.margins: -Theme.dp(4)
         enabled: seek.interactive
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
@@ -199,7 +199,7 @@ Item {
             text: seek.fmt(seek.dragging ? seek.dragProgress * seek.length : seek.position)
             color: seek.labelColor
             font.family: Theme.fontFamily
-            font.pixelSize: 11
+            font.pixelSize: Theme.dp(11)
             font.variableAxes: Theme.axes(11, 420, 0)
         }
 
@@ -211,14 +211,14 @@ Item {
             text: seek.showRemaining ? "-" + seek.fmt(seek.length - seek.position) : seek.fmt(seek.length)
             color: lenArea.containsMouse ? Theme.text : seek.labelColor
             font.family: Theme.fontFamily
-            font.pixelSize: 11
+            font.pixelSize: Theme.dp(11)
             font.variableAxes: Theme.axes(11, 420, 0)
 
             MouseArea {
                 id: lenArea
 
                 anchors.fill: parent
-                anchors.margins: -6
+                anchors.margins: -Theme.dp(6)
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: seek.showRemaining = !seek.showRemaining

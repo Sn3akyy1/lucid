@@ -70,7 +70,7 @@ WidgetBody {
     Column {
         visible: !w.ready
         anchors.centerIn: parent
-        spacing: 8
+        spacing: Theme.dp(8)
 
         LoadingIndicator {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -94,11 +94,11 @@ WidgetBody {
 
         Item {
             anchors.right: parent.right
-            anchors.rightMargin: 12
+            anchors.rightMargin: Theme.dp(12)
             anchors.top: parent.top
-            anchors.topMargin: 12
-            width: 96
-            height: 96
+            anchors.topMargin: Theme.dp(12)
+            width: Theme.dp(96)
+            height: Theme.dp(96)
 
             MaterialShape {
                 anchors.fill: parent
@@ -117,7 +117,7 @@ WidgetBody {
 
             WeatherIcon {
                 anchors.centerIn: parent
-                size: 72
+                size: Theme.dp(72)
                 kind: w.report ? WeatherSource.kindFor(w.report.code, w.night) : "clear"
                 tint: w.inkAccent
                 cloudColor: w.ink
@@ -126,18 +126,18 @@ WidgetBody {
         }
 
         LText {
-            x: 20
-            y: 16
+            x: Theme.dp(20)
+            y: Theme.dp(16)
             role: "labelLarge"
             color: w.inkDim
             text: w.place
         }
 
         LText {
-            x: 16
+            x: Theme.dp(16)
             anchors.bottom: descCol.top
-            anchors.bottomMargin: -8
-            size: 64
+            anchors.bottomMargin: -Theme.dp(8)
+            size: Theme.dp(64)
             weight: 600
             rounded: 100
             color: w.ink
@@ -147,9 +147,9 @@ WidgetBody {
         Column {
             id: descCol
 
-            x: 20
+            x: Theme.dp(20)
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 16
+            anchors.bottomMargin: Theme.dp(16)
             spacing: 0
 
             LText {
@@ -172,13 +172,13 @@ WidgetBody {
     Row {
         visible: w.ready && w.variant === "compact"
         anchors.left: parent.left
-        anchors.leftMargin: 14
+        anchors.leftMargin: Theme.dp(14)
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 12
+        spacing: Theme.dp(12)
 
         Item {
-            width: 60
-            height: 60
+            width: Theme.dp(60)
+            height: Theme.dp(60)
 
             MaterialShape {
                 anchors.fill: parent
@@ -188,7 +188,7 @@ WidgetBody {
 
             WeatherIcon {
                 anchors.centerIn: parent
-                size: 44
+                size: Theme.dp(44)
                 kind: w.report ? WeatherSource.kindFor(w.report.code, w.night) : "clear"
                 tint: w.inkAccent
                 cloudColor: w.ink
@@ -198,7 +198,7 @@ WidgetBody {
 
         Column {
             anchors.verticalCenter: parent.verticalCenter
-            spacing: -2
+            spacing: -Theme.dp(2)
 
             LText {
                 role: "headlineMedium"
@@ -235,16 +235,16 @@ WidgetBody {
 
         visible: w.ready && w.variant === "forecast"
         anchors.fill: parent
-        anchors.margins: 16
+        anchors.margins: Theme.dp(16)
 
         Row {
             id: fcHead
 
-            spacing: 10
+            spacing: Theme.dp(10)
 
             WeatherIcon {
                 anchors.verticalCenter: parent.verticalCenter
-                size: 46
+                size: Theme.dp(46)
                 kind: w.report ? WeatherSource.kindFor(w.report.code, w.night) : "clear"
                 tint: w.inkAccent
                 cloudColor: w.ink
@@ -280,9 +280,9 @@ WidgetBody {
 
         Column {
             anchors.top: fcHead.bottom
-            anchors.topMargin: 10
+            anchors.topMargin: Theme.dp(10)
             width: parent.width
-            spacing: 2
+            spacing: Theme.dp(2)
 
             Repeater {
                 model: w.days.slice(1, 6)
@@ -292,10 +292,10 @@ WidgetBody {
                     required property int index
 
                     width: parent.width
-                    height: 26
+                    height: Theme.dp(26)
 
                     LText {
-                        width: 40
+                        width: Theme.dp(40)
                         anchors.verticalCenter: parent.verticalCenter
                         role: "labelLarge"
                         color: w.ink
@@ -303,9 +303,9 @@ WidgetBody {
                     }
 
                     WeatherIcon {
-                        x: 42
+                        x: Theme.dp(42)
                         anchors.verticalCenter: parent.verticalCenter
-                        size: 22
+                        size: Theme.dp(22)
                         animate: false
                         kind: WeatherSource.kindFor(modelData.code, false)
                         tint: w.inkAccent
@@ -313,8 +313,8 @@ WidgetBody {
                     }
 
                     LText {
-                        x: 72
-                        width: 32
+                        x: Theme.dp(72)
+                        width: Theme.dp(32)
                         anchors.verticalCenter: parent.verticalCenter
                         horizontalAlignment: Text.AlignRight
                         role: "labelMedium"
@@ -324,20 +324,20 @@ WidgetBody {
 
                     // where this day's range sits in the week's
                     Rectangle {
-                        x: 112
+                        x: Theme.dp(112)
                         anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - 112 - 40
-                        height: 6
-                        radius: 3
+                        width: parent.width - Theme.dp(112) - Theme.dp(40)
+                        height: Theme.dp(6)
+                        radius: Theme.dp(3)
                         color: Theme.alpha(w.ink, 0.12)
 
                         Rectangle {
                             readonly property real span: Math.max(1, fc.hi - fc.lo)
 
                             x: parent.width * (modelData.minC - fc.lo) / span
-                            width: Math.max(6, parent.width * (modelData.maxC - modelData.minC) / span)
+                            width: Math.max(Theme.dp(6), parent.width * (modelData.maxC - modelData.minC) / span)
                             height: parent.height
-                            radius: 3
+                            radius: Theme.dp(3)
                             color: w.inkAccent
                         }
 
@@ -369,7 +369,7 @@ WidgetBody {
         })
         readonly property real lo: Math.min.apply(null, hr.temps.length ? hr.temps : [0])
         readonly property real hi: Math.max.apply(null, hr.temps.length ? hr.temps : [1])
-        readonly property real colW: (hr.width - 32) / Math.max(1, w.hours.length)
+        readonly property real colW: (hr.width - Theme.dp(32)) / Math.max(1, w.hours.length)
 
         function yAt(i) {
             const span = Math.max(1, hr.hi - hr.lo);
@@ -380,8 +380,8 @@ WidgetBody {
         anchors.fill: parent
 
         LText {
-            x: 18
-            y: 14
+            x: Theme.dp(18)
+            y: Theme.dp(14)
             role: "titleSmall"
             color: w.ink
             text: w.report ? WeatherSource.descFor(w.report.code) + " · " + w.t(w.report.tempC, w.report.tempF) : ""
@@ -389,8 +389,8 @@ WidgetBody {
 
         LText {
             anchors.right: parent.right
-            anchors.rightMargin: 18
-            y: 14
+            anchors.rightMargin: Theme.dp(18)
+            y: Theme.dp(14)
             role: "labelMedium"
             color: w.inkDim
             text: w.place
@@ -437,13 +437,13 @@ WidgetBody {
                 required property var modelData
                 required property int index
 
-                x: 16 + hr.colW * index
+                x: Theme.dp(16) + hr.colW * index
                 width: hr.colW
                 height: hr.height
 
                 LText {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    y: hr.yAt(index) - 22
+                    y: hr.yAt(index) - Theme.dp(22)
                     role: "labelMedium"
                     weight: 640
                     color: w.ink
@@ -452,18 +452,18 @@ WidgetBody {
 
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    y: hr.yAt(index) - 4
-                    width: 8
-                    height: 8
-                    radius: 4
+                    y: hr.yAt(index) - Theme.dp(4)
+                    width: Theme.dp(8)
+                    height: Theme.dp(8)
+                    radius: Theme.dp(4)
                     color: w.inkAccent
                 }
 
                 WeatherIcon {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: hourLabel.top
-                    anchors.bottomMargin: 2
-                    size: 24
+                    anchors.bottomMargin: Theme.dp(2)
+                    size: Theme.dp(24)
                     animate: false
                     kind: WeatherSource.kindFor(modelData.code, !modelData.day)
                     tint: w.inkAccent
@@ -475,7 +475,7 @@ WidgetBody {
 
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 12
+                    anchors.bottomMargin: Theme.dp(12)
                     role: "labelSmall"
                     color: index === 0 ? w.inkAccent : w.inkDim
                     text: w.hourName(modelData, index)

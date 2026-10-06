@@ -113,7 +113,7 @@ WidgetBody {
     component Mark: MaterialShape {
         id: mk
 
-        property real d: 48
+        property real d: Theme.dp(48)
 
         width: mk.d
         height: mk.d
@@ -133,14 +133,14 @@ WidgetBody {
     // the phone's reception, as the cellular symbol that matches it
     component Bars: Icon {
         name: ["signal_cellular_0_bar", "signal_cellular_1_bar", "signal_cellular_2_bar", "signal_cellular_3_bar", "signal_cellular_4_bar"][Math.max(0, Math.min(4, w.sigStrength))]
-        size: 18
+        size: Theme.dp(18)
         fill: 1
         color: w.ink
     }
 
     component BatteryRing: Item {
-        width: 34
-        height: 34
+        width: Theme.dp(34)
+        height: Theme.dp(34)
 
         CircularProgress {
             anchors.fill: parent
@@ -165,9 +165,9 @@ WidgetBody {
     component ActionGroup: Row {
         id: ag
 
-        property real btn: 44
+        property real btn: Theme.dp(44)
 
-        spacing: 3
+        spacing: Theme.dp(3)
 
         Repeater {
             model: w.actions
@@ -182,23 +182,23 @@ WidgetBody {
 
                 width: ag.btn
                 height: ag.btn
-                topLeftRadius: act.firstOne || actTap.pressed ? ag.btn / 2 : 10
-                bottomLeftRadius: act.firstOne || actTap.pressed ? ag.btn / 2 : 10
-                topRightRadius: act.lastOne || actTap.pressed ? ag.btn / 2 : 10
-                bottomRightRadius: act.lastOne || actTap.pressed ? ag.btn / 2 : 10
+                topLeftRadius: act.firstOne || actTap.pressed ? ag.btn / 2 : Theme.dp(10)
+                bottomLeftRadius: act.firstOne || actTap.pressed ? ag.btn / 2 : Theme.dp(10)
+                topRightRadius: act.lastOne || actTap.pressed ? ag.btn / 2 : Theme.dp(10)
+                bottomRightRadius: act.lastOne || actTap.pressed ? ag.btn / 2 : Theme.dp(10)
                 color: Theme.alpha(w.ink, 0.09)
 
                 Icon {
                     anchors.centerIn: parent
                     name: act.modelData.icon
-                    size: 20
+                    size: Theme.dp(20)
                     color: w.ink
                 }
 
                 StateLayer {
                     id: actTap
 
-                    radius: 10
+                    radius: Theme.dp(10)
                     tint: w.ink
                     onClicked: w.run(act.modelData.run)
                 }
@@ -213,12 +213,12 @@ WidgetBody {
     Column {
         visible: !w.connected
         anchors.centerIn: parent
-        width: parent.width - 32
-        spacing: 8
+        width: parent.width - Theme.dp(32)
+        spacing: Theme.dp(8)
 
         Mark {
             anchors.horizontalCenter: parent.horizontalCenter
-            d: Math.min(56, w.height * 0.34)
+            d: Math.min(Theme.dp(56), w.height * 0.34)
         }
 
         LText {
@@ -256,23 +256,23 @@ WidgetBody {
         id: head
 
         visible: w.connected && w.variant !== "compact"
-        x: 16
-        y: 14
-        width: parent.width - 32
-        height: 48
+        x: Theme.dp(16)
+        y: Theme.dp(14)
+        width: parent.width - Theme.dp(32)
+        height: Theme.dp(48)
 
         Mark {
             id: headMark
 
             anchors.verticalCenter: parent.verticalCenter
-            d: 46
+            d: Theme.dp(46)
         }
 
         Column {
             anchors.left: headMark.right
-            anchors.leftMargin: 12
+            anchors.leftMargin: Theme.dp(12)
             anchors.right: headBatt.left
-            anchors.rightMargin: 8
+            anchors.rightMargin: Theme.dp(8)
             anchors.verticalCenter: parent.verticalCenter
             spacing: 0
 
@@ -287,7 +287,7 @@ WidgetBody {
 
             Row {
                 width: parent.width
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Bars {
                     id: headBars
@@ -297,7 +297,7 @@ WidgetBody {
                 }
 
                 LText {
-                    width: parent.width - (headBars.visible ? headBars.width + 6 : 0)
+                    width: parent.width - (headBars.visible ? headBars.width + Theme.dp(6) : 0)
                     anchors.verticalCenter: parent.verticalCenter
                     role: "labelMedium"
                     color: w.inkDim
@@ -323,8 +323,8 @@ WidgetBody {
         visible: w.connected && w.variant === "card"
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 16
-        btn: Math.min(52, (w.width - 32 - 3 * (w.actions.length - 1)) / Math.max(1, w.actions.length))
+        anchors.bottomMargin: Theme.dp(16)
+        btn: Math.min(Theme.dp(52), (w.width - Theme.dp(32) - 3 * (w.actions.length - 1)) / Math.max(1, w.actions.length))
     }
 
     // remote: the header, what the phone is playing, and the actions
@@ -334,34 +334,34 @@ WidgetBody {
         anchors.right: parent.right
         anchors.top: head.bottom
         anchors.bottom: parent.bottom
-        anchors.margins: 14
-        anchors.topMargin: 12
+        anchors.margins: Theme.dp(14)
+        anchors.topMargin: Theme.dp(12)
 
         Rectangle {
             id: nowPlaying
 
             width: parent.width
-            height: 60
-            radius: 18
+            height: Theme.dp(60)
+            radius: Theme.dp(18)
             color: Theme.alpha(w.ink, 0.07)
 
             Icon {
                 id: npIcon
 
-                x: 14
+                x: Theme.dp(14)
                 anchors.verticalCenter: parent.verticalCenter
                 name: "music_note"
-                size: 20
+                size: Theme.dp(20)
                 color: w.inkAccent
             }
 
             Column {
                 anchors.left: npIcon.right
-                anchors.leftMargin: 10
+                anchors.leftMargin: Theme.dp(10)
                 anchors.right: npCtl.left
-                anchors.rightMargin: 4
+                anchors.rightMargin: Theme.dp(4)
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: -2
+                spacing: -Theme.dp(2)
 
                 LText {
                     width: parent.width
@@ -386,7 +386,7 @@ WidgetBody {
                 id: npCtl
 
                 anchors.right: parent.right
-                anchors.rightMargin: 6
+                anchors.rightMargin: Theme.dp(6)
                 anchors.verticalCenter: parent.verticalCenter
 
                 IconButton {
@@ -401,16 +401,16 @@ WidgetBody {
 
                 Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 40
-                    height: 40
-                    radius: npTap.pressed ? 12 : 20
+                    width: Theme.dp(40)
+                    height: Theme.dp(40)
+                    radius: npTap.pressed ? Theme.dp(12) : Theme.dp(20)
                     color: w.inkAccent
                     opacity: w.hasMedia ? 1 : 0.4
 
                     Icon {
                         anchors.centerIn: parent
                         name: w.isPlaying ? "pause" : "play_arrow"
-                        size: 22
+                        size: Theme.dp(22)
                         fill: 1
                         color: w.fgInkAccent
                     }
@@ -443,7 +443,7 @@ WidgetBody {
         ActionGroup {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            btn: Math.min(52, (parent.width - 3 * (w.actions.length - 1)) / Math.max(1, w.actions.length))
+            btn: Math.min(Theme.dp(52), (parent.width - 3 * (w.actions.length - 1)) / Math.max(1, w.actions.length))
         }
 
     }
@@ -452,22 +452,22 @@ WidgetBody {
     Item {
         visible: w.connected && w.variant === "compact"
         anchors.fill: parent
-        anchors.margins: 14
+        anchors.margins: Theme.dp(14)
 
         Mark {
             id: cMark
 
             anchors.verticalCenter: parent.verticalCenter
-            d: 44
+            d: Theme.dp(44)
         }
 
         Column {
             anchors.left: cMark.right
-            anchors.leftMargin: 10
+            anchors.leftMargin: Theme.dp(10)
             anchors.right: cRing.left
-            anchors.rightMargin: 6
+            anchors.rightMargin: Theme.dp(6)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: -2
+            spacing: -Theme.dp(2)
 
             LText {
                 width: parent.width

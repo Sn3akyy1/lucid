@@ -12,8 +12,8 @@ Item {
 
     signal summoned()
 
-    implicitWidth: 178
-    implicitHeight: 180
+    implicitWidth: Theme.dp(178)
+    implicitHeight: Theme.dp(180)
 
     opacity: Widgets.full ? 0.4 : 1
 
@@ -53,8 +53,8 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 10
-            height: 102
+            anchors.margins: Theme.dp(10)
+            height: Theme.dp(102)
             clip: true
 
             WidgetPreview {
@@ -73,9 +73,9 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: stage.bottom
-            anchors.leftMargin: 14
-            anchors.rightMargin: 14
-            anchors.topMargin: 8
+            anchors.leftMargin: Theme.dp(14)
+            anchors.rightMargin: Theme.dp(14)
+            anchors.topMargin: Theme.dp(8)
             text: tile.variant ? tile.variant.name : ""
             color: Theme.text
             font.family: Theme.fontFamily
@@ -89,8 +89,8 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: name.bottom
-            anchors.leftMargin: 14
-            anchors.rightMargin: 14
+            anchors.leftMargin: Theme.dp(14)
+            anchors.rightMargin: Theme.dp(14)
             anchors.topMargin: 1
             text: tile.variant ? tile.variant.blurb : ""
             color: Theme.subtextDim
@@ -106,10 +106,10 @@ Item {
         Rectangle {
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 8
-            width: 20
-            height: 20
-            radius: 10
+            anchors.margins: Theme.dp(8)
+            width: Theme.dp(20)
+            height: Theme.dp(20)
+            radius: Theme.dp(10)
             color: Theme.accent
             opacity: tile.placed > 0 ? 1 : 0
             visible: opacity > 0.01
@@ -135,9 +135,9 @@ Item {
 
         Rectangle {
             anchors.centerIn: stage
-            width: 34
-            height: 34
-            radius: 17
+            width: Theme.dp(34)
+            height: Theme.dp(34)
+            radius: Theme.dp(17)
             color: Theme.accent
             opacity: area.containsMouse ? 1 : 0
             scale: area.containsMouse ? 1 : 0.7
@@ -161,7 +161,7 @@ Item {
             WidgetGlyph {
                 anchors.centerIn: parent
                 name: "add"
-                size: 20
+                size: Theme.dp(20)
                 color: Theme.fgAccent
             }
 

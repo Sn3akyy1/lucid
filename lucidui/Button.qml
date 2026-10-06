@@ -22,12 +22,12 @@ Item {
     signal clicked()
     signal toggled(bool value)
 
-    readonly property int h: btn.size === "xs" ? 30 : (btn.size === "m" ? 48 : 36)
-    readonly property int pad: btn.size === "xs" ? 12 : (btn.size === "m" ? 24 : 16)
-    readonly property int iconPx: btn.size === "m" ? 22 : (btn.size === "xs" ? 17 : 19)
+    readonly property int h: btn.size === "xs" ? Theme.dp(30) : (btn.size === "m" ? Theme.dp(48) : Theme.dp(36))
+    readonly property int pad: btn.size === "xs" ? Theme.dp(12) : (btn.size === "m" ? Theme.dp(24) : Theme.dp(16))
+    readonly property int iconPx: btn.size === "m" ? Theme.dp(22) : (btn.size === "xs" ? Theme.dp(17) : Theme.dp(19))
     readonly property bool selected: btn.checkable && btn.checked
-    readonly property real restRadius: btn.selected ? (btn.size === "m" ? 16 : 12) : btn.h / 2
-    readonly property real pressRadius: btn.size === "m" ? 12 : 8
+    readonly property real restRadius: btn.selected ? (btn.size === "m" ? Theme.dp(16) : Theme.dp(12)) : btn.h / 2
+    readonly property real pressRadius: btn.size === "m" ? Theme.dp(12) : Theme.dp(8)
 
     readonly property color container: {
         if (btn.containerOverride.a > 0)
@@ -93,7 +93,7 @@ Item {
     }
 
     implicitHeight: btn.h
-    implicitWidth: row.implicitWidth + btn.pad * 2 - (btn.icon !== "" && btn.text !== "" ? 4 : 0)
+    implicitWidth: row.implicitWidth + btn.pad * 2 - (btn.icon !== "" && btn.text !== "" ? Theme.dp(4) : 0)
     opacity: btn.disabled ? 1 : 1
 
     Rectangle {
@@ -141,8 +141,8 @@ Item {
         id: row
 
         anchors.centerIn: parent
-        anchors.horizontalCenterOffset: btn.icon !== "" && btn.text !== "" ? -2 : 0
-        spacing: 8
+        anchors.horizontalCenterOffset: btn.icon !== "" && btn.text !== "" ? -Theme.dp(2) : 0
+        spacing: Theme.dp(8)
 
         Icon {
             visible: btn.icon !== ""

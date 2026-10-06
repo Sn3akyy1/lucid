@@ -37,7 +37,7 @@ Rectangle {
     visible: media.player !== null
     radius: Theme.shapeXl
     color: Lockscreen.card
-    implicitHeight: 124
+    implicitHeight: Theme.dp(124)
 
     Connections {
         function onPositionChanged() {
@@ -72,17 +72,17 @@ Rectangle {
         id: art
 
         anchors.left: parent.left
-        anchors.leftMargin: 18
+        anchors.leftMargin: Theme.dp(18)
         anchors.verticalCenter: parent.verticalCenter
-        width: 80
-        height: 80
+        width: Theme.dp(80)
+        height: Theme.dp(80)
         radius: Theme.shapeLg
         color: Theme.accentContainer
 
         LockGlyph {
             anchors.centerIn: parent
             name: "music"
-            size: 30
+            size: Theme.dp(30)
             color: Theme.fgAccentContainer
             visible: cover.status !== Image.Ready
         }
@@ -93,8 +93,8 @@ Rectangle {
             anchors.fill: parent
             source: media.player && media.player.trackArtUrl ? media.player.trackArtUrl : ""
             fillMode: Image.PreserveAspectCrop
-            sourceSize.width: 160
-            sourceSize.height: 160
+            sourceSize.width: Theme.dp(160)
+            sourceSize.height: Theme.dp(160)
             asynchronous: true
         }
 
@@ -104,13 +104,13 @@ Rectangle {
         id: transport
 
         anchors.right: parent.right
-        anchors.rightMargin: 12
+        anchors.rightMargin: Theme.dp(12)
         anchors.verticalCenter: parent.verticalCenter
         spacing: 0
 
         LockIconButton {
-            diameter: 36
-            glyphSize: 19
+            diameter: Theme.dp(36)
+            glyphSize: Theme.dp(19)
             glyph: "prev"
             glyphColor: Theme.subtext
             actionable: !!media.player && media.player.canGoPrevious
@@ -118,8 +118,8 @@ Rectangle {
         }
 
         LockIconButton {
-            diameter: 40
-            glyphSize: 22
+            diameter: Theme.dp(40)
+            glyphSize: Theme.dp(22)
             glyph: media.playing ? "pause" : "play"
             glyphColor: Theme.accent
             actionable: !!media.player && media.player.canTogglePlaying
@@ -127,8 +127,8 @@ Rectangle {
         }
 
         LockIconButton {
-            diameter: 36
-            glyphSize: 19
+            diameter: Theme.dp(36)
+            glyphSize: Theme.dp(19)
             glyph: "next"
             glyphColor: Theme.subtext
             actionable: !!media.player && media.player.canGoNext
@@ -139,11 +139,11 @@ Rectangle {
 
     Column {
         anchors.left: art.right
-        anchors.leftMargin: 16
+        anchors.leftMargin: Theme.dp(16)
         anchors.right: transport.left
-        anchors.rightMargin: 12
+        anchors.rightMargin: Theme.dp(12)
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 3
+        spacing: Theme.dp(3)
 
         Text {
             width: parent.width
@@ -168,7 +168,7 @@ Rectangle {
 
         Item {
             width: parent.width
-            height: 6
+            height: Theme.dp(6)
             visible: media.length > 0
         }
 

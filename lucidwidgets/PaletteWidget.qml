@@ -74,14 +74,14 @@ WidgetBody {
     Row {
         id: head
 
-        x: 18
-        y: 14
-        spacing: 8
+        x: Theme.dp(18)
+        y: Theme.dp(14)
+        spacing: Theme.dp(8)
 
         Icon {
             anchors.verticalCenter: parent.verticalCenter
             name: w.copied !== "" ? "content_copy" : "palette"
-            size: 18
+            size: Theme.dp(18)
             fill: 1
             color: w.inkAccent
         }
@@ -104,11 +104,11 @@ WidgetBody {
         anchors.right: parent.right
         anchors.top: head.bottom
         anchors.bottom: parent.bottom
-        anchors.margins: 12
-        anchors.topMargin: 8
+        anchors.margins: Theme.dp(12)
+        anchors.topMargin: Theme.dp(8)
         columns: 3
-        rowSpacing: 2
-        columnSpacing: 2
+        rowSpacing: Theme.dp(2)
+        columnSpacing: Theme.dp(2)
 
         Repeater {
             model: w.roles
@@ -117,10 +117,10 @@ WidgetBody {
                 id: sw
 
                 required property var modelData
-                readonly property real d: Math.min(width - 16, height - (w.showHex ? 34 : 20))
+                readonly property real d: Math.min(width - Theme.dp(16), height - (w.showHex ? Theme.dp(34) : Theme.dp(20)))
 
-                width: (shapes.width - 4) / 3
-                height: (shapes.height - 2) / 2
+                width: (shapes.width - Theme.dp(4)) / 3
+                height: (shapes.height - Theme.dp(2)) / 2
 
                 MaterialShape {
                     id: blob
@@ -164,9 +164,9 @@ WidgetBody {
 
                 Column {
                     anchors.top: blob.bottom
-                    anchors.topMargin: 3
+                    anchors.topMargin: Theme.dp(3)
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: -3
+                    spacing: -Theme.dp(3)
 
                     LText {
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -207,12 +207,12 @@ WidgetBody {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: 14
-        height: parent.height - head.height - 36
+        anchors.margins: Theme.dp(14)
+        height: parent.height - head.height - Theme.dp(36)
 
         Row {
             anchors.fill: parent
-            spacing: 3
+            spacing: Theme.dp(3)
 
             Repeater {
                 model: w.tones
@@ -227,10 +227,10 @@ WidgetBody {
 
                     width: (parent.width - 3 * (w.tones.length - 1)) / w.tones.length
                     height: parent.height
-                    topLeftRadius: stop.index === 0 ? 16 : 5
-                    bottomLeftRadius: stop.index === 0 ? 16 : 5
-                    topRightRadius: stop.index === w.tones.length - 1 ? 16 : 5
-                    bottomRightRadius: stop.index === w.tones.length - 1 ? 16 : 5
+                    topLeftRadius: stop.index === 0 ? Theme.dp(16) : Theme.dp(5)
+                    bottomLeftRadius: stop.index === 0 ? Theme.dp(16) : Theme.dp(5)
+                    topRightRadius: stop.index === w.tones.length - 1 ? Theme.dp(16) : Theme.dp(5)
+                    bottomRightRadius: stop.index === w.tones.length - 1 ? Theme.dp(16) : Theme.dp(5)
                     color: stop.c
                     scale: stop.hot ? 1.06 : 1
                     z: stop.hot ? 1 : 0
@@ -247,7 +247,7 @@ WidgetBody {
                     LText {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
-                        anchors.bottomMargin: 8
+                        anchors.bottomMargin: Theme.dp(8)
                         role: "labelSmall"
                         tabular: true
                         color: stop.modelData > 55 ? Qt.rgba(0, 0, 0, 0.7) : Qt.rgba(1, 1, 1, 0.8)
@@ -280,9 +280,9 @@ WidgetBody {
         anchors.right: parent.right
         anchors.top: head.bottom
         anchors.bottom: parent.bottom
-        anchors.margins: 14
-        anchors.topMargin: 10
-        spacing: 8
+        anchors.margins: Theme.dp(14)
+        anchors.topMargin: Theme.dp(10)
+        spacing: Theme.dp(8)
 
         Repeater {
             model: w.families
@@ -297,7 +297,7 @@ WidgetBody {
                 readonly property var steps: [75, 62, 50, 38, 28]
 
                 width: (scheme.width - scheme.spacing * 3) / 4
-                spacing: 2
+                spacing: Theme.dp(2)
 
                 LText {
                     width: parent.width
@@ -318,11 +318,11 @@ WidgetBody {
                         readonly property color c: Theme.tonal(fam.modelData.seed, chip.modelData)
 
                         width: fam.width
-                        height: (scheme.height - 18 - 8) / 5
-                        topLeftRadius: chip.index === 0 ? 12 : 3
-                        topRightRadius: chip.index === 0 ? 12 : 3
-                        bottomLeftRadius: chip.index === 4 ? 12 : 3
-                        bottomRightRadius: chip.index === 4 ? 12 : 3
+                        height: (scheme.height - Theme.dp(18) - Theme.dp(8)) / 5
+                        topLeftRadius: chip.index === 0 ? Theme.dp(12) : Theme.dp(3)
+                        topRightRadius: chip.index === 0 ? Theme.dp(12) : Theme.dp(3)
+                        bottomLeftRadius: chip.index === 4 ? Theme.dp(12) : Theme.dp(3)
+                        bottomRightRadius: chip.index === 4 ? Theme.dp(12) : Theme.dp(3)
                         color: chip.c
 
                         LText {

@@ -61,7 +61,7 @@ Item {
     })
     property string name: "clock"
     property color color: Theme.subtext
-    property real size: 18
+    property real size: Theme.dp(18)
 
     implicitWidth: glyph.size
     implicitHeight: glyph.size

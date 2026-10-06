@@ -8,7 +8,7 @@ Item {
     // samples run 0..1, oldest first
     property var samples: []
     property color lineColor: Theme.accent
-    property real lineWidth: 2
+    property real lineWidth: Theme.dp(2)
     property bool filled: true
     // scale to the loudest sample instead of 0..1, for rates with no ceiling
     property bool autoScale: false
@@ -41,8 +41,8 @@ Item {
         return spark.points.concat([Qt.point(spark.width, spark.height + 2), Qt.point(0, spark.height + 2)]);
     }
 
-    implicitHeight: 48
-    implicitWidth: 120
+    implicitHeight: Theme.dp(48)
+    implicitWidth: Theme.dp(120)
     clip: true
 
     Shape {

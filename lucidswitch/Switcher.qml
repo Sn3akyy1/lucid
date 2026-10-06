@@ -28,15 +28,15 @@ PanelWindow {
     property var stamps: ({})
     property int tick: 0
     readonly property int count: rows.count
-    readonly property int pad: 16
-    readonly property int gap: 18
-    readonly property int footH: 40
+    readonly property int pad: Theme.dp(16)
+    readonly property int gap: Theme.dp(18)
+    readonly property int footH: Theme.dp(40)
     readonly property var fit: {
         const n = Math.max(1, sw.count);
-        const availW = Math.max(360, sw.width - 160) - sw.pad * 2 - 12;
-        const availH = Math.max(260, sw.height * 0.8) - sw.pad * 2 - sw.footH - 12;
+        const availW = Math.max(Theme.dp(360), sw.width - Theme.dp(160)) - sw.pad * 2 - Theme.dp(12);
+        const availH = Math.max(Theme.dp(260), sw.height * 0.8) - sw.pad * 2 - sw.footH - Theme.dp(12);
         let out = null;
-        for (let w = 264; w >= 168; w -= 8) {
+        for (let w = Theme.dp(264); w >= Theme.dp(168); w -= Theme.dp(8)) {
             const h = sw.tileHeight(w);
             const cols = Math.max(1, Math.min(n, Math.floor((availW + sw.gap) / (w + sw.gap))));
             const lines = Math.ceil(n / cols);
@@ -64,7 +64,7 @@ PanelWindow {
     }
 
     function tileHeight(w) {
-        return sw.thumbHeight(w) + 8 + 20;
+        return sw.thumbHeight(w) + Theme.dp(8) + Theme.dp(20);
     }
 
     // the last line sits centred under the full ones
@@ -303,8 +303,8 @@ PanelWindow {
         const top = sw.cellY(sw.index);
         if (top < view.contentY)
             view.contentY = top;
-        else if (top + sw.fit.h + 12 > view.contentY + view.height)
-            view.contentY = top + sw.fit.h + 12 - view.height;
+        else if (top + sw.fit.h + Theme.dp(12) > view.contentY + view.height)
+            view.contentY = top + sw.fit.h + Theme.dp(12) - view.height;
     }
 
     onIndexChanged: sw.ensureVisible()
@@ -510,11 +510,11 @@ PanelWindow {
         Rectangle {
             id: card
 
-            readonly property real innerW: Math.max(sw.fit.fullW + 12, 520)
+            readonly property real innerW: Math.max(sw.fit.fullW + Theme.dp(12), Theme.dp(520))
 
             anchors.centerIn: parent
             width: Math.round(card.innerW + sw.pad * 2)
-            height: Math.round((sw.count > 0 ? sw.fit.viewH + 12 : 132) + sw.pad * 2 + sw.footH)
+            height: Math.round((sw.count > 0 ? sw.fit.viewH + Theme.dp(12) : Theme.dp(132)) + sw.pad * 2 + sw.footH)
             radius: Theme.shapeXl
             color: Theme.bg
             opacity: sw.reveal
@@ -529,12 +529,12 @@ PanelWindow {
                 id: view
 
                 visible: sw.count > 0
-                x: sw.pad + Math.round((card.innerW - sw.fit.fullW - 12) / 2)
+                x: sw.pad + Math.round((card.innerW - sw.fit.fullW - Theme.dp(12)) / 2)
                 y: sw.pad
-                width: sw.fit.fullW + 12
-                height: sw.fit.viewH + 12
+                width: sw.fit.fullW + Theme.dp(12)
+                height: sw.fit.viewH + Theme.dp(12)
                 contentWidth: view.width
-                contentHeight: sw.fit.fullH + 12
+                contentHeight: sw.fit.fullH + Theme.dp(12)
                 interactive: view.contentHeight > view.height + 1
                 clip: view.interactive
                 boundsBehavior: Flickable.StopAtBounds
@@ -542,8 +542,8 @@ PanelWindow {
                 Item {
                     id: grid
 
-                    x: 6
-                    y: 6
+                    x: Theme.dp(6)
+                    y: Theme.dp(6)
                     width: sw.fit.fullW
                     height: sw.fit.fullH
                     transform: Translate {
@@ -608,7 +608,7 @@ PanelWindow {
 
                                 width: tile.width
                                 height: sw.thumbHeight(tile.width)
-                                radius: tile.isSelected ? 18 : 12
+                                radius: tile.isSelected ? Theme.dp(18) : Theme.dp(12)
                                 color: Theme.withBlur(tile.isSelected ? Theme.surfaceHighest : Theme.surfaceHigh)
                                 border.color: tile.isSelected ? Theme.primary : "transparent"
                                 border.width: tile.isSelected ? 3 : 0
@@ -621,8 +621,8 @@ PanelWindow {
                                     readonly property bool wide: tile.aspect >= shot.width / shot.height
 
                                     anchors.fill: parent
-                                    anchors.margins: 5
-                                    radius: 6
+                                    anchors.margins: Theme.dp(5)
+                                    radius: Theme.dp(6)
                                     color: Theme.withBlur(Theme.bgSunken)
                                     border.width: tile.isSelected ? 2 : 1
                                     border.color: tile.isSelected ? Theme.accent : Theme.alpha(Theme.text, 0.25)
@@ -647,7 +647,7 @@ PanelWindow {
 
                                     IconImage {
                                         anchors.centerIn: parent
-                                        implicitSize: Math.round(Math.min(56, shot.height * 0.42))
+                                        implicitSize: Math.round(Math.min(Theme.dp(56), shot.height * 0.42))
                                         source: tile.iconSource
                                         visible: !preview.visible && tile.iconSource !== ""
                                     }
@@ -664,25 +664,25 @@ PanelWindow {
                                 Rectangle {
                                     id: chip
 
-                                    x: shot.width >= chip.width + 12 ? shot.x + 6 : Math.round(shot.x + (shot.width - chip.width) / 2)
-                                    y: shot.y + shot.height - chip.height - 6
+                                    x: shot.width >= chip.width + Theme.dp(12) ? shot.x + Theme.dp(6) : Math.round(shot.x + (shot.width - chip.width) / 2)
+                                    y: shot.y + shot.height - chip.height - Theme.dp(6)
                                     visible: tile.ws !== null
-                                    height: 22
-                                    radius: 11
-                                    width: chipRow.implicitWidth + 14
+                                    height: Theme.dp(22)
+                                    radius: Theme.dp(11)
+                                    width: chipRow.implicitWidth + Theme.dp(14)
                                     color: tile.here ? Theme.primary : Theme.alpha(Theme.surfaceHighest, 0.92)
 
                                     Row {
                                         id: chipRow
 
                                         anchors.centerIn: parent
-                                        spacing: 4
+                                        spacing: Theme.dp(4)
 
                                         Icon {
                                             anchors.verticalCenter: parent.verticalCenter
                                             visible: tile.special
                                             name: tile.special ? Specials.glyph(tile.wsName) : ""
-                                            size: 14
+                                            size: Theme.dp(14)
                                             fill: 1
                                             color: tile.here ? Theme.fgPrimary : Theme.subtext
                                         }
@@ -702,7 +702,7 @@ PanelWindow {
                                 IconButton {
                                     anchors.top: shot.top
                                     anchors.right: shot.right
-                                    anchors.margins: 6
+                                    anchors.margins: Theme.dp(6)
                                     visible: tile.isSelected
                                     variant: "tonal"
                                     size: "xs"
@@ -752,14 +752,14 @@ PanelWindow {
 
                             Row {
                                 anchors.top: card.bottom
-                                anchors.topMargin: 8
+                                anchors.topMargin: Theme.dp(8)
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                spacing: 6
+                                spacing: Theme.dp(6)
 
                                 Item {
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: 16
-                                    height: 16
+                                    width: Theme.dp(16)
+                                    height: Theme.dp(16)
 
                                     IconImage {
                                         anchors.fill: parent
@@ -771,7 +771,7 @@ PanelWindow {
                                         anchors.centerIn: parent
                                         visible: tile.iconSource === ""
                                         name: "select_window"
-                                        size: 16
+                                        size: Theme.dp(16)
                                         color: tile.isSelected ? Theme.primary : Theme.subtext
                                     }
 
@@ -781,8 +781,8 @@ PanelWindow {
                                     id: captionText
 
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: Math.min(Math.ceil(captionMetrics.advanceWidth) + 1, tile.width - 22)
-                                    size: 13
+                                    width: Math.min(Math.ceil(captionMetrics.advanceWidth) + 1, tile.width - Theme.dp(22))
+                                    size: Theme.dp(13)
                                     weight: tile.isSelected ? 620 : 480
                                     color: tile.isSelected ? Theme.primary : Theme.subtext
                                     elide: Text.ElideRight
@@ -833,12 +833,12 @@ PanelWindow {
                 anchors.centerIn: parent
                 anchors.verticalCenterOffset: -sw.footH / 2
                 visible: sw.count === 0
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 Icon {
                     anchors.horizontalCenter: parent.horizontalCenter
                     name: "select_window"
-                    size: 36
+                    size: Theme.dp(36)
                     color: Theme.subtext
                 }
 
@@ -855,8 +855,8 @@ PanelWindow {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                anchors.leftMargin: sw.pad + 8
-                anchors.rightMargin: sw.pad + 8
+                anchors.leftMargin: sw.pad + Theme.dp(8)
+                anchors.rightMargin: sw.pad + Theme.dp(8)
                 height: sw.footH + sw.pad / 2
 
                 Row {
@@ -865,12 +865,12 @@ PanelWindow {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.verticalCenterOffset: -sw.pad / 4
-                    spacing: 6
+                    spacing: Theme.dp(6)
 
                     Icon {
                         anchors.verticalCenter: parent.verticalCenter
                         name: "select_window"
-                        size: 16
+                        size: Theme.dp(16)
                         color: Theme.subtext
                     }
 
@@ -886,7 +886,7 @@ PanelWindow {
                 LText {
                     anchors.right: parent.right
                     anchors.left: countRow.right
-                    anchors.leftMargin: 16
+                    anchors.leftMargin: Theme.dp(16)
                     anchors.verticalCenter: countRow.verticalCenter
                     horizontalAlignment: Text.AlignRight
                     elide: Text.ElideLeft

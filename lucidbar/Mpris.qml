@@ -15,7 +15,7 @@ BarPill {
     readonly property var easeStandard: [0.2, 0, 0, 1, 1, 1]
     readonly property var easeEmphasized: [0.05, 0.7, 0.1, 1, 1, 1]
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
-    readonly property int contentWidth: root.panelWidth - 28
+    readonly property int contentWidth: root.panelWidth - Theme.dp(28)
     readonly property var mprisPlayers: {
         const out = [];
         const list = Mpris.players.values;
@@ -419,9 +419,9 @@ BarPill {
     }
 
     shown: Prefs.barHas("media")
-    compactWidth: compactRow.implicitWidth + 20
-    panelWidth: Math.min(400, root.screenW - 34)
-    panelHeight: 28 + (root.page === "player" ? playerColumn.implicitHeight : shazamColumn.implicitHeight)
+    compactWidth: compactRow.implicitWidth + Theme.dp(20)
+    panelWidth: Math.min(Theme.dp(400), root.screenW - Theme.dp(34))
+    panelHeight: Theme.dp(28) + (root.page === "player" ? playerColumn.implicitHeight : shazamColumn.implicitHeight)
     expandedRadius: Theme.radiusXl
     compactCollapseScale: 0.94
     compactInteractive: false
@@ -666,11 +666,11 @@ BarPill {
             id: compactRow
 
             anchors.centerIn: parent
-            spacing: 8
+            spacing: Theme.dp(8)
 
             Item {
-                width: 26
-                height: 26
+                width: Theme.dp(26)
+                height: Theme.dp(26)
                 anchors.verticalCenter: parent.verticalCenter
 
                 CircularProgress {
@@ -686,9 +686,9 @@ BarPill {
                     id: compactArt
 
                     anchors.centerIn: parent
-                    width: 18
-                    height: 18
-                    radius: 9
+                    width: Theme.dp(18)
+                    height: Theme.dp(18)
+                    radius: Theme.dp(9)
                     color: Theme.surfaceHighest
                     visible: root.player !== null && compactArtImg.status === Image.Ready
 
@@ -699,8 +699,8 @@ BarPill {
                         source: root.artUrl
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
-                        sourceSize.width: 64
-                        sourceSize.height: 64
+                        sourceSize.width: Theme.dp(64)
+                        sourceSize.height: Theme.dp(64)
                     }
 
                     RotationAnimation on rotation {
@@ -715,7 +715,7 @@ BarPill {
 
                 Row {
                     anchors.centerIn: parent
-                    spacing: 2
+                    spacing: Theme.dp(2)
                     visible: root.player !== null && !compactArt.visible
 
                     Repeater {
@@ -725,10 +725,10 @@ BarPill {
                             required property int index
 
                             width: 2.5
-                            radius: 999
+                            radius: Theme.dp(999)
                             color: Theme.accent
                             anchors.verticalCenter: parent.verticalCenter
-                            height: root.isPlaying ? Math.max(3, root.bandLevel(1 + index * 11, 10 + index * 11) * 11) : 3
+                            height: root.isPlaying ? Math.max(Theme.dp(3), root.bandLevel(1 + index * 11, 10 + index * 11) * 11) : Theme.dp(3)
 
                             Behavior on height {
                                 NumberAnimation {
@@ -748,7 +748,7 @@ BarPill {
                     anchors.centerIn: parent
                     visible: root.player === null
                     name: "music_note"
-                    size: 16
+                    size: Theme.dp(16)
                     fill: 1
                     color: Theme.accent
                 }
@@ -758,8 +758,8 @@ BarPill {
             Item {
                 id: compactTitleSlot
 
-                width: root.volumeFlash ? volumeFlashRow.implicitWidth : Math.min(170, Math.max(60, compactTitle.naturalWidth))
-                height: 18
+                width: root.volumeFlash ? volumeFlashRow.implicitWidth : Math.min(Theme.dp(170), Math.max(Theme.dp(60), compactTitle.naturalWidth))
+                height: Theme.dp(18)
                 anchors.verticalCenter: parent.verticalCenter
 
                 Marquee {
@@ -786,13 +786,13 @@ BarPill {
                     id: volumeFlashRow
 
                     anchors.centerIn: parent
-                    spacing: 5
+                    spacing: Theme.dp(5)
                     opacity: root.volumeFlash ? 1 : 0
 
                     Icon {
                         anchors.verticalCenter: parent.verticalCenter
                         name: root.playerVolume <= 0 ? "volume_off" : (root.playerVolume < 0.5 ? "volume_down" : "volume_up")
-                        size: 16
+                        size: Theme.dp(16)
                         fill: 1
                         color: Theme.accent
                     }
@@ -817,9 +817,9 @@ BarPill {
             }
 
             Rectangle {
-                width: 24
-                height: 24
-                radius: playArea.pressed ? 8 : 12
+                width: Theme.dp(24)
+                height: Theme.dp(24)
+                radius: playArea.pressed ? Theme.dp(8) : Theme.dp(12)
                 anchors.verticalCenter: parent.verticalCenter
                 color: Theme.accent
                 opacity: root.player !== null && root.player.canTogglePlaying ? 1 : 0.4
@@ -836,7 +836,7 @@ BarPill {
                 Icon {
                     anchors.centerIn: parent
                     name: root.isPlaying ? "pause" : "play_arrow"
-                    size: 16
+                    size: Theme.dp(16)
                     fill: 1
                     color: Theme.fgAccent
                 }
@@ -880,27 +880,27 @@ BarPill {
         Column {
             id: playerColumn
 
-            x: 14
-            y: 14
+            x: Theme.dp(14)
+            y: Theme.dp(14)
             width: root.contentWidth
-            spacing: 10
+            spacing: Theme.dp(10)
 
             Row {
                 width: root.contentWidth
-                height: 84
-                spacing: 12
+                height: Theme.dp(84)
+                spacing: Theme.dp(12)
 
                 Item {
                     id: artwork
 
-                    width: 84
-                    height: 84
+                    width: Theme.dp(84)
+                    height: Theme.dp(84)
 
                     RoundedArt {
                         anchors.fill: parent
                         source: root.artUrl
                         shapeRadius: Theme.radiusLg
-                        fallbackGlyph: 30
+                        fallbackGlyph: Theme.dp(30)
                     }
 
                     Rectangle {
@@ -924,7 +924,7 @@ BarPill {
                         opacity: artArea.containsMouse ? 1 : 0
                         path: root.isPlaying ? root.pauseGlyph : root.playGlyph
                         tint: "white"
-                        glyphSize: 32
+                        glyphSize: Theme.dp(32)
 
                         Behavior on opacity {
                             NumberAnimation {
@@ -948,8 +948,8 @@ BarPill {
                 }
 
                 Item {
-                    width: root.contentWidth - 84 - 12
-                    height: 84
+                    width: root.contentWidth - Theme.dp(84) - Theme.dp(12)
+                    height: Theme.dp(84)
 
                     Column {
                         anchors.top: parent.top
@@ -981,21 +981,21 @@ BarPill {
                         anchors.bottom: parent.bottom
                         anchors.left: parent.left
                         width: parent.width
-                        height: 22
-                        spacing: 8
+                        height: Theme.dp(22)
+                        spacing: Theme.dp(8)
                         visible: root.volumeSupported
 
                         SvgIcon {
                             anchors.verticalCenter: parent.verticalCenter
                             path: root.volumeGlyphFor(root.playerVolume)
                             tint: Theme.subtext
-                            glyphSize: 14
+                            glyphSize: Theme.dp(14)
                         }
 
                         Slider {
                             id: volTrack
 
-                            width: parent.width - 22
+                            width: parent.width - Theme.dp(22)
                             anchors.verticalCenter: parent.verticalCenter
                             value: root.playerVolume
                             showValue: false
@@ -1017,12 +1017,12 @@ BarPill {
                 id: vizStrip
 
                 width: root.contentWidth
-                height: 20
+                height: Theme.dp(20)
                 opacity: root.isPlaying ? 1 : 0.75
 
                 Row {
                     anchors.fill: parent
-                    spacing: 3
+                    spacing: Theme.dp(3)
 
                     Repeater {
                         model: root.barCount
@@ -1037,7 +1037,7 @@ BarPill {
                             // a wide bar must not drag the height up with it
                             height: Math.min(vizStrip.height, Math.max(width, level * vizStrip.height))
                             anchors.bottom: parent.bottom
-                            radius: 999
+                            radius: Theme.dp(999)
                             color: root.barColor(level)
 
                             Behavior on height {
@@ -1066,11 +1066,11 @@ BarPill {
 
             Item {
                 width: root.contentWidth
-                height: 40
+                height: Theme.dp(40)
 
                 Column {
                     width: parent.width
-                    spacing: 4
+                    spacing: Theme.dp(4)
                     visible: root.hasDuration
 
                     Item {
@@ -1080,22 +1080,22 @@ BarPill {
                         property bool dragging: false
                         property real dragProgress: root.progress
                         readonly property real displayProgress: dragging ? dragProgress : root.progress
-                        readonly property real trackInset: 8
+                        readonly property real trackInset: Theme.dp(8)
 
                         width: parent.width
-                        height: 22
+                        height: Theme.dp(22)
 
                         Canvas {
                             id: waveCanvas
 
                             property real animatedProgress: trackHitArea.displayProgress
-                            readonly property real trackThickness: 4
-                            readonly property real handleWidth: 4
-                            property real handleHeight: trackHitArea.hovering || trackHitArea.dragging ? 18 : 14
+                            readonly property real trackThickness: Theme.dp(4)
+                            readonly property real handleWidth: Theme.dp(4)
+                            property real handleHeight: trackHitArea.hovering || trackHitArea.dragging ? Theme.dp(18) : Theme.dp(14)
                             property real amplitude: trackHitArea.hovering || trackHitArea.dragging ? 4.5 : 3.5
-                            readonly property real trackGap: 6
-                            readonly property real stopIndicator: 4
-                            readonly property real wavelength: 26
+                            readonly property real trackGap: Theme.dp(6)
+                            readonly property real stopIndicator: Theme.dp(4)
+                            readonly property real wavelength: Theme.dp(26)
 
                             function smoothstep(t) {
                                 t = Math.max(0, Math.min(1, t));
@@ -1263,7 +1263,7 @@ BarPill {
                                 id: lenArea
 
                                 anchors.fill: parent
-                                anchors.margins: -6
+                                anchors.margins: -Theme.dp(6)
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: root.showRemaining = !root.showRemaining
@@ -1277,15 +1277,15 @@ BarPill {
 
                 Row {
                     anchors.centerIn: parent
-                    spacing: 7
+                    spacing: Theme.dp(7)
                     visible: !root.hasDuration
 
                     Rectangle {
                         id: liveDot
 
-                        width: 6
-                        height: 6
-                        radius: 999
+                        width: Theme.dp(6)
+                        height: Theme.dp(6)
+                        radius: Theme.dp(999)
                         color: Theme.accent
                         anchors.verticalCenter: parent.verticalCenter
 
@@ -1327,17 +1327,17 @@ BarPill {
 
             Item {
                 width: root.contentWidth
-                height: 40
+                height: Theme.dp(40)
 
                 Row {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+                    spacing: Theme.dp(2)
 
                     IconBtn {
                         ghost: true
-                        diameter: 28
-                        glyphSize: 15
+                        diameter: Theme.dp(28)
+                        glyphSize: Theme.dp(15)
                         visible: root.mprisPlayers.length > 1
                         path: root.swapGlyph
                         tint: Theme.subtextDim
@@ -1346,8 +1346,8 @@ BarPill {
 
                     IconBtn {
                         ghost: true
-                        diameter: 28
-                        glyphSize: 16
+                        diameter: Theme.dp(28)
+                        glyphSize: Theme.dp(16)
                         path: root.identifyGlyph
                         tint: Theme.subtextDim
                         onActivated: root.openPanel("shazam")
@@ -1358,12 +1358,12 @@ BarPill {
                 Row {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+                    spacing: Theme.dp(2)
 
                     IconBtn {
                         ghost: true
-                        diameter: 28
-                        glyphSize: 14
+                        diameter: Theme.dp(28)
+                        glyphSize: Theme.dp(14)
                         visible: root.player !== null && root.player.canRaise
                         path: root.openGlyph
                         tint: Theme.subtextDim
@@ -1379,13 +1379,13 @@ BarPill {
                 Row {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 10
+                    spacing: Theme.dp(10)
                     visible: root.player !== null
 
                     IconBtn {
                         ghost: true
-                        diameter: 26
-                        glyphSize: 14
+                        diameter: Theme.dp(26)
+                        glyphSize: Theme.dp(14)
                         anchors.verticalCenter: parent.verticalCenter
                         visible: root.player !== null && root.player.shuffleSupported
                         path: root.shuffleGlyph
@@ -1398,8 +1398,8 @@ BarPill {
                     }
 
                     IconBtn {
-                        diameter: 30
-                        glyphSize: 15
+                        diameter: Theme.dp(30)
+                        glyphSize: Theme.dp(15)
                         anchors.verticalCenter: parent.verticalCenter
                         path: root.prevGlyph
                         enabledAction: root.player !== null && root.player.canGoPrevious
@@ -1407,8 +1407,8 @@ BarPill {
                     }
 
                     IconBtn {
-                        diameter: 40
-                        glyphSize: 19
+                        diameter: Theme.dp(40)
+                        glyphSize: Theme.dp(19)
                         filled: true
                         anchors.verticalCenter: parent.verticalCenter
                         path: root.isPlaying ? root.pauseGlyph : root.playGlyph
@@ -1418,8 +1418,8 @@ BarPill {
                     }
 
                     IconBtn {
-                        diameter: 30
-                        glyphSize: 15
+                        diameter: Theme.dp(30)
+                        glyphSize: Theme.dp(15)
                         anchors.verticalCenter: parent.verticalCenter
                         path: root.nextGlyph
                         enabledAction: root.player !== null && root.player.canGoNext
@@ -1428,8 +1428,8 @@ BarPill {
 
                     IconBtn {
                         ghost: true
-                        diameter: 26
-                        glyphSize: 14
+                        diameter: Theme.dp(26)
+                        glyphSize: Theme.dp(14)
                         anchors.verticalCenter: parent.verticalCenter
                         visible: root.player !== null && root.player.loopSupported
                         path: (root.player && root.player.loopState === MprisLoopState.Track) ? root.repeatOneGlyph : root.repeatGlyph
@@ -1477,24 +1477,24 @@ BarPill {
         Column {
             id: shazamColumn
 
-            x: 14
-            y: 14
+            x: Theme.dp(14)
+            y: Theme.dp(14)
             width: root.contentWidth
-            spacing: 12
+            spacing: Theme.dp(12)
 
             Item {
                 width: root.contentWidth
-                height: 30
+                height: Theme.dp(30)
 
                 Row {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 4
+                    spacing: Theme.dp(4)
 
                     IconBtn {
                         ghost: true
-                        diameter: 26
-                        glyphSize: 15
+                        diameter: Theme.dp(26)
+                        glyphSize: Theme.dp(15)
                         anchors.verticalCenter: parent.verticalCenter
                         path: root.backGlyph
                         tint: Theme.subtext
@@ -1517,12 +1517,12 @@ BarPill {
                 Row {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+                    spacing: Theme.dp(2)
 
                     IconBtn {
                         ghost: true
-                        diameter: 28
-                        glyphSize: 16
+                        diameter: Theme.dp(28)
+                        glyphSize: Theme.dp(16)
                         path: root.volumeGlyphs[root.volumeGlyphs.length - 1].path
                         tint: root.listenSource === "system" ? Theme.accent : Theme.subtextDim
                         onActivated: {
@@ -1533,8 +1533,8 @@ BarPill {
 
                     IconBtn {
                         ghost: true
-                        diameter: 28
-                        glyphSize: 16
+                        diameter: Theme.dp(28)
+                        glyphSize: Theme.dp(16)
                         path: root.micGlyph
                         tint: root.listenSource === "mic" ? Theme.accent : Theme.subtextDim
                         onActivated: {
@@ -1551,16 +1551,16 @@ BarPill {
                 id: shazamHero
 
                 width: root.contentWidth
-                height: root.shazamState === "match" ? 84 : 136
+                height: root.shazamState === "match" ? Theme.dp(84) : Theme.dp(136)
 
                 Column {
                     anchors.centerIn: parent
-                    spacing: 14
+                    spacing: Theme.dp(14)
                     visible: root.shazamState !== "match"
 
                     Item {
-                        width: 116
-                        height: 74
+                        width: Theme.dp(116)
+                        height: Theme.dp(74)
                         anchors.horizontalCenter: parent.horizontalCenter
 
                         Repeater {
@@ -1572,9 +1572,9 @@ BarPill {
                                 required property int index
 
                                 anchors.centerIn: parent
-                                width: 64
-                                height: 64
-                                radius: 999
+                                width: Theme.dp(64)
+                                height: Theme.dp(64)
+                                radius: Theme.dp(999)
                                 color: "transparent"
                                 border.width: 2
                                 border.color: Theme.accent
@@ -1624,9 +1624,9 @@ BarPill {
                             id: listenBtn
 
                             anchors.centerIn: parent
-                            width: 64
-                            height: 64
-                            radius: 999
+                            width: Theme.dp(64)
+                            height: Theme.dp(64)
+                            radius: Theme.dp(999)
                             color: Theme.accent
                             scale: listenArea.pressed ? 0.94 : (listenArea.containsMouse ? 1.05 : 1)
 
@@ -1650,7 +1650,7 @@ BarPill {
 
                             Row {
                                 anchors.centerIn: parent
-                                spacing: 3
+                                spacing: Theme.dp(3)
                                 visible: root.shazamState === "listening"
 
                                 Repeater {
@@ -1659,11 +1659,11 @@ BarPill {
                                     Rectangle {
                                         required property int index
 
-                                        width: 3
-                                        radius: 999
+                                        width: Theme.dp(3)
+                                        radius: Theme.dp(999)
                                         color: Theme.fgAccent
                                         anchors.verticalCenter: parent.verticalCenter
-                                        height: Math.max(4, root.bandLevel(1 + index * 7, 7 + index * 7) * 26)
+                                        height: Math.max(Theme.dp(4), root.bandLevel(1 + index * 7, 7 + index * 7) * 26)
 
                                         Behavior on height {
                                             NumberAnimation {
@@ -1684,7 +1684,7 @@ BarPill {
                                 visible: root.shazamState !== "listening"
                                 path: root.shazamState === "idle" ? root.identifyGlyph : root.retryGlyph
                                 tint: Theme.fgAccent
-                                glyphSize: 26
+                                glyphSize: Theme.dp(26)
                             }
 
                             MouseArea {
@@ -1715,7 +1715,7 @@ BarPill {
 
                     Column {
                         width: root.contentWidth
-                        spacing: 3
+                        spacing: Theme.dp(3)
 
                         Text {
                             width: parent.width
@@ -1768,20 +1768,20 @@ BarPill {
                 Row {
                     anchors.verticalCenter: parent.verticalCenter
                     width: root.contentWidth
-                    spacing: 14
+                    spacing: Theme.dp(14)
                     visible: root.shazamState === "match"
 
                     RoundedArt {
-                        width: 76
-                        height: 76
+                        width: Theme.dp(76)
+                        height: Theme.dp(76)
                         source: root.shazamResult ? root.shazamResult.art : ""
                         shapeRadius: Theme.radiusMd
-                        fallbackGlyph: 28
+                        fallbackGlyph: Theme.dp(28)
                     }
 
                     Item {
-                        width: root.contentWidth - 76 - 14
-                        height: 76
+                        width: root.contentWidth - Theme.dp(76) - Theme.dp(14)
+                        height: Theme.dp(76)
 
                         Column {
                             anchors.top: parent.top
@@ -1832,7 +1832,7 @@ BarPill {
                         Row {
                             anchors.bottom: parent.bottom
                             anchors.left: parent.left
-                            spacing: 6
+                            spacing: Theme.dp(6)
 
                             PillBtn {
                                 label: "Shazam"
@@ -1841,24 +1841,24 @@ BarPill {
                             }
 
                             IconBtn {
-                                diameter: 28
-                                glyphSize: 14
+                                diameter: Theme.dp(28)
+                                glyphSize: Theme.dp(14)
                                 anchors.verticalCenter: parent.verticalCenter
                                 path: root.searchGlyph
                                 onActivated: root.searchOnline(root.shazamResult)
                             }
 
                             IconBtn {
-                                diameter: 28
-                                glyphSize: 14
+                                diameter: Theme.dp(28)
+                                glyphSize: Theme.dp(14)
                                 anchors.verticalCenter: parent.verticalCenter
                                 path: root.copyGlyph
                                 onActivated: root.copyText(root.shazamResult ? root.shazamResult.title + " — " + root.shazamResult.artist : "")
                             }
 
                             IconBtn {
-                                diameter: 28
-                                glyphSize: 14
+                                diameter: Theme.dp(28)
+                                glyphSize: Theme.dp(14)
                                 anchors.verticalCenter: parent.verticalCenter
                                 path: root.retryGlyph
                                 onActivated: root.startListening()
@@ -1883,12 +1883,12 @@ BarPill {
 
             Column {
                 width: root.contentWidth
-                spacing: 6
+                spacing: Theme.dp(6)
                 visible: historyAdapter.items.length > 0
 
                 Item {
                     width: parent.width
-                    height: 14
+                    height: Theme.dp(14)
 
                     Text {
                         anchors.left: parent.left
@@ -1906,8 +1906,8 @@ BarPill {
                         ghost: true
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        diameter: 22
-                        glyphSize: 13
+                        diameter: Theme.dp(22)
+                        glyphSize: Theme.dp(13)
                         path: root.trashGlyph
                         tint: Theme.subtextDim
                         onActivated: root.clearHistory()
@@ -1924,11 +1924,11 @@ BarPill {
                         required property var modelData
 
                         width: root.contentWidth
-                        height: 38
+                        height: Theme.dp(38)
 
                         Rectangle {
                             anchors.fill: parent
-                            anchors.margins: -4
+                            anchors.margins: -Theme.dp(4)
                             radius: Theme.radiusSm
                             color: Theme.text
                             opacity: histArea.pressed ? Theme.statePressed : (histArea.containsMouse ? Theme.stateHover : 0)
@@ -1947,18 +1947,18 @@ BarPill {
 
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 32
-                            height: 32
+                            width: Theme.dp(32)
+                            height: Theme.dp(32)
                             source: histRow.modelData.art
                             shapeRadius: Theme.radiusXs
-                            fallbackGlyph: 16
+                            fallbackGlyph: Theme.dp(16)
                         }
 
                         Column {
                             anchors.left: histArt.right
-                            anchors.leftMargin: 10
+                            anchors.leftMargin: Theme.dp(10)
                             anchors.right: histAgo.left
-                            anchors.rightMargin: 10
+                            anchors.rightMargin: Theme.dp(10)
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 1
 
@@ -2024,7 +2024,7 @@ BarPill {
 
         property string source: ""
         property int shapeRadius: Theme.radiusMd
-        property int fallbackGlyph: 28
+        property int fallbackGlyph: Theme.dp(28)
         readonly property bool ready: artSource.status === Image.Ready
 
         ClippingRectangle {
@@ -2040,8 +2040,8 @@ BarPill {
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: true
-                sourceSize.width: 256
-                sourceSize.height: 256
+                sourceSize.width: Theme.dp(256)
+                sourceSize.height: Theme.dp(256)
                 visible: art.ready
             }
 
@@ -2062,7 +2062,7 @@ BarPill {
 
         property string path: ""
         property color tint: Theme.text
-        property int glyphSize: 16
+        property int glyphSize: Theme.dp(16)
 
         width: icon.glyphSize
         height: icon.glyphSize
@@ -2088,7 +2088,7 @@ BarPill {
         property int pixelSize: Theme.fs(13)
         property bool scrolling: true
         readonly property int sliceCount: 7
-        readonly property int sliceWidth: 2
+        readonly property int sliceWidth: Theme.dp(2)
         // one loop of text plus the gap before its repeat
         readonly property real segmentWidth: measure.implicitWidth
         readonly property real naturalWidth: bare.implicitWidth
@@ -2229,8 +2229,8 @@ BarPill {
         id: btn
 
         property string path: ""
-        property int diameter: 28
-        property int glyphSize: 14
+        property int diameter: Theme.dp(28)
+        property int glyphSize: Theme.dp(14)
         property color tint: Theme.text
         property bool filled: false
         property bool ghost: false
@@ -2240,7 +2240,7 @@ BarPill {
 
         width: btn.diameter
         height: btn.diameter
-        radius: 999
+        radius: Theme.dp(999)
         color: btn.filled ? Theme.accent : (btn.ghost ? "transparent" : Theme.withBlur(Theme.bgHigh))
         opacity: btn.enabledAction ? 1 : 0.3
         scale: btnArea.pressed ? 0.9 : (btnArea.containsMouse ? 1.07 : 1)
@@ -2312,9 +2312,9 @@ BarPill {
 
         signal activated()
 
-        implicitWidth: pillRow.implicitWidth + 26
-        height: 30
-        radius: 999
+        implicitWidth: pillRow.implicitWidth + Theme.dp(26)
+        height: Theme.dp(30)
+        radius: Theme.dp(999)
         color: pill.accented ? Theme.accent : Theme.withBlur(Theme.bgHigh)
         scale: pillArea.pressed ? 0.94 : (pillArea.containsMouse ? 1.04 : 1)
 
@@ -2322,14 +2322,14 @@ BarPill {
             id: pillRow
 
             anchors.centerIn: parent
-            spacing: 7
+            spacing: Theme.dp(7)
 
             SvgIcon {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: pill.path !== ""
                 path: pill.path
                 tint: pill.onColor
-                glyphSize: 14
+                glyphSize: Theme.dp(14)
             }
 
             Text {

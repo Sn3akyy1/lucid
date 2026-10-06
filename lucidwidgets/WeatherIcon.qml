@@ -11,7 +11,7 @@ Item {
 
     // clear, clear-night, partly, partly-night, cloud, rain, snow, storm, fog
     property string kind: "clear"
-    property real size: 48
+    property real size: Theme.dp(48)
     property color tint: Theme.accent
     property color cloudColor: Theme.subtext
     property bool animate: true

@@ -145,7 +145,7 @@ Variants {
                     y: Math.min(field.ay, field.by)
                     width: Math.abs(field.bx - field.ax)
                     height: Math.abs(field.by - field.ay)
-                    radius: Math.min(4, box.width / 2, box.height / 2)
+                    radius: Math.min(Theme.dp(4), box.width / 2, box.height / 2)
                     color: Theme.alpha(Theme.accent, 0.16)
                     border.width: 1
                     border.color: Theme.alpha(Theme.accent, 0.8)

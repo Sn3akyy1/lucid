@@ -53,14 +53,14 @@ WidgetBody {
         anchors.fill: parent
 
         Row {
-            x: 22
-            y: 10
-            spacing: 6
+            x: Theme.dp(22)
+            y: Theme.dp(10)
+            spacing: Theme.dp(6)
 
             LText {
                 id: dTime
 
-                size: 74
+                size: Theme.dp(74)
                 weight: 620
                 rounded: 100
                 tabular: true
@@ -70,7 +70,7 @@ WidgetBody {
 
             Column {
                 anchors.bottom: dTime.bottom
-                anchors.bottomMargin: 16
+                anchors.bottomMargin: Theme.dp(16)
                 spacing: 0
 
                 LText {
@@ -95,9 +95,9 @@ WidgetBody {
 
         LText {
             visible: w.showDate
-            x: 24
+            x: Theme.dp(24)
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 18
+            anchors.bottomMargin: Theme.dp(18)
             role: "titleSmall"
             weight: 520
             color: w.inkDim
@@ -111,10 +111,10 @@ WidgetBody {
         id: stack
 
         // sized off the card, not off `unit`, or the two size each other in a loop
-        readonly property int dateSize: Math.max(11, Math.round(stack.height * 0.06))
+        readonly property int dateSize: Math.max(Theme.dp(11), Math.round(stack.height * 0.06))
         readonly property int dateBox: w.showDate ? Math.round(stack.dateSize * 1.45) : 0
         // the lock screen's proportions: a line box of 0.82 units, two of them
-        readonly property int unit: Math.max(24, Math.min((stack.height - 52 - stack.dateBox) / 1.64, (stack.width - 56) / 1.35))
+        readonly property int unit: Math.max(Theme.dp(24), Math.min((stack.height - Theme.dp(52) - stack.dateBox) / 1.64, (stack.width - Theme.dp(56)) / 1.35))
 
         visible: w.variant === "stack"
         anchors.fill: parent
@@ -125,7 +125,7 @@ WidgetBody {
             anchors.horizontalCenter: parent.horizontalCenter
             // the digits sit low in their line boxes, so nudge the group back up
             y: Math.round((stack.height - height) / 2) - Math.round(stack.unit * 0.02)
-            spacing: 2
+            spacing: Theme.dp(2)
 
             // both lines take the width of the wider one, so a one-digit hour sits
             // centred over the minute instead of leaving a hole beside it
@@ -190,7 +190,7 @@ WidgetBody {
     Item {
         id: analog
 
-        readonly property real r: Math.min(width, height) / 2 - 12
+        readonly property real r: Math.min(width, height) / 2 - Theme.dp(12)
 
         visible: w.variant === "analog"
         anchors.fill: parent
@@ -211,9 +211,9 @@ WidgetBody {
 
                 readonly property real a: index / 12 * 2 * Math.PI
 
-                x: analog.width / 2 + Math.sin(a) * (analog.r - 16) - width / 2
-                y: analog.height / 2 - Math.cos(a) * (analog.r - 16) - height / 2
-                width: index % 3 === 0 ? 7 : 4
+                x: analog.width / 2 + Math.sin(a) * (analog.r - Theme.dp(16)) - width / 2
+                y: analog.height / 2 - Math.cos(a) * (analog.r - Theme.dp(16)) - height / 2
+                width: index % 3 === 0 ? Theme.dp(7) : Theme.dp(4)
                 height: width
                 radius: width / 2
                 visible: !(w.showDate && index === 3)
@@ -225,11 +225,11 @@ WidgetBody {
         // a watch's date window, where the three would be
         Rectangle {
             visible: w.showDate
-            x: analog.width / 2 + analog.r - 22 - width
+            x: analog.width / 2 + analog.r - Theme.dp(22) - width
             anchors.verticalCenter: parent.verticalCenter
-            width: dateWin.implicitWidth + 12
-            height: 22
-            radius: 8
+            width: dateWin.implicitWidth + Theme.dp(12)
+            height: Theme.dp(22)
+            radius: Theme.dp(8)
             color: Theme.alpha(w.inkAccent, 0.18)
 
             LText {
@@ -249,7 +249,7 @@ WidgetBody {
         Rectangle {
             x: analog.width / 2 - width / 2
             y: analog.height / 2 - height + width / 2
-            width: 11
+            width: Theme.dp(11)
             height: analog.r * 0.52
             radius: 5.5
             color: w.inkAccent
@@ -261,9 +261,9 @@ WidgetBody {
         Rectangle {
             x: analog.width / 2 - width / 2
             y: analog.height / 2 - height + width / 2
-            width: 6
+            width: Theme.dp(6)
             height: analog.r * 0.8
-            radius: 3
+            radius: Theme.dp(3)
             color: w.ink
             transformOrigin: Item.Bottom
             rotation: (w.now.getMinutes() + w.now.getSeconds() / 60) * 6
@@ -272,9 +272,9 @@ WidgetBody {
 
         Rectangle {
             anchors.centerIn: parent
-            width: 14
-            height: 14
-            radius: 7
+            width: Theme.dp(14)
+            height: Theme.dp(14)
+            radius: Theme.dp(7)
             color: w.ink
         }
 
@@ -282,11 +282,11 @@ WidgetBody {
             readonly property real a: w.now.getSeconds() / 60 * 2 * Math.PI
 
             visible: w.seconds
-            x: analog.width / 2 + Math.sin(a) * (analog.r - 3) - width / 2
-            y: analog.height / 2 - Math.cos(a) * (analog.r - 3) - height / 2
-            width: 10
-            height: 10
-            radius: 5
+            x: analog.width / 2 + Math.sin(a) * (analog.r - Theme.dp(3)) - width / 2
+            y: analog.height / 2 - Math.cos(a) * (analog.r - Theme.dp(3)) - height / 2
+            width: Theme.dp(10)
+            height: Theme.dp(10)
+            radius: Theme.dp(5)
             color: w.inkAccent
         }
 
@@ -299,7 +299,7 @@ WidgetBody {
 
         MaterialShape {
             anchors.centerIn: parent
-            width: Math.min(parent.width, parent.height) - 18
+            width: Math.min(parent.width, parent.height) - Theme.dp(18)
             height: width
             shape: w.opt("shape") || "cookie9"
             color: w.inkAccent
@@ -319,11 +319,11 @@ WidgetBody {
 
         Column {
             anchors.centerIn: parent
-            spacing: -4
+            spacing: -Theme.dp(4)
 
             LText {
                 anchors.horizontalCenter: parent.horizontalCenter
-                size: 56
+                size: Theme.dp(56)
                 weight: 640
                 rounded: 100
                 tabular: true
@@ -347,18 +347,18 @@ WidgetBody {
     Column {
         visible: w.variant === "minimal"
         anchors.left: parent.left
-        anchors.leftMargin: 6
+        anchors.leftMargin: Theme.dp(6)
         anchors.verticalCenter: parent.verticalCenter
-        spacing: -6
+        spacing: -Theme.dp(6)
 
         Row {
-            spacing: 6
+            spacing: Theme.dp(6)
 
             ShadowText {
                 text: w.hourOf(w.now) + ":" + w.two(w.now.getMinutes())
                 color: "white"
                 shadow: true
-                pixelSize: 58
+                pixelSize: Theme.dp(58)
                 weight: 600
                 rounded: 100
             }
@@ -366,11 +366,11 @@ WidgetBody {
             ShadowText {
                 visible: !w.use24
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 12
+                anchors.bottomMargin: Theme.dp(12)
                 text: w.ampm(w.now)
                 color: "white"
                 shadow: true
-                pixelSize: 18
+                pixelSize: Theme.dp(18)
                 weight: 560
             }
 
@@ -382,7 +382,7 @@ WidgetBody {
             color: "white"
             opacity: 0.85
             shadow: true
-            pixelSize: 15
+            pixelSize: Theme.dp(15)
             weight: 520
         }
 
@@ -392,8 +392,8 @@ WidgetBody {
     Column {
         visible: w.variant === "world"
         anchors.fill: parent
-        anchors.margins: 12
-        spacing: 3
+        anchors.margins: Theme.dp(12)
+        spacing: Theme.dp(3)
 
         Repeater {
             model: w.zones
@@ -409,15 +409,15 @@ WidgetBody {
                 }
 
                 width: parent.width
-                height: (parent.height - 6) / 3
-                topLeftRadius: city.index === 0 ? 18 : 6
-                topRightRadius: city.index === 0 ? 18 : 6
-                bottomLeftRadius: city.index === w.zones.length - 1 ? 18 : 6
-                bottomRightRadius: city.index === w.zones.length - 1 ? 18 : 6
+                height: (parent.height - Theme.dp(6)) / 3
+                topLeftRadius: city.index === 0 ? Theme.dp(18) : Theme.dp(6)
+                topRightRadius: city.index === 0 ? Theme.dp(18) : Theme.dp(6)
+                bottomLeftRadius: city.index === w.zones.length - 1 ? Theme.dp(18) : Theme.dp(6)
+                bottomRightRadius: city.index === w.zones.length - 1 ? Theme.dp(18) : Theme.dp(6)
                 color: Theme.alpha(w.ink, 0.07)
 
                 Column {
-                    x: 14
+                    x: Theme.dp(14)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 0
 
@@ -437,7 +437,7 @@ WidgetBody {
 
                 LText {
                     anchors.right: parent.right
-                    anchors.rightMargin: 14
+                    anchors.rightMargin: Theme.dp(14)
                     anchors.verticalCenter: parent.verticalCenter
                     role: "headlineSmall"
                     weight: 600

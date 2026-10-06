@@ -22,13 +22,13 @@ Item {
     readonly property color emptyColor: Theme.alpha(Theme.text, 0.28)
     readonly property real level: Math.max(0, Math.min(1, bp.percent / 100))
 
-    implicitWidth: bp.showText ? 30 : 22
-    implicitHeight: 15
+    implicitWidth: bp.showText ? Theme.dp(30) : Theme.dp(22)
+    implicitHeight: Theme.dp(15)
 
     Item {
         id: body
 
-        width: bp.width - 3
+        width: bp.width - Theme.dp(3)
         height: bp.height
 
         Rectangle {
@@ -100,8 +100,8 @@ Item {
         anchors.left: body.right
         anchors.leftMargin: 1
         anchors.verticalCenter: parent.verticalCenter
-        width: 2
-        height: 6
+        width: Theme.dp(2)
+        height: Theme.dp(6)
         radius: 1
         color: bp.level >= 0.99 ? bp.fillColor : bp.emptyColor
     }
@@ -110,7 +110,7 @@ Item {
         visible: bp.charging && !bp.showText
         anchors.centerIn: body
         name: "bolt"
-        size: 12
+        size: Theme.dp(12)
         fill: 1
         color: Theme.bgOpaque
     }

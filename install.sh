@@ -782,18 +782,11 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     [[ -f "$LUCID_DIR/wallpaper-outputs.conf" ]] || install -m644 "$SRC/support/lucid/wallpaper-outputs.conf" "$LUCID_DIR/wallpaper-outputs.conf"
     # the sddm theme lives outside $HOME, so it is the one thing here that
     # needs root. skipped entirely when sddm is not installed, and it never
-    # switches the active theme - that stays the user's call
+    # switches the active theme - that stays the user's call. root keeps the
+    # theme; every account paints its own corner of it without a password
     if [[ -d /usr/share/sddm/themes ]]; then
         SDDM_THEME_DIR=/usr/share/sddm/themes/lucid
-        if sudo install -d -m755 "$SDDM_THEME_DIR" 2>/dev/null \
-           && sudo cp -r "$SRC/support/sddm/lucid/." "$SDDM_THEME_DIR/" \
-           && sudo install -Dm644 "$SRC/assets/fonts/GoogleSansFlex.ttf" "$SDDM_THEME_DIR/fonts/GoogleSansFlex.ttf" \
-           && sudo install -Dm644 "$SRC/assets/fonts/OFL-GoogleSansFlex.txt" "$SDDM_THEME_DIR/fonts/OFL-GoogleSansFlex.txt"; then
-            # the greeter runs as its own user, so the font it draws in rides
-            # along with the theme rather than in anyone's home
-            # sync-sddm.sh repaints this on every theme change, and it must be
-            # able to do that without asking for a password every time
-            sudo chown -R "$USER" "$SDDM_THEME_DIR"
+        if sudo bash "$SRC/support/sddm/install-theme.sh" "$SDDM_THEME_DIR"; then
             say "  sddm theme      -> $SDDM_THEME_DIR"
             # /etc/sddm.conf outranks /etc/sddm.conf.d, so point at the file
             # that actually wins rather than at the tidier-looking drop-in

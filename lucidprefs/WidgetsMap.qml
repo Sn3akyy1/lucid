@@ -14,14 +14,14 @@ Item {
     readonly property real screenH: map.screenSize ? map.screenSize.height : 1080
     readonly property real fit: Math.min((frame.width - 24) / map.screenW, (frame.height - 24) / map.screenH)
 
-    implicitHeight: 300
+    implicitHeight: Theme.dp(300)
 
     Text {
         id: caption
 
         anchors.left: parent.left
         anchors.top: parent.top
-        leftPadding: 22
+        leftPadding: Theme.dp(22)
         text: "Your desktop"
         color: Theme.accent
         font.family: Theme.fontFamily
@@ -29,13 +29,13 @@ Item {
         font.variableAxes: Theme.axes(Theme.fontTitleSm, 600, 0)
         font.weight: Font.DemiBold
         font.letterSpacing: 0.1
-        bottomPadding: 12
+        bottomPadding: Theme.dp(12)
     }
 
     Text {
         anchors.right: parent.right
         anchors.baseline: caption.baseline
-        rightPadding: 22
+        rightPadding: Theme.dp(22)
         text: "Click a widget to pin it in place"
         color: Theme.subtextDim
         font.family: Theme.fontFamily
@@ -80,6 +80,8 @@ Item {
                     id: spot
 
                     required property string uid
+                    required property string wtype
+                    required property string wvariant
                     required property real wx
                     required property real wy
                     required property real bw
@@ -88,8 +90,8 @@ Item {
                     required property bool pinned
                     required property bool closing
                     required property string screenName
-                    readonly property real cw: spot.bw * spot.zoom * map.fit
-                    readonly property real ch: spot.bh * spot.zoom * map.fit
+                    readonly property real cw: spot.bw * spot.zoom * Widgets.sizeScale(spot.wtype, spot.wvariant) * map.fit
+                    readonly property real ch: spot.bh * spot.zoom * Widgets.sizeScale(spot.wtype, spot.wvariant) * map.fit
 
                     x: Math.max(0, Math.min(parent.width - spot.cw, spot.wx * map.fit))
                     y: Math.max(0, Math.min(parent.height - spot.ch, spot.wy * map.fit))
@@ -118,10 +120,10 @@ Item {
                     Rectangle {
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        anchors.margins: 4
-                        width: 18
-                        height: 18
-                        radius: 9
+                        anchors.margins: Theme.dp(4)
+                        width: Theme.dp(18)
+                        height: Theme.dp(18)
+                        radius: Theme.dp(9)
                         color: Theme.accent
                         opacity: spot.pinned ? 1 : (area.containsMouse ? 0.55 : 0)
                         visible: opacity > 0.01
@@ -129,7 +131,7 @@ Item {
                         WidgetGlyph {
                             anchors.centerIn: parent
                             name: "pin"
-                            size: 11
+                            size: Theme.dp(11)
                             color: Theme.fgAccent
                         }
 
@@ -159,8 +161,8 @@ Item {
 
         Rectangle {
             anchors.centerIn: canvas
-            width: empty.implicitWidth + 36
-            height: empty.implicitHeight + 24
+            width: empty.implicitWidth + Theme.dp(36)
+            height: empty.implicitHeight + Theme.dp(24)
             radius: Theme.radiusLg
             color: Theme.bgOpaque
             visible: Widgets.count === 0
@@ -169,7 +171,7 @@ Item {
                 id: empty
 
                 anchors.centerIn: parent
-                spacing: 3
+                spacing: Theme.dp(3)
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter

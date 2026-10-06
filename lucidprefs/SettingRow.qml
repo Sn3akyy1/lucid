@@ -26,10 +26,10 @@ Item {
     property string warning: ""
     default property alias control: holder.data
     readonly property string activeDescription: (!row.enabled && row.disabledReason !== "") ? row.disabledReason : row.description
-    readonly property int outerRadius: 26
-    readonly property int innerRadius: 6
-    readonly property int padH: 22
-    readonly property int padV: 16
+    readonly property int outerRadius: Theme.dp(26)
+    readonly property int innerRadius: Theme.dp(6)
+    readonly property int padH: Theme.dp(22)
+    readonly property int padV: Theme.dp(16)
     // the SettingCard this row belongs to, if any
     readonly property var group: {
         for (var p = row.parent; p; p = p.parent) {
@@ -45,8 +45,8 @@ Item {
         flashPulse.restart();
     }
 
-    implicitWidth: parent ? parent.width : 400
-    implicitHeight: Math.max(60, (row.stacked ? labels.implicitHeight + holder.implicitHeight + 14 : Math.max(labels.implicitHeight, holder.implicitHeight)) + row.padV * 2)
+    implicitWidth: parent ? parent.width : Theme.dp(400)
+    implicitHeight: Math.max(Theme.dp(60), (row.stacked ? labels.implicitHeight + holder.implicitHeight + Theme.dp(14) : Math.max(labels.implicitHeight, holder.implicitHeight)) + row.padV * 2)
     onVisibleChanged: {
         if (row.group)
             row.group.regroupLater();
@@ -157,10 +157,10 @@ Item {
         anchors.left: parent.left
         anchors.leftMargin: row.padH
         anchors.right: row.stacked ? parent.right : holder.left
-        anchors.rightMargin: row.stacked ? row.padH : 20
+        anchors.rightMargin: row.stacked ? row.padH : Theme.dp(20)
         anchors.top: parent.top
         anchors.topMargin: row.padV
-        spacing: 4
+        spacing: Theme.dp(4)
 
         Item {
             width: parent.width
@@ -171,7 +171,7 @@ Item {
 
                 anchors.left: parent.left
                 anchors.right: resetBtn.left
-                anchors.rightMargin: row.resetVisible ? 6 : 0
+                anchors.rightMargin: row.resetVisible ? Theme.dp(6) : 0
                 anchors.verticalCenter: parent.verticalCenter
                 text: row.title
                 color: Theme.text
@@ -200,9 +200,9 @@ Item {
 
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                size: 30
-                iconSize: 17
-                width: row.resetVisible ? 30 : 0
+                size: Theme.dp(30)
+                iconSize: Theme.dp(17)
+                width: row.resetVisible ? Theme.dp(30) : 0
                 enabled: row.resetVisible
                 opacity: row.resetVisible ? 1 : 0
                 visible: opacity > 0.01
@@ -256,7 +256,7 @@ Item {
                 anchors.top: parent.top
                 anchors.topMargin: 1
                 name: "warning"
-                size: 15
+                size: Theme.dp(15)
                 fill: 1
                 color: Theme.error
             }
@@ -265,7 +265,7 @@ Item {
                 id: warnText
 
                 anchors.left: warnMark.right
-                anchors.leftMargin: 8
+                anchors.leftMargin: Theme.dp(8)
                 anchors.right: parent.right
                 anchors.top: parent.top
                 text: row.warning
@@ -291,7 +291,7 @@ Item {
         anchors.left: row.stacked ? parent.left : undefined
         anchors.leftMargin: row.padH
         anchors.top: row.stacked ? labels.bottom : undefined
-        anchors.topMargin: row.stacked ? 12 : 0
+        anchors.topMargin: row.stacked ? Theme.dp(12) : 0
         anchors.verticalCenter: row.stacked ? undefined : parent.verticalCenter
     }
 

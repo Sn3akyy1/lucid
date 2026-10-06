@@ -27,8 +27,8 @@ Item {
     signal removeRequested(int index)
     signal pinRequested(string appId, int index)
 
-    readonly property int slotSize: Prefs.dockIconSize
-    readonly property int slotGap: Prefs.dockSpacing
+    readonly property int slotSize: Theme.dp(Prefs.dockIconSize)
+    readonly property int slotGap: Theme.dp(Prefs.dockSpacing)
     readonly property int slotPitch: row.slotSize + row.slotGap
     // the gap opening and the icon landing in it share one timing
     readonly property int enterMs: Theme.ms(220)
@@ -266,12 +266,12 @@ Item {
             }
 
             Rectangle {
-                width: 8
-                height: 8
-                radius: 4
+                width: Theme.dp(8)
+                height: Theme.dp(8)
+                radius: Theme.dp(4)
                 color: Theme.accent
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: -14
+                y: -Theme.dp(14)
                 opacity: slot.overPinThreshold ? 1 : 0
                 visible: opacity > 0
 

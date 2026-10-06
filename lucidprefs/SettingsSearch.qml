@@ -11,7 +11,7 @@ Item {
     property real railT: 1
     property alias text: input.text
     readonly property bool focused: input.activeFocus
-    readonly property real iconX: 20 * field.railT + ((field.width - 22) / 2) * (1 - field.railT)
+    readonly property real iconX: Theme.dp(20) * field.railT + ((field.width - Theme.dp(22)) / 2) * (1 - field.railT)
     readonly property real labelFade: Math.max(0, (field.railT - 0.5) / 0.5)
 
     signal moved(int by)
@@ -30,7 +30,7 @@ Item {
         input.text = "";
     }
 
-    implicitHeight: 50
+    implicitHeight: Theme.dp(50)
 
     Rectangle {
         anchors.fill: parent
@@ -71,7 +71,7 @@ Item {
         x: field.iconX
         anchors.verticalCenter: parent.verticalCenter
         name: "search"
-        size: 22
+        size: Theme.dp(22)
         color: input.activeFocus ? Theme.accent : Theme.subtext
     }
 
@@ -81,9 +81,9 @@ Item {
         id: input
 
         anchors.left: parent.left
-        anchors.leftMargin: field.iconX + 38
+        anchors.leftMargin: field.iconX + Theme.dp(38)
         anchors.right: clearBtn.visible ? clearBtn.left : parent.right
-        anchors.rightMargin: clearBtn.visible ? 4 : 18
+        anchors.rightMargin: clearBtn.visible ? Theme.dp(4) : Theme.dp(18)
         anchors.verticalCenter: parent.verticalCenter
         opacity: field.labelFade
         color: Theme.text
@@ -104,7 +104,7 @@ Item {
     Text {
         anchors.left: input.left
         anchors.right: parent.right
-        anchors.rightMargin: 18
+        anchors.rightMargin: Theme.dp(18)
         anchors.verticalCenter: parent.verticalCenter
         text: "Search settings"
         color: Theme.subtextDim
@@ -119,10 +119,10 @@ Item {
         id: clearBtn
 
         anchors.right: parent.right
-        anchors.rightMargin: 7
+        anchors.rightMargin: Theme.dp(7)
         anchors.verticalCenter: parent.verticalCenter
-        size: 36
-        iconSize: 18
+        size: Theme.dp(36)
+        iconSize: Theme.dp(18)
         opacity: field.labelFade
         visible: input.text !== "" && opacity > 0.01
         iconPath: "close"

@@ -43,7 +43,7 @@ Item {
         page.focusId = Chrono.timers[Chrono.timers.length - 1].id;
     }
 
-    implicitHeight: 404
+    implicitHeight: Theme.dp(404)
     onShownChanged: {
         if (page.shown)
             Chrono.rollDay();
@@ -71,7 +71,7 @@ Item {
 
         }
 
-        implicitHeight: 30
+        implicitHeight: Theme.dp(30)
 
         LText {
             anchors.verticalCenter: parent.verticalCenter
@@ -94,7 +94,7 @@ Item {
 
             LText {
                 anchors.verticalCenter: parent.verticalCenter
-                width: 30
+                width: Theme.dp(30)
                 horizontalAlignment: Text.AlignHCenter
                 role: "titleSmall"
                 weight: 640
@@ -125,14 +125,14 @@ Item {
     Rectangle {
         id: dialCard
 
-        width: 312
+        width: Theme.dp(312)
         height: parent.height
         radius: Theme.shapeXl
         color: Theme.withBlur(Theme.surfaceHigh)
 
         LText {
-            x: 20
-            y: 18
+            x: Theme.dp(20)
+            y: Theme.dp(18)
             role: "titleMedium"
             weight: 600
             text: page.focused ? page.focused.label : "New timer"
@@ -142,14 +142,14 @@ Item {
             id: dial
 
             anchors.horizontalCenter: parent.horizontalCenter
-            y: 46
-            width: 200
-            height: 200
+            y: Theme.dp(46)
+            width: Theme.dp(200)
+            height: Theme.dp(200)
 
             MaterialShape {
                 anchors.centerIn: parent
-                width: 176
-                height: 176
+                width: Theme.dp(176)
+                height: Theme.dp(176)
                 shape: "cookie12"
                 color: page.focused && page.focused.running ? Theme.alpha(Theme.primary, 0.1) : Theme.withBlur(Theme.surfaceHighest)
 
@@ -165,7 +165,7 @@ Item {
 
             CircularProgress {
                 anchors.fill: parent
-                thickness: 10
+                thickness: Theme.dp(10)
                 value: page.totalMs > 0 ? page.remainMs / page.totalMs : 0
                 color: page.focused && page.remainMs <= 0 ? Theme.error : Theme.primary
                 trackColor: Theme.withBlur(Theme.surfaceHighest)
@@ -221,17 +221,17 @@ Item {
 
             visible: !page.focused
             anchors.top: dial.bottom
-            anchors.topMargin: 6
+            anchors.topMargin: Theme.dp(6)
             anchors.bottom: controls.top
-            anchors.bottomMargin: 6
+            anchors.bottomMargin: Theme.dp(6)
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 280
+            width: Theme.dp(280)
             clip: true
 
             Flow {
                 anchors.centerIn: parent
                 width: parent.width
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Repeater {
                     model: page.presets
@@ -255,9 +255,9 @@ Item {
             id: controls
 
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 18
+            anchors.bottomMargin: Theme.dp(18)
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 10
+            spacing: Theme.dp(10)
 
             IconButton {
                 anchors.verticalCenter: parent.verticalCenter
@@ -268,15 +268,15 @@ Item {
 
             // the one big control, filled, the way a clock app's start button is
             Rectangle {
-                width: 72
-                height: 56
-                radius: playArea.pressed ? 16 : 28
+                width: Theme.dp(72)
+                height: Theme.dp(56)
+                radius: playArea.pressed ? Theme.dp(16) : Theme.dp(28)
                 color: Theme.primary
 
                 Icon {
                     anchors.centerIn: parent
                     name: page.focused && page.focused.running ? "pause" : "play_arrow"
-                    size: 30
+                    size: Theme.dp(30)
                     fill: 1
                     color: Theme.fgPrimary
                 }
@@ -322,26 +322,26 @@ Item {
         readonly property color ink: pomo.tinted ? Theme.fgTertiaryContainer : Theme.text
 
         anchors.left: dialCard.right
-        anchors.leftMargin: 12
+        anchors.leftMargin: Theme.dp(12)
         anchors.right: parent.right
-        height: pomo.tuning ? page.height : 176
+        height: pomo.tuning ? page.height : Theme.dp(176)
         radius: Theme.shapeXl
         color: pomo.tinted ? Theme.withBlur(Theme.tertiaryContainer) : Theme.withBlur(Theme.surfaceHigh)
 
         Column {
             id: pomoHead
 
-            x: 20
-            y: 16
-            spacing: 2
+            x: Theme.dp(20)
+            y: Theme.dp(16)
+            spacing: Theme.dp(2)
 
             Row {
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 Icon {
                     anchors.verticalCenter: parent.verticalCenter
                     name: Chrono.pomoPhase === "focus" ? "psychiatry" : (Chrono.pomoActive ? "coffee" : "timer")
-                    size: 20
+                    size: Theme.dp(20)
                     fill: 1
                     color: pomo.ink
                 }
@@ -381,8 +381,8 @@ Item {
 
         IconButton {
             anchors.right: parent.right
-            anchors.rightMargin: 10
-            y: 10
+            anchors.rightMargin: Theme.dp(10)
+            y: Theme.dp(10)
             icon: pomo.tuning ? "close" : "tune"
             tintOverride: pomo.ink
             onClicked: pomo.tuning = !pomo.tuning
@@ -390,22 +390,22 @@ Item {
 
         Item {
             anchors.top: pomoHead.bottom
-            anchors.topMargin: 10
+            anchors.topMargin: Theme.dp(10)
             anchors.bottom: pomoCount.top
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.leftMargin: 20
-            anchors.rightMargin: 20
+            anchors.leftMargin: Theme.dp(20)
+            anchors.rightMargin: Theme.dp(20)
             visible: opacity > 0
             opacity: Math.max(0, (pomo.t - 0.4) / 0.6)
             clip: true
 
             Column {
                 width: parent.width
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 Row {
-                    spacing: 6
+                    spacing: Theme.dp(6)
 
                     Repeater {
                         model: Chrono.pomoPresets
@@ -430,8 +430,8 @@ Item {
 
                     width: parent.width
                     columns: 2
-                    columnSpacing: 16
-                    rowSpacing: 2
+                    columnSpacing: Theme.dp(16)
+                    rowSpacing: Theme.dp(2)
 
                     Stepper {
                         width: lengths.cell
@@ -494,7 +494,7 @@ Item {
 
                 Flow {
                     width: parent.width
-                    spacing: 6
+                    spacing: Theme.dp(6)
 
                     Chip {
                         text: "Auto breaks"
@@ -529,9 +529,9 @@ Item {
         LText {
             id: pomoCount
 
-            x: 20
+            x: Theme.dp(20)
             anchors.bottom: dots.top
-            anchors.bottomMargin: 6
+            anchors.bottomMargin: Theme.dp(6)
             size: Theme.fs(text.length > 5 ? 34 : 42)
             weight: 620
             rounded: 100
@@ -543,10 +543,10 @@ Item {
         Row {
             id: dots
 
-            x: 22
+            x: Theme.dp(22)
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 22
-            spacing: 6
+            anchors.bottomMargin: Theme.dp(22)
+            spacing: Theme.dp(6)
 
             Repeater {
                 model: Prefs.pomodoroRounds
@@ -557,9 +557,9 @@ Item {
                     readonly property bool current: Chrono.pomoPhase === "focus" && index === Chrono.pomoRound % Math.max(1, Prefs.pomodoroRounds)
 
                     anchors.verticalCenter: parent.verticalCenter
-                    width: current ? 22 : 8
-                    height: 8
-                    radius: 4
+                    width: current ? Theme.dp(22) : Theme.dp(8)
+                    height: Theme.dp(8)
+                    radius: Theme.dp(4)
                     color: done || current ? pomo.ink : Theme.alpha(pomo.ink, 0.25)
 
                     Behavior on width {
@@ -579,10 +579,10 @@ Item {
 
         Row {
             anchors.right: parent.right
-            anchors.rightMargin: 16
+            anchors.rightMargin: Theme.dp(16)
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 16
-            spacing: 6
+            anchors.bottomMargin: Theme.dp(16)
+            spacing: Theme.dp(6)
 
             IconButton {
                 visible: Chrono.pomoActive
@@ -639,10 +639,10 @@ Item {
 
     Rectangle {
         anchors.left: dialCard.right
-        anchors.leftMargin: 12
+        anchors.leftMargin: Theme.dp(12)
         anchors.right: parent.right
         anchors.top: pomo.bottom
-        anchors.topMargin: 12
+        anchors.topMargin: Theme.dp(12)
         anchors.bottom: parent.bottom
         visible: opacity > 0
         opacity: 1 - Math.min(1, pomo.t * 2.5)
@@ -652,8 +652,8 @@ Item {
         LText {
             id: listHead
 
-            x: 20
-            y: 16
+            x: Theme.dp(20)
+            y: Theme.dp(16)
             role: "titleSmall"
             text: Chrono.timers.length ? "Timers" : "No timers running"
             color: Chrono.timers.length ? Theme.text : Theme.subtext
@@ -664,7 +664,7 @@ Item {
                 return !t.running && t.left <= 0;
             })
             anchors.right: parent.right
-            anchors.rightMargin: 10
+            anchors.rightMargin: Theme.dp(10)
             anchors.verticalCenter: listHead.verticalCenter
             variant: "text"
             size: "xs"
@@ -674,13 +674,13 @@ Item {
 
         Flickable {
             anchors.top: listHead.bottom
-            anchors.topMargin: 8
+            anchors.topMargin: Theme.dp(8)
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.leftMargin: 10
-            anchors.rightMargin: 10
-            anchors.bottomMargin: 10
+            anchors.leftMargin: Theme.dp(10)
+            anchors.rightMargin: Theme.dp(10)
+            anchors.bottomMargin: Theme.dp(10)
             contentHeight: timerCol.implicitHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds
@@ -689,7 +689,7 @@ Item {
                 id: timerCol
 
                 width: parent.width
-                spacing: 2
+                spacing: Theme.dp(2)
 
                 Repeater {
                     model: Chrono.timers
@@ -703,8 +703,8 @@ Item {
                         readonly property bool isFocus: page.focused !== null && page.focused.id === trow.modelData.id
 
                         width: timerCol.width
-                        height: 52
-                        radius: trow.isFocus ? 26 : 12
+                        height: Theme.dp(52)
+                        radius: trow.isFocus ? Theme.dp(26) : Theme.dp(12)
                         color: trow.isFocus ? Theme.withBlur(Theme.secondaryContainer) : Theme.withBlur(Theme.surfaceHighest)
 
                         StateLayer {
@@ -713,17 +713,17 @@ Item {
                         }
 
                         CircularProgress {
-                            x: 10
+                            x: Theme.dp(10)
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 32
-                            height: 32
-                            thickness: 4
+                            width: Theme.dp(32)
+                            height: Theme.dp(32)
+                            thickness: Theme.dp(4)
                             value: trow.modelData.total > 0 ? trow.rem / trow.modelData.total : 0
                             color: trow.rem <= 0 ? Theme.error : Theme.primary
                         }
 
                         Column {
-                            x: 54
+                            x: Theme.dp(54)
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 0
 
@@ -746,7 +746,7 @@ Item {
 
                         Row {
                             anchors.right: parent.right
-                            anchors.rightMargin: 6
+                            anchors.rightMargin: Theme.dp(6)
                             anchors.verticalCenter: parent.verticalCenter
 
                             IconButton {

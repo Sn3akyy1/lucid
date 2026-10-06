@@ -24,7 +24,7 @@ Item {
 
     }
 
-    implicitWidth: parent ? parent.width : 700
+    implicitWidth: parent ? parent.width : Theme.dp(700)
     implicitHeight: page.detailed ? detailView.implicitHeight : listView.implicitHeight
     enabled: Prefs.kdeConnectEnabled
     opacity: page.enabled ? 1 : 0.38
@@ -38,7 +38,7 @@ Item {
         id: listView
 
         width: parent.width
-        spacing: 26
+        spacing: Theme.dp(26)
         visible: !page.detailed
         opacity: page.detailed ? 0 : 1
 
@@ -60,7 +60,7 @@ Item {
                 description: KdeConnect.selfId !== "" ? "This machine's KDE Connect ID is " + KdeConnect.selfId + "." : "Waiting for the KDE Connect daemon…"
 
                 M3TextField {
-                    width: 260
+                    width: Theme.dp(260)
                     enabled: KdeConnect.running
                     placeholder: "archlinux"
                     text: KdeConnect.selfName
@@ -83,7 +83,7 @@ Item {
 
                 Flow {
                     width: parent.width
-                    spacing: 16
+                    spacing: Theme.dp(16)
 
                     Repeater {
                         model: KdeConnect.backends
@@ -126,9 +126,9 @@ Item {
 
             Column {
                 width: parent.width
-                topPadding: 4
-                bottomPadding: 8
-                spacing: 2
+                topPadding: Theme.dp(4)
+                bottomPadding: Theme.dp(8)
+                spacing: Theme.dp(2)
 
                 GroupLabel {
                     text: "Wants to pair"
@@ -194,8 +194,8 @@ Item {
                     width: parent.width
                     visible: KdeConnect.running && KdeConnect.devices.length === 0
                     horizontalAlignment: Text.AlignHCenter
-                    topPadding: 18
-                    bottomPadding: 18
+                    topPadding: Theme.dp(18)
+                    bottomPadding: Theme.dp(18)
                     text: "No devices yet. Install KDE Connect on your phone, open it, and it will appear here."
                     color: Theme.subtext
                     font.family: Theme.fontFamily
@@ -256,9 +256,9 @@ Item {
         font.variableAxes: Theme.axes(Theme.fontTitleSm, 600, 0)
         font.weight: Font.DemiBold
         font.letterSpacing: 0.1
-        leftPadding: 22
-        topPadding: 14
-        bottomPadding: 6
+        leftPadding: Theme.dp(22)
+        topPadding: Theme.dp(14)
+        bottomPadding: Theme.dp(6)
     }
 
 }

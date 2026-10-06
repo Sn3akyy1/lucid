@@ -25,12 +25,12 @@ Item {
         }).join(", ") + " — both fire";
     }
     readonly property string problem: row.failure !== "" ? "Did not bind: " + row.failure : row.clashText
-    readonly property int outerRadius: 26
-    readonly property int innerRadius: 6
-    readonly property int keysWidth: Math.min(280, Math.round(row.width * 0.32))
+    readonly property int outerRadius: Theme.dp(26)
+    readonly property int innerRadius: Theme.dp(6)
+    readonly property int keysWidth: Math.min(Theme.dp(280), Math.round(row.width * 0.32))
 
-    implicitWidth: parent ? parent.width : 400
-    implicitHeight: Math.max(64, texts.implicitHeight + 26)
+    implicitWidth: parent ? parent.width : Theme.dp(400)
+    implicitHeight: Math.max(Theme.dp(64), texts.implicitHeight + Theme.dp(26))
 
     Rectangle {
         anchors.fill: parent
@@ -74,7 +74,7 @@ Item {
         id: keysBox
 
         anchors.left: parent.left
-        anchors.leftMargin: 22
+        anchors.leftMargin: Theme.dp(22)
         anchors.verticalCenter: parent.verticalCenter
         width: row.keysWidth
         height: combo.height
@@ -93,11 +93,11 @@ Item {
         id: texts
 
         anchors.left: keysBox.right
-        anchors.leftMargin: 18
+        anchors.leftMargin: Theme.dp(18)
         anchors.right: controls.left
-        anchors.rightMargin: 14
+        anchors.rightMargin: Theme.dp(14)
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 3
+        spacing: Theme.dp(3)
 
         Text {
             width: parent.width
@@ -137,9 +137,9 @@ Item {
         id: controls
 
         anchors.right: parent.right
-        anchors.rightMargin: 14
+        anchors.rightMargin: Theme.dp(14)
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 2
+        spacing: Theme.dp(2)
 
         M3Switch {
             anchors.verticalCenter: parent.verticalCenter
@@ -151,22 +151,22 @@ Item {
         }
 
         Item {
-            width: 8
+            width: Theme.dp(8)
             height: 1
         }
 
         M3IconButton {
             anchors.verticalCenter: parent.verticalCenter
-            size: 38
-            iconSize: 19
+            size: Theme.dp(38)
+            iconSize: Theme.dp(19)
             iconPath: "edit"
             onClicked: Keybinds.editRequested(row.bindId)
         }
 
         M3IconButton {
             anchors.verticalCenter: parent.verticalCenter
-            size: 38
-            iconSize: 19
+            size: Theme.dp(38)
+            iconSize: Theme.dp(19)
             destructive: true
             enabled: Keybinds.parseError === ""
             iconPath: "delete"

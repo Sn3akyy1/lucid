@@ -24,8 +24,8 @@ Item {
     signal rightClicked()
     signal toggled(bool value)
 
-    readonly property int btnH: ib.size === "xs" ? 30 : (ib.size === "m" ? 48 : 36)
-    readonly property int iconPx: ib.size === "xs" ? 18 : (ib.size === "m" ? 24 : 20)
+    readonly property int btnH: ib.size === "xs" ? Theme.dp(30) : (ib.size === "m" ? Theme.dp(48) : Theme.dp(36))
+    readonly property int iconPx: ib.size === "xs" ? Theme.dp(18) : (ib.size === "m" ? Theme.dp(24) : Theme.dp(20))
     readonly property int btnW: ib.widthKind === "narrow" ? Math.round(ib.btnH * 0.78) : (ib.widthKind === "wide" ? Math.round(ib.btnH * 1.3) : ib.btnH)
     readonly property bool on: ib.checkable && ib.checked
 
@@ -71,7 +71,7 @@ Item {
         id: box
 
         anchors.fill: parent
-        radius: area.pressed ? Math.min(ib.btnH / 2, 10) : (ib.on && ib.variant !== "standard" ? Math.min(ib.btnH / 2, 12) : ib.btnH / 2)
+        radius: area.pressed ? Math.min(ib.btnH / 2, Theme.dp(10)) : (ib.on && ib.variant !== "standard" ? Math.min(ib.btnH / 2, Theme.dp(12)) : ib.btnH / 2)
         color: ib.container
         border.width: ib.variant === "outlined" && !ib.on ? 1 : 0
         border.color: Theme.outline

@@ -13,26 +13,26 @@ Item {
     }
 
     implicitWidth: row.implicitWidth
-    implicitHeight: 60
+    implicitHeight: Theme.dp(60)
     visible: wx.report !== null
 
     Row {
         id: row
 
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 14
+        spacing: Theme.dp(14)
 
         WeatherIcon {
             anchors.verticalCenter: parent.verticalCenter
             kind: wx.report ? WeatherSource.kindFor(wx.report.code, wx.night) : "cloud"
-            size: 52
+            size: Theme.dp(52)
             tint: Theme.accent
             cloudColor: Theme.text
         }
 
         Row {
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 14
+            spacing: Theme.dp(14)
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
@@ -47,13 +47,13 @@ Item {
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 1
-                height: 26
+                height: Theme.dp(26)
                 color: Lockscreen.hairline
             }
 
             Column {
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
+                spacing: Theme.dp(2)
 
                 Text {
                     text: wx.report ? WeatherSource.descFor(wx.report.code) : ""

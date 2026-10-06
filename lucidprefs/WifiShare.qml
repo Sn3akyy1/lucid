@@ -10,7 +10,7 @@ Item {
     required property string ssid
     // stacks the code over the password, for the narrow bar panel
     property bool compact: false
-    property int qrSize: share.compact ? 148 : 168
+    property int qrSize: share.compact ? Theme.dp(148) : Theme.dp(168)
     property bool revealed: false
     property bool copied: false
 
@@ -104,7 +104,7 @@ Item {
 
         Text {
             anchors.centerIn: parent
-            width: parent.width - 28
+            width: parent.width - Theme.dp(28)
             visible: share.rows.length === 0
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
@@ -117,7 +117,7 @@ Item {
     }
 
     component Details: Column {
-        spacing: 10
+        spacing: Theme.dp(10)
 
         Text {
             width: parent.width
@@ -131,16 +131,16 @@ Item {
 
         Rectangle {
             width: parent.width
-            height: 40
+            height: Theme.dp(40)
             radius: Theme.radiusSm
             visible: share.ready && !share.open
             color: Theme.alpha(Theme.text, 0.06)
 
             Text {
                 anchors.left: parent.left
-                anchors.leftMargin: 12
+                anchors.leftMargin: Theme.dp(12)
                 anchors.right: eye.left
-                anchors.rightMargin: 8
+                anchors.rightMargin: Theme.dp(8)
                 anchors.verticalCenter: parent.verticalCenter
                 // a fixed row of dots, so hidden it doesn't give the length away
                 text: share.revealed ? (share.info.psk || "") : "••••••••••"
@@ -155,9 +155,9 @@ Item {
                 id: eye
 
                 anchors.right: parent.right
-                anchors.rightMargin: 4
+                anchors.rightMargin: Theme.dp(4)
                 anchors.verticalCenter: parent.verticalCenter
-                size: 32
+                size: Theme.dp(32)
                 // eye / eye-off, Material Design Icons
                 iconPath: share.revealed ? "visibility_off" : "visibility"
                 onClicked: share.revealed = !share.revealed
@@ -184,8 +184,8 @@ Item {
 
         width: parent.width
         columns: share.compact ? 1 : 2
-        columnSpacing: 20
-        rowSpacing: 12
+        columnSpacing: Theme.dp(20)
+        rowSpacing: Theme.dp(12)
         verticalItemAlignment: Grid.AlignVCenter
         horizontalItemAlignment: share.compact ? Grid.AlignHCenter : Grid.AlignLeft
 

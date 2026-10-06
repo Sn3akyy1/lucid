@@ -150,8 +150,8 @@ Item {
             digit.show();
         }
 
-        width: 30
-        height: 30
+        width: Theme.dp(30)
+        height: Theme.dp(30)
         onValueChanged: if (!field.activeFocus)
             digit.show()
         Component.onCompleted: digit.show()
@@ -208,8 +208,8 @@ Item {
         Rectangle {
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width - 6
-            height: 2
+            width: parent.width - Theme.dp(6)
+            height: Theme.dp(2)
             radius: 1
             color: digit.typing ? Theme.primary : Theme.alpha(Theme.subtext, 0.4)
 
@@ -224,12 +224,12 @@ Item {
 
     }
 
-    implicitHeight: 404
+    implicitHeight: Theme.dp(404)
 
     Rectangle {
         id: monthCard
 
-        width: 312
+        width: Theme.dp(312)
         height: parent.height
         radius: Theme.shapeXl
         color: Theme.withBlur(Theme.surfaceHigh)
@@ -238,7 +238,7 @@ Item {
             id: month
 
             anchors.centerIn: parent
-            cell: 40
+            cell: Theme.dp(40)
             selected: page.selected
             onPicked: (y, m, d) => {
                 page.selected = { "year": y, "month": m, "day": d };
@@ -252,7 +252,7 @@ Item {
 
     Rectangle {
         anchors.left: monthCard.right
-        anchors.leftMargin: 12
+        anchors.leftMargin: Theme.dp(12)
         anchors.right: parent.right
         height: parent.height
         radius: Theme.shapeXl
@@ -260,7 +260,7 @@ Item {
 
         Item {
             anchors.fill: parent
-            anchors.margins: 18
+            anchors.margins: Theme.dp(18)
 
             Column {
                 id: dayHead
@@ -286,9 +286,9 @@ Item {
                 id: list
 
                 anchors.top: dayHead.bottom
-                anchors.topMargin: 12
+                anchors.topMargin: Theme.dp(12)
                 anchors.bottom: form.top
-                anchors.bottomMargin: 12
+                anchors.bottomMargin: Theme.dp(12)
                 width: parent.width
                 contentHeight: items.implicitHeight
                 clip: true
@@ -298,7 +298,7 @@ Item {
                     id: items
 
                     width: list.width
-                    spacing: 2
+                    spacing: Theme.dp(2)
 
                     Repeater {
                         model: page.dayItems
@@ -334,13 +334,13 @@ Item {
                 Column {
                     visible: page.dayItems.length === 0
                     anchors.horizontalCenter: parent.horizontalCenter
-                    y: 24
-                    spacing: 8
+                    y: Theme.dp(24)
+                    spacing: Theme.dp(8)
 
                     Icon {
                         anchors.horizontalCenter: parent.horizontalCenter
                         name: "event_available"
-                        size: 32
+                        size: Theme.dp(32)
                         color: Theme.subtextDim
                     }
 
@@ -360,7 +360,7 @@ Item {
 
                 anchors.bottom: parent.bottom
                 width: parent.width
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 TextField {
                     id: nameField
@@ -385,21 +385,21 @@ Item {
 
                 Row {
                     width: parent.width
-                    spacing: 8
+                    spacing: Theme.dp(8)
 
                     Rectangle {
                         id: timeBox
 
-                        width: timeRow.implicitWidth + 20
-                        height: 36
-                        radius: 18
+                        width: timeRow.implicitWidth + Theme.dp(20)
+                        height: Theme.dp(36)
+                        radius: Theme.dp(18)
                         color: Theme.withBlur(Theme.surfaceHighest)
 
                         Row {
                             id: timeRow
 
                             anchors.centerIn: parent
-                            spacing: 2
+                            spacing: Theme.dp(2)
 
                             TimeDigit {
                                 id: hourDigit
@@ -443,8 +443,8 @@ Item {
                             Item {
                                 visible: !Prefs.clock24h
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: 32
-                                height: 30
+                                width: Theme.dp(32)
+                                height: Theme.dp(30)
 
                                 LText {
                                     anchors.centerIn: parent
@@ -455,7 +455,7 @@ Item {
                                 }
 
                                 StateLayer {
-                                    radius: 8
+                                    radius: Theme.dp(8)
                                     onClicked: page.setPm(!page.pm)
                                 }
 
@@ -473,7 +473,7 @@ Item {
                     }
 
                     Item {
-                        width: parent.width - timeBox.width - addBtn.width - 16
+                        width: parent.width - timeBox.width - addBtn.width - Theme.dp(16)
                         height: 1
                     }
 

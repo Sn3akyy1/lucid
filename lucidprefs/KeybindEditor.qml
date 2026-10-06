@@ -273,11 +273,11 @@ Item {
     Rectangle {
         id: card
 
-        readonly property int pad: 28
+        readonly property int pad: Theme.dp(28)
 
         anchors.centerIn: parent
-        width: Math.min(640, editor.width - 48)
-        height: Math.min(editor.height - 48, head.height + body.implicitHeight + 12 + foot.height)
+        width: Math.min(Theme.dp(640), editor.width - Theme.dp(48))
+        height: Math.min(editor.height - Theme.dp(48), head.height + body.implicitHeight + Theme.dp(12) + foot.height)
         radius: Theme.shapeXl
         color: Theme.bgHigh
         scale: editor.shown ? 1 : 0.94
@@ -292,12 +292,12 @@ Item {
             id: head
 
             width: parent.width
-            height: 76
+            height: Theme.dp(76)
 
             Text {
                 x: card.pad
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 12
+                anchors.bottomMargin: Theme.dp(12)
                 text: editor.editingId === "" ? "New keybind" : "Edit keybind"
                 color: Theme.text
                 font.family: Theme.fontFamily
@@ -315,7 +315,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             contentWidth: width
-            contentHeight: body.implicitHeight + 12
+            contentHeight: body.implicitHeight + Theme.dp(12)
             clip: true
             boundsBehavior: Flickable.StopAtBounds
 
@@ -324,7 +324,7 @@ Item {
 
                 x: card.pad
                 width: scroller.width - card.pad * 2
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 SectionLabel {
                     text: "Keys"
@@ -336,7 +336,7 @@ Item {
                     readonly property string shownKeys: editor.recording && !editor.awaitingRelease ? (editor.heldMods !== "" ? editor.heldMods + " + …" : "") : editor.keys
 
                     width: body.width
-                    height: 74
+                    height: Theme.dp(74)
                     radius: Theme.shapeLg
                     color: Theme.bgSunken
                     border.width: editor.recording ? 2 : 1
@@ -346,7 +346,7 @@ Item {
                         anchors.centerIn: parent
                         visible: keysPreview.shownKeys !== ""
                         keys: keysPreview.shownKeys
-                        capHeight: 38
+                        capHeight: Theme.dp(38)
                         fontSize: Theme.fontTitleSm
                     }
 
@@ -363,12 +363,12 @@ Item {
 
                 Item {
                     width: body.width
-                    height: 46
+                    height: Theme.dp(46)
 
                     M3TextField {
                         anchors.left: parent.left
                         anchors.right: recordBtn.left
-                        anchors.rightMargin: 10
+                        anchors.rightMargin: Theme.dp(10)
                         anchors.verticalCenter: parent.verticalCenter
                         placeholder: editor.each ? "SUPER + {key}" : "SUPER + SHIFT + T"
                         text: editor.keys
@@ -403,7 +403,7 @@ Item {
 
                 Item {
                     width: body.width
-                    height: Math.max(eachSwitch.height, eachText.implicitHeight) + 8
+                    height: Math.max(eachSwitch.height, eachText.implicitHeight) + Theme.dp(8)
 
                     M3Switch {
                         id: eachSwitch
@@ -420,10 +420,10 @@ Item {
                         id: eachText
 
                         anchors.left: eachSwitch.right
-                        anchors.leftMargin: 14
+                        anchors.leftMargin: Theme.dp(14)
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
+                        spacing: Theme.dp(2)
 
                         Text {
                             text: "Repeat for workspaces 1–10"
@@ -475,7 +475,7 @@ Item {
 
                 Flow {
                     width: body.width
-                    spacing: 6
+                    spacing: Theme.dp(6)
 
                     Repeater {
                         model: Keybinds.categories
@@ -497,7 +497,7 @@ Item {
                 }
 
                 M3Segmented {
-                    width: 280
+                    width: Theme.dp(280)
                     current: editor.kind
                     options: [{
                         "key": "exec",
@@ -523,7 +523,7 @@ Item {
 
                 Rectangle {
                     width: body.width
-                    height: 156
+                    height: Theme.dp(156)
                     visible: editor.kind === "lua"
                     radius: Theme.shapeLg
                     color: Theme.bgSunken
@@ -541,7 +541,7 @@ Item {
                         }
 
                         anchors.fill: parent
-                        anchors.margins: 14
+                        anchors.margins: Theme.dp(14)
                         contentWidth: width
                         contentHeight: luaEdit.implicitHeight
                         clip: true
@@ -573,8 +573,8 @@ Item {
                     }
 
                     Text {
-                        x: 14
-                        y: 14
+                        x: Theme.dp(14)
+                        y: Theme.dp(14)
                         visible: luaEdit.text === ""
                         text: "hl.dsp.window.close()"
                         color: Theme.subtextDim
@@ -599,7 +599,7 @@ Item {
 
                 Flow {
                     width: body.width
-                    spacing: 6
+                    spacing: Theme.dp(6)
 
                     Repeater {
                         model: editor.optionList
@@ -625,11 +625,11 @@ Item {
 
             anchors.bottom: parent.bottom
             width: parent.width
-            height: 76
+            height: Theme.dp(76)
 
             M3Button {
                 anchors.left: parent.left
-                anchors.leftMargin: card.pad - 8
+                anchors.leftMargin: card.pad - Theme.dp(8)
                 anchors.verticalCenter: parent.verticalCenter
                 visible: editor.editingId !== ""
                 enabled: Keybinds.parseError === ""
@@ -643,7 +643,7 @@ Item {
                 anchors.right: parent.right
                 anchors.rightMargin: card.pad
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 M3Button {
                     text: "Cancel"
@@ -686,7 +686,7 @@ Item {
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontTitleSm
         font.weight: Font.DemiBold
-        topPadding: 8
+        topPadding: Theme.dp(8)
     }
 
     // m3 filter chip: outlined at rest, tonal with a check once picked
@@ -698,8 +698,8 @@ Item {
 
         signal clicked()
 
-        height: 34
-        width: chipRow.implicitWidth + 26
+        height: Theme.dp(34)
+        width: chipRow.implicitWidth + Theme.dp(26)
         radius: Theme.shapeSm
         color: chip.selected ? Theme.secondaryContainer : "transparent"
         border.width: chip.selected ? 0 : 1
@@ -716,13 +716,13 @@ Item {
             id: chipRow
 
             anchors.centerIn: parent
-            spacing: 6
+            spacing: Theme.dp(6)
 
             Icon {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: chip.selected
                 name: "check"
-                size: 16
+                size: Theme.dp(16)
                 color: Theme.fgSecondaryContainer
             }
 

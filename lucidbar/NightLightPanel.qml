@@ -46,12 +46,12 @@ Item {
         id: col
 
         width: root.width
-        spacing: 12
+        spacing: Theme.dp(12)
 
         Text {
             width: col.width
-            leftPadding: 4
-            rightPadding: 4
+            leftPadding: Theme.dp(4)
+            rightPadding: Theme.dp(4)
             text: NightLight.available ? NightLight.status + (NightLight.active ? "  ·  " + NightLight.temperature + " K" : "") : "hyprsunset is not installed, so the screen can't be warmed."
             color: NightLight.available ? (NightLight.active ? Theme.accent : Theme.subtext) : Theme.warning
             font.family: Theme.fontFamily
@@ -73,13 +73,13 @@ Item {
             }
 
             width: col.width
-            height: 34
+            height: Theme.dp(34)
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width
-                height: 14
-                radius: 7
+                height: Theme.dp(14)
+                radius: Theme.dp(7)
                 opacity: NightLight.active ? 1 : 0.55
 
                 gradient: Gradient {
@@ -102,9 +102,9 @@ Item {
             Rectangle {
                 x: Math.max(0, Math.min(warmth.width - width, warmth.pos * warmth.width - width / 2))
                 anchors.verticalCenter: parent.verticalCenter
-                width: 6
-                height: 28
-                radius: 3
+                width: Theme.dp(6)
+                height: Theme.dp(28)
+                radius: Theme.dp(3)
                 color: Theme.text
                 border.width: 2
                 border.color: Theme.bgOpaque
@@ -128,11 +128,11 @@ Item {
 
         Item {
             width: col.width
-            height: 14
+            height: Theme.dp(14)
 
             Text {
                 anchors.left: parent.left
-                anchors.leftMargin: 4
+                anchors.leftMargin: Theme.dp(4)
                 text: "Cooler"
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
@@ -141,7 +141,7 @@ Item {
 
             Text {
                 anchors.right: parent.right
-                anchors.rightMargin: 4
+                anchors.rightMargin: Theme.dp(4)
                 text: "Warmer"
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
@@ -152,7 +152,7 @@ Item {
 
         Column {
             width: col.width
-            spacing: 4
+            spacing: Theme.dp(4)
 
             Repeater {
                 model: root.schedules
@@ -164,15 +164,15 @@ Item {
                     readonly property bool selected: Prefs.nightLightSchedule === option.modelData.key
 
                     width: col.width
-                    height: 46
-                    radius: 12
+                    height: Theme.dp(46)
+                    radius: Theme.dp(12)
                     color: option.selected ? Theme.withBlur(Theme.bgActive) : (optionArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent")
 
                     Column {
                         anchors.left: parent.left
-                        anchors.leftMargin: 12
+                        anchors.leftMargin: Theme.dp(12)
                         anchors.right: radio.left
-                        anchors.rightMargin: 10
+                        anchors.rightMargin: Theme.dp(10)
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 1
 
@@ -201,20 +201,20 @@ Item {
                         id: radio
 
                         anchors.right: parent.right
-                        anchors.rightMargin: 12
+                        anchors.rightMargin: Theme.dp(12)
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 18
-                        height: 18
-                        radius: 9
+                        width: Theme.dp(18)
+                        height: Theme.dp(18)
+                        radius: Theme.dp(9)
                         color: "transparent"
                         border.width: 2
                         border.color: option.selected ? Theme.accent : Theme.outlineStrong
 
                         Rectangle {
                             anchors.centerIn: parent
-                            width: 8
-                            height: 8
-                            radius: 4
+                            width: Theme.dp(8)
+                            height: Theme.dp(8)
+                            radius: Theme.dp(4)
                             color: Theme.accent
                             scale: option.selected ? 1 : 0
 
@@ -254,8 +254,8 @@ Item {
 
         Text {
             width: col.width
-            leftPadding: 4
-            rightPadding: 4
+            leftPadding: Theme.dp(4)
+            rightPadding: Theme.dp(4)
             text: "Hours and more in Settings"
             color: settingsArea.containsMouse ? Theme.accent : Theme.subtext
             font.family: Theme.fontFamily

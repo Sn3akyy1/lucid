@@ -118,6 +118,61 @@ def convert(d, box):
     return "".join(out)
 
 
+def area(pts):
+    return 0.5 * sum(pts[j][0] * pts[(j + 1) % len(pts)][1] - pts[(j + 1) % len(pts)][0] * pts[j][1]
+                     for j in range(len(pts)))
+
+
+# the exports carry zero-area spikes (m0 2v9v-9z): nothing to fill, but the gpu
+# curve renderer antialiases them into hairline dots at small sizes. drops every
+# subpath that encloses nothing, and opens each kept one with an absolute moveto
+# so dropping one never shifts the next
+def despike(d):
+    toks = list(tokens(d))
+    i = 0
+    cmd = None
+    x = y = sx = sy = 0.0
+    subs = []
+    while i < len(toks):
+        t = toks[i]
+        if isinstance(t, str):
+            cmd = t
+            i += 1
+            if cmd in "Zz":
+                subs[-1][0].append("Z")
+                x, y = sx, sy
+                continue
+        up = cmd.upper()
+        rel = cmd.islower()
+        n = ARGS[up]
+        v = toks[i:i + n]
+        i += n
+        if up == "M":
+            x, y = (x + v[0], y + v[1]) if rel and subs else (v[0], v[1])
+            sx, sy = x, y
+            subs.append((["M%s %s" % (fmt(x), fmt(y))], [(x, y)]))
+            cmd = "l" if rel else "L"
+            continue
+        out, pts = subs[-1]
+        out.append(cmd + " ".join(fmt(a) for a in v))
+        if up == "H":
+            x = x + v[0] if rel else v[0]
+            pts.append((x, y))
+        elif up == "V":
+            y = y + v[0] if rel else v[0]
+            pts.append((x, y))
+        elif up == "A":
+            x, y = (x + v[5], y + v[6]) if rel else (v[5], v[6])
+            pts.append((x, y))
+        else:
+            # control points too: a real curve never has a flat control polygon
+            ox, oy = x, y
+            for j in range(0, n, 2):
+                pts.append((ox + v[j], oy + v[j + 1]) if rel else (v[j], v[j + 1]))
+            x, y = pts[-1]
+    return "".join("".join(out) for out, pts in subs if abs(area(pts)) > 1e-6)
+
+
 # one entry per subpath, every command made absolute on the 24 grid so a shape
 # stands on its own: [role, path, centre x, centre y], the cloud last so it
 # paints over what falls from it
@@ -169,6 +224,8 @@ def parts(d, box, lit, small):
         out.append(("L" if up in "HV" else up) + " ".join("%s %s" % (fmt((px - mx) * k), fmt((py - my) * k)) for px, py in pairs))
     shapes = []
     for out, pts in subs:
+        if abs(area(pts)) <= 1e-6:
+            continue
         xs = [(p[0] - mx) * k for p in pts]
         ys = [(p[1] - my) * k for p in pts]
         shapes.append(["".join(out), min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys)])
@@ -246,7 +303,7 @@ def main():
             missing.append(n)
             continue
         filled = filled if filled else outline
-        table[n] = [convert(*outline), convert(*filled)]
+        table[n] = [despike(convert(*outline)), despike(convert(*filled))]
     cut = {n: parts(*(got[(n, "_fill1")] or got[(n, "")]), *PARTED[n]) for n in PARTED if n in table}
     write(OUT, table, missing, cut)
     # the greeter draws every glyph filled
@@ -257,7 +314,7 @@ def main():
         if shape is None:
             missing.append(n)
             continue
-        solid[n] = convert(*shape)
+        solid[n] = despike(convert(*shape))
     write(SDDM_OUT, solid, missing)
 
 

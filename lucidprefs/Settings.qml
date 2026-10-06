@@ -17,8 +17,8 @@ FloatingWindow {
     readonly property int maxFlick: 9000
 
     // m3 navigation rail: 88 collapsed, 268 expanded
-    readonly property int railNarrow: 88
-    readonly property int railWide: 268
+    readonly property int railNarrow: Theme.dp(88)
+    readonly property int railWide: Theme.dp(268)
     property bool railWanted: true
     readonly property bool railExpanded: (win.railWanted && surface.width >= 880) || railSearch.focused || win.searching
     // 0 collapsed .. 1 expanded, tracked through the width animation itself so
@@ -26,8 +26,8 @@ FloatingWindow {
     readonly property real railT: Math.max(0, Math.min(1, (rail.width - win.railNarrow) / (win.railWide - win.railNarrow)))
 
     // m3 large top app bar, collapsing to a small one on scroll
-    readonly property int barTall: 128
-    readonly property int barShort: 66
+    readonly property int barTall: Theme.dp(128)
+    readonly property int barShort: Theme.dp(66)
     property real scrollY: 0
     readonly property real collapse: Math.max(0, Math.min(1, win.scrollY / 72))
 
@@ -325,10 +325,10 @@ FloatingWindow {
     // of the process and hyprland never blurs it, so stay one step under solid
     color: Theme.alpha(Theme.bg, Math.min(Theme.bg.a, 254 / 255))
 
-    implicitWidth: 1180
-    implicitHeight: 800
-    minimumSize.width: 720
-    minimumSize.height: 520
+    implicitWidth: Theme.dp(1180)
+    implicitHeight: Theme.dp(800)
+    minimumSize.width: Theme.dp(720)
+    minimumSize.height: Theme.dp(520)
 
     ConfirmDialog {
         id: confirmDialog
@@ -635,7 +635,7 @@ FloatingWindow {
         Item {
             id: rail
 
-            readonly property int pad: 12
+            readonly property int pad: Theme.dp(12)
 
             width: win.railExpanded ? win.railWide : win.railNarrow
             anchors.left: parent.left
@@ -657,7 +657,7 @@ FloatingWindow {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                height: 78
+                height: Theme.dp(78)
 
                 MouseArea {
                     anchors.fill: parent
@@ -669,8 +669,8 @@ FloatingWindow {
 
                     x: 20 * win.railT + ((rail.width - menuBtn.width) / 2) * (1 - win.railT)
                     anchors.verticalCenter: parent.verticalCenter
-                    size: 44
-                    iconSize: 22
+                    size: Theme.dp(44)
+                    iconSize: Theme.dp(22)
                     enabled: surface.width >= 880
                     iconPath: "menu"
                     onClicked: win.railWanted = !win.railWanted
@@ -678,15 +678,15 @@ FloatingWindow {
 
                 Row {
                     anchors.left: menuBtn.right
-                    anchors.leftMargin: 12
+                    anchors.leftMargin: Theme.dp(12)
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 11
+                    spacing: Theme.dp(11)
                     opacity: Math.max(0, (win.railT - 0.55) / 0.45)
                     visible: opacity > 0.01
 
                     LucidaMark {
-                        width: 24
-                        height: 24
+                        width: Theme.dp(24)
+                        height: Theme.dp(24)
                         anchors.verticalCenter: parent.verticalCenter
                     }
 
@@ -725,7 +725,7 @@ FloatingWindow {
                 x: rail.pad
                 width: rail.width - rail.pad * 2
                 anchors.top: railHead.bottom
-                anchors.topMargin: 2
+                anchors.topMargin: Theme.dp(2)
                 railT: win.railT
                 selected: win.page === "users"
                 onClicked: win.page = "users"
@@ -737,7 +737,7 @@ FloatingWindow {
                 x: rail.pad
                 width: rail.width - rail.pad * 2
                 anchors.top: userCard.bottom
-                anchors.topMargin: 8
+                anchors.topMargin: Theme.dp(8)
                 railT: win.railT
                 onTextChanged: win.searchTextChanged()
                 onMoved: (by) => {
@@ -759,9 +759,9 @@ FloatingWindow {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: railSearch.bottom
-                anchors.topMargin: 6
+                anchors.topMargin: Theme.dp(6)
                 anchors.bottom: railFoot.top
-                anchors.bottomMargin: 8
+                anchors.bottomMargin: Theme.dp(8)
                 contentWidth: width
                 contentHeight: navList.implicitHeight
                 clip: true
@@ -774,7 +774,7 @@ FloatingWindow {
 
                     x: rail.pad
                     width: navScroll.width - rail.pad * 2
-                    spacing: 3
+                    spacing: Theme.dp(3)
 
                     Repeater {
                         model: win.navPages
@@ -793,13 +793,13 @@ FloatingWindow {
                             // to a rule once there is no width left to print it
                             Item {
                                 width: parent.width
-                                height: Math.round(15 + 19 * win.railT)
+                                height: Math.round(Theme.dp(15) + 19 * win.railT)
                                 visible: navCell.heading !== ""
 
                                 Text {
-                                    x: 20
+                                    x: Theme.dp(20)
                                     anchors.bottom: parent.bottom
-                                    anchors.bottomMargin: 5
+                                    anchors.bottomMargin: Theme.dp(5)
                                     text: navCell.heading
                                     color: Theme.primary
                                     font.family: Theme.fontFamily
@@ -813,8 +813,8 @@ FloatingWindow {
                                 Rectangle {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     anchors.bottom: parent.bottom
-                                    anchors.bottomMargin: 7
-                                    width: 22
+                                    anchors.bottomMargin: Theme.dp(7)
+                                    width: Theme.dp(22)
                                     height: 1.5
                                     radius: 0.75
                                     color: Theme.outline
@@ -830,12 +830,12 @@ FloatingWindow {
                                 readonly property var modelData: navCell.modelData
 
                                 readonly property bool selected: win.page === navItem.modelData.key
-                                readonly property real iconX: 20 * win.railT + ((navItem.width - 22) / 2) * (1 - win.railT)
+                                readonly property real iconX: Theme.dp(20) * win.railT + ((navItem.width - Theme.dp(22)) / 2) * (1 - win.railT)
                                 readonly property real labelFade: Math.max(0, (win.railT - 0.5) / 0.5)
                                 readonly property color fg: navItem.selected ? Theme.fgSecondaryContainer : (navArea.containsMouse ? Theme.text : Theme.subtext)
 
                                 width: parent.width
-                                height: 50
+                                height: Theme.dp(50)
 
                                 // m3 active indicator: a full-shape tonal pill
                                 Rectangle {
@@ -869,8 +869,8 @@ FloatingWindow {
 
                                 LucidaMark {
                                     x: navItem.iconX
-                                    width: 22
-                                    height: 22
+                                    width: Theme.dp(22)
+                                    height: Theme.dp(22)
                                     strokeWidth: 3.4
                                     anchors.verticalCenter: parent.verticalCenter
                                     visible: navItem.modelData.key === "about"
@@ -897,9 +897,9 @@ FloatingWindow {
 
                                 Text {
                                     anchors.left: parent.left
-                                    anchors.leftMargin: navItem.iconX + 38
+                                    anchors.leftMargin: navItem.iconX + Theme.dp(38)
                                     anchors.right: parent.right
-                                    anchors.rightMargin: 14
+                                    anchors.rightMargin: Theme.dp(14)
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: navItem.modelData.label
                                     color: navItem.fg
@@ -973,10 +973,10 @@ FloatingWindow {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                height: 66
+                height: Theme.dp(66)
 
                 M3Button {
-                    x: rail.pad + 6
+                    x: rail.pad + Theme.dp(6)
                     anchors.verticalCenter: parent.verticalCenter
                     variant: "text"
                     destructive: true
@@ -989,8 +989,8 @@ FloatingWindow {
                 M3IconButton {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
-                    size: 44
-                    iconSize: 21
+                    size: Theme.dp(44)
+                    iconSize: Theme.dp(21)
                     destructive: true
                     opacity: 1 - Math.min(1, win.railT * 2)
                     visible: opacity > 0.01
@@ -1010,9 +1010,9 @@ FloatingWindow {
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.topMargin: 12
-            anchors.rightMargin: 12
-            anchors.bottomMargin: 12
+            anchors.topMargin: Theme.dp(12)
+            anchors.rightMargin: Theme.dp(12)
+            anchors.bottomMargin: Theme.dp(12)
             color: Theme.withBlur(Theme.bgSunken)
             radius: Theme.shapeXl
             clip: true
@@ -1045,7 +1045,7 @@ FloatingWindow {
 
                     anchors.fill: parent
                     contentWidth: width
-                    contentHeight: paneLoader.y + paneLoader.height + 44
+                    contentHeight: paneLoader.y + paneLoader.height + Theme.dp(44)
                     clip: true
                     interactive: pane.active
                     visible: pane.opacity > 0.01
@@ -1089,7 +1089,7 @@ FloatingWindow {
                         id: paneBar
 
                         policy: pane.contentHeight > pane.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-                        width: 10
+                        width: Theme.dp(10)
                         // the app bar is translucent, so the handle would show
                         // through it; and the pane's clip is rectangular while its
                         // corners are not, so an unpadded handle paints outside the
@@ -1098,7 +1098,7 @@ FloatingWindow {
                         bottomPadding: content.radius
 
                         contentItem: Rectangle {
-                            implicitWidth: paneBar.hovered || paneBar.pressed ? 8 : 5
+                            implicitWidth: paneBar.hovered || paneBar.pressed ? Theme.dp(8) : Theme.dp(5)
                             radius: width / 2
                             color: paneBar.pressed ? Theme.accent : (paneBar.hovered ? Theme.alpha(Theme.text, 0.4) : Theme.alpha(Theme.text, 0.2))
 
@@ -1138,8 +1138,8 @@ FloatingWindow {
 
                         property bool everActive: false
 
-                        x: 34
-                        y: win.barTall + 10 + (pane.active ? 0 : 14)
+                        x: Theme.dp(34)
+                        y: win.barTall + Theme.dp(10) + (pane.active ? 0 : Theme.dp(14))
                         active: paneLoader.everActive
                         source: {
                             switch (pane.modelData.key) {
@@ -1273,22 +1273,22 @@ FloatingWindow {
                     id: leading
 
                     anchors.left: parent.left
-                    anchors.leftMargin: 18
+                    anchors.leftMargin: Theme.dp(18)
                     anchors.top: parent.top
-                    anchors.topMargin: 13
-                    spacing: 2
+                    anchors.topMargin: Theme.dp(13)
+                    spacing: Theme.dp(2)
 
                     M3IconButton {
-                        size: 40
-                        iconSize: 21
+                        size: Theme.dp(40)
+                        iconSize: Theme.dp(21)
                         iconPath: "arrow_back"
                         enabled: win.canGoBack
                         onClicked: win.goBack()
                     }
 
                     M3IconButton {
-                        size: 40
-                        iconSize: 21
+                        size: Theme.dp(40)
+                        iconSize: Theme.dp(21)
                         iconPath: "arrow_forward"
                         enabled: win.canGoForward
                         onClicked: win.goForward()
@@ -1300,13 +1300,13 @@ FloatingWindow {
                     id: headText
 
                     // slides in beside the arrows as the bar collapses to one row
-                    x: 34 + (leading.x + leading.width + 14 - 34) * win.collapse
+                    x: Theme.dp(34) + (leading.x + leading.width + Theme.dp(14) - Theme.dp(34)) * win.collapse
                     // an anchored Column would take its width from children that
                     // in turn bind to it, so measure against the trailing row
-                    width: Math.max(0, trailing.x - headText.x - 24)
+                    width: Math.max(0, trailing.x - headText.x - Theme.dp(24))
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 19
-                    spacing: 3
+                    anchors.bottomMargin: Theme.dp(19)
+                    spacing: Theme.dp(3)
 
                     Text {
                         width: parent.width
@@ -1337,10 +1337,10 @@ FloatingWindow {
                     id: trailing
 
                     anchors.right: parent.right
-                    anchors.rightMargin: 18
+                    anchors.rightMargin: Theme.dp(18)
                     anchors.top: parent.top
-                    anchors.topMargin: 13
-                    spacing: 10
+                    anchors.topMargin: Theme.dp(13)
+                    spacing: Theme.dp(10)
 
                     M3Switch {
                         id: surfaceToggle
@@ -1357,8 +1357,8 @@ FloatingWindow {
 
                     M3IconButton {
                         anchors.verticalCenter: parent.verticalCenter
-                        size: 40
-                        iconSize: 21
+                        size: Theme.dp(40)
+                        iconSize: Theme.dp(21)
                         iconPath: "close"
                         onClicked: win.visible = false
                     }

@@ -43,7 +43,7 @@ Column {
         return days + (days === 1 ? " day ago" : " days ago");
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
 
     Timer {
         interval: 1000
@@ -78,7 +78,7 @@ Column {
             description: "A town or city to sit the shell in. Press Enter to look it up."
 
             M3TextField {
-                width: 260
+                width: Theme.dp(260)
                 enabled: !Prefs.gpsEnabled
                 placeholder: "Poznań"
                 text: Prefs.locationName
@@ -116,11 +116,11 @@ Column {
             warning: Loc.zoneError !== "" ? "Unchanged \u2014 " + Loc.zoneError : ""
 
             Row {
-                spacing: 14
+                spacing: Theme.dp(14)
 
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+                    spacing: Theme.dp(2)
 
                     Text {
                         text: Loc.zone !== "" ? Loc.zone.replace(/_/g, " ") : "Reading…"
@@ -267,7 +267,7 @@ Column {
             description: "For the clock's calendar and the calendar widgets."
 
             M3Segmented {
-                width: 200
+                width: Theme.dp(200)
                 options: [{
                     "key": "mon",
                     "label": "Monday"
@@ -476,7 +476,7 @@ Column {
             description: "Plays Lucid's alarm alongside the notification, whatever the system sound settings say."
 
             Row {
-                spacing: 4
+                spacing: Theme.dp(4)
 
                 M3IconButton {
                     anchors.verticalCenter: parent.verticalCenter
@@ -502,7 +502,7 @@ Column {
             description: "A chime as a reminder comes due, and again when a snoozed one comes back. Like the alarm, it plays even while you are silenced."
 
             Row {
-                spacing: 4
+                spacing: Theme.dp(4)
 
                 M3IconButton {
                     anchors.verticalCenter: parent.verticalCenter

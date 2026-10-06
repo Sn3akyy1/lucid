@@ -37,13 +37,13 @@ Column {
     signal opened()
     signal expandRequested()
 
-    width: parent ? parent.width : 400
+    width: parent ? parent.width : Theme.dp(400)
 
     Rectangle {
         id: head
 
         width: parent.width
-        height: 62
+        height: Theme.dp(62)
         radius: Theme.radiusMd
         color: dev.expanded ? Theme.bgHover : (headArea.containsMouse ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent")
 
@@ -57,15 +57,15 @@ Column {
         Item {
             id: iconTile
 
-            width: 40
-            height: 40
+            width: Theme.dp(40)
+            height: Theme.dp(40)
             anchors.left: parent.left
-            anchors.leftMargin: 11
+            anchors.leftMargin: Theme.dp(11)
             anchors.verticalCenter: parent.verticalCenter
 
             Rectangle {
                 anchors.fill: parent
-                radius: 13
+                radius: Theme.dp(13)
                 color: Theme.alpha(dev.asking ? Theme.warning : Theme.accent, dev.reachable || dev.asking ? 0.24 : 0.11)
 
                 Behavior on color {
@@ -79,18 +79,18 @@ Column {
 
             DeviceGlyph {
                 anchors.centerIn: parent
-                size: 21
+                size: Theme.dp(21)
                 kind: Bt.glyphKind(dev.modelData.type)
                 color: dev.asking ? Theme.warning : Theme.accent
             }
 
             Rectangle {
-                width: 11
-                height: 11
+                width: Theme.dp(11)
+                height: Theme.dp(11)
                 radius: 5.5
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                anchors.margins: -2
+                anchors.margins: -Theme.dp(2)
                 visible: dev.opens
                 color: Theme.success
                 border.width: 2
@@ -101,11 +101,11 @@ Column {
 
         Column {
             anchors.left: iconTile.right
-            anchors.leftMargin: 14
+            anchors.leftMargin: Theme.dp(14)
             anchors.right: trailing.left
-            anchors.rightMargin: 12
+            anchors.rightMargin: Theme.dp(12)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 2
+            spacing: Theme.dp(2)
 
             Text {
                 width: parent.width
@@ -134,14 +134,14 @@ Column {
             id: trailing
 
             anchors.right: parent.right
-            anchors.rightMargin: 14
+            anchors.rightMargin: Theme.dp(14)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 12
+            spacing: Theme.dp(12)
 
             Row {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: dev.sig !== undefined && dev.sig.strength >= 0
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
@@ -168,7 +168,7 @@ Column {
             Icon {
                 anchors.verticalCenter: parent.verticalCenter
                 name: dev.opens ? "chevron_right" : "expand_more"
-                size: 18
+                size: Theme.dp(18)
                 color: Theme.subtext
                 rotation: !dev.opens && dev.expanded ? 180 : 0
 
@@ -220,11 +220,11 @@ Column {
             id: body
 
             width: parent.width
-            leftPadding: 65
-            rightPadding: 14
-            topPadding: 4
-            bottomPadding: 16
-            spacing: 12
+            leftPadding: Theme.dp(65)
+            rightPadding: Theme.dp(14)
+            topPadding: Theme.dp(4)
+            bottomPadding: Theme.dp(16)
+            spacing: Theme.dp(12)
             opacity: dev.expanded ? 1 : 0
 
             Behavior on opacity {
@@ -235,7 +235,7 @@ Column {
             }
 
             Text {
-                width: parent.width - 79
+                width: parent.width - Theme.dp(79)
                 text: {
                     if (dev.asking)
                         return "Check that " + dev.modelData.name + " is showing key " + dev.modelData.key + ", then accept.";
@@ -256,7 +256,7 @@ Column {
             }
 
             Row {
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 M3Button {
                     variant: "filled"

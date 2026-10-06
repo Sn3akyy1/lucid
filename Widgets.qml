@@ -35,6 +35,8 @@ Singleton {
     property var userPresets: []
     // the unsaved arrangement a preset last replaced, so it is one click away
     property var lastLayout: []
+    // the interface size the stored positions were laid out at; see fitToScale
+    property real laidScale: 1
     // cards a preset took off while they still held something you wrote
     property var stash: []
     // the primary screen's cards as plain entries, for drawing it small
@@ -54,8 +56,8 @@ Singleton {
     // the layer covers the whole output, so a card can be dragged under the bar or
     // the dock on purpose. a freshly spawned one should still land clear of them:
     // these mirror the two windows' own exclusive zones
-    readonly property real spawnTop: Prefs.barEnabled ? Prefs.effectiveBarTopMargin + Prefs.barHeight : 0
-    readonly property real spawnBottom: (Prefs.dockEnabled && !Prefs.dockAutoHide) ? Prefs.dockIconSize + 20 + Prefs.effectiveDockBottomMargin : 0
+    readonly property real spawnTop: Prefs.barEnabled ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) + Prefs.shellGap : 0
+    readonly property real spawnBottom: (Prefs.dockEnabled && !Prefs.dockAutoHide) ? Theme.dp(Prefs.dockIconSize + 20) + Prefs.effectiveDockBottomMargin + Prefs.shellGap : 0
 
     // one entry per category; a variant is another face on the same data, not another widget
     readonly property var catalogue: [{
@@ -1105,6 +1107,9 @@ Singleton {
         ]
     }]
 
+    // every way the store finishes loading, an empty or missing file included
+    onLoadedChanged: root.fitToScale()
+
     function typeAt(typeId) {
         for (var i = 0; i < root.catalogue.length; i++) {
             if (root.catalogue[i].id === typeId)
@@ -1131,6 +1136,32 @@ Singleton {
     function resizable(typeId, variantId) {
         var v = root.variantAt(typeId, variantId);
         return v !== null && v.resizable === true;
+    }
+
+    // what a card's stored size is drawn at: a catalogue size follows the interface
+    // size, a card that was dragged to its own size keeps it. `at` defaults to now
+    function sizeScale(typeId, variantId, at) {
+        if (root.resizable(typeId, variantId))
+            return 1;
+
+        return at !== undefined ? at : Prefs.interfaceScale;
+    }
+
+    // a new card's stored size: the catalogue's as authored, or for a card that keeps
+    // its own size, the catalogue's at the interface size it is born at
+    function freshSize(typeId, v) {
+        if (v.resizable !== true)
+            return ({
+                "w": v.w,
+                "h": v.h
+            });
+
+        var lim = root.sizeLimits(typeId, v.id);
+        var k = Prefs.interfaceScale;
+        return ({
+            "w": Math.round(Math.max(lim.minW, Math.min(lim.maxW, v.w * k))),
+            "h": Math.round(Math.max(lim.minH, Math.min(lim.maxH, v.h * k)))
+        });
     }
 
     function sizeLimits(typeId, variantId) {
@@ -1242,8 +1273,8 @@ Singleton {
                 taken.push({
                 "x": e.wx,
                 "y": e.wy,
-                "w": e.bw * e.zoom,
-                "h": e.bh * e.zoom
+                "w": e.bw * e.zoom * root.sizeScale(e.wtype, e.wvariant),
+                "h": e.bh * e.zoom * root.sizeScale(e.wtype, e.wvariant)
             });
 
         }
@@ -1374,7 +1405,9 @@ Singleton {
         if (!v || root.full)
             return "";
 
-        var spot = root.freeSpot(v.w, v.h);
+        var size = root.freshSize(typeId, v);
+        var k = root.sizeScale(typeId, v.id);
+        var spot = root.freeSpot(size.w * k, size.h * k);
         return root.spawnAt(typeId, v.id, spot.x, spot.y, "", false);
     }
 
@@ -1390,14 +1423,15 @@ Singleton {
         if (landed === true)
             root.landingUid = uid;
 
+        var size = root.freshSize(typeId, v);
         instances.append({
             "uid": uid,
             "wtype": typeId,
             "wvariant": v.id,
             "wx": Math.round(x),
             "wy": Math.round(y),
-            "bw": v.w,
-            "bh": v.h,
+            "bw": size.w,
+            "bh": size.h,
             "pinned": false,
             "zoom": 1,
             "zOrder": root.topZ,
@@ -1527,9 +1561,10 @@ Singleton {
         // its size too
         var keep = v.resizable === true && root.resizable(e.wtype, e.wvariant);
         var lim = root.sizeLimits(e.wtype, v.id);
+        var size = root.freshSize(e.wtype, v);
         instances.setProperty(i, "wvariant", v.id);
-        instances.setProperty(i, "bw", keep ? Math.max(lim.minW, Math.min(lim.maxW, e.bw)) : v.w);
-        instances.setProperty(i, "bh", keep ? Math.max(lim.minH, Math.min(lim.maxH, e.bh)) : v.h);
+        instances.setProperty(i, "bw", keep ? Math.max(lim.minW, Math.min(lim.maxW, e.bw)) : size.w);
+        instances.setProperty(i, "bh", keep ? Math.max(lim.minH, Math.min(lim.maxH, e.bh)) : size.h);
         root.edited();
         root.save();
     }
@@ -1577,8 +1612,10 @@ Singleton {
 
         var e = instances.get(i);
         var v = root.variantAt(e.wtype, e.wvariant);
-        if (v)
-            root.setSize(uid, v.w, v.h);
+        if (v) {
+            var size = root.freshSize(e.wtype, v);
+            root.setSize(uid, size.w, size.h);
+        }
 
     }
 
@@ -1783,6 +1820,8 @@ Singleton {
         var H = scr ? scr.height : root.canvasH;
         var RW = p.refW || 1920;
         var RH = p.refH || 1080;
+        // the interface size the preset's cards were drawn at when it was made
+        var r = p.refScale || 1;
         var s = Math.max(0.6, Math.min(1.6, Math.min(W / RW, H / RH)));
         var out = [];
         for (var i = 0; i < p.cards.length; i++) {
@@ -1795,21 +1834,22 @@ Singleton {
             var zoom = Math.round(z0 * s * 100) / 100;
             var bw = (v.resizable === true && c.w) ? c.w : v.w;
             var bh = (v.resizable === true && c.h) ? c.h : v.h;
-            var refW = bw * z0;
-            var refH = bh * z0;
+            var kr = root.sizeScale(c.type, v.id, r);
+            var refW = bw * z0 * kr;
+            var refH = bh * z0 * kr;
             var at = c.at || "tl";
             var x = c.x * s;
             if (c.stretch === true)
                 bw = (W - (RW - c.x - refW) * s - x) / zoom;
             else if (at.charAt(1) === "r")
-                x = W - (RW - c.x - refW) * s - bw * zoom;
+                x = W - (RW - c.x - refW) * s - bw * zoom * kr;
             else if (at.charAt(1) === "c")
-                x = W / 2 + (c.x + refW / 2 - RW / 2) * s - bw * zoom / 2;
+                x = W / 2 + (c.x + refW / 2 - RW / 2) * s - bw * zoom * kr / 2;
             var y = c.y * s;
             if (at.charAt(0) === "b")
-                y = H - (RH - c.y - refH) * s - bh * zoom;
+                y = H - (RH - c.y - refH) * s - bh * zoom * kr;
             else if (at.charAt(0) === "m")
-                y = H / 2 + (c.y + refH / 2 - RH / 2) * s - bh * zoom / 2;
+                y = H / 2 + (c.y + refH / 2 - RH / 2) * s - bh * zoom * kr / 2;
             if (v.resizable === true) {
                 var lim = root.sizeLimits(c.type, v.id);
                 bw = Math.max(lim.minW, Math.min(lim.maxW, bw));
@@ -1818,8 +1858,8 @@ Singleton {
             var entry = {
                 "type": c.type,
                 "variant": v.id,
-                "wx": Math.round(Math.max(0, Math.min(W - bw * zoom, x))),
-                "wy": Math.round(Math.max(0, Math.min(H - bh * zoom, y))),
+                "wx": Math.round(Math.max(0, Math.min(W - bw * zoom * kr, x))),
+                "wy": Math.round(Math.max(0, Math.min(H - bh * zoom * kr, y))),
                 "bw": Math.round(bw),
                 "bh": Math.round(bh),
                 "zoom": zoom,
@@ -1833,7 +1873,168 @@ Singleton {
 
             out.push(entry);
         }
+        var now = Prefs.interfaceScale;
+        if (Math.abs(now - r) >= 0.001) {
+            var pos = root.rescaled(out, W, H, r, now);
+            for (var j = 0; j < out.length; j++) {
+                out[j].wx = pos[j].x;
+                out[j].wy = pos[j].y;
+            }
+        }
         return out;
+    }
+
+    // for each box, the extent of the cluster it is part of: boxes within a hand's
+    // width of each other, among the ones `linked` lets join up
+    function clusterExtents(box, linked) {
+        var group = box.map((b, i) => {
+            return i;
+        });
+        var find = (i) => {
+            while (group[i] !== i)
+                i = group[i];
+            return i;
+        };
+        var near = 48;
+        for (var i = 0; i < box.length; i++) {
+            for (var j = i + 1; j < box.length; j++) {
+                var a = box[i];
+                var b = box[j];
+                if (linked(i) && linked(j) && a.x - near < b.x + b.w && b.x - near < a.x + a.w && a.y - near < b.y + b.h && b.y - near < a.y + a.h)
+                    group[find(i)] = find(j);
+
+            }
+        }
+        var ext = {};
+        for (var k = 0; k < box.length; k++) {
+            var g = find(k);
+            var r = ext[g] || ({
+                "x0": Infinity,
+                "y0": Infinity,
+                "x1": -Infinity,
+                "y1": -Infinity
+            });
+            r.x0 = Math.min(r.x0, box[k].x);
+            r.y0 = Math.min(r.y0, box[k].y);
+            r.x1 = Math.max(r.x1, box[k].x + box[k].w);
+            r.y1 = Math.max(r.y1, box[k].y + box[k].h);
+            ext[g] = r;
+        }
+        return box.map((b, n) => {
+            return ext[find(n)];
+        });
+    }
+
+    // where cards laid out at interface size `from` sit at `to`: each cluster is scaled
+    // about the edge or corner of the screen it is nearest, so a cluster in a corner
+    // stays in that corner and closes up rather than drifting to the top left. a card
+    // that keeps its own size stays put. cards: {type, variant, wx, wy, bw, bh, zoom}
+    function rescaled(cards, W, H, from, to) {
+        var f = to / from;
+        var box = cards.map((c) => {
+            var k = root.sizeScale(c.type, c.variant, from);
+            return ({
+                "x": c.wx,
+                "y": c.wy,
+                "w": c.bw * (c.zoom || 1) * k,
+                "h": c.bh * (c.zoom || 1) * k,
+                "fixed": !root.resizable(c.type, c.variant)
+            });
+        });
+        var ext = root.clusterExtents(box, (i) => {
+            return box[i].fixed;
+        });
+        return box.map((b, i) => {
+            if (!b.fixed)
+                return ({
+                "x": b.x,
+                "y": b.y
+            });
+
+            var e = ext[i];
+            var cx = (e.x0 + e.x1) / 2;
+            var cy = (e.y0 + e.y1) / 2;
+            var ax = cx < W / 3 ? e.x0 : (cx > W * 2 / 3 ? e.x1 : cx);
+            var ay = cy < H / 3 ? e.y0 : (cy > H * 2 / 3 ? e.y1 : cy);
+            return ({
+                "x": Math.round(Math.max(0, Math.min(W - b.w * f, ax + (b.x - ax) * f))),
+                "y": Math.round(Math.max(0, Math.min(H - b.h * f, ay + (b.y - ay) * f)))
+            });
+        });
+    }
+
+    function screenNamed(name) {
+        if (name === "")
+            return root.primaryScreen();
+
+        for (var i = 0; i < Quickshell.screens.length; i++) {
+            if (Quickshell.screens[i].name === name)
+                return Quickshell.screens[i];
+
+        }
+        return null;
+    }
+
+    // stored positions belong to the interface size they were laid out at. when that
+    // changes, every screen's clusters are regrouped once and the new size written
+    // down. waits for Prefs, whose defaults would otherwise pass for the user's size
+    function fitToScale() {
+        if (!root.loaded || !Prefs.loaded)
+            return ;
+
+        var from = root.laidScale;
+        var to = Prefs.interfaceScale;
+        if (Math.abs(to - from) < 0.001)
+            return ;
+
+        root.laidScale = to;
+        var screens = {};
+        for (var i = 0; i < instances.count; i++) {
+            var e = instances.get(i);
+            var scr = e.closing ? null : root.screenNamed(e.screenName);
+            // a card on a screen that is not connected keeps its place
+            if (scr === null)
+                continue;
+
+            if (!screens[scr.name])
+                screens[scr.name] = {
+                "scr": scr,
+                "at": [],
+                "cards": []
+            };
+
+            screens[scr.name].at.push(i);
+            screens[scr.name].cards.push({
+                "type": e.wtype,
+                "variant": e.wvariant,
+                "wx": e.wx,
+                "wy": e.wy,
+                "bw": e.bw,
+                "bh": e.bh,
+                "zoom": e.zoom
+            });
+        }
+        for (var name in screens) {
+            var g = screens[name];
+            var pos = root.rescaled(g.cards, g.scr.width, g.scr.height, from, to);
+            for (var n = 0; n < g.at.length; n++) {
+                instances.setProperty(g.at[n], "wx", pos[n].x);
+                instances.setProperty(g.at[n], "wy", pos[n].y);
+            }
+        }
+        // the layout a preset replaced comes back at the size everything else is
+        var main = root.primaryScreen();
+        if (main && root.lastLayout.length > 0) {
+            var back = root.rescaled(root.lastLayout, main.width, main.height, from, to);
+            root.lastLayout = root.lastLayout.map((c, m) => {
+                return Object.assign({}, c, {
+                    "wx": back[m].x,
+                    "wy": back[m].y
+                });
+            });
+        }
+        root.touched();
+        root.save();
     }
 
     // the desktop written down as a preset: each cluster pinned to the edge it sits
@@ -1844,8 +2045,8 @@ Singleton {
         var H = scr ? scr.height : root.canvasH;
         var cards = root.snapshot(true);
         var box = cards.map((c) => {
-            var w = c.bw * c.zoom;
-            var h = c.bh * c.zoom;
+            var w = c.bw * c.zoom * root.sizeScale(c.type, c.variant);
+            var h = c.bh * c.zoom * root.sizeScale(c.type, c.variant);
             return ({
                 "x": Math.max(0, Math.min(W - w, c.wx)),
                 "y": Math.max(0, Math.min(H - h, c.wy)),
@@ -1858,43 +2059,13 @@ Singleton {
             return root.resizable(c.type, c.variant) && box[i].w >= W / 2 && (box[i].x <= 4 || box[i].x + box[i].w >= W - 4);
         });
         // cards within a hand's width of each other move as one
-        var group = cards.map((c, i) => {
-            return i;
+        var ext = root.clusterExtents(box, (i) => {
+            return !stretch[i];
         });
-        var find = (i) => {
-            while (group[i] !== i)
-                i = group[i];
-            return i;
-        };
-        var near = 48;
-        for (var i = 0; i < cards.length; i++) {
-            for (var j = i + 1; j < cards.length; j++) {
-                var a = box[i];
-                var b = box[j];
-                if (!stretch[i] && !stretch[j] && a.x - near < b.x + b.w && b.x - near < a.x + a.w && a.y - near < b.y + b.h && b.y - near < a.y + a.h)
-                    group[find(i)] = find(j);
-
-            }
-        }
-        var ext = {};
-        for (var k = 0; k < cards.length; k++) {
-            var g = find(k);
-            var r = ext[g] || ({
-                "x0": W,
-                "y0": H,
-                "x1": 0,
-                "y1": 0
-            });
-            r.x0 = Math.min(r.x0, box[k].x);
-            r.y0 = Math.min(r.y0, box[k].y);
-            r.x1 = Math.max(r.x1, box[k].x + box[k].w);
-            r.y1 = Math.max(r.y1, box[k].y + box[k].h);
-            ext[g] = r;
-        }
         var out = [];
         for (var n = 0; n < cards.length; n++) {
             var c = cards[n];
-            var e = ext[find(n)];
+            var e = ext[n];
             var cx = (e.x0 + e.x1) / 2;
             var cy = (e.y0 + e.y1) / 2;
             out.push({
@@ -1917,6 +2088,7 @@ Singleton {
             "name": name,
             "refW": W,
             "refH": H,
+            "refScale": Prefs.interfaceScale,
             "saved": Date.now(),
             "cards": out
         });
@@ -2189,6 +2361,7 @@ Singleton {
         return JSON.stringify({
             "nextId": root.nextId,
             "boardFull": true,
+            "laidScale": root.laidScale,
             "preset": root.presetId,
             "saved": root.userPresets,
             "last": root.lastLayout,
@@ -2205,6 +2378,7 @@ Singleton {
             data = null;
         }
         instances.clear();
+        root.laidScale = (data && typeof data.laidScale === "number") ? data.laidScale : 1;
         if (!data || !data.instances) {
             root.loaded = true;
             return ;
@@ -2246,11 +2420,17 @@ Singleton {
         root.loaded = true;
         root.refreshDesktop();
         root.liftOntoFullBoard();
+        root.fitToScale();
     }
 
     Connections {
         function onLoadedChanged() {
             root.liftOntoFullBoard();
+            root.fitToScale();
+        }
+
+        function onInterfaceScaleChanged() {
+            root.fitToScale();
         }
 
         target: Prefs

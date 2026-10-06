@@ -37,7 +37,7 @@ Column {
         Quickshell.execDetached([page.home + "/.config/hypr/scripts/wallpaper/set-wallpaper.sh", path]);
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
 
     onWallpaperDirChanged: wallpaperScan.restart()
 
@@ -200,7 +200,7 @@ Column {
             description: page.modeHint
 
             M3Segmented {
-                width: 200
+                width: Theme.dp(200)
                 current: Prefs.colorMode
                 options: page.modeOptions
                 onChosen: (key) => {
@@ -219,9 +219,9 @@ Column {
             Item {
                 id: themeGrid
 
-                readonly property int tileW: 150
-                readonly property int tileH: 60
-                readonly property int gap: 10
+                readonly property int tileW: Theme.dp(150)
+                readonly property int tileH: Theme.dp(60)
+                readonly property int gap: Theme.dp(10)
                 readonly property int perRow: Math.max(1, Math.floor((themeGrid.width + themeGrid.gap) / (themeGrid.tileW + themeGrid.gap)))
                 property bool dragging: false
 
@@ -325,21 +325,21 @@ Column {
 
                         Row {
                             anchors.left: parent.left
-                            anchors.leftMargin: 12
+                            anchors.leftMargin: Theme.dp(12)
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 10
+                            spacing: Theme.dp(10)
 
                             Rectangle {
-                                width: 28
-                                height: 28
-                                radius: 14
+                                width: Theme.dp(28)
+                                height: Theme.dp(28)
+                                radius: Theme.dp(14)
                                 anchors.verticalCenter: parent.verticalCenter
                                 color: swatch.tileBg
 
                                 Rectangle {
-                                    width: 12
-                                    height: 12
-                                    radius: 6
+                                    width: Theme.dp(12)
+                                    height: Theme.dp(12)
+                                    radius: Theme.dp(6)
                                     anchors.centerIn: parent
                                     color: swatch.tileAccent
                                 }
@@ -347,7 +347,7 @@ Column {
                             }
 
                             Text {
-                                width: 90
+                                width: Theme.dp(90)
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: swatch.themeName
                                 color: swatch.selected ? Theme.text : Theme.subtext
@@ -391,12 +391,12 @@ Column {
 
                             readonly property bool shown: swatch.isUser && swatchHover.hovered && !themeDrag.active
 
-                            width: 22
-                            height: 22
-                            radius: 11
+                            width: Theme.dp(22)
+                            height: Theme.dp(22)
+                            radius: Theme.dp(11)
                             anchors.right: parent.right
                             anchors.top: parent.top
-                            anchors.margins: 6
+                            anchors.margins: Theme.dp(6)
                             color: delHover.hovered ? Theme.error : Theme.alpha(Theme.cShadow, 0.65)
                             opacity: themeDel.shown ? 1 : 0
                             visible: themeDel.opacity > 0.01
@@ -428,7 +428,7 @@ Column {
                             Icon {
                                 anchors.centerIn: parent
                                 name: "close"
-                                size: 16
+                                size: Theme.dp(16)
                                 color: delHover.hovered ? Theme.fgError : "white"
                             }
 
@@ -495,11 +495,11 @@ Column {
 
             Column {
                 width: parent.width
-                spacing: 14
+                spacing: Theme.dp(14)
 
                 Flow {
                     width: parent.width
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     Repeater {
                         model: wallpapers
@@ -512,8 +512,8 @@ Column {
 
                             readonly property bool selected: page.appliedWallpaper === tile.path
 
-                            width: 150
-                            height: 88
+                            width: Theme.dp(150)
+                            height: Theme.dp(88)
                             radius: Theme.radiusSm
                             color: Theme.bgSunken
 
@@ -530,8 +530,8 @@ Column {
                                     fillMode: Image.PreserveAspectCrop
                                     asynchronous: true
                                     cache: true
-                                    sourceSize.width: 300
-                                    sourceSize.height: 176
+                                    sourceSize.width: Theme.dp(300)
+                                    sourceSize.height: Theme.dp(176)
                                     visible: thumb.status === Image.Ready
                                 }
 
@@ -567,12 +567,12 @@ Column {
 
                                 readonly property bool active: tileArea.containsMouse || delArea.containsMouse
 
-                                width: 28
-                                height: 28
-                                radius: 14
+                                width: Theme.dp(28)
+                                height: Theme.dp(28)
+                                radius: Theme.dp(14)
                                 anchors.right: parent.right
                                 anchors.top: parent.top
-                                anchors.margins: 6
+                                anchors.margins: Theme.dp(6)
                                 color: delArea.containsMouse ? Theme.error : Theme.alpha(Theme.cShadow, 0.65)
                                 opacity: delBtn.active ? 1 : 0
                                 visible: opacity > 0.01
@@ -604,7 +604,7 @@ Column {
                                 Icon {
                                     anchors.centerIn: parent
                                     name: "delete"
-                                    size: 18
+                                    size: Theme.dp(18)
                                     fill: delArea.containsMouse ? 1 : 0
                                     color: delArea.containsMouse ? Theme.fgError : "white"
                                 }
@@ -636,14 +636,14 @@ Column {
                 }
 
                 Row {
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     M3Button {
                         text: "Add wallpaper..."
                         variant: "filled"
                         iconPath: "add"
                         onClicked: {
-                            wallpaperPicker.command = ["sh", "-c", "zenity --file-selection --title='Add wallpaper' --file-filter='Images | *.jpg *.jpeg *.png *.webp *.JPG *.PNG' 2>/dev/null || true"];
+                            wallpaperPicker.command = ["python3", Qt.resolvedUrl("pickfile.py").toString().replace("file://", ""), "--title", "Add wallpaper", "--filter", "Images=image/jpeg,image/png,image/webp"];
                             wallpaperPicker.running = true;
                         }
                     }
@@ -671,7 +671,7 @@ Column {
             showDivider: false
 
             M3TextField {
-                width: 260
+                width: Theme.dp(260)
                 text: Prefs.wallpaperFolder
                 placeholder: "~/Pictures/wallpapers/" + page.currentTheme
                 onAccepted: (v) => {

@@ -12,8 +12,8 @@ PanelWindow {
 
     property bool open: false
     property string query: ""
-    readonly property int gutter: 16
-    readonly property int minColumn: 380
+    readonly property int gutter: Theme.dp(16)
+    readonly property int minColumn: Theme.dp(380)
     readonly property var shownBinds: {
         var q = sheet.query.trim().toLowerCase();
         return Keybinds.binds.filter((b) => {
@@ -165,8 +165,8 @@ PanelWindow {
         id: card
 
         anchors.centerIn: parent
-        width: Math.min(1360, sheet.width - 96)
-        height: Math.min(940, sheet.height - 96)
+        width: Math.min(Theme.dp(1360), sheet.width - Theme.dp(96))
+        height: Math.min(Theme.dp(940), sheet.height - Theme.dp(96))
         radius: Theme.shapeXl
         color: Theme.bgOpaque
         border.width: 1
@@ -182,17 +182,17 @@ PanelWindow {
         Item {
             id: header
 
-            x: 30
-            y: 22
-            width: parent.width - 60
-            height: 60
+            x: Theme.dp(30)
+            y: Theme.dp(22)
+            width: parent.width - Theme.dp(60)
+            height: Theme.dp(60)
 
             Column {
                 anchors.left: parent.left
                 anchors.right: tools.left
-                anchors.rightMargin: 24
+                anchors.rightMargin: Theme.dp(24)
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 3
+                spacing: Theme.dp(3)
 
                 Text {
                     text: "Keybinds"
@@ -218,12 +218,12 @@ PanelWindow {
 
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Math.min(320, Math.max(180, card.width * 0.26))
-                    height: 44
+                    width: Math.min(Theme.dp(320), Math.max(Theme.dp(180), card.width * 0.26))
+                    height: Theme.dp(44)
                     radius: height / 2
                     color: Theme.bgSunken
                     border.width: searchInput.activeFocus ? 2 : 1
@@ -232,10 +232,10 @@ PanelWindow {
                     Icon {
                         id: searchIcon
 
-                        x: 14
+                        x: Theme.dp(14)
                         anchors.verticalCenter: parent.verticalCenter
                         name: "search"
-                        size: 20
+                        size: Theme.dp(20)
                         color: Theme.subtext
                     }
 
@@ -243,9 +243,9 @@ PanelWindow {
                         id: searchInput
 
                         anchors.left: searchIcon.right
-                        anchors.leftMargin: 8
+                        anchors.leftMargin: Theme.dp(8)
                         anchors.right: parent.right
-                        anchors.rightMargin: 16
+                        anchors.rightMargin: Theme.dp(16)
                         anchors.verticalCenter: parent.verticalCenter
                         color: Theme.text
                         font.family: Theme.fontFamily
@@ -285,8 +285,8 @@ PanelWindow {
 
                 M3IconButton {
                     anchors.verticalCenter: parent.verticalCenter
-                    size: 40
-                    iconSize: 21
+                    size: Theme.dp(40)
+                    iconSize: Theme.dp(21)
                     iconPath: "close"
                     onClicked: sheet.hide()
                 }
@@ -299,13 +299,13 @@ PanelWindow {
             id: body
 
             anchors.top: header.bottom
-            anchors.topMargin: 18
+            anchors.topMargin: Theme.dp(18)
             anchors.left: parent.left
-            anchors.leftMargin: 30
+            anchors.leftMargin: Theme.dp(30)
             anchors.right: parent.right
-            anchors.rightMargin: 30
+            anchors.rightMargin: Theme.dp(30)
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 26
+            anchors.bottomMargin: Theme.dp(26)
             contentWidth: width
             contentHeight: columnsRow.height
             clip: true
@@ -340,16 +340,16 @@ PanelWindow {
                                 })
 
                                 width: column.width
-                                height: groupCol.implicitHeight + 30
+                                height: groupCol.implicitHeight + Theme.dp(30)
                                 radius: Theme.shapeLg
                                 color: Theme.bgTile
 
                                 Column {
                                     id: groupCol
 
-                                    x: 18
-                                    y: 14
-                                    width: parent.width - 36
+                                    x: Theme.dp(18)
+                                    y: Theme.dp(14)
+                                    width: parent.width - Theme.dp(36)
 
                                     Text {
                                         text: group.modelData
@@ -357,7 +357,7 @@ PanelWindow {
                                         font.family: Theme.fontFamily
                                         font.pixelSize: Theme.fontTitleSm
                                         font.weight: Font.DemiBold
-                                        bottomPadding: 8
+                                        bottomPadding: Theme.dp(8)
                                     }
 
                                     Repeater {
@@ -370,12 +370,12 @@ PanelWindow {
                                             readonly property bool broken: Keybinds.failed[line.modelData.id] !== undefined
 
                                             width: groupCol.width
-                                            height: 34
+                                            height: Theme.dp(34)
 
                                             Rectangle {
                                                 anchors.fill: parent
-                                                anchors.leftMargin: -8
-                                                anchors.rightMargin: -8
+                                                anchors.leftMargin: -Theme.dp(8)
+                                                anchors.rightMargin: -Theme.dp(8)
                                                 radius: Theme.shapeSm
                                                 color: Theme.text
                                                 opacity: lineArea.containsMouse ? Theme.stateHover : 0
@@ -393,7 +393,7 @@ PanelWindow {
                                             Text {
                                                 anchors.left: parent.left
                                                 anchors.right: lineKeys.left
-                                                anchors.rightMargin: 12
+                                                anchors.rightMargin: Theme.dp(12)
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 text: Keybinds.displayDesc(line.modelData)
                                                 color: line.broken ? Theme.error : Theme.text
@@ -408,7 +408,7 @@ PanelWindow {
                                                 anchors.right: parent.right
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 keys: line.modelData.keys
-                                                capHeight: 25
+                                                capHeight: Theme.dp(25)
                                                 fontSize: Theme.fontLabelMd
                                             }
 

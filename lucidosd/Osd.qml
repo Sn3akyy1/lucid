@@ -30,13 +30,13 @@ PanelWindow {
     property int pendingBrightness: -1
 
     // m3 shape, spacing and slider metrics, shared with lucidbar/System.qml
-    readonly property int cardPadX: 12
-    readonly property int badgeSize: 36
-    readonly property int cardGap: 10
-    readonly property int glyphSize: 18
+    readonly property int cardPadX: Theme.dp(12)
+    readonly property int badgeSize: Theme.dp(36)
+    readonly property int cardGap: Theme.dp(10)
+    readonly property int glyphSize: Theme.dp(18)
     // the level card's own, tighter slider metrics
-    readonly property int levelTrackH: 30
-    readonly property int levelHandleH: 38
+    readonly property int levelTrackH: Theme.dp(30)
+    readonly property int levelHandleH: Theme.dp(38)
 
     readonly property string levelIcon: {
         if (osdWindow.oscType === "brightness")
@@ -196,9 +196,9 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     // remapped with the rest of the shell when displays change
     visible: Monitors.surfacesUp
-    implicitWidth: 480
-    implicitHeight: 140
-    margins.bottom: 96
+    implicitWidth: Theme.dp(480)
+    implicitHeight: Theme.dp(140)
+    margins.bottom: Theme.dp(96)
     Component.onCompleted: findDeviceProc.running = true
     onBacklightDeviceChanged: {
         if (backlightDevice !== "")
@@ -449,12 +449,12 @@ PanelWindow {
     Rectangle {
         id: card
 
-        readonly property int levelWidth: 260
-        readonly property int toggleWidth: osdWindow.cardPadX * 2 + osdWindow.badgeSize + osdWindow.cardGap + Math.ceil(Math.max(labelMetrics.advanceWidth, stateFlip.width)) + 6
+        readonly property int levelWidth: Theme.dp(260)
+        readonly property int toggleWidth: osdWindow.cardPadX * 2 + osdWindow.badgeSize + osdWindow.cardGap + Math.ceil(Math.max(labelMetrics.advanceWidth, stateFlip.width)) + Theme.dp(6)
 
         anchors.centerIn: parent
-        anchors.verticalCenterOffset: osdWindow.cardVisible ? 0 : 16
-        height: osdWindow.isLevelType ? 50 : 56
+        anchors.verticalCenterOffset: osdWindow.cardVisible ? 0 : Theme.dp(16)
+        height: osdWindow.isLevelType ? Theme.dp(50) : Theme.dp(56)
         width: osdWindow.isLevelType ? card.levelWidth : card.toggleWidth
         radius: height / 2
         color: Theme.bg
@@ -476,16 +476,16 @@ PanelWindow {
 
             visible: osdWindow.isLevelType
             anchors.left: parent.left
-            anchors.leftMargin: 10
+            anchors.leftMargin: Theme.dp(10)
             anchors.right: parent.right
-            anchors.rightMargin: 10
+            anchors.rightMargin: Theme.dp(10)
             anchors.verticalCenter: parent.verticalCenter
             size: "m"
             trackH: osdWindow.levelTrackH
             handleH: osdWindow.levelHandleH
             // a full stadium cap, as round as the card behind it
             outerR: osdWindow.levelTrackH / 2
-            iconSize: 18
+            iconSize: Theme.dp(18)
             from: 0
             to: 100
             value: osdWindow.levelMuted ? 0 : osdWindow.levelValue
@@ -553,7 +553,7 @@ PanelWindow {
 
                 anchors.centerIn: parent
                 name: osdWindow.toggleIcon
-                size: osdWindow.glyphSize + 2
+                size: osdWindow.glyphSize + Theme.dp(2)
                 fill: osdWindow.badgeActive ? 1 : 0
                 color: osdWindow.badgeActive ? Theme.fgAccent : Theme.text
             }
@@ -565,7 +565,7 @@ PanelWindow {
             anchors.left: iconBadge.right
             anchors.leftMargin: osdWindow.cardGap
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 2
+            spacing: Theme.dp(2)
 
             LText {
                 role: "labelSmall"

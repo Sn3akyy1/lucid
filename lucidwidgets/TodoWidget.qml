@@ -116,14 +116,14 @@ WidgetBody {
 
         signal toggled()
 
-        width: 40
-        height: 40
+        width: Theme.dp(40)
+        height: Theme.dp(40)
 
         Rectangle {
             anchors.centerIn: parent
-            width: 20
-            height: 20
-            radius: 6
+            width: Theme.dp(20)
+            height: Theme.dp(20)
+            radius: Theme.dp(6)
             color: ck.on ? w.inkAccent : "transparent"
             border.width: ck.on ? 0 : 2
             border.color: w.inkDim
@@ -148,7 +148,7 @@ WidgetBody {
             Icon {
                 anchors.centerIn: parent
                 name: "check"
-                size: 16
+                size: Theme.dp(16)
                 weight: 700
                 color: w.fgInkAccent
                 opacity: ck.on ? 1 : 0
@@ -177,7 +177,7 @@ WidgetBody {
         StateLayer {
             id: ckTap
 
-            radius: 20
+            radius: Theme.dp(20)
             tint: w.inkAccent
             onClicked: ck.toggled()
         }
@@ -190,17 +190,17 @@ WidgetBody {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.leftMargin: 18
-        anchors.rightMargin: 12
-        anchors.topMargin: 12
-        height: 36
+        anchors.leftMargin: Theme.dp(18)
+        anchors.rightMargin: Theme.dp(12)
+        anchors.topMargin: Theme.dp(12)
+        height: Theme.dp(36)
 
         Item {
             id: headRing
 
             anchors.verticalCenter: parent.verticalCenter
-            width: 28
-            height: 28
+            width: Theme.dp(28)
+            height: Theme.dp(28)
 
             CircularProgress {
                 anchors.fill: parent
@@ -213,7 +213,7 @@ WidgetBody {
             Icon {
                 anchors.centerIn: parent
                 name: w.focusOnly ? "flag" : "checklist"
-                size: 15
+                size: Theme.dp(15)
                 fill: 1
                 color: w.inkAccent
             }
@@ -222,9 +222,9 @@ WidgetBody {
 
         Column {
             anchors.left: headRing.right
-            anchors.leftMargin: 10
+            anchors.leftMargin: Theme.dp(10)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: -3
+            spacing: -Theme.dp(3)
 
             LText {
                 role: "titleMedium"
@@ -262,13 +262,13 @@ WidgetBody {
 
         visible: !w.focusOnly
         anchors.top: head.bottom
-        anchors.topMargin: 8
+        anchors.topMargin: Theme.dp(8)
         anchors.bottom: addBox.top
-        anchors.bottomMargin: 8
+        anchors.bottomMargin: Theme.dp(8)
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: 10
-        anchors.rightMargin: 10
+        anchors.leftMargin: Theme.dp(10)
+        anchors.rightMargin: Theme.dp(10)
         contentHeight: rows.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
@@ -278,7 +278,7 @@ WidgetBody {
             id: rows
 
             width: list.width
-            spacing: 2
+            spacing: Theme.dp(2)
 
             Repeater {
                 model: w.shown
@@ -291,11 +291,11 @@ WidgetBody {
                     readonly property bool hot: rowHover.hovered
 
                     width: rows.width
-                    height: 44
-                    topLeftRadius: row.index === 0 ? 16 : 4
-                    topRightRadius: row.index === 0 ? 16 : 4
-                    bottomLeftRadius: row.index === w.shown.length - 1 ? 16 : 4
-                    bottomRightRadius: row.index === w.shown.length - 1 ? 16 : 4
+                    height: Theme.dp(44)
+                    topLeftRadius: row.index === 0 ? Theme.dp(16) : Theme.dp(4)
+                    topRightRadius: row.index === 0 ? Theme.dp(16) : Theme.dp(4)
+                    bottomLeftRadius: row.index === w.shown.length - 1 ? Theme.dp(16) : Theme.dp(4)
+                    bottomRightRadius: row.index === w.shown.length - 1 ? Theme.dp(16) : Theme.dp(4)
                     color: Theme.alpha(w.ink, row.hot ? 0.1 : 0.06)
 
                     HoverHandler {
@@ -305,7 +305,7 @@ WidgetBody {
                     Check {
                         id: rowCheck
 
-                        x: 2
+                        x: Theme.dp(2)
                         anchors.verticalCenter: parent.verticalCenter
                         on: row.modelData.d
                         onToggled: w.toggleAt(row.modelData.at)
@@ -313,9 +313,9 @@ WidgetBody {
 
                     LText {
                         anchors.left: rowCheck.right
-                        anchors.leftMargin: 2
+                        anchors.leftMargin: Theme.dp(2)
                         anchors.right: rowDel.left
-                        anchors.rightMargin: 4
+                        anchors.rightMargin: Theme.dp(4)
                         anchors.verticalCenter: parent.verticalCenter
                         role: "bodyMedium"
                         color: row.modelData.d ? w.inkFaint : w.ink
@@ -328,7 +328,7 @@ WidgetBody {
                         id: rowDel
 
                         anchors.right: parent.right
-                        anchors.rightMargin: 4
+                        anchors.rightMargin: Theme.dp(4)
                         anchors.verticalCenter: parent.verticalCenter
                         opacity: row.hot ? 1 : 0
                         size: "xs"
@@ -347,12 +347,12 @@ WidgetBody {
             visible: w.shown.length === 0
             anchors.horizontalCenter: parent.horizontalCenter
             y: Math.max(0, (list.height - height) / 2)
-            spacing: 6
+            spacing: Theme.dp(6)
 
             Icon {
                 anchors.horizontalCenter: parent.horizontalCenter
                 name: w.items.length ? "task_alt" : "edit_note"
-                size: 30
+                size: Theme.dp(30)
                 color: w.inkFaint
             }
 
@@ -371,13 +371,13 @@ WidgetBody {
     Item {
         visible: w.focusOnly
         anchors.top: head.bottom
-        anchors.topMargin: 6
+        anchors.topMargin: Theme.dp(6)
         anchors.bottom: addBox.top
-        anchors.bottomMargin: 8
+        anchors.bottomMargin: Theme.dp(8)
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: 18
-        anchors.rightMargin: 18
+        anchors.leftMargin: Theme.dp(18)
+        anchors.rightMargin: Theme.dp(18)
 
         LText {
             id: bigTask
@@ -385,7 +385,7 @@ WidgetBody {
             width: parent.width
             anchors.top: parent.top
             anchors.bottom: focusBtns.top
-            anchors.bottomMargin: 6
+            anchors.bottomMargin: Theme.dp(6)
             role: "headlineSmall"
             weight: 560
             color: w.nextUp ? w.ink : w.inkDim
@@ -395,7 +395,7 @@ WidgetBody {
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
             fontSizeMode: Text.VerticalFit
-            minimumPixelSize: 14
+            minimumPixelSize: Theme.dp(14)
         }
 
         Row {
@@ -403,7 +403,7 @@ WidgetBody {
 
             visible: w.nextUp !== null
             anchors.bottom: parent.bottom
-            spacing: 8
+            spacing: Theme.dp(8)
 
             Button {
                 variant: "filled"
@@ -437,9 +437,9 @@ WidgetBody {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: 10
-        height: 44
-        radius: 22
+        anchors.margins: Theme.dp(10)
+        height: Theme.dp(44)
+        radius: Theme.dp(22)
         color: w.editing ? Theme.alpha(w.inkAccent, 0.14) : Theme.alpha(w.ink, 0.06)
         border.width: w.editing ? 2 : 0
         border.color: w.inkAccent
@@ -463,10 +463,10 @@ WidgetBody {
         Icon {
             id: addMark
 
-            x: 14
+            x: Theme.dp(14)
             anchors.verticalCenter: parent.verticalCenter
             name: "add"
-            size: 20
+            size: Theme.dp(20)
             color: w.editing ? w.inkAccent : w.inkDim
         }
 
@@ -474,9 +474,9 @@ WidgetBody {
             id: adder
 
             anchors.left: addMark.right
-            anchors.leftMargin: 10
+            anchors.leftMargin: Theme.dp(10)
             anchors.right: parent.right
-            anchors.rightMargin: 16
+            anchors.rightMargin: Theme.dp(16)
             anchors.verticalCenter: parent.verticalCenter
             color: w.ink
             font.family: Theme.fontFamily
@@ -503,7 +503,7 @@ WidgetBody {
 
         LText {
             anchors.left: addMark.right
-            anchors.leftMargin: 10
+            anchors.leftMargin: Theme.dp(10)
             anchors.verticalCenter: parent.verticalCenter
             role: "bodyMedium"
             color: w.inkFaint

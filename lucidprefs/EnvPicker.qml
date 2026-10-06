@@ -84,8 +84,8 @@ Item {
         id: card
 
         anchors.centerIn: parent
-        width: Math.min(460, picker.width - 80)
-        height: Math.min(520, picker.height - 80)
+        width: Math.min(Theme.dp(460), picker.width - Theme.dp(80))
+        height: Math.min(Theme.dp(520), picker.height - Theme.dp(80))
         radius: Theme.radiusXl
         color: Theme.bgHigh
         clip: true
@@ -100,7 +100,7 @@ Item {
 
             anchors.left: parent.left
             anchors.top: parent.top
-            anchors.margins: 22
+            anchors.margins: Theme.dp(22)
             text: picker.heading
             color: Theme.text
             font.family: Theme.fontFamily
@@ -115,10 +115,10 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: cardTitle.bottom
-            anchors.leftMargin: 22
-            anchors.rightMargin: 22
-            anchors.topMargin: 14
-            height: 46
+            anchors.leftMargin: Theme.dp(22)
+            anchors.rightMargin: Theme.dp(22)
+            anchors.topMargin: Theme.dp(14)
+            height: Theme.dp(46)
             radius: Theme.shapeLg
             color: Theme.bgSunken
             border.width: searchInput.activeFocus ? 2 : 1
@@ -128,8 +128,8 @@ Item {
                 id: searchInput
 
                 anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
+                anchors.leftMargin: Theme.dp(12)
+                anchors.rightMargin: Theme.dp(12)
                 verticalAlignment: TextInput.AlignVCenter
                 color: Theme.text
                 font.family: Theme.fontFamily
@@ -150,7 +150,7 @@ Item {
 
             Text {
                 anchors.left: parent.left
-                anchors.leftMargin: 12
+                anchors.leftMargin: Theme.dp(12)
                 anchors.verticalCenter: parent.verticalCenter
                 text: "Search " + picker.items.length + " installed " + picker.noun
                 color: Theme.subtextDim
@@ -164,7 +164,7 @@ Item {
 
         Text {
             anchors.centerIn: parent
-            width: card.width - 60
+            width: card.width - Theme.dp(60)
             text: picker.items.length === 0 ? "Nothing installed to choose from" : "No " + picker.noun + " match “" + picker.filter + "”"
             color: Theme.subtextDim
             font.family: Theme.fontFamily
@@ -182,8 +182,8 @@ Item {
             anchors.right: parent.right
             anchors.top: searchBox.bottom
             anchors.bottom: parent.bottom
-            anchors.margins: 12
-            anchors.topMargin: 10
+            anchors.margins: Theme.dp(12)
+            anchors.topMargin: Theme.dp(10)
             clip: true
             model: picker.matches
             boundsBehavior: Flickable.StopAtBounds
@@ -221,10 +221,10 @@ Item {
                 id: listBar
 
                 policy: ScrollBar.AlwaysOn
-                width: 10
+                width: Theme.dp(10)
 
                 contentItem: Rectangle {
-                    implicitWidth: listBar.hovered || listBar.pressed ? 8 : 5
+                    implicitWidth: listBar.hovered || listBar.pressed ? Theme.dp(8) : Theme.dp(5)
                     radius: width / 2
                     color: listBar.pressed ? Theme.accent : (listBar.hovered ? Theme.alpha(Theme.text, 0.4) : Theme.alpha(Theme.text, 0.2))
 
@@ -250,8 +250,8 @@ Item {
                 readonly property bool isCurrent: themeRow.modelData === picker.current
                 readonly property string preview: picker.showPreviews ? (picker.previews[themeRow.modelData] || "") : ""
 
-                width: list.width - 14
-                height: 50
+                width: list.width - Theme.dp(14)
+                height: Theme.dp(50)
                 radius: height / 2
                 color: themeRow.isCurrent ? Theme.accentContainer : "transparent"
 
@@ -259,14 +259,14 @@ Item {
                     id: swatch
 
                     anchors.left: parent.left
-                    anchors.leftMargin: 13
+                    anchors.leftMargin: Theme.dp(13)
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 26
-                    height: 26
+                    width: Theme.dp(26)
+                    height: Theme.dp(26)
                     visible: themeRow.preview !== ""
                     source: themeRow.preview === "" ? "" : "file://" + themeRow.preview
-                    sourceSize.width: 52
-                    sourceSize.height: 52
+                    sourceSize.width: Theme.dp(52)
+                    sourceSize.height: Theme.dp(52)
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                     smooth: true
@@ -274,9 +274,9 @@ Item {
 
                 Text {
                     anchors.left: swatch.visible ? swatch.right : parent.left
-                    anchors.leftMargin: swatch.visible ? 12 : 14
+                    anchors.leftMargin: swatch.visible ? Theme.dp(12) : Theme.dp(14)
                     anchors.right: parent.right
-                    anchors.rightMargin: 14
+                    anchors.rightMargin: Theme.dp(14)
                     anchors.verticalCenter: parent.verticalCenter
                     text: themeRow.modelData
                     font.family: Theme.fontFamily

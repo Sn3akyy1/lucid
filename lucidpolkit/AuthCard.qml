@@ -14,9 +14,17 @@ Rectangle {
     readonly property string headline: Polkit.title !== "" ? Polkit.title : "Authentication required"
     readonly property bool busy: Polkit.checking || (!Polkit.prompting && !Polkit.preview && !Polkit.granted)
     readonly property bool canSubmit: !card.busy && pwInput.text !== ""
+    // the placeholder waits for the last beads to fade before it comes back
+    property bool vacant: true
 
     function focusInput() {
         pwInput.forceActiveFocus();
+    }
+
+    function pin() {
+        if (Polkit.secret && pwInput.selectionStart === pwInput.selectionEnd && pwInput.cursorPosition !== pwInput.length)
+            pwInput.cursorPosition = pwInput.length;
+
     }
 
     function submit() {
@@ -24,11 +32,10 @@ Rectangle {
             return ;
 
         Polkit.submit(pwInput.text);
-        pwInput.text = "";
     }
 
-    width: 452
-    height: body.implicitHeight + 56
+    width: Theme.dp(452)
+    height: body.implicitHeight + Theme.dp(56)
     radius: Theme.shapeXl
     color: Theme.bg
     scale: card.shown ? 1 : 0.9
@@ -37,9 +44,20 @@ Rectangle {
     // a fresh prompt is a fresh field
     Connections {
         function onPromptingChanged() {
-            if (Polkit.prompting)
-                card.focusInput();
+            if (!Polkit.prompting)
+                return ;
 
+            pwInput.text = "";
+            card.focusInput();
+        }
+
+        // what was typed never outlives its request
+        function onOpenChanged() {
+            if (Polkit.open)
+                return ;
+
+            pwInput.text = "";
+            revealBtn.revealed = false;
         }
 
         // another administrator wants their own password, not the one typed
@@ -58,6 +76,13 @@ Rectangle {
         }
 
         target: Polkit
+    }
+
+    Timer {
+        id: vacate
+
+        interval: Theme.durDefaultEffects
+        onTriggered: card.vacant = true
     }
 
     // the lock screen's refusal, step for step
@@ -112,8 +137,8 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: 28
-        spacing: 14
+        anchors.margins: Theme.dp(28)
+        spacing: Theme.dp(14)
         opacity: Polkit.granted ? 0 : 1
 
         Behavior on opacity {
@@ -125,11 +150,11 @@ Rectangle {
 
         Row {
             width: parent.width
-            spacing: 16
+            spacing: Theme.dp(16)
 
             Item {
-                width: 52
-                height: 52
+                width: Theme.dp(52)
+                height: Theme.dp(52)
 
                 MaterialShape {
                     anchors.fill: parent
@@ -152,14 +177,14 @@ Rectangle {
                     anchors.centerIn: parent
                     name: Polkit.glyph
                     color: Theme.fgAccentContainer
-                    size: 26
+                    size: Theme.dp(26)
                 }
 
             }
 
             Column {
-                width: parent.width - 68
-                spacing: 3
+                width: parent.width - Theme.dp(68)
+                spacing: Theme.dp(3)
                 anchors.verticalCenter: parent.verticalCenter
 
                 Text {
@@ -203,7 +228,7 @@ Rectangle {
         // who the password belongs to, and the pick when polkit offers a choice
         Column {
             width: parent.width
-            spacing: 8
+            spacing: Theme.dp(8)
             visible: card.identity !== null
 
             Text {
@@ -216,7 +241,7 @@ Rectangle {
 
             Flow {
                 width: parent.width
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 Repeater {
                     model: Polkit.multiUser ? Polkit.identities : []
@@ -229,9 +254,9 @@ Rectangle {
 
                         readonly property bool active: chip.index === Polkit.identityIndex
 
-                        height: 40
-                        width: chipRow.width + 26
-                        radius: 20
+                        height: Theme.dp(40)
+                        width: chipRow.width + Theme.dp(26)
+                        radius: Theme.dp(20)
                         color: chip.active ? Theme.accentContainer : Theme.bgTile
                         border.width: chip.active ? 0 : 1
                         border.color: Theme.outline
@@ -240,12 +265,12 @@ Rectangle {
                             id: chipRow
 
                             anchors.centerIn: parent
-                            spacing: 9
+                            spacing: Theme.dp(9)
 
                             UserAvatar {
                                 anchors.verticalCenter: parent.verticalCenter
                                 user: Polkit.userFor(chip.modelData)
-                                size: 26
+                                size: Theme.dp(26)
                             }
 
                             Text {
@@ -283,13 +308,13 @@ Rectangle {
             }
 
             Row {
-                spacing: 9
+                spacing: Theme.dp(9)
                 visible: !Polkit.multiUser
 
                 UserAvatar {
                     anchors.verticalCenter: parent.verticalCenter
                     user: Polkit.userFor(card.identity)
-                    size: 28
+                    size: Theme.dp(28)
                 }
 
                 Text {
@@ -310,15 +335,14 @@ Rectangle {
             id: pill
 
             property real focusLift: pwInput.activeFocus ? 1 : 0
-            property real typePulse: 0
             property real shakeOffset: 0
 
             width: parent.width
-            height: 50
-            radius: 25
+            height: Theme.dp(50)
+            radius: Theme.dp(25)
             color: Polkit.errorText !== "" ? Theme.alpha(Theme.error, 0.14) : (pwInput.activeFocus ? Theme.bgHigh : Theme.bgSunken)
-            opacity: card.busy ? 0.6 : 1
-            scale: 1 + pill.focusLift * 0.015 + pill.typePulse
+            opacity: card.busy && pwInput.text === "" ? 0.6 : 1
+            scale: 1 + pill.focusLift * 0.015
 
             transform: Translate {
                 x: pill.shakeOffset
@@ -332,32 +356,10 @@ Rectangle {
 
             }
 
-            // every keystroke gives the bar the same small kick it has on the lock screen
-            SequentialAnimation {
-                id: typeBump
-
-                NumberAnimation {
-                    target: pill
-                    property: "typePulse"
-                    to: 0.02
-                    duration: Theme.ms(70)
-                    easing.type: Easing.OutCubic
-                }
-
-                NumberAnimation {
-                    target: pill
-                    property: "typePulse"
-                    to: 0
-                    duration: Theme.ms(160)
-                    easing.type: Easing.OutCubic
-                }
-
-            }
-
             Rectangle {
                 anchors.fill: parent
-                anchors.margins: -3
-                radius: parent.radius + 3
+                anchors.margins: -Theme.dp(3)
+                radius: parent.radius + Theme.dp(3)
                 color: "transparent"
                 border.width: 1.5
                 border.color: Polkit.errorText !== "" ? Theme.error : Theme.accent
@@ -377,54 +379,106 @@ Rectangle {
                 id: keyMark
 
                 anchors.left: parent.left
-                anchors.leftMargin: 18
+                anchors.leftMargin: Theme.dp(18)
                 anchors.verticalCenter: parent.verticalCenter
                 name: "key"
                 color: Polkit.errorText !== "" ? Theme.error : Theme.subtextDim
-                size: 19
+                size: Theme.dp(19)
+            }
+
+            Text {
+                anchors.left: keyMark.right
+                anchors.leftMargin: Theme.dp(12)
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.dp(48)
+                anchors.verticalCenter: parent.verticalCenter
+                transformOrigin: Item.Left
+                text: Polkit.prompt.replace(/:\s*$/, "")
+                color: pwInput.activeFocus ? Theme.subtext : Theme.subtextDim
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontBodyLg
+                font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
+                elide: Text.ElideRight
+                opacity: card.vacant ? 1 : 0
+                scale: 0.94 + 0.06 * opacity
+                visible: opacity > 0.01
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Theme.durDefaultEffects
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.curveEffects
+                    }
+
+                }
+
+            }
+
+            // each character lands as a turning shape and melts into a dot
+            PasswordEcho {
+                id: echo
+
+                anchors.left: keyMark.right
+                anchors.leftMargin: Theme.dp(12)
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.dp(46)
+                anchors.verticalCenter: parent.verticalCenter
+                height: Theme.dp(30)
+                text: pwInput.text
+                reveal: revealBtn.revealed
+                busy: card.busy
+                selectionStart: pwInput.selectionStart
+                selectionEnd: pwInput.selectionEnd
+                color: Polkit.errorText !== "" ? Theme.error : Theme.text
+                edge: pill.color
+                font: pwInput.font
+                visible: Polkit.secret
             }
 
             TextInput {
                 id: pwInput
 
                 anchors.left: keyMark.right
-                anchors.leftMargin: 12
+                anchors.leftMargin: Theme.dp(12)
                 anchors.right: parent.right
-                anchors.rightMargin: Polkit.secret ? 48 : 18
+                anchors.rightMargin: Polkit.secret ? Theme.dp(48) : Theme.dp(18)
                 anchors.verticalCenter: parent.verticalCenter
                 height: parent.height
                 verticalAlignment: TextInput.AlignVCenter
                 enabled: !card.busy
-                echoMode: (Polkit.secret && !revealBtn.revealed) ? TextInput.Password : TextInput.Normal
-                passwordCharacter: "•"
-                color: Theme.text
+                // the beads stand in for the text unless pam asked something visible
+                echoMode: Polkit.secret ? TextInput.Password : TextInput.Normal
+                passwordCharacter: " "
+                color: Polkit.secret ? "transparent" : Theme.text
+                // the beads draw a secret's selection themselves
+                selectionColor: Polkit.secret ? "transparent" : Theme.accent
+                selectedTextColor: Polkit.secret ? "transparent" : Theme.fgAccent
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyLg
                 font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
-                selectByMouse: true
-                selectionColor: Theme.accent
-                selectedTextColor: Theme.fgAccent
+                selectByMouse: false
                 clip: true
+                cursorDelegate: Rectangle {
+                    width: Theme.dp(2)
+                    radius: 1
+                    color: Theme.accent
+                    visible: !Polkit.secret
+                }
+
+                // the beads have no caret: a secret is typed at its end, and only a
+                // selection grown back from there may hold the cursor anywhere else
+                onCursorPositionChanged: Qt.callLater(card.pin)
                 onAccepted: card.submit()
                 onTextChanged: {
-                    if (pwInput.text !== "") {
-                        Polkit.errorText = "";
-                        typeBump.restart();
+                    if (pwInput.text === "") {
+                        vacate.restart();
+                        return ;
                     }
+                    vacate.stop();
+                    card.vacant = false;
+                    Polkit.errorText = "";
                 }
                 Keys.onEscapePressed: Polkit.cancel()
-            }
-
-            Text {
-                anchors.left: keyMark.right
-                anchors.leftMargin: 12
-                anchors.verticalCenter: parent.verticalCenter
-                text: Polkit.prompt.replace(/:\s*$/, "")
-                color: Theme.subtextDim
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontBodyLg
-                font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
-                visible: pwInput.text === ""
             }
 
             M3IconButton {
@@ -433,10 +487,10 @@ Rectangle {
                 property bool revealed: false
 
                 anchors.right: parent.right
-                anchors.rightMargin: 7
+                anchors.rightMargin: Theme.dp(7)
                 anchors.verticalCenter: parent.verticalCenter
-                size: 36
-                iconSize: 19
+                size: Theme.dp(36)
+                iconSize: Theme.dp(19)
                 visible: Polkit.secret
                 iconPath: revealBtn.revealed ? "visibility" : "visibility_off"
                 onClicked: {
@@ -468,7 +522,7 @@ Rectangle {
             readonly property string line: Polkit.errorText !== "" ? Polkit.errorText : (Polkit.infoText !== "" ? Polkit.infoText : (card.busy ? "Checking with the authentication service…" : ""))
 
             width: parent.width
-            height: status.line !== "" ? 18 : 0
+            height: status.line !== "" ? Theme.dp(18) : 0
             clip: true
 
             Text {
@@ -504,8 +558,8 @@ Rectangle {
             width: parent.width
 
             MouseArea {
-                width: detailsHead.width + 14
-                height: 40
+                width: detailsHead.width + Theme.dp(14)
+                height: Theme.dp(40)
                 cursorShape: Qt.PointingHandCursor
                 onClicked: details.expanded = !details.expanded
 
@@ -513,7 +567,7 @@ Rectangle {
                     id: detailsHead
 
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 4
+                    spacing: Theme.dp(4)
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
@@ -527,7 +581,7 @@ Rectangle {
                     Icon {
                         anchors.verticalCenter: parent.verticalCenter
                         name: "chevron_right"
-                        size: 16
+                        size: Theme.dp(16)
                         color: Theme.subtextDim
                         rotation: details.expanded ? 90 : 0
 
@@ -546,14 +600,14 @@ Rectangle {
             }
 
             Item {
-                width: Math.max(0, parent.width - actions.width - detailsHead.width - 14)
+                width: Math.max(0, parent.width - actions.width - detailsHead.width - Theme.dp(14))
                 height: 1
             }
 
             Row {
                 id: actions
 
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 M3Button {
                     text: "Cancel"
@@ -592,7 +646,7 @@ Rectangle {
                     id: detailRows
 
                     width: parent.width
-                    spacing: 4
+                    spacing: Theme.dp(4)
                     opacity: details.expanded ? 1 : 0
 
                     Text {
@@ -642,22 +696,22 @@ Rectangle {
     // the grant, held just long enough to be read
     Column {
         anchors.centerIn: parent
-        spacing: 14
+        spacing: Theme.dp(14)
         opacity: Polkit.granted ? 1 : 0
         visible: opacity > 0.01
 
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 60
-            height: 60
-            radius: 30
+            width: Theme.dp(60)
+            height: Theme.dp(60)
+            radius: Theme.dp(30)
             color: Theme.alpha(Theme.success, 0.18)
 
             AuthGlyph {
                 anchors.centerIn: parent
                 name: "check"
                 color: Theme.success
-                size: 30
+                size: Theme.dp(30)
             }
 
         }

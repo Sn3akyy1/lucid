@@ -20,7 +20,7 @@ Item {
     })
     property string name: "shield"
     property color color: Theme.fgAccentContainer
-    property real size: 22
+    property real size: Theme.dp(22)
 
     implicitWidth: glyph.size
     implicitHeight: glyph.size

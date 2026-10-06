@@ -69,24 +69,24 @@ WidgetBody {
         id: linedHead
 
         visible: w.lined
-        x: 20
-        y: 14
-        width: parent.width - 40
-        height: 26
+        x: Theme.dp(20)
+        y: Theme.dp(14)
+        width: parent.width - Theme.dp(40)
+        height: Theme.dp(26)
 
         Icon {
             id: noteIcon
 
             anchors.verticalCenter: parent.verticalCenter
             name: "sticky_note_2"
-            size: 18
+            size: Theme.dp(18)
             fill: 1
             color: w.inkAccent
         }
 
         LText {
             anchors.left: noteIcon.right
-            anchors.leftMargin: 8
+            anchors.leftMargin: Theme.dp(8)
             anchors.verticalCenter: parent.verticalCenter
             role: "titleSmall"
             color: w.ink
@@ -107,9 +107,9 @@ WidgetBody {
         id: scroller
 
         anchors.fill: parent
-        anchors.margins: 20
-        anchors.topMargin: w.lined ? 48 : 20
-        anchors.bottomMargin: w.lined ? 30 : 20
+        anchors.margins: Theme.dp(20)
+        anchors.topMargin: w.lined ? Theme.dp(48) : Theme.dp(20)
+        anchors.bottomMargin: w.lined ? Theme.dp(30) : Theme.dp(20)
         contentWidth: width
         contentHeight: w.headline ? height : editor.implicitHeight
         clip: true
@@ -141,7 +141,7 @@ WidgetBody {
             id: editor
 
             // the headline shrinks to fit the card, the others scroll
-            readonly property int basePx: w.headline ? 40 : (w.variant === "sticky" ? 17 : 14)
+            readonly property int basePx: w.headline ? Theme.dp(40) : (w.variant === "sticky" ? Theme.dp(17) : Theme.dp(14))
             readonly property int px: w.headline ? fit.px : editor.basePx
 
             width: scroller.width
@@ -192,7 +192,7 @@ WidgetBody {
         Text {
             id: fit
 
-            property int px: 40
+            property int px: Theme.dp(40)
 
             function measure() {
                 if (!w.headline || scroller.width <= 0)
@@ -252,8 +252,8 @@ WidgetBody {
         visible: w.lined
         anchors.left: parent.left
         anchors.bottom: parent.bottom
-        anchors.leftMargin: 20
-        anchors.bottomMargin: 10
+        anchors.leftMargin: Theme.dp(20)
+        anchors.bottomMargin: Theme.dp(10)
         role: "labelSmall"
         color: w.inkFaint
         text: w.editing ? "Esc to finish" : w.ago(w.edited)
@@ -318,7 +318,7 @@ WidgetBody {
         visible: w.editing && !w.lined
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: 10
+        anchors.margins: Theme.dp(10)
         role: "labelSmall"
         color: Theme.alpha(w.ink, 0.45)
         text: "Esc to finish"

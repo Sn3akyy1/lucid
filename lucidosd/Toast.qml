@@ -21,12 +21,12 @@ PanelWindow {
     property bool hasSwatch: false
 
     // m3 snackbar metrics: 48dp container, 16dp leading pad, 12dp icon gap
-    readonly property int pillHeight: 48
-    readonly property int pillPad: 16
-    readonly property int iconGap: 12
-    readonly property int glyphSize: 20
-    readonly property int labelMax: 340
-    readonly property int detailMax: 260
+    readonly property int pillHeight: Theme.dp(48)
+    readonly property int pillPad: Theme.dp(16)
+    readonly property int iconGap: Theme.dp(12)
+    readonly property int glyphSize: Theme.dp(20)
+    readonly property int labelMax: Theme.dp(340)
+    readonly property int detailMax: Theme.dp(260)
 
     // system events wait their turn here instead of cutting each other off
     property var queue: []
@@ -150,9 +150,9 @@ PanelWindow {
     visible: pill.opacity > 0.01 && Monitors.surfacesUp
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-    implicitWidth: Math.max(160, pill.width + 40)
-    implicitHeight: 88
-    margins.top: 10
+    implicitWidth: Math.max(Theme.dp(160), pill.width + Theme.dp(40))
+    implicitHeight: Theme.dp(88)
+    margins.top: Theme.dp(10)
     BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && toastWindow.visible) ? toastBlur : null
 
     anchors {
@@ -202,7 +202,7 @@ PanelWindow {
         id: pill
 
         anchors.horizontalCenter: parent.horizontalCenter
-        y: toastWindow.shown ? 20 : 2
+        y: toastWindow.shown ? Theme.dp(20) : Theme.dp(2)
         height: toastWindow.pillHeight
         width: leadIcon.width + toastWindow.iconGap + labelText.width + (detailText.visible ? toastWindow.iconGap + detailText.width : 0) + toastWindow.pillPad * 2
         radius: Theme.shapeFull
@@ -286,7 +286,7 @@ PanelWindow {
                 visible: !toastWindow.hasSwatch && /^[a-z0-9_]+$/.test(toastWindow.iconPath)
                 anchors.centerIn: parent
                 name: visible ? toastWindow.iconPath : ""
-                size: toastWindow.glyphSize + 2
+                size: toastWindow.glyphSize + Theme.dp(2)
                 fill: 1
                 color: toastWindow.warn ? toastWindow.warnTone : Theme.accent
             }

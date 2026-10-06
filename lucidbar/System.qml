@@ -38,11 +38,11 @@ BarPill {
     readonly property var easeEmphasizedAccel: [0.3, 0, 0.8, 0.15, 1, 1]
 
     // m3 spacing, on the 4dp grid
-    readonly property int sp1: 4
-    readonly property int sp2: 8
-    readonly property int sp3: 12
-    readonly property int sp4: 16
-    readonly property int sp5: 20
+    readonly property int sp1: Theme.dp(4)
+    readonly property int sp2: Theme.dp(8)
+    readonly property int sp3: Theme.dp(12)
+    readonly property int sp4: Theme.dp(16)
+    readonly property int sp5: Theme.dp(20)
 
     Timer {
         id: viewResetTimer
@@ -82,14 +82,14 @@ BarPill {
 
     }
 
-    readonly property int horizontalPadding: 16
+    readonly property int horizontalPadding: Theme.dp(16)
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
-    readonly property int maxPanelHeight: Math.min(820, Math.max(200, root.screenH - 40))
+    readonly property int maxPanelHeight: Math.min(Theme.dp(820), Math.max(Theme.dp(200), root.screenH - Theme.dp(40)))
     readonly property int panelPad: root.sp4
     readonly property int contentWidth: root.panelWidth - root.panelPad * 2
-    readonly property int headerHeight: 52
-    readonly property int subHeaderHeight: 44
+    readonly property int headerHeight: Theme.dp(52)
+    readonly property int subHeaderHeight: Theme.dp(44)
     // header top margin + header + gap + body + bottom padding
     readonly property int viewChrome: root.sp2 + root.headerHeight + root.sp1 + root.panelPad
     readonly property real viewContentHeight: {
@@ -260,9 +260,9 @@ BarPill {
     property bool tipDragging: false
     property bool tipOnIcon: false
     readonly property bool tipWanted: (root.tipOverPill && root.tipOnIcon) || root.tipOverCard || root.tipDragging
-    readonly property int tipGap: 6
+    readonly property int tipGap: Theme.dp(6)
     // grows each icon's slab a little; the row spacing is 8, so gaps stay dead
-    readonly property int tipSlabPad: 2
+    readonly property int tipSlabPad: Theme.dp(2)
     // a dwell delay, not an animation, so it is deliberately not motion-scaled
     readonly property int tipShowDelay: 1000
     readonly property int tipEnterMs: Theme.barMs(120)
@@ -561,7 +561,7 @@ BarPill {
     shown: Prefs.barHas("system")
 
     compactWidth: content.implicitWidth + root.horizontalPadding * 2
-    panelWidth: Math.min(400, root.screenW - 34)
+    panelWidth: Math.min(Theme.dp(400), root.screenW - Theme.dp(34))
     panelHeight: Math.min(root.maxPanelHeight, root.viewContentHeight)
     expandedRadius: Theme.shapeXl
     compactCollapseScale: 0.94
@@ -1219,12 +1219,12 @@ BarPill {
     // the grid both views share
     readonly property int tileCols: 6
     readonly property real tileW: (root.contentWidth - root.sp2 * (root.tileCols - 1)) / root.tileCols
-    readonly property real tileH: root.tileW + 20
+    readonly property real tileH: root.tileW + Theme.dp(20)
     readonly property real tileStepX: root.tileW + root.sp2
     readonly property real tileStepY: root.tileH + root.sp3
     // how far a lifted tile stays off the editor's edges: its 1.1 lift and its
     // label both reach past its box, and the scroll area clips at the edge
-    readonly property int tileDragPad: 6
+    readonly property int tileDragPad: Theme.dp(6)
 
     function tileGridHeight(n) {
         const rows = Math.max(1, Math.ceil(n / root.tileCols));
@@ -1353,7 +1353,7 @@ BarPill {
             id: content
 
             anchors.centerIn: parent
-            spacing: 10
+            spacing: Theme.dp(10)
 
             // the active keyboard layout; a click steps to the next one, the
             // rest of the pill still opens the panel
@@ -1362,8 +1362,8 @@ BarPill {
 
                 visible: Prefs.showKbLayout && root.kbLayout !== ""
                 anchors.verticalCenter: parent.verticalCenter
-                width: kbText.implicitWidth + 10
-                height: 20
+                width: kbText.implicitWidth + Theme.dp(10)
+                height: Theme.dp(20)
                 radius: height / 2
                 color: kbArea.containsMouse ? Theme.alpha(Theme.text, 0.1) : "transparent"
 
@@ -1393,7 +1393,7 @@ BarPill {
 
                 anchors.verticalCenter: parent.verticalCenter
                 name: root.wifiGlyph
-                size: 17
+                size: Theme.dp(17)
                 fill: 1
                 color: (wifiPanel.wifiConnected || wifiPanel.primaryIsEthernet) ? Theme.accent : Theme.subtext
             }
@@ -1404,7 +1404,7 @@ BarPill {
                 visible: root.btEnabled
                 anchors.verticalCenter: parent.verticalCenter
                 name: root.btGlyph
-                size: 16
+                size: Theme.dp(16)
                 color: btPanel.connectedDevices.length > 0 ? Theme.accent : Theme.subtext
             }
 
@@ -1412,12 +1412,12 @@ BarPill {
                 id: volIndicator
 
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 3
+                spacing: Theme.dp(3)
 
                 Icon {
                     anchors.verticalCenter: parent.verticalCenter
                     name: root.volumeIcon(root.volumePercent, root.volMuted)
-                    size: 17
+                    size: Theme.dp(17)
                     fill: 1
                     color: root.volMuted ? Theme.error : Theme.text
                 }
@@ -1438,7 +1438,7 @@ BarPill {
 
                 anchors.verticalCenter: parent.verticalCenter
                 name: root.micMuted ? "mic_off" : "mic"
-                size: 16
+                size: Theme.dp(16)
                 fill: 1
                 color: root.micMuted ? Theme.error : Theme.subtext
             }
@@ -1511,8 +1511,8 @@ BarPill {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.topMargin: root.sp2
-                    anchors.leftMargin: root.panelPad + 4
-                    anchors.rightMargin: root.panelPad - 4
+                    anchors.leftMargin: root.panelPad + Theme.dp(4)
+                    anchors.rightMargin: root.panelPad - Theme.dp(4)
                     height: root.headerHeight
 
                     Column {
@@ -1538,7 +1538,7 @@ BarPill {
                     Row {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
+                        spacing: Theme.dp(2)
 
                         IconButton {
                             icon: "edit"
@@ -1645,10 +1645,10 @@ BarPill {
                                 Rectangle {
                                     id: outBtn
 
-                                    width: 50
-                                    height: 38
+                                    width: Theme.dp(50)
+                                    height: Theme.dp(38)
                                     anchors.verticalCenter: parent.verticalCenter
-                                    radius: 12
+                                    radius: Theme.dp(12)
                                     color: Theme.withBlur(Theme.surfaceHighest)
 
                                     StateLayer {
@@ -1659,7 +1659,7 @@ BarPill {
                                     Icon {
                                         anchors.centerIn: parent
                                         name: "speaker"
-                                        size: 20
+                                        size: Theme.dp(20)
                                         color: Theme.subtext
                                     }
 
@@ -1727,7 +1727,7 @@ BarPill {
 
                             visible: root.mprisMod && root.mprisMod.player
                             width: root.contentWidth
-                            height: 84
+                            height: Theme.dp(84)
                             radius: Theme.shapeLgInc
                             color: Theme.withBlur(Theme.surfaceHigh)
 
@@ -1746,10 +1746,10 @@ BarPill {
                                 id: mediaArt
 
                                 anchors.left: parent.left
-                                anchors.leftMargin: 10
+                                anchors.leftMargin: Theme.dp(10)
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: 64
-                                height: 64
+                                width: Theme.dp(64)
+                                height: Theme.dp(64)
                                 radius: Theme.shapeLg
                                 color: Theme.withBlur(Theme.surfaceHighest)
 
@@ -1761,8 +1761,8 @@ BarPill {
                                     fillMode: Image.PreserveAspectCrop
                                     asynchronous: true
                                     cache: true
-                                    sourceSize.width: 128
-                                    sourceSize.height: 128
+                                    sourceSize.width: Theme.dp(128)
+                                    sourceSize.height: Theme.dp(128)
                                     visible: mediaArtImg.status === Image.Ready
                                 }
 
@@ -1770,7 +1770,7 @@ BarPill {
                                     anchors.centerIn: parent
                                     visible: !mediaArtImg.visible
                                     name: "music_note"
-                                    size: 26
+                                    size: Theme.dp(26)
                                     color: Theme.subtext
                                 }
 
@@ -1780,10 +1780,10 @@ BarPill {
                                 id: mediaControls
 
                                 anchors.right: parent.right
-                                anchors.rightMargin: 10
+                                anchors.rightMargin: Theme.dp(10)
                                 anchors.top: parent.top
-                                anchors.topMargin: 12
-                                spacing: 2
+                                anchors.topMargin: Theme.dp(12)
+                                spacing: Theme.dp(2)
 
                                 IconButton {
                                     anchors.verticalCenter: parent.verticalCenter
@@ -1827,11 +1827,11 @@ BarPill {
 
                             Column {
                                 anchors.left: mediaArt.right
-                                anchors.leftMargin: 12
+                                anchors.leftMargin: Theme.dp(12)
                                 anchors.right: mediaControls.left
-                                anchors.rightMargin: 8
+                                anchors.rightMargin: Theme.dp(8)
                                 anchors.top: parent.top
-                                anchors.topMargin: 14
+                                anchors.topMargin: Theme.dp(14)
                                 spacing: 1
 
                                 LText {
@@ -1854,17 +1854,17 @@ BarPill {
 
                             LinearProgress {
                                 anchors.left: mediaArt.right
-                                anchors.leftMargin: 12
+                                anchors.leftMargin: Theme.dp(12)
                                 anchors.right: parent.right
-                                anchors.rightMargin: 16
+                                anchors.rightMargin: Theme.dp(16)
                                 anchors.bottom: parent.bottom
-                                anchors.bottomMargin: 14
+                                anchors.bottomMargin: Theme.dp(14)
                                 value: mediaCard.progress
                                 wavy: true
                                 animated: mediaCard.playing
                                 valueAnimated: false
                                 amplitude: 2.5
-                                wavelength: 24
+                                wavelength: Theme.dp(24)
                                 trackColor: Theme.withBlur(Theme.surfaceHighest)
                             }
 
@@ -1897,7 +1897,7 @@ BarPill {
                             }
 
                             width: root.contentWidth
-                            height: gaugeRow.implicitHeight + 28
+                            height: gaugeRow.implicitHeight + Theme.dp(28)
                             radius: Theme.shapeLgInc
                             color: Theme.withBlur(Theme.surfaceHigh)
 
@@ -1905,7 +1905,7 @@ BarPill {
                                 id: gaugeRow
 
                                 anchors.centerIn: parent
-                                width: parent.width - 16
+                                width: parent.width - Theme.dp(16)
 
                                 Gauge {
                                     width: gaugeRow.width / 4
@@ -1993,7 +1993,7 @@ BarPill {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.topMargin: root.sp2
-                    anchors.leftMargin: root.panelPad - 6
+                    anchors.leftMargin: root.panelPad - Theme.dp(6)
                     anchors.rightMargin: root.panelPad
                     height: root.subHeaderHeight
 
@@ -2133,7 +2133,7 @@ BarPill {
 
                         width: subScroll.width
                         visible: root.view === "output"
-                        spacing: 2
+                        spacing: Theme.dp(2)
 
                         Repeater {
                             model: root.outputNodes
@@ -2190,7 +2190,7 @@ BarPill {
 
                         width: subScroll.width
                         visible: root.view === "power"
-                        spacing: 2
+                        spacing: Theme.dp(2)
 
                         Repeater {
                             model: Power.actions
@@ -2541,20 +2541,20 @@ BarPill {
         Rectangle {
             id: tipCard
 
-            readonly property int pad: 14
+            readonly property int pad: Theme.dp(14)
             // measured off unconstrained metrics, since an eliding Text reports
             // its elided width and would pin the card at whatever it first got
             readonly property real natural: {
-                let w = Math.max(tipOverlineText.implicitWidth, tipTitleMetrics.width + (root.tipViewKind === "volume" ? 36 : 0));
+                let w = Math.max(tipOverlineText.implicitWidth, tipTitleMetrics.width + (root.tipViewKind === "volume" ? Theme.dp(36) : 0));
                 if (tipSupportText.visible)
                     w = Math.max(w, tipSupportMetrics.width);
 
                 return Math.ceil(w) + 2;
             }
-            readonly property int floorW: root.tipViewKind === "volume" ? 240 : 132
+            readonly property int floorW: root.tipViewKind === "volume" ? Theme.dp(240) : Theme.dp(132)
 
-            width: Math.ceil(Math.min(320, Math.max(tipCard.floorW, tipCard.natural + tipCard.pad * 2)))
-            height: Math.round(tipCol.implicitHeight + tipCard.pad * 2 - 4)
+            width: Math.ceil(Math.min(Theme.dp(320), Math.max(tipCard.floorW, tipCard.natural + tipCard.pad * 2)))
+            height: Math.round(tipCol.implicitHeight + tipCard.pad * 2 - Theme.dp(4))
             x: root.tipCardX
             y: root.compactHeight + root.tipGap
             radius: Theme.shapeLg
@@ -2625,9 +2625,9 @@ BarPill {
                 anchors.left: parent.left
                 anchors.top: parent.top
                 anchors.leftMargin: tipCard.pad
-                anchors.topMargin: tipCard.pad - 2
+                anchors.topMargin: tipCard.pad - Theme.dp(2)
                 width: tipCard.width - tipCard.pad * 2
-                spacing: 2
+                spacing: Theme.dp(2)
 
                 LText {
                     id: tipOverlineText
@@ -2641,7 +2641,7 @@ BarPill {
                 LText {
                     id: tipTitleText
 
-                    width: tipCol.width - (root.tipViewKind === "volume" ? 36 : 0)
+                    width: tipCol.width - (root.tipViewKind === "volume" ? Theme.dp(36) : 0)
                     role: "titleMedium"
                     weight: 600
                     text: root.tipTitle
@@ -2657,7 +2657,7 @@ BarPill {
                     color: Theme.subtext
                     text: root.tipSupport
                     elide: Text.ElideRight
-                    bottomPadding: 2
+                    bottomPadding: Theme.dp(2)
                 }
 
                 Slider {
@@ -2666,7 +2666,7 @@ BarPill {
                     visible: root.tipViewKind === "volume"
                     enabled: false
                     width: tipCol.width
-                    height: 30
+                    height: Theme.dp(30)
                     from: 0
                     to: 100
                     value: root.volumePercent
@@ -2692,17 +2692,17 @@ BarPill {
                 visible: root.tipViewKind === "volume"
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.rightMargin: 10
-                anchors.topMargin: 10
-                width: 32
-                height: 32
-                radius: 16
+                anchors.rightMargin: Theme.dp(10)
+                anchors.topMargin: Theme.dp(10)
+                width: Theme.dp(32)
+                height: Theme.dp(32)
+                radius: Theme.dp(16)
                 color: root.volMuted ? Theme.errorContainer : (tipMute.hovered ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent")
 
                 Icon {
                     anchors.centerIn: parent
                     name: root.volumeIcon(root.volumePercent, root.volMuted)
-                    size: 18
+                    size: Theme.dp(18)
                     fill: 1
                     color: root.volMuted ? Theme.fgErrorContainer : Theme.subtext
                 }
@@ -2734,7 +2734,7 @@ BarPill {
         signal expandRequested()
 
         width: (root.contentWidth - root.sp2) / 2
-        height: 64
+        height: Theme.dp(64)
         radius: tile.checked ? Theme.shapeLgInc : height / 2
         color: tile.checked ? Theme.primary : Theme.withBlur(Theme.surfaceHighest)
 
@@ -2764,15 +2764,15 @@ BarPill {
             id: bubble
 
             anchors.left: parent.left
-            anchors.leftMargin: 10
+            anchors.leftMargin: Theme.dp(10)
             anchors.verticalCenter: parent.verticalCenter
-            width: 44
-            height: 44
-            radius: 22
+            width: Theme.dp(44)
+            height: Theme.dp(44)
+            radius: Theme.dp(22)
             color: tile.checked ? Theme.alpha(Theme.fgPrimary, 0.14) : Theme.alpha(Theme.text, 0.08)
 
             StateLayer {
-                radius: 22
+                radius: Theme.dp(22)
                 tint: tile.checked ? Theme.fgPrimary : Theme.text
                 onClicked: tile.toggled()
             }
@@ -2780,7 +2780,7 @@ BarPill {
             Icon {
                 anchors.centerIn: parent
                 name: tile.icon
-                size: 22
+                size: Theme.dp(22)
                 fill: tile.checked ? 1 : 0
                 color: tile.checked ? Theme.fgPrimary : Theme.text
             }
@@ -2789,9 +2789,9 @@ BarPill {
 
         Column {
             anchors.left: bubble.right
-            anchors.leftMargin: 10
+            anchors.leftMargin: Theme.dp(10)
             anchors.right: chevron.left
-            anchors.rightMargin: 2
+            anchors.rightMargin: Theme.dp(2)
             anchors.verticalCenter: parent.verticalCenter
             spacing: 0
 
@@ -2819,10 +2819,10 @@ BarPill {
             id: chevron
 
             anchors.right: parent.right
-            anchors.rightMargin: 10
+            anchors.rightMargin: Theme.dp(10)
             anchors.verticalCenter: parent.verticalCenter
             name: "chevron_right"
-            size: 20
+            size: Theme.dp(20)
             color: tile.checked ? Theme.fgPrimary : Theme.subtext
         }
 
@@ -2883,7 +2883,7 @@ BarPill {
             Icon {
                 anchors.centerIn: parent
                 name: st.icon
-                size: 22
+                size: Theme.dp(22)
                 fill: st.checked ? 1 : 0
                 color: st.checked ? Theme.fgPrimary : Theme.text
             }
@@ -2892,7 +2892,7 @@ BarPill {
 
         LText {
             anchors.top: sq.bottom
-            anchors.topMargin: 4
+            anchors.topMargin: Theme.dp(4)
             anchors.horizontalCenter: parent.horizontalCenter
             // the gutter is the label's too; past that it shrinks a little before it elides
             width: root.tileStepX
@@ -2901,7 +2901,7 @@ BarPill {
             color: st.checked ? Theme.text : Theme.subtext
             text: st.label
             fontSizeMode: Text.HorizontalFit
-            minimumPixelSize: Math.max(8, size - 2)
+            minimumPixelSize: Math.max(Theme.dp(8), size - Theme.dp(2))
             elide: Text.ElideRight
         }
 
@@ -2987,7 +2987,7 @@ BarPill {
             Icon {
                 anchors.centerIn: parent
                 name: et.icon
-                size: 22
+                size: Theme.dp(22)
                 fill: et.held ? 1 : 0
                 color: et.held ? Theme.fgPrimary : (et.adding ? Theme.subtext : Theme.text)
             }
@@ -2996,7 +2996,7 @@ BarPill {
 
         LText {
             anchors.top: esq.bottom
-            anchors.topMargin: 4
+            anchors.topMargin: Theme.dp(4)
             anchors.horizontalCenter: parent.horizontalCenter
             width: root.tileStepX
             horizontalAlignment: Text.AlignHCenter
@@ -3004,17 +3004,17 @@ BarPill {
             color: et.adding ? Theme.subtext : Theme.text
             text: et.label
             fontSizeMode: Text.HorizontalFit
-            minimumPixelSize: Math.max(8, size - 2)
+            minimumPixelSize: Math.max(Theme.dp(8), size - Theme.dp(2))
             elide: Text.ElideRight
         }
 
         // sits on the circle's rim inside the cell, since the scroll area clips
         // anything past the last column. the hit area is wider than the badge
         Item {
-            x: esq.width - 24
-            y: -4
-            width: 28
-            height: 28
+            x: esq.width - Theme.dp(24)
+            y: -Theme.dp(4)
+            width: Theme.dp(28)
+            height: Theme.dp(28)
             opacity: et.held ? 0 : 1
 
             Behavior on opacity {
@@ -3026,15 +3026,15 @@ BarPill {
 
             Rectangle {
                 anchors.centerIn: parent
-                width: 20
-                height: 20
-                radius: 10
+                width: Theme.dp(20)
+                height: Theme.dp(20)
+                radius: Theme.dp(10)
                 color: Theme.inverseSurface
 
                 Icon {
                     anchors.centerIn: parent
                     name: et.adding ? "add" : "remove"
-                    size: 14
+                    size: Theme.dp(14)
                     color: Theme.fgInverseSurface
                 }
 
@@ -3042,7 +3042,7 @@ BarPill {
 
             StateLayer {
                 visible: !et.adding
-                radius: 14
+                radius: Theme.dp(14)
                 onClicked: et.badgeClicked()
             }
 
@@ -3070,17 +3070,17 @@ BarPill {
             id: gcol
 
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 6
+            spacing: Theme.dp(6)
 
             Item {
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: 54
-                height: 54
+                width: Theme.dp(54)
+                height: Theme.dp(54)
 
                 CircularProgress {
                     anchors.fill: parent
                     value: g.value
-                    thickness: 5
+                    thickness: Theme.dp(5)
                     color: g.tone
                     trackColor: Theme.withBlur(Theme.surfaceHighest)
                 }
@@ -3093,7 +3093,7 @@ BarPill {
                         visible: g.centerIcon !== ""
                         anchors.verticalCenter: parent.verticalCenter
                         name: g.centerIcon
-                        size: 13
+                        size: Theme.dp(13)
                         fill: 1
                         color: g.tone
                     }
@@ -3110,7 +3110,7 @@ BarPill {
 
                 StateLayer {
                     visible: g.clickable
-                    radius: 27
+                    radius: Theme.dp(27)
                     onClicked: g.clicked()
                 }
 
@@ -3124,7 +3124,7 @@ BarPill {
                     anchors.horizontalCenter: parent.horizontalCenter
                     role: "labelMedium"
                     text: g.label
-                    width: Math.min(implicitWidth, g.width - 4)
+                    width: Math.min(implicitWidth, g.width - Theme.dp(4))
                     elide: Text.ElideRight
                 }
 
@@ -3135,7 +3135,7 @@ BarPill {
                     size: Theme.fs(11)
                     color: Theme.subtext
                     text: g.detail
-                    width: Math.min(implicitWidth, g.width - 4)
+                    width: Math.min(implicitWidth, g.width - Theme.dp(4))
                     elide: Text.ElideRight
                 }
 

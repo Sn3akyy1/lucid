@@ -34,12 +34,12 @@ Item {
         return s.split;
     })) : -1
 
-    implicitHeight: 404
+    implicitHeight: Theme.dp(404)
 
     Rectangle {
         id: face
 
-        width: 360
+        width: Theme.dp(360)
         height: parent.height
         radius: Theme.shapeXl
         color: Theme.withBlur(Theme.surfaceHigh)
@@ -48,14 +48,14 @@ Item {
             id: dial
 
             anchors.horizontalCenter: parent.horizontalCenter
-            y: 28
-            width: 250
-            height: 250
+            y: Theme.dp(28)
+            width: Theme.dp(250)
+            height: Theme.dp(250)
 
             MaterialShape {
                 anchors.centerIn: parent
-                width: 206
-                height: 206
+                width: Theme.dp(206)
+                height: Theme.dp(206)
                 shape: "sunny"
                 color: Chrono.swRunning ? Theme.alpha(Theme.primary, 0.1) : Theme.withBlur(Theme.surfaceHighest)
 
@@ -71,7 +71,7 @@ Item {
 
             CircularProgress {
                 anchors.fill: parent
-                thickness: 8
+                thickness: Theme.dp(8)
                 value: Chrono.swActive ? (page.elapsed % 60000) / 60000 : 0
                 trackColor: Theme.withBlur(Theme.surfaceHighest)
                 animated: false
@@ -79,7 +79,7 @@ Item {
 
             Column {
                 anchors.centerIn: parent
-                spacing: -4
+                spacing: -Theme.dp(4)
 
                 LText {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -105,9 +105,9 @@ Item {
 
         Row {
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 22
+            anchors.bottomMargin: Theme.dp(22)
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 12
+            spacing: Theme.dp(12)
 
             Button {
                 anchors.verticalCenter: parent.verticalCenter
@@ -119,9 +119,9 @@ Item {
             }
 
             Rectangle {
-                width: 76
-                height: 58
-                radius: swArea.pressed ? 16 : 29
+                width: Theme.dp(76)
+                height: Theme.dp(58)
+                radius: swArea.pressed ? Theme.dp(16) : Theme.dp(29)
                 color: Chrono.swRunning ? Theme.secondaryContainer : Theme.primary
 
                 Behavior on radius {
@@ -143,7 +143,7 @@ Item {
                 Icon {
                     anchors.centerIn: parent
                     name: Chrono.swRunning ? "pause" : "play_arrow"
-                    size: 30
+                    size: Theme.dp(30)
                     fill: 1
                     color: Chrono.swRunning ? Theme.fgSecondaryContainer : Theme.fgPrimary
                 }
@@ -173,7 +173,7 @@ Item {
 
     Rectangle {
         anchors.left: face.right
-        anchors.leftMargin: 12
+        anchors.leftMargin: Theme.dp(12)
         anchors.right: parent.right
         height: parent.height
         radius: Theme.shapeXl
@@ -182,8 +182,8 @@ Item {
         LText {
             id: lapHead
 
-            x: 20
-            y: 16
+            x: Theme.dp(20)
+            y: Theme.dp(16)
             role: "titleSmall"
             text: page.splits.length ? page.splits.length + (page.splits.length === 1 ? " lap" : " laps") : "Laps"
         }
@@ -191,12 +191,12 @@ Item {
         Column {
             visible: page.splits.length === 0
             anchors.centerIn: parent
-            spacing: 8
+            spacing: Theme.dp(8)
 
             Icon {
                 anchors.horizontalCenter: parent.horizontalCenter
                 name: "flag"
-                size: 32
+                size: Theme.dp(32)
                 color: Theme.subtextDim
             }
 
@@ -211,15 +211,15 @@ Item {
 
         ListView {
             anchors.top: lapHead.bottom
-            anchors.topMargin: 10
+            anchors.topMargin: Theme.dp(10)
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.leftMargin: 10
-            anchors.rightMargin: 10
-            anchors.bottomMargin: 10
+            anchors.leftMargin: Theme.dp(10)
+            anchors.rightMargin: Theme.dp(10)
+            anchors.bottomMargin: Theme.dp(10)
             clip: true
-            spacing: 2
+            spacing: Theme.dp(2)
             model: page.splits
             boundsBehavior: Flickable.StopAtBounds
 
@@ -232,12 +232,12 @@ Item {
                 readonly property bool isWorst: lap.modelData.split === page.worst
 
                 width: ListView.view.width
-                height: 44
-                radius: 12
+                height: Theme.dp(44)
+                radius: Theme.dp(12)
                 color: Theme.withBlur(Theme.surfaceHighest)
 
                 LText {
-                    x: 16
+                    x: Theme.dp(16)
                     anchors.verticalCenter: parent.verticalCenter
                     role: "labelLarge"
                     color: Theme.subtext
@@ -246,13 +246,13 @@ Item {
 
                 Row {
                     anchors.centerIn: parent
-                    spacing: 6
+                    spacing: Theme.dp(6)
 
                     Icon {
                         visible: lap.isBest || lap.isWorst
                         anchors.verticalCenter: parent.verticalCenter
                         name: lap.isBest ? "arrow_downward" : "arrow_upward"
-                        size: 15
+                        size: Theme.dp(15)
                         color: lap.isBest ? Theme.success : Theme.error
                     }
 
@@ -269,7 +269,7 @@ Item {
 
                 LText {
                     anchors.right: parent.right
-                    anchors.rightMargin: 16
+                    anchors.rightMargin: Theme.dp(16)
                     anchors.verticalCenter: parent.verticalCenter
                     role: "bodySmall"
                     tabular: true

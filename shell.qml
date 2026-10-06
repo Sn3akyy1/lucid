@@ -65,7 +65,7 @@ ShellRoot {
         property bool laidOut: false
         readonly property bool anyModuleShown: bar.leftGroupWidth + bar.centreGroupWidth + bar.rightGroupWidth > 0.5
         function placeGroup(widths, originX) {
-            const gap = Prefs.barSpacing;
+            const gap = Theme.dp(Prefs.barSpacing);
             const out = [];
             let x = originX;
             let any = false;
@@ -77,7 +77,7 @@ ShellRoot {
                     any = true;
                 }
             }
-            out.push(any ? Math.max(originX, x - Prefs.barSpacing) : originX);
+            out.push(any ? Math.max(originX, x - Theme.dp(Prefs.barSpacing)) : originX);
             return out;
         }
 
@@ -195,7 +195,7 @@ ShellRoot {
         readonly property real leftGroupWidth: bar.placeGroup(bar.leftWidths, 0)[bar.leftWidths.length]
         readonly property real centreGroupWidth: bar.placeGroup(bar.centreWidths, 0)[bar.centreWidths.length]
         readonly property real rightGroupWidth: bar.placeGroup(bar.rightWidths, 0)[bar.rightWidths.length]
-        readonly property int zoneGap: Prefs.barZoneGap
+        readonly property int zoneGap: Theme.dp(Prefs.barZoneGap)
 
         // pills ease to their new slots only while the arrangement is changing.
         // a Behavior left on all the time would sit on top of the width
@@ -230,7 +230,7 @@ ShellRoot {
             }
 
         }
-        readonly property real sideMargin: Prefs.barSideMargin
+        readonly property real sideMargin: Theme.dp(Prefs.barSideMargin)
 
         Component.onCompleted: laidOutTimer.start()
 
@@ -242,8 +242,8 @@ ShellRoot {
         }
 
         color: "transparent"
-        implicitHeight: bar.screen ? bar.screen.height - Prefs.effectiveBarTopMargin : 800
-        exclusiveZone: (Prefs.barEnabled && bar.anyModuleShown) ? Prefs.barHeight : 0
+        implicitHeight: bar.screen ? bar.screen.height - Prefs.effectiveBarTopMargin : Theme.dp(800)
+        exclusiveZone: (Prefs.barEnabled && bar.anyModuleShown) ? Theme.dp(Prefs.barHeight) + Prefs.shellGap : 0
 
         anchors {
             top: true
@@ -464,7 +464,7 @@ ShellRoot {
                             toNeighbour = Math.min(toNeighbour, d);
 
                     }
-                    return Math.max(0, Math.min(Prefs.barNotchFlare, Math.floor(toNeighbour / 2), Math.floor(toEdge)));
+                    return Math.max(0, Math.min(Theme.dp(Prefs.barNotchFlare), Math.floor(toNeighbour / 2), Math.floor(toEdge)));
                 }
 
                 anchors.fill: parent

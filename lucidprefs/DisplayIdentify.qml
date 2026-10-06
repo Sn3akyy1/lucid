@@ -68,8 +68,8 @@ Scope {
                     // starts hidden, so the first frame fades in
                     property bool up: false
 
-                    width: Math.max(220, info.implicitWidth + 64)
-                    height: info.implicitHeight + 52
+                    width: Math.max(Theme.dp(220), info.implicitWidth + Theme.dp(64))
+                    height: info.implicitHeight + Theme.dp(52)
                     radius: Theme.shapeXl
                     color: Theme.bgOpaque
                     border.width: 2
@@ -82,14 +82,14 @@ Scope {
                         id: info
 
                         anchors.centerIn: parent
-                        spacing: 2
+                        spacing: Theme.dp(2)
 
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: win.mon ? Monitors.numberFor(win.key) : "?"
                             color: Theme.accent
                             font.family: Theme.fontFamily
-                            font.pixelSize: 96
+                            font.pixelSize: Theme.dp(96)
                             font.weight: Font.DemiBold
                         }
 

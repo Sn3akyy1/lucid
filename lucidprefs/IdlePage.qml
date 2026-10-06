@@ -19,7 +19,7 @@ Column {
         return "";
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
     onVisibleChanged: Idle.watching = page.visible
     Component.onCompleted: Idle.watching = page.visible
 
@@ -391,7 +391,7 @@ Column {
 
             Rectangle {
                 width: parent.width
-                implicitHeight: confText.implicitHeight + 28
+                implicitHeight: confText.implicitHeight + Theme.dp(28)
                 radius: Theme.radiusSm
                 color: Theme.bgSunken
 
@@ -401,7 +401,7 @@ Column {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    anchors.margins: 14
+                    anchors.margins: Theme.dp(14)
                     text: Idle.conf
                     color: Theme.subtext
                     font.family: "monospace"

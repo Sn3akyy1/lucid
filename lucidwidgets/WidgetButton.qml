@@ -5,8 +5,8 @@ Item {
     id: btn
 
     property string icon: "close"
-    property real diameter: 28
-    property real iconSize: 16
+    property real diameter: Theme.dp(28)
+    property real iconSize: Theme.dp(16)
     property color iconColor: Theme.subtext
     property color activeColor: Theme.accent
     property bool active: false

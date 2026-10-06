@@ -78,7 +78,7 @@ Column {
         return names.length > 1 ? names.slice(0, -1).join(", ") + " or " + names[names.length - 1] : names.join("");
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
 
     SettingCard {
         visible: Specials.moduleProbed && !Specials.moduleInstalled
@@ -118,7 +118,7 @@ Column {
                 description: page.keyLine(modelData)
 
                 Row {
-                    spacing: 4
+                    spacing: Theme.dp(4)
 
                     M3Button {
                         anchors.verticalCenter: parent.verticalCenter
@@ -188,12 +188,12 @@ Column {
 
             Column {
                 width: parent.width
-                spacing: 16
+                spacing: Theme.dp(16)
 
                 M3TextField {
                     id: nameField
 
-                    width: Math.min(parent.width, 360)
+                    width: Math.min(parent.width, Theme.dp(360))
                     placeholder: "Notes"
                     text: page.formName
                     commitOnBlur: false
@@ -210,7 +210,7 @@ Column {
 
                 Flow {
                     width: parent.width
-                    spacing: 6
+                    spacing: Theme.dp(6)
 
                     Repeater {
                         model: page.glyphChoices
@@ -221,15 +221,15 @@ Column {
                             required property string modelData
                             readonly property bool picked: page.formGlyph === modelData
 
-                            width: 40
-                            height: 40
+                            width: Theme.dp(40)
+                            height: Theme.dp(40)
                             radius: Theme.radiusSm
                             color: glyphTile.picked ? Theme.accent : (glyphArea.containsMouse ? Theme.bgHover : Theme.bgTile)
 
                             Icon {
                                 anchors.centerIn: parent
                                 name: Specials.glyphName(glyphTile.modelData)
-                                size: 22
+                                size: Theme.dp(22)
                                 fill: 1
                                 color: glyphTile.picked ? Theme.fgAccent : Theme.subtext
                             }
@@ -250,7 +250,7 @@ Column {
                 }
 
                 Row {
-                    spacing: 8
+                    spacing: Theme.dp(8)
 
                     M3Button {
                         text: page.formNew ? "Create" : "Save"
@@ -315,7 +315,7 @@ Column {
 
                 Column {
                     width: parent.width
-                    spacing: 14
+                    spacing: Theme.dp(14)
 
                     Repeater {
                         model: appsRow.apps

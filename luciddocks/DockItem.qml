@@ -30,7 +30,7 @@ Item {
     signal requestContextMenu()
     signal launched()
 
-    readonly property int slot: Prefs.dockIconSize
+    readonly property int slot: Theme.dp(Prefs.dockIconSize)
     readonly property real slotScale: dockItem.slot / 46
 
     function sc(v) {
@@ -82,12 +82,12 @@ Item {
     readonly property string monogram: dockItem.displayName !== "" ? dockItem.displayName.charAt(0).toUpperCase() : "?"
 
     readonly property real hoverSwell: (dockItem.active ? 0.12 : 0.08) * Prefs.dockHoverEffect
-    readonly property real hoverLift: (dockItem.active ? 9 : 6) * Prefs.dockHoverEffect
+    readonly property real hoverLift: (dockItem.active ? Theme.dp(9) : Theme.dp(6)) * Prefs.dockHoverEffect
 
     width: dockItem.slot
     height: dockItem.slot
     scale: dockItem.pressed ? 0.94 : (dockItem.hovered ? 1 + dockItem.hoverSwell : 1 + dockItem.magnifyBoost)
-    y: dockItem.pressed ? -2 : (dockItem.hovered ? -dockItem.hoverLift : 0)
+    y: dockItem.pressed ? -Theme.dp(2) : (dockItem.hovered ? -dockItem.hoverLift : 0)
 
     onHoveredChanged: {
         if (dockItem.hovered) {
@@ -238,7 +238,7 @@ Item {
         readonly property real segW: dockItem.focused ? (indicator.segments === 1 ? dockItem.sc(16) : dockItem.sc(9)) : dockItem.sc(5)
 
         anchors.horizontalCenter: parent.horizontalCenter
-        y: dockItem.height + dockItem.sc(3) + (dockItem.hovered ? 3 : 0)
+        y: dockItem.height + dockItem.sc(3) + (dockItem.hovered ? Theme.dp(3) : 0)
         spacing: dockItem.sc(3)
         opacity: (dockItem.active && Prefs.dockShowIndicators) ? 1 : 0
         visible: indicator.opacity > 0
@@ -308,7 +308,7 @@ Item {
         label: dockItem.displayName
         detail: dockItem.windowCount > 1 ? dockItem.windowCount + " windows" : (dockItem.windowCount === 1 ? "1 window" : "")
         open: Prefs.dockShowTooltips && dockItem.tooltipReady && dockItem.displayName !== ""
-        lift: dockItem.hovered ? 4 : 0
+        lift: dockItem.hovered ? Theme.dp(4) : 0
     }
 
     Item {

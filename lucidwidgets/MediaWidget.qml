@@ -199,7 +199,7 @@ WidgetBody {
     component Cover: ClippingRectangle {
         id: cov
 
-        property real corner: 20
+        property real corner: Theme.dp(20)
 
         radius: cov.corner
         color: Theme.alpha(w.ink, 0.08)
@@ -211,8 +211,8 @@ WidgetBody {
             source: w.artUrl
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
-            sourceSize.width: 512
-            sourceSize.height: 512
+            sourceSize.width: Theme.dp(512)
+            sourceSize.height: Theme.dp(512)
             visible: covImg.status === Image.Ready
         }
 
@@ -230,10 +230,10 @@ WidgetBody {
     component Transport: Row {
         id: tr
 
-        property real big: 56
+        property real big: Theme.dp(56)
         property bool showPrev: true
 
-        spacing: 8
+        spacing: Theme.dp(8)
 
         IconButton {
             visible: tr.showPrev
@@ -308,23 +308,23 @@ WidgetBody {
     Item {
         visible: w.variant === "card"
         anchors.fill: parent
-        anchors.margins: 14
+        anchors.margins: Theme.dp(14)
 
         Cover {
             id: cardArt
 
             width: parent.width
             height: width
-            corner: 22
+            corner: Theme.dp(22)
         }
 
         Rectangle {
             visible: w.source !== ""
-            x: 10
-            y: 10
-            width: srcLabel.implicitWidth + 18
-            height: 24
-            radius: 12
+            x: Theme.dp(10)
+            y: Theme.dp(10)
+            width: srcLabel.implicitWidth + Theme.dp(18)
+            height: Theme.dp(24)
+            radius: Theme.dp(12)
             color: Theme.alpha(w.fill, 0.85)
 
             LText {
@@ -340,7 +340,7 @@ WidgetBody {
 
         Column {
             anchors.top: cardArt.bottom
-            anchors.topMargin: 12
+            anchors.topMargin: Theme.dp(12)
             width: parent.width
             spacing: 0
 
@@ -369,7 +369,7 @@ WidgetBody {
             visible: w.showProgress
             opacity: w.has ? 1 : 0.35
             anchors.bottom: cardControls.top
-            anchors.bottomMargin: 4
+            anchors.bottomMargin: Theme.dp(4)
             width: parent.width
             position: w.livePos
             length: w.length
@@ -389,7 +389,7 @@ WidgetBody {
 
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
-            big: 52
+            big: Theme.dp(52)
         }
 
     }
@@ -398,22 +398,22 @@ WidgetBody {
     Item {
         visible: w.variant === "row"
         anchors.fill: parent
-        anchors.margins: 12
+        anchors.margins: Theme.dp(12)
 
         Cover {
             id: rowArt
 
             width: parent.height
             height: parent.height
-            corner: 18
+            corner: Theme.dp(18)
         }
 
         Column {
             anchors.left: rowArt.right
-            anchors.leftMargin: 14
+            anchors.leftMargin: Theme.dp(14)
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.topMargin: 2
+            anchors.topMargin: Theme.dp(2)
             spacing: 0
 
             Marquee {
@@ -437,12 +437,12 @@ WidgetBody {
         LinearProgress {
             visible: w.showProgress && w.has
             anchors.left: rowArt.right
-            anchors.leftMargin: 14
+            anchors.leftMargin: Theme.dp(14)
             anchors.right: rowControls.left
-            anchors.rightMargin: 10
+            anchors.rightMargin: Theme.dp(10)
             anchors.verticalCenter: rowControls.verticalCenter
             value: w.progress
-            thickness: 4
+            thickness: Theme.dp(4)
             animated: false
             color: w.inkAccent
             trackColor: Theme.alpha(w.ink, 0.14)
@@ -452,10 +452,10 @@ WidgetBody {
             id: rowControls
 
             anchors.right: parent.right
-            anchors.rightMargin: -6
+            anchors.rightMargin: -Theme.dp(6)
             anchors.bottom: parent.bottom
             spacing: 0
-            big: 38
+            big: Theme.dp(38)
         }
 
     }
@@ -495,11 +495,11 @@ WidgetBody {
 
         Column {
             anchors.left: parent.left
-            anchors.leftMargin: 16
+            anchors.leftMargin: Theme.dp(16)
             anchors.right: artPlay.left
-            anchors.rightMargin: 10
+            anchors.rightMargin: Theme.dp(10)
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 18
+            anchors.bottomMargin: Theme.dp(18)
             spacing: 0
 
             Marquee {
@@ -524,12 +524,12 @@ WidgetBody {
             id: artPlay
 
             anchors.right: parent.right
-            anchors.rightMargin: 14
+            anchors.rightMargin: Theme.dp(14)
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 14
-            width: 48
-            height: 48
-            radius: artTap.pressed ? 14 : 24
+            anchors.bottomMargin: Theme.dp(14)
+            width: Theme.dp(48)
+            height: Theme.dp(48)
+            radius: artTap.pressed ? Theme.dp(14) : Theme.dp(24)
             color: w.inkAccent
             scale: artTap.pressed ? 0.96 : (artTap.containsMouse ? 1.05 : 1)
 
@@ -545,7 +545,7 @@ WidgetBody {
             Icon {
                 anchors.centerIn: parent
                 name: w.playing ? "pause" : "play_arrow"
-                size: 26
+                size: Theme.dp(26)
                 fill: 1
                 color: w.fgInkAccent
             }
@@ -566,7 +566,7 @@ WidgetBody {
             anchors.bottom: parent.bottom
             anchors.leftMargin: w.corner
             width: (parent.width - w.corner * 2) * w.progress
-            height: 3
+            height: Theme.dp(3)
             radius: 1.5
             color: w.inkAccent
         }
@@ -582,9 +582,9 @@ WidgetBody {
 
         CircularProgress {
             anchors.centerIn: parent
-            width: Math.min(parent.width, parent.height) - 16
+            width: Math.min(parent.width, parent.height) - Theme.dp(16)
             height: width
-            thickness: 6
+            thickness: Theme.dp(6)
             value: w.progress
             animated: false
             color: w.inkAccent
@@ -595,7 +595,7 @@ WidgetBody {
             id: record
 
             anchors.centerIn: parent
-            width: Math.min(parent.width, parent.height) - 40
+            width: Math.min(parent.width, parent.height) - Theme.dp(40)
             height: width
             shape: "cookie12"
             source: w.artUrl
@@ -620,9 +620,9 @@ WidgetBody {
 
         Rectangle {
             anchors.centerIn: parent
-            width: 56
-            height: 56
-            radius: discTap.pressed ? 16 : 28
+            width: Theme.dp(56)
+            height: Theme.dp(56)
+            radius: discTap.pressed ? Theme.dp(16) : Theme.dp(28)
             color: w.inkAccent
             opacity: w.hovered || !w.playing ? 1 : 0
             scale: w.hovered || !w.playing ? 1 : 0.7
@@ -646,7 +646,7 @@ WidgetBody {
             Icon {
                 anchors.centerIn: parent
                 name: w.playing ? "pause" : "play_arrow"
-                size: 30
+                size: Theme.dp(30)
                 fill: 1
                 color: w.fgInkAccent
             }

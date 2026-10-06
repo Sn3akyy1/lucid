@@ -8,19 +8,19 @@ Item {
     id: lp
 
     property real value: 0
-    property real thickness: 4
+    property real thickness: Theme.dp(4)
     property bool wavy: false
     property bool animated: true
     // off for a value that already arrives frame by frame
     property bool valueAnimated: true
-    property real amplitude: 3
-    property real wavelength: 28
+    property real amplitude: Theme.dp(3)
+    property real wavelength: Theme.dp(28)
     property color color: Theme.primary
     property color trackColor: Theme.secondaryContainer
     property real _v: Math.max(0, Math.min(1, lp.value))
     property real _amp: lp.wavy && lp.animated ? lp.amplitude : 0
     property real phase: 0
-    readonly property real gap: lp.thickness + 2
+    readonly property real gap: lp.thickness + Theme.dp(2)
     readonly property real split: lp._v * lp.width
     readonly property real _step: 3
 
@@ -68,8 +68,8 @@ Item {
         return pts;
     }
 
-    implicitWidth: 200
-    implicitHeight: lp.wavy ? lp.thickness + lp.amplitude * 2 + 2 : lp.thickness
+    implicitWidth: Theme.dp(200)
+    implicitHeight: lp.wavy ? lp.thickness + lp.amplitude * 2 + Theme.dp(2) : lp.thickness
 
     Behavior on _v {
         enabled: lp.valueAnimated

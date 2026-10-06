@@ -7,20 +7,20 @@ Item {
     id: strip
 
     property var model: null
-    property int heroW: 340
-    property int heroH: 211
-    property int midW: 238
-    property int midH: 148
-    property int smallW: 150
-    property int smallH: 93
-    property int itemGap: 10
+    property int heroW: Theme.dp(340)
+    property int heroH: Theme.dp(211)
+    property int midW: Theme.dp(238)
+    property int midH: Theme.dp(148)
+    property int smallW: Theme.dp(150)
+    property int smallH: Theme.dp(93)
+    property int itemGap: Theme.dp(10)
     property int hoveredIndex: -1
-    readonly property int hoverGrow: 6
+    readonly property int hoverGrow: Theme.dp(6)
     property alias currentIndex: view.currentIndex
     // the wallpaper actually in use
     property string appliedPath: ""
     property real stableHeight: height
-    readonly property real rowHeight: strip.heroH + 62
+    readonly property real rowHeight: strip.heroH + Theme.dp(62)
     // the hero card at the screen's own density: every tier is drawn from it
     readonly property size decodeSize: Qt.size(Math.ceil(strip.heroW * Math.max(1, Screen.devicePixelRatio)), Math.ceil(strip.heroH * Math.max(1, Screen.devicePixelRatio)))
 
@@ -99,7 +99,7 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.topMargin: Math.max(0, (strip.stableHeight - strip.rowHeight) / 2)
-        height: strip.heroH + 24
+        height: strip.heroH + Theme.dp(24)
         orientation: ListView.Horizontal
         spacing: strip.itemGap
         clip: true
@@ -186,7 +186,7 @@ Item {
                 id: card
 
                 anchors.centerIn: parent
-                anchors.verticalCenterOffset: slot.hovered ? -4 : 0
+                anchors.verticalCenterOffset: slot.hovered ? -Theme.dp(4) : 0
                 scale: slot.pressed ? 1 - 4 / card.width : (slot.hovered ? 1 + strip.hoverGrow / card.width : 1)
                 width: parent.width
                 height: slot.targetH
@@ -258,9 +258,9 @@ Item {
             Rectangle {
                 anchors.right: card.right
                 anchors.top: card.top
-                anchors.margins: 10
-                width: 26
-                height: 26
+                anchors.margins: Theme.dp(10)
+                width: Theme.dp(26)
+                height: Theme.dp(26)
                 radius: width / 2
                 color: Theme.accent
                 scale: slot.isApplied ? 1 : 0.4
@@ -278,8 +278,8 @@ Item {
 
                 DockGlyph {
                     anchors.centerIn: parent
-                    width: 15
-                    height: 15
+                    width: Theme.dp(15)
+                    height: Theme.dp(15)
                     pathData: DockIcons.check
                     glyphColor: Theme.fgAccent
                 }
@@ -322,10 +322,10 @@ Item {
         id: caption
 
         anchors.top: view.bottom
-        anchors.topMargin: 12
+        anchors.topMargin: Theme.dp(12)
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 26
+        height: Theme.dp(26)
         visible: view.visible
 
         Row {
@@ -335,7 +335,7 @@ Item {
             readonly property var entry: strip.model && capRow.at >= 0 && capRow.at < strip.model.count ? strip.model.get(capRow.at) : null
 
             anchors.centerIn: parent
-            spacing: 10
+            spacing: Theme.dp(10)
 
             LText {
                 id: capName
@@ -345,7 +345,7 @@ Item {
                 text: capRow.entry ? capRow.entry.name : ""
                 color: Theme.text
                 elide: Text.ElideRight
-                width: Math.min(capMetrics.width + 2, Math.max(0, strip.width - 220))
+                width: Math.min(capMetrics.width + Theme.dp(2), Math.max(0, strip.width - Theme.dp(220)))
 
                 TextMetrics {
                     id: capMetrics
@@ -358,8 +358,8 @@ Item {
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
-                width: appliedLabel.implicitWidth + 16
-                height: 22
+                width: appliedLabel.implicitWidth + Theme.dp(16)
+                height: Theme.dp(22)
                 radius: Theme.shapeFull
                 color: Theme.accent
                 visible: capRow.entry !== null && strip.appliedPath !== "" && strip.appliedPath === capRow.entry.path
@@ -393,20 +393,20 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: Math.max(0, (strip.stableHeight - emptyState.implicitHeight) / 2)
         anchors.horizontalCenter: parent.horizontalCenter
-        spacing: 12
+        spacing: Theme.dp(12)
         visible: !strip.model || strip.model.count === 0
 
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 58
-            height: 58
+            width: Theme.dp(58)
+            height: Theme.dp(58)
             radius: Theme.shapeXl
             color: Theme.withBlur(Theme.surfaceHigh)
 
             Icon {
                 anchors.centerIn: parent
                 name: "wallpaper"
-                size: 28
+                size: Theme.dp(28)
                 color: Theme.primary
             }
 

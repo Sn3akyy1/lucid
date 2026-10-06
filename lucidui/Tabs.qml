@@ -24,7 +24,7 @@ Item {
     }
     readonly property Item currentItem: tabs.currentIndex >= 0 && rep.count > tabs.currentIndex ? rep.itemAt(tabs.currentIndex) : null
 
-    implicitHeight: tabs.options.length && tabs.options[0].icon && !tabs.secondary && !tabs.inline ? 56 : 46
+    implicitHeight: tabs.options.length && tabs.options[0].icon && !tabs.secondary && !tabs.inline ? Theme.dp(56) : Theme.dp(46)
 
     Row {
         id: row
@@ -58,14 +58,14 @@ Item {
                     anchors.centerIn: parent
                     anchors.verticalCenterOffset: -1
                     columns: tabs.inline ? 2 : 1
-                    spacing: tabs.inline ? 8 : 2
+                    spacing: tabs.inline ? Theme.dp(8) : Theme.dp(2)
                     horizontalItemAlignment: Grid.AlignHCenter
                     verticalItemAlignment: Grid.AlignVCenter
 
                     Icon {
                         visible: !!tab.modelData.icon && !tabs.secondary
                         name: tab.modelData.icon || ""
-                        size: 22
+                        size: Theme.dp(22)
                         fill: tab.on ? 1 : 0
                         color: tab.on ? Theme.primary : Theme.subtext
                     }
@@ -99,11 +99,11 @@ Item {
 
         visible: tabs.currentItem !== null
         anchors.bottom: parent.bottom
-        height: tabs.secondary ? 2 : 3
+        height: tabs.secondary ? Theme.dp(2) : Theme.dp(3)
         width: indicator.w
         x: tabs.currentItem ? tabs.currentItem.x + (tabs.currentItem.width - indicator.w) / 2 : 0
-        topLeftRadius: tabs.secondary ? 0 : 3
-        topRightRadius: tabs.secondary ? 0 : 3
+        topLeftRadius: tabs.secondary ? 0 : Theme.dp(3)
+        topRightRadius: tabs.secondary ? 0 : Theme.dp(3)
         color: Theme.primary
 
         Behavior on x {

@@ -7,13 +7,13 @@ Row {
     id: combo
 
     property string keys: ""
-    property int capHeight: 26
+    property int capHeight: Theme.dp(26)
     property int fontSize: Theme.fontLabelLg
     property color capColor: Theme.bgHigh
     property color textColor: Theme.text
     property bool dim: false
 
-    spacing: 4
+    spacing: Theme.dp(4)
     opacity: combo.dim ? 0.45 : 1
 
     Repeater {
@@ -26,8 +26,8 @@ Row {
 
             anchors.verticalCenter: parent.verticalCenter
             height: combo.capHeight
-            width: Math.max(combo.capHeight, cap.implicitWidth + 16)
-            radius: 7
+            width: Math.max(combo.capHeight, cap.implicitWidth + Theme.dp(16))
+            radius: Theme.dp(7)
             color: combo.capColor
             border.width: 1
             border.color: Theme.alpha(Theme.outline, 0.6)
@@ -37,9 +37,9 @@ Row {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                anchors.leftMargin: 3
-                anchors.rightMargin: 3
-                anchors.bottomMargin: 2
+                anchors.leftMargin: Theme.dp(3)
+                anchors.rightMargin: Theme.dp(3)
+                anchors.bottomMargin: Theme.dp(2)
                 height: 1
                 color: Theme.alpha(Theme.shadow, 0.35)
             }

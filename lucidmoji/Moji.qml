@@ -8,13 +8,13 @@ import qs
 PanelWindow {
     id: mojiWindow
 
-    readonly property real panelW: 520
-    readonly property real panelH: 600
+    readonly property real panelW: Theme.dp(520)
+    readonly property real panelH: Theme.dp(600)
     property bool open: false
     // stays true through the exit animation
     property bool rendered: false
     // how far below its spot the panel sits while hidden
-    property real rise: 16
+    property real rise: Theme.dp(16)
     property bool dataRequested: false
     property var emojiGroups: []
     property var emojiData: []

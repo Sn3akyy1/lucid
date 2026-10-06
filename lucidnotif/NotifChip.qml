@@ -10,8 +10,8 @@ Rectangle {
 
     signal clicked()
 
-    implicitWidth: row.implicitWidth + (chip.iconPath !== "" ? 20 : 24)
-    implicitHeight: 26
+    implicitWidth: row.implicitWidth + (chip.iconPath !== "" ? Theme.dp(20) : Theme.dp(24))
+    implicitHeight: Theme.dp(26)
     radius: area.pressed ? Theme.shapeSm : height / 2
     color: Theme.layer(Theme.secondaryContainer, Theme.fgSecondaryContainer, area.pressed ? Theme.statePressed : (area.containsMouse ? Theme.stateHover : 0))
 
@@ -19,12 +19,12 @@ Rectangle {
         id: row
 
         anchors.centerIn: parent
-        spacing: 4
+        spacing: Theme.dp(4)
 
         NotifIcon {
             anchors.verticalCenter: parent.verticalCenter
             visible: chip.iconPath !== ""
-            size: 14
+            size: Theme.dp(14)
             path: chip.iconPath
             color: Theme.fgSecondaryContainer
         }

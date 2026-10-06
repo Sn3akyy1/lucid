@@ -13,10 +13,10 @@ Item {
     property var grabWindow: null
     property real originX: 0
     property real originY: 0
-    readonly property real cardW2: row.implicitWidth + 24
-    readonly property real cardH2: popup.cardH + 66
-    readonly property real cardX: Math.max(8, Math.min(popup.width - popup.cardW2 - 8, popup.originX + popup.anchorLocalX - popup.cardW2 / 2))
-    readonly property real cardY: Math.max(8, popup.originY + popup.anchorLocalY - popup.cardH2 - 12)
+    readonly property real cardW2: row.implicitWidth + Theme.dp(24)
+    readonly property real cardH2: popup.cardH + Theme.dp(66)
+    readonly property real cardX: Math.max(Theme.dp(8), Math.min(popup.width - popup.cardW2 - Theme.dp(8), popup.originX + popup.anchorLocalX - popup.cardW2 / 2))
+    readonly property real cardY: Math.max(Theme.dp(8), popup.originY + popup.anchorLocalY - popup.cardH2 - Theme.dp(12))
     readonly property bool showing: popup.popupVisible || fadeAnim.running
     property bool popupVisible: false
     property string appId: ""
@@ -27,8 +27,8 @@ Item {
     property var hostWindow: null
     property real anchorLocalX: 0
     property real anchorLocalY: 0
-    readonly property int cardW: 172
-    readonly property int cardH: 106
+    readonly property int cardW: Theme.dp(172)
+    readonly property int cardH: Theme.dp(106)
     readonly property bool showOpenHere: {
         for (var i = 0; i < popup.groups.length; i++) {
             if (popup.groups[i].workspaceId === popup.activeWorkspaceId)
@@ -86,7 +86,7 @@ Item {
             id: row
 
             anchors.centerIn: parent
-            spacing: 14
+            spacing: Theme.dp(14)
 
             Repeater {
                 model: popup.groups
@@ -113,7 +113,7 @@ Item {
                     }
 
                     width: popup.cardW
-                    height: popup.cardH + 40
+                    height: popup.cardH + Theme.dp(40)
 
                     HoverHandler {
                         id: hoverHandler
@@ -150,8 +150,8 @@ Item {
                         }
 
                         IconImage {
-                            width: 40
-                            height: 40
+                            width: Theme.dp(40)
+                            height: Theme.dp(40)
                             anchors.centerIn: parent
                             source: popup.iconName === "" ? "" : (IconTheme.generation >= 0 && IconTheme.pathFor(popup.iconName) !== "" ? IconTheme.pathFor(popup.iconName) : Quickshell.iconPath(popup.iconName, true))
                             visible: !preview.hasContent
@@ -202,14 +202,14 @@ Item {
 
                     Rectangle {
                         visible: entry.modelData.count >= 2
-                        width: 22
-                        height: 22
-                        radius: 11
+                        width: Theme.dp(22)
+                        height: Theme.dp(22)
+                        radius: Theme.dp(11)
                         color: Theme.accent
                         anchors.left: mainCard.left
                         anchors.top: mainCard.top
-                        anchors.leftMargin: -6
-                        anchors.topMargin: -6
+                        anchors.leftMargin: -Theme.dp(6)
+                        anchors.topMargin: -Theme.dp(6)
                         z: 20
 
                         Text {
@@ -226,7 +226,7 @@ Item {
 
                     Column {
                         anchors.top: mainCard.bottom
-                        anchors.topMargin: 7
+                        anchors.topMargin: Theme.dp(7)
                         anchors.left: parent.left
                         anchors.right: parent.right
                         spacing: 1
@@ -281,7 +281,7 @@ Item {
 
                 visible: popup.showOpenHere
                 width: popup.cardW
-                height: popup.cardH + 40
+                height: popup.cardH + Theme.dp(40)
 
                 HoverHandler {
                     id: openHereHover
@@ -313,8 +313,8 @@ Item {
 
                     DockGlyph {
                         anchors.centerIn: parent
-                        width: 30
-                        height: 30
+                        width: Theme.dp(30)
+                        height: Theme.dp(30)
                         pathData: DockIcons.newWindow
                         glyphColor: Theme.accent
                     }
@@ -331,7 +331,7 @@ Item {
 
                 Text {
                     anchors.top: openHereCard.bottom
-                    anchors.topMargin: 7
+                    anchors.topMargin: Theme.dp(7)
                     anchors.horizontalCenter: openHereCard.horizontalCenter
                     text: "Open here"
                     color: openHereEntry.hovered ? Theme.text : Theme.subtext

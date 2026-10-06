@@ -42,7 +42,7 @@ WidgetBody {
     MonthView {
         visible: w.variant === "month"
         anchors.centerIn: parent
-        cell: Math.floor((w.width - 28) / 7)
+        cell: Math.floor((w.width - Theme.dp(28)) / 7)
         mondayFirst: w.mondayFirst
         showHeader: w.opt("showMonthName") !== false
         showNav: w.hovered
@@ -59,7 +59,7 @@ WidgetBody {
     Item {
         visible: w.variant === "week"
         anchors.fill: parent
-        anchors.margins: 16
+        anchors.margins: Theme.dp(16)
 
         LText {
             role: "titleSmall"
@@ -78,18 +78,18 @@ WidgetBody {
                     required property var modelData
 
                     width: parent.width / 7
-                    height: 72
+                    height: Theme.dp(72)
 
                     Rectangle {
                         anchors.fill: parent
-                        anchors.margins: 2
+                        anchors.margins: Theme.dp(2)
                         radius: width / 2
                         color: modelData.today ? w.inkAccent : "transparent"
                     }
 
                     Column {
                         anchors.centerIn: parent
-                        spacing: 2
+                        spacing: Theme.dp(2)
 
                         LText {
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -109,8 +109,8 @@ WidgetBody {
 
                         Rectangle {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            width: 5
-                            height: 5
+                            width: Theme.dp(5)
+                            height: Theme.dp(5)
                             radius: 2.5
                             color: modelData.today ? w.fgInkAccent : w.inkAccent
                             opacity: modelData.marked ? 1 : 0
@@ -132,8 +132,8 @@ WidgetBody {
         anchors.fill: parent
 
         LText {
-            x: 20
-            y: 16
+            x: Theme.dp(20)
+            y: Theme.dp(16)
             role: "titleMedium"
             weight: 600
             color: w.inkAccent
@@ -142,8 +142,8 @@ WidgetBody {
 
         LText {
             anchors.centerIn: parent
-            anchors.verticalCenterOffset: 4
-            size: 96
+            anchors.verticalCenterOffset: Theme.dp(4)
+            size: Theme.dp(96)
             weight: 620
             rounded: 100
             color: w.ink
@@ -151,10 +151,10 @@ WidgetBody {
         }
 
         Row {
-            x: 20
+            x: Theme.dp(20)
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 16
-            spacing: 6
+            anchors.bottomMargin: Theme.dp(16)
+            spacing: Theme.dp(6)
 
             LText {
                 anchors.verticalCenter: parent.verticalCenter
@@ -168,9 +168,9 @@ WidgetBody {
 
                 Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 6
-                    height: 6
-                    radius: 3
+                    width: Theme.dp(6)
+                    height: Theme.dp(6)
+                    radius: Theme.dp(3)
                     color: w.inkAccent
                 }
 
@@ -184,12 +184,12 @@ WidgetBody {
     Item {
         visible: w.variant === "agenda"
         anchors.fill: parent
-        anchors.margins: 16
+        anchors.margins: Theme.dp(16)
 
         Row {
             id: agHead
 
-            spacing: 8
+            spacing: Theme.dp(8)
 
             LText {
                 anchors.verticalCenter: parent.verticalCenter
@@ -215,9 +215,9 @@ WidgetBody {
             readonly property var shown: w.coming.slice(0, Math.max(1, Math.floor((parent.height - agHead.height - 10 + 3) / 43)))
 
             anchors.top: agHead.bottom
-            anchors.topMargin: 10
+            anchors.topMargin: Theme.dp(10)
             width: parent.width
-            spacing: 3
+            spacing: Theme.dp(3)
 
             Repeater {
                 model: agList.shown
@@ -229,19 +229,19 @@ WidgetBody {
                     required property int index
 
                     width: parent.width
-                    height: 40
-                    topLeftRadius: ev.index === 0 ? 16 : 5
-                    topRightRadius: ev.index === 0 ? 16 : 5
-                    bottomLeftRadius: ev.index === agList.shown.length - 1 ? 16 : 5
-                    bottomRightRadius: ev.index === agList.shown.length - 1 ? 16 : 5
+                    height: Theme.dp(40)
+                    topLeftRadius: ev.index === 0 ? Theme.dp(16) : Theme.dp(5)
+                    topRightRadius: ev.index === 0 ? Theme.dp(16) : Theme.dp(5)
+                    bottomLeftRadius: ev.index === agList.shown.length - 1 ? Theme.dp(16) : Theme.dp(5)
+                    bottomRightRadius: ev.index === agList.shown.length - 1 ? Theme.dp(16) : Theme.dp(5)
                     readonly property bool soon: ev.modelData.at - w.now < 6 * 86400000
                     color: Theme.alpha(w.ink, 0.07)
 
                     Column {
-                        x: 12
+                        x: Theme.dp(12)
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 44
-                        spacing: -2
+                        width: Theme.dp(44)
+                        spacing: -Theme.dp(2)
 
                         LText {
                             role: "labelSmall"
@@ -260,9 +260,9 @@ WidgetBody {
                     }
 
                     LText {
-                        x: 60
+                        x: Theme.dp(60)
                         anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - 60 - timeTag.width - 20
+                        width: parent.width - Theme.dp(60) - timeTag.width - Theme.dp(20)
                         role: "bodyMedium"
                         weight: 520
                         color: w.ink
@@ -274,7 +274,7 @@ WidgetBody {
                         id: timeTag
 
                         anchors.right: parent.right
-                        anchors.rightMargin: 12
+                        anchors.rightMargin: Theme.dp(12)
                         anchors.verticalCenter: parent.verticalCenter
                         role: "labelMedium"
                         color: w.inkDim
@@ -288,13 +288,13 @@ WidgetBody {
             Column {
                 visible: w.coming.length === 0
                 width: parent.width
-                topPadding: 18
-                spacing: 6
+                topPadding: Theme.dp(18)
+                spacing: Theme.dp(6)
 
                 Icon {
                     anchors.horizontalCenter: parent.horizontalCenter
                     name: "event_available"
-                    size: 30
+                    size: Theme.dp(30)
                     color: w.inkFaint
                 }
 

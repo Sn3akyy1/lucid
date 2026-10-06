@@ -18,7 +18,7 @@ Item {
     // words people search for that a page never uses itself
     property var keywords: ({
         "users": "password avatar picture login sign in",
-        "general": "accent animation motion rounding corners islands notches",
+        "general": "accent animation motion rounding corners islands notches size scale zoom smaller bigger larger compact density",
         "glass": "blur transparency transparent opacity translucent frosted",
         "theme": "palette wallpaper background dark light matugen",
         "environment": "gtk qt cursor icon theme font",

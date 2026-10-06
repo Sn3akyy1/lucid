@@ -46,7 +46,7 @@ Column {
 
     signal expandRequested()
 
-    width: parent ? parent.width : 400
+    width: parent ? parent.width : Theme.dp(400)
 
     // bluez reports failure only by going quiet again, so watch the transitions
     Connections {
@@ -80,22 +80,22 @@ Column {
         id: head
 
         width: parent.width
-        height: 62
+        height: Theme.dp(62)
         radius: Theme.radiusMd
         color: dev.expanded ? Theme.bgHover : (headArea.containsMouse ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent")
 
         Item {
             id: iconTile
 
-            width: 40
-            height: 40
+            width: Theme.dp(40)
+            height: Theme.dp(40)
             anchors.left: parent.left
-            anchors.leftMargin: 11
+            anchors.leftMargin: Theme.dp(11)
             anchors.verticalCenter: parent.verticalCenter
 
             Rectangle {
                 anchors.fill: parent
-                radius: 13
+                radius: Theme.dp(13)
                 color: Theme.alpha(Theme.accent, dev.isConnected ? 0.24 : 0.11)
 
                 Behavior on color {
@@ -109,18 +109,18 @@ Column {
 
             DeviceGlyph {
                 anchors.centerIn: parent
-                size: 21
+                size: Theme.dp(21)
                 kind: Bt.glyphKind(dev.modelData.icon)
                 color: Theme.accent
             }
 
             Rectangle {
-                width: 11
-                height: 11
+                width: Theme.dp(11)
+                height: Theme.dp(11)
                 radius: 5.5
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                anchors.margins: -2
+                anchors.margins: -Theme.dp(2)
                 visible: dev.isConnected
                 color: Theme.success
                 border.width: 2
@@ -131,11 +131,11 @@ Column {
 
         Column {
             anchors.left: iconTile.right
-            anchors.leftMargin: 14
+            anchors.leftMargin: Theme.dp(14)
             anchors.right: trailing.left
-            anchors.rightMargin: 12
+            anchors.rightMargin: Theme.dp(12)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 2
+            spacing: Theme.dp(2)
 
             Text {
                 width: parent.width
@@ -164,14 +164,14 @@ Column {
             id: trailing
 
             anchors.right: parent.right
-            anchors.rightMargin: 14
+            anchors.rightMargin: Theme.dp(14)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 10
+            spacing: Theme.dp(10)
 
             Row {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: dev.batteryPct >= 0
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
@@ -184,17 +184,17 @@ Column {
 
                 Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 26
-                    height: 6
-                    radius: 3
+                    width: Theme.dp(26)
+                    height: Theme.dp(6)
+                    radius: Theme.dp(3)
                     color: Theme.bgTrack
 
                     Rectangle {
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
-                        width: Math.max(3, parent.width * Math.max(0, Math.min(1, dev.batteryPct / 100)))
+                        width: Math.max(Theme.dp(3), parent.width * Math.max(0, Math.min(1, dev.batteryPct / 100)))
                         height: parent.height
-                        radius: 3
+                        radius: Theme.dp(3)
                         color: dev.batteryPct < 20 ? Theme.error : Theme.success
                     }
 
@@ -205,7 +205,7 @@ Column {
             Icon {
                 anchors.verticalCenter: parent.verticalCenter
                 name: "expand_more"
-                size: 18
+                size: Theme.dp(18)
                 color: Theme.subtext
                 rotation: dev.expanded ? 180 : 0
 
@@ -253,15 +253,15 @@ Column {
             id: body
 
             width: parent.width
-            leftPadding: 65
-            rightPadding: 14
-            topPadding: 4
-            bottomPadding: 16
-            spacing: 12
+            leftPadding: Theme.dp(65)
+            rightPadding: Theme.dp(14)
+            topPadding: Theme.dp(4)
+            bottomPadding: Theme.dp(16)
+            spacing: Theme.dp(12)
             opacity: dev.expanded ? 1 : 0
 
             Row {
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 M3Button {
                     variant: "filled"
@@ -314,7 +314,7 @@ Column {
             }
 
             M3TextField {
-                width: 300
+                width: Theme.dp(300)
                 visible: dev.renaming
                 placeholder: dev.modelData.name
                 text: dev.modelData.name
@@ -327,7 +327,7 @@ Column {
             }
 
             Text {
-                width: parent.width - 79
+                width: parent.width - Theme.dp(79)
                 visible: dev.actionFailed && !dev.busy && !dev.isConnected
                 text: dev.group === "nearby" ? "Pairing failed. Bring the device closer, make sure it is in pairing mode, and try again." : "Could not connect. The device may be off or out of range."
                 color: Theme.error
@@ -338,9 +338,9 @@ Column {
             }
 
             Column {
-                width: parent.width - 79
+                width: parent.width - Theme.dp(79)
                 visible: dev.isConnected && dev.card && dev.card.profiles.length > 1
-                spacing: 7
+                spacing: Theme.dp(7)
 
                 Text {
                     text: "Audio mode"
@@ -353,7 +353,7 @@ Column {
 
                 Flow {
                     width: parent.width
-                    spacing: 6
+                    spacing: Theme.dp(6)
 
                     Repeater {
                         model: dev.card ? dev.card.profiles : []
@@ -364,9 +364,9 @@ Column {
                             required property string modelData
                             readonly property bool selected: dev.card && dev.card.active === prof.modelData
 
-                            width: profLabel.implicitWidth + 24
-                            height: 30
-                            radius: 15
+                            width: profLabel.implicitWidth + Theme.dp(24)
+                            height: Theme.dp(30)
+                            radius: Theme.dp(15)
                             color: prof.selected ? Theme.accentContainer : (profArea.containsMouse ? Theme.bgHover : Theme.bgSunken)
 
                             Text {
@@ -406,9 +406,9 @@ Column {
             }
 
             Flow {
-                width: parent.width - 79
+                width: parent.width - Theme.dp(79)
                 visible: dev.isPaired
-                spacing: 18
+                spacing: Theme.dp(18)
 
                 CheckLine {
                     label: "Reconnect on its own"

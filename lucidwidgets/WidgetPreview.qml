@@ -19,8 +19,10 @@ Item {
     property bool _woke: !pv.staggered
 
     readonly property var info: Widgets.variantAt(pv.wtype, pv.wvariant)
-    readonly property real natW: pv.bodyW > 0 ? pv.bodyW : (pv.info ? pv.info.w : 200)
-    readonly property real natH: pv.bodyH > 0 ? pv.bodyH : (pv.info ? pv.info.h : 200)
+    // drawn at the interface size, like the card it stands for
+    readonly property real sizeScale: Widgets.sizeScale(pv.wtype, pv.wvariant)
+    readonly property real natW: Math.round((pv.bodyW > 0 ? pv.bodyW : (pv.info ? pv.info.w : 200)) * pv.sizeScale)
+    readonly property real natH: Math.round((pv.bodyH > 0 ? pv.bodyH : (pv.info ? pv.info.h : 200)) * pv.sizeScale)
     readonly property real fit: Math.min(pv.width / pv.natW, pv.height / pv.natH, 1)
     readonly property bool bare: card.item !== null && card.item.bare === true
 

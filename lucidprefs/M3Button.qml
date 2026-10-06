@@ -33,8 +33,8 @@ Item {
 
     signal clicked()
 
-    implicitHeight: 40
-    implicitWidth: content.implicitWidth + (btn.variant === "text" ? 26 : 46)
+    implicitHeight: Theme.dp(40)
+    implicitWidth: content.implicitWidth + (btn.variant === "text" ? Theme.dp(26) : Theme.dp(46))
     opacity: btn.enabled ? 1 : 0.38
 
     Rectangle {
@@ -81,13 +81,13 @@ Item {
         id: content
 
         anchors.centerIn: parent
-        spacing: 8
+        spacing: Theme.dp(8)
 
         Icon {
             anchors.verticalCenter: parent.verticalCenter
             visible: btn.iconPath !== ""
             name: btn.iconPath
-            size: 19
+            size: Theme.dp(19)
             color: btn.labelColor
         }
 

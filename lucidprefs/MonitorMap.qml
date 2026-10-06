@@ -112,7 +112,7 @@ Item {
         Monitors.setPos(key, x, y);
     }
 
-    implicitHeight: Math.max(180, Math.min(420, map.width * map.view.h / map.view.w))
+    implicitHeight: Math.max(Theme.dp(180), Math.min(Theme.dp(420), map.width * map.view.h / map.view.w))
 
     Rectangle {
         id: frame
@@ -136,8 +136,8 @@ Item {
                 readonly property bool chosen: map.selected === plate.modelData
 
                 visible: plate.out !== null && Monitors.isOn(plate.modelData)
-                width: Math.max(34, plate.size.w * map.fit)
-                height: Math.max(26, plate.size.h * map.fit)
+                width: Math.max(Theme.dp(34), plate.size.w * map.fit)
+                height: Math.max(Theme.dp(26), plate.size.h * map.fit)
                 x: map.offX + plate.pos.x * map.fit
                 y: map.offY + plate.pos.y * map.fit
                 radius: Theme.shapeSm
@@ -149,7 +149,7 @@ Item {
                 Text {
                     anchors.left: parent.left
                     anchors.top: parent.top
-                    anchors.margins: 6
+                    anchors.margins: Theme.dp(6)
                     visible: plate.height > 44
                     text: Monitors.numberFor(plate.modelData)
                     color: plate.lit ? Theme.fgAccent : Theme.subtextDim

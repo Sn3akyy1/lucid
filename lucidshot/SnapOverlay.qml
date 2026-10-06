@@ -802,7 +802,7 @@ function stopRecordingBackend() {
             id: beam
 
             width: parent.width
-            height: 26
+            height: Theme.dp(26)
             y: -height
 
             gradient: Gradient {
@@ -852,8 +852,8 @@ function stopRecordingBackend() {
                 readonly property bool rightSide: index % 2 === 1
                 readonly property bool bottomSide: index > 1
 
-                width: 9
-                height: 2
+                width: Theme.dp(9)
+                height: Theme.dp(2)
                 color: Theme.accent
                 x: rightSide ? scanner.width - width : 0
                 y: bottomSide ? scanner.height - height : 0
@@ -939,8 +939,8 @@ function stopRecordingBackend() {
             color: Theme.bgOpaque
             border.color: Theme.alpha(Theme.text, toolbarHover.hovered ? 0.12 : 0.07)
             border.width: 1
-            width: toolRow.implicitWidth + 24
-            height: 60
+            width: toolRow.implicitWidth + Theme.dp(24)
+            height: Theme.dp(60)
             opacity: 0
             visible: opacity > 0
 
@@ -971,7 +971,7 @@ function stopRecordingBackend() {
                 id: toolRow
 
                 anchors.centerIn: parent
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 ModeSwitch {
                     anchors.verticalCenter: parent.verticalCenter
@@ -982,7 +982,7 @@ function stopRecordingBackend() {
                 Row {
                     visible: snapWindow.captureMode !== "color"
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 4
+                    spacing: Theme.dp(4)
 
                     IconAction {
                         iconPath: "crop_free"
@@ -1006,7 +1006,7 @@ function stopRecordingBackend() {
 
                     visible: snapWindow.captureMode === "color"
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     IconAction {
                         anchors.verticalCenter: parent.verticalCenter
@@ -1020,7 +1020,7 @@ function stopRecordingBackend() {
 
                     Row {
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 4
+                        spacing: Theme.dp(4)
 
                         FormatChip {
                             fmt: "hex"
@@ -1041,13 +1041,13 @@ function stopRecordingBackend() {
 
                     visible: snapWindow.captureMode === "video"
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     SnapDivider {}
 
                     Row {
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 4
+                        spacing: Theme.dp(4)
 
                         IconAction {
                             iconPath: {
@@ -1093,7 +1093,7 @@ function stopRecordingBackend() {
 
                     Row {
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 6
+                        spacing: Theme.dp(6)
 
                         ToggleChip {
                             anchors.verticalCenter: parent.verticalCenter
@@ -1138,8 +1138,8 @@ function stopRecordingBackend() {
 
             readonly property bool active: snapWindow.colorFormat === fchip.fmt
 
-            width: fchipText.implicitWidth + 18
-            height: 28
+            width: fchipText.implicitWidth + Theme.dp(18)
+            height: Theme.dp(28)
 
             Rectangle {
                 anchors.fill: parent
@@ -1186,7 +1186,7 @@ function stopRecordingBackend() {
 
         component SnapDivider: Rectangle {
             width: 1
-            height: 22
+            height: Theme.dp(22)
             anchors.verticalCenter: parent.verticalCenter
             color: Theme.alpha(Theme.outline, 0.6)
         }
@@ -1202,8 +1202,8 @@ function stopRecordingBackend() {
 
             signal tapped()
 
-            width: 44
-            height: 44
+            width: Theme.dp(44)
+            height: Theme.dp(44)
 
             Item {
                 id: visual
@@ -1222,9 +1222,9 @@ function stopRecordingBackend() {
                     id: stateLayer
 
                     anchors.centerIn: parent
-                    width: 42
-                    height: 42
-                    radius: action.active ? 14 : 21
+                    width: Theme.dp(42)
+                    height: Theme.dp(42)
+                    radius: action.active ? Theme.dp(14) : Theme.dp(21)
                     color: action.activeColor
 
                     Behavior on radius {
@@ -1252,7 +1252,7 @@ function stopRecordingBackend() {
                 Icon {
                     anchors.centerIn: parent
                     name: action.iconPath
-                    size: 22
+                    size: Theme.dp(22)
                     fill: action.active ? 1 : 0
                     opacity: action.disabled ? 0.35 : 1
                     color: action.active ? Theme.fgAccent : (hover.hovered ? Theme.text : Theme.subtext)
@@ -1264,12 +1264,12 @@ function stopRecordingBackend() {
 
                 visible: opacity > 0
                 opacity: tipReady ? 1 : 0
-                radius: 6
+                radius: Theme.dp(6)
                 color: Theme.inverseSurface
-                width: tipText.implicitWidth + 16
-                height: tipText.implicitHeight + 10
+                width: tipText.implicitWidth + Theme.dp(16)
+                height: tipText.implicitHeight + Theme.dp(10)
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: parent.height + 10
+                y: parent.height + Theme.dp(10)
                 z: 10
 
                 property bool tipReady: false
@@ -1333,7 +1333,7 @@ function stopRecordingBackend() {
 
             signal tapped()
 
-            width: 84
+            width: Theme.dp(84)
             height: parent.height
 
             Rectangle {
@@ -1351,7 +1351,7 @@ function stopRecordingBackend() {
 
             Row {
                 anchors.centerIn: parent
-                spacing: 6
+                spacing: Theme.dp(6)
                 opacity: seg.disabled ? 0.35 : 1
                 scale: segTap.pressed ? 0.92 : 1
 
@@ -1365,7 +1365,7 @@ function stopRecordingBackend() {
                 Icon {
                     anchors.verticalCenter: parent.verticalCenter
                     name: seg.iconPath
-                    size: 18
+                    size: Theme.dp(18)
                     fill: seg.active ? 1 : 0
                     color: seg.active ? Theme.fgAccent : Theme.subtext
                 }
@@ -1409,8 +1409,8 @@ function stopRecordingBackend() {
             readonly property bool recording: snapWindow.recordingState !== "idle"
             readonly property int modeIndex: snapWindow.captureMode === "video" ? 1 : (snapWindow.captureMode === "text" ? 2 : (snapWindow.captureMode === "color" ? 3 : 0))
 
-            width: 342
-            height: 44
+            width: Theme.dp(342)
+            height: Theme.dp(44)
             radius: height / 2
             color: Theme.alpha(Theme.text, switchHover.hovered ? 0.07 : 0.045)
 
@@ -1425,10 +1425,10 @@ function stopRecordingBackend() {
             }
 
             Rectangle {
-                x: 3 + modeSwitch.modeIndex * 84
-                y: 3
-                width: 84
-                height: parent.height - 6
+                x: Theme.dp(3) + modeSwitch.modeIndex * 84
+                y: Theme.dp(3)
+                width: Theme.dp(84)
+                height: parent.height - Theme.dp(6)
                 radius: height / 2
                 color: Theme.accent
 
@@ -1443,7 +1443,7 @@ function stopRecordingBackend() {
 
             Row {
                 anchors.fill: parent
-                anchors.margins: 3
+                anchors.margins: Theme.dp(3)
 
                 ModeSegment {
                     label: "Photo"
@@ -1489,8 +1489,8 @@ function stopRecordingBackend() {
             readonly property bool recording: snapWindow.recordingState === "recording"
             readonly property bool paused: snapWindow.recordingState === "paused"
 
-            width: chipRow.implicitWidth + 16
-            height: 30
+            width: chipRow.implicitWidth + Theme.dp(16)
+            height: Theme.dp(30)
             radius: Theme.radiusSm
             color: Theme.alpha(Theme.text, 0.05)
 
@@ -1498,14 +1498,14 @@ function stopRecordingBackend() {
                 id: chipRow
 
                 anchors.centerIn: parent
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Rectangle {
                     id: recDot
 
-                    width: 8
-                    height: 8
-                    radius: 4
+                    width: Theme.dp(8)
+                    height: Theme.dp(8)
+                    radius: Theme.dp(4)
                     anchors.verticalCenter: parent.verticalCenter
                     visible: chip.recording || chip.paused
                     color: chip.paused ? Theme.subtext : Theme.error
@@ -1557,8 +1557,8 @@ function stopRecordingBackend() {
 
             signal tapped()
 
-            width: chipRow.implicitWidth + 20
-            height: 34
+            width: chipRow.implicitWidth + Theme.dp(20)
+            height: Theme.dp(34)
             scale: tap.pressed ? 0.94 : (chipHover.hovered ? 1.03 : 1)
 
             Behavior on scale {
@@ -1584,12 +1584,12 @@ function stopRecordingBackend() {
                 id: chipRow
 
                 anchors.centerIn: parent
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Icon {
                     anchors.verticalCenter: parent.verticalCenter
                     name: chip.iconPath
-                    size: 17
+                    size: Theme.dp(17)
                     fill: chip.on ? 1 : 0
                     color: chip.on ? Theme.fgAccent : Theme.subtext
                 }
@@ -1625,8 +1625,8 @@ function stopRecordingBackend() {
         }
 
         component DragHandle: Item {
-            width: 32
-            height: 38
+            width: Theme.dp(32)
+            height: Theme.dp(38)
 
             Item {
                 id: dragVisual
@@ -1643,8 +1643,8 @@ function stopRecordingBackend() {
 
                 Rectangle {
                     anchors.centerIn: parent
-                    width: 30
-                    height: 34
+                    width: Theme.dp(30)
+                    height: Theme.dp(34)
                     radius: Theme.radiusSm
                     color: Theme.accent
                     opacity: dragH.active ? Theme.statePressed : (hoverH.hovered ? Theme.stateHover : 0)
@@ -1660,15 +1660,15 @@ function stopRecordingBackend() {
                     anchors.centerIn: parent
                     columns: 2
                     rows: 2
-                    spacing: 4
+                    spacing: Theme.dp(4)
 
                     Repeater {
                         model: 4
 
                         Rectangle {
-                            width: 4
-                            height: 4
-                            radius: 2
+                            width: Theme.dp(4)
+                            height: Theme.dp(4)
+                            radius: Theme.dp(2)
                             color: hoverH.hovered ? Theme.accent : Theme.subtext
 
                             Behavior on color {

@@ -19,7 +19,7 @@ Column {
         return v === "" ? "Not set" : v;
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
 
     SettingCard {
         title: "POINTER"
@@ -117,7 +117,7 @@ Column {
             showDivider: false
 
             M3Segmented {
-                width: 260
+                width: Theme.dp(260)
                 current: Prefs.envColorScheme
                 options: page.schemeOptions
                 onChosen: (key) => {

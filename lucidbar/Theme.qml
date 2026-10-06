@@ -65,7 +65,10 @@ Singleton {
     readonly property real motionScale: pf.motionScale * root.motionBaseline
     // the ramp below is authored a step large; 1.00x renders it at 0.9
     readonly property real typeBaseline: 0.9
-    readonly property real fontScale: pf.fontScale * root.typeBaseline
+    // the interface size setting. every authored pixel in the shell goes
+    // through dp(), so 1.00x is the shipped layout exactly
+    readonly property real uiScale: Math.max(0.7, Math.min(1.3, pf.uiScale || 1))
+    readonly property real fontScale: pf.fontScale * root.typeBaseline * root.uiScale
     readonly property real blurAmount: blurAdapter.value || 0
 
     function setBlurAmount(v) {
@@ -216,25 +219,25 @@ Singleton {
     readonly property real disabledContent: 0.38
     readonly property real disabledContainer: 0.12
     readonly property int radiusPill: 999
-    readonly property int radiusXs: 8
-    readonly property int radiusSm: 12
-    readonly property int radiusMd: 16
-    readonly property int radiusLg: 20
-    readonly property int radiusXl: 28
+    readonly property int radiusXs: root.dp(8)
+    readonly property int radiusSm: root.dp(12)
+    readonly property int radiusMd: root.dp(16)
+    readonly property int radiusLg: root.dp(20)
+    readonly property int radiusXl: root.dp(28)
 
     // m3 shape scale, in dp
     readonly property int shapeNone: 0
-    readonly property int shapeXs: 4
-    readonly property int shapeSm: 8
-    readonly property int shapeMd: 12
-    readonly property int shapeLg: 16
-    readonly property int shapeLgInc: 20
-    readonly property int shapeXl: 28
-    readonly property int shapeXlInc: 32
-    readonly property int shapeXxl: 48
+    readonly property int shapeXs: root.dp(4)
+    readonly property int shapeSm: root.dp(8)
+    readonly property int shapeMd: root.dp(12)
+    readonly property int shapeLg: root.dp(16)
+    readonly property int shapeLgInc: root.dp(20)
+    readonly property int shapeXl: root.dp(28)
+    readonly property int shapeXlInc: root.dp(32)
+    readonly property int shapeXxl: root.dp(48)
     readonly property int shapeFull: 999
     // where two members of one group meet
-    readonly property int shapeJoin: 4
+    readonly property int shapeJoin: root.dp(4)
 
     // m3 surface containers, under their spec names
     readonly property color surfaceLowest: root.mLowest
@@ -372,6 +375,10 @@ Singleton {
 
     function fs(px) {
         return Math.round(px * root.fontScale);
+    }
+
+    function dp(px) {
+        return Math.round(px * root.uiScale);
     }
 
     function ms(d) {
@@ -700,6 +707,7 @@ Singleton {
             property real barMotionScale: 1.35
             property string fontFamily: "Google Sans"
             property real fontScale: 1
+            property real uiScale: 1
         }
 
     }

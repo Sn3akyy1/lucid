@@ -11,13 +11,13 @@ Item {
     property real railT: 1
     property bool selected: false
     readonly property var user: Users.me
-    readonly property real avatarX: 20 * card.railT + ((card.width - 40) / 2) * (1 - card.railT)
+    readonly property real avatarX: Theme.dp(20) * card.railT + ((card.width - Theme.dp(40)) / 2) * (1 - card.railT)
     readonly property real labelFade: Math.max(0, (card.railT - 0.5) / 0.5)
     readonly property color fg: card.selected ? Theme.fgSecondaryContainer : (area.containsMouse ? Theme.text : Theme.subtext)
 
     signal clicked()
 
-    implicitHeight: 58
+    implicitHeight: Theme.dp(58)
 
     Rectangle {
         anchors.fill: parent
@@ -53,16 +53,16 @@ Item {
 
         x: card.avatarX
         anchors.verticalCenter: parent.verticalCenter
-        size: 40
+        size: Theme.dp(40)
         user: card.user
         showAdmin: true
     }
 
     Column {
         anchors.left: parent.left
-        anchors.leftMargin: card.avatarX + 52
+        anchors.leftMargin: card.avatarX + Theme.dp(52)
         anchors.right: chevron.left
-        anchors.rightMargin: 6
+        anchors.rightMargin: Theme.dp(6)
         anchors.verticalCenter: parent.verticalCenter
         spacing: -1
         opacity: card.labelFade
@@ -111,12 +111,12 @@ Item {
         id: chevron
 
         anchors.right: parent.right
-        anchors.rightMargin: 16
+        anchors.rightMargin: Theme.dp(16)
         anchors.verticalCenter: parent.verticalCenter
         opacity: card.labelFade * 0.7
         visible: opacity > 0.01
         name: "chevron_right"
-        size: 18
+        size: Theme.dp(18)
         color: card.fg
     }
 

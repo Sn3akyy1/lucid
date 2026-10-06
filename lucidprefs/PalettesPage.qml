@@ -122,7 +122,7 @@ Column {
         galleryUpdate.running = true;
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
     onQueryChanged: page.shown = 48
     onVariantChanged: page.shown = 48
 
@@ -304,13 +304,13 @@ Column {
 
             Column {
                 width: parent.width
-                spacing: 14
+                spacing: Theme.dp(14)
 
                 Row {
                     id: galleryBar
 
                     width: parent.width
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     M3TextField {
                         width: galleryBar.width - galleryFilter.width - galleryBar.spacing
@@ -323,7 +323,7 @@ Column {
                     M3Segmented {
                         id: galleryFilter
 
-                        width: Math.min(250, Math.round(galleryBar.width * 0.45))
+                        width: Math.min(Theme.dp(250), Math.round(galleryBar.width * 0.45))
                         anchors.verticalCenter: parent.verticalCenter
                         current: page.variant
                         options: [{
@@ -345,7 +345,7 @@ Column {
 
                 Flow {
                     width: parent.width
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     Repeater {
                         model: page.filtered.slice(0, page.shown)
@@ -389,13 +389,13 @@ Column {
                 id: importRows
 
                 // the file row carries two buttons, so its field sets the width both use
-                readonly property real fieldWidth: Math.max(160, importRows.width - chooseButton.width - importFileButton.width - 20)
+                readonly property real fieldWidth: Math.max(Theme.dp(160), importRows.width - chooseButton.width - importFileButton.width - Theme.dp(20))
 
                 width: parent.width
-                spacing: 12
+                spacing: Theme.dp(12)
 
                 Row {
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     M3TextField {
                         id: repoField
@@ -424,7 +424,7 @@ Column {
                 }
 
                 Row {
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     M3TextField {
                         id: fileField
@@ -448,7 +448,7 @@ Column {
                         text: "Choose..."
                         enabled: page.addState !== "working"
                         onClicked: {
-                            filePicker.command = ["sh", "-c", "zenity --file-selection --title='Choose a colour scheme' 2>/dev/null || true"];
+                            filePicker.command = ["python3", Qt.resolvedUrl("pickfile.py").toString().replace("file://", ""), "--title", "Choose a colour scheme"];
                             filePicker.running = true;
                         }
                     }
@@ -469,7 +469,7 @@ Column {
 
                 Rectangle {
                     width: parent.width
-                    height: status.implicitHeight + 24
+                    height: status.implicitHeight + Theme.dp(24)
                     radius: Theme.radiusSm
                     color: Theme.bgSunken
                     visible: page.addState !== "idle"
@@ -479,23 +479,23 @@ Column {
 
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        anchors.leftMargin: 14
-                        anchors.rightMargin: 14
+                        anchors.leftMargin: Theme.dp(14)
+                        anchors.rightMargin: Theme.dp(14)
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 12
+                        spacing: Theme.dp(12)
 
                         Rectangle {
-                            width: 34
-                            height: 34
-                            radius: 17
+                            width: Theme.dp(34)
+                            height: Theme.dp(34)
+                            radius: Theme.dp(17)
                             anchors.verticalCenter: parent.verticalCenter
                             visible: page.addState === "done" && page.addResult !== null
                             color: page.addResult ? page.addResult.swatchBg : "transparent"
 
                             Rectangle {
-                                width: 14
-                                height: 14
-                                radius: 7
+                                width: Theme.dp(14)
+                                height: Theme.dp(14)
+                                radius: Theme.dp(7)
                                 anchors.centerIn: parent
                                 color: page.addResult ? page.addResult.swatchAccent : "transparent"
                             }
@@ -503,9 +503,9 @@ Column {
                         }
 
                         Rectangle {
-                            width: 34
-                            height: 34
-                            radius: 17
+                            width: Theme.dp(34)
+                            height: Theme.dp(34)
+                            radius: Theme.dp(17)
                             anchors.verticalCenter: parent.verticalCenter
                             visible: page.addState !== "done"
                             color: page.addState === "error" ? Theme.alpha(Theme.error, 0.18) : Theme.alpha(Theme.accent, 0.18)
@@ -513,16 +513,16 @@ Column {
                             Icon {
                                 anchors.centerIn: parent
                                 name: page.addState === "error" ? "priority_high" : "more_horiz"
-                                size: 20
+                                size: Theme.dp(20)
                                 color: page.addState === "error" ? Theme.error : Theme.accent
                             }
 
                         }
 
                         Column {
-                            width: status.width - 180
+                            width: status.width - Theme.dp(180)
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 3
+                            spacing: Theme.dp(3)
 
                             Text {
                                 text: {
@@ -608,13 +608,13 @@ Column {
 
             Column {
                 width: parent.width
-                spacing: 12
+                spacing: Theme.dp(12)
 
                 Row {
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     M3Segmented {
-                        width: 300
+                        width: Theme.dp(300)
                         anchors.verticalCenter: parent.verticalCenter
                         current: page.exportFormat
                         options: [{
@@ -639,7 +639,7 @@ Column {
                             page.exportMessage = "";
                             var file = page.exportName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "palette";
                             exportPicker.running = false;
-                            exportPicker.command = ["sh", "-c", "zenity --file-selection --save --title='Export the palette' --filename=\"$1\" 2>/dev/null || true", "sh", page.home + "/" + file + (page.exportFormat === "lucid" ? ".json" : ".yaml")];
+                            exportPicker.command = ["python3", Qt.resolvedUrl("pickfile.py").toString().replace("file://", ""), "--save", "--title", "Export the palette", "--file", page.home + "/" + file + (page.exportFormat === "lucid" ? ".json" : ".yaml")];
                             exportPicker.running = true;
                         }
                     }

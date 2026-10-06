@@ -12,10 +12,10 @@ Item {
     property real fieldW: 1920
     property real fieldH: 1080
 
-    readonly property real panelW: 320
-    readonly property real edge: 8
-    readonly property real pad: 16
-    readonly property real cornerRadius: 28
+    readonly property real panelW: Theme.dp(320)
+    readonly property real edge: Theme.dp(8)
+    readonly property real pad: Theme.dp(16)
+    readonly property real cornerRadius: Theme.dp(28)
     readonly property bool open: menu.frame !== null && menu.frame.menuOpen
     // the right-click point, in screen coordinates
     readonly property real originX: menu.frame ? menu.frame.x + menu.frame.menuAtX : 0
@@ -108,10 +108,10 @@ Item {
         property string title: ""
 
         width: body.width
-        spacing: 8
+        spacing: Theme.dp(8)
 
         LText {
-            leftPadding: 4
+            leftPadding: Theme.dp(4)
             role: "labelMedium"
             weight: 620
             color: Theme.primary
@@ -153,26 +153,26 @@ Item {
                 id: body
 
                 width: scroller.width
-                spacing: 18
+                spacing: Theme.dp(18)
 
                 // header: the card's mark, its name and face, lock and close
                 Item {
                     width: body.width
-                    height: 44
+                    height: Theme.dp(44)
 
                     MaterialShape {
                         id: mark
 
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 42
-                        height: 42
+                        width: Theme.dp(42)
+                        height: Theme.dp(42)
                         shape: "cookie9"
                         color: Theme.primaryContainer
 
                         WidgetGlyph {
                             anchors.centerIn: parent
                             name: menu.frame ? menu.frame.wtype : "clock"
-                            size: 20
+                            size: Theme.dp(20)
                             color: Theme.fgPrimaryContainer
                         }
 
@@ -180,11 +180,11 @@ Item {
 
                     Column {
                         anchors.left: mark.right
-                        anchors.leftMargin: 12
+                        anchors.leftMargin: Theme.dp(12)
                         anchors.right: headBtns.left
-                        anchors.rightMargin: 6
+                        anchors.rightMargin: Theme.dp(6)
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: -2
+                        spacing: -Theme.dp(2)
 
                         LText {
                             width: parent.width
@@ -209,7 +209,7 @@ Item {
 
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
+                        spacing: Theme.dp(2)
 
                         IconButton {
                             variant: "tonal"
@@ -243,7 +243,7 @@ Item {
 
                     Flow {
                         width: body.width
-                        spacing: 6
+                        spacing: Theme.dp(6)
 
                         Repeater {
                             model: menu.typeInfo ? menu.typeInfo.variants : []
@@ -253,17 +253,17 @@ Item {
 
                                 required property var modelData
                                 readonly property bool on: menu.frame !== null && menu.frame.wvariant === face.modelData.id
-                                readonly property real tileW: (body.width - 12) / 3
+                                readonly property real tileW: (body.width - Theme.dp(12)) / 3
 
                                 width: face.tileW
-                                height: face.tileW * 0.78 + 24
+                                height: face.tileW * 0.78 + Theme.dp(24)
 
                                 Rectangle {
                                     id: thumb
 
                                     width: parent.width
                                     height: face.tileW * 0.78
-                                    radius: face.on ? 14 : 18
+                                    radius: face.on ? Theme.dp(14) : Theme.dp(18)
                                     color: face.on ? Theme.alpha(Theme.primary, 0.14) : Theme.withBlur(Theme.surfaceHigh)
                                     border.width: face.on ? 2 : 0
                                     border.color: Theme.primary
@@ -279,7 +279,7 @@ Item {
 
                                     WidgetPreview {
                                         anchors.fill: parent
-                                        anchors.margins: 6
+                                        anchors.margins: Theme.dp(6)
                                         wtype: menu.frame ? menu.frame.wtype : ""
                                         wvariant: face.modelData.id
                                         live: menu.open
@@ -290,16 +290,16 @@ Item {
                                         visible: face.on
                                         anchors.right: parent.right
                                         anchors.top: parent.top
-                                        anchors.margins: 4
-                                        width: 18
-                                        height: 18
-                                        radius: 9
+                                        anchors.margins: Theme.dp(4)
+                                        width: Theme.dp(18)
+                                        height: Theme.dp(18)
+                                        radius: Theme.dp(9)
                                         color: Theme.primary
 
                                         Icon {
                                             anchors.centerIn: parent
                                             name: "check"
-                                            size: 13
+                                            size: Theme.dp(13)
                                             weight: 700
                                             color: Theme.fgPrimary
                                         }
@@ -319,7 +319,7 @@ Item {
 
                                 LText {
                                     anchors.top: thumb.bottom
-                                    anchors.topMargin: 4
+                                    anchors.topMargin: Theme.dp(4)
                                     width: parent.width
                                     horizontalAlignment: Text.AlignHCenter
                                     role: "labelMedium"
@@ -354,16 +354,16 @@ Item {
                                 required property var modelData
                                 readonly property bool on: menu.tone === sw.modelData.key
 
-                                width: 44
-                                spacing: 4
+                                width: Theme.dp(44)
+                                spacing: Theme.dp(4)
 
                                 Item {
-                                    width: 44
-                                    height: 44
+                                    width: Theme.dp(44)
+                                    height: Theme.dp(44)
 
                                     Rectangle {
                                         anchors.fill: parent
-                                        radius: 22
+                                        radius: Theme.dp(22)
                                         color: "transparent"
                                         border.width: 2
                                         border.color: sw.on ? Theme.primary : "transparent"
@@ -371,9 +371,9 @@ Item {
 
                                     Rectangle {
                                         anchors.centerIn: parent
-                                        width: sw.on ? 34 : 38
+                                        width: sw.on ? Theme.dp(34) : Theme.dp(38)
                                         height: width
-                                        radius: sw.on ? 12 : width / 2
+                                        radius: sw.on ? Theme.dp(12) : width / 2
                                         color: sw.modelData.fill
                                         border.width: sw.modelData.key === "surface" ? 1 : 0
                                         border.color: Theme.alpha(Theme.text, 0.22)
@@ -400,7 +400,7 @@ Item {
                                             visible: sw.modelData.key === "auto"
                                             anchors.centerIn: parent
                                             name: "auto_awesome"
-                                            size: 18
+                                            size: Theme.dp(18)
                                             fill: 1
                                             color: sw.modelData.dot
                                         }
@@ -408,16 +408,16 @@ Item {
                                         Rectangle {
                                             visible: sw.modelData.key !== "auto"
                                             anchors.centerIn: parent
-                                            width: 12
-                                            height: 12
-                                            radius: 6
+                                            width: Theme.dp(12)
+                                            height: Theme.dp(12)
+                                            radius: Theme.dp(6)
                                             color: sw.modelData.dot
                                         }
 
                                     }
 
                                     StateLayer {
-                                        radius: 22
+                                        radius: Theme.dp(22)
                                         onClicked: {
                                             if (menu.frame)
                                                 menu.frame.setOpt("tone", sw.modelData.key);
@@ -473,7 +473,7 @@ Item {
 
                     LText {
                         visible: menu.resizable
-                        leftPadding: 4
+                        leftPadding: Theme.dp(4)
                         role: "bodySmall"
                         color: Theme.subtext
                         text: menu.frame ? Math.round(menu.frame.bodyW) + " × " + Math.round(menu.frame.bodyH) + "  ·  drag any edge" : ""
@@ -481,7 +481,7 @@ Item {
 
                     Row {
                         visible: menu.resizable
-                        spacing: 8
+                        spacing: Theme.dp(8)
 
                         Button {
                             variant: "tonal"
@@ -519,7 +519,7 @@ Item {
                     Column {
                         visible: menu.boolOptions.length > 0
                         width: body.width
-                        spacing: 2
+                        spacing: Theme.dp(2)
 
                         Repeater {
                             model: menu.boolOptions
@@ -532,18 +532,18 @@ Item {
                                 readonly property bool value: menu.frame ? menu.frame.opt(brow.modelData.key) === true : brow.modelData.def === true
 
                                 width: body.width
-                                height: 50
-                                topLeftRadius: brow.index === 0 ? 18 : 4
-                                topRightRadius: brow.index === 0 ? 18 : 4
-                                bottomLeftRadius: brow.index === menu.boolOptions.length - 1 ? 18 : 4
-                                bottomRightRadius: brow.index === menu.boolOptions.length - 1 ? 18 : 4
+                                height: Theme.dp(50)
+                                topLeftRadius: brow.index === 0 ? Theme.dp(18) : Theme.dp(4)
+                                topRightRadius: brow.index === 0 ? Theme.dp(18) : Theme.dp(4)
+                                bottomLeftRadius: brow.index === menu.boolOptions.length - 1 ? Theme.dp(18) : Theme.dp(4)
+                                bottomRightRadius: brow.index === menu.boolOptions.length - 1 ? Theme.dp(18) : Theme.dp(4)
                                 color: Theme.withBlur(Theme.surfaceHigh)
 
                                 LText {
                                     anchors.left: parent.left
-                                    anchors.leftMargin: 16
+                                    anchors.leftMargin: Theme.dp(16)
                                     anchors.right: bsw.left
-                                    anchors.rightMargin: 10
+                                    anchors.rightMargin: Theme.dp(10)
                                     anchors.verticalCenter: parent.verticalCenter
                                     role: "bodyMedium"
                                     text: brow.modelData.label
@@ -554,7 +554,7 @@ Item {
                                     id: bsw
 
                                     anchors.right: parent.right
-                                    anchors.rightMargin: 12
+                                    anchors.rightMargin: Theme.dp(12)
                                     anchors.verticalCenter: parent.verticalCenter
                                     checked: brow.value
                                     onToggled: (v) => {
@@ -580,11 +580,11 @@ Item {
                             readonly property var value: menu.frame ? menu.frame.opt(crow.modelData.key) : crow.modelData.def
 
                             width: body.width
-                            topPadding: 4
-                            spacing: 6
+                            topPadding: Theme.dp(4)
+                            spacing: Theme.dp(6)
 
                             LText {
-                                leftPadding: 4
+                                leftPadding: Theme.dp(4)
                                 role: "bodyMedium"
                                 text: crow.modelData.label
                             }
@@ -633,10 +633,10 @@ Item {
 
                 Row {
                     width: body.width
-                    spacing: 8
+                    spacing: Theme.dp(8)
 
                     Button {
-                        width: (body.width - 8) / 2
+                        width: (body.width - Theme.dp(8)) / 2
                         variant: "tonal"
                         size: "s"
                         icon: "content_copy"
@@ -652,7 +652,7 @@ Item {
                     }
 
                     Button {
-                        width: (body.width - 8) / 2
+                        width: (body.width - Theme.dp(8)) / 2
                         variant: "tonal"
                         danger: true
                         size: "s"

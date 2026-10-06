@@ -75,11 +75,11 @@ SettingCard {
 
         Column {
             width: parent.width
-            spacing: 12
+            spacing: Theme.dp(12)
 
             Rectangle {
                 width: parent.width
-                height: 170
+                height: Theme.dp(170)
                 radius: Theme.radiusLg
                 color: pad.pressed ? Theme.bgActive : (pad.containsMouse ? Theme.bgHover : Theme.bgSunken)
                 border.width: 1
@@ -154,7 +154,7 @@ SettingCard {
             }
 
             Row {
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 M3Button {
                     variant: "tonal"
@@ -196,7 +196,7 @@ SettingCard {
 
         Rectangle {
             width: parent.width
-            height: 46
+            height: Theme.dp(46)
             radius: Theme.radiusSm
             color: Theme.bgSunken
             border.width: card.typing ? 2 : 1
@@ -211,7 +211,7 @@ SettingCard {
 
             Text {
                 anchors.left: parent.left
-                anchors.leftMargin: 14
+                anchors.leftMargin: Theme.dp(14)
                 anchors.verticalCenter: parent.verticalCenter
                 text: card.typing ? "Listening — type away" : "Click to send keys to the phone"
                 color: card.typing ? Theme.accent : Theme.subtextDim

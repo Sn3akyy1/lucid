@@ -8,7 +8,7 @@ Item {
     id: av
 
     property var user: null
-    property int size: 44
+    property int size: Theme.dp(44)
     // a camera scrim on hover, for the ones you can change
     property bool editable: false
     property bool showAdmin: false
@@ -48,8 +48,8 @@ Item {
             asynchronous: true
             // the path stays put when the picture changes, so never hold one
             cache: false
-            sourceSize.width: 256
-            sourceSize.height: 256
+            sourceSize.width: Theme.dp(256)
+            sourceSize.height: Theme.dp(256)
             visible: av.ready
 
             // a new picture usually lands on the same path, so the source never

@@ -51,15 +51,15 @@ BarPill {
         return "file://" + dir + "/" + fileName;
     }
 
-    readonly property int horizontalPadding: 10
+    readonly property int horizontalPadding: Theme.dp(10)
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
-    readonly property int maxPanelHeight: Math.min(380, Math.max(180, root.screenH - 40))
+    readonly property int maxPanelHeight: Math.min(Theme.dp(380), Math.max(Theme.dp(180), root.screenH - Theme.dp(40)))
 
     shown: Prefs.barHas("tray") && root.trayCount > 0
     compactWidth: compactRow.implicitWidth + root.horizontalPadding * 2
-    panelWidth: Math.min(300, root.screenW - 34)
-    panelHeight: Math.min(root.maxPanelHeight, expandedColumn.implicitHeight + 28)
+    panelWidth: Math.min(Theme.dp(300), root.screenW - Theme.dp(34))
+    panelHeight: Math.min(root.maxPanelHeight, expandedColumn.implicitHeight + Theme.dp(28))
     expandedRadius: Theme.radiusLg
     compactCollapseScale: 0.94
 
@@ -79,17 +79,17 @@ BarPill {
             id: compactRow
 
             anchors.centerIn: parent
-            spacing: 4
+            spacing: Theme.dp(4)
 
             Item {
-                width: 16
-                height: 16
+                width: Theme.dp(16)
+                height: Theme.dp(16)
                 anchors.verticalCenter: parent.verticalCenter
 
                 Icon {
                     anchors.centerIn: parent
                     name: "dashboard"
-                    size: 18
+                    size: Theme.dp(18)
                     fill: 1
                     color: Theme.text
                 }
@@ -100,9 +100,9 @@ BarPill {
                 id: countBadge
 
                 anchors.verticalCenter: parent.verticalCenter
-                height: 16
-                width: root.trayCount > 0 ? Math.max(16, countText.implicitWidth + 8) : 0
-                radius: 999
+                height: Theme.dp(16)
+                width: root.trayCount > 0 ? Math.max(Theme.dp(16), countText.implicitWidth + Theme.dp(8)) : 0
+                radius: Theme.dp(999)
                 color: Theme.accent
                 opacity: root.trayCount > 0 ? 1 : 0
                 scale: root.trayCount > 0 ? 1 : 0.4
@@ -169,12 +169,12 @@ BarPill {
             id: expandedColumn
 
             anchors.fill: parent
-            anchors.margins: 14
-            spacing: 10
+            anchors.margins: Theme.dp(14)
+            spacing: Theme.dp(10)
 
             Item {
                 width: parent.width
-                height: 28
+                height: Theme.dp(28)
 
                 Rectangle {
                     anchors.bottom: parent.bottom
@@ -221,7 +221,7 @@ BarPill {
                 clip: true
                 spacing: 0
                 model: root.trayItems
-                height: Math.min(contentHeight, root.maxPanelHeight - 60)
+                height: Math.min(contentHeight, root.maxPanelHeight - Theme.dp(60))
                 flickDeceleration: 6000
                 maximumFlickVelocity: 6000
 
@@ -297,12 +297,12 @@ BarPill {
             Rectangle {
                 id: menuSheet
 
-                readonly property real wanted: entryCol.implicitHeight + 12
+                readonly property real wanted: entryCol.implicitHeight + Theme.dp(12)
 
-                width: 196
-                height: Math.min(menuSheet.wanted, root.screenH - 80)
+                width: Theme.dp(196)
+                height: Math.min(menuSheet.wanted, root.screenH - Theme.dp(80))
                 // kept on screen, whichever side of the bar the tray sits on
-                x: Math.max(10 - root.x, Math.min(root.menuX, menuLayer.width - menuSheet.width - 10))
+                x: Math.max(Theme.dp(10) - root.x, Math.min(root.menuX, menuLayer.width - menuSheet.width - Theme.dp(10)))
                 y: root.menuY
                 radius: Theme.radiusSm
                 color: Theme.bg
@@ -338,7 +338,7 @@ BarPill {
 
                 Flickable {
                     anchors.fill: parent
-                    anchors.margins: 6
+                    anchors.margins: Theme.dp(6)
                     contentWidth: width
                     contentHeight: entryCol.implicitHeight
                     clip: true
@@ -364,14 +364,14 @@ BarPill {
                                 readonly property bool isSep: entryRow.entry.isSeparator || entryRow.entry.text === ""
 
                                 width: entryCol.width
-                                height: entryRow.isSep ? 7 : 28
+                                height: entryRow.isSep ? Theme.dp(7) : Theme.dp(28)
 
                                 Rectangle {
                                     visible: entryRow.isSep
                                     anchors.verticalCenter: parent.verticalCenter
                                     anchors.left: parent.left
                                     anchors.right: parent.right
-                                    anchors.margins: 6
+                                    anchors.margins: Theme.dp(6)
                                     height: 1
                                     color: Theme.outline
                                 }
@@ -397,19 +397,19 @@ BarPill {
 
                                     visible: !entryRow.isSep && entryRow.entry.checkState !== Qt.Unchecked
                                     anchors.left: parent.left
-                                    anchors.leftMargin: 4
+                                    anchors.leftMargin: Theme.dp(4)
                                     anchors.verticalCenter: parent.verticalCenter
                                     name: "check"
-                                    size: 14
+                                    size: Theme.dp(14)
                                     color: Theme.accent
                                 }
 
                                 Text {
                                     visible: !entryRow.isSep
                                     anchors.left: parent.left
-                                    anchors.leftMargin: tick.visible ? 22 : 10
+                                    anchors.leftMargin: tick.visible ? Theme.dp(22) : Theme.dp(10)
                                     anchors.right: parent.right
-                                    anchors.rightMargin: 10
+                                    anchors.rightMargin: Theme.dp(10)
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: entryRow.entry.text
                                     color: entryRow.entry.enabled ? Theme.text : Theme.subtextDim
@@ -493,7 +493,7 @@ BarPill {
         }
 
         width: ListView.view.width
-        height: card.supporting !== "" ? 54 : 44
+        height: card.supporting !== "" ? Theme.dp(54) : Theme.dp(44)
         color: "transparent"
 
         Rectangle {
@@ -518,7 +518,7 @@ BarPill {
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.leftMargin: 48
+            anchors.leftMargin: Theme.dp(48)
             height: 1
             color: Theme.outline
         }
@@ -550,21 +550,21 @@ BarPill {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            anchors.leftMargin: 8
-            anchors.rightMargin: 10
-            spacing: 12
+            anchors.leftMargin: Theme.dp(8)
+            anchors.rightMargin: Theme.dp(10)
+            spacing: Theme.dp(12)
 
             Item {
-                width: 28
-                height: 28
+                width: Theme.dp(28)
+                height: Theme.dp(28)
                 anchors.verticalCenter: parent.verticalCenter
 
                 IconImage {
                     id: cardIconImage
 
                     anchors.centerIn: parent
-                    width: 22
-                    height: 22
+                    width: Theme.dp(22)
+                    height: Theme.dp(22)
                     source: card.resolvedIcon
                     asynchronous: true
                     visible: status === Image.Ready
@@ -573,7 +573,7 @@ BarPill {
                 Rectangle {
                     visible: !cardIconImage.visible
                     anchors.fill: parent
-                    radius: 999
+                    radius: Theme.dp(999)
                     color: Theme.withBlur(Theme.bgHigh)
 
                     Text {
@@ -592,9 +592,9 @@ BarPill {
                     visible: card.needsAttention
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    width: 8
-                    height: 8
-                    radius: 999
+                    width: Theme.dp(8)
+                    height: Theme.dp(8)
+                    radius: Theme.dp(999)
                     color: Theme.accent
                     border.width: 2
                     border.color: Theme.bgOpaque
@@ -604,7 +604,7 @@ BarPill {
 
             Column {
                 anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - 28 - parent.spacing
+                width: parent.width - Theme.dp(28) - parent.spacing
                 spacing: 1
 
                 Text {

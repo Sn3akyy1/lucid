@@ -1,16 +1,68 @@
 pragma Singleton
 
 import QtQuick
+import QtCore
 
-// lucid's tokens, as sddm can have them. every colour is written into
-// theme.conf by sync-sddm.sh, which reads them off the running shell rather
-// than re-deriving them - the tone maths in the shell's Theme.qml is not
-// reproducible from the palette file alone
-QtObject {
+// lucid's tokens, as sddm can have them. every colour is written by
+// sync-sddm.sh, which reads them off the running shell rather than
+// re-deriving them - the tone maths in the shell's Theme.qml is not
+// reproducible from the palette file alone.
+// each account paints its own users/<name>/, so the greeter wears whoever is
+// picked; theme.conf beside Main.qml is only the fallback for the unpainted.
+// an Item rather than a QtObject so the colours can carry Behaviors
+Item {
     id: root
 
+    // a palette swap moves with the wallpaper, on the desktop's own fade
+    component Glide: Behavior {
+        enabled: root.settled
+
+        ColorAnimation {
+            duration: root.lookMs
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: root.easeLook
+        }
+
+    }
+
+    // false until the greeter has picked its first account, so the boot
+    // palette lands at once instead of gliding in from the fallback
+    property bool settled: false
+    // whose wallpaper and colours are showing
+    readonly property string look: Lock.lookName
+    // users/<name>/ is plain data written by that account: ini and a jpeg,
+    // never qml, so no account can put code in front of another's password
+    readonly property url lookDir: Qt.resolvedUrl("../users/" + encodeURIComponent(root.look) + "/")
+    // an account counts as painted once its palette is there
+    readonly property bool lookOwn: {
+        void lookConf.location;
+        return root.look !== "" && lookConf.value("accent", "") !== "";
+    }
+    readonly property url background: {
+        if (root.lookOwn)
+            return root.lookDir + "background.jpg";
+
+        const shared = config.background;
+        return shared ? Qt.resolvedUrl("../" + shared) : "";
+    }
+    readonly property int lookMs: 1000
+    // awww's own fade curve, the one the desktop crossfades its palette on
+    readonly property var easeLook: [0.54, 0, 0.34, 0.99, 1, 1]
+
+    // read-only: Settings writes only what is set through it, and nothing is
+    Settings {
+        id: lookConf
+
+        location: root.lookDir + "theme.conf"
+    }
+
     function conf(key, fallback) {
-        var v = config[key];
+        // read the location so every binding through here re-runs on a switch
+        void lookConf.location;
+        var v = root.lookOwn ? lookConf.value(key, "") : "";
+        if (v === undefined || v === null || v === "")
+            v = config[key];
+
         return (v === undefined || v === null || v === "") ? fallback : v;
     }
 
@@ -21,32 +73,97 @@ QtObject {
 
     readonly property bool isLight: root.conf("isLight", "false") === "true"
 
-    readonly property color accent: root.conf("accent", "#ffb1c4")
-    readonly property color accentHover: root.conf("accentHover", "#ffc9d6")
-    readonly property color fgAccent: root.conf("fgAccent", "#5e1130")
-    readonly property color accentMuted: root.conf("accentMuted", "#c98a9b")
-    readonly property color accentContainer: root.conf("accentContainer", "#762744")
-    readonly property color fgAccentContainer: root.conf("fgAccentContainer", "#ffd9e1")
+    property color accent: root.conf("accent", "#ffb1c4")
+    property color accentHover: root.conf("accentHover", "#ffc9d6")
+    property color fgAccent: root.conf("fgAccent", "#5e1130")
+    property color accentMuted: root.conf("accentMuted", "#c98a9b")
+    property color accentContainer: root.conf("accentContainer", "#762744")
+    property color fgAccentContainer: root.conf("fgAccentContainer", "#ffd9e1")
     // the lock clock's hour: the primary hue lifted almost to white
-    readonly property color clockHour: root.conf("clockHour", root.text)
+    property color clockHour: root.conf("clockHour", root.text)
 
-    readonly property color bgOpaque: root.conf("bgOpaque", "#0f080a")
-    readonly property color bgHigh: root.conf("bgHigh", "#3a3032")
-    readonly property color text: root.conf("text", "#efdfe1")
-    readonly property color subtext: root.conf("subtext", "#d6c2c6")
-    readonly property color subtextDim: root.conf("subtextDim", "#aa9a9d")
-    readonly property color outline: root.conf("outline", "#524347")
-    readonly property color outlineStrong: root.conf("outlineStrong", "#9e8c90")
+    property color bgOpaque: root.conf("bgOpaque", "#0f080a")
+    property color bgHigh: root.conf("bgHigh", "#3a3032")
+    property color text: root.conf("text", "#efdfe1")
+    property color subtext: root.conf("subtext", "#d6c2c6")
+    property color subtextDim: root.conf("subtextDim", "#aa9a9d")
+    property color outline: root.conf("outline", "#524347")
+    property color outlineStrong: root.conf("outlineStrong", "#9e8c90")
 
-    readonly property color error: root.conf("error", "#ffb4ab")
-    readonly property color fgError: root.conf("fgError", "#690005")
+    property color error: root.conf("error", "#ffb4ab")
+    property color fgError: root.conf("fgError", "#690005")
     // the shell derives this in L* tone space; sync-sddm.sh reads it off the
     // running Theme rather than trying to redo that maths here
-    readonly property color errorHover: root.conf("errorHover", "#ffc2bb")
-    readonly property color success: root.conf("success", "#36e27e")
-    readonly property color fgSuccess: root.conf("fgSuccess", "#06381b")
-    readonly property color warning: root.conf("warning", "#eec13a")
-    readonly property color cScrim: root.conf("scrim", "#000000")
+    property color errorHover: root.conf("errorHover", "#ffc2bb")
+    property color success: root.conf("success", "#36e27e")
+    property color fgSuccess: root.conf("fgSuccess", "#06381b")
+    property color warning: root.conf("warning", "#eec13a")
+    property color cScrim: root.conf("scrim", "#000000")
+
+    // every colour glides; card and cardHigh follow bgOpaque and bgHigh
+    Glide on accent {
+    }
+
+    Glide on accentHover {
+    }
+
+    Glide on fgAccent {
+    }
+
+    Glide on accentMuted {
+    }
+
+    Glide on accentContainer {
+    }
+
+    Glide on fgAccentContainer {
+    }
+
+    Glide on clockHour {
+    }
+
+    Glide on bgOpaque {
+    }
+
+    Glide on bgHigh {
+    }
+
+    Glide on text {
+    }
+
+    Glide on subtext {
+    }
+
+    Glide on subtextDim {
+    }
+
+    Glide on outline {
+    }
+
+    Glide on outlineStrong {
+    }
+
+    Glide on error {
+    }
+
+    Glide on fgError {
+    }
+
+    Glide on errorHover {
+    }
+
+    Glide on success {
+    }
+
+    Glide on fgSuccess {
+    }
+
+    Glide on warning {
+    }
+
+    Glide on cScrim {
+    }
+
 
     // solid m3 containers, the same two Lockscreen.qml draws its cards with
     readonly property color card: root.bgOpaque
@@ -121,6 +238,12 @@ QtObject {
     readonly property var easeEmphasizedDecel: [0.05, 0.7, 0.1, 1, 1, 1]
     readonly property var easeEmphasizedAccel: [0.3, 0, 0.8, 0.15, 1, 1]
     readonly property int easeEmphasized: Easing.OutBack
+    readonly property var curveFastSpatial: [0.42, 1.67, 0.21, 0.9, 1, 1]
+    readonly property var curveEffects: [0.31, 0.94, 0.34, 1, 1, 1]
+    readonly property int durFastSpatial: root.ms(350)
+    readonly property int durDefaultEffects: root.ms(200)
+    readonly property int durShort: root.ms(180)
+    readonly property int durMedium: root.ms(280)
 
     function alpha(c, a) {
         return Qt.rgba(c.r, c.g, c.b, a);

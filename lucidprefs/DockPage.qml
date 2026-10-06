@@ -4,7 +4,7 @@ import qs
 Column {
     id: page
 
-    spacing: 26
+    spacing: Theme.dp(26)
 
     DockPreview {
         width: parent.width

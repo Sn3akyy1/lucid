@@ -9,7 +9,7 @@ Item {
     readonly property bool isSettingGroup: true
     property string title: ""
     property string subtitle: ""
-    property int gap: 3
+    property int gap: Theme.dp(3)
     default property alias content: inner.data
     // pages shout their section titles; m3 wants sentence case
     readonly property var _keep: ({
@@ -61,7 +61,7 @@ Item {
         Qt.callLater(card.regroup);
     }
 
-    implicitWidth: parent ? parent.width : 400
+    implicitWidth: parent ? parent.width : Theme.dp(400)
     implicitHeight: header.implicitHeight + inner.implicitHeight
     Component.onCompleted: card.regroupLater()
 
@@ -79,21 +79,21 @@ Item {
             font.variableAxes: Theme.axes(Theme.fontTitleSm, 600, 0)
             font.weight: Font.DemiBold
             font.letterSpacing: 0.1
-            leftPadding: 22
-            bottomPadding: card.subtitle === "" ? 12 : 0
+            leftPadding: Theme.dp(22)
+            bottomPadding: card.subtitle === "" ? Theme.dp(12) : 0
             visible: card.prettyTitle !== ""
         }
 
         Text {
-            width: parent.width - 44
+            width: parent.width - Theme.dp(44)
             text: card.subtitle
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyMd
             font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
             wrapMode: Text.WordWrap
-            leftPadding: 22
-            bottomPadding: 12
+            leftPadding: Theme.dp(22)
+            bottomPadding: Theme.dp(12)
             visible: card.subtitle !== ""
         }
 

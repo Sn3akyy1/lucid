@@ -25,28 +25,28 @@ Column {
 
     signal expandRequested()
 
-    width: parent ? parent.width : 400
+    width: parent ? parent.width : Theme.dp(400)
 
     Rectangle {
         id: head
 
         width: parent.width
-        height: 62
+        height: Theme.dp(62)
         radius: Theme.radiusMd
         color: dev.expanded ? Theme.bgHover : (headArea.containsMouse ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent")
 
         Item {
             id: iconTile
 
-            width: 40
-            height: 40
+            width: Theme.dp(40)
+            height: Theme.dp(40)
             anchors.left: parent.left
-            anchors.leftMargin: 11
+            anchors.leftMargin: Theme.dp(11)
             anchors.verticalCenter: parent.verticalCenter
 
             Rectangle {
                 anchors.fill: parent
-                radius: 13
+                radius: Theme.dp(13)
                 color: Theme.alpha(Theme.accent, dev.isDefault ? 0.24 : 0.11)
 
                 Behavior on color {
@@ -60,19 +60,19 @@ Column {
 
             DeviceGlyph {
                 anchors.centerIn: parent
-                size: 21
+                size: Theme.dp(21)
                 kind: Audio.glyphKind(dev.modelData)
                 color: Theme.accent
             }
 
             // the tick the rest of the app uses for "this is the one in use"
             Rectangle {
-                width: 14
-                height: 14
-                radius: 7
+                width: Theme.dp(14)
+                height: Theme.dp(14)
+                radius: Theme.dp(7)
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                anchors.margins: -3
+                anchors.margins: -Theme.dp(3)
                 visible: dev.isDefault
                 color: Theme.success
                 border.width: 2
@@ -81,7 +81,7 @@ Column {
                 Icon {
                     anchors.centerIn: parent
                     name: "check"
-                    size: 10
+                    size: Theme.dp(10)
                     color: Theme.fgSuccess
                 }
 
@@ -91,11 +91,11 @@ Column {
 
         Column {
             anchors.left: iconTile.right
-            anchors.leftMargin: 14
+            anchors.leftMargin: Theme.dp(14)
             anchors.right: trailing.left
-            anchors.rightMargin: 12
+            anchors.rightMargin: Theme.dp(12)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 2
+            spacing: Theme.dp(2)
 
             Text {
                 width: parent.width
@@ -124,9 +124,9 @@ Column {
             id: trailing
 
             anchors.right: parent.right
-            anchors.rightMargin: 12
+            anchors.rightMargin: Theme.dp(12)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 8
+            spacing: Theme.dp(8)
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
@@ -139,8 +139,8 @@ Column {
 
             M3IconButton {
                 anchors.verticalCenter: parent.verticalCenter
-                size: 32
-                iconSize: 18
+                size: Theme.dp(32)
+                iconSize: Theme.dp(18)
                 rotation: dev.expanded ? 180 : 0
                 iconPath: "expand_more"
                 onClicked: dev.expandRequested()
@@ -161,7 +161,7 @@ Column {
             id: headArea
 
             anchors.fill: parent
-            anchors.rightMargin: trailing.width + 12
+            anchors.rightMargin: trailing.width + Theme.dp(12)
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: Audio.setDefault(dev.modelData)
@@ -187,28 +187,28 @@ Column {
             id: body
 
             width: parent.width
-            leftPadding: 65
-            rightPadding: 14
-            topPadding: 4
-            bottomPadding: 16
-            spacing: 14
+            leftPadding: Theme.dp(65)
+            rightPadding: Theme.dp(14)
+            topPadding: Theme.dp(4)
+            bottomPadding: Theme.dp(16)
+            spacing: Theme.dp(14)
             opacity: dev.expanded ? 1 : 0
 
             Row {
-                width: parent.width - 79
-                spacing: 12
+                width: parent.width - Theme.dp(79)
+                spacing: Theme.dp(12)
 
                 M3IconButton {
                     anchors.verticalCenter: parent.verticalCenter
-                    size: 36
-                    iconSize: 19
+                    size: Theme.dp(36)
+                    iconSize: Theme.dp(19)
                     variant: dev.muted ? "tonal" : "standard"
                     iconPath: dev.muted ? "volume_off" : "volume_up"
                     onClicked: Audio.toggleMute(dev.modelData)
                 }
 
                 M3Slider {
-                    width: parent.width - 48
+                    width: parent.width - Theme.dp(48)
                     anchors.verticalCenter: parent.verticalCenter
                     from: 0
                     to: 100
@@ -227,9 +227,9 @@ Column {
             // where the sound physically comes out: the headphone socket, the
             // speakers, the digital output
             Column {
-                width: parent.width - 79
+                width: parent.width - Theme.dp(79)
                 visible: dev.ports && dev.ports.list.length > 1
-                spacing: 7
+                spacing: Theme.dp(7)
 
                 Text {
                     text: dev.modelData.isSink ? "Socket" : "Connector"
@@ -258,9 +258,9 @@ Column {
 
             // the card's own mode, which decides what devices it offers at all
             Column {
-                width: parent.width - 79
+                width: parent.width - Theme.dp(79)
                 visible: dev.card && dev.card.profiles.length > 1
-                spacing: 7
+                spacing: Theme.dp(7)
 
                 Text {
                     text: "Mode"
@@ -283,7 +283,7 @@ Column {
             }
 
             Text {
-                width: parent.width - 79
+                width: parent.width - Theme.dp(79)
                 text: dev.modelData.name
                 color: Theme.subtextDim
                 font.family: "monospace"

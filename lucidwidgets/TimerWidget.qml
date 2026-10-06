@@ -47,7 +47,7 @@ WidgetBody {
         id: fab
 
         property string icon: "play_arrow"
-        property real d: 56
+        property real d: Theme.dp(56)
         property bool quiet: false
 
         signal tapped()
@@ -88,7 +88,7 @@ WidgetBody {
     Item {
         id: ring
 
-        readonly property real d: Math.min(width - 32, height - 84)
+        readonly property real d: Math.min(width - Theme.dp(32), height - Theme.dp(84))
 
         visible: w.variant === "ring"
         anchors.fill: parent
@@ -101,13 +101,13 @@ WidgetBody {
                 id: dial
 
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: 12
+                y: Theme.dp(12)
                 width: ring.d
                 height: ring.d
 
                 MaterialShape {
                     anchors.centerIn: parent
-                    width: parent.width - 30
+                    width: parent.width - Theme.dp(30)
                     height: width
                     shape: w.done ? "sunny" : "cookie12"
                     color: Theme.alpha(w.inkAccent, w.done ? 0.3 : 0.1)
@@ -124,7 +124,7 @@ WidgetBody {
 
                 CircularProgress {
                     anchors.fill: parent
-                    thickness: 9
+                    thickness: Theme.dp(9)
                     value: w.total > 0 ? w.remain / w.total : 0
                     animated: false
                     color: w.inkAccent
@@ -133,7 +133,7 @@ WidgetBody {
 
                 Column {
                     anchors.centerIn: parent
-                    spacing: -4
+                    spacing: -Theme.dp(4)
 
                     LText {
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -159,8 +159,8 @@ WidgetBody {
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 12
-                spacing: 8
+                anchors.bottomMargin: Theme.dp(12)
+                spacing: Theme.dp(8)
 
                 IconButton {
                     anchors.verticalCenter: parent.verticalCenter
@@ -175,7 +175,7 @@ WidgetBody {
 
                 Fab {
                     anchors.verticalCenter: parent.verticalCenter
-                    d: 46
+                    d: Theme.dp(46)
                     icon: w.running ? "pause" : (w.done ? "replay" : "play_arrow")
                     onTapped: {
                         if (w.timer)
@@ -208,12 +208,12 @@ WidgetBody {
         Column {
             visible: w.timer === null && !w.preview
             anchors.centerIn: parent
-            spacing: 12
+            spacing: Theme.dp(12)
 
             Icon {
                 anchors.horizontalCenter: parent.horizontalCenter
                 name: "timer"
-                size: 30
+                size: Theme.dp(30)
                 color: w.inkAccent
             }
 
@@ -227,7 +227,7 @@ WidgetBody {
             Grid {
                 anchors.horizontalCenter: parent.horizontalCenter
                 columns: 2
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Repeater {
                     model: w.presets
@@ -237,9 +237,9 @@ WidgetBody {
 
                         required property int modelData
 
-                        width: 64
-                        height: 40
-                        radius: preTap.pressed ? 12 : 20
+                        width: Theme.dp(64)
+                        height: Theme.dp(40)
+                        radius: preTap.pressed ? Theme.dp(12) : Theme.dp(20)
                         color: Theme.alpha(w.inkAccent, 0.16)
 
                         LText {
@@ -272,14 +272,14 @@ WidgetBody {
     Item {
         id: pomo
 
-        readonly property real d: Math.min(width - 40, height - 124)
+        readonly property real d: Math.min(width - Theme.dp(40), height - Theme.dp(124))
 
         visible: w.variant === "pomodoro"
         anchors.fill: parent
 
         LText {
             anchors.horizontalCenter: parent.horizontalCenter
-            y: 14
+            y: Theme.dp(14)
             role: "titleSmall"
             color: w.ink
             text: w.phase === "idle" ? "Pomodoro" : Chrono.phaseLabel(w.phase)
@@ -289,7 +289,7 @@ WidgetBody {
             id: pomoDial
 
             anchors.horizontalCenter: parent.horizontalCenter
-            y: 40
+            y: Theme.dp(40)
             width: pomo.d
             height: pomo.d
 
@@ -303,7 +303,7 @@ WidgetBody {
                 anchors.centerIn: parent
                 width: parent.width * 0.78
                 height: width
-                thickness: 6
+                thickness: Theme.dp(6)
                 value: w.pomoTotal > 0 && w.phase !== "idle" ? w.pomoLeft / w.pomoTotal : 0
                 animated: false
                 color: w.inkAccent
@@ -325,8 +325,8 @@ WidgetBody {
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: pomoDial.bottom
-            anchors.topMargin: 10
-            spacing: 5
+            anchors.topMargin: Theme.dp(10)
+            spacing: Theme.dp(5)
 
             Repeater {
                 model: Math.max(1, Prefs.pomodoroRounds)
@@ -336,8 +336,8 @@ WidgetBody {
                     readonly property int doneRounds: w.preview ? 1 : Chrono.pomoRound % Math.max(1, Prefs.pomodoroRounds)
                     readonly property bool current: index === doneRounds && w.phase === "focus"
 
-                    width: current ? 18 : 7
-                    height: 7
+                    width: current ? Theme.dp(18) : Theme.dp(7)
+                    height: Theme.dp(7)
                     radius: 3.5
                     color: index < doneRounds || current ? w.inkAccent : Theme.alpha(w.ink, 0.2)
 
@@ -359,8 +359,8 @@ WidgetBody {
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 12
-            spacing: 8
+            anchors.bottomMargin: Theme.dp(12)
+            spacing: Theme.dp(8)
 
             IconButton {
                 anchors.verticalCenter: parent.verticalCenter
@@ -373,7 +373,7 @@ WidgetBody {
 
             Fab {
                 anchors.verticalCenter: parent.verticalCenter
-                d: 46
+                d: Theme.dp(46)
                 icon: (w.preview || Chrono.pomoRunning) ? "pause" : "play_arrow"
                 onTapped: Chrono.pomoToggle()
             }
@@ -395,16 +395,16 @@ WidgetBody {
     Item {
         visible: w.variant === "stopwatch"
         anchors.fill: parent
-        anchors.margins: 16
+        anchors.margins: Theme.dp(16)
 
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            y: Math.max(0, (parent.height - 58 - height) / 2)
+            y: Math.max(0, (parent.height - Theme.dp(58) - height) / 2)
 
             LText {
                 id: swMain
 
-                size: 52
+                size: Theme.dp(52)
                 weight: 640
                 rounded: 100
                 tabular: true
@@ -414,7 +414,7 @@ WidgetBody {
 
             LText {
                 anchors.baseline: swMain.baseline
-                size: 24
+                size: Theme.dp(24)
                 weight: 600
                 tabular: true
                 color: w.inkAccent
@@ -427,7 +427,7 @@ WidgetBody {
             visible: Chrono.laps.length > 0
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: swCtl.top
-            anchors.bottomMargin: 6
+            anchors.bottomMargin: Theme.dp(6)
             role: "labelMedium"
             tabular: true
             color: w.inkDim
@@ -439,7 +439,7 @@ WidgetBody {
 
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            spacing: 8
+            spacing: Theme.dp(8)
 
             IconButton {
                 anchors.verticalCenter: parent.verticalCenter
@@ -451,7 +451,7 @@ WidgetBody {
 
             Fab {
                 anchors.verticalCenter: parent.verticalCenter
-                d: 46
+                d: Theme.dp(46)
                 icon: (w.preview || Chrono.swRunning) ? "pause" : "play_arrow"
                 onTapped: Chrono.swToggle()
             }

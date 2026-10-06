@@ -382,14 +382,14 @@ WidgetBody {
         visible: w.variant === "detail"
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: 18
-        anchors.rightMargin: 18
+        anchors.leftMargin: Theme.dp(18)
+        anchors.rightMargin: Theme.dp(18)
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 13
+        spacing: Theme.dp(13)
 
         Item {
             width: parent.width
-            height: 44
+            height: Theme.dp(44)
 
             Text {
                 id: headTemp
@@ -399,16 +399,16 @@ WidgetBody {
                 text: w.headText
                 color: w.hasGpu ? (w.gpuAwake ? w.tempTint(w.gpuTemp) : Theme.subtextDim) : w.tempTint(w.cpuTemp)
                 font.family: Theme.fontFamily
-                font.pixelSize: 38
+                font.pixelSize: Theme.dp(38)
                 font.bold: true
                 font.letterSpacing: -1.5
             }
 
             Column {
                 anchors.left: headTemp.right
-                anchors.leftMargin: 12
+                anchors.leftMargin: Theme.dp(12)
                 anchors.right: headDraw.left
-                anchors.rightMargin: 8
+                anchors.rightMargin: Theme.dp(8)
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 1
 
@@ -416,7 +416,7 @@ WidgetBody {
                     text: w.hasGpu ? "GRAPHICS" : "PROCESSOR"
                     color: Theme.accent
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.dp(10)
                     font.bold: true
                     font.letterSpacing: 1.4
                 }
@@ -426,7 +426,7 @@ WidgetBody {
                     text: w.hasGpu ? (w.gpuAwake ? w.gpuShort : "Asleep, left undisturbed") : "Temperature"
                     color: w.gpuAwake || !w.hasGpu ? Theme.text : Theme.subtextDim
                     font.family: Theme.fontFamily
-                    font.pixelSize: 13
+                    font.pixelSize: Theme.dp(13)
                     elide: Text.ElideRight
                 }
 
@@ -445,7 +445,7 @@ WidgetBody {
                     text: "DRAW"
                     color: Theme.subtextDim
                     font.family: Theme.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.dp(9)
                     font.bold: true
                     font.letterSpacing: 0.9
                 }
@@ -455,7 +455,7 @@ WidgetBody {
                     text: w.gpuPower.toFixed(w.gpuPower < 10 ? 1 : 0) + " W"
                     color: Theme.text
                     font.family: Theme.fontFamily
-                    font.pixelSize: 13
+                    font.pixelSize: Theme.dp(13)
                     font.bold: true
                 }
 
@@ -477,7 +477,7 @@ WidgetBody {
 
         Row {
             visible: w.opt("showControls") !== false
-            spacing: 8
+            spacing: Theme.dp(8)
 
             Chip {
                 icon: Power.symbol(Power.profile)
@@ -507,7 +507,7 @@ WidgetBody {
 
         visible: w.variant === "rings"
         anchors.centerIn: parent
-        width: parent.width - 20
+        width: parent.width - Theme.dp(20)
 
         Repeater {
             model: w.rings
@@ -518,16 +518,16 @@ WidgetBody {
                 required property var modelData
 
                 width: w.rings.length > 0 ? ringRow.width / w.rings.length : 0
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 Item {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: 70
-                    height: 70
+                    width: Theme.dp(70)
+                    height: Theme.dp(70)
 
                     Gauge {
                         anchors.fill: parent
-                        thickness: 7
+                        thickness: Theme.dp(7)
                         value: ringCell.modelData.value
                         fillColor: ringCell.modelData.tint
                         startAngle: -215
@@ -536,11 +536,11 @@ WidgetBody {
 
                     Text {
                         anchors.centerIn: parent
-                        anchors.verticalCenterOffset: -3
+                        anchors.verticalCenterOffset: -Theme.dp(3)
                         text: ringCell.modelData.text
                         color: Theme.text
                         font.family: Theme.fontFamily
-                        font.pixelSize: 17
+                        font.pixelSize: Theme.dp(17)
                         font.bold: true
                     }
 
@@ -551,7 +551,7 @@ WidgetBody {
                     text: ringCell.modelData.short
                     color: Theme.subtextDim
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.dp(10)
                     font.bold: true
                     font.letterSpacing: 1.2
                 }
@@ -567,7 +567,7 @@ WidgetBody {
 
         visible: w.variant === "compact"
         anchors.centerIn: parent
-        width: parent.width - 32
+        width: parent.width - Theme.dp(32)
 
         Repeater {
             model: w.compactCells
@@ -584,7 +584,7 @@ WidgetBody {
                     text: compactCell.modelData.short
                     color: Theme.subtextDim
                     font.family: Theme.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: Theme.dp(10)
                     font.bold: true
                     font.letterSpacing: 1.2
                 }
@@ -593,7 +593,7 @@ WidgetBody {
                     text: compactCell.modelData.text
                     color: compactCell.modelData.tint
                     font.family: Theme.fontFamily
-                    font.pixelSize: 22
+                    font.pixelSize: Theme.dp(22)
                     font.bold: true
                     font.letterSpacing: -0.5
                 }
@@ -618,30 +618,30 @@ WidgetBody {
                 required property var modelData
 
                 width: statRow.model.length > 0 ? statRow.width / statRow.model.length : 0
-                spacing: 3
+                spacing: Theme.dp(3)
 
                 Text {
                     text: stat.modelData.label
                     color: Theme.subtextDim
                     font.family: Theme.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.dp(9)
                     font.bold: true
                     font.letterSpacing: 0.9
                 }
 
                 Text {
-                    width: stat.width - 8
+                    width: stat.width - Theme.dp(8)
                     text: stat.modelData.value
                     color: Theme.text
                     font.family: Theme.fontFamily
-                    font.pixelSize: 13
+                    font.pixelSize: Theme.dp(13)
                     font.bold: true
                     elide: Text.ElideRight
                 }
 
                 Meter {
-                    width: stat.width - 12
-                    thickness: 4
+                    width: stat.width - Theme.dp(12)
+                    thickness: Theme.dp(4)
                     value: stat.modelData.level
                     fillColor: stat.modelData.tint
                 }
@@ -662,8 +662,8 @@ WidgetBody {
 
         signal clicked()
 
-        implicitWidth: chipRow.implicitWidth + 24
-        implicitHeight: 30
+        implicitWidth: chipRow.implicitWidth + Theme.dp(24)
+        implicitHeight: Theme.dp(30)
         radius: height / 2
         opacity: chip.busy ? 0.6 : 1
         color: chip.on ? Theme.accent : Theme.alpha(Theme.text, chipArea.containsMouse ? 0.13 : 0.07)
@@ -672,12 +672,12 @@ WidgetBody {
             id: chipRow
 
             anchors.centerIn: parent
-            spacing: 6
+            spacing: Theme.dp(6)
 
             WidgetGlyph {
                 anchors.verticalCenter: parent.verticalCenter
                 name: chip.icon
-                size: 15
+                size: Theme.dp(15)
                 color: chip.on ? Theme.fgAccent : Theme.text
             }
 
@@ -686,7 +686,7 @@ WidgetBody {
                 text: chip.label
                 color: chip.on ? Theme.fgAccent : Theme.text
                 font.family: Theme.fontFamily
-                font.pixelSize: 12
+                font.pixelSize: Theme.dp(12)
                 font.bold: true
             }
 

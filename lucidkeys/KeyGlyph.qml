@@ -34,8 +34,8 @@ Item {
     })
     readonly property string pathData: glyph.symbols[glyph.name] || ""
 
-    implicitWidth: 24
-    implicitHeight: 24
+    implicitWidth: Theme.dp(24)
+    implicitHeight: Theme.dp(24)
     visible: glyph.pathData !== ""
 
     Icon {

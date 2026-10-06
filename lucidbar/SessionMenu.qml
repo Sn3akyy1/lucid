@@ -62,7 +62,7 @@ BarPill {
     // the action waiting for its second click
     property string armed: ""
     property string uptime: ""
-    readonly property int horizontalPadding: 11
+    readonly property int horizontalPadding: Theme.dp(11)
 
     function run(id) {
         const a = root.actions.find((x) => {
@@ -87,9 +87,9 @@ BarPill {
     readonly property bool gridPanel: Prefs.powerModulePanelStyle === "grid"
 
     shown: Prefs.showPower
-    compactWidth: (root.accentFace ? 24 : 18) + root.horizontalPadding * 2
-    panelWidth: root.gridPanel ? 300 : 260
-    panelHeight: panelColumn.implicitHeight + 32
+    compactWidth: (root.accentFace ? Theme.dp(24) : Theme.dp(18)) + root.horizontalPadding * 2
+    panelWidth: root.gridPanel ? Theme.dp(300) : Theme.dp(260)
+    panelHeight: panelColumn.implicitHeight + Theme.dp(32)
     expandedRadius: Theme.shapeXl
     onExpandedChanged: {
         root.armed = "";
@@ -130,15 +130,15 @@ BarPill {
     compactContent: [
         Rectangle {
             anchors.centerIn: parent
-            width: 24
-            height: 24
+            width: Theme.dp(24)
+            height: Theme.dp(24)
             radius: height / 2
             color: Theme.accent
             visible: root.accentFace
         },
         NotifIcon {
             anchors.centerIn: parent
-            size: root.accentFace ? 15 : 17
+            size: root.accentFace ? Theme.dp(15) : Theme.dp(17)
             path: root.icons.power
             color: root.accentFace ? Theme.fgAccent : Theme.text
         }
@@ -151,12 +151,12 @@ BarPill {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 16
-            spacing: 4
+            anchors.margins: Theme.dp(16)
+            spacing: Theme.dp(4)
 
             Item {
                 width: parent.width
-                height: 34
+                height: Theme.dp(34)
 
                 Text {
                     anchors.left: parent.left
@@ -172,9 +172,9 @@ BarPill {
                     visible: Prefs.powerModuleUptime && root.uptime !== ""
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    width: uptimeLabel.implicitWidth + 20
-                    height: 26
-                    radius: 13
+                    width: uptimeLabel.implicitWidth + Theme.dp(20)
+                    height: Theme.dp(26)
+                    radius: Theme.dp(13)
                     color: Theme.accentContainer
 
                     Text {
@@ -195,7 +195,7 @@ BarPill {
             // a list, or three to a row with the label under the icon
             Grid {
                 columns: root.gridPanel ? 3 : 1
-                spacing: root.gridPanel ? 8 : 4
+                spacing: root.gridPanel ? Theme.dp(8) : Theme.dp(4)
 
                 Repeater {
                     model: root.actions
@@ -207,24 +207,24 @@ BarPill {
                         readonly property bool isArmed: root.armed === actionRow.modelData.id
                         readonly property bool danger: actionRow.modelData.id === "reboot" || actionRow.modelData.id === "shutdown"
 
-                        width: root.gridPanel ? (panelColumn.width - 16) / 3 : panelColumn.width
-                        height: root.gridPanel ? 84 : 48
+                        width: root.gridPanel ? (panelColumn.width - Theme.dp(16)) / 3 : panelColumn.width
+                        height: root.gridPanel ? Theme.dp(84) : Theme.dp(48)
                         radius: Theme.radiusMd
                         color: actionRow.isArmed ? Theme.alpha(Theme.error, 0.9) : (actionArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent")
 
                         Rectangle {
                             id: actionIcon
 
-                            x: root.gridPanel ? (parent.width - width) / 2 : 8
-                            y: root.gridPanel ? 12 : (parent.height - height) / 2
-                            width: 34
-                            height: 34
-                            radius: 17
+                            x: root.gridPanel ? (parent.width - width) / 2 : Theme.dp(8)
+                            y: root.gridPanel ? Theme.dp(12) : (parent.height - height) / 2
+                            width: Theme.dp(34)
+                            height: Theme.dp(34)
+                            radius: Theme.dp(17)
                             color: actionRow.isArmed ? Theme.alpha(Theme.fgError, 0.18) : (actionRow.danger ? Theme.errorContainer : Theme.accentContainer)
 
                             NotifIcon {
                                 anchors.centerIn: parent
-                                size: 18
+                                size: Theme.dp(18)
                                 path: root.icons[actionRow.modelData.icon]
                                 color: actionRow.isArmed ? Theme.fgError : (actionRow.danger ? Theme.fgErrorContainer : Theme.fgAccentContainer)
                             }
@@ -232,9 +232,9 @@ BarPill {
                         }
 
                         Text {
-                            x: root.gridPanel ? 6 : actionIcon.x + actionIcon.width + 12
-                            y: root.gridPanel ? actionIcon.y + actionIcon.height + 8 : (parent.height - height) / 2
-                            width: parent.width - x - (root.gridPanel ? 6 : 12)
+                            x: root.gridPanel ? Theme.dp(6) : actionIcon.x + actionIcon.width + Theme.dp(12)
+                            y: root.gridPanel ? actionIcon.y + actionIcon.height + Theme.dp(8) : (parent.height - height) / 2
+                            width: parent.width - x - (root.gridPanel ? Theme.dp(6) : Theme.dp(12))
                             horizontalAlignment: root.gridPanel ? Text.AlignHCenter : Text.AlignLeft
                             text: actionRow.isArmed ? actionRow.modelData.label + (root.gridPanel ? "?" : "? Click again") : actionRow.modelData.label
                             color: actionRow.isArmed ? Theme.fgError : Theme.text

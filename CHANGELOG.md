@@ -248,6 +248,18 @@ places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
   Hyprland update.
 - The theme scripts behind the Colours and Palettes pages go into
   `~/.config/lucid` with the rest.
+- **The login screen wears whoever is picked.** Each account paints its own
+  wallpaper and palette into the SDDM theme, and choosing another account in
+  the user picker crossfades the greeter to theirs. Before, the installer handed
+  the whole theme to whichever account ran it last, and every other account's
+  wallpaper changes were dropped without a word. The theme now stays root's,
+  with one sticky `users/` directory each account writes only its own part of,
+  and an account the greeter has nothing for yet is painted at its next login.
+- **Settings' file choosers no longer need zenity.** Picking an account
+  picture, a wallpaper, a template or a palette did nothing at all without it.
+  They now open the desktop's own chooser through the XDG portal, with zenity
+  and kdialog as fallbacks and a notification when none is there, and they float
+  instead of tiling.
 
 ### Upgrading
 
@@ -268,6 +280,10 @@ git pull
 - **A Hyprland config of your own** gets `require("modules.settings")`
   appended, the same way `modules.glass` is, so the Windows and Input pages can
   apply what they set.
+- **The login screen** needs the theme reinstalled once, as root, to move to
+  per-account copies: `./install.sh` does it, or on its own
+  `sudo support/sddm/install-theme.sh`. Each account then shows up as itself
+  after its next login or wallpaper change.
 
 ## v1.10.5 — 2026-09-22
 

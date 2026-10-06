@@ -24,6 +24,33 @@ function superellipse(th, a, b, p) {
     return Math.pow(Math.pow(c, p) + Math.pow(s, p), -1 / p);
 }
 
+// a polygon given as [x, y, ...] about the centre, for an inside test
+function within(v, x, y) {
+    var hit = false;
+    for (var i = 0, j = v.length - 2; i < v.length; j = i, i += 2) {
+        if ((v[i + 1] > y) !== (v[j + 1] > y) && x < (v[j] - v[i]) * (y - v[i + 1]) / (v[j + 1] - v[i + 1]) + v[i])
+            hit = !hit;
+
+    }
+    return hit;
+}
+
+// the radius of any shape the centre can see all of, found by bisection
+function hull(inside) {
+    return function(t) {
+        var lo = 0, hi = 2;
+        var c = Math.cos(t), s = Math.sin(t);
+        for (var i = 0; i < 22; i++) {
+            var m = (lo + hi) / 2;
+            if (inside(m * c, m * s))
+                lo = m;
+            else
+                hi = m;
+        }
+        return lo;
+    };
+}
+
 // [radius fn, smoothing window, rotation]
 var defs = {
     "circle": [function(t) { return 1; }, 0, 0],
@@ -48,7 +75,12 @@ var defs = {
     "softBurst": [function(t) { return 1 - 0.17 * (1 - tri(10 * t)); }, 3, 0],
     "flower": [function(t) { return 0.72 + 0.28 * Math.pow(Math.abs(Math.cos(4 * t)), 0.8); }, 3, Math.PI / 8],
     "arch": [function(t) { return Math.sin(t) > 0 ? superellipse(t, 1, 1, 4) : 1; }, 2, 0],
-    "puffy": [function(t) { return 0.88 + 0.12 * Math.pow(Math.abs(Math.cos(3 * t)), 0.5) - 0.05 * Math.cos(2 * t); }, 3, 0]
+    "puffy": [function(t) { return 0.88 + 0.12 * Math.pow(Math.abs(Math.cos(3 * t)), 0.5) - 0.05 * Math.cos(2 * t); }, 3, 0],
+    "semiCircle": [hull(function(x, y) { return y >= -0.5 && x * x + (y + 0.5) * (y + 0.5) <= 1; }), 3, 0],
+    "fan": [hull(function(x, y) { return Math.abs(x) <= 1 && Math.abs(y) <= 1 && (x < -0.6 || y > 0.6 || (x + 0.6) * (x + 0.6) + (y - 0.6) * (y - 0.6) <= 2.56); }), 2, 0],
+    "arrow": [hull(function(x, y) { return within([0, -1.32, 1.45, 1.12, 0, 0.78, -1.43, 1.1], x, y); }), 4, 0],
+    "clamShell": [hull(function(x, y) { return within([-0.66, -0.68, 0.66, -0.68, 1.04, 0, 0.66, 0.68, -0.66, 0.68, -1.04, 0], x, y); }), 3, 0],
+    "ghostish": [hull(function(x, y) { var a = Math.abs(x); return y < 0 ? x * x + y * y <= 1 : a <= 1 && y <= (a <= 0.15 ? 0.81 : 0.81 + (a - 0.15) * 0.553); }), 3, 0]
 };
 
 function radii(name) {

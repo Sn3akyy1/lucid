@@ -30,10 +30,10 @@ Column {
         return "{{colors." + role + ".default." + tokens.format + "}}";
     }
 
-    spacing: 14
+    spacing: Theme.dp(14)
 
     M3Segmented {
-        width: Math.min(tokens.width, 440)
+        width: Math.min(tokens.width, Theme.dp(440))
         current: tokens.format
         options: tokens.formats
         onChosen: (key) => {
@@ -52,7 +52,7 @@ Column {
 
     Flow {
         width: tokens.width
-        spacing: 6
+        spacing: Theme.dp(6)
 
         Repeater {
             model: Templates.roles
@@ -63,8 +63,8 @@ Column {
                 required property string modelData
                 readonly property string hex: Templates.colours[chip.modelData] || "#000000"
 
-                width: chipRow.implicitWidth + 20
-                height: 34
+                width: chipRow.implicitWidth + Theme.dp(20)
+                height: Theme.dp(34)
                 radius: height / 2
                 color: chipArea.containsMouse ? Theme.bgHigh : Theme.bgSunken
 
@@ -72,12 +72,12 @@ Column {
                     id: chipRow
 
                     anchors.centerIn: parent
-                    spacing: 8
+                    spacing: Theme.dp(8)
 
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 18
-                        height: 18
+                        width: Theme.dp(18)
+                        height: Theme.dp(18)
                         radius: height / 2
                         color: chip.hex
                         border.width: 1

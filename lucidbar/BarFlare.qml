@@ -6,7 +6,7 @@ Item {
     id: flare
 
     property bool mirrored: false
-    property int size: 14
+    property int size: Theme.dp(14)
     property color fillColor: Theme.bg
     property bool hovered: false
 

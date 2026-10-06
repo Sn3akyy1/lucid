@@ -28,10 +28,10 @@ SettingCard {
 
             Row {
                 width: parent.width
-                spacing: 14
+                spacing: Theme.dp(14)
 
                 M3Slider {
-                    width: parent.width - 110
+                    width: parent.width - Theme.dp(110)
                     anchors.verticalCenter: parent.verticalCenter
                     enabled: !sinkRow.modelData.muted
                     showReadout: false

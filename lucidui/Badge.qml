@@ -11,8 +11,8 @@ Rectangle {
     property color fg: Theme.fgError
     readonly property bool dot: b.count < 0
 
-    implicitWidth: b.dot ? 6 : Math.max(16, num.implicitWidth + 8)
-    implicitHeight: b.dot ? 6 : 16
+    implicitWidth: b.dot ? Theme.dp(6) : Math.max(Theme.dp(16), num.implicitWidth + Theme.dp(8))
+    implicitHeight: b.dot ? Theme.dp(6) : Theme.dp(16)
     radius: height / 2
     color: b.tone
 

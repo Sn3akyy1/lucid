@@ -98,7 +98,7 @@ SettingCard {
 
         Flow {
             width: parent.width
-            spacing: 10
+            spacing: Theme.dp(10)
 
             Repeater {
                 model: card.mod && card.mod.styles ? card.mod.styles : []
@@ -126,7 +126,7 @@ SettingCard {
 
         Flow {
             width: parent.width
-            spacing: 10
+            spacing: Theme.dp(10)
 
             Repeater {
                 model: card.mod && card.mod.panelStyles ? card.mod.panelStyles : []
@@ -237,7 +237,7 @@ SettingCard {
 
         Column {
             width: parent.width
-            spacing: 6
+            spacing: Theme.dp(6)
 
             Repeater {
                 model: card.powerRows
@@ -254,15 +254,15 @@ SettingCard {
                     readonly property bool on: powerItem.at !== -1
 
                     width: parent.width
-                    height: 52
+                    height: Theme.dp(52)
                     radius: Theme.radiusMd
                     color: Theme.bgSunken
 
                     Column {
                         anchors.left: parent.left
-                        anchors.leftMargin: 16
+                        anchors.leftMargin: Theme.dp(16)
                         anchors.right: powerTools.left
-                        anchors.rightMargin: 10
+                        anchors.rightMargin: Theme.dp(10)
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 1
 
@@ -290,13 +290,13 @@ SettingCard {
                         id: powerTools
 
                         anchors.right: parent.right
-                        anchors.rightMargin: 12
+                        anchors.rightMargin: Theme.dp(12)
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
+                        spacing: Theme.dp(2)
 
                         M3IconButton {
                             anchors.verticalCenter: parent.verticalCenter
-                            size: 34
+                            size: Theme.dp(34)
                             enabled: powerItem.on && powerItem.at > 0
                             iconPath: "arrow_upward"
                             onClicked: {
@@ -309,7 +309,7 @@ SettingCard {
 
                         M3IconButton {
                             anchors.verticalCenter: parent.verticalCenter
-                            size: 34
+                            size: Theme.dp(34)
                             enabled: powerItem.on && powerItem.at < card.powerOn.length - 1
                             iconPath: "arrow_downward"
                             onClicked: {
@@ -389,7 +389,7 @@ SettingCard {
         showDivider: false
 
         M3Segmented {
-            width: Math.min(parent.width, 480)
+            width: Math.min(parent.width, Theme.dp(480))
             current: Prefs.windowModuleText
             options: [{
                 "key": "title",

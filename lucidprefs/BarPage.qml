@@ -61,7 +61,7 @@ Column {
         target: Prefs
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
 
     BarPreview {
         width: parent.width

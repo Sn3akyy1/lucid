@@ -103,8 +103,8 @@ Item {
         id: card
 
         anchors.centerIn: parent
-        width: Math.min(480, dialog.width - 64)
-        height: Math.min(cardCol.implicitHeight + 56, dialog.height - 48)
+        width: Math.min(Theme.dp(480), dialog.width - Theme.dp(64))
+        height: Math.min(cardCol.implicitHeight + Theme.dp(56), dialog.height - Theme.dp(48))
         radius: Theme.shapeXl
         color: Theme.bgHigh
         scale: dialog.shown ? 1 : 0.88
@@ -120,8 +120,8 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 28
-            spacing: 10
+            anchors.margins: Theme.dp(28)
+            spacing: Theme.dp(10)
 
             Text {
                 width: parent.width
@@ -145,7 +145,7 @@ Item {
 
             Item {
                 width: parent.width
-                height: 6
+                height: Theme.dp(6)
             }
 
             M3TextField {
@@ -196,7 +196,7 @@ Item {
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelLg
                 font.variableAxes: Theme.axes(Theme.fontLabelLg, 420, 0)
-                topPadding: 6
+                topPadding: Theme.dp(6)
             }
 
             M3Segmented {
@@ -232,7 +232,7 @@ Item {
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelLg
                 font.variableAxes: Theme.axes(Theme.fontLabelLg, 420, 0)
-                topPadding: 6
+                topPadding: Theme.dp(6)
             }
 
             M3Segmented {
@@ -281,12 +281,12 @@ Item {
 
             Item {
                 width: parent.width
-                height: 8
+                height: Theme.dp(8)
             }
 
             Row {
                 anchors.right: parent.right
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 M3Button {
                     text: "Cancel"

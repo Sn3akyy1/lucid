@@ -43,8 +43,8 @@ Item {
         tile.naming = false;
     }
 
-    implicitWidth: 240
-    implicitHeight: thumb.height + 88
+    implicitWidth: Theme.dp(240)
+    implicitHeight: thumb.height + Theme.dp(88)
     opacity: tile.empty ? 0.5 : 1
     onEmptyChanged: {
         if (tile.empty)
@@ -88,7 +88,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 10
+            anchors.margins: Theme.dp(10)
             height: thumb.implicitHeight
             cards: Widgets.desktopLayout
             wallpaper: tile.wallpaper
@@ -96,9 +96,9 @@ Item {
 
         Rectangle {
             anchors.centerIn: thumb
-            width: 34
-            height: 34
-            radius: 17
+            width: Theme.dp(34)
+            height: Theme.dp(34)
+            radius: Theme.dp(17)
             color: Theme.accent
             opacity: area.containsMouse && !tile.naming && !tile.empty ? 1 : 0
             scale: area.containsMouse && !tile.naming && !tile.empty ? 1 : 0.7
@@ -107,7 +107,7 @@ Item {
             WidgetGlyph {
                 anchors.centerIn: parent
                 name: "add"
-                size: 20
+                size: Theme.dp(20)
                 color: Theme.fgAccent
             }
 
@@ -132,10 +132,10 @@ Item {
         Rectangle {
             anchors.horizontalCenter: thumb.horizontalCenter
             anchors.bottom: thumb.bottom
-            anchors.bottomMargin: 8
-            width: hint.implicitWidth + 20
-            height: 24
-            radius: 12
+            anchors.bottomMargin: Theme.dp(8)
+            width: hint.implicitWidth + Theme.dp(20)
+            height: Theme.dp(24)
+            radius: Theme.dp(12)
             color: Theme.bgOpaque
             opacity: tile.naming ? 1 : 0
             visible: opacity > 0.01
@@ -167,9 +167,9 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: thumb.bottom
-            anchors.leftMargin: 14
-            anchors.rightMargin: 14
-            anchors.topMargin: 10
+            anchors.leftMargin: Theme.dp(14)
+            anchors.rightMargin: Theme.dp(14)
+            anchors.topMargin: Theme.dp(10)
             text: "Save this layout"
             color: Theme.text
             font.family: Theme.fontFamily
@@ -184,10 +184,10 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: name.bottom
-            anchors.leftMargin: 14
-            anchors.rightMargin: 14
-            anchors.topMargin: 3
-            height: 30
+            anchors.leftMargin: Theme.dp(14)
+            anchors.rightMargin: Theme.dp(14)
+            anchors.topMargin: Theme.dp(3)
+            height: Theme.dp(30)
             text: tile.empty ? "Place a widget or two first, then keep the arrangement here." : "Keep what is on your desktop now as a preset of your own."
             color: Theme.subtextDim
             font.family: Theme.fontFamily
@@ -215,15 +215,15 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: 10
-        spacing: 6
+        anchors.margins: Theme.dp(10)
+        spacing: Theme.dp(6)
         visible: tile.naming
 
         M3TextField {
             id: field
 
             width: parent.width - save.width - parent.spacing
-            height: 42
+            height: Theme.dp(42)
             placeholder: "Name it"
             commitOnBlur: false
             onEdited: (v) => {
@@ -240,7 +240,7 @@ Item {
             id: save
 
             anchors.verticalCenter: field.verticalCenter
-            size: 42
+            size: Theme.dp(42)
             variant: "filled"
             enabled: tile.draft.trim() !== ""
             iconPath: "check"

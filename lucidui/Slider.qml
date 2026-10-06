@@ -39,20 +39,20 @@ Item {
     signal iconClicked()
 
     // metrics follow the size token unless a call site overrides them
-    property int trackH: sl.size === "l" ? 52 : (sl.size === "m" ? 38 : (sl.size === "s" ? 22 : 14))
-    property int handleH: sl.size === "l" ? 64 : (sl.size === "m" ? 50 : 36)
-    property real outerR: sl.size === "l" ? 16 : (sl.size === "m" ? 12 : sl.trackH / 2)
-    property int iconSize: sl.size === "l" ? 24 : 20
+    property int trackH: sl.size === "l" ? Theme.dp(52) : (sl.size === "m" ? Theme.dp(38) : (sl.size === "s" ? Theme.dp(22) : Theme.dp(14)))
+    property int handleH: sl.size === "l" ? Theme.dp(64) : (sl.size === "m" ? Theme.dp(50) : Theme.dp(36))
+    property real outerR: sl.size === "l" ? Theme.dp(16) : (sl.size === "m" ? Theme.dp(12) : sl.trackH / 2)
+    property int iconSize: sl.size === "l" ? Theme.dp(24) : Theme.dp(20)
     // the pointer swells the control instead of just tinting it
-    property int hoverGrow: 2
+    property int hoverGrow: Theme.dp(2)
     readonly property bool hot: !sl.disabled && (sl.hovered || area.pressed)
     readonly property int trackHNow: sl.trackH + (sl.hot ? sl.hoverGrow : 0)
     readonly property int handleHNow: sl.handleH + (sl.hot ? sl.hoverGrow * 2 : 0)
     // a stadium cap has to stay a stadium while it grows
     readonly property real outerRNow: sl.outerR >= sl.trackH / 2 ? sl.trackHNow / 2 : sl.outerR
-    readonly property int handleW: area.pressed ? 2 : (sl.hot ? 6 : 4)
-    readonly property int gap: 5
-    readonly property real innerR: 2
+    readonly property int handleW: area.pressed ? Theme.dp(2) : (sl.hot ? Theme.dp(6) : Theme.dp(4))
+    readonly property int gap: Theme.dp(5)
+    readonly property real innerR: Theme.dp(2)
     readonly property real frac: sl.to > sl.from ? Math.max(0, Math.min(1, (sl.live - sl.from) / (sl.to - sl.from))) : 0
     readonly property real handleX: sl.handleW / 2 + sl.frac * (sl.width - sl.handleW)
 
@@ -86,7 +86,7 @@ Item {
 
     }
 
-    implicitWidth: 200
+    implicitWidth: Theme.dp(200)
     implicitHeight: Math.max(sl.handleH, sl.trackH)
     opacity: sl.disabled ? Theme.disabledContent : 1
 
@@ -159,10 +159,10 @@ Item {
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
-            anchors.rightMargin: Math.max(3, (sl.trackHNow - 4) / 2)
-            width: 4
-            height: 4
-            radius: 2
+            anchors.rightMargin: Math.max(Theme.dp(3), (sl.trackHNow - Theme.dp(4)) / 2)
+            width: Theme.dp(4)
+            height: Theme.dp(4)
+            radius: Theme.dp(2)
             color: sl.activeColor
             visible: parent.width > 14
         }
@@ -202,7 +202,7 @@ Item {
 
         readonly property bool fitsActive: active.width >= sl.trackH + 8
         // a stadium end centres the glyph on its cap, a squarer one needs the nudge
-        readonly property int nudge: sl.outerR >= sl.trackH / 2 ? 0 : 2
+        readonly property int nudge: sl.outerR >= sl.trackH / 2 ? 0 : Theme.dp(2)
 
         visible: sl.icon !== "" && sl.trackH >= 28
         name: sl.icon
@@ -217,7 +217,7 @@ Item {
     LText {
         id: valueLabel
 
-        readonly property real pad: Math.max(8, sl.trackH / 4)
+        readonly property real pad: Math.max(Theme.dp(8), sl.trackH / 4)
         readonly property real iconRoom: inset.visible ? sl.trackH : 0
         readonly property bool onActive: active.width - (inset.fitsActive ? valueLabel.iconRoom : 0) - valueLabel.pad * 2 >= valueLabel.implicitWidth
 
@@ -239,12 +239,12 @@ Item {
         opacity: area.pressed ? 1 : 0
         scale: area.pressed ? 1 : 0.6
         transformOrigin: Item.Bottom
-        width: Math.max(36, label.implicitWidth + 20)
-        height: 30
-        radius: 15
+        width: Math.max(Theme.dp(36), label.implicitWidth + Theme.dp(20))
+        height: Theme.dp(30)
+        radius: Theme.dp(15)
         color: Theme.inverseSurface
         x: sl.handleX - width / 2
-        y: -height - 8
+        y: -height - Theme.dp(8)
 
         LText {
             id: label
@@ -277,8 +277,8 @@ Item {
         id: area
 
         anchors.fill: parent
-        anchors.topMargin: -6
-        anchors.bottomMargin: -6
+        anchors.topMargin: -Theme.dp(6)
+        anchors.bottomMargin: -Theme.dp(6)
         enabled: !sl.disabled
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
@@ -307,9 +307,9 @@ Item {
 
     MouseArea {
         visible: sl.iconClickable && inset.visible
-        x: inset.x - 8
+        x: inset.x - Theme.dp(8)
         y: 0
-        width: inset.width + 16
+        width: inset.width + Theme.dp(16)
         height: sl.height
         cursorShape: Qt.PointingHandCursor
         onClicked: sl.iconClicked()

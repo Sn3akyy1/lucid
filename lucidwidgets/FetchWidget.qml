@@ -60,25 +60,25 @@ WidgetBody {
     Item {
         visible: w.variant === "card"
         anchors.fill: parent
-        anchors.margins: 18
+        anchors.margins: Theme.dp(18)
 
         Row {
             id: cardHead
 
-            spacing: 14
+            spacing: Theme.dp(14)
 
             LP.LucidaMark {
                 anchors.verticalCenter: parent.verticalCenter
-                width: 46
-                height: 46
-                strokeWidth: 2
+                width: Theme.dp(46)
+                height: Theme.dp(46)
+                strokeWidth: Theme.dp(2)
                 ringColor: w.inkAccent
                 starColor: w.ink
             }
 
             Column {
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: -3
+                spacing: -Theme.dp(3)
 
                 LText {
                     role: "titleMedium"
@@ -99,9 +99,9 @@ WidgetBody {
 
         Column {
             anchors.top: cardHead.bottom
-            anchors.topMargin: 14
+            anchors.topMargin: Theme.dp(14)
             width: parent.width
-            spacing: 5
+            spacing: Theme.dp(5)
 
             Repeater {
                 model: w.rows.slice(1)
@@ -112,14 +112,14 @@ WidgetBody {
                     required property var modelData
 
                     width: parent.width
-                    height: 20
+                    height: Theme.dp(20)
 
                     Icon {
                         id: frIcon
 
                         anchors.verticalCenter: parent.verticalCenter
                         name: fr.modelData.icon
-                        size: 16
+                        size: Theme.dp(16)
                         fill: 1
                         color: w.inkAccent
                     }
@@ -128,9 +128,9 @@ WidgetBody {
                         id: frKey
 
                         anchors.left: frIcon.right
-                        anchors.leftMargin: 10
+                        anchors.leftMargin: Theme.dp(10)
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 70
+                        width: Theme.dp(70)
                         role: "labelLarge"
                         color: w.inkDim
                         text: fr.modelData.key
@@ -154,7 +154,7 @@ WidgetBody {
 
         Row {
             anchors.bottom: parent.bottom
-            spacing: 4
+            spacing: Theme.dp(4)
 
             Repeater {
                 model: w.swatches
@@ -163,12 +163,12 @@ WidgetBody {
                     required property color modelData
                     required property int index
 
-                    width: 22
-                    height: 14
-                    topLeftRadius: index === 0 ? 7 : 3
-                    bottomLeftRadius: index === 0 ? 7 : 3
-                    topRightRadius: index === w.swatches.length - 1 ? 7 : 3
-                    bottomRightRadius: index === w.swatches.length - 1 ? 7 : 3
+                    width: Theme.dp(22)
+                    height: Theme.dp(14)
+                    topLeftRadius: index === 0 ? Theme.dp(7) : Theme.dp(3)
+                    bottomLeftRadius: index === 0 ? Theme.dp(7) : Theme.dp(3)
+                    topRightRadius: index === w.swatches.length - 1 ? Theme.dp(7) : Theme.dp(3)
+                    bottomRightRadius: index === w.swatches.length - 1 ? Theme.dp(7) : Theme.dp(3)
                     color: modelData
                 }
 
@@ -182,15 +182,15 @@ WidgetBody {
     Item {
         visible: w.variant === "terminal"
         anchors.fill: parent
-        anchors.margins: 16
+        anchors.margins: Theme.dp(16)
 
         Column {
             width: parent.width
-            spacing: 2
+            spacing: Theme.dp(2)
 
             Text {
                 font.family: "monospace"
-                font.pixelSize: 13
+                font.pixelSize: Theme.dp(13)
                 color: w.inkDim
                 textFormat: Text.StyledText
                 text: "<font color='" + Theme.toHex(w.inkAccent) + "'>❯</font> lucidfetch"
@@ -198,12 +198,12 @@ WidgetBody {
 
             Item {
                 width: 1
-                height: 6
+                height: Theme.dp(6)
             }
 
             Text {
                 font.family: "monospace"
-                font.pixelSize: 13
+                font.pixelSize: Theme.dp(13)
                 font.bold: true
                 color: w.inkAccent
                 text: (w.info.user || "") + "@" + (w.info.host || "")
@@ -211,7 +211,7 @@ WidgetBody {
 
             Text {
                 font.family: "monospace"
-                font.pixelSize: 13
+                font.pixelSize: Theme.dp(13)
                 color: w.inkFaint
                 text: "─".repeat(Math.max(4, ((w.info.user || "") + "@" + (w.info.host || "")).length))
             }
@@ -224,7 +224,7 @@ WidgetBody {
 
                     width: parent.width
                     font.family: "monospace"
-                    font.pixelSize: 13
+                    font.pixelSize: Theme.dp(13)
                     color: w.ink
                     elide: Text.ElideRight
                     textFormat: Text.StyledText
@@ -245,8 +245,8 @@ WidgetBody {
                 Rectangle {
                     required property color modelData
 
-                    width: 20
-                    height: 12
+                    width: Theme.dp(20)
+                    height: Theme.dp(12)
                     color: modelData
                 }
 

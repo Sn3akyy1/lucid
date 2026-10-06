@@ -131,7 +131,7 @@ Item {
         id: col
 
         width: root.width
-        spacing: 10
+        spacing: Theme.dp(10)
 
         Item {
             id: scanButton
@@ -140,7 +140,7 @@ Item {
 
             visible: root.btEnabled
             width: parent.width
-            height: 44
+            height: Theme.dp(44)
 
             Timer {
                 interval: 400
@@ -185,13 +185,13 @@ Item {
 
                 Row {
                     anchors.left: parent.left
-                    anchors.leftMargin: 12
+                    anchors.leftMargin: Theme.dp(12)
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     Item {
-                        width: 24
-                        height: 24
+                        width: Theme.dp(24)
+                        height: Theme.dp(24)
                         anchors.verticalCenter: parent.verticalCenter
 
                         LoadingIndicator {
@@ -204,7 +204,7 @@ Item {
                             anchors.centerIn: parent
                             visible: !root.discovering
                             name: "bluetooth_searching"
-                            size: 20
+                            size: Theme.dp(20)
                             color: Theme.subtext
                         }
 
@@ -221,7 +221,7 @@ Item {
 
                 LText {
                     anchors.right: parent.right
-                    anchors.rightMargin: 16
+                    anchors.rightMargin: Theme.dp(16)
                     anchors.verticalCenter: parent.verticalCenter
                     visible: root.discovering
                     role: "labelMedium"
@@ -236,11 +236,11 @@ Item {
         Item {
             visible: root.btEnabled
             width: parent.width
-            height: 34
+            height: Theme.dp(34)
 
             LText {
                 anchors.left: parent.left
-                anchors.leftMargin: 6
+                anchors.leftMargin: Theme.dp(6)
                 anchors.verticalCenter: parent.verticalCenter
                 role: "bodyMedium"
                 color: Theme.subtext
@@ -263,8 +263,8 @@ Item {
         Column {
             visible: !root.btEnabled
             width: parent.width
-            topPadding: 20
-            spacing: 4
+            topPadding: Theme.dp(20)
+            spacing: Theme.dp(4)
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -291,11 +291,11 @@ Item {
 
             visible: root.btEnabled
             width: parent.width
-            spacing: 14
+            spacing: Theme.dp(14)
 
             Column {
                 width: parent.width
-                spacing: 3
+                spacing: Theme.dp(3)
                 visible: root.connectedDevices.length > 0
 
                 Text {
@@ -305,8 +305,8 @@ Item {
                     font.bold: true
                     font.pixelSize: Theme.fs(12)
                     font.variableAxes: Theme.axes(Theme.fs(12), 600, 0)
-                    leftPadding: 4
-                    bottomPadding: 3
+                    leftPadding: Theme.dp(4)
+                    bottomPadding: Theme.dp(3)
                 }
 
                 Repeater {
@@ -322,7 +322,7 @@ Item {
 
             Column {
                 width: parent.width
-                spacing: 3
+                spacing: Theme.dp(3)
                 visible: root.pairedDevices.length > 0
 
                 Text {
@@ -332,8 +332,8 @@ Item {
                     font.bold: true
                     font.pixelSize: Theme.fs(12)
                     font.variableAxes: Theme.axes(Theme.fs(12), 600, 0)
-                    leftPadding: 4
-                    bottomPadding: 3
+                    leftPadding: Theme.dp(4)
+                    bottomPadding: Theme.dp(3)
                 }
 
                 Repeater {
@@ -349,7 +349,7 @@ Item {
 
             Column {
                 width: parent.width
-                spacing: 3
+                spacing: Theme.dp(3)
                 visible: root.nearbyDevices.length > 0
 
                 Text {
@@ -359,8 +359,8 @@ Item {
                     font.bold: true
                     font.pixelSize: Theme.fs(12)
                     font.variableAxes: Theme.axes(Theme.fs(12), 600, 0)
-                    leftPadding: 4
-                    bottomPadding: 3
+                    leftPadding: Theme.dp(4)
+                    bottomPadding: Theme.dp(3)
                 }
 
                 Repeater {
@@ -377,9 +377,9 @@ Item {
             Column {
                 width: parent.width
                 visible: root.connectedDevices.length === 0 && root.pairedDevices.length === 0 && root.nearbyDevices.length === 0
-                topPadding: 18
-                bottomPadding: 6
-                spacing: 4
+                topPadding: Theme.dp(18)
+                bottomPadding: Theme.dp(6)
+                spacing: Theme.dp(4)
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -455,8 +455,8 @@ Item {
 
         Rectangle {
             width: parent.width
-            height: 56
-            radius: devItem.isExpanded ? 20 : 14
+            height: Theme.dp(56)
+            radius: devItem.isExpanded ? Theme.dp(20) : Theme.dp(14)
             color: devItem.isExpanded ? Theme.withBlur(Theme.surfaceHighest) : (rowArea.containsMouse ? Theme.withBlur(Theme.layer(Theme.surfaceHigh, Theme.text, Theme.stateHover)) : Theme.withBlur(Theme.surfaceHigh))
 
             Behavior on radius {
@@ -470,18 +470,18 @@ Item {
 
             Row {
                 anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 14
-                spacing: 12
+                anchors.leftMargin: Theme.dp(10)
+                anchors.rightMargin: Theme.dp(14)
+                spacing: Theme.dp(12)
 
                 Item {
-                    width: 36
-                    height: 36
+                    width: Theme.dp(36)
+                    height: Theme.dp(36)
                     anchors.verticalCenter: parent.verticalCenter
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: 18
+                        radius: Theme.dp(18)
                         color: devItem.isConnected ? Theme.primary : Theme.alpha(Theme.text, 0.08)
 
                         Behavior on color {
@@ -496,7 +496,7 @@ Item {
                     Icon {
                         anchors.centerIn: parent
                         name: ({"headphones": "headphones", "phone": "smartphone", "laptop": "computer", "speaker": "speaker", "keyboard": "keyboard", "mouse": "mouse"})[devItem.iconKind] || "bluetooth"
-                        size: 20
+                        size: Theme.dp(20)
                         fill: devItem.isConnected ? 1 : 0
                         color: devItem.isConnected ? Theme.fgPrimary : Theme.text
                     }
@@ -505,15 +505,15 @@ Item {
                         id: btDot
 
                         visible: devItem.isConnected
-                        width: 8
-                        height: 8
-                        radius: 4
+                        width: Theme.dp(8)
+                        height: Theme.dp(8)
+                        radius: Theme.dp(4)
                         color: Theme.success
                         border.width: 2
                         border.color: Theme.surfaceHigh
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
-                        anchors.margins: -2
+                        anchors.margins: -Theme.dp(2)
 
                         // visible is the effective one, so a closed panel stops the pulse
                         // instead of driving a repaint every frame for nobody
@@ -540,7 +540,7 @@ Item {
                 }
 
                 Column {
-                    width: parent.width - 36 - 20 - 24
+                    width: parent.width - Theme.dp(36) - Theme.dp(20) - Theme.dp(24)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 1
 
@@ -557,7 +557,7 @@ Item {
 
                     Row {
                         width: parent.width
-                        spacing: 6
+                        spacing: Theme.dp(6)
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
@@ -585,9 +585,9 @@ Item {
 
                         Rectangle {
                             visible: devItem.isConnected && devItem.modelData.batteryAvailable
-                            width: 22
-                            height: 5
-                            radius: 2
+                            width: Theme.dp(22)
+                            height: Theme.dp(5)
+                            radius: Theme.dp(2)
                             color: Theme.bgTrack
                             anchors.verticalCenter: parent.verticalCenter
 
@@ -596,9 +596,9 @@ Item {
 
                                 anchors.left: parent.left
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: Math.max(2, parent.width * Math.max(0, Math.min(1, pct)))
+                                width: Math.max(Theme.dp(2), parent.width * Math.max(0, Math.min(1, pct)))
                                 height: parent.height
-                                radius: 2
+                                radius: Theme.dp(2)
                                 color: pct < 0.2 ? Theme.error : Theme.success
                             }
 
@@ -610,7 +610,7 @@ Item {
 
                 Icon {
                     name: "expand_more"
-                    size: 20
+                    size: Theme.dp(20)
                     color: Theme.subtext
                     anchors.verticalCenter: parent.verticalCenter
                     rotation: devItem.isExpanded ? 180 : 0
@@ -659,27 +659,27 @@ Item {
                 id: expandContent
 
                 width: parent.width
-                leftPadding: 36
-                rightPadding: 14
-                topPadding: 6
-                bottomPadding: 14
-                spacing: 9
-                y: devItem.isExpanded ? 0 : -8
+                leftPadding: Theme.dp(36)
+                rightPadding: Theme.dp(14)
+                topPadding: Theme.dp(6)
+                bottomPadding: Theme.dp(14)
+                spacing: Theme.dp(9)
+                y: devItem.isExpanded ? 0 : -Theme.dp(8)
                 opacity: devItem.isExpanded ? 1 : 0
 
                 Row {
-                    width: parent.width - 46
-                    height: 30
-                    spacing: 8
+                    width: parent.width - Theme.dp(46)
+                    height: Theme.dp(30)
+                    spacing: Theme.dp(8)
 
                     Rectangle {
                         id: primaryBtn
 
                         readonly property bool busy: devItem.isPairing || devItem.isConnecting
 
-                        width: devItem.group === "nearby" ? parent.width : (parent.width - 8) / 2
+                        width: devItem.group === "nearby" ? parent.width : (parent.width - Theme.dp(8)) / 2
                         height: parent.height
-                        radius: 999
+                        radius: Theme.dp(999)
                         color: busy ? Theme.withBlur(Theme.outlineStrong) : (devItem.isConnected ? Theme.accentContainer : (primaryArea.containsMouse ? Theme.accentHover : Theme.accent))
                         opacity: busy ? 0.7 : 1
                         scale: primaryArea.pressed ? 0.96 : 1
@@ -744,9 +744,9 @@ Item {
                         id: forgetBtn
 
                         visible: devItem.group !== "nearby"
-                        width: (parent.width - 8) / 2
+                        width: (parent.width - Theme.dp(8)) / 2
                         height: parent.height
-                        radius: 999
+                        radius: Theme.dp(999)
                         color: forgetArea.containsMouse ? Theme.withBlur(Theme.outlineStrong) : "transparent"
                         border.width: 1
                         border.color: Theme.outlineStrong
@@ -806,7 +806,7 @@ Item {
                         id: cancelPairArea
 
                         anchors.fill: parent
-                        anchors.margins: -4
+                        anchors.margins: -Theme.dp(4)
                         cursorShape: Qt.PointingHandCursor
                         onClicked: devItem.modelData.cancelPair()
                     }
@@ -815,7 +815,7 @@ Item {
 
                 Text {
                     visible: devItem.actionFailed && !devItem.isConnected && !devItem.isPairing && !devItem.isConnecting
-                    width: parent.width - 46
+                    width: parent.width - Theme.dp(46)
                     text: devItem.group === "nearby" ? "Pairing failed. Please try again." : "Failed to connect. The device may be out of range."
                     color: Theme.error
                     font.family: Theme.fontFamily
@@ -825,17 +825,17 @@ Item {
                 }
 
                 Flow {
-                    width: parent.width - 46
+                    width: parent.width - Theme.dp(46)
                     visible: devItem.group !== "nearby"
-                    spacing: 12
+                    spacing: Theme.dp(12)
 
                     Row {
-                        spacing: 8
+                        spacing: Theme.dp(8)
 
                         Rectangle {
-                            width: 15
-                            height: 15
-                            radius: 4
+                            width: Theme.dp(15)
+                            height: Theme.dp(15)
+                            radius: Theme.dp(4)
                             anchors.verticalCenter: parent.verticalCenter
                             color: devItem.modelData.trusted ? Theme.accent : "transparent"
                             border.width: 1.5
@@ -877,12 +877,12 @@ Item {
 
                     Row {
                         visible: devItem.isConnected
-                        spacing: 8
+                        spacing: Theme.dp(8)
 
                         Rectangle {
-                            width: 15
-                            height: 15
-                            radius: 4
+                            width: Theme.dp(15)
+                            height: Theme.dp(15)
+                            radius: Theme.dp(4)
                             anchors.verticalCenter: parent.verticalCenter
                             color: devItem.modelData.wakeAllowed ? Theme.accent : "transparent"
                             border.width: 1.5
@@ -923,12 +923,12 @@ Item {
                     }
 
                     Row {
-                        spacing: 8
+                        spacing: Theme.dp(8)
 
                         Rectangle {
-                            width: 15
-                            height: 15
-                            radius: 4
+                            width: Theme.dp(15)
+                            height: Theme.dp(15)
+                            radius: Theme.dp(4)
                             anchors.verticalCenter: parent.verticalCenter
                             color: devItem.modelData.blocked ? Theme.withBlur(Theme.error) : "transparent"
                             border.width: 1.5
@@ -983,7 +983,7 @@ Item {
                         id: renameArea
 
                         anchors.fill: parent
-                        anchors.margins: -4
+                        anchors.margins: -Theme.dp(4)
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             devItem.renameText = devItem.modelData.name;
@@ -997,9 +997,9 @@ Item {
                     id: renameBox
 
                     visible: devItem.renaming
-                    width: parent.width - 46
-                    height: 30
-                    radius: 8
+                    width: parent.width - Theme.dp(46)
+                    height: Theme.dp(30)
+                    radius: Theme.dp(8)
                     color: Theme.withBlur(Theme.bgSunken)
                     border.width: 1
                     border.color: renameInput.activeFocus ? Theme.accent : Theme.bgHigh
@@ -1018,8 +1018,8 @@ Item {
                         id: renameInput
 
                         anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
+                        anchors.leftMargin: Theme.dp(10)
+                        anchors.rightMargin: Theme.dp(10)
                         verticalAlignment: Text.AlignVCenter
                         color: Theme.text
                         font.family: Theme.fontFamily

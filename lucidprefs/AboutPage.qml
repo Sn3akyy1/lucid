@@ -56,7 +56,7 @@ Column {
     // set by Settings while the page is on screen
     property bool pageShown: false
 
-    spacing: 26
+    spacing: Theme.dp(26)
     onPageShownChanged: {
         if (page.pageShown)
             hero.enter();
@@ -78,7 +78,7 @@ Column {
             description: Updates.status
 
             Row {
-                spacing: 8
+                spacing: Theme.dp(8)
 
                 M3Button {
                     text: Updates.busy ? "Checking…" : "Check now"

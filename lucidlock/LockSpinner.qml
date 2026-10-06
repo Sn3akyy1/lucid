@@ -6,7 +6,7 @@ import qs
 Item {
     id: spin
 
-    property real diameter: 22
+    property real diameter: Theme.dp(22)
     property real thickness: 2.5
     property color color: Theme.fgAccent
     property bool running: true

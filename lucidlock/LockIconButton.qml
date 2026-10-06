@@ -6,8 +6,8 @@ Item {
     id: btn
 
     property string glyph: "close"
-    property real diameter: 44
-    property real glyphSize: 20
+    property real diameter: Theme.dp(44)
+    property real glyphSize: Theme.dp(20)
     property color glyphColor: Theme.text
     // a resting fill, for the one button on a card that is the point of it
     property color baseColor: "transparent"
@@ -99,9 +99,9 @@ Item {
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.bottom
-        anchors.topMargin: 6
-        width: tipText.implicitWidth + 16
-        height: 24
+        anchors.topMargin: Theme.dp(6)
+        width: tipText.implicitWidth + Theme.dp(16)
+        height: Theme.dp(24)
         radius: Theme.shapeXs
         color: Theme.inverseSurface
         visible: btn.tooltip !== "" && btn.hovered

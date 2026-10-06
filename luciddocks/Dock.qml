@@ -382,25 +382,25 @@ PanelWindow {
     // shared with the settings app, see Prefs.themeCatalogue
     readonly property var allThemes: Prefs.themeCatalogue
 
-    readonly property int iconSlot: Prefs.dockIconSize
-    readonly property int iconGap: Prefs.dockSpacing
+    readonly property int iconSlot: Theme.dp(Prefs.dockIconSize)
+    readonly property int iconGap: Theme.dp(Prefs.dockSpacing)
     readonly property int slotPitch: dockWindow.iconSlot + dockWindow.iconGap
     readonly property real maxDockWidth: dockWindow.screen ? dockWindow.screen.width : 1920
-    property real dragHeadroom: 220
+    property real dragHeadroom: Theme.dp(220)
 
-    readonly property int menuMaxHeight: 610
+    readonly property int menuMaxHeight: Theme.dp(610)
     // how much of the panel is chrome, not results
-    readonly property int panelPadding: 36
+    readonly property int panelPadding: Theme.dp(36)
     readonly property int wallCardCount: 5
-    readonly property int wallCardGap: 10
-    readonly property int wallHeroW: Math.max(280, Math.min(420, Math.round(dockWindow.maxDockWidth * 0.177)))
+    readonly property int wallCardGap: Theme.dp(10)
+    readonly property int wallHeroW: Math.max(Theme.dp(280), Math.min(Theme.dp(420), Math.round(dockWindow.maxDockWidth * 0.177)))
     readonly property int wallHeroH: Math.round(dockWindow.wallHeroW * 0.62)
     readonly property int wallMidW: Math.round(dockWindow.wallHeroW * 0.70)
     readonly property int wallMidH: Math.round(dockWindow.wallMidW * 0.62)
     readonly property int wallSmallW: Math.round(dockWindow.wallHeroW * 0.44)
     readonly property int wallSmallH: Math.round(dockWindow.wallSmallW * 0.62)
     readonly property int wallStripWidth: dockWindow.wallHeroW + 2 * (dockWindow.wallMidW + dockWindow.wallCardGap) + 2 * (dockWindow.wallSmallW + dockWindow.wallCardGap)
-    readonly property int wallHoverRoom: 12
+    readonly property int wallHoverRoom: Theme.dp(12)
 
     readonly property real menuWidth: {
         if (dockWindow.mode === "wallpaper")
@@ -416,7 +416,7 @@ PanelWindow {
     property int resultCount: 0
     readonly property real menuContentMax: dockWindow.menuMaxHeight - dockWindow.panelPadding - Prefs.launcherChromeH
     // with no rows the panel is as tall as the empty state, not a fixed floor that cut it
-    readonly property real menuContentMin: dockWindow.resultsHeight > 0 || !launcherLoader.item ? 70 : Math.max(70, launcherLoader.item.emptyHeight)
+    readonly property real menuContentMin: dockWindow.resultsHeight > 0 || !launcherLoader.item ? Theme.dp(70) : Math.max(Theme.dp(70), launcherLoader.item.emptyHeight)
     readonly property real menuHeight: {
         var content;
         if (dockWindow.mode === "wallpaper")
@@ -1311,7 +1311,7 @@ PanelWindow {
     // unplugged one is remapped rather than staying gone until a reload
     visible: Monitors.surfacesUp
     margins.bottom: 0
-    exclusiveZone: (!Prefs.loaded || !Prefs.dockEnabled || Prefs.dockAutoHide) ? 0 : (shell.implicitHeight + Prefs.effectiveDockBottomMargin)
+    exclusiveZone: (!Prefs.loaded || !Prefs.dockEnabled || Prefs.dockAutoHide) ? 0 : (shell.implicitHeight + Prefs.effectiveDockBottomMargin + Prefs.shellGap)
     WlrLayershell.keyboardFocus: dockWindow.menuOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     WlrLayershell.layer: dockWindow.menuOpen ? WlrLayer.Overlay : WlrLayer.Top
     color: "transparent"
@@ -1500,7 +1500,7 @@ PanelWindow {
         x: shell.x
         width: shell.width
         anchors.bottom: parent.bottom
-        height: dockWindow.dockRevealed ? dockWindow.placementMargin + 3 : 3
+        height: dockWindow.dockRevealed ? dockWindow.placementMargin + Theme.dp(3) : Theme.dp(3)
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
         enabled: Prefs.dockAutoHide
@@ -2037,10 +2037,10 @@ PanelWindow {
         anchors.bottomMargin: dockWindow.hiddenOffset + dockWindow.placementMargin
         anchors.horizontalCenter: parent.horizontalCenter
         implicitWidth: dockFace.implicitWidth
-        implicitHeight: dockWindow.iconSlot + 20
+        implicitHeight: dockWindow.iconSlot + Theme.dp(20)
         width: dockWindow.menuOpen ? dockWindow.menuWidth : shell.implicitWidth
         height: dockWindow.menuOpen ? dockWindow.menuHeight : shell.implicitHeight
-        radius: Math.min(Prefs.dockRadius, Math.round(shell.height / 2))
+        radius: Math.min(Theme.dp(Prefs.dockRadius), Math.round(shell.height / 2))
         color: Theme.bg
         // corners meeting the screen edge square off in notch mode
         bottomLeftRadius: dockWindow.renderAsNotch ? 0 : shell.radius
@@ -2127,7 +2127,7 @@ PanelWindow {
         Item {
             id: dockFace
 
-            implicitWidth: iconRow.implicitWidth + 24
+            implicitWidth: iconRow.implicitWidth + Theme.dp(24)
             width: shell.implicitWidth
             height: shell.implicitHeight
             anchors.left: parent.left
@@ -2148,9 +2148,9 @@ PanelWindow {
                 id: iconRow
 
                 anchors.left: parent.left
-                anchors.leftMargin: 12
+                anchors.leftMargin: Theme.dp(12)
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 DockItem {
                     id: launcherItem
@@ -2202,7 +2202,7 @@ PanelWindow {
                 Item {
                     id: runningGroup
 
-                    readonly property int lead: 21
+                    readonly property int lead: Theme.dp(21)
                     readonly property real fill: Math.min(1, runningRow.width / runningGroup.lead)
 
                     width: runningRow.width > 0.5 ? runningRow.width + runningGroup.lead * runningGroup.fill : 0
@@ -2347,10 +2347,10 @@ PanelWindow {
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 8
+            anchors.bottomMargin: Theme.dp(8)
             text: "dock surface headroom - " + Math.round(parent.width) + " x " + Math.round(parent.height) + " transparent" + (dockWindow.dragging ? " (INPUT LIVE: dragging)" : ", input masked out")
             color: "#cc80d8ff"
-            font.pixelSize: 12
+            font.pixelSize: Theme.dp(12)
             font.variableAxes: Theme.axes(12, 420, 0)
             font.family: Theme.fontFamily
         }
@@ -2377,7 +2377,7 @@ PanelWindow {
 
             readonly property bool isRight: index === 1
 
-            size: Prefs.dockNotchFlare
+            size: Theme.dp(Prefs.dockNotchFlare)
             mirrored: isRight
             x: isRight ? shell.x + shell.width : shell.x - width
             y: shell.y + shell.height - height

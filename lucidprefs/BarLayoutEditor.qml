@@ -21,14 +21,14 @@ Item {
     property string selected: ""
 
     signal chosen(string id)
-    readonly property int labelWidth: 64
-    readonly property int laneHeight: 48
-    readonly property int laneGap: 8
-    readonly property int lanePad: 7
-    readonly property int chipHeight: 34
-    readonly property int chipGap: 6
+    readonly property int labelWidth: Theme.dp(64)
+    readonly property int laneHeight: Theme.dp(48)
+    readonly property int laneGap: Theme.dp(8)
+    readonly property int lanePad: Theme.dp(7)
+    readonly property int chipHeight: Theme.dp(34)
+    readonly property int chipGap: Theme.dp(6)
     // grip, its gap and the padding either side of it and the name
-    readonly property int chipChrome: 14 + 8 + 8 + 16
+    readonly property int chipChrome: Theme.dp(14) + Theme.dp(8) + Theme.dp(8) + Theme.dp(16)
     readonly property real laneWidth: Math.max(0, editor.width - editor.labelWidth)
     property bool dragging: false
     property string dragSide: ""
@@ -283,7 +283,7 @@ Item {
             height: editor.laneHeight
 
             Text {
-                width: editor.labelWidth - 12
+                width: editor.labelWidth - Theme.dp(12)
                 anchors.verticalCenter: parent.verticalCenter
                 text: editor.sideNames[lane.modelData]
                 color: Theme.subtext
@@ -399,15 +399,15 @@ Item {
             Item {
                 id: grip
 
-                x: 14
+                x: Theme.dp(14)
                 anchors.verticalCenter: parent.verticalCenter
-                width: 6
-                height: 10
+                width: Theme.dp(6)
+                height: Theme.dp(10)
 
                 Icon {
                     anchors.centerIn: parent
                     name: "drag_indicator"
-                    size: 16
+                    size: Theme.dp(16)
                     color: chip.picked || chip.activeFocus || chipDrag.active ? chip.ink : Theme.subtext
                 }
 
@@ -415,9 +415,9 @@ Item {
 
             Text {
                 anchors.left: grip.right
-                anchors.leftMargin: 8
+                anchors.leftMargin: Theme.dp(8)
                 anchors.right: parent.right
-                anchors.rightMargin: 16
+                anchors.rightMargin: Theme.dp(16)
                 anchors.verticalCenter: parent.verticalCenter
                 text: editor.modules[chip.mid].name
                 color: chip.ink

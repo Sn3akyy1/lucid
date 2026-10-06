@@ -131,19 +131,19 @@ Item {
         });
     }
     readonly property bool sunk: root.shownSpecialSlot >= 0 && !root.rowHovered
-    readonly property int horizontalPadding: 10
-    readonly property int dotGap: 6
-    readonly property int specialGap: 6
-    readonly property int dotSize: 10
-    readonly property int activeDotWidth: 24
-    readonly property int hoverDotSize: 24
-    readonly property int hoverActiveDotWidth: 38
-    readonly property int sunkDotSize: 6
-    readonly property int sunkActiveWidth: 14
-    readonly property int stashIcon: 16
+    readonly property int horizontalPadding: Theme.dp(10)
+    readonly property int dotGap: Theme.dp(6)
+    readonly property int specialGap: Theme.dp(6)
+    readonly property int dotSize: Theme.dp(10)
+    readonly property int activeDotWidth: Theme.dp(24)
+    readonly property int hoverDotSize: Theme.dp(24)
+    readonly property int hoverActiveDotWidth: Theme.dp(38)
+    readonly property int sunkDotSize: Theme.dp(6)
+    readonly property int sunkActiveWidth: Theme.dp(14)
+    readonly property int stashIcon: Theme.dp(16)
     readonly property int stashMax: 3
-    readonly property int stashFan: 20
-    readonly property int compactHeight: Prefs.barHeight
+    readonly property int stashFan: Theme.dp(20)
+    readonly property int compactHeight: Theme.dp(Prefs.barHeight)
     property int hoveredSlot: -1
     readonly property bool rowHovered: rowHover.hovered && !root.expanded
     readonly property int litSlot: root.rowHovered && root.hoveredSlot !== -1 ? root.hoveredSlot : root.activeSlot
@@ -178,11 +178,11 @@ Item {
 
         return Math.max(0.5, Math.min(3.6, w / h));
     }
-    readonly property int basePreviewH: 130
-    readonly property int baseTileSpacing: 16
-    readonly property int baseCardPadding: 22
-    readonly property int baseLabelGap: 6
-    readonly property int baseLabelHeight: 16
+    readonly property int basePreviewH: Theme.dp(130)
+    readonly property int baseTileSpacing: Theme.dp(16)
+    readonly property int baseCardPadding: Theme.dp(22)
+    readonly property int baseLabelGap: Theme.dp(6)
+    readonly property int baseLabelHeight: Theme.dp(16)
     readonly property var gridPlan: {
         const n = Math.max(1, root.slotCount);
         const availW = root.screenW * 0.86 - root.baseCardPadding * 2;
@@ -245,13 +245,13 @@ Item {
     readonly property int specialRows: Math.ceil(root.specialCount / root.gridColumns)
     readonly property real gridScale: Math.max(0.5, root.gridPlan.scale)
     readonly property int previewW: Math.round(root.gridPlan.previewW)
-    readonly property int previewH: Math.max(24, Math.round(root.gridPlan.previewW / root.tileAspect))
-    readonly property int labelGap: Math.max(3, Math.round(root.baseLabelGap * root.gridScale))
-    readonly property int labelHeight: Math.max(11, Math.round(root.baseLabelHeight * root.gridScale))
+    readonly property int previewH: Math.max(Theme.dp(24), Math.round(root.gridPlan.previewW / root.tileAspect))
+    readonly property int labelGap: Math.max(Theme.dp(3), Math.round(root.baseLabelGap * root.gridScale))
+    readonly property int labelHeight: Math.max(Theme.dp(11), Math.round(root.baseLabelHeight * root.gridScale))
     readonly property int tileW: root.previewW
     readonly property int tileH: root.previewH + root.labelGap + root.labelHeight
-    readonly property int tileSpacing: Math.max(8, Math.round(root.baseTileSpacing * root.gridScale))
-    readonly property int cardPadding: Math.max(12, Math.round(root.baseCardPadding * Math.min(1, root.gridScale + 0.25)))
+    readonly property int tileSpacing: Math.max(Theme.dp(8), Math.round(root.baseTileSpacing * root.gridScale))
+    readonly property int cardPadding: Math.max(Theme.dp(12), Math.round(root.baseCardPadding * Math.min(1, root.gridScale + 0.25)))
     readonly property int gridWidth: root.gridColumns * root.tileW + (root.gridColumns - 1) * root.tileSpacing
     readonly property int regularBottom: root.regularRows * (root.tileH + root.tileSpacing) - root.tileSpacing
     readonly property int captionY: root.regularBottom + Math.round(root.tileSpacing * 1.5)
@@ -259,8 +259,8 @@ Item {
     readonly property int gridHeight: root.specialRows > 0 ? root.specialTop + root.specialRows * (root.tileH + root.tileSpacing) - root.tileSpacing : root.regularBottom
     readonly property int cardWidth: root.gridWidth + root.cardPadding * 2
     readonly property int cardHeight: root.gridHeight + root.cardPadding * 2
-    readonly property real labelFontSize: Math.max(9, 12 * root.gridScale)
-    readonly property real plusFontSize: Math.max(16, 28 * root.gridScale)
+    readonly property real labelFontSize: Math.max(Theme.dp(9), 12 * root.gridScale)
+    readonly property real plusFontSize: Math.max(Theme.dp(16), 28 * root.gridScale)
     property int selectedIndex: -1
     property bool dragging: false
     property int dropSlot: -1
@@ -1107,7 +1107,7 @@ Item {
                     y: (parent.height - height) / 2
                     width: 0
                     height: 0
-                    radius: 999
+                    radius: Theme.dp(999)
                     color: activePill.litWs && activePill.litWs.urgent ? Theme.error : Theme.accent
                     onOffXChanged: activePill.place()
                     onOffWChanged: activePill.place()
@@ -1191,7 +1191,7 @@ Item {
                         y: (parent.height - height) / 2
                         width: root.slotWidth(dot.index)
                         height: root.slotHeight(dot.index)
-                        radius: 999
+                        radius: Theme.dp(999)
                         color: dot.isUrgent ? Theme.error : (root.rowHovered || dot.index === root.activeSlot ? "transparent" : Theme.alpha(Theme.subtext, dot.occupied ? 0.72 : 0.24))
 
                         Text {
@@ -1314,7 +1314,7 @@ Item {
                         Item {
                             id: stack
 
-                            x: chip.open ? 4 : 0
+                            x: chip.open ? Theme.dp(4) : 0
                             y: Math.round((chip.height - root.stashIcon) / 2)
                             width: root.stashIcon + (chip.open ? Math.max(0, chip.iconCount - 1) * root.stashFan : 0)
                             height: root.stashIcon
@@ -1553,7 +1553,7 @@ Item {
                     color: Theme.primary
                     font.family: Theme.fontFamily
                     font.bold: true
-                    font.pixelSize: Math.max(10, 12 * root.gridScale)
+                    font.pixelSize: Math.max(Theme.dp(10), 12 * root.gridScale)
                     font.variableAxes: Theme.axes(Math.max(10, 12 * root.gridScale), 600, 0)
                 }
 
@@ -1594,7 +1594,7 @@ Item {
 
                             width: root.previewW
                             height: root.previewH
-                            radius: tile.isActive ? 18 : 12
+                            radius: tile.isActive ? Theme.dp(18) : Theme.dp(12)
                             color: Theme.withBlur(tile.highlighted ? Theme.surfaceHighest : Theme.surfaceHigh)
                             border.color: tile.isUrgent ? Theme.error : ((tile.isActive || tile.isDropTarget) ? Theme.primary : "transparent")
                             border.width: (tile.isActive || tile.isUrgent || tile.isDropTarget) ? 3 : 0
@@ -1711,8 +1711,8 @@ Item {
                         readonly property real fracY: Math.max(0, Math.min(1, (thumb.atY - thumb.usableMonY) / thumb.usableMonH))
                         readonly property real fracW: Math.max(0, Math.min(1, thumb.sizeW / thumb.usableMonW))
                         readonly property real fracH: Math.max(0, Math.min(1, thumb.sizeH / thumb.usableMonH))
-                        readonly property real insetPad: 3
-                        readonly property real thumbGap: 4
+                        readonly property real insetPad: Theme.dp(3)
+                        readonly property real thumbGap: Theme.dp(4)
                         readonly property real tileX: root.slotPosX(thumb.slotIndex)
                         readonly property real tileY: root.slotPosY(thumb.slotIndex)
                         readonly property real usableW: root.previewW - thumb.insetPad * 2
@@ -1723,8 +1723,8 @@ Item {
                         readonly property real clampedY: Math.min(thumb.tileY + thumb.insetPad + thumb.fracY * thumb.usableH, thumb.tileY + thumb.insetPad + thumb.usableH - thumb.clampedH)
                         readonly property real restX: thumb.clampedX + thumb.thumbGap / 2
                         readonly property real restY: thumb.clampedY + thumb.thumbGap / 2
-                        readonly property real restW: Math.max(2, thumb.clampedW - thumb.thumbGap)
-                        readonly property real restH: Math.max(2, thumb.clampedH - thumb.thumbGap)
+                        readonly property real restW: Math.max(Theme.dp(2), thumb.clampedW - thumb.thumbGap)
+                        readonly property real restH: Math.max(Theme.dp(2), thumb.clampedH - thumb.thumbGap)
                         readonly property var toplevel: root.tlByAddress[thumb.address] || null
                         readonly property string iconSource: root.iconFor(thumb.appClass)
                         readonly property bool hasPreview: thumb.everHadContent || preview.hasContent
@@ -1738,7 +1738,7 @@ Item {
                         y: dragHandler.active ? thumb.dragOriginY + dragHandler.translation.y : thumb.restY
                         width: thumb.restW
                         height: thumb.restH
-                        radius: 6
+                        radius: Theme.dp(6)
                         color: Theme.withBlur(Theme.bgSunken)
                         border.width: dragHandler.active || thumb.isSwapTarget || thumb.focused ? 2 : 1
                         border.color: thumb.isSwapTarget || dragHandler.active || thumb.focused ? Theme.accent : Theme.alpha(Theme.text, 0.25)
@@ -1830,8 +1830,8 @@ Item {
 
                         Text {
                             anchors.centerIn: parent
-                            anchors.margins: 4
-                            width: parent.width - 8
+                            anchors.margins: Theme.dp(4)
+                            width: parent.width - Theme.dp(8)
                             visible: !thumb.hasPreview && (thumb.iconSource === "" || badgeIcon.status !== Image.Ready)
                             text: thumb.appClass
                             color: Theme.subtext
@@ -1845,7 +1845,7 @@ Item {
                         Rectangle {
                             id: appBadge
 
-                            readonly property real iconSize: Math.max(10, Math.min(22, Math.min(thumb.restW, thumb.restH) * 0.35))
+                            readonly property real iconSize: Math.max(Theme.dp(10), Math.min(Theme.dp(22), Math.min(thumb.restW, thumb.restH) * 0.35))
 
                             visible: !thumb.hasPreview && thumb.iconSource !== "" && badgeIcon.status === Image.Ready
                             anchors.centerIn: parent

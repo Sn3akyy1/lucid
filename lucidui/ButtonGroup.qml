@@ -16,9 +16,9 @@ Item {
 
     signal picked(var key)
 
-    readonly property int h: grp.size === "xs" ? 30 : (grp.size === "m" ? 48 : 36)
-    readonly property int gap: 2
-    readonly property real inner: grp.size === "m" ? 8 : 6
+    readonly property int h: grp.size === "xs" ? Theme.dp(30) : (grp.size === "m" ? Theme.dp(48) : Theme.dp(36))
+    readonly property int gap: Theme.dp(2)
+    readonly property real inner: grp.size === "m" ? Theme.dp(8) : Theme.dp(6)
 
     implicitHeight: grp.h
     implicitWidth: {
@@ -63,7 +63,7 @@ Item {
                 readonly property bool on: grp.current === seg.modelData.key
                 readonly property bool first: seg.index === 0
                 readonly property bool last: seg.index === rep.count - 1
-                readonly property real natural: lbl.implicitWidth + (seg.modelData.icon ? 26 : 0) + (grp.showCheck && seg.on ? 22 : 0) + 32
+                readonly property real natural: lbl.implicitWidth + (seg.modelData.icon ? Theme.dp(26) : 0) + (grp.showCheck && seg.on ? Theme.dp(22) : 0) + Theme.dp(32)
                 readonly property real outer: grp.h / 2
                 readonly property real press: area.pressed ? grp.inner * 0.6 : 0
 
@@ -135,13 +135,13 @@ Item {
 
                 Row {
                     anchors.centerIn: parent
-                    spacing: 6
+                    spacing: Theme.dp(6)
 
                     Icon {
                         visible: (grp.showCheck && seg.on) || !!seg.modelData.icon
                         anchors.verticalCenter: parent.verticalCenter
                         name: grp.showCheck && seg.on ? "check" : (seg.modelData.icon || "")
-                        size: grp.size === "m" ? 22 : 18
+                        size: grp.size === "m" ? Theme.dp(22) : Theme.dp(18)
                         fill: seg.on ? 1 : 0
                         color: seg.on ? Theme.fgPrimary : Theme.subtext
                     }

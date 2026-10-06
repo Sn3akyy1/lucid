@@ -63,15 +63,15 @@ Column {
         });
     }
 
-    spacing: 12
+    spacing: Theme.dp(12)
 
     Row {
-        spacing: 10
+        spacing: Theme.dp(10)
 
         M3TextField {
             id: nameField
 
-            width: 200
+            width: Theme.dp(200)
             text: form.name
             placeholder: "Name, like myapp"
             onEdited: (v) => {
@@ -82,7 +82,7 @@ Column {
         M3TextField {
             id: hookField
 
-            width: form.width - nameField.width - 10
+            width: form.width - nameField.width - Theme.dp(10)
             text: form.hook
             placeholder: "Command that reloads the app (optional)"
             onEdited: (v) => {
@@ -93,12 +93,12 @@ Column {
     }
 
     Row {
-        spacing: 10
+        spacing: Theme.dp(10)
 
         M3TextField {
             id: inputField
 
-            width: form.width - chooseButton.width - 10
+            width: form.width - chooseButton.width - Theme.dp(10)
             text: form.input
             placeholder: "Template file, or an https:// link to one"
             onEdited: (v) => {
@@ -116,7 +116,7 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             text: "Choose..."
             onClicked: {
-                picker.command = ["sh", "-c", "zenity --file-selection --title='Choose a template' 2>/dev/null || true"];
+                picker.command = ["python3", Qt.resolvedUrl("pickfile.py").toString().replace("file://", ""), "--title", "Choose a template"];
                 picker.running = true;
             }
         }
@@ -135,7 +135,7 @@ Column {
     }
 
     Row {
-        spacing: 10
+        spacing: Theme.dp(10)
 
         M3Button {
             text: form.phase === "trying" ? "Trying..." : "Try it"
@@ -157,7 +157,7 @@ Column {
 
     Rectangle {
         width: form.width
-        height: result.implicitHeight + 24
+        height: result.implicitHeight + Theme.dp(24)
         radius: Theme.radiusSm
         color: Theme.bgSunken
         visible: form.message !== "" || form.preview !== ""
@@ -165,10 +165,10 @@ Column {
         Column {
             id: result
 
-            x: 14
-            y: 12
-            width: parent.width - 28
-            spacing: 8
+            x: Theme.dp(14)
+            y: Theme.dp(12)
+            width: parent.width - Theme.dp(28)
+            spacing: Theme.dp(8)
 
             Text {
                 width: parent.width

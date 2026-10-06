@@ -9,12 +9,12 @@ Rectangle {
     id: panel
 
     // whatever vertical room the column above it did not want
-    property real maxHeight: 340
+    property real maxHeight: Theme.dp(340)
     readonly property bool empty: Notifs.count === 0
 
     radius: Theme.shapeXl
     color: Lockscreen.card
-    implicitHeight: Math.min(panel.maxHeight, head.height + (panel.empty ? 96 : list.contentHeight + 24))
+    implicitHeight: Math.min(panel.maxHeight, head.height + (panel.empty ? Theme.dp(96) : list.contentHeight + Theme.dp(24)))
 
     ScriptModel {
         id: rowModel
@@ -28,13 +28,13 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        height: 52
+        height: Theme.dp(52)
 
         Row {
             anchors.left: parent.left
-            anchors.leftMargin: 22
+            anchors.leftMargin: Theme.dp(22)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 10
+            spacing: Theme.dp(10)
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
@@ -48,9 +48,9 @@ Rectangle {
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.max(22, countText.implicitWidth + 14)
-                height: 22
-                radius: 999
+                width: Math.max(Theme.dp(22), countText.implicitWidth + Theme.dp(14))
+                height: Theme.dp(22)
+                radius: Theme.dp(999)
                 color: Theme.accent
                 visible: !panel.empty
 
@@ -72,10 +72,10 @@ Rectangle {
 
         LockIconButton {
             anchors.right: parent.right
-            anchors.rightMargin: 12
+            anchors.rightMargin: Theme.dp(12)
             anchors.verticalCenter: parent.verticalCenter
-            diameter: 36
-            glyphSize: 18
+            diameter: Theme.dp(36)
+            glyphSize: Theme.dp(18)
             glyph: "close"
             glyphColor: Theme.subtext
             tooltip: "Clear all"
@@ -88,14 +88,14 @@ Rectangle {
     // nothing waiting is worth saying plainly, not leaving a blank card
     Column {
         anchors.centerIn: parent
-        anchors.verticalCenterOffset: 14
-        spacing: 10
+        anchors.verticalCenterOffset: Theme.dp(14)
+        spacing: Theme.dp(10)
         visible: panel.empty
 
         LockGlyph {
             anchors.horizontalCenter: parent.horizontalCenter
             name: "bell"
-            size: 26
+            size: Theme.dp(26)
             color: Theme.alpha(Theme.subtextDim, 0.7)
         }
 
@@ -117,9 +117,9 @@ Rectangle {
         anchors.right: parent.right
         anchors.top: head.bottom
         anchors.bottom: parent.bottom
-        anchors.leftMargin: 14
-        anchors.rightMargin: 14
-        anchors.bottomMargin: 14
+        anchors.leftMargin: Theme.dp(14)
+        anchors.rightMargin: Theme.dp(14)
+        anchors.bottomMargin: Theme.dp(14)
         clip: true
         visible: !panel.empty
         interactive: false
@@ -130,7 +130,7 @@ Rectangle {
             id: rows
 
             width: list.width
-            spacing: 6
+            spacing: Theme.dp(6)
 
             move: Transition {
                 NumberAnimation {
@@ -164,14 +164,14 @@ Rectangle {
                     readonly property bool isHeader: rowItem.modelData && rowItem.modelData.kind === "header"
 
                     width: rows.width
-                    implicitHeight: rowItem.isHeader ? 24 : group.implicitHeight
+                    implicitHeight: rowItem.isHeader ? Theme.dp(24) : group.implicitHeight
                     height: rowItem.implicitHeight
 
                     Text {
                         anchors.left: parent.left
-                        anchors.leftMargin: 6
+                        anchors.leftMargin: Theme.dp(6)
                         anchors.bottom: parent.bottom
-                        anchors.bottomMargin: 4
+                        anchors.bottomMargin: Theme.dp(4)
                         visible: rowItem.isHeader
                         text: rowItem.isHeader ? rowItem.modelData.label : ""
                         color: Theme.subtextDim

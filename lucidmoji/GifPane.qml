@@ -36,7 +36,7 @@ Item {
         return "";
     }
     readonly property bool hasKey: pane.provider !== ""
-    readonly property real colWidth: Math.floor((pane.width - 12) / 2)
+    readonly property real colWidth: Math.floor((pane.width - Theme.dp(12)) / 2)
 
     readonly property var entries: {
         if (!pane.host)
@@ -109,10 +109,10 @@ Item {
             var h = pane.colWidth * ratio;
             if (ha <= hb) {
                 a.push(it);
-                ha += h + 8;
+                ha += h + Theme.dp(8);
             } else {
                 b.push(it);
-                hb += h + 8;
+                hb += h + Theme.dp(8);
             }
         }
         return [a, b];
@@ -122,7 +122,7 @@ Item {
         var totals = [0, 0];
         for (var c = 0; c < pane.columns.length; c++) {
             var list = pane.columns[c];
-            for (var i = 0; i < list.length; i++) totals[c] += pane.gifHeight(list[i]) + 8;
+            for (var i = 0; i < list.length; i++) totals[c] += pane.gifHeight(list[i]) + Theme.dp(8);
         }
         return Math.max(totals[0], totals[1]);
     }
@@ -131,7 +131,7 @@ Item {
 
     function gifHeight(entry) {
         var ratio = (entry.w > 0 && entry.h > 0) ? (entry.h / entry.w) : 0.7;
-        return Math.max(60, Math.min(220, pane.colWidth * ratio));
+        return Math.max(Theme.dp(60), Math.min(Theme.dp(220), pane.colWidth * ratio));
     }
 
     function openLane(tile) {
@@ -383,21 +383,21 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 16
+        height: Theme.dp(16)
 
         Row {
             id: backLabel
 
             anchors.left: parent.left
-            anchors.leftMargin: pane.mode === "results" ? 2 : 6
+            anchors.leftMargin: pane.mode === "results" ? Theme.dp(2) : Theme.dp(6)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 2
+            spacing: Theme.dp(2)
 
             Icon {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: pane.mode === "results"
                 name: "chevron_left"
-                size: 16
+                size: Theme.dp(16)
                 color: pane.errorText !== "" ? Theme.error : Theme.subtext
             }
 
@@ -427,7 +427,7 @@ Item {
 
         Text {
             anchors.right: parent.right
-            anchors.rightMargin: 6
+            anchors.rightMargin: Theme.dp(6)
             anchors.verticalCenter: parent.verticalCenter
             text: pane.errorText !== "" ? pane.errorText : (pane.mode === "results" ? pane.entries.length + "" : "")
             color: pane.errorText !== "" ? Theme.error : Theme.subtextDim
@@ -446,12 +446,12 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: keyNotice.visible ? keyNotice.top : parent.bottom
-        anchors.topMargin: 6
-        anchors.bottomMargin: keyNotice.visible ? 6 : 0
+        anchors.topMargin: Theme.dp(6)
+        anchors.bottomMargin: keyNotice.visible ? Theme.dp(6) : 0
         visible: pane.mode === "browse"
         clip: true
         cellWidth: Math.floor(browseGrid.width / 2)
-        cellHeight: 92
+        cellHeight: Theme.dp(92)
         model: pane.tiles
         boundsBehavior: Flickable.StopAtBounds
 
@@ -466,7 +466,7 @@ Item {
 
             ClippingRectangle {
                 anchors.fill: parent
-                anchors.margins: 4
+                anchors.margins: Theme.dp(4)
                 radius: Theme.radiusSm
                 color: Theme.bgTile
 
@@ -503,7 +503,7 @@ Item {
 
                 Text {
                     anchors.centerIn: parent
-                    width: parent.width - 16
+                    width: parent.width - Theme.dp(16)
                     text: tile.modelData.label
                     color: "white"
                     font.family: Theme.fontFamily
@@ -533,10 +533,10 @@ Item {
 
             policy: ScrollBar.AsNeeded
             visible: browseGrid.contentHeight > browseGrid.height
-            width: 8
+            width: Theme.dp(8)
 
             contentItem: Rectangle {
-                implicitWidth: 6
+                implicitWidth: Theme.dp(6)
                 radius: width / 2
                 color: Theme.alpha(Theme.text, 0.2)
             }
@@ -556,16 +556,16 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.topMargin: 6
+        anchors.topMargin: Theme.dp(6)
         visible: pane.mode === "results"
         clip: true
         contentWidth: width
-        contentHeight: pane.wallHeight + 8
+        contentHeight: pane.wallHeight + Theme.dp(8)
         boundsBehavior: Flickable.StopAtBounds
 
         Row {
-            x: 4
-            spacing: 8
+            x: Theme.dp(4)
+            spacing: Theme.dp(8)
 
             Repeater {
                 model: pane.columns
@@ -576,7 +576,7 @@ Item {
                     required property var modelData
                     required property int index
 
-                    spacing: 8
+                    spacing: Theme.dp(8)
 
                     Repeater {
                         model: col.modelData
@@ -586,7 +586,7 @@ Item {
 
                             required property var modelData
 
-                            width: pane.colWidth - 4
+                            width: pane.colWidth - Theme.dp(4)
                             height: pane.gifHeight(gifCell.modelData)
                             radius: Theme.radiusSm
                             color: Theme.bgTile
@@ -618,10 +618,10 @@ Item {
                             Icon {
                                 anchors.top: parent.top
                                 anchors.right: parent.right
-                                anchors.topMargin: 4
-                                anchors.rightMargin: 4
+                                anchors.topMargin: Theme.dp(4)
+                                anchors.rightMargin: Theme.dp(4)
                                 name: "star"
-                                size: 18
+                                size: Theme.dp(18)
                                 fill: pane.host && pane.host.isFavGif(gifCell.modelData.url) ? 1 : 0
                                 color: pane.host && pane.host.isFavGif(gifCell.modelData.url) ? Theme.accent : "white"
                                 visible: cellHover.hovered || (pane.host && pane.host.isFavGif(gifCell.modelData.url))
@@ -661,10 +661,10 @@ Item {
 
             policy: ScrollBar.AsNeeded
             visible: wall.contentHeight > wall.height
-            width: 8
+            width: Theme.dp(8)
 
             contentItem: Rectangle {
-                implicitWidth: 6
+                implicitWidth: Theme.dp(6)
                 radius: width / 2
                 color: Theme.alpha(Theme.text, 0.2)
             }
@@ -683,17 +683,17 @@ Item {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        spacing: 2
+        spacing: Theme.dp(2)
         visible: pane.mode === "browse" && !pane.hasKey
 
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 6
+            spacing: Theme.dp(6)
 
             Icon {
                 anchors.verticalCenter: parent.verticalCenter
                 name: "key"
-                size: 15
+                size: Theme.dp(15)
                 fill: 1
                 color: Theme.subtext
             }
@@ -723,8 +723,8 @@ Item {
 
     Column {
         anchors.centerIn: parent
-        width: parent.width - 60
-        spacing: 8
+        width: parent.width - Theme.dp(60)
+        spacing: Theme.dp(8)
         visible: !pane.loading && pane.mode === "results" && pane.entries.length === 0
 
         Icon {

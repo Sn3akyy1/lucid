@@ -32,8 +32,8 @@ PanelWindow {
     property string hint: ""
     property string done: ""
 
-    readonly property int cardWidth: 320
-    readonly property int pad: 8
+    readonly property int cardWidth: Theme.dp(320)
+    readonly property int pad: Theme.dp(8)
     readonly property int thumbWidth: preview.cardWidth - preview.pad * 2
     readonly property int thumbHeight: {
         if (preview.imgW <= 0 || preview.imgH <= 0)
@@ -164,8 +164,8 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     WlrLayershell.namespace: "lucid-shot-preview"
-    implicitWidth: preview.cardWidth + 36
-    implicitHeight: card.height + 36
+    implicitWidth: preview.cardWidth + Theme.dp(36)
+    implicitHeight: card.height + Theme.dp(36)
     BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && preview.visible && !preview.cleared) ? cardBlur : null
     mask: preview.shown ? cardRegion : emptyRegion
 
@@ -267,8 +267,8 @@ PanelWindow {
         // hidden outright while cleared: a fade still running would keep
         // painting it even with its Behavior switched off
         visible: !preview.cleared
-        x: 18
-        y: 18
+        x: Theme.dp(18)
+        y: Theme.dp(18)
         width: preview.cardWidth
         height: body.implicitHeight + preview.pad * 2
         radius: Theme.radiusLg
@@ -280,7 +280,7 @@ PanelWindow {
         transform: Translate {
             id: slide
 
-            x: preview.shown ? 0 : 60
+            x: preview.shown ? 0 : Theme.dp(60)
 
             Behavior on x {
                 enabled: !preview.instant
@@ -305,7 +305,7 @@ PanelWindow {
             x: preview.pad
             y: preview.pad
             width: preview.thumbWidth
-            spacing: 8
+            spacing: Theme.dp(8)
 
             ClippingRectangle {
                 id: shot
@@ -313,7 +313,7 @@ PanelWindow {
                 width: preview.thumbWidth
                 height: preview.thumbHeight
                 // concentric with the card
-                radius: Math.max(4, card.radius - preview.pad)
+                radius: Math.max(Theme.dp(4), card.radius - preview.pad)
                 color: Theme.alpha(Theme.text, 0.06)
 
                 Image {
@@ -329,16 +329,16 @@ PanelWindow {
 
                 Rectangle {
                     anchors.centerIn: parent
-                    width: 46
-                    height: 46
-                    radius: 23
+                    width: Theme.dp(46)
+                    height: Theme.dp(46)
+                    radius: Theme.dp(23)
                     visible: preview.kind === "video"
                     color: Theme.alpha("#000000", 0.45)
 
                     Glyph {
                         anchors.centerIn: parent
                         name: preview.icons.play
-                        size: 28
+                        size: Theme.dp(28)
                         tint: "#ffffff"
                     }
 
@@ -392,17 +392,17 @@ PanelWindow {
                 Rectangle {
                     anchors.top: parent.top
                     anchors.right: parent.right
-                    anchors.margins: 6
-                    width: 26
-                    height: 26
-                    radius: 13
+                    anchors.margins: Theme.dp(6)
+                    width: Theme.dp(26)
+                    height: Theme.dp(26)
+                    radius: Theme.dp(13)
                     opacity: preview.hovered ? 1 : 0
                     color: closeArea.containsMouse ? Theme.alpha("#000000", 0.7) : Theme.alpha("#000000", 0.5)
 
                     Glyph {
                         anchors.centerIn: parent
                         name: preview.icons.close
-                        size: 16
+                        size: Theme.dp(16)
                         tint: "#ffffff"
                     }
 
@@ -430,13 +430,13 @@ PanelWindow {
 
             Item {
                 width: parent.width
-                height: 34
+                height: Theme.dp(34)
 
                 Column {
                     anchors.left: parent.left
-                    anchors.leftMargin: 4
+                    anchors.leftMargin: Theme.dp(4)
                     anchors.right: actions.left
-                    anchors.rightMargin: 8
+                    anchors.rightMargin: Theme.dp(8)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 1
 
@@ -487,7 +487,7 @@ PanelWindow {
 
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+                    spacing: Theme.dp(2)
 
                     ActionButton {
                         action: "copy"
@@ -523,10 +523,10 @@ PanelWindow {
             property real progress: 1
 
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 3
+            anchors.bottomMargin: Theme.dp(3)
             x: card.radius
             width: Math.max(0, (card.width - card.radius * 2) * lifeBar.progress)
-            height: 2
+            height: Theme.dp(2)
             radius: 1
             color: Theme.alpha(Theme.accent, preview.hovered ? 0.35 : 0.7)
         }
@@ -548,11 +548,11 @@ PanelWindow {
         id: glyph
 
         property string name: ""
-        property int size: 18
+        property int size: Theme.dp(18)
         property color tint: Theme.text
 
-        width: 24
-        height: 24
+        width: Theme.dp(24)
+        height: Theme.dp(24)
 
         Icon {
             anchors.centerIn: parent
@@ -572,15 +572,15 @@ PanelWindow {
         property bool danger: false
         readonly property bool armed: btn.danger && preview.armedDelete
 
-        width: 34
-        height: 34
-        radius: 17
+        width: Theme.dp(34)
+        height: Theme.dp(34)
+        radius: Theme.dp(17)
         color: btn.armed ? Theme.alpha(Theme.error, 0.18) : (btnArea.containsMouse ? Theme.alpha(Theme.text, Theme.stateHover) : "transparent")
 
         Glyph {
             anchors.centerIn: parent
             name: preview.icons[btn.action] || ""
-            size: 18
+            size: Theme.dp(18)
             tint: btn.danger && (btn.armed || btnArea.containsMouse) ? Theme.error : Theme.subtext
         }
 

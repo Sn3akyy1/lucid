@@ -10,9 +10,9 @@ Item {
     property bool expanded: false
     property bool altOpen: false
     property int compactWidth: 0
-    property int compactHeight: Prefs.barHeight
-    property int panelWidth: 320
-    property int panelHeight: 200
+    property int compactHeight: Theme.dp(Prefs.barHeight)
+    property int panelWidth: Theme.dp(320)
+    property int panelHeight: Theme.dp(200)
     property int altWidth: 0
     property int altHeight: 0
     property int expandedRadius: Theme.radiusLg
@@ -71,7 +71,7 @@ Item {
     property bool panelTransitioning: false
 
     readonly property bool hoverLift: Prefs.barHoverGrow > 0 && pill.compactHovered && !pill.anyOpen && pill.shown
-    property real hoverGrow: pill.hoverLift ? Math.min(Prefs.barHoverGrow, Math.max(0, Prefs.barSpacing / 2)) : 0
+    property real hoverGrow: pill.hoverLift ? Math.min(Theme.dp(Prefs.barHoverGrow), Math.max(0, Theme.dp(Prefs.barSpacing) / 2)) : 0
 
     property int hoverGrowDuration: Theme.barMs(150)
 
@@ -240,7 +240,7 @@ Item {
         width: pill.popupMode ? (pill.anyOpen ? pill.popupWidth : pill.compactWidth + pill.hoverGrow * 2) : pill.width + pill.hoverGrow * 2
         height: pill.popupMode ? (pill.anyOpen ? pill.popupHeight : pill.compactHeight) : pill.height
         x: pill.popupMode && pill.anyOpen ? pill.popupX : pill.surfaceX
-        y: pill.popupMode && pill.anyOpen ? pill.compactHeight + Prefs.barPopupGap : pill.surfaceY
+        y: pill.popupMode && pill.anyOpen ? pill.compactHeight + Theme.dp(Prefs.barPopupGap) : pill.surfaceY
         visible: !pill.popupMode || shell.y > 0.5
         color: Theme.bg
         radius: pill.cornerRadius

@@ -6,13 +6,13 @@ import qs
 Item {
     id: clock
 
-    property real unit: 160
+    property real unit: Theme.dp(160)
     // one animated number drives both the scale and the space it gives back,
     // so the date underneath rides up with the clock instead of jumping
     property real k: Lockscreen.focused ? 0.52 : 1
 
     implicitWidth: Math.max(stack.implicitWidth, meta.implicitWidth)
-    implicitHeight: stack.implicitHeight * clock.k + 18 + meta.implicitHeight
+    implicitHeight: stack.implicitHeight * clock.k + Theme.dp(18) + meta.implicitHeight
 
     Behavior on k {
         NumberAnimation {
@@ -26,7 +26,7 @@ Item {
     Item {
         id: stack
 
-        implicitWidth: Math.max(hour.implicitWidth, minute.implicitWidth + (ampm.visible ? ampm.implicitWidth + 12 : 0))
+        implicitWidth: Math.max(hour.implicitWidth, minute.implicitWidth + (ampm.visible ? ampm.implicitWidth + Theme.dp(12) : 0))
         implicitHeight: Math.round(clock.unit * 1.64)
         width: implicitWidth
         height: implicitHeight * clock.k
@@ -67,7 +67,7 @@ Item {
             id: ampm
 
             anchors.left: minute.right
-            anchors.leftMargin: 12
+            anchors.leftMargin: Theme.dp(12)
             anchors.bottom: minute.bottom
             anchors.bottomMargin: Math.round(clock.unit * 0.16)
             text: Lockscreen.meridiem
@@ -85,8 +85,8 @@ Item {
         id: meta
 
         anchors.top: stack.bottom
-        anchors.topMargin: 18
-        spacing: 4
+        anchors.topMargin: Theme.dp(18)
+        spacing: Theme.dp(4)
 
         Text {
             text: Lockscreen.dateText

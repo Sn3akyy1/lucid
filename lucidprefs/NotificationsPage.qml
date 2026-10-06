@@ -31,7 +31,7 @@ Column {
         });
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
 
     // only for the quiet-hours readout, so it can idle when there is none
     Timer {
@@ -284,12 +284,12 @@ Column {
             showDivider: false
 
             Row {
-                spacing: 10
+                spacing: Theme.dp(10)
 
                 M3TextField {
                     id: fromField
 
-                    width: 96
+                    width: Theme.dp(96)
                     enabled: Prefs.quietHours
                     placeholder: "22:00"
                     text: Prefs.minutesText(Prefs.quietFrom)
@@ -315,7 +315,7 @@ Column {
                 M3TextField {
                     id: toField
 
-                    width: 96
+                    width: Theme.dp(96)
                     enabled: Prefs.quietHours
                     placeholder: "07:00"
                     text: Prefs.minutesText(Prefs.quietTo)
@@ -361,10 +361,10 @@ Column {
 
             Row {
                 width: parent.width
-                spacing: 12
+                spacing: Theme.dp(12)
 
                 M3Chips {
-                    width: parent.width - playSound.width - 12
+                    width: parent.width - playSound.width - Theme.dp(12)
                     enabled: Prefs.notifSound
                     current: Sounds.notifKey(Prefs.notifSoundName)
                     options: Sounds.notifSounds
@@ -535,7 +535,7 @@ Column {
 
             Column {
                 width: parent.width
-                spacing: 14
+                spacing: Theme.dp(14)
                 visible: page.appList.length > 0
 
                 Repeater {
@@ -563,7 +563,7 @@ Column {
             M3TextField {
                 id: muteField
 
-                width: 260
+                width: Theme.dp(260)
                 placeholder: "Spotify"
                 onAccepted: (v) => {
                     var name = v.trim();

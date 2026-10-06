@@ -177,28 +177,28 @@ WidgetBody {
 
     Text {
         anchors.centerIn: parent
-        width: parent.width - 40
+        width: parent.width - Theme.dp(40)
         visible: w.library.length === 0 && w.variant !== "hero"
         horizontalAlignment: Text.AlignHCenter
         text: w.emptyText
         color: Theme.subtextDim
         font.family: Theme.fontFamily
-        font.pixelSize: 13
+        font.pixelSize: Theme.dp(13)
         wrapMode: Text.WordWrap
     }
 
     Item {
         id: shelf
 
-        readonly property real gap: 10
-        readonly property real coverH: Math.max(60, shelf.height - shelfHead.height - shelfFoot.height - 22)
+        readonly property real gap: Theme.dp(10)
+        readonly property real coverH: Math.max(Theme.dp(60), shelf.height - shelfHead.height - shelfFoot.height - Theme.dp(22))
         readonly property real coverW: Math.round(shelf.coverH * 2 / 3)
         readonly property int fits: Math.max(1, Math.floor((shelf.width + shelf.gap) / (shelf.coverW + shelf.gap)))
         readonly property var focusGame: w.hoverGame || (w.shown.length > 0 ? w.shown[0] : null)
 
         visible: w.variant === "shelf"
         anchors.fill: parent
-        anchors.margins: 16
+        anchors.margins: Theme.dp(16)
 
         Text {
             id: shelfHead
@@ -208,7 +208,7 @@ WidgetBody {
             text: w.opt("order") === "name" ? "LIBRARY" : "RECENTLY PLAYED"
             color: Theme.accent
             font.family: Theme.fontFamily
-            font.pixelSize: 10
+            font.pixelSize: Theme.dp(10)
             font.bold: true
             font.letterSpacing: 1.4
         }
@@ -219,13 +219,13 @@ WidgetBody {
             text: w.library.length === 0 ? "" : w.library.length + (w.library.length === 1 ? " game" : " games")
             color: Theme.subtextDim
             font.family: Theme.fontFamily
-            font.pixelSize: 10
+            font.pixelSize: Theme.dp(10)
             font.bold: true
         }
 
         Row {
             anchors.top: shelfHead.bottom
-            anchors.topMargin: 11
+            anchors.topMargin: Theme.dp(11)
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: shelf.gap
 
@@ -250,9 +250,9 @@ WidgetBody {
 
                     Rectangle {
                         anchors.centerIn: parent
-                        width: 42
-                        height: 42
-                        radius: 21
+                        width: Theme.dp(42)
+                        height: Theme.dp(42)
+                        radius: Theme.dp(21)
                         color: Theme.accent
                         opacity: (tile.hot || tile.starting) ? 1 : 0
 
@@ -260,7 +260,7 @@ WidgetBody {
                             anchors.centerIn: parent
                             anchors.horizontalCenterOffset: 1
                             name: "play"
-                            size: 22
+                            size: Theme.dp(22)
                             color: Theme.fgAccent
                         }
 
@@ -316,7 +316,7 @@ WidgetBody {
                 text: shelf.focusGame ? (w.launchingId === shelf.focusGame.id ? "Starting " + shelf.focusGame.name + "…" : shelf.focusGame.name) : ""
                 color: Theme.text
                 font.family: Theme.fontFamily
-                font.pixelSize: 13
+                font.pixelSize: Theme.dp(13)
                 font.bold: true
                 elide: Text.ElideRight
             }
@@ -326,7 +326,7 @@ WidgetBody {
                 text: w.detail(shelf.focusGame)
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Theme.dp(11)
                 elide: Text.ElideRight
             }
 
@@ -351,7 +351,7 @@ WidgetBody {
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             cache: true
-            sourceSize.width: 960
+            sourceSize.width: Theme.dp(960)
             visible: status === Image.Ready
         }
 
@@ -384,17 +384,17 @@ WidgetBody {
 
         Column {
             anchors.left: parent.left
-            anchors.leftMargin: 20
+            anchors.leftMargin: Theme.dp(20)
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width * 0.62
             visible: hero.game !== null
-            spacing: 6
+            spacing: Theme.dp(6)
 
             Text {
                 text: "LAST PLAYED"
                 color: Theme.accent
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.dp(10)
                 font.bold: true
                 font.letterSpacing: 1.4
             }
@@ -403,12 +403,12 @@ WidgetBody {
                 id: heroLogo
 
                 width: parent.width
-                height: 44
+                height: Theme.dp(44)
                 source: (hero.game && hero.game.logo) ? "file://" + hero.game.logo : ""
                 fillMode: Image.PreserveAspectFit
                 horizontalAlignment: Image.AlignLeft
                 asynchronous: true
-                sourceSize.height: 88
+                sourceSize.height: Theme.dp(88)
                 visible: status === Image.Ready
             }
 
@@ -418,7 +418,7 @@ WidgetBody {
                 text: hero.game ? hero.game.name : ""
                 color: Theme.text
                 font.family: Theme.fontFamily
-                font.pixelSize: 20
+                font.pixelSize: Theme.dp(20)
                 font.bold: true
                 wrapMode: Text.WordWrap
                 maximumLineCount: 2
@@ -430,20 +430,20 @@ WidgetBody {
                 text: w.detail(hero.game)
                 color: Theme.subtext
                 font.family: Theme.fontFamily
-                font.pixelSize: 12
+                font.pixelSize: Theme.dp(12)
                 elide: Text.ElideRight
             }
 
             Item {
                 width: 1
-                height: 2
+                height: Theme.dp(2)
             }
 
             Rectangle {
                 id: playChip
 
-                implicitWidth: playRow.implicitWidth + 28
-                implicitHeight: 32
+                implicitWidth: playRow.implicitWidth + Theme.dp(28)
+                implicitHeight: Theme.dp(32)
                 radius: height / 2
                 color: playArea.containsMouse ? Theme.accentHover : Theme.accent
 
@@ -451,12 +451,12 @@ WidgetBody {
                     id: playRow
 
                     anchors.centerIn: parent
-                    spacing: 6
+                    spacing: Theme.dp(6)
 
                     WidgetGlyph {
                         anchors.verticalCenter: parent.verticalCenter
                         name: "play"
-                        size: 16
+                        size: Theme.dp(16)
                         color: Theme.fgAccent
                     }
 
@@ -465,7 +465,7 @@ WidgetBody {
                         text: (hero.game && w.launchingId === hero.game.id) ? "Starting…" : "Play"
                         color: Theme.fgAccent
                         font.family: Theme.fontFamily
-                        font.pixelSize: 13
+                        font.pixelSize: Theme.dp(13)
                         font.bold: true
                     }
 
@@ -490,7 +490,7 @@ WidgetBody {
             text: w.emptyText
             color: Theme.subtextDim
             font.family: Theme.fontFamily
-            font.pixelSize: 13
+            font.pixelSize: Theme.dp(13)
         }
 
     }
@@ -507,10 +507,10 @@ WidgetBody {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.leftMargin: 18
-            anchors.rightMargin: 16
-            anchors.topMargin: 15
-            height: 22
+            anchors.leftMargin: Theme.dp(18)
+            anchors.rightMargin: Theme.dp(16)
+            anchors.topMargin: Theme.dp(15)
+            height: Theme.dp(22)
 
             Text {
                 id: listTitle
@@ -520,19 +520,19 @@ WidgetBody {
                 text: "GAMES"
                 color: Theme.accent
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.dp(10)
                 font.bold: true
                 font.letterSpacing: 1.4
             }
 
             Text {
                 anchors.left: listTitle.right
-                anchors.leftMargin: 8
+                anchors.leftMargin: Theme.dp(8)
                 anchors.verticalCenter: parent.verticalCenter
                 text: w.library.length === 0 ? "" : w.library.length + " installed"
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.pixelSize: Theme.dp(10)
                 font.bold: true
             }
 
@@ -544,9 +544,9 @@ WidgetBody {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: listHead.bottom
-            anchors.topMargin: 4
+            anchors.topMargin: Theme.dp(4)
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 8
+            anchors.bottomMargin: Theme.dp(8)
             contentWidth: width
             contentHeight: listColumn.height
             clip: true
@@ -567,12 +567,12 @@ WidgetBody {
                         required property var modelData
 
                         width: listColumn.width
-                        height: 52
+                        height: Theme.dp(52)
 
                         Rectangle {
                             anchors.fill: parent
-                            anchors.leftMargin: 8
-                            anchors.rightMargin: 8
+                            anchors.leftMargin: Theme.dp(8)
+                            anchors.rightMargin: Theme.dp(8)
                             radius: Theme.radiusXs
                             color: rowArea.containsMouse ? Theme.alpha(Theme.text, 0.06) : "transparent"
                         }
@@ -581,20 +581,20 @@ WidgetBody {
                             id: rowCover
 
                             anchors.left: parent.left
-                            anchors.leftMargin: 18
+                            anchors.leftMargin: Theme.dp(18)
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 76
-                            height: 36
-                            radius: 7
+                            width: Theme.dp(76)
+                            height: Theme.dp(36)
+                            radius: Theme.dp(7)
                             wide: true
                             game: row.modelData
                         }
 
                         Column {
                             anchors.left: rowCover.right
-                            anchors.leftMargin: 12
+                            anchors.leftMargin: Theme.dp(12)
                             anchors.right: rowPlay.left
-                            anchors.rightMargin: 8
+                            anchors.rightMargin: Theme.dp(8)
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 1
 
@@ -603,7 +603,7 @@ WidgetBody {
                                 text: row.modelData.name
                                 color: Theme.text
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 13
+                                font.pixelSize: Theme.dp(13)
                                 font.bold: true
                                 elide: Text.ElideRight
                             }
@@ -613,7 +613,7 @@ WidgetBody {
                                 text: w.launchingId === row.modelData.id ? "Starting…" : w.detail(row.modelData)
                                 color: w.launchingId === row.modelData.id ? Theme.accent : Theme.subtextDim
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Theme.dp(11)
                                 elide: Text.ElideRight
                             }
 
@@ -623,10 +623,10 @@ WidgetBody {
                             id: rowPlay
 
                             anchors.right: parent.right
-                            anchors.rightMargin: 20
+                            anchors.rightMargin: Theme.dp(20)
                             anchors.verticalCenter: parent.verticalCenter
                             name: "play"
-                            size: 18
+                            size: Theme.dp(18)
                             color: Theme.accent
                             opacity: rowArea.containsMouse ? 1 : 0
                         }
@@ -658,17 +658,17 @@ WidgetBody {
         property bool wide: false
         readonly property string file: cover.game ? (cover.wide ? (cover.game.header || cover.game.capsule || "") : (cover.game.capsule || cover.game.header || "")) : ""
 
-        radius: 10
+        radius: Theme.dp(10)
         color: cover.game ? Theme.alpha(w.tint(cover.game.name), 0.24) : Theme.alpha(Theme.text, 0.07)
 
         Text {
             anchors.fill: parent
-            anchors.margins: cover.wide ? 4 : 8
+            anchors.margins: cover.wide ? Theme.dp(4) : Theme.dp(8)
             visible: art.status !== Image.Ready
             text: cover.game ? cover.game.name : ""
             color: Theme.text
             font.family: Theme.fontFamily
-            font.pixelSize: cover.wide ? 9 : 12
+            font.pixelSize: cover.wide ? Theme.dp(9) : Theme.dp(12)
             font.bold: true
             wrapMode: Text.WordWrap
             maximumLineCount: 3
@@ -685,7 +685,7 @@ WidgetBody {
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             cache: true
-            sourceSize.width: cover.wide ? 230 : 300
+            sourceSize.width: cover.wide ? Theme.dp(230) : Theme.dp(300)
             visible: status === Image.Ready
         }
 

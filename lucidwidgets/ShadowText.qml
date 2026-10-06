@@ -6,7 +6,7 @@ Item {
 
     property string text: ""
     property color color: Theme.text
-    property int pixelSize: 16
+    property int pixelSize: Theme.dp(16)
     property bool bold: false
     property real weight: st.bold ? 640 : 420
     property real rounded: 0

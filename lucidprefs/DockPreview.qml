@@ -7,11 +7,11 @@ Rectangle {
     radius: Theme.radiusMd
     color: Theme.bgSunken
     clip: true
-    implicitHeight: 116
+    implicitHeight: Theme.dp(116)
 
     Rectangle {
         anchors.fill: parent
-        anchors.margins: 10
+        anchors.margins: Theme.dp(10)
         radius: Theme.radiusXs
         color: Theme.alpha(Theme.accent, 0.10)
         clip: true
@@ -23,8 +23,8 @@ Rectangle {
 
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: Prefs.dockNotch ? 0 : Math.max(2, Prefs.dockBottomMargin * bar.scaleFactor * 0.5)
-            width: icons.width + 12
+            anchors.bottomMargin: Prefs.dockNotch ? 0 : Math.max(Theme.dp(2), Prefs.dockBottomMargin * bar.scaleFactor * 0.5)
+            width: icons.width + Theme.dp(12)
             height: icons.height + 20 * bar.scaleFactor
             color: Theme.bgOpaque
             radius: Math.min(Prefs.dockRadius * bar.scaleFactor, bar.height / 2)
@@ -51,8 +51,8 @@ Rectangle {
                     Item {
                         required property int index
 
-                        width: Math.max(6, Prefs.dockIconSize * bar.scaleFactor)
-                        height: Math.max(6, Prefs.dockIconSize * bar.scaleFactor)
+                        width: Math.max(Theme.dp(6), Prefs.dockIconSize * bar.scaleFactor)
+                        height: Math.max(Theme.dp(6), Prefs.dockIconSize * bar.scaleFactor)
 
                         Rectangle {
                             anchors.fill: parent
@@ -73,12 +73,12 @@ Rectangle {
                         }
 
                         Rectangle {
-                            width: parent.index === 2 ? 9 : 3
-                            height: 3
+                            width: parent.index === 2 ? Theme.dp(9) : Theme.dp(3)
+                            height: Theme.dp(3)
                             radius: 1.5
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.bottom: parent.bottom
-                            anchors.bottomMargin: -3
+                            anchors.bottomMargin: -Theme.dp(3)
                             visible: Prefs.dockShowIndicators && (parent.index === 1 || parent.index === 2)
                             color: Theme.accent
                         }
@@ -95,9 +95,9 @@ Rectangle {
 
     Text {
         anchors.right: parent.right
-        anchors.rightMargin: 16
+        anchors.rightMargin: Theme.dp(16)
         anchors.top: parent.top
-        anchors.topMargin: 10
+        anchors.topMargin: Theme.dp(10)
         text: (Prefs.dockNotch ? "Notch" : "Island") + (Prefs.dockAutoHide ? " · auto-hide" : "")
         color: Theme.subtextDim
         font.family: Theme.fontFamily

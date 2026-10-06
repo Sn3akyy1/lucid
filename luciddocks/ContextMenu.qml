@@ -14,10 +14,10 @@ Item {
     // coordinates can be used unchanged
     property real originX: 0
     property real originY: 0
-    readonly property real cardW: 210
-    readonly property real cardH: list.implicitHeight + 16
-    readonly property real cardX: Math.max(8, Math.min(menu.width - menu.cardW - 8, menu.originX + menu.anchorLocalX - menu.cardW / 2))
-    readonly property real cardY: Math.max(8, menu.originY + menu.anchorLocalY - menu.cardH - 12)
+    readonly property real cardW: Theme.dp(210)
+    readonly property real cardH: list.implicitHeight + Theme.dp(16)
+    readonly property real cardX: Math.max(Theme.dp(8), Math.min(menu.width - menu.cardW - Theme.dp(8), menu.originX + menu.anchorLocalX - menu.cardW / 2))
+    readonly property real cardY: Math.max(Theme.dp(8), menu.originY + menu.anchorLocalY - menu.cardH - Theme.dp(12))
     readonly property bool showing: menu.menuVisible || fadeAnim.running
     property bool menuVisible: false
     property string appId: ""
@@ -123,8 +123,8 @@ Item {
             id: list
 
             anchors.fill: parent
-            anchors.margins: 8
-            spacing: 2
+            anchors.margins: Theme.dp(8)
+            spacing: Theme.dp(2)
 
             Repeater {
                 model: menu.actions
@@ -138,7 +138,7 @@ Item {
                     readonly property color tone: row.modelData.danger ? Theme.error : Theme.text
 
                     width: list.width
-                    height: 40 + (row.modelData.divider ? 9 : 0)
+                    height: Theme.dp(40) + (row.modelData.divider ? Theme.dp(9) : 0)
 
                     Rectangle {
                         id: divider
@@ -146,9 +146,9 @@ Item {
                         anchors.top: parent.top
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        anchors.leftMargin: 8
-                        anchors.rightMargin: 8
-                        anchors.topMargin: 4
+                        anchors.leftMargin: Theme.dp(8)
+                        anchors.rightMargin: Theme.dp(8)
+                        anchors.topMargin: Theme.dp(4)
                         height: 1
                         color: Theme.outline
                         visible: row.modelData.divider
@@ -158,7 +158,7 @@ Item {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
-                        height: 40
+                        height: Theme.dp(40)
 
                         Rectangle {
                             anchors.fill: parent
@@ -179,10 +179,10 @@ Item {
                             id: rowGlyph
 
                             anchors.left: parent.left
-                            anchors.leftMargin: 10
+                            anchors.leftMargin: Theme.dp(10)
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 18
-                            height: 18
+                            width: Theme.dp(18)
+                            height: Theme.dp(18)
                             pathData: row.modelData.glyph
                             glyphColor: row.modelData.danger ? Theme.error : Theme.subtext
                         }
@@ -190,7 +190,7 @@ Item {
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.left: rowGlyph.right
-                            anchors.leftMargin: 12
+                            anchors.leftMargin: Theme.dp(12)
                             text: row.modelData.label
                             color: row.tone
                             font.family: Theme.fontFamily

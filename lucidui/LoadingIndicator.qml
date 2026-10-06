@@ -14,8 +14,8 @@ Item {
     readonly property var sequence: ["softBurst", "cookie9", "pentagon", "pill", "sunny", "cookie4", "oval"]
     property real t: 0
 
-    implicitWidth: 44
-    implicitHeight: 44
+    implicitWidth: Theme.dp(44)
+    implicitHeight: Theme.dp(44)
 
     NumberAnimation on t {
         running: li.running && li.visible

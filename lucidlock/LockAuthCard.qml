@@ -23,7 +23,7 @@ Rectangle {
 
     radius: Theme.shapeXl
     color: Lockscreen.card
-    implicitHeight: body.implicitHeight + 48
+    implicitHeight: body.implicitHeight + Theme.dp(48)
 
     // the card counts as inside the field: clicking it aims the keyboard at the
     // pill rather than dropping back to the glance
@@ -41,21 +41,21 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: 24
-        spacing: 14
+        anchors.margins: Theme.dp(24)
+        spacing: Theme.dp(14)
 
         Item {
             id: avatarBox
 
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 84
-            height: 84
+            width: Theme.dp(84)
+            height: Theme.dp(84)
 
             // a ring in the avatar's own shape: accent while typing, red on refusal
             MaterialShape {
                 anchors.centerIn: parent
-                width: parent.width + 10
-                height: parent.height + 10
+                width: parent.width + Theme.dp(10)
+                height: parent.height + Theme.dp(10)
                 shape: "cookie12"
                 spin: avatar.spin
                 color: Lockscreen.granted ? Theme.success : (Lockscreen.phase === "failed" || Lockscreen.phase === "error" ? Theme.error : Theme.alpha(Theme.accent, 0.7))
@@ -113,7 +113,7 @@ Rectangle {
 
         Column {
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 2
+            spacing: Theme.dp(2)
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -139,7 +139,7 @@ Rectangle {
 
         Item {
             width: parent.width
-            height: 6
+            height: Theme.dp(6)
         }
 
         LockField {
@@ -151,7 +151,7 @@ Rectangle {
         // the status line: pam's verdict, the keyboard's warnings, or nothing
         Item {
             width: parent.width
-            height: card.hasStatus ? 22 : 0
+            height: card.hasStatus ? Theme.dp(22) : 0
             clip: true
 
             Behavior on height {
@@ -168,7 +168,7 @@ Rectangle {
 
                 anchors.left: parent.left
                 anchors.right: marks.left
-                anchors.rightMargin: 8
+                anchors.rightMargin: Theme.dp(8)
                 anchors.verticalCenter: parent.verticalCenter
                 text: Lockscreen.statusText
                 elide: Text.ElideRight
@@ -232,15 +232,15 @@ Rectangle {
 
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 // the commonest reason a password is refused, said where it
                 // cannot be pushed aside by the refusal itself
                 Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: capsRow.implicitWidth + 16
-                    height: 20
-                    radius: 999
+                    width: capsRow.implicitWidth + Theme.dp(16)
+                    height: Theme.dp(20)
+                    radius: Theme.dp(999)
                     color: Theme.alpha(Theme.warning, 0.18)
                     visible: Lockscreen.capsLock
 
@@ -248,12 +248,12 @@ Rectangle {
                         id: capsRow
 
                         anchors.centerIn: parent
-                        spacing: 4
+                        spacing: Theme.dp(4)
 
                         LockGlyph {
                             anchors.verticalCenter: parent.verticalCenter
                             name: "caps"
-                            size: 13
+                            size: Theme.dp(13)
                             color: Theme.warning
                         }
 
@@ -274,9 +274,9 @@ Rectangle {
                 // which keymap is live
                 Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: layoutText.implicitWidth + 18
-                    height: 20
-                    radius: 999
+                    width: layoutText.implicitWidth + Theme.dp(18)
+                    height: Theme.dp(20)
+                    radius: Theme.dp(999)
                     color: Lockscreen.cardHigh
                     visible: Lockscreen.layoutShort !== "" && Lockscreen.focused
 

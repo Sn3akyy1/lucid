@@ -20,10 +20,10 @@ Column {
     }
 
     function columnsFor(width) {
-        return Math.max(2, Math.floor((width + 10) / 222));
+        return Math.max(2, Math.floor((width + Theme.dp(10)) / Theme.dp(222)));
     }
 
-    spacing: 26
+    spacing: Theme.dp(26)
     // the header switch turns the whole layer off, so the page has nothing left to set
     enabled: Prefs.widgetsEnabled
     opacity: Prefs.widgetsEnabled ? 1 : 0.38
@@ -63,8 +63,8 @@ Column {
 
                 width: parent.width
                 columns: page.columnsFor(builtIn.width)
-                columnSpacing: 10
-                rowSpacing: 10
+                columnSpacing: Theme.dp(10)
+                rowSpacing: Theme.dp(10)
 
                 Repeater {
                     model: Widgets.presets
@@ -98,8 +98,8 @@ Column {
 
                 width: parent.width
                 columns: page.columnsFor(saved.width)
-                columnSpacing: 10
-                rowSpacing: 10
+                columnSpacing: Theme.dp(10)
+                rowSpacing: Theme.dp(10)
 
                 PresetSaveTile {
                     width: page.tileWidth(saved)
@@ -154,7 +154,7 @@ Column {
 
             Flow {
                 width: parent.width
-                spacing: 6
+                spacing: Theme.dp(6)
 
                 Repeater {
                     model: [{
@@ -174,9 +174,9 @@ Column {
 
                         readonly property bool selected: page.filter === chip.modelData.id
 
-                        width: chipLabel.implicitWidth + 26
-                        height: 32
-                        radius: 16
+                        width: chipLabel.implicitWidth + Theme.dp(26)
+                        height: Theme.dp(32)
+                        radius: Theme.dp(16)
                         color: chip.selected ? Theme.accentContainer : (chipArea.containsMouse ? Theme.bgHover : Theme.bgSunken)
 
                         Behavior on color {
@@ -235,7 +235,7 @@ Column {
 
                 Flow {
                     width: parent.width
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     Repeater {
                         model: group.modelData.variants

@@ -43,13 +43,13 @@ Item {
     // bumped on every change to the cards, for anything that reads across the whole list
     property int cardsRev: 0
 
-    readonly property real edge: 12
-    readonly property real pad: 20
+    readonly property real edge: Theme.dp(12)
+    readonly property real pad: Theme.dp(20)
     readonly property int wheelStep: 190
-    readonly property real sheetW: Math.min(452, wp.width - wp.edge * 2)
+    readonly property real sheetW: Math.min(Theme.dp(452), wp.width - wp.edge * 2)
     readonly property real sheetH: Math.max(0, wp.height - wp.edge * 2)
     readonly property real innerW: wp.sheetW - wp.pad * 2
-    readonly property real tileW: Math.floor((wp.innerW - 10) / 2)
+    readonly property real tileW: Math.floor((wp.innerW - Theme.dp(10)) / 2)
     // a card on another screen than the main one remembers which
     readonly property string spawnScreen: (wp.board && !wp.board.isPrimary) ? wp.board.screenName : ""
     readonly property var shownTypes: {
@@ -167,7 +167,9 @@ Item {
         if (!v || Widgets.full || !wp.board)
             return ;
 
-        var spot = Widgets.freeSpot(v.w, v.h, {
+        var size = Widgets.freshSize(typeId, v);
+        var k = Widgets.sizeScale(typeId, v.id);
+        var spot = Widgets.freeSpot(size.w * k, size.h * k, {
             "screen": wp.board.screenName,
             "w": wp.width,
             "h": wp.height,
@@ -218,14 +220,17 @@ Item {
         settle.stop();
         ghost.wtype = typeId;
         ghost.wvariant = v.id;
-        ghost.natW = v.w;
-        ghost.natH = v.h;
+        // the size the card will land at
+        var size = Widgets.freshSize(typeId, v);
+        var k = Widgets.sizeScale(typeId, v.id);
+        ghost.natW = Math.round(size.w * k);
+        ghost.natH = Math.round(size.h * k);
         // the ghost grows out of the preview around the point that was grabbed
         var fx = from.w > 0 ? Math.max(0, Math.min(1, (at.x - from.x) / from.w)) : 0.5;
         var fy = from.h > 0 ? Math.max(0, Math.min(1, (at.y - from.y) / from.h)) : 0.5;
-        ghost.grabX = fx * v.w;
-        ghost.grabY = fy * v.h;
-        ghost.fromScale = from.w > 0 ? from.w / v.w : 0.5;
+        ghost.grabX = fx * ghost.natW;
+        ghost.grabY = fy * ghost.natH;
+        ghost.fromScale = from.w > 0 ? from.w / ghost.natW : 0.5;
         ghost.fade = 1;
         ghost.lift = 0;
         ghost.carried = true;
@@ -373,7 +378,7 @@ Item {
     Rectangle {
         id: sheet
 
-        x: wp.edge - (1 - wp.reveal) * (wp.sheetW + wp.edge + 24)
+        x: wp.edge - (1 - wp.reveal) * (wp.sheetW + wp.edge + Theme.dp(24))
         y: wp.edge
         width: wp.sheetW
         height: wp.sheetH
@@ -437,12 +442,12 @@ Item {
 
         Column {
             anchors.centerIn: parent
-            spacing: 14
+            spacing: Theme.dp(14)
 
             MaterialShape {
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: 72
-                height: 72
+                width: Theme.dp(72)
+                height: Theme.dp(72)
                 shape: "cookie9"
                 color: bin.hot ? Theme.error : Theme.primaryContainer
                 scale: bin.hot ? 1.12 : 1
@@ -450,7 +455,7 @@ Item {
                 Icon {
                     anchors.centerIn: parent
                     name: "delete"
-                    size: 30
+                    size: Theme.dp(30)
                     fill: bin.hot ? 1 : 0
                     color: bin.hot ? Theme.fgError : Theme.fgPrimaryContainer
                 }
@@ -629,21 +634,21 @@ Item {
                 x: wp.pad
                 y: wp.pad
                 width: wp.innerW
-                height: 48
+                height: Theme.dp(48)
 
                 MaterialShape {
                     id: mark
 
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 46
-                    height: 46
+                    width: Theme.dp(46)
+                    height: Theme.dp(46)
                     shape: "cookie9"
                     color: Theme.primaryContainer
 
                     WidgetGlyph {
                         anchors.centerIn: parent
                         name: "widgets"
-                        size: 22
+                        size: Theme.dp(22)
                         color: Theme.fgPrimaryContainer
                     }
 
@@ -651,9 +656,9 @@ Item {
 
                 Column {
                     anchors.left: mark.right
-                    anchors.leftMargin: 14
+                    anchors.leftMargin: Theme.dp(14)
                     anchors.right: closeBtn.left
-                    anchors.rightMargin: 8
+                    anchors.rightMargin: Theme.dp(8)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 0
 
@@ -700,7 +705,7 @@ Item {
                 id: search
 
                 x: wp.pad
-                y: head.y + head.height + 14
+                y: head.y + head.height + Theme.dp(14)
                 width: wp.innerW
                 variant: "search"
                 containerColor: Theme.withBlur(Theme.surfaceHigh)
@@ -729,7 +734,7 @@ Item {
                 id: tabBar
 
                 x: wp.pad
-                y: search.y + search.height + 6
+                y: search.y + search.height + Theme.dp(6)
                 width: wp.innerW
                 inline: true
                 options: wp.tabs
@@ -783,9 +788,9 @@ Item {
                             id: chipScroll
 
                             x: wp.pad
-                            y: 14
+                            y: Theme.dp(14)
                             width: wp.innerW
-                            height: 32
+                            height: Theme.dp(32)
                             contentWidth: chipRow.width
                             contentHeight: height
                             flickableDirection: Flickable.HorizontalFlick
@@ -795,7 +800,7 @@ Item {
                             Row {
                                 id: chipRow
 
-                                spacing: 6
+                                spacing: Theme.dp(6)
 
                                 Repeater {
                                     model: [{
@@ -832,13 +837,13 @@ Item {
                             id: gallery
 
                             x: 0
-                            y: chipScroll.y + chipScroll.height + 10
+                            y: chipScroll.y + chipScroll.height + Theme.dp(10)
                             width: wp.sheetW
                             height: Math.max(0, addPane.height - gallery.y)
                             clip: true
-                            spacing: 22
-                            topMargin: 8
-                            bottomMargin: 20
+                            spacing: Theme.dp(22)
+                            topMargin: Theme.dp(8)
+                            bottomMargin: Theme.dp(20)
                             cacheBuffer: 360
                             boundsBehavior: Flickable.StopAtBounds
                             flickDeceleration: 6000
@@ -878,15 +883,15 @@ Item {
 
                                     x: wp.pad
                                     width: wp.innerW
-                                    spacing: 10
+                                    spacing: Theme.dp(10)
 
                                     Item {
                                         width: parent.width
-                                        height: 22
+                                        height: Theme.dp(22)
 
                                         LText {
                                             anchors.left: parent.left
-                                            anchors.leftMargin: 4
+                                            anchors.leftMargin: Theme.dp(4)
                                             anchors.verticalCenter: parent.verticalCenter
                                             role: "labelLarge"
                                             color: Theme.primary
@@ -895,7 +900,7 @@ Item {
 
                                         LText {
                                             anchors.right: parent.right
-                                            anchors.rightMargin: 4
+                                            anchors.rightMargin: Theme.dp(4)
                                             anchors.verticalCenter: parent.verticalCenter
                                             role: "labelMedium"
                                             color: Theme.subtext
@@ -906,7 +911,7 @@ Item {
 
                                     Grid {
                                         columns: 2
-                                        spacing: 10
+                                        spacing: Theme.dp(10)
 
                                         Repeater {
                                             model: group.modelData.variants
@@ -933,13 +938,13 @@ Item {
                         Column {
                             anchors.centerIn: gallery
                             width: wp.innerW
-                            spacing: 10
+                            spacing: Theme.dp(10)
                             visible: wp.shownTypes.length === 0
 
                             Icon {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 name: "search_off"
-                                size: 40
+                                size: Theme.dp(40)
                                 color: Theme.subtext
                             }
 
@@ -970,7 +975,7 @@ Item {
                         width: wp.sheetW
                         height: strip.height
                         visible: strip.inView(1)
-                        contentHeight: placedCol.implicitHeight + 34
+                        contentHeight: placedCol.implicitHeight + Theme.dp(34)
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
                         flickDeceleration: 6000
@@ -996,23 +1001,23 @@ Item {
                             id: placedCol
 
                             x: wp.pad
-                            y: 14
+                            y: Theme.dp(14)
                             width: wp.innerW
-                            spacing: 18
+                            spacing: Theme.dp(18)
 
                             Item {
                                 width: parent.width
-                                height: 36
+                                height: Theme.dp(36)
                                 visible: wp.liveCards > 0
 
                                 LText {
                                     anchors.left: parent.left
-                                    anchors.leftMargin: 4
+                                    anchors.leftMargin: Theme.dp(4)
                                     anchors.verticalCenter: parent.verticalCenter
                                     role: "labelLarge"
                                     color: Theme.primary
                                     text: "Hover one to find it, click it for its options"
-                                    width: parent.width - clearBtn.width - 12
+                                    width: parent.width - clearBtn.width - Theme.dp(12)
                                     elide: Text.ElideRight
                                 }
 
@@ -1042,7 +1047,7 @@ Item {
 
                             Column {
                                 width: parent.width
-                                spacing: 2
+                                spacing: Theme.dp(2)
                                 visible: wp.liveCards > 0
 
                                 Repeater {
@@ -1062,7 +1067,7 @@ Item {
                                 width: parent.width
                                 visible: wp.liveCards > 0 && wp.placedEnds.first === ""
                                 horizontalAlignment: Text.AlignHCenter
-                                topPadding: 12
+                                topPadding: Theme.dp(12)
                                 role: "bodyMedium"
                                 color: Theme.subtext
                                 text: "None of your widgets match the search."
@@ -1071,22 +1076,22 @@ Item {
                             // nothing out yet
                             Column {
                                 width: parent.width
-                                spacing: 10
+                                spacing: Theme.dp(10)
                                 visible: wp.liveCards === 0
-                                topPadding: 26
-                                bottomPadding: 10
+                                topPadding: Theme.dp(26)
+                                bottomPadding: Theme.dp(10)
 
                                 MaterialShape {
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    width: 64
-                                    height: 64
+                                    width: Theme.dp(64)
+                                    height: Theme.dp(64)
                                     shape: "cookie9"
                                     color: Theme.primaryContainer
 
                                     WidgetGlyph {
                                         anchors.centerIn: parent
                                         name: "widgets"
-                                        size: 26
+                                        size: Theme.dp(26)
                                         color: Theme.fgPrimaryContainer
                                     }
 
@@ -1111,10 +1116,10 @@ Item {
 
                             Column {
                                 width: parent.width
-                                spacing: 8
+                                spacing: Theme.dp(8)
 
                                 LText {
-                                    leftPadding: 4
+                                    leftPadding: Theme.dp(4)
                                     role: "labelLarge"
                                     color: Theme.primary
                                     text: "Behaviour"
@@ -1122,7 +1127,7 @@ Item {
 
                                 Column {
                                     width: parent.width
-                                    spacing: 2
+                                    spacing: Theme.dp(2)
 
                                     Repeater {
                                         model: [{
@@ -1150,18 +1155,18 @@ Item {
                                             required property int index
 
                                             width: parent.width
-                                            height: 60
-                                            topLeftRadius: brow.index === 0 ? 20 : 4
-                                            topRightRadius: brow.index === 0 ? 20 : 4
-                                            bottomLeftRadius: brow.index === 3 ? 20 : 4
-                                            bottomRightRadius: brow.index === 3 ? 20 : 4
+                                            height: Theme.dp(60)
+                                            topLeftRadius: brow.index === 0 ? Theme.dp(20) : Theme.dp(4)
+                                            topRightRadius: brow.index === 0 ? Theme.dp(20) : Theme.dp(4)
+                                            bottomLeftRadius: brow.index === 3 ? Theme.dp(20) : Theme.dp(4)
+                                            bottomRightRadius: brow.index === 3 ? Theme.dp(20) : Theme.dp(4)
                                             color: Theme.withBlur(Theme.surfaceHigh)
 
                                             Column {
                                                 anchors.left: parent.left
-                                                anchors.leftMargin: 16
+                                                anchors.leftMargin: Theme.dp(16)
                                                 anchors.right: bsw.left
-                                                anchors.rightMargin: 10
+                                                anchors.rightMargin: Theme.dp(10)
                                                 anchors.verticalCenter: parent.verticalCenter
 
                                                 LText {
@@ -1185,7 +1190,7 @@ Item {
                                                 id: bsw
 
                                                 anchors.right: parent.right
-                                                anchors.rightMargin: 12
+                                                anchors.rightMargin: Theme.dp(12)
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 checked: Prefs[brow.modelData.key] === true
                                                 onToggled: (v) => {
@@ -1228,7 +1233,7 @@ Item {
                 x: 0
                 y: wp.sheetH - foot.height
                 width: wp.sheetW
-                height: 68
+                height: Theme.dp(68)
 
                 Rectangle {
                     width: parent.width
@@ -1238,7 +1243,7 @@ Item {
 
                 Button {
                     anchors.left: parent.left
-                    anchors.leftMargin: wp.pad - 6
+                    anchors.leftMargin: wp.pad - Theme.dp(6)
                     anchors.verticalCenter: parent.verticalCenter
                     variant: "text"
                     icon: "settings"
@@ -1275,7 +1280,7 @@ Item {
             property var doomed: null
             property string wallpaper: ""
 
-            contentHeight: layoutCol.implicitHeight + 34
+            contentHeight: layoutCol.implicitHeight + Theme.dp(34)
             clip: true
             boundsBehavior: Flickable.StopAtBounds
             flickDeceleration: 6000
@@ -1310,12 +1315,12 @@ Item {
                 id: layoutCol
 
                 x: wp.pad
-                y: 14
+                y: Theme.dp(14)
                 width: wp.innerW
-                spacing: 12
+                spacing: Theme.dp(12)
 
                 LText {
-                    leftPadding: 4
+                    leftPadding: Theme.dp(4)
                     role: "labelLarge"
                     color: Theme.primary
                     text: "Yours"
@@ -1323,7 +1328,7 @@ Item {
 
                 Grid {
                     columns: 2
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     LP.PresetSaveTile {
                         width: wp.tileW
@@ -1372,16 +1377,16 @@ Item {
                 // asks before a saved layout goes
                 Rectangle {
                     width: parent.width
-                    height: 56
-                    radius: 20
+                    height: Theme.dp(56)
+                    radius: Theme.dp(20)
                     visible: layouts.doomed !== null
                     color: Theme.errorContainer
 
                     LText {
                         anchors.left: parent.left
-                        anchors.leftMargin: 16
+                        anchors.leftMargin: Theme.dp(16)
                         anchors.right: keepBtn.left
-                        anchors.rightMargin: 8
+                        anchors.rightMargin: Theme.dp(8)
                         anchors.verticalCenter: parent.verticalCenter
                         role: "bodyMedium"
                         color: Theme.fgErrorContainer
@@ -1393,7 +1398,7 @@ Item {
                         id: keepBtn
 
                         anchors.right: dropBtn.left
-                        anchors.rightMargin: 4
+                        anchors.rightMargin: Theme.dp(4)
                         anchors.verticalCenter: parent.verticalCenter
                         variant: "text"
                         size: "xs"
@@ -1406,7 +1411,7 @@ Item {
                         id: dropBtn
 
                         anchors.right: parent.right
-                        anchors.rightMargin: 10
+                        anchors.rightMargin: Theme.dp(10)
                         anchors.verticalCenter: parent.verticalCenter
                         variant: "filled"
                         danger: true
@@ -1424,11 +1429,11 @@ Item {
 
                 Item {
                     width: 1
-                    height: 6
+                    height: Theme.dp(6)
                 }
 
                 LText {
-                    leftPadding: 4
+                    leftPadding: Theme.dp(4)
                     role: "labelLarge"
                     color: Theme.primary
                     text: "Ready-made"
@@ -1436,7 +1441,7 @@ Item {
 
                 Grid {
                     columns: 2
-                    spacing: 10
+                    spacing: Theme.dp(10)
 
                     Repeater {
                         model: Widgets.presets.filter((p) => {

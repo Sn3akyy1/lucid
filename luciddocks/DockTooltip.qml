@@ -7,7 +7,7 @@ Rectangle {
     property string label: ""
     property string detail: ""
     property bool open: false
-    property real gap: 10
+    property real gap: Theme.dp(10)
     property real lift: 0
 
     property int fadeDuration: Theme.durShort
@@ -19,8 +19,8 @@ Rectangle {
     scale: tip.open ? 1 : 0.92
     transformOrigin: Item.Bottom
 
-    implicitWidth: Math.max(labelText.implicitWidth, detailText.implicitWidth) + 20
-    implicitHeight: content.implicitHeight + 12
+    implicitWidth: Math.max(labelText.implicitWidth, detailText.implicitWidth) + Theme.dp(20)
+    implicitHeight: content.implicitHeight + Theme.dp(12)
     width: tip.implicitWidth
     height: tip.implicitHeight
 

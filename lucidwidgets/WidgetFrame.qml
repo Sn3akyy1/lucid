@@ -35,9 +35,11 @@ Item {
     // a variant that carries its own size: drag any edge instead of picking S/M/L/XL
     readonly property bool resizable: frame.variantInfo !== null && frame.variantInfo.resizable === true
     readonly property real safeZoom: frame.zoom > 0 ? frame.zoom : 1
+    // a catalogue size is drawn at the interface size; a hand-sized card keeps its own
+    readonly property real sizeScale: frame.resizable ? 1 : Theme.uiScale
     // while a grip is held the card runs off the live drag, not off the store
-    readonly property real bodyW: frame.resizing ? frame.resW / frame.safeZoom : frame.bw
-    readonly property real bodyH: frame.resizing ? frame.resH / frame.safeZoom : frame.bh
+    readonly property real bodyW: frame.resizing ? frame.resW / frame.safeZoom : Math.round(frame.bw * frame.sizeScale)
+    readonly property real bodyH: frame.resizing ? frame.resH / frame.safeZoom : Math.round(frame.bh * frame.sizeScale)
     readonly property real cardW: Math.round(frame.bodyW * frame.zoom)
     readonly property real cardH: Math.round(frame.bodyH * frame.zoom)
     readonly property int radius: Math.round(Math.min(Theme.radiusXl * frame.zoom, frame.cardH / 2, frame.cardW / 2))
@@ -101,7 +103,7 @@ Item {
     property real resW: 0
     property real resH: 0
 
-    readonly property real gripSize: 12
+    readonly property real gripSize: Theme.dp(12)
     // the eight handles, clockwise from the top left corner
     readonly property var gripSpecs: [{
         "h": -1,
@@ -721,14 +723,14 @@ Item {
 
                 readonly property bool corner: dot.modelData.h !== 0 && dot.modelData.v !== 0
 
-                width: 6
-                height: 6
-                radius: 3
+                width: Theme.dp(6)
+                height: Theme.dp(6)
+                radius: Theme.dp(3)
                 color: Theme.accent
                 opacity: outline.opacity
                 visible: dot.corner
-                x: dot.modelData.h < 0 ? -3 : frame.width - 3
-                y: dot.modelData.v < 0 ? -3 : frame.height - 3
+                x: dot.modelData.h < 0 ? -Theme.dp(3) : frame.width - Theme.dp(3)
+                y: dot.modelData.v < 0 ? -Theme.dp(3) : frame.height - Theme.dp(3)
             }
 
         }
@@ -786,10 +788,10 @@ Item {
         readonly property bool shown: frame.editMode && !frame.closing && !frame.dragging && !frame.resizing
 
         z: 9
-        width: 26
-        height: 26
-        x: Math.max(-9, 4 - frame.x)
-        y: Math.max(-9, 4 - frame.y)
+        width: Theme.dp(26)
+        height: Theme.dp(26)
+        x: Math.max(-Theme.dp(9), Theme.dp(4) - frame.x)
+        y: Math.max(-Theme.dp(9), Theme.dp(4) - frame.y)
         opacity: removeBadge.shown ? 1 : 0
         scale: removeBadge.shown ? 1 : 0.5
         visible: opacity > 0.01
@@ -813,7 +815,7 @@ Item {
         Icon {
             anchors.centerIn: parent
             name: "remove"
-            size: 18
+            size: Theme.dp(18)
             color: badgeArea.containsMouse ? Theme.fgError : Theme.text
         }
 
