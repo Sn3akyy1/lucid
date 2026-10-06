@@ -438,6 +438,7 @@ Singleton {
     property alias windowModuleScroll: s.windowModuleScroll
     property alias windowModuleMiddleClose: s.windowModuleMiddleClose
     property alias windowModuleStyle: s.windowModuleStyle
+    property alias workspacesByDisplay: s.workspacesByDisplay
     property alias clock24h: s.clock24h
     property alias clockShowDate: s.clockShowDate
     property alias gpsEnabled: s.gpsEnabled
@@ -803,6 +804,7 @@ Singleton {
         "windowModuleScroll": true,
         "windowModuleMiddleClose": false,
         "windowModuleStyle": "plain",
+        "workspacesByDisplay": true,
         "clock24h": false,
         "clockShowDate": true,
         "gpsEnabled": false,
@@ -1365,6 +1367,7 @@ Singleton {
             property bool windowModuleScroll: true
             property bool windowModuleMiddleClose: false
             property string windowModuleStyle: "plain"
+            property bool workspacesByDisplay: true
             property bool clock24h: false
             property bool clockShowDate: true
             property bool gpsEnabled: false

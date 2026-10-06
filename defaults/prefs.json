@@ -62,6 +62,7 @@
     "windowModuleScroll": true,
     "windowModuleMiddleClose": false,
     "windowModuleStyle": "plain",
+    "workspacesByDisplay": true,
     "showTray": true,
     "showWorkspaces": true,
     "surfaceDarkness": -1,

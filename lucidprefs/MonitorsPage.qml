@@ -519,6 +519,21 @@ Column {
 
         }
 
+        SettingRow {
+            title: "Group by display"
+            resetKey: "workspacesByDisplay"
+            description: "The bar's workspace dots and the overview fall into one run per display, each under the display's number, and the accent follows the display you are on."
+            visible: Monitors.workspaceKeys.length > 1
+
+            M3Switch {
+                checked: Prefs.workspacesByDisplay
+                onToggled: (v) => {
+                    return Prefs.workspacesByDisplay = v;
+                }
+            }
+
+        }
+
         Repeater {
             model: Monitors.workspacesSplit ? Monitors.workspaceKeys : []
 
