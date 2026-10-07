@@ -259,6 +259,19 @@ them and reordered inside them, or taken out of the bar entirely.
 Two shapes, set in Settings: **island** (floating rounded pills) or **notch**
 (flush to the screen edge, with flares that blend into it).
 
+Each module's card under *Settings → Bar* also picks its look, starting from
+the one above: the clock in one line or two, or with the time on its accent
+chip, and how the date reads; media as the turning disc, a still cover or just
+its bars, with a large-cover panel; workspaces as dots or numbers, how many
+always show and whether the wheel switches them; notifications as a count, a dot
+or an accent chip; and the tray collapsed or as every app's icon, in the app's
+own colours or the palette's, with a switch per app to keep it out.
+
+With more than one display, *Settings → Displays → The bar on its own → Every
+display* puts a bar on each screen, showing that screen's workspaces. One of
+them, on the shell's display or the one in use, still turns into notification
+popups and answers the bar's `qs ipc` targets.
+
 Drag a module by its handle to move it within a zone or into another one, or
 down into *Not in the bar* to take it out; the arrows and buttons beside it do
 the same thing. Also in Settings: how close the middle may come to either side
@@ -306,6 +319,15 @@ The answer takes a card above the results, set in display type; Return copies it
 Applications with a window already open carry the dock's own running mark
 beside their name, and the selected row says what Return will do with it. A
 search that finds nothing offers the four prefixes as chips you can click.
+
+A typed search ranks more than apps: open windows, by their app or their title
+(Return switches to the window); apps' own actions such as *New Private
+Window*, listed under the app when you type its name; and lock, suspend, log
+out, restart and shut down from three letters, the last three asking for a
+second Return. Something that reads as an address gets a row of its own at the
+top when nothing matches it better. Each of these is a switch on the Launcher
+settings page, which can also put power buttons at the end of the empty search
+field.
 
 The application list follows the desktop-entry spec properly: `~/.local/share/
 applications` overrides `/usr/share/applications` entry for entry, so an
@@ -622,6 +644,11 @@ past the neighbour and making a new workspace at the end.
   volume; they keep quiet while you are silenced, apart from the battery
   warnings. Tiny ticks answer the volume, brightness, Caps Lock and microphone
   keys — once where a drag or a held key starts and once where it stops.
+  The page also shows what a device is doing: a live meter under the output and
+  the microphone volume, balance and a Left/Right test for a stereo output, a
+  way to put an app back on the default device, and a *Behaviour* card for
+  WirePlumber's own settings (remembering each app's volume and device,
+  following the default, pausing when headphones go, headset call mode, mono).
   The sounds are synthesised by `support/sounds/build-sounds.py` into
   `assets/sounds`; the ticks start from [Kenney](https://kenney.nl)'s Interface
   Sounds, which are CC0. Scriptable with
@@ -645,7 +672,10 @@ past the neighbour and making a new workspace at the end.
   its **notifications** with dismiss and inline reply, a **media remote** with
   seek and volume for whichever player it is running, **its** system volume,
   and a **touchpad and keyboard** that drive the phone from this machine. Every
-  per-device feature can be switched off individually. Scriptable too —
+  per-device feature can be switched off individually. The phone widget on the
+  desktop browses the phone's files too, greys out whatever the phone has
+  switched off, and steps between phones when more than one is paired.
+  Scriptable too —
   `qs ipc call kdeconnect status`, `list`, `rescan`, and
   `qs ipc call -- kdeconnect ring <id>`
 - **Idle and sleep** — an *Idle* page that owns hypridle for you. It writes
@@ -720,7 +750,10 @@ past the neighbour and making a new workspace at the end.
   as you scroll, and a reset arrow on anything you have moved off its default.
   The search field at the head of the rail finds any option by its name or its
   description and opens its page scrolled to it; `Ctrl+F`, or just start typing.
-  Scriptable with `qs ipc call -- settings search <words>`
+  Scriptable with `qs ipc call -- settings search <words>`. The General page
+  sets how big the whole shell is (*Interface size*, 75 to 125 %, without
+  touching the monitor's scale) and how round (*Corner rounding*, square to
+  half as round again)
 
 <img src="assets/prev6.webp" alt="The Lucid lock screen: a large clock on the left, and the sign-in card, the song playing and notifications on the right">
 

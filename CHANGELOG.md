@@ -7,8 +7,8 @@ All notable changes to Lucid are recorded here, newest first.
 Lucid 2. Every surface is redrawn in Material You Expressive on one shared kit
 of controls, the clock grows into an app, the launcher learns new modes and the
 control centre's tiles are yours to arrange. On top of that sits a release's
-worth of new features, most of them from **Ciro Rivera**, who wrote seventeen of
-the pull requests in this one. Thank you, Ciro.
+worth of new features, most of them from **Ciro Rivera**, who wrote twenty-five
+of the pull requests in this one. Thank you, Ciro.
 
 <img src="assets/prev1.webp" alt="The Lucid desktop: the bar along the top, calendar, weather, clock and music widgets on the wallpaper, and the dock along the bottom">
 
@@ -71,9 +71,9 @@ the pull requests in this one. Thank you, Ciro.
   over your windows with a − on each, and a card dragged onto the sheet is
   taken off. `qs ipc call widgets panel` toggles it.
 - **The launcher** gains a head band with its modes, the calculator's answer as
-  a card at the top of the results, and prefixes: `>win` for open windows, `?`
-  for the web, `$` to run a command in your terminal and `:` for emoji. Apps can
-  be hidden from it, and it has a page of its own in Settings.
+  a card at the top of the results, and prefixes: `?` for the web, `$` to run a
+  command in your terminal and `:` for emoji. Apps can be hidden from it, and it
+  has a page of its own in Settings.
 - **Control centre tiles are yours to arrange.** *Edit tiles* lets you drag
   them into any order and add or remove them from a shelf of spares; the
   sliders ease as they move.
@@ -147,6 +147,10 @@ places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
   Lock does; key repeat and Num Lock. Mouse speed, acceleration, scrolling and
   left-handed buttons; the touchpad's tapping, scrolling and palm rejection; and
   how the workspace swipe feels. By Ciro Rivera in #47.
+- **Corner rounding.** One dial under *Settings → General → Shape*, from square
+  to half as round again as shipped, live: cards, panels, menus, the bar's and
+  the dock's pills, buttons, chips, switches and the search fields all follow
+  it, while avatars, dots and the like stay round. By Ciro Rivera in #18.
 
 #### Colours and palettes
 
@@ -184,6 +188,51 @@ places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
   machine's uptime. **Active window** shows the focused window and, opened,
   floats, pins, fullscreens, moves or closes it, or switches to another window
   on the workspace. By Ciro Rivera in #50.
+- **Looks and options for the bar's own modules**, each on its card, every one
+  starting from how the module already looks. The clock: one line or two lines
+  beside the accent chip, and four ways to write the date. Media: a still cover
+  or just the bars and the play button, a large-cover panel, and switches to
+  hide it while nothing plays, drop the artist, cap the title's width, hide the
+  play button and turn the volume wheel off. Workspaces: numbers instead of
+  dots, how many always show, and the wheel on or off — the wheel switches
+  workspaces now, which it never did. Notifications: a dot, or bell and count on
+  an accent chip. The tray: every app's icon in the bar, the icons in the
+  palette's colours, and a switch per app to keep it out. By Ciro Rivera in #50.
+- **A bar on every display.** *Settings → Displays → The bar on its own →
+  Every display* (or `qs ipc call -- displays bar all`) gives each screen a bar
+  of its own, with that screen's workspaces. Notification popups, the privacy
+  toast and the bar's ipc still come from one of them: the shell's display, or
+  the one you are on. By Ciro Rivera in #14.
+
+#### Launcher
+
+- **One search for everything open and everything to do.** Typed text now
+  finds open windows by their app or their title (Return switches to it), apps'
+  own actions like *New Private Window* (listed under the app when you type its
+  name), and lock, suspend, log out, restart and shut down from three letters,
+  ranked together with the apps and the commands. Restart, shut down and log out
+  ask for a second Return. A typed address gets a row of its own at the top when
+  nothing matches it better. Each has a switch under *Settings → Launcher*,
+  beside a line under each app from its desktop entry (off to begin with). By
+  Ciro Rivera in #17.
+- **Power buttons by the search field**, off to begin with: pick which of lock,
+  suspend, log out, restart and shut down show while nothing is typed. The ones
+  that end the session turn red on the first press and act on the second. By
+  Ciro Rivera in #17.
+
+#### Sound and the phone
+
+- **The Sound page shows what a device is doing.** A live level meter under the
+  output and the microphone volume (so a dead microphone reads apart from a
+  quiet one), balance for a stereo output with a way back to the centre, a
+  Left/Right test, an app put back on the default device, and a Behaviour card
+  for WirePlumber's own settings: remembering each app's volume and device,
+  following the default, pausing when a device goes away, headset call mode and
+  mono audio. The meters have a switch of their own. By Ciro Rivera in #11.
+- **The phone widget** browses the phone's files (with a switch for the
+  button), greys out what the phone has switched off and says why when tapped,
+  says what an action just did, and with more than one phone paired steps to the
+  next and remembers it. By Ciro Rivera in #15.
 
 #### Control centre
 
@@ -229,6 +278,24 @@ places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
   `hl.dsp.exit()` first now. By Ciro Rivera in #30.
 - **The bar clock's AM/PM** is the locale's own now ("P.M.", "午後"). Ciro found
   it doubled outside English locales in #29.
+- **Bluetooth devices that drop two seconds after connecting**, over and over:
+  an adapter that is not pairable lets the pairing through but throws its key
+  away. Pairing now holds pairable on until it is done. By Ciro Rivera in #9.
+- **A region or a recording on a second display** came from the wrong place, or
+  recorded both displays. By Ciro Rivera in #8.
+- **The installer offered to restart a shell that was not running**, and did,
+  with plain `qs`. By Ciro Rivera in #7.
+
+### Contributed
+
+- **Workspaces that say which display they are on.** With two or more displays
+  the bar's dots fall into one run per display, each led by the display's number
+  on hover, the accent follows the display you are on, and the overview lays out
+  one block per display. *Settings → Displays → Workspaces → Group by display*
+  turns it off; one display looks as it always did. By @MrZtone in #54.
+- **The installer names what a replaced `hyprland.conf` sourced**, since a Lua
+  config cannot read those files, and the README gives the xray layer rule in
+  Lua. By @arbelonson-source in #5.
 
 ### Performance
 
@@ -246,8 +313,9 @@ places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
 ### Installer
 
 - New packages: `hyprsunset` (night light), `qrencode` (Wi-Fi codes),
-  `xdg-terminal-exec` (the launcher's `$` mode) and `inotify-tools` (the camera
-  on/off toast).
+  `xdg-terminal-exec` (the launcher's `$` mode), `inotify-tools` (the camera
+  on/off toast), `sshfs` (browsing a phone's files), and `pipewire-audio` with
+  `sound-theme-freedesktop` (the Sound page's Left/Right test).
 - **Google Sans Flex** is installed to `~/.local/share/fonts/lucid` for the apps
   the Environment page dresses, and beside the SDDM theme, which now draws in it
   the way the lock screen does.
