@@ -682,6 +682,13 @@ Singleton {
     property alias weekStartMonday: s.weekStartMonday
     property alias launcherSearchEngine: s.launcherSearchEngine
     property alias launcherWebRow: s.launcherWebRow
+    property alias launcherWindows: s.launcherWindows
+    property alias launcherAppActions: s.launcherAppActions
+    property alias launcherAppDescriptions: s.launcherAppDescriptions
+    property alias launcherPowerSearch: s.launcherPowerSearch
+    property alias launcherAddressFirst: s.launcherAddressFirst
+    property alias launcherPowerChips: s.launcherPowerChips
+    property alias launcherPowerButtons: s.launcherPowerButtons
     property alias launcherWidth: s.launcherWidth
     property alias launcherSearchPosition: s.launcherSearchPosition
     property alias launcherDensity: s.launcherDensity
@@ -1047,6 +1054,13 @@ Singleton {
         "weekStartMonday": true,
         "launcherSearchEngine": "duckduckgo",
         "launcherWebRow": true,
+        "launcherWindows": true,
+        "launcherAppActions": true,
+        "launcherAppDescriptions": false,
+        "launcherPowerSearch": true,
+        "launcherAddressFirst": true,
+        "launcherPowerChips": false,
+        "launcherPowerButtons": "lock,suspend,reboot,shutdown",
         "launcherWidth": "standard",
         "launcherSearchPosition": "bottom",
         "launcherDensity": "compact",
@@ -1629,6 +1643,13 @@ Singleton {
             property bool weekStartMonday: true
             property string launcherSearchEngine: "duckduckgo"
             property bool launcherWebRow: true
+            property bool launcherWindows: true
+            property bool launcherAppActions: true
+            property bool launcherAppDescriptions: false
+            property bool launcherPowerSearch: true
+            property bool launcherAddressFirst: true
+            property bool launcherPowerChips: false
+            property string launcherPowerButtons: "lock,suspend,reboot,shutdown"
             property string launcherWidth: "standard"
             property string launcherSearchPosition: "bottom"
             property string launcherDensity: "compact"

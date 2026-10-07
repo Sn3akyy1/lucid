@@ -164,6 +164,48 @@ Column {
         }
 
         SettingRow {
+            title: "Open windows"
+            resetKey: "launcherWindows"
+            description: "A search also finds the windows you have open, by their app or their title, ranked with the apps. Return switches to it."
+
+            M3Switch {
+                checked: Prefs.launcherWindows
+                onToggled: (v) => {
+                    return Prefs.launcherWindows = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Application actions"
+            resetKey: "launcherAppActions"
+            description: "What an app offers besides opening, such as New Private Window: listed under it when you type its name, and found on their own from three letters."
+
+            M3Switch {
+                checked: Prefs.launcherAppActions
+                onToggled: (v) => {
+                    return Prefs.launcherAppActions = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "A line under each application"
+            resetKey: "launcherAppDescriptions"
+            description: "What the app says it is, from its desktop entry, under its name."
+
+            M3Switch {
+                checked: Prefs.launcherAppDescriptions
+                onToggled: (v) => {
+                    return Prefs.launcherAppDescriptions = v;
+                }
+            }
+
+        }
+
+        SettingRow {
             title: "Calculator"
             resetKey: "launcherCalculator"
             description: "Type a sum and the answer takes a card above the results, set in display type. Return copies it."
@@ -173,6 +215,64 @@ Column {
                 checked: Prefs.launcherCalculator
                 onToggled: (v) => {
                     return Prefs.launcherCalculator = v;
+                }
+            }
+
+        }
+
+    }
+
+    SettingCard {
+        title: "POWER BUTTONS"
+
+        SettingRow {
+            title: "Power buttons by the search field"
+            resetKey: "launcherPowerChips"
+            description: "Round buttons at the end of the search field while nothing is typed. Restart, shut down and log out turn red on the first press and act on the second."
+
+            M3Switch {
+                checked: Prefs.launcherPowerChips
+                onToggled: (v) => {
+                    return Prefs.launcherPowerChips = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Which buttons"
+            resetKey: "launcherPowerButtons"
+            description: "They keep this order whatever order you pick them in."
+            enabled: Prefs.launcherPowerChips
+            disabledReason: "The power buttons are switched off."
+            stacked: true
+            showDivider: false
+
+            M3Chips {
+                width: parent.width
+                multi: true
+                enabled: Prefs.launcherPowerChips
+                selectedKeys: String(Prefs.launcherPowerButtons).split(",").filter((k) => {
+                    return k !== "";
+                })
+                options: Power.actions.map((a) => {
+                    return {
+                        "key": a.id,
+                        "label": a.label
+                    };
+                })
+                onChosen: (key) => {
+                    const list = String(Prefs.launcherPowerButtons).split(",").filter((k) => {
+                        return k !== "" && k !== key;
+                    });
+                    if (String(Prefs.launcherPowerButtons).split(",").indexOf(key) === -1)
+                        list.push(key);
+
+                    Prefs.launcherPowerButtons = Power.actions.map((a) => {
+                        return a.id;
+                    }).filter((id) => {
+                        return list.indexOf(id) !== -1;
+                    }).join(",");
                 }
             }
 
@@ -241,6 +341,34 @@ Column {
                 checked: Prefs.launcherWebRow
                 onToggled: (v) => {
                     return Prefs.launcherWebRow = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Open typed addresses first"
+            resetKey: "launcherAddressFirst"
+            description: "Something that reads as an address, like example.com, gets a row of its own at the top when no app or window matches it better."
+
+            M3Switch {
+                checked: Prefs.launcherAddressFirst
+                onToggled: (v) => {
+                    return Prefs.launcherAddressFirst = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Power actions in results"
+            resetKey: "launcherPowerSearch"
+            description: "Lock, suspend, log out, restart and shut down turn up when you type them, from three letters. Restart, shut down and log out ask for a second Return."
+
+            M3Switch {
+                checked: Prefs.launcherPowerSearch
+                onToggled: (v) => {
+                    return Prefs.launcherPowerSearch = v;
                 }
             }
 

@@ -109,6 +109,13 @@ Item {
         return r && r.selectable && r.kind === "clip" ? r.payload : "";
     }
     property bool justOpened: false
+    // the power buttons at the end of the search field, while nothing is typed
+    property bool showPowerChips: false
+    property var powerButtons: []
+    // the one waiting on a second press
+    property string armedPower: ""
+
+    signal powerChipTapped(string id)
 
     signal activated(int index)
     signal closeRequested()
@@ -461,7 +468,7 @@ Item {
 
             anchors.left: leadingButton.right
             anchors.leftMargin: Theme.dp(8)
-            anchors.right: clearButton.left
+            anchors.right: powerChips.visible ? powerChips.left : clearButton.left
             anchors.rightMargin: Theme.dp(8)
             anchors.verticalCenter: parent.verticalCenter
             color: Theme.text
@@ -568,6 +575,73 @@ Item {
                             easing.bezierCurve: Theme.easeEmphasizedDecel
                         }
 
+                    }
+
+                }
+
+            }
+
+        }
+
+        // in a fixed order whatever order they were picked in; restart, shut down
+        // and log out turn to the error colour and want a second press
+        Row {
+            id: powerChips
+
+            readonly property var shown: Power.actions.filter((a) => {
+                return face.powerButtons.indexOf(a.id) !== -1;
+            })
+
+            visible: face.showPowerChips && !searchBar.typing && face.mode === "apps" && powerChips.shown.length > 0
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.dp(8)
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.dp(2)
+
+            Repeater {
+                model: powerChips.shown
+
+                Item {
+                    id: chip
+
+                    required property var modelData
+                    readonly property bool armed: face.armedPower === chip.modelData.id
+
+                    width: Math.round(36 * face.cs)
+                    height: Math.round(36 * face.cs)
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: chip.armed ? Math.round(10 * face.cs) : width / 2
+                        color: chip.armed ? Theme.error : Theme.text
+                        opacity: chip.armed ? 1 : (chipTap.pressed ? Theme.statePressed : (chipHover.hovered ? Theme.stateHover : 0))
+
+                        Behavior on radius {
+                            NumberAnimation {
+                                duration: Theme.durFastSpatial
+                                easing.type: Easing.Bezier
+                                easing.bezierCurve: Theme.curveFastSpatial
+                            }
+
+                        }
+
+                    }
+
+                    Icon {
+                        anchors.centerIn: parent
+                        name: chip.modelData.icon
+                        size: Math.round(20 * face.cs)
+                        color: chip.armed ? Theme.fgError : (chipHover.hovered ? Theme.text : Theme.subtext)
+                    }
+
+                    HoverHandler {
+                        id: chipHover
+                    }
+
+                    TapHandler {
+                        id: chipTap
+
+                        onTapped: face.powerChipTapped(chip.modelData.id)
                     }
 
                 }

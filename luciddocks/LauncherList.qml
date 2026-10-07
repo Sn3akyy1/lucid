@@ -109,7 +109,12 @@ Item {
         switch (kind) {
         case "app":
         case "command":
+        case "action":
             return "Open";
+        case "window":
+            return "Switch";
+        case "power":
+            return "Run";
         case "setting":
             return "Settings";
         case "web":
