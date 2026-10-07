@@ -921,8 +921,10 @@ you know what's being pulled in.
 | `qrencode` | The QR code that shares a saved Wi-Fi network. Without it the password still shows, with no code |
 | `bluez`, `bluez-utils` | Bluetooth panel and the Bluetooth settings page |
 | `kdeconnect`, `python-gobject` | The KDE Connect page. The daemon is the backend and starts itself; `python-gobject` backs the bridge Lucid talks to it through. Without either the page says so and does nothing else |
+| `sshfs` | Browsing a phone's files from the phone widget or the KDE Connect page. Without it KDE Connect cannot mount the phone and the button does nothing |
 | `libpulse`, `wireplumber` | Volume, audio devices, and playing Lucid's sounds |
 | `inotify-tools` | The camera on/off toast and sound. Without it the camera is never watched; nothing else changes |
+| `pipewire-audio`, `sound-theme-freedesktop` | The Sound page's Left/Right test: `pw-play`, and the voice that names each side. Without them the test plays nothing |
 | `brightnessctl`, `upower` | Brightness, battery |
 | `hyprsunset` | Night light. Lucid starts it when night light first comes on and talks to it over `hyprctl hyprsunset`; one you already run is used as it is, and never reset unless Lucid warmed it |
 | `hypridle` | The Idle page: dimming, locking, screen off and suspend when you walk away. Without it the page says so and writes nothing |

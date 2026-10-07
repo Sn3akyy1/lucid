@@ -125,7 +125,7 @@ PKG_REQUIRED=(quickshell qt6-5compat qt6-declarative qt6-multimedia)
 PKG_FEATURES=(
     matugen jq imagemagick
     networkmanager qrencode bluez bluez-utils
-    kdeconnect python-gobject
+    kdeconnect sshfs python-gobject
     libpulse wireplumber brightnessctl upower hypridle hyprsunset
     grim wf-recorder ffmpeg wl-clipboard wtype cliphist
     tesseract tesseract-data-eng hyprpicker
@@ -146,6 +146,8 @@ PKG_FEATURES=(
     xdg-terminal-exec
     # the camera on/off toast hears /dev/video* opened and closed through this
     inotify-tools
+    # the Sound page's Left/Right test: pw-play, and the voice that names each side
+    pipewire-audio sound-theme-freedesktop
 )
 # invoked by the shipped Hyprland binds and the Lucid look. without these the
 # config installs fine but its keys do nothing and the prompt renders as boxes
