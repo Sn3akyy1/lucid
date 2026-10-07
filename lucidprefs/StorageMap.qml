@@ -25,7 +25,7 @@ Item {
     readonly property var homeStack: map.scan && map.scan.home ? map.stackFor(map.scan.home) : null
     readonly property bool atHome: map.homeStack !== null && map.currentPath.indexOf(map.scan.home) === 0
     readonly property bool busy: Storage.detailPath !== "" && Storage.detailPath === map.currentPath
-    readonly property int outerRadius: Theme.dp(26)
+    readonly property int outerRadius: Theme.rad(26)
     readonly property int innerRadius: Theme.dp(6)
     // the size tiles are laid out for; a resize stretches them until it settles
     property real layoutW: 0
@@ -531,7 +531,7 @@ Item {
 
             width: parent.width
             height: Theme.dp(420)
-            radius: Theme.dp(18)
+            radius: Theme.rad(18)
             color: Theme.bgSunken
             clip: true
             onWidthChanged: map.layoutW > 0 ? relayout.restart() : relayout.settle()
@@ -685,7 +685,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: Theme.dp(34)
                     height: Theme.dp(34)
-                    radius: Theme.dp(10)
+                    radius: Theme.rad(10)
                     color: {
                         var n = foot.focusNode;
                         if (!n || !map.pal || n.t === 2 || n.u)

@@ -24,7 +24,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: Theme.dp(12)
+        radius: Theme.rad(12)
         color: Theme.bgSunken
     }
 

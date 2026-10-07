@@ -148,7 +148,7 @@ Item {
 
                 anchors.fill: parent
                 anchors.margins: lvl.gap / 2
-                radius: Math.max(0, Math.min(Theme.dp(12), width / 3, height / 3))
+                radius: Math.max(0, Math.min(Theme.rad(12), width / 3, height / 3))
                 color: tile.fill
                 border.width: tile.picked ? Theme.dp(2) : 0
                 border.color: Theme.text

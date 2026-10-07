@@ -16,7 +16,7 @@ Item {
     readonly property bool scanning: ov.vol !== null && Storage.scanMount === ov.vol.mount
     readonly property real capacity: ov.vol ? ov.vol.used + ov.vol.avail : 0
     readonly property real usedFrac: ov.capacity > 0 ? ov.vol.used / ov.capacity : 0
-    readonly property int outerRadius: Theme.dp(26)
+    readonly property int outerRadius: Theme.rad(26)
     readonly property int innerRadius: Theme.dp(6)
     // { key, label, color, size }, in a fixed order so colours never swap places
     readonly property var segments: {
