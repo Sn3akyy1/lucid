@@ -221,7 +221,9 @@ Item {
                     visible: bead.pick > 0
                 }
 
-                Shape {
+                // a bead is too small for the curve renderer, which leaves its edge
+                // ragged, so the outline is tessellated and multisampled instead
+                Item {
                     id: form
 
                     readonly property real size: echo.dot * 1.5
@@ -230,19 +232,27 @@ Item {
                     height: form.size
                     anchors.centerIn: parent
                     anchors.verticalCenterOffset: -bead.bob * 3
-                    preferredRendererType: Shape.CurveRenderer
+                    layer.enabled: true
+                    layer.samples: 8
+                    layer.smooth: true
                     rotation: bead.spin - bead.square * bead.pick
                     scale: bead.pop * (1 - bead.settle / 3) * (1 - bead.gone / 2) * (1 - bead.shown / 2) * (1 + bead.bob / 4) * (1 - 0.12 * bead.pick + 0.3 * Math.sin(Math.PI * bead.pick))
                     opacity: bead.lit * (1 - bead.gone) * (1 - bead.shown)
                     visible: opacity > 0
 
-                    ShapePath {
-                        fillColor: bead.ink
-                        strokeColor: "transparent"
-                        strokeWidth: 0
+                    Shape {
+                        anchors.fill: parent
+                        preferredRendererType: Shape.GeometryRenderer
 
-                        PathSvg {
-                            path: Shapes.svg(Shapes.mix(Shapes.mix(Shapes.radii(bead.shape), Shapes.radii("circle"), bead.melt), Shapes.radii("square"), bead.pick), form.size, 0)
+                        ShapePath {
+                            fillColor: bead.ink
+                            strokeColor: "transparent"
+                            strokeWidth: 0
+
+                            PathSvg {
+                                path: Shapes.svg(Shapes.mix(Shapes.mix(Shapes.radii(bead.shape), Shapes.radii("circle"), bead.melt), Shapes.radii("square"), bead.pick), form.size, 0)
+                            }
+
                         }
 
                     }
