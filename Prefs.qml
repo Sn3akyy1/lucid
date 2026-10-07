@@ -587,6 +587,10 @@ Singleton {
     property alias audioMoveStreams: s.audioMoveStreams
     property alias kdeConnectEnabled: s.kdeConnectEnabled
     property alias updateCheck: s.updateCheck
+    property alias storageLowWarn: s.storageLowWarn
+    property alias storageLowPercent: s.storageLowPercent
+    // 0 means never
+    property alias storageTrashDays: s.storageTrashDays
 
     property alias specialScratchpad: s.specialScratchpad
     property alias specialMusic: s.specialMusic
@@ -755,6 +759,7 @@ Singleton {
         { "key": "notifications", "icon": "notifications", "keys": "popups toasts do not disturb dnd quiet hours sound muted apps", "group": "System", "label": "Notifications", "title": "Notifications", "blurb": "Popups, quiet hours, sound and which applications may interrupt you", "toggle": "barNotifications" },
         { "key": "idle", "icon": "bedtime", "keys": "sleep suspend lock dim screen off hypridle caffeine", "group": "System", "label": "Idle", "title": "Idle and Sleep", "blurb": "What happens when you walk away: dimming, locking, screen off and suspend", "toggle": "idleEnabled" },
         { "key": "datetime", "icon": "schedule", "keys": "clock time zone location 24 hour seconds week monday sunday timer pomodoro focus break alarm world", "group": "System", "label": "Date & Time", "title": "Date and Time", "blurb": "Where you are, the clock, and its timers" },
+        { "key": "storage", "icon": "hard_drive", "keys": "disk space storage usage free full clean cleanup cache trash duplicates large files drives ssd health smart trim mount", "group": "System", "label": "Storage", "title": "Storage", "blurb": "What fills your drives, what could go, and the drives themselves" },
         { "key": "about", "icon": "info", "keys": "version update lucid", "group": "System", "label": "About", "title": "About", "blurb": "Lucid" }
     ]
 
@@ -974,6 +979,9 @@ Singleton {
         "audioMoveStreams": true,
         "kdeConnectEnabled": true,
         "updateCheck": true,
+        "storageLowWarn": true,
+        "storageLowPercent": 10,
+        "storageTrashDays": 0,
         "idleEnabled": false,
         "idleAutostart": true,
         "idleKeepAwake": false,
@@ -1562,6 +1570,9 @@ Singleton {
             property bool audioMoveStreams: true
             property bool kdeConnectEnabled: true
             property bool updateCheck: true
+            property bool storageLowWarn: true
+            property int storageLowPercent: 10
+            property int storageTrashDays: 0
             property bool idleEnabled: false
             property bool idleAutostart: true
             property bool idleKeepAwake: false

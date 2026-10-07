@@ -30,8 +30,9 @@ ShellRoot {
     // the update check, which runs whether or not the settings app is
     // ever opened, the clipboard, which owns the wl-paste watchers and so
     // has to be up long before the launcher is first opened, and night
-    // light, whose schedule runs whether or not the System pill is shown, and
-    // the sounds, so their ipc target answers before anything has played
+    // light, whose schedule runs whether or not the System pill is shown,
+    // the sounds, so their ipc target answers before anything has played, and
+    // storage, which warns when space runs low and empties old trash
     Component.onCompleted: {
         void KdeConnect.installed;
         void Bt.present;
@@ -53,6 +54,7 @@ ShellRoot {
         void Capture.state;
         void NightLight.active;
         void Sounds.dir;
+        void Storage.watching;
     }
 
     // the bar that speaks for the shell, of however many there are

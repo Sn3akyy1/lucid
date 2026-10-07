@@ -36,6 +36,7 @@ Item {
         "notifications": "dnd popups toast usb camera",
         "idle": "lock suspend screen off timeout hypridle",
         "datetime": "clock timezone time zone",
+        "storage": "disk space full free clean cleanup cache trash duplicates large files drive ssd health smart trim mount usb",
         "about": "version update"
     })
     // { key, card, title, description }, in page order

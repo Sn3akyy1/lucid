@@ -734,7 +734,7 @@ BarPill {
     Process {
         id: lsblkProc
 
-        command: ["lsblk", "-b", "-J", "-o", "NAME,KNAME,PATH,SIZE,TYPE"]
+        command: ["lsblk", "-J", "-o", "NAME,KNAME,PATH,TYPE"]
 
         stdout: StdioCollector {
             onStreamFinished: {
@@ -757,7 +757,6 @@ BarPill {
                     if (isWholeDisk || isExtraPartition)
                         disks.push({
                             "name": dev.name,
-                            "size": parseInt(dev.size),
                             "paths": pathsUnder(dev)
                         });
 
@@ -776,7 +775,7 @@ BarPill {
     Process {
         id: dfProc
 
-        command: ["df", "-B1", "--output=source,used"]
+        command: ["df", "-B1", "--output=source,used,avail"]
 
         stdout: StdioCollector {
             onStreamFinished: {
@@ -784,8 +783,8 @@ BarPill {
                 const disks = root._lsblkDisks.map((d) => {
                     return ({
                         "name": d.name,
-                        "size": d.size,
                         "used": 0,
+                        "avail": 0,
                         "mounted": false
                     });
                 });
@@ -793,18 +792,20 @@ BarPill {
                 const seen = {};
                 for (const line of lines) {
                     const parts = line.trim().split(/\s+/);
-                    if (parts.length < 2)
+                    if (parts.length < 3)
                         continue;
 
                     const source = parts[0];
                     const used = parseInt(parts[1]);
-                    if (!source.startsWith("/dev/") || isNaN(used) || seen[source])
+                    const avail = parseInt(parts[2]);
+                    if (!source.startsWith("/dev/") || isNaN(used) || isNaN(avail) || seen[source])
                         continue;
 
                     seen[source] = true;
                     for (let i = 0; i < disks.length; i++) {
                         if (root._lsblkDisks[i].paths.includes(source)) {
                             disks[i].used += used;
+                            disks[i].avail += avail;
                             disks[i].mounted = true;
                         }
                     }
@@ -1881,7 +1882,8 @@ BarPill {
                                 }
                                 return root.diskList.length > 0 ? root.diskList[0] : null;
                             }
-                            readonly property real diskPct: (selectedDiskInfo && selectedDiskInfo.size > 0 && selectedDiskInfo.mounted) ? selectedDiskInfo.used / selectedDiskInfo.size : 0
+                            // fs overhead and the root reserve are neither used nor free, so measure against what df can hand out
+                            readonly property real diskPct: (selectedDiskInfo && selectedDiskInfo.mounted && selectedDiskInfo.used + selectedDiskInfo.avail > 0) ? selectedDiskInfo.used / (selectedDiskInfo.used + selectedDiskInfo.avail) : 0
 
                             function cycleDisk() {
                                 if (root.diskList.length < 2)
@@ -1930,8 +1932,8 @@ BarPill {
                                     value: statsCard.diskPct
                                     center: statsCard.selectedDiskInfo && statsCard.selectedDiskInfo.mounted ? Math.round(statsCard.diskPct * 100) + "" : "—"
                                     label: root.selectedDisk || "Disk"
-                                    detail: statsCard.selectedDiskInfo ? (statsCard.selectedDiskInfo.mounted ? Math.round(statsCard.selectedDiskInfo.used / 1.07374e+09) + " / " + Math.round(statsCard.selectedDiskInfo.size / 1.07374e+09) + " GB" : "not mounted") : ""
-                                    tone: Theme.accent
+                                    detail: statsCard.selectedDiskInfo ? (statsCard.selectedDiskInfo.mounted ? Math.round(statsCard.selectedDiskInfo.avail / 1.07374e+09) + " GB free" : "not mounted") : ""
+                                    tone: statsCard.diskPct * 100 > 100 - Prefs.storageLowPercent ? Theme.error : Theme.accent
                                     clickable: root.diskList.length > 1
                                     onClicked: statsCard.cycleDisk()
                                 }

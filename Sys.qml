@@ -32,6 +32,7 @@ Singleton {
     property real disk: 0
     property real diskUsedGb: 0
     property real diskTotalGb: 0
+    property real diskFreeGb: 0
     property real temp: -1
     property real uptime: -1
     // bytes per second, summed over every real interface
@@ -127,11 +128,13 @@ Singleton {
                     mem[m[1]] = parseInt(m[2]);
 
             } else if (section === "disk") {
-                var d = line.split(/\s+/).map(Number);
-                if (d.length >= 2 && d[0] > 0) {
+                var d = line.trim().split(/\s+/).map(Number);
+                // the root reserve is neither used nor free, so the share is of used + avail, as df reports it
+                if (d.length >= 3 && d[1] + d[2] > 0) {
                     root.diskTotalGb = d[0] / 1073741824;
                     root.diskUsedGb = d[1] / 1073741824;
-                    root.disk = d[1] / d[0];
+                    root.diskFreeGb = d[2] / 1073741824;
+                    root.disk = d[1] / (d[1] + d[2]);
                 }
             } else if (section === "temp") {
                 var t = parseInt(line);
@@ -205,7 +208,7 @@ Singleton {
     Process {
         id: poll
 
-        command: ["sh", "-c", "echo @cpu; head -1 /proc/stat; echo @mhz; grep -m8 '^cpu MHz' /proc/cpuinfo | cut -d: -f2; echo @mem; grep -E '^(MemTotal|MemAvailable|SwapTotal|SwapFree):' /proc/meminfo; echo @disk; df -B1 --output=size,used / | tail -1; echo @up; cat /proc/uptime; echo @load; cat /proc/loadavg; echo @net; tail -n +3 /proc/net/dev; echo @temp; t=''; for h in /sys/class/hwmon/hwmon*; do n=$(cat \"$h/name\" 2>/dev/null); case \"$n\" in coretemp|k10temp|zenpower|cpu_thermal|acpitz) [ -r \"$h/temp1_input\" ] && t=$(cat \"$h/temp1_input\") && break;; esac; done; [ -z \"$t\" ] && [ -r /sys/class/thermal/thermal_zone0/temp ] && t=$(cat /sys/class/thermal/thermal_zone0/temp); echo \"$t\"; echo @gpu; for c in /sys/class/drm/card*/device/gpu_busy_percent; do [ -r \"$c\" ] && cat \"$c\" && exit 0; done; " + (root.info.nvidia ? "nvidia-smi --query-gpu=utilization.gpu,temperature.gpu --format=csv,noheader,nounits 2>/dev/null | head -1" : "true")]
+        command: ["sh", "-c", "echo @cpu; head -1 /proc/stat; echo @mhz; grep -m8 '^cpu MHz' /proc/cpuinfo | cut -d: -f2; echo @mem; grep -E '^(MemTotal|MemAvailable|SwapTotal|SwapFree):' /proc/meminfo; echo @disk; df -B1 --output=size,used,avail / | tail -1; echo @up; cat /proc/uptime; echo @load; cat /proc/loadavg; echo @net; tail -n +3 /proc/net/dev; echo @temp; t=''; for h in /sys/class/hwmon/hwmon*; do n=$(cat \"$h/name\" 2>/dev/null); case \"$n\" in coretemp|k10temp|zenpower|cpu_thermal|acpitz) [ -r \"$h/temp1_input\" ] && t=$(cat \"$h/temp1_input\") && break;; esac; done; [ -z \"$t\" ] && [ -r /sys/class/thermal/thermal_zone0/temp ] && t=$(cat /sys/class/thermal/thermal_zone0/temp); echo \"$t\"; echo @gpu; for c in /sys/class/drm/card*/device/gpu_busy_percent; do [ -r \"$c\" ] && cat \"$c\" && exit 0; done; " + (root.info.nvidia ? "nvidia-smi --query-gpu=utilization.gpu,temperature.gpu --format=csv,noheader,nounits 2>/dev/null | head -1" : "true")]
 
         stdout: StdioCollector {
             onStreamFinished: root.parse(this.text)

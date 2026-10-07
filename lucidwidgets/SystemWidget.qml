@@ -16,6 +16,7 @@ WidgetBody {
         "ramTotalGb": 15.5,
         "diskUsedGb": 220,
         "diskTotalGb": 460,
+        "diskFreeGb": 240,
         "down": 2.4e+06,
         "up": 310000
     })
@@ -77,7 +78,7 @@ WidgetBody {
             "icon": "hard_drive",
             "value": w.disk,
             "text": Math.round(w.disk * 100) + "%",
-            "detail": (w.preview || Sys.diskTotalGb > 0) ? Math.round((w.preview ? w.sample.diskTotalGb - w.sample.diskUsedGb : Sys.diskTotalGb - Sys.diskUsedGb)) + " GB free" : ""
+            "detail": (w.preview || Sys.diskTotalGb > 0) ? Math.round(w.preview ? w.sample.diskFreeGb : Sys.diskFreeGb) + " GB free" : ""
         });
 
         if (w.opt("showTemp") === true && w.temp >= 0)

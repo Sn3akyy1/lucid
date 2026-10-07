@@ -12,6 +12,8 @@ Item {
     property bool contained: false
     property color color: li.contained ? Theme.fgPrimaryContainer : Theme.primary
     readonly property var sequence: ["softBurst", "cookie9", "pentagon", "pill", "sunny", "cookie4", "oval"]
+    // one scale for every shape, so none leaves the box while it turns
+    readonly property real fit: 1 / Math.max.apply(null, li.sequence.map((n) => Math.max.apply(null, Shapes.radii(n))))
     property real t: 0
 
     implicitWidth: Theme.dp(44)
@@ -39,7 +41,7 @@ Item {
         readonly property real f: li.t - Math.floor(li.t)
         // a spring-ish settle into each shape
         readonly property real e: 1 - Math.pow(1 - Math.min(1, s.f * 1.6), 3)
-        readonly property real sz: li.width * (li.contained ? 0.62 : 0.84)
+        readonly property real sz: li.width * (li.contained ? 0.62 : 0.84) * li.fit
 
         width: s.sz
         height: s.sz
