@@ -26,8 +26,8 @@ Item {
     readonly property int pad: btn.size === "xs" ? Theme.dp(12) : (btn.size === "m" ? Theme.dp(24) : Theme.dp(16))
     readonly property int iconPx: btn.size === "m" ? Theme.dp(22) : (btn.size === "xs" ? Theme.dp(17) : Theme.dp(19))
     readonly property bool selected: btn.checkable && btn.checked
-    readonly property real restRadius: btn.selected ? (btn.size === "m" ? Theme.dp(16) : Theme.dp(12)) : btn.h / 2
-    readonly property real pressRadius: btn.size === "m" ? Theme.dp(12) : Theme.dp(8)
+    readonly property real restRadius: btn.selected ? (btn.size === "m" ? Theme.rad(16) : Theme.rad(12)) : Theme.pill(btn.h)
+    readonly property real pressRadius: btn.size === "m" ? Theme.rad(12) : Theme.rad(8)
 
     readonly property color container: {
         if (btn.containerOverride.a > 0)

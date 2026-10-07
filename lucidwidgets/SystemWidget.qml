@@ -412,7 +412,7 @@ WidgetBody {
 
                 width: tile.spans ? tiles.width : (tiles.width - tiles.spacing * (tiles.cols - 1)) / Math.max(1, tiles.cols)
                 height: (tiles.height - tiles.spacing * (tiles.rows - 1)) / Math.max(1, tiles.rows)
-                radius: Theme.dp(18)
+                radius: Theme.rad(18)
                 color: Theme.alpha(tile.hue, 0.14)
 
                 // the fill rises with the reading

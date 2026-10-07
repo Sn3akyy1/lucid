@@ -177,7 +177,7 @@ WidgetBody {
         StateLayer {
             id: ckTap
 
-            radius: Theme.dp(20)
+            radius: Theme.rad(20)
             tint: w.inkAccent
             onClicked: ck.toggled()
         }
@@ -292,10 +292,10 @@ WidgetBody {
 
                     width: rows.width
                     height: Theme.dp(44)
-                    topLeftRadius: row.index === 0 ? Theme.dp(16) : Theme.dp(4)
-                    topRightRadius: row.index === 0 ? Theme.dp(16) : Theme.dp(4)
-                    bottomLeftRadius: row.index === w.shown.length - 1 ? Theme.dp(16) : Theme.dp(4)
-                    bottomRightRadius: row.index === w.shown.length - 1 ? Theme.dp(16) : Theme.dp(4)
+                    topLeftRadius: row.index === 0 ? Theme.rad(16) : Theme.dp(4)
+                    topRightRadius: row.index === 0 ? Theme.rad(16) : Theme.dp(4)
+                    bottomLeftRadius: row.index === w.shown.length - 1 ? Theme.rad(16) : Theme.dp(4)
+                    bottomRightRadius: row.index === w.shown.length - 1 ? Theme.rad(16) : Theme.dp(4)
                     color: Theme.alpha(w.ink, row.hot ? 0.1 : 0.06)
 
                     HoverHandler {

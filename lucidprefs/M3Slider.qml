@@ -68,7 +68,7 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            radius: height / 2
+            radius: Theme.pill(height)
             color: slider.dragging ? Theme.accent : Theme.bgHigh
 
             Behavior on color {

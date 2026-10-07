@@ -1902,7 +1902,7 @@ Item {
 
                             width: root.previewW
                             height: root.previewH
-                            radius: tile.isActive ? Theme.dp(18) : Theme.dp(12)
+                            radius: tile.isActive ? Theme.rad(18) : Theme.rad(12)
                             color: Theme.withBlur(tile.highlighted ? Theme.surfaceHighest : Theme.surfaceHigh)
                             border.color: tile.isUrgent ? Theme.error : ((tile.isActive || tile.isDropTarget) ? Theme.primary : "transparent")
                             border.width: (tile.isActive || tile.isUrgent || tile.isDropTarget) ? 3 : 0
@@ -2014,7 +2014,7 @@ Item {
 
                             width: root.previewW
                             height: root.previewH
-                            radius: Theme.dp(12)
+                            radius: Theme.rad(12)
                             color: Theme.withBlur(plusTile.highlighted ? Theme.surfaceHighest : Theme.surfaceHigh)
                             border.color: plusTile.isDropTarget ? Theme.primary : "transparent"
                             border.width: plusTile.isDropTarget ? 3 : 0

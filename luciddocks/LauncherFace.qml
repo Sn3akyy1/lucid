@@ -403,7 +403,7 @@ Item {
         y: face.searchTop ? face.headBlock : face.height - face.searchHeight
         width: face.width
         height: face.searchHeight
-        radius: Theme.shapeFull
+        radius: Theme.pill(height)
         color: searchBar.typing ? Theme.withBlur(Theme.surfaceHighest) : Theme.withBlur(Theme.surfaceHigh)
 
         Behavior on color {
@@ -425,7 +425,7 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                radius: width / 2
+                radius: Theme.pill(width)
                 color: Theme.text
                 opacity: leadingButton.isBack ? (leadTap.pressed ? Theme.statePressed : (leadHover.hovered ? Theme.stateHover : 0)) : 0
 
@@ -612,7 +612,7 @@ Item {
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: chip.armed ? Math.round(10 * face.cs) : width / 2
+                        radius: chip.armed ? Math.round(10 * face.cs) : Theme.pill(width)
                         color: chip.armed ? Theme.error : Theme.text
                         opacity: chip.armed ? 1 : (chipTap.pressed ? Theme.statePressed : (chipHover.hovered ? Theme.stateHover : 0))
 
@@ -662,7 +662,7 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                radius: width / 2
+                radius: Theme.pill(width)
                 color: Theme.text
                 opacity: clearTap.pressed ? Theme.statePressed : (clearHover.hovered ? Theme.stateHover : 0)
 

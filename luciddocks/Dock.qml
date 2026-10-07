@@ -2414,7 +2414,7 @@ PanelWindow {
         implicitHeight: dockWindow.iconSlot + Theme.dp(20)
         width: dockWindow.menuOpen ? dockWindow.menuWidth : shell.implicitWidth
         height: dockWindow.menuOpen ? dockWindow.menuHeight : shell.implicitHeight
-        radius: Math.min(Theme.dp(Prefs.dockRadius), Math.round(shell.height / 2))
+        radius: Math.min(Theme.rad(Prefs.dockRadius), Math.round(Theme.pill(shell.height)))
         color: Theme.bg
         // corners meeting the screen edge square off in notch mode
         bottomLeftRadius: dockWindow.renderAsNotch ? 0 : shell.radius

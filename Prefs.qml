@@ -30,10 +30,10 @@ Singleton {
 
     readonly property bool barNotch: root.barStyle === "notch"
     readonly property bool dockNotch: root.dockStyle === "notch"
-    readonly property int barPillRadius: Math.min(Theme.dp(18), Math.round(Theme.dp(root.barHeight) / 2))
+    readonly property int barPillRadius: Math.min(Theme.rad(18), Math.round(Theme.pill(Theme.dp(root.barHeight))))
     readonly property int effectiveBarTopMargin: root.barNotch ? 0 : Theme.dp(root.barTopMargin)
     readonly property int effectiveDockBottomMargin: root.dockNotch ? 0 : Theme.dp(root.dockBottomMargin)
-    readonly property int dockItemRadius: Math.min(Theme.dp(root.dockRadius), Math.round(Theme.dp(root.dockIconSize) / 2))
+    readonly property int dockItemRadius: Math.min(Theme.rad(root.dockRadius), Math.round(Theme.pill(Theme.dp(root.dockIconSize))))
     readonly property int dockIconInset: Math.max(0, Math.min(Theme.dp(root.dockIconPadding), Math.floor(Theme.dp(root.dockIconSize) / 2) - Theme.dp(6)))
     // the bar's layout reads through these: the groups in barLayout, keeping
     // only the modules switched on. the names are the zones' from before the
@@ -371,6 +371,7 @@ Singleton {
     property alias fontFamily: s.fontFamily
     property alias fontScale: s.fontScale
     property alias uiScale: s.uiScale
+    property alias cornerScale: s.cornerScale
     // room the bar and dock keep clear of windows, past their own size: added to
     // their exclusive zones, in real pixels like hyprland's gaps
     property alias shellGap: s.shellGap
@@ -819,6 +820,7 @@ Singleton {
         "fontFamily": "Google Sans",
         "fontScale": 1,
         "uiScale": 1,
+        "cornerScale": 1,
         "shellGap": 0,
         "wallpaperFolder": "",
         "themeOrder": "",
@@ -1406,6 +1408,7 @@ Singleton {
             property string fontFamily: "Google Sans"
             property real fontScale: 1
             property real uiScale: 1
+            property real cornerScale: 1
             property int shellGap: 0
             property string wallpaperFolder: ""
             property string themeOrder: ""

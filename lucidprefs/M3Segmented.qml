@@ -65,8 +65,8 @@ Item {
                 readonly property bool selected: seg.current === cell.modelData.key
                 readonly property bool isFirst: cell.index === 0
                 readonly property bool isLast: cell.index === seg.options.length - 1
-                readonly property real outer: seg.height / 2
-                readonly property real inner: cell.selected ? seg.height / 2 : Theme.shapeSm
+                readonly property real outer: Theme.pill(seg.height)
+                readonly property real inner: cell.selected ? Theme.pill(seg.height) : Theme.shapeSm
                 readonly property real squeeze: area.pressed ? Theme.dp(4) : 0
                 // check and label at selected weight, so a pick never shifts widths
                 readonly property real content: Theme.dp(18) + Theme.dp(6) + probe.implicitWidth

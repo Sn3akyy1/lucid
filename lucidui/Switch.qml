@@ -19,7 +19,7 @@ Item {
         id: track
 
         anchors.fill: parent
-        radius: height / 2
+        radius: Theme.pill(height)
         color: sw.checked ? Theme.primary : Theme.bgSunken
         border.width: sw.checked ? 0 : 2
         border.color: Theme.outlineStrong

@@ -25,7 +25,7 @@ Item {
         }).join(", ") + " — both fire";
     }
     readonly property string problem: row.failure !== "" ? "Did not bind: " + row.failure : row.clashText
-    readonly property int outerRadius: Theme.dp(26)
+    readonly property int outerRadius: Theme.rad(26)
     readonly property int innerRadius: Theme.dp(6)
     readonly property int keysWidth: Math.min(Theme.dp(280), Math.round(row.width * 0.32))
 

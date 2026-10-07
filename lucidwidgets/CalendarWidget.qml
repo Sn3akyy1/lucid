@@ -230,10 +230,10 @@ WidgetBody {
 
                     width: parent.width
                     height: Theme.dp(40)
-                    topLeftRadius: ev.index === 0 ? Theme.dp(16) : Theme.dp(5)
-                    topRightRadius: ev.index === 0 ? Theme.dp(16) : Theme.dp(5)
-                    bottomLeftRadius: ev.index === agList.shown.length - 1 ? Theme.dp(16) : Theme.dp(5)
-                    bottomRightRadius: ev.index === agList.shown.length - 1 ? Theme.dp(16) : Theme.dp(5)
+                    topLeftRadius: ev.index === 0 ? Theme.rad(16) : Theme.dp(5)
+                    topRightRadius: ev.index === 0 ? Theme.rad(16) : Theme.dp(5)
+                    bottomLeftRadius: ev.index === agList.shown.length - 1 ? Theme.rad(16) : Theme.dp(5)
+                    bottomRightRadius: ev.index === agList.shown.length - 1 ? Theme.rad(16) : Theme.dp(5)
                     readonly property bool soon: ev.modelData.at - w.now < 6 * 86400000
                     color: Theme.alpha(w.ink, 0.07)
 

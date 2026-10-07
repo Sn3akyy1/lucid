@@ -44,6 +44,26 @@ Column {
         title: "SHAPE"
 
         SettingRow {
+            title: "Corner rounding"
+            resetKey: "cornerScale"
+            description: "How round the whole shell is: cards, panels, menus, pills and buttons. Lower squares them off, higher rounds them further; avatars, dots and the like stay round."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 0
+                to: 1.5
+                stepSize: 0.25
+                stepLabels: ["Square", "25%", "50%", "75%", "As shipped", "125%", "150%"]
+                value: Prefs.cornerScale
+                onMoved: (v) => {
+                    return Prefs.cornerScale = Math.round(v * 100) / 100;
+                }
+            }
+
+        }
+
+        SettingRow {
             title: "Bar style"
             description: "Islands float free of the screen edge. Notches sit flush against it, squaring off the corners that meet it."
 

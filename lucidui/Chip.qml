@@ -34,7 +34,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: Theme.dp(8)
+        radius: Theme.rad(8)
         color: chip.selected ? Theme.secondaryContainer : "transparent"
         border.width: chip.selected ? 0 : 1
         border.color: Theme.outline
@@ -47,7 +47,7 @@ Item {
         }
 
         StateLayer {
-            radius: Theme.dp(8)
+            radius: Theme.rad(8)
             tint: chip.content
             disabled: chip.disabled
             onClicked: chip.clicked()

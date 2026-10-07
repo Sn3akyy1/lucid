@@ -1156,10 +1156,10 @@ Item {
 
                                             width: parent.width
                                             height: Theme.dp(60)
-                                            topLeftRadius: brow.index === 0 ? Theme.dp(20) : Theme.dp(4)
-                                            topRightRadius: brow.index === 0 ? Theme.dp(20) : Theme.dp(4)
-                                            bottomLeftRadius: brow.index === 3 ? Theme.dp(20) : Theme.dp(4)
-                                            bottomRightRadius: brow.index === 3 ? Theme.dp(20) : Theme.dp(4)
+                                            topLeftRadius: brow.index === 0 ? Theme.rad(20) : Theme.dp(4)
+                                            topRightRadius: brow.index === 0 ? Theme.rad(20) : Theme.dp(4)
+                                            bottomLeftRadius: brow.index === 3 ? Theme.rad(20) : Theme.dp(4)
+                                            bottomRightRadius: brow.index === 3 ? Theme.rad(20) : Theme.dp(4)
                                             color: Theme.withBlur(Theme.surfaceHigh)
 
                                             Column {
@@ -1378,7 +1378,7 @@ Item {
                 Rectangle {
                     width: parent.width
                     height: Theme.dp(56)
-                    radius: Theme.dp(20)
+                    radius: Theme.rad(20)
                     visible: layouts.doomed !== null
                     color: Theme.errorContainer
 

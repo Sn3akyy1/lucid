@@ -147,10 +147,10 @@ WidgetBody {
 
         width: parent ? parent.width : 0
         height: Theme.dp(48)
-        topLeftRadius: dr.first ? Theme.dp(18) : Theme.dp(6)
-        topRightRadius: dr.first ? Theme.dp(18) : Theme.dp(6)
-        bottomLeftRadius: dr.last ? Theme.dp(18) : Theme.dp(6)
-        bottomRightRadius: dr.last ? Theme.dp(18) : Theme.dp(6)
+        topLeftRadius: dr.first ? Theme.rad(18) : Theme.dp(6)
+        topRightRadius: dr.first ? Theme.rad(18) : Theme.dp(6)
+        bottomLeftRadius: dr.last ? Theme.rad(18) : Theme.dp(6)
+        bottomRightRadius: dr.last ? Theme.rad(18) : Theme.dp(6)
         color: Theme.alpha(w.ink, 0.07)
 
         Item {
@@ -317,14 +317,14 @@ WidgetBody {
 
             Rectangle {
                 anchors.fill: parent
-                radius: Theme.dp(16)
+                radius: Theme.rad(16)
                 color: Theme.alpha(w.ink, 0.1)
             }
 
             Rectangle {
                 width: Math.max(Theme.dp(32), parent.width * w.level)
                 height: parent.height
-                radius: Theme.dp(16)
+                radius: Theme.rad(16)
                 color: w.tint
 
                 Behavior on width {
@@ -410,7 +410,7 @@ WidgetBody {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Theme.dp(44)
                 height: Theme.dp(44)
-                radius: Theme.dp(14)
+                radius: Theme.rad(14)
                 color: Theme.alpha(w.tint, 0.16)
 
                 Icon {

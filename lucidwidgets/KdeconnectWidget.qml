@@ -265,7 +265,7 @@ WidgetBody {
 
                 width: ag.btn
                 height: ag.btn
-                topLeftRadius: act.firstOne || actTap.pressed ? ag.btn / 2 : Theme.dp(10)
+                topLeftRadius: act.firstOne || actTap.pressed ? ag.btn / 2 : Theme.rad(10)
                 bottomLeftRadius: act.firstOne || actTap.pressed ? ag.btn / 2 : Theme.dp(10)
                 topRightRadius: act.lastOne || actTap.pressed ? ag.btn / 2 : Theme.dp(10)
                 bottomRightRadius: act.lastOne || actTap.pressed ? ag.btn / 2 : Theme.dp(10)
@@ -426,7 +426,7 @@ WidgetBody {
 
             width: parent.width
             height: Theme.dp(60)
-            radius: Theme.dp(18)
+            radius: Theme.rad(18)
             color: Theme.alpha(w.ink, 0.07)
 
             Icon {

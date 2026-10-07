@@ -34,9 +34,9 @@ FocusScope {
         width: parent.width
         height: tf.variant === "search" ? Theme.dp(48) : Theme.dp(52)
         color: tf.variant === "outlined" ? "transparent" : tf.containerColor
-        radius: tf.variant === "search" ? height / 2 : (tf.variant === "outlined" ? Theme.dp(10) : 0)
-        topLeftRadius: tf.variant === "filled" ? Theme.dp(10) : radius
-        topRightRadius: tf.variant === "filled" ? Theme.dp(10) : radius
+        radius: tf.variant === "search" ? Theme.pill(height) : (tf.variant === "outlined" ? Theme.rad(10) : 0)
+        topLeftRadius: tf.variant === "filled" ? Theme.rad(10) : radius
+        topRightRadius: tf.variant === "filled" ? Theme.rad(10) : radius
         border.width: tf.variant === "outlined" ? (tf.active ? 2 : 1) : 0
         border.color: tf.error ? Theme.error : (tf.active ? Theme.primary : Theme.outlineStrong)
 

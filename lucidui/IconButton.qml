@@ -71,7 +71,7 @@ Item {
         id: box
 
         anchors.fill: parent
-        radius: area.pressed ? Math.min(ib.btnH / 2, Theme.dp(10)) : (ib.on && ib.variant !== "standard" ? Math.min(ib.btnH / 2, Theme.dp(12)) : ib.btnH / 2)
+        radius: area.pressed ? Math.min(Theme.pill(ib.btnH), Theme.rad(10)) : (ib.on && ib.variant !== "standard" ? Math.min(Theme.pill(ib.btnH), Theme.rad(12)) : Theme.pill(ib.btnH))
         color: ib.container
         border.width: ib.variant === "outlined" && !ib.on ? 1 : 0
         border.color: Theme.outline

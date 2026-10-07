@@ -52,10 +52,10 @@ Item {
         id: plate
 
         anchors.fill: parent
-        topLeftRadius: row.first ? Theme.dp(20) : Theme.dp(4)
-        topRightRadius: row.first ? Theme.dp(20) : Theme.dp(4)
-        bottomLeftRadius: row.last ? Theme.dp(20) : Theme.dp(4)
-        bottomRightRadius: row.last ? Theme.dp(20) : Theme.dp(4)
+        topLeftRadius: row.first ? Theme.rad(20) : Theme.dp(4)
+        topRightRadius: row.first ? Theme.rad(20) : Theme.dp(4)
+        bottomLeftRadius: row.last ? Theme.rad(20) : Theme.dp(4)
+        bottomRightRadius: row.last ? Theme.rad(20) : Theme.dp(4)
         color: Theme.withBlur(Theme.surfaceHigh)
 
         Rectangle {

@@ -320,7 +320,7 @@ Item {
 
                     width: sugg.width
                     height: Theme.dp(40)
-                    radius: Theme.dp(12)
+                    radius: Theme.rad(12)
                     color: "transparent"
 
                     StateLayer {

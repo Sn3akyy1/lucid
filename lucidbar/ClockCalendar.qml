@@ -455,7 +455,7 @@ Item {
                                 }
 
                                 StateLayer {
-                                    radius: Theme.dp(8)
+                                    radius: Theme.rad(8)
                                     onClicked: page.setPm(!page.pm)
                                 }
 

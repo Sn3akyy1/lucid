@@ -233,7 +233,7 @@ Item {
 
                 width: ListView.view.width
                 height: Theme.dp(44)
-                radius: Theme.dp(12)
+                radius: Theme.rad(12)
                 color: Theme.withBlur(Theme.surfaceHighest)
 
                 LText {

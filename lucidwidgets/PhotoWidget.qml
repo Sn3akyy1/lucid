@@ -144,7 +144,7 @@ WidgetBody {
 
             width: parent.width
             height: parent.height - Theme.dp(34)
-            radius: Theme.dp(10)
+            radius: Theme.rad(10)
             color: Theme.alpha(w.ink, 0.06)
 
             Image {

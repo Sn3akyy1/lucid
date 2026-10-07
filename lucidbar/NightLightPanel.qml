@@ -165,7 +165,7 @@ Item {
 
                     width: col.width
                     height: Theme.dp(46)
-                    radius: Theme.dp(12)
+                    radius: Theme.rad(12)
                     color: option.selected ? Theme.withBlur(Theme.bgActive) : (optionArea.containsMouse ? Theme.withBlur(Theme.bgHover) : "transparent")
 
                     Column {

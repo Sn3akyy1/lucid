@@ -456,7 +456,7 @@ Item {
         Rectangle {
             width: parent.width
             height: Theme.dp(56)
-            radius: devItem.isExpanded ? Theme.dp(20) : Theme.dp(14)
+            radius: devItem.isExpanded ? Theme.rad(20) : Theme.rad(14)
             color: devItem.isExpanded ? Theme.withBlur(Theme.surfaceHighest) : (rowArea.containsMouse ? Theme.withBlur(Theme.layer(Theme.surfaceHigh, Theme.text, Theme.stateHover)) : Theme.withBlur(Theme.surfaceHigh))
 
             Behavior on radius {
@@ -999,7 +999,7 @@ Item {
                     visible: devItem.renaming
                     width: parent.width - Theme.dp(46)
                     height: Theme.dp(30)
-                    radius: Theme.dp(8)
+                    radius: Theme.rad(8)
                     color: Theme.withBlur(Theme.bgSunken)
                     border.width: 1
                     border.color: renameInput.activeFocus ? Theme.accent : Theme.bgHigh

@@ -95,7 +95,7 @@ Column {
 
             Rectangle {
                 anchors.fill: parent
-                radius: Theme.dp(12)
+                radius: Theme.rad(12)
                 color: Theme.alpha(Theme.accent, net.isConnected ? 0.24 : 0.11)
 
                 Behavior on color {

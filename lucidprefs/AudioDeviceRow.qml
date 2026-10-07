@@ -46,7 +46,7 @@ Column {
 
             Rectangle {
                 anchors.fill: parent
-                radius: Theme.dp(13)
+                radius: Theme.rad(13)
                 color: Theme.alpha(Theme.accent, dev.isDefault ? 0.24 : 0.11)
 
                 Behavior on color {

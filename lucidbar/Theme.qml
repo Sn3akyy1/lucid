@@ -68,6 +68,8 @@ Singleton {
     // the interface size setting. every authored pixel in the shell goes
     // through dp(), so 1.00x is the shipped layout exactly
     readonly property real uiScale: Math.max(0.7, Math.min(1.3, pf.uiScale || 1))
+    // Settings > General > Corner rounding: 0 is square, 1 as shipped, 1.5 rounder
+    readonly property real cornerScale: Math.max(0, Math.min(1.5, pf.cornerScale === undefined ? 1 : pf.cornerScale))
     readonly property real fontScale: pf.fontScale * root.typeBaseline * root.uiScale
     readonly property real blurAmount: blurAdapter.value || 0
 
@@ -219,22 +221,22 @@ Singleton {
     readonly property real disabledContent: 0.38
     readonly property real disabledContainer: 0.12
     readonly property int radiusPill: 999
-    readonly property int radiusXs: root.dp(8)
-    readonly property int radiusSm: root.dp(12)
-    readonly property int radiusMd: root.dp(16)
-    readonly property int radiusLg: root.dp(20)
-    readonly property int radiusXl: root.dp(28)
+    readonly property int radiusXs: root.rad(8)
+    readonly property int radiusSm: root.rad(12)
+    readonly property int radiusMd: root.rad(16)
+    readonly property int radiusLg: root.rad(20)
+    readonly property int radiusXl: root.rad(28)
 
     // m3 shape scale, in dp
     readonly property int shapeNone: 0
     readonly property int shapeXs: root.dp(4)
-    readonly property int shapeSm: root.dp(8)
-    readonly property int shapeMd: root.dp(12)
-    readonly property int shapeLg: root.dp(16)
-    readonly property int shapeLgInc: root.dp(20)
-    readonly property int shapeXl: root.dp(28)
-    readonly property int shapeXlInc: root.dp(32)
-    readonly property int shapeXxl: root.dp(48)
+    readonly property int shapeSm: root.rad(8)
+    readonly property int shapeMd: root.rad(12)
+    readonly property int shapeLg: root.rad(16)
+    readonly property int shapeLgInc: root.rad(20)
+    readonly property int shapeXl: root.rad(28)
+    readonly property int shapeXlInc: root.rad(32)
+    readonly property int shapeXxl: root.rad(48)
     readonly property int shapeFull: 999
     // where two members of one group meet
     readonly property int shapeJoin: root.dp(4)
@@ -379,6 +381,18 @@ Singleton {
 
     function dp(px) {
         return Math.round(px * root.uiScale);
+    }
+
+    // a radius through the corner rounding dial as well as the interface size.
+    // the slim ones under 8px are what they draw, and stay
+    function rad(px) {
+        return px < 8 ? root.dp(px) : Math.round(px * root.uiScale * root.cornerScale);
+    }
+
+    // a pill or a round control: half its short side, squaring off with the
+    // dial below 100% and never rounder than a pill above it
+    function pill(size) {
+        return size / 2 * Math.min(1, root.cornerScale);
     }
 
     function ms(d) {
@@ -708,6 +722,7 @@ Singleton {
             property string fontFamily: "Google Sans"
             property real fontScale: 1
             property real uiScale: 1
+            property real cornerScale: 1
         }
 
     }

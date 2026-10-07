@@ -64,7 +64,7 @@ Item {
                 readonly property bool first: seg.index === 0
                 readonly property bool last: seg.index === rep.count - 1
                 readonly property real natural: lbl.implicitWidth + (seg.modelData.icon ? Theme.dp(26) : 0) + (grp.showCheck && seg.on ? Theme.dp(22) : 0) + Theme.dp(32)
-                readonly property real outer: grp.h / 2
+                readonly property real outer: Theme.pill(grp.h)
                 readonly property real press: area.pressed ? grp.inner * 0.6 : 0
 
                 width: grp.equalWidth ? (row.width - grp.gap * (rep.count - 1)) / Math.max(1, rep.count) : seg.natural

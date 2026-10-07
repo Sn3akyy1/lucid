@@ -1648,7 +1648,7 @@ BarPill {
                                     width: Theme.dp(50)
                                     height: Theme.dp(38)
                                     anchors.verticalCenter: parent.verticalCenter
-                                    radius: Theme.dp(12)
+                                    radius: Theme.rad(12)
                                     color: Theme.withBlur(Theme.surfaceHighest)
 
                                     StateLayer {
@@ -3042,7 +3042,7 @@ BarPill {
 
             StateLayer {
                 visible: !et.adding
-                radius: Theme.dp(14)
+                radius: Theme.rad(14)
                 onClicked: et.badgeClicked()
             }
 

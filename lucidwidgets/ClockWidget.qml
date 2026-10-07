@@ -229,7 +229,7 @@ WidgetBody {
             anchors.verticalCenter: parent.verticalCenter
             width: dateWin.implicitWidth + Theme.dp(12)
             height: Theme.dp(22)
-            radius: Theme.dp(8)
+            radius: Theme.rad(8)
             color: Theme.alpha(w.inkAccent, 0.18)
 
             LText {
@@ -410,10 +410,10 @@ WidgetBody {
 
                 width: parent.width
                 height: (parent.height - Theme.dp(6)) / 3
-                topLeftRadius: city.index === 0 ? Theme.dp(18) : Theme.dp(6)
-                topRightRadius: city.index === 0 ? Theme.dp(18) : Theme.dp(6)
-                bottomLeftRadius: city.index === w.zones.length - 1 ? Theme.dp(18) : Theme.dp(6)
-                bottomRightRadius: city.index === w.zones.length - 1 ? Theme.dp(18) : Theme.dp(6)
+                topLeftRadius: city.index === 0 ? Theme.rad(18) : Theme.dp(6)
+                topRightRadius: city.index === 0 ? Theme.rad(18) : Theme.dp(6)
+                bottomLeftRadius: city.index === w.zones.length - 1 ? Theme.rad(18) : Theme.dp(6)
+                bottomRightRadius: city.index === w.zones.length - 1 ? Theme.rad(18) : Theme.dp(6)
                 color: Theme.alpha(w.ink, 0.07)
 
                 Column {

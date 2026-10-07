@@ -227,10 +227,10 @@ WidgetBody {
 
                     width: (parent.width - 3 * (w.tones.length - 1)) / w.tones.length
                     height: parent.height
-                    topLeftRadius: stop.index === 0 ? Theme.dp(16) : Theme.dp(5)
-                    bottomLeftRadius: stop.index === 0 ? Theme.dp(16) : Theme.dp(5)
-                    topRightRadius: stop.index === w.tones.length - 1 ? Theme.dp(16) : Theme.dp(5)
-                    bottomRightRadius: stop.index === w.tones.length - 1 ? Theme.dp(16) : Theme.dp(5)
+                    topLeftRadius: stop.index === 0 ? Theme.rad(16) : Theme.dp(5)
+                    bottomLeftRadius: stop.index === 0 ? Theme.rad(16) : Theme.dp(5)
+                    topRightRadius: stop.index === w.tones.length - 1 ? Theme.rad(16) : Theme.dp(5)
+                    bottomRightRadius: stop.index === w.tones.length - 1 ? Theme.rad(16) : Theme.dp(5)
                     color: stop.c
                     scale: stop.hot ? 1.06 : 1
                     z: stop.hot ? 1 : 0
@@ -319,10 +319,10 @@ WidgetBody {
 
                         width: fam.width
                         height: (scheme.height - Theme.dp(18) - Theme.dp(8)) / 5
-                        topLeftRadius: chip.index === 0 ? Theme.dp(12) : Theme.dp(3)
-                        topRightRadius: chip.index === 0 ? Theme.dp(12) : Theme.dp(3)
-                        bottomLeftRadius: chip.index === 4 ? Theme.dp(12) : Theme.dp(3)
-                        bottomRightRadius: chip.index === 4 ? Theme.dp(12) : Theme.dp(3)
+                        topLeftRadius: chip.index === 0 ? Theme.rad(12) : Theme.dp(3)
+                        topRightRadius: chip.index === 0 ? Theme.rad(12) : Theme.dp(3)
+                        bottomLeftRadius: chip.index === 4 ? Theme.rad(12) : Theme.dp(3)
+                        bottomRightRadius: chip.index === 4 ? Theme.rad(12) : Theme.dp(3)
                         color: chip.c
 
                         LText {

@@ -114,7 +114,7 @@ Item {
         Rectangle {
             width: parent.width
             height: Theme.dp(54)
-            radius: netItem.isExpanded ? Theme.dp(20) : Theme.dp(14)
+            radius: netItem.isExpanded ? Theme.rad(20) : Theme.rad(14)
             color: netItem.isExpanded ? Theme.withBlur(Theme.surfaceHighest) : (rowArea.containsMouse ? Theme.withBlur(Theme.layer(Theme.surfaceHigh, Theme.text, Theme.stateHover)) : Theme.withBlur(Theme.surfaceHigh))
 
             Behavior on radius {
@@ -267,7 +267,7 @@ Item {
                     visible: netItem.showPasswordInput && !netItem.isConnected
                     width: parent.width - Theme.dp(46)
                     height: Theme.dp(32)
-                    radius: Theme.dp(8)
+                    radius: Theme.rad(8)
                     color: Theme.withBlur(Theme.bgSunken)
                     border.width: 1
                     border.color: netItem.connectFailed ? Theme.error : (passwordInput.activeFocus ? Theme.accent : Theme.bgHigh)
@@ -1379,7 +1379,7 @@ Item {
                     Rectangle {
                         width: parent.width - Theme.dp(8)
                         height: Theme.dp(30)
-                        radius: Theme.dp(8)
+                        radius: Theme.rad(8)
                         color: Theme.withBlur(Theme.bgSunken)
                         border.width: 1
                         border.color: hiddenSsidInput.activeFocus ? Theme.accent : Theme.bgHigh
@@ -1423,7 +1423,7 @@ Item {
                     Rectangle {
                         width: parent.width - Theme.dp(8)
                         height: Theme.dp(30)
-                        radius: Theme.dp(8)
+                        radius: Theme.rad(8)
                         color: Theme.withBlur(Theme.bgSunken)
                         border.width: 1
                         border.color: root.hiddenFailed ? Theme.error : (hiddenPskInput.activeFocus ? Theme.accent : Theme.bgHigh)

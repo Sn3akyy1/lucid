@@ -608,7 +608,7 @@ PanelWindow {
 
                                 width: tile.width
                                 height: sw.thumbHeight(tile.width)
-                                radius: tile.isSelected ? Theme.dp(18) : Theme.dp(12)
+                                radius: tile.isSelected ? Theme.rad(18) : Theme.rad(12)
                                 color: Theme.withBlur(tile.isSelected ? Theme.surfaceHighest : Theme.surfaceHigh)
                                 border.color: tile.isSelected ? Theme.primary : "transparent"
                                 border.width: tile.isSelected ? 3 : 0

@@ -34,7 +34,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: height / 2
+        radius: Theme.pill(height)
         color: Theme.bgTile
         border.width: input.activeFocus ? 2 : 0
         border.color: Theme.accent

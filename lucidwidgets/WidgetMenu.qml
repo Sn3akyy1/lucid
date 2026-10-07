@@ -15,7 +15,7 @@ Item {
     readonly property real panelW: Theme.dp(320)
     readonly property real edge: Theme.dp(8)
     readonly property real pad: Theme.dp(16)
-    readonly property real cornerRadius: Theme.dp(28)
+    readonly property real cornerRadius: Theme.rad(28)
     readonly property bool open: menu.frame !== null && menu.frame.menuOpen
     // the right-click point, in screen coordinates
     readonly property real originX: menu.frame ? menu.frame.x + menu.frame.menuAtX : 0
@@ -263,7 +263,7 @@ Item {
 
                                     width: parent.width
                                     height: face.tileW * 0.78
-                                    radius: face.on ? Theme.dp(14) : Theme.dp(18)
+                                    radius: face.on ? Theme.rad(14) : Theme.rad(18)
                                     color: face.on ? Theme.alpha(Theme.primary, 0.14) : Theme.withBlur(Theme.surfaceHigh)
                                     border.width: face.on ? 2 : 0
                                     border.color: Theme.primary
@@ -373,7 +373,7 @@ Item {
                                         anchors.centerIn: parent
                                         width: sw.on ? Theme.dp(34) : Theme.dp(38)
                                         height: width
-                                        radius: sw.on ? Theme.dp(12) : width / 2
+                                        radius: sw.on ? Theme.rad(12) : width / 2
                                         color: sw.modelData.fill
                                         border.width: sw.modelData.key === "surface" ? 1 : 0
                                         border.color: Theme.alpha(Theme.text, 0.22)
@@ -533,10 +533,10 @@ Item {
 
                                 width: body.width
                                 height: Theme.dp(50)
-                                topLeftRadius: brow.index === 0 ? Theme.dp(18) : Theme.dp(4)
-                                topRightRadius: brow.index === 0 ? Theme.dp(18) : Theme.dp(4)
-                                bottomLeftRadius: brow.index === menu.boolOptions.length - 1 ? Theme.dp(18) : Theme.dp(4)
-                                bottomRightRadius: brow.index === menu.boolOptions.length - 1 ? Theme.dp(18) : Theme.dp(4)
+                                topLeftRadius: brow.index === 0 ? Theme.rad(18) : Theme.dp(4)
+                                topRightRadius: brow.index === 0 ? Theme.rad(18) : Theme.dp(4)
+                                bottomLeftRadius: brow.index === menu.boolOptions.length - 1 ? Theme.rad(18) : Theme.dp(4)
+                                bottomRightRadius: brow.index === menu.boolOptions.length - 1 ? Theme.rad(18) : Theme.dp(4)
                                 color: Theme.withBlur(Theme.surfaceHigh)
 
                                 LText {

@@ -658,7 +658,7 @@ WidgetBody {
         property bool wide: false
         readonly property string file: cover.game ? (cover.wide ? (cover.game.header || cover.game.capsule || "") : (cover.game.capsule || cover.game.header || "")) : ""
 
-        radius: Theme.dp(10)
+        radius: Theme.rad(10)
         color: cover.game ? Theme.alpha(w.tint(cover.game.name), 0.24) : Theme.alpha(Theme.text, 0.07)
 
         Text {
