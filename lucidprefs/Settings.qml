@@ -378,6 +378,10 @@ FloatingWindow {
                 Prefs.themeDeleteRequested(action.substring(6));
             else if (action.indexOf("widget-preset:") === 0)
                 Widgets.deletePreset(action.substring(14));
+            else if (action.indexOf("storage-clean:") === 0)
+                Storage.clean(action.substring(14));
+            else if (action.indexOf("storage-trash:") === 0)
+                Storage.trash(action.substring(14));
             else
                 Prefs.set(action, Prefs.defaults[action]);
         }
@@ -1189,6 +1193,8 @@ FloatingWindow {
                                 return "IdlePage.qml";
                             case "datetime":
                                 return "DateTimePage.qml";
+                            case "storage":
+                                return "StoragePage.qml";
                             case "search":
                                 return "SearchPage.qml";
                             default:
