@@ -114,22 +114,7 @@ BarPill {
         }
     }
 
-    IpcHandler {
-        target: "clock"
-
-        // qs ipc call clock open timer
-        function open(page: string): void {
-            root.openTab(page === "" ? "today" : page);
-        }
-
-        function toggle(): void {
-            root.expanded = !root.expanded;
-        }
-
-        function close(): void {
-            root.expanded = false;
-        }
-    }
+    // the "clock" ipc target lives in shell.qml, which can have a bar per display
 
     compactContent: [
         Row {

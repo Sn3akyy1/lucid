@@ -10,7 +10,8 @@ IpcHandler {
         return Monitors.aimSurfaceLabel("shell", where);
     }
 
-    // the bar and dock can sit apart from the rest; auto puts them back with it
+    // the bar and dock can sit apart from the rest; auto puts them back with it,
+    // and the bar alone also takes all, for one on every display
     function bar(where: string): string {
         return Monitors.aimSurfaceLabel("bar", where);
     }

@@ -36,8 +36,11 @@ BarPill {
     panelWidth: Math.min(Theme.dp(380), root.screenW - Theme.dp(34))
     panelHeight: Math.min(root.maxPanelHeight, mainColumn.implicitHeight + Theme.dp(28))
     expandedRadius: Theme.shapeXl
+    // off on the other bars when there is one on every display
+    property bool showsPopups: true
+
     // the module becomes the newest popup; the older ones stack under it
-    altOpen: root.shown && root.topPopup !== null && !root.expanded
+    altOpen: root.showsPopups && root.shown && root.topPopup !== null && !root.expanded
     altWidth: Math.min(Theme.dp(344), root.screenW - Theme.dp(34))
     altHeight: Math.min(root.maxPanelHeight, topCard.implicitHeight)
     overlayOpen: root.altOpen && (root.restPopups.length > 0 || root.popupOverflow > 0)
