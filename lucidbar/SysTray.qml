@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Shapes
 import Quickshell
+import Quickshell.Hyprland._FocusGrab
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs
@@ -75,10 +76,14 @@ BarPill {
             root.expanded = false;
 
     }
-    onExpandedChanged: {
-        if (!root.expanded)
-            root.menuItem = null;
+    // opening the panel over a bar menu, or shutting it, takes the menu away
+    onExpandedChanged: root.menuItem = null
 
+    // a menu opened from the bar has no panel's grab behind it, so it keeps its own
+    HyprlandFocusGrab {
+        active: root.overlayOpen && !root.expanded
+        windows: root.hostWindow ? [root.hostWindow] : []
+        onCleared: root.menuItem = null
     }
 
     compactContent: [
@@ -142,17 +147,22 @@ BarPill {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: (mouse) => {
                             if (mouse.button === Qt.RightButton) {
-                                // its menu, from the pill's own panel
-                                root.expanded = true;
+                                // its menu on its own, under the icon; the pill stays shut
+                                if (root.menuItem === inline.modelData && root.overlayOpen) {
+                                    root.menuItem = null;
+                                    return ;
+                                }
                                 const p = menuLayer.mapFromItem(inline, 0, inline.height + Theme.dp(6));
                                 root.menuItem = inline.modelData;
                                 root.menuX = p.x;
                                 root.menuY = p.y;
-                            } else if (mouse.button === Qt.MiddleButton) {
-                                inline.modelData.secondaryActivate();
-                            } else {
-                                inline.modelData.activate();
+                                return ;
                             }
+                            root.menuItem = null;
+                            if (mouse.button === Qt.MiddleButton)
+                                inline.modelData.secondaryActivate();
+                            else
+                                inline.modelData.activate();
                         }
                         onWheel: (wheel) => {
                             inline.modelData.scroll(wheel.angleDelta.y, false);
