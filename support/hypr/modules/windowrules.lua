@@ -42,6 +42,14 @@ hl.window_rule({
     center = true,
 })
 
+hl.window_rule({
+    match = { class = "org.gnome.Calculator" },
+
+    float  = true,
+    size   = "200 400",
+    center = true,
+})
+
 -- lucid's file choosers. the portal opens them with no parent window to hang
 -- off, so they would tile. matched by the titles lucidprefs/pickfile.py and
 -- the kde connect bridge pass, so the file manager itself is left alone

@@ -148,6 +148,8 @@ PKG_FEATURES=(
     inotify-tools
     # the Sound page's Left/Right test: pw-play, and the voice that names each side
     pipewire-audio sound-theme-freedesktop
+    # the Storage page: a drive's health, and mounting or ejecting one
+    smartmontools udisks2
 )
 # invoked by the shipped Hyprland binds and the Lucid look. without these the
 # config installs fine but its keys do nothing and the prompt renders as boxes
