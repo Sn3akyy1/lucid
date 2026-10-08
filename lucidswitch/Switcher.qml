@@ -622,7 +622,8 @@ PanelWindow {
 
                                     anchors.fill: parent
                                     anchors.margins: Theme.dp(5)
-                                    radius: Theme.dp(6)
+                                    // concentric with the card, which it sits 5 inside
+                                    radius: Math.max(Theme.dp(6), card.radius - Theme.dp(5))
                                     color: Theme.withBlur(Theme.bgSunken)
                                     border.width: tile.isSelected ? 2 : 1
                                     border.color: tile.isSelected ? Theme.accent : Theme.alpha(Theme.text, 0.25)
