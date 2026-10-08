@@ -194,7 +194,7 @@ Singleton {
         "options": ["workspacesShown", "workspacesWheel"],
         "style": "workspacesStyle",
         "styles": [
-            {"key": "dots", "name": "Dots", "blurb": "A dot for each, the one you are on drawn out long"},
+            {"key": "dots", "name": "Shapes", "blurb": "A dot while empty, a square in use, a new shape on the one you are on"},
             {"key": "numbers", "name": "Numbers", "blurb": "Each one's number, the empty ones quieter"}
         ]
     },

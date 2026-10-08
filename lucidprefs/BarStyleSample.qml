@@ -1,6 +1,8 @@
 import QtQuick
+import QtQuick.Shapes
 import qs
 import qs.lucidui
+import "../lucidui/Shapes.js" as Shapes
 
 // a small stand-in for a bar module in one of its styles, drawn with the
 // bar's own fonts and colours, for the style tiles on the module's card.
@@ -399,23 +401,68 @@ Item {
 
     }
 
+    // a run of two in use, the second the one you are on, then four empty
     Component {
         id: workspacesDots
 
-        Row {
-            spacing: Theme.dp(6)
+        Item {
+            id: wsd
+
+            readonly property int cell: Theme.dp(26)
+
+            implicitWidth: wsd.cell * 6
+            implicitHeight: wsd.cell
+
+            Rectangle {
+                width: wsd.cell * 2
+                height: wsd.cell
+                radius: Theme.pill(height)
+                color: Theme.withBlur(Theme.surfaceHighest)
+            }
+
+            Rectangle {
+                x: wsd.cell
+                width: wsd.cell
+                height: wsd.cell
+                radius: Theme.pill(height)
+                color: Theme.accent
+            }
 
             Repeater {
                 model: 6
 
-                Rectangle {
-                    required property int index
+                Item {
+                    id: mark
 
-                    width: index === 0 ? Theme.dp(24) : Theme.dp(10)
-                    height: Theme.dp(10)
-                    radius: height / 2
-                    color: index === 0 ? Theme.accent : Theme.withBlur(Theme._darken(Theme.subtext, 0.45))
-                    anchors.verticalCenter: parent.verticalCenter
+                    required property int index
+                    readonly property real size: wsd.cell * (mark.index === 1 ? 2 / 3 : (mark.index === 0 ? 1 / 3 : 1 / 4))
+
+                    x: mark.index * wsd.cell
+                    width: wsd.cell
+                    height: wsd.cell
+                    layer.enabled: true
+                    layer.samples: 8
+
+                    Shape {
+                        x: (wsd.cell - mark.size) / 2
+                        y: (wsd.cell - mark.size) / 2
+                        width: mark.size
+                        height: mark.size
+                        preferredRendererType: Shape.GeometryRenderer
+
+                        ShapePath {
+                            fillColor: mark.index === 1 ? Theme.fgPrimary : (mark.index === 0 ? Theme.text : Theme.alpha(Theme.subtext, 0.5))
+                            strokeColor: "transparent"
+                            strokeWidth: 0
+
+                            PathSvg {
+                                path: Shapes.path(mark.index === 1 ? "cookie9" : (mark.index === 0 ? "square" : "circle"), mark.size, 0)
+                            }
+
+                        }
+
+                    }
+
                 }
 
             }
@@ -427,29 +474,43 @@ Item {
     Component {
         id: workspacesNumbers
 
-        Row {
-            spacing: Theme.dp(6)
+        Item {
+            id: wsn
+
+            readonly property int cell: Theme.dp(26)
+
+            implicitWidth: wsn.cell * 6
+            implicitHeight: wsn.cell
+
+            Rectangle {
+                width: wsn.cell * 2
+                height: wsn.cell
+                radius: Theme.pill(height)
+                color: Theme.withBlur(Theme.surfaceHighest)
+            }
+
+            Rectangle {
+                x: wsn.cell
+                width: wsn.cell
+                height: wsn.cell
+                radius: Theme.pill(height)
+                color: Theme.accent
+            }
 
             Repeater {
                 model: 6
 
-                Rectangle {
+                BarText {
                     required property int index
 
-                    width: index === 0 ? Theme.dp(30) : Theme.dp(20)
-                    height: Theme.dp(20)
-                    radius: height / 2
-                    color: index === 0 ? Theme.accent : "transparent"
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    BarText {
-                        anchors.centerIn: parent
-                        text: index + 1
-                        font.pixelSize: Theme.fs(12)
-                        color: index === 0 ? Theme.bgOpaque : Theme.subtext
-                        opacity: index < 3 ? 1 : 0.5
-                    }
-
+                    x: index * wsn.cell
+                    width: wsn.cell
+                    height: wsn.cell
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: index + 1
+                    font.pixelSize: Theme.fs(12)
+                    color: index === 1 ? Theme.fgPrimary : (index === 0 ? Theme.text : Theme.alpha(Theme.subtext, 0.55))
                 }
 
             }
