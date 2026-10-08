@@ -2,7 +2,7 @@
 
 All notable changes to Lucid are recorded here, newest first.
 
-## v1.20 — 2026-10-06
+## v1.20 — 2026-10-07
 
 Lucid 2. Every surface is redrawn in Material You Expressive on one shared kit
 of controls, the clock grows into an app, the launcher learns new modes and the
@@ -10,14 +10,28 @@ control centre's tiles are yours to arrange. On top of that sits a release's
 worth of new features, most of them from **Ciro Rivera**, who wrote twenty-five
 of the pull requests in this one. Thank you, Ciro.
 
-<img src="assets/prev1.webp" alt="The Lucid desktop: the bar along the top, calendar, weather, clock and music widgets on the wallpaper, and the dock along the bottom">
+<img src="assets/desktop.webp" alt="The Lucid desktop: the bar along the top, calendar and weather widgets on the left, the clock and what is playing on the right, and the dock along the bottom">
 
-<img src="assets/prev4.webp" alt="The System panel: toggles, sliders, media, and system stats">
+<img src="assets/control-centre.webp" alt="The control centre open from the bar, beside palette, music and quote widgets, with the volume popup above the dock">
 
-<img src="assets/prev3.webp" alt="The Lucid settings app on the General page">
+<img src="assets/settings-storage.webp" alt="Settings on the Storage page, with the control centre and the on-screen keyboard open beside it">
 
 ### Lucid 2
 
+<!-- picture: <img src="assets/whatsnew/1.20/look.webp" alt="The new look across the bar, a panel and the settings"> -->
+
+<img src="assets/clock-app.webp" alt="The clock app on its Today page, among clock, music, calendar, weather, battery, system and to-do widgets">
+
+<img src="assets/widget-panel.webp" alt="The widget panel on its Clock gallery, beside a Coming up card and lucidfetch on the desktop">
+
+<img src="assets/launcher-wallpapers.webp" alt="The launcher in its wallpaper mode, its other modes along the top">
+
+<!-- picture: <img src="assets/whatsnew/1.20/lock.webp" alt="The lock screen sinking out of the desktop"> -->
+
+- **What's new, in the shell.** The first start after an update opens a sheet
+  with what the new version brings, once; *Settings → About → What's new*
+  opens it again, and `qs ipc call updates whatsnew` too. A newer release
+  waiting to be installed still links its notes on GitHub from the same card.
 - **Material You Expressive, everywhere.** The bar, dock, launcher, control
   centre, clock, widgets, OSD, toasts, lock screen and settings now share one
   kit of controls (`lucidui/`): buttons, chips, sliders, switches, tabs, text
@@ -44,7 +58,18 @@ of the pull requests in this one. Thank you, Ciro.
 - **Password beads.** On the lock screen, in the polkit prompt and on the login
   screen, each character typed drops a Material Expressive shape that melts
   into a dot. A selection gathers its beads into one band, and Ctrl+A sweeps it
-  across from the left.
+  across from the left. The shapes are androidx's own MaterialShapes, worked
+  out from the same numbers rather than drawn by eye.
+- **The lock screen grows out of your desktop.** Locking takes a picture of
+  each display first, so the lock starts as exactly what was on screen, which
+  frosts, sinks into a card and gives way to the wallpaper. Unlocking runs it
+  back: the cards fall away, the desktop rises through the frost, and the last
+  moments fade straight onto your live windows.
+- **Workspaces as shapes.** The workspace pill's resting look: an empty
+  workspace is a dot, one with windows a square, the one you are on a new
+  Material shape on each visit, and neighbouring busy workspaces join into one
+  run. The pill stretches from one to the next, and the marks under it take its
+  ink exactly. Hovering still brings the numbers.
 - **The clock is an app.** Behind the pill: Today, with the weather and what is
   next; a month calendar with reminders; countdown timers and a pomodoro; a
   stopwatch with laps; and world clocks. Whatever is counting shows on the pill
@@ -86,8 +111,17 @@ of the pull requests in this one. Thank you, Ciro.
   than decoding every original, 8K ones included, each time.
 - **Window borders follow the palette**, and the starship prompt takes the
   palette's colours without its format being replaced.
+- **A Storage page.** *Settings → Storage* shows what fills each drive, by kind
+  and as a map you can zoom through from your home folder or the whole disk,
+  what could go (package caches, old trash, duplicates and large files in your
+  own folders) with a confirm for each, and the drives themselves with their
+  health. It warns when space runs low and can empty trash after a number of
+  days. The bar's disk card and the System widget now count free space as `df`
+  does, leaving the root reserve out.
 
 ### Sounds
+
+<img src="assets/settings-sound.webp" alt="Settings on the Sound page: the system sounds, each with a switch and a play button">
 
 - **Lucid has sounds of its own.** The freedesktop bells and drops are gone;
   every sound is synthesised — FM bells, plucks, blips and sweeps, nothing
@@ -127,6 +161,8 @@ pull requests arrived tested, explained and ready, and the shell is better in
 places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
 
 #### Settings
+
+<!-- picture: <img src="assets/whatsnew/1.20/settings.webp" alt="The Windows and Input pages"> -->
 
 - **Search every setting.** A field at the head of the settings rail searches
   every row on every page, not just the page names: the results say which card
@@ -176,6 +212,8 @@ places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
 
 #### Bar
 
+<!-- picture: <img src="assets/whatsnew/1.20/bar.webp" alt="A module's card on the Bar page, with its looks"> -->
+
 - **Arrange the bar from Settings.** *Settings → Bar → Modules* shows the bar's
   three groups as lanes: drag a module along its lane or into another one, or
   use the arrow keys. Each module has a card with its switch, the group it sits
@@ -205,6 +243,8 @@ places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
   the one you are on. By Ciro Rivera in #14.
 
 #### Launcher
+
+<!-- picture: <img src="assets/whatsnew/1.20/launcher.webp" alt="A typed search finding a window, an app's actions and a power action"> -->
 
 - **One search for everything open and everything to do.** Typed text now
   finds open windows by their app or their title (Return switches to it), apps'
@@ -248,6 +288,10 @@ places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
   per subvolume. By Ciro Rivera in #27.
 
 #### Screenshots and recording
+
+<img src="assets/screenshot-toolbar.webp" alt="The screenshot toolbar over the dimmed desktop: photo, video, text and colour, then a region or the whole display">
+
+<!-- picture: <img src="assets/whatsnew/1.20/preview.webp" alt="The preview card after a capture"> -->
 
 - **A preview card after each capture**, in the corner of the display you
   captured: click to open, drag it into any app that takes files, or copy, mark
@@ -314,8 +358,9 @@ places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
 
 - New packages: `hyprsunset` (night light), `qrencode` (Wi-Fi codes),
   `xdg-terminal-exec` (the launcher's `$` mode), `inotify-tools` (the camera
-  on/off toast), `sshfs` (browsing a phone's files), and `pipewire-audio` with
-  `sound-theme-freedesktop` (the Sound page's Left/Right test).
+  on/off toast), `sshfs` (browsing a phone's files), `pipewire-audio` with
+  `sound-theme-freedesktop` (the Sound page's Left/Right test), and
+  `smartmontools` and `udisks2` (drive health and mounting on the Storage page).
 - **Google Sans Flex** is installed to `~/.local/share/fonts/lucid` for the apps
   the Environment page dresses, and beside the SDDM theme, which now draws in it
   the way the lock screen does.
@@ -344,6 +389,11 @@ places nobody had asked about yet. A huge thank you, @ciroenrique4-eng.
   instead of tiling.
 - Restarting the shell at the end of an install goes through `launch-shell.sh`,
   as a login does, so it comes up on the same render backend.
+- **SUPER+R restarts the shell as well**, as its keybind always said: Hyprland
+  reloads, the shell stops cleanly and comes back through `launch-shell.sh`.
+  The calculator (F12) opens as a small floating window rather than tiling,
+  and with more than one keyboard layout Alt+Shift switches between them
+  (*Settings → Input* picks another key).
 
 ### Upgrading
 

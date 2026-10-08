@@ -25,14 +25,17 @@ your wallpaper.
   <a href="https://quickshell.org"><img alt="Built on Quickshell" src="https://img.shields.io/badge/BUILT%20ON-QUICKSHELL-FFC46B?style=for-the-badge&labelColor=14100E"></a>
 </p>
 
-<img src="assets/prev1.webp" alt="The Lucid desktop: the bar along the top, calendar, weather, clock and music widgets on the wallpaper, and the dock along the bottom">
+<img src="assets/desktop.webp" alt="The Lucid desktop: the bar along the top, calendar and weather widgets on the left, the clock and what is playing on the right, and the dock along the bottom">
 
 </div>
 
 ---
 
-> **v1.1.0 — lock screen, polkit, accounts and light mode.** It's what I use
-> daily. Everything that landed in it, and in every version before it, is in the
+> **v1.20 — Lucid 2.** Every surface redrawn in Material You Expressive, a clock
+> that is an app, a launcher that finds everything, sounds of its own, and a bar
+> and settings you can shape, much of it from contributors. It's what I use
+> daily. The shell shows the highlights once after you update; everything that
+> landed in it, and in every version before it, is in the
 > [changelog](CHANGELOG.md). Rough edges are still possible and bug reports are
 > welcome.
 
@@ -224,12 +227,11 @@ them and reordered inside them, or taken out of the bar entirely.
   With more than one display the dots gather into a run per display, marked
   on hover with its number from Settings → Displays, and the overview lays
   out a block per display, left to right as they stand on the desk.
-  Scratchpads (special workspaces) sit beside the dots as a greyed chip marked
-  with a glyph for what is stashed in them — a terminal for a terminal, a note
-  for an editor, read off each app's own categories. Opening one sinks the dots,
-  fans the glyphs out and lifts them into the accent with its name. Click a
-  glyph to jump to that window, or drag windows in and out from the overview's
-  scratchpad row
+  A scratchpad (special workspace) shows beside the dots only while it is open:
+  the dots sink, and a chip comes up with its name and a glyph for each app
+  stashed in it — a terminal for a terminal, a note for an editor, read off each
+  app's own categories. Click a glyph to jump to that window, or drag windows in
+  and out from the overview's scratchpad row
 - **Media** — MPRIS controls, seek bar, art, and Shazam-style song ID (`songrec`)
 - **Tray** — SNI system tray with working context menus
 - **Clock** — the date beside the time, the time itself in a filled chip, and a
@@ -278,18 +280,25 @@ the same thing. Also in Settings: how close the middle may come to either side
 before it gives way, and a button that puts every module back where Lucid ships
 it.
 
-<img src="assets/prev4.webp" alt="The System panel: toggles, sliders, media, and system stats">
+<img src="assets/control-centre.webp" alt="The control centre open from the bar, beside palette, music and quote widgets, with the volume popup above the dock">
 
 *The System pill opens into a control centre — Wi-Fi and Bluetooth with full
-panels behind them, quick toggles like Caffeine and Do Not Disturb, brightness
-and volume with the audio devices behind those, what is playing, and CPU, RAM,
-battery and per-disk usage.*
+panels behind them, brightness and volume with the audio devices behind those,
+two rows of tiles you arrange yourself, what is playing, and CPU, memory, disk
+and battery.*
 
 The small tiles are yours to arrange, the way a phone's quick settings are. The
 pencil in the panel's header opens *Edit tiles*: drag a tile to move it, tap its
 − or drag it below the line to take it out, and tap anything under *Tap to add*
 to put it in. Clipboard, Emoji, Wallpaper, Theme, Widgets and Clear wait there
 to begin with, and Reset brings back the set Lucid ships.
+
+<img src="assets/clock-app.webp" alt="The clock app on its Today page, among clock, music, calendar, weather, battery, system and to-do widgets">
+
+*The clock pill opens into the clock app, here on its Today page: the time, the
+weather through the day and the week ahead, and the next reminder. Around it, a
+stacked clock, what is playing, the month, the weather, the battery, the system
+and a to-do list.*
 
 ### Dock and launcher
 
@@ -351,7 +360,7 @@ too and preview in the row. `cliphist` is the store; the shell owns the
 `wl-paste` watchers that feed it, so history records for as long as the shell
 is running. Turn the whole thing off with the switch on the Launcher page.
 
-<img src="assets/prev2.webp" alt="The wallpaper carousel inside the launcher">
+<img src="assets/launcher-wallpapers.webp" alt="The launcher in its wallpaper mode, its other modes along the top">
 
 *Wallpaper mode: a carousel that previews as you move through it, and applies
 on the second press.*
@@ -371,10 +380,11 @@ for the card's sheet, lock or remove it there — and switches layouts on
 each, and a card dragged back onto the sheet is taken off the desktop.
 **Settings → Widgets** holds the same gallery and every preset.
 
-<img src="assets/prev5.webp" alt="Clock, calendar, to-do and note widgets on a lakeside wallpaper, with the volume popup above the dock">
+<img src="assets/widget-panel.webp" alt="The widget panel on its Clock gallery, beside a Coming up card and lucidfetch on the desktop">
 
-*A clock, the month, a to-do list and a sticky note, with the volume popup
-showing above the dock and a visualiser running under it.*
+*The widget panel on its Clock gallery: drag a card onto the desktop, or click
+it to add it. Out on the desktop, a Coming up card and lucidfetch, each with
+its − while the panel is open.*
 
 Eighteen kinds, sixty-one looks between them — every category ships several
 variants of the same data:
@@ -678,6 +688,12 @@ past the neighbour and making a new workspace at the end.
   Scriptable too —
   `qs ipc call kdeconnect status`, `list`, `rescan`, and
   `qs ipc call -- kdeconnect ring <id>`
+- **Storage** — a *Storage* page for what fills your drives: how much each
+  kind of file takes, a map you can zoom through from your home folder or the
+  whole disk, what could go (package caches, old trash, duplicates and large
+  files in your own folders, each with a confirm), and the drives themselves,
+  with their health from `smartctl` and mounting through `udisksctl`. It warns
+  when space runs low and can empty trash after a number of days
 - **Idle and sleep** — an *Idle* page that owns hypridle for you. It writes
   `~/.config/hypr/hypridle.conf` and restarts the daemon whenever something on
   the page changes, so the ladder — dim, lock, screen off, suspend — is set with
@@ -745,15 +761,16 @@ past the neighbour and making a new workspace at the end.
   become Hyprland window rules in `~/.config/hypr/lucid-glass.lua`, applied
   without a reload and pushed onto windows that are already open. Scriptable
   with `qs ipc call settings glass`
-- **Settings** — a GUI for all of the above, no config file editing. Seventeen
-  pages behind a collapsible rail, grouped-list cards, an app bar that collapses
+- **Settings** — a GUI for all of the above, no config file editing.
+  Twenty-five pages behind a collapsible rail, grouped-list cards, an app bar that collapses
   as you scroll, and a reset arrow on anything you have moved off its default.
   The search field at the head of the rail finds any option by its name or its
   description and opens its page scrolled to it; `Ctrl+F`, or just start typing.
   Scriptable with `qs ipc call -- settings search <words>`. The General page
   sets how big the whole shell is (*Interface size*, 75 to 125 %, without
   touching the monitor's scale) and how round (*Corner rounding*, square to
-  half as round again)
+  half as round again). The first start after an update opens a *What's new*
+  sheet once; *About → What's new* brings it back
 
 <img src="assets/prev6.webp" alt="The Lucid lock screen: a large clock on the left, and the sign-in card, the song playing and notifications on the right">
 
@@ -761,11 +778,21 @@ past the neighbour and making a new workspace at the end.
 battery, network and Bluetooth at a glance, what is playing, the notifications,
 and the power bar in the corner.*
 
-<img src="assets/prev3.webp" alt="The Lucid settings app on the General page">
+<img src="assets/screenshot-toolbar.webp" alt="The screenshot toolbar over the dimmed desktop: photo, video, text and colour, then a region or the whole display">
 
-*Settings on the General page — the shape of the bar and the dock, glass, and
-how strongly the accent and the surfaces are tinted. The rail groups the pages
-into Appearance, Desktop and Devices.*
+*The screenshot toolbar — Photo, Video, Text and Colour, then a region or the
+whole display — over the desktop it is about to take.*
+
+<img src="assets/settings-sound.webp" alt="Settings on the Sound page: the system sounds, each with a switch and a play button">
+
+*Settings on the Sound page: Lucid's own system sounds, each with a switch and
+a play button, under one volume for all of them.*
+
+<img src="assets/settings-storage.webp" alt="Settings on the Storage page, with the control centre and the on-screen keyboard open beside it">
+
+*Settings on the Storage page — what fills the drive, by kind and as a map you
+can zoom through — with the control centre and the on-screen keyboard open
+beside it.*
 
 ## Theming
 
@@ -957,6 +984,7 @@ you know what's being pulled in.
 | `sshfs` | Browsing a phone's files from the phone widget or the KDE Connect page. Without it KDE Connect cannot mount the phone and the button does nothing |
 | `libpulse`, `wireplumber` | Volume, audio devices, and playing Lucid's sounds |
 | `inotify-tools` | The camera on/off toast and sound. Without it the camera is never watched; nothing else changes |
+| `smartmontools`, `udisks2` | The Storage page's drive health and mounting. Without them those two rows say so; the map and the cleanup work either way |
 | `pipewire-audio`, `sound-theme-freedesktop` | The Sound page's Left/Right test: `pw-play`, and the voice that names each side. Without them the test plays nothing |
 | `brightnessctl`, `upower` | Brightness, battery |
 | `hyprsunset` | Night light. Lucid starts it when night light first comes on and talks to it over `hyprctl hyprsunset`; one you already run is used as it is, and never reset unless Lucid warmed it |
@@ -1057,7 +1085,7 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | `screenshot` | `full` `text` |
 | `media` | `toggle` `open` `close` `identify` `playPause` `next` `previous` |
 | `workspaces` | `toggle` `open` `close` |
-| `updates` | `status` `check` |
+| `updates` | `status` `check` `whatsnew` (the What's new sheet for this version) |
 | `displays` | `list` `settings` `shell <where>` `bar <where>` `dock <where>` — *where* is an output name, `left`/`middle`/`right`, `here`, `next`, `prev` or `auto` |
 | `polkit` | `status` `demo <action-id>` `fail` `grant` `close` — `demo` raises the dialog with no PAM session behind it, for previewing a theme |
 | `debug` | `toggle` `on` `off` — draws input and blur region outlines |
