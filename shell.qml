@@ -4,6 +4,7 @@ import "./luciddocks"
 import "./lucidkeys"
 import "./lucidlock"
 import "./lucidmoji"
+import "./lucidnews"
 import "./lucidnotif"
 import "./lucidosd"
 import "./lucidpolkit"
@@ -883,6 +884,10 @@ ShellRoot {
         id: keybindSheetMod
     }
 
+    WhatsNew {
+        id: whatsNewMod
+    }
+
     SettingsHost {
         id: settingsMod
     }
@@ -955,7 +960,7 @@ ShellRoot {
     }
 
     Instantiator {
-        model: [osdMod, toastMod, keyboardMod, polkitMod, keybindSheetMod]
+        model: [osdMod, toastMod, keyboardMod, polkitMod, keybindSheetMod, whatsNewMod]
 
         Binding {
             required property var modelData

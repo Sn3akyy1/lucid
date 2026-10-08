@@ -19,6 +19,8 @@ Singleton {
     property string latestUrl: root.releasesUrl
     // the version already announced, so an ignored update stays quiet
     property string notified: ""
+    // the version whose What's new sheet has been shown, so it opens by itself once
+    property string seen: ""
     property real checkedAt: 0
     property bool busy: false
     // "" | "offline" | "ratelimited" | "norelease" | "unreadable"
@@ -115,6 +117,21 @@ Singleton {
         Quickshell.execDetached(["xdg-open", root.latestUrl]);
     }
 
+    // the What's new sheet (lucidnews) listens for this
+    signal whatsNewRequested()
+
+    function showWhatsNew() {
+        root.whatsNewRequested();
+    }
+
+    function markSeen() {
+        if (root.current === "" || root.seen === root.current)
+            return ;
+
+        root.seen = root.current;
+        root.save();
+    }
+
     // one notification per version, with a button onto the release notes
     function announce() {
         if (!root.available || root.notified === root.latest)
@@ -153,7 +170,8 @@ Singleton {
             "latest": root.latest,
             "name": root.latestName,
             "url": root.latestUrl,
-            "notified": root.notified
+            "notified": root.notified,
+            "seen": root.seen
         }));
     }
 
@@ -176,6 +194,11 @@ Singleton {
 
         function probe(): string {
             return root.repo + " | latest=" + root.latest + " | url=" + root.latestUrl;
+        }
+
+        // the What's new sheet for this version
+        function whatsnew(): void {
+            root.showWhatsNew();
         }
 
     }
@@ -260,6 +283,7 @@ Singleton {
                 root.latestName = p.name || "";
                 root.latestUrl = p.url || root.releasesUrl;
                 root.notified = p.notified || "";
+                root.seen = p.seen || "";
             } catch (e) {
             }
         }

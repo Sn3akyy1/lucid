@@ -26,6 +26,9 @@ Column {
     }, {
         "name": "lucidmoji",
         "desc": "Emoji and GIF picker"
+    }, {
+        "name": "lucidnews",
+        "desc": "What's new: the sheet a new version opens with"
     }]
     readonly property var commands: [{
         "cmd": "qs ipc call settings open",
@@ -87,9 +90,18 @@ Column {
                     onClicked: Updates.check()
                 }
 
+                // what this version brought, in the shell's own sheet
                 M3Button {
                     text: "What's new"
-                    variant: Updates.available ? "filled" : "outlined"
+                    variant: "outlined"
+                    onClicked: Updates.showWhatsNew()
+                }
+
+                // a newer one's notes live on GitHub until it is installed
+                M3Button {
+                    visible: Updates.available
+                    text: "Release notes"
+                    variant: "filled"
                     onClicked: Updates.openLatest()
                 }
 
