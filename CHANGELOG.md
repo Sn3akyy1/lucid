@@ -2,7 +2,7 @@
 
 All notable changes to Lucid are recorded here, newest first.
 
-## v1.20 — 2026-10-07
+## v1.20 — 2026-10-08
 
 Lucid 2. Every surface is redrawn in Material You Expressive on one shared kit
 of controls, the clock grows into an app, the launcher learns new modes and the

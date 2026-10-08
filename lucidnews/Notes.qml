@@ -10,8 +10,8 @@ QtObject {
     // VERSION file says this
     readonly property string version: "1.20"
     readonly property string name: "Lucid 2"
-    readonly property string date: "7 October 2026"
-    readonly property bool placeholders: true
+    readonly property string date: "8 October 2026"
+    readonly property bool placeholders: false
     readonly property var heroes: [
         {
             "src": "assets/desktop.webp",
