@@ -821,14 +821,32 @@ Item {
 
                             }
 
-                            // a mouse wheel runs the chips sideways
+                            // a wheel or a sideways swipe runs the chips, at the panes' step
                             WheelHandler {
                                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                                 onWheel: (event) => {
                                     event.accepted = true;
                                     var d = event.angleDelta.x !== 0 ? event.angleDelta.x : event.angleDelta.y;
-                                    chipScroll.contentX = Math.max(0, Math.min(chipScroll.contentWidth - chipScroll.width, chipScroll.contentX - d));
+                                    var maxX = Math.max(0, chipScroll.contentWidth - chipScroll.width);
+                                    var base = chipAnim.running ? chipAnim.to : chipScroll.contentX;
+                                    var target = Math.max(0, Math.min(maxX, base - (d / 120) * wp.wheelStep));
+                                    if (target === base)
+                                        return ;
+
+                                    chipAnim.stop();
+                                    chipAnim.from = chipScroll.contentX;
+                                    chipAnim.to = target;
+                                    chipAnim.start();
                                 }
+                            }
+
+                            NumberAnimation {
+                                id: chipAnim
+
+                                target: chipScroll
+                                property: "contentX"
+                                duration: Theme.ms(170)
+                                easing.type: Easing.OutCubic
                             }
 
                         }
