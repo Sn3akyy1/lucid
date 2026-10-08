@@ -27,7 +27,7 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="bar">
   <div class="wrap bar-inner">
-    <a class="pill brand" href="index.html" aria-label="Lucid home"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g class="mark-orbit"><path class="mark-ring" d="M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100"/><circle class="mark-dot" cx="21" cy="9.4" r="1"/></g><path class="mark-star" d="M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"/></svg><span>Lucid</span><span class="brand-ver">v1.10.5</span></a>
+    <a class="pill brand" href="index.html" aria-label="Lucid home"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g class="mark-orbit"><path class="mark-ring" d="M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100"/><circle class="mark-dot" cx="21" cy="9.4" r="1"/></g><path class="mark-star" d="M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"/></svg><span>Lucid</span><span class="brand-ver">v1.20</span></a>
     <nav class="pill nav" aria-label="Main">
       <a class="nav-link" href="features.html">Features</a>
       <a class="nav-link" href="screenshots.html">Screenshots</a>
@@ -123,6 +123,7 @@
       <a class="sub" href="#light-mode">Light mode</a>
       <a class="sub" href="#wallpapers">Wallpapers per display</a>
       <a class="sub" href="#own-theme">Your own theme</a>
+      <a class="sub" href="#colours">Colours and palettes</a>
       <a href="#requirements">Requirements</a>
       <a class="sub" href="#fonts">Fonts</a>
       <a href="#optional">Optional setup</a>
@@ -169,11 +170,12 @@
 <span class="p">$ </span>./install.sh</code></pre>
           <button class="copy-btn" type="button" data-copy="git pull&#10;./install.sh" aria-label="Copy the update commands"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button>
         </div>
-        <p>Lucid tells you when there is something to pull. Once a day it asks GitHub's public API for the newest release, and when that is newer than your install it posts one notification, once per version. The request is a plain <code>curl</code> for <code>api.github.com/repos/Sn3akyy1/lucid/releases/latest</code> and carries nothing about you or your machine. <strong>Settings → About</strong> shows what it found and turns it off.</p>
+        <p>Lucid tells you when there is something to pull. Once a day it asks GitHub's public API for the newest release, and when that is newer than your install it posts one notification, once per version. The request is a plain <code>curl</code> for <code>api.github.com/repos/Sn3akyy1/lucid/releases/latest</code> and carries nothing about you or your machine. <strong>Settings → About</strong> shows what it found and turns it off. After an update, the first start opens a <em>What's new</em> sheet with what the version brings, once; <strong>About → What's new</strong> opens it again.</p>
         <div class="code">
           <pre><code><span class="p">$ </span>qs ipc call updates status   <span class="c"># what it knows</span>
-<span class="p">$ </span>qs ipc call updates check    <span class="c"># ask now</span></code></pre>
-          <button class="copy-btn" type="button" data-copy="qs ipc call updates status&#10;qs ipc call updates check" aria-label="Copy the commands"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button>
+<span class="p">$ </span>qs ipc call updates check    <span class="c"># ask now</span>
+<span class="p">$ </span>qs ipc call updates whatsnew <span class="c"># this version's What's new</span></code></pre>
+          <button class="copy-btn" type="button" data-copy="qs ipc call updates status&#10;qs ipc call updates check&#10;qs ipc call updates whatsnew" aria-label="Copy the commands"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button>
         </div>
         <p>The <strong>v0.57 beta</strong> stays available as a tag. Nothing carries over between it and v1.x, which moved enough that a fresh install is worth it.</p>
         <div class="code">
@@ -217,6 +219,8 @@
               <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>.</kbd></span></td><td>Emoji picker</td></tr>
               <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>K</kbd></span></td><td>On-screen keyboard</td></tr>
               <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>W</kbd></span></td><td class="wrap-ok">Workspace overview (also a three-finger swipe)</td></tr>
+              <tr><td><span class="keys"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Tab</kbd></span></td><td class="wrap-ok">Window switcher: every window on every workspace, newest first (add <kbd>Shift</kbd> to step back)</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>Esc</kbd></span></td><td class="wrap-ok">Session screen: lock, sleep, log out, restart, shut down</td></tr>
               <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>D</kbd> or <kbd>Print</kbd></span></td><td>Region screenshot</td></tr>
               <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>Print</kbd></span></td><td>Full screenshot</td></tr>
               <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd></span></td><td>Copy text from a region (OCR)</td></tr>
@@ -232,7 +236,8 @@
               <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd></span></td><td>To-do workspace</td></tr>
               <tr><td><span class="keys"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Esc</kbd></span></td><td>System monitor workspace</td></tr>
               <tr><td><span class="keys"><kbd>Super</kbd>+arrows</span></td><td>Move focus</td></tr>
-              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>R</kbd></span></td><td>Reload Hyprland</td></tr>
+              <tr><td><span class="keys"><kbd>Super</kbd>+<kbd>R</kbd></span></td><td class="wrap-ok">Reload Hyprland and restart the shell</td></tr>
+              <tr><td><span class="keys"><kbd>Alt</kbd>+<kbd>Shift</kbd></span></td><td class="wrap-ok">Next keyboard layout, with more than one (Settings → Input picks another key)</td></tr>
               <tr><td><span class="keys"><kbd>F1</kbd>–<kbd>F6</kbd></span></td><td>Volume, mic, brightness</td></tr>
               <tr><td><span class="keys"><kbd>F9</kbd></span></td><td>Terminal</td></tr>
               <tr><td><span class="keys"><kbd>F10</kbd></span></td><td>Lock</td></tr>
@@ -249,6 +254,7 @@
           <pre><code>hl.bind(&quot;SUPER + space&quot;,     hl.dsp.exec_cmd(&quot;qs ipc call -- launcher toggle&quot;))
 hl.bind(&quot;SUPER + E&quot;,         hl.dsp.exec_cmd(&quot;qs ipc call -- moji toggle&quot;))
 hl.bind(&quot;SUPER + L&quot;,         hl.dsp.exec_cmd(&quot;qs ipc call -- lock lock&quot;))
+hl.bind(&quot;SUPER + Escape&quot;,    hl.dsp.exec_cmd(&quot;qs ipc call -- session toggle&quot;))
 hl.bind(&quot;SUPER + S&quot;,         hl.dsp.exec_cmd(&quot;qs ipc call -- snap toggle&quot;))
 hl.bind(&quot;SUPER + SHIFT + T&quot;, hl.dsp.exec_cmd(&quot;qs ipc call -- snap text&quot;))
 hl.bind(&quot;SUPER + SHIFT + C&quot;, hl.dsp.exec_cmd(&quot;qs ipc call -- snap color&quot;))
@@ -272,23 +278,29 @@ hl.bind("SUPER + SHIFT + M", specials.toggle("music"))</code></pre>
           <table>
             <thead><tr><th scope="col">Target</th><th scope="col">Functions</th></tr></thead>
             <tbody>
-              <tr><td><code>launcher</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>wallpaper</code> <code>theme</code> <code>power</code> <code>blur</code> <code>command</code> <code>shuffle</code> <code>clipboard</code> <code>search &lt;query&gt;</code></td></tr>
-              <tr><td><code>settings</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>show &lt;page&gt;</code> <code>general</code> <code>users</code> <code>glass</code> <code>bar</code> <code>dock</code> <code>environment</code> <code>displays</code> <code>widgets</code> <code>workspaces</code> <code>notifications</code> <code>sound</code> <code>network</code> <code>bluetooth</code> <code>kdeconnect</code> <code>idle</code> <code>datetime</code> <code>font</code> <code>reset</code></td></tr>
+              <tr><td><code>launcher</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>wallpaper</code> <code>theme</code> <code>power</code> <code>blur</code> <code>command</code> <code>shuffle</code> <code>clipboard</code> <code>emoji</code> <code>search &lt;query&gt;</code> <code>hide &lt;id&gt;</code> <code>unhide &lt;id&gt;</code> <code>hidden</code></td></tr>
+              <tr><td><code>settings</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>show &lt;page&gt;</code> <code>general</code> <code>users</code> <code>glass</code> <code>bar</code> <code>dock</code> <code>colours</code> <code>palettes</code> <code>environment</code> <code>keybinds</code> <code>input</code> <code>displays</code> <code>widgets</code> <code>windows</code> <code>workspaces</code> <code>notifications</code> <code>sound</code> <code>network</code> <code>bluetooth</code> <code>kdeconnect</code> <code>idle</code> <code>datetime</code> <code>font</code> <code>search &lt;words&gt;</code> <code>reset</code></td></tr>
               <tr><td><code>idle</code></td><td class="wrap-ok"><code>status</code> <code>keepawake</code> <code>awake</code> <code>normal</code> <code>on</code> <code>off</code> <code>restart</code></td></tr>
               <tr><td><code>network</code></td><td class="wrap-ok"><code>status</code> <code>list</code> <code>rescan</code></td></tr>
+              <tr><td><code>nightlight</code></td><td class="wrap-ok"><code>toggle</code> <code>on</code> <code>off</code> <code>status</code></td></tr>
               <tr><td><code>kdeconnect</code></td><td class="wrap-ok"><code>status</code> <code>list</code> <code>rescan</code> <code>ring &lt;id&gt;</code> <code>ping &lt;id&gt;</code> <code>clipboard &lt;id&gt;</code> <code>files &lt;id&gt;</code> <code>send &lt;id&gt; &lt;path&gt;</code></td></tr>
-              <tr><td><code>widgets</code></td><td class="wrap-ok"><code>add &lt;type&gt; &lt;variant&gt;</code> <code>remove &lt;uid&gt;</code> <code>clear</code> <code>toggle</code> <code>lock</code> <code>unlock</code> <code>list</code> <code>catalogue</code> <code>settings</code> <code>resize &lt;uid&gt; &lt;w&gt; &lt;h&gt;</code></td></tr>
+              <tr><td><code>widgets</code></td><td class="wrap-ok"><code>panel</code> <code>openPanel &lt;screen&gt;</code> <code>closePanel</code> <code>add &lt;type&gt; &lt;variant&gt;</code> <code>remove &lt;uid&gt;</code> <code>clear</code> <code>toggle</code> <code>lock</code> <code>unlock</code> <code>list</code> <code>catalogue</code> <code>settings</code> <code>resize &lt;uid&gt; &lt;w&gt; &lt;h&gt;</code></td></tr>
               <tr><td><code>moji</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>emoji</code> <code>kaomoji</code> <code>gif</code> <code>center</code></td></tr>
               <tr><td><code>keyboard</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>letters</code> <code>fnkeys</code> <code>center</code> <code>bigger</code> <code>smaller</code></td></tr>
               <tr><td><code>notifs</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>clear</code> <code>toggleDnd</code> <code>expandAll</code> <code>settings</code> <code>count</code></td></tr>
               <tr><td><code>lock</code></td><td class="wrap-ok"><code>lock</code> <code>unlock</code> <code>isLocked</code> <code>status</code>. Nothing here bypasses the password; PAM is the only way in.</td></tr>
-              <tr><td><code>snap</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>text</code> <code>color</code></td></tr>
+              <tr><td><code>snap</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>text</code> <code>color</code> <code>video</code></td></tr>
+              <tr><td><code>session</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code></td></tr>
+              <tr><td><code>switcher</code></td><td class="wrap-ok"><code>next</code> <code>prev</code> <code>toggle</code> <code>open</code> <code>close</code> <code>status</code>. <code>next</code>/<code>prev</code> open it when it is closed.</td></tr>
+              <tr><td><code>timer</code></td><td class="wrap-ok"><code>start &lt;seconds&gt;</code> <code>stopwatch</code> <code>pomodoro</code> <code>pomodoroSkip</code> <code>pomodoroStop</code> <code>pomodoroAdd &lt;minutes&gt;</code> <code>status</code></td></tr>
+              <tr><td><code>clock</code></td><td class="wrap-ok"><code>open &lt;tab&gt;</code> <code>toggle</code> <code>close</code>. <em>tab</em> is <code>today</code>, <code>calendar</code>, <code>timer</code>, <code>stopwatch</code> or <code>world</code>.</td></tr>
               <tr><td><code>toast</code></td><td class="wrap-ok"><code>show &lt;icon&gt; &lt;label&gt;</code> <code>warn &lt;icon&gt; &lt;label&gt;</code></td></tr>
+              <tr><td><code>sounds</code></td><td class="wrap-ok"><code>play &lt;name&gt;</code> <code>list</code>. At the system-sound volume.</td></tr>
               <tr><td><code>screenshot</code></td><td class="wrap-ok"><code>full</code> <code>text</code></td></tr>
               <tr><td><code>media</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code> <code>identify</code> <code>playPause</code> <code>next</code> <code>previous</code></td></tr>
               <tr><td><code>workspaces</code></td><td class="wrap-ok"><code>toggle</code> <code>open</code> <code>close</code></td></tr>
-              <tr><td><code>updates</code></td><td class="wrap-ok"><code>status</code> <code>check</code></td></tr>
-              <tr><td><code>displays</code></td><td class="wrap-ok"><code>list</code> <code>settings</code> <code>shell &lt;where&gt;</code> <code>bar &lt;where&gt;</code> <code>dock &lt;where&gt;</code>. <em>where</em> is an output name, <code>left</code>, <code>middle</code> or <code>right</code>, <code>here</code>, <code>next</code>, <code>prev</code> or <code>auto</code>.</td></tr>
+              <tr><td><code>updates</code></td><td class="wrap-ok"><code>status</code> <code>check</code> <code>whatsnew</code> (the What's new sheet for this version)</td></tr>
+              <tr><td><code>displays</code></td><td class="wrap-ok"><code>list</code> <code>settings</code> <code>shell &lt;where&gt;</code> <code>bar &lt;where&gt;</code> <code>dock &lt;where&gt;</code>. <em>where</em> is an output name, <code>left</code>/<code>middle</code>/<code>right</code>, <code>here</code>, <code>next</code>, <code>prev</code> or <code>auto</code>.</td></tr>
               <tr><td><code>polkit</code></td><td class="wrap-ok"><code>status</code> <code>demo &lt;action-id&gt;</code> <code>fail</code> <code>grant</code> <code>close</code>. <code>demo</code> raises the dialog with no PAM session behind it, for previewing a theme.</td></tr>
               <tr><td><code>debug</code></td><td class="wrap-ok"><code>toggle</code> <code>on</code> <code>off</code>. Draws input and blur region outlines.</td></tr>
             </tbody>
@@ -331,6 +343,12 @@ HDMI-A-1  ~/Pictures/wallpapers/second.jpg</code></pre>
         </div>
       </section>
 
+      <section id="colours">
+        <h3>Colours and palettes</h3>
+        <p><strong>Settings → Colours</strong> shapes what Matugen builds: its nine scheme styles, from the calm <em>Tonal</em> it uses by default to <em>Monochrome</em>, the contrast, and which of the wallpaper's dominant colours the palette starts from. <strong>Your colour</strong> is a theme built from one colour, typed as hex, picked off the screen or chosen from a few. Below that, every app template with how its last render went, a switch for each, and a form for a template of your own that you can try before adding it.</p>
+        <p><strong>Settings → Palettes</strong> is a gallery of the 560 base16 and base24 schemes tinted-theming collects, drawn in their own colours, searchable and filtered by dark or light, one click to add or use. Themes import from a repo or a file, light schemes stay light with a dark side worked out for them, and the palette on screen can be edited live and exported as a Lucid palette or base16 YAML.</p>
+      </section>
+
       <section id="requirements">
         <h2>Requirements</h2>
         <p>Arch Linux and Hyprland. The installer handles all of this; it is listed here so you know what is being pulled in. Lucid uses Hyprland-specific APIs for workspaces and window management and will not work on other compositors.</p>
@@ -348,10 +366,16 @@ HDMI-A-1  ~/Pictures/wallpapers/second.jpg</code></pre>
               <tr><td><code>awww</code></td><td class="wrap-ok">Setting the wallpaper</td></tr>
               <tr><td><code>python-pywal</code></td><td class="wrap-ok">The Pywal theme</td></tr>
               <tr><td><code>networkmanager</code></td><td class="wrap-ok">Wi-Fi panel</td></tr>
+              <tr><td><code>qrencode</code></td><td class="wrap-ok">The QR code that shares a saved Wi-Fi network. Without it the password still shows, with no code</td></tr>
               <tr><td><code>bluez</code>, <code>bluez-utils</code></td><td class="wrap-ok">Bluetooth panel and the Bluetooth settings page</td></tr>
               <tr><td><code>kdeconnect</code>, <code>python-gobject</code></td><td class="wrap-ok">The Phone page. Without either the page says so and does nothing else</td></tr>
-              <tr><td><code>libpulse</code>, <code>wireplumber</code></td><td class="wrap-ok">Volume, audio devices</td></tr>
+              <tr><td><code>sshfs</code></td><td class="wrap-ok">Browsing a phone's files from the phone widget or the Phone page</td></tr>
+              <tr><td><code>libpulse</code>, <code>wireplumber</code></td><td class="wrap-ok">Volume, audio devices, and playing Lucid's sounds</td></tr>
+              <tr><td><code>pipewire-audio</code>, <code>sound-theme-freedesktop</code></td><td class="wrap-ok">The Sound page's Left/Right test. Without them the test plays nothing</td></tr>
+              <tr><td><code>inotify-tools</code></td><td class="wrap-ok">The camera on and off toast and sound. Without it the camera is never watched</td></tr>
+              <tr><td><code>smartmontools</code>, <code>udisks2</code></td><td class="wrap-ok">The Storage page's drive health and mounting. The map and the cleanup work without them</td></tr>
               <tr><td><code>brightnessctl</code>, <code>upower</code></td><td class="wrap-ok">Brightness, battery</td></tr>
+              <tr><td><code>hyprsunset</code></td><td class="wrap-ok">Night light. Lucid starts it when night light first comes on, and uses one you already run as it is</td></tr>
               <tr><td><code>hypridle</code></td><td class="wrap-ok">The Idle page: dimming, locking, screen off and suspend</td></tr>
               <tr><td><code>grim</code>, <code>wf-recorder</code>, <code>ffmpeg</code>, <code>imagemagick</code></td><td class="wrap-ok">Screenshots and recording</td></tr>
               <tr><td><code>tesseract</code>, <code>tesseract-data-eng</code></td><td class="wrap-ok">The text copier's OCR</td></tr>
@@ -364,7 +388,7 @@ HDMI-A-1  ~/Pictures/wallpapers/second.jpg</code></pre>
               <tr><td><code>polkit</code></td><td class="wrap-ok">Every administrator prompt. The shell is the session's authentication agent, so no other agent should be started</td></tr>
               <tr><td><code>accountsservice</code></td><td class="wrap-ok">The Users and Accounts page</td></tr>
               <tr><td><code>libnotify</code></td><td class="wrap-ok">Notification actions</td></tr>
-              <tr><td><code>swappy</code></td><td class="wrap-ok">The Open action on a screenshot notification</td></tr>
+              <tr><td><code>swappy</code></td><td class="wrap-ok">Marking up a screenshot, from its preview card or notification</td></tr>
               <tr><td><code>hyprpicker</code></td><td class="wrap-ok">The colour picker</td></tr>
               <tr><td><code>xdg-utils</code></td><td class="wrap-ok">Opening links and files from the shell</td></tr>
               <tr><td><code>librsvg</code></td><td class="wrap-ok">Turning the pointer's shadow off</td></tr>
@@ -382,7 +406,7 @@ HDMI-A-1  ~/Pictures/wallpapers/second.jpg</code></pre>
 
       <section id="fonts">
         <h3>Fonts</h3>
-        <p>The default UI font is <strong>Google Sans</strong>, which is not in the Arch repos. Without it Qt falls back to your default sans and everything still works, or you can pick any installed font in Settings → General.</p>
+        <p>The UI font is <strong>Google Sans Flex</strong>, which Lucid ships itself under its open font licence; the installer also puts it in <code>~/.local/share/fonts/lucid</code> for the apps the Environment page dresses. Pick any installed font instead in Settings → General.</p>
       </section>
 
       <section id="optional">

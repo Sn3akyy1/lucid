@@ -27,7 +27,7 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="bar">
   <div class="wrap bar-inner">
-    <a class="pill brand" href="index.html" aria-label="Lucid home"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g class="mark-orbit"><path class="mark-ring" d="M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100"/><circle class="mark-dot" cx="21" cy="9.4" r="1"/></g><path class="mark-star" d="M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"/></svg><span>Lucid</span><span class="brand-ver">v1.10.5</span></a>
+    <a class="pill brand" href="index.html" aria-label="Lucid home"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g class="mark-orbit"><path class="mark-ring" d="M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100"/><circle class="mark-dot" cx="21" cy="9.4" r="1"/></g><path class="mark-star" d="M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"/></svg><span>Lucid</span><span class="brand-ver">v1.20</span></a>
     <nav class="pill nav" aria-label="Main">
       <a class="nav-link" href="features.html">Features</a>
       <a class="nav-link" href="screenshots.html">Screenshots</a>
@@ -158,7 +158,7 @@
           <p>Pull and run the installer again. Your settings, pinned apps, reminders, Shazam history and API keys are carried into the new install, and the old one is kept as <code>~/.config/quickshell.backup-&lt;timestamp&gt;</code>.</p>
           <div class="code"><pre><code><span class="p">$ </span>git pull
 <span class="p">$ </span>./install.sh</code></pre><button class="copy-btn" type="button" aria-label="Copy the commands"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button></div>
-          <p>You don't have to watch for releases: Lucid checks once a day and tells you once per version, in a notification.</p>
+          <p>You don't have to watch for releases: Lucid checks once a day and tells you once per version, in a notification. After an update, the first start opens a <strong>What's new</strong> sheet once; <strong>Settings → About → What's new</strong> opens it again.</p>
         </div>
       </details>
 
@@ -228,6 +228,7 @@
         <summary><div><h3>How do I add my own theme?</h3><small>Theming and appearance</small></div><svg class="i" aria-hidden="true" focusable="false"><use href="#i-expand_more"></use></svg></summary>
         <div class="article-body">
           <p>Paste the URL of any colour-scheme repo into <strong>Settings → Theme</strong>. Lucid clones it, reads base16, base24 or name-keyed JSON exactly, falls back to sorting the hex codes it finds, and builds a full Material 3 palette. Wallpapers in the repo come along too. <strong>Nothing from the repo is ever run</strong>: only text is parsed and only images are copied.</p>
+          <p>Or open <strong>Settings → Palettes</strong>, a gallery of 560 base16 and base24 schemes drawn in their own colours, one click to add or use.</p>
           <a class="link-arrow" href="docs.html#own-theme">More on themes<svg class="i" aria-hidden="true" focusable="false"><use href="#i-arrow_forward"></use></svg></a>
         </div>
       </details>
@@ -250,9 +251,9 @@ HDMI-A-1  ~/Pictures/wallpapers/second.jpg</code></pre><button class="copy-btn" 
       </details>
 
       <details class="article" id="font" data-topic="look" data-keywords="font google sans missing fallback typeface">
-        <summary><div><h3>Google Sans isn't installed</h3><small>Theming and appearance</small></div><svg class="i" aria-hidden="true" focusable="false"><use href="#i-expand_more"></use></svg></summary>
+        <summary><div><h3>Do I need Google Sans installed?</h3><small>Theming and appearance</small></div><svg class="i" aria-hidden="true" focusable="false"><use href="#i-expand_more"></use></svg></summary>
         <div class="article-body">
-          <p>Google Sans isn't in the Arch repos. Without it Qt falls back to your default sans and everything still works, or you can pick any installed font in <strong>Settings → General</strong>.</p>
+          <p>No. Lucid ships Google Sans Flex itself, under its open font licence, and the installer puts it in <code>~/.local/share/fonts/lucid</code> for the apps the Environment page dresses too. To use something else, pick any installed font in <strong>Settings → General</strong>.</p>
         </div>
       </details>
 
@@ -340,7 +341,7 @@ hl.bind(&quot;SUPER + comma&quot;, hl.dsp.exec_cmd(&quot;qs ipc call -- settings
       <details class="article" id="keybind-list" data-topic="keys" data-keywords="shortcuts keybinds list super keys">
         <summary><div><h3>Where is the full list of shortcuts?</h3><small>Keybinds and IPC</small></div><svg class="i" aria-hidden="true" focusable="false"><use href="#i-expand_more"></use></svg></summary>
         <div class="article-body">
-          <p>In the <a href="docs.html#keybinds">Keybinds</a> section of the docs. They live in <code>~/.config/hypr/modules/binds.lua</code>, and <code>hyprctl reload</code> picks up any change you make there.</p>
+          <p>Press <kbd>Super</kbd>+<kbd>/</kbd> for the whole sheet over the screen, or see the <a href="docs.html#keybinds">Keybinds</a> section of the docs. They live in <code>~/.config/lucid/keybinds.json</code>, and <strong>Settings → Keybinds</strong> lists, searches, edits, adds and switches them off.</p>
         </div>
       </details>
 
@@ -375,7 +376,7 @@ hl.bind(&quot;SUPER + comma&quot;, hl.dsp.exec_cmd(&quot;qs ipc call -- settings
           <p>When SDDM is present the installer copies the theme in, but it never switches to it. To use it, set <code>Current=lucid</code> in the <code>[Theme]</code> section of <code>/etc/sddm.conf</code>:</p>
           <div class="code"><pre><code>[Theme]
 Current=lucid</code></pre><button class="copy-btn" type="button" aria-label="Copy the config"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-content_copy"></use></svg></button></div>
-          <p>Put it in <code>/etc/sddm.conf</code> itself. That file outranks anything in <code>/etc/sddm.conf.d/</code>, so a drop-in there loses if <code>sddm.conf</code> names a theme of its own. The login screen is painted from the running shell's colours, so it follows a theme change.</p>
+          <p>Put it in <code>/etc/sddm.conf</code> itself. That file outranks anything in <code>/etc/sddm.conf.d/</code>, so a drop-in there loses if <code>sddm.conf</code> names a theme of its own. The login screen is painted from the running shell's colours, so it follows a theme change. Every account keeps its own wallpaper and palette there, and picking another account crossfades the screen to theirs.</p>
         </div>
       </details>
 

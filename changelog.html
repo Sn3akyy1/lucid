@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Lucid Changelog</title>
-  <meta name="description" content="What landed in each Lucid release, from the v0.57 beta to v1.10.5: lock screen, polkit, accounts, light mode, displays, glass, widgets and more.">
+  <meta name="description" content="What landed in each Lucid release, from the v0.57 beta to v1.20: Lucid 2, a clock app, a widget panel, sounds, lock screen, polkit, accounts, light mode, displays and more.">
   <meta name="theme-color" content="#0f0807" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#fae7e3" media="(prefers-color-scheme: light)">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Lucid">
   <meta property="og:title" content="Lucid Changelog">
-  <meta property="og:description" content="What landed in each Lucid release, from the v0.57 beta to v1.10.5: lock screen, polkit, accounts, light mode, displays, glass, widgets and more.">
+  <meta property="og:description" content="What landed in each Lucid release, from the v0.57 beta to v1.20: Lucid 2, a clock app, a widget panel, sounds, lock screen, polkit, accounts, light mode, displays and more.">
   <meta property="og:image" content="assets/images/og-image.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="favicon.ico" sizes="any">
@@ -27,7 +27,7 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="bar">
   <div class="wrap bar-inner">
-    <a class="pill brand" href="index.html" aria-label="Lucid home"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g class="mark-orbit"><path class="mark-ring" d="M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100"/><circle class="mark-dot" cx="21" cy="9.4" r="1"/></g><path class="mark-star" d="M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"/></svg><span>Lucid</span><span class="brand-ver">v1.10.5</span></a>
+    <a class="pill brand" href="index.html" aria-label="Lucid home"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g class="mark-orbit"><path class="mark-ring" d="M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100"/><circle class="mark-dot" cx="21" cy="9.4" r="1"/></g><path class="mark-star" d="M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"/></svg><span>Lucid</span><span class="brand-ver">v1.20</span></a>
     <nav class="pill nav" aria-label="Main">
       <a class="nav-link" href="features.html">Features</a>
       <a class="nav-link" href="screenshots.html">Screenshots</a>
@@ -118,9 +118,31 @@
     <div class="callout" style="margin-bottom: 24px"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-notifications"></use></svg><p><strong>To hear about new versions,</strong> press <strong>Watch → Custom → Releases</strong> on the GitHub repo. Lucid also checks for itself once a day and tells you once, in a notification.</p></div>
 
     <div class="releases">
-      <article class="release" id="v1-10-5">
+      <article class="release" id="v1-20">
         <div class="release-meta">
           <span class="chip chip-accent" style="justify-self: start">Latest</span>
+          <span class="ver">v1.20</span>
+          <time datetime="2026-10-08">8 October 2026</time>
+          <a class="link-arrow" href="https://github.com/Sn3akyy1/lucid/releases/tag/v1.20" rel="noopener">Release notes<svg class="i" aria-hidden="true" focusable="false"><use href="#i-north_east"></use></svg></a>
+        </div>
+        <div class="release-body">
+          <h2>Lucid 2</h2>
+          <p>Every surface is redrawn in Material You Expressive on one shared kit of controls, the clock grows into an app, the launcher learns new modes and the control centre's tiles are yours to arrange. On top of that sits a release's worth of new features, twenty-five of its pull requests from Ciro Rivera.</p>
+          <div class="release-groups">
+            <div class="rgroup"><h3>Lucid 2</h3><ul><li>Material You Expressive on one kit of controls</li><li>Interface size, 75 to 125 %</li><li>A session screen and a window switcher</li><li>The lock screen grows out of your desktop</li><li>Workspaces as shapes</li><li>The clock is an app</li><li>Every widget rebuilt, four new ones</li><li>A widget panel</li><li>Control centre tiles you arrange</li><li>A Storage page</li><li>What's new, in the shell</li></ul></div>
+            <div class="rgroup"><h3>Sounds</h3><ul><li>Lucid's own synthesised sounds</li><li>Eight notification sounds</li><li>System sounds for devices, the charger and the camera</li><li>Tiny ticks for your own keys</li></ul></div>
+            <div class="rgroup"><h3>Settings</h3><ul><li>Search every setting</li><li>Windows and Input pages for Hyprland</li><li>Corner rounding</li><li>Colours and Palettes pages</li></ul></div>
+            <div class="rgroup"><h3>Bar and launcher</h3><ul><li>Arrange the bar from Settings</li><li>Privacy, Power and Active window modules</li><li>Looks for every module</li><li>A bar on every display</li><li>One search for windows, app actions and power</li><li>Emoji, web and run prefixes</li></ul></div>
+            <div class="rgroup"><h3>Also new</h3><ul><li>Night light</li><li>A preview card after each capture</li><li>Share Wi-Fi as a QR code</li><li>Workspaces of your own</li><li>A clipboard preview pane</li></ul></div>
+            <div class="rgroup"><h3>Contributed</h3><ul><li>Twenty-five pull requests, by <a href="https://github.com/ciroenrique4-eng" rel="noopener">Ciro Rivera</a></li><li>Workspaces grouped by display, by <a href="https://github.com/MrZtone" rel="noopener">@MrZtone</a></li><li>Installer fixes, by <a href="https://github.com/arbelonson-source" rel="noopener">@arbelonson-source</a></li></ul></div>
+            <div class="rgroup"><h3>Performance</h3><ul><li>About 150 MB less memory at rest</li><li>An idle bar no longer redraws</li><li>No five-second freeze while a window resizes</li></ul></div>
+          </div>
+          <p>To update, pull and run the installer again. It leaves your keybinds alone, so add <kbd>Super</kbd>+<kbd>Esc</kbd> (the session screen) and <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Tab</kbd> (the window switcher) under Settings → Keybinds.</p>
+        </div>
+      </article>
+
+      <article class="release" id="v1-10-5">
+        <div class="release-meta">
           <span class="ver">v1.10.5</span>
           <time datetime="2026-09-22">22 September 2026</time>
           <a class="link-arrow" href="https://github.com/Sn3akyy1/lucid/releases/tag/v1.10.5" rel="noopener">Release notes<svg class="i" aria-hidden="true" focusable="false"><use href="#i-north_east"></use></svg></a>
