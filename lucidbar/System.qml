@@ -1199,7 +1199,7 @@ BarPill {
             break;
         case "lock":
             root.expanded = false;
-            Lockscreen.lock();
+            Lockscreen.lock(Theme.barDurEnter + Theme.ms(60));
             break;
         case "phone":
             // rings the phone that is in reach; with none, the phone page says why

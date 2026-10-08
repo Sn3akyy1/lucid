@@ -128,15 +128,136 @@ Singleton {
     }
 
     // ── session control ────────────────────────────────────────────────────
-    function lock() {
-        if (root.locked)
+    // settle: ms for the menu that asked to shut before the desktop is photographed
+    function lock(settle) {
+        if (root.locked || root.arming)
             return ;
 
+        root.arming = true;
+        root.captures = ({
+        });
+        root.seeThrough = false;
+        settleWait.interval = Math.max(1, settle || 0);
+        settleWait.restart();
+    }
+
+    function lockNow() {
+        root.arming = false;
         root.reset();
         root.leaving = false;
         root.focused = false;
+        root.lockedAt = Date.now();
         root.locked = true;
         Users.probe();
+    }
+
+    // ── the desktop the lock grows out of ──────────────────────────────────
+    // screencopy only sees the lock once it is up, so the desktop is caught first
+    property bool arming: false
+    // screen name -> file url
+    property var captures: ({
+    })
+    // a surface built long after this (a reload) must not replay the dive
+    property real lockedAt: 0
+    // session_lock_xray is on, so an unlock can end see-through. only after a grant
+    property bool seeThrough: false
+    readonly property string captureDir: Quickshell.env("XDG_RUNTIME_DIR") || "/tmp"
+
+    function captureFor(screen) {
+        return screen ? (root.captures[screen.name] || "") : "";
+    }
+
+    Timer {
+        id: settleWait
+
+        onTriggered: {
+            var names = [];
+            for (var i = 0; i < Quickshell.screens.length; i++)
+                names.push(Quickshell.screens[i].name);
+
+            capture.stamp = Date.now();
+            capture.command = ["sh", "-c", "umask 077; d=$1; s=$2; shift 2; for o; do (timeout 1 grim -t ppm -o \"$o\" \"$d/lucid-lock-$o-$s.ppm\" 2>/dev/null && echo \"$o\") & done; wait", "sh", root.captureDir, String(capture.stamp)].concat(names);
+            capture.running = true;
+            captureCap.restart();
+        }
+    }
+
+    // a screen that is off never hands over a frame; lock without it
+    Timer {
+        id: captureCap
+
+        interval: 260
+        onTriggered: root.armed(true)
+    }
+
+    Process {
+        id: capture
+
+        property real stamp: 0
+
+        // the grims hold stdout too, so its end is the end of all of them
+        stdout: StdioCollector {
+            id: captured
+
+            onStreamFinished: root.armed(false)
+        }
+
+    }
+
+    function armed(timedOut) {
+        if (!root.arming)
+            return ;
+
+        captureCap.stop();
+        var map = {
+        };
+        if (timedOut) {
+            capture.running = false;
+        } else {
+            var lines = captured.text.split("\n");
+            for (var i = 0; i < lines.length; i++) {
+                var o = lines[i].trim();
+                if (o !== "")
+                    map[o] = "file://" + root.captureDir + "/lucid-lock-" + o + "-" + capture.stamp + ".ppm";
+
+            }
+        }
+        root.captures = map;
+        root.lockNow();
+    }
+
+    function forgetCaptures() {
+        root.captures = ({
+        });
+        Quickshell.execDetached(["sh", "-c", "rm -f \"$1\"/lucid-lock-*.ppm", "sh", root.captureDir]);
+    }
+
+    // the old value is kept inside hyprland; a shell that died mid-unlock restores it at start
+    Process {
+        id: xrayOn
+
+        command: ["hyprctl", "eval", "if LucidLockXray == nil then local ok, v = pcall(hl.get_config, 'misc.session_lock_xray') LucidLockXray = ok and v or false end hl.config({ ['misc.session_lock_xray'] = true })"]
+        onExited: (code) => {
+            root.seeThrough = code === 0 && root.leaving;
+        }
+    }
+
+    function restoreXray() {
+        Quickshell.execDetached(["hyprctl", "eval", "if LucidLockXray ~= nil then hl.config({ ['misc.session_lock_xray'] = LucidLockXray }) LucidLockXray = nil end"]);
+    }
+
+    // after the surface is gone: xray off under a see-through lock is a black frame
+    Timer {
+        id: xrayOff
+
+        interval: 400
+        onTriggered: root.restoreXray()
+    }
+
+    onLeavingChanged: {
+        if (root.leaving && root.locked)
+            xrayOn.running = true;
+
     }
 
     // if the surface never reports back — it failed to draw, or the screen it
@@ -145,7 +266,7 @@ Singleton {
         id: deadman
 
         running: root.leaving
-        interval: 2000
+        interval: Math.max(2000, Theme.ms(2000))
         onTriggered: {
             if (root.locked)
                 root.release();
@@ -154,16 +275,27 @@ Singleton {
     }
 
     // the surface calls this once its exit animation has played out
+    // seeThrough stays set until the next lock, or the last clear frame turns black
     function release() {
         root.locked = false;
         root.leaving = false;
         root.focused = false;
         root.reset();
+        root.forgetCaptures();
+        xrayOff.restart();
     }
 
     // every unlock asked for from outside: the ipc, logind. asking twice, or
     // asking when nothing is locked, must not strand `leaving` set
     function requestUnlock() {
+        if (root.arming) {
+            root.arming = false;
+            settleWait.stop();
+            captureCap.stop();
+            capture.running = false;
+            root.forgetCaptures();
+            return ;
+        }
         if (root.locked && !root.leaving)
             root.leaving = true;
 
@@ -676,7 +808,11 @@ Singleton {
     }
 
     onLockedChanged: root.pushLockedHint()
-    Component.onCompleted: root.pushLockedHint()
+    Component.onCompleted: {
+        root.pushLockedHint();
+        root.restoreXray();
+        root.forgetCaptures();
+    }
 
     IpcHandler {
         target: "lock"

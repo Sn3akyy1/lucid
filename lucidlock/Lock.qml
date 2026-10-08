@@ -16,12 +16,14 @@ Scope {
         surface: WlSessionLockSurface {
             id: pane
 
-            color: "black"
+            // clear only for the last frames of an unlock
+            color: Lockscreen.seeThrough ? "transparent" : "black"
 
             LockSurface {
                 anchors.fill: parent
                 // only the shell's own screen gets the field and the cards
                 primary: !Monitors.mainScreen || pane.screen === Monitors.mainScreen
+                capture: Lockscreen.captureFor(pane.screen)
             }
 
         }

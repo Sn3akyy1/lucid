@@ -25,9 +25,10 @@ Singleton {
     readonly property var holds: PowerProfiles.holds || []
     readonly property var available: root.hasPerformance ? [PowerProfile.PowerSaver, PowerProfile.Balanced, PowerProfile.Performance] : [PowerProfile.PowerSaver, PowerProfile.Balanced]
 
-    function run(id) {
+    // settled: the caller has already waited out its own exit
+    function run(id, settled) {
         if (id === "lock") {
-            Lockscreen.lock();
+            Lockscreen.lock(settled ? 0 : Theme.barDurEnter + Theme.ms(60));
             return ;
         }
         if (id === "logout") {

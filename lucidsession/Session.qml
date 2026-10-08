@@ -143,7 +143,7 @@ PanelWindow {
         property string pending: ""
 
         interval: 260
-        onTriggered: Power.run(runLater.pending)
+        onTriggered: Power.run(runLater.pending, true)
     }
 
     IpcHandler {

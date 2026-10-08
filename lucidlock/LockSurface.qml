@@ -1,21 +1,52 @@
 import QtQuick
 import QtQuick.Effects
+import Quickshell.Widgets
 import qs
 
-// one screen's worth of lock. arriving is a staggered wave read off a single
-// number; leaving is the whole stage falling forward at once
+// one screen's worth of lock. the desktop it covers frosts over and sinks away
+// on the way in, and comes back up through the frost on the way out
 Item {
     id: surface
 
     // only the shell's own screen carries the field; the rest get the clock
     property bool primary: true
+    // the desktop a moment before the lock
+    property string capture: ""
+    // a surface rebuilt mid-lock (a reload) must not show the desktop again
+    readonly property bool fresh: Date.now() - Lockscreen.lockedAt < 1500
+    readonly property bool dive: surface.capture !== "" && surface.fresh
+    readonly property bool desk: deskImage.status === Image.Ready
     // the arrival driver, linear in time so each block can ease its own slice
     property real t: 0
-    // 1 while the lock is here, 0 once it has gone
-    property real out: 1
+    property real u: 0
     // 0 glance, 1 focus. the day steps back so the field can step forward
     property real focusK: Lockscreen.focused ? 1 : 0
     readonly property real e: surface.ease(surface.t)
+    // the cards wait for the desktop to sink
+    readonly property real lead: surface.dive ? 0.16 : 0
+    readonly property real sinkT: surface.clamp01(surface.t / 0.6)
+    readonly property real riseT: surface.clamp01((surface.u - 0.04) / 0.7)
+    readonly property real sink: surface.bez([0.3, 0, 0.1, 1, 1, 1], surface.sinkT)
+    // 1 while the lock is here, 0 once it has gone
+    readonly property real out: 1 - surface.bez(Theme.easeEmphasizedAccel, surface.clamp01(surface.u / (surface.desk ? 0.32 : 0.55)))
+    // 0 at the glass, 1 sunk away
+    readonly property real depth: surface.u > 0 ? 1 - surface.bez(Theme.easeEmphasizedDecel, surface.riseT) : (surface.dive ? surface.sink : 1)
+    readonly property real deskBlur: surface.u > 0 ? 1 - surface.bez(Theme.curveStandard, surface.clamp01((surface.u - 0.08) / 0.62)) : surface.bez([0.3, 0.5, 0.1, 1, 1, 1], surface.sinkT)
+    // dissolves only once frosted, so the swap reads as colour, not a double exposure
+    readonly property real deskOpacity: {
+        if (!surface.desk)
+            return 0;
+
+        if (surface.u > 0)
+            return surface.smooth(surface.clamp01((surface.u - 0.04) / 0.3));
+
+        return surface.dive ? 1 - surface.smooth(surface.clamp01((surface.sinkT - 0.32) / 0.68)) : 0;
+    }
+    // not on the way in: its blur would build cold on the dive's second frame
+    readonly property bool paperHidden: surface.u > 0 && surface.deskOpacity >= 1 && surface.depth <= 0 && surface.deskBlur <= 0
+    readonly property real shade: (surface.dive ? surface.sink : surface.e) * (surface.desk && surface.u > 0 ? surface.depth : surface.out)
+    // hyprland draws the live desktop underneath by then (session_lock_xray)
+    readonly property real clear: Lockscreen.seeThrough ? (surface.desk ? surface.smooth(surface.clamp01((surface.u - 0.74) / 0.26)) : surface.smooth(surface.clamp01((surface.u - 0.4) / 0.6))) : 0
     // while the field has the screen, everything that steps back also stops
     // taking clicks. a click out there only buys the focus back
     readonly property bool glanceLive: !Lockscreen.focused
@@ -28,9 +59,40 @@ Item {
         return 1 - Math.pow(1 - c, 5);
     }
 
+    function clamp01(x) {
+        return Math.max(0, Math.min(1, x));
+    }
+
+    function smooth(x) {
+        return x * x * (3 - 2 * x);
+    }
+
+    // bisection: the emphasized curves are too steep for newton
+    function bez(c, x) {
+        if (x <= 0)
+            return 0;
+
+        if (x >= 1)
+            return 1;
+
+        var lo = 0, hi = 1, s = x;
+        for (var i = 0; i < 18; i++) {
+            s = (lo + hi) / 2;
+            var r = 1 - s;
+            var bx = 3 * c[0] * s * r * r + 3 * c[2] * s * s * r + s * s * s;
+            if (bx < x)
+                lo = s;
+            else
+                hi = s;
+        }
+        var q = 1 - s;
+        return 3 * c[1] * s * q * q + 3 * c[3] * s * s * q + s * s * s;
+    }
+
     // a block's own progress: nothing until its turn, then a full ease of its own
     function rv(delay) {
-        return surface.ease((surface.t - delay) / Math.max(0.05, 1 - delay));
+        var d = surface.lead + delay * (1 - surface.lead);
+        return surface.ease((surface.t - d) / Math.max(0.05, 1 - d));
     }
 
     function focusInput() {
@@ -38,6 +100,10 @@ Item {
             auth.focusInput();
 
     }
+
+    // flattened, or the layers show through one another
+    opacity: 1 - surface.clear
+    layer.enabled: surface.clear > 0
 
     Behavior on focusK {
         NumberAnimation {
@@ -54,21 +120,18 @@ Item {
         target: surface
         property: "t"
         to: 1
-        duration: Theme.ms(900)
+        duration: surface.dive ? Theme.ms(1100) : Theme.ms(900)
     }
 
-    // the exit is one gesture, not the arrival run backwards: the stage leans
-    // forward and dissolves while the wallpaper comes back into focus
+    // the exit is its own gesture, not the arrival run backwards
     ParallelAnimation {
         id: exitAnim
 
         NumberAnimation {
             target: surface
-            property: "out"
-            to: 0
-            duration: Theme.ms(300)
-            easing.type: Easing.Bezier
-            easing.bezierCurve: Theme.easeEmphasizedAccel
+            property: "u"
+            to: 1
+            duration: surface.desk ? Theme.ms(680) : Theme.ms(560)
         }
 
         NumberAnimation {
@@ -97,7 +160,7 @@ Item {
 
     Component.onCompleted: {
         surface.t = 0;
-        surface.out = 1;
+        surface.u = 0;
         enterAnim.start();
         Qt.callLater(surface.focusInput);
     }
@@ -109,16 +172,18 @@ Item {
         id: paperBox
 
         anchors.fill: parent
+        visible: !surface.paperHidden
 
         Image {
             anchors.fill: parent
             // encoded, or a wallpaper with a space in its name never loads
             source: "file://" + encodeURI(Lockscreen.wallpaper)
             fillMode: Image.PreserveAspectCrop
-            asynchronous: true
+            // a dive uncovers it within a few frames
+            asynchronous: !surface.dive
             cache: true
             // settles out of a push-in on the way in, and falls away on the way out
-            scale: 1.07 - 0.07 * surface.e + surface.focusK * 0.02 + (1 - surface.out) * 0.06
+            scale: 1.07 - 0.07 * (surface.dive ? surface.sink : surface.e) + surface.focusK * 0.02 + (1 - surface.out) * 0.06
         }
 
     }
@@ -126,15 +191,54 @@ Item {
     MultiEffect {
         anchors.fill: parent
         source: paperBox
+        visible: !surface.paperHidden
         autoPaddingEnabled: false
         blurEnabled: true
         blurMax: 64
-        blur: surface.e * surface.out * (0.5 + surface.focusK * 0.32)
+        blur: (surface.dive ? 1 : surface.e) * (surface.desk ? 1 : surface.out) * (0.5 + surface.focusK * 0.32)
+    }
+
+    // ── the desktop it grew out of ─────────────────────────────────────────
+    Item {
+        id: deskBox
+
+        anchors.fill: parent
+        visible: false
+
+        ClippingRectangle {
+            anchors.fill: parent
+            color: "transparent"
+            radius: surface.depth * Theme.shapeXlInc
+            scale: 1 - surface.depth * 0.08
+
+            Image {
+                id: deskImage
+
+                anchors.fill: parent
+                source: surface.capture
+                // it is the lock's first frame, so it cannot be late
+                asynchronous: !surface.fresh
+                cache: false
+            }
+
+        }
+
+    }
+
+    MultiEffect {
+        anchors.fill: parent
+        source: deskBox
+        visible: surface.deskOpacity > 0
+        opacity: surface.deskOpacity
+        autoPaddingEnabled: false
+        blurEnabled: true
+        blurMax: 64
+        blur: surface.deskBlur
     }
 
     Rectangle {
         anchors.fill: parent
-        opacity: surface.e * surface.out * (0.34 + surface.focusK * 0.14)
+        opacity: surface.shade * (0.34 + surface.focusK * 0.14)
 
         gradient: Gradient {
             GradientStop {
@@ -160,7 +264,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: Theme.accent
-        opacity: surface.e * surface.out * 0.07
+        opacity: surface.shade * 0.07
     }
 
     // everything drawn on top leaves together
@@ -170,6 +274,8 @@ Item {
         anchors.fill: parent
         opacity: surface.out
         scale: 1 + (1 - surface.out) * 0.05
+        // flattened, or the cards fade through one another
+        layer.enabled: surface.u > 0 && surface.out > 0
 
         // a click anywhere off the card puts the lock back to its resting face
         // and forgets whatever was half-typed. declared first, so every control
