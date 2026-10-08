@@ -26,7 +26,7 @@ of the pull requests in this one. Thank you, Ciro.
 
 <img src="assets/launcher-wallpapers.webp" alt="The launcher in its wallpaper mode, its other modes along the top">
 
-<!-- picture: <img src="assets/whatsnew/1.20/lock.webp" alt="The lock screen sinking out of the desktop"> -->
+<img src="assets/lock-screen.webp" alt="The Lucid lock screen: the weather and a large clock on the left, and the sign-in card, the song playing and notifications on the right">
 
 - **What's new, in the shell.** The first start after an update opens a sheet
   with what the new version brings, once; *Settings → About → What's new*

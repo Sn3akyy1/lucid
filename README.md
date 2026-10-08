@@ -772,7 +772,7 @@ past the neighbour and making a new workspace at the end.
   half as round again). The first start after an update opens a *What's new*
   sheet once; *About → What's new* brings it back
 
-<img src="assets/prev6.webp" alt="The Lucid lock screen: a large clock on the left, and the sign-in card, the song playing and notifications on the right">
+<img src="assets/lock-screen.webp" alt="The Lucid lock screen: the weather and a large clock on the left, and the sign-in card, the song playing and notifications on the right">
 
 *The lock screen — the clock in the wallpaper's own colour, the weather,
 battery, network and Bluetooth at a glance, what is playing, the notifications,
@@ -832,7 +832,7 @@ Matugen and Your colour build:
 
 Changes apply as you make them, to the shell and every app template.
 
-<img src="assets/prev7.webp" alt="Lucid in light mode: pale green widgets, bar and dock over a night-time street">
+<img src="assets/light-mode.webp" alt="Lucid in light mode: pale blue widgets, bar and dock over a pixel-art city at night">
 
 *Light mode, with the palette taken from the wallpaper. The bar, the dock and
 every widget follow it.*

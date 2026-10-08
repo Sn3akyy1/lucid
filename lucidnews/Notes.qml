@@ -51,8 +51,8 @@ QtObject {
                     "alt": "The launcher in its wallpaper mode, its other modes along the top"
                 },
                 {
-                    "src": "assets/whatsnew/1.20/lock.webp",
-                    "alt": "The lock screen sinking out of the desktop"
+                    "src": "assets/lock-screen.webp",
+                    "alt": "The Lucid lock screen: the weather and a large clock on the left, and the sign-in card, the song playing and notifications on the right"
                 }
             ],
             "items": [
