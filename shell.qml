@@ -896,6 +896,17 @@ ShellRoot {
     DisplayIdentify {
     }
 
+    // "keep these display settings?" on every screen while a change is on trial
+    DisplayTrial {
+    }
+
+    // the map on the Displays page marks the displays these sit on
+    Binding {
+        target: Monitors
+        property: "barWindows"
+        value: bars.instances
+    }
+
     Auth {
         id: polkitMod
     }

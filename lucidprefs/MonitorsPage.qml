@@ -112,7 +112,7 @@ Column {
 
         SettingRow {
             title: Monitors.liveCount > 1 ? "Drag a display to move it" : "This display"
-            description: Monitors.liveCount > 1 ? "An edge dragged near another one snaps to it, so there are no gaps between them. Click one to jump to its settings." : "Click it to jump to its settings. With a second display plugged in, this is where you arrange them."
+            description: Monitors.liveCount > 1 ? "A display always lands against another one, never on top of it and with no gap between them. Pointing at one shows its number on the real display. Click one to pick it and move it with the arrow keys; double-click it to jump to its settings." : "Double-click it to jump to its settings. With a second display plugged in, this is where you arrange them."
             stacked: true
             showDivider: false
 
@@ -121,9 +121,85 @@ Column {
                 spacing: Theme.dp(16)
 
                 MonitorMap {
+                    id: monitorMap
+
                     width: parent.width
                     selected: page.focusKey
-                    onPicked: (key) => page.reveal(key)
+                    onPicked: (key) => page.focusKey = key
+                    onOpened: (key) => page.reveal(key)
+                }
+
+                Text {
+                    width: parent.width
+                    visible: monitorMap.activeFocus && monitorMap.movable && monitorMap.placed.indexOf(page.focusKey) >= 0
+                    text: monitorMap.dragging && monitorMap.byKeys ? "Enter puts it there, Escape puts it back." : "The arrow keys move " + Monitors.shortLabel(page.focusKey) + " round the others; with Shift they slide it along the edge it is on."
+                    color: Theme.subtext
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontBodyMd
+                    wrapMode: Text.WordWrap
+                }
+
+                // the displays the map leaves out, with the way back into it
+                Repeater {
+                    model: Monitors.keys.filter((k) => {
+                        return Monitors.output(k) !== null && (!Monitors.isOn(k) || Monitors.mirrorOf(k) !== "");
+                    })
+
+                    Row {
+                        id: aside
+
+                        required property string modelData
+                        readonly property bool off: !Monitors.isOn(aside.modelData)
+
+                        width: parent.width
+                        spacing: Theme.dp(12)
+
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Theme.dp(34)
+                            height: Theme.dp(22)
+                            radius: Theme.shapeSm
+                            color: "transparent"
+                            border.width: 1
+                            border.color: Theme.outlineStrong
+                            opacity: 0.8
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: aside.off ? "—" : "⧉"
+                                color: Theme.subtext
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontLabel
+                            }
+
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - Theme.dp(46) - asideButton.width - Theme.dp(12)
+                            text: aside.off ? Monitors.shortLabel(aside.modelData) + " (" + Monitors.nameOf(aside.modelData) + ") is switched off." : Monitors.shortLabel(aside.modelData) + " (" + Monitors.nameOf(aside.modelData) + ") shows the same picture as " + Monitors.mirrorOf(aside.modelData) + "."
+                            color: Theme.subtext
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontBodyMd
+                            wrapMode: Text.WordWrap
+                        }
+
+                        M3Button {
+                            id: asideButton
+
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: aside.off ? "Switch on" : "Stop mirroring"
+                            variant: "tonal"
+                            onClicked: {
+                                if (aside.off)
+                                    Monitors.setOn(aside.modelData, true);
+                                else
+                                    Monitors.setMirror(aside.modelData, "");
+                            }
+                        }
+
+                    }
+
                 }
 
                 Row {
@@ -143,6 +219,13 @@ Column {
                         text: "Identify"
                         variant: "text"
                         onClicked: Monitors.identify()
+                    }
+
+                    M3Button {
+                        text: "Settings for " + Monitors.shortLabel(page.focusKey)
+                        variant: "text"
+                        visible: page.focusKey !== "" && Monitors.output(page.focusKey) !== null
+                        onClicked: page.reveal(page.focusKey)
                     }
 
                 }

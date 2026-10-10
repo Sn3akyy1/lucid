@@ -4,7 +4,8 @@ import Quickshell.Wayland
 import qs
 
 // a big number in the middle of every display for a moment, the same number
-// its box carries on the Displays page
+// its box carries on the Displays page. pointing at a box on the page's map
+// puts it on that one display for as long as the pointer stays
 Scope {
     id: root
 
@@ -21,6 +22,15 @@ Scope {
             hideTimer.restart();
         }
 
+        function onPointedAtChanged() {
+            if (Monitors.pointedAt !== "") {
+                unloadTimer.stop();
+                root.live = true;
+            } else if (!root.shown) {
+                unloadTimer.restart();
+            }
+        }
+
         target: Monitors
     }
 
@@ -30,7 +40,9 @@ Scope {
         interval: 2600
         onTriggered: {
             root.shown = false;
-            unloadTimer.restart();
+            if (Monitors.pointedAt === "")
+                unloadTimer.restart();
+
         }
     }
 
@@ -53,6 +65,7 @@ Scope {
                 required property var modelData
                 readonly property string key: Monitors.keyForName(win.modelData.name)
                 readonly property var mon: Monitors.output(win.key)
+                readonly property bool lit: root.shown || (Monitors.pointedAt !== "" && Monitors.pointedAt === win.key)
 
                 screen: win.modelData
                 color: "transparent"
@@ -74,8 +87,8 @@ Scope {
                     color: Theme.bgOpaque
                     border.width: 2
                     border.color: Theme.accent
-                    opacity: card.up && root.shown ? 1 : 0
-                    scale: card.up && root.shown ? 1 : 0.9
+                    opacity: card.up && win.lit ? 1 : 0
+                    scale: card.up && win.lit ? 1 : 0.9
                     Component.onCompleted: card.up = true
 
                     Column {

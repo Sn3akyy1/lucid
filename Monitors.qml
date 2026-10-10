@@ -186,6 +186,79 @@ Singleton {
         Prefs.set("monitorSetups", JSON.stringify(next));
     }
 
+    // ---- trying a change out ----------------------------------------------
+    // a mode, scale, rotation or mirror can leave a display black or unreadable,
+    // so those go in on trial: unless kept, they go back by themselves. only the
+    // fields the trial touched go back, so a drag made meanwhile stays
+    readonly property int trialSeconds: 15
+    // { key: { field: what it was, undefined for unset } }, null with no trial
+    property var trialUndo: null
+    property int trialLeft: 0
+    readonly property bool onTrial: root.trialUndo !== null
+
+    function tryOut(key, patch) {
+        const undo = {};
+        for (const k in (root.trialUndo || {})) {
+            undo[k] = {};
+            for (const f in root.trialUndo[k]) undo[k][f] = root.trialUndo[k][f];
+        }
+        if (!undo[key])
+            undo[key] = {};
+
+        const was = root.setupOf(key);
+        for (const f in patch) {
+            if (!(f in undo[key]))
+                undo[key][f] = was[f];
+
+        }
+        root.write(key, patch);
+        // picking the old values again is nothing to confirm
+        const back = Object.keys(undo).every((k) => {
+            const now = root.setupOf(k);
+            return Object.keys(undo[k]).every((f) => {
+                return now[f] === undo[k][f];
+            });
+        });
+        if (back) {
+            root.keepTrial();
+            return ;
+        }
+        root.trialUndo = undo;
+        root.trialLeft = root.trialSeconds;
+        trialTick.restart();
+    }
+
+    function keepTrial() {
+        trialTick.stop();
+        root.trialUndo = null;
+    }
+
+    function revertTrial() {
+        const undo = root.trialUndo;
+        root.keepTrial();
+        if (!undo)
+            return ;
+
+        for (const k in undo) {
+            const patch = {};
+            for (const f in undo[k]) patch[f] = undo[k][f] === undefined ? null : undo[k][f];
+            root.write(k, patch);
+        }
+    }
+
+    Timer {
+        id: trialTick
+
+        interval: 1000
+        repeat: true
+        onTriggered: {
+            root.trialLeft -= 1;
+            if (root.trialLeft <= 0)
+                root.revertTrial();
+
+        }
+    }
+
     // ---- each setting, override first and what hyprland picked behind it ---
     function modeOf(key) {
         return root.setupOf(key).mode || "";
@@ -345,13 +418,13 @@ Singleton {
         if (hz <= 0)
             return ;
 
-        root.write(key, {
+        root.tryOut(key, {
             "mode": res + "@" + hz.toFixed(2)
         });
     }
 
     function setRate(key, hz) {
-        root.write(key, {
+        root.tryOut(key, {
             "mode": root.currentRes(key) + "@" + Number(hz).toFixed(2)
         });
     }
@@ -366,7 +439,7 @@ Singleton {
     }
 
     function setScale(key, v) {
-        root.write(key, {
+        root.tryOut(key, {
             "scale": Math.round(v * 100) / 100
         });
     }
@@ -393,7 +466,7 @@ Singleton {
     }
 
     function setTransform(key, t) {
-        root.write(key, {
+        root.tryOut(key, {
             "transform": Number(t)
         });
     }
@@ -462,7 +535,7 @@ Singleton {
     }
 
     function setMirror(key, name) {
-        root.write(key, {
+        root.tryOut(key, {
             "mirror": name === "" ? undefined : name,
             "x": undefined,
             "y": undefined
@@ -497,27 +570,20 @@ Singleton {
         });
     }
 
-    // moving one output by hand leaves the others on "auto", which hyprland is
-    // then free to place around it, so the first drag pins them all where they
-    // already are
-    function pinAll() {
+    // a whole arrangement in one write, { key: { x, y } }. moving one output by
+    // hand and leaving the others on "auto" would let hyprland reshuffle them
+    // around it, so a drag hands every output in the layout to this
+    function place(positions) {
         const next = {};
         for (const k in root.setups) next[k] = root.setups[k];
-        let moved = false;
-        for (const o of root.outputs) {
-            if (!root.isOn(o.key) || !root.isAuto(o.key))
-                continue;
-
+        for (const key in positions) {
             const cur = {};
-            for (const f in root.setupOf(o.key)) cur[f] = root.setupOf(o.key)[f];
-            cur.x = o.x;
-            cur.y = o.y;
-            next[o.key] = cur;
-            moved = true;
+            for (const f in root.setupOf(key)) cur[f] = root.setupOf(key)[f];
+            cur.x = Math.round(positions[key].x);
+            cur.y = Math.round(positions[key].y);
+            next[key] = cur;
         }
-        if (moved)
-            Prefs.set("monitorSetups", JSON.stringify(next));
-
+        Prefs.set("monitorSetups", JSON.stringify(next));
     }
 
     function autoArrange() {
@@ -698,6 +764,38 @@ Singleton {
             return x !== "" && x.indexOf("0x") !== 0;
         }).join(" ");
         return made !== "" ? made : (o.description !== "" ? o.description : o.name);
+    }
+
+    // a laptop's own panel, whatever port name the kernel gave it
+    function isBuiltIn(key) {
+        const o = root.output(key);
+        return o !== null && /^(eDP|LVDS|DSI)/.test(o.name);
+    }
+
+    // what a box on the map is called: "Built-in", or who made it
+    function shortLabel(key) {
+        return root.isBuiltIn(key) ? "Built-in" : root.labelFor(key);
+    }
+
+    // the display the pointer is on in the map, which shows its number on the
+    // real one; "" for none
+    property string pointedAt: ""
+
+    // the bar windows, handed over by shell.qml, so the map can mark the
+    // displays a bar is really on, even when hyprland chose
+    property var barWindows: []
+    readonly property var barKeys: {
+        if (!Prefs.barEnabled)
+            return [];
+
+        const out = [];
+        for (const w of root.barWindows) {
+            const k = w && w.visible ? root.keyOf(w.screen) : "";
+            if (k !== "" && out.indexOf(k) < 0)
+                out.push(k);
+
+        }
+        return out;
     }
 
     // the outputs left to right, which is the order a person describes them in
