@@ -81,6 +81,11 @@ Item {
     // folded all the way back, so a closing panel keeps its round lower corners
     readonly property real drop: pill.popupMode ? 0 : Math.max(0, pill.height - pill.compactHeight)
     readonly property bool dropped: pill.drop > 0.5
+    // the neighbour this one is joined to on the left, which draws no line of its own
+    readonly property var leftMate: pill.joinLeft ? pill.hostWindow.joinedMate(pill.modId, true) : null
+    // the line goes the moment either side starts to open and comes back once
+    // both have folded away: drawn through a morph it reads as a crack
+    readonly property bool seamShown: pill.joinLeft && Prefs.barJoinDividers && !pill.anyOpen && !pill.dropped && !(pill.leftMate && (pill.leftMate.anyOpen === true || pill.leftMate.dropped === true))
 
     // growing sideways would run into a joined neighbour, so a joined pill lights
     // up in place instead
@@ -354,17 +359,6 @@ Item {
 
             }
 
-            // the seam between two joined modules, drawn by the right-hand one
-            Rectangle {
-                visible: pill.joinLeft && Prefs.barJoinDividers
-                x: 0
-                anchors.verticalCenter: parent.verticalCenter
-                width: Math.max(1, Theme.dp(1))
-                height: Math.round(parent.height * 0.42)
-                radius: width / 2
-                color: Theme.alpha(Theme.text, 0.14)
-            }
-
             MouseArea {
                 anchors.fill: parent
                 enabled: pill.compactInteractive
@@ -481,6 +475,48 @@ Item {
 
             }
 
+        }
+
+    }
+
+    // the seam between two joined modules, drawn by the right-hand one. a child
+    // of the pill rather than of the compact face, which shrinks as it opens
+    // out at once, back with a short fade: set by hand, since a Behavior gated on
+    // the same flag can see the flag change after the value and fade out too
+    Rectangle {
+        id: seam
+
+        x: 0
+        y: Math.round((pill.compactHeight - height) / 2)
+        z: 50
+        width: Math.max(1, Theme.dp(1))
+        height: Math.round(pill.compactHeight * 0.42)
+        radius: width / 2
+        color: Theme.alpha(Theme.text, 0.14)
+        opacity: 0
+        visible: seam.opacity > 0.01
+        Component.onCompleted: seam.opacity = pill.seamShown ? 1 : 0
+
+        NumberAnimation {
+            id: seamIn
+
+            target: seam
+            property: "opacity"
+            to: 1
+            duration: Theme.barMs(160)
+            easing.type: Easing.OutCubic
+        }
+
+        Connections {
+            function onSeamShownChanged() {
+                seamIn.stop();
+                if (pill.seamShown)
+                    seamIn.start();
+                else
+                    seam.opacity = 0;
+            }
+
+            target: pill
         }
 
     }

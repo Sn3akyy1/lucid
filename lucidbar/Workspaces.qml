@@ -2678,7 +2678,9 @@ Item {
 
     // the seam with a joined neighbour on the left, as BarPill draws it
     Rectangle {
-        visible: root.joinLeft && Prefs.barJoinDividers && !root.expanded
+        readonly property var mate: root.joinLeft ? root.hostWindow.joinedMate("workspaces", true) : null
+
+        visible: root.joinLeft && Prefs.barJoinDividers && !root.expanded && !(mate && (mate.anyOpen === true || mate.dropped === true))
         x: 0
         y: Math.round((root.compactHeight - height) / 2)
         z: 5
