@@ -246,6 +246,25 @@ ShellRoot {
                 return i + 1 < keys.length && widths[i] > 0.5 && widths[i + 1] > 0.5 && Prefs.barJoined(keys[i], keys[i + 1]);
             }
 
+            // the joined neighbour of a module on one side, as its item, or null
+            function joinedMate(key, toTheLeft) {
+                const at = bar.placeMap[key];
+                if (!at || !(toTheLeft ? bar.joinedLeftOf(key) : bar.joinedRightOf(key)))
+                    return null;
+
+                const keys = bar.zoneKeys(at.zone);
+                return bar.pillFor[keys[at.at + (toTheLeft ? -1 : 1)]] || null;
+            }
+
+            function keyOf(mod) {
+                for (const k in bar.pillFor) {
+                    if (bar.pillFor[k] === mod)
+                        return k;
+
+                }
+                return "";
+            }
+
             // what a module's pill reads to square off the corners it shares
             function joinedLeftOf(key) {
                 const at = bar.placeMap[key];
@@ -615,6 +634,52 @@ ShellRoot {
                         duration: Theme.barDurEnter
                         easing.type: Easing.Bezier
                         easing.bezierCurve: Theme.easeEmphasizedDecel
+                    }
+
+                }
+
+            }
+
+            // a module opened in place in the middle of a group: where its panel
+            // drops below a joined neighbour, the neighbour's lower edge curves
+            // into the panel's side instead of meeting it in a square corner
+            Repeater {
+                model: Prefs.barPopupMode ? [] : bar.modules
+
+                Item {
+                    id: seam
+
+                    required property var modelData
+
+                    readonly property bool open: !!seam.modelData && seam.modelData.anyOpen === true
+                    readonly property string key: seam.open ? bar.keyOf(seam.modelData) : ""
+                    readonly property var leftMate: seam.key !== "" ? bar.joinedMate(seam.key, true) : null
+                    readonly property var rightMate: seam.key !== "" ? bar.joinedMate(seam.key, false) : null
+
+                    // grows with the panel as it opens, and never wider than half the neighbour
+                    function sizeFor(mate) {
+                        if (!mate)
+                            return 0;
+
+                        const drop = seam.modelData.y + seam.modelData.height - (mate.y + mate.height);
+                        return Math.max(0, Math.min(Theme.dp(Prefs.barNotchFlare), Math.floor(drop), Math.floor(mate.width / 2)));
+                    }
+
+                    anchors.fill: parent
+                    z: -1
+                    visible: seam.open
+
+                    BarFlare {
+                        size: seam.sizeFor(seam.leftMate)
+                        x: seam.modelData ? seam.modelData.x - width + 0.5 : 0
+                        y: seam.leftMate ? seam.leftMate.y + seam.leftMate.height - 0.5 : 0
+                    }
+
+                    BarFlare {
+                        mirrored: true
+                        size: seam.sizeFor(seam.rightMate)
+                        x: seam.modelData ? seam.modelData.x + seam.modelData.width - 0.5 : 0
+                        y: seam.rightMate ? seam.rightMate.y + seam.rightMate.height - 0.5 : 0
                     }
 
                 }
