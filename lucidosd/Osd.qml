@@ -605,7 +605,8 @@ PanelWindow {
         anchors.verticalCenterOffset: osdWindow.notch ? (parent.height - card.height) / 2 + (osdWindow.cardVisible ? 0 : card.height) : (osdWindow.cardVisible ? 0 : Theme.dp(16))
         height: (osdWindow.isLevelType || osdWindow.isSegmentType) ? Theme.dp(50) : Theme.dp(56)
         width: (osdWindow.isLevelType || osdWindow.isSegmentType) ? card.levelWidth : card.toggleWidth
-        radius: height / 2
+        // follows Corner rounding like every other pill in the shell
+        radius: Theme.pill(height)
         bottomLeftRadius: osdWindow.notch ? 0 : card.radius
         bottomRightRadius: osdWindow.notch ? 0 : card.radius
         color: Theme.bg
@@ -635,8 +636,9 @@ PanelWindow {
             size: "m"
             trackH: osdWindow.levelTrackH
             handleH: osdWindow.levelHandleH
-            // a full stadium cap, as round as the card behind it
-            outerR: osdWindow.levelTrackH / 2
+            // a full stadium cap, as round as the card behind it, squaring
+            // off with it under Corner rounding
+            outerR: Theme.pill(osdWindow.levelTrackH)
             iconSize: Theme.dp(18)
             from: 0
             to: 100
