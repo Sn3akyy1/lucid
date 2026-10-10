@@ -48,7 +48,23 @@ PanelWindow {
     // own search prefixes, so callers pass the prefix they want
     function openLauncher(query) {
         dockWindow.setSearchText(query);
+        dockWindow.aimLauncher();
         dockWindow.menuOpen = true;
+    }
+
+    // with the dock off the launcher belongs to no display, so it opens on the
+    // one being worked on; with the dock on it grows out of the dock and stays
+    // there. shell.qml moves the window, so this runs before menuOpen flips
+    property var launcherScreen: null
+    // dropped once the dock is back on, or once that display is unplugged:
+    // a surface sent to a dead display is never drawn
+    readonly property var launcherPlacement: !Prefs.dockEnabled && dockWindow.launcherScreen && Quickshell.screens.indexOf(dockWindow.launcherScreen) >= 0 ? dockWindow.launcherScreen : null
+
+    function aimLauncher() {
+        if (dockWindow.menuOpen)
+            return ;
+
+        dockWindow.launcherScreen = Prefs.dockEnabled ? null : Monitors.focusedScreen;
     }
 
     function pulseMorph() {
@@ -1745,6 +1761,7 @@ PanelWindow {
             if (!dockWindow.menuOpen)
                 dockWindow.setSearchText("");
 
+            dockWindow.aimLauncher();
             dockWindow.menuOpen = !dockWindow.menuOpen;
         }
 
@@ -1811,6 +1828,7 @@ PanelWindow {
 
         function command(): void {
             dockWindow.setSearchText(">");
+            dockWindow.aimLauncher();
             dockWindow.menuOpen = true;
         }
 
@@ -1820,6 +1838,7 @@ PanelWindow {
 
         function search(q: string): void {
             dockWindow.setSearchText(q);
+            dockWindow.aimLauncher();
             dockWindow.menuOpen = true;
         }
 
@@ -2542,6 +2561,7 @@ PanelWindow {
                         if (!dockWindow.menuOpen)
                             dockWindow.setSearchText("");
 
+                        dockWindow.aimLauncher();
                         dockWindow.menuOpen = !dockWindow.menuOpen;
                     }
                 }

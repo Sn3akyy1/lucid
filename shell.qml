@@ -944,7 +944,8 @@ ShellRoot {
     // the dock can be sent to one of its own (the bar places itself), the rest
     // follow the shell. gated, because unset must leave the choice to hyprland,
     // which null would not. emoji and screenshot act on the window you are in,
-    // so they follow the focus
+    // so they follow the focus, and so does the launcher while the dock is off
+    // (Dock.launcherPlacement)
     Instantiator {
         model: [dock, clickCatcher]
 
@@ -953,14 +954,14 @@ ShellRoot {
 
             target: modelData
             property: "screen"
-            value: Monitors.dockPlacement
-            when: Monitors.dockPlacement !== null
+            value: dock.launcherPlacement || Monitors.dockPlacement
+            when: (dock.launcherPlacement || Monitors.dockPlacement) !== null
         }
 
     }
 
     Instantiator {
-        model: [osdMod, toastMod, keyboardMod, polkitMod, keybindSheetMod, whatsNewMod]
+        model: [toastMod, keyboardMod, polkitMod, keybindSheetMod, whatsNewMod]
 
         Binding {
             required property var modelData
@@ -971,6 +972,15 @@ ShellRoot {
             when: Monitors.shellPlacement !== null
         }
 
+    }
+
+    // the osd follows the shell too, unless no display is picked for it: then
+    // it shows on the one being worked on, as the launcher does (Osd.placement)
+    Binding {
+        target: osdMod
+        property: "screen"
+        value: osdMod.placement || Monitors.shellPlacement
+        when: (osdMod.placement || Monitors.shellPlacement) !== null
     }
 
     Connections {
