@@ -896,6 +896,11 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     add_template pywalfox       "$TPL/pywalfox-colors.json"    '~/.cache/wal/colors.json'      "cmd:pywalfox" 'pywalfox update'
     add_template steam-material "$TPL/steam-material.css"      '~/.local/share/Steam/millennium/themes/Material-Theme/css/main/colors/matugen.css' \
                                 "dir:$HOME/.local/share/Steam/millennium/themes/Material-Theme"
+    # Qt widget apps take their palette from qt6ct, the platform theme
+    # modules/env.lua sets. KDE apps then lay a KDE colour scheme over it, so
+    # they get one too - both are pointed at below
+    add_template qt6ct          "$TPL/qt6ct-colors.conf"       '~/.config/qt6ct/colors/lucid.conf' "cmd:qt6ct"
+    add_template kde            "$TPL/kde-colors.colors"       '~/.local/share/color-schemes/Lucid.colors' "cmd:qt6ct"
 
     # firefox and zen keep their chrome css inside a generated profile dir, so
     # the path has to be discovered rather than assumed
@@ -915,6 +920,50 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     (( ${#MG_ADDED[@]} ))   && say "  matugen added:   ${MG_ADDED[*]}"                                || true
     (( ${#MG_KEPT[@]} ))    && say "  ${dim}matugen kept:    ${MG_KEPT[*]}${r}"                       || true
     (( ${#MG_SKIPPED[@]} )) && say "  ${dim}matugen skipped: ${MG_SKIPPED[*]} (not installed)${r}"    || true
+
+    # put keys under [section] of an ini file, creating the section - or the
+    # file - when it isn't there
+    ini_add_keys() {
+        local file=$1 section=$2 keys=$3
+        mkdir -p "$(dirname "$file")"
+        if [[ ! -f "$file" ]]; then
+            printf '[%s]\n%s\n' "$section" "$keys" > "$file"
+        elif grep -qxF "[$section]" "$file"; then
+            awk -v s="[$section]" -v k="$keys" '{ print } $0 == s { print k }' "$file" > "$file.lucid-tmp" \
+                && cat "$file.lucid-tmp" > "$file"
+            rm -f "$file.lucid-tmp"
+        else
+            printf '\n[%s]\n%s\n' "$section" "$keys" >> "$file"
+        fi
+    }
+
+    # with no palette chosen in qt6ct, Qt apps (Prism Launcher, qt6ct itself...)
+    # get Qt's stock light one whatever the theme. a palette already picked
+    # there is the user's and stays
+    QT6CT_CFG="$HOME/.config/qt6ct/qt6ct.conf"
+    if command -v qt6ct &>/dev/null && grep -q '^\[templates\.qt6ct\]' "$MATUGEN_CFG"; then
+        if grep -qE '^(custom_palette|color_scheme_path)=' "$QT6CT_CFG" 2>/dev/null; then
+            say "  ${dim}qt6ct already has a palette${r}"
+        else
+            ini_add_keys "$QT6CT_CFG" Appearance \
+                "color_scheme_path=$HOME/.config/qt6ct/colors/lucid.conf"$'\n'"custom_palette=true"
+            say "  qt6ct now uses the theme's palette"
+        fi
+    fi
+
+    # outside Plasma, a KDE app (Dolphin, Kate, Okular...) with no colour scheme
+    # named in kdeglobals swaps the qt6ct palette for Breeze Light or Dark as it
+    # starts, so name Lucid's. one already named - by Plasma under [General] or
+    # by the user - stays
+    KDEGLOBALS="$HOME/.config/kdeglobals"
+    if command -v qt6ct &>/dev/null && grep -q '^\[templates\.kde\]' "$MATUGEN_CFG"; then
+        if grep -q '^ColorScheme=' "$KDEGLOBALS" 2>/dev/null; then
+            say "  ${dim}kdeglobals already names a colour scheme${r}"
+        else
+            ini_add_keys "$KDEGLOBALS" UiSettings "ColorScheme=Lucid"
+            say "  KDE apps now use the theme's colour scheme"
+        fi
+    fi
 
     # GTK apps - Nautilus included - only read colors.css if gtk.css imports it
     for gtkver in 3.0 4.0; do
