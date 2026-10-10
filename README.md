@@ -276,9 +276,12 @@ popups and answers the bar's `qs ipc` targets.
 
 Drag a module by its handle to move it within a zone or into another one, or
 down into *Not in the bar* to take it out; the arrows and buttons beside it do
-the same thing. Also in Settings: how close the middle may come to either side
-before it gives way, and a button that puts every module back where Lucid ships
-it.
+the same thing. The link between two neighbours **joins** them: they sit flush
+and share one island (or one notch, its fillets only at the ends), with a faint
+line where they meet if you want one, and a module opened in place hangs its
+panel from its own stretch of the group. Also in Settings: how close the middle
+may come to either side before it gives way, and a button that puts every
+module back where Lucid ships it.
 
 <img src="assets/control-centre.webp" alt="The control centre open from the bar, beside palette, music and quote widgets, with the volume popup above the dock">
 

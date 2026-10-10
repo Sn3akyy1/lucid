@@ -27,6 +27,12 @@ Rectangle {
             return screen.pillSpan[key] || 0.06;
         }
 
+        // whether the module at i in a zone is joined to the one after it
+        function joinedAt(zone, i) {
+            const keys = Prefs.barKeysOf(zone);
+            return i >= 0 && i + 1 < keys.length && Prefs.barJoined(keys[i], keys[i + 1]);
+        }
+
         function zoneSpan(zone) {
             const keys = Prefs.barKeysOf(zone);
             var w = 0;
@@ -88,14 +94,19 @@ Rectangle {
 
                 Rectangle {
                     required property var modelData
+                    required property int index
+                    // joined in the arrangement: no gap, and square where they meet
+                    readonly property bool joinL: screen.joinedAt("left", index - 1)
+                    readonly property bool joinR: screen.joinedAt("left", index)
 
-                    width: screen.width * screen.cellSpan(modelData)
+                    // a joined one reaches across the gap to its neighbour
+                    width: screen.width * screen.cellSpan(modelData) + (joinR ? screen.gap + 1 : 0)
                     height: screen.modH
                     color: Theme.bgOpaque
-                    topLeftRadius: Prefs.barNotch ? 0 : height / 2
-                    topRightRadius: Prefs.barNotch ? 0 : height / 2
-                    bottomLeftRadius: height / 2
-                    bottomRightRadius: height / 2
+                    topLeftRadius: Prefs.barNotch || joinL ? 0 : height / 2
+                    topRightRadius: Prefs.barNotch || joinR ? 0 : height / 2
+                    bottomLeftRadius: joinL ? 0 : height / 2
+                    bottomRightRadius: joinR ? 0 : height / 2
 
                     Behavior on color {
                         ColorAnimation {
@@ -130,14 +141,19 @@ Rectangle {
 
                 Rectangle {
                     required property var modelData
+                    required property int index
+                    // joined in the arrangement: no gap, and square where they meet
+                    readonly property bool joinL: screen.joinedAt("centre", index - 1)
+                    readonly property bool joinR: screen.joinedAt("centre", index)
 
-                    width: screen.width * screen.cellSpan(modelData)
+                    // a joined one reaches across the gap to its neighbour
+                    width: screen.width * screen.cellSpan(modelData) + (joinR ? screen.gap + 1 : 0)
                     height: screen.modH
                     color: Theme.bgOpaque
-                    topLeftRadius: Prefs.barNotch ? 0 : height / 2
-                    topRightRadius: Prefs.barNotch ? 0 : height / 2
-                    bottomLeftRadius: height / 2
-                    bottomRightRadius: height / 2
+                    topLeftRadius: Prefs.barNotch || joinL ? 0 : height / 2
+                    topRightRadius: Prefs.barNotch || joinR ? 0 : height / 2
+                    bottomLeftRadius: joinL ? 0 : height / 2
+                    bottomRightRadius: joinR ? 0 : height / 2
 
                     Behavior on color {
                         ColorAnimation {
@@ -172,14 +188,19 @@ Rectangle {
 
                 Rectangle {
                     required property var modelData
+                    required property int index
+                    // joined in the arrangement: no gap, and square where they meet
+                    readonly property bool joinL: screen.joinedAt("right", index - 1)
+                    readonly property bool joinR: screen.joinedAt("right", index)
 
-                    width: screen.width * screen.cellSpan(modelData)
+                    // a joined one reaches across the gap to its neighbour
+                    width: screen.width * screen.cellSpan(modelData) + (joinR ? screen.gap + 1 : 0)
                     height: screen.modH
                     color: Theme.bgOpaque
-                    topLeftRadius: Prefs.barNotch ? 0 : height / 2
-                    topRightRadius: Prefs.barNotch ? 0 : height / 2
-                    bottomLeftRadius: height / 2
-                    bottomRightRadius: height / 2
+                    topLeftRadius: Prefs.barNotch || joinL ? 0 : height / 2
+                    topRightRadius: Prefs.barNotch || joinR ? 0 : height / 2
+                    bottomLeftRadius: joinL ? 0 : height / 2
+                    bottomRightRadius: joinR ? 0 : height / 2
 
                     Behavior on color {
                         ColorAnimation {

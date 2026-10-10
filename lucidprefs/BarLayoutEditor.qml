@@ -5,7 +5,8 @@ import qs.lucidui
 // Prefs.barLayout as three lanes, one per group of the bar, each lined up the
 // way the bar lines it up: against the left edge, around the middle, against
 // the right edge. a chip drags along its lane or into another, and the arrow
-// keys move the focused one (left/right along the bar, up/down between lanes)
+// keys move the focused one (left/right along the bar, up/down between lanes).
+// the link between two neighbours joins them into one island on the bar
 Item {
     id: editor
 
@@ -26,7 +27,9 @@ Item {
     readonly property int laneGap: Theme.dp(8)
     readonly property int lanePad: Theme.dp(7)
     readonly property int chipHeight: Theme.dp(34)
-    readonly property int chipGap: Theme.dp(6)
+    // room between chips for the link that joins them
+    readonly property int chipGap: Theme.dp(22)
+    readonly property int linkSize: Theme.dp(20)
     // grip, its gap and the padding either side of it and the name
     readonly property int chipChrome: Theme.dp(14) + Theme.dp(8) + Theme.dp(8) + Theme.dp(16)
     readonly property real laneWidth: Math.max(0, editor.width - editor.labelWidth)
@@ -35,6 +38,34 @@ Item {
     // bumped whenever the model changes, so the slots below are worked out again
     property int revision: 0
     readonly property var slots: editor.layout(editor.revision, editor.width)
+    // every two modules side by side in a lane, both switched on: where their
+    // link sits and whether it is joined
+    readonly property var links: {
+        void Prefs.barJoinSet;
+        const out = [];
+        const g = editor.groups(editor.revision);
+        for (const side of editor.sides) {
+            const ids = g[side];
+            for (let i = 0; i + 1 < ids.length; i++) {
+                const a = ids[i];
+                const b = ids[i + 1];
+                const sa = editor.slots[a];
+                const sb = editor.slots[b];
+                if (!sa || !sb || Prefs[editor.modules[a].key] !== true || Prefs[editor.modules[b].key] !== true)
+                    continue;
+
+                out.push({
+                    "a": a,
+                    "b": b,
+                    "left": sa.x + sa.w,
+                    "right": sb.x,
+                    "y": sa.y + editor.chipHeight / 2,
+                    "joined": Prefs.barJoined(a, b)
+                });
+            }
+        }
+        return out;
+    }
 
     function laneY(i) {
         return i * (editor.laneHeight + editor.laneGap);
@@ -45,7 +76,7 @@ Item {
         return editor.sides[Math.max(0, Math.min(2, i))];
     }
 
-    function groups() {
+    function groups(revision) {
         const out = {
             "left": [],
             "center": [],
@@ -307,6 +338,79 @@ Item {
                     color: Theme.subtextDim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabelMd
+                }
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Theme.durShort
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    Repeater {
+        model: editor.dragging ? [] : editor.links
+
+        Item {
+            id: link
+
+            required property var modelData
+
+            x: link.modelData.left
+            y: link.modelData.y - height / 2
+            width: link.modelData.right - link.modelData.left
+            height: editor.linkSize
+            z: 0
+
+            // joined, a bar runs under the link from one chip to the other
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                x: -Theme.dp(6)
+                width: parent.width + Theme.dp(12)
+                height: Theme.dp(4)
+                radius: height / 2
+                color: Theme.accent
+                opacity: link.modelData.joined ? 1 : 0
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Theme.durShort
+                    }
+
+                }
+
+            }
+
+            Rectangle {
+                id: linkButton
+
+                anchors.centerIn: parent
+                width: editor.linkSize
+                height: editor.linkSize
+                radius: Theme.shapeFull
+                color: link.modelData.joined ? Theme.accent : (linkHover.hovered ? Theme.bgHover : "transparent")
+                opacity: link.modelData.joined || linkHover.hovered ? 1 : 0.6
+
+                Icon {
+                    anchors.centerIn: parent
+                    name: "link"
+                    size: Theme.dp(14)
+                    color: link.modelData.joined ? Theme.fgAccent : Theme.subtext
+                }
+
+                HoverHandler {
+                    id: linkHover
+
+                    cursorShape: Qt.PointingHandCursor
+                }
+
+                TapHandler {
+                    onTapped: Prefs.setBarJoined(link.modelData.a, link.modelData.b, !link.modelData.joined)
                 }
 
                 Behavior on color {

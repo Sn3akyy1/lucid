@@ -219,21 +219,50 @@ ShellRoot {
             visible: Prefs.loaded && Prefs.barEnabled && Monitors.surfacesUp
             property bool laidOut: false
             readonly property bool anyModuleShown: bar.leftGroupWidth + bar.centreGroupWidth + bar.rightGroupWidth > 0.5
-            function placeGroup(widths, originX) {
+            // keys, when given, lets modules joined to the next one sit flush against it
+            function placeGroup(widths, originX, keys) {
                 const gap = Theme.dp(Prefs.barSpacing);
                 const out = [];
                 let x = originX;
                 let any = false;
+                let trailing = 0;
                 for (let i = 0; i < widths.length; i++) {
                     out.push(x);
                     const w = widths[i];
                     if (w > 0.5) {
-                        x += w + (gap > 0 ? gap * Math.min(1, w / gap) : 0);
+                        trailing = keys && bar.joinedAfter(keys, widths, i) ? 0 : (gap > 0 ? gap * Math.min(1, w / gap) : 0);
+                        x += w + trailing;
                         any = true;
                     }
                 }
-                out.push(any ? Math.max(originX, x - Theme.dp(Prefs.barSpacing)) : originX);
+                out.push(any ? Math.max(originX, x - trailing) : originX);
                 return out;
+            }
+
+            // whether the module at i is joined to the one right after it. both
+            // have to be in the bar this moment: one that has emptied out (a tray
+            // with no icons, workspaces off in the overview) parts its group there
+            function joinedAfter(keys, widths, i) {
+                return i + 1 < keys.length && widths[i] > 0.5 && widths[i + 1] > 0.5 && Prefs.barJoined(keys[i], keys[i + 1]);
+            }
+
+            // what a module's pill reads to square off the corners it shares
+            function joinedLeftOf(key) {
+                const at = bar.placeMap[key];
+                if (!at || at.at === 0)
+                    return false;
+
+                const keys = bar.zoneKeys(at.zone);
+                return bar.widthOf(key) > 0.5 && bar.widthOf(keys[at.at - 1]) > 0.5 && Prefs.barJoined(keys[at.at - 1], key);
+            }
+
+            function joinedRightOf(key) {
+                const at = bar.placeMap[key];
+                if (!at)
+                    return false;
+
+                const keys = bar.zoneKeys(at.zone);
+                return at.at + 1 < keys.length && bar.widthOf(key) > 0.5 && bar.widthOf(keys[at.at + 1]) > 0.5 && Prefs.barJoined(key, keys[at.at + 1]);
             }
 
             property real wsCollapse: (workspacesMod.expanded && !Prefs.barPopupMode) ? 0 : 1
@@ -348,9 +377,9 @@ ShellRoot {
             readonly property var leftWidths: bar.widthsOf("left")
             readonly property var centreWidths: bar.widthsOf("centre")
             readonly property var rightWidths: bar.widthsOf("right")
-            readonly property real leftGroupWidth: bar.placeGroup(bar.leftWidths, 0)[bar.leftWidths.length]
-            readonly property real centreGroupWidth: bar.placeGroup(bar.centreWidths, 0)[bar.centreWidths.length]
-            readonly property real rightGroupWidth: bar.placeGroup(bar.rightWidths, 0)[bar.rightWidths.length]
+            readonly property real leftGroupWidth: bar.placeGroup(bar.leftWidths, 0, bar.zoneKeys("left"))[bar.leftWidths.length]
+            readonly property real centreGroupWidth: bar.placeGroup(bar.centreWidths, 0, bar.zoneKeys("centre"))[bar.centreWidths.length]
+            readonly property real rightGroupWidth: bar.placeGroup(bar.rightWidths, 0, bar.zoneKeys("right"))[bar.rightWidths.length]
             readonly property int zoneGap: Theme.dp(Prefs.barZoneGap)
 
             // pills ease to their new slots only while the arrangement is changing.
@@ -375,9 +404,9 @@ ShellRoot {
             readonly property real leftOriginX: bar.sideMargin
             readonly property real rightOriginX: bar.width - bar.rightGroupWidth - bar.sideMargin
             readonly property real centreOriginX: Math.min(Math.max((bar.width - bar.centreGroupWidth) / 2, bar.leftOriginX + bar.leftGroupWidth + bar.zoneGap), bar.rightOriginX - bar.centreGroupWidth - bar.zoneGap)
-            readonly property var leftPlaces: bar.placeGroup(bar.leftWidths, bar.leftOriginX)
-            readonly property var centrePlaces: bar.placeGroup(bar.centreWidths, bar.centreOriginX)
-            readonly property var rightPlaces: bar.placeGroup(bar.rightWidths, bar.rightOriginX)
+            readonly property var leftPlaces: bar.placeGroup(bar.leftWidths, bar.leftOriginX, bar.zoneKeys("left"))
+            readonly property var centrePlaces: bar.placeGroup(bar.centreWidths, bar.centreOriginX, bar.zoneKeys("centre"))
+            readonly property var rightPlaces: bar.placeGroup(bar.rightWidths, bar.rightOriginX, bar.zoneKeys("right"))
 
             Behavior on wsCollapse {
                 NumberAnimation {

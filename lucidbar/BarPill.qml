@@ -70,7 +70,17 @@ Item {
     property bool compactHovered: false
     property bool panelTransitioning: false
 
-    readonly property bool hoverLift: Prefs.barHoverGrow > 0 && pill.compactHovered && !pill.anyOpen && pill.shown
+    // joined to a neighbour in Settings > Bar: the shared edge loses its corners
+    // and its gap, so the group reads as one island (or one notch). the bar works
+    // it out; the open popup of popup mode stands apart either way
+    readonly property string modId: pill.moduleId()
+    readonly property bool joinLeft: !!pill.hostWindow && !!pill.hostWindow.joinedLeftOf && pill.modId !== "" && pill.hostWindow.joinedLeftOf(pill.modId)
+    readonly property bool joinRight: !!pill.hostWindow && !!pill.hostWindow.joinedRightOf && pill.modId !== "" && pill.hostWindow.joinedRightOf(pill.modId)
+    readonly property bool joined: pill.joinLeft || pill.joinRight
+
+    // growing sideways would run into a joined neighbour, so a joined pill lights
+    // up in place instead
+    readonly property bool hoverLift: Prefs.barHoverGrow > 0 && pill.compactHovered && !pill.anyOpen && pill.shown && !pill.joined
     property real hoverGrow: pill.hoverLift ? Math.min(Theme.dp(Prefs.barHoverGrow), Math.max(0, Theme.dp(Prefs.barSpacing) / 2)) : 0
 
     property int hoverGrowDuration: Theme.barMs(150)
@@ -219,8 +229,10 @@ Item {
         color: Theme.bg
         clip: true
         radius: Prefs.barPillRadius
-        topLeftRadius: pill.pillTopRadius
-        topRightRadius: pill.pillTopRadius
+        topLeftRadius: pill.joinLeft ? 0 : pill.pillTopRadius
+        topRightRadius: pill.joinRight ? 0 : pill.pillTopRadius
+        bottomLeftRadius: pill.joinLeft ? 0 : Prefs.barPillRadius
+        bottomRightRadius: pill.joinRight ? 0 : Prefs.barPillRadius
 
         Behavior on color {
             enabled: pill.hostWindow ? pill.hostWindow.laidOut : false
@@ -244,8 +256,12 @@ Item {
         visible: !pill.popupMode || shell.y > 0.5
         color: Theme.bg
         radius: pill.cornerRadius
-        topLeftRadius: pill.topRadius
-        topRightRadius: pill.topRadius
+        // opened in place, the panel hangs from its own stretch of the group: the
+        // shared top corners stay square, the bottom ones round off below it
+        topLeftRadius: pill.joinLeft && !pill.popupMode ? 0 : pill.topRadius
+        topRightRadius: pill.joinRight && !pill.popupMode ? 0 : pill.topRadius
+        bottomLeftRadius: pill.joinLeft && !pill.popupMode && !pill.anyOpen ? 0 : pill.cornerRadius
+        bottomRightRadius: pill.joinRight && !pill.popupMode && !pill.anyOpen ? 0 : pill.cornerRadius
         clip: true
         layer.enabled: pill.surfaceLayered
         layer.samples: 4
@@ -310,6 +326,38 @@ Item {
             opacity: pill.popupMode || !pill.anyOpen ? 1 : 0
             scale: pill.popupMode || !pill.anyOpen ? 1 : pill.compactCollapseScale
             visible: opacity > 0.01
+
+            // a joined pill doesn't grow on hover, so its stretch of the group lights up
+            Rectangle {
+                anchors.fill: parent
+                visible: pill.joined && opacity > 0
+                color: Theme.text
+                opacity: pill.compactHovered && !pill.anyOpen ? Theme.stateHover : 0
+                topLeftRadius: compactFace.parent ? compactFace.parent.topLeftRadius : 0
+                topRightRadius: compactFace.parent ? compactFace.parent.topRightRadius : 0
+                bottomLeftRadius: compactFace.parent ? compactFace.parent.bottomLeftRadius : 0
+                bottomRightRadius: compactFace.parent ? compactFace.parent.bottomRightRadius : 0
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Theme.barMs(150)
+                        easing.type: Easing.OutCubic
+                    }
+
+                }
+
+            }
+
+            // the seam between two joined modules, drawn by the right-hand one
+            Rectangle {
+                visible: pill.joinLeft && Prefs.barJoinDividers
+                x: 0
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.max(1, Theme.dp(1))
+                height: Math.round(parent.height * 0.42)
+                radius: width / 2
+                color: Theme.alpha(Theme.text, 0.14)
+            }
 
             MouseArea {
                 anchors.fill: parent

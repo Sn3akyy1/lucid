@@ -1069,6 +1069,10 @@ Item {
     }
     readonly property bool popupMode: Prefs.barPopupMode
     readonly property bool compactHovered: root.rowHovered
+    // joined to a neighbour in Settings > Bar, as BarPill does it. while the
+    // overview is up the module has left its slot, so the bar parts it anyway
+    readonly property bool joinLeft: !!root.hostWindow && !!root.hostWindow.joinedLeftOf && root.hostWindow.joinedLeftOf("workspaces")
+    readonly property bool joinRight: !!root.hostWindow && !!root.hostWindow.joinedRightOf && root.hostWindow.joinedRightOf("workspaces")
     readonly property int topRadius: Prefs.barNotch && !root.popupMode ? 0 : root.cornerRadius
     readonly property int pillTopRadius: Prefs.barNotch ? 0 : Prefs.barPillRadius
     readonly property bool popupExpanding: root.popupMode && root.expanded
@@ -1218,8 +1222,10 @@ Item {
 
         clip: true
         radius: Prefs.barPillRadius
-        topLeftRadius: root.pillTopRadius
-        topRightRadius: root.pillTopRadius
+        topLeftRadius: root.joinLeft ? 0 : root.pillTopRadius
+        topRightRadius: root.joinRight ? 0 : root.pillTopRadius
+        bottomLeftRadius: root.joinLeft ? 0 : Prefs.barPillRadius
+        bottomRightRadius: root.joinRight ? 0 : Prefs.barPillRadius
     }
 
     Rectangle {
@@ -1235,8 +1241,10 @@ Item {
         visible: !root.popupMode || shell.y > 0.5
         color: Theme.bg
         radius: root.cornerRadius
-        topLeftRadius: root.topRadius
-        topRightRadius: root.topRadius
+        topLeftRadius: root.joinLeft && !root.popupMode ? 0 : root.topRadius
+        topRightRadius: root.joinRight && !root.popupMode ? 0 : root.topRadius
+        bottomLeftRadius: root.joinLeft && !root.popupMode ? 0 : root.cornerRadius
+        bottomRightRadius: root.joinRight && !root.popupMode ? 0 : root.cornerRadius
         clip: !root.dragging
 
         Behavior on x {
@@ -2666,6 +2674,18 @@ Item {
 
         }
 
+    }
+
+    // the seam with a joined neighbour on the left, as BarPill draws it
+    Rectangle {
+        visible: root.joinLeft && Prefs.barJoinDividers && !root.expanded
+        x: 0
+        y: Math.round((root.compactHeight - height) / 2)
+        z: 5
+        width: Math.max(1, Theme.dp(1))
+        height: Math.round(root.compactHeight * 0.42)
+        radius: width / 2
+        color: Theme.alpha(Theme.text, 0.14)
     }
 
     states: State {
