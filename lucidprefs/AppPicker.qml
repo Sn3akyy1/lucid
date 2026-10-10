@@ -32,8 +32,9 @@ Item {
 
     function open(ws) {
         picker.workspace = ws;
-        picker.heading = "Add an app to " + Specials.label(ws);
-        picker.items = Specials.installedApps(ws);
+        // "::desktop" is the desktop icons' own: a launcher on the desktop
+        picker.heading = ws === "::desktop" ? "Add an app to the desktop" : "Add an app to " + Specials.label(ws);
+        picker.items = ws === "::desktop" ? DesktopIcons.installedApps() : Specials.installedApps(ws);
         picker.filter = "";
         searchInput.text = "";
         picker.shown = true;

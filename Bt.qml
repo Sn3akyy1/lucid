@@ -24,6 +24,12 @@ Singleton {
     // bluez_card.* entries from pipewire, one per connected audio device
     property var audioCards: []
 
+    // devices that announce OBEX object push (phones, computers): the ones files can go to
+    property var pushTargets: []
+    // where files went last, first in the lists that pick a device
+    property string lastSendTarget: ""
+    readonly property int deviceCount: (root.adapter && root.adapter.devices) ? root.adapter.devices.values.length : 0
+
     // pairings started while pairable was off, see pair()
     property var pairQueue: []
     property bool pairableHeld: false
@@ -207,12 +213,33 @@ Singleton {
         aliasProc.running = true;
     }
 
+    // lucidprefs/bt-send.py does the sending and its notifications; with no files it asks
+    // for them first. It runs detached so a shell restart does not cut a transfer short.
+    function sendFiles(address, name, files) {
+        root.lastSendTarget = address;
+        const helper = Qt.resolvedUrl("lucidprefs/bt-send.py").toString().replace("file://", "");
+        Quickshell.execDetached(["python3", helper, "--address", address, "--name", name || "", "--"].concat(files || []));
+    }
+
+    function canReceiveFiles(address) {
+        return root.pushTargets.indexOf(address) >= 0;
+    }
+
+    function probePush() {
+        pushProc.running = false;
+        pushProc.running = true;
+    }
+
     function refresh() {
         infoProc.running = false;
         infoProc.running = true;
         cardProc.running = false;
         cardProc.running = true;
+        root.probePush();
     }
+
+    onDeviceCountChanged: root.probePush()
+    Component.onCompleted: root.probePush()
 
     // adapter address, alias and the rfkill state, in one shot
     Process {
@@ -248,6 +275,23 @@ Singleton {
                     });
                 } catch (e) {
                 }
+            }
+        }
+
+    }
+
+    Process {
+        id: pushProc
+
+        command: ["sh", "-c", "for d in $(bluetoothctl devices 2>/dev/null | cut -d' ' -f2); do bluetoothctl info \"$d\" 2>/dev/null | grep -qi 00001105-0000-1000-8000-00805f9b34fb && echo \"$d\"; done"]
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.pushTargets = this.text.split("\n").map((l) => {
+                    return l.trim().toUpperCase();
+                }).filter((l) => {
+                    return l !== "";
+                });
             }
         }
 
@@ -384,6 +428,16 @@ Singleton {
             root.pairableHeld = false;
             pairableOff.running = true;
         }
+    }
+
+    IpcHandler {
+        // qs ipc call bluetooth send <address> <file>: an empty file ("") opens the chooser
+        function send(address: string, file: string): void {
+            const d = root.deviceAt(address.toUpperCase());
+            root.sendFiles(address.toUpperCase(), d ? d.name : "", file !== "" ? [file] : []);
+        }
+
+        target: "bluetooth"
     }
 
 }

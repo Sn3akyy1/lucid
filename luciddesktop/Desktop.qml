@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import qs
 
@@ -12,18 +13,51 @@ Variants {
         id: unit
 
         required property var modelData
+        // the icons live on the main screen only
+        readonly property bool icons: DesktopIcons.live && unit.modelData === DesktopIcons.screen
 
         function run(id) {
-            if (id === "widgetPanel")
+            if (id.indexOf("icon:") === 0 || id === "newFolder" || id === "paste" || id === "arrange" || id === "openDesktop")
+                DesktopIcons.runAction(id);
+            else if (id === "widgetPanel")
                 Widgets.openPanel(unit.modelData.name);
             else if (id === "settings")
                 Prefs.settingsRequested("");
             else if (id === "keyboard")
                 Prefs.keyboardRequested();
+            else if (id === "hideIcons" || id === "showIcons")
+                Prefs.desktopIconsShown = id === "showIcons";
             else if (id === "hideWidgets" || id === "showWidgets")
                 Prefs.widgetsEnabled = !Prefs.widgetsEnabled;
             else
                 Prefs.desktopActionRequested(id);
+        }
+
+        // surfaces on one layer stack in the order they were made, so a wallpaper
+        // daemon that starts (or restarts) after the shell would cover the
+        // icons. Its surface showing up remaps this one, back on top
+        property bool lifting: false
+
+        Connections {
+            function onRawEvent(event) {
+                if (event.name === "openlayer" && /awww|swww|paper|swaybg|wallpaper/i.test(event.data))
+                    liftTimer.restart();
+
+            }
+
+            target: Hyprland
+        }
+
+        Timer {
+            id: liftTimer
+
+            interval: 400
+            onTriggered: {
+                unit.lifting = true;
+                Qt.callLater(() => {
+                    unit.lifting = false;
+                });
+            }
         }
 
         PanelWindow {
@@ -33,7 +67,7 @@ Variants {
             readonly property bool lifted: field.lift && (field.armed || box.visible)
 
             screen: unit.modelData
-            visible: Prefs.loaded && (Prefs.desktopSelection || Prefs.desktopMenu)
+            visible: Prefs.loaded && (Prefs.desktopSelection || Prefs.desktopMenu || unit.icons) && !unit.lifting
             color: "transparent"
             // reserves nothing and refuses to be shrunk into the bar and dock's
             // strips, so the box can be dragged edge to edge
@@ -45,7 +79,9 @@ Variants {
             // crosses, so only then does a left press lift the layer over the bar,
             // the dock and the widgets
             WlrLayershell.layer: layer.lifted ? WlrLayer.Overlay : WlrLayer.Background
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+            // a click on an icon takes the keyboard (Enter, Delete, F2...) and a
+            // click on a window gives it straight back
+            WlrLayershell.keyboardFocus: unit.icons ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
             // click-through while the box fades out up there
             mask: Region {
                 width: (field.armed || !layer.lifted) ? layer.width : 0
@@ -75,11 +111,20 @@ Variants {
                 // a plain click should not flash a box, so wait for real travel
                 readonly property int threshold: 4
 
+                // with icons, the box selects them, and the icons' board draws it
+                // over them; without, this one is the decoration it always was
+                property bool additive: false
+
                 function begin() {
                     field.dragging = true;
+                    field.publish();
+                    if (unit.icons) {
+                        DesktopIcons.beginBand(field.additive);
+                        field.track();
+                        return ;
+                    }
                     fade.stop();
                     box.opacity = 1;
-                    field.publish();
                 }
 
                 // widget cards sit on the same screen-sized board, so they read the box as is
@@ -93,11 +138,22 @@ Variants {
                     };
                 }
 
+                function track() {
+                    if (unit.icons && field.dragging)
+                        DesktopIcons.updateBand(Math.min(field.ax, field.bx), Math.min(field.ay, field.by), Math.abs(field.bx - field.ax), Math.abs(field.by - field.ay));
+
+                }
+
                 function finish() {
                     if (field.dragging) {
-                        fade.restart();
+                        if (!unit.icons)
+                            fade.restart();
+
                         Widgets.marquee = null;
                     }
+                    if (unit.icons)
+                        DesktopIcons.endBand();
+
                     field.dragging = false;
                     field.armed = false;
                 }
@@ -109,12 +165,26 @@ Variants {
                     Widgets.clearSelection();
                     if (m.button === Qt.RightButton) {
                         field.armed = false;
-                        if (Prefs.desktopMenu)
+                        if (unit.icons) {
+                            DesktopIcons.clearSelection();
+                            DesktopIcons.menuX = m.x;
+                            DesktopIcons.menuY = m.y;
+                            DesktopIcons.probePaste();
+                        }
+                        if (Prefs.desktopMenu) {
+                            menu.custom = null;
                             menu.openAt(m.x, m.y);
-
+                        }
                         return ;
                     }
                     field.lift = !ToplevelManager.activeToplevel;
+                    field.additive = (m.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)) !== 0;
+                    if (unit.icons) {
+                        iconBoard.forceActiveFocus();
+                        if (!field.additive)
+                            DesktopIcons.clearSelection();
+
+                    }
                     field.armed = Prefs.desktopSelection;
                     field.ax = m.x;
                     field.ay = m.y;
@@ -130,9 +200,10 @@ Variants {
 
                     field.bx = Math.max(0, Math.min(field.width, m.x));
                     field.by = Math.max(0, Math.min(field.height, m.y));
-                    if (field.dragging)
+                    if (field.dragging) {
                         field.publish();
-                    else if (Math.abs(field.bx - field.ax) > field.threshold || Math.abs(field.by - field.ay) > field.threshold)
+                        field.track();
+                    } else if (Math.abs(field.bx - field.ax) > field.threshold || Math.abs(field.by - field.ay) > field.threshold)
                         field.begin();
                 }
                 onReleased: field.finish()
@@ -169,6 +240,94 @@ Variants {
 
             }
 
+            IconBoard {
+                id: iconBoard
+
+                anchors.fill: parent
+                visible: unit.icons
+                enabled: unit.icons
+            }
+
+            // files dragged over the desktop: from a file manager, a
+            // browser, the screenshot card, or our own icons being moved
+            DropArea {
+                anchors.fill: parent
+                enabled: unit.icons
+                onEntered: (d) => {
+                    d.accept(d.proposedAction);
+                }
+                onPositionChanged: (d) => {
+                    DesktopIcons.hover(d.x, d.y);
+                }
+                onExited: DesktopIcons.leaveDrag()
+                onDropped: (d) => {
+                    DesktopIcons.dropped(d);
+                }
+            }
+
+            // glass icons frost the wallpaper behind each card, like the widgets
+            BackgroundEffect.blurRegion: unit.glass ? glassBlur : null
+
+            Region {
+                id: glassBlur
+
+                regions: glassCards.instances
+            }
+
+        }
+
+        readonly property bool glass: unit.icons && (Prefs.desktopIconStyle === "glass" || Prefs.desktopIconStyle === "objects") && Theme.blurAmount > 0
+
+        Variants {
+            id: glassCards
+
+            // every card in the glass look; in the object look only the ones
+            // showing, under the pointer, selected or taking a drop
+            model: {
+                if (!unit.glass)
+                    return [];
+
+                if (Prefs.desktopIconStyle === "glass")
+                    return DesktopIcons.items.map((i) => {
+                    return i.key;
+                });
+
+                var keys = DesktopIcons.selectedKeys.slice();
+                [DesktopIcons.hoverKey, DesktopIcons.dropInto].forEach((k) => {
+                    if (k !== "" && keys.indexOf(k) < 0)
+                        keys.push(k);
+
+                });
+                return keys;
+            }
+
+            // the card's own rectangle, a hair inside it so the frosting's hard
+            // edge never shows past the card's rounded one
+            Region {
+                required property var modelData
+
+                readonly property var spot: DesktopIcons.placed[modelData] || null
+
+                x: spot ? DesktopIcons.tileX(spot.c) + Theme.dp(5) : 0
+                y: spot ? DesktopIcons.tileY(spot.r) + Theme.dp(3) : 0
+                width: spot ? DesktopIcons.tileW - Theme.dp(10) : 0
+                height: spot ? (DesktopIcons.cardH[modelData] || DesktopIcons.tileH - Theme.dp(4)) - Theme.dp(2) : 0
+                radius: Math.max(0, (Prefs.desktopIconStyle === "objects" ? Theme.radiusLg : Theme.radiusMd) - 1)
+            }
+
+        }
+
+        // the icons ask for their menu through here, so there is one menu
+        Connections {
+            function onMenuRequested(x, y, actions) {
+                if (!unit.icons)
+                    return ;
+
+                menu.custom = actions;
+                menu.openAt(x, y);
+            }
+
+            target: DesktopIcons
         }
 
         // the menu cannot live on the background layer or windows would cover it,
@@ -208,6 +367,7 @@ Variants {
 
                     fieldW: menuLayer.width
                     fieldH: menuLayer.height
+                    monitor: Hyprland.monitorFor(unit.modelData)
                     onChosen: (id) => {
                         return unit.run(id);
                     }

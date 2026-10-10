@@ -584,6 +584,9 @@ Singleton {
 
     property alias btScanOnOpen: s.btScanOnOpen
     property alias btShowUnnamed: s.btShowUnnamed
+    property alias btReceive: s.btReceive
+    property alias btReceiveFolder: s.btReceiveFolder
+    property alias btReceiveAutoPaired: s.btReceiveAutoPaired
     property alias audioMoveStreams: s.audioMoveStreams
     property alias kdeConnectEnabled: s.kdeConnectEnabled
     property alias updateCheck: s.updateCheck
@@ -646,6 +649,20 @@ Singleton {
 
     property alias desktopSelection: s.desktopSelection
     property alias desktopMenu: s.desktopMenu
+    property alias desktopIcons: s.desktopIcons
+    property alias desktopIconSize: s.desktopIconSize
+    property alias desktopIconsCorner: s.desktopIconsCorner
+    property alias desktopIconsSort: s.desktopIconsSort
+    property alias desktopIconsOpen: s.desktopIconsOpen
+    property alias desktopIconsThumbs: s.desktopIconsThumbs
+    property alias desktopIconsHidden: s.desktopIconsHidden
+    property alias desktopIconsHome: s.desktopIconsHome
+    property alias desktopIconsTrash: s.desktopIconsTrash
+    property alias desktopIconStyle: s.desktopIconStyle
+    property alias desktopIconTint: s.desktopIconTint
+    property alias desktopIconsShown: s.desktopIconsShown
+    property alias desktopIconShape: s.desktopIconShape
+    property alias desktopIconNames: s.desktopIconNames
     property alias shotPreview: s.shotPreview
     property alias shotPreviewSeconds: s.shotPreviewSeconds
 
@@ -976,6 +993,9 @@ Singleton {
         "widgetOnTop": false,
         "btScanOnOpen": true,
         "btShowUnnamed": false,
+        "btReceive": true,
+        "btReceiveFolder": "",
+        "btReceiveAutoPaired": false,
         "audioMoveStreams": true,
         "kdeConnectEnabled": true,
         "updateCheck": true,
@@ -1003,6 +1023,20 @@ Singleton {
         "idleWhileMedia": true,
         "desktopSelection": true,
         "desktopMenu": true,
+        "desktopIcons": false,
+        "desktopIconSize": "medium",
+        "desktopIconsCorner": "left",
+        "desktopIconsSort": "name",
+        "desktopIconsOpen": "double",
+        "desktopIconsThumbs": true,
+        "desktopIconsHidden": false,
+        "desktopIconsHome": false,
+        "desktopIconsTrash": false,
+        "desktopIconStyle": "objects",
+        "desktopIconTint": "folders",
+        "desktopIconsShown": true,
+        "desktopIconShape": "square",
+        "desktopIconNames": "always",
         "shotPreview": "preview",
         "shotPreviewSeconds": 6,
         "envAdopted": false,
@@ -1567,6 +1601,9 @@ Singleton {
             property bool widgetOnTop: false
             property bool btScanOnOpen: true
             property bool btShowUnnamed: false
+            property bool btReceive: true
+            property string btReceiveFolder: ""
+            property bool btReceiveAutoPaired: false
             property bool audioMoveStreams: true
             property bool kdeConnectEnabled: true
             property bool updateCheck: true
@@ -1594,6 +1631,20 @@ Singleton {
             property bool idleWhileMedia: true
             property bool desktopSelection: true
             property bool desktopMenu: true
+            property bool desktopIcons: false
+            property string desktopIconSize: "medium"
+            property string desktopIconsCorner: "left"
+            property string desktopIconsSort: "name"
+            property string desktopIconsOpen: "double"
+            property bool desktopIconsThumbs: true
+            property bool desktopIconsHidden: false
+            property bool desktopIconsHome: false
+            property bool desktopIconsTrash: false
+            property string desktopIconStyle: "objects"
+            property string desktopIconTint: "folders"
+            property bool desktopIconsShown: true
+            property string desktopIconShape: "square"
+            property string desktopIconNames: "always"
             property string shotPreview: "preview"
             property int shotPreviewSeconds: 6
             property bool envAdopted: false

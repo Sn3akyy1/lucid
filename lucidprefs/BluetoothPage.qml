@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Bluetooth
+import Quickshell.Io
 import qs
 
 Column {
@@ -7,6 +8,8 @@ Column {
 
     property string filter: ""
     property string expandedBt: ""
+    // re-read so "just now" moves on while the page is open
+    property int agoTick: 0
     readonly property var adapter: Bt.adapter
     readonly property bool on: Bt.on
     readonly property bool discovering: !!(page.adapter && page.adapter.discovering)
@@ -68,6 +71,19 @@ Column {
     }
 
     spacing: Theme.dp(26)
+
+    function ago(ms) {
+        page.agoTick;
+        const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
+        if (s < 60)
+            return "just now";
+
+        if (s < 3600)
+            return Math.round(s / 60) + " min ago";
+
+        return new Date(ms).toLocaleTimeString(Qt.locale(), Locale.ShortFormat);
+    }
+
     Component.onCompleted: {
         Bt.refresh();
         if (Prefs.btScanOnOpen && page.on && page.adapter && !page.discovering) {
@@ -173,6 +189,140 @@ Column {
 
         }
 
+    }
+
+    SettingCard {
+        title: "RECEIVING FILES"
+
+        SettingRow {
+            title: "Receive files"
+            enabled: !!page.adapter
+            disabledReason: "No Bluetooth adapter is plugged into this machine."
+            description: {
+                if (!Prefs.btReceive)
+                    return "Files sent to this machine are turned away.";
+
+                if (BtReceive.status === "missing")
+                    return "Needs obexd, which comes in the bluez-obex package.";
+
+                if (BtReceive.status === "taken")
+                    return "Another app is already answering incoming files, so it handles them instead.";
+
+                if (BtReceive.status === "error")
+                    return BtReceive.detail !== "" ? BtReceive.detail : "Something went wrong starting the receiver.";
+
+                if (BtReceive.status === "starting")
+                    return "Starting…";
+
+                return "Each file asks first, in a notification. Devices that haven't paired can only find this machine while “Let other devices find this one” is on.";
+            }
+
+            M3Switch {
+                enabled: !!page.adapter
+                checked: Prefs.btReceive
+                onToggled: (v) => {
+                    Prefs.btReceive = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Save to"
+            enabled: Prefs.btReceive
+            description: BtReceive.folder !== "" ? BtReceive.pretty(BtReceive.folder) : "Your Downloads folder"
+            resetKey: "btReceiveFolder"
+
+            Row {
+                spacing: Theme.dp(8)
+
+                M3Button {
+                    text: "Open"
+                    variant: "text"
+                    enabled: Prefs.btReceive && BtReceive.folder !== ""
+                    onClicked: BtReceive.openFolder()
+                }
+
+                M3Button {
+                    text: folderPicker.running ? "Choosing…" : "Change…"
+                    enabled: Prefs.btReceive && !folderPicker.running
+                    onClicked: {
+                        folderPicker.command = ["sh", "-c", "zenity --file-selection --directory --title='Save received files to' --filename=\"$1/\" 2>/dev/null || true", "sh", BtReceive.folder];
+                        folderPicker.running = true;
+                    }
+                }
+
+            }
+
+        }
+
+        SettingRow {
+            title: "Accept from paired devices without asking"
+            enabled: Prefs.btReceive
+            description: "Your own phone or laptop sends straight to the folder. Anything else still asks."
+
+            M3Switch {
+                enabled: Prefs.btReceive
+                checked: Prefs.btReceiveAutoPaired
+                onToggled: (v) => {
+                    Prefs.btReceiveAutoPaired = v;
+                }
+            }
+
+        }
+
+        Repeater {
+            model: Prefs.btReceive ? BtReceive.recent : []
+
+            delegate: SettingRow {
+                required property var modelData
+
+                title: modelData.name
+                description: "From " + modelData.device + " · " + page.ago(modelData.time)
+
+                Row {
+                    spacing: Theme.dp(8)
+
+                    M3Button {
+                        text: "Show in folder"
+                        variant: "text"
+                        onClicked: BtReceive.showInFolder(modelData.file)
+                    }
+
+                    M3Button {
+                        text: "Open"
+                        onClicked: BtReceive.openFile(modelData.file)
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    Process {
+        id: folderPicker
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const dir = this.text.trim();
+                if (dir === "")
+                    return ;
+
+                // the default stays unset, so it follows the Downloads folder
+                Prefs.btReceiveFolder = dir === BtReceive.defaultFolder ? "" : dir;
+            }
+        }
+
+    }
+
+    Timer {
+        interval: 30000
+        repeat: true
+        running: BtReceive.recent.length > 0
+        onTriggered: page.agoTick++
     }
 
     SettingCard {

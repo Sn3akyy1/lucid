@@ -25,6 +25,10 @@ Singleton {
     // uid of the card currently held by the pointer, and of the one showing its menu
     property string dragUid: ""
     property string menuUid: ""
+    // the card under a drag or a resize and where it is this moment, before the
+    // store hears of it: the desktop icons step out of its way as it goes
+    property string liveUid: ""
+    property rect liveRect: Qt.rect(0, 0, 0, 0)
     // the desktop's selection box while it is out, {screen, x, y, w, h} in board coords
     property var marquee: null
     // uid -> true for every card the box caught; they drag as one
@@ -1292,21 +1296,27 @@ Singleton {
         if (o.avoid)
             taken.push(o.avoid);
 
-        for (var y = top; y <= maxY; y += step) {
-            for (var x = pad; x <= maxX; x += step) {
-                var clear = true;
-                for (var k = 0; k < taken.length && clear; k++) {
-                    var t = taken[k];
-                    if (x < t.x + t.w + 18 && x + w + 18 > t.x && y < t.y + t.h + 18 && y + h + 18 > t.y)
-                        clear = false;
+        // twice on the screen with the desktop icons: clear of them too if it can
+        // be, and of the other cards either way (icons step aside for a card,
+        // never the reverse)
+        var iconScreen = DesktopIcons.live && DesktopIcons.screen && (o.screen === undefined || o.screen === DesktopIcons.screen.name);
+        for (var pass = iconScreen ? 0 : 1; pass < 2; pass++) {
+            for (var y = top; y <= maxY; y += step) {
+                for (var x = pad; x <= maxX; x += step) {
+                    var clear = pass === 1 || !DesktopIcons.overlapsIcons(x, y, w, h);
+                    for (var k = 0; k < taken.length && clear; k++) {
+                        var t = taken[k];
+                        if (x < t.x + t.w + 18 && x + w + 18 > t.x && y < t.y + t.h + 18 && y + h + 18 > t.y)
+                            clear = false;
+
+                    }
+                    if (clear)
+                        return ({
+                            "x": x,
+                            "y": y
+                        });
 
                 }
-                if (clear)
-                    return ({
-                        "x": x,
-                        "y": y
-                    });
-
             }
         }
         var n = instances.count;
@@ -1315,6 +1325,13 @@ Singleton {
             "x": Math.min(maxX, left + (n % 8) * 34),
             "y": Math.min(maxY, top + (n % 8) * 34)
         });
+    }
+
+    // the card under a drag and where it is this moment; the desktop icons
+    // step out of its way as it goes
+    function setLive(uid, x, y, w, h) {
+        root.liveRect = Qt.rect(x, y, w, h);
+        root.liveUid = uid;
     }
 
     // a card with no screen of its own follows the main one

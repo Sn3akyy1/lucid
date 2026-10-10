@@ -271,6 +271,7 @@ Item {
             m.dragX = m.homeX + dx;
             m.dragY = m.homeY + dy;
         }
+        Widgets.setLive(frame.uid, frame.dragX, frame.dragY, frame.width, frame.height);
     }
 
     function endDrag() {
@@ -316,6 +317,7 @@ Item {
         if (frame.dragX === frame.homeX && frame.dragY === frame.homeY)
             Widgets.clearSelection();
 
+        Widgets.liveUid = "";
     }
 
     function beginResize(hx, vy, px, py) {
@@ -377,6 +379,7 @@ Item {
         frame.resY = ny;
         frame.resW = nw;
         frame.resH = nh;
+        Widgets.setLive(frame.uid, nx, ny, nw, nh);
     }
 
     function endResize() {
@@ -387,6 +390,7 @@ Item {
         Widgets.setSize(frame.uid, frame.resW / z, frame.resH / z);
         Widgets.setPos(frame.uid, frame.resX, frame.resY);
         frame.resizing = false;
+        Widgets.liveUid = "";
     }
 
     // the menu's shortcut for the look the visualiser is really after

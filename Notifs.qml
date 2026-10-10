@@ -124,6 +124,7 @@ Singleton {
         }
         for (var i = 0; i < v.length; i++) root.stamp(v[i])
         root.entries = v;
+        root.popupPrune(v);
         Prefs.liveNotifCount = v.length;
         root.regroup();
     }
@@ -406,6 +407,32 @@ Singleton {
         root.popupLeft = left;
         root.popups = root.popups.filter((p) => p.id !== id);
         if (root.replyingId === id)
+            root.replyingId = -1;
+
+    }
+
+    // an application can close its own notification; its popup goes with it
+    // instead of lingering as an empty card
+    function popupPrune(live) {
+        var ids = {};
+        for (var i = 0; i < live.length; i++) ids[live[i].id] = true
+        var gone = root.popups.filter((p) => {
+            return !p || !ids[p.id];
+        });
+        if (gone.length === 0)
+            return ;
+
+        var left = {};
+        for (var k in root.popupLeft) {
+            if (ids[Number(k)])
+                left[k] = root.popupLeft[k];
+
+        }
+        root.popupLeft = left;
+        root.popups = root.popups.filter((p) => {
+            return p && ids[p.id];
+        });
+        if (root.replyingId >= 0 && !ids[root.replyingId])
             root.replyingId = -1;
 
     }
