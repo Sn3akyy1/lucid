@@ -219,21 +219,72 @@ ShellRoot {
             visible: Prefs.loaded && Prefs.barEnabled && Monitors.surfacesUp
             property bool laidOut: false
             readonly property bool anyModuleShown: bar.leftGroupWidth + bar.centreGroupWidth + bar.rightGroupWidth > 0.5
-            function placeGroup(widths, originX) {
+            // keys, when given, lets modules joined to the next one sit flush against it
+            function placeGroup(widths, originX, keys) {
                 const gap = Theme.dp(Prefs.barSpacing);
                 const out = [];
                 let x = originX;
                 let any = false;
+                let trailing = 0;
                 for (let i = 0; i < widths.length; i++) {
-                    out.push(x);
+                    // whole pixels: a module sliding along while a neighbour opens
+                    // would otherwise land between them, and the edges of the gaps
+                    // on either side shimmer as it goes
+                    out.push(Math.round(x));
                     const w = widths[i];
                     if (w > 0.5) {
-                        x += w + (gap > 0 ? gap * Math.min(1, w / gap) : 0);
+                        trailing = keys && bar.joinedAfter(keys, widths, i) ? 0 : (gap > 0 ? gap * Math.min(1, w / gap) : 0);
+                        x += w + trailing;
                         any = true;
                     }
                 }
-                out.push(any ? Math.max(originX, x - Theme.dp(Prefs.barSpacing)) : originX);
+                out.push(any ? Math.max(originX, x - trailing) : originX);
                 return out;
+            }
+
+            // whether the module at i is joined to the one right after it. both
+            // have to be in the bar this moment: one that has emptied out (a tray
+            // with no icons, workspaces off in the overview) parts its group there
+            function joinedAfter(keys, widths, i) {
+                return i + 1 < keys.length && widths[i] > 0.5 && widths[i + 1] > 0.5 && Prefs.barJoined(keys[i], keys[i + 1]);
+            }
+
+            // the joined neighbour of a module on one side, as its item, or null
+            function joinedMate(key, toTheLeft) {
+                const at = bar.placeMap[key];
+                if (!at || !(toTheLeft ? bar.joinedLeftOf(key) : bar.joinedRightOf(key)))
+                    return null;
+
+                const keys = bar.zoneKeys(at.zone);
+                return bar.pillFor[keys[at.at + (toTheLeft ? -1 : 1)]] || null;
+            }
+
+            function keyOf(mod) {
+                for (const k in bar.pillFor) {
+                    if (bar.pillFor[k] === mod)
+                        return k;
+
+                }
+                return "";
+            }
+
+            // what a module's pill reads to square off the corners it shares
+            function joinedLeftOf(key) {
+                const at = bar.placeMap[key];
+                if (!at || at.at === 0)
+                    return false;
+
+                const keys = bar.zoneKeys(at.zone);
+                return bar.widthOf(key) > 0.5 && bar.widthOf(keys[at.at - 1]) > 0.5 && Prefs.barJoined(keys[at.at - 1], key);
+            }
+
+            function joinedRightOf(key) {
+                const at = bar.placeMap[key];
+                if (!at)
+                    return false;
+
+                const keys = bar.zoneKeys(at.zone);
+                return at.at + 1 < keys.length && bar.widthOf(key) > 0.5 && bar.widthOf(keys[at.at + 1]) > 0.5 && Prefs.barJoined(key, keys[at.at + 1]);
             }
 
             property real wsCollapse: (workspacesMod.expanded && !Prefs.barPopupMode) ? 0 : 1
@@ -348,9 +399,9 @@ ShellRoot {
             readonly property var leftWidths: bar.widthsOf("left")
             readonly property var centreWidths: bar.widthsOf("centre")
             readonly property var rightWidths: bar.widthsOf("right")
-            readonly property real leftGroupWidth: bar.placeGroup(bar.leftWidths, 0)[bar.leftWidths.length]
-            readonly property real centreGroupWidth: bar.placeGroup(bar.centreWidths, 0)[bar.centreWidths.length]
-            readonly property real rightGroupWidth: bar.placeGroup(bar.rightWidths, 0)[bar.rightWidths.length]
+            readonly property real leftGroupWidth: bar.placeGroup(bar.leftWidths, 0, bar.zoneKeys("left"))[bar.leftWidths.length]
+            readonly property real centreGroupWidth: bar.placeGroup(bar.centreWidths, 0, bar.zoneKeys("centre"))[bar.centreWidths.length]
+            readonly property real rightGroupWidth: bar.placeGroup(bar.rightWidths, 0, bar.zoneKeys("right"))[bar.rightWidths.length]
             readonly property int zoneGap: Theme.dp(Prefs.barZoneGap)
 
             // pills ease to their new slots only while the arrangement is changing.
@@ -375,9 +426,9 @@ ShellRoot {
             readonly property real leftOriginX: bar.sideMargin
             readonly property real rightOriginX: bar.width - bar.rightGroupWidth - bar.sideMargin
             readonly property real centreOriginX: Math.min(Math.max((bar.width - bar.centreGroupWidth) / 2, bar.leftOriginX + bar.leftGroupWidth + bar.zoneGap), bar.rightOriginX - bar.centreGroupWidth - bar.zoneGap)
-            readonly property var leftPlaces: bar.placeGroup(bar.leftWidths, bar.leftOriginX)
-            readonly property var centrePlaces: bar.placeGroup(bar.centreWidths, bar.centreOriginX)
-            readonly property var rightPlaces: bar.placeGroup(bar.rightWidths, bar.rightOriginX)
+            readonly property var leftPlaces: bar.placeGroup(bar.leftWidths, bar.leftOriginX, bar.zoneKeys("left"))
+            readonly property var centrePlaces: bar.placeGroup(bar.centreWidths, bar.centreOriginX, bar.zoneKeys("centre"))
+            readonly property var rightPlaces: bar.placeGroup(bar.rightWidths, bar.rightOriginX, bar.zoneKeys("right"))
 
             Behavior on wsCollapse {
                 NumberAnimation {
@@ -586,6 +637,78 @@ ShellRoot {
                         duration: Theme.barDurEnter
                         easing.type: Easing.Bezier
                         easing.bezierCurve: Theme.easeEmphasizedDecel
+                    }
+
+                }
+
+            }
+
+            // behind every seam between two joined modules, a strip of the bar's own
+            // colour: with modules on whole pixels and widths that are not, the two
+            // edges can fall a fraction apart and let the wallpaper show through
+            Repeater {
+                model: bar.modules
+
+                Rectangle {
+                    id: bridge
+
+                    required property var modelData
+
+                    readonly property string key: bar.keyOf(bridge.modelData)
+                    readonly property var mate: bridge.key !== "" ? bar.joinedMate(bridge.key, false) : null
+
+                    visible: bridge.mate !== null
+                    x: bridge.mate ? bridge.mate.x - Theme.dp(1) : 0
+                    y: bridge.mate ? Math.max(bridge.modelData.y, bridge.mate.y) : 0
+                    z: 0
+                    width: Theme.dp(2)
+                    height: bridge.mate ? Math.min(bridge.modelData.height, bridge.mate.height) : 0
+                    color: Theme.bg
+                }
+
+            }
+
+            // a module opened in place in the middle of a group: where its panel
+            // drops below a joined neighbour, the neighbour's lower edge curves
+            // into the panel's side instead of meeting it in a square corner
+            Repeater {
+                model: Prefs.barPopupMode ? [] : bar.modules
+
+                Item {
+                    id: seam
+
+                    required property var modelData
+
+                    // open, or still folding back up after closing
+                    readonly property bool open: !!seam.modelData && (seam.modelData.anyOpen === true || seam.modelData.dropped === true)
+                    readonly property string key: seam.open ? bar.keyOf(seam.modelData) : ""
+                    readonly property var leftMate: seam.key !== "" ? bar.joinedMate(seam.key, true) : null
+                    readonly property var rightMate: seam.key !== "" ? bar.joinedMate(seam.key, false) : null
+
+                    // grows with the panel as it opens, and never wider than half the neighbour
+                    function sizeFor(mate) {
+                        if (!mate)
+                            return 0;
+
+                        const drop = seam.modelData.y + seam.modelData.height - (mate.y + mate.height);
+                        return Math.max(0, Math.min(Theme.dp(Prefs.barNotchFlare), Math.floor(drop), Math.floor(mate.width / 2)));
+                    }
+
+                    anchors.fill: parent
+                    z: -1
+                    visible: seam.open
+
+                    BarFlare {
+                        size: seam.sizeFor(seam.leftMate)
+                        x: seam.modelData ? seam.modelData.x - width + 0.5 : 0
+                        y: seam.leftMate ? seam.leftMate.y + seam.leftMate.height - 0.5 : 0
+                    }
+
+                    BarFlare {
+                        mirrored: true
+                        size: seam.sizeFor(seam.rightMate)
+                        x: seam.modelData ? seam.modelData.x + seam.modelData.width - 0.5 : 0
+                        y: seam.rightMate ? seam.rightMate.y + seam.rightMate.height - 0.5 : 0
                     }
 
                 }

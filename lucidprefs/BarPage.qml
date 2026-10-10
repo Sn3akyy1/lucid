@@ -268,7 +268,7 @@ Column {
         SettingRow {
             title: "Arrangement"
             resetKey: "barLayout"
-            description: "Tap a module to set it up below, or drag it along its group or into another one. Left and right sit against the screen's edges and the centre stays in the middle; a module switched off keeps its place, and an outlined one is on but has nothing to show right now."
+            description: "Tap a module to set it up below, or drag it along its group or into another one. Left and right sit against the screen's edges and the centre stays in the middle; a module switched off keeps its place, and an outlined one is on but has nothing to show right now. The link between two neighbours joins them: on the bar they share one island (or one notch), and a panel opens from its own stretch of it."
             enabled: Prefs.barEnabled
             disabledReason: "The bar is switched off, so there is nothing to arrange."
             stacked: true
@@ -279,6 +279,21 @@ Column {
                 selected: page.selectedModule
                 onChosen: (id) => {
                     return page.selectedModule = id;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Lines between joined modules"
+            resetKey: "barJoinDividers"
+            description: "A faint line where two joined modules meet. Off, a group reads as one piece."
+            enabled: Prefs.barEnabled
+
+            M3Switch {
+                checked: Prefs.barJoinDividers
+                onToggled: (v) => {
+                    Prefs.barJoinDividers = v;
                 }
             }
 

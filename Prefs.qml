@@ -39,7 +39,7 @@ Singleton {
     // only the modules switched on. the names are the zones' from before the
     // bar page's arrangement editor, so the bar itself needn't know the difference
     readonly property var barZones: ["left", "centre", "right"]
-    readonly property var barLayoutKeys: ["barLayout"]
+    readonly property var barLayoutKeys: ["barLayout", "barJoins", "barJoinDividers"]
 
     function barModuleAt(key) {
         return root.barModuleById[key] || null;
@@ -423,6 +423,8 @@ Singleton {
     property alias barZoneGap: s.barZoneGap
     property alias systemTiles: s.systemTiles
     property alias barLayout: s.barLayout
+    property alias barJoins: s.barJoins
+    property alias barJoinDividers: s.barJoinDividers
     property alias showWorkspaces: s.showWorkspaces
     property alias showMedia: s.showMedia
     property alias showTray: s.showTray
@@ -845,6 +847,8 @@ Singleton {
         "barZoneGap": 26,
         "systemTiles": "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session",
         "barLayout": "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}",
+        "barJoins": "[]",
+        "barJoinDividers": true,
         "showWorkspaces": true,
         "showMedia": true,
         "showTray": true,
@@ -1186,6 +1190,46 @@ Singleton {
         });
     }
 
+    // modules joined into one island (or one notch), as "a+b" pairs in barJoins.
+    // a pair only counts while the two sit side by side in a group with both
+    // shown, so moving one away parts them without touching the list, and putting
+    // it back joins them again
+    readonly property var barJoinSet: root.parseBarJoins(root.barJoins)
+
+    function parseBarJoins(text) {
+        const out = ({});
+        let parsed = null;
+        try {
+            parsed = JSON.parse(text);
+        } catch (e) {
+        }
+        if (!Array.isArray(parsed))
+            return out;
+
+        for (const pair of parsed) {
+            if (typeof pair === "string" && pair.indexOf("+") > 0)
+                out[pair] = true;
+
+        }
+        return out;
+    }
+
+    function barJoined(a, b) {
+        return root.barJoinSet[a + "+" + b] === true || root.barJoinSet[b + "+" + a] === true;
+    }
+
+    function setBarJoined(a, b, on) {
+        const keep = Object.keys(root.barJoinSet).filter((k) => {
+            return k !== a + "+" + b && k !== b + "+" + a;
+        });
+        if (on)
+            keep.push(a + "+" + b);
+
+        // the pills ease into their new places, as for any rearrangement
+        root.barReorderTick++;
+        root.barJoins = JSON.stringify(keep);
+    }
+
     // on means the modules that ship switched on; one that ships off stays off
     function setAllBarModules(v) {
         for (const m of root.barModules)
@@ -1436,6 +1480,8 @@ Singleton {
             property int barZoneGap: 26
             property string systemTiles: "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session"
             property string barLayout: "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}"
+            property string barJoins: "[]"
+            property bool barJoinDividers: true
             property bool showWorkspaces: true
             property bool showMedia: true
             property bool showTray: true

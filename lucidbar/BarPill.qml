@@ -70,7 +70,26 @@ Item {
     property bool compactHovered: false
     property bool panelTransitioning: false
 
-    readonly property bool hoverLift: Prefs.barHoverGrow > 0 && pill.compactHovered && !pill.anyOpen && pill.shown
+    // joined to a neighbour in Settings > Bar: the shared edge loses its corners
+    // and its gap, so the group reads as one island (or one notch). the bar works
+    // it out; the open popup of popup mode stands apart either way
+    readonly property string modId: pill.moduleId()
+    readonly property bool joinLeft: !!pill.hostWindow && !!pill.hostWindow.joinedLeftOf && pill.modId !== "" && pill.hostWindow.joinedLeftOf(pill.modId)
+    readonly property bool joinRight: !!pill.hostWindow && !!pill.hostWindow.joinedRightOf && pill.modId !== "" && pill.hostWindow.joinedRightOf(pill.modId)
+    readonly property bool joined: pill.joinLeft || pill.joinRight
+    // the panel is still out below the bar: true from the open until it has
+    // folded all the way back, so a closing panel keeps its round lower corners
+    readonly property real drop: pill.popupMode ? 0 : Math.max(0, pill.height - pill.compactHeight)
+    readonly property bool dropped: pill.drop > 0.5
+    // the neighbour this one is joined to on the left, which draws no line of its own
+    readonly property var leftMate: pill.joinLeft ? pill.hostWindow.joinedMate(pill.modId, true) : null
+    // the line goes the moment either side starts to open and comes back once
+    // both have folded away: drawn through a morph it reads as a crack
+    readonly property bool seamShown: pill.joinLeft && Prefs.barJoinDividers && !pill.anyOpen && !pill.dropped && !(pill.leftMate && (pill.leftMate.anyOpen === true || pill.leftMate.dropped === true))
+
+    // growing sideways would run into a joined neighbour, so a joined pill lights
+    // up in place instead
+    readonly property bool hoverLift: Prefs.barHoverGrow > 0 && pill.compactHovered && !pill.anyOpen && pill.shown && !pill.joined
     property real hoverGrow: pill.hoverLift ? Math.min(Theme.dp(Prefs.barHoverGrow), Math.max(0, Theme.dp(Prefs.barSpacing) / 2)) : 0
 
     property int hoverGrowDuration: Theme.barMs(150)
@@ -219,8 +238,10 @@ Item {
         color: Theme.bg
         clip: true
         radius: Prefs.barPillRadius
-        topLeftRadius: pill.pillTopRadius
-        topRightRadius: pill.pillTopRadius
+        topLeftRadius: pill.joinLeft ? 0 : pill.pillTopRadius
+        topRightRadius: pill.joinRight ? 0 : pill.pillTopRadius
+        bottomLeftRadius: pill.joinLeft ? 0 : Prefs.barPillRadius
+        bottomRightRadius: pill.joinRight ? 0 : Prefs.barPillRadius
 
         Behavior on color {
             enabled: pill.hostWindow ? pill.hostWindow.laidOut : false
@@ -244,8 +265,14 @@ Item {
         visible: !pill.popupMode || shell.y > 0.5
         color: Theme.bg
         radius: pill.cornerRadius
-        topLeftRadius: pill.topRadius
-        topRightRadius: pill.topRadius
+        // opened in place, the panel hangs from its own stretch of the group: the
+        // shared top corners stay square, the bottom ones round off below it
+        topLeftRadius: pill.joinLeft && !pill.popupMode ? 0 : pill.topRadius
+        topRightRadius: pill.joinRight && !pill.popupMode ? 0 : pill.topRadius
+        // never rounder than the panel hangs below the bar, or the curve would bite
+        // into the neighbour's side as the panel folds the last few pixels away
+        bottomLeftRadius: pill.joinLeft && !pill.popupMode ? Math.min(shell.radius, pill.drop) : shell.radius
+        bottomRightRadius: pill.joinRight && !pill.popupMode ? Math.min(shell.radius, pill.drop) : shell.radius
         clip: true
         layer.enabled: pill.surfaceLayered
         layer.samples: 4
@@ -310,6 +337,27 @@ Item {
             opacity: pill.popupMode || !pill.anyOpen ? 1 : 0
             scale: pill.popupMode || !pill.anyOpen ? 1 : pill.compactCollapseScale
             visible: opacity > 0.01
+
+            // a joined pill doesn't grow on hover, so its stretch of the group lights up
+            Rectangle {
+                anchors.fill: parent
+                visible: pill.joined && opacity > 0
+                color: Theme.text
+                opacity: pill.compactHovered && !pill.anyOpen ? Theme.stateHover : 0
+                topLeftRadius: compactFace.parent ? compactFace.parent.topLeftRadius : 0
+                topRightRadius: compactFace.parent ? compactFace.parent.topRightRadius : 0
+                bottomLeftRadius: compactFace.parent ? compactFace.parent.bottomLeftRadius : 0
+                bottomRightRadius: compactFace.parent ? compactFace.parent.bottomRightRadius : 0
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Theme.barMs(150)
+                        easing.type: Easing.OutCubic
+                    }
+
+                }
+
+            }
 
             MouseArea {
                 anchors.fill: parent
@@ -427,6 +475,48 @@ Item {
 
             }
 
+        }
+
+    }
+
+    // the seam between two joined modules, drawn by the right-hand one. a child
+    // of the pill rather than of the compact face, which shrinks as it opens
+    // out at once, back with a short fade: set by hand, since a Behavior gated on
+    // the same flag can see the flag change after the value and fade out too
+    Rectangle {
+        id: seam
+
+        x: 0
+        y: Math.round((pill.compactHeight - height) / 2)
+        z: 50
+        width: Math.max(1, Theme.dp(1))
+        height: Math.round(pill.compactHeight * 0.42)
+        radius: width / 2
+        color: Theme.alpha(Theme.text, 0.14)
+        opacity: 0
+        visible: seam.opacity > 0.01
+        Component.onCompleted: seam.opacity = pill.seamShown ? 1 : 0
+
+        NumberAnimation {
+            id: seamIn
+
+            target: seam
+            property: "opacity"
+            to: 1
+            duration: Theme.barMs(160)
+            easing.type: Easing.OutCubic
+        }
+
+        Connections {
+            function onSeamShownChanged() {
+                seamIn.stop();
+                if (pill.seamShown)
+                    seamIn.start();
+                else
+                    seam.opacity = 0;
+            }
+
+            target: pill
         }
 
     }
