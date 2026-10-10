@@ -454,7 +454,10 @@ FloatingWindow {
 
         z: 100
         onChosen: (workspace, entryId) => {
-            return Specials.addApp(workspace, entryId);
+            if (workspace === "::desktop")
+                DesktopIcons.addApp(entryId);
+            else
+                Specials.addApp(workspace, entryId);
         }
     }
 

@@ -16,13 +16,38 @@ Item {
     // a menu opens down-right of the cursor, and flips rather than run off screen
     readonly property bool toLeft: menu.originX + menu.panelW + menu.edge > menu.fieldW
     readonly property bool toUp: menu.originY + panel.height + menu.edge > menu.fieldH
-    readonly property var actions: {
+    // a list of its own instead of the desktop's, for the icons' menu
+    property var custom: null
+    readonly property var actions: menu.custom !== null ? menu.custom : menu.desktopActions
+    readonly property var desktopActions: {
         var arr = [];
+        if (DesktopIcons.live) {
+            arr.push({
+                "id": "newFolder",
+                "label": "New Folder",
+                "glyph": DesktopIcons.glyphs.newFolder,
+                "divider": false
+            });
+            if (DesktopIcons.canPaste)
+                arr.push({
+                "id": "paste",
+                "label": "Paste",
+                "glyph": DesktopIcons.glyphs.paste,
+                "divider": false
+            });
+
+            arr.push({
+                "id": "arrange",
+                "label": "Arrange Icons",
+                "glyph": DesktopIcons.glyphs.arrange,
+                "divider": false
+            });
+        }
         arr.push({
             "id": "wallpaper",
             "label": "Change Wallpaper",
             "glyph": DockIcons.wallpaper,
-            "divider": false
+            "divider": arr.length > 0
         });
         arr.push({
             "id": "theme",
@@ -47,6 +72,21 @@ Item {
             "label": "Show Widgets",
             "glyph": DockIcons.visible,
             "divider": false
+        });
+
+        // put away and back, the way the widgets are; Settings keeps the switch
+        // that turns the icons off altogether
+        if (Prefs.desktopIcons)
+            arr.push(Prefs.desktopIconsShown ? {
+            "id": "hideIcons",
+            "label": "Hide Icons",
+            "glyph": DockIcons.hidden,
+            "divider": !Prefs.widgetsEnabled && Widgets.count === 0
+        } : {
+            "id": "showIcons",
+            "label": "Show Icons",
+            "glyph": DockIcons.visible,
+            "divider": !Prefs.widgetsEnabled && Widgets.count === 0
         });
 
         arr.push({

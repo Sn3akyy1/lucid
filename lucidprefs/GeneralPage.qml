@@ -251,7 +251,7 @@ Column {
         SettingRow {
             title: "Selection box"
             resetKey: "desktopSelection"
-            description: "Drag across empty desktop to draw a box, the way it does on Windows and macOS. Widgets it touches are selected and move together when you drag any one of them; pinned widgets are left out. Click the desktop to let go."
+            description: Prefs.desktopIcons ? "Drag across empty desktop to draw a box, the way it does on Windows and macOS. It selects the icons and the widgets it touches; hold Ctrl or Shift to add icons to what is already selected. Selected widgets move together when you drag any one of them; pinned widgets are left out. Click the desktop to let go." : "Drag across empty desktop to draw a box, the way it does on Windows and macOS. Widgets it touches are selected and move together when you drag any one of them; pinned widgets are left out. Click the desktop to let go."
 
             M3Switch {
                 checked: Prefs.desktopSelection
@@ -273,6 +273,310 @@ Column {
                 onToggled: (v) => {
                     return Prefs.desktopMenu = v;
                 }
+            }
+
+        }
+
+    }
+
+    SettingCard {
+        title: "DESKTOP ICONS"
+
+        SettingRow {
+            title: "Show icons"
+            resetKey: "desktopIcons"
+            description: "What is in your Desktop folder sits on the wallpaper, sharing it with the widgets. A widget always keeps its space: an icon it covers steps to the nearest free cell, and goes back when the widget moves away. Drag icons around, into a folder, onto the trash or out into any app; drop files from a file manager or a browser to put them here. Right-click the desktop to hide them for a while."
+
+            M3Switch {
+                checked: Prefs.desktopIcons
+                onToggled: (v) => {
+                    return Prefs.desktopIcons = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Look"
+            resetKey: "desktopIconStyle"
+            enabled: Prefs.desktopIcons
+            disabledReason: "Turn on Show icons first."
+            description: Prefs.desktopIconStyle === "objects" ? "Folders, pages and the bin drawn as things on a desk, in the wallpaper's colours: a folder's flap opens under the pointer, a page wears its type on a tab, the bin's lid lifts for a drop. Pictures are prints, apps keep their own icons, and a card of the widgets' material comes up under the pointer." : (Prefs.desktopIconStyle === "shapes" ? "Each icon sits on a shape in a colour of the palette \u2014 folders, apps and files apart at a glance \u2014 and tips toward the pointer. Pictures are prints on paper in the wallpaper's hue, set down slightly askew." : (Prefs.desktopIconStyle === "glass" ? "Every icon on a frosted card of its own, the material the widgets are made of." : "The icons straight on the wallpaper, their names in white."))
+
+            M3Segmented {
+                width: Theme.dp(340)
+                current: Prefs.desktopIconStyle
+                options: [{
+                    "key": "objects",
+                    "label": "Objects"
+                }, {
+                    "key": "shapes",
+                    "label": "Shapes"
+                }, {
+                    "key": "glass",
+                    "label": "Glass"
+                }, {
+                    "key": "classic",
+                    "label": "Classic"
+                }]
+                onChosen: (key) => {
+                    return Prefs.desktopIconStyle = key;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Shape"
+            resetKey: "desktopIconShape"
+            enabled: Prefs.desktopIcons && Prefs.desktopIconStyle === "shapes"
+            disabledReason: "For the Shapes look."
+            description: Prefs.desktopIconShape === "expressive" ? "Material's expressive shapes, one per kind: cookies for folders and the trash, the calendar's rounded pentagon for apps, a squircle for files." : "A square with the shell's own corners, the roundness dial included, that rounds out a little under the pointer."
+
+            M3Segmented {
+                width: Theme.dp(260)
+                current: Prefs.desktopIconShape
+                options: [{
+                    "key": "square",
+                    "label": "Shell square"
+                }, {
+                    "key": "expressive",
+                    "label": "Expressive"
+                }]
+                onChosen: (key) => {
+                    return Prefs.desktopIconShape = key;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Shell colours"
+            resetKey: "desktopIconTint"
+            enabled: Prefs.desktopIcons && Prefs.desktopIconStyle !== "objects"
+            disabledReason: Prefs.desktopIcons ? "The Objects look draws folders and files in the palette already." : "Turn on Show icons first."
+            description: "Recolour the icon theme's folders, or its file icons too, in the palette, keeping their light and shade. Apps keep their own colours, and pictures are never touched."
+
+            M3Segmented {
+                width: Theme.dp(420)
+                current: Prefs.desktopIconTint
+                options: [{
+                    "key": "off",
+                    "label": "Off"
+                }, {
+                    "key": "folders",
+                    "label": "Folders"
+                }, {
+                    "key": "all",
+                    "label": "Folders and files"
+                }]
+                onChosen: (key) => {
+                    return Prefs.desktopIconTint = key;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Names"
+            resetKey: "desktopIconNames"
+            enabled: Prefs.desktopIcons
+            disabledReason: "Turn on Show icons first."
+            description: Prefs.desktopIconNames === "hover" ? "Only the pictures until the pointer comes among them; then the names come out in a wave from the one under it. Selected icons keep theirs." : "Every name under its icon, on one line; the whole name shows under the pointer. Over a light sky the names turn dark."
+
+            M3Segmented {
+                width: Theme.dp(240)
+                current: Prefs.desktopIconNames
+                options: [{
+                    "key": "always",
+                    "label": "Always"
+                }, {
+                    "key": "hover",
+                    "label": "On hover"
+                }]
+                onChosen: (key) => {
+                    return Prefs.desktopIconNames = key;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Size"
+            resetKey: "desktopIconSize"
+            enabled: Prefs.desktopIcons
+            disabledReason: "Turn on Show icons first."
+
+            M3Segmented {
+                width: Theme.dp(240)
+                current: Prefs.desktopIconSize
+                options: [{
+                    "key": "small",
+                    "label": "Small"
+                }, {
+                    "key": "medium",
+                    "label": "Medium"
+                }, {
+                    "key": "large",
+                    "label": "Large"
+                }]
+                onChosen: (key) => {
+                    return Prefs.desktopIconSize = key;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Start from"
+            resetKey: "desktopIconsCorner"
+            enabled: Prefs.desktopIcons
+            disabledReason: "Turn on Show icons first."
+            description: "New icons fill the columns from this side of the screen, top to bottom."
+
+            M3Segmented {
+                width: Theme.dp(180)
+                current: Prefs.desktopIconsCorner
+                options: [{
+                    "key": "left",
+                    "label": "Left"
+                }, {
+                    "key": "right",
+                    "label": "Right"
+                }]
+                onChosen: (key) => {
+                    return Prefs.desktopIconsCorner = key;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Arrange by"
+            resetKey: "desktopIconsSort"
+            enabled: Prefs.desktopIcons
+            disabledReason: "Turn on Show icons first."
+            description: "The order new icons take, and the one Arrange Icons (right-click the desktop) puts everything back in. Folders come first."
+
+            M3Segmented {
+                width: Theme.dp(260)
+                current: Prefs.desktopIconsSort
+                options: [{
+                    "key": "name",
+                    "label": "Name"
+                }, {
+                    "key": "type",
+                    "label": "Type"
+                }, {
+                    "key": "date",
+                    "label": "Modified"
+                }]
+                onChosen: (key) => {
+                    Prefs.desktopIconsSort = key;
+                    DesktopIcons.arrange();
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Open with"
+            resetKey: "desktopIconsOpen"
+            enabled: Prefs.desktopIcons
+            disabledReason: "Turn on Show icons first."
+
+            M3Segmented {
+                width: Theme.dp(240)
+                current: Prefs.desktopIconsOpen
+                options: [{
+                    "key": "double",
+                    "label": "Double click"
+                }, {
+                    "key": "single",
+                    "label": "Single click"
+                }]
+                onChosen: (key) => {
+                    return Prefs.desktopIconsOpen = key;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Previews"
+            resetKey: "desktopIconsThumbs"
+            enabled: Prefs.desktopIcons
+            disabledReason: "Turn on Show icons first."
+            description: "Pictures show themselves instead of a generic icon, and so do videos and documents a file manager has already made a thumbnail for."
+
+            M3Switch {
+                checked: Prefs.desktopIconsThumbs
+                onToggled: (v) => {
+                    return Prefs.desktopIconsThumbs = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Hidden files"
+            resetKey: "desktopIconsHidden"
+            enabled: Prefs.desktopIcons
+            disabledReason: "Turn on Show icons first."
+            description: "Files whose name starts with a dot."
+
+            M3Switch {
+                checked: Prefs.desktopIconsHidden
+                onToggled: (v) => {
+                    return Prefs.desktopIconsHidden = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Home folder"
+            resetKey: "desktopIconsHome"
+            enabled: Prefs.desktopIcons
+            disabledReason: "Turn on Show icons first."
+
+            M3Switch {
+                checked: Prefs.desktopIconsHome
+                onToggled: (v) => {
+                    return Prefs.desktopIconsHome = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Trash"
+            resetKey: "desktopIconsTrash"
+            enabled: Prefs.desktopIcons
+            disabledReason: "Turn on Show icons first."
+            description: "Drop files on it to throw them away; right-click it to empty it."
+
+            M3Switch {
+                checked: Prefs.desktopIconsTrash
+                onToggled: (v) => {
+                    return Prefs.desktopIconsTrash = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Add an app"
+            enabled: Prefs.desktopIcons
+            disabledReason: "Turn on Show icons first."
+            description: "Puts a launcher for it on the desktop. Launchers that arrive any other way ask before they run the first time."
+            showDivider: false
+
+            M3Button {
+                text: "Choose\u2026"
+                variant: "tonal"
+                enabled: Prefs.desktopIcons
+                onClicked: Prefs.appPickerRequested("::desktop")
             }
 
         }

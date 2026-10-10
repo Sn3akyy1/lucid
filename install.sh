@@ -333,6 +333,7 @@ else
         --exclude='./lucidmoji/state.json' \
         --exclude='./lucidkeys/state.json' \
         --exclude='./lucidwidgets/widgets.json' \
+        --exclude='./luciddesktop/icons.json' \
         . | tar -C "$SHELL_DIR" -xf -
     say "  shell files -> $SHELL_DIR"
 fi
@@ -468,6 +469,12 @@ seed moji-config.json      lucidmoji/config.json
 seed moji-state.json       lucidmoji/state.json
 seed keys-state.json       lucidkeys/state.json
 seed widgets.json          lucidwidgets/widgets.json
+# where the desktop icons sit has no shipped default: only carried over
+if [[ ! -s "$SHELL_DIR/luciddesktop/icons.json" && -n "$BACKUP" && -s "$BACKUP/luciddesktop/icons.json" ]]; then
+    mkdir -p "$SHELL_DIR/luciddesktop"
+    cp "$BACKUP/luciddesktop/icons.json" "$SHELL_DIR/luciddesktop/icons.json"
+    say "  carried over luciddesktop/icons.json"
+fi
 
 # the media visualiser runs `cava -p ~/.config/cava/quickshell.conf`. without
 # that file cava falls back to its own defaults, which emit ncurses output
