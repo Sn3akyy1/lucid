@@ -961,7 +961,7 @@ ShellRoot {
     }
 
     Instantiator {
-        model: [osdMod, toastMod, keyboardMod, polkitMod, keybindSheetMod, whatsNewMod]
+        model: [toastMod, keyboardMod, polkitMod, keybindSheetMod, whatsNewMod]
 
         Binding {
             required property var modelData
@@ -972,6 +972,15 @@ ShellRoot {
             when: Monitors.shellPlacement !== null
         }
 
+    }
+
+    // the osd follows the shell too, unless no display is picked for it: then
+    // it shows on the one being worked on, as the launcher does (Osd.placement)
+    Binding {
+        target: osdMod
+        property: "screen"
+        value: osdMod.placement || Monitors.shellPlacement
+        when: (osdMod.placement || Monitors.shellPlacement) !== null
     }
 
     Connections {

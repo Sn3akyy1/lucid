@@ -122,7 +122,18 @@ PanelWindow {
         osdWindow.cardVisible = v;
     }
 
+    // with no display picked for the shell the card has no home of its own, so
+    // it comes up on the one being worked on. it only moves while it is down:
+    // moving a shown card would cut its animation off. shell.qml applies it
+    property var aimedScreen: null
+    // dropped once a display is picked, or once that one is unplugged: a
+    // surface sent to a dead display is never drawn
+    readonly property var placement: Prefs.monitorShellScreen === "" && osdWindow.aimedScreen && Quickshell.screens.indexOf(osdWindow.aimedScreen) >= 0 ? osdWindow.aimedScreen : null
+
     function trigger() {
+        if (!osdWindow.cardVisible && Prefs.monitorShellScreen === "")
+            osdWindow.aimedScreen = Monitors.focusedScreen;
+
         osdWindow.setCardVisible(true);
         hideTimer.restart();
         if (osdWindow.isLevelType) {
