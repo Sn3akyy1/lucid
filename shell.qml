@@ -227,7 +227,10 @@ ShellRoot {
                 let any = false;
                 let trailing = 0;
                 for (let i = 0; i < widths.length; i++) {
-                    out.push(x);
+                    // whole pixels: a module sliding along while a neighbour opens
+                    // would otherwise land between them, and the edges of the gaps
+                    // on either side shimmer as it goes
+                    out.push(Math.round(x));
                     const w = widths[i];
                     if (w > 0.5) {
                         trailing = keys && bar.joinedAfter(keys, widths, i) ? 0 : (gap > 0 ? gap * Math.min(1, w / gap) : 0);
@@ -636,6 +639,31 @@ ShellRoot {
                         easing.bezierCurve: Theme.easeEmphasizedDecel
                     }
 
+                }
+
+            }
+
+            // behind every seam between two joined modules, a strip of the bar's own
+            // colour: with modules on whole pixels and widths that are not, the two
+            // edges can fall a fraction apart and let the wallpaper show through
+            Repeater {
+                model: bar.modules
+
+                Rectangle {
+                    id: bridge
+
+                    required property var modelData
+
+                    readonly property string key: bar.keyOf(bridge.modelData)
+                    readonly property var mate: bridge.key !== "" ? bar.joinedMate(bridge.key, false) : null
+
+                    visible: bridge.mate !== null
+                    x: bridge.mate ? bridge.mate.x - Theme.dp(1) : 0
+                    y: bridge.mate ? Math.max(bridge.modelData.y, bridge.mate.y) : 0
+                    z: 0
+                    width: Theme.dp(2)
+                    height: bridge.mate ? Math.min(bridge.modelData.height, bridge.mate.height) : 0
+                    color: Theme.bg
                 }
 
             }
