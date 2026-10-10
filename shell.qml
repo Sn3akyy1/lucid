@@ -388,6 +388,47 @@ ShellRoot {
             }
             readonly property real sideMargin: Theme.dp(Prefs.barSideMargin)
 
+            // busy: a panel is open somewhere on the bar, so it stays out
+            // regardless of the pointer. held: the pointer is on the reveal
+            // strip or already on a module - either keeps it from hiding
+            readonly property bool barBusy: bar.modules.some((m) => {
+                return m.expanded === true || m.anyOpen === true;
+            })
+            property bool slidingAway: false
+            readonly property bool heldByPointer: revealArea.containsMouse || (!bar.slidingAway && bar.modules.some((m) => {
+                return m.visible && (m.surfaceHovered === true || m.compactHovered === true);
+            }))
+            readonly property bool barRevealed: !Prefs.barAutoHide || bar.barBusy || bar.heldByPointer
+            // how far the compact content sits above its resting y=0 while
+            // hidden - past the window's own top edge, so it clips away for free
+            property real hiddenOffset: bar.barRevealed ? 0 : -(Theme.dp(Prefs.barHeight) + Prefs.effectiveBarTopMargin + Theme.dp(4))
+
+            Behavior on hiddenOffset {
+                NumberAnimation {
+                    duration: Theme.durLong
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.easeEmphasizedDecel
+                }
+
+            }
+
+            onBarRevealedChanged: {
+                if (bar.barRevealed) {
+                    bar.slidingAway = false;
+                    slideAwayTimer.stop();
+                } else {
+                    bar.slidingAway = true;
+                    slideAwayTimer.restart();
+                }
+            }
+
+            Timer {
+                id: slideAwayTimer
+
+                interval: Theme.durLong
+                onTriggered: bar.slidingAway = false
+            }
+
             Component.onCompleted: laidOutTimer.start()
 
             Timer {
@@ -399,7 +440,7 @@ ShellRoot {
 
             color: "transparent"
             implicitHeight: bar.screen ? bar.screen.height - Prefs.effectiveBarTopMargin : Theme.dp(800)
-            exclusiveZone: (Prefs.barEnabled && bar.anyModuleShown) ? Theme.dp(Prefs.barHeight) + Prefs.shellGap : 0
+            exclusiveZone: (Prefs.barEnabled && bar.anyModuleShown && !Prefs.barAutoHide) ? Theme.dp(Prefs.barHeight) + Prefs.shellGap : 0
 
             anchors {
                 top: true
@@ -412,6 +453,95 @@ ShellRoot {
                 top: Prefs.effectiveBarTopMargin
             }
 
+            // full bar: one strip across the whole top edge, under every module
+            Rectangle {
+                id: fullStrip
+
+                visible: Prefs.barFull && bar.anyModuleShown
+                x: 0
+                y: bar.hiddenOffset
+                z: -2
+                width: bar.width
+                height: Theme.dp(Prefs.barHeight)
+                color: Theme.bg
+
+                Behavior on color {
+                    enabled: bar.laidOut
+
+                    ColorAnimation {
+                        duration: Theme.barMs(260)
+                        easing.type: Easing.OutCubic
+                    }
+
+                }
+
+            }
+
+            // rounded corners hanging off the strip where it meets the screen sides
+            BarFlare {
+                visible: fullStrip.visible && size > 0
+                mirrored: true
+                size: Theme.dp(Prefs.barFullCorner)
+                x: 0
+                y: Theme.dp(Prefs.barHeight) + bar.hiddenOffset
+                z: -2
+            }
+
+            BarFlare {
+                visible: fullStrip.visible && size > 0
+                size: Theme.dp(Prefs.barFullCorner)
+                x: bar.width - width
+                y: Theme.dp(Prefs.barHeight) + bar.hiddenOffset
+                z: -2
+            }
+
+            // full bar: an open panel hangs off the strip, so round the two concave
+            // corners where its sides meet the strip's lower edge. They grow with
+            // the panel's height, so a folding panel takes them with it
+            Repeater {
+                model: (Prefs.barFull && !Prefs.barPopupMode) ? bar.modules.filter((m) => {
+                    return m !== workspacesMod;
+                }) : []
+
+                Item {
+                    id: panelFlares
+
+                    required property var modelData
+
+                    // surfaceOpen, not the height alone: a pill that is only
+                    // resizing its compact face is see-through on the full bar
+                    readonly property real reach: (panelFlares.modelData.visible && panelFlares.modelData.surfaceOpen === true) ? panelFlares.modelData.height - Theme.dp(Prefs.barHeight) : 0
+
+                    // never past the screen edge, and never into the screen corner
+                    // that already rounds that side
+                    function sizeFor(toTheLeft) {
+                        var m = panelFlares.modelData;
+                        var corner = Theme.dp(Prefs.barFullCorner);
+                        var toEdge = toTheLeft ? m.x : bar.width - m.x - m.width;
+                        var room = toEdge - (toEdge < corner * 2 ? corner : 0);
+                        return Math.max(0, Math.floor(Math.min(corner, panelFlares.reach, room)));
+                    }
+
+                    anchors.fill: parent
+                    z: -1
+
+                    BarFlare {
+                        size: panelFlares.sizeFor(true)
+                        x: panelFlares.modelData.x - width + 0.5
+                        y: Theme.dp(Prefs.barHeight)
+                    }
+
+                    BarFlare {
+                        mirrored: true
+                        size: panelFlares.sizeFor(false)
+                        x: panelFlares.modelData.x + panelFlares.modelData.width - 0.5
+                        y: Theme.dp(Prefs.barHeight)
+                    }
+
+                }
+
+            }
+
             Mpris {
                 id: mprisMod
 
@@ -420,6 +550,7 @@ ShellRoot {
                 hostWindow: bar
                 x: bar.placeFor("media")
                 anchors.top: parent.top
+                anchors.topMargin: bar.hiddenOffset
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling
@@ -442,6 +573,7 @@ ShellRoot {
                 hostWindow: bar
                 x: bar.placeFor("tray")
                 anchors.top: parent.top
+                anchors.topMargin: bar.hiddenOffset
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling
@@ -463,6 +595,7 @@ ShellRoot {
 
                 hostWindow: bar
                 anchors.top: parent.top
+                anchors.topMargin: bar.hiddenOffset
                 x: bar.placeFor("clock")
 
                 Behavior on x {
@@ -487,6 +620,7 @@ ShellRoot {
                 hostWindow: bar
                 x: bar.placeFor("notifications")
                 anchors.top: parent.top
+                anchors.topMargin: bar.hiddenOffset
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling
@@ -511,6 +645,7 @@ ShellRoot {
                 hostWindow: bar
                 x: bar.placeFor("privacy")
                 anchors.top: parent.top
+                anchors.topMargin: bar.hiddenOffset
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling
@@ -533,6 +668,7 @@ ShellRoot {
                 hostWindow: bar
                 x: bar.placeFor("power")
                 anchors.top: parent.top
+                anchors.topMargin: bar.hiddenOffset
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling
@@ -555,6 +691,7 @@ ShellRoot {
                 hostWindow: bar
                 x: bar.placeFor("window")
                 anchors.top: parent.top
+                anchors.topMargin: bar.hiddenOffset
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling
@@ -578,6 +715,7 @@ ShellRoot {
                 mprisMod: mprisMod
                 x: bar.placeFor("system")
                 anchors.top: parent.top
+                anchors.topMargin: bar.hiddenOffset
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling
@@ -634,7 +772,7 @@ ShellRoot {
                         hovered: flares.modHovered
                         size: flares.flareFor(true)
                         x: flares.modelData ? flares.modelData.x - width + flares.bite : 0
-                        y: 0
+                        y: bar.hiddenOffset
                     }
 
                     BarFlare {
@@ -642,7 +780,7 @@ ShellRoot {
                         mirrored: true
                         size: flares.flareFor(false)
                         x: flares.modelData ? flares.modelData.x + flares.modelData.width - flares.bite : 0
-                        y: 0
+                        y: bar.hiddenOffset
                     }
 
                 }
@@ -655,7 +793,7 @@ ShellRoot {
                 hostWindow: bar
                 dockMod: dock
                 restX: bar.placeFor("workspaces")
-                restY: 0
+                restY: bar.hiddenOffset
 
                 Behavior on restX {
                     enabled: bar.laidOut && bar.shuffling
@@ -708,6 +846,24 @@ ShellRoot {
                     mod: windowMod
                 }
 
+                Region {
+                    item: Prefs.barAutoHide ? revealArea : null
+                }
+
+            }
+
+            // touching this strip reveals the bar
+            MouseArea {
+                id: revealArea
+
+                x: 0
+                y: 0
+                width: bar.width
+                height: Theme.dp(4)
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+                enabled: Prefs.barAutoHide
+                visible: Prefs.barAutoHide
             }
 
             // the overview and the dock menu shut each other
@@ -735,6 +891,13 @@ ShellRoot {
 
             Region {
                 id: barBlurRegion
+
+                Region {
+                    x: 0
+                    y: fullStrip.visible ? bar.hiddenOffset : 0
+                    width: fullStrip.visible ? Math.round(bar.width) : 0
+                    height: fullStrip.visible ? Theme.dp(Prefs.barHeight) : 0
+                }
 
                 ModuleRegion {
                     blur: true

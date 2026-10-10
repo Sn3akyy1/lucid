@@ -29,9 +29,12 @@ Singleton {
     }
 
     readonly property bool barNotch: root.barStyle === "notch"
+    readonly property bool barFull: root.barStyle === "full"
+    // notches and the full bar both sit flush against the top edge
+    readonly property bool barFlush: root.barNotch || root.barFull
     readonly property bool dockNotch: root.dockStyle === "notch"
     readonly property int barPillRadius: Math.min(Theme.rad(18), Math.round(Theme.pill(Theme.dp(root.barHeight))))
-    readonly property int effectiveBarTopMargin: root.barNotch ? 0 : Theme.dp(root.barTopMargin)
+    readonly property int effectiveBarTopMargin: root.barFlush ? 0 : Theme.dp(root.barTopMargin)
     readonly property int effectiveDockBottomMargin: root.dockNotch ? 0 : Theme.dp(root.dockBottomMargin)
     readonly property int dockItemRadius: Math.min(Theme.rad(root.dockRadius), Math.round(Theme.pill(Theme.dp(root.dockIconSize))))
     readonly property int dockIconInset: Math.max(0, Math.min(Theme.dp(root.dockIconPadding), Math.floor(Theme.dp(root.dockIconSize) / 2) - Theme.dp(6)))
@@ -568,6 +571,10 @@ Singleton {
     property alias dockHoverEffect: s.dockHoverEffect
     property alias barMotionScale: s.barMotionScale
     property alias barNotchFlare: s.barNotchFlare
+    // the concave corners the full bar hangs against the screen sides
+    property alias barFullCorner: s.barFullCorner
+    property alias barHoverOpen: s.barHoverOpen
+    property alias barAutoHide: s.barAutoHide
     property alias dockNotchFlare: s.dockNotchFlare
     property alias dockAutoHide: s.dockAutoHide
     property alias dockShowIndicators: s.dockShowIndicators
@@ -743,7 +750,7 @@ Singleton {
         { "key": "colours", "icon": "format_color_fill", "keys": "matugen style scheme contrast your colour hex picker templates apps render variables", "group": "Appearance", "label": "Colours", "title": "Colours", "blurb": "How Matugen and Your colour build a palette, the applications that follow it, and templates of your own" },
         { "key": "palettes", "icon": "colors", "keys": "gallery schemes base16 base24 tinted import repo file editor export", "group": "Appearance", "label": "Palettes", "title": "Palettes", "blurb": "A gallery of colour schemes, and themes from a repo or a file" },
         { "key": "environment", "icon": "format_paint", "keys": "cursor icons gtk qt fonts application theme", "group": "Appearance", "label": "Environment", "title": "Environment", "blurb": "Cursors, icons, fonts and application themes, across GTK, Qt and Hyprland alike" },
-        { "key": "bar", "icon": "toolbar", "keys": "status height margin spacing modules workspaces clock media tray system popup", "group": "Desktop", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
+        { "key": "bar", "icon": "toolbar", "keys": "status height margin spacing modules workspaces clock media tray system popup full hover auto-hide autohide corners", "group": "Desktop", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
         { "key": "dock", "icon": "dock_to_bottom", "keys": "icons size magnify autohide pinned running indicators tooltips windows notch radius corners rounding padding inset", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
         { "key": "launcher", "icon": "search", "keys": "launcher search spotlight apps results width density rows chips modes prefix engine web emoji run clipboard calculator frequent recent", "group": "Desktop", "label": "Launcher", "title": "Launcher", "blurb": "The search panel the dock opens into: how wide it is, how its results read, and what it looks through" },
         { "key": "widgets", "icon": "widgets", "keys": "desktop cards clock calendar weather presets", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
@@ -962,6 +969,9 @@ Singleton {
         "dockHoverEffect": 1,
         "barMotionScale": 1.35,
         "barNotchFlare": 14,
+        "barFullCorner": 18,
+        "barHoverOpen": false,
+        "barAutoHide": false,
         "dockNotchFlare": 14,
         "dockAutoHide": false,
         "dockShowIndicators": true,
@@ -1553,6 +1563,9 @@ Singleton {
             property real dockHoverEffect: 1
             property real barMotionScale: 1.35
             property int barNotchFlare: 14
+            property int barFullCorner: 18
+            property bool barHoverOpen: false
+            property bool barAutoHide: false
             property int dockNotchFlare: 14
             property bool dockAutoHide: false
             property bool dockShowIndicators: true

@@ -65,10 +65,10 @@ Column {
 
         SettingRow {
             title: "Bar style"
-            description: "Islands float free of the screen edge. Notches sit flush against it, squaring off the corners that meet it."
+            description: "Islands float free of the screen edge. Notches sit flush against it, squaring off the corners that meet it. Full bar joins every module on one continuous strip across the top."
 
             M3Segmented {
-                width: Theme.dp(260)
+                width: Theme.dp(360)
                 current: Prefs.barStyle
                 options: [{
                     "key": "island",
@@ -76,6 +76,9 @@ Column {
                 }, {
                     "key": "notch",
                     "label": "Notches"
+                }, {
+                    "key": "full",
+                    "label": "Full bar"
                 }]
                 onChosen: (key) => {
                     return Prefs.barStyle = key;
