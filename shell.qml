@@ -944,7 +944,8 @@ ShellRoot {
     // the dock can be sent to one of its own (the bar places itself), the rest
     // follow the shell. gated, because unset must leave the choice to hyprland,
     // which null would not. emoji and screenshot act on the window you are in,
-    // so they follow the focus
+    // so they follow the focus, and so does the launcher while the dock is off
+    // (Dock.launcherPlacement)
     Instantiator {
         model: [dock, clickCatcher]
 
@@ -953,8 +954,8 @@ ShellRoot {
 
             target: modelData
             property: "screen"
-            value: Monitors.dockPlacement
-            when: Monitors.dockPlacement !== null
+            value: dock.launcherPlacement || Monitors.dockPlacement
+            when: (dock.launcherPlacement || Monitors.dockPlacement) !== null
         }
 
     }
