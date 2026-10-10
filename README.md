@@ -870,6 +870,17 @@ If you already use matugen, the installer **appends** its Quickshell template
 to your `config.toml` and backs up the original — your existing templates are
 left alone.
 
+Qt and KDE apps follow the theme too when qt6ct is installed. Qt widget apps
+read their palette from qt6ct, so the installer points `qt6ct.conf` at the one
+a template writes, `~/.config/qt6ct/colors/lucid.conf`. KDE apps (Dolphin,
+Kate, Okular…) need one more step: outside Plasma, they swap that palette for
+Breeze as they start unless `kdeglobals` names a colour scheme. So a second
+template writes `~/.local/share/color-schemes/Lucid.colors`, and `kdeglobals`
+gets `[UiSettings] ColorScheme=Lucid`. A palette you already picked in qt6ct,
+or a scheme already named in `kdeglobals`, stays as it is. Both toolkits only
+read colours when an app starts, so an app that is already open changes the
+next time you open it.
+
 Every template in `~/.config/matugen/config.toml` follows whichever palette is
 active, not only the wallpaper ones: picking Nord or Catppuccin renders them
 with that theme's colours. That makes the config the place to theme any other

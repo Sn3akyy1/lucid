@@ -76,6 +76,8 @@ def catalog():
         ("steam-material", "Steam (Millennium)", "steam-material.css",
          "~/.local/share/Steam/millennium/themes/Material-Theme/css/main/colors/matugen.css",
          "dir:~/.local/share/Steam/millennium/themes/Material-Theme", ""),
+        ("qt6ct", "Qt apps (qt6ct)", "qt6ct-colors.conf", "~/.config/qt6ct/colors/lucid.conf", "cmd:qt6ct", ""),
+        ("kde", "KDE apps", "kde-colors.colors", "~/.local/share/color-schemes/Lucid.colors", "cmd:qt6ct", ""),
         ("firefox-website-colors", "Firefox", "firefox-colors.css",
          str(ff / "chrome/colors.css") if ff else "", "profile" if ff else "never", ""),
         ("zen", "Zen Browser", "zen-userchrome.css",
