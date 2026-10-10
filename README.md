@@ -425,6 +425,33 @@ tucked under the dock is the point. Widgets sit **below** your windows by
 default so they behave like a desktop, and step aside for fullscreen windows;
 both are switches on the Widgets page if you would rather they float on top.
 
+### Desktop icons
+
+Your `~/Desktop` folder on the wallpaper of the main display, sharing it with
+the widgets: a widget always wins, and an icon under one steps to the nearest
+free cell — live while the widget is dragged — and back once it moves away.
+Turn them on in **Settings → General → Desktop icons**.
+
+They are drawn as **things on a desk** rather than copies of a file manager's
+icons: a folder whose flap opens under the pointer, a page with its corner
+folded and its type on a tab, a trash can whose lid lifts and that fills up,
+pictures as prints on paper of the wallpaper's hue, tilted a few degrees until
+you point at them. The other looks are Shapes (each kind on a Material shape
+in the palette's colours, square with the shell's corners or expressive),
+Glass (a frosted card each) and Classic (the icon theme as it is). Names read
+the wallpaper under them and pick light or dark text.
+
+Click, Ctrl/Shift-click or draw a box to select — the same box that selects
+widgets — then drag: into a folder, onto the trash, into a file manager or a
+browser, or anywhere on the grid. Files dropped in from elsewhere are moved on
+the same drive and copied from another one. Hold the pointer on a folder for a
+fan of what is inside and a count; Space opens a quick look (←/→ to step,
+Enter to open); F2 renames in place; Delete moves to the trash. Right-click
+for New Folder, Paste, Arrange Icons, Hide Icons and Add an app (a launcher
+for any installed application; a launcher without the executable bit asks
+before it runs). Size, corner, order, one or two clicks, previews, hidden files
+and the Home and Trash icons are on the same Settings card.
+
 ### Special workspaces
 
 Scratchpads that slide over whatever workspace you are on, and hide again with
