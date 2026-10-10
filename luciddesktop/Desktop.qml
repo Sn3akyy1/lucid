@@ -367,6 +367,7 @@ Variants {
 
                     fieldW: menuLayer.width
                     fieldH: menuLayer.height
+                    monitor: Hyprland.monitorFor(unit.modelData)
                     onChosen: (id) => {
                         return unit.run(id);
                     }

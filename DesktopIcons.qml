@@ -1114,6 +1114,33 @@ Singleton {
         return out;
     }
 
+    // paired devices that take files over bluetooth: the last one sent to,
+    // then the connected ones, then by name
+    function btTargets() {
+        if (!Bt.on || !Bt.adapter.devices)
+            return [];
+
+        var rank = (d) => (d.address === Bt.lastSendTarget ? 2 : 0) + (d.connected ? 1 : 0);
+        var out = Bt.adapter.devices.values.filter((d) => d.paired && Bt.canReceiveFiles(d.address));
+        out.sort((a, b) => (rank(b) - rank(a)) || (a.name || "").localeCompare(b.name || ""));
+        return out.map((d) => {
+            var icon = (d.icon || "").toLowerCase();
+            var notes = [];
+            if (d.address === Bt.lastSendTarget)
+                notes.push("Last used");
+
+            if (d.connected)
+                notes.push("Connected");
+
+            return {
+                "address": d.address,
+                "name": d.name || d.address,
+                "note": notes.join(" · "),
+                "glyph": icon.indexOf("phone") >= 0 || icon.indexOf("tablet") >= 0 ? root.glyphs.phone : (icon.indexOf("computer") >= 0 ? root.glyphs.computer : root.glyphs.bluetooth)
+            };
+        });
+    }
+
     // the right-click menu for the icons under the pointer
     function openMenu(keys, px, py) {
         var acts = [];
@@ -1176,6 +1203,24 @@ Singleton {
                 "divider": true
             });
         }
+        // plain files only: object push carries no folders. One entry, the
+        // devices in its side panel, however many are paired
+        var sendable = files.filter((f) => f.kind === "file");
+        var targets = sendable.length > 0 ? root.btTargets() : [];
+        if (targets.length > 0)
+            acts.push({
+            "id": "icon:bt",
+            "label": "Send via Bluetooth",
+            "glyph": root.glyphs.bluetooth,
+            "divider": true,
+            "children": targets.map((d) => ({
+                "id": "icon:bt:" + d.address,
+                "label": d.name,
+                "note": d.note,
+                "glyph": d.glyph
+            }))
+        });
+
         root.menuRequested(px, py, acts);
     }
 
@@ -1198,6 +1243,13 @@ Singleton {
             root.copyPath(keys);
         } else if (id === "icon:trash") {
             root.trash(keys);
+        } else if (id.indexOf("icon:bt:") === 0) {
+            var addr = id.slice(8);
+            var dev = Bt.deviceAt(addr);
+            var paths = root.filesOf(keys).filter((f) => f.kind === "file").map((f) => f.path);
+            if (paths.length > 0)
+                Bt.sendFiles(addr, dev ? dev.name : "", paths);
+
         } else if (id === "newFolder") {
             root.newFolder();
         } else if (id === "paste") {
@@ -1223,7 +1275,10 @@ Singleton {
         "arrange": "M3 18h6v-2H3v2ZM3 6v2h18V6H3Zm0 7h12v-2H3v2Z",
         "folder": "M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2Z",
         "file": "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm-1 7V3.5L18.5 9H13Z",
-        "home": "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5Z"
+        "home": "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5Z",
+        "phone": "M17 1.01 7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99ZM17 19H7V5h10v14Z",
+        "computer": "M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4ZM4 6h16v10H4V6Z",
+        "bluetooth": "M17.71 7.71 12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29ZM13 5.83l1.88 1.88L13 9.59V5.83Zm1.88 10.46L13 18.17v-3.76l1.88 1.88Z"
     })
 
     // ---- plumbing ----------------------------------------------------------

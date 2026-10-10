@@ -26,6 +26,8 @@ Singleton {
 
     // devices that announce OBEX object push (phones, computers): the ones files can go to
     property var pushTargets: []
+    // where files went last, first in the lists that pick a device
+    property string lastSendTarget: ""
     readonly property int deviceCount: (root.adapter && root.adapter.devices) ? root.adapter.devices.values.length : 0
 
     // pairings started while pairable was off, see pair()
@@ -214,6 +216,7 @@ Singleton {
     // lucidprefs/bt-send.py does the sending and its notifications; with no files it asks
     // for them first. It runs detached so a shell restart does not cut a transfer short.
     function sendFiles(address, name, files) {
+        root.lastSendTarget = address;
         const helper = Qt.resolvedUrl("lucidprefs/bt-send.py").toString().replace("file://", "");
         Quickshell.execDetached(["python3", helper, "--address", address, "--name", name || "", "--"].concat(files || []));
     }
@@ -236,6 +239,7 @@ Singleton {
     }
 
     onDeviceCountChanged: root.probePush()
+    Component.onCompleted: root.probePush()
 
     // adapter address, alias and the rfkill state, in one shot
     Process {
