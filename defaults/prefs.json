@@ -40,6 +40,8 @@
     "matugenSourceImage": "",
     "matugenSourceIndex": 0,
     "motionScale": 1,
+    "osdStyle": "island",
+    "osdToggles": "osd",
     "showClock": true,
     "showKbLayout": true,
     "showMedia": true,

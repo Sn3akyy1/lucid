@@ -509,6 +509,11 @@ Singleton {
     property alias locationTz: s.locationTz
     property alias timeZoneAuto: s.timeZoneAuto
     property alias doNotDisturb: s.doNotDisturb
+    readonly property bool osdNotch: root.osdStyle === "notch"
+    // caps lock, num lock and the microphone show as a toast instead of on the osd
+    readonly property bool osdTogglesToast: root.osdToggles === "toast"
+    property alias osdStyle: s.osdStyle
+    property alias osdToggles: s.osdToggles
     property alias toastTimeout: s.toastTimeout
     property alias toastOnLayout: s.toastOnLayout
     property alias toastOnGameMode: s.toastOnGameMode
@@ -737,7 +742,7 @@ Singleton {
     // every settings page, for the app's rail and for the launcher's search
     readonly property var settingsPages: [
         { "key": "users", "icon": "account_circle", "keys": "user account password avatar login admin sudo", "group": "Account", "label": "Account", "title": "Users and Accounts", "blurb": "Who may sign in to this machine, what they are called and what they are allowed to do", "hidden": true },
-        { "key": "general", "icon": "tune", "keys": "style islands notches accent darkness surface tint motion animation speed font scale typography interface size zoom smaller bigger density", "group": "Appearance", "label": "General", "title": "General", "blurb": "Size, shape, colour and motion across the whole shell" },
+        { "key": "general", "icon": "tune", "keys": "style islands notches osd accent darkness surface tint motion animation speed font scale typography interface size zoom smaller bigger density", "group": "Appearance", "label": "General", "title": "General", "blurb": "Size, shape, colour and motion across the whole shell" },
         { "key": "glass", "icon": "blur_on", "keys": "blur transparency opacity translucent frosted kitty terminal windows", "group": "Appearance", "label": "Glass", "title": "Glass", "blurb": "How far the desktop shows through the shell, the terminal and your windows" },
         { "key": "theme", "icon": "palette", "keys": "colour color scheme wallpaper matugen pywal catppuccin gruvbox nord dark light mode import", "group": "Appearance", "label": "Theme", "title": "Theme and Appearance", "blurb": "Colour schemes, wallpapers and themes you import" },
         { "key": "colours", "icon": "format_color_fill", "keys": "matugen style scheme contrast your colour hex picker templates apps render variables", "group": "Appearance", "label": "Colours", "title": "Colours", "blurb": "How Matugen and Your colour build a palette, the applications that follow it, and templates of your own" },
@@ -756,7 +761,7 @@ Singleton {
         { "key": "network", "icon": "wifi", "keys": "wifi ethernet vpn dns ip proxy internet", "group": "Devices", "label": "Network", "title": "Network", "blurb": "Wi-Fi, wired, VPN and how this machine gets its address" },
         { "key": "bluetooth", "icon": "bluetooth", "keys": "devices pair headphones", "group": "Devices", "label": "Bluetooth", "title": "Bluetooth and Devices", "blurb": "The radio, what it is paired with, and the phone you connect to it" },
         { "key": "kdeconnect", "icon": "smartphone", "keys": "phone kde connect files notifications clipboard", "group": "Devices", "label": "Phone", "title": "Phone", "blurb": "Your phone on this machine over KDE Connect: files, notifications, clipboard and a remote", "toggle": "kdeConnectEnabled" },
-        { "key": "notifications", "icon": "notifications", "keys": "popups toasts do not disturb dnd quiet hours sound muted apps", "group": "System", "label": "Notifications", "title": "Notifications", "blurb": "Popups, quiet hours, sound and which applications may interrupt you", "toggle": "barNotifications" },
+        { "key": "notifications", "icon": "notifications", "keys": "popups toasts do not disturb dnd quiet hours sound muted apps caps lock num lock microphone", "group": "System", "label": "Notifications", "title": "Notifications", "blurb": "Popups, quiet hours, sound and which applications may interrupt you", "toggle": "barNotifications" },
         { "key": "idle", "icon": "bedtime", "keys": "sleep suspend lock dim screen off hypridle caffeine", "group": "System", "label": "Idle", "title": "Idle and Sleep", "blurb": "What happens when you walk away: dimming, locking, screen off and suspend", "toggle": "idleEnabled" },
         { "key": "datetime", "icon": "schedule", "keys": "clock time zone location 24 hour seconds week monday sunday timer pomodoro focus break alarm world", "group": "System", "label": "Date & Time", "title": "Date and Time", "blurb": "Where you are, the clock, and its timers" },
         { "key": "storage", "icon": "hard_drive", "keys": "disk space storage usage free full clean cleanup cache trash duplicates large files drives ssd health smart trim mount", "group": "System", "label": "Storage", "title": "Storage", "blurb": "What fills your drives, what could go, and the drives themselves" },
@@ -905,6 +910,8 @@ Singleton {
         "locationTz": "",
         "timeZoneAuto": true,
         "doNotDisturb": false,
+        "osdStyle": "island",
+        "osdToggles": "osd",
         "toastTimeout": 5,
         "toastOnLayout": true,
         "toastOnGameMode": true,
@@ -1496,6 +1503,8 @@ Singleton {
             property string locationTz: ""
             property bool timeZoneAuto: true
             property bool doNotDisturb: false
+            property string osdStyle: "island"
+            property string osdToggles: "osd"
             property int toastTimeout: 5
             property bool toastOnLayout: true
             property bool toastOnGameMode: true
