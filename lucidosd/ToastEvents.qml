@@ -17,6 +17,8 @@ Scope {
     id: root
 
     required property var toast
+    // the osd, whose caps lock, num lock and microphone changes can come here instead
+    property var osd: null
 
     property bool armed: false
 
@@ -745,6 +747,43 @@ Scope {
         }
     }
 
+    // caps lock, num lock and the microphone, when they are set to show here
+    // rather than on the osd. Something the user just did, so it cuts in at once;
+    // the osd only reports real changes, so there is nothing to settle or arm
+    function toggleEntry(kind, on) {
+        switch (kind) {
+        case "capslock":
+            return {
+                "key": "toggle-capslock",
+                "icon": "keyboard_capslock",
+                "label": on ? "Caps Lock on" : "Caps Lock off"
+            };
+        case "numlock":
+            return {
+                "key": "toggle-numlock",
+                "icon": "dialpad",
+                "label": on ? "Num Lock on" : "Num Lock off"
+            };
+        default:
+            return {
+                "key": "toggle-mic",
+                "icon": on ? "mic" : "mic_off",
+                "label": on ? "Microphone on" : "Microphone muted"
+            };
+        }
+    }
+
+    Connections {
+        function onToggled(kind, on) {
+            if (Prefs.osdTogglesToast)
+                root.toast.present(root.toggleEntry(kind, on));
+
+        }
+
+        target: root.osd
+        ignoreUnknownSignals: true
+    }
+
     IpcHandler {
         target: "toastevents"
 
@@ -757,6 +796,12 @@ Scope {
             // one of each is more than a real burst may hold
             root.toast.queueCap = 16;
             root.send("preview-layout", root.glyphPath("keyboard"), root.layoutName || "English (US)", "Keyboard layout");
+            if (Prefs.osdTogglesToast) {
+                const caps = root.toggleEntry("capslock", true);
+                const mic = root.toggleEntry("mic", false);
+                root.send("preview-caps", caps.icon, caps.label, "");
+                root.send("preview-mic", mic.icon, mic.label, "");
+            }
             root.send("preview-game", "game", "Game mode on", "");
             root.send("preview-charger", "battery_charging_full", "Charging", pct + "%");
             root.send("preview-low", "battery_alert", "Battery low", "20% left", true);
