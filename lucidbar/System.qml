@@ -2109,6 +2109,7 @@ BarPill {
                         width: subScroll.width
                         active: root.expanded && root.view === "bluetooth"
                         visible: root.view === "bluetooth"
+                        onCloseRequested: root.expanded = false
                     }
 
                     NightLightPanel {

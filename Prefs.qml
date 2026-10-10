@@ -584,6 +584,9 @@ Singleton {
 
     property alias btScanOnOpen: s.btScanOnOpen
     property alias btShowUnnamed: s.btShowUnnamed
+    property alias btReceive: s.btReceive
+    property alias btReceiveFolder: s.btReceiveFolder
+    property alias btReceiveAutoPaired: s.btReceiveAutoPaired
     property alias audioMoveStreams: s.audioMoveStreams
     property alias kdeConnectEnabled: s.kdeConnectEnabled
     property alias updateCheck: s.updateCheck
@@ -976,6 +979,9 @@ Singleton {
         "widgetOnTop": false,
         "btScanOnOpen": true,
         "btShowUnnamed": false,
+        "btReceive": true,
+        "btReceiveFolder": "",
+        "btReceiveAutoPaired": false,
         "audioMoveStreams": true,
         "kdeConnectEnabled": true,
         "updateCheck": true,
@@ -1567,6 +1573,9 @@ Singleton {
             property bool widgetOnTop: false
             property bool btScanOnOpen: true
             property bool btShowUnnamed: false
+            property bool btReceive: true
+            property string btReceiveFolder: ""
+            property bool btReceiveAutoPaired: false
             property bool audioMoveStreams: true
             property bool kdeConnectEnabled: true
             property bool updateCheck: true
