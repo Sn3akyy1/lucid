@@ -622,6 +622,40 @@ Singleton {
             "def": false
         }]
     }, {
+        "id": "github",
+        "name": "GitHub",
+        "blurb": "Your contributions, the way your profile draws them.",
+        "variants": [{
+            "id": "year",
+            "name": "Year",
+            "blurb": "The contribution graph. Drag an edge to fit more weeks.",
+            "w": 452,
+            "h": 176,
+            "resizable": true,
+            "minW": 200,
+            "minH": 150,
+            "maxW": 3840,
+            "maxH": 320
+        }, {
+            "id": "streak",
+            "name": "Streak",
+            "blurb": "Days in a row, today and the year, over the last few days.",
+            "w": 300,
+            "h": 168
+        }],
+        "options": [{
+            "key": "months",
+            "label": "Month names",
+            "type": "bool",
+            "def": true,
+            "variants": ["year"]
+        }, {
+            "key": "user",
+            "label": "",
+            "type": "hidden",
+            "def": ""
+        }]
+    }, {
         "id": "weather",
         "name": "Weather",
         "blurb": "Conditions now and over the next few days.",

@@ -116,6 +116,7 @@ Item {
         "media": "music song player spotify mpris audio album",
         "visualiser": "visualizer audio music sound cava spectrum bars",
         "games": "steam play gaming library",
+        "github": "git contributions commits code streak heatmap",
         "weather": "forecast temperature rain sun",
         "notes": "sticky memo text note write",
         "todo": "tasks checklist list reminders",

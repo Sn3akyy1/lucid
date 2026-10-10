@@ -88,7 +88,7 @@ Variants {
                 readonly property bool wantsKeyboard: {
                     for (var i = 0; i < Widgets.model.count; i++) {
                         var e = Widgets.model.get(i);
-                        if (!e.closing && (e.wtype === "notes" || e.wtype === "todo"))
+                        if (!e.closing && (e.wtype === "notes" || e.wtype === "todo" || e.wtype === "github"))
                             return true;
 
                     }

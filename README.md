@@ -407,6 +407,7 @@ variants of the same data:
 | Thermals | The graphics card in full with each fan and the power profile, arc gauges for GPU and CPU heat and the fans, or two temperatures and a fan speed in a row |
 | Network | A minute of download and upload drawn as a graph, the connection in detail (address, signal, VPN and whether the internet answers), or down and up as two numbers |
 | Games | Your installed Steam games, one click from playing: covers on a shelf, the last one you played over its artwork, or a list |
+| GitHub | Your contributions as your profile draws them, with as many weeks as you drag it wide, or your streak with today and the year. It reads the public profile page, so it only needs your username, no token |
 | Palette | The Material roles the shell is currently built from, click one to copy the hex |
 | Phone | Card, compact row, or a remote — the paired phone's battery and signal, with ring, ping, send a file and send the clipboard a click away; the remote drives whatever the phone is playing |
 
