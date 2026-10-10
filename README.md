@@ -699,7 +699,14 @@ past the neighbour and making a new workspace at the end.
   allow-wake, block, and battery where the device reports it. A connected pair
   of headphones also gets its **audio mode** — high quality versus headset,
   whichever profiles PipeWire offers for it — so switching to the microphone
-  no longer means a trip to `pavucontrol`
+  no longer means a trip to `pavucontrol`. **Receiving files**: a phone or
+  laptop sending something over Bluetooth gets a notification with Accept and
+  Decline; accepted, the same notification follows the transfer and the last
+  one opens the file or shows it in its folder. Pick the folder (Downloads by
+  default) and whether paired devices skip the question. **Sending files**: a
+  paired phone or computer gets *Send files* in its row, here and in the
+  control centre; pick the files and one notification follows it all —
+  waiting for the other side to accept, progress, Cancel, and how it ended
 - **Phone** — a *Phone* page that is a real KDE Connect client, not a launcher
   for someone else's. It drives the KDE Connect daemon over D-Bus, so it pairs,
   unpairs and answers pairing requests with the verification key shown on both
@@ -1007,6 +1014,7 @@ you know what's being pulled in.
 | `networkmanager` | Wi-Fi panel |
 | `qrencode` | The QR code that shares a saved Wi-Fi network. Without it the password still shows, with no code |
 | `bluez`, `bluez-utils` | Bluetooth panel and the Bluetooth settings page |
+| `bluez-obex`, `python-gobject` | Sending and receiving files over Bluetooth. Without `bluez-obex` the page says so, files sent to the machine are turned away and sending says what is missing |
 | `kdeconnect`, `python-gobject` | The KDE Connect page. The daemon is the backend and starts itself; `python-gobject` backs the bridge Lucid talks to it through. Without either the page says so and does nothing else |
 | `sshfs` | Browsing a phone's files from the phone widget or the KDE Connect page. Without it KDE Connect cannot mount the phone and the button does nothing |
 | `libpulse`, `wireplumber` | Volume, audio devices, and playing Lucid's sounds |
@@ -1097,6 +1105,7 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | `network` | `status` `list` `rescan` |
 | `nightlight` | `toggle` `on` `off` `status` |
 | `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |
+| `bluetooth` | `send <address> <path>` (an empty path opens the file chooser) |
 | `widgets` | `panel` `openPanel <screen>` `closePanel` `add <type> <variant>` `remove <uid>` `clear` `toggle` `lock` `unlock` `list` `catalogue` `settings` `resize <uid> <w> <h>` |
 | `moji` | `toggle` `open` `close` `emoji` `kaomoji` `gif` `center` |
 | `keyboard` | `toggle` `open` `close` `letters` `fnkeys` `center` `bigger` `smaller` |

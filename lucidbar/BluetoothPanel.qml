@@ -10,6 +10,8 @@ Item {
     property bool active: false
     property string expandedKey: ""
 
+    signal closeRequested()
+
     readonly property var adapter: Bluetooth.defaultAdapter
     readonly property bool btEnabled: adapter ? adapter.enabled : false
     readonly property var deviceGroups: root.computeGroups()
@@ -124,7 +126,8 @@ Item {
     onActiveChanged: {
         if (!root.active)
             root.expandedKey = "";
-
+        else
+            Bt.probePush();
     }
 
     Column {
@@ -970,25 +973,57 @@ Item {
 
                 }
 
-                Text {
+                Row {
                     visible: devItem.group !== "nearby" && !devItem.renaming
-                    text: "Rename"
-                    color: Theme.subtext
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(11)
-                    font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
-                    font.underline: renameArea.containsMouse
+                    spacing: Theme.dp(16)
 
-                    MouseArea {
-                        id: renameArea
+                    // object push needs no open link: a paired phone that is not
+                    // connected takes files just the same
+                    Text {
+                        visible: Bt.canReceiveFiles(devItem.modelData.address)
+                        text: "Send files"
+                        color: Theme.subtext
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(11)
+                        font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
+                        font.underline: sendArea.containsMouse
 
-                        anchors.fill: parent
-                        anchors.margins: -Theme.dp(4)
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            devItem.renameText = devItem.modelData.name;
-                            devItem.renaming = true;
+                        MouseArea {
+                            id: sendArea
+
+                            anchors.fill: parent
+                            anchors.margins: -Theme.dp(4)
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                // the file chooser opens next, and the panel would sit over it
+                                root.closeRequested();
+                                Bt.sendFiles(devItem.modelData.address, devItem.modelData.name, []);
+                            }
                         }
+
+                    }
+
+                    Text {
+                        text: "Rename"
+                        color: Theme.subtext
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fs(11)
+                        font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
+                        font.underline: renameArea.containsMouse
+
+                        MouseArea {
+                            id: renameArea
+
+                            anchors.fill: parent
+                            anchors.margins: -Theme.dp(4)
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                devItem.renameText = devItem.modelData.name;
+                                devItem.renaming = true;
+                            }
+                        }
+
                     }
 
                 }

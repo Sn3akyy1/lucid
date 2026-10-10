@@ -260,7 +260,9 @@ Column {
             spacing: Theme.dp(12)
             opacity: dev.expanded ? 1 : 0
 
-            Row {
+            // four buttons: they wrap on a narrow window
+            Flow {
+                width: parent.width - Theme.dp(79)
                 spacing: Theme.dp(10)
 
                 M3Button {
@@ -294,6 +296,13 @@ Column {
                     visible: dev.isPairing
                     text: "Cancel"
                     onClicked: dev.modelData.cancelPair()
+                }
+
+                M3Button {
+                    variant: "tonal"
+                    visible: dev.isPaired && Bt.canReceiveFiles(dev.modelData.address)
+                    text: "Send files"
+                    onClicked: Bt.sendFiles(dev.modelData.address, dev.modelData.name, [])
                 }
 
                 M3Button {

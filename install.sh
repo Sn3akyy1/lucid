@@ -124,7 +124,7 @@ PKG_REQUIRED=(quickshell qt6-5compat qt6-declarative qt6-multimedia)
 # each of these backs one feature; missing ones degrade that feature only
 PKG_FEATURES=(
     matugen jq imagemagick
-    networkmanager qrencode bluez bluez-utils
+    networkmanager qrencode bluez bluez-utils bluez-obex
     kdeconnect sshfs python-gobject
     libpulse wireplumber brightnessctl upower hypridle hyprsunset
     grim wf-recorder ffmpeg wl-clipboard wtype cliphist
