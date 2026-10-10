@@ -475,6 +475,15 @@ with the focus, resizing a window by its edges, floating windows snapping to
 each other and to the screen, hiding the cursor while typing or after a while,
 and window animations.
 
+Two cards mark windows that need telling apart. A **pinned** window (it floats
+over the rest and follows you to every workspace) wears a border of its own —
+accent, tertiary or a gradient — a tab with a pin tucked into the corner you
+pick, which unpins it on a click and steps away while the window moves, and a
+ripple the moment it is pinned. A window **asking for attention** (a message
+in, a download done, a terminal's bell) gets a tab with a ringing bell in its
+corner, in the colour the bar gives its workspace, and rings the first time
+you see it; a click takes you to it and the tab goes once you are there.
+
 Only what you change there is Lucid's. It goes to
 `~/.config/hypr/lucid-settings.lua`, which `modules/settings.lua` applies without
 a reload; everything else stays as your Hyprland config has it, and each row's

@@ -126,6 +126,37 @@ Singleton {
         return p === b;
     }
 
+    // a pinned window's border, from the palette like the others: off, accent,
+    // tertiary or a gradient between the two
+    readonly property var pinModes: [{
+        "key": "off",
+        "label": "Off"
+    }, {
+        "key": "accent",
+        "label": "Accent"
+    }, {
+        "key": "tertiary",
+        "label": "Tertiary"
+    }, {
+        "key": "gradient",
+        "label": "Gradient"
+    }]
+    readonly property var pinColours: {
+        const m = Prefs.pinBorder;
+        if (m === "accent")
+            return [Theme.cPrimary];
+
+        if (m === "tertiary")
+            return [Theme.cTertiary];
+
+        if (m === "gradient")
+            return [Theme.cTertiary, Theme.cPrimary];
+
+        return [];
+    }
+    // never thinner than 2 px, so it shows even with borders turned off
+    readonly property int pinBorderSize: Math.max(2, Math.round(root.num("general.border_size", 2)))
+
     // what goes to Hyprland: the options set as they are, the choices worked out
     readonly property var wanted: {
         const out = {};
@@ -194,6 +225,16 @@ Singleton {
         // rules rather than options: a window alone on its workspace goes edge to edge
         if (root.mine["lucid.solo"] === true)
             out += "    solo = true,\n";
+
+        // one colour for every pinned window, in focus or not; a gradient only
+        // on the focused one, as its own rule: given in one rule, Hyprland
+        // keeps the out-of-focus colour but never draws it
+        if (root.pinColours.length > 0) {
+            const cs = root.pinColours.map((c) => {
+                return root.rgba(c, 1);
+            });
+            out += "    pinned = { border = " + root.luaStr(cs[0] + " " + cs[0]) + (cs.length > 1 ? ", focused = " + root.luaStr(cs.join(" ") + " 45deg") : "") + ", size = " + root.pinBorderSize + " },\n";
+        }
 
         out += "    options = {\n";
         for (const k of Object.keys(w).sort())
