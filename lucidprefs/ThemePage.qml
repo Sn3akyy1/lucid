@@ -683,4 +683,436 @@ Column {
 
     }
 
+    SettingCard {
+        title: "WALLPAPER PICKER"
+
+        SettingRow {
+            title: "Picker style"
+            description: "How the wallpapers are laid out when you open the picker from the launcher."
+            stacked: true
+
+            Flow {
+                width: parent.width
+                spacing: Theme.dp(10)
+
+                WallpaperStyleThumb {
+                    styleId: "strip"
+                    label: "Strip"
+                }
+
+                WallpaperStyleThumb {
+                    styleId: "pills"
+                    label: "Pills"
+                }
+
+                WallpaperStyleThumb {
+                    styleId: "tiles"
+                    label: "Tiles"
+                }
+
+                WallpaperStyleThumb {
+                    styleId: "bento"
+                    label: "Bento"
+                }
+
+            }
+
+        }
+
+        SettingRow {
+            title: "Pill shape"
+            description: "How tall the pills are around the open one: all alike, the full height of the panel, or rising to a peak."
+            visible: Prefs.wallpaperPickerStyle === "pills"
+            showDivider: false
+            stacked: true
+
+            M3Segmented {
+                width: Math.min(parent.width, Theme.dp(560))
+                current: Prefs.wallpaperPillsShape
+                options: [{
+                    "key": "uniform",
+                    "label": "Uniform"
+                }, {
+                    "key": "full",
+                    "label": "Full height"
+                }, {
+                    "key": "wave",
+                    "label": "Wave"
+                }]
+                onChosen: (key) => Prefs.wallpaperPillsShape = key
+            }
+
+        }
+
+        SettingRow {
+            title: "Step"
+            description: "How quickly the cards shrink away from the middle one."
+            visible: Prefs.wallpaperPickerStyle === "strip"
+            stacked: true
+
+            M3Segmented {
+                width: Math.min(parent.width, Theme.dp(420))
+                current: Prefs.wallpaperStripSteps
+                options: [{
+                    "key": "soft",
+                    "label": "Soft"
+                }, {
+                    "key": "normal",
+                    "label": "Normal"
+                }, {
+                    "key": "steep",
+                    "label": "Marked"
+                }]
+                onChosen: (key) => Prefs.wallpaperStripSteps = key
+            }
+
+        }
+
+        SettingRow {
+            title: "Neighbours"
+            description: "How many cards show on each side of the middle one."
+            visible: Prefs.wallpaperPickerStyle === "strip"
+            showDivider: false
+            stacked: true
+
+            M3Segmented {
+                width: Math.min(parent.width, Theme.dp(240))
+                current: Prefs.wallpaperStripSides
+                options: [{
+                    "key": 2,
+                    "label": String(2)
+                }, {
+                    "key": 3,
+                    "label": String(3)
+                }]
+                onChosen: (key) => Prefs.wallpaperStripSides = key
+            }
+
+        }
+
+        SettingRow {
+            title: "Rows"
+            description: "How many rows of tiles the picker shows."
+            visible: Prefs.wallpaperPickerStyle === "tiles"
+            stacked: true
+
+            M3Segmented {
+                width: Math.min(parent.width, Theme.dp(360))
+                current: Math.max(2, Math.min(5, Math.round(Prefs.wallpaperTilesRows) || 2))
+                options: [{
+                    "key": 2,
+                    "label": String(2)
+                }, {
+                    "key": 3,
+                    "label": String(3)
+                }, {
+                    "key": 4,
+                    "label": String(4)
+                }, {
+                    "key": 5,
+                    "label": String(5)
+                }]
+                onChosen: (key) => Prefs.wallpaperTilesRows = key
+            }
+
+        }
+
+        SettingRow {
+            title: "Tile shape"
+            description: "Square tiles, or wide ones that show more of each picture."
+            visible: Prefs.wallpaperPickerStyle === "tiles"
+            showDivider: false
+            stacked: true
+
+            M3Segmented {
+                width: Math.min(parent.width, Theme.dp(320))
+                current: Prefs.wallpaperTilesAspect
+                options: [{
+                    "key": "square",
+                    "label": "Square"
+                }, {
+                    "key": "wide",
+                    "label": "Wide"
+                }]
+                onChosen: (key) => Prefs.wallpaperTilesAspect = key
+            }
+
+        }
+
+        SettingRow {
+            title: "Main wallpaper"
+            description: "How much of the panel the selected wallpaper takes."
+            visible: Prefs.wallpaperPickerStyle === "bento"
+            stacked: true
+
+            M3Segmented {
+                width: Math.min(parent.width, Theme.dp(420))
+                current: Prefs.wallpaperBentoHero
+                options: [{
+                    "key": "small",
+                    "label": "Small"
+                }, {
+                    "key": "medium",
+                    "label": "Medium"
+                }, {
+                    "key": "large",
+                    "label": "Large"
+                }]
+                onChosen: (key) => Prefs.wallpaperBentoHero = key
+            }
+
+        }
+
+        SettingRow {
+            title: "Show previous"
+            description: "Keep the two wallpapers before the selected one at the edge, or give their room to the rest."
+            visible: Prefs.wallpaperPickerStyle === "bento"
+            showDivider: false
+
+            M3Switch {
+                checked: Prefs.wallpaperBentoPrev
+                onToggled: (v) => {
+                    return Prefs.wallpaperBentoPrev = v;
+                }
+            }
+
+        }
+
+    }
+
+    SettingCard {
+        id: transCard
+
+        readonly property string type: Prefs.wallTransType
+        readonly property bool fades: transCard.type === "none" || transCard.type === "simple"
+
+        title: "WALLPAPER TRANSITION"
+
+        SettingRow {
+            title: "Presets"
+            description: "A starting point; changing anything below makes it your own."
+            stacked: true
+
+            Flow {
+                width: parent.width
+                spacing: Theme.dp(10)
+
+                Repeater {
+                    model: WallTransitions.all
+
+                    WallTransitionTile {
+                        required property var modelData
+
+                        preset: modelData
+                    }
+
+                }
+
+            }
+
+        }
+
+        SettingRow {
+            title: "Effect"
+            description: "Fade and Simple blend the two pictures; the others reveal the new one from a side, a line or a circle."
+            stacked: true
+
+            M3Chips {
+                width: parent.width
+                current: Prefs.wallTransType
+                options: [{
+                    "key": "fade",
+                    "label": "Fade"
+                }, {
+                    "key": "simple",
+                    "label": "Simple"
+                }, {
+                    "key": "none",
+                    "label": "None"
+                }, {
+                    "key": "left",
+                    "label": "From left"
+                }, {
+                    "key": "right",
+                    "label": "From right"
+                }, {
+                    "key": "top",
+                    "label": "From top"
+                }, {
+                    "key": "bottom",
+                    "label": "From bottom"
+                }, {
+                    "key": "wipe",
+                    "label": "Wipe"
+                }, {
+                    "key": "wave",
+                    "label": "Wave"
+                }, {
+                    "key": "grow",
+                    "label": "Grow"
+                }, {
+                    "key": "outer",
+                    "label": "Shrink"
+                }, {
+                    "key": "random",
+                    "label": "Random"
+                }]
+                onChosen: (key) => WallTransitions.set("type", key)
+            }
+
+        }
+
+        SettingRow {
+            title: "Duration"
+            visible: !transCard.fades
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 0.2
+                to: 5
+                stepSize: 0.1
+                decimals: 1
+                suffix: " s"
+                value: Prefs.wallTransDuration
+                onMoved: (v) => WallTransitions.set("duration", Math.round(v * 10) / 10)
+            }
+
+        }
+
+        SettingRow {
+            title: "Angle"
+            description: "0° sweeps right to left, 90° top to bottom."
+            visible: transCard.type === "wipe" || transCard.type === "wave"
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 0
+                to: 355
+                stepSize: Theme.dp(5)
+                suffix: "°"
+                value: Prefs.wallTransAngle
+                onMoved: (v) => WallTransitions.set("angle", Math.round(v))
+            }
+
+        }
+
+        SettingRow {
+            title: "Wave size"
+            visible: transCard.type === "wave"
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 8
+                to: 80
+                stepSize: Theme.dp(2)
+                suffix: " px"
+                value: parseInt(Prefs.wallTransWave.split(",")[0]) || 20
+                onMoved: (v) => WallTransitions.set("wave", Math.round(v) + "," + Math.round(v))
+            }
+
+        }
+
+        SettingRow {
+            title: "Starts from"
+            description: "Where the circle opens. \"Chosen card\" grows it from the wallpaper you are previewing in the picker."
+            visible: transCard.type === "grow" || transCard.type === "outer"
+            stacked: true
+
+            M3Segmented {
+                width: Math.min(parent.width, Theme.dp(560))
+                current: Prefs.wallTransOrigin
+                options: [{
+                    "key": "center",
+                    "label": "Centre"
+                }, {
+                    "key": "card",
+                    "label": "Chosen card"
+                }, {
+                    "key": "cursor",
+                    "label": "Pointer"
+                }]
+                onChosen: (key) => WallTransitions.set("origin", key)
+            }
+
+        }
+
+        SettingRow {
+            title: "Curve"
+            description: "How the change speeds up and slows down."
+            visible: !transCard.fades
+            stacked: true
+
+            M3Segmented {
+                width: Math.min(parent.width, Theme.dp(560))
+                current: Prefs.wallTransBezier
+                options: [{
+                    "key": ".54,0,.34,.99",
+                    "label": "Smooth"
+                }, {
+                    "key": ".05,.7,.1,1",
+                    "label": "Snappy"
+                }, {
+                    "key": ".4,0,.2,1",
+                    "label": "Gentle"
+                }, {
+                    "key": "0,0,1,1",
+                    "label": "Linear"
+                }]
+                onChosen: (key) => WallTransitions.set("bezier", key)
+            }
+
+        }
+
+        SettingRow {
+            title: "Save as preset"
+            description: "Keep the settings above under a name of your own."
+
+            Row {
+                spacing: Theme.dp(10)
+
+                M3TextField {
+                    id: presetName
+
+                    width: Theme.dp(200)
+                    placeholder: "Preset name"
+                    onAccepted: (v) => {
+                        WallTransitions.saveCurrent(v);
+                        presetName.text = "";
+                    }
+                }
+
+                M3Button {
+                    text: "Save"
+                    variant: "tonal"
+                    onClicked: {
+                        WallTransitions.saveCurrent(presetName.text);
+                        presetName.text = "";
+                    }
+                }
+
+            }
+
+        }
+
+        SettingRow {
+            title: "Try it"
+            description: "Plays the transition from a flat colour taken from your wallpaper into it."
+            showDivider: false
+
+            M3Button {
+                text: "Try transition"
+                variant: "tonal"
+                onClicked: {
+                    if (page.appliedWallpaper !== "")
+                        Quickshell.execDetached(["env", "WALL_DEMO=1", page.home + "/.config/hypr/scripts/wallpaper/set-wallpaper.sh", page.appliedWallpaper]);
+                }
+            }
+
+        }
+
+    }
+
 }

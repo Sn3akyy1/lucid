@@ -378,6 +378,22 @@ Singleton {
     // the same clamp Theme.uiScale applies, for code that has to wait on Prefs.loaded
     readonly property real interfaceScale: Math.max(0.7, Math.min(1.3, root.uiScale || 1))
     property alias wallpaperFolder: s.wallpaperFolder
+    property alias wallpaperPickerStyle: s.wallpaperPickerStyle
+    property alias wallpaperPillsShape: s.wallpaperPillsShape
+    property alias wallpaperStripSteps: s.wallpaperStripSteps
+    property alias wallpaperStripSides: s.wallpaperStripSides
+    property alias wallpaperTilesRows: s.wallpaperTilesRows
+    property alias wallpaperTilesAspect: s.wallpaperTilesAspect
+    property alias wallpaperBentoHero: s.wallpaperBentoHero
+    property alias wallpaperBentoPrev: s.wallpaperBentoPrev
+    property alias wallTransType: s.wallTransType
+    property alias wallTransDuration: s.wallTransDuration
+    property alias wallTransAngle: s.wallTransAngle
+    property alias wallTransOrigin: s.wallTransOrigin
+    property alias wallTransBezier: s.wallTransBezier
+    property alias wallTransWave: s.wallTransWave
+    property alias wallTransPreset: s.wallTransPreset
+    property alias wallTransCustomPresets: s.wallTransCustomPresets
     // bracket writes on the adapter are dropped, so this must go through the alias
     property alias themeOrder: s.themeOrder
     // how matugen builds a palette, from the wallpaper or from themeColour: its
@@ -828,6 +844,22 @@ Singleton {
         "cornerScale": 1,
         "shellGap": 0,
         "wallpaperFolder": "",
+        "wallpaperPickerStyle": "strip",
+        "wallpaperPillsShape": "uniform",
+        "wallpaperStripSteps": "normal",
+        "wallpaperStripSides": 2,
+        "wallpaperTilesRows": 2,
+        "wallpaperTilesAspect": "square",
+        "wallpaperBentoHero": "medium",
+        "wallpaperBentoPrev": true,
+        "wallTransType": "fade",
+        "wallTransDuration": 1,
+        "wallTransAngle": 45,
+        "wallTransOrigin": "center",
+        "wallTransBezier": ".54,0,.34,.99",
+        "wallTransWave": "20,20",
+        "wallTransPreset": "soft",
+        "wallTransCustomPresets": "",
         "themeOrder": "",
         "matugenScheme": "scheme-tonal-spot",
         "matugenContrast": 0,
@@ -1419,6 +1451,22 @@ Singleton {
             property real cornerScale: 1
             property int shellGap: 0
             property string wallpaperFolder: ""
+            property string wallpaperPickerStyle: "strip"
+            property string wallpaperPillsShape: "uniform"
+            property string wallpaperStripSteps: "normal"
+            property int wallpaperStripSides: 2
+            property int wallpaperTilesRows: 2
+            property string wallpaperTilesAspect: "square"
+            property string wallpaperBentoHero: "medium"
+            property bool wallpaperBentoPrev: true
+            property string wallTransType: "fade"
+            property real wallTransDuration: 1
+            property int wallTransAngle: 45
+            property string wallTransOrigin: "center"
+            property string wallTransBezier: ".54,0,.34,.99"
+            property string wallTransWave: "20,20"
+            property string wallTransPreset: "soft"
+            property string wallTransCustomPresets: ""
             property string themeOrder: ""
             property string matugenScheme: "scheme-tonal-spot"
             property real matugenContrast: 0

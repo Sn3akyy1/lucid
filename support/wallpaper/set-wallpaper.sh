@@ -59,7 +59,54 @@ if ! "$WP_CLI" query &>/dev/null; then
     sleep 0.5
 fi
 
-FADE=1
+DEFAULT_TRANS=(--transition-type fade --transition-duration 1 --transition-fps 60)
+TRANS_ARGS=("${DEFAULT_TRANS[@]}")
+
+# the transition chosen in Settings -> Theme, written by the shell to
+# transition.conf as KEY=value lines. read line by line, never sourced: only the
+# keys below are looked at and every value must match its pattern, so a damaged
+# or hostile file falls back to the plain fade. WALL_POS (x,y as fractions, y
+# from the bottom) is the picker saying where the chosen card sits.
+load_transition() {
+    local conf="$LUCID_DIR/wallpaper-transition.conf" k v
+    local type=fade duration=1 angle="" origin=center bezier="" wave=""
+    if [[ -f "$conf" ]]; then
+        while IFS='=' read -r k v || [[ -n "$k" ]]; do
+            case "$k" in
+            TYPE)
+                [[ "$v" =~ ^(none|simple|fade|left|right|top|bottom|wipe|wave|grow|center|any|outer|random)$ ]] && type=$v ;;
+            DURATION)
+                [[ "$v" =~ ^[0-9]+([.][0-9]+)?$ ]] && awk -v d="$v" 'BEGIN{exit !(d > 0)}' && duration=$v ;;
+            ANGLE) [[ "$v" =~ ^[0-9]{1,3}$ ]] && angle=$v ;;
+            ORIGIN) [[ "$v" =~ ^(center|card|cursor)$ ]] && origin=$v ;;
+            BEZIER) [[ "$v" =~ ^[0-9.]+(,[0-9.]+){3}$ ]] && bezier=$v ;;
+            WAVE) [[ "$v" =~ ^[0-9]+,[0-9]+$ ]] && wave=$v ;;
+            esac
+        done < "$conf"
+    fi
+    TRANS_ARGS=(--transition-type "$type" --transition-duration "$duration" --transition-fps 60)
+    [[ "$type" == wipe || "$type" == wave ]] && [[ -n "$angle" ]] && TRANS_ARGS+=(--transition-angle "$angle")
+    [[ "$type" == wave && -n "$wave" ]] && TRANS_ARGS+=(--transition-wave "$wave")
+    [[ "$type" != none && "$type" != simple && -n "$bezier" ]] && TRANS_ARGS+=(--transition-bezier "$bezier")
+    if [[ "$type" == grow || "$type" == outer ]]; then
+        local pos=center
+        if [[ "$origin" == card && "${WALL_POS:-}" =~ ^[0-9]*[.]?[0-9]+,[0-9]*[.]?[0-9]+$ ]]; then
+            pos=$WALL_POS
+        elif [[ "$origin" == cursor ]] && command -v hyprctl &>/dev/null && command -v jq &>/dev/null; then
+            local cur mon
+            cur=$(hyprctl cursorpos 2>/dev/null | tr -d ' ')
+            mon=$(hyprctl monitors -j 2>/dev/null | jq -r '(map(select(.focused))[0] // .[0]) | "\(.x) \(.y) \(.width / .scale) \(.height / .scale)"')
+            if [[ "$cur" =~ ^[0-9]+,[0-9]+$ && -n "$mon" ]]; then
+                pos=$(awk -v c="$cur" -v m="$mon" 'BEGIN{split(c,a,",");split(m,b," ");
+                    x=(a[1]-b[1])/b[3]; y=1-(a[2]-b[2])/b[4];
+                    if (x<0) x=0; if (x>1) x=1; if (y<0) y=0; if (y>1) y=1;
+                    printf "%.3f,%.3f", x, y}')
+            fi
+        fi
+        TRANS_ARGS+=(--transition-pos "$pos")
+    fi
+}
+load_transition
 
 # the daemon decodes the whole original on every switch, 0.36 s for an 8k jpeg
 # before the fade can even start. a copy scaled to the screen decodes in a
@@ -122,21 +169,32 @@ make_fit_copies() {
 
 set_output() {
     # $1 image, $2 output ("" for every one), rest passed to the daemon.
-    # extra args may be --resize no or fit, which need the original's own size
+    # extra args may be --resize no or fit, which need the original's own size.
+    # if the daemon refuses the chosen transition the plain fade still changes
+    # the picture
     local img="$1" out="$2"; shift 2
     if [[ $# -eq 0 ]]; then
         fit_copy "$img"
         img="$FIT_IMG"
     fi
-    if [[ -n "$out" ]]; then
-        "$WP_CLI" img "$img" -o "$out" \
-            --transition-type fade --transition-duration "$FADE" --transition-fps 60 "$@" \
-            || echo "warning: could not set the wallpaper on $out" >&2
-    else
-        "$WP_CLI" img "$img" \
-            --transition-type fade --transition-duration "$FADE" --transition-fps 60 "$@"
-    fi
+    local target=()
+    [[ -n "$out" ]] && target=(-o "$out")
+    "$WP_CLI" img "$img" ${target[@]+"${target[@]}"} "${TRANS_ARGS[@]}" "$@" \
+        || "$WP_CLI" img "$img" ${target[@]+"${target[@]}"} "${DEFAULT_TRANS[@]}" "$@" \
+        || { [[ -n "$out" ]] && echo "warning: could not set the wallpaper on $out" >&2; }
 }
+
+# WALL_DEMO=1 is Settings -> Theme -> Try transition. The picture is already on
+# screen, so a transition to it would show nothing: put a flat colour taken from
+# the picture up first, then run the real transition. Only the background moves;
+# the colours and the saved wallpaper stay as they are.
+if [[ -n "${WALL_DEMO:-}" ]]; then
+    DEMO_HEX=""
+    command -v magick &>/dev/null && DEMO_HEX=$(magick "$WALLPAPER" -resize '1x1!' -modulate 55 -format '%[hex:u.p{0,0}]' info: 2>/dev/null | tr -dc '0-9A-Fa-f' | head -c 6 | tr a-f A-F)
+    [[ ${#DEMO_HEX} -eq 6 ]] || DEMO_HEX=101018
+    "$WP_CLI" img "0x$DEMO_HEX" --transition-type none &>/dev/null || true
+    sleep 0.3
+fi
 
 # per-output overrides, one rule a line:  <output>  <extra args for img>
 # any argument that is a file becomes that output's image, the rest are passed
@@ -175,6 +233,8 @@ else
         set_output "$OUT_IMG" "$OUT" ${OUT_ARGS[@]+"${OUT_ARGS[@]}"}
     done
 fi
+
+[[ -n "${WALL_DEMO:-}" ]] && exit 0
 
 mkdir -p "$CACHE_DIR"
 printf '%s' "$WALLPAPER" > "$CURRENT_WALL_FILE"

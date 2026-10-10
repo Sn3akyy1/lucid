@@ -12,6 +12,18 @@ Item {
     property string mode: "apps"
     property var model: null
     property var wallpaperModel: null
+    // Settings -> Theme picks the style; unknown names fall back to the strip
+    readonly property var pickerFiles: ({
+        "strip": "WallpaperStrip.qml",
+        "pills": "WallpaperPills.qml",
+        "tiles": "WallpaperTiles.qml",
+        "bento": "WallpaperBento.qml"
+    })
+    property int pickerIndex: -1
+    property bool pickerSettling: false
+    // set by hand, never bound: see the Connections on Prefs below for why
+    property string pickerStyle: "strip"
+    readonly property var wallStrip: pickerLoader.item
     property string appliedWallpaper: ""
     property int wallHeroW: Theme.dp(340)
     property int wallHeroH: Theme.dp(211)
@@ -19,6 +31,8 @@ Item {
     property int wallMidH: Theme.dp(148)
     property int wallSmallW: Theme.dp(150)
     property int wallSmallH: Theme.dp(93)
+    property int wallTinyW: Theme.dp(100)
+    property int wallTinyH: Theme.dp(62)
     property int wallCardGap: Theme.dp(10)
     property alias searchText: searchInput.text
     property string highlightQuery: ""
@@ -127,8 +141,18 @@ Item {
     signal hideRequested(int index)
     signal clearRequested()
 
+    Component.onCompleted: face.pickerStyle = Prefs.wallpaperPickerStyle
+
     function setWallpaperIndex(i) {
-        wallStrip.setIndexImmediate(i);
+        face.pickerIndex = i;
+        if (wallStrip)
+            wallStrip.setIndexImmediate(i);
+    }
+
+    // a picker that was just swapped in (the style changed) starts where the last one was
+    function restorePickerIndex() {
+        if (wallStrip && face.pickerIndex >= 0)
+            wallStrip.setIndexImmediate(face.pickerIndex);
     }
 
     function resetSelection() {
@@ -185,9 +209,11 @@ Item {
     }
 
     function submit() {
-        if (face.displayMode === "wallpaper")
-            wallStrip.activateCurrent();
-        else
+        if (face.displayMode === "wallpaper") {
+            if (wallStrip)
+                wallStrip.activateCurrent();
+
+        } else
             resultList.activateCurrent();
     }
 
@@ -368,27 +394,79 @@ Item {
             clearArmed: face.clearArmed
         }
 
-        WallpaperStrip {
-            id: wallStrip
+        Loader {
+            id: pickerLoader
 
             anchors.fill: parent
             visible: face.displayMode === "wallpaper"
-            model: face.wallpaperModel
-            heroW: face.wallHeroW
-            heroH: face.wallHeroH
-            midW: face.wallMidW
-            midH: face.wallMidH
-            smallW: face.wallSmallW
-            smallH: face.wallSmallH
-            itemGap: face.wallCardGap
-            appliedPath: face.appliedWallpaper
-            stableHeight: face.stableContentHeight
-            onChosen: (path) => {
-                return face.wallpaperChosen(path);
+            source: face.pickerFiles[face.pickerStyle] || face.pickerFiles.strip
+            onLoaded: pickerRestore.restart()
+        }
+
+        // A style change is taken in this order on purpose: the old picker reports
+        // index 0 as it is torn down, and the new one does the same while its model
+        // arrives, neither of which is the user moving. So the index is read first,
+        // moves in the middle are ignored, and the new picker is put back where it was.
+        Connections {
+            function onWallpaperPickerStyleChanged() {
+                if (wallStrip)
+                    face.pickerIndex = wallStrip.currentIndex;
+
+                face.pickerSettling = true;
+                face.pickerStyle = Prefs.wallpaperPickerStyle;
+                pickerRestore.restart();
             }
-            onPreviewed: (path) => {
-                return face.wallpaperPreviewed(path);
+
+            target: Prefs
+        }
+
+        Timer {
+            id: pickerRestore
+
+            interval: 60
+            onTriggered: {
+                face.restorePickerIndex();
+                pickerSettle.restart();
             }
+        }
+
+        Timer {
+            id: pickerSettle
+
+            interval: 300
+            onTriggered: face.pickerSettling = false
+        }
+
+        // the picker styles share one interface; these hand it the panel's numbers
+        Binding { target: pickerLoader.item; property: "model"; value: face.wallpaperModel; when: pickerLoader.item !== null }
+        Binding { target: pickerLoader.item; property: "heroW"; value: face.wallHeroW; when: pickerLoader.item !== null }
+        Binding { target: pickerLoader.item; property: "heroH"; value: face.wallHeroH; when: pickerLoader.item !== null }
+        Binding { target: pickerLoader.item; property: "midW"; value: face.wallMidW; when: pickerLoader.item !== null }
+        Binding { target: pickerLoader.item; property: "midH"; value: face.wallMidH; when: pickerLoader.item !== null }
+        Binding { target: pickerLoader.item; property: "smallW"; value: face.wallSmallW; when: pickerLoader.item !== null }
+        Binding { target: pickerLoader.item; property: "smallH"; value: face.wallSmallH; when: pickerLoader.item !== null }
+        Binding { target: pickerLoader.item; property: "tinyW"; value: face.wallTinyW; when: pickerLoader.item !== null }
+        Binding { target: pickerLoader.item; property: "tinyH"; value: face.wallTinyH; when: pickerLoader.item !== null }
+        Binding { target: pickerLoader.item; property: "itemGap"; value: face.wallCardGap; when: pickerLoader.item !== null }
+        Binding { target: pickerLoader.item; property: "appliedPath"; value: face.appliedWallpaper; when: pickerLoader.item !== null }
+        Binding { target: pickerLoader.item; property: "stableHeight"; value: face.stableContentHeight; when: pickerLoader.item !== null }
+
+        Connections {
+            function onChosen(path) {
+                face.wallpaperChosen(path);
+            }
+
+            function onPreviewed(path) {
+                face.wallpaperPreviewed(path);
+            }
+
+            function onCurrentIndexChanged() {
+                if (pickerLoader.item && !face.pickerSettling)
+                    face.pickerIndex = pickerLoader.item.currentIndex;
+            }
+
+            target: pickerLoader.item
+            ignoreUnknownSignals: true
         }
 
     }
@@ -484,16 +562,21 @@ Item {
             Keys.onUpPressed: {
                 if (face.listVisible)
                     resultList.step(-1);
+                else if (face.displayMode === "wallpaper" && wallStrip)
+                    wallStrip.stepVertical(-1);
 
             }
             Keys.onDownPressed: {
                 if (face.listVisible)
                     resultList.step(1);
+                else if (face.displayMode === "wallpaper" && wallStrip)
+                    wallStrip.stepVertical(1);
 
             }
             Keys.onLeftPressed: (event) => {
                 if (face.displayMode === "wallpaper") {
-                    wallStrip.currentIndex = Math.max(0, wallStrip.currentIndex - 1);
+                    if (wallStrip)
+                        wallStrip.step(-1);
                     event.accepted = true;
                 } else {
                     event.accepted = false;
@@ -501,7 +584,8 @@ Item {
             }
             Keys.onRightPressed: (event) => {
                 if (face.displayMode === "wallpaper" && face.wallpaperModel) {
-                    wallStrip.currentIndex = Math.min(face.wallpaperModel.count - 1, wallStrip.currentIndex + 1);
+                    if (wallStrip)
+                        wallStrip.step(1);
                     event.accepted = true;
                 } else {
                     event.accepted = false;

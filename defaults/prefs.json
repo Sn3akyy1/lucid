@@ -94,5 +94,21 @@
     "toastOnPower": true,
     "toastOnWifi": true,
     "toastTimeout": 5,
-    "wallpaperFolder": ""
+    "wallpaperFolder": "",
+    "wallpaperPickerStyle": "strip",
+    "wallpaperPillsShape": "uniform",
+    "wallpaperStripSteps": "normal",
+    "wallpaperStripSides": 2,
+    "wallpaperTilesRows": 2,
+    "wallpaperTilesAspect": "square",
+    "wallpaperBentoHero": "medium",
+    "wallpaperBentoPrev": true,
+    "wallTransType": "fade",
+    "wallTransDuration": 1,
+    "wallTransAngle": 45,
+    "wallTransOrigin": "center",
+    "wallTransBezier": ".54,0,.34,.99",
+    "wallTransWave": "20,20",
+    "wallTransPreset": "soft",
+    "wallTransCustomPresets": ""
 }
