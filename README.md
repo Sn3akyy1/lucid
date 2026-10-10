@@ -319,8 +319,23 @@ prefix you can type:
 | Web | `?` | Searches your engine of choice, or opens the address if what you typed is one |
 | Run | `$` | Runs a command line, in the background or in a terminal that stays open |
 | Theme | `>theme` | Switch between the seven bundled palettes, and any you have imported |
-| Wallpaper | `>wallpaper` | Carousel of your wallpaper folder |
+| Wallpaper | `>wallpaper` | Your wallpaper folder, as a carousel, pills, tiles or a bento grid |
 | Clipboard | `>clip` | What you copied earlier, images included — pick one to put it back on the clipboard |
+
+The wallpaper picker comes in four styles, picked in **Settings → Theme →
+Wallpaper picker** with a live thumbnail of each: *Strip* (the carousel, with
+how fast the neighbours shrink and two or three of them on each side),
+*Pills* (slim pills that open into the picture: even, full height, or a
+wave), *Tiles* (a grid of two to five rows, square or wide, the panel cut to
+fit it) and *Bento* (a large picture beside smaller ones, with or without the
+previous one). The same page picks the **transition** the wallpaper changes
+with — fade, wipe, wave, grow, outer and the rest of what `awww` can do, its
+length, angle and easing — from presets or your own, saved and named, and can
+grow it from the card you picked or from the cursor. *Try transition* runs it
+on the wallpaper you have, without changing anything. The choice is written to
+`~/.config/lucid/wallpaper-transition.conf`, which `set-wallpaper.sh` reads
+line by line (never sourced); anything it does not recognise falls back to the
+plain fade.
 
 Type a sum in the search field for a calculator (`2^3^2`, right-associative).
 The answer takes a card above the results, set in display type; Return copies it.

@@ -13,6 +13,8 @@ Item {
     property int midH: Theme.dp(148)
     property int smallW: Theme.dp(150)
     property int smallH: Theme.dp(93)
+    property int tinyW: Theme.dp(100)
+    property int tinyH: Theme.dp(62)
     property int itemGap: Theme.dp(10)
     property int hoveredIndex: -1
     readonly property int hoverGrow: Theme.dp(6)
@@ -23,23 +25,51 @@ Item {
     readonly property real rowHeight: strip.heroH + Theme.dp(62)
     // the hero card at the screen's own density: every tier is drawn from it
     readonly property size decodeSize: Qt.size(Math.ceil(strip.heroW * Math.max(1, Screen.devicePixelRatio)), Math.ceil(strip.heroH * Math.max(1, Screen.devicePixelRatio)))
+    // Settings -> Theme -> Strip: neighbours shown on each side
+    readonly property int sides: Prefs.wallpaperStripSides === 3 ? 3 : 2
 
     property int previewInterval: 300
     property string pendingPreviewPath: ""
     property bool syncing: false
     property int pendingCenterIndex: -1
 
+    // where the card the user picked sits, as fractions of the window (-1 when
+    // it is not known); the "from the chosen card" transition grows from there
+    property real originX: -1
+    property real originY: -1
+
     signal chosen(string path)
     signal previewed(string path)
+
+    function noteOrigin(card) {
+        if (!card || strip.Window.width <= 0 || strip.Window.height <= 0) {
+            strip.originX = -1;
+            strip.originY = -1;
+            return;
+        }
+        var p = card.mapToItem(null, card.width / 2, card.height / 2);
+        strip.originX = p.x / strip.Window.width;
+        strip.originY = p.y / strip.Window.height;
+    }
+
+    // arrow keys: one card along, and (for the styles laid out in rows) one row over
+    function step(d) {
+        if (strip.model)
+            view.currentIndex = Math.max(0, Math.min(strip.model.count - 1, view.currentIndex + d));
+    }
+
+    function stepVertical(d) {
+    }
 
     function activateCurrent() {
         if (view.currentIndex < 0 || !strip.model)
             return;
 
         var item = strip.model.get(view.currentIndex);
-        if (item)
+        if (item) {
+            strip.noteOrigin(view.currentItem);
             strip.chosen(item.path);
-
+        }
     }
 
     function setIndexImmediate(i) {
@@ -70,6 +100,8 @@ Item {
         if (strip.pendingPreviewPath === "")
             return;
 
+        // the transition can grow from the card being previewed
+        strip.noteOrigin(view.currentItem);
         strip.previewed(strip.pendingPreviewPath);
         strip.pendingPreviewPath = "";
     }
@@ -164,9 +196,9 @@ Item {
                     strip.hoveredIndex = -1;
 
             }
-            readonly property int tier: Math.min(2, Math.abs(slot.index - view.currentIndex))
-            readonly property int targetW: slot.tier === 0 ? strip.heroW : (slot.tier === 1 ? strip.midW : strip.smallW)
-            readonly property int targetH: slot.tier === 0 ? strip.heroH : (slot.tier === 1 ? strip.midH : strip.smallH)
+            readonly property int tier: Math.min(strip.sides, Math.abs(slot.index - view.currentIndex))
+            readonly property int targetW: slot.tier === 0 ? strip.heroW : (slot.tier === 1 ? strip.midW : (slot.tier === 2 ? strip.smallW : strip.tinyW))
+            readonly property int targetH: slot.tier === 0 ? strip.heroH : (slot.tier === 1 ? strip.midH : (slot.tier === 2 ? strip.smallH : strip.tinyH))
 
             width: slot.targetW
             height: view.height
@@ -206,9 +238,9 @@ Item {
                     }
 
                 }
-                radius: slot.tier === 0 ? Theme.shapeXlInc : (slot.tier === 1 ? Theme.shapeLgInc : Theme.shapeMd)
+                radius: slot.tier === 0 ? Theme.shapeXlInc : (slot.tier === 1 ? Theme.shapeLgInc : (slot.tier === 2 ? Theme.shapeMd : Theme.shapeSm))
                 color: Theme.bgTile
-                opacity: (slot.tier === 0 || slot.hovered) ? 1 : (slot.tier === 1 ? 0.78 : 0.5)
+                opacity: (slot.tier === 0 || slot.hovered) ? 1 : (slot.tier === 1 ? 0.78 : (slot.tier === 2 ? 0.5 : 0.36))
 
                 Behavior on height {
                     NumberAnimation {
@@ -303,9 +335,10 @@ Item {
                 id: cardTap
 
                 onTapped: {
-                    if (slot.isCurrent)
+                    if (slot.isCurrent) {
+                        strip.noteOrigin(slot);
                         strip.chosen(slot.path);
-                    else
+                    } else
                         view.currentIndex = slot.index;
                 }
             }

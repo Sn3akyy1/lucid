@@ -56,6 +56,7 @@ ShellRoot {
         void NightLight.active;
         void Sounds.dir;
         void Storage.watching;
+        void WallTransitions.active;
     }
 
     // the bar that speaks for the shell, of however many there are

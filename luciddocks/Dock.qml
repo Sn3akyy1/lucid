@@ -131,6 +131,7 @@ PanelWindow {
     property var scannedApps: []
     readonly property string currentTheme: Prefs.currentTheme
     property string pendingWallpaper: ""
+    property point pendingOrigin: Qt.point(-1, -1)
     property string appliedWallpaper: ""
     property bool wallpaperArmed: false
     readonly property bool dragging: pinnedRow.dragging || runningRow.dragging
@@ -430,16 +431,46 @@ PanelWindow {
     readonly property int wallCardGap: Theme.dp(10)
     readonly property int wallHeroW: Math.max(Theme.dp(280), Math.min(Theme.dp(420), Math.round(dockWindow.maxDockWidth * 0.177)))
     readonly property int wallHeroH: Math.round(dockWindow.wallHeroW * 0.62)
-    readonly property int wallMidW: Math.round(dockWindow.wallHeroW * 0.70)
+    // Settings -> Theme -> Strip: how fast the neighbours shrink (mid and small as shares of the hero)
+    readonly property var wallSteps: ({
+        "soft": [0.82, 0.64],
+        "normal": [0.70, 0.44],
+        "steep": [0.56, 0.30]
+    })[Prefs.wallpaperStripSteps] || [0.70, 0.44]
+    readonly property int wallMidW: Math.round(dockWindow.wallHeroW * dockWindow.wallSteps[0])
     readonly property int wallMidH: Math.round(dockWindow.wallMidW * 0.62)
-    readonly property int wallSmallW: Math.round(dockWindow.wallHeroW * 0.44)
+    readonly property int wallSmallW: Math.round(dockWindow.wallHeroW * dockWindow.wallSteps[1])
     readonly property int wallSmallH: Math.round(dockWindow.wallSmallW * 0.62)
-    readonly property int wallStripWidth: dockWindow.wallHeroW + 2 * (dockWindow.wallMidW + dockWindow.wallCardGap) + 2 * (dockWindow.wallSmallW + dockWindow.wallCardGap)
+    // a fourth, tiny tier when the strip shows three neighbours on each side
+    readonly property int wallTinyW: Math.round(dockWindow.wallSmallW * 0.68)
+    readonly property int wallTinyH: Math.round(dockWindow.wallTinyW * 0.62)
+    // the panel's width for the other styles, which lay themselves out in whatever
+    // they are given: what the strip takes with its default look, so that a wide
+    // strip (soft steps, three neighbours) does not widen the panel for them too
+    readonly property int wallBaseWidth: dockWindow.wallHeroW + 2 * (Math.round(dockWindow.wallHeroW * 0.70) + dockWindow.wallCardGap) + 2 * (Math.round(dockWindow.wallHeroW * 0.44) + dockWindow.wallCardGap)
+    readonly property int wallStripWidth: dockWindow.wallHeroW + 2 * (dockWindow.wallMidW + dockWindow.wallCardGap) + 2 * (dockWindow.wallSmallW + dockWindow.wallCardGap) + (Prefs.wallpaperStripSides === 3 ? 2 * (dockWindow.wallTinyW + dockWindow.wallCardGap) : 0)
     readonly property int wallHoverRoom: Theme.dp(12)
+    // Tiles: the panel is cut to its grid. More rows make it taller and fewer
+    // wallpapers narrower, instead of the tiles shrinking to fit a fixed panel
+    readonly property bool wallIsTiles: Prefs.wallpaperPickerStyle === "tiles"
+    readonly property int wallTilesRows: Math.max(2, Math.min(5, Math.round(Prefs.wallpaperTilesRows) || 2))
+    readonly property int wallTilesBase: Math.round(dockWindow.wallHeroH * 0.5)
+    // what the grid leaves around itself: a margin above, the caption and one below
+    readonly property int wallTilesChrome: Theme.dp(56)
+    // a grid may stand taller than the other panels (it grows with its rows) but not
+    // past this; only then do the tiles shrink, and the width follows the real size
+    readonly property real wallTilesContentMax: Math.max(dockWindow.menuContentMax, Math.round((dockWindow.screen ? dockWindow.screen.height : 1080) * 0.62))
+    readonly property int wallTilesTile: Math.max(Theme.dp(40), Math.min(dockWindow.wallTilesBase, Math.floor((dockWindow.wallTilesContentMax - dockWindow.wallTilesChrome) / dockWindow.wallTilesRows)))
+    readonly property int wallTilesCellW: Prefs.wallpaperTilesAspect === "wide" ? Math.round(dockWindow.wallTilesTile * 16 / 9) : dockWindow.wallTilesTile
+    readonly property int wallTilesWidth: Math.ceil(wallpapersModel.count / dockWindow.wallTilesRows) * dockWindow.wallTilesCellW + Theme.dp(24)
 
     readonly property real menuWidth: {
-        if (dockWindow.mode === "wallpaper")
-            return dockWindow.wallStripWidth + dockWindow.panelPadding + dockWindow.wallHoverRoom;
+        if (dockWindow.mode === "wallpaper") {
+            if (dockWindow.wallIsTiles)
+                return Math.min(Math.max(Prefs.launcherPanelWidth, dockWindow.wallTilesWidth + dockWindow.panelPadding + dockWindow.wallHoverRoom), dockWindow.maxDockWidth - 48);
+
+            return Math.min((Prefs.wallpaperPickerStyle === "strip" ? dockWindow.wallStripWidth : dockWindow.wallBaseWidth) + dockWindow.panelPadding + dockWindow.wallHoverRoom, dockWindow.maxDockWidth - 48);
+        }
 
         // the list plus its preview pane
         if (dockWindow.mode === "clipboard")
@@ -455,7 +486,7 @@ PanelWindow {
     readonly property real menuHeight: {
         var content;
         if (dockWindow.mode === "wallpaper")
-            content = dockWindow.wallHeroH + 70;
+            content = dockWindow.wallIsTiles ? dockWindow.wallTilesRows * dockWindow.wallTilesTile + dockWindow.wallTilesChrome : dockWindow.wallHeroH + Theme.dp(70);
         // fixed, so deleting entries doesn't shrink the preview under the cursor
         else if (dockWindow.mode === "clipboard")
             content = dockWindow.menuContentMax;
@@ -1340,16 +1371,41 @@ PanelWindow {
             return;
 
         dockWindow.pendingWallpaper = path;
+        // where the card being previewed sits, for transitions that grow from it
+        var picker = launcherLoader.item ? launcherLoader.item.wallStrip : null;
+        dockWindow.pendingOrigin = picker ? Qt.point(picker.originX, picker.originY) : Qt.point(-1, -1);
         wallpaperDebounce.restart();
     }
 
-    function applyWallpaper(path) {
+    // a point given as fractions of this window, as fractions of the screen it is on:
+    // the window is as wide as the panel, centred, and sits on the bottom edge
+    function screenFraction(o) {
+        if (!o || o.x < 0 || o.x > 1 || o.y < 0 || o.y > 1 || !dockWindow.screen || dockWindow.screen.width <= 0 || dockWindow.screen.height <= 0)
+            return null;
+
+        var sx = ((dockWindow.screen.width - dockWindow.width) / 2 + o.x * dockWindow.width) / dockWindow.screen.width;
+        var sy = (dockWindow.screen.height - dockWindow.height + o.y * dockWindow.height) / dockWindow.screen.height;
+        if (sx < 0 || sx > 1 || sy < 0 || sy > 1)
+            return null;
+
+        return Qt.point(sx, sy);
+    }
+
+    // origin: where the picked card sits, as fractions of the window (or nothing);
+    // with Settings -> Theme -> Origin on "chosen card" the transition grows from there.
+    // WALL_POS counts y from the bottom, set-wallpaper.sh ignores it for other types
+    function applyWallpaper(path, origin) {
         if (path === "")
             return;
 
         dockWindow.appliedWallpaper = path;
         wallpaperState.current = path;
-        Quickshell.execDetached([Quickshell.env("HOME") + "/.config/hypr/scripts/wallpaper/set-wallpaper.sh", path]);
+        var cmd = [Quickshell.env("HOME") + "/.config/hypr/scripts/wallpaper/set-wallpaper.sh", path];
+        var pos = dockWindow.screenFraction(origin);
+        if (Prefs.wallTransOrigin === "card" && pos)
+            cmd = ["env", "WALL_POS=" + pos.x.toFixed(3) + "," + (1 - pos.y).toFixed(3)].concat(cmd);
+
+        Quickshell.execDetached(cmd);
     }
 
     function syncStripToCurrent() {
@@ -2161,7 +2217,7 @@ PanelWindow {
         id: wallpaperDebounce
 
         interval: 250
-        onTriggered: dockWindow.applyWallpaper(dockWindow.pendingWallpaper)
+        onTriggered: dockWindow.applyWallpaper(dockWindow.pendingWallpaper, dockWindow.pendingOrigin)
     }
 
     Timer {
@@ -2640,6 +2696,8 @@ PanelWindow {
                 wallMidH: dockWindow.wallMidH
                 wallSmallW: dockWindow.wallSmallW
                 wallSmallH: dockWindow.wallSmallH
+                wallTinyW: dockWindow.wallTinyW
+                wallTinyH: dockWindow.wallTinyH
                 wallCardGap: dockWindow.wallCardGap
                 appliedWallpaper: dockWindow.appliedWallpaper
                 highlightQuery: dockWindow.filterQuery
@@ -2667,7 +2725,8 @@ PanelWindow {
                 onClearRequested: Clip.wipe()
                 onWallpaperPreviewed: (path) => dockWindow.requestWallpaper(path)
                 onWallpaperChosen: (path) => {
-                    dockWindow.applyWallpaper(path);
+                    var picker = launcherLoader.item ? launcherLoader.item.wallStrip : null;
+                    dockWindow.applyWallpaper(path, picker ? Qt.point(picker.originX, picker.originY) : Qt.point(-1, -1));
                     dockWindow.menuOpen = false;
                 }
             }
