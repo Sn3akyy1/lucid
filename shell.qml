@@ -860,6 +860,12 @@ ShellRoot {
         id: osdMod
     }
 
+    PinnedWindows {
+    }
+
+    UrgentWindows {
+    }
+
     Toast {
         id: toastMod
     }

@@ -611,6 +611,11 @@ Singleton {
     property alias specialCustom: s.specialCustom
     // Hyprland options set from Settings > Windows, as JSON { "general.gaps_in": 8, ... }
     property alias hyprOptions: s.hyprOptions
+    property alias pinBorder: s.pinBorder
+    property alias pinBadge: s.pinBadge
+    property alias pinPulse: s.pinPulse
+    property alias urgentBadge: s.urgentBadge
+    property alias urgentPulse: s.urgentPulse
 
     property alias glassApps: s.glassApps
     property alias glassValues: s.glassValues
@@ -1040,6 +1045,11 @@ Singleton {
         "specialGaps": 0,
         "specialCustom": "[]",
         "hyprOptions": "{}",
+        "pinBorder": "tertiary",
+        "pinBadge": "top-right",
+        "pinPulse": true,
+        "urgentBadge": "top-left",
+        "urgentPulse": true,
         "glassApps": "vscodium",
         "glassValues": "vscodium=0.9",
         "monitorSetups": "{}",
@@ -1631,6 +1641,11 @@ Singleton {
             property int specialGaps: 0
             property string specialCustom: "[]"
             property string hyprOptions: "{}"
+            property string pinBorder: "tertiary"
+            property string pinBadge: "top-right"
+            property bool pinPulse: true
+            property string urgentBadge: "top-left"
+            property bool urgentPulse: true
             // the apps on the Glass page, and the ones given their own value
             property string glassApps: "vscodium"
             property string glassValues: "vscodium=0.9"

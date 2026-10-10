@@ -136,6 +136,29 @@ function M.apply(live)
             })
         end
     end
+    -- a pinned window, the one that follows you to every workspace, wears a
+    -- border of its own so it reads as pinned at a glance
+    if type(cfg.pinned) == "table" and cfg.pinned.border ~= nil then
+        local ok, rule = pcall(hl.window_rule, {
+            match        = { pin = true },
+            border_color = cfg.pinned.border,
+            border_size  = tonumber(cfg.pinned.size) or 2,
+        })
+        if ok and rule then
+            rules[#rules + 1] = rule
+        else
+            failed["lucid.pinned"] = tostring(rule)
+        end
+        -- a gradient goes on the focused one alone: in the same rule as the
+        -- out-of-focus colour, Hyprland stops drawing that colour
+        if cfg.pinned.focused ~= nil then
+            local fok, frule = pcall(hl.window_rule, {
+                match        = { pin = true, focus = true },
+                border_color = cfg.pinned.focused,
+            })
+            if fok and frule then rules[#rules + 1] = frule end
+        end
+    end
     write_status()
 end
 
