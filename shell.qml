@@ -651,7 +651,8 @@ ShellRoot {
 
                     required property var modelData
 
-                    readonly property bool open: !!seam.modelData && seam.modelData.anyOpen === true
+                    // open, or still folding back up after closing
+                    readonly property bool open: !!seam.modelData && (seam.modelData.anyOpen === true || seam.modelData.dropped === true)
                     readonly property string key: seam.open ? bar.keyOf(seam.modelData) : ""
                     readonly property var leftMate: seam.key !== "" ? bar.joinedMate(seam.key, true) : null
                     readonly property var rightMate: seam.key !== "" ? bar.joinedMate(seam.key, false) : null

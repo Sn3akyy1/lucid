@@ -1243,8 +1243,8 @@ Item {
         radius: root.cornerRadius
         topLeftRadius: root.joinLeft && !root.popupMode ? 0 : root.topRadius
         topRightRadius: root.joinRight && !root.popupMode ? 0 : root.topRadius
-        bottomLeftRadius: root.joinLeft && !root.popupMode ? 0 : root.cornerRadius
-        bottomRightRadius: root.joinRight && !root.popupMode ? 0 : root.cornerRadius
+        bottomLeftRadius: root.joinLeft && !root.popupMode ? 0 : shell.radius
+        bottomRightRadius: root.joinRight && !root.popupMode ? 0 : shell.radius
         clip: !root.dragging
 
         Behavior on x {

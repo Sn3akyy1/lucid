@@ -77,6 +77,9 @@ Item {
     readonly property bool joinLeft: !!pill.hostWindow && !!pill.hostWindow.joinedLeftOf && pill.modId !== "" && pill.hostWindow.joinedLeftOf(pill.modId)
     readonly property bool joinRight: !!pill.hostWindow && !!pill.hostWindow.joinedRightOf && pill.modId !== "" && pill.hostWindow.joinedRightOf(pill.modId)
     readonly property bool joined: pill.joinLeft || pill.joinRight
+    // the panel is still out below the bar: true from the open until it has
+    // folded all the way back, so a closing panel keeps its round lower corners
+    readonly property bool dropped: !pill.popupMode && pill.height > pill.compactHeight + 0.5
 
     // growing sideways would run into a joined neighbour, so a joined pill lights
     // up in place instead
@@ -260,8 +263,8 @@ Item {
         // shared top corners stay square, the bottom ones round off below it
         topLeftRadius: pill.joinLeft && !pill.popupMode ? 0 : pill.topRadius
         topRightRadius: pill.joinRight && !pill.popupMode ? 0 : pill.topRadius
-        bottomLeftRadius: pill.joinLeft && !pill.popupMode && !pill.anyOpen ? 0 : pill.cornerRadius
-        bottomRightRadius: pill.joinRight && !pill.popupMode && !pill.anyOpen ? 0 : pill.cornerRadius
+        bottomLeftRadius: pill.joinLeft && !pill.popupMode && !pill.dropped ? 0 : shell.radius
+        bottomRightRadius: pill.joinRight && !pill.popupMode && !pill.dropped ? 0 : shell.radius
         clip: true
         layer.enabled: pill.surfaceLayered
         layer.samples: 4
