@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Lucid Changelog</title>
-  <meta name="description" content="What landed in each Lucid release, from the v0.57 beta to v1.20: Lucid 2, a clock app, a widget panel, sounds, lock screen, polkit, accounts, light mode, displays and more.">
+  <meta name="description" content="What landed in each Lucid release, from the v0.57 beta to v1.20.1: desktop icons, live wallpapers, Lucid 2, a clock app, a widget panel, sounds, lock screen, polkit, accounts, light mode, displays and more.">
   <meta name="theme-color" content="#0f0807" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#fae7e3" media="(prefers-color-scheme: light)">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Lucid">
   <meta property="og:title" content="Lucid Changelog">
-  <meta property="og:description" content="What landed in each Lucid release, from the v0.57 beta to v1.20: Lucid 2, a clock app, a widget panel, sounds, lock screen, polkit, accounts, light mode, displays and more.">
+  <meta property="og:description" content="What landed in each Lucid release, from the v0.57 beta to v1.20.1: desktop icons, live wallpapers, Lucid 2, a clock app, a widget panel, sounds, lock screen, polkit, accounts, light mode, displays and more.">
   <meta property="og:image" content="assets/images/og-image.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="favicon.ico" sizes="any">
@@ -27,7 +27,7 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="bar">
   <div class="wrap bar-inner">
-    <a class="pill brand" href="index.html" aria-label="Lucid home"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g class="mark-orbit"><path class="mark-ring" d="M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100"/><circle class="mark-dot" cx="21" cy="9.4" r="1"/></g><path class="mark-star" d="M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"/></svg><span>Lucid</span><span class="brand-ver">v1.20</span></a>
+    <a class="pill brand" href="index.html" aria-label="Lucid home"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g class="mark-orbit"><path class="mark-ring" d="M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100"/><circle class="mark-dot" cx="21" cy="9.4" r="1"/></g><path class="mark-star" d="M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"/></svg><span>Lucid</span><span class="brand-ver">v1.20.1</span></a>
     <nav class="pill nav" aria-label="Main">
       <a class="nav-link" href="features.html">Features</a>
       <a class="nav-link" href="screenshots.html">Screenshots</a>
@@ -118,9 +118,30 @@
     <div class="callout" style="margin-bottom: 24px"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-notifications"></use></svg><p><strong>To hear about new versions,</strong> press <strong>Watch → Custom → Releases</strong> on the GitHub repo. Lucid also checks for itself once a day and tells you once, in a notification.</p></div>
 
     <div class="releases">
-      <article class="release" id="v1-20">
+      <article class="release" id="v1-20-1">
         <div class="release-meta">
           <span class="chip chip-accent" style="justify-self: start">Latest</span>
+          <span class="ver">v1.20.1</span>
+          <time datetime="2026-10-15">15 October 2026</time>
+          <a class="link-arrow" href="https://github.com/Sn3akyy1/lucid/releases/tag/v1.20.1" rel="noopener">Release notes<svg class="i" aria-hidden="true" focusable="false"><use href="#i-north_east"></use></svg></a>
+        </div>
+        <div class="release-body">
+          <h2>Desktop icons, live wallpapers and the Steam fix</h2>
+          <p>A point release on top of Lucid 2: icons on the desktop, bar modules that join into one island, live wallpapers and three new ways to pick a wallpaper, five new widgets, files over Bluetooth, a Startup page, fingerprint unlock, and the fix for Steam opening and closing in a loop. Most of it is once again the work of Ciro Rivera, fifteen pull requests of it.</p>
+          <div class="release-groups">
+            <div class="rgroup"><h3>Fixed</h3><ul><li>Steam no longer opens and closes in a loop</li><li>Steam gets the right graphics driver</li><li>A second click on a bar module closes its pop-up</li></ul></div>
+            <div class="rgroup"><h3>Desktop and bar</h3><ul><li>Icons on the desktop, drawn by your icon theme</li><li>Cascading right-click menus, quick look and undo</li><li>Bar modules that join into one island</li><li>Notched pop-ups</li><li>A full-width bar, open on hover and auto-hide</li></ul></div>
+            <div class="rgroup"><h3>Wallpapers</h3><ul><li>Four picker styles: Strip, Pills, Tiles and Bento</li><li>Transitions you can shape and save</li><li>Live wallpapers from videos in the wallpaper folder</li></ul></div>
+            <div class="rgroup"><h3>Devices and windows</h3><ul><li>Send and receive files over Bluetooth</li><li>A Bluetooth pairing agent</li><li>Pinned windows and windows asking for attention stand out</li><li>A display map that lands a drag against a neighbour</li><li>Display changes on trial</li></ul></div>
+            <div class="rgroup"><h3>Also new</h3><ul><li>Five new widgets: progress, quick toggles, shortcuts, search and the sun</li><li>New clock, weather and media faces</li><li>A GitHub contributions widget</li><li>Qt and KDE apps follow the theme</li><li>Open GTK4 apps repaint with the theme</li><li>A dock that hides only when it is in the way</li><li>A new prompt and terminal</li><li>A Startup page for apps at login and environment variables</li><li>Fingerprint unlock on the lock and login screens</li></ul></div>
+            <div class="rgroup"><h3>Contributed</h3><ul><li>Fifteen pull requests, by <a href="https://github.com/ciroenrique4-eng" rel="noopener">Ciro Rivera</a></li><li>Fingerprint unlock, by <a href="https://github.com/SKetU-l" rel="noopener">@SKetU-l</a></li><li>The Steam fix found by <a href="https://github.com/xherqs" rel="noopener">@xherqs</a></li></ul></div>
+          </div>
+          <p>To update, pull and run the installer again. Steam still looping before you update? Delete <code>~/.icons/default/index.theme</code> and start it again.</p>
+        </div>
+      </article>
+
+      <article class="release" id="v1-20">
+        <div class="release-meta">
           <span class="ver">v1.20</span>
           <time datetime="2026-10-08">8 October 2026</time>
           <a class="link-arrow" href="https://github.com/Sn3akyy1/lucid/releases/tag/v1.20" rel="noopener">Release notes<svg class="i" aria-hidden="true" focusable="false"><use href="#i-north_east"></use></svg></a>
