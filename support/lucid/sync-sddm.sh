@@ -116,9 +116,10 @@ if grep -q '^Theme-Id=lucid$' "$DIR/metadata.desktop" 2>/dev/null; then
     # vt never reads half a file
     TMPC=""
     TMPJ=""
+    TMPV=""
     cleanup() {
         local f
-        for f in "$TMPC" "$TMPJ"; do
+        for f in "$TMPC" "$TMPJ" "$TMPV"; do
             [[ -n "$f" ]] && rm -f -- "$f"
         done
         return 0
@@ -133,11 +134,37 @@ if grep -q '^Theme-Id=lucid$' "$DIR/metadata.desktop" 2>/dev/null; then
         [[ $ENROLLED =~ $FINGER_RE ]] && FINGER=true
     fi
 
+    # a live wallpaper moves on the login screen too. the copy is made the way
+    # background.jpg is: 480 wide, blurred there and grown back by the greeter,
+    # and without its sound, so a cold gpu at boot decodes a few hundred lines
+    # rather than 1080. it only changes with the video, so it is made once
+    VIDEO=""
+    LIVE=$(head -n1 "$HOME/.cache/current_live_wallpaper" 2>/dev/null || true)
+    if [[ -n "$LIVE" && -f "$LIVE" ]] && command -v ffmpeg &>/dev/null; then
+        KEY=$(printf '%s|%s' "$LIVE" "$(stat -c %Y "$LIVE" 2>/dev/null || echo 0)" | sha1sum | cut -c1-16)
+        if [[ -s "$OUT/background.mp4" && "$(cat "$OUT/background.key" 2>/dev/null)" == "$KEY" ]]; then
+            VIDEO=background.mp4
+        else
+            TMPV=$(mktemp --suffix=.mp4 "$OUT/.background.XXXXXX")
+            if ffmpeg -v error -y -i "$LIVE" -an -sn -dn \
+                   -vf "scale=480:-2,gblur=sigma=3.4" \
+                   -c:v libx264 -preset veryfast -crf 26 -pix_fmt yuv420p \
+                   -movflags +faststart -threads 2 "$TMPV" </dev/null; then
+                chmod 644 "$TMPV"
+                mv -f "$TMPV" "$OUT/background.mp4"
+                echo "$KEY" > "$OUT/background.key"
+                chmod 644 "$OUT/background.key"
+                VIDEO=background.mp4
+            fi
+        fi
+    fi
+
     TMPC=$(mktemp "$OUT/.theme.conf.XXXXXX")
     {
         echo "[General]"
         echo "# written by sync-sddm.sh from $ME's running shell. edits are overwritten."
         echo "background=background.jpg"
+        echo "backgroundVideo=$VIDEO"
         echo "fingerprint=$FINGER"
         echo
         python3 - "$TOKENS" <<'PY'
@@ -149,6 +176,10 @@ PY
     } > "$TMPC"
     chmod 644 "$TMPC"
     mv -f "$TMPC" "$OUT/theme.conf"
+    # gone only once theme.conf has stopped naming it
+    if [[ -z "$VIDEO" ]]; then
+        rm -f "$OUT/background.mp4" "$OUT/background.key"
+    fi
 
     # the greeter must not run a 64px blur over 1080p on a cold gpu at boot,
     # so the resting blur is baked in here. blurring small and growing back is

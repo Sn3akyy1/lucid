@@ -160,7 +160,7 @@ Item {
 
         // the first account's colours land at once; every pick after it glides
         surface.paperLive = true;
-        surface.showPaper(Theme.background);
+        surface.showPaper();
         Qt.callLater(function() {
             Theme.settled = true;
         });
@@ -204,13 +204,16 @@ Item {
     property var paperLayers: []
     property bool paperLive: false
 
-    function showPaper(src) {
+    function showPaper() {
+        var src = Theme.background;
+        var video = Theme.backgroundVideo;
         var top = surface.paperLayers.length > 0 ? surface.paperLayers[surface.paperLayers.length - 1] : null;
-        if (top && String(top.src) === String(src))
+        if (top && String(top.src) === String(src) && String(top.video) === String(video))
             return ;
 
         surface.paperLayers.push(paperLayer.createObject(paper, {
-            "src": src
+            "src": src,
+            "video": video
         }));
     }
 
@@ -225,9 +228,16 @@ Item {
     }
 
     Connections {
+        // the picture and the video move together on a switch: one layer for both
         function onBackgroundChanged() {
             if (surface.paperLive)
-                surface.showPaper(Theme.background);
+                Qt.callLater(surface.showPaper);
+
+        }
+
+        function onBackgroundVideoChanged() {
+            if (surface.paperLive)
+                Qt.callLater(surface.showPaper);
 
         }
 
@@ -241,6 +251,7 @@ Item {
             id: layer
 
             required property url src
+            required property url video
             // a picture that will not load still fades in, as a flat surface
             readonly property bool decoded: img.status !== Image.Loading
 
@@ -271,6 +282,15 @@ Item {
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: false
+            }
+
+            // its own file, so a machine without QtMultimedia loses only the
+            // motion and keeps the still under it
+            Loader {
+                anchors.fill: parent
+                active: String(layer.video) !== ""
+                source: "components/LiveBackdrop.qml"
+                onLoaded: item.source = layer.video
             }
 
             NumberAnimation {

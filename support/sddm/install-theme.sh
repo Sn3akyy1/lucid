@@ -44,6 +44,23 @@ rm -f "$DEST/background.jpg"
 # other account unable to paint it. -h, so a planted link changes nothing else
 find "$DEST" -path "$DEST/users" -prune -o -exec chown -h root:root {} +
 
+# the login screen plays a live wallpaper as a small video. left to itself,
+# Qt's ffmpeg backend opens every hardware decoder and encoder first, CUDA and
+# VDPAU included: ~3 s before the video starts, and a hybrid laptop's dGPU
+# woken at the login screen. a few hundred lines decode fine in software. a
+# GreeterEnvironment set anywhere else is left alone, since this would replace it
+GREETER_CONF=/etc/sddm.conf.d/lucid-greeter.conf
+if ! grep -qs '^[[:space:]]*GreeterEnvironment=.' /etc/sddm.conf $(ls /etc/sddm.conf.d/*.conf 2>/dev/null | grep -vx "$GREETER_CONF"); then
+    install -d -m755 /etc/sddm.conf.d
+    printf '%s\n' \
+        "# written by lucid's install-theme.sh: the greeter decodes the live" \
+        "# wallpaper in software rather than waking every GPU to look for a decoder" \
+        "[General]" \
+        "GreeterEnvironment=QT_FFMPEG_DECODING_HW_DEVICE_TYPES=,QT_FFMPEG_ENCODING_HW_DEVICE_TYPES=" \
+        > "$GREETER_CONF"
+    chmod 644 "$GREETER_CONF"
+fi
+
 if [[ -L "$DEST/users" || ( -e "$DEST/users" && ! -d "$DEST/users" ) ]]; then
     rm -f "$DEST/users"
 fi
