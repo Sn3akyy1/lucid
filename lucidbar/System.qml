@@ -2186,6 +2186,82 @@ BarPill {
                             bottomPadding: root.sp5
                         }
 
+                        // each program's own level, so one loud app is turned
+                        // down here instead of in settings
+                        Column {
+                            width: outputList.width
+                            visible: Audio.playbackStreams.length > 0
+                            topPadding: root.sp3
+                            bottomPadding: root.sp2
+                            spacing: root.sp3
+
+                            Divider {
+                                width: parent.width
+                            }
+
+                            LText {
+                                leftPadding: Theme.dp(6)
+                                role: "titleSmall"
+                                color: Theme.primary
+                                text: "App volume"
+                            }
+
+                        }
+
+                        Repeater {
+                            model: Audio.playbackStreams
+
+                            Column {
+                                id: appVol
+
+                                required property var modelData
+                                readonly property int volume: Audio.volumeOf(appVol.modelData)
+                                readonly property bool muted: Audio.mutedOf(appVol.modelData)
+
+                                width: outputList.width
+                                spacing: Theme.dp(2)
+                                bottomPadding: root.sp1
+
+                                LText {
+                                    width: parent.width
+                                    leftPadding: Theme.dp(6)
+                                    role: "bodyMedium"
+                                    color: Theme.text
+                                    elide: Text.ElideRight
+                                    text: {
+                                        const media = Audio.mediaLabel(appVol.modelData);
+                                        return Audio.appLabel(appVol.modelData) + (media !== "" ? " · " + media : "");
+                                    }
+                                }
+
+                                Slider {
+                                    width: parent.width
+                                    size: "m"
+                                    icon: root.volumeIcon(appVol.volume, appVol.muted)
+                                    iconClickable: true
+                                    from: 0
+                                    to: 100
+                                    value: appVol.volume
+                                    activeColor: appVol.muted ? Theme.outlineStrong : Theme.primary
+                                    inactiveColor: Theme.withBlur(Theme.surfaceHighest)
+                                    easeValue: root.expanded
+                                    // a bubble over the handle runs off the panel's
+                                    // edge near 100%, so the reading sits in the track
+                                    showValue: false
+                                    inlineValue: true
+                                    valueText: (v) => {
+                                        return Math.round(v) + "%";
+                                    }
+                                    onMoved: (v) => {
+                                        return Audio.setVolume(appVol.modelData, v);
+                                    }
+                                    onIconClicked: Audio.toggleMute(appVol.modelData)
+                                }
+
+                            }
+
+                        }
+
                     }
 
                     Column {
