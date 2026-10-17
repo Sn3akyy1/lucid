@@ -632,6 +632,9 @@ Singleton {
     property alias btReceiveFolder: s.btReceiveFolder
     property alias btReceiveAutoPaired: s.btReceiveAutoPaired
     property alias audioMoveStreams: s.audioMoveStreams
+    // device names the combined output plays on, comma separated; it exists
+    // while two or more are ticked
+    property alias audioCombine: s.audioCombine
     property alias kdeConnectEnabled: s.kdeConnectEnabled
     property alias updateCheck: s.updateCheck
     property alias storageLowWarn: s.storageLowWarn
@@ -829,7 +832,7 @@ Singleton {
         { "key": "keybinds", "icon": "keyboard", "keys": "shortcuts hotkeys keys bindings hyprland super binds", "group": "Desktop", "label": "Keybinds", "title": "Keybinds", "blurb": "Every Hyprland shortcut: change one, switch it off or add your own" },
         { "key": "input", "icon": "mouse", "keys": "keyboard layout layouts xkb caps lock repeat numlock mouse pointer speed acceleration touchpad tap natural scroll gestures swipe", "group": "Devices", "label": "Input", "title": "Input", "blurb": "Keyboard layouts and key repeat, the mouse, the touchpad and its gestures" },
         { "key": "displays", "icon": "desktop_windows", "keys": "monitor screen resolution refresh rate scale vrr arrangement", "group": "Devices", "label": "Displays", "title": "Displays", "blurb": "Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on" },
-        { "key": "sound", "icon": "volume_up", "keys": "audio volume speakers microphone output input devices system sounds chime usb bluetooth charger battery screenshot camera", "group": "Devices", "label": "Sound", "title": "Sound", "blurb": "Which speakers play and which microphone listens, what each application is using, and how loud any of it is" },
+        { "key": "sound", "icon": "volume_up", "keys": "audio volume speakers microphone output input devices combined several multiple outputs at once system sounds chime usb bluetooth charger battery screenshot camera", "group": "Devices", "label": "Sound", "title": "Sound", "blurb": "Which speakers play and which microphone listens, what each application is using, and how loud any of it is" },
         { "key": "network", "icon": "wifi", "keys": "wifi ethernet vpn dns ip proxy internet", "group": "Devices", "label": "Network", "title": "Network", "blurb": "Wi-Fi, wired, VPN and how this machine gets its address" },
         { "key": "bluetooth", "icon": "bluetooth", "keys": "devices pair headphones", "group": "Devices", "label": "Bluetooth", "title": "Bluetooth and Devices", "blurb": "The radio, what it is paired with, and the phone you connect to it" },
         { "key": "kdeconnect", "icon": "smartphone", "keys": "phone kde connect files notifications clipboard", "group": "Devices", "label": "Phone", "title": "Phone", "blurb": "Your phone on this machine over KDE Connect: files, notifications, clipboard and a remote", "toggle": "kdeConnectEnabled" },
@@ -1088,6 +1091,7 @@ Singleton {
         "btReceiveFolder": "",
         "btReceiveAutoPaired": false,
         "audioMoveStreams": true,
+        "audioCombine": "",
         "kdeConnectEnabled": true,
         "updateCheck": true,
         "storageLowWarn": true,
@@ -1807,6 +1811,7 @@ Singleton {
             property string btReceiveFolder: ""
             property bool btReceiveAutoPaired: false
             property bool audioMoveStreams: true
+            property string audioCombine: ""
             property bool kdeConnectEnabled: true
             property bool updateCheck: true
             property bool storageLowWarn: true

@@ -18,8 +18,10 @@ Singleton {
     readonly property var inputs: root.nodes.filter((n) => {
         return root.isAudio(n) && !n.isSink && !n.isStream;
     }).sort(root.byLabel)
+    // the combined output feeds each of its devices through a stream of its
+    // own, which is plumbing rather than something playing
     readonly property var playbackStreams: root.nodes.filter((n) => {
-        return root.isAudio(n) && n.isStream && n.isSink;
+        return root.isAudio(n) && n.isStream && n.isSink && !root.isCombineFeed(n);
     })
     // the page's own level meters record through streams named "quickshell";
     // the name never changes, so a stream is never dropped once it is tracked
@@ -45,6 +47,148 @@ Singleton {
     readonly property string soundDir: "/usr/share/sounds/freedesktop/stereo/"
     // pactl calls are serialised: two at once on the same card race
     property var actionQueue: []
+    // one extra output that plays on every device ticked for it, kept by a
+    // pipewire-pulse module that lives until pipewire does
+    readonly property string combineName: "lucid_combined"
+    readonly property string combineFeedPrefix: "output." + root.combineName + "_"
+    readonly property var combineWanted: Prefs.splitList(Prefs.audioCombine)
+    readonly property var combined: root.outputs.find((n) => {
+        return n.name === root.combineName;
+    }) || null
+    // every real output that could be part of it
+    readonly property var combinable: root.outputs.filter((n) => {
+        return n.name !== root.combineName;
+    })
+    // device names the combined output is playing on right now
+    readonly property var combineFeeding: root.nodes.filter((n) => {
+        return root.isCombineFeed(n);
+    }).map((n) => {
+        return n.name.substring(root.combineFeedPrefix.length);
+    })
+    property bool combinePending: false
+    // a set pipewire refused is not asked for again until something changes
+    property string combineFailed: ""
+    property string combineTried: ""
+    property bool combineMakeDefault: false
+
+    function isCombineFeed(node) {
+        return !!node && node.isStream && String(node.name).indexOf(root.combineFeedPrefix) === 0;
+    }
+
+    function isCombineMember(name) {
+        return root.combineWanted.indexOf(name) >= 0;
+    }
+
+    // ticking the second device makes the combined output and plays through
+    // it; unticking down to one takes it away again
+    //
+    // what comes out of a device is the combined output's volume times the
+    // device's own, so the volume is handed across each way: the combined
+    // output takes over the level and the devices open up under it, and a
+    // device leaving keeps the loudness it had inside
+    function setCombineMember(name, on) {
+        const list = root.combineWanted.filter((x) => {
+            return x !== name;
+        });
+        if (on)
+            list.push(name);
+
+        const node = root.combinable.find((n) => {
+            return n.name === name;
+        }) || null;
+        if (on && list.length >= 2 && !root.combined)
+            root.combineMakeDefault = true;
+        else if (on && root.combined && root.levelOf(root.combined) > 0.0001)
+            root.scaleVolume(node, 1 / root.levelOf(root.combined));
+        else if (!on && root.combined && list.length >= 2 && root.combineFeeding.indexOf(name) >= 0)
+            root.scaleVolume(node, root.levelOf(root.combined));
+        Prefs.audioCombine = list.join(",");
+    }
+
+    // every channel times the same factor, so the balance survives
+    function scaleVolume(node, factor) {
+        if (!node || !node.audio)
+            return ;
+
+        const v = node.audio.volumes;
+        if (!v || v.length === 0) {
+            node.audio.volume = Math.min(1, node.audio.volume * factor);
+            return ;
+        }
+        const out = [];
+        for (let i = 0; i < v.length; i++) out.push(Math.min(1, v[i] * factor))
+        node.audio.volumes = out;
+    }
+
+    // a fresh combined output starts as loud as the loudest of its devices,
+    // takes over what is playing, and only then do the devices open up
+    function combineTakeover() {
+        const c = root.combined;
+        if (!c || !c.ready || !root.combineMakeDefault)
+            return ;
+
+        root.combineMakeDefault = false;
+        const members = root.combinable.filter((n) => {
+            return root.isCombineMember(n.name);
+        });
+        let top = 0;
+        for (let i = 0; i < members.length; i++) top = Math.max(top, root.levelOf(members[i]))
+        if (top > 0.0001)
+            root.setVolume(c, top * 100);
+
+        root.setDefault(c);
+        if (top > 0.0001) {
+            for (let i = 0; i < members.length; i++) root.scaleVolume(members[i], 1 / top)
+        }
+    }
+
+    // the module is only ever handed devices that exist: one it waits for and
+    // never sees fails the whole load. A device that drops away and comes back
+    // rejoins by itself, so it only has to be remade when the set itself moves
+    function syncCombine() {
+        if (root.combinePending)
+            return ;
+
+        const wanted = root.combineWanted;
+        const present = wanted.filter((name) => {
+            return root.combinable.some((n) => {
+                return n.name === name;
+            });
+        });
+        if (wanted.length < 2 || present.length < 2) {
+            if (root.combined && wanted.length < 2) {
+                const level = root.levelOf(root.combined);
+                root.combinable.forEach((n) => {
+                    if (root.combineFeeding.indexOf(n.name) >= 0)
+                        root.scaleVolume(n, level);
+
+                });
+                root.applyCombine([]);
+            }
+            return ;
+        }
+        const feeding = root.combineFeeding;
+        const stale = feeding.some((name) => {
+            return wanted.indexOf(name) < 0;
+        });
+        const missing = present.some((name) => {
+            return feeding.indexOf(name) < 0;
+        });
+        if ((!root.combined || stale || missing) && present.join(",") !== root.combineFailed)
+            root.applyCombine(present);
+
+    }
+
+    function applyCombine(members) {
+        root.combinePending = true;
+        root.combineTried = members.join(",");
+        // drop every copy first, so a shell restarted halfway never leaves two
+        let script = "pactl list short modules | awk -F'\\t' '$2 == \"module-combine-sink\" && $3 ~ /(^| )sink_name=" + root.combineName + "( |$)/ { print $1 }' | while read -r m; do pactl unload-module \"$m\"; done";
+        if (members.length >= 2)
+            script += "; pactl load-module module-combine-sink sink_name=" + root.combineName + " " + root.shq("sink_properties='device.description=\"Combined output\"'") + " sinks=" + root.shq(members.join(",")) + " >/dev/null";
+
+        root.run(script);
+    }
 
     function isAudio(node) {
         return !!node && (node.type & PwNodeType.Audio) !== 0;
@@ -597,6 +741,11 @@ Singleton {
 
         onExited: (code) => {
             root.lastError = code === 0 ? "" : "pactl would not make that change";
+            if (String(actionProc.command[2] || "").indexOf("module-combine-sink") >= 0) {
+                root.combinePending = false;
+                root.combineFailed = code === 0 ? "" : root.combineTried;
+                combineSettle.restart();
+            }
             root.refresh();
             if (String(actionProc.command[2] || "").indexOf("wpctl settings") === 0)
                 root.refreshWp();
@@ -649,17 +798,48 @@ Singleton {
     Connections {
         function onValuesChanged() {
             settle.restart();
+            combineSettle.restart();
         }
 
         target: Pipewire.nodes
     }
 
+    Connections {
+        function onAudioCombineChanged() {
+            root.combineFailed = "";
+            combineSettle.restart();
+        }
+
+        target: Prefs
+    }
+
+    // nodes arrive one at a time; wait for them to stop before comparing
+    Timer {
+        id: combineSettle
+
+        interval: 700
+        onTriggered: root.syncCombine()
+    }
+
+    onCombinedChanged: root.combineTakeover()
+
+    Connections {
+        function onReadyChanged() {
+            root.combineTakeover();
+        }
+
+        // read before its binding has run while the shell is starting
+        target: root.combined || null
+        ignoreUnknownSignals: true
+    }
+
     PwObjectTracker {
-        objects: root.tracked
+        objects: root.tracked || []
     }
 
     Component.onCompleted: {
         root.refresh();
         root.refreshWp();
+        combineSettle.restart();
     }
 }

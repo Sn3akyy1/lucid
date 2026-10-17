@@ -15,8 +15,18 @@ Column {
     readonly property string detail: Audio.detailOf(dev.modelData)
     readonly property int volume: Audio.volumeOf(dev.modelData)
     readonly property bool muted: Audio.mutedOf(dev.modelData)
+    readonly property bool isCombined: dev.modelData.name === Audio.combineName
+    // the combined output has no profile or socket; what it is made of says more
+    readonly property string combineDetail: !dev.isCombined ? "" : Audio.combinable.filter((n) => {
+        return Audio.combineFeeding.indexOf(n.name) >= 0;
+    }).map((n) => {
+        return Audio.label(n);
+    }).join(" + ")
     readonly property string status: {
         const what = dev.modelData.isSink ? "output" : "input";
+        if (dev.isCombined)
+            return (dev.isDefault ? "Default output · " : "") + (dev.combineDetail !== "" ? dev.combineDetail : "Waiting for its devices");
+
         if (dev.isDefault)
             return dev.detail !== "" ? "Default " + what + " · " + dev.detail : "Default " + what;
 

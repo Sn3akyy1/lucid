@@ -34,6 +34,29 @@ Column {
         const detail = Audio.detailOf(page.sink);
         return Audio.label(page.sink) + (detail !== "" ? " · " + detail : "");
     }
+    // the devices on offer, plus any ticked one that is unplugged right now,
+    // so it can still be unticked
+    readonly property var combineChoices: {
+        const out = Audio.combinable.map((n) => {
+            return {
+                "name": n.name,
+                "label": Audio.label(n),
+                "present": true
+            };
+        });
+        Audio.combineWanted.forEach((name) => {
+            if (!out.some((c) => {
+                return c.name === name;
+            }))
+                out.push({
+                "name": name,
+                "label": name,
+                "present": false
+            });
+
+        });
+        return out;
+    }
     readonly property string inputSummary: {
         if (Audio.inputs.length === 0)
             return "No microphone or other input is plugged into this machine.";
@@ -196,13 +219,89 @@ Column {
             title: "Move playing apps with the output"
             resetKey: "audioMoveStreams"
             description: "Picking a different output carries anything already playing across to it. With this off, only apps that have no device of their own follow the change."
-            showDivider: false
 
             M3Switch {
                 checked: Prefs.audioMoveStreams
                 onToggled: (v) => {
                     return Prefs.audioMoveStreams = v;
                 }
+            }
+
+        }
+
+        SettingRow {
+            title: "Play through several at once"
+            resetKey: "audioCombine"
+            enabled: page.combineChoices.length >= 2
+            disabledReason: "This needs two or more outputs."
+            description: "Tick two or more and a Combined output joins the list below, playing on all of them together. Its volume leads, and the slider under each ticked device sets how loud that one plays beside the others. Devices that keep time apart, like the built-in card and a USB or Bluetooth one, can drift a few milliseconds from each other."
+            showDivider: false
+            stacked: true
+
+            Column {
+                width: parent.width
+                spacing: Theme.dp(14)
+                visible: page.combineChoices.length >= 2
+
+                Repeater {
+                    model: page.combineChoices
+
+                    Column {
+                        id: choice
+
+                        required property var modelData
+                        readonly property bool member: Audio.isCombineMember(choice.modelData.name)
+                        readonly property var node: choice.modelData.present ? (Audio.combinable.find((n) => {
+                            return n.name === choice.modelData.name;
+                        }) || null) : null
+
+                        width: parent.width
+                        spacing: Theme.dp(6)
+
+                        CheckLine {
+                            label: choice.modelData.present ? choice.modelData.label : choice.modelData.label + " — not connected"
+                            checked: choice.member
+                            onToggled: Audio.setCombineMember(choice.modelData.name, !checked)
+                        }
+
+                        // the device's own level, which is how loud it plays
+                        // beside the others under the combined output's volume
+                        Row {
+                            x: Theme.dp(27)
+                            width: parent.width - x
+                            visible: choice.member && !!choice.node
+                            spacing: Theme.dp(12)
+
+                            M3IconButton {
+                                anchors.verticalCenter: parent.verticalCenter
+                                size: Theme.dp(36)
+                                iconSize: Theme.dp(19)
+                                variant: Audio.mutedOf(choice.node) ? "tonal" : "standard"
+                                iconPath: Audio.mutedOf(choice.node) ? "volume_off" : "volume_up"
+                                onClicked: Audio.toggleMute(choice.node)
+                            }
+
+                            M3Slider {
+                                width: parent.width - Theme.dp(48)
+                                anchors.verticalCenter: parent.verticalCenter
+                                from: 0
+                                to: 100
+                                stepSize: 1
+                                decimals: 0
+                                suffix: "%"
+                                enabled: !Audio.mutedOf(choice.node)
+                                value: Audio.volumeOf(choice.node)
+                                onMoved: (v) => {
+                                    return Audio.setVolume(choice.node, v);
+                                }
+                            }
+
+                        }
+
+                    }
+
+                }
+
             }
 
         }

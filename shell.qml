@@ -66,6 +66,10 @@ ShellRoot {
         void Sounds.dir;
         void Storage.watching;
         void WallTransitions.active;
+        // the combined output is remade at login by the service that keeps it
+        if (Prefs.audioCombine !== "")
+            void Audio.sink;
+
     }
 
     // the bar that speaks for the shell, of however many there are
