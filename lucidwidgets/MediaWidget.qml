@@ -78,6 +78,9 @@ WidgetBody {
         return Quickshell.env("HOME") + "/.cache/lucid/art/" + h.toString(16) + ".img";
     }
     property string localArt: ""
+    // what every image on the card shows: the cached copy for a remote cover,
+    // the url as it is for a local one
+    readonly property string artSource: w.remoteArt ? w.localArt : w.artUrl
 
     function toggle() {
         if (w.has && w.player.canTogglePlaying)
@@ -164,9 +167,12 @@ WidgetBody {
         w.posStamp = Date.now();
     }
 
+    // every cover goes through the local copy: a remote one handed straight to
+    // an Image makes Qt speak http/2 itself, which is where the shell has
+    // crashed. the tint needs it, so it was fetched for the tint alone before
     function fetchCover() {
         w.localArt = "";
-        if (w.artFile !== "" && w.opt("artTint") !== false && !w.preview) {
+        if (w.artFile !== "" && !w.preview) {
             fetchArt.running = false;
             fetchArt.running = true;
         }
@@ -189,7 +195,7 @@ WidgetBody {
     ColorQuantizer {
         id: quant
 
-        source: w.remoteArt ? w.localArt : w.artUrl
+        source: w.artSource
         depth: 3
         rescaleSize: 48
     }
@@ -226,7 +232,7 @@ WidgetBody {
             id: covImg
 
             anchors.fill: parent
-            source: w.artUrl
+            source: w.artSource
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             sourceSize.width: Theme.dp(512)
@@ -749,7 +755,7 @@ WidgetBody {
             width: Math.min(parent.width, parent.height) - Theme.dp(40)
             height: width
             shape: "cookie12"
-            source: w.artUrl
+            source: w.artSource
             fallbackColor: Theme.alpha(w.ink, 0.1)
 
             RotationAnimation on rotation {
@@ -842,7 +848,7 @@ WidgetBody {
             width: pillRing.width - Theme.dp(12)
             height: width
             shape: "circle"
-            source: w.artUrl
+            source: w.artSource
             fallbackColor: Theme.alpha(w.ink, 0.1)
 
             Icon {
@@ -978,7 +984,7 @@ WidgetBody {
             width: Math.round(orbit.d * 0.5)
             height: width
             shape: "circle"
-            source: w.artUrl
+            source: w.artSource
             decode: Theme.dp(256)
             fallbackColor: Theme.alpha(w.ink, 0.1)
 
@@ -1039,7 +1045,7 @@ WidgetBody {
             height: width
             shape: blob.shown
             to: w.trackShape
-            source: w.artUrl
+            source: w.artSource
             decode: Theme.dp(384)
             fallbackColor: Theme.alpha(w.fill, 1)
             Component.onCompleted: blob.shown = w.trackShape
@@ -1181,7 +1187,7 @@ WidgetBody {
             width: capsule.width - Theme.dp(24)
             height: width
             shape: "circle"
-            source: w.artUrl
+            source: w.artSource
             fallbackColor: Theme.alpha(w.ink, 0.1)
 
             Icon {
