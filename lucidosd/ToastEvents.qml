@@ -589,8 +589,13 @@ Scope {
     // the camera: inotify sees every open and close of /dev/video*, so nothing
     // runs until one is touched, and only then is whoever holds a camera looked
     // up. A browser opening it just to list devices has closed it again by the
-    // time the settle ends, and stays quiet
+    // time the settle ends, and stays quiet. A change is only said once it has
+    // held for a moment, so an app that flicks the camera on and off (a
+    // preview starting, a device probe) never rings the toast twice
     property int camState: -1
+    // what a scan has seen but nothing has said yet, and the holders behind it
+    property int camPending: -1
+    property var camPendingComms: []
 
     // after a usb change, so a webcam plugged in later is watched too
     function camRewatch() {
@@ -626,19 +631,44 @@ Scope {
             return c !== "";
         });
         const on = comms.length > 0 ? 1 : 0;
-        if (on === root.camState)
+        if (on === root.camState) {
+            // it settled back to what is already known; hold nothing
+            root.camPending = -1;
+            camConfirm.stop();
+            return ;
+        }
+        if (on === root.camPending)
             return ;
 
-        const known = root.camState !== -1;
-        root.camState = on;
-        if (!known)
-            return ;
+        // a change: hold it until it has lasted, then say it
+        root.camPending = on;
+        root.camPendingComms = comms;
+        camConfirm.restart();
+    }
 
-        root.sound(on ? "camera-on" : "camera-off", Prefs.soundOnCamera);
-        // the privacy module's "x is using the camera" folds into the same toast
-        if (Prefs.toastOnCamera)
-            root.send("privacy-camera", on ? "videocam" : "videocam_off", on ? "Camera on" : "Camera off", on ? root.camApps(comms).join(", ") : "");
+    Timer {
+        id: camConfirm
 
+        // long enough that a probe or a flicker has come and gone, short
+        // enough that a real use is still told at once
+        interval: 1500
+        onTriggered: {
+            const on = root.camPending;
+            if (on === -1)
+                return ;
+
+            const known = root.camState !== -1;
+            root.camState = on;
+            root.camPending = -1;
+            if (!known)
+                return ;
+
+            root.sound(on ? "camera-on" : "camera-off", Prefs.soundOnCamera);
+            // the privacy module's "x is using the camera" folds into the same toast
+            if (Prefs.toastOnCamera)
+                root.send("privacy-camera", on ? "videocam" : "videocam_off", on ? "Camera on" : "Camera off", on ? root.camApps(root.camPendingComms).join(", ") : "");
+
+        }
     }
 
     Timer {
