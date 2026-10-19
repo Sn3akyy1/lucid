@@ -1027,6 +1027,10 @@ BarPill {
     // what each key in Prefs.systemTiles shows, and what a tap on it does
     function tileIcon(key) {
         switch (key) {
+        case "wifi":
+            return root.wifiGlyph;
+        case "bluetooth":
+            return root.btGlyph;
         case "mic":
             return root.micMuted ? "mic_off" : "mic";
         case "record":
@@ -1046,6 +1050,8 @@ BarPill {
 
     function tileLabel(key) {
         switch (key) {
+        case "wifi":
+            return wifiPanel.primaryIsEthernet ? "Ethernet" : "Wi-Fi";
         case "location":
             return Prefs.gpsEnabled && Loc.busy ? "Locating" : "Location";
         case "record":
@@ -1064,6 +1070,10 @@ BarPill {
 
     function tileChecked(key) {
         switch (key) {
+        case "wifi":
+            return Networking.wifiEnabled || wifiPanel.primaryIsEthernet;
+        case "bluetooth":
+            return root.btEnabled;
         case "dnd":
             return root.dndOn;
         case "awake":
@@ -1125,6 +1135,12 @@ BarPill {
             return ;
         }
         switch (key) {
+        case "wifi":
+            Networking.wifiEnabled = !Networking.wifiEnabled;
+            break;
+        case "bluetooth":
+            Bt.setEnabled(!root.btEnabled);
+            break;
         case "dnd":
             Notifs.toggleDnd();
             break;
@@ -1217,8 +1233,8 @@ BarPill {
         }
     }
 
-    // what the panel holds and in what order, picked on the module's card.
-    // anything unknown, or named twice, is left out
+    // the header buttons picked on the module's card, in that order; anything
+    // unknown, or named twice, is left out
     function picked(list, known) {
         return String(list || "").split(",").map((k) => {
             return k.trim();
@@ -1227,74 +1243,113 @@ BarPill {
         });
     }
 
-    readonly property var sectionKeys: root.picked(Prefs.systemSections, ["brightness", "volume", "quick", "tiles", "media", "stats"])
-    readonly property var gaugeKeys: root.picked(Prefs.systemGauges, ["cpu", "ram", "disk", "battery"])
     readonly property var headerKeys: root.picked(Prefs.systemHeaderButtons, ["edit", "settings", "lock", "power"])
-    // the wide panel: connections and tiles, the sliders and media, the machine.
-    // each section keeps its own column, in the order picked; a column with
-    // nothing in it goes, and with one left the panel stays a single column
-    readonly property var wideHome: ({
-        "quick": 0,
-        "tiles": 0,
-        "brightness": 1,
-        "volume": 1,
-        "media": 1,
-        "stats": 2
+    // the blocks, in the order picked on the module's card, and what the sliders
+    // and system blocks hold. the toggles block holds the tiles
+    readonly property var blockKeys: Prefs.systemBlockKeys
+    // only the sliders with something to move here
+    readonly property var sliderKeys: Prefs.systemSliderKeys.filter((k) => {
+        return (k !== "brightness" || root.maxBrightness > 0) && (k !== "mic" || !!(root.source && root.source.audio));
     })
-    // the single column's width, which the tiles' column keeps in the wide panel
-    readonly property int stackedWidth: Math.min(Theme.dp(400), root.screenW - Theme.dp(34)) - root.panelPad * 2
-    readonly property var wideColWidths: [root.stackedWidth, Theme.dp(320), Theme.dp(260)]
-    readonly property var wideColumns: {
-        const out = [[], [], []];
-        for (const k of root.sectionKeys)
-            out[root.wideHome[k]].push(k);
-        return out.map((keys, home) => {
-            return {
-                "keys": keys,
-                "width": root.wideColWidths[home]
-            };
-        }).filter((c) => {
-            return c.keys.length > 0;
+    // the system block reads as cards: media on its own, each run of gauges on one
+    readonly property var infoGroups: {
+        const out = [];
+        for (const k of Prefs.systemInfoKeys) {
+            const last = out.length > 0 ? out[out.length - 1] : null;
+            if (k === "media")
+                out.push({
+                "media": true,
+                "keys": []
+            });
+            else if (last && !last.media)
+                last.keys.push(k);
+            else
+                out.push({
+                "media": false,
+                "keys": [k]
+            });
+        }
+        return out;
+    }
+    readonly property bool mediaUp: !!(root.mprisMod && root.mprisMod.player)
+
+    function blockShown(key) {
+        if (root.blockKeys.indexOf(key) === -1)
+            return false;
+
+        if (key === "sliders")
+            return root.sliderKeys.length > 0;
+
+        if (key === "toggles")
+            return Prefs.systemTileKeys.length > 0;
+
+        return root.infoGroups.some((g) => {
+            return !g.media || root.mediaUp;
         });
     }
-    readonly property int wideWidth: root.wideColumns.reduce((w, c) => {
-        return w + c.width;
-    }, 0) + Math.max(0, root.wideColumns.length - 1) * root.sp4 + root.panelPad * 2
+
+    readonly property var shownBlocks: root.blockKeys.filter((k) => {
+        return root.blockShown(k);
+    })
+    // the single column's width, which the tiles keep in the wide panel
+    readonly property int stackedWidth: Math.min(Theme.dp(400), root.screenW - Theme.dp(34)) - root.panelPad * 2
+    readonly property int vSliderWidth: Theme.dp(56)
+
+    function wideBlockWidth(key) {
+        if (key === "toggles")
+            return root.stackedWidth;
+
+        if (key === "sliders")
+            return root.sliderKeys.length * root.vSliderWidth + Math.max(0, root.sliderKeys.length - 1) * root.sp2;
+
+        return Theme.dp(296);
+    }
+
+    readonly property int wideWidth: root.shownBlocks.reduce((w, k) => {
+        return w + root.wideBlockWidth(k);
+    }, 0) + Math.max(0, root.shownBlocks.length - 1) * root.sp4 + root.panelPad * 2
     // only the main view: the others are lists, and keep the usual width
-    readonly property bool wideMain: Prefs.systemPanelStyle === "wide" && root.view === "main" && root.wideColumns.length > 1 && root.screenW >= root.wideWidth + Theme.dp(34)
-    readonly property var columns: root.wideMain ? root.wideColumns : [{
-        "keys": root.sectionKeys,
-        "width": root.contentWidth
-    }]
+    readonly property bool wideMain: Prefs.systemPanelStyle === "wide" && root.view === "main" && root.shownBlocks.length > 1 && root.screenW >= root.wideWidth + Theme.dp(34)
 
-    // how wide a section is: the panel's, or its column's
-    function widthFor(key) {
-        return root.wideMain ? root.wideColWidths[root.wideHome[key]] : root.contentWidth;
+    function blockWidth(key) {
+        return root.wideMain ? root.wideBlockWidth(key) : root.contentWidth;
     }
 
-    readonly property real mainTileW: (root.widthFor("tiles") - root.sp2 * (root.tileCols - 1)) / root.tileCols
-
-    // the big tiles: Wi-Fi and Bluetooth, and any of the grid's toggles, with a
-    // line under the name saying what each is doing
-    readonly property var quickCatalogue: ["wifi", "bluetooth", "airplane", "dnd", "awake", "dark", "location", "mic", "gamemode", "profile", "nightlight", "vpn"]
-    readonly property var quickKeys: root.picked(Prefs.systemQuickTiles, root.quickCatalogue)
-
-    function quickIcon(key) {
-        if (key === "wifi")
-            return root.wifiGlyph;
-
-        if (key === "bluetooth")
-            return root.btGlyph;
-
-        return root.tileIcon(key);
+    function blockLoader(key) {
+        return key === "sliders" ? slidersBlock : (key === "toggles" ? togglesBlock : systemBlock);
     }
 
-    function quickName(key) {
+    // where a block starts: past the shown ones before it, across or down
+    function blockStart(key) {
+        let at = 0;
+        for (const k of root.shownBlocks) {
+            if (k === key)
+                break;
+
+            at += root.wideMain ? root.blockWidth(k) + root.sp4 : root.blockLoader(k).height + root.sp3;
+        }
+        return at;
+    }
+
+    // the standing sliders reach as far down as the tallest of the rest
+    readonly property real wideTall: Math.max(Theme.dp(240), root.blockShown("toggles") ? togglesBlock.height : 0, root.blockShown("system") ? systemBlock.height : 0)
+    readonly property real mainTileW: Math.floor((root.blockWidth("toggles") - root.sp2 * (root.tileCols - 1)) / root.tileCols)
+    readonly property real bigTileW: Math.floor((root.blockWidth("toggles") - root.sp2) / 2)
+    readonly property int micPercent: (root.source && root.source.audio) ? Math.round(root.source.audio.volume * 100) : 0
+
+    function setMicVolume(v) {
+        if (!root.source || !root.source.audio)
+            return ;
+
+        if (root.source.audio.muted)
+            root.source.audio.muted = false;
+
+        root.source.audio.volume = v / 100;
+    }
+
+    // a big tile's name, and the line under it saying what it is doing
+    function bigName(key) {
         switch (key) {
-        case "wifi":
-            return wifiPanel.primaryIsEthernet ? "Ethernet" : "Wi-Fi";
-        case "bluetooth":
-            return "Bluetooth";
         case "dnd":
             return "Do not disturb";
         case "awake":
@@ -1308,12 +1363,11 @@ BarPill {
         case "profile":
             return "Power profile";
         }
-        const t = Prefs.systemTileAt(key);
-        return t ? t.name : key;
+        return root.tileLabel(key);
     }
 
-    function quickSub(key) {
-        const on = root.quickChecked(key);
+    function bigSub(key) {
+        const on = root.tileChecked(key);
         switch (key) {
         case "wifi":
             return wifiPanel.statusText;
@@ -1341,39 +1395,16 @@ BarPill {
             return Power.name(Power.profile);
         case "vpn":
             return Net.activeVpn ? Net.activeVpn.name : (Net.vpns.length > 0 ? "Off" : "None set up");
+        case "record":
+        case "timer":
+            return root.tileLabel(key);
         }
-        return on ? "On" : "Off";
+        return root.tileChecked(key) ? "On" : "";
     }
 
-    function quickChecked(key) {
-        if (key === "wifi")
-            return Networking.wifiEnabled || wifiPanel.primaryIsEthernet;
-
-        if (key === "bluetooth")
-            return root.btEnabled;
-
-        return root.tileChecked(key);
-    }
-
-    // the bubble switches it
-    function quickToggle(key) {
-        if (key === "wifi")
-            Networking.wifiEnabled = !Networking.wifiEnabled;
-        else if (key === "bluetooth")
-            Bt.setEnabled(!root.btEnabled);
-        else
-            root.tileAct(key);
-    }
-
-    // the rest of the tile opens what there is to see, or switches it too
-    readonly property var quickPages: ["wifi", "bluetooth", "profile", "nightlight"]
-
-    function quickOpen(key) {
-        if (root.quickPages.indexOf(key) !== -1)
-            root.showView(key);
-        else
-            root.quickToggle(key);
-    }
+    // the tiles with a page of their own: a right click on a small one, the
+    // body of a big one, opens it
+    readonly property var tilePages: ["wifi", "bluetooth", "profile", "nightlight"]
 
     function headerAct(key) {
         switch (key) {
@@ -1757,43 +1788,70 @@ BarPill {
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
 
-                    // the sections, in the order picked on the module's card; the wide
-                    // panel spreads them over its columns (see wideHome)
-                    Row {
+                    // the blocks, in the order picked on the module's card: one under
+                    // another, or side by side in the wide panel, where the sliders
+                    // stand up as tall as the tallest of the rest
+                    Item {
                         id: mainColumn
 
-                        spacing: root.sp4
+                        width: root.wideMain ? root.wideWidth - root.panelPad * 2 : root.contentWidth
+                        implicitHeight: {
+                            let h = 0;
+                            for (const k of root.shownBlocks) {
+                                const b = root.blockLoader(k);
+                                h = root.wideMain ? Math.max(h, b.height) : h + b.height;
+                            }
+                            return root.wideMain ? h : h + Math.max(0, root.shownBlocks.length - 1) * root.sp3;
+                        }
 
-                        Repeater {
-                            model: root.columns
+                        Loader {
+                            id: slidersBlock
 
-                            Column {
-                                id: sectionColumn
+                            visible: root.blockShown("sliders")
+                            x: root.wideMain ? root.blockStart("sliders") : 0
+                            y: root.wideMain ? 0 : root.blockStart("sliders")
+                            width: root.blockWidth("sliders")
+                            sourceComponent: root.wideMain ? tallSliders : flatSliders
+                        }
 
-                                required property var modelData
+                        Loader {
+                            id: togglesBlock
 
-                                width: sectionColumn.modelData.width
-                                spacing: root.sp3
+                            visible: root.blockShown("toggles")
+                            x: root.wideMain ? root.blockStart("toggles") : 0
+                            y: root.wideMain ? 0 : root.blockStart("toggles")
+                            width: root.blockWidth("toggles")
+                            sourceComponent: togglesSection
+                        }
 
-                                Repeater {
-                                    model: sectionColumn.modelData.keys
+                        Loader {
+                            id: systemBlock
 
-                                    Loader {
-                                        required property string modelData
+                            visible: root.blockShown("system")
+                            x: root.wideMain ? root.blockStart("system") : 0
+                            y: root.wideMain ? 0 : root.blockStart("system")
+                            width: root.blockWidth("system")
+                            sourceComponent: systemSection
+                        }
 
-                                        width: sectionColumn.modelData.width
-                                        // a section with nothing to show (no backlight, nothing playing) takes no room
-                                        visible: item !== null && item.shown
-                                        sourceComponent: ({
-                                            "brightness": brightnessSection,
-                                            "volume": volumeSection,
-                                            "quick": quickSection,
-                                            "tiles": tilesSection,
-                                            "media": mediaSection,
-                                            "stats": statsSection
-                                        })[modelData]
-                                    }
+                    }
 
+                    // the sliders lying down, one under another
+                    Component {
+                        id: flatSliders
+
+                        Column {
+                            width: root.blockWidth("sliders")
+                            spacing: root.sp2
+
+                            Repeater {
+                                model: root.sliderKeys
+
+                                Loader {
+                                    required property string modelData
+
+                                    width: root.blockWidth("sliders")
+                                    sourceComponent: modelData === "brightness" ? brightnessSlider : (modelData === "volume" ? volumeSlider : micSlider)
                                 }
 
                             }
@@ -1803,12 +1861,10 @@ BarPill {
                     }
 
                     Component {
-                        id: brightnessSection
+                        id: brightnessSlider
 
                         Slider {
-                            readonly property bool shown: root.maxBrightness > 0
-
-                            width: root.widthFor("brightness")
+                            width: root.blockWidth("sliders")
                             size: "m"
                             icon: root.brightnessIcon
                             from: 0
@@ -1827,16 +1883,14 @@ BarPill {
                     }
 
                     Component {
-                        id: volumeSection
+                        id: volumeSlider
 
                         Row {
-                            readonly property bool shown: true
-
-                            width: root.widthFor("volume")
+                            width: root.blockWidth("sliders")
                             spacing: root.sp2
 
                             Slider {
-                                width: root.widthFor("volume") - outBtn.width - root.sp2
+                                width: root.blockWidth("sliders") - outBtn.width - root.sp2
                                 size: "m"
                                 icon: root.volumeIcon(root.volumePercent, root.volMuted)
                                 iconClickable: true
@@ -1885,31 +1939,65 @@ BarPill {
 
                     }
 
-                    // the big tiles, two to a row
                     Component {
-                        id: quickSection
+                        id: micSlider
 
-                        Grid {
-                            readonly property bool shown: root.quickKeys.length > 0
+                        Slider {
+                            width: root.blockWidth("sliders")
+                            size: "m"
+                            icon: root.micMuted ? "mic_off" : "mic"
+                            iconClickable: true
+                            from: 0
+                            to: 100
+                            value: root.micPercent
+                            activeColor: root.micMuted ? Theme.outlineStrong : Theme.primary
+                            inactiveColor: Theme.withBlur(Theme.surfaceHighest)
+                            easeValue: root.expanded
+                            valueText: (v) => {
+                                return Math.round(v) + "%";
+                            }
+                            onMoved: (v) => {
+                                return root.setMicVolume(v);
+                            }
+                            onIconClicked: root.toggleMicMute()
+                        }
 
-                            width: root.widthFor("quick")
-                            columns: 2
-                            columnSpacing: root.sp2
-                            rowSpacing: root.sp2
+                    }
+
+                    // the sliders standing up, side by side
+                    Component {
+                        id: tallSliders
+
+                        Row {
+                            height: root.wideTall
+                            spacing: root.sp2
 
                             Repeater {
-                                model: root.quickKeys
+                                model: root.sliderKeys
 
-                                QuickTile {
+                                VSlider {
                                     required property string modelData
 
-                                    icon: root.quickIcon(modelData)
-                                    name: root.quickName(modelData)
-                                    sub: root.quickSub(modelData)
-                                    checked: root.quickChecked(modelData)
-                                    hasPage: root.quickPages.indexOf(modelData) !== -1
-                                    onToggled: root.quickToggle(modelData)
-                                    onExpandRequested: root.quickOpen(modelData)
+                                    height: parent.height
+                                    icon: modelData === "brightness" ? root.brightnessIcon : (modelData === "volume" ? root.volumeIcon(root.volumePercent, root.volMuted) : (root.micMuted ? "mic_off" : "mic"))
+                                    value: modelData === "brightness" ? root.brightnessPercent : (modelData === "volume" ? root.volumePercent : root.micPercent)
+                                    muted: (modelData === "volume" && root.volMuted) || (modelData === "mic" && root.micMuted)
+                                    iconClickable: modelData !== "brightness"
+                                    footIcon: modelData === "volume" ? "speaker" : ""
+                                    onMoved: (v) => {
+                                        if (modelData === "brightness") {
+                                            root.setBrightness(v);
+                                        } else if (modelData === "volume") {
+                                            if (root.sink && root.sink.audio && root.sink.audio.muted)
+                                                root.sink.audio.muted = false;
+
+                                            root.setVolume(v);
+                                        } else {
+                                            root.setMicVolume(v);
+                                        }
+                                    }
+                                    onIconClicked: modelData === "volume" ? root.toggleVolMute() : root.toggleMicMute()
+                                    onFootClicked: root.showView("output")
                                 }
 
                             }
@@ -1918,29 +2006,75 @@ BarPill {
 
                     }
 
+                    // the tiles: a small one takes a cell, a big one half a row
                     Component {
-                        id: tilesSection
+                        id: togglesSection
 
-                        Grid {
-                            readonly property bool shown: Prefs.systemTileKeys.length > 0
-
-                            width: root.widthFor("tiles")
-                            columns: root.tileCols
-                            columnSpacing: root.sp2
-                            rowSpacing: root.sp3
+                        Flow {
+                            width: root.blockWidth("toggles")
+                            spacing: root.sp2
 
                             Repeater {
                                 model: Prefs.systemTileKeys
 
-                                SmallTile {
-                                    required property string modelData
+                                Item {
+                                    id: tileSlot
 
-                                    icon: root.tileIcon(modelData)
-                                    label: root.tileLabel(modelData)
-                                    checked: root.tileChecked(modelData)
-                                    hasMore: modelData === "profile" || modelData === "nightlight"
-                                    onToggled: root.tileAct(modelData)
-                                    onMore: root.showView(modelData)
+                                    required property string modelData
+                                    readonly property bool big: Prefs.systemBigKeys.indexOf(modelData) !== -1
+
+                                    width: tileSlot.big ? root.bigTileW : root.mainTileW
+                                    // the small ones' names sit in the gap, so their row keeps the grid's
+                                    height: tileSlot.big ? Theme.dp(64) : root.mainTileW + Theme.dp(24)
+
+                                    QuickTile {
+                                        visible: tileSlot.big
+                                        width: root.bigTileW
+                                        icon: root.tileIcon(tileSlot.modelData)
+                                        name: root.bigName(tileSlot.modelData)
+                                        sub: root.bigSub(tileSlot.modelData)
+                                        checked: root.tileChecked(tileSlot.modelData)
+                                        hasPage: root.tilePages.indexOf(tileSlot.modelData) !== -1
+                                        onToggled: root.tileAct(tileSlot.modelData)
+                                        onExpandRequested: hasPage ? root.showView(tileSlot.modelData) : root.tileAct(tileSlot.modelData)
+                                    }
+
+                                    SmallTile {
+                                        visible: !tileSlot.big
+                                        icon: root.tileIcon(tileSlot.modelData)
+                                        label: root.tileLabel(tileSlot.modelData)
+                                        checked: root.tileChecked(tileSlot.modelData)
+                                        hasMore: root.tilePages.indexOf(tileSlot.modelData) !== -1
+                                        onToggled: root.tileAct(tileSlot.modelData)
+                                        onMore: root.showView(tileSlot.modelData)
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                    // media on its own card, each run of gauges on one
+                    Component {
+                        id: systemSection
+
+                        Column {
+                            width: root.blockWidth("system")
+                            spacing: root.sp3
+
+                            Repeater {
+                                model: root.infoGroups
+
+                                Loader {
+                                    required property var modelData
+                                    readonly property var groupKeys: modelData.keys
+
+                                    width: root.blockWidth("system")
+                                    visible: !modelData.media || root.mediaUp
+                                    sourceComponent: modelData.media ? mediaCardC : gaugesCardC
                                 }
 
                             }
@@ -1950,7 +2084,7 @@ BarPill {
                     }
 
                     Component {
-                        id: mediaSection
+                        id: mediaCardC
 
                         Rectangle {
                             id: mediaCard
@@ -1959,9 +2093,7 @@ BarPill {
                             readonly property real progress: (root.mprisMod && root.mprisMod.lenSec > 0) ? Math.max(0, Math.min(1, root.mprisMod.livePosSec / root.mprisMod.lenSec)) : 0
                             readonly property bool playing: root.mprisMod ? root.mprisMod.isPlaying : false
 
-                            readonly property bool shown: !!(root.mprisMod && root.mprisMod.player)
-
-                            width: root.widthFor("media")
+                            width: root.blockWidth("system")
                             height: Theme.dp(84)
                             radius: Theme.shapeLgInc
                             color: Theme.withBlur(Theme.surfaceHigh)
@@ -2108,7 +2240,7 @@ BarPill {
                     }
 
                     Component {
-                        id: statsSection
+                        id: gaugesCardC
 
                         Rectangle {
                             id: statsCard
@@ -2137,7 +2269,8 @@ BarPill {
                                 root.selectedDisk = root.diskList[(i + 1) % root.diskList.length].name;
                             }
 
-                            readonly property bool shown: root.gaugeKeys.length > 0
+                            // this run of gauges, from the Loader it sits in
+                            readonly property var keys: parent && parent.groupKeys ? parent.groupKeys : []
                             // each gauge picked on the module's card, as the Gauge reads it
                             readonly property var gauges: ({
                                 "cpu": {
@@ -2174,22 +2307,22 @@ BarPill {
                                 }
                             })
 
-                            width: root.widthFor("stats")
+                            width: root.blockWidth("system")
                             height: gaugeGrid.implicitHeight + Theme.dp(28)
                             radius: Theme.shapeLgInc
                             color: Theme.withBlur(Theme.surfaceHigh)
 
-                            // a row of them, or two to a row in a wide column
+                            // in a row, or two to a row in the wide panel's narrower block
                             Grid {
                                 id: gaugeGrid
 
                                 anchors.centerIn: parent
                                 width: parent.width - Theme.dp(16)
-                                columns: root.wideMain ? Math.min(2, root.gaugeKeys.length) : Math.max(1, root.gaugeKeys.length)
+                                columns: root.wideMain ? Math.min(2, statsCard.keys.length) : Math.max(1, statsCard.keys.length)
                                 rowSpacing: Theme.dp(12)
 
                                 Repeater {
-                                    model: root.gaugeKeys
+                                    model: statsCard.keys
 
                                     Gauge {
                                         required property string modelData
@@ -2299,11 +2432,12 @@ BarPill {
                     Button {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        visible: root.view === "tiles" && Prefs.isModified("systemTiles")
+                        // the tiles, and with them Wi-Fi and Bluetooth back at the front, big
+                        visible: root.view === "tiles" && (Prefs.isModified("systemTiles") || Prefs.isModified("systemTilesRadios") || Prefs.isModified("systemBigTiles"))
                         variant: "text"
                         size: "xs"
                         text: "Reset"
-                        onClicked: Prefs.resetKeys(["systemTiles"])
+                        onClicked: Prefs.resetKeys(["systemTiles", "systemTilesRadios", "systemBigTiles"])
                     }
 
                     Switch {
@@ -3074,7 +3208,7 @@ BarPill {
         signal toggled()
         signal expandRequested()
 
-        width: (root.widthFor("quick") - root.sp2) / 2
+        width: root.bigTileW
         height: Theme.dp(64)
         radius: tile.checked ? Theme.shapeLgInc : height / 2
         color: tile.checked ? Theme.primary : Theme.withBlur(Theme.surfaceHighest)
@@ -3166,6 +3300,147 @@ BarPill {
             name: "chevron_right"
             size: Theme.dp(20)
             color: tile.checked ? Theme.fgPrimary : Theme.subtext
+        }
+
+    }
+
+    // a slider standing up, for the wide panel: the level fills a tall pill
+    // from the bottom, its icon at the foot (a tap mutes, where it can), the
+    // value over it, and a button under it where there is a list to pick from
+    component VSlider: Item {
+        id: vs
+
+        property string icon: ""
+        property real value: 0
+        property bool muted: false
+        property bool iconClickable: false
+        property string footIcon: ""
+        property real dragValue: -1
+        readonly property real shownValue: vs.dragValue >= 0 ? vs.dragValue : vs.value
+        readonly property real level: Math.max(0, Math.min(1, vs.shownValue / 100))
+
+        signal moved(real v)
+        signal iconClicked()
+        signal footClicked()
+
+        width: root.vSliderWidth
+
+        LText {
+            id: vsValue
+
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            role: "labelMedium"
+            weight: 600
+            color: vs.muted ? Theme.subtextDim : Theme.subtext
+            text: Math.round(vs.shownValue) + "%"
+        }
+
+        Rectangle {
+            id: vsTrack
+
+            anchors.top: vsValue.bottom
+            anchors.topMargin: root.sp1
+            anchors.bottom: vsFoot.visible ? vsFoot.top : parent.bottom
+            anchors.bottomMargin: vsFoot.visible ? root.sp2 : 0
+            width: parent.width
+            radius: Theme.rad(18)
+            color: Theme.withBlur(Theme.surfaceHighest)
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                // never shorter than its own round end, so the icon always sits on it
+                height: Math.max(width, parent.height * vs.level)
+                radius: parent.radius
+                color: vs.muted ? Theme.outlineStrong : Theme.primary
+
+                Behavior on height {
+                    enabled: vs.dragValue < 0
+
+                    NumberAnimation {
+                        duration: Theme.barMs(160)
+                        easing.type: Easing.OutCubic
+                    }
+
+                }
+
+            }
+
+            MouseArea {
+                function valueAt(my) {
+                    return Math.round(Math.max(0, Math.min(100, (1 - my / vsTrack.height) * 100)));
+                }
+
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                preventStealing: true
+                onPressed: (mouse) => {
+                    vs.dragValue = valueAt(mouse.y);
+                    vs.moved(vs.dragValue);
+                }
+                onPositionChanged: (mouse) => {
+                    if (!pressed)
+                        return ;
+
+                    vs.dragValue = valueAt(mouse.y);
+                    vs.moved(vs.dragValue);
+                }
+                onReleased: vs.dragValue = -1
+                onCanceled: vs.dragValue = -1
+                onWheel: (wheel) => {
+                    vs.moved(Math.max(0, Math.min(100, vs.value + (wheel.angleDelta.y > 0 ? 5 : -5))));
+                }
+            }
+
+            Item {
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width
+                height: parent.width
+
+                Icon {
+                    anchors.centerIn: parent
+                    name: vs.icon
+                    size: Theme.dp(22)
+                    fill: 1
+                    color: vs.muted ? Theme.text : Theme.fgPrimary
+                }
+
+                StateLayer {
+                    visible: vs.iconClickable
+                    radius: vsTrack.radius
+                    tint: Theme.fgPrimary
+                    onClicked: vs.iconClicked()
+                }
+
+            }
+
+        }
+
+        Rectangle {
+            id: vsFoot
+
+            visible: vs.footIcon !== ""
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: Theme.dp(38)
+            radius: Theme.rad(12)
+            color: Theme.withBlur(Theme.surfaceHighest)
+
+            StateLayer {
+                radius: parent.radius
+                onClicked: vs.footClicked()
+            }
+
+            Icon {
+                anchors.centerIn: parent
+                name: vs.footIcon
+                size: Theme.dp(20)
+                color: Theme.subtext
+            }
+
         }
 
     }
@@ -3486,5 +3761,7 @@ BarPill {
         }
 
     }
+
+
 
 }

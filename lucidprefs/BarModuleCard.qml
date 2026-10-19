@@ -325,131 +325,14 @@ SettingCard {
     // system
     SettingRow {
         visible: card.moduleId === "system"
-        title: "Sections"
-        resetKey: "systemSections"
-        description: "What the panel holds, top to bottom in this order. Wide keeps each in its column: Wi-Fi, Bluetooth and the tiles, the sliders and media, then the machine. At least one stays."
+        title: "Layout"
+        resetKey: "systemBlocks"
+        description: "Its blocks, laid out as the panel lays them. Drag a block by its handle to move it with all it holds; drag what is inside one into order. A tap makes a tile big (half a row, with its name and what it is doing) or small again; the cross takes a piece out and + puts it back."
         stacked: true
         showDivider: false
 
-        OrderedPicker {
+        PanelBuilder {
             width: parent.width
-            minimum: 1
-            value: Prefs.systemSections
-            catalogue: [{
-                "id": "brightness",
-                "label": "Brightness",
-                "note": "only with a backlight"
-            }, {
-                "id": "volume",
-                "label": "Volume and output"
-            }, {
-                "id": "quick",
-                "label": "Big tiles",
-                "note": "picked just below"
-            }, {
-                "id": "tiles",
-                "label": "Tiles",
-                "note": "set with Edit in the panel"
-            }, {
-                "id": "media",
-                "label": "Media",
-                "note": "while something plays"
-            }, {
-                "id": "stats",
-                "label": "System",
-                "note": "the gauges picked below"
-            }]
-            onPicked: (v) => {
-                return Prefs.systemSections = v;
-            }
-        }
-
-    }
-
-    SettingRow {
-        visible: card.moduleId === "system"
-        title: "Big tiles"
-        resetKey: "systemQuickTiles"
-        description: "Two to a row, the name and what it is doing. The icon switches it; the rest of the tile opens its page where it has one."
-        stacked: true
-        showDivider: false
-
-        OrderedPicker {
-            width: parent.width
-            value: Prefs.systemQuickTiles
-            catalogue: [{
-                "id": "wifi",
-                "label": "Wi-Fi"
-            }, {
-                "id": "bluetooth",
-                "label": "Bluetooth"
-            }, {
-                "id": "airplane",
-                "label": "Airplane mode"
-            }, {
-                "id": "dnd",
-                "label": "Do not disturb"
-            }, {
-                "id": "awake",
-                "label": "Stay awake"
-            }, {
-                "id": "dark",
-                "label": "Dark mode"
-            }, {
-                "id": "location",
-                "label": "Location"
-            }, {
-                "id": "mic",
-                "label": "Microphone"
-            }, {
-                "id": "gamemode",
-                "label": "Game mode"
-            }, {
-                "id": "profile",
-                "label": "Power profile"
-            }, {
-                "id": "nightlight",
-                "label": "Night light"
-            }, {
-                "id": "vpn",
-                "label": "VPN"
-            }]
-            onPicked: (v) => {
-                return Prefs.systemQuickTiles = v;
-            }
-        }
-
-    }
-
-    SettingRow {
-        visible: card.moduleId === "system"
-        title: "Gauges"
-        resetKey: "systemGauges"
-        description: "On the system card, in this order. With none, the card goes."
-        stacked: true
-        showDivider: false
-
-        OrderedPicker {
-            width: parent.width
-            value: Prefs.systemGauges
-            catalogue: [{
-                "id": "cpu",
-                "label": "CPU",
-                "note": "with its temperature"
-            }, {
-                "id": "ram",
-                "label": "Memory"
-            }, {
-                "id": "disk",
-                "label": "Disk",
-                "note": "a click moves to the next one"
-            }, {
-                "id": "battery",
-                "label": "Battery"
-            }]
-            onPicked: (v) => {
-                return Prefs.systemGauges = v;
-            }
         }
 
     }
