@@ -280,7 +280,13 @@ Singleton {
         "name": "System",
         "desc": "Battery, volume, brightness and quick settings",
         "more": "Its tiles are set with Edit tiles in the control centre itself; the keyboard layout sign and game mode are in System module, further down this page.",
-        "page": ""
+        "page": "",
+        "options": ["systemSections", "systemQuickTiles", "systemGauges", "systemHeaderButtons"],
+        "panelStyle": "systemPanelStyle",
+        "panelStyles": [
+            {"key": "stacked", "name": "Stacked", "blurb": "One column, top to bottom"},
+            {"key": "wide", "name": "Wide", "blurb": "Three columns: connections and tiles, sliders and media, the machine"}
+        ]
     },
     {
         "id": "privacy",
@@ -478,6 +484,11 @@ Singleton {
 
     property alias barZoneGap: s.barZoneGap
     property alias systemTiles: s.systemTiles
+    property alias systemPanelStyle: s.systemPanelStyle
+    property alias systemSections: s.systemSections
+    property alias systemQuickTiles: s.systemQuickTiles
+    property alias systemGauges: s.systemGauges
+    property alias systemHeaderButtons: s.systemHeaderButtons
     property alias barLayout: s.barLayout
     property alias barJoins: s.barJoins
     property alias barJoinDividers: s.barJoinDividers
@@ -1003,6 +1014,11 @@ Singleton {
         "autoColorMode": false,
         "barZoneGap": 26,
         "systemTiles": "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session",
+        "systemPanelStyle": "stacked",
+        "systemSections": "brightness,volume,quick,tiles,media,stats",
+        "systemQuickTiles": "wifi,bluetooth",
+        "systemGauges": "cpu,ram,disk,battery",
+        "systemHeaderButtons": "edit,settings,lock,power",
         "barLayout": "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}",
         "barJoins": "[]",
         "barJoinDividers": true,
@@ -1733,6 +1749,12 @@ Singleton {
             property bool autoColorMode: false
             property int barZoneGap: 26
             property string systemTiles: "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session"
+            // the control centre: one column or three, and what it holds, in order
+            property string systemPanelStyle: "stacked"
+            property string systemSections: "brightness,volume,quick,tiles,media,stats"
+            property string systemQuickTiles: "wifi,bluetooth"
+            property string systemGauges: "cpu,ram,disk,battery"
+            property string systemHeaderButtons: "edit,settings,lock,power"
             property string barLayout: "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}"
             property string barJoins: "[]"
             property bool barJoinDividers: true

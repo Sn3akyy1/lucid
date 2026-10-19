@@ -323,6 +323,170 @@ SettingCard {
 
     // notifications
     // system
+    SettingRow {
+        visible: card.moduleId === "system"
+        title: "Sections"
+        resetKey: "systemSections"
+        description: "What the panel holds, top to bottom in this order. Wide keeps each in its column: Wi-Fi, Bluetooth and the tiles, the sliders and media, then the machine. At least one stays."
+        stacked: true
+        showDivider: false
+
+        OrderedPicker {
+            width: parent.width
+            minimum: 1
+            value: Prefs.systemSections
+            catalogue: [{
+                "id": "brightness",
+                "label": "Brightness",
+                "note": "only with a backlight"
+            }, {
+                "id": "volume",
+                "label": "Volume and output"
+            }, {
+                "id": "quick",
+                "label": "Big tiles",
+                "note": "picked just below"
+            }, {
+                "id": "tiles",
+                "label": "Tiles",
+                "note": "set with Edit in the panel"
+            }, {
+                "id": "media",
+                "label": "Media",
+                "note": "while something plays"
+            }, {
+                "id": "stats",
+                "label": "System",
+                "note": "the gauges picked below"
+            }]
+            onPicked: (v) => {
+                return Prefs.systemSections = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "system"
+        title: "Big tiles"
+        resetKey: "systemQuickTiles"
+        description: "Two to a row, the name and what it is doing. The icon switches it; the rest of the tile opens its page where it has one."
+        stacked: true
+        showDivider: false
+
+        OrderedPicker {
+            width: parent.width
+            value: Prefs.systemQuickTiles
+            catalogue: [{
+                "id": "wifi",
+                "label": "Wi-Fi"
+            }, {
+                "id": "bluetooth",
+                "label": "Bluetooth"
+            }, {
+                "id": "airplane",
+                "label": "Airplane mode"
+            }, {
+                "id": "dnd",
+                "label": "Do not disturb"
+            }, {
+                "id": "awake",
+                "label": "Stay awake"
+            }, {
+                "id": "dark",
+                "label": "Dark mode"
+            }, {
+                "id": "location",
+                "label": "Location"
+            }, {
+                "id": "mic",
+                "label": "Microphone"
+            }, {
+                "id": "gamemode",
+                "label": "Game mode"
+            }, {
+                "id": "profile",
+                "label": "Power profile"
+            }, {
+                "id": "nightlight",
+                "label": "Night light"
+            }, {
+                "id": "vpn",
+                "label": "VPN"
+            }]
+            onPicked: (v) => {
+                return Prefs.systemQuickTiles = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "system"
+        title: "Gauges"
+        resetKey: "systemGauges"
+        description: "On the system card, in this order. With none, the card goes."
+        stacked: true
+        showDivider: false
+
+        OrderedPicker {
+            width: parent.width
+            value: Prefs.systemGauges
+            catalogue: [{
+                "id": "cpu",
+                "label": "CPU",
+                "note": "with its temperature"
+            }, {
+                "id": "ram",
+                "label": "Memory"
+            }, {
+                "id": "disk",
+                "label": "Disk",
+                "note": "a click moves to the next one"
+            }, {
+                "id": "battery",
+                "label": "Battery"
+            }]
+            onPicked: (v) => {
+                return Prefs.systemGauges = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "system"
+        title: "Header buttons"
+        resetKey: "systemHeaderButtons"
+        description: "Beside the date, in this order."
+        stacked: true
+        showDivider: false
+
+        OrderedPicker {
+            width: parent.width
+            value: Prefs.systemHeaderButtons
+            catalogue: [{
+                "id": "edit",
+                "label": "Edit tiles",
+                "note": "the only way to the tile editor"
+            }, {
+                "id": "settings",
+                "label": "Settings"
+            }, {
+                "id": "lock",
+                "label": "Lock"
+            }, {
+                "id": "power",
+                "label": "Power",
+                "note": "suspend, restart, shut down"
+            }]
+            onPicked: (v) => {
+                return Prefs.systemHeaderButtons = v;
+            }
+        }
+
+    }
+
     // system tray
     SettingRow {
         visible: card.moduleId === "tray"
