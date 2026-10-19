@@ -221,12 +221,12 @@ Singleton {
     readonly property var systemSliderKeys: root.prefList(root.systemSliders, root.systemSliderCatalog)
     readonly property var systemInfoKeys: root.prefList(root.systemInfo, root.systemInfoCatalog)
 
-    // the wide control centre is a grid, bento style: each block sits at a
-    // column and a row and spans as many of each as it is given. a column is
-    // a tile wide; a row is as tall as the tallest block sitting in it alone.
-    // systemGrid keeps { key: { x, y, w, h, lie } }, lie laying the sliders down
+    // the control centre is a grid, bento style: each block sits at a column
+    // and a row and spans as many of each as it is given. a column is a tile
+    // wide and a row a thin strip, so a block is as tall as it is made, never
+    // less than what it holds. systemGrid keeps { key: { x, y, w, h, lie } },
+    // lie laying the sliders down
     readonly property int systemGridCols: 16
-    readonly property int systemGridMaxRows: 6
     readonly property var systemGridSaved: {
         try {
             const v = JSON.parse(root.systemGrid || "{}");
@@ -248,93 +248,81 @@ Singleton {
         return 3;
     }
 
-    // the columns a block takes until it is given others: about what it had
-    // when the blocks only stood side by side
-    function systemGridDefaultW(key, lie) {
-        const w = key === "toggles" ? 6 : (key === "system" ? 5 : (lie ? 4 : Math.max(2, root.systemSliderKeys.length)));
-        return Math.max(w, root.systemGridMinW(key, lie));
-    }
-
     function systemGridOverlap(a, b) {
         return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
     }
 
-    // a spot made whole: whole cells, no smaller than the block allows, inside the grid
-    function systemGridFit(key, r) {
-        const lie = !!r.lie;
-        const minW = root.systemGridMinW(key, lie);
-        const w = Math.max(minW, Math.min(root.systemGridCols, Math.round(Number(r.w) || root.systemGridDefaultW(key, lie))));
-        const h = Math.max(1, Math.min(root.systemGridMaxRows, Math.round(Number(r.h) || 1)));
-        const x = Math.max(0, Math.min(root.systemGridCols - w, Math.round(Number(r.x) || 0)));
-        const y = Math.max(0, Math.round(Number(r.y) || 0));
+    // a spot made whole: whole cells, inside the grid, no narrower than the
+    // block allows and no shorter than the rows its pieces need. until they
+    // are given a place the blocks make the one column the panel always had,
+    // six tiles wide, with the sliders lying down
+    function systemGridFit(key, r, need) {
+        const lie = r.lie === undefined ? true : !!r.lie;
+        const w = Math.max(root.systemGridMinW(key, lie), Math.min(root.systemGridCols, Math.round(Number(r.w) || 6)));
         return {
-            "x": x,
-            "y": y,
+            "x": Math.max(0, Math.min(root.systemGridCols - w, Math.round(Number(r.x) || 0))),
+            "y": Math.max(0, Math.round(Number(r.y) || 0)),
             "w": w,
-            "h": h,
+            "h": Math.max(1, need || 1, Math.round(Number(r.h) || 0)),
             "lie": lie
         };
     }
 
-    // the first spot a w by h block fits without landing on any in taken,
-    // reading across and then down
-    function systemGridFree(w, h, taken) {
-        for (let y = 0; ; y++) {
-            for (let x = 0; x + w <= root.systemGridCols; x++) {
-                const r = {
-                    "x": x,
-                    "y": y,
-                    "w": w,
-                    "h": h
-                };
-                if (!taken.some((t) => {
-                    return root.systemGridOverlap(r, t);
-                }))
-                    return r;
-
-            }
-        }
-    }
-
-    // where each of keys sits: where it was saved while that is still free,
-    // the rest at the first free spot, so nothing ever lands on another
-    function systemGridPlace(keys) {
+    // where each of keys sits, given the rows each needs. top to bottom, one
+    // that would land on another (it grew, or another did) moves down past it;
+    // one never placed goes under all the rest
+    function systemGridPlace(keys, needs) {
+        const need = needs || {};
         const saved = root.systemGridSaved;
         const out = {};
+        const placed = keys.filter((k) => {
+            return !!saved[k];
+        }).map((k) => {
+            return {
+                "key": k,
+                "r": root.systemGridFit(k, saved[k], need[k])
+            };
+        }).sort((a, b) => {
+            return a.r.y - b.r.y || a.r.x - b.r.x;
+        });
         const taken = [];
-        for (const key of keys) {
-            if (!saved[key])
-                continue;
+        for (const p of placed) {
+            for (; ; ) {
+                const hit = taken.filter((t) => {
+                    return root.systemGridOverlap(p.r, t);
+                });
+                if (hit.length === 0)
+                    break;
 
-            const r = root.systemGridFit(key, saved[key]);
-            if (taken.some((t) => {
-                return root.systemGridOverlap(r, t);
-            }))
-                continue;
-
-            out[key] = r;
-            taken.push(r);
+                p.r.y = Math.max(...hit.map((t) => {
+                    return t.y + t.h;
+                }));
+            }
+            out[p.key] = p.r;
+            taken.push(p.r);
         }
-        for (const key of keys) {
-            if (out[key])
+        for (const k of keys) {
+            if (out[k])
                 continue;
 
-            const lie = !!(saved[key] && saved[key].lie);
-            const r = root.systemGridFree(root.systemGridDefaultW(key, lie), saved[key] ? root.systemGridFit(key, saved[key]).h : 1, taken);
-            r.lie = lie;
-            out[key] = r;
+            const r = root.systemGridFit(k, {}, need[k]);
+            r.y = taken.reduce((y, t) => {
+                return Math.max(y, t.y + t.h);
+            }, 0);
+            out[k] = r;
             taken.push(r);
         }
         return out;
     }
 
-    // puts a block at a new spot or size. the ones it lands on move to where
-    // it was, if they fit there, or else to the first free spot
-    function systemGridSet(key, spot) {
-        const now = root.systemGridPlace(root.systemBlockKeys);
-        const old = now[key] || root.systemGridFit(key, {});
+    // puts a block at a new spot or size. a block it lands on takes the spot
+    // it left if it fits there, or else goes under it
+    function systemGridSet(key, spot, needs) {
+        const need = needs || {};
+        const now = root.systemGridPlace(root.systemBlockKeys, need);
+        const old = now[key] || root.systemGridFit(key, {}, need[key]);
         const next = Object.assign({}, root.systemGridSaved, now);
-        const moved = root.systemGridFit(key, Object.assign({}, old, spot));
+        const moved = root.systemGridFit(key, Object.assign({}, old, spot), need[key]);
         next[key] = moved;
         const taken = [moved];
         const pushed = [];
@@ -351,11 +339,11 @@ Singleton {
             const there = root.systemGridFit(k, Object.assign({}, now[k], {
                 "x": old.x,
                 "y": old.y
-            }));
+            }), need[k]);
             const r = taken.some((t) => {
                 return root.systemGridOverlap(there, t);
-            }) ? Object.assign(root.systemGridFree(now[k].w, now[k].h, taken), {
-                "lie": now[k].lie
+            }) ? Object.assign({}, now[k], {
+                "y": moved.y + moved.h
             }) : there;
             next[k] = r;
             taken.push(r);
@@ -475,12 +463,7 @@ Singleton {
         "desc": "Battery, volume, brightness and quick settings",
         "more": "Its tiles are set with Edit tiles in the control centre itself; the keyboard layout sign and game mode are in System module, further down this page.",
         "page": "",
-        "options": ["systemTiles", "systemTilesRadios", "systemBigTiles", "systemBlocks", "systemGrid", "systemSliders", "systemInfo", "systemHeaderButtons"],
-        "panelStyle": "systemPanelStyle",
-        "panelStyles": [
-            {"key": "stacked", "name": "Stacked", "blurb": "One column, top to bottom"},
-            {"key": "wide", "name": "Wide", "blurb": "Its blocks on a grid: side by side, one over another, as big as you make them"}
-        ]
+        "options": ["systemTiles", "systemTilesRadios", "systemBigTiles", "systemBlocks", "systemGrid", "systemSliders", "systemInfo", "systemHeaderButtons"]
     },
     {
         "id": "privacy",
@@ -678,7 +661,6 @@ Singleton {
 
     property alias barZoneGap: s.barZoneGap
     property alias systemTiles: s.systemTiles
-    property alias systemPanelStyle: s.systemPanelStyle
     property alias systemTilesRadios: s.systemTilesRadios
     property alias systemBigTiles: s.systemBigTiles
     property alias systemBlocks: s.systemBlocks
@@ -1211,7 +1193,6 @@ Singleton {
         "autoColorMode": false,
         "barZoneGap": 26,
         "systemTiles": "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session",
-        "systemPanelStyle": "stacked",
         "systemTilesRadios": false,
         "systemBigTiles": "wifi,bluetooth",
         "systemBlocks": "sliders,toggles,system",
@@ -1949,16 +1930,14 @@ Singleton {
             property bool autoColorMode: false
             property int barZoneGap: 26
             property string systemTiles: "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session"
-            // the control centre: its blocks one under another or side by side,
-            // and what each holds, in order
-            property string systemPanelStyle: "stacked"
+            // the control centre: its blocks, and what each holds, in order
             property bool systemTilesRadios: false
             property string systemBigTiles: "wifi,bluetooth"
             property string systemBlocks: "sliders,toggles,system"
             property string systemSliders: "brightness,volume"
             property string systemInfo: "media,cpu,ram,disk,battery"
-            // where each block sits on the wide panel's grid, as JSON; empty
-            // lays them side by side in the order above
+            // where each block sits on the panel's grid, as JSON; empty lays
+            // them one under another in the order above
             property string systemGrid: ""
             property string systemHeaderButtons: "edit,settings,lock,power"
             property string barLayout: "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}"
