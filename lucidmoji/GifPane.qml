@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
 import qs
@@ -21,6 +22,13 @@ Item {
     property bool loading: false
     property string errorText: ""
     property int hoverIndex: -1
+    // previews and api replies arrive through curl and are shown from the
+    // cache: a live https url handed to an AnimatedImage (or XMLHttpRequest)
+    // makes Qt run its own http/2 client, which is what has crashed the shell
+    property var gifCached: ({})
+    property var gifPending: ({})
+    property var previewQueue: []
+    property var apiQueue: []
 
     // "giphy" | "tenor" | ""
     readonly property string provider: {
@@ -224,28 +232,56 @@ Item {
         return out;
     }
 
-    function request(url, onOk) {
+    // the api goes through curl, one call at a time in the order it came
+    function request(url, callback) {
         pane.loading = true;
         pane.errorText = "";
-        var xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState !== XMLHttpRequest.DONE)
-                return ;
+        var q = pane.apiQueue.slice();
+        q.push({
+            "url": url,
+            "callback": callback
+        });
+        pane.apiQueue = q;
+        if (!apiFetch.running)
+            apiFetch.start();
 
-            pane.loading = false;
-            if (xhr.status !== 200) {
-                var who = pane.provider === "giphy" ? "Giphy" : "Tenor";
-                pane.errorText = xhr.status === 0 ? ("No connection to " + who) : (who + " returned " + xhr.status + " — check your key");
-                return ;
-            }
-            try {
-                onOk(xhr.responseText);
-            } catch (e) {
-                pane.errorText = "Could not read the response";
-            }
-        };
-        xhr.open("GET", url);
-        xhr.send();
+    }
+
+    function gifFile(url) {
+        var h = 5381;
+        for (var i = 0; i < url.length; i++) h = ((h * 33) ^ url.charCodeAt(i)) >>> 0
+        return Quickshell.env("HOME") + "/.cache/lucid/gif/" + h.toString(16) + ".img";
+    }
+
+    // a remote preview resolves to its copy in the cache once one lands, a
+    // local one is handed over untouched, and the rest wait as the fallback
+    function previewSource(url) {
+        var cached = pane.gifCached;
+        if (!/^https?:/.test(url))
+            return url;
+
+        return cached[url] ? "file://" + pane.gifFile(url) : "";
+    }
+
+    function fetchPreviews(list) {
+        var batch = [];
+        for (var i = 0; i < list.length; i++) {
+            var u = list[i] ? list[i].preview : "";
+            if (!/^https?:/.test(u) || pane.gifCached[u] || pane.gifPending[u])
+                continue;
+
+            pane.gifPending[u] = true;
+            batch.push(u);
+        }
+        if (batch.length === 0)
+            return ;
+
+        var q = pane.previewQueue.slice();
+        q.push(batch);
+        pane.previewQueue = q;
+        if (!gifFetch.running)
+            gifFetch.start();
+
     }
 
     function fetchCategories() {
@@ -324,6 +360,15 @@ Item {
         pane.mode = "results";
         searchDebounce.restart();
     }
+    // every lane the grid can show, prefetched into the cache as it arrives
+    Component.onCompleted: {
+        pane.fetchPreviews(pane.entries);
+        pane.fetchPreviews(pane.tiles);
+    }
+
+    onEntriesChanged: pane.fetchPreviews(pane.entries)
+
+    onTilesChanged: pane.fetchPreviews(pane.tiles)
     onVisibleChanged: {
         if (!pane.visible)
             return ;
@@ -345,6 +390,107 @@ Item {
 
         interval: 350
         onTriggered: pane.search()
+    }
+
+    Process {
+        id: apiFetch
+
+        property string url: ""
+        property var callback: null
+        property bool done: false
+
+        function start() {
+            var q = pane.apiQueue.slice();
+            if (q.length === 0)
+                return ;
+
+            var job = q.shift();
+            pane.apiQueue = q;
+            apiFetch.url = job.url;
+            apiFetch.callback = job.callback;
+            apiFetch.done = false;
+            apiFetch.running = false;
+            apiFetch.running = true;
+        }
+
+        // no -f: the http code is wanted even when it is an error
+        command: ["curl", "-s", "--max-time", "15", "-w", "\n%{http_code}", apiFetch.url]
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (apiFetch.done)
+                    return ;
+
+                apiFetch.done = true;
+                var t = this.text;
+                var cut = t.lastIndexOf("\n");
+                var code = cut === -1 ? 0 : parseInt(t.slice(cut + 1), 10);
+                var body = cut === -1 ? "" : t.slice(0, cut);
+                if (code === 200) {
+                    try {
+                        apiFetch.callback(body);
+                    } catch (e) {
+                        pane.errorText = "Could not read the response";
+                    }
+                } else {
+                    var who = pane.provider === "giphy" ? "Giphy" : "Tenor";
+                    pane.errorText = !code ? ("No connection to " + who) : (who + " returned " + code + " — check your key");
+                }
+                pane.loading = pane.apiQueue.length > 0;
+                if (pane.apiQueue.length > 0)
+                    apiFetch.start();
+
+            }
+        }
+
+    }
+
+    Process {
+        id: gifFetch
+
+        property var urls: []
+
+        // six downloads at a time, one line per preview that made it to the
+        // cache, so a failed one stays pending and can be retried later
+        readonly property string script: "d=\"$1\"; shift\nmkdir -p \"$d\"\nfind \"$d\" -name '*.img' -mtime +14 -delete 2>/dev/null\nn=0\nwhile [ $# -ge 2 ]; do\n  u=\"$1\"; f=\"$2\"; shift 2\n  (\n    if [ -s \"$f\" ]; then printf '%s\\n' \"$u\"; exit 0; fi\n    t=\"$f.$n\"\n    if curl -sfL --max-time 12 -o \"$t\" \"$u\" && [ -s \"$t\" ]; then mv \"$t\" \"$f\"; printf '%s\\n' \"$u\"; else rm -f \"$t\"; fi\n  ) &\n  n=$((n + 1))\n  [ $((n % 6)) -eq 0 ] && wait\ndone\nwait\n"
+
+        function start() {
+            var q = pane.previewQueue.slice();
+            if (q.length === 0)
+                return ;
+
+            var batch = q.shift();
+            pane.previewQueue = q;
+            gifFetch.urls = batch;
+            var args = ["sh", "-c", gifFetch.script, "sh", Quickshell.env("HOME") + "/.cache/lucid/gif"];
+            for (var i = 0; i < batch.length; i++) {
+                args.push(batch[i]);
+                args.push(pane.gifFile(batch[i]));
+            }
+            gifFetch.command = args;
+            gifFetch.running = false;
+            gifFetch.running = true;
+        }
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var fresh = {};
+                var lines = this.text.split("\n");
+                for (var i = 0; i < lines.length; i++) {
+                    var u = lines[i].trim();
+                    if (u !== "")
+                        fresh[u] = true;
+
+                }
+                for (var j = 0; j < gifFetch.urls.length; j++) delete pane.gifPending[gifFetch.urls[j]];
+                // a new object so every preview bound to this re-evaluates
+                pane.gifCached = Object.assign({}, pane.gifCached, fresh);
+                if (pane.previewQueue.length > 0)
+                    gifFetch.start();
+
+            }
+        }
+
     }
 
     Process {
@@ -472,7 +618,7 @@ Item {
 
                 AnimatedImage {
                     anchors.fill: parent
-                    source: tile.modelData.preview
+                    source: pane.previewSource(tile.modelData.preview)
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     cache: true
@@ -593,7 +739,7 @@ Item {
 
                             AnimatedImage {
                                 anchors.fill: parent
-                                source: gifCell.modelData.preview
+                                source: pane.previewSource(gifCell.modelData.preview)
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
                                 cache: true

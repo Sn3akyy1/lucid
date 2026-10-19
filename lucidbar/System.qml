@@ -1758,7 +1758,7 @@ BarPill {
                                     id: mediaArtImg
 
                                     anchors.fill: parent
-                                    source: root.mprisMod ? root.mprisMod.artUrl : ""
+                                    source: root.mprisMod ? root.mprisMod.artSource : ""
                                     fillMode: Image.PreserveAspectCrop
                                     asynchronous: true
                                     cache: true

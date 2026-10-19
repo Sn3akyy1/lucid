@@ -59,6 +59,80 @@ BarPill {
     readonly property string title: root.player ? (root.player.trackTitle || "Unknown") : "Nothing playing"
     readonly property string artist: root.player ? root.player.trackArtist : ""
     readonly property string artUrl: root.player ? root.player.trackArtUrl : ""
+    // clear the cached file:// url immediately when the track changes, so
+    // artSource falls back to the remote url (or empty) while the new cover downloads
+    onArtUrlChanged: root.localArt = ""
+    // a remote cover is fetched into the cache and shown from there: an Image
+    // fed the url itself makes Qt run the network stack, and its http/2 client
+    // is what has been taking the shell down mid-session
+    readonly property bool remoteArt: /^https?:/.test(root.artUrl)
+    readonly property string artFile: {
+        if (!root.remoteArt)
+            return "";
+
+        var h = 5381;
+        for (var i = 0; i < root.artUrl.length; i++) h = ((h * 33) ^ root.artUrl.charCodeAt(i)) >>> 0
+        return Quickshell.env("HOME") + "/.cache/lucid/art/" + h.toString(16) + ".img";
+    }
+    property string localArt: ""
+    readonly property string artSource: root.remoteArt ? root.localArt : root.artUrl
+
+    function fetchCover() {
+        root.localArt = "";
+        if (root.artFile !== "") {
+            artFetch.running = false;
+            artFetch.running = true;
+        }
+    }
+
+    onArtFileChanged: root.fetchCover()
+    Component.onCompleted: root.fetchCover()
+
+    // shazam art follows the same pattern
+    readonly property bool shazamRemoteArt: root.shazamResult && /^https?:/.test(root.shazamResult.art)
+    readonly property string shazamArtFile: {
+        if (!root.shazamRemoteArt || !root.shazamResult)
+            return "";
+        var h = 5381;
+        var u = root.shazamResult.art;
+        for (var i = 0; i < u.length; i++) h = ((h * 33) ^ u.charCodeAt(i)) >>> 0
+        return Quickshell.env("HOME") + "/.cache/lucid/art/" + h.toString(16) + ".img";
+    }
+    property string shazamLocalArt: ""
+    readonly property string shazamArtSource: root.shazamRemoteArt ? root.shazamLocalArt : (root.shazamResult ? root.shazamResult.art : "")
+
+    function shazamFetch() {
+        root.shazamLocalArt = "";
+        if (root.shazamArtFile !== "") {
+            shazamFetchProc.running = false;
+            shazamFetchProc.running = true;
+        }
+    }
+
+    onShazamArtFileChanged: root.shazamFetch()
+    onShazamResultChanged: root.shazamFetch()
+
+    Process {
+        id: artFetch
+
+        command: ["sh", "-c", "f=\"$1\"; d=\"$(dirname \"$f\")\"; mkdir -p \"$d\"; find \"$d\" -name '*.img' -mtime +14 -delete 2>/dev/null; [ -s \"$f\" ] || { t=\"$f.$$\"; curl -sfL --max-time 10 -o \"$t\" \"$2\" && mv \"$t\" \"$f\" && sync || rm -f \"$t\"; }; [ -s \"$f\" ]", "sh", root.artFile, root.artUrl]
+        onExited: (code) => {
+            if (code === 0)
+                root.localArt = "file://" + root.artFile;
+
+        }
+    }
+
+    Process {
+        id: shazamFetchProc
+
+        command: root.shazamResult ? ["sh", "-c", "f=\"$1\"; d=\"$(dirname \"$f\")\"; mkdir -p \"$d\"; find \"$d\" -name '*.img' -mtime +14 -delete 2>/dev/null; [ -s \"$f\" ] || { t=\"$f.$$\"; curl -sfL --max-time 10 -o \"$t\" \"$2\" && mv \"$t\" \"$f\" && sync || rm -f \"$t\"; }; [ -s \"$f\" ]", "sh", root.shazamArtFile, root.shazamResult.art] : []
+        onExited: (code) => {
+            if (code === 0)
+                root.shazamLocalArt = "file://" + root.shazamArtFile;
+
+        }
+    }
     readonly property string sourceName: root.player ? (root.player.identity || "Media player") : ""
     // the cover across the top, or the record: either way the track goes under it
     readonly property bool heroLayout: (root.coverPanel || root.vinylPanel) && root.player !== null
@@ -530,6 +604,7 @@ BarPill {
     Connections {
         function onTrackChanged() {
             root.snapNext = true;
+            root.fetchCover();
         }
 
         target: root.player
@@ -1077,7 +1152,7 @@ BarPill {
 
                     RoundedArt {
                         anchors.fill: parent
-                        source: root.artUrl
+                        source: root.artSource
                         shapeRadius: root.innerRadius
                         decode: Theme.dp(512)
                         fallbackGlyph: Math.round(Math.min(parent.width, parent.height) * 0.32)
@@ -1508,7 +1583,7 @@ BarPill {
 
                     RoundedArt {
                         anchors.fill: parent
-                        source: root.artUrl
+                        source: root.artSource
                         shapeRadius: Theme.shapeLg
                         fallbackGlyph: Math.round(Math.min(parent.width, parent.height) * 0.32)
                     }
@@ -2427,7 +2502,7 @@ BarPill {
                     RoundedArt {
                         width: Theme.dp(88)
                         height: Theme.dp(88)
-                        source: root.shazamResult ? root.shazamResult.art : ""
+                        source: root.shazamArtSource
                         shapeRadius: Theme.shapeLg
                         fallbackGlyph: Theme.dp(30)
                     }

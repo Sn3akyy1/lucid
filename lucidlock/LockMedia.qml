@@ -1,4 +1,6 @@
 import QtQuick
+import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Mpris
 import Quickshell.Widgets
 import qs
@@ -23,6 +25,43 @@ Rectangle {
     readonly property string title: media.player ? (media.player.trackTitle || "Unknown track") : ""
     readonly property string artist: media.player ? (media.player.trackArtist || media.player.identity || "") : ""
     readonly property real length: media.player ? media.player.length : 0
+    // a remote cover through the cache, never straight into the Image: Qt's
+    // own http/2 client is what has been crashing the shell
+    readonly property string artUrl: media.player ? (media.player.trackArtUrl || "") : ""
+    onArtUrlChanged: media.localArt = ""
+    readonly property bool remoteArt: /^https?:/.test(media.artUrl)
+    readonly property string artFile: {
+        if (!media.remoteArt)
+            return "";
+
+        var h = 5381;
+        for (var i = 0; i < media.artUrl.length; i++) h = ((h * 33) ^ media.artUrl.charCodeAt(i)) >>> 0
+        return Quickshell.env("HOME") + "/.cache/lucid/art/" + h.toString(16) + ".img";
+    }
+    property string localArt: ""
+    readonly property string artSource: media.remoteArt ? media.localArt : media.artUrl
+
+    function fetchCover() {
+        media.localArt = "";
+        if (media.artFile !== "") {
+            artFetch.running = false;
+            artFetch.running = true;
+        }
+    }
+
+    onArtFileChanged: media.fetchCover()
+    Component.onCompleted: media.fetchCover()
+
+    Process {
+        id: artFetch
+
+        command: ["sh", "-c", "f=\"$1\"; d=\"$(dirname \"$f\")\"; mkdir -p \"$d\"; find \"$d\" -name '*.img' -mtime +14 -delete 2>/dev/null; [ -s \"$f\" ] || { t=\"$f.$$\"; curl -sfL --max-time 10 -o \"$t\" \"$2\" && mv \"$t\" \"$f\" && sync || rm -f \"$t\"; }; [ -s \"$f\" ]", "sh", media.artFile, media.artUrl]
+        onExited: (code) => {
+            if (code === 0)
+                media.localArt = "file://" + media.artFile;
+
+        }
+    }
     property real livePos: 0
     property double posStamp: 0
     readonly property real progress: media.length > 0 ? Math.min(1, media.livePos / media.length) : 0
@@ -40,6 +79,9 @@ Rectangle {
     implicitHeight: Theme.dp(124)
 
     Connections {
+        function onTrackChanged() {
+            media.fetchCover();
+        }
         function onPositionChanged() {
             media.posStamp = Date.now();
             media.livePos = media.player.position;
@@ -91,7 +133,7 @@ Rectangle {
             id: cover
 
             anchors.fill: parent
-            source: media.player && media.player.trackArtUrl ? media.player.trackArtUrl : ""
+            source: media.artSource
             fillMode: Image.PreserveAspectCrop
             sourceSize.width: Theme.dp(160)
             sourceSize.height: Theme.dp(160)
