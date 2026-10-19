@@ -47,12 +47,151 @@ Item {
     }, 0) + 6
     // where a block is being carried or stretched to, outlined on the grid
     property var target: null
-    // the block whose left-out pieces are on offer under the bar
-    property string adding: ""
-    // the piece being dragged, under the pointer, and where it would land
+    // the shelf's page: blocks, tiles, sliders or gauges
+    property string tab: "blocks"
+    // a piece being dragged off a block, or anything carried from the shelf,
+    // under the pointer (in the builder's own pixels), and where it would land
     property var ghost: null
+    property var carry: null
     property point ghostAt: Qt.point(0, 0)
     property var drop: null
+    // something from the grid is over the shelf, to be taken out
+    property bool overShelf: false
+    readonly property var shelfTabs: [
+        { "key": "blocks", "label": "Blocks" },
+        { "key": "tiles", "label": "Tiles" },
+        { "key": "sliders", "label": "Sliders" },
+        { "key": "gauges", "label": "Gauges" }
+    ]
+    // what the shelf offers on a page: every block, shown or not, and the
+    // pieces not on the panel yet
+    function shelfItems(tab) {
+        if (tab === "blocks")
+            return Prefs.systemBlockCatalog.map((b) => {
+            return {
+                "kind": "block",
+                "key": b.key,
+                "name": b.name,
+                "icon": b.icon,
+                "on": Prefs.systemBlockKeys.indexOf(b.key) !== -1
+            };
+        });
+
+        const block = tab === "tiles" ? "tiles" : tab;
+        const kind = tab === "tiles" ? "tile" : (tab === "sliders" ? "slider" : "gauge");
+        return builder.spareOf(block).map((k) => {
+            const e = builder.entryOf(block, k) || {
+                "icon": "",
+                "name": k
+            };
+            return {
+                "kind": kind,
+                "key": k,
+                "name": e.name,
+                "icon": e.icon,
+                "on": false
+            };
+        });
+    }
+
+    function shelfCount(tab) {
+        return builder.shelfItems(tab).filter((i) => {
+            return !i.on;
+        }).length;
+    }
+
+    function shelfHas(p) {
+        return p.x >= shelf.x && p.x < shelf.x + shelf.width && p.y >= shelf.y && p.y < shelf.y + shelf.height;
+    }
+
+    // which block takes a piece of a kind
+    function accepts(block, kind) {
+        return kind === "tile" ? builder.isTiles(block) : (kind === "slider" ? block === "sliders" : (kind === "gauge" && block === "gauges"));
+    }
+
+    function homeOf(kind) {
+        return kind === "tile" ? "tiles" : (kind === "slider" ? "sliders" : "gauges");
+    }
+
+    // a piece into a block, at a place in it or at its end, the block shown if it was not
+    function insertPiece(block, key, index) {
+        if (builder.isTiles(block)) {
+            builder.moveTile(key, block, index);
+            return ;
+        }
+        const l = builder.keysOf(block).filter((k) => {
+            return k !== key;
+        });
+        l.splice(index < 0 || index > l.length ? l.length : index, 0, key);
+        builder.setKeys(block, l);
+        if (Prefs.systemBlockKeys.indexOf(block) === -1)
+            builder.setBlockShown(block, true);
+
+    }
+
+    // a click on the shelf: a block goes on the panel, a piece to the end of its block
+    function addItem(item) {
+        if (item.kind === "block") {
+            if (!item.on)
+                builder.setBlockShown(item.key, true);
+
+            return ;
+        }
+        builder.insertPiece(builder.homeOf(item.kind), item.key, -1);
+    }
+
+    // carrying from the shelf: a block snaps to a cell, a piece to a block that takes it
+    function carryStart(item, p) {
+        builder.carry = item;
+        builder.ghostAt = p;
+    }
+
+    function carryTo(p) {
+        builder.ghostAt = p;
+        const bp = board.mapFromItem(builder, p.x, p.y);
+        const inside = bp.x >= 0 && bp.y >= 0 && bp.x < board.width && bp.y < board.height;
+        if (builder.carry.kind === "block") {
+            const w = Prefs.systemGridFit(builder.carry.key, Prefs.systemGridSaved[builder.carry.key] || {}).w;
+            builder.target = inside ? {
+                "x": Math.max(0, Math.min(builder.boardCols - w, Math.round((bp.x - builder.span(w) / 2) / builder.stepX))),
+                "y": Math.max(0, Math.round((bp.y - builder.rowUnit) / builder.stepY)),
+                "w": w,
+                "h": 3
+            } : null;
+            return ;
+        }
+        const c = inside ? builder.cardAt(bp) : null;
+        if (c && builder.accepts(c.blockKey, builder.carry.kind)) {
+            const q = c.mapFromItem(board, bp.x, bp.y);
+            builder.drop = {
+                "card": c,
+                "index": c.pieceIndexAt(q.x, q.y)
+            };
+        } else {
+            builder.drop = null;
+        }
+    }
+
+    function carryEnd() {
+        const c = builder.carry, t = builder.target, d = builder.drop;
+        builder.carry = null;
+        builder.target = null;
+        builder.drop = null;
+        if (!c)
+            return ;
+
+        if (c.kind === "block" && t) {
+            if (!c.on)
+                builder.setBlockShown(c.key, true);
+
+            Prefs.systemGridSet(c.key, {
+                "x": t.x,
+                "y": t.y
+            }, builder.needs);
+        } else if (c.kind !== "block" && d) {
+            builder.insertPiece(d.card.blockKey, c.key, d.index);
+        }
+    }
 
     function span(n) {
         return n * builder.unit + Math.max(0, n - 1) * builder.gridGap;
@@ -269,153 +408,95 @@ Item {
 
     }
 
-    // each block by name: its + for the pieces left out, the sliders' stand
-    // or lie, and its eye, which hides it with all it holds or brings it back
-    Flow {
-        id: bar
+    // the shelf: every block and every piece not on the panel yet, drawn as
+    // the panel draws them. a click adds one, a drag puts it where it is let
+    // go; a piece or a block dragged back here comes off the panel
+    Rectangle {
+        id: shelf
 
         width: parent.width
-        spacing: Theme.dp(8)
+        height: shelfCol.implicitHeight + Theme.dp(32)
+        radius: Theme.radiusLg
+        color: builder.overShelf ? Theme.alpha(Theme.error, 0.12) : Theme.bgSunken
+        border.width: builder.overShelf ? Theme.dp(2) : 0
+        border.color: Theme.error
 
-        Repeater {
-            model: Prefs.systemBlockCatalog
+        Column {
+            id: shelfCol
 
-            Rectangle {
-                id: chip
+            x: Theme.dp(16)
+            y: Theme.dp(16)
+            width: parent.width - Theme.dp(32)
+            spacing: Theme.dp(12)
 
-                required property var modelData
-                readonly property bool shown: Prefs.systemBlockKeys.indexOf(chip.modelData.key) !== -1
-                readonly property bool hasSpare: builder.spareOf(chip.modelData.key).length > 0
+            Column {
+                width: parent.width
+                spacing: Theme.dp(2)
 
-                width: chipRow.implicitWidth + Theme.dp(18)
-                height: Theme.dp(40)
-                radius: height / 2
-                color: chip.shown ? Theme.bgSunken : "transparent"
-                border.width: chip.shown ? 0 : Theme.dp(1.5)
-                border.color: Theme.outline
+                LText {
+                    role: "titleSmall"
+                    weight: 600
+                    text: builder.overShelf ? "Let go to take it off the panel" : "Add to the panel"
+                    color: builder.overShelf ? Theme.error : Theme.text
+                }
 
-                Row {
-                    id: chipRow
+                LText {
+                    width: parent.width
+                    role: "bodySmall"
+                    color: Theme.subtext
+                    wrapMode: Text.WordWrap
+                    text: "Click one to add it, or drag it onto the grid: a tile, a slider or a gauge into its block, a whole block onto any spot. To take something off, drag it back here."
+                }
 
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: Theme.dp(12)
-                    spacing: Theme.dp(2)
+            }
 
-                    Icon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        name: chip.modelData.icon
-                        size: Theme.dp(18)
-                        color: chip.shown ? Theme.accent : Theme.subtext
-                    }
+            Flow {
+                width: parent.width
+                spacing: Theme.dp(8)
 
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        leftPadding: Theme.dp(6)
-                        rightPadding: Theme.dp(4)
-                        text: chip.modelData.name
-                        color: chip.shown ? Theme.text : Theme.subtext
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontLabelLg
-                        font.weight: Font.DemiBold
-                    }
+                Repeater {
+                    model: builder.shelfTabs
 
-                    M3IconButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: chip.shown && chip.modelData.key !== "media"
-                        size: Theme.dp(30)
-                        enabled: chip.hasSpare
-                        iconPath: builder.adding === chip.modelData.key && chip.hasSpare ? "close" : "add"
-                        onClicked: builder.adding = builder.adding === chip.modelData.key ? "" : chip.modelData.key
-                    }
+                    Chip {
+                        required property var modelData
+                        readonly property int count: builder.shelfCount(modelData.key)
 
-                    // the sliders stand side by side or lie one under another
-                    M3IconButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: chip.shown && chip.modelData.key === "sliders"
-                        size: Theme.dp(30)
-                        iconPath: builder.slidersStand ? "width" : "height"
-                        onClicked: Prefs.systemGridSet("sliders", {
-                            "lie": builder.slidersStand
-                        }, builder.needs)
-                    }
-
-                    M3IconButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        size: Theme.dp(30)
-                        iconPath: chip.shown ? "visibility" : "visibility_off"
-                        enabled: !chip.shown || Prefs.systemBlockKeys.length > 1
-                        onClicked: {
-                            if (chip.shown && builder.adding === chip.modelData.key)
-                                builder.adding = "";
-
-                            builder.setBlockShown(chip.modelData.key, !chip.shown);
-                        }
+                        kind: "filter"
+                        text: modelData.label + (count > 0 ? "  " + count : "")
+                        selected: builder.tab === modelData.key
+                        onClicked: builder.tab = modelData.key
                     }
 
                 }
 
             }
 
-        }
+            Flow {
+                id: shelfFlow
 
-    }
+                readonly property var items: builder.shelfItems(builder.tab)
 
-    // the pieces left out of one block; tapping one puts it at the end
-    Flow {
-        id: adds
+                width: parent.width
+                spacing: Theme.dp(8)
 
-        readonly property var spare: builder.adding !== "" ? builder.spareOf(builder.adding) : []
+                Repeater {
+                    model: shelfFlow.items
 
-        visible: adds.spare.length > 0
-        y: bar.height + Theme.dp(10)
-        width: parent.width
-        spacing: Theme.dp(6)
+                    ShelfItem {
+                        required property var modelData
 
-        Repeater {
-            model: adds.spare
-
-            Rectangle {
-                id: spareChip
-
-                required property string modelData
-                readonly property var entry: builder.entryOf(builder.adding, spareChip.modelData)
-
-                width: Math.min(parent.width, spareRow.implicitWidth + Theme.dp(20))
-                height: Theme.dp(34)
-                radius: Theme.dp(12)
-                color: "transparent"
-                border.width: Theme.dp(1.5)
-                border.color: Theme.outline
-                clip: true
-
-                Row {
-                    id: spareRow
-
-                    anchors.centerIn: parent
-                    spacing: Theme.dp(6)
-
-                    Icon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        name: spareChip.entry ? spareChip.entry.icon : ""
-                        size: Theme.dp(18)
-                        color: Theme.text
-                    }
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: spareChip.entry ? spareChip.entry.name : spareChip.modelData
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontLabelLg
+                        item: modelData
                     }
 
                 }
 
-                StateLayer {
-                    radius: parent.radius
-                    onClicked: builder.setKeys(builder.adding, builder.keysOf(builder.adding).concat([spareChip.modelData]))
-                }
+            }
 
+            LText {
+                visible: shelfFlow.items.length === 0
+                role: "bodySmall"
+                color: Theme.subtextDim
+                text: "All of them are on the panel already."
             }
 
         }
@@ -426,7 +507,7 @@ Item {
     Item {
         id: boardWrap
 
-        y: bar.height + (adds.visible ? adds.height + Theme.dp(10) : 0) + Theme.dp(12)
+        y: shelf.height + Theme.dp(12)
         width: Math.round(board.width * builder.k)
         height: Math.round(board.height * builder.k)
         x: Math.max(0, Math.round((builder.width - width) / 2))
@@ -483,45 +564,48 @@ Item {
 
             }
 
-            // the piece being dragged, over everything
-            Rectangle {
-                id: ghostItem
+        }
 
-                readonly property var entry: builder.ghost ? builder.entryOf(builder.ghost.block, builder.ghost.key) : null
+    }
 
-                visible: builder.ghost !== null
-                z: 10
-                width: builder.ghost ? builder.ghost.w : 0
-                height: builder.ghost ? builder.ghost.h : 0
-                x: builder.ghostAt.x - width / 2
-                y: builder.ghostAt.y - height / 2
-                radius: Math.min(Theme.radiusMd, height / 2)
-                color: Theme.withBlur(Theme.surfaceHighest)
-                border.width: Theme.dp(2)
-                border.color: Theme.accent
+    // the piece or block being carried, over everything: red over the shelf
+    Rectangle {
+        id: ghostItem
 
-                Row {
-                    anchors.centerIn: parent
-                    spacing: Theme.dp(6)
+        readonly property var what: builder.carry ? {
+            "icon": builder.carry.icon,
+            "name": builder.carry.name
+        } : (builder.ghost ? builder.entryOf(builder.ghost.block, builder.ghost.key) : null)
 
-                    Icon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        name: ghostItem.entry ? ghostItem.entry.icon : ""
-                        size: Theme.dp(20)
-                        color: Theme.text
-                    }
+        visible: builder.ghost !== null || builder.carry !== null
+        z: 20
+        width: builder.ghost ? Math.max(Theme.dp(40), builder.ghost.w * builder.k) : Theme.dp(150)
+        height: builder.ghost ? Math.max(Theme.dp(40), builder.ghost.h * builder.k) : Theme.dp(44)
+        x: builder.ghostAt.x - width / 2
+        y: builder.ghostAt.y - height / 2
+        radius: Math.min(Theme.radiusMd, height / 2)
+        color: Theme.withBlur(Theme.surfaceHighest)
+        border.width: Theme.dp(2)
+        border.color: builder.overShelf ? Theme.error : Theme.accent
 
-                    Text {
-                        visible: ghostItem.width > Theme.dp(90)
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: ghostItem.entry ? ghostItem.entry.name : ""
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontLabelLg
-                    }
+        Row {
+            anchors.centerIn: parent
+            spacing: Theme.dp(6)
 
-                }
+            Icon {
+                anchors.verticalCenter: parent.verticalCenter
+                name: ghostItem.what ? ghostItem.what.icon : ""
+                size: Theme.dp(20)
+                color: Theme.text
+            }
 
+            Text {
+                visible: ghostItem.width > Theme.dp(90)
+                anchors.verticalCenter: parent.verticalCenter
+                text: ghostItem.what ? ghostItem.what.name : ""
+                color: Theme.text
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontLabelLg
             }
 
         }
@@ -562,7 +646,9 @@ Item {
             const left = p.x - card.grab.x, top = p.y - card.grab.y;
             card.dragDX = left - card.box.x;
             card.dragDY = top - card.box.y;
-            builder.target = {
+            // over the shelf it comes off the panel, if it is not the last
+            builder.overShelf = Prefs.systemBlockKeys.length > 1 && builder.shelfHas(board.mapToItem(builder, p.x, p.y));
+            builder.target = builder.overShelf ? null : {
                 "x": Math.max(0, Math.min(builder.boardCols - card.cell.w, Math.round(left / builder.stepX))),
                 "y": Math.max(0, Math.round(top / builder.stepY)),
                 "w": card.cell.w,
@@ -576,6 +662,11 @@ Item {
             card.dragDY = 0;
             const t = builder.target;
             builder.target = null;
+            if (builder.overShelf) {
+                builder.overShelf = false;
+                builder.setBlockShown(card.blockKey, false);
+                return ;
+            }
             if (t && (t.x !== card.cell.x || t.y !== card.cell.y))
                 Prefs.systemGridSet(card.blockKey, {
                 "x": t.x,
@@ -739,9 +830,14 @@ Item {
                 if (area.mode !== 3)
                     return ;
 
-                builder.ghostAt = p;
-                const over = builder.cardAt(p);
-                if (over === card) {
+                const bp = board.mapToItem(builder, p.x, p.y);
+                builder.ghostAt = bp;
+                // over the shelf it comes out of the block, if it is not the last
+                builder.overShelf = (builder.isTiles(card.blockKey) || card.order.length > 1) && builder.shelfHas(bp);
+                const over = builder.overShelf ? null : builder.cardAt(p);
+                if (builder.overShelf) {
+                    builder.drop = null;
+                } else if (over === card) {
                     builder.drop = null;
                     const to = view.pieceAt(mouse.x, mouse.y);
                     const at = card.liveOrder.indexOf(builder.ghost.key);
@@ -774,10 +870,16 @@ Item {
                     const key = builder.ghost.key;
                     const d = builder.drop;
                     const l = card.liveOrder;
+                    const out = builder.overShelf;
                     builder.ghost = null;
                     builder.drop = null;
+                    builder.overShelf = false;
                     card.liveOrder = null;
-                    if (d)
+                    if (out)
+                        builder.setKeys(card.blockKey, builder.keysOf(card.blockKey).filter((k) => {
+                        return k !== key;
+                    }));
+                    else if (d)
                         builder.moveTile(key, d.card.blockKey, d.index);
                     else
                         builder.setKeys(card.blockKey, l);
@@ -790,6 +892,7 @@ Item {
                 builder.target = null;
                 builder.ghost = null;
                 builder.drop = null;
+                builder.overShelf = false;
                 card.liveOrder = null;
                 area.mode = 0;
             }
@@ -846,8 +949,8 @@ Item {
             x: Theme.dp(6)
             y: Theme.dp(6)
             z: 3
-            width: tagRow.implicitWidth + Theme.dp(16)
-            height: Theme.dp(28)
+            width: tagRow.implicitWidth + Theme.dp(12)
+            height: Theme.dp(30)
             radius: height / 2
             color: Theme.accent
 
@@ -866,6 +969,7 @@ Item {
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
+                    rightPadding: Theme.dp(4)
                     text: (Prefs.systemBlockCatalog.find((b) => {
                         return b.key === card.blockKey;
                     }) || {
@@ -877,11 +981,28 @@ Item {
                     font.weight: Font.DemiBold
                 }
 
+                // the sliders stand side by side or lie one under another
+                TagButton {
+                    visible: card.blockKey === "sliders"
+                    icon: builder.slidersStand ? "width" : "height"
+                    onClicked: Prefs.systemGridSet("sliders", {
+                        "lie": builder.slidersStand
+                    }, builder.needs)
+                }
+
+                // off the panel, keeping what it holds; it waits on the shelf
+                TagButton {
+                    visible: Prefs.systemBlockKeys.length > 1
+                    icon: "visibility_off"
+                    onClicked: builder.setBlockShown(card.blockKey, false)
+                }
+
             }
 
             MouseArea {
                 id: tagArea
 
+                z: -1
                 anchors.fill: parent
                 cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
                 preventStealing: true
@@ -898,6 +1019,7 @@ Item {
                     card.dragDX = 0;
                     card.dragDY = 0;
                     builder.target = null;
+                    builder.overShelf = false;
                 }
             }
 
@@ -952,6 +1074,206 @@ Item {
                 }
             }
 
+        }
+
+    }
+
+    // a small button on a block's name tag
+    component TagButton: Rectangle {
+        id: tb
+
+        property string icon: ""
+
+        signal clicked()
+
+        anchors.verticalCenter: parent.verticalCenter
+        width: Theme.dp(24)
+        height: Theme.dp(24)
+        radius: width / 2
+        color: tbArea.containsMouse ? Theme.alpha(Theme.fgAccent, 0.16) : "transparent"
+
+        Icon {
+            anchors.centerIn: parent
+            name: tb.icon
+            size: Theme.dp(16)
+            color: Theme.fgAccent
+        }
+
+        MouseArea {
+            id: tbArea
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: tb.clicked()
+        }
+
+    }
+
+    // one thing on the shelf, drawn as the panel draws it, with its name. a
+    // block already on the panel is shown faded, with a check
+    component ShelfItem: Item {
+        id: si
+
+        property var item: null
+        readonly property string kind: si.item ? si.item.kind : ""
+        readonly property bool on: !!si.item && si.item.on
+
+        width: si.kind === "block" ? Theme.dp(176) : (si.kind === "slider" ? Theme.dp(208) : (si.kind === "gauge" ? Theme.dp(112) : Theme.dp(92)))
+        height: si.kind === "block" ? Theme.dp(148) : (si.kind === "slider" ? Theme.dp(92) : (si.kind === "gauge" ? Theme.dp(150) : Theme.dp(104)))
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Theme.radiusMd
+            color: siArea.containsMouse && !si.on ? Theme.withBlur(Theme.surfaceHighest) : Theme.withBlur(Theme.surfaceHigh)
+            opacity: si.on ? 0.5 : 1
+        }
+
+        Item {
+            id: stage
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: Theme.dp(10)
+            height: si.kind === "tile" ? parent.height - Theme.dp(20) : parent.height - Theme.dp(40)
+            opacity: si.on ? 0.45 : 1
+            clip: si.kind === "block"
+
+            // a small tile carries its own name under it
+            CcSmallTile {
+                visible: si.kind === "tile"
+                enabled: false
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.dp(52)
+                gutter: Theme.dp(16)
+                icon: si.item ? si.item.icon : ""
+                label: si.item ? si.item.name : ""
+            }
+
+            CcLyingSlider {
+                visible: si.kind === "slider"
+                enabled: false
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width
+                icon: si.item ? si.item.icon : ""
+                value: 55
+            }
+
+            CcGauge {
+                visible: si.kind === "gauge"
+                enabled: false
+                anchors.centerIn: parent
+                width: parent.width
+                value: 0.55
+                // its icon in the ring, the name being under the card
+                center: ""
+                centerIcon: si.item ? si.item.icon : ""
+                label: ""
+            }
+
+            // a block, as it would sit six columns wide, scaled to fit
+            Item {
+                visible: si.kind === "block"
+                anchors.centerIn: parent
+                width: preview.width * preview.scale
+                height: Math.min(parent.height, preview.height * preview.scale)
+                clip: true
+
+                CcBlock {
+                    id: preview
+
+                    enabled: false
+                    scale: Math.min(stage.width / width, 1)
+                    transformOrigin: Item.TopLeft
+                    width: builder.span(6)
+                    height: implicitHeight
+                    kind: si.kind === "block" ? si.item.key : ""
+                    keys: si.kind === "block" ? builder.keysOf(si.item.key) : []
+                    host: sample
+                    cols: 6
+                    bigCols: 2
+                    gap: builder.gridGap
+                    cards: Prefs.systemBlockCards
+                }
+
+            }
+
+        }
+
+        LText {
+            visible: si.kind !== "tile"
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: Theme.dp(10)
+            role: "labelLarge"
+            text: si.item ? si.item.name : ""
+            elide: Text.ElideRight
+        }
+
+        // on the panel already
+        Rectangle {
+            visible: si.on
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: Theme.dp(6)
+            width: Theme.dp(22)
+            height: Theme.dp(22)
+            radius: width / 2
+            color: Theme.primary
+
+            Icon {
+                anchors.centerIn: parent
+                name: "check"
+                size: Theme.dp(14)
+                color: Theme.fgPrimary
+            }
+
+        }
+
+        MouseArea {
+            id: siArea
+
+            property point start
+            property bool carrying: false
+
+            anchors.fill: parent
+            enabled: !si.on
+            hoverEnabled: true
+            preventStealing: true
+            cursorShape: siArea.carrying ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+            onPressed: (mouse) => {
+                siArea.start = Qt.point(mouse.x, mouse.y);
+                siArea.carrying = false;
+            }
+            onPositionChanged: (mouse) => {
+                if (!pressed)
+                    return ;
+
+                if (!siArea.carrying) {
+                    if (Math.abs(mouse.x - siArea.start.x) + Math.abs(mouse.y - siArea.start.y) < Theme.dp(8))
+                        return ;
+
+                    siArea.carrying = true;
+                    builder.carryStart(si.item, mapToItem(builder, mouse.x, mouse.y));
+                }
+                builder.carryTo(mapToItem(builder, mouse.x, mouse.y));
+            }
+            onReleased: {
+                if (siArea.carrying)
+                    builder.carryEnd();
+                else
+                    builder.addItem(si.item);
+                siArea.carrying = false;
+            }
+            onCanceled: {
+                builder.carry = null;
+                builder.target = null;
+                builder.drop = null;
+                siArea.carrying = false;
+            }
         }
 
     }
