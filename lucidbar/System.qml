@@ -9,6 +9,7 @@ import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
 import Quickshell.Widgets
 import qs
+import qs.lucidcc
 import qs.lucidui
 
 BarPill {
@@ -1245,47 +1246,31 @@ BarPill {
 
     readonly property var headerKeys: root.picked(Prefs.systemHeaderButtons, ["edit", "settings", "lock", "power"])
     // the blocks, in the order picked on the module's card, and what the sliders
-    // and system blocks hold. the toggles block holds the tiles
+    // hold; the tile blocks hold the tiles, the gauges the readings picked
     readonly property var blockKeys: Prefs.systemBlockKeys
     // only the sliders with something to move here
     readonly property var sliderKeys: Prefs.systemSliderKeys.filter((k) => {
         return (k !== "brightness" || root.maxBrightness > 0) && (k !== "mic" || !!(root.source && root.source.audio));
     })
-    // the system block reads as cards: media on its own, each run of gauges on one
-    readonly property var infoGroups: {
-        const out = [];
-        for (const k of Prefs.systemInfoKeys) {
-            const last = out.length > 0 ? out[out.length - 1] : null;
-            if (k === "media")
-                out.push({
-                "media": true,
-                "keys": []
-            });
-            else if (last && !last.media)
-                last.keys.push(k);
-            else
-                out.push({
-                "media": false,
-                "keys": [k]
-            });
-        }
-        return out;
-    }
     readonly property bool mediaUp: !!(root.mprisMod && root.mprisMod.player)
 
+    // what a block holds here
+    function blockPieces(key) {
+        switch (key) {
+        case "sliders":
+            return root.sliderKeys;
+        case "bigtiles":
+            return Prefs.systemBigTileKeys;
+        case "tiles":
+            return Prefs.systemSmallTileKeys;
+        case "media":
+            return root.mediaUp ? ["media"] : [];
+        }
+        return Prefs.systemInfoKeys;
+    }
+
     function blockShown(key) {
-        if (root.blockKeys.indexOf(key) === -1)
-            return false;
-
-        if (key === "sliders")
-            return root.sliderKeys.length > 0;
-
-        if (key === "toggles")
-            return Prefs.systemTileKeys.length > 0;
-
-        return root.infoGroups.some((g) => {
-            return !g.media || root.mediaUp;
-        });
+        return root.blockKeys.indexOf(key) !== -1 && root.blockPieces(key).length > 0;
     }
 
     readonly property var shownBlocks: root.blockKeys.filter((k) => {
@@ -1303,9 +1288,9 @@ BarPill {
     readonly property var gridNeeds: {
         const out = {};
         for (const k of root.shownBlocks) {
-            const b = root.blockLoader(k);
-            if (b.item)
-                out[k] = Math.ceil((b.item.implicitHeight + root.gridGap) / (root.gridRow + root.gridGap));
+            const b = root.blockItem(k);
+            if (b)
+                out[k] = Math.ceil((b.implicitHeight + root.gridGap) / (root.gridRow + root.gridGap));
 
         }
         return out;
@@ -1365,8 +1350,8 @@ BarPill {
         return root.gridMain && root.gridSpots[key] ? root.gridSpan(root.gridSpots[key].w) : root.contentWidth;
     }
 
-    function blockLoader(key) {
-        return key === "sliders" ? slidersBlock : (key === "toggles" ? togglesBlock : systemBlock);
+    function blockItem(key) {
+        return blockRepeater.count > 0 ? blockRepeater.itemAt(root.blockKeys.indexOf(key)) : null;
     }
 
     // the single column: top to bottom as on the grid
@@ -1381,22 +1366,142 @@ BarPill {
             if (k === key)
                 break;
 
-            at += root.blockLoader(k).height + root.sp3;
+            const b = root.blockItem(k);
+            at += (b ? b.height : 0) + root.sp3;
         }
         return at;
     }
 
-    // a column of the grid is a tile; the single column keeps six to a row
-    readonly property int mainTileCols: root.gridMain && root.gridSpots.toggles ? root.gridSpots.toggles.w : root.tileCols
-    // on the grid the tiles keep its gap too, so each sits on its column
-    readonly property int mainTileGap: root.gridMain ? root.gridGap : root.sp2
-    readonly property real mainTileW: Math.floor((root.blockWidth("toggles") - root.mainTileGap * (root.mainTileCols - 1)) / root.mainTileCols)
-    readonly property real bigTileW: Math.floor((root.blockWidth("toggles") - root.mainTileGap) / 2)
+    // what the blocks show and do, as CcBlock asks its host
+    function sliderIcon(k) {
+        return k === "brightness" ? root.brightnessIcon : (k === "volume" ? root.volumeIcon(root.volumePercent, root.volMuted) : (root.micMuted ? "mic_off" : "mic"));
+    }
 
-    // gauges sharing a card: as many to a row as leave each its 88, in rows as even as can be
-    function gaugeCols(n, width) {
-        const most = Math.max(1, Math.min(n, Math.floor(width / Theme.dp(88))));
-        return Math.max(1, Math.ceil(n / Math.ceil(n / most)));
+    function sliderValue(k) {
+        return k === "brightness" ? root.brightnessPercent : (k === "volume" ? root.volumePercent : root.micPercent);
+    }
+
+    function sliderMuted(k) {
+        return (k === "volume" && root.volMuted) || (k === "mic" && root.micMuted);
+    }
+
+    function sliderMove(k, v) {
+        if (k === "brightness") {
+            root.setBrightness(v);
+        } else if (k === "volume") {
+            if (root.sink && root.sink.audio && root.sink.audio.muted)
+                root.sink.audio.muted = false;
+
+            root.setVolume(v);
+        } else {
+            root.setMicVolume(v);
+        }
+    }
+
+    function sliderIconClick(k) {
+        if (k === "volume")
+            root.toggleVolMute();
+        else if (k === "mic")
+            root.toggleMicMute();
+    }
+
+    readonly property var mprisPlayer: root.mprisMod ? root.mprisMod.player : null
+    readonly property string mediaTitle: root.mprisMod ? root.mprisMod.title : ""
+    readonly property string mediaArtist: root.mprisMod ? root.mprisMod.artist : ""
+    readonly property string mediaArt: root.mprisMod ? root.mprisMod.artSource : ""
+    readonly property real mediaProgress: (root.mprisMod && root.mprisMod.lenSec > 0) ? Math.max(0, Math.min(1, root.mprisMod.livePosSec / root.mprisMod.lenSec)) : 0
+    readonly property bool mediaPlaying: root.mprisMod ? root.mprisMod.isPlaying : false
+
+    function mediaPrev() {
+        if (root.mprisPlayer && root.mprisPlayer.canGoPrevious)
+            root.mprisPlayer.previous();
+
+    }
+
+    function mediaToggle() {
+        if (root.mprisPlayer && root.mprisPlayer.canTogglePlaying)
+            root.mprisPlayer.togglePlaying();
+
+    }
+
+    function mediaNext() {
+        if (root.mprisPlayer && root.mprisPlayer.canGoNext)
+            root.mprisPlayer.next();
+
+    }
+
+    function mediaOpen() {
+        root.expanded = false;
+        if (root.mprisMod)
+            root.mprisMod.expanded = true;
+
+    }
+
+    readonly property var selectedDiskInfo: {
+        for (const d of root.diskList) {
+            if (d.name === root.selectedDisk)
+                return d;
+
+        }
+        return root.diskList.length > 0 ? root.diskList[0] : null;
+    }
+    // fs overhead and the root reserve are neither used nor free, so measure against what df can hand out
+    readonly property real diskPct: (root.selectedDiskInfo && root.selectedDiskInfo.mounted && root.selectedDiskInfo.used + root.selectedDiskInfo.avail > 0) ? root.selectedDiskInfo.used / (root.selectedDiskInfo.used + root.selectedDiskInfo.avail) : 0
+
+    // each gauge, as CcGauge reads it
+    function gauge(k) {
+        switch (k) {
+        case "cpu":
+            return {
+                "value": root.cpuPercent / 100,
+                "center": root.cpuHistory.length > 0 ? Math.round(root.cpuPercent) + "" : "—",
+                "label": "CPU",
+                "detail": root.cpuTemp > 0 ? Units.degUnit(root.cpuTemp) : "",
+                "tone": root.cpuTemp >= 85 ? Theme.error : Theme.accent,
+                "icon": ""
+            };
+        case "ram":
+            return {
+                "value": root.ramPercent / 100,
+                "center": root.ramHistory.length > 0 ? Math.round(root.ramPercent) + "" : "—",
+                "label": "Memory",
+                "detail": root.ramTotalGB > 0 ? root.ramUsedGB.toFixed(1) + " GB" : "",
+                "tone": Theme.accent,
+                "icon": ""
+            };
+        case "disk":
+            return {
+                "value": root.diskPct,
+                "center": root.selectedDiskInfo && root.selectedDiskInfo.mounted ? Math.round(root.diskPct * 100) + "" : "—",
+                "label": root.selectedDisk || "Disk",
+                "detail": root.selectedDiskInfo ? (root.selectedDiskInfo.mounted ? Math.round(root.selectedDiskInfo.avail / 1.07374e+09) + " GB free" : "not mounted") : "",
+                "tone": root.diskPct * 100 > 100 - Prefs.storageLowPercent ? Theme.error : Theme.accent,
+                "icon": "",
+                "clickable": root.diskList.length > 1
+            };
+        }
+        return {
+            "value": root.batteryPresent ? root.batteryPercent / 100 : 0,
+            "center": root.batteryPresent ? root.batteryPercent + "" : "—",
+            "label": root.batteryCharging ? "Charging" : "Battery",
+            "detail": root.batteryDetail,
+            "tone": root.batteryPercent <= 20 && !root.batteryCharging ? Theme.error : Theme.accent,
+            "icon": root.batteryCharging ? "bolt" : ""
+        };
+    }
+
+    // a tap on the disk gauge moves to the next disk
+    function gaugeClick(k) {
+        if (k !== "disk" || root.diskList.length < 2)
+            return ;
+
+        let i = 0;
+        for (let j = 0; j < root.diskList.length; j++) {
+            if (root.diskList[j].name === root.selectedDisk)
+                i = j;
+
+        }
+        root.selectedDisk = root.diskList[(i + 1) % root.diskList.length].name;
     }
 
     readonly property int micPercent: (root.source && root.source.audio) ? Math.round(root.source.audio.volume * 100) : 0
@@ -1863,560 +1968,36 @@ BarPill {
                                 return root.gridHeight;
 
                             let h = 0;
-                            for (const k of root.shownBlocks)
-                                h += root.blockLoader(k).height;
+                            for (const k of root.shownBlocks) {
+                                const b = root.blockItem(k);
+                                h += b ? b.height : 0;
+                            }
                             return h + Math.max(0, root.shownBlocks.length - 1) * root.sp3;
                         }
 
-                        Loader {
-                            id: slidersBlock
-
-                            visible: root.blockShown("sliders")
-                            x: root.gridMain ? root.gridBox("sliders").x : 0
-                            y: root.gridMain ? root.gridBox("sliders").y : root.blockStart("sliders")
-                            width: root.blockWidth("sliders")
-                            height: root.gridMain ? root.gridBox("sliders").height : (item ? item.implicitHeight : 0)
-                            sourceComponent: root.gridMain && root.slidersStand ? tallSliders : flatSliders
-                        }
-
-                        Loader {
-                            id: togglesBlock
-
-                            visible: root.blockShown("toggles")
-                            x: root.gridMain ? root.gridBox("toggles").x : 0
-                            y: root.gridMain ? root.gridBox("toggles").y : root.blockStart("toggles")
-                            width: root.blockWidth("toggles")
-                            height: root.gridMain ? root.gridBox("toggles").height : (item ? item.implicitHeight : 0)
-                            sourceComponent: togglesSection
-                        }
-
-                        Loader {
-                            id: systemBlock
-
-                            visible: root.blockShown("system")
-                            x: root.gridMain ? root.gridBox("system").x : 0
-                            y: root.gridMain ? root.gridBox("system").y : root.blockStart("system")
-                            width: root.blockWidth("system")
-                            height: root.gridMain ? root.gridBox("system").height : (item ? item.implicitHeight : 0)
-                            sourceComponent: systemSection
-                        }
-
-                    }
-
-                    // the sliders lying down, one under another
-                    Component {
-                        id: flatSliders
-
-                        Column {
-                            width: root.blockWidth("sliders")
-                            spacing: root.sp2
-
-                            Repeater {
-                                model: root.sliderKeys
-
-                                Loader {
-                                    required property string modelData
-
-                                    width: root.blockWidth("sliders")
-                                    sourceComponent: modelData === "brightness" ? brightnessSlider : (modelData === "volume" ? volumeSlider : micSlider)
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                    Component {
-                        id: brightnessSlider
-
-                        Slider {
-                            width: root.blockWidth("sliders")
-                            size: "m"
-                            icon: root.brightnessIcon
-                            from: 0
-                            to: 100
-                            value: root.brightnessPercent
-                            inactiveColor: Theme.withBlur(Theme.surfaceHighest)
-                            easeValue: root.expanded
-                            valueText: (v) => {
-                                return Math.round(v) + "%";
-                            }
-                            onMoved: (v) => {
-                                return root.setBrightness(v);
-                            }
-                        }
-
-                    }
-
-                    Component {
-                        id: volumeSlider
-
-                        Row {
-                            width: root.blockWidth("sliders")
-                            spacing: root.sp2
-
-                            Slider {
-                                width: root.blockWidth("sliders") - outBtn.width - root.sp2
-                                size: "m"
-                                icon: root.volumeIcon(root.volumePercent, root.volMuted)
-                                iconClickable: true
-                                from: 0
-                                to: 100
-                                value: root.volumePercent
-                                activeColor: root.volMuted ? Theme.outlineStrong : Theme.primary
-                                inactiveColor: Theme.withBlur(Theme.surfaceHighest)
-                                easeValue: root.expanded
-                                valueText: (v) => {
-                                    return Math.round(v) + "%";
-                                }
-                                onMoved: (v) => {
-                                    if (root.sink && root.sink.audio && root.sink.audio.muted)
-                                        root.sink.audio.muted = false;
-
-                                    root.setVolume(v);
-                                }
-                                onIconClicked: root.toggleVolMute()
-                            }
-
-                            Rectangle {
-                                id: outBtn
-
-                                width: Theme.dp(50)
-                                height: Theme.dp(38)
-                                anchors.verticalCenter: parent.verticalCenter
-                                radius: Theme.rad(12)
-                                color: Theme.withBlur(Theme.surfaceHighest)
-
-                                StateLayer {
-                                    radius: parent.radius
-                                    onClicked: root.showView("output")
-                                }
-
-                                Icon {
-                                    anchors.centerIn: parent
-                                    name: "speaker"
-                                    size: Theme.dp(20)
-                                    color: Theme.subtext
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                    Component {
-                        id: micSlider
-
-                        Slider {
-                            width: root.blockWidth("sliders")
-                            size: "m"
-                            icon: root.micMuted ? "mic_off" : "mic"
-                            iconClickable: true
-                            from: 0
-                            to: 100
-                            value: root.micPercent
-                            activeColor: root.micMuted ? Theme.outlineStrong : Theme.primary
-                            inactiveColor: Theme.withBlur(Theme.surfaceHighest)
-                            easeValue: root.expanded
-                            valueText: (v) => {
-                                return Math.round(v) + "%";
-                            }
-                            onMoved: (v) => {
-                                return root.setMicVolume(v);
-                            }
-                            onIconClicked: root.toggleMicMute()
-                        }
-
-                    }
-
-                    // the sliders standing up, side by side
-                    Component {
-                        id: tallSliders
-
-                        // the least they stand; the row they sit in may give them more
-                        Item {
-                            implicitHeight: Theme.dp(160)
-
-                            Row {
-                                id: tallRow
-
-                                anchors.fill: parent
-                                spacing: root.gridGap
-
-                                Repeater {
-                                    model: root.sliderKeys
-
-                                    VSlider {
-                                        required property string modelData
-
-                                        width: Math.floor((tallRow.width - tallRow.spacing * (root.sliderKeys.length - 1)) / Math.max(1, root.sliderKeys.length))
-                                        height: tallRow.height
-                                        icon: modelData === "brightness" ? root.brightnessIcon : (modelData === "volume" ? root.volumeIcon(root.volumePercent, root.volMuted) : (root.micMuted ? "mic_off" : "mic"))
-                                        value: modelData === "brightness" ? root.brightnessPercent : (modelData === "volume" ? root.volumePercent : root.micPercent)
-                                        muted: (modelData === "volume" && root.volMuted) || (modelData === "mic" && root.micMuted)
-                                        iconClickable: modelData !== "brightness"
-                                        footIcon: modelData === "volume" ? "speaker" : ""
-                                        onMoved: (v) => {
-                                            if (modelData === "brightness") {
-                                                root.setBrightness(v);
-                                            } else if (modelData === "volume") {
-                                                if (root.sink && root.sink.audio && root.sink.audio.muted)
-                                                    root.sink.audio.muted = false;
-
-                                                root.setVolume(v);
-                                            } else {
-                                                root.setMicVolume(v);
-                                            }
-                                        }
-                                        onIconClicked: modelData === "volume" ? root.toggleVolMute() : root.toggleMicMute()
-                                        onFootClicked: root.showView("output")
-                                    }
-
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                    // the tiles: a small one takes a cell, a big one half a row
-                    Component {
-                        id: togglesSection
-
-                        Flow {
-                            width: root.blockWidth("toggles")
-                            spacing: root.mainTileGap
-
-                            Repeater {
-                                model: Prefs.systemTileKeys
-
-                                Item {
-                                    id: tileSlot
-
-                                    required property string modelData
-                                    readonly property bool big: Prefs.systemBigKeys.indexOf(modelData) !== -1
-
-                                    width: tileSlot.big ? root.bigTileW : root.mainTileW
-                                    // the small ones' names sit in the gap, so their row keeps the grid's
-                                    height: tileSlot.big ? Theme.dp(64) : root.mainTileW + Theme.dp(24)
-
-                                    QuickTile {
-                                        visible: tileSlot.big
-                                        width: root.bigTileW
-                                        icon: root.tileIcon(tileSlot.modelData)
-                                        name: root.bigName(tileSlot.modelData)
-                                        sub: root.bigSub(tileSlot.modelData)
-                                        checked: root.tileChecked(tileSlot.modelData)
-                                        hasPage: root.tilePages.indexOf(tileSlot.modelData) !== -1
-                                        onToggled: root.tileAct(tileSlot.modelData)
-                                        onExpandRequested: hasPage ? root.showView(tileSlot.modelData) : root.tileAct(tileSlot.modelData)
-                                    }
-
-                                    SmallTile {
-                                        visible: !tileSlot.big
-                                        icon: root.tileIcon(tileSlot.modelData)
-                                        label: root.tileLabel(tileSlot.modelData)
-                                        checked: root.tileChecked(tileSlot.modelData)
-                                        hasMore: root.tilePages.indexOf(tileSlot.modelData) !== -1
-                                        onToggled: root.tileAct(tileSlot.modelData)
-                                        onMore: root.showView(tileSlot.modelData)
-                                    }
-
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                    // media on its own card, each run of gauges on one
-                    Component {
-                        id: systemSection
-
-                        Column {
-                            width: root.blockWidth("system")
-                            spacing: root.sp3
-
-                            Repeater {
-                                model: root.infoGroups
-
-                                Loader {
-                                    required property var modelData
-                                    readonly property var groupKeys: modelData.keys
-
-                                    width: root.blockWidth("system")
-                                    visible: !modelData.media || root.mediaUp
-                                    sourceComponent: modelData.media ? mediaCardC : gaugesCardC
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                    Component {
-                        id: mediaCardC
-
-                        Rectangle {
-                            id: mediaCard
-
-                            readonly property var mprisPlayer: root.mprisMod ? root.mprisMod.player : null
-                            readonly property real progress: (root.mprisMod && root.mprisMod.lenSec > 0) ? Math.max(0, Math.min(1, root.mprisMod.livePosSec / root.mprisMod.lenSec)) : 0
-                            readonly property bool playing: root.mprisMod ? root.mprisMod.isPlaying : false
-
-                            width: root.blockWidth("system")
-                            height: Theme.dp(84)
-                            radius: Theme.shapeLgInc
-                            color: Theme.withBlur(Theme.surfaceHigh)
-
-                            StateLayer {
-                                radius: parent.radius
-                                onClicked: {
-                                    root.expanded = false;
-                                    if (root.mprisMod)
-                                        root.mprisMod.expanded = true;
-
-                                }
-                            }
-
-                            // ClippingRectangle: radius + clip alone leaves the image corners square
-                            ClippingRectangle {
-                                id: mediaArt
-
-                                anchors.left: parent.left
-                                anchors.leftMargin: Theme.dp(10)
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: Theme.dp(64)
-                                height: Theme.dp(64)
-                                radius: Theme.shapeLg
-                                color: Theme.withBlur(Theme.surfaceHighest)
-
-                                Image {
-                                    id: mediaArtImg
-
-                                    anchors.fill: parent
-                                    source: root.mprisMod ? root.mprisMod.artSource : ""
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
-                                    cache: true
-                                    sourceSize.width: Theme.dp(128)
-                                    sourceSize.height: Theme.dp(128)
-                                    visible: mediaArtImg.status === Image.Ready
-                                }
-
-                                Icon {
-                                    anchors.centerIn: parent
-                                    visible: !mediaArtImg.visible
-                                    name: "music_note"
-                                    size: Theme.dp(26)
-                                    color: Theme.subtext
-                                }
-
-                            }
-
-                            Row {
-                                id: mediaControls
-
-                                anchors.right: parent.right
-                                anchors.rightMargin: Theme.dp(10)
-                                anchors.top: parent.top
-                                anchors.topMargin: Theme.dp(12)
-                                spacing: Theme.dp(2)
-
-                                IconButton {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    icon: "skip_previous"
-                                    iconFill: 1
-                                    size: "xs"
-                                    tintOverride: Theme.text
-                                    onClicked: {
-                                        if (mediaCard.mprisPlayer && mediaCard.mprisPlayer.canGoPrevious)
-                                            mediaCard.mprisPlayer.previous();
-
-                                    }
-                                }
-
-                                IconButton {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    icon: mediaCard.playing ? "pause" : "play_arrow"
-                                    iconFill: 1
-                                    variant: "filled"
-                                    onClicked: {
-                                        if (mediaCard.mprisPlayer && mediaCard.mprisPlayer.canTogglePlaying)
-                                            mediaCard.mprisPlayer.togglePlaying();
-
-                                    }
-                                }
-
-                                IconButton {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    icon: "skip_next"
-                                    iconFill: 1
-                                    size: "xs"
-                                    tintOverride: Theme.text
-                                    onClicked: {
-                                        if (mediaCard.mprisPlayer && mediaCard.mprisPlayer.canGoNext)
-                                            mediaCard.mprisPlayer.next();
-
-                                    }
-                                }
-
-                            }
-
-                            Column {
-                                anchors.left: mediaArt.right
-                                anchors.leftMargin: Theme.dp(12)
-                                anchors.right: mediaControls.left
-                                anchors.rightMargin: Theme.dp(8)
-                                anchors.top: parent.top
-                                anchors.topMargin: Theme.dp(14)
-                                spacing: 1
-
-                                LText {
-                                    width: parent.width
-                                    role: "titleSmall"
-                                    text: root.mprisMod ? root.mprisMod.title : ""
-                                    elide: Text.ElideRight
-                                }
-
-                                LText {
-                                    width: parent.width
-                                    visible: text !== ""
-                                    role: "bodySmall"
-                                    color: Theme.subtext
-                                    text: root.mprisMod ? root.mprisMod.artist : ""
-                                    elide: Text.ElideRight
-                                }
-
-                            }
-
-                            LinearProgress {
-                                anchors.left: mediaArt.right
-                                anchors.leftMargin: Theme.dp(12)
-                                anchors.right: parent.right
-                                anchors.rightMargin: Theme.dp(16)
-                                anchors.bottom: parent.bottom
-                                anchors.bottomMargin: Theme.dp(14)
-                                value: mediaCard.progress
-                                wavy: true
-                                animated: mediaCard.playing
-                                valueAnimated: false
-                                amplitude: 2.5
-                                wavelength: Theme.dp(24)
-                                trackColor: Theme.withBlur(Theme.surfaceHighest)
-                            }
-
-                        }
-
-                    }
-
-                    Component {
-                        id: gaugesCardC
-
-                        Rectangle {
-                            id: statsCard
-
-                            readonly property var selectedDiskInfo: {
-                                for (const d of root.diskList) {
-                                    if (d.name === root.selectedDisk)
-                                        return d;
-
-                                }
-                                return root.diskList.length > 0 ? root.diskList[0] : null;
-                            }
-                            // fs overhead and the root reserve are neither used nor free, so measure against what df can hand out
-                            readonly property real diskPct: (selectedDiskInfo && selectedDiskInfo.mounted && selectedDiskInfo.used + selectedDiskInfo.avail > 0) ? selectedDiskInfo.used / (selectedDiskInfo.used + selectedDiskInfo.avail) : 0
-
-                            function cycleDisk() {
-                                if (root.diskList.length < 2)
-                                    return ;
-
-                                var i = 0;
-                                for (var k = 0; k < root.diskList.length; k++) {
-                                    if (root.diskList[k].name === root.selectedDisk)
-                                        i = k;
-
-                                }
-                                root.selectedDisk = root.diskList[(i + 1) % root.diskList.length].name;
-                            }
-
-                            // this run of gauges, from the Loader it sits in
-                            readonly property var keys: parent && parent.groupKeys ? parent.groupKeys : []
-                            // each gauge picked on the module's card, as the Gauge reads it
-                            readonly property var gauges: ({
-                                "cpu": {
-                                    "value": root.cpuPercent / 100,
-                                    "center": root.cpuHistory.length > 0 ? Math.round(root.cpuPercent) + "" : "—",
-                                    "label": "CPU",
-                                    "detail": root.cpuTemp > 0 ? Units.degUnit(root.cpuTemp) : "",
-                                    "tone": root.cpuTemp >= 85 ? Theme.error : Theme.accent,
-                                    "icon": ""
-                                },
-                                "ram": {
-                                    "value": root.ramPercent / 100,
-                                    "center": root.ramHistory.length > 0 ? Math.round(root.ramPercent) + "" : "—",
-                                    "label": "Memory",
-                                    "detail": root.ramTotalGB > 0 ? root.ramUsedGB.toFixed(1) + " GB" : "",
-                                    "tone": Theme.accent,
-                                    "icon": ""
-                                },
-                                "disk": {
-                                    "value": statsCard.diskPct,
-                                    "center": statsCard.selectedDiskInfo && statsCard.selectedDiskInfo.mounted ? Math.round(statsCard.diskPct * 100) + "" : "—",
-                                    "label": root.selectedDisk || "Disk",
-                                    "detail": statsCard.selectedDiskInfo ? (statsCard.selectedDiskInfo.mounted ? Math.round(statsCard.selectedDiskInfo.avail / 1.07374e+09) + " GB free" : "not mounted") : "",
-                                    "tone": statsCard.diskPct * 100 > 100 - Prefs.storageLowPercent ? Theme.error : Theme.accent,
-                                    "icon": ""
-                                },
-                                "battery": {
-                                    "value": root.batteryPresent ? root.batteryPercent / 100 : 0,
-                                    "center": root.batteryPresent ? root.batteryPercent + "" : "—",
-                                    "label": root.batteryCharging ? "Charging" : "Battery",
-                                    "detail": root.batteryDetail,
-                                    "tone": root.batteryPercent <= 20 && !root.batteryCharging ? Theme.error : Theme.accent,
-                                    "icon": root.batteryCharging ? "bolt" : ""
-                                }
-                            })
-
-                            width: root.blockWidth("system")
-                            height: gaugeGrid.implicitHeight + Theme.dp(28)
-                            radius: Theme.shapeLgInc
-                            color: Theme.withBlur(Theme.surfaceHigh)
-
-                            // as many to a row as the block's width leaves room for
-                            Grid {
-                                id: gaugeGrid
-
-                                anchors.centerIn: parent
-                                width: parent.width - Theme.dp(16)
-                                columns: root.gaugeCols(statsCard.keys.length, width)
-                                rowSpacing: Theme.dp(12)
-
-                                Repeater {
-                                    model: statsCard.keys
-
-                                    Gauge {
-                                        required property string modelData
-                                        readonly property var g: statsCard.gauges[modelData]
-
-                                        width: gaugeGrid.width / gaugeGrid.columns
-                                        value: g.value
-                                        center: g.center
-                                        label: g.label
-                                        detail: g.detail
-                                        tone: g.tone
-                                        centerIcon: g.icon
-                                        clickable: modelData === "disk" && root.diskList.length > 1
-                                        onClicked: statsCard.cycleDisk()
-                                    }
-
-                                }
-
+                        Repeater {
+                            id: blockRepeater
+
+                            model: root.blockKeys
+
+                            CcBlock {
+                                required property string modelData
+                                readonly property var spot: root.gridSpots[modelData] || null
+
+                                visible: root.blockShown(modelData)
+                                kind: modelData
+                                keys: root.blockPieces(modelData)
+                                host: root
+                                // on the grid a column is a small tile and three a big one
+                                cols: root.gridMain && spot ? spot.w : root.tileCols
+                                bigCols: root.gridMain && spot ? Math.max(1, Math.floor(spot.w / 3)) : 2
+                                gap: root.gridMain ? root.gridGap : root.sp2
+                                standing: root.gridMain && root.slidersStand
+                                cards: Prefs.systemBlockCards
+                                x: root.gridMain ? root.gridBox(modelData).x : 0
+                                y: root.gridMain ? root.gridBox(modelData).y : root.blockStart(modelData)
+                                width: root.blockWidth(modelData)
+                                height: root.gridMain ? root.gridBox(modelData).height : implicitHeight
                             }
 
                         }
@@ -3269,337 +2850,6 @@ BarPill {
         }
     ]
 
-    // a big tile: the icon side toggles, the label side opens the detail view.
-    // the pill squares off once the tile is on
-    component QuickTile: Rectangle {
-        id: tile
-
-        property string icon: ""
-        property string name: ""
-        property string sub: ""
-        property bool checked: false
-        // off for a tile with no page of its own: no chevron, and it all switches
-        property bool hasPage: true
-
-        signal toggled()
-        signal expandRequested()
-
-        width: root.bigTileW
-        height: Theme.dp(64)
-        radius: tile.checked ? Theme.shapeLgInc : height / 2
-        color: tile.checked ? Theme.primary : Theme.withBlur(Theme.surfaceHighest)
-
-        Behavior on radius {
-            NumberAnimation {
-                duration: Theme.durDefaultSpatial
-                easing.type: Easing.Bezier
-                easing.bezierCurve: Theme.curveDefaultSpatial
-            }
-
-        }
-
-        Behavior on color {
-            ColorAnimation {
-                duration: Theme.durDefaultEffects
-            }
-
-        }
-
-        StateLayer {
-            radius: tile.radius
-            tint: tile.checked ? Theme.fgPrimary : Theme.text
-            onClicked: tile.expandRequested()
-        }
-
-        Rectangle {
-            id: bubble
-
-            anchors.left: parent.left
-            anchors.leftMargin: Theme.dp(10)
-            anchors.verticalCenter: parent.verticalCenter
-            width: Theme.dp(44)
-            height: Theme.dp(44)
-            radius: Theme.dp(22)
-            color: tile.checked ? Theme.alpha(Theme.fgPrimary, 0.14) : Theme.alpha(Theme.text, 0.08)
-
-            StateLayer {
-                radius: Theme.dp(22)
-                tint: tile.checked ? Theme.fgPrimary : Theme.text
-                onClicked: tile.toggled()
-            }
-
-            Icon {
-                anchors.centerIn: parent
-                name: tile.icon
-                size: Theme.dp(22)
-                fill: tile.checked ? 1 : 0
-                color: tile.checked ? Theme.fgPrimary : Theme.text
-            }
-
-        }
-
-        Column {
-            anchors.left: bubble.right
-            anchors.leftMargin: Theme.dp(10)
-            anchors.right: tile.hasPage ? chevron.left : parent.right
-            anchors.rightMargin: tile.hasPage ? Theme.dp(2) : Theme.dp(12)
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 0
-
-            LText {
-                width: parent.width
-                role: "titleSmall"
-                weight: 600
-                text: tile.name
-                color: tile.checked ? Theme.fgPrimary : Theme.text
-                elide: Text.ElideRight
-            }
-
-            LText {
-                width: parent.width
-                visible: text !== ""
-                role: "bodySmall"
-                text: tile.sub
-                color: tile.checked ? Theme.alpha(Theme.fgPrimary, 0.78) : Theme.subtext
-                elide: Text.ElideRight
-            }
-
-        }
-
-        Icon {
-            id: chevron
-
-            visible: tile.hasPage
-            anchors.right: parent.right
-            anchors.rightMargin: Theme.dp(10)
-            anchors.verticalCenter: parent.verticalCenter
-            name: "chevron_right"
-            size: Theme.dp(20)
-            color: tile.checked ? Theme.fgPrimary : Theme.subtext
-        }
-
-    }
-
-    // a slider standing up, on the grid: the level fills a tall pill
-    // from the bottom, its icon at the foot (a tap mutes, where it can), the
-    // value over it, and a button under it where there is a list to pick from
-    component VSlider: Item {
-        id: vs
-
-        property string icon: ""
-        property real value: 0
-        property bool muted: false
-        property bool iconClickable: false
-        property string footIcon: ""
-        property real dragValue: -1
-        readonly property real shownValue: vs.dragValue >= 0 ? vs.dragValue : vs.value
-        readonly property real level: Math.max(0, Math.min(1, vs.shownValue / 100))
-
-        signal moved(real v)
-        signal iconClicked()
-        signal footClicked()
-
-        width: Theme.dp(56)
-
-        LText {
-            id: vsValue
-
-            anchors.top: parent.top
-            anchors.horizontalCenter: parent.horizontalCenter
-            role: "labelMedium"
-            weight: 600
-            color: vs.muted ? Theme.subtextDim : Theme.subtext
-            text: Math.round(vs.shownValue) + "%"
-        }
-
-        Rectangle {
-            id: vsTrack
-
-            anchors.top: vsValue.bottom
-            anchors.topMargin: root.sp1
-            anchors.bottom: vsFoot.visible ? vsFoot.top : parent.bottom
-            anchors.bottomMargin: vsFoot.visible ? root.sp2 : 0
-            width: parent.width
-            radius: Theme.rad(18)
-            color: Theme.withBlur(Theme.surfaceHighest)
-
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                // never shorter than its own round end, so the icon always sits on it
-                height: Math.max(width, parent.height * vs.level)
-                radius: parent.radius
-                color: vs.muted ? Theme.outlineStrong : Theme.primary
-
-                Behavior on height {
-                    enabled: vs.dragValue < 0
-
-                    NumberAnimation {
-                        duration: Theme.barMs(160)
-                        easing.type: Easing.OutCubic
-                    }
-
-                }
-
-            }
-
-            MouseArea {
-                function valueAt(my) {
-                    return Math.round(Math.max(0, Math.min(100, (1 - my / vsTrack.height) * 100)));
-                }
-
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                preventStealing: true
-                onPressed: (mouse) => {
-                    vs.dragValue = valueAt(mouse.y);
-                    vs.moved(vs.dragValue);
-                }
-                onPositionChanged: (mouse) => {
-                    if (!pressed)
-                        return ;
-
-                    vs.dragValue = valueAt(mouse.y);
-                    vs.moved(vs.dragValue);
-                }
-                onReleased: vs.dragValue = -1
-                onCanceled: vs.dragValue = -1
-                onWheel: (wheel) => {
-                    vs.moved(Math.max(0, Math.min(100, vs.value + (wheel.angleDelta.y > 0 ? 5 : -5))));
-                }
-            }
-
-            Item {
-                anchors.bottom: parent.bottom
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width
-                height: parent.width
-
-                Icon {
-                    anchors.centerIn: parent
-                    name: vs.icon
-                    size: Theme.dp(22)
-                    fill: 1
-                    color: vs.muted ? Theme.text : Theme.fgPrimary
-                }
-
-                StateLayer {
-                    visible: vs.iconClickable
-                    radius: vsTrack.radius
-                    tint: Theme.fgPrimary
-                    onClicked: vs.iconClicked()
-                }
-
-            }
-
-        }
-
-        Rectangle {
-            id: vsFoot
-
-            visible: vs.footIcon !== ""
-            anchors.bottom: parent.bottom
-            width: parent.width
-            height: Theme.dp(38)
-            radius: Theme.rad(12)
-            color: Theme.withBlur(Theme.surfaceHighest)
-
-            StateLayer {
-                radius: parent.radius
-                onClicked: vs.footClicked()
-            }
-
-            Icon {
-                anchors.centerIn: parent
-                name: vs.footIcon
-                size: Theme.dp(20)
-                color: Theme.subtext
-            }
-
-        }
-
-    }
-
-    // an icon-only tile with its name underneath
-    component SmallTile: Item {
-        id: st
-
-        property string icon: ""
-        property string label: ""
-        property bool checked: false
-        // a right click asks for more than the tap does
-        property bool hasMore: false
-
-        signal toggled()
-        signal more()
-
-        width: root.mainTileW
-        height: root.mainTileW + Theme.dp(20)
-
-        Rectangle {
-            id: sq
-
-            width: st.width
-            height: st.width
-            radius: st.checked ? Theme.shapeLg : width / 2
-            color: st.checked ? Theme.primary : Theme.withBlur(Theme.surfaceHighest)
-
-            Behavior on radius {
-                NumberAnimation {
-                    duration: Theme.durDefaultSpatial
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: Theme.curveDefaultSpatial
-                }
-
-            }
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: Theme.durDefaultEffects
-                }
-
-            }
-
-            StateLayer {
-                radius: sq.radius
-                tint: st.checked ? Theme.fgPrimary : Theme.text
-                acceptedButtons: st.hasMore ? (Qt.LeftButton | Qt.RightButton) : Qt.LeftButton
-                onClicked: (mouse) => {
-                    if (mouse.button === Qt.RightButton)
-                        st.more();
-                    else
-                        st.toggled();
-                }
-            }
-
-            Icon {
-                anchors.centerIn: parent
-                name: st.icon
-                size: Theme.dp(22)
-                fill: st.checked ? 1 : 0
-                color: st.checked ? Theme.fgPrimary : Theme.text
-            }
-
-        }
-
-        LText {
-            anchors.top: sq.bottom
-            anchors.topMargin: Theme.dp(4)
-            anchors.horizontalCenter: parent.horizontalCenter
-            // the gutter is the label's too; past that it shrinks a little before it elides
-            width: root.mainTileW + root.sp2
-            horizontalAlignment: Text.AlignHCenter
-            role: "labelSmall"
-            color: st.checked ? Theme.text : Theme.subtext
-            text: st.label
-            fontSizeMode: Text.HorizontalFit
-            minimumPixelSize: Math.max(Theme.dp(8), size - Theme.dp(2))
-            elide: Text.ElideRight
-        }
-
-    }
-
     // a tile as the editor shows it: flat, no state, and a badge saying what a
     // tap does. an active one is dragged by its slot, a spare one is tapped
     component EditTile: Item {
@@ -3742,109 +2992,5 @@ BarPill {
         }
 
     }
-
-    // a ring gauge with its reading in the middle
-    component Gauge: Item {
-        id: g
-
-        property real value: 0
-        property string center: ""
-        property string centerIcon: ""
-        property string label: ""
-        property string detail: ""
-        property color tone: Theme.accent
-        property bool clickable: false
-
-        signal clicked()
-
-        // as big as its share of the card allows, from the old 54 up to 84
-        readonly property real ring: Math.round(Math.max(Theme.dp(54), Math.min(Theme.dp(84), g.width - Theme.dp(20))))
-
-        implicitHeight: gcol.implicitHeight
-
-        Column {
-            id: gcol
-
-            anchors.horizontalCenter: parent.horizontalCenter
-            spacing: Theme.dp(6)
-
-            Item {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: g.ring
-                height: g.ring
-
-                CircularProgress {
-                    anchors.fill: parent
-                    value: g.value
-                    thickness: Math.round(g.ring * 0.1)
-                    // past 72 the ring would turn wavy on its own; a gauge reads better plain
-                    wavy: false
-                    color: g.tone
-                    trackColor: Theme.withBlur(Theme.surfaceHighest)
-                }
-
-                Row {
-                    anchors.centerIn: parent
-                    spacing: 0
-
-                    Icon {
-                        visible: g.centerIcon !== ""
-                        anchors.verticalCenter: parent.verticalCenter
-                        name: g.centerIcon
-                        size: Math.round(g.ring * 0.24)
-                        fill: 1
-                        color: g.tone
-                    }
-
-                    LText {
-                        anchors.verticalCenter: parent.verticalCenter
-                        role: "labelLarge"
-                        size: Math.round(g.ring * 0.27)
-                        weight: 680
-                        rounded: 100
-                        text: g.center
-                    }
-
-                }
-
-                StateLayer {
-                    visible: g.clickable
-                    radius: g.ring / 2
-                    onClicked: g.clicked()
-                }
-
-            }
-
-            Column {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 0
-
-                LText {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    role: "labelMedium"
-                    text: g.label
-                    width: Math.min(implicitWidth, g.width - Theme.dp(4))
-                    elide: Text.ElideRight
-                }
-
-                LText {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    visible: text !== ""
-                    role: "bodySmall"
-                    size: Theme.fs(11)
-                    color: Theme.subtext
-                    text: g.detail
-                    width: Math.min(implicitWidth, g.width - Theme.dp(4))
-                    elide: Text.ElideRight
-                }
-
-            }
-
-        }
-
-    }
-
-
-
 
 }

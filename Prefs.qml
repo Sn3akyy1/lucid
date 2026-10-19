@@ -187,8 +187,22 @@ Singleton {
         root.systemTilesRadios = true;
     }
 
-    // a big tile takes half a row, with its name and what it is doing
+    // a big tile takes half a row, with its name and what it is doing. the
+    // big ones and the small ones are blocks of their own, each in the order
+    // systemTiles keeps
     readonly property var systemBigKeys: root.prefList(root.systemBigTiles, root.systemTileCatalog)
+    readonly property var systemBigTileKeys: root.systemTileKeys.filter((k) => {
+        return root.systemBigKeys.indexOf(k) !== -1;
+    })
+    readonly property var systemSmallTileKeys: root.systemTileKeys.filter((k) => {
+        return root.systemBigKeys.indexOf(k) === -1;
+    })
+
+    // both tile blocks at once: which are big, and the order of each
+    function setSystemTileBlocks(big, small) {
+        root.systemBigTiles = big.join(",");
+        root.setSystemTiles(big.concat(small));
+    }
 
     function setTileBig(key, big) {
         const l = root.systemBigKeys.filter((k) => {
@@ -200,12 +214,14 @@ Singleton {
         root.systemBigTiles = l.join(",");
     }
 
-    // the control centre's blocks, and what the sliders and system blocks hold;
-    // the toggles block holds the tiles above
+    // the control centre's blocks, and what the sliders and gauges hold; the
+    // tile blocks hold the tiles above
     readonly property var systemBlockCatalog: [
         { "key": "sliders", "icon": "tune", "name": "Sliders" },
-        { "key": "toggles", "icon": "grid_view", "name": "Toggles" },
-        { "key": "system", "icon": "developer_board", "name": "System" }
+        { "key": "bigtiles", "icon": "dashboard", "name": "Big tiles" },
+        { "key": "tiles", "icon": "apps", "name": "Tiles" },
+        { "key": "media", "icon": "music_note", "name": "Media" },
+        { "key": "gauges", "icon": "speed", "name": "Gauges" }
     ]
     readonly property var systemSliderCatalog: [
         { "key": "brightness", "icon": "brightness_medium", "name": "Brightness" },
@@ -213,13 +229,42 @@ Singleton {
         { "key": "mic", "icon": "mic", "name": "Microphone" }
     ]
     readonly property var systemInfoCatalog: [
-        { "key": "media", "icon": "music_note", "name": "Media" },
         { "key": "cpu", "icon": "memory", "name": "CPU" },
         { "key": "ram", "icon": "memory_alt", "name": "Memory" },
         { "key": "disk", "icon": "hard_drive", "name": "Disk" },
         { "key": "battery", "icon": "battery_full", "name": "Battery" }
     ]
-    readonly property var systemBlockKeys: root.prefList(root.systemBlocks, root.systemBlockCatalog)
+    // there were three blocks once: toggles held both kinds of tile, and
+    // system the media card (when it was on its list) and the gauges
+    readonly property var systemBlockKeys: {
+        const out = [];
+        const legacyMedia = String(root.systemInfo).split(",").map((x) => {
+            return x.trim();
+        }).indexOf("media") !== -1;
+        for (const k of String(root.systemBlocks || "").split(",").map((x) => {
+            return x.trim();
+        })) {
+            const keys = k === "toggles" ? ["bigtiles", "tiles"] : (k === "system" ? (legacyMedia ? ["media", "gauges"] : ["gauges"]) : [k]);
+            for (const x of keys) {
+                if (out.indexOf(x) === -1 && root.systemBlockCatalog.some((c) => {
+                    return c.key === x;
+                }))
+                    out.push(x);
+
+            }
+        }
+        return out;
+    }
+    readonly property bool systemLegacy: /\b(toggles|system)\b/.test(String(root.systemBlocks)) || /"(toggles|system)"/.test(String(root.systemGrid))
+
+    // writes the three old blocks out as the five, once the layout is edited
+    function systemMigrate() {
+        if (!root.systemLegacy)
+            return ;
+
+        root.systemGrid = JSON.stringify(root.systemGridSaved);
+        root.systemBlocks = root.systemBlockKeys.join(",");
+    }
     readonly property var systemSliderKeys: root.prefList(root.systemSliders, root.systemSliderCatalog)
     readonly property var systemInfoKeys: root.prefList(root.systemInfo, root.systemInfoCatalog)
 
@@ -230,12 +275,37 @@ Singleton {
     // lie laying the sliders down
     readonly property int systemGridCols: 16
     readonly property var systemGridSaved: {
+        let v;
         try {
-            const v = JSON.parse(root.systemGrid || "{}");
-            return v && typeof v === "object" && !Array.isArray(v) ? v : {};
+            v = JSON.parse(root.systemGrid || "{}");
         } catch (e) {
             return {};
         }
+        if (!v || typeof v !== "object" || Array.isArray(v))
+            return {};
+
+        // an old block leaves its spot to the two it became, one over the other
+        const split = (old, top, under) => {
+            const r = v[old];
+            delete v[old];
+            if (!r)
+                return ;
+
+            if (!v[top])
+                v[top] = Object.assign({}, r, {
+                "h": 1
+            });
+
+            if (!v[under])
+                v[under] = Object.assign({}, r, {
+                "y": (Number(r.y) || 0) + 1,
+                "h": 1
+            });
+
+        };
+        split("toggles", "bigtiles", "tiles");
+        split("system", "media", "gauges");
+        return v;
     }
 
     // the fewest columns a block can do with: a standing slider each, room
@@ -244,8 +314,11 @@ Singleton {
         if (key === "sliders")
             return lie ? 3 : Math.max(1, root.systemSliderKeys.length);
 
-        if (key === "system")
-            return root.systemInfoKeys.indexOf("media") !== -1 ? 4 : 2;
+        if (key === "media")
+            return 4;
+
+        if (key === "gauges")
+            return 2;
 
         return 3;
     }
@@ -253,10 +326,11 @@ Singleton {
     // a width the block can take: standing sliders take whole columns each
     function systemGridSnapW(key, lie, w) {
         const least = root.systemGridMinW(key, lie);
-        if (key === "sliders" && !lie) {
-            const n = least;
+        // standing sliders a column or more each, big tiles three each
+        const n = key === "sliders" && !lie ? least : (key === "bigtiles" ? 3 : 1);
+        if (n > 1)
             return Math.max(n, Math.min(Math.floor(root.systemGridCols / n), Math.round(w / n)) * n);
-        }
+
         return Math.max(least, Math.min(root.systemGridCols, w));
     }
 
@@ -481,7 +555,7 @@ Singleton {
         "desc": "Battery, volume, brightness and quick settings",
         "more": "Its tiles are set with Edit tiles in the control centre itself; the keyboard layout sign and game mode are on the Bar page in Settings.",
         "page": "bar",
-        "options": ["systemTiles", "systemTilesRadios", "systemBigTiles", "systemBlocks", "systemGrid", "systemSliders", "systemInfo", "systemHeaderButtons"]
+        "options": ["systemTiles", "systemTilesRadios", "systemBigTiles", "systemBlocks", "systemGrid", "systemBlockCards", "systemSliders", "systemInfo", "systemHeaderButtons"]
     },
     {
         "id": "privacy",
@@ -689,6 +763,7 @@ Singleton {
     property alias systemSliders: s.systemSliders
     property alias systemInfo: s.systemInfo
     property alias systemGrid: s.systemGrid
+    property alias systemBlockCards: s.systemBlockCards
     property alias systemHeaderButtons: s.systemHeaderButtons
     property alias barLayout: s.barLayout
     property alias barJoins: s.barJoins
@@ -1232,10 +1307,11 @@ Singleton {
         "systemTiles": "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session",
         "systemTilesRadios": false,
         "systemBigTiles": "wifi,bluetooth",
-        "systemBlocks": "sliders,toggles,system",
+        "systemBlocks": "sliders,bigtiles,tiles,media,gauges",
         "systemSliders": "brightness,volume",
-        "systemInfo": "media,cpu,ram,disk,battery",
+        "systemInfo": "cpu,ram,disk,battery",
         "systemGrid": "",
+        "systemBlockCards": false,
         "systemHeaderButtons": "edit,settings,lock,power",
         "barLayout": "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}",
         "barJoins": "[]",
@@ -1985,12 +2061,14 @@ Singleton {
             // the control centre: its blocks, and what each holds, in order
             property bool systemTilesRadios: false
             property string systemBigTiles: "wifi,bluetooth"
-            property string systemBlocks: "sliders,toggles,system"
+            property string systemBlocks: "sliders,bigtiles,tiles,media,gauges"
             property string systemSliders: "brightness,volume"
-            property string systemInfo: "media,cpu,ram,disk,battery"
+            property string systemInfo: "cpu,ram,disk,battery"
             // where each block sits on the panel's grid, as JSON; empty lays
             // them one under another in the order above
             property string systemGrid: ""
+            // a card behind the tiles and the sliders too, as media and the gauges have
+            property bool systemBlockCards: false
             property string systemHeaderButtons: "edit,settings,lock,power"
             property string barLayout: "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}"
             property string barJoins: "[]"
