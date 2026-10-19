@@ -3681,6 +3681,9 @@ BarPill {
 
         signal clicked()
 
+        // as big as its share of the card allows, from the old 54 up to 84
+        readonly property real ring: Math.round(Math.max(Theme.dp(54), Math.min(Theme.dp(84), g.width - Theme.dp(20))))
+
         implicitHeight: gcol.implicitHeight
 
         Column {
@@ -3691,13 +3694,15 @@ BarPill {
 
             Item {
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: Theme.dp(54)
-                height: Theme.dp(54)
+                width: g.ring
+                height: g.ring
 
                 CircularProgress {
                     anchors.fill: parent
                     value: g.value
-                    thickness: Theme.dp(5)
+                    thickness: Math.round(g.ring * 0.1)
+                    // past 72 the ring would turn wavy on its own; a gauge reads better plain
+                    wavy: false
                     color: g.tone
                     trackColor: Theme.withBlur(Theme.surfaceHighest)
                 }
@@ -3710,7 +3715,7 @@ BarPill {
                         visible: g.centerIcon !== ""
                         anchors.verticalCenter: parent.verticalCenter
                         name: g.centerIcon
-                        size: Theme.dp(13)
+                        size: Math.round(g.ring * 0.24)
                         fill: 1
                         color: g.tone
                     }
@@ -3718,6 +3723,7 @@ BarPill {
                     LText {
                         anchors.verticalCenter: parent.verticalCenter
                         role: "labelLarge"
+                        size: Math.round(g.ring * 0.27)
                         weight: 680
                         rounded: 100
                         text: g.center
@@ -3727,7 +3733,7 @@ BarPill {
 
                 StateLayer {
                     visible: g.clickable
-                    radius: Theme.dp(27)
+                    radius: g.ring / 2
                     onClicked: g.clicked()
                 }
 
@@ -3761,6 +3767,7 @@ BarPill {
         }
 
     }
+
 
 
 
