@@ -561,7 +561,7 @@ BarPill {
     shown: Prefs.barHas("system")
 
     compactWidth: content.implicitWidth + root.horizontalPadding * 2
-    panelWidth: Math.min(Theme.dp(400), root.screenW - Theme.dp(34))
+    panelWidth: root.wideMain ? root.wideWidth : Math.min(Theme.dp(400), root.screenW - Theme.dp(34))
     panelHeight: Math.min(root.maxPanelHeight, root.viewContentHeight)
     expandedRadius: Theme.shapeXl
     compactCollapseScale: 0.94
@@ -1217,6 +1217,183 @@ BarPill {
         }
     }
 
+    // what the panel holds and in what order, picked on the module's card.
+    // anything unknown, or named twice, is left out
+    function picked(list, known) {
+        return String(list || "").split(",").map((k) => {
+            return k.trim();
+        }).filter((k, i, all) => {
+            return known.indexOf(k) !== -1 && all.indexOf(k) === i;
+        });
+    }
+
+    readonly property var sectionKeys: root.picked(Prefs.systemSections, ["brightness", "volume", "quick", "tiles", "media", "stats"])
+    readonly property var gaugeKeys: root.picked(Prefs.systemGauges, ["cpu", "ram", "disk", "battery"])
+    readonly property var headerKeys: root.picked(Prefs.systemHeaderButtons, ["edit", "settings", "lock", "power"])
+    // the wide panel: connections and tiles, the sliders and media, the machine.
+    // each section keeps its own column, in the order picked; a column with
+    // nothing in it goes, and with one left the panel stays a single column
+    readonly property var wideHome: ({
+        "quick": 0,
+        "tiles": 0,
+        "brightness": 1,
+        "volume": 1,
+        "media": 1,
+        "stats": 2
+    })
+    // the single column's width, which the tiles' column keeps in the wide panel
+    readonly property int stackedWidth: Math.min(Theme.dp(400), root.screenW - Theme.dp(34)) - root.panelPad * 2
+    readonly property var wideColWidths: [root.stackedWidth, Theme.dp(320), Theme.dp(260)]
+    readonly property var wideColumns: {
+        const out = [[], [], []];
+        for (const k of root.sectionKeys)
+            out[root.wideHome[k]].push(k);
+        return out.map((keys, home) => {
+            return {
+                "keys": keys,
+                "width": root.wideColWidths[home]
+            };
+        }).filter((c) => {
+            return c.keys.length > 0;
+        });
+    }
+    readonly property int wideWidth: root.wideColumns.reduce((w, c) => {
+        return w + c.width;
+    }, 0) + Math.max(0, root.wideColumns.length - 1) * root.sp4 + root.panelPad * 2
+    // only the main view: the others are lists, and keep the usual width
+    readonly property bool wideMain: Prefs.systemPanelStyle === "wide" && root.view === "main" && root.wideColumns.length > 1 && root.screenW >= root.wideWidth + Theme.dp(34)
+    readonly property var columns: root.wideMain ? root.wideColumns : [{
+        "keys": root.sectionKeys,
+        "width": root.contentWidth
+    }]
+
+    // how wide a section is: the panel's, or its column's
+    function widthFor(key) {
+        return root.wideMain ? root.wideColWidths[root.wideHome[key]] : root.contentWidth;
+    }
+
+    readonly property real mainTileW: (root.widthFor("tiles") - root.sp2 * (root.tileCols - 1)) / root.tileCols
+
+    // the big tiles: Wi-Fi and Bluetooth, and any of the grid's toggles, with a
+    // line under the name saying what each is doing
+    readonly property var quickCatalogue: ["wifi", "bluetooth", "airplane", "dnd", "awake", "dark", "location", "mic", "gamemode", "profile", "nightlight", "vpn"]
+    readonly property var quickKeys: root.picked(Prefs.systemQuickTiles, root.quickCatalogue)
+
+    function quickIcon(key) {
+        if (key === "wifi")
+            return root.wifiGlyph;
+
+        if (key === "bluetooth")
+            return root.btGlyph;
+
+        return root.tileIcon(key);
+    }
+
+    function quickName(key) {
+        switch (key) {
+        case "wifi":
+            return wifiPanel.primaryIsEthernet ? "Ethernet" : "Wi-Fi";
+        case "bluetooth":
+            return "Bluetooth";
+        case "dnd":
+            return "Do not disturb";
+        case "awake":
+            return "Stay awake";
+        case "dark":
+            return "Dark mode";
+        case "mic":
+            return "Microphone";
+        case "gamemode":
+            return "Game mode";
+        case "profile":
+            return "Power profile";
+        }
+        const t = Prefs.systemTileAt(key);
+        return t ? t.name : key;
+    }
+
+    function quickSub(key) {
+        const on = root.quickChecked(key);
+        switch (key) {
+        case "wifi":
+            return wifiPanel.statusText;
+        case "bluetooth":
+            return btPanel.label;
+        case "airplane":
+            return on ? "Radios off" : "Off";
+        case "dnd":
+            return on ? "Silenced" : "Off";
+        case "awake":
+            return on ? "Staying awake" : "Idle allowed";
+        case "location":
+            return !on ? "Off" : (Loc.busy ? "Locating" : "On");
+        case "mic":
+            return on ? "On" : "Muted";
+        case "gamemode":
+            if (root.gameModeBusy)
+                return root.gameModeOn ? "Starting" : "Stopping";
+
+            if (root.gameModeFailed)
+                return "Failed";
+
+            return !root.gameModeConfigured ? "Set it up" : (on ? "On" : "Off");
+        case "profile":
+            return Power.name(Power.profile);
+        case "vpn":
+            return Net.activeVpn ? Net.activeVpn.name : (Net.vpns.length > 0 ? "Off" : "None set up");
+        }
+        return on ? "On" : "Off";
+    }
+
+    function quickChecked(key) {
+        if (key === "wifi")
+            return Networking.wifiEnabled || wifiPanel.primaryIsEthernet;
+
+        if (key === "bluetooth")
+            return root.btEnabled;
+
+        return root.tileChecked(key);
+    }
+
+    // the bubble switches it
+    function quickToggle(key) {
+        if (key === "wifi")
+            Networking.wifiEnabled = !Networking.wifiEnabled;
+        else if (key === "bluetooth")
+            Bt.setEnabled(!root.btEnabled);
+        else
+            root.tileAct(key);
+    }
+
+    // the rest of the tile opens what there is to see, or switches it too
+    readonly property var quickPages: ["wifi", "bluetooth", "profile", "nightlight"]
+
+    function quickOpen(key) {
+        if (root.quickPages.indexOf(key) !== -1)
+            root.showView(key);
+        else
+            root.quickToggle(key);
+    }
+
+    function headerAct(key) {
+        switch (key) {
+        case "edit":
+            root.showView("tiles");
+            break;
+        case "settings":
+            root.expanded = false;
+            Prefs.settingsRequested("");
+            break;
+        case "lock":
+            root.expanded = false;
+            Power.run("lock");
+            break;
+        case "power":
+            root.showView("power");
+            break;
+        }
+    }
+
     // the grid both views share
     readonly property int tileCols: 6
     readonly property real tileW: (root.contentWidth - root.sp2 * (root.tileCols - 1)) / root.tileCols
@@ -1536,36 +1713,28 @@ BarPill {
 
                     }
 
+                    // the ones picked on the module's card, in that order
                     Row {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.dp(2)
 
-                        IconButton {
-                            icon: "edit"
-                            onClicked: root.showView("tiles")
-                        }
+                        Repeater {
+                            model: root.headerKeys
 
-                        IconButton {
-                            icon: "settings"
-                            onClicked: {
-                                root.expanded = false;
-                                Prefs.settingsRequested("");
+                            IconButton {
+                                required property string modelData
+
+                                icon: ({
+                                    "edit": "edit",
+                                    "settings": "settings",
+                                    "lock": "lock",
+                                    "power": "power_settings_new"
+                                })[modelData]
+                                variant: modelData === "power" ? "tonal" : "standard"
+                                onClicked: root.headerAct(modelData)
                             }
-                        }
 
-                        IconButton {
-                            icon: "lock"
-                            onClicked: {
-                                root.expanded = false;
-                                Power.run("lock");
-                            }
-                        }
-
-                        IconButton {
-                            icon: "power_settings_new"
-                            variant: "tonal"
-                            onClicked: root.showView("power")
                         }
 
                     }
@@ -1588,115 +1757,174 @@ BarPill {
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
 
-                    Column {
+                    // the sections, in the order picked on the module's card; the wide
+                    // panel spreads them over its columns (see wideHome)
+                    Row {
                         id: mainColumn
 
-                        width: scrollArea.width
-                        spacing: root.sp3
+                        spacing: root.sp4
 
-                        Column {
-                            width: root.contentWidth
+                        Repeater {
+                            model: root.columns
+
+                            Column {
+                                id: sectionColumn
+
+                                required property var modelData
+
+                                width: sectionColumn.modelData.width
+                                spacing: root.sp3
+
+                                Repeater {
+                                    model: sectionColumn.modelData.keys
+
+                                    Loader {
+                                        required property string modelData
+
+                                        width: sectionColumn.modelData.width
+                                        // a section with nothing to show (no backlight, nothing playing) takes no room
+                                        visible: item !== null && item.shown
+                                        sourceComponent: ({
+                                            "brightness": brightnessSection,
+                                            "volume": volumeSection,
+                                            "quick": quickSection,
+                                            "tiles": tilesSection,
+                                            "media": mediaSection,
+                                            "stats": statsSection
+                                        })[modelData]
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                    Component {
+                        id: brightnessSection
+
+                        Slider {
+                            readonly property bool shown: root.maxBrightness > 0
+
+                            width: root.widthFor("brightness")
+                            size: "m"
+                            icon: root.brightnessIcon
+                            from: 0
+                            to: 100
+                            value: root.brightnessPercent
+                            inactiveColor: Theme.withBlur(Theme.surfaceHighest)
+                            easeValue: root.expanded
+                            valueText: (v) => {
+                                return Math.round(v) + "%";
+                            }
+                            onMoved: (v) => {
+                                return root.setBrightness(v);
+                            }
+                        }
+
+                    }
+
+                    Component {
+                        id: volumeSection
+
+                        Row {
+                            readonly property bool shown: true
+
+                            width: root.widthFor("volume")
                             spacing: root.sp2
 
                             Slider {
-                                visible: root.maxBrightness > 0
-                                width: root.contentWidth
+                                width: root.widthFor("volume") - outBtn.width - root.sp2
                                 size: "m"
-                                icon: root.brightnessIcon
+                                icon: root.volumeIcon(root.volumePercent, root.volMuted)
+                                iconClickable: true
                                 from: 0
                                 to: 100
-                                value: root.brightnessPercent
+                                value: root.volumePercent
+                                activeColor: root.volMuted ? Theme.outlineStrong : Theme.primary
                                 inactiveColor: Theme.withBlur(Theme.surfaceHighest)
                                 easeValue: root.expanded
                                 valueText: (v) => {
                                     return Math.round(v) + "%";
                                 }
                                 onMoved: (v) => {
-                                    return root.setBrightness(v);
+                                    if (root.sink && root.sink.audio && root.sink.audio.muted)
+                                        root.sink.audio.muted = false;
+
+                                    root.setVolume(v);
                                 }
+                                onIconClicked: root.toggleVolMute()
                             }
 
-                            Row {
-                                width: root.contentWidth
-                                spacing: root.sp2
+                            Rectangle {
+                                id: outBtn
 
-                                Slider {
-                                    width: root.contentWidth - outBtn.width - root.sp2
-                                    size: "m"
-                                    icon: root.volumeIcon(root.volumePercent, root.volMuted)
-                                    iconClickable: true
-                                    from: 0
-                                    to: 100
-                                    value: root.volumePercent
-                                    activeColor: root.volMuted ? Theme.outlineStrong : Theme.primary
-                                    inactiveColor: Theme.withBlur(Theme.surfaceHighest)
-                                    easeValue: root.expanded
-                                    valueText: (v) => {
-                                        return Math.round(v) + "%";
-                                    }
-                                    onMoved: (v) => {
-                                        if (root.sink && root.sink.audio && root.sink.audio.muted)
-                                            root.sink.audio.muted = false;
+                                width: Theme.dp(50)
+                                height: Theme.dp(38)
+                                anchors.verticalCenter: parent.verticalCenter
+                                radius: Theme.rad(12)
+                                color: Theme.withBlur(Theme.surfaceHighest)
 
-                                        root.setVolume(v);
-                                    }
-                                    onIconClicked: root.toggleVolMute()
+                                StateLayer {
+                                    radius: parent.radius
+                                    onClicked: root.showView("output")
                                 }
 
-                                Rectangle {
-                                    id: outBtn
-
-                                    width: Theme.dp(50)
-                                    height: Theme.dp(38)
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    radius: Theme.rad(12)
-                                    color: Theme.withBlur(Theme.surfaceHighest)
-
-                                    StateLayer {
-                                        radius: parent.radius
-                                        onClicked: root.showView("output")
-                                    }
-
-                                    Icon {
-                                        anchors.centerIn: parent
-                                        name: "speaker"
-                                        size: Theme.dp(20)
-                                        color: Theme.subtext
-                                    }
-
+                                Icon {
+                                    anchors.centerIn: parent
+                                    name: "speaker"
+                                    size: Theme.dp(20)
+                                    color: Theme.subtext
                                 }
 
                             }
 
                         }
 
-                        Row {
-                            width: root.contentWidth
-                            spacing: root.sp2
+                    }
 
-                            QuickTile {
-                                icon: root.wifiGlyph
-                                name: wifiPanel.primaryIsEthernet ? "Ethernet" : "Wi-Fi"
-                                sub: wifiPanel.statusText
-                                checked: Networking.wifiEnabled || wifiPanel.primaryIsEthernet
-                                onToggled: Networking.wifiEnabled = !Networking.wifiEnabled
-                                onExpandRequested: root.showView("wifi")
-                            }
-
-                            QuickTile {
-                                icon: root.btGlyph
-                                name: "Bluetooth"
-                                sub: btPanel.label
-                                checked: root.btEnabled
-                                onToggled: Bt.setEnabled(!root.btEnabled)
-                                onExpandRequested: root.showView("bluetooth")
-                            }
-
-                        }
+                    // the big tiles, two to a row
+                    Component {
+                        id: quickSection
 
                         Grid {
-                            visible: Prefs.systemTileKeys.length > 0
-                            width: root.contentWidth
+                            readonly property bool shown: root.quickKeys.length > 0
+
+                            width: root.widthFor("quick")
+                            columns: 2
+                            columnSpacing: root.sp2
+                            rowSpacing: root.sp2
+
+                            Repeater {
+                                model: root.quickKeys
+
+                                QuickTile {
+                                    required property string modelData
+
+                                    icon: root.quickIcon(modelData)
+                                    name: root.quickName(modelData)
+                                    sub: root.quickSub(modelData)
+                                    checked: root.quickChecked(modelData)
+                                    hasPage: root.quickPages.indexOf(modelData) !== -1
+                                    onToggled: root.quickToggle(modelData)
+                                    onExpandRequested: root.quickOpen(modelData)
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                    Component {
+                        id: tilesSection
+
+                        Grid {
+                            readonly property bool shown: Prefs.systemTileKeys.length > 0
+
+                            width: root.widthFor("tiles")
                             columns: root.tileCols
                             columnSpacing: root.sp2
                             rowSpacing: root.sp3
@@ -1719,6 +1947,11 @@ BarPill {
 
                         }
 
+                    }
+
+                    Component {
+                        id: mediaSection
+
                         Rectangle {
                             id: mediaCard
 
@@ -1726,8 +1959,9 @@ BarPill {
                             readonly property real progress: (root.mprisMod && root.mprisMod.lenSec > 0) ? Math.max(0, Math.min(1, root.mprisMod.livePosSec / root.mprisMod.lenSec)) : 0
                             readonly property bool playing: root.mprisMod ? root.mprisMod.isPlaying : false
 
-                            visible: root.mprisMod && root.mprisMod.player
-                            width: root.contentWidth
+                            readonly property bool shown: !!(root.mprisMod && root.mprisMod.player)
+
+                            width: root.widthFor("media")
                             height: Theme.dp(84)
                             radius: Theme.shapeLgInc
                             color: Theme.withBlur(Theme.surfaceHigh)
@@ -1871,6 +2105,11 @@ BarPill {
 
                         }
 
+                    }
+
+                    Component {
+                        id: statsSection
+
                         Rectangle {
                             id: statsCard
 
@@ -1898,54 +2137,75 @@ BarPill {
                                 root.selectedDisk = root.diskList[(i + 1) % root.diskList.length].name;
                             }
 
-                            width: root.contentWidth
-                            height: gaugeRow.implicitHeight + Theme.dp(28)
+                            readonly property bool shown: root.gaugeKeys.length > 0
+                            // each gauge picked on the module's card, as the Gauge reads it
+                            readonly property var gauges: ({
+                                "cpu": {
+                                    "value": root.cpuPercent / 100,
+                                    "center": root.cpuHistory.length > 0 ? Math.round(root.cpuPercent) + "" : "—",
+                                    "label": "CPU",
+                                    "detail": root.cpuTemp > 0 ? Units.degUnit(root.cpuTemp) : "",
+                                    "tone": root.cpuTemp >= 85 ? Theme.error : Theme.accent,
+                                    "icon": ""
+                                },
+                                "ram": {
+                                    "value": root.ramPercent / 100,
+                                    "center": root.ramHistory.length > 0 ? Math.round(root.ramPercent) + "" : "—",
+                                    "label": "Memory",
+                                    "detail": root.ramTotalGB > 0 ? root.ramUsedGB.toFixed(1) + " GB" : "",
+                                    "tone": Theme.accent,
+                                    "icon": ""
+                                },
+                                "disk": {
+                                    "value": statsCard.diskPct,
+                                    "center": statsCard.selectedDiskInfo && statsCard.selectedDiskInfo.mounted ? Math.round(statsCard.diskPct * 100) + "" : "—",
+                                    "label": root.selectedDisk || "Disk",
+                                    "detail": statsCard.selectedDiskInfo ? (statsCard.selectedDiskInfo.mounted ? Math.round(statsCard.selectedDiskInfo.avail / 1.07374e+09) + " GB free" : "not mounted") : "",
+                                    "tone": statsCard.diskPct * 100 > 100 - Prefs.storageLowPercent ? Theme.error : Theme.accent,
+                                    "icon": ""
+                                },
+                                "battery": {
+                                    "value": root.batteryPresent ? root.batteryPercent / 100 : 0,
+                                    "center": root.batteryPresent ? root.batteryPercent + "" : "—",
+                                    "label": root.batteryCharging ? "Charging" : "Battery",
+                                    "detail": root.batteryDetail,
+                                    "tone": root.batteryPercent <= 20 && !root.batteryCharging ? Theme.error : Theme.accent,
+                                    "icon": root.batteryCharging ? "bolt" : ""
+                                }
+                            })
+
+                            width: root.widthFor("stats")
+                            height: gaugeGrid.implicitHeight + Theme.dp(28)
                             radius: Theme.shapeLgInc
                             color: Theme.withBlur(Theme.surfaceHigh)
 
-                            Row {
-                                id: gaugeRow
+                            // a row of them, or two to a row in a wide column
+                            Grid {
+                                id: gaugeGrid
 
                                 anchors.centerIn: parent
                                 width: parent.width - Theme.dp(16)
+                                columns: root.wideMain ? Math.min(2, root.gaugeKeys.length) : Math.max(1, root.gaugeKeys.length)
+                                rowSpacing: Theme.dp(12)
 
-                                Gauge {
-                                    width: gaugeRow.width / 4
-                                    value: root.cpuPercent / 100
-                                    center: root.cpuHistory.length > 0 ? Math.round(root.cpuPercent) + "" : "—"
-                                    label: "CPU"
-                                    detail: root.cpuTemp > 0 ? Units.degUnit(root.cpuTemp) : ""
-                                    tone: root.cpuTemp >= 85 ? Theme.error : Theme.accent
-                                }
+                                Repeater {
+                                    model: root.gaugeKeys
 
-                                Gauge {
-                                    width: gaugeRow.width / 4
-                                    value: root.ramPercent / 100
-                                    center: root.ramHistory.length > 0 ? Math.round(root.ramPercent) + "" : "—"
-                                    label: "Memory"
-                                    detail: root.ramTotalGB > 0 ? root.ramUsedGB.toFixed(1) + " GB" : ""
-                                    tone: Theme.accent
-                                }
+                                    Gauge {
+                                        required property string modelData
+                                        readonly property var g: statsCard.gauges[modelData]
 
-                                Gauge {
-                                    width: gaugeRow.width / 4
-                                    value: statsCard.diskPct
-                                    center: statsCard.selectedDiskInfo && statsCard.selectedDiskInfo.mounted ? Math.round(statsCard.diskPct * 100) + "" : "—"
-                                    label: root.selectedDisk || "Disk"
-                                    detail: statsCard.selectedDiskInfo ? (statsCard.selectedDiskInfo.mounted ? Math.round(statsCard.selectedDiskInfo.avail / 1.07374e+09) + " GB free" : "not mounted") : ""
-                                    tone: statsCard.diskPct * 100 > 100 - Prefs.storageLowPercent ? Theme.error : Theme.accent
-                                    clickable: root.diskList.length > 1
-                                    onClicked: statsCard.cycleDisk()
-                                }
+                                        width: gaugeGrid.width / gaugeGrid.columns
+                                        value: g.value
+                                        center: g.center
+                                        label: g.label
+                                        detail: g.detail
+                                        tone: g.tone
+                                        centerIcon: g.icon
+                                        clickable: modelData === "disk" && root.diskList.length > 1
+                                        onClicked: statsCard.cycleDisk()
+                                    }
 
-                                Gauge {
-                                    width: gaugeRow.width / 4
-                                    value: root.batteryPresent ? root.batteryPercent / 100 : 0
-                                    center: root.batteryPresent ? root.batteryPercent + "" : "—"
-                                    label: root.batteryCharging ? "Charging" : "Battery"
-                                    detail: root.batteryDetail
-                                    tone: root.batteryPercent <= 20 && !root.batteryCharging ? Theme.error : Theme.accent
-                                    centerIcon: root.batteryCharging ? "bolt" : ""
                                 }
 
                             }
@@ -2808,11 +3068,13 @@ BarPill {
         property string name: ""
         property string sub: ""
         property bool checked: false
+        // off for a tile with no page of its own: no chevron, and it all switches
+        property bool hasPage: true
 
         signal toggled()
         signal expandRequested()
 
-        width: (root.contentWidth - root.sp2) / 2
+        width: (root.widthFor("quick") - root.sp2) / 2
         height: Theme.dp(64)
         radius: tile.checked ? Theme.shapeLgInc : height / 2
         color: tile.checked ? Theme.primary : Theme.withBlur(Theme.surfaceHighest)
@@ -2869,8 +3131,8 @@ BarPill {
         Column {
             anchors.left: bubble.right
             anchors.leftMargin: Theme.dp(10)
-            anchors.right: chevron.left
-            anchors.rightMargin: Theme.dp(2)
+            anchors.right: tile.hasPage ? chevron.left : parent.right
+            anchors.rightMargin: tile.hasPage ? Theme.dp(2) : Theme.dp(12)
             anchors.verticalCenter: parent.verticalCenter
             spacing: 0
 
@@ -2897,6 +3159,7 @@ BarPill {
         Icon {
             id: chevron
 
+            visible: tile.hasPage
             anchors.right: parent.right
             anchors.rightMargin: Theme.dp(10)
             anchors.verticalCenter: parent.verticalCenter
@@ -2920,8 +3183,8 @@ BarPill {
         signal toggled()
         signal more()
 
-        width: root.tileW
-        height: root.tileH
+        width: root.mainTileW
+        height: root.mainTileW + Theme.dp(20)
 
         Rectangle {
             id: sq
@@ -2974,7 +3237,7 @@ BarPill {
             anchors.topMargin: Theme.dp(4)
             anchors.horizontalCenter: parent.horizontalCenter
             // the gutter is the label's too; past that it shrinks a little before it elides
-            width: root.tileStepX
+            width: root.mainTileW + root.sp2
             horizontalAlignment: Text.AlignHCenter
             role: "labelSmall"
             color: st.checked ? Theme.text : Theme.subtext
