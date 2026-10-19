@@ -49,7 +49,6 @@
     "showMedia": true,
     "showNotifications": true,
     "showSystem": true,
-    "systemPanelStyle": "stacked",
     "systemTilesRadios": false,
     "systemBigTiles": "wifi,bluetooth",
     "systemBlocks": "sliders,toggles,system",

@@ -561,7 +561,7 @@ BarPill {
     shown: Prefs.barHas("system")
 
     compactWidth: content.implicitWidth + root.horizontalPadding * 2
-    panelWidth: root.wideMain ? root.wideWidth : Math.min(Theme.dp(400), root.screenW - Theme.dp(34))
+    panelWidth: root.gridMain ? root.gridPanelWidth : Math.min(Theme.dp(400), root.screenW - Theme.dp(34))
     panelHeight: Math.min(root.maxPanelHeight, root.viewContentHeight)
     expandedRadius: Theme.shapeXl
     compactCollapseScale: 0.94
@@ -1291,106 +1291,93 @@ BarPill {
     readonly property var shownBlocks: root.blockKeys.filter((k) => {
         return root.blockShown(k);
     })
-    // the wide panel is the grid kept in Prefs.systemGrid: a column is a tile
-    // wide, and a row as tall as the tallest block sitting in it alone. the
-    // columns and rows nothing shown sits in fold away
+    // the panel is the grid kept in Prefs.systemGrid: a column is a tile wide
+    // and a row a thin strip, so a block is as tall as it was made, or as its
+    // pieces need. the columns and rows nothing shown sits in fold away
     readonly property int gridUnit: Theme.dp(52)
+    readonly property int gridRow: Theme.dp(20)
     readonly property int gridGap: root.sp3
-    readonly property var gridPlace: Prefs.systemGridPlace(root.blockKeys)
-    readonly property bool slidersStand: !(root.gridPlace.sliders && root.gridPlace.sliders.lie)
+    // across, where each block sits does not hang on what it holds
+    readonly property var gridSpots: Prefs.systemGridPlace(root.blockKeys)
+    // the rows each shown block's pieces need
+    readonly property var gridNeeds: {
+        const out = {};
+        for (const k of root.shownBlocks) {
+            const b = root.blockLoader(k);
+            if (b.item)
+                out[k] = Math.ceil((b.item.implicitHeight + root.gridGap) / (root.gridRow + root.gridGap));
+
+        }
+        return out;
+    }
+    readonly property var gridPlace: Prefs.systemGridPlace(root.blockKeys, root.gridNeeds)
+    readonly property bool slidersStand: !!(root.gridSpots.sliders && !root.gridSpots.sliders.lie)
 
     function gridSpan(n) {
         return n * root.gridUnit + Math.max(0, n - 1) * root.gridGap;
     }
 
-    // the columns and rows the shown blocks sit in, each mapped to where it ends up
-    readonly property var gridAxes: {
-        const cols = [], rows = [];
+    function gridRowSpan(n) {
+        return n * root.gridRow + Math.max(0, n - 1) * root.gridGap;
+    }
+
+    // the cells the shown blocks cover, in order: the rest fold away
+    function gridUsed(place, across) {
+        const out = [];
         for (const k of root.shownBlocks) {
-            const r = root.gridPlace[k];
-            for (let i = 0; i < r.w; i++)
-                if (cols.indexOf(r.x + i) === -1)
-                    cols.push(r.x + i);
-            for (let i = 0; i < r.h; i++)
-                if (rows.indexOf(r.y + i) === -1)
-                    rows.push(r.y + i);
+            const r = place[k];
+            if (!r)
+                continue;
+
+            const from = across ? r.x : r.y;
+            for (let i = 0; i < (across ? r.w : r.h); i++)
+                if (out.indexOf(from + i) === -1)
+                    out.push(from + i);
         }
-        const by = (a, b) => {
+        return out.sort((a, b) => {
             return a - b;
-        };
-        return {
-            "cols": cols.sort(by),
-            "rows": rows.sort(by)
-        };
-    }
-    // what a block needs, down: the standing sliders stretch to whatever the row gives them
-    function blockNeed(key) {
-        const b = root.blockLoader(key);
-        return b.item ? b.item.implicitHeight : 0;
+        });
     }
 
-    // each row's height: the most any block sitting in it alone needs, then a
-    // block spanning rows that still needs more stretches the last of them
-    readonly property var gridRowH: {
-        const rows = root.gridAxes.rows;
-        const h = rows.map(() => {
-            return 0;
-        });
-        const keys = root.shownBlocks.slice().sort((a, b) => {
-            return root.gridPlace[a].h - root.gridPlace[b].h;
-        });
-        for (const k of keys) {
-            const r = root.gridPlace[k];
-            const first = rows.indexOf(r.y);
-            let have = (r.h - 1) * root.gridGap;
-            for (let i = 0; i < r.h; i++)
-                have += h[first + i];
-            const need = root.blockNeed(k);
-            if (need > have)
-                h[first + r.h - 1] += need - have;
-
-        }
-        return h;
-    }
+    readonly property var gridCols: root.gridUsed(root.gridSpots, true)
+    readonly property var gridRows: root.gridUsed(root.gridPlace, false)
 
     // a shown block's box on the grid, in pixels
     function gridBox(key) {
         const r = root.gridPlace[key];
-        const ci = r ? root.gridAxes.cols.indexOf(r.x) : -1;
-        const ri = r ? root.gridAxes.rows.indexOf(r.y) : -1;
+        const ci = r ? root.gridCols.indexOf(r.x) : -1;
+        const ri = r ? root.gridRows.indexOf(r.y) : -1;
         if (ci < 0 || ri < 0)
             return Qt.rect(0, 0, root.gridUnit, 0);
 
-        let y = 0;
-        for (let i = 0; i < ri; i++)
-            y += root.gridRowH[i] + root.gridGap;
-        let h = (r.h - 1) * root.gridGap;
-        for (let i = 0; i < r.h; i++)
-            h += root.gridRowH[ri + i] || 0;
-        return Qt.rect(ci * (root.gridUnit + root.gridGap), y, root.gridSpan(r.w), h);
+        return Qt.rect(ci * (root.gridUnit + root.gridGap), ri * (root.gridRow + root.gridGap), root.gridSpan(r.w), root.gridRowSpan(r.h));
     }
 
-    readonly property int gridWidth: root.gridSpan(root.gridAxes.cols.length)
-    readonly property real gridHeight: root.gridRowH.reduce((t, h) => {
-        return t + h;
-    }, 0) + Math.max(0, root.gridRowH.length - 1) * root.gridGap
-    readonly property int wideWidth: root.gridWidth + root.panelPad * 2
-    // only the main view: the others are lists, and keep the usual width
-    readonly property bool wideMain: Prefs.systemPanelStyle === "wide" && root.view === "main" && root.shownBlocks.length > 1 && root.screenW >= root.wideWidth + Theme.dp(34)
+    readonly property int gridWidth: root.gridSpan(root.gridCols.length)
+    readonly property real gridHeight: root.gridRowSpan(root.gridRows.length)
+    readonly property int gridPanelWidth: root.gridWidth + root.panelPad * 2
+    // only the main view, and only while the grid fits the screen: otherwise,
+    // and in the other views, which are lists, the usual single column
+    readonly property bool gridMain: root.view === "main" && root.screenW >= root.gridPanelWidth + Theme.dp(34)
 
     // across, a block's columns are all it takes; down, the rows decide
     function blockWidth(key) {
-        return root.wideMain && root.gridPlace[key] ? root.gridSpan(root.gridPlace[key].w) : root.contentWidth;
+        return root.gridMain && root.gridSpots[key] ? root.gridSpan(root.gridSpots[key].w) : root.contentWidth;
     }
 
     function blockLoader(key) {
         return key === "sliders" ? slidersBlock : (key === "toggles" ? togglesBlock : systemBlock);
     }
 
-    // where a block starts down the single column: past the shown ones before it
+    // the single column: top to bottom as on the grid
+    readonly property var columnOrder: root.shownBlocks.slice().sort((a, b) => {
+        const p = root.gridSpots[a], q = root.gridSpots[b];
+        return p && q ? (p.y - q.y || p.x - q.x) : 0;
+    })
+
     function blockStart(key) {
         let at = 0;
-        for (const k of root.shownBlocks) {
+        for (const k of root.columnOrder) {
             if (k === key)
                 break;
 
@@ -1400,7 +1387,7 @@ BarPill {
     }
 
     // a column of the grid is a tile; the single column keeps six to a row
-    readonly property int mainTileCols: root.wideMain && root.gridPlace.toggles ? root.gridPlace.toggles.w : root.tileCols
+    readonly property int mainTileCols: root.gridMain && root.gridSpots.toggles ? root.gridSpots.toggles.w : root.tileCols
     readonly property real mainTileW: Math.floor((root.blockWidth("toggles") - root.sp2 * (root.mainTileCols - 1)) / root.mainTileCols)
     readonly property real bigTileW: Math.floor((root.blockWidth("toggles") - root.sp2) / 2)
 
@@ -1863,15 +1850,14 @@ BarPill {
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
 
-                    // the blocks, in the order picked on the module's card: one under
-                    // another, or side by side in the wide panel, where the sliders
-                    // stand up as tall as the tallest of the rest
+                    // the blocks where the module's card put them on the grid, or one
+                    // under another when the grid does not fit the screen
                     Item {
                         id: mainColumn
 
-                        width: root.wideMain ? root.gridWidth : root.contentWidth
+                        width: root.gridMain ? root.gridWidth : root.contentWidth
                         implicitHeight: {
-                            if (root.wideMain)
+                            if (root.gridMain)
                                 return root.gridHeight;
 
                             let h = 0;
@@ -1884,21 +1870,21 @@ BarPill {
                             id: slidersBlock
 
                             visible: root.blockShown("sliders")
-                            x: root.wideMain ? root.gridBox("sliders").x : 0
-                            y: root.wideMain ? root.gridBox("sliders").y : root.blockStart("sliders")
+                            x: root.gridMain ? root.gridBox("sliders").x : 0
+                            y: root.gridMain ? root.gridBox("sliders").y : root.blockStart("sliders")
                             width: root.blockWidth("sliders")
-                            height: root.wideMain ? root.gridBox("sliders").height : (item ? item.implicitHeight : 0)
-                            sourceComponent: root.wideMain && root.slidersStand ? tallSliders : flatSliders
+                            height: root.gridMain ? root.gridBox("sliders").height : (item ? item.implicitHeight : 0)
+                            sourceComponent: root.gridMain && root.slidersStand ? tallSliders : flatSliders
                         }
 
                         Loader {
                             id: togglesBlock
 
                             visible: root.blockShown("toggles")
-                            x: root.wideMain ? root.gridBox("toggles").x : 0
-                            y: root.wideMain ? root.gridBox("toggles").y : root.blockStart("toggles")
+                            x: root.gridMain ? root.gridBox("toggles").x : 0
+                            y: root.gridMain ? root.gridBox("toggles").y : root.blockStart("toggles")
                             width: root.blockWidth("toggles")
-                            height: root.wideMain ? root.gridBox("toggles").height : (item ? item.implicitHeight : 0)
+                            height: root.gridMain ? root.gridBox("toggles").height : (item ? item.implicitHeight : 0)
                             sourceComponent: togglesSection
                         }
 
@@ -1906,10 +1892,10 @@ BarPill {
                             id: systemBlock
 
                             visible: root.blockShown("system")
-                            x: root.wideMain ? root.gridBox("system").x : 0
-                            y: root.wideMain ? root.gridBox("system").y : root.blockStart("system")
+                            x: root.gridMain ? root.gridBox("system").x : 0
+                            y: root.gridMain ? root.gridBox("system").y : root.blockStart("system")
                             width: root.blockWidth("system")
-                            height: root.wideMain ? root.gridBox("system").height : (item ? item.implicitHeight : 0)
+                            height: root.gridMain ? root.gridBox("system").height : (item ? item.implicitHeight : 0)
                             sourceComponent: systemSection
                         }
 
@@ -2400,7 +2386,7 @@ BarPill {
                             radius: Theme.shapeLgInc
                             color: Theme.withBlur(Theme.surfaceHigh)
 
-                            // in a row, or two to a row in the wide panel's narrower block
+                            // as many to a row as the block's width leaves room for
                             Grid {
                                 id: gaugeGrid
 
@@ -3392,7 +3378,7 @@ BarPill {
 
     }
 
-    // a slider standing up, for the wide panel: the level fills a tall pill
+    // a slider standing up, on the grid: the level fills a tall pill
     // from the bottom, its icon at the foot (a tap mutes, where it can), the
     // value over it, and a button under it where there is a list to pick from
     component VSlider: Item {
