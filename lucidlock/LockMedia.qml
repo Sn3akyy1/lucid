@@ -28,6 +28,7 @@ Rectangle {
     // a remote cover through the cache, never straight into the Image: Qt's
     // own http/2 client is what has been crashing the shell
     readonly property string artUrl: media.player ? (media.player.trackArtUrl || "") : ""
+    onArtUrlChanged: media.localArt = ""
     readonly property bool remoteArt: /^https?:/.test(media.artUrl)
     readonly property string artFile: {
         if (!media.remoteArt)
@@ -54,7 +55,7 @@ Rectangle {
     Process {
         id: artFetch
 
-        command: ["sh", "-c", "f=\"$1\"; d=\"$(dirname \"$f\")\"; mkdir -p \"$d\"; find \"$d\" -name '*.img' -mtime +14 -delete 2>/dev/null; [ -s \"$f\" ] || { t=\"$f.$$\"; curl -sfL --max-time 10 -o \"$t\" \"$2\" && mv \"$t\" \"$f\" || rm -f \"$t\"; }; [ -s \"$f\" ]", "sh", media.artFile, media.artUrl]
+        command: ["sh", "-c", "f=\"$1\"; d=\"$(dirname \"$f\")\"; mkdir -p \"$d\"; find \"$d\" -name '*.img' -mtime +14 -delete 2>/dev/null; [ -s \"$f\" ] || { t=\"$f.$$\"; curl -sfL --max-time 10 -o \"$t\" \"$2\" && mv \"$t\" \"$f\" && sync || rm -f \"$t\"; }; [ -s \"$f\" ]", "sh", media.artFile, media.artUrl]
         onExited: (code) => {
             if (code === 0)
                 media.localArt = "file://" + media.artFile;
@@ -78,6 +79,9 @@ Rectangle {
     implicitHeight: Theme.dp(124)
 
     Connections {
+        function onTrackChanged() {
+            media.fetchCover();
+        }
         function onPositionChanged() {
             media.posStamp = Date.now();
             media.livePos = media.player.position;

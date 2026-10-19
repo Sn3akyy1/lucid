@@ -59,6 +59,9 @@ BarPill {
     readonly property string title: root.player ? (root.player.trackTitle || "Unknown") : "Nothing playing"
     readonly property string artist: root.player ? root.player.trackArtist : ""
     readonly property string artUrl: root.player ? root.player.trackArtUrl : ""
+    // clear the cached file:// url immediately when the track changes, so
+    // artSource falls back to the remote url (or empty) while the new cover downloads
+    onArtUrlChanged: root.localArt = ""
     // a remote cover is fetched into the cache and shown from there: an Image
     // fed the url itself makes Qt run the network stack, and its http/2 client
     // is what has been taking the shell down mid-session
@@ -112,7 +115,7 @@ BarPill {
     Process {
         id: artFetch
 
-        command: ["sh", "-c", "f=\"$1\"; d=\"$(dirname \"$f\")\"; mkdir -p \"$d\"; find \"$d\" -name '*.img' -mtime +14 -delete 2>/dev/null; [ -s \"$f\" ] || { t=\"$f.$$\"; curl -sfL --max-time 10 -o \"$t\" \"$2\" && mv \"$t\" \"$f\" || rm -f \"$t\"; }; [ -s \"$f\" ]", "sh", root.artFile, root.artUrl]
+        command: ["sh", "-c", "f=\"$1\"; d=\"$(dirname \"$f\")\"; mkdir -p \"$d\"; find \"$d\" -name '*.img' -mtime +14 -delete 2>/dev/null; [ -s \"$f\" ] || { t=\"$f.$$\"; curl -sfL --max-time 10 -o \"$t\" \"$2\" && mv \"$t\" \"$f\" && sync || rm -f \"$t\"; }; [ -s \"$f\" ]", "sh", root.artFile, root.artUrl]
         onExited: (code) => {
             if (code === 0)
                 root.localArt = "file://" + root.artFile;
@@ -123,7 +126,7 @@ BarPill {
     Process {
         id: shazamFetchProc
 
-        command: ["sh", "-c", "f=\"$1\"; d=\"$(dirname \"$f\")\"; mkdir -p \"$d\"; find \"$d\" -name '*.img' -mtime +14 -delete 2>/dev/null; [ -s \"$f\" ] || { t=\"$f.$$\"; curl -sfL --max-time 10 -o \"$t\" \"$2\" && mv \"$t\" \"$f\" || rm -f \"$t\"; }; [ -s \"$f\" ]", "sh", root.shazamArtFile, root.shazamResult.art]
+        command: root.shazamResult ? ["sh", "-c", "f=\"$1\"; d=\"$(dirname \"$f\")\"; mkdir -p \"$d\"; find \"$d\" -name '*.img' -mtime +14 -delete 2>/dev/null; [ -s \"$f\" ] || { t=\"$f.$$\"; curl -sfL --max-time 10 -o \"$t\" \"$2\" && mv \"$t\" \"$f\" && sync || rm -f \"$t\"; }; [ -s \"$f\" ]", "sh", root.shazamArtFile, root.shazamResult.art] : []
         onExited: (code) => {
             if (code === 0)
                 root.shazamLocalArt = "file://" + root.shazamArtFile;
@@ -601,6 +604,7 @@ BarPill {
     Connections {
         function onTrackChanged() {
             root.snapNext = true;
+            root.fetchCover();
         }
 
         target: root.player

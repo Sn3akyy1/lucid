@@ -26,6 +26,7 @@ WidgetBody {
     readonly property string artist: w.has ? (w.player.trackArtist || w.player.identity || "") : "Start something and it lands here"
     readonly property string source: w.has ? (w.player.identity || "") : ""
     readonly property string artUrl: w.has ? (w.player.trackArtUrl || "") : ""
+    onArtUrlChanged: w.localArt = ""
     readonly property real length: w.has ? w.player.length : 0
     readonly property real position: w.has ? w.player.position : 0
     // mpris reports position in whole seconds, so interpolate between them
@@ -178,13 +179,23 @@ WidgetBody {
         }
     }
 
+    // track changed on the player -> immediately clear cached art and refetch
+    Connections {
+        function onTrackChanged() {
+            w.fetchCover();
+        }
+
+        target: w.player
+        ignoreUnknownSignals: true
+    }
+
     onArtFileChanged: w.fetchCover()
     Component.onCompleted: w.fetchCover()
 
     Process {
         id: fetchArt
 
-        command: ["sh", "-c", "f=\"$1\"; d=\"$(dirname \"$f\")\"; mkdir -p \"$d\"; find \"$d\" -name '*.img' -mtime +14 -delete 2>/dev/null; [ -s \"$f\" ] || { t=\"$f.$$\"; curl -sfL --max-time 10 -o \"$t\" \"$2\" && mv \"$t\" \"$f\" || rm -f \"$t\"; }; [ -s \"$f\" ]", "sh", w.artFile, w.artUrl]
+        command: ["sh", "-c", "f=\"$1\"; d=\"$(dirname \"$f\")\"; mkdir -p \"$d\"; find \"$d\" -name '*.img' -mtime +14 -delete 2>/dev/null; [ -s \"$f\" ] || { t=\"$f.$$\"; curl -sfL --max-time 10 -o \"$t\" \"$2\" && mv \"$t\" \"$f\" && sync || rm -f \"$t\"; }; [ -s \"$f\" ]", "sh", w.artFile, w.artUrl]
         onExited: (code) => {
             if (code === 0)
                 w.localArt = "file://" + w.artFile;

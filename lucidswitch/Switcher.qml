@@ -604,7 +604,7 @@ PanelWindow {
 
                             // the workspace overview's card: the window sits inset, bordered
                             Rectangle {
-                                id: card
+                                id: thumbCard
 
                                 width: tile.width
                                 height: sw.thumbHeight(tile.width)
@@ -623,7 +623,7 @@ PanelWindow {
                                     anchors.fill: parent
                                     anchors.margins: Theme.dp(5)
                                     // concentric with the card, which it sits 5 inside
-                                    radius: Math.max(Theme.dp(6), card.radius - Theme.dp(5))
+                                    radius: Math.max(Theme.dp(6), thumbCard.radius - Theme.dp(5))
                                     color: Theme.withBlur(Theme.bgSunken)
                                     border.width: tile.isSelected ? 2 : 1
                                     border.color: tile.isSelected ? Theme.accent : Theme.alpha(Theme.text, 0.25)
@@ -752,7 +752,7 @@ PanelWindow {
                             }
 
                             Row {
-                                anchors.top: card.bottom
+                                anchors.top: thumbCard.bottom
                                 anchors.topMargin: Theme.dp(8)
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 spacing: Theme.dp(6)
