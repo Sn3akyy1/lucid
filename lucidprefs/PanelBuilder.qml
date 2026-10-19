@@ -310,13 +310,13 @@ Item {
             if (freed <= 0)
                 return ;
 
-            const next = Object.assign({}, Prefs.systemGridSaved, builder.place);
+            const next = Object.assign({}, Prefs.systemGridSaved);
             for (const key of Prefs.systemBlockKeys) {
-                if (key !== "sliders" && next[key].y >= was.y + was.h)
-                    next[key] = Object.assign({}, next[key], {
-                    "y": next[key].y - freed
+                const r = builder.place[key];
+                next[key] = Object.assign({}, r, {
+                    "y": key !== "sliders" && r.y >= was.y + was.h ? r.y - freed : r.y,
+                    "h": Prefs.systemGridOwnH(key)
                 });
-
             }
             Prefs.systemGrid = JSON.stringify(next);
         });
@@ -753,8 +753,15 @@ Item {
             const t = builder.target;
             builder.target = null;
             const c = card.cell;
-            if (t && (t.x !== c.x || t.y !== c.y || t.w !== c.w || t.h !== c.h))
-                Prefs.systemGridSet(card.blockKey, t, builder.needs);
+            if (!t || (t.x === c.x && t.y === c.y && t.w === c.w && t.h === c.h))
+                return ;
+
+            // a height is kept only once it is stretched; until then it follows what the block holds
+            const spot = Object.assign({}, t);
+            if (t.h === c.h)
+                delete spot.h;
+
+            Prefs.systemGridSet(card.blockKey, spot, builder.needs);
 
         }
 
