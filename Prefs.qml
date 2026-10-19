@@ -248,6 +248,16 @@ Singleton {
         return 3;
     }
 
+    // a width the block can take: standing sliders take whole columns each
+    function systemGridSnapW(key, lie, w) {
+        const least = root.systemGridMinW(key, lie);
+        if (key === "sliders" && !lie) {
+            const n = least;
+            return Math.max(n, Math.min(Math.floor(root.systemGridCols / n), Math.round(w / n)) * n);
+        }
+        return Math.max(least, Math.min(root.systemGridCols, w));
+    }
+
     function systemGridOverlap(a, b) {
         return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
     }
@@ -258,7 +268,7 @@ Singleton {
     // six tiles wide, with the sliders lying down
     function systemGridFit(key, r, need) {
         const lie = r.lie === undefined ? true : !!r.lie;
-        const w = Math.max(root.systemGridMinW(key, lie), Math.min(root.systemGridCols, Math.round(Number(r.w) || 6)));
+        const w = root.systemGridSnapW(key, lie, Math.round(Number(r.w) || 6));
         return {
             "x": Math.max(0, Math.min(root.systemGridCols - w, Math.round(Number(r.x) || 0))),
             "y": Math.max(0, Math.round(Number(r.y) || 0)),

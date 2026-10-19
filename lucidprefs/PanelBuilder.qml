@@ -370,7 +370,8 @@ Item {
         readonly property rect box: card.cell ? builder.boxOf(card.cell) : Qt.rect(0, 0, 0, 0)
         // the block's width on the panel
         readonly property real realW: card.spot ? builder.span(card.spot.w) : builder.unit
-        readonly property real pieceGap: Math.round(builder.tileGap * builder.k)
+        // the tiles and the standing sliders keep the grid's gap, a column each
+        readonly property real pieceGap: Math.round((card.blockKey === "toggles" || card.standing ? builder.gridGap : builder.tileGap) * builder.k)
         // a column is a tile
         readonly property int tileCols: card.spot ? card.spot.w : 6
         readonly property bool standing: card.blockKey === "sliders" && builder.slidersStand
@@ -517,14 +518,21 @@ Item {
         function sizeTo(p, e) {
             const c = card.cell;
             let x = c.x, y = c.y, w = c.w, h = c.h;
-            const minW = Prefs.systemGridMinW(card.blockKey, c.lie), minH = card.needRows;
+            const minH = card.needRows;
+            // in widths the block can take, and inside the grid
+            const snap = (want, room) => {
+                let v = Prefs.systemGridSnapW(card.blockKey, c.lie, want);
+                while (v > room && v > Prefs.systemGridMinW(card.blockKey, c.lie))
+                    v = Prefs.systemGridSnapW(card.blockKey, c.lie, v - 1);
+                return v;
+            };
             if (e.r)
-                w = Math.max(minW, Math.min(builder.boardCols - x, Math.round((p.x + builder.gridGap * builder.k) / builder.stepX) - x));
+                w = snap(Math.round((p.x + builder.gridGap * builder.k) / builder.stepX) - x, builder.boardCols - x);
 
             if (e.l) {
                 const right = c.x + c.w;
-                x = Math.max(0, Math.min(right - minW, Math.round(p.x / builder.stepX)));
-                w = right - x;
+                w = snap(right - Math.round(p.x / builder.stepX), right);
+                x = right - w;
             }
             if (e.b)
                 h = Math.max(minH, Math.round((p.y + builder.gridGap * builder.k) / builder.stepY) - y);
@@ -610,9 +618,16 @@ Item {
         // its cells, so the room it was given shows past what it holds
         Rectangle {
             anchors.fill: parent
-            anchors.margins: -Math.round(Theme.dp(4) * builder.k)
             radius: Theme.radiusMd
             color: Theme.alpha(Theme.text, card.busy ? 0.08 : 0.04)
+        }
+
+        // and their outline, over what it holds
+        Rectangle {
+            anchors.fill: parent
+            z: 2
+            radius: Theme.radiusMd
+            color: "transparent"
             border.width: card.busy || hover.hovered ? Theme.dp(1.5) : Theme.dp(1)
             border.color: card.busy || hover.hovered ? Theme.accent : Theme.alpha(Theme.text, 0.1)
         }
@@ -750,8 +765,9 @@ Item {
                     // its cross, while the pointer is on it
                     Rectangle {
                         visible: slotItem.removable && builder.ghost === null && (pieceArea.containsMouse || crossArea.containsMouse)
-                        x: slotItem.width - width + Theme.dp(4)
-                        y: -Theme.dp(4)
+                        // inside a standing slider, which reaches the block's top edge
+                        x: slotItem.width - width + (card.standing ? -Theme.dp(4) : Theme.dp(4))
+                        y: card.standing ? Theme.dp(4) : -Theme.dp(4)
                         width: Theme.dp(18)
                         height: Theme.dp(18)
                         radius: width / 2

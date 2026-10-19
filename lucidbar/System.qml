@@ -1388,8 +1388,10 @@ BarPill {
 
     // a column of the grid is a tile; the single column keeps six to a row
     readonly property int mainTileCols: root.gridMain && root.gridSpots.toggles ? root.gridSpots.toggles.w : root.tileCols
-    readonly property real mainTileW: Math.floor((root.blockWidth("toggles") - root.sp2 * (root.mainTileCols - 1)) / root.mainTileCols)
-    readonly property real bigTileW: Math.floor((root.blockWidth("toggles") - root.sp2) / 2)
+    // on the grid the tiles keep its gap too, so each sits on its column
+    readonly property int mainTileGap: root.gridMain ? root.gridGap : root.sp2
+    readonly property real mainTileW: Math.floor((root.blockWidth("toggles") - root.mainTileGap * (root.mainTileCols - 1)) / root.mainTileCols)
+    readonly property real bigTileW: Math.floor((root.blockWidth("toggles") - root.mainTileGap) / 2)
 
     // gauges sharing a card: as many to a row as leave each its 88, in rows as even as can be
     function gaugeCols(n, width) {
@@ -2041,7 +2043,7 @@ BarPill {
                                 id: tallRow
 
                                 anchors.fill: parent
-                                spacing: root.sp2
+                                spacing: root.gridGap
 
                                 Repeater {
                                     model: root.sliderKeys
@@ -2086,7 +2088,7 @@ BarPill {
 
                         Flow {
                             width: root.blockWidth("toggles")
-                            spacing: root.sp2
+                            spacing: root.mainTileGap
 
                             Repeater {
                                 model: Prefs.systemTileKeys
