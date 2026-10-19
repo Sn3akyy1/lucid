@@ -221,6 +221,148 @@ Singleton {
     readonly property var systemSliderKeys: root.prefList(root.systemSliders, root.systemSliderCatalog)
     readonly property var systemInfoKeys: root.prefList(root.systemInfo, root.systemInfoCatalog)
 
+    // the wide control centre is a grid, bento style: each block sits at a
+    // column and a row and spans as many of each as it is given. a column is
+    // a tile wide; a row is as tall as the tallest block sitting in it alone.
+    // systemGrid keeps { key: { x, y, w, h, lie } }, lie laying the sliders down
+    readonly property int systemGridCols: 16
+    readonly property int systemGridMaxRows: 6
+    readonly property var systemGridSaved: {
+        try {
+            const v = JSON.parse(root.systemGrid || "{}");
+            return v && typeof v === "object" && !Array.isArray(v) ? v : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    // the fewest columns a block can do with: a standing slider each, room
+    // for the lying sliders' value and the media card, three tiles a row
+    function systemGridMinW(key, lie) {
+        if (key === "sliders")
+            return lie ? 3 : Math.max(1, root.systemSliderKeys.length);
+
+        if (key === "system")
+            return root.systemInfoKeys.indexOf("media") !== -1 ? 4 : 2;
+
+        return 3;
+    }
+
+    // the columns a block takes until it is given others: about what it had
+    // when the blocks only stood side by side
+    function systemGridDefaultW(key, lie) {
+        const w = key === "toggles" ? 6 : (key === "system" ? 5 : (lie ? 4 : Math.max(2, root.systemSliderKeys.length)));
+        return Math.max(w, root.systemGridMinW(key, lie));
+    }
+
+    function systemGridOverlap(a, b) {
+        return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+    }
+
+    // a spot made whole: whole cells, no smaller than the block allows, inside the grid
+    function systemGridFit(key, r) {
+        const lie = !!r.lie;
+        const minW = root.systemGridMinW(key, lie);
+        const w = Math.max(minW, Math.min(root.systemGridCols, Math.round(Number(r.w) || root.systemGridDefaultW(key, lie))));
+        const h = Math.max(1, Math.min(root.systemGridMaxRows, Math.round(Number(r.h) || 1)));
+        const x = Math.max(0, Math.min(root.systemGridCols - w, Math.round(Number(r.x) || 0)));
+        const y = Math.max(0, Math.round(Number(r.y) || 0));
+        return {
+            "x": x,
+            "y": y,
+            "w": w,
+            "h": h,
+            "lie": lie
+        };
+    }
+
+    // the first spot a w by h block fits without landing on any in taken,
+    // reading across and then down
+    function systemGridFree(w, h, taken) {
+        for (let y = 0; ; y++) {
+            for (let x = 0; x + w <= root.systemGridCols; x++) {
+                const r = {
+                    "x": x,
+                    "y": y,
+                    "w": w,
+                    "h": h
+                };
+                if (!taken.some((t) => {
+                    return root.systemGridOverlap(r, t);
+                }))
+                    return r;
+
+            }
+        }
+    }
+
+    // where each of keys sits: where it was saved while that is still free,
+    // the rest at the first free spot, so nothing ever lands on another
+    function systemGridPlace(keys) {
+        const saved = root.systemGridSaved;
+        const out = {};
+        const taken = [];
+        for (const key of keys) {
+            if (!saved[key])
+                continue;
+
+            const r = root.systemGridFit(key, saved[key]);
+            if (taken.some((t) => {
+                return root.systemGridOverlap(r, t);
+            }))
+                continue;
+
+            out[key] = r;
+            taken.push(r);
+        }
+        for (const key of keys) {
+            if (out[key])
+                continue;
+
+            const lie = !!(saved[key] && saved[key].lie);
+            const r = root.systemGridFree(root.systemGridDefaultW(key, lie), saved[key] ? root.systemGridFit(key, saved[key]).h : 1, taken);
+            r.lie = lie;
+            out[key] = r;
+            taken.push(r);
+        }
+        return out;
+    }
+
+    // puts a block at a new spot or size. the ones it lands on move to where
+    // it was, if they fit there, or else to the first free spot
+    function systemGridSet(key, spot) {
+        const now = root.systemGridPlace(root.systemBlockKeys);
+        const old = now[key] || root.systemGridFit(key, {});
+        const next = Object.assign({}, root.systemGridSaved, now);
+        const moved = root.systemGridFit(key, Object.assign({}, old, spot));
+        next[key] = moved;
+        const taken = [moved];
+        const pushed = [];
+        for (const k of root.systemBlockKeys) {
+            if (k === key)
+                continue;
+
+            if (root.systemGridOverlap(now[k], moved))
+                pushed.push(k);
+            else
+                taken.push(now[k]);
+        }
+        for (const k of pushed) {
+            const there = root.systemGridFit(k, Object.assign({}, now[k], {
+                "x": old.x,
+                "y": old.y
+            }));
+            const r = taken.some((t) => {
+                return root.systemGridOverlap(there, t);
+            }) ? Object.assign(root.systemGridFree(now[k].w, now[k].h, taken), {
+                "lie": now[k].lie
+            }) : there;
+            next[k] = r;
+            taken.push(r);
+        }
+        root.systemGrid = JSON.stringify(next);
+    }
+
     // a comma list kept in a pref, as the keys a catalogue knows, once each
     function prefList(text, catalogue) {
         return String(text || "").split(",").map((x) => {
@@ -333,11 +475,11 @@ Singleton {
         "desc": "Battery, volume, brightness and quick settings",
         "more": "Its tiles are set with Edit tiles in the control centre itself; the keyboard layout sign and game mode are in System module, further down this page.",
         "page": "",
-        "options": ["systemTiles", "systemTilesRadios", "systemBigTiles", "systemBlocks", "systemSliders", "systemInfo", "systemHeaderButtons"],
+        "options": ["systemTiles", "systemTilesRadios", "systemBigTiles", "systemBlocks", "systemGrid", "systemSliders", "systemInfo", "systemHeaderButtons"],
         "panelStyle": "systemPanelStyle",
         "panelStyles": [
             {"key": "stacked", "name": "Stacked", "blurb": "One column, top to bottom"},
-            {"key": "wide", "name": "Wide", "blurb": "Its blocks side by side, the sliders standing up"}
+            {"key": "wide", "name": "Wide", "blurb": "Its blocks on a grid: side by side, one over another, as big as you make them"}
         ]
     },
     {
@@ -542,6 +684,7 @@ Singleton {
     property alias systemBlocks: s.systemBlocks
     property alias systemSliders: s.systemSliders
     property alias systemInfo: s.systemInfo
+    property alias systemGrid: s.systemGrid
     property alias systemHeaderButtons: s.systemHeaderButtons
     property alias barLayout: s.barLayout
     property alias barJoins: s.barJoins
@@ -1074,6 +1217,7 @@ Singleton {
         "systemBlocks": "sliders,toggles,system",
         "systemSliders": "brightness,volume",
         "systemInfo": "media,cpu,ram,disk,battery",
+        "systemGrid": "",
         "systemHeaderButtons": "edit,settings,lock,power",
         "barLayout": "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}",
         "barJoins": "[]",
@@ -1813,6 +1957,9 @@ Singleton {
             property string systemBlocks: "sliders,toggles,system"
             property string systemSliders: "brightness,volume"
             property string systemInfo: "media,cpu,ram,disk,battery"
+            // where each block sits on the wide panel's grid, as JSON; empty
+            // lays them side by side in the order above
+            property string systemGrid: ""
             property string systemHeaderButtons: "edit,settings,lock,power"
             property string barLayout: "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}"
             property string barJoins: "[]"

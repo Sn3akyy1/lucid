@@ -327,7 +327,9 @@ SettingCard {
         visible: card.moduleId === "system"
         title: "Layout"
         resetKey: "systemBlocks"
-        description: "Its blocks, laid out as the panel lays them. Drag a block by its handle to move it with all it holds; drag what is inside one into order. A tap makes a tile big (half a row, with its name and what it is doing) or small again; the cross takes a piece out and + puts it back."
+        resetVisible: Prefs.isModified("systemBlocks") || Prefs.isModified("systemGrid")
+        resetAction: "prefs:systemBlocks,systemGrid"
+        description: Prefs.systemPanelStyle === "wide" ? "Its blocks on the wide panel's grid, a column to a tile. Drag a block by its handle to any cell, beside or under the others; a block it lands on takes its old place. Drag its corner to span more or fewer columns and rows. Drag what is inside one into order; a tap makes a tile big or small again, the cross takes a piece out and + puts it back. Empty rows and columns fold away in the panel." : "Its blocks, laid out as the panel lays them. Drag a block by its handle to move it with all it holds; drag what is inside one into order. A tap makes a tile big (half a row, with its name and what it is doing) or small again; the cross takes a piece out and + puts it back."
         stacked: true
         showDivider: false
 

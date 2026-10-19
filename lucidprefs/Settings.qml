@@ -357,6 +357,8 @@ FloatingWindow {
                 Prefs.resetKeys(Prefs.monitorKeys);
             else if (action.indexOf("special-delete:") === 0)
                 Specials.remove(action.substring(15));
+            else if (action.indexOf("prefs:") === 0)
+                Prefs.resetKeys(action.substring(6).split(","));
             else if (action.indexOf("hypr:") === 0)
                 HyprConfig.resetKeys(action.substring(5).split(","));
             else if (action.indexOf("keybind-delete:") === 0) {
