@@ -329,12 +329,28 @@ SettingCard {
         resetKey: "systemBlocks"
         resetVisible: Prefs.isModified("systemBlocks") || Prefs.isModified("systemGrid")
         resetAction: "prefs:systemBlocks,systemGrid"
-        description: "Its blocks on the panel's grid, bento style: a column is a tile, a row a thin strip. Drag a block by anything but its pieces to any cell, beside or under the others; one it lands on takes its old place. Drag an edge or a corner to make it wider, narrower, taller or shorter, never less than it holds. Above the grid, + puts pieces back, the arrows stand the sliders up or lay them down, and the eye hides a block. Inside one, drag the pieces into order; a tap makes a tile big or small again and the cross takes a piece out. Empty rows and columns fold away in the panel."
+        description: "Its blocks on the panel's grid, bento style, drawn as the panel draws them: a column is a tile, a row a thin strip. Drag a block by anything but its pieces, or by its name, to any cell; one it lands on takes its old place. Drag an edge or a corner to make it wider, narrower, taller or shorter, never less than it holds. Above the grid, + puts pieces back, the arrows stand the sliders up or lay them down, and the eye hides a block. Inside one, drag the pieces into order; drag or tap a tile across to the other tile block, and the cross takes a piece out. Empty rows and columns fold away in the panel."
         stacked: true
         showDivider: false
 
         PanelBuilder {
             width: parent.width
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "system"
+        title: "Cards behind every block"
+        resetKey: "systemBlockCards"
+        description: "Media and the gauges always sit on a card; on, the tiles and the sliders get one too, for an even bento look."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.systemBlockCards
+            onToggled: (v) => {
+                return Prefs.systemBlockCards = v;
+            }
         }
 
     }
