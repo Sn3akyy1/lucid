@@ -329,7 +329,7 @@ SettingCard {
         resetKey: "systemBlocks"
         resetVisible: Prefs.isModified("systemBlocks") || Prefs.isModified("systemGrid")
         resetAction: "prefs:systemBlocks,systemGrid"
-        description: "Its blocks on the panel's grid, bento style, drawn as the panel draws them: a column is a tile, a row a thin strip. Drag a block by anything but its pieces, or by its name, to any cell; one it lands on takes its old place. Drag an edge or a corner to make it wider, narrower, taller or shorter, never less than it holds. Above the grid, + puts pieces back, the arrows stand the sliders up or lay them down, and the eye hides a block. Inside one, drag the pieces into order; drag or tap a tile across to the other tile block, and the cross takes a piece out. Empty rows and columns fold away in the panel."
+        description: "The control centre as a bento grid, drawn as the panel draws it. Add blocks, tiles, sliders and gauges from the shelf; on the grid, drag a block by anything but its pieces to move it and by an edge or corner to resize it, and drag the pieces inside into order. Hover a block for its name, with buttons to hide it and, on the sliders, to stand them up or lay them down. Empty rows and columns fold away in the panel."
         stacked: true
         showDivider: false
 
