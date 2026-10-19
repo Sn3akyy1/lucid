@@ -120,6 +120,8 @@ Singleton {
     // every tile the system panel's grid can carry. the panel shows the ones
     // named in systemTiles, in that order, and its editor offers the rest
     readonly property var systemTileCatalog: [
+        { "key": "wifi", "icon": "wifi", "name": "Wi-Fi" },
+        { "key": "bluetooth", "icon": "bluetooth", "name": "Bluetooth" },
         { "key": "dnd", "icon": "do_not_disturb_on", "name": "Silence" },
         { "key": "awake", "icon": "coffee", "name": "Awake" },
         { "key": "dark", "icon": "dark_mode", "name": "Dark" },
@@ -164,10 +166,12 @@ Singleton {
         return null;
     }
 
-    // same rules as the bar zones: no repeats, nothing the catalogue lacks
-    readonly property var systemTileKeys: String(root.systemTiles).split(",").map((x) => {
+    // same rules as the bar zones: no repeats, nothing the catalogue lacks.
+    // Wi-Fi and Bluetooth sat above the grid before they were tiles of it, so
+    // until the tiles are edited they lead it and a list saved before keeps them
+    readonly property var systemTileKeys: (root.systemTilesRadios ? [] : ["wifi", "bluetooth"]).concat(String(root.systemTiles).split(",").map((x) => {
         return x.trim();
-    }).filter((x, i, all) => {
+    })).filter((x, i, all) => {
         return x !== "" && all.indexOf(x) === i && root.systemTileAt(x) !== null;
     })
     readonly property var systemTileSpare: root.systemTileCatalog.filter((t) => {
@@ -178,6 +182,54 @@ Singleton {
 
     function setSystemTiles(keys) {
         root.systemTiles = keys.join(",");
+        root.systemTilesRadios = true;
+    }
+
+    // a big tile takes half a row, with its name and what it is doing
+    readonly property var systemBigKeys: root.prefList(root.systemBigTiles, root.systemTileCatalog)
+
+    function setTileBig(key, big) {
+        const l = root.systemBigKeys.filter((k) => {
+            return k !== key;
+        });
+        if (big)
+            l.push(key);
+
+        root.systemBigTiles = l.join(",");
+    }
+
+    // the control centre's blocks, and what the sliders and system blocks hold;
+    // the toggles block holds the tiles above
+    readonly property var systemBlockCatalog: [
+        { "key": "sliders", "icon": "tune", "name": "Sliders" },
+        { "key": "toggles", "icon": "grid_view", "name": "Toggles" },
+        { "key": "system", "icon": "developer_board", "name": "System" }
+    ]
+    readonly property var systemSliderCatalog: [
+        { "key": "brightness", "icon": "brightness_medium", "name": "Brightness" },
+        { "key": "volume", "icon": "volume_up", "name": "Volume" },
+        { "key": "mic", "icon": "mic", "name": "Microphone" }
+    ]
+    readonly property var systemInfoCatalog: [
+        { "key": "media", "icon": "music_note", "name": "Media" },
+        { "key": "cpu", "icon": "memory", "name": "CPU" },
+        { "key": "ram", "icon": "memory_alt", "name": "Memory" },
+        { "key": "disk", "icon": "hard_drive", "name": "Disk" },
+        { "key": "battery", "icon": "battery_full", "name": "Battery" }
+    ]
+    readonly property var systemBlockKeys: root.prefList(root.systemBlocks, root.systemBlockCatalog)
+    readonly property var systemSliderKeys: root.prefList(root.systemSliders, root.systemSliderCatalog)
+    readonly property var systemInfoKeys: root.prefList(root.systemInfo, root.systemInfoCatalog)
+
+    // a comma list kept in a pref, as the keys a catalogue knows, once each
+    function prefList(text, catalogue) {
+        return String(text || "").split(",").map((x) => {
+            return x.trim();
+        }).filter((x, i, all) => {
+            return x !== "" && all.indexOf(x) === i && catalogue.some((c) => {
+                return c.key === x;
+            });
+        });
     }
 
     // every bar module, in one place: the id barLayout arranges it by, the
@@ -281,11 +333,11 @@ Singleton {
         "desc": "Battery, volume, brightness and quick settings",
         "more": "Its tiles are set with Edit tiles in the control centre itself; the keyboard layout sign and game mode are in System module, further down this page.",
         "page": "",
-        "options": ["systemSections", "systemQuickTiles", "systemGauges", "systemHeaderButtons"],
+        "options": ["systemTiles", "systemTilesRadios", "systemBigTiles", "systemBlocks", "systemSliders", "systemInfo", "systemHeaderButtons"],
         "panelStyle": "systemPanelStyle",
         "panelStyles": [
             {"key": "stacked", "name": "Stacked", "blurb": "One column, top to bottom"},
-            {"key": "wide", "name": "Wide", "blurb": "Three columns: connections and tiles, sliders and media, the machine"}
+            {"key": "wide", "name": "Wide", "blurb": "Its blocks side by side, the sliders standing up"}
         ]
     },
     {
@@ -485,9 +537,11 @@ Singleton {
     property alias barZoneGap: s.barZoneGap
     property alias systemTiles: s.systemTiles
     property alias systemPanelStyle: s.systemPanelStyle
-    property alias systemSections: s.systemSections
-    property alias systemQuickTiles: s.systemQuickTiles
-    property alias systemGauges: s.systemGauges
+    property alias systemTilesRadios: s.systemTilesRadios
+    property alias systemBigTiles: s.systemBigTiles
+    property alias systemBlocks: s.systemBlocks
+    property alias systemSliders: s.systemSliders
+    property alias systemInfo: s.systemInfo
     property alias systemHeaderButtons: s.systemHeaderButtons
     property alias barLayout: s.barLayout
     property alias barJoins: s.barJoins
@@ -1015,9 +1069,11 @@ Singleton {
         "barZoneGap": 26,
         "systemTiles": "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session",
         "systemPanelStyle": "stacked",
-        "systemSections": "brightness,volume,quick,tiles,media,stats",
-        "systemQuickTiles": "wifi,bluetooth",
-        "systemGauges": "cpu,ram,disk,battery",
+        "systemTilesRadios": false,
+        "systemBigTiles": "wifi,bluetooth",
+        "systemBlocks": "sliders,toggles,system",
+        "systemSliders": "brightness,volume",
+        "systemInfo": "media,cpu,ram,disk,battery",
         "systemHeaderButtons": "edit,settings,lock,power",
         "barLayout": "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}",
         "barJoins": "[]",
@@ -1749,11 +1805,14 @@ Singleton {
             property bool autoColorMode: false
             property int barZoneGap: 26
             property string systemTiles: "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session"
-            // the control centre: one column or three, and what it holds, in order
+            // the control centre: its blocks one under another or side by side,
+            // and what each holds, in order
             property string systemPanelStyle: "stacked"
-            property string systemSections: "brightness,volume,quick,tiles,media,stats"
-            property string systemQuickTiles: "wifi,bluetooth"
-            property string systemGauges: "cpu,ram,disk,battery"
+            property bool systemTilesRadios: false
+            property string systemBigTiles: "wifi,bluetooth"
+            property string systemBlocks: "sliders,toggles,system"
+            property string systemSliders: "brightness,volume"
+            property string systemInfo: "media,cpu,ram,disk,battery"
             property string systemHeaderButtons: "edit,settings,lock,power"
             property string barLayout: "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}"
             property string barJoins: "[]"
