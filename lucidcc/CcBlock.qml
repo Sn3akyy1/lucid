@@ -231,6 +231,7 @@ Item {
                     muted: block.host.sliderMuted(modelData)
                     iconClickable: modelData !== "brightness"
                     footIcon: modelData === "volume" ? "speaker" : ""
+                    easeValue: block.ease
                     onMoved: (v) => {
                         return block.host.sliderMove(modelData, v);
                     }

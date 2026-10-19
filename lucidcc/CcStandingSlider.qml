@@ -2,9 +2,9 @@ import QtQuick
 import qs
 import qs.lucidui
 
-// a slider standing up, on the grid: the level fills a tall pill
-// from the bottom, its icon at the foot (a tap mutes, where it can), the
-// value over it, and a button under it where there is a list to pick from
+// a slider standing up: the one that lies down, turned so it fills from the
+// bottom, its icon at the foot still upright (a tap mutes, where it can), and
+// a button under it where there is a list to pick from
 Item {
     id: vs
 
@@ -13,9 +13,7 @@ Item {
     property bool muted: false
     property bool iconClickable: false
     property string footIcon: ""
-    property real dragValue: -1
-    readonly property real shownValue: vs.dragValue >= 0 ? vs.dragValue : vs.value
-    readonly property real level: Math.max(0, Math.min(1, vs.shownValue / 100))
+    property bool easeValue: false
 
     signal moved(real v)
     signal iconClicked()
@@ -23,106 +21,75 @@ Item {
 
     width: Theme.dp(56)
 
-    LText {
-        id: vsValue
+    Item {
+        id: room
 
         anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        role: "labelMedium"
-        weight: 600
-        color: vs.muted ? Theme.subtextDim : Theme.subtext
-        text: Math.round(vs.shownValue) + "%"
-    }
-
-    Rectangle {
-        id: vsTrack
-
-        anchors.top: vsValue.bottom
-        anchors.topMargin: Theme.dp(4)
-        anchors.bottom: vsFoot.visible ? vsFoot.top : parent.bottom
-        anchors.bottomMargin: vsFoot.visible ? Theme.dp(8) : 0
+        anchors.bottom: foot.visible ? foot.top : parent.bottom
+        anchors.bottomMargin: foot.visible ? Theme.dp(8) : 0
         width: parent.width
-        radius: Theme.rad(18)
-        color: Theme.withBlur(Theme.surfaceHighest)
 
+        Slider {
+            id: slider
+
+            anchors.centerIn: parent
+            width: room.height
+            rotation: -90
+            size: "m"
+            icon: vs.icon
+            iconTurn: 90
+            iconClickable: vs.iconClickable
+            showValue: false
+            from: 0
+            to: 100
+            value: vs.value
+            activeColor: vs.muted ? Theme.outlineStrong : Theme.primary
+            inactiveColor: Theme.withBlur(Theme.surfaceHighest)
+            easeValue: vs.easeValue
+            onMoved: (v) => {
+                return vs.moved(v);
+            }
+            onIconClicked: vs.iconClicked()
+        }
+
+        // the value over the handle while it is dragged, as the lying one shows it
         Rectangle {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            // never shorter than its own round end, so the icon always sits on it
-            height: Math.max(width, parent.height * vs.level)
-            radius: parent.radius
-            color: vs.muted ? Theme.outlineStrong : Theme.primary
+            visible: opacity > 0.01
+            opacity: slider.dragging ? 1 : 0
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: room.height - slider.handleX - slider.handleHNow / 2 - height - Theme.dp(8)
+            width: Math.max(Theme.dp(36), bubbleText.implicitWidth + Theme.dp(20))
+            height: Theme.dp(30)
+            radius: Theme.dp(15)
+            color: Theme.inverseSurface
 
-            Behavior on height {
-                enabled: vs.dragValue < 0
+            LText {
+                id: bubbleText
 
+                anchors.centerIn: parent
+                role: "labelLarge"
+                color: Theme.fgInverseSurface
+                text: Math.round(slider.live) + "%"
+            }
+
+            Behavior on opacity {
                 NumberAnimation {
-                    duration: Theme.barMs(160)
-                    easing.type: Easing.OutCubic
+                    duration: Theme.durFastEffects
                 }
 
             }
 
         }
 
-        MouseArea {
-            function valueAt(my) {
-                return Math.round(Math.max(0, Math.min(100, (1 - my / vsTrack.height) * 100)));
-            }
-
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            preventStealing: true
-            onPressed: (mouse) => {
-                vs.dragValue = valueAt(mouse.y);
-                vs.moved(vs.dragValue);
-            }
-            onPositionChanged: (mouse) => {
-                if (!pressed)
-                    return ;
-
-                vs.dragValue = valueAt(mouse.y);
-                vs.moved(vs.dragValue);
-            }
-            onReleased: vs.dragValue = -1
-            onCanceled: vs.dragValue = -1
-            onWheel: (wheel) => {
-                vs.moved(Math.max(0, Math.min(100, vs.value + (wheel.angleDelta.y > 0 ? 5 : -5))));
-            }
-        }
-
-        Item {
-            anchors.bottom: parent.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width
-            height: parent.width
-
-            Icon {
-                anchors.centerIn: parent
-                name: vs.icon
-                size: Theme.dp(22)
-                fill: 1
-                color: vs.muted ? Theme.text : Theme.fgPrimary
-            }
-
-            StateLayer {
-                visible: vs.iconClickable
-                radius: vsTrack.radius
-                tint: Theme.fgPrimary
-                onClicked: vs.iconClicked()
-            }
-
-        }
-
     }
 
     Rectangle {
-        id: vsFoot
+        id: foot
 
         visible: vs.footIcon !== ""
         anchors.bottom: parent.bottom
-        width: parent.width
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: Theme.dp(50)
         height: Theme.dp(38)
         radius: Theme.rad(12)
         color: Theme.withBlur(Theme.surfaceHighest)

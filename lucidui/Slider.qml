@@ -33,6 +33,8 @@ Item {
     property bool held: false
 
     property bool iconClickable: false
+    // turns the icon by this much, so it still reads upright on a slider turned on its side
+    property real iconTurn: 0
 
     signal moved(real value)
     signal released(real value)
@@ -208,6 +210,7 @@ Item {
         name: sl.icon
         size: sl.iconSize
         fill: 1
+        rotation: sl.iconTurn
         anchors.verticalCenter: parent.verticalCenter
         x: (inset.fitsActive ? 0 : inactive.x) + Math.round((sl.trackH - size) / 2) + inset.nudge
         color: inset.fitsActive ? Theme.fgPrimary : Theme.fgSecondaryContainer

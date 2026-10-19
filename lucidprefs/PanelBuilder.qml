@@ -294,6 +294,34 @@ Item {
         }) || null;
     }
 
+    // the sliders stood up or laid down, taking the rows they need turned and
+    // not the ones they had. when that is fewer, what sat under them comes up
+    function turnSliders() {
+        const was = builder.place.sliders;
+        Prefs.systemGridSet("sliders", {
+            "lie": builder.slidersStand,
+            "h": 0
+        }, Object.assign({}, builder.needs, {
+            "sliders": 1
+        }));
+        Qt.callLater(() => {
+            const now = builder.place.sliders;
+            const freed = was.y + was.h - (now.y + now.h);
+            if (freed <= 0)
+                return ;
+
+            const next = Object.assign({}, Prefs.systemGridSaved, builder.place);
+            for (const key of Prefs.systemBlockKeys) {
+                if (key !== "sliders" && next[key].y >= was.y + was.h)
+                    next[key] = Object.assign({}, next[key], {
+                    "y": next[key].y - freed
+                });
+
+            }
+            Prefs.systemGrid = JSON.stringify(next);
+        });
+    }
+
     function setBlockShown(key, on) {
         const l = Prefs.systemBlockKeys.filter((k) => {
             return k !== key;
@@ -985,9 +1013,7 @@ Item {
                 TagButton {
                     visible: card.blockKey === "sliders"
                     icon: builder.slidersStand ? "width" : "height"
-                    onClicked: Prefs.systemGridSet("sliders", {
-                        "lie": builder.slidersStand
-                    }, builder.needs)
+                    onClicked: builder.turnSliders()
                 }
 
                 // off the panel, keeping what it holds; it waits on the shelf
