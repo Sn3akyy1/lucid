@@ -1291,50 +1291,125 @@ BarPill {
     readonly property var shownBlocks: root.blockKeys.filter((k) => {
         return root.blockShown(k);
     })
-    // the single column's width, which the tiles keep in the wide panel
-    readonly property int stackedWidth: Math.min(Theme.dp(400), root.screenW - Theme.dp(34)) - root.panelPad * 2
-    readonly property int vSliderWidth: Theme.dp(56)
+    // the wide panel is the grid kept in Prefs.systemGrid: a column is a tile
+    // wide, and a row as tall as the tallest block sitting in it alone. the
+    // columns and rows nothing shown sits in fold away
+    readonly property int gridUnit: Theme.dp(52)
+    readonly property int gridGap: root.sp3
+    readonly property var gridPlace: Prefs.systemGridPlace(root.blockKeys)
+    readonly property bool slidersStand: !(root.gridPlace.sliders && root.gridPlace.sliders.lie)
 
-    function wideBlockWidth(key) {
-        if (key === "toggles")
-            return root.stackedWidth;
-
-        if (key === "sliders")
-            return root.sliderKeys.length * root.vSliderWidth + Math.max(0, root.sliderKeys.length - 1) * root.sp2;
-
-        return Theme.dp(296);
+    function gridSpan(n) {
+        return n * root.gridUnit + Math.max(0, n - 1) * root.gridGap;
     }
 
-    readonly property int wideWidth: root.shownBlocks.reduce((w, k) => {
-        return w + root.wideBlockWidth(k);
-    }, 0) + Math.max(0, root.shownBlocks.length - 1) * root.sp4 + root.panelPad * 2
+    // the columns and rows the shown blocks sit in, each mapped to where it ends up
+    readonly property var gridAxes: {
+        const cols = [], rows = [];
+        for (const k of root.shownBlocks) {
+            const r = root.gridPlace[k];
+            for (let i = 0; i < r.w; i++)
+                if (cols.indexOf(r.x + i) === -1)
+                    cols.push(r.x + i);
+            for (let i = 0; i < r.h; i++)
+                if (rows.indexOf(r.y + i) === -1)
+                    rows.push(r.y + i);
+        }
+        const by = (a, b) => {
+            return a - b;
+        };
+        return {
+            "cols": cols.sort(by),
+            "rows": rows.sort(by)
+        };
+    }
+    // what a block needs, down: the standing sliders stretch to whatever the row gives them
+    function blockNeed(key) {
+        const b = root.blockLoader(key);
+        return b.item ? b.item.implicitHeight : 0;
+    }
+
+    // each row's height: the most any block sitting in it alone needs, then a
+    // block spanning rows that still needs more stretches the last of them
+    readonly property var gridRowH: {
+        const rows = root.gridAxes.rows;
+        const h = rows.map(() => {
+            return 0;
+        });
+        const keys = root.shownBlocks.slice().sort((a, b) => {
+            return root.gridPlace[a].h - root.gridPlace[b].h;
+        });
+        for (const k of keys) {
+            const r = root.gridPlace[k];
+            const first = rows.indexOf(r.y);
+            let have = (r.h - 1) * root.gridGap;
+            for (let i = 0; i < r.h; i++)
+                have += h[first + i];
+            const need = root.blockNeed(k);
+            if (need > have)
+                h[first + r.h - 1] += need - have;
+
+        }
+        return h;
+    }
+
+    // a shown block's box on the grid, in pixels
+    function gridBox(key) {
+        const r = root.gridPlace[key];
+        const ci = r ? root.gridAxes.cols.indexOf(r.x) : -1;
+        const ri = r ? root.gridAxes.rows.indexOf(r.y) : -1;
+        if (ci < 0 || ri < 0)
+            return Qt.rect(0, 0, root.gridUnit, 0);
+
+        let y = 0;
+        for (let i = 0; i < ri; i++)
+            y += root.gridRowH[i] + root.gridGap;
+        let h = (r.h - 1) * root.gridGap;
+        for (let i = 0; i < r.h; i++)
+            h += root.gridRowH[ri + i] || 0;
+        return Qt.rect(ci * (root.gridUnit + root.gridGap), y, root.gridSpan(r.w), h);
+    }
+
+    readonly property int gridWidth: root.gridSpan(root.gridAxes.cols.length)
+    readonly property real gridHeight: root.gridRowH.reduce((t, h) => {
+        return t + h;
+    }, 0) + Math.max(0, root.gridRowH.length - 1) * root.gridGap
+    readonly property int wideWidth: root.gridWidth + root.panelPad * 2
     // only the main view: the others are lists, and keep the usual width
     readonly property bool wideMain: Prefs.systemPanelStyle === "wide" && root.view === "main" && root.shownBlocks.length > 1 && root.screenW >= root.wideWidth + Theme.dp(34)
 
+    // across, a block's columns are all it takes; down, the rows decide
     function blockWidth(key) {
-        return root.wideMain ? root.wideBlockWidth(key) : root.contentWidth;
+        return root.wideMain && root.gridPlace[key] ? root.gridSpan(root.gridPlace[key].w) : root.contentWidth;
     }
 
     function blockLoader(key) {
         return key === "sliders" ? slidersBlock : (key === "toggles" ? togglesBlock : systemBlock);
     }
 
-    // where a block starts: past the shown ones before it, across or down
+    // where a block starts down the single column: past the shown ones before it
     function blockStart(key) {
         let at = 0;
         for (const k of root.shownBlocks) {
             if (k === key)
                 break;
 
-            at += root.wideMain ? root.blockWidth(k) + root.sp4 : root.blockLoader(k).height + root.sp3;
+            at += root.blockLoader(k).height + root.sp3;
         }
         return at;
     }
 
-    // the standing sliders reach as far down as the tallest of the rest
-    readonly property real wideTall: Math.max(Theme.dp(240), root.blockShown("toggles") ? togglesBlock.height : 0, root.blockShown("system") ? systemBlock.height : 0)
-    readonly property real mainTileW: Math.floor((root.blockWidth("toggles") - root.sp2 * (root.tileCols - 1)) / root.tileCols)
+    // a column of the grid is a tile; the single column keeps six to a row
+    readonly property int mainTileCols: root.wideMain && root.gridPlace.toggles ? root.gridPlace.toggles.w : root.tileCols
+    readonly property real mainTileW: Math.floor((root.blockWidth("toggles") - root.sp2 * (root.mainTileCols - 1)) / root.mainTileCols)
     readonly property real bigTileW: Math.floor((root.blockWidth("toggles") - root.sp2) / 2)
+
+    // gauges sharing a card: as many to a row as leave each its 88, in rows as even as can be
+    function gaugeCols(n, width) {
+        const most = Math.max(1, Math.min(n, Math.floor(width / Theme.dp(88))));
+        return Math.max(1, Math.ceil(n / Math.ceil(n / most)));
+    }
+
     readonly property int micPercent: (root.source && root.source.audio) ? Math.round(root.source.audio.volume * 100) : 0
 
     function setMicVolume(v) {
@@ -1794,33 +1869,36 @@ BarPill {
                     Item {
                         id: mainColumn
 
-                        width: root.wideMain ? root.wideWidth - root.panelPad * 2 : root.contentWidth
+                        width: root.wideMain ? root.gridWidth : root.contentWidth
                         implicitHeight: {
+                            if (root.wideMain)
+                                return root.gridHeight;
+
                             let h = 0;
-                            for (const k of root.shownBlocks) {
-                                const b = root.blockLoader(k);
-                                h = root.wideMain ? Math.max(h, b.height) : h + b.height;
-                            }
-                            return root.wideMain ? h : h + Math.max(0, root.shownBlocks.length - 1) * root.sp3;
+                            for (const k of root.shownBlocks)
+                                h += root.blockLoader(k).height;
+                            return h + Math.max(0, root.shownBlocks.length - 1) * root.sp3;
                         }
 
                         Loader {
                             id: slidersBlock
 
                             visible: root.blockShown("sliders")
-                            x: root.wideMain ? root.blockStart("sliders") : 0
-                            y: root.wideMain ? 0 : root.blockStart("sliders")
+                            x: root.wideMain ? root.gridBox("sliders").x : 0
+                            y: root.wideMain ? root.gridBox("sliders").y : root.blockStart("sliders")
                             width: root.blockWidth("sliders")
-                            sourceComponent: root.wideMain ? tallSliders : flatSliders
+                            height: root.wideMain ? root.gridBox("sliders").height : (item ? item.implicitHeight : 0)
+                            sourceComponent: root.wideMain && root.slidersStand ? tallSliders : flatSliders
                         }
 
                         Loader {
                             id: togglesBlock
 
                             visible: root.blockShown("toggles")
-                            x: root.wideMain ? root.blockStart("toggles") : 0
-                            y: root.wideMain ? 0 : root.blockStart("toggles")
+                            x: root.wideMain ? root.gridBox("toggles").x : 0
+                            y: root.wideMain ? root.gridBox("toggles").y : root.blockStart("toggles")
                             width: root.blockWidth("toggles")
+                            height: root.wideMain ? root.gridBox("toggles").height : (item ? item.implicitHeight : 0)
                             sourceComponent: togglesSection
                         }
 
@@ -1828,9 +1906,10 @@ BarPill {
                             id: systemBlock
 
                             visible: root.blockShown("system")
-                            x: root.wideMain ? root.blockStart("system") : 0
-                            y: root.wideMain ? 0 : root.blockStart("system")
+                            x: root.wideMain ? root.gridBox("system").x : 0
+                            y: root.wideMain ? root.gridBox("system").y : root.blockStart("system")
                             width: root.blockWidth("system")
+                            height: root.wideMain ? root.gridBox("system").height : (item ? item.implicitHeight : 0)
                             sourceComponent: systemSection
                         }
 
@@ -1968,36 +2047,45 @@ BarPill {
                     Component {
                         id: tallSliders
 
-                        Row {
-                            height: root.wideTall
-                            spacing: root.sp2
+                        // the least they stand; the row they sit in may give them more
+                        Item {
+                            implicitHeight: Theme.dp(160)
 
-                            Repeater {
-                                model: root.sliderKeys
+                            Row {
+                                id: tallRow
 
-                                VSlider {
-                                    required property string modelData
+                                anchors.fill: parent
+                                spacing: root.sp2
 
-                                    height: parent.height
-                                    icon: modelData === "brightness" ? root.brightnessIcon : (modelData === "volume" ? root.volumeIcon(root.volumePercent, root.volMuted) : (root.micMuted ? "mic_off" : "mic"))
-                                    value: modelData === "brightness" ? root.brightnessPercent : (modelData === "volume" ? root.volumePercent : root.micPercent)
-                                    muted: (modelData === "volume" && root.volMuted) || (modelData === "mic" && root.micMuted)
-                                    iconClickable: modelData !== "brightness"
-                                    footIcon: modelData === "volume" ? "speaker" : ""
-                                    onMoved: (v) => {
-                                        if (modelData === "brightness") {
-                                            root.setBrightness(v);
-                                        } else if (modelData === "volume") {
-                                            if (root.sink && root.sink.audio && root.sink.audio.muted)
-                                                root.sink.audio.muted = false;
+                                Repeater {
+                                    model: root.sliderKeys
 
-                                            root.setVolume(v);
-                                        } else {
-                                            root.setMicVolume(v);
+                                    VSlider {
+                                        required property string modelData
+
+                                        width: Math.floor((tallRow.width - tallRow.spacing * (root.sliderKeys.length - 1)) / Math.max(1, root.sliderKeys.length))
+                                        height: tallRow.height
+                                        icon: modelData === "brightness" ? root.brightnessIcon : (modelData === "volume" ? root.volumeIcon(root.volumePercent, root.volMuted) : (root.micMuted ? "mic_off" : "mic"))
+                                        value: modelData === "brightness" ? root.brightnessPercent : (modelData === "volume" ? root.volumePercent : root.micPercent)
+                                        muted: (modelData === "volume" && root.volMuted) || (modelData === "mic" && root.micMuted)
+                                        iconClickable: modelData !== "brightness"
+                                        footIcon: modelData === "volume" ? "speaker" : ""
+                                        onMoved: (v) => {
+                                            if (modelData === "brightness") {
+                                                root.setBrightness(v);
+                                            } else if (modelData === "volume") {
+                                                if (root.sink && root.sink.audio && root.sink.audio.muted)
+                                                    root.sink.audio.muted = false;
+
+                                                root.setVolume(v);
+                                            } else {
+                                                root.setMicVolume(v);
+                                            }
                                         }
+                                        onIconClicked: modelData === "volume" ? root.toggleVolMute() : root.toggleMicMute()
+                                        onFootClicked: root.showView("output")
                                     }
-                                    onIconClicked: modelData === "volume" ? root.toggleVolMute() : root.toggleMicMute()
-                                    onFootClicked: root.showView("output")
+
                                 }
 
                             }
@@ -2318,7 +2406,7 @@ BarPill {
 
                                 anchors.centerIn: parent
                                 width: parent.width - Theme.dp(16)
-                                columns: root.wideMain ? Math.min(2, statsCard.keys.length) : Math.max(1, statsCard.keys.length)
+                                columns: root.gaugeCols(statsCard.keys.length, width)
                                 rowSpacing: Theme.dp(12)
 
                                 Repeater {
@@ -3323,7 +3411,7 @@ BarPill {
         signal iconClicked()
         signal footClicked()
 
-        width: root.vSliderWidth
+        width: Theme.dp(56)
 
         LText {
             id: vsValue

@@ -55,6 +55,7 @@
     "systemBlocks": "sliders,toggles,system",
     "systemSliders": "brightness,volume",
     "systemInfo": "media,cpu,ram,disk,battery",
+    "systemGrid": "",
     "systemHeaderButtons": "edit,settings,lock,power",
     "showPrivacy": false,
     "privacyWatch": "mic,camera,screen",
