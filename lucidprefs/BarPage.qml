@@ -29,7 +29,8 @@ Column {
         if (!flick)
             return ;
 
-        const y = moduleCard.mapToItem(flick.contentItem, 0, 0).y;
+        const part = moduleCard.partItem(Prefs.barModulePart);
+        const y = (part || moduleCard).mapToItem(flick.contentItem, 0, 0).y;
         flick.contentY = Math.max(0, Math.min(Math.max(0, flick.contentHeight - flick.height), y - 90));
     }
 
@@ -47,6 +48,7 @@ Column {
         onTriggered: {
             page.revealModule();
             Prefs.barModuleFocus = "";
+            Prefs.barModulePart = "";
         }
     }
 
@@ -481,7 +483,7 @@ Column {
         SettingRow {
             title: "Game mode: turn on"
             resetKey: "gameModeOnCmd"
-            description: "Left empty, with the command below, game mode is Lucid's own: animations, blur, shadows, rounded corners and gaps go off, and come back as they were. Or give a shell command of your own for the Game mode tile (under Edit tiles in the control centre); it runs through bash, so pipes and && work."
+            description: "Left empty, with the command below, game mode is Lucid's own: animations, blur, shadows, rounded corners and gaps go off, and come back as they were. Or give a shell command of your own for the Game mode tile (add it from the shelf in the System module's layout); it runs through bash, so pipes and && work."
             stacked: true
 
             M3TextField {

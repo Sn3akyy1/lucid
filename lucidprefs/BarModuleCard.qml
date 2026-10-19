@@ -59,6 +59,14 @@ SettingCard {
         return card.powerOn.indexOf(id) === -1;
     }))
 
+    // a part of the card a link can land on, or null for its top
+    function partItem(name) {
+        return ({
+            "layout": layoutRow,
+            "owntiles": ownTilesRow
+        })[name] || null;
+    }
+
     function setPower(list) {
         Prefs.powerModuleActions = list.join(",");
     }
@@ -324,6 +332,8 @@ SettingCard {
     // notifications
     // system
     SettingRow {
+        id: layoutRow
+
         visible: card.moduleId === "system"
         title: "Layout"
         resetKey: "systemBlocks"
@@ -356,6 +366,42 @@ SettingCard {
     }
 
     SettingRow {
+        id: ownTilesRow
+
+        visible: card.moduleId === "system"
+        title: "Your own tiles"
+        resetKey: "systemOwnTiles"
+        description: "Tiles that run commands of yours, for what Lucid has no tile for: a VPN, a server, a script. With only the first command a tap runs it; give one to turn it off too and it is a switch, kept right by the check when something else changes it. They run through bash, so pipes and && work. A new one goes onto the panel with the small tiles, and the shelf above holds it when it is off."
+        stacked: true
+        showDivider: false
+
+        Column {
+            width: parent.width
+            spacing: Theme.dp(8)
+
+            Repeater {
+                model: Prefs.systemOwnTileList
+
+                OwnTileEditor {
+                    required property var modelData
+
+                    tile: modelData
+                }
+
+            }
+
+            M3Button {
+                text: "Add a tile"
+                iconPath: "add"
+                variant: "tonal"
+                onClicked: Prefs.addSystemOwnTile()
+            }
+
+        }
+
+    }
+
+    SettingRow {
         visible: card.moduleId === "system"
         title: "Header buttons"
         resetKey: "systemHeaderButtons"
@@ -368,8 +414,8 @@ SettingCard {
             value: Prefs.systemHeaderButtons
             catalogue: [{
                 "id": "edit",
-                "label": "Edit tiles",
-                "note": "the only way to the tile editor"
+                "label": "Edit",
+                "note": "opens the layout here, in Settings"
             }, {
                 "id": "settings",
                 "label": "Settings"

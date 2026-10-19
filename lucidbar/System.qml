@@ -67,10 +67,6 @@ BarPill {
         if (root.view === v)
             return ;
 
-        // filled before the view flips, so its height is right from the first frame
-        if (v === "tiles")
-            root.syncTiles();
-
         root.viewSwitching = true;
         viewSwitchTimer.restart();
 
@@ -105,9 +101,6 @@ BarPill {
 
         if (root.view === "power")
             return powerList.implicitHeight + root.viewChrome;
-
-        if (root.view === "tiles")
-            return tileEditor.implicitHeight + root.viewChrome;
 
         if (root.view === "profile")
             return powerPanel.implicitHeight + root.viewChrome;
@@ -571,6 +564,7 @@ BarPill {
     Component.onCompleted: {
         findDeviceProc.running = true;
         root.refreshGameMode();
+        root.refreshOwnTiles();
     }
     onBacklightDeviceChanged: {
         if (backlightDevice !== "")
@@ -589,6 +583,7 @@ BarPill {
         if (expanded) {
             root.tipClose();
             root.refreshGameMode();
+            root.refreshOwnTiles();
             statsTimer.restart();
             lsblkProc.running = true;
         } else {
@@ -967,6 +962,95 @@ BarPill {
         }
     }
 
+    // the user's own tiles, from the module's card: a switch runs its on or
+    // off command through bash and, like game mode, asks its status command
+    // (exit 0 = on) whenever the panel opens; a button only runs its command
+    property var ownOn: ({})
+    property var ownBusy: ({})
+    property var ownFailed: ({})
+
+    function ownSet(map, key, v) {
+        const out = Object.assign({}, root[map]);
+        out[key] = v;
+        root[map] = out;
+    }
+
+    function ownRun(key, script, check) {
+        const p = ownRunC.createObject(root, {
+            "key": key,
+            "check": check,
+            "command": ["bash", "-c", script]
+        });
+        p.running = true;
+    }
+
+    function ownAct(key) {
+        const t = Prefs.systemOwnTile(key);
+        if (!t || t.on.trim() === "") {
+            // nothing to run yet: its fields are on the module's card
+            root.expanded = false;
+            Prefs.openBarModule("system", "owntiles");
+            return ;
+        }
+        if (t.off.trim() === "") {
+            root.expanded = false;
+            Quickshell.execDetached(["bash", "-c", "sleep 0.3; " + t.on]);
+            return ;
+        }
+        if (root.ownBusy[key])
+            return ;
+
+        const on = !root.ownOn[key];
+        root.ownSet("ownFailed", key, false);
+        root.ownSet("ownBusy", key, true);
+        root.ownSet("ownOn", key, on);
+        root.ownRun(key, on ? t.on : t.off, false);
+    }
+
+    function ownDone(key, check, code) {
+        if (check) {
+            root.ownSet("ownOn", key, code === 0);
+            return ;
+        }
+        root.ownSet("ownBusy", key, false);
+        if (code !== 0) {
+            root.ownSet("ownFailed", key, true);
+            root.ownSet("ownOn", key, !root.ownOn[key]);
+        }
+        root.refreshOwnTiles();
+    }
+
+    function refreshOwnTiles() {
+        for (const t of Prefs.systemOwnTileList) {
+            if (t.off.trim() !== "" && t.status.trim() !== "" && !root.ownBusy[t.key])
+                root.ownRun(t.key, t.status, true);
+
+        }
+    }
+
+    Component {
+        id: ownRunC
+
+        Process {
+            property string key: ""
+            property bool check: false
+
+            onExited: (code) => {
+                root.ownDone(key, check, code);
+                destroy();
+            }
+        }
+
+    }
+
+    Connections {
+        function onSystemOwnTilesChanged() {
+            root.refreshOwnTiles();
+        }
+
+        target: Prefs
+    }
+
     Connections {
         function onGameModeStatusCmdChanged() {
             root.refreshGameMode();
@@ -1065,6 +1149,9 @@ BarPill {
 
             return root.gameModeFailed ? "Failed" : "Game";
         }
+        if (root.ownFailed[key])
+            return "Failed";
+
         const t = Prefs.systemTileAt(key);
         return t ? t.name : "";
     }
@@ -1108,7 +1195,7 @@ BarPill {
         case "stopwatch":
             return Chrono.swRunning;
         }
-        return false;
+        return !!root.ownOn[key];
     }
 
     // tools behind another surface, which only opens once this one is gone
@@ -1129,6 +1216,10 @@ BarPill {
     })
 
     function tileAct(key) {
+        if (Prefs.systemOwnTile(key)) {
+            root.ownAct(key);
+            return ;
+        }
         const cmd = root.tileCommands[key];
         if (cmd) {
             root.expanded = false;
@@ -1568,6 +1659,19 @@ BarPill {
         case "timer":
             return root.tileLabel(key);
         }
+        const own = Prefs.systemOwnTile(key);
+        if (own) {
+            if (root.ownBusy[key])
+                return on ? "Starting" : "Stopping";
+
+            if (root.ownFailed[key])
+                return "Failed";
+
+            if (own.on.trim() === "")
+                return "Set it up";
+
+            return own.off.trim() === "" ? "" : (on ? "On" : "Off");
+        }
         return root.tileChecked(key) ? "On" : "";
     }
 
@@ -1578,7 +1682,9 @@ BarPill {
     function headerAct(key) {
         switch (key) {
         case "edit":
-            root.showView("tiles");
+            // the layout editor on the module's card in Settings
+            root.expanded = false;
+            Prefs.openBarModule("system", "layout");
             break;
         case "settings":
             root.expanded = false;
@@ -1594,135 +1700,8 @@ BarPill {
         }
     }
 
-    // the grid both views share
+    // small tiles to a row, where the panel is one column
     readonly property int tileCols: 6
-    readonly property real tileW: (root.contentWidth - root.sp2 * (root.tileCols - 1)) / root.tileCols
-    readonly property real tileH: root.tileW + Theme.dp(20)
-    readonly property real tileStepX: root.tileW + root.sp2
-    readonly property real tileStepY: root.tileH + root.sp3
-    // how far a lifted tile stays off the editor's edges: its 1.1 lift and its
-    // label both reach past its box, and the scroll area clips at the edge
-    readonly property int tileDragPad: Theme.dp(6)
-
-    function tileGridHeight(n) {
-        const rows = Math.max(1, Math.ceil(n / root.tileCols));
-        return rows * root.tileH + (rows - 1) * root.sp3;
-    }
-
-    // the editor works on its own copy, so a drag can reorder it live without
-    // the repeater rebuilding the tile under the pointer
-    ListModel {
-        id: tileModel
-    }
-
-    ListModel {
-        id: spareModel
-    }
-
-    // pops in whichever tile has just crossed between the two lists
-    property string tileArrival: ""
-    property string tileDeparture: ""
-    property bool tileDragging: false
-    property bool tileOverSpare: false
-
-    function modelKeys(m) {
-        const out = [];
-        for (let i = 0; i < m.count; i++) out.push(m.get(i).key)
-        return out;
-    }
-
-    function syncTiles() {
-        if (root.tileDragging)
-            return ;
-
-        const keys = Prefs.systemTileKeys;
-        const spare = Prefs.systemTileSpare;
-        if (root.modelKeys(tileModel).join(",") === keys.join(",") && root.modelKeys(spareModel).join(",") === spare.join(","))
-            return ;
-
-        root.tileArrival = "";
-        root.tileDeparture = "";
-        tileModel.clear();
-        for (const k of keys) tileModel.append({
-            "key": k
-        })
-        spareModel.clear();
-        for (const k of spare) spareModel.append({
-            "key": k
-        })
-    }
-
-    Connections {
-        function onSystemTilesChanged() {
-            root.syncTiles();
-        }
-
-        target: Prefs
-    }
-
-    function tileCommit() {
-        Prefs.setSystemTiles(root.modelKeys(tileModel));
-    }
-
-    function tileAdd(key) {
-        const i = root.modelKeys(spareModel).indexOf(key);
-        if (i < 0)
-            return ;
-
-        root.tileArrival = key;
-        spareModel.remove(i);
-        tileModel.append({
-            "key": key
-        });
-        root.tileCommit();
-    }
-
-    function tileRemove(key) {
-        const i = root.modelKeys(tileModel).indexOf(key);
-        if (i < 0)
-            return ;
-
-        root.tileDeparture = key;
-        tileModel.remove(i);
-        // back to its catalogue place among the spares
-        const spare = root.modelKeys(spareModel);
-        const order = Prefs.systemTileCatalog.map((t) => {
-            return t.key;
-        }).filter((k) => {
-            return k === key || spare.indexOf(k) >= 0;
-        });
-        spareModel.insert(order.indexOf(key), {
-            "key": key
-        });
-        root.tileCommit();
-    }
-
-    // the dragged tile takes whichever cell its centre is over, so the rest
-    // part around it as it goes; below the grid it is on its way out
-    function tileAim(slot, face) {
-        const p = face.mapToItem(tileBoard, face.width / 2, face.height / 2);
-        root.tileOverSpare = p.y > tileBoard.height + root.sp3;
-        if (root.tileOverSpare)
-            return ;
-
-        const col = Math.max(0, Math.min(root.tileCols - 1, Math.floor(p.x / root.tileStepX)));
-        const row = Math.max(0, Math.floor(p.y / root.tileStepY));
-        const to = Math.min(tileModel.count - 1, row * root.tileCols + col);
-        if (to !== slot.index)
-            tileModel.move(slot.index, to, 1);
-
-    }
-
-    function tileDrop(key) {
-        const out = root.tileOverSpare;
-        root.tileOverSpare = false;
-        root.tileDragging = false;
-        // removing destroys the very delegate whose release is running
-        if (out)
-            Qt.callLater(root.tileRemove, key);
-        else
-            root.tileCommit();
-    }
 
     readonly property string brightnessIcon: root.brightnessPercent < 34 ? "brightness_low" : (root.brightnessPercent < 67 ? "brightness_medium" : "brightness_high")
 
@@ -2075,8 +2054,6 @@ BarPill {
                                 return "Sound output";
                             case "power":
                                 return "Power";
-                            case "tiles":
-                                return "Edit tiles";
                             case "profile":
                                 return "Power profile";
                             case "nightlight":
@@ -2084,17 +2061,6 @@ BarPill {
                             }
                             return "";
                         }
-                    }
-
-                    Button {
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        // the tiles, and with them Wi-Fi and Bluetooth back at the front, big
-                        visible: root.view === "tiles" && (Prefs.isModified("systemTiles") || Prefs.isModified("systemTilesRadios") || Prefs.isModified("systemBigTiles"))
-                        variant: "text"
-                        size: "xs"
-                        text: "Reset"
-                        onClicked: Prefs.resetKeys(["systemTiles", "systemTilesRadios", "systemBigTiles"])
                     }
 
                     Switch {
@@ -2134,8 +2100,6 @@ BarPill {
                             return outputList.implicitHeight;
                         case "power":
                             return powerList.implicitHeight;
-                        case "tiles":
-                            return tileEditor.implicitHeight;
                         case "profile":
                             return powerPanel.implicitHeight;
                         case "nightlight":
@@ -2346,307 +2310,6 @@ BarPill {
 
                     }
 
-                    Item {
-                        id: tileEditor
-
-                        width: subScroll.width
-                        visible: root.view === "tiles"
-                        implicitHeight: tileColumn.implicitHeight
-
-                        Column {
-                            id: tileColumn
-
-                            width: parent.width
-                            spacing: root.sp3
-
-                            LText {
-                                width: parent.width
-                                role: "bodySmall"
-                                color: Theme.subtext
-                                text: "Drag to rearrange, or tap − to take a tile out"
-                                wrapMode: Text.WordWrap
-                            }
-
-                            Item {
-                                id: tileBoard
-
-                                width: parent.width
-                                height: root.tileGridHeight(tileModel.count)
-
-                                LText {
-                                    visible: tileModel.count === 0
-                                    anchors.centerIn: parent
-                                    role: "bodyMedium"
-                                    color: Theme.subtext
-                                    text: "The panel has no tiles"
-                                }
-
-                                Repeater {
-                                    model: tileModel
-
-                                    Item {
-                                        id: slot
-
-                                        required property string key
-                                        required property int index
-                                        readonly property var spec: Prefs.systemTileAt(slot.key)
-                                        readonly property bool held: grab.drag.active
-
-                                        x: (slot.index % root.tileCols) * root.tileStepX
-                                        y: Math.floor(slot.index / root.tileCols) * root.tileStepY
-                                        width: root.tileW
-                                        height: root.tileH
-                                        onHeldChanged: {
-                                            if (slot.held)
-                                                root.tileDragging = true;
-
-                                        }
-                                        Component.onCompleted: {
-                                            if (root.tileArrival === slot.key) {
-                                                face.enter = 0;
-                                                slotPop.start();
-                                            }
-                                        }
-
-                                        MouseArea {
-                                            id: grab
-
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            preventStealing: true
-                                            cursorShape: slot.held ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-                                            drag.target: face
-                                            // in the drag layer's space, since the face only moves once lifted into it
-                                            drag.minimumX: root.tileDragPad
-                                            drag.maximumX: tileDragLayer.width - face.width - root.tileDragPad
-                                            drag.minimumY: root.tileDragPad
-                                            drag.maximumY: tileDragLayer.height - face.height - root.tileDragPad
-                                            onPositionChanged: {
-                                                if (slot.held)
-                                                    root.tileAim(slot, face);
-
-                                            }
-                                            onReleased: root.tileDrop(slot.key)
-                                            onCanceled: root.tileDrop(slot.key)
-                                        }
-
-                                        EditTile {
-                                            id: face
-
-                                            icon: slot.spec ? slot.spec.icon : ""
-                                            label: slot.spec ? slot.spec.name : ""
-                                            held: slot.held
-                                            hot: grab.containsMouse
-                                            onBadgeClicked: root.tileRemove(slot.key)
-                                            states: [
-                                                State {
-                                                    name: "held"
-                                                    when: slot.held
-
-                                                    // lifted out of the slot, so the slot can move on underneath it
-                                                    ParentChange {
-                                                        target: face
-                                                        parent: tileDragLayer
-                                                    }
-
-                                                }
-                                            ]
-                                            transitions: [
-                                                Transition {
-                                                    from: "held"
-
-                                                    ParentAnimation {
-                                                        NumberAnimation {
-                                                            properties: "x,y"
-                                                            duration: Theme.durFastSpatial
-                                                            easing.type: Easing.Bezier
-                                                            easing.bezierCurve: Theme.curveStandard
-                                                        }
-
-                                                    }
-
-                                                }
-                                            ]
-                                        }
-
-                                        NumberAnimation {
-                                            id: slotPop
-
-                                            target: face
-                                            property: "enter"
-                                            to: 1
-                                            duration: Theme.durFastSpatial
-                                            easing.type: Easing.Bezier
-                                            easing.bezierCurve: Theme.curveFastSpatial
-                                        }
-
-                                        Behavior on x {
-                                            enabled: root.view === "tiles"
-
-                                            NumberAnimation {
-                                                duration: Theme.durFastSpatial
-                                                easing.type: Easing.Bezier
-                                                easing.bezierCurve: Theme.curveStandard
-                                            }
-
-                                        }
-
-                                        Behavior on y {
-                                            enabled: root.view === "tiles"
-
-                                            NumberAnimation {
-                                                duration: Theme.durFastSpatial
-                                                easing.type: Easing.Bezier
-                                                easing.bezierCurve: Theme.curveStandard
-                                            }
-
-                                        }
-
-                                    }
-
-                                }
-
-                                Behavior on height {
-                                    enabled: root.view === "tiles"
-
-                                    NumberAnimation {
-                                        duration: Theme.durFastSpatial
-                                        easing.type: Easing.Bezier
-                                        easing.bezierCurve: Theme.curveStandard
-                                    }
-
-                                }
-
-                            }
-
-                            Divider {
-                                width: parent.width
-                            }
-
-                            LText {
-                                role: "titleSmall"
-                                color: root.tileOverSpare ? Theme.text : Theme.subtext
-                                text: root.tileOverSpare ? "Release to take it out" : "Tap to add"
-                            }
-
-                            Item {
-                                id: spareBoard
-
-                                width: parent.width
-                                height: spareModel.count > 0 ? root.tileGridHeight(spareModel.count) : spareEmpty.implicitHeight
-
-                                // the drop target for a tile on its way out
-                                Rectangle {
-                                    anchors.fill: parent
-                                    anchors.margins: -root.sp2
-                                    radius: Theme.shapeLg
-                                    color: Theme.text
-                                    opacity: root.tileOverSpare ? Theme.stateHover : 0
-
-                                    Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: Theme.durFastEffects
-                                        }
-
-                                    }
-
-                                }
-
-                                LText {
-                                    id: spareEmpty
-
-                                    visible: spareModel.count === 0
-                                    width: parent.width
-                                    role: "bodyMedium"
-                                    color: Theme.subtext
-                                    text: "Every tile is already in the panel"
-                                }
-
-                                Repeater {
-                                    model: spareModel
-
-                                    EditTile {
-                                        id: spare
-
-                                        required property string key
-                                        required property int index
-                                        readonly property var spec: Prefs.systemTileAt(spare.key)
-
-                                        x: (spare.index % root.tileCols) * root.tileStepX
-                                        y: Math.floor(spare.index / root.tileCols) * root.tileStepY
-                                        icon: spare.spec ? spare.spec.icon : ""
-                                        label: spare.spec ? spare.spec.name : ""
-                                        adding: true
-                                        onBadgeClicked: root.tileAdd(spare.key)
-                                        Component.onCompleted: {
-                                            if (root.tileDeparture === spare.key) {
-                                                spare.enter = 0;
-                                                sparePop.start();
-                                            }
-                                        }
-
-                                        NumberAnimation {
-                                            id: sparePop
-
-                                            target: spare
-                                            property: "enter"
-                                            to: 1
-                                            duration: Theme.durFastSpatial
-                                            easing.type: Easing.Bezier
-                                            easing.bezierCurve: Theme.curveFastSpatial
-                                        }
-
-                                        Behavior on x {
-                                            enabled: root.view === "tiles"
-
-                                            NumberAnimation {
-                                                duration: Theme.durFastSpatial
-                                                easing.type: Easing.Bezier
-                                                easing.bezierCurve: Theme.curveStandard
-                                            }
-
-                                        }
-
-                                        Behavior on y {
-                                            enabled: root.view === "tiles"
-
-                                            NumberAnimation {
-                                                duration: Theme.durFastSpatial
-                                                easing.type: Easing.Bezier
-                                                easing.bezierCurve: Theme.curveStandard
-                                            }
-
-                                        }
-
-                                    }
-
-                                }
-
-                                Behavior on height {
-                                    enabled: root.view === "tiles"
-
-                                    NumberAnimation {
-                                        duration: Theme.durFastSpatial
-                                        easing.type: Easing.Bezier
-                                        easing.bezierCurve: Theme.curveStandard
-                                    }
-
-                                }
-
-                            }
-
-                        }
-
-                        // a dragged tile rides above both lists
-                        Item {
-                            id: tileDragLayer
-
-                            anchors.fill: parent
-                            z: 10
-                        }
-
-                    }
-
                     MouseArea {
                         anchors.fill: parent
                         acceptedButtons: Qt.NoButton
@@ -2849,148 +2512,5 @@ BarPill {
 
         }
     ]
-
-    // a tile as the editor shows it: flat, no state, and a badge saying what a
-    // tap does. an active one is dragged by its slot, a spare one is tapped
-    component EditTile: Item {
-        id: et
-
-        property string icon: ""
-        property string label: ""
-        property bool adding: false
-        property bool held: false
-        property bool hot: false
-        // 0..1, run up when the tile has just arrived from the other list
-        property real enter: 1
-        property real lift: et.held ? 1.1 : 1
-
-        signal badgeClicked()
-
-        width: root.tileW
-        height: root.tileH
-        z: et.held ? 1 : 0
-        opacity: Math.min(1, et.enter)
-        scale: (0.6 + 0.4 * et.enter) * et.lift
-
-        Behavior on lift {
-            NumberAnimation {
-                duration: Theme.durFastSpatial
-                easing.type: Easing.Bezier
-                easing.bezierCurve: Theme.curveFastSpatial
-            }
-
-        }
-
-        Rectangle {
-            id: esq
-
-            width: et.width
-            height: et.width
-            radius: et.held ? Theme.shapeLg : width / 2
-            color: et.held ? Theme.primary : Theme.withBlur(Theme.surfaceHighest)
-
-            Behavior on radius {
-                NumberAnimation {
-                    duration: Theme.durDefaultSpatial
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: Theme.curveDefaultSpatial
-                }
-
-            }
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: Theme.durDefaultEffects
-                }
-
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                radius: parent.radius
-                color: Theme.text
-                opacity: et.hot && !et.held ? Theme.stateHover : 0
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.durFastEffects
-                    }
-
-                }
-
-            }
-
-            // a spare tile is one big add button
-            StateLayer {
-                visible: et.adding
-                radius: esq.radius
-                onClicked: et.badgeClicked()
-            }
-
-            Icon {
-                anchors.centerIn: parent
-                name: et.icon
-                size: Theme.dp(22)
-                fill: et.held ? 1 : 0
-                color: et.held ? Theme.fgPrimary : (et.adding ? Theme.subtext : Theme.text)
-            }
-
-        }
-
-        LText {
-            anchors.top: esq.bottom
-            anchors.topMargin: Theme.dp(4)
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: root.tileStepX
-            horizontalAlignment: Text.AlignHCenter
-            role: "labelSmall"
-            color: et.adding ? Theme.subtext : Theme.text
-            text: et.label
-            fontSizeMode: Text.HorizontalFit
-            minimumPixelSize: Math.max(Theme.dp(8), size - Theme.dp(2))
-            elide: Text.ElideRight
-        }
-
-        // sits on the circle's rim inside the cell, since the scroll area clips
-        // anything past the last column. the hit area is wider than the badge
-        Item {
-            x: esq.width - Theme.dp(24)
-            y: -Theme.dp(4)
-            width: Theme.dp(28)
-            height: Theme.dp(28)
-            opacity: et.held ? 0 : 1
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.durFastEffects
-                }
-
-            }
-
-            Rectangle {
-                anchors.centerIn: parent
-                width: Theme.dp(20)
-                height: Theme.dp(20)
-                radius: Theme.dp(10)
-                color: Theme.inverseSurface
-
-                Icon {
-                    anchors.centerIn: parent
-                    name: et.adding ? "add" : "remove"
-                    size: Theme.dp(14)
-                    color: Theme.fgInverseSurface
-                }
-
-            }
-
-            StateLayer {
-                visible: !et.adding
-                radius: Theme.rad(14)
-                onClicked: et.badgeClicked()
-            }
-
-        }
-
-    }
 
 }
