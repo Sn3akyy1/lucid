@@ -813,8 +813,9 @@ Item {
             return k === "wifi" ? "Connected" : (k === "bluetooth" ? "On" : "Off");
         }
 
+        // the radios on, and every third small tile, so a look shows both states
         function tileChecked(k) {
-            return k === "wifi" || k === "bluetooth";
+            return k === "wifi" || k === "bluetooth" || Prefs.systemSmallTileKeys.indexOf(k) % 3 === 0;
         }
 
         function tileAct(k) {
@@ -1066,11 +1067,126 @@ Item {
 
     }
 
+    // how each block is drawn. with none picked, the blocks and the look each
+    // has, to pick one; with one picked, each of its looks drawn as the panel
+    // would draw it, a click away
+    Rectangle {
+        id: looksBar
+
+        readonly property string block: builder.selected !== "" && (Prefs.systemStyleCatalog[builder.selected] || []).length > 1 ? builder.selected : ""
+
+        y: toolbar.y + toolbar.height + Theme.dp(8)
+        width: parent.width
+        height: looksCol.implicitHeight + Theme.dp(28)
+        radius: Theme.radiusLg
+        color: Theme.bgSunken
+
+        Column {
+            id: looksCol
+
+            x: Theme.dp(16)
+            y: Theme.dp(14)
+            width: parent.width - Theme.dp(32)
+            spacing: Theme.dp(10)
+
+            // the same height whichever it shows, so the grid under it never moves
+            Item {
+                width: parent.width
+                height: Theme.dp(40)
+
+                Column {
+                    anchors.left: parent.left
+                    anchors.right: allBlocks.left
+                    anchors.rightMargin: Theme.dp(8)
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Theme.dp(2)
+
+                    LText {
+                        width: parent.width
+                        role: "titleSmall"
+                        weight: 600
+                        text: looksBar.block === "" ? "Looks" : builder.blockName(looksBar.block) + ": its look"
+                        elide: Text.ElideRight
+                    }
+
+                    LText {
+                        width: parent.width
+                        role: "bodySmall"
+                        color: Theme.subtext
+                        text: looksBar.block === "" ? "Every block can be drawn more than one way. Pick one here, or click it on the grid, for its looks." : "Click one to use it; Ctrl+Z goes back."
+                        elide: Text.ElideRight
+                    }
+
+                }
+
+                M3Button {
+                    id: allBlocks
+
+                    visible: looksBar.block !== ""
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    variant: "text"
+                    text: "All blocks"
+                    onClicked: builder.selected = ""
+                }
+
+            }
+
+            // one row, sliding sideways where it is wider than the page: the
+            // blocks in the look each has, or the picked block's looks
+            Flickable {
+                width: parent.width
+                height: Theme.dp(150)
+                contentWidth: looksRow.width
+                flickableDirection: Flickable.HorizontalFlick
+                boundsBehavior: Flickable.StopAtBounds
+                clip: true
+
+                Row {
+                    id: looksRow
+
+                    spacing: Theme.dp(8)
+
+                    Repeater {
+                        model: looksBar.block === "" ? builder.readingOrder() : []
+
+                        LookTile {
+                            required property string modelData
+
+                            block: modelData
+                            look: (Prefs.systemStyleCatalog[modelData] || []).find((l) => {
+                                return l.key === Prefs.systemBlockStyle(modelData);
+                            }) || null
+                            picker: true
+                        }
+
+                    }
+
+                    Repeater {
+                        model: looksBar.block !== "" ? Prefs.systemStyleCatalog[looksBar.block] : []
+
+                        LookTile {
+                            required property var modelData
+
+                            block: looksBar.block
+                            look: modelData
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
     // the grid, full size and scaled down as one
     Item {
         id: boardWrap
 
-        y: toolbar.y + toolbar.height + Theme.dp(8)
+        y: looksBar.y + looksBar.height + Theme.dp(12)
         width: Math.round(board.width * builder.k)
         height: Math.round(board.height * builder.k)
         x: Math.max(0, Math.round((builder.width - width) / 2))
@@ -1751,11 +1867,15 @@ Item {
                     onClicked: builder.turnSliders()
                 }
 
-                // its looks, and the rest a right click offers
+                // picks it, for its looks over the grid
                 TagButton {
                     visible: (Prefs.systemStyleCatalog[card.blockKey] || []).length > 1
                     icon: "palette"
-                    onClicked: builder.openMenu(card, -1, mapToItem(builder, 0, height))
+                    onClicked: {
+                        builder.forceActiveFocus();
+                        builder.menu = null;
+                        builder.selected = card.blockKey;
+                    }
                 }
 
                 // off the panel, keeping what it holds; it waits on the shelf
@@ -1884,6 +2004,115 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: tb.clicked()
+        }
+
+    }
+
+    // one look of a block, the block drawn in it at the width it has on the
+    // grid, with its name; the one in use is ticked. as a picker it is the
+    // block in the look it has, and a click picks the block
+    component LookTile: Item {
+        id: lt
+
+        property string block: ""
+        property var look: null
+        property bool picker: false
+        readonly property bool on: !lt.picker && !!lt.look && Prefs.systemBlockStyle(lt.block) === lt.look.key
+        readonly property var cell: builder.place[lt.block] || null
+
+        width: Theme.dp(176)
+        height: Theme.dp(150)
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Theme.radiusMd
+            color: ltArea.containsMouse && !lt.on ? Theme.withBlur(Theme.surfaceHighest) : Theme.withBlur(Theme.surfaceHigh)
+            border.width: lt.on ? Theme.dp(2) : 0
+            border.color: Theme.accent
+        }
+
+        Item {
+            id: ltStage
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: Theme.dp(10)
+            height: parent.height - Theme.dp(42)
+
+            Item {
+                anchors.centerIn: parent
+                width: ltPreview.width * ltPreview.scale
+                height: Math.min(parent.height, ltPreview.height * ltPreview.scale)
+                clip: true
+
+                CcBlock {
+                    id: ltPreview
+
+                    enabled: false
+                    scale: Math.min(ltStage.width / width, ltStage.height / height, 1)
+                    transformOrigin: Item.TopLeft
+                    width: builder.span(lt.cell ? lt.cell.w : 6)
+                    height: implicitHeight
+                    kind: lt.block
+                    keys: builder.keysOf(lt.block)
+                    host: sample
+                    cols: lt.cell ? lt.cell.w : 6
+                    bigCols: lt.cell ? Math.max(1, Math.floor(lt.cell.w / 3)) : 2
+                    gap: builder.gridGap
+                    standing: lt.block === "sliders" && builder.slidersStand
+                    look: lt.look ? lt.look.key : ""
+                    cards: Prefs.systemBlockCards
+                }
+
+            }
+
+        }
+
+        LText {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: Theme.dp(10)
+            role: "labelLarge"
+            text: lt.picker ? builder.blockName(lt.block) + (lt.look ? " · " + lt.look.name : "") : (lt.look ? lt.look.name : "")
+            elide: Text.ElideRight
+        }
+
+        // in use
+        Rectangle {
+            visible: lt.on
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: Theme.dp(6)
+            width: Theme.dp(22)
+            height: Theme.dp(22)
+            radius: width / 2
+            color: Theme.primary
+
+            Icon {
+                anchors.centerIn: parent
+                name: "check"
+                size: Theme.dp(14)
+                color: Theme.fgPrimary
+            }
+
+        }
+
+        MouseArea {
+            id: ltArea
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: lt.on ? Qt.ArrowCursor : Qt.PointingHandCursor
+            onClicked: {
+                if (lt.picker) {
+                    builder.forceActiveFocus();
+                    builder.selected = lt.block;
+                } else if (lt.look) {
+                    Prefs.setSystemBlockStyle(lt.block, lt.look.key);
+                }
+            }
         }
 
     }
