@@ -3,7 +3,9 @@ import qs
 import qs.lucidui
 
 // a big tile: the icon side toggles, the label side opens the detail view.
-// the pill squares off once the tile is on
+// the pill squares off once the tile is on. its looks: pill; shapes (below);
+// compact, one line and lower; outline, a ring while off and a soft tonal
+// fill while on
 Rectangle {
     id: tile
 
@@ -15,15 +17,21 @@ Rectangle {
     property bool hasPage: true
     // the pill stays a pill and its icon turns into this shape as it comes on
     property string shape: ""
+    // pill, shapes, compact or outline
+    property string look: "pill"
+    readonly property bool compact: tile.look === "compact"
+    readonly property bool outline: tile.look === "outline"
     // on, and drawn as a filled pill
-    readonly property bool filled: tile.checked && tile.shape === ""
+    readonly property bool filled: tile.checked && tile.shape === "" && !tile.outline
 
     signal toggled()
     signal expandRequested()
 
-    height: Theme.dp(64)
-    radius: tile.filled ? Theme.shapeLgInc : height / 2
-    color: tile.filled ? Theme.primary : Theme.withBlur(Theme.surfaceHighest)
+    height: tile.compact ? Theme.dp(48) : Theme.dp(64)
+    radius: tile.filled || (tile.outline && tile.checked) ? Theme.shapeLgInc : height / 2
+    color: tile.filled ? Theme.primary : (tile.outline ? (tile.checked ? Theme.alpha(Theme.primary, 0.16) : "transparent") : Theme.withBlur(Theme.surfaceHighest))
+    border.width: tile.outline ? Math.max(1, Theme.dp(1.5)) : 0
+    border.color: tile.checked ? Theme.primary : Theme.outline
 
     Behavior on radius {
         NumberAnimation {
@@ -53,10 +61,10 @@ Rectangle {
         anchors.left: parent.left
         anchors.leftMargin: Theme.dp(10)
         anchors.verticalCenter: parent.verticalCenter
-        width: Theme.dp(44)
-        height: Theme.dp(44)
-        radius: Theme.dp(22)
-        color: tile.shape !== "" ? "transparent" : (tile.filled ? Theme.alpha(Theme.fgPrimary, 0.14) : Theme.alpha(Theme.text, 0.08))
+        width: tile.compact ? Theme.dp(34) : Theme.dp(44)
+        height: width
+        radius: width / 2
+        color: tile.shape !== "" ? "transparent" : (tile.filled ? Theme.alpha(Theme.fgPrimary, 0.14) : (tile.outline && tile.checked ? Theme.primary : Theme.alpha(Theme.text, 0.08)))
 
         MaterialShape {
             visible: tile.shape !== ""
@@ -95,7 +103,7 @@ Rectangle {
         }
 
         StateLayer {
-            radius: Theme.dp(22)
+            radius: bubble.radius
             tint: tile.checked ? Theme.fgPrimary : Theme.text
             onClicked: tile.toggled()
         }
@@ -129,7 +137,7 @@ Rectangle {
 
         LText {
             width: parent.width
-            visible: text !== ""
+            visible: text !== "" && !tile.compact
             role: "bodySmall"
             text: tile.sub
             color: tile.filled ? Theme.alpha(Theme.fgPrimary, 0.78) : Theme.subtext
