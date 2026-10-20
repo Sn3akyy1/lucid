@@ -142,7 +142,7 @@ Item {
 
                     width: flow.pieceW
                     // the small ones' names sit in the gap, so their row keeps the grid's
-                    height: flow.big ? Theme.dp(64) : flow.pieceW + Theme.dp(24)
+                    height: flow.big ? (block.look === "compact" ? Theme.dp(48) : Theme.dp(64)) : flow.pieceW + (block.look === "icons" ? 0 : Theme.dp(24))
 
                     CcBigTile {
                         visible: flow.big
@@ -152,6 +152,7 @@ Item {
                         sub: block.host.bigSub(slot.modelData)
                         checked: block.host.tileChecked(slot.modelData)
                         hasPage: slot.hasPage
+                        look: block.look === "" ? "pill" : block.look
                         shape: block.shapeOf(slot.modelData)
                         onToggled: block.host.tileAct(slot.modelData)
                         onExpandRequested: slot.hasPage ? block.host.showView(slot.modelData) : block.host.tileAct(slot.modelData)
@@ -165,6 +166,8 @@ Item {
                         label: block.host.tileLabel(slot.modelData)
                         checked: block.host.tileChecked(slot.modelData)
                         hasMore: slot.hasPage
+                        square: block.look === "square"
+                        labelled: block.look !== "icons"
                         shape: block.shapeOf(slot.modelData)
                         onToggled: block.host.tileAct(slot.modelData)
                         onMore: block.host.showView(slot.modelData)

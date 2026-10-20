@@ -14,6 +14,10 @@ Item {
     // round while off, and turning into this shape as it comes on, in
     // place of squaring off
     property string shape: ""
+    // a rounded square on and off alike, only its colour changing
+    property bool square: false
+    // its name under it; without, the name shows on hover
+    property bool labelled: true
 
     signal toggled()
     signal more()
@@ -21,14 +25,14 @@ Item {
     // the gap beside it, which its name may spill into
     property real gutter: Theme.dp(8)
 
-    height: st.width + Theme.dp(20)
+    height: st.labelled ? st.width + Theme.dp(20) : st.width
 
     Rectangle {
         id: sq
 
         width: st.width
         height: st.width
-        radius: st.checked && st.shape === "" ? Theme.shapeLg : width / 2
+        radius: st.square || (st.checked && st.shape === "") ? Theme.shapeLg : width / 2
         color: st.shape !== "" ? "transparent" : (st.checked ? Theme.primary : Theme.withBlur(Theme.surfaceHighest))
 
         Behavior on radius {
@@ -84,6 +88,8 @@ Item {
         }
 
         StateLayer {
+            id: tap
+
             radius: sq.radius
             tint: st.checked ? Theme.fgPrimary : Theme.text
             acceptedButtons: st.hasMore ? (Qt.LeftButton | Qt.RightButton) : Qt.LeftButton
@@ -105,7 +111,31 @@ Item {
 
     }
 
+    // its name, while the pointer is on a tile that does not show it
+    Rectangle {
+        visible: !st.labelled && tap.containsMouse
+        z: 10
+        anchors.top: sq.bottom
+        anchors.topMargin: Theme.dp(4)
+        anchors.horizontalCenter: sq.horizontalCenter
+        width: tipText.implicitWidth + Theme.dp(16)
+        height: Theme.dp(24)
+        radius: height / 2
+        color: Theme.inverseSurface
+
+        LText {
+            id: tipText
+
+            anchors.centerIn: parent
+            role: "labelMedium"
+            color: Theme.fgInverseSurface
+            text: st.label
+        }
+
+    }
+
     LText {
+        visible: st.labelled
         anchors.top: sq.bottom
         anchors.topMargin: Theme.dp(4)
         anchors.horizontalCenter: parent.horizontalCenter
