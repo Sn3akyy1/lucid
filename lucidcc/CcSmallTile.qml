@@ -11,6 +11,9 @@ Item {
     property bool checked: false
     // a right click asks for more than the tap does
     property bool hasMore: false
+    // round while off, and turning into this shape as it comes on, in
+    // place of squaring off
+    property string shape: ""
 
     signal toggled()
     signal more()
@@ -25,8 +28,8 @@ Item {
 
         width: st.width
         height: st.width
-        radius: st.checked ? Theme.shapeLg : width / 2
-        color: st.checked ? Theme.primary : Theme.withBlur(Theme.surfaceHighest)
+        radius: st.checked && st.shape === "" ? Theme.shapeLg : width / 2
+        color: st.shape !== "" ? "transparent" : (st.checked ? Theme.primary : Theme.withBlur(Theme.surfaceHighest))
 
         Behavior on radius {
             NumberAnimation {
@@ -40,6 +43,42 @@ Item {
         Behavior on color {
             ColorAnimation {
                 duration: Theme.durDefaultEffects
+            }
+
+        }
+
+        MaterialShape {
+            visible: st.shape !== ""
+            anchors.fill: parent
+            shape: "circle"
+            to: st.shape
+            morph: st.checked ? 1 : 0
+            rotation: st.checked ? 0 : -60
+            color: st.checked ? Theme.primary : Theme.withBlur(Theme.surfaceHighest)
+
+            Behavior on morph {
+                NumberAnimation {
+                    duration: Theme.durDefaultSpatial
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.curveStandard
+                }
+
+            }
+
+            Behavior on rotation {
+                NumberAnimation {
+                    duration: Theme.durSlowSpatial
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.curveSlowSpatial
+                }
+
+            }
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.durDefaultEffects
+                }
+
             }
 
         }

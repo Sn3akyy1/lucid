@@ -1972,6 +1972,7 @@ BarPill {
                                 bigCols: root.gridMain && spot ? Math.max(1, Math.floor(spot.w / 3)) : 2
                                 gap: root.gridMain ? root.gridGap : root.sp2
                                 standing: root.gridMain && root.slidersStand
+                                look: Prefs.systemBlockStyle(modelData)
                                 cards: Prefs.systemBlockCards
                                 x: root.gridMain ? root.gridBox(modelData).x : 0
                                 y: root.gridMain ? root.gridBox(modelData).y : root.blockStart(modelData)

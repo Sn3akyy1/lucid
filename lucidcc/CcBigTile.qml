@@ -13,13 +13,17 @@ Rectangle {
     property bool checked: false
     // off for a tile with no page of its own: no chevron, and it all switches
     property bool hasPage: true
+    // the pill stays a pill and its icon turns into this shape as it comes on
+    property string shape: ""
+    // on, and drawn as a filled pill
+    readonly property bool filled: tile.checked && tile.shape === ""
 
     signal toggled()
     signal expandRequested()
 
     height: Theme.dp(64)
-    radius: tile.checked ? Theme.shapeLgInc : height / 2
-    color: tile.checked ? Theme.primary : Theme.withBlur(Theme.surfaceHighest)
+    radius: tile.filled ? Theme.shapeLgInc : height / 2
+    color: tile.filled ? Theme.primary : Theme.withBlur(Theme.surfaceHighest)
 
     Behavior on radius {
         NumberAnimation {
@@ -39,7 +43,7 @@ Rectangle {
 
     StateLayer {
         radius: tile.radius
-        tint: tile.checked ? Theme.fgPrimary : Theme.text
+        tint: tile.filled ? Theme.fgPrimary : Theme.text
         onClicked: tile.expandRequested()
     }
 
@@ -52,7 +56,43 @@ Rectangle {
         width: Theme.dp(44)
         height: Theme.dp(44)
         radius: Theme.dp(22)
-        color: tile.checked ? Theme.alpha(Theme.fgPrimary, 0.14) : Theme.alpha(Theme.text, 0.08)
+        color: tile.shape !== "" ? "transparent" : (tile.filled ? Theme.alpha(Theme.fgPrimary, 0.14) : Theme.alpha(Theme.text, 0.08))
+
+        MaterialShape {
+            visible: tile.shape !== ""
+            anchors.fill: parent
+            shape: "circle"
+            to: tile.shape
+            morph: tile.checked ? 1 : 0
+            rotation: tile.checked ? 0 : -60
+            color: tile.checked ? Theme.primary : Theme.alpha(Theme.text, 0.08)
+
+            Behavior on morph {
+                NumberAnimation {
+                    duration: Theme.durDefaultSpatial
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.curveStandard
+                }
+
+            }
+
+            Behavior on rotation {
+                NumberAnimation {
+                    duration: Theme.durSlowSpatial
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.curveSlowSpatial
+                }
+
+            }
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.durDefaultEffects
+                }
+
+            }
+
+        }
 
         StateLayer {
             radius: Theme.dp(22)
@@ -83,7 +123,7 @@ Rectangle {
             role: "titleSmall"
             weight: 600
             text: tile.name
-            color: tile.checked ? Theme.fgPrimary : Theme.text
+            color: tile.filled ? Theme.fgPrimary : Theme.text
             elide: Text.ElideRight
         }
 
@@ -92,7 +132,7 @@ Rectangle {
             visible: text !== ""
             role: "bodySmall"
             text: tile.sub
-            color: tile.checked ? Theme.alpha(Theme.fgPrimary, 0.78) : Theme.subtext
+            color: tile.filled ? Theme.alpha(Theme.fgPrimary, 0.78) : Theme.subtext
             elide: Text.ElideRight
         }
 
@@ -107,7 +147,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         name: "chevron_right"
         size: Theme.dp(20)
-        color: tile.checked ? Theme.fgPrimary : Theme.subtext
+        color: tile.filled ? Theme.fgPrimary : Theme.subtext
     }
 
 }

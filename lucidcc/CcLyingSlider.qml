@@ -13,6 +13,8 @@ Row {
     property bool iconClickable: false
     property string footIcon: ""
     property bool easeValue: false
+    // thicker, with the value inside it
+    property bool bold: false
 
     signal moved(real v)
     signal iconClicked()
@@ -22,7 +24,8 @@ Row {
 
     Slider {
         width: ls.width - (foot.visible ? foot.width + ls.spacing : 0)
-        size: "m"
+        size: ls.bold ? "l" : "m"
+        inlineValue: ls.bold
         icon: ls.icon
         iconClickable: ls.iconClickable
         from: 0
@@ -45,9 +48,9 @@ Row {
 
         visible: ls.footIcon !== ""
         width: Theme.dp(50)
-        height: Theme.dp(38)
+        height: ls.bold ? Theme.dp(52) : Theme.dp(38)
         anchors.verticalCenter: parent.verticalCenter
-        radius: Theme.rad(12)
+        radius: ls.bold ? Theme.rad(16) : Theme.rad(12)
         color: Theme.withBlur(Theme.surfaceHighest)
 
         StateLayer {
