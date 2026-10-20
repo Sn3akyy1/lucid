@@ -30,12 +30,34 @@ Item {
 
     implicitHeight: Theme.dp(84)
 
-    // the cover blurred over the whole card, under a scrim the text reads on
+    // the cover blurred over the whole card, under a scrim the text reads on;
+    // with no cover, a wash of the accent in its place
     ClippingRectangle {
         anchors.fill: parent
         radius: mc.radius
         color: "transparent"
-        visible: mc.look === "backdrop" && backdropArt.status === Image.Ready
+        visible: mc.look === "backdrop"
+
+        Rectangle {
+            visible: backdropArt.status !== Image.Ready
+            anchors.fill: parent
+
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+
+                GradientStop {
+                    position: 0
+                    color: Theme.alpha(Theme.primary, 0.32)
+                }
+
+                GradientStop {
+                    position: 1
+                    color: Theme.alpha(Theme.tertiary, 0.14)
+                }
+
+            }
+
+        }
 
         Image {
             id: backdropArt
@@ -50,6 +72,7 @@ Item {
         }
 
         MultiEffect {
+            visible: backdropArt.status === Image.Ready
             anchors.fill: parent
             source: backdropArt
             blurEnabled: true
@@ -59,6 +82,7 @@ Item {
         }
 
         Rectangle {
+            visible: backdropArt.status === Image.Ready
             anchors.fill: parent
             color: Theme.alpha(Theme.bgOpaque, 0.55)
         }
