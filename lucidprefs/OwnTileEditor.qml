@@ -20,12 +20,24 @@ Rectangle {
         Prefs.setSystemOwnTile(ed.key, fields);
     }
 
+    // sent here from the layout: lit up a moment, its name ready to change
+    function flash() {
+        flashTimer.restart();
+        nameField.focusInput();
+    }
+
     width: parent ? parent.width : 0
     height: body.implicitHeight + Theme.dp(32)
     radius: Theme.radiusMd
     color: "transparent"
-    border.width: 1
-    border.color: Theme.outline
+    border.width: flashTimer.running ? Theme.dp(2) : 1
+    border.color: flashTimer.running ? Theme.accent : Theme.outline
+
+    Timer {
+        id: flashTimer
+
+        interval: 1600
+    }
 
     Column {
         id: body
@@ -60,6 +72,8 @@ Rectangle {
                 spacing: Theme.dp(8)
 
                 M3TextField {
+                    id: nameField
+
                     width: parent.width
                     placeholder: "Name"
                     text: ed.tile ? ed.tile.name : ""

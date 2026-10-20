@@ -59,6 +59,25 @@ SettingCard {
         return card.powerOn.indexOf(id) === -1;
     }))
 
+    // one of the user's own tiles brought into view, its name ready to change
+    function revealOwnTile(key) {
+        let flick = card.parent;
+        while (flick && (flick.contentY === undefined || flick.contentHeight === undefined))
+            flick = flick.parent;
+        for (let i = 0; i < ownTileRepeater.count; i++) {
+            const ed = ownTileRepeater.itemAt(i);
+            if (!ed || ed.key !== key)
+                continue;
+
+            if (flick) {
+                const y = ed.mapToItem(flick.contentItem, 0, 0).y;
+                flick.contentY = Math.max(0, Math.min(Math.max(0, flick.contentHeight - flick.height), y - Theme.dp(90)));
+            }
+            ed.flash();
+            return ;
+        }
+    }
+
     // a part of the card a link can land on, or null for its top
     function partItem(name) {
         return ({
@@ -339,12 +358,31 @@ SettingCard {
         resetKey: "systemBlocks"
         resetVisible: Prefs.isModified("systemBlocks") || Prefs.isModified("systemGrid")
         resetAction: "prefs:systemBlocks,systemGrid"
-        description: "The control centre as a bento grid, drawn as the panel draws it. Add blocks, tiles, sliders and gauges from the shelf; on the grid, drag a block by anything but its pieces to move it and by an edge or corner to resize it, and drag the pieces inside into order. Hover a block for its name, with buttons to hide it and, on the sliders, to stand them up or lay them down. Empty rows and columns fold away in the panel."
+        description: "The control centre as a bento grid, drawn as the panel draws it. Add blocks, tiles, sliders and gauges from the shelf; on the grid, drag a block by anything but its pieces to move it and by an edge or corner to resize it, and drag the pieces inside into order. Right-click a block or a piece for what it can do. Click a block and the arrow keys move it, Shift with them resizes it, Delete hides it and Tab goes to the next; Ctrl+Z undoes. Empty rows and columns fold away in the panel."
         stacked: true
         showDivider: false
 
         PanelBuilder {
+            id: layoutBuilder
+
             width: parent.width
+            onEditOwnTile: (key) => {
+                return card.revealOwnTile(key);
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "system"
+        title: "Start from a layout"
+        description: Prefs.systemLayoutList.length === 0 ? "A ready-made one moves the blocks you have on and keeps what each holds. Save the layout you have now to come back to it; Ctrl+Z in the grid above undoes a switch." : "A ready-made one moves the blocks you have on and keeps what each holds; a saved one brings back everything as it was. Saving again under a name you already used updates that one."
+        stacked: true
+        showDivider: false
+
+        PanelLayouts {
+            width: parent.width
+            needs: layoutBuilder.needs
         }
 
     }
@@ -380,6 +418,8 @@ SettingCard {
             spacing: Theme.dp(8)
 
             Repeater {
+                id: ownTileRepeater
+
                 model: Prefs.systemOwnTileList
 
                 OwnTileEditor {

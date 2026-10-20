@@ -440,10 +440,11 @@ Singleton {
 
     // where each of keys sits, given the rows each needs. top to bottom, one
     // that would land on another (it grew, or another did) moves down past it;
-    // one never placed goes under all the rest
-    function systemGridPlace(keys, needs) {
+    // one never placed goes under all the rest. grid, when given, stands in
+    // for the saved one, so a layout not in use can be drawn too
+    function systemGridPlace(keys, needs, grid) {
         const need = needs || {};
-        const saved = root.systemGridSaved;
+        const saved = grid || root.systemGridSaved;
         const out = {};
         const placed = keys.filter((k) => {
             return !!saved[k];
@@ -534,6 +535,132 @@ Singleton {
             taken.push(r);
         }
         root.systemGrid = JSON.stringify(next);
+    }
+
+    // everything the control centre's layout is: which blocks, where, and
+    // what each holds. a saved layout, and each step undo goes back, is these
+    readonly property var systemLayoutKeys: ["systemBlocks", "systemGrid", "systemTiles", "systemTilesRadios", "systemBigTiles", "systemSliders", "systemInfo"]
+
+    function systemLayoutNow() {
+        const out = {};
+        for (const k of root.systemLayoutKeys)
+            out[k] = root[k];
+        return out;
+    }
+
+    function systemLayoutSame(a, b) {
+        return root.systemLayoutKeys.every((k) => {
+            return a[k] === b[k];
+        });
+    }
+
+    // only what a layout knows, and only when it is a value of the right kind
+    function systemLayoutApply(v) {
+        for (const k of root.systemLayoutKeys) {
+            if (v && v[k] !== undefined && typeof v[k] === typeof root[k] && root[k] !== v[k])
+                root[k] = v[k];
+
+        }
+    }
+
+    // the blocks a layout shows and where, without the legacy names
+    function systemLayoutGrid(v) {
+        try {
+            const g = JSON.parse(v.systemGrid || "{}");
+            return g && typeof g === "object" && !Array.isArray(g) ? g : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    // the user's own, as JSON [{ id, name, saved, layout }]
+    readonly property var systemLayoutList: {
+        let v = [];
+        try {
+            v = JSON.parse(root.systemLayouts || "[]");
+        } catch (e) {
+        }
+        return (Array.isArray(v) ? v : []).filter((l) => {
+            return l && l.id && l.layout && typeof l.layout === "object";
+        });
+    }
+
+    function systemLayoutNamed(name) {
+        const n = String(name).trim().toLowerCase();
+        return root.systemLayoutList.find((l) => {
+            return String(l.name).toLowerCase() === n;
+        }) || null;
+    }
+
+    // saving under a name already used updates that one
+    function saveSystemLayout(name) {
+        const n = String(name).trim();
+        if (n === "")
+            return ;
+
+        const was = root.systemLayoutNamed(n);
+        const entry = {
+            "id": was ? was.id : String(Date.now()),
+            "name": n,
+            "saved": Date.now(),
+            "layout": root.systemLayoutNow()
+        };
+        const list = root.systemLayoutList.filter((l) => {
+            return !was || l.id !== was.id;
+        });
+        root.systemLayouts = JSON.stringify(list.concat([entry]));
+    }
+
+    function deleteSystemLayout(id) {
+        const list = root.systemLayoutList.filter((l) => {
+            return l.id !== id;
+        });
+        root.systemLayouts = list.length === 0 ? "" : JSON.stringify(list);
+    }
+
+    function applySystemLayout(id) {
+        const l = root.systemLayoutList.find((x) => {
+            return x.id === id;
+        });
+        if (l)
+            root.systemLayoutApply(l.layout);
+
+    }
+
+    // ready-made arrangements of the blocks that are on: what each holds is left alone
+    readonly property var systemLayoutPresets: [
+        { "id": "column", "name": "Column", "blurb": "One under another, six tiles wide" },
+        { "id": "pair", "name": "Two columns", "blurb": "Sliders and tiles, then media and gauges beside them" },
+        { "id": "wide", "name": "Wide", "blurb": "Standing sliders, the tiles, then media and gauges" }
+    ]
+
+    function systemPresetGrid(id) {
+        if (id === "pair")
+            return {
+                "sliders": { "x": 0, "y": 0, "w": 6, "lie": true },
+                "bigtiles": { "x": 0, "y": 1, "w": 6 },
+                "tiles": { "x": 0, "y": 2, "w": 6 },
+                "media": { "x": 6, "y": 0, "w": 6 },
+                "gauges": { "x": 6, "y": 1, "w": 6 }
+            };
+
+        if (id === "wide") {
+            const sw = root.systemGridMinW("sliders", false);
+            const rw = Math.min(6, root.systemGridCols - sw - 6);
+            return {
+                "sliders": { "x": 0, "y": 0, "w": sw, "lie": false },
+                "bigtiles": { "x": sw, "y": 0, "w": 6 },
+                "tiles": { "x": sw, "y": 1, "w": 6 },
+                "media": { "x": sw + 6, "y": 0, "w": rw },
+                "gauges": { "x": sw + 6, "y": 1, "w": rw }
+            };
+        }
+        return {};
+    }
+
+    function applySystemPreset(id) {
+        const g = root.systemPresetGrid(id);
+        root.systemGrid = Object.keys(g).length === 0 ? "" : JSON.stringify(g);
     }
 
     // a comma list kept in a pref, as the keys a catalogue knows, once each
@@ -857,6 +984,7 @@ Singleton {
     property alias systemGrid: s.systemGrid
     property alias systemBlockCards: s.systemBlockCards
     property alias systemOwnTiles: s.systemOwnTiles
+    property alias systemLayouts: s.systemLayouts
     property alias systemHeaderButtons: s.systemHeaderButtons
     property alias barLayout: s.barLayout
     property alias barJoins: s.barJoins
@@ -2136,6 +2264,9 @@ Singleton {
             // tiles that run the user's commands, as a JSON list of
             // { id, name, icon, on, off, status }
             property string systemOwnTiles: ""
+            // control centre layouts the user saved, as JSON; kept out of
+            // the defaults, so no reset throws them away
+            property string systemLayouts: ""
             property string systemHeaderButtons: "edit,settings,lock,power"
             property string barLayout: "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}"
             property string barJoins: "[]"

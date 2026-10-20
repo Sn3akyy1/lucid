@@ -8,10 +8,11 @@ import qs.lucidui
 // panel's own CcBlock with made-up readings, drawn full size and the whole
 // grid scaled down to fit, so it reads as the panel does. a block is dragged
 // by anything but its pieces, or by its name, to any cell and stretched by any
-// edge or corner; the bar above names each, with its + to put pieces back, its
-// eye to hide it and, for the sliders, whether they stand or lie. inside a
-// block the pieces are dragged into order and taken out with their cross; a
-// tile is dragged, or tapped, across to the other kind of tile
+// edge or corner; the shelf above adds blocks and pieces and takes back what is
+// dragged onto it. inside a block the pieces are dragged into order and taken
+// out with their cross; a tile is dragged, or tapped, across to the other kind
+// of tile. a right click offers what a block or piece can do, a picked block
+// moves and stretches with the keys, and every change can be undone
 Item {
     id: builder
 
@@ -57,6 +58,24 @@ Item {
     property var drop: null
     // something from the grid is over the shelf, to be taken out
     property bool overShelf: false
+    // a block being stretched by an edge or corner, for its size beside it
+    property bool sizing: false
+    // the block a click or Tab picked, which the arrows move and stretch
+    property string selected: ""
+    // a right click's menu: the block, the piece (or ""), where, and what it offers
+    property var menu: null
+    // what the shelf's tiles page is narrowed to
+    property string query: ""
+    // a line after something came off the panel, with undo beside it
+    property string notice: ""
+    // the layout before each change, to step back through; what undo stepped
+    // back from, to step forward again; and the layout as it was last seen
+    property var undoStack: []
+    property var redoStack: []
+    property var last: null
+    // one of the user's own tiles, to be brought up where it is edited
+    signal editOwnTile(string key)
+
     readonly property var shelfTabs: [
         { "key": "blocks", "label": "Blocks" },
         { "key": "tiles", "label": "Tiles" },
@@ -79,7 +98,11 @@ Item {
 
         const block = tab === "tiles" ? "tiles" : tab;
         const kind = tab === "tiles" ? "tile" : (tab === "sliders" ? "slider" : "gauge");
-        return builder.spareOf(block).map((k) => {
+        const q = tab === "tiles" ? builder.query.trim().toLowerCase() : "";
+        return builder.spareOf(block).filter((k) => {
+            const e = builder.entryOf(block, k);
+            return q === "" || k.indexOf(q) !== -1 || (!!e && e.name.toLowerCase().indexOf(q) !== -1);
+        }).map((k) => {
             const e = builder.entryOf(block, k) || {
                 "icon": "",
                 "name": k
@@ -94,7 +117,11 @@ Item {
         });
     }
 
+    // what is left to add, whatever the search narrows the page to
     function shelfCount(tab) {
+        if (tab !== "blocks")
+            return builder.spareOf(tab).length;
+
         return builder.shelfItems(tab).filter((i) => {
             return !i.on;
         }).length;
@@ -332,10 +359,408 @@ Item {
         Prefs.systemBlocks = l.join(",");
     }
 
+    function blockName(key) {
+        return (Prefs.systemBlockCatalog.find((b) => {
+            return b.key === key;
+        }) || {
+            "name": key
+        }).name;
+    }
+
+    // taking things off says so, with undo a click away
+    function tell(text) {
+        builder.notice = text;
+        noticeTimer.restart();
+    }
+
+    function hideBlock(key) {
+        if (Prefs.systemBlockKeys.length < 2)
+            return ;
+
+        builder.setBlockShown(key, false);
+        if (builder.selected === key)
+            builder.selected = "";
+
+        builder.tell(builder.blockName(key) + " is off the panel");
+    }
+
+    function removePiece(block, key) {
+        const e = builder.entryOf(block, key);
+        builder.setKeys(block, builder.keysOf(block).filter((k) => {
+            return k !== key;
+        }));
+        builder.tell((e ? e.name : key) + " is off the panel");
+    }
+
+    // a change is kept once the prefs settle, so a drag, or a turn that
+    // writes twice, is one step back
+    function record() {
+        settle.stop();
+        const now = Prefs.systemLayoutNow();
+        if (builder.last && !Prefs.systemLayoutSame(now, builder.last)) {
+            builder.undoStack = builder.undoStack.slice(-29).concat([builder.last]);
+            builder.redoStack = [];
+        }
+        builder.last = now;
+    }
+
+    function undo() {
+        builder.record();
+        if (builder.undoStack.length === 0)
+            return ;
+
+        const to = builder.undoStack[builder.undoStack.length - 1];
+        builder.undoStack = builder.undoStack.slice(0, -1);
+        builder.redoStack = builder.redoStack.concat([builder.last]);
+        builder.last = to;
+        builder.notice = "";
+        Prefs.systemLayoutApply(to);
+    }
+
+    function redo() {
+        builder.record();
+        if (builder.redoStack.length === 0)
+            return ;
+
+        const to = builder.redoStack[builder.redoStack.length - 1];
+        builder.redoStack = builder.redoStack.slice(0, -1);
+        builder.undoStack = builder.undoStack.concat([builder.last]);
+        builder.last = to;
+        builder.notice = "";
+        Prefs.systemLayoutApply(to);
+    }
+
+    // the blocks top to bottom, then left to right, as they read
+    function readingOrder() {
+        return Prefs.systemBlockKeys.filter((k) => {
+            return !!builder.place[k];
+        }).sort((a, b) => {
+            return builder.place[a].y - builder.place[b].y || builder.place[a].x - builder.place[b].x;
+        });
+    }
+
+    // every block as high as it can go, and the lot against the left edge;
+    // null when they are already
+    readonly property var tidied: {
+        const keys = builder.readingOrder();
+        const left = keys.reduce((n, k) => {
+            return Math.min(n, builder.place[k].x);
+        }, builder.boardCols);
+        const done = [];
+        let moved = false;
+        for (const k of keys) {
+            const r = Object.assign({}, builder.place[k]);
+            r.x -= left;
+            const clear = (y) => {
+                return !done.some((t) => {
+                    return Prefs.systemGridOverlap(Object.assign({}, r, {
+                        "y": y
+                    }), t);
+                });
+            };
+            while (r.y > 0 && clear(r.y - 1))
+                r.y--;
+            moved = moved || r.x !== builder.place[k].x || r.y !== builder.place[k].y;
+            done.push(Object.assign({
+                "key": k
+            }, r));
+        }
+        return moved ? done : null;
+    }
+
+    function tidy() {
+        if (!builder.tidied)
+            return ;
+
+        const next = Object.assign({}, Prefs.systemGridSaved);
+        for (const r of builder.tidied)
+            next[r.key] = {
+            "x": r.x,
+            "y": r.y,
+            "w": r.w,
+            "h": Prefs.systemGridOwnH(r.key),
+            "lie": r.lie
+        };
+        Prefs.systemGrid = JSON.stringify(next);
+    }
+
+    function cardOf(key) {
+        for (let i = 0; i < boardRepeater.count; i++) {
+            const it = boardRepeater.itemAt(i);
+            if (it && it.blockKey === key)
+                return it;
+
+        }
+        return null;
+    }
+
+    // the picked block a column or a row over; one it lands on trades places
+    function nudge(dx, dy) {
+        const c = builder.place[builder.selected];
+        if (!c)
+            return ;
+
+        const x = Math.max(0, Math.min(builder.boardCols - c.w, c.x + dx));
+        const y = Math.max(0, c.y + dy);
+        if (x !== c.x || y !== c.y)
+            Prefs.systemGridSet(builder.selected, {
+            "x": x,
+            "y": y
+        }, builder.needs);
+
+    }
+
+    // the picked block a step wider or narrower (in widths it can take), or a
+    // row taller or shorter, where there is room
+    function stretch(dw, dh) {
+        const key = builder.selected;
+        const c = builder.place[key];
+        const card = builder.cardOf(key);
+        if (!c || !card)
+            return ;
+
+        const step = key === "bigtiles" ? 3 : (key === "sliders" && !c.lie ? Prefs.systemGridMinW(key, false) : 1);
+        const w = dw === 0 ? c.w : Prefs.systemGridSnapW(key, c.lie, c.w + dw * step);
+        const h = Math.max(card.needRows, c.h + dh);
+        const want = {
+            "x": c.x,
+            "y": c.y,
+            "w": w,
+            "h": h
+        };
+        if ((w === c.w && h === c.h) || c.x + w > builder.boardCols || !builder.freeFor(key, want))
+            return ;
+
+        const spot = {
+            "w": w
+        };
+        if (dh !== 0)
+            spot.h = h;
+
+        Prefs.systemGridSet(key, spot, builder.needs);
+    }
+
+    // back to six columns, and only as tall as what it holds
+    function resetSize(key) {
+        const c = builder.place[key];
+        if (!c)
+            return ;
+
+        const need = {};
+        need[key] = 1;
+        Prefs.systemGridSet(key, {
+            "w": Prefs.systemGridSnapW(key, c.lie, 6),
+            "h": 1
+        }, Object.assign({}, builder.needs, need));
+    }
+
+    // what a right click on a block offers, and on a piece of it first what the piece can do
+    function openMenu(card, piece, p) {
+        const block = card.blockKey;
+        const items = [];
+        const key = piece >= 0 ? card.order[piece] : "";
+        if (key !== "") {
+            if (block === "tiles")
+                items.push({
+                "act": "big",
+                "icon": "dashboard",
+                "label": "Make it big"
+            });
+            else if (block === "bigtiles")
+                items.push({
+                "act": "small",
+                "icon": "apps",
+                "label": "Make it small"
+            });
+            if (Prefs.systemOwnTile(key))
+                items.push({
+                "act": "edit",
+                "icon": "edit",
+                "label": "Edit this tile"
+            });
+
+            if (builder.isTiles(block) || card.order.length > 1)
+                items.push({
+                "act": "off",
+                "icon": "close",
+                "label": "Take it off"
+            });
+
+            if (items.length > 0)
+                items.push({
+                "act": ""
+            });
+
+        }
+        if (block === "sliders")
+            items.push({
+            "act": "turn",
+            "icon": builder.slidersStand ? "width" : "height",
+            "label": builder.slidersStand ? "Lay them down" : "Stand them up"
+        });
+
+        items.push({
+            "act": "size",
+            "icon": "restart_alt",
+            "label": "Reset its size"
+        });
+        if (Prefs.systemBlockKeys.length > 1)
+            items.push({
+            "act": "hide",
+            "icon": "visibility_off",
+            "label": "Hide " + builder.blockName(block)
+        });
+
+        builder.selected = block;
+        builder.menu = {
+            "block": block,
+            "piece": key,
+            "x": p.x,
+            "y": p.y,
+            "items": items
+        };
+    }
+
+    function menuAct(act) {
+        const m = builder.menu;
+        builder.menu = null;
+        if (!m)
+            return ;
+
+        if (act === "big")
+            builder.moveTile(m.piece, "bigtiles", -1);
+        else if (act === "small")
+            builder.moveTile(m.piece, "tiles", -1);
+        else if (act === "edit")
+            builder.editOwnTile(m.piece);
+        else if (act === "off")
+            builder.removePiece(m.block, m.piece);
+        else if (act === "turn")
+            builder.turnSliders();
+        else if (act === "size")
+            builder.resetSize(m.block);
+        else if (act === "hide")
+            builder.hideBlock(m.block);
+    }
+
     width: parent ? parent.width : 0
     implicitHeight: boardWrap.y + boardWrap.height
-    // the three blocks there were once are written out as the five
-    Component.onCompleted: Prefs.systemMigrate()
+    activeFocusOnTab: true
+    onActiveFocusChanged: {
+        if (!builder.activeFocus) {
+            builder.selected = "";
+            builder.menu = null;
+        }
+    }
+    // the three blocks there were once are written out as the five, and the
+    // layout from here on is what undo goes back to
+    Component.onCompleted: {
+        Prefs.systemMigrate();
+        builder.last = Prefs.systemLayoutNow();
+    }
+    // ctrl+z and ctrl+shift+z (or ctrl+y) step back and forth; tab picks the
+    // blocks in turn, the arrows move the one picked, with shift they
+    // stretch it, and delete hides it
+    Keys.onPressed: (e) => {
+        const ctrl = (e.modifiers & Qt.ControlModifier) !== 0;
+        const shift = (e.modifiers & Qt.ShiftModifier) !== 0;
+        e.accepted = true;
+        if (ctrl && e.key === Qt.Key_Z) {
+            if (shift)
+                builder.redo();
+            else
+                builder.undo();
+            return ;
+        }
+        if (ctrl && e.key === Qt.Key_Y) {
+            builder.redo();
+            return ;
+        }
+        if (e.key === Qt.Key_Escape && (builder.menu || builder.selected !== "")) {
+            if (builder.menu)
+                builder.menu = null;
+            else
+                builder.selected = "";
+            return ;
+        }
+        if (e.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) {
+            e.accepted = false;
+            return ;
+        }
+        if (e.key === Qt.Key_Tab || e.key === Qt.Key_Backtab) {
+            const order = builder.readingOrder();
+            const i = order.indexOf(builder.selected);
+            const next = e.key === Qt.Key_Tab ? (i < 0 ? 0 : i + 1) : (i < 0 ? order.length - 1 : i - 1);
+            builder.menu = null;
+            builder.selected = next >= 0 && next < order.length ? order[next] : "";
+            // past the last one, focus moves on as tab always does
+            e.accepted = builder.selected !== "";
+            return ;
+        }
+        if (builder.selected === "") {
+            e.accepted = false;
+            return ;
+        }
+        const dx = e.key === Qt.Key_Left ? -1 : (e.key === Qt.Key_Right ? 1 : 0);
+        const dy = e.key === Qt.Key_Up ? -1 : (e.key === Qt.Key_Down ? 1 : 0);
+        if (dx !== 0 || dy !== 0) {
+            if (shift)
+                builder.stretch(dx, dy);
+            else
+                builder.nudge(dx, dy);
+        } else if (e.key === Qt.Key_Delete || e.key === Qt.Key_Backspace) {
+            builder.hideBlock(builder.selected);
+        } else {
+            e.accepted = false;
+        }
+    }
+
+    Timer {
+        id: settle
+
+        interval: 250
+        onTriggered: builder.record()
+    }
+
+    Timer {
+        id: noticeTimer
+
+        interval: 6000
+        onTriggered: builder.notice = ""
+    }
+
+    // every change to the layout, from here or anywhere, is a step undo can take back
+    Connections {
+        function onSystemBlocksChanged() {
+            settle.restart();
+        }
+
+        function onSystemGridChanged() {
+            settle.restart();
+        }
+
+        function onSystemTilesChanged() {
+            settle.restart();
+        }
+
+        function onSystemTilesRadiosChanged() {
+            settle.restart();
+        }
+
+        function onSystemBigTilesChanged() {
+            settle.restart();
+        }
+
+        function onSystemSlidersChanged() {
+            settle.restart();
+        }
+
+        function onSystemInfoChanged() {
+            settle.restart();
+        }
+
+        target: Prefs
+    }
 
     // made-up readings, so the blocks show as they would in the panel
     QtObject {
@@ -492,11 +917,32 @@ Item {
                         kind: "filter"
                         text: modelData.label + (count > 0 ? "  " + count : "")
                         selected: builder.tab === modelData.key
-                        onClicked: builder.tab = modelData.key
+                        onClicked: {
+                            builder.tab = modelData.key;
+                            builder.query = "";
+                            shelfSearch.clear();
+                        }
                     }
 
                 }
 
+            }
+
+            // the tiles are many, so their page can be searched
+            M3TextField {
+                id: shelfSearch
+
+                visible: builder.tab === "tiles"
+                width: Math.min(parent.width, Theme.dp(320))
+                placeholder: "Search the tiles"
+                commitOnBlur: false
+                onEdited: (v) => {
+                    return builder.query = v;
+                }
+                onCancelled: {
+                    shelfSearch.clear();
+                    builder.query = "";
+                }
             }
 
             Flow {
@@ -524,7 +970,80 @@ Item {
                 visible: shelfFlow.items.length === 0
                 role: "bodySmall"
                 color: Theme.subtextDim
-                text: "All of them are on the panel already."
+                text: builder.tab === "tiles" && builder.query.trim() !== "" ? "No tile left to add goes by “" + builder.query.trim() + "”." : "All of them are on the panel already."
+            }
+
+        }
+
+    }
+
+    // undo and redo, tidying up, and a word after something came off
+    Item {
+        id: toolbar
+
+        y: shelf.height + Theme.dp(12)
+        width: parent.width
+        height: Theme.dp(40)
+
+        Row {
+            id: tools
+
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.dp(4)
+
+            M3IconButton {
+                anchors.verticalCenter: parent.verticalCenter
+                size: Theme.dp(36)
+                iconPath: "undo"
+                enabled: builder.undoStack.length > 0 || settle.running
+                onClicked: builder.undo()
+            }
+
+            M3IconButton {
+                anchors.verticalCenter: parent.verticalCenter
+                size: Theme.dp(36)
+                iconPath: "redo"
+                enabled: builder.redoStack.length > 0
+                onClicked: builder.redo()
+            }
+
+            Item {
+                width: Theme.dp(4)
+                height: 1
+            }
+
+            // every block as high as it goes, the lot against the left edge
+            M3Button {
+                anchors.verticalCenter: parent.verticalCenter
+                variant: "tonal"
+                text: "Tidy up"
+                iconPath: "vertical_align_top"
+                enabled: builder.tidied !== null
+                onClicked: builder.tidy()
+            }
+
+        }
+
+        Row {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.dp(4)
+            visible: builder.notice !== ""
+
+            LText {
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.min(implicitWidth, toolbar.width - tools.width - Theme.dp(110))
+                role: "bodyMedium"
+                color: Theme.subtext
+                elide: Text.ElideRight
+                text: builder.notice
+            }
+
+            M3Button {
+                anchors.verticalCenter: parent.verticalCenter
+                variant: "text"
+                text: "Undo"
+                onClicked: builder.undo()
             }
 
         }
@@ -535,7 +1054,7 @@ Item {
     Item {
         id: boardWrap
 
-        y: shelf.height + Theme.dp(12)
+        y: toolbar.y + toolbar.height + Theme.dp(8)
         width: Math.round(board.width * builder.k)
         height: Math.round(board.height * builder.k)
         x: Math.max(0, Math.round((builder.width - width) / 2))
@@ -548,7 +1067,18 @@ Item {
             scale: builder.k
             transformOrigin: Item.TopLeft
 
-            // a faint stripe for each column
+            // a press on no block lets go of the one picked, and takes the keys
+            MouseArea {
+                anchors.fill: parent
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onPressed: {
+                    builder.forceActiveFocus();
+                    builder.selected = "";
+                    builder.menu = null;
+                }
+            }
+
+            // a faint stripe for each column, plainer while something is carried or stretched
             Repeater {
                 model: builder.boardCols
 
@@ -559,13 +1089,15 @@ Item {
                     width: builder.unit
                     height: board.height
                     radius: Theme.dp(8)
-                    color: Theme.alpha(Theme.text, 0.035)
+                    color: Theme.alpha(Theme.text, builder.target ? 0.07 : 0.035)
                 }
 
             }
 
             // where the block being carried or stretched would go
             Rectangle {
+                id: targetBox
+
                 readonly property rect box: builder.target ? builder.boxOf(builder.target) : Qt.rect(0, 0, 0, 0)
 
                 visible: builder.target !== null
@@ -577,6 +1109,32 @@ Item {
                 color: Theme.alpha(Theme.accent, 0.12)
                 border.width: Theme.dp(2)
                 border.color: Theme.accent
+            }
+
+            // and, while it is stretched, how big, over the block itself;
+            // drawn at the size it reads, whatever the grid is scaled to
+            Rectangle {
+                visible: builder.sizing && builder.target !== null
+                z: 7
+                x: targetBox.x + (targetBox.width - width) / 2
+                y: targetBox.y + (targetBox.height - height) / 2
+                scale: 1 / builder.k
+                width: sizeText.implicitWidth + Theme.dp(20)
+                height: Theme.dp(28)
+                radius: height / 2
+                color: Theme.accent
+
+                Text {
+                    id: sizeText
+
+                    anchors.centerIn: parent
+                    text: builder.target ? builder.target.w + (builder.target.w === 1 ? " column" : " columns") + " × " + builder.target.h + (builder.target.h === 1 ? " row" : " rows") : ""
+                    color: Theme.fgAccent
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontLabelLg
+                    font.weight: Font.DemiBold
+                }
+
             }
 
             Repeater {
@@ -640,6 +1198,102 @@ Item {
 
     }
 
+    // a press anywhere off the menu closes it
+    MouseArea {
+        visible: builder.menu !== null
+        anchors.fill: parent
+        z: 29
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onPressed: builder.menu = null
+    }
+
+    // a right click's menu, kept inside the builder
+    Rectangle {
+        id: menuBox
+
+        visible: builder.menu !== null
+        z: 30
+        width: Theme.dp(220)
+        height: menuCol.implicitHeight + Theme.dp(12)
+        x: builder.menu ? Math.max(0, Math.min(builder.width - width, builder.menu.x)) : 0
+        y: builder.menu ? Math.max(0, Math.min(builder.height - height, builder.menu.y)) : 0
+        radius: Theme.radiusMd
+        color: Theme.withBlur(Theme.surfaceHighest)
+        border.width: 1
+        border.color: Theme.outline
+
+        Column {
+            id: menuCol
+
+            x: Theme.dp(6)
+            y: Theme.dp(6)
+            width: parent.width - Theme.dp(12)
+
+            Repeater {
+                model: builder.menu ? builder.menu.items : []
+
+                Item {
+                    id: menuRow
+
+                    required property var modelData
+
+                    width: menuCol.width
+                    height: menuRow.modelData.act === "" ? Theme.dp(9) : Theme.dp(38)
+
+                    // a line between what the piece can do and what the block can
+                    Rectangle {
+                        visible: menuRow.modelData.act === ""
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width
+                        height: 1
+                        color: Theme.outline
+                    }
+
+                    Rectangle {
+                        visible: menuRow.modelData.act !== ""
+                        anchors.fill: parent
+                        radius: Theme.radiusSm
+                        color: menuArea.containsMouse ? Theme.alpha(Theme.text, 0.08) : "transparent"
+
+                        Row {
+                            anchors.verticalCenter: parent.verticalCenter
+                            x: Theme.dp(10)
+                            spacing: Theme.dp(12)
+
+                            Icon {
+                                anchors.verticalCenter: parent.verticalCenter
+                                name: menuRow.modelData.icon || ""
+                                size: Theme.dp(18)
+                                color: Theme.subtext
+                            }
+
+                            LText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                role: "labelLarge"
+                                text: menuRow.modelData.label || ""
+                            }
+
+                        }
+
+                        MouseArea {
+                            id: menuArea
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: builder.menuAct(menuRow.modelData.act)
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
     // a block on the grid, the panel's own, filling its cells. dragged by
     // anything but its pieces it moves; its edges and corners stretch it; its
     // pieces are dragged into order, a tile across to the other tile block
@@ -656,6 +1310,8 @@ Item {
         readonly property bool editable: card.blockKey !== "media"
         readonly property int needRows: Math.max(1, Math.ceil((view.implicitHeight + builder.gridGap) / builder.stepY))
         readonly property bool busy: area.mode === 1 || tagArea.pressed || card.sizing
+        // picked by a click or tab, for the keys
+        readonly property bool picked: builder.selected === card.blockKey && builder.activeFocus
         property bool sizing: false
         // the piece the pointer is on, and the one showing its cross
         readonly property int hovered: hover.hovered && builder.ghost === null && card.editable ? view.pieceAt(hover.point.position.x, hover.point.position.y) : -1
@@ -692,7 +1348,7 @@ Item {
             builder.target = null;
             if (builder.overShelf) {
                 builder.overShelf = false;
-                builder.setBlockShown(card.blockKey, false);
+                builder.hideBlock(card.blockKey);
                 return ;
             }
             if (t && (t.x !== card.cell.x || t.y !== card.cell.y))
@@ -750,6 +1406,7 @@ Item {
 
         function sizeEnd() {
             card.sizing = false;
+            builder.sizing = false;
             const t = builder.target;
             builder.target = null;
             const c = card.cell;
@@ -809,15 +1466,15 @@ Item {
             cards: Prefs.systemBlockCards
         }
 
-        // and their outline, over what it holds
+        // and their outline, over what it holds; thicker on the one picked
         Rectangle {
-            readonly property bool lit: card.busy || hover.hovered || (!!builder.drop && builder.drop.card === card)
+            readonly property bool lit: card.busy || hover.hovered || card.picked || (!!builder.drop && builder.drop.card === card)
 
             anchors.fill: parent
             z: 2
             radius: Theme.radiusMd
             color: "transparent"
-            border.width: lit ? Theme.dp(2) : Theme.dp(1)
+            border.width: card.picked ? Theme.dp(3) : (lit ? Theme.dp(2) : Theme.dp(1))
             border.color: lit ? Theme.accent : Theme.alpha(Theme.text, 0.1)
         }
 
@@ -834,8 +1491,17 @@ Item {
             anchors.fill: parent
             z: 1
             preventStealing: true
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
             cursorShape: area.mode === 1 || area.mode === 3 ? Qt.ClosedHandCursor : (card.hovered >= 0 ? Qt.PointingHandCursor : Qt.OpenHandCursor)
             onPressed: (mouse) => {
+                builder.forceActiveFocus();
+                builder.menu = null;
+                if (mouse.button === Qt.RightButton) {
+                    area.mode = 0;
+                    builder.openMenu(card, card.editable ? view.pieceAt(mouse.x, mouse.y) : -1, mapToItem(builder, mouse.x, mouse.y));
+                    return ;
+                }
+                builder.selected = card.blockKey;
                 area.start = Qt.point(mouse.x, mouse.y);
                 area.from = card.editable ? view.pieceAt(mouse.x, mouse.y) : -1;
                 if (area.from >= 0) {
@@ -911,9 +1577,7 @@ Item {
                     builder.overShelf = false;
                     card.liveOrder = null;
                     if (out)
-                        builder.setKeys(card.blockKey, builder.keysOf(card.blockKey).filter((k) => {
-                        return k !== key;
-                    }));
+                        builder.removePiece(card.blockKey, key);
                     else if (d)
                         builder.moveTile(key, d.card.blockKey, d.index);
                     else
@@ -970,17 +1634,51 @@ Item {
                 onClicked: {
                     const key = card.order[card.crossAt];
                     card.crossAt = -1;
-                    builder.setKeys(card.blockKey, card.order.filter((k) => {
-                        return k !== key;
-                    }));
+                    builder.removePiece(card.blockKey, key);
                 }
             }
 
         }
 
-        // its name, with a handle, while the pointer is on the block
+        // and a pencil on one of the user's own tiles, to go and edit it
         Rectangle {
-            visible: hover.hovered || card.busy
+            readonly property rect pb: card.crossAt >= 0 ? view.pieceBox(card.crossAt) : Qt.rect(0, 0, 0, 0)
+            readonly property string key: card.crossAt >= 0 && builder.isTiles(card.blockKey) ? (card.order[card.crossAt] || "") : ""
+
+            visible: key !== "" && Prefs.systemOwnTile(key) !== null && area.mode === 0
+            z: 3
+            width: Theme.dp(22)
+            height: Theme.dp(22)
+            radius: width / 2
+            x: pb.x + Theme.dp(2)
+            y: pb.y + Theme.dp(2)
+            color: Theme.accent
+
+            Icon {
+                anchors.centerIn: parent
+                name: "edit"
+                size: Theme.dp(14)
+                color: Theme.fgAccent
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                anchors.margins: -Theme.dp(3)
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onExited: {
+                    if (card.hovered < 0)
+                        card.crossAt = -1;
+
+                }
+                onClicked: builder.editOwnTile(parent.key)
+            }
+
+        }
+
+        // its name, with a handle, while the pointer is on the block or it is picked
+        Rectangle {
+            visible: hover.hovered || card.busy || card.picked
             x: Theme.dp(6)
             y: Theme.dp(6)
             z: 3
@@ -1027,7 +1725,7 @@ Item {
                 TagButton {
                     visible: Prefs.systemBlockKeys.length > 1
                     icon: "visibility_off"
-                    onClicked: builder.setBlockShown(card.blockKey, false)
+                    onClicked: builder.hideBlock(card.blockKey)
                 }
 
             }
@@ -1040,7 +1738,10 @@ Item {
                 cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
                 preventStealing: true
                 onPressed: (mouse) => {
-                    return card.moveFrom(mapToItem(board, mouse.x, mouse.y));
+                    builder.forceActiveFocus();
+                    builder.menu = null;
+                    builder.selected = card.blockKey;
+                    card.moveFrom(mapToItem(board, mouse.x, mouse.y));
                 }
                 onPositionChanged: (mouse) => {
                     if (pressed)
@@ -1064,7 +1765,7 @@ Item {
 
             Rectangle {
                 required property var modelData
-                readonly property bool corner: (modelData.l || modelData.r) && (modelData.t || modelData.b)
+                readonly property bool corner: !!((modelData.l || modelData.r) && (modelData.t || modelData.b))
                 readonly property real len: corner ? Theme.dp(10) : Theme.dp(24)
 
                 visible: hover.hovered || card.sizing
@@ -1094,7 +1795,13 @@ Item {
                 y: modelData.t ? -e / 2 : (modelData.b ? card.height - e / 2 : e)
                 preventStealing: true
                 cursorShape: (modelData.l || modelData.r) && (modelData.t || modelData.b) ? ((!!modelData.l === !!modelData.t) ? Qt.SizeFDiagCursor : Qt.SizeBDiagCursor) : (modelData.l || modelData.r ? Qt.SizeHorCursor : Qt.SizeVerCursor)
-                onPressed: card.sizing = true
+                onPressed: {
+                    builder.forceActiveFocus();
+                    builder.menu = null;
+                    builder.selected = card.blockKey;
+                    card.sizing = true;
+                    builder.sizing = true;
+                }
                 onPositionChanged: (mouse) => {
                     if (pressed)
                         card.sizeTo(mapToItem(board, mouse.x, mouse.y), modelData);
@@ -1103,6 +1810,7 @@ Item {
                 onReleased: card.sizeEnd()
                 onCanceled: {
                     card.sizing = false;
+                    builder.sizing = false;
                     builder.target = null;
                 }
             }

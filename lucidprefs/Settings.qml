@@ -382,6 +382,8 @@ FloatingWindow {
                 Prefs.removeBuiltinTheme(action.substring(11));
             else if (action.indexOf("widget-preset:") === 0)
                 Widgets.deletePreset(action.substring(14));
+            else if (action.indexOf("cc-layout:") === 0)
+                Prefs.deleteSystemLayout(action.substring(10));
             else if (action.indexOf("storage-clean:") === 0)
                 Storage.clean(action.substring(14));
             else if (action.indexOf("storage-trash:") === 0)
@@ -550,6 +552,8 @@ FloatingWindow {
 
     Connections {
         function onResetConfirmRequested(title, body, confirmLabel, action) {
+            // enter and escape answer the dialog, whatever held the keys before it
+            focusSink.forceActiveFocus();
             confirmDialog.ask(title, body, confirmLabel, action);
         }
 
