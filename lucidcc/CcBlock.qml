@@ -36,6 +36,10 @@ Item {
     // a card behind the tiles and the sliders too; media and gauges always have one
     property bool cards: false
     readonly property bool carded: block.kind === "media" || block.kind === "gauges" || block.cards
+    // the small tile whose name shows, kept over its neighbours
+    property string tipKey: ""
+    z: block.tipKey !== "" ? 1 : 0
+
     readonly property real pad: block.carded && block.kind !== "media" ? Theme.dp(12) : 0
     readonly property bool ease: !!block.host && !!block.host.expanded
     // what its pieces need down, before it is given more
@@ -138,6 +142,8 @@ Item {
                     id: slot
 
                     required property string modelData
+
+                    z: block.tipKey === slot.modelData ? 1 : 0
                     readonly property bool hasPage: block.host.tilePages.indexOf(slot.modelData) !== -1
 
                     width: flow.pieceW
@@ -168,6 +174,14 @@ Item {
                         hasMore: slot.hasPage
                         square: block.look === "square"
                         labelled: block.look !== "icons"
+                        // above it is the panel's edge on the top row of a block at the top
+                        tipUp: block.y + flow.y + slot.y >= Theme.dp(28)
+                        onTipShownChanged: {
+                            if (tipShown)
+                                block.tipKey = slot.modelData;
+                            else if (block.tipKey === slot.modelData)
+                                block.tipKey = "";
+                        }
                         shape: block.shapeOf(slot.modelData)
                         onToggled: block.host.tileAct(slot.modelData)
                         onMore: block.host.showView(slot.modelData)

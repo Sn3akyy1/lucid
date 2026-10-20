@@ -18,6 +18,9 @@ Item {
     property bool square: false
     // its name under it; without, the name shows on hover
     property bool labelled: true
+    // that name over the tile, or under it when there is no room above
+    property bool tipUp: true
+    readonly property bool tipShown: !st.labelled && tap.containsMouse
 
     signal toggled()
     signal more()
@@ -113,10 +116,11 @@ Item {
 
     // its name, while the pointer is on a tile that does not show it
     Rectangle {
-        visible: !st.labelled && tap.containsMouse
+        visible: st.tipShown
         z: 10
-        anchors.top: sq.bottom
-        anchors.topMargin: Theme.dp(4)
+        anchors.bottom: st.tipUp ? sq.top : undefined
+        anchors.top: st.tipUp ? undefined : sq.bottom
+        anchors.margins: Theme.dp(4)
         anchors.horizontalCenter: sq.horizontalCenter
         width: tipText.implicitWidth + Theme.dp(16)
         height: Theme.dp(24)
