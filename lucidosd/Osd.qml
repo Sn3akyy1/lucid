@@ -43,8 +43,17 @@ PanelWindow {
     // a fine-grained level keeps the level track
     readonly property bool kbdSegmented: osdWindow.kbdMax > 0 && osdWindow.kbdMax <= 6
     // notch style: the card sits flush on the bottom edge and rises out of it,
-    // with the dock's concave corners at its sides
-    readonly property bool notch: Prefs.osdNotch
+    // with the dock's concave corners at its sides. a dock on that edge steps
+    // down while it shows; one held up by a menu or a drag keeps the edge, and
+    // the card floats above it instead
+    readonly property bool notch: Prefs.osdNotch && !osdWindow.dockStays
+    // what the dock reads to step aside
+    readonly property bool holdsEdge: osdWindow.notch && osdWindow.cardVisible
+    // shell.qml hands the dock over
+    property var dockWindow: null
+    // taken as the card comes up: switching styles while it is shown would
+    // make it jump
+    property bool dockStays: false
     readonly property int notchFlare: osdWindow.notch ? Theme.dp(Prefs.dockNotchFlare) : 0
 
     // m3 shape, spacing and slider metrics, shared with lucidbar/System.qml
@@ -133,6 +142,9 @@ PanelWindow {
     // the params have to be set before the flag flips: a Behavior reads the
     // previous value of anything its animation binds to
     function setCardVisible(v) {
+        if (v && !osdWindow.cardVisible)
+            osdWindow.dockStays = !!osdWindow.dockWindow && osdWindow.dockWindow.dockBusy && osdWindow.dockWindow.screen === osdWindow.screen;
+
         cardFade.duration = v ? Theme.durEnter : Theme.durExit;
         cardFade.easing.bezierCurve = v ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
         cardRise.duration = v ? Theme.durEnter : Theme.durExit;
@@ -249,6 +261,9 @@ PanelWindow {
 
     color: "transparent"
     exclusiveZone: 0
+    // the notch belongs on the edge itself, under the dock's reserved strip;
+    // the floating card keeps clear of it
+    exclusionMode: osdWindow.notch ? ExclusionMode.Ignore : ExclusionMode.Normal
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     // remapped with the rest of the shell when displays change

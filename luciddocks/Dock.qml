@@ -18,8 +18,12 @@ PanelWindow {
     readonly property bool dockBusy: dockWindow.menuOpen || dockWindow.dragging || (dockWindow.morphing && !dockWindow.launcherFromHidden && !dockWindow.closingFromHidden)
     property bool slidingAway: false
     readonly property bool heldByPointer: revealArea.containsMouse || (shellHover.hovered && !dockWindow.slidingAway)
-    // on screen in its own right; a disabled dock never is
-    readonly property bool dockShown: Prefs.dockEnabled && (!dockWindow.hides || dockWindow.heldByPointer)
+    // on screen in its own right; a disabled dock never is, nor one stepping
+    // down for the osd's notch
+    readonly property bool dockShown: Prefs.dockEnabled && !dockWindow.yieldsToOsd && (!dockWindow.hides || dockWindow.heldByPointer)
+    // shell.qml hands the osd over
+    property var osd: null
+    readonly property bool yieldsToOsd: !!dockWindow.osd && dockWindow.osd.holdsEdge && dockWindow.osd.screen === dockWindow.screen
     // dynamic hiding only tucks the dock away while the workspace has windows
     readonly property bool hides: Prefs.dockAutoHide && (!Prefs.dockDynamicHide || dockWindow.dynamicHidden)
     readonly property bool dockRevealed: dockWindow.dockShown || dockWindow.dockBusy
