@@ -812,12 +812,12 @@ Item {
         }
 
         function bigSub(k) {
-            return k === "wifi" ? "Connected" : (k === "bluetooth" ? "On" : "Off");
+            return k === "wifi" ? "Connected" : (sample.tileChecked(k) ? "On" : "Off");
         }
 
-        // the radios on, and every third small tile, so a look shows both states
+        // the radios on, and every third tile of either kind, so a look shows both states
         function tileChecked(k) {
-            return k === "wifi" || k === "bluetooth" || Prefs.systemSmallTileKeys.indexOf(k) % 3 === 0;
+            return k === "wifi" || k === "bluetooth" || Prefs.systemSmallTileKeys.indexOf(k) % 3 === 0 || Prefs.systemBigTileKeys.indexOf(k) % 3 === 0;
         }
 
         function tileAct(k) {
