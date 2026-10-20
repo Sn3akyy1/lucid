@@ -543,11 +543,11 @@ Singleton {
 
     // the looks each block can take; the first is the one it always had
     readonly property var systemStyleCatalog: ({
-        "sliders": [{ "key": "plain", "name": "Plain" }, { "key": "bold", "name": "Bold" }],
+        "sliders": [{ "key": "plain", "name": "Plain" }, { "key": "bold", "name": "Bold" }, { "key": "thin", "name": "Thin" }, { "key": "round", "name": "Round" }],
         "bigtiles": [{ "key": "pill", "name": "Pill" }, { "key": "shapes", "name": "Shapes" }],
         "tiles": [{ "key": "round", "name": "Round" }, { "key": "shapes", "name": "Shapes" }],
-        "media": [{ "key": "card", "name": "Card" }, { "key": "disc", "name": "Disc" }, { "key": "backdrop", "name": "Backdrop" }],
-        "gauges": [{ "key": "rings", "name": "Rings" }, { "key": "bars", "name": "Bars" }, { "key": "tiles", "name": "Tiles" }, { "key": "compact", "name": "Compact" }]
+        "media": [{ "key": "card", "name": "Card" }, { "key": "disc", "name": "Disc" }, { "key": "backdrop", "name": "Backdrop" }, { "key": "mini", "name": "Mini" }, { "key": "wave", "name": "Wave" }, { "key": "cover", "name": "Cover" }],
+        "gauges": [{ "key": "rings", "name": "Rings" }, { "key": "bars", "name": "Bars" }, { "key": "tiles", "name": "Tiles" }, { "key": "compact", "name": "Compact" }, { "key": "graph", "name": "Graph" }, { "key": "dial", "name": "Dial" }]
     })
     // systemBlockStyles as JSON { block: look }, only the looks the catalogue knows
     readonly property var systemStyleMap: {

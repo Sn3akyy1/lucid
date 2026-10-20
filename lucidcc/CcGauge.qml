@@ -1,10 +1,12 @@
+import "../lucidwidgets" as LW
 import QtQuick
 import qs
 import qs.lucidui
 
-// one gauge, in one of four looks: a ring with its reading in the middle; a
-// line with a bar under it; a tile the reading fills from the bottom; or a
-// small ring with the number beside it
+// one gauge, in one of six looks: a ring with its reading in the middle; a
+// line with a bar under it; a tile the reading fills from the bottom; a
+// small ring with the number beside it; its last readings as a curve (or a
+// bar, for what keeps no history); or a dial, open at the foot
 Item {
     id: g
 
@@ -19,6 +21,8 @@ Item {
     property string look: "rings"
     // what it measures, for the looks that show it beside the reading
     property string icon: ""
+    // its last readings, 0 to 1, oldest first, where it keeps them
+    property var history: []
 
     signal clicked()
 
@@ -26,8 +30,177 @@ Item {
     readonly property real ring: Math.round(Math.max(Theme.dp(54), Math.min(Theme.dp(84), g.width - Theme.dp(20))))
     readonly property string reading: g.center === "" || g.center === "—" ? "—" : g.center + "%"
     readonly property string glyph: g.centerIcon !== "" ? g.centerIcon : g.icon
+    // the detail, unless it only says the name again
+    readonly property string extra: g.detail.toLowerCase() === g.label.toLowerCase() ? "" : g.detail
 
-    implicitHeight: g.look === "bars" ? Theme.dp(44) : (g.look === "tiles" ? Theme.dp(96) : (g.look === "compact" ? Theme.dp(44) : gcol.implicitHeight))
+    implicitHeight: ({
+        "bars": Theme.dp(44),
+        "tiles": Theme.dp(96),
+        "compact": Theme.dp(44),
+        "graph": Theme.dp(88),
+        "dial": g.ring + (g.extra !== "" ? Theme.dp(22) : 0)
+    })[g.look] || gcol.implicitHeight
+
+    // a card with the name and the reading over its last readings drawn as a
+    // curve; what keeps none gets a bar
+    Rectangle {
+        visible: g.look === "graph"
+        anchors.fill: parent
+        radius: Theme.shapeLg
+        color: Theme.alpha(g.tone, 0.08)
+        clip: true
+
+        Icon {
+            id: graphIcon
+
+            x: Theme.dp(12)
+            y: Theme.dp(12)
+            name: g.glyph
+            size: Theme.dp(16)
+            fill: 1
+            color: g.tone
+        }
+
+        LText {
+            anchors.left: graphIcon.right
+            anchors.leftMargin: Theme.dp(6)
+            anchors.right: graphValue.left
+            anchors.rightMargin: Theme.dp(6)
+            anchors.verticalCenter: graphIcon.verticalCenter
+            role: "labelMedium"
+            color: Theme.subtext
+            text: g.label
+            elide: Text.ElideRight
+        }
+
+        LText {
+            id: graphValue
+
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.dp(12)
+            anchors.verticalCenter: graphIcon.verticalCenter
+            role: "titleSmall"
+            weight: 680
+            tabular: true
+            text: g.reading
+        }
+
+        LW.Spark {
+            visible: g.history.length > 1
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.top: graphIcon.bottom
+            anchors.topMargin: Theme.dp(8)
+            samples: g.history
+            lineColor: g.tone
+            lineWidth: Theme.dp(2)
+        }
+
+        Column {
+            visible: g.history.length < 2
+            x: Theme.dp(12)
+            width: parent.width - Theme.dp(24)
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: Theme.dp(14)
+            spacing: Theme.dp(8)
+
+            LText {
+                width: parent.width
+                visible: text !== ""
+                role: "bodySmall"
+                color: Theme.subtext
+                text: g.extra
+                elide: Text.ElideRight
+            }
+
+            LinearProgress {
+                width: parent.width
+                value: g.value
+                thickness: Theme.dp(6)
+                color: g.tone
+                trackColor: Theme.withBlur(Theme.surfaceHighest)
+            }
+
+        }
+
+    }
+
+    // a dial: an arc open at the foot, the reading in its middle and the name in the gap
+    Item {
+        visible: g.look === "dial"
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: g.ring
+        height: parent.height
+
+        LW.Gauge {
+            id: dial
+
+            width: g.ring
+            height: g.ring
+            value: g.value
+            thickness: Math.round(g.ring * 0.1)
+            startAngle: 135
+            sweep: 270
+            fillColor: g.tone
+            trackColor: Theme.withBlur(Theme.surfaceHighest)
+        }
+
+        Row {
+            anchors.centerIn: dial
+            spacing: 0
+
+            Icon {
+                visible: g.centerIcon !== ""
+                anchors.verticalCenter: parent.verticalCenter
+                name: g.centerIcon
+                size: Math.round(g.ring * 0.24)
+                fill: 1
+                color: g.tone
+            }
+
+            LText {
+                anchors.verticalCenter: parent.verticalCenter
+                role: "labelLarge"
+                size: Math.round(g.ring * 0.27)
+                weight: 680
+                rounded: 100
+                text: g.center
+            }
+
+        }
+
+        LText {
+            anchors.horizontalCenter: dial.horizontalCenter
+            anchors.bottom: dial.bottom
+            width: Math.min(implicitWidth, g.ring * 0.62)
+            role: "labelSmall"
+            text: g.label
+            elide: Text.ElideRight
+        }
+
+        LText {
+            visible: text !== ""
+            anchors.horizontalCenter: dial.horizontalCenter
+            anchors.top: dial.bottom
+            anchors.topMargin: Theme.dp(4)
+            width: Math.min(implicitWidth, g.width - Theme.dp(4))
+            role: "bodySmall"
+            size: Theme.fs(11)
+            color: Theme.subtext
+            text: g.extra
+            elide: Text.ElideRight
+        }
+
+        StateLayer {
+            visible: g.clickable
+            width: g.ring
+            height: g.ring
+            radius: g.ring / 2
+            onClicked: g.clicked()
+        }
+
+    }
 
     // a line: its icon and name, the reading at the end, over a bar
     Item {
@@ -63,7 +236,7 @@ Item {
             width: Math.max(0, Math.min(implicitWidth, barValue.x - barLabel.x - barLabel.width - Theme.dp(16)))
             role: "labelMedium"
             color: Theme.subtext
-            text: g.detail
+            text: g.extra
             elide: Text.ElideRight
         }
 
@@ -145,8 +318,7 @@ Item {
                 width: parent.width
                 role: "labelMedium"
                 color: Theme.subtext
-                // a detail that only says the name again is left out
-                text: g.detail !== "" && g.detail.toLowerCase() !== g.label.toLowerCase() ? g.label + " · " + g.detail : g.label
+                text: g.extra !== "" ? g.label + " · " + g.extra : g.label
                 elide: Text.ElideRight
             }
 
@@ -206,16 +378,16 @@ Item {
     }
 
     StateLayer {
-        visible: g.clickable && g.look !== "rings"
+        visible: g.clickable && g.look !== "rings" && g.look !== "dial"
         anchors.fill: parent
-        radius: g.look === "tiles" ? Theme.shapeLg : Theme.dp(12)
+        radius: g.look === "tiles" || g.look === "graph" ? Theme.shapeLg : Theme.dp(12)
         onClicked: g.clicked()
     }
 
     Column {
         id: gcol
 
-        visible: g.look !== "bars" && g.look !== "tiles" && g.look !== "compact"
+        visible: ["bars", "tiles", "compact", "graph", "dial"].indexOf(g.look) === -1
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: Theme.dp(6)
 
@@ -284,7 +456,7 @@ Item {
                 role: "bodySmall"
                 size: Theme.fs(11)
                 color: Theme.subtext
-                text: g.detail
+                text: g.extra
                 width: Math.min(implicitWidth, g.width - Theme.dp(4))
                 elide: Text.ElideRight
             }
