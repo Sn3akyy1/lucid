@@ -14,10 +14,12 @@ Item {
     property bool iconClickable: false
     property string footIcon: ""
     property bool easeValue: false
-    // plain, bold (thicker), thin (a fine track) or round (capsule ends)
+    // plain, bold (thicker), thin (a fine track) or wavy (the fill a wave
+    // that flows, lying flat while muted)
     property string look: "plain"
     readonly property bool bold: vs.look === "bold"
     readonly property bool thin: vs.look === "thin"
+    readonly property bool wavy: vs.look === "wavy"
 
     signal moved(real v)
     signal iconClicked()
@@ -29,8 +31,8 @@ Item {
         id: room
 
         anchors.top: parent.top
-        anchors.bottom: thinIcon.visible ? thinIcon.top : (foot.visible ? foot.top : parent.bottom)
-        anchors.bottomMargin: thinIcon.visible || foot.visible ? Theme.dp(8) : 0
+        anchors.bottom: outIcon.visible ? outIcon.top : (foot.visible ? foot.top : parent.bottom)
+        anchors.bottomMargin: outIcon.visible || foot.visible ? Theme.dp(8) : 0
         width: parent.width
 
         Slider {
@@ -43,9 +45,13 @@ Item {
             // thicker or finer, handle and all still inside the column
             trackH: vs.bold ? Theme.dp(46) : (vs.thin ? Theme.dp(22) : Theme.dp(38))
             handleH: vs.bold ? Theme.dp(52) : (vs.thin ? Theme.dp(36) : Theme.dp(50))
-            outerR: vs.look === "round" || vs.thin ? trackH / 2 : Theme.dp(12)
-            // a thin track has no room for its icon, which sits under it instead
-            icon: vs.thin ? "" : vs.icon
+            outerR: vs.thin ? trackH / 2 : Theme.dp(12)
+            wavy: vs.wavy
+            waveFlow: vs.easeValue
+            waveAmp: vs.muted ? 0 : 1
+            // a thin track has no room for its icon, nor a wave anything to
+            // put it on, so it sits under them instead
+            icon: vs.thin || vs.wavy ? "" : vs.icon
             iconTurn: 90
             iconClickable: vs.iconClickable
             showValue: false
@@ -92,11 +98,11 @@ Item {
 
     }
 
-    // thin: the icon under the track (a tap mutes, where it can)
+    // thin and wavy: the icon under the track (a tap mutes, where it can)
     Item {
-        id: thinIcon
+        id: outIcon
 
-        visible: vs.thin
+        visible: vs.thin || vs.wavy
         anchors.bottom: foot.visible ? foot.top : parent.bottom
         anchors.bottomMargin: foot.visible ? Theme.dp(6) : 0
         anchors.horizontalCenter: parent.horizontalCenter
@@ -126,7 +132,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         width: Theme.dp(50)
         height: Theme.dp(38)
-        radius: vs.look === "round" || vs.thin ? Math.min(width, height) / 2 : Theme.rad(12)
+        radius: vs.thin || vs.wavy ? Math.min(width, height) / 2 : Theme.rad(12)
         color: Theme.withBlur(Theme.surfaceHighest)
 
         StateLayer {
