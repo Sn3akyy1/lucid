@@ -689,15 +689,17 @@ Singleton {
                 "gauges": { "x": 6, "y": 1, "w": 6 }
             };
 
+        // standing sliders down the left as tall as the rest, the tiles beside
+        // them, media and the gauges at the right. three sliders take a third
+        // column, and the rest move over for it
         if (id === "wide") {
             const sw = root.systemGridMinW("sliders", false);
-            const rw = Math.min(6, root.systemGridCols - sw - 6);
             return {
-                "sliders": { "x": 0, "y": 0, "w": sw, "lie": false },
+                "sliders": { "x": 0, "y": 0, "w": sw, "h": 11, "lie": false },
                 "bigtiles": { "x": sw, "y": 0, "w": 6 },
-                "tiles": { "x": sw, "y": 1, "w": 6 },
-                "media": { "x": sw + 6, "y": 0, "w": rw },
-                "gauges": { "x": sw + 6, "y": 1, "w": rw }
+                "tiles": { "x": sw, "y": 6, "w": 6, "h": 5 },
+                "media": { "x": sw + 6, "y": 0, "w": 5 },
+                "gauges": { "x": sw + 6, "y": 3, "w": 5, "h": 8 }
             };
         }
         return {};
