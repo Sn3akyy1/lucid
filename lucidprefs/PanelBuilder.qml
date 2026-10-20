@@ -611,6 +611,20 @@ Item {
             "label": "Hide " + builder.blockName(block)
         });
 
+        // and the looks it can take, the one it has ticked
+        const looks = Prefs.systemStyleCatalog[block] || [];
+        if (looks.length > 1) {
+            items.push({
+                "act": "",
+                "label": "Look"
+            });
+            for (const l of looks)
+                items.push({
+                "act": "look:" + l.key,
+                "icon": Prefs.systemBlockStyle(block) === l.key ? "check" : "",
+                "label": l.name
+            });
+        }
         builder.selected = block;
         builder.menu = {
             "block": block,
@@ -641,6 +655,8 @@ Item {
             builder.resetSize(m.block);
         else if (act === "hide")
             builder.hideBlock(m.block);
+        else if (act.indexOf("look:") === 0)
+            Prefs.setSystemBlockStyle(m.block, act.substring(5));
     }
 
     width: parent ? parent.width : 0
@@ -1237,16 +1253,29 @@ Item {
 
                     required property var modelData
 
-                    width: menuCol.width
-                    height: menuRow.modelData.act === "" ? Theme.dp(9) : Theme.dp(38)
+                    readonly property bool caption: menuRow.modelData.act === "" && !!menuRow.modelData.label
 
-                    // a line between what the piece can do and what the block can
+                    width: menuCol.width
+                    height: menuRow.modelData.act !== "" ? Theme.dp(38) : (menuRow.caption ? Theme.dp(34) : Theme.dp(9))
+
+                    // a line between what the piece can do and what the block can,
+                    // and over the looks, their heading
                     Rectangle {
                         visible: menuRow.modelData.act === ""
-                        anchors.verticalCenter: parent.verticalCenter
+                        y: menuRow.caption ? Theme.dp(4) : (parent.height - height) / 2
                         width: parent.width
                         height: 1
                         color: Theme.outline
+                    }
+
+                    LText {
+                        visible: menuRow.caption
+                        x: Theme.dp(10)
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: Theme.dp(4)
+                        role: "labelMedium"
+                        color: Theme.subtext
+                        text: menuRow.modelData.label || ""
                     }
 
                     Rectangle {
@@ -1463,6 +1492,7 @@ Item {
             bigCols: card.spot ? Math.max(1, Math.floor(card.spot.w / 3)) : 2
             gap: builder.gridGap
             standing: card.blockKey === "sliders" && builder.slidersStand
+            look: Prefs.systemBlockStyle(card.blockKey)
             cards: Prefs.systemBlockCards
         }
 
@@ -1721,6 +1751,13 @@ Item {
                     onClicked: builder.turnSliders()
                 }
 
+                // its looks, and the rest a right click offers
+                TagButton {
+                    visible: (Prefs.systemStyleCatalog[card.blockKey] || []).length > 1
+                    icon: "palette"
+                    onClicked: builder.openMenu(card, -1, mapToItem(builder, 0, height))
+                }
+
                 // off the panel, keeping what it holds; it waits on the shelf
                 TagButton {
                     visible: Prefs.systemBlockKeys.length > 1
@@ -1936,6 +1973,7 @@ Item {
                     cols: 6
                     bigCols: 2
                     gap: builder.gridGap
+                    look: si.kind === "block" ? Prefs.systemBlockStyle(si.item.key) : ""
                     cards: Prefs.systemBlockCards
                 }
 

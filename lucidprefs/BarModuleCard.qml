@@ -356,9 +356,9 @@ SettingCard {
         visible: card.moduleId === "system"
         title: "Layout"
         resetKey: "systemBlocks"
-        resetVisible: Prefs.isModified("systemBlocks") || Prefs.isModified("systemGrid")
-        resetAction: "prefs:systemBlocks,systemGrid"
-        description: "The control centre as a bento grid, drawn as the panel draws it. Add blocks, tiles, sliders and gauges from the shelf; on the grid, drag a block by anything but its pieces to move it and by an edge or corner to resize it, and drag the pieces inside into order. Right-click a block or a piece for what it can do. Click a block and the arrow keys move it, Shift with them resizes it, Delete hides it and Tab goes to the next; Ctrl+Z undoes. Empty rows and columns fold away in the panel."
+        resetVisible: Prefs.isModified("systemBlocks") || Prefs.isModified("systemGrid") || Prefs.isModified("systemBlockStyles")
+        resetAction: "prefs:systemBlocks,systemGrid,systemBlockStyles"
+        description: "The control centre as a bento grid, drawn as the panel draws it. Add blocks, tiles, sliders and gauges from the shelf; on the grid, drag a block by anything but its pieces to move it and by an edge or corner to resize it, and drag the pieces inside into order. Right-click a block or a piece for what it can do, and for the block's look (or use the palette on its name). Click a block and the arrow keys move it, Shift with them resizes it, Delete hides it and Tab goes to the next; Ctrl+Z undoes. Empty rows and columns fold away in the panel."
         stacked: true
         showDivider: false
 

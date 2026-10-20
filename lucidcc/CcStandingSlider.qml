@@ -14,6 +14,8 @@ Item {
     property bool iconClickable: false
     property string footIcon: ""
     property bool easeValue: false
+    // thicker
+    property bool bold: false
 
     signal moved(real v)
     signal iconClicked()
@@ -36,6 +38,9 @@ Item {
             width: room.height
             rotation: -90
             size: "m"
+            // thicker, handle and all still inside the column
+            trackH: vs.bold ? Theme.dp(46) : Theme.dp(38)
+            handleH: vs.bold ? Theme.dp(52) : Theme.dp(50)
             icon: vs.icon
             iconTurn: 90
             iconClickable: vs.iconClickable

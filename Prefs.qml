@@ -539,7 +539,52 @@ Singleton {
 
     // everything the control centre's layout is: which blocks, where, and
     // what each holds. a saved layout, and each step undo goes back, is these
-    readonly property var systemLayoutKeys: ["systemBlocks", "systemGrid", "systemTiles", "systemTilesRadios", "systemBigTiles", "systemSliders", "systemInfo"]
+    readonly property var systemLayoutKeys: ["systemBlocks", "systemGrid", "systemTiles", "systemTilesRadios", "systemBigTiles", "systemSliders", "systemInfo", "systemBlockStyles"]
+
+    // the looks each block can take; the first is the one it always had
+    readonly property var systemStyleCatalog: ({
+        "sliders": [{ "key": "plain", "name": "Plain" }, { "key": "bold", "name": "Bold" }],
+        "bigtiles": [{ "key": "pill", "name": "Pill" }, { "key": "shapes", "name": "Shapes" }],
+        "tiles": [{ "key": "round", "name": "Round" }, { "key": "shapes", "name": "Shapes" }],
+        "media": [{ "key": "card", "name": "Card" }, { "key": "disc", "name": "Disc" }, { "key": "backdrop", "name": "Backdrop" }],
+        "gauges": [{ "key": "rings", "name": "Rings" }, { "key": "bars", "name": "Bars" }, { "key": "tiles", "name": "Tiles" }, { "key": "compact", "name": "Compact" }]
+    })
+    // systemBlockStyles as JSON { block: look }, only the looks the catalogue knows
+    readonly property var systemStyleMap: {
+        let v = {};
+        try {
+            v = JSON.parse(root.systemBlockStyles || "{}");
+        } catch (e) {
+        }
+        const out = {};
+        for (const k in root.systemStyleCatalog) {
+            if (v && root.systemStyleCatalog[k].some((c) => {
+                return c.key === v[k];
+            }))
+                out[k] = v[k];
+
+        }
+        return out;
+    }
+
+    function systemBlockStyle(key) {
+        const l = root.systemStyleCatalog[key];
+        return root.systemStyleMap[key] || (l ? l[0].key : "");
+    }
+
+    // the first look is kept as no entry at all
+    function setSystemBlockStyle(key, look) {
+        const l = root.systemStyleCatalog[key];
+        if (!l)
+            return ;
+
+        const next = Object.assign({}, root.systemStyleMap);
+        if (look === l[0].key)
+            delete next[key];
+        else
+            next[key] = look;
+        root.systemBlockStyles = Object.keys(next).length === 0 ? "" : JSON.stringify(next);
+    }
 
     function systemLayoutNow() {
         const out = {};
@@ -775,7 +820,7 @@ Singleton {
         "desc": "Battery, volume, brightness and quick settings",
         "more": "The keyboard layout sign and game mode are in System module, further down this page.",
         "page": "",
-        "options": ["systemTiles", "systemTilesRadios", "systemBigTiles", "systemBlocks", "systemGrid", "systemBlockCards", "systemOwnTiles", "systemSliders", "systemInfo", "systemHeaderButtons"]
+        "options": ["systemTiles", "systemTilesRadios", "systemBigTiles", "systemBlocks", "systemGrid", "systemBlockCards", "systemBlockStyles", "systemOwnTiles", "systemSliders", "systemInfo", "systemHeaderButtons"]
     },
     {
         "id": "privacy",
@@ -984,6 +1029,7 @@ Singleton {
     property alias systemGrid: s.systemGrid
     property alias systemBlockCards: s.systemBlockCards
     property alias systemOwnTiles: s.systemOwnTiles
+    property alias systemBlockStyles: s.systemBlockStyles
     property alias systemLayouts: s.systemLayouts
     property alias systemHeaderButtons: s.systemHeaderButtons
     property alias barLayout: s.barLayout
@@ -1519,6 +1565,7 @@ Singleton {
         "systemGrid": "",
         "systemBlockCards": false,
         "systemOwnTiles": "",
+        "systemBlockStyles": "",
         "systemHeaderButtons": "edit,settings,lock,power",
         "barLayout": "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}",
         "barJoins": "[]",
@@ -2264,6 +2311,9 @@ Singleton {
             // tiles that run the user's commands, as a JSON list of
             // { id, name, icon, on, off, status }
             property string systemOwnTiles: ""
+            // the look each block takes, as JSON { block: look }; one not
+            // named keeps the look it always had
+            property string systemBlockStyles: ""
             // control centre layouts the user saved, as JSON; kept out of
             // the defaults, so no reset throws them away
             property string systemLayouts: ""

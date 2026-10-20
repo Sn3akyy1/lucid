@@ -17,6 +17,8 @@ import qs.lucidui
 //   gauges  gauge(k), as { value, center, label, detail, tone, icon,
 //           clickable }, and gaugeClick(k)
 //   expanded, while the values may ease
+// look picks how the block draws its pieces (Prefs.systemStyleCatalog); ""
+// is the first, the look it always had
 Item {
     id: block
 
@@ -29,6 +31,7 @@ Item {
     property int bigCols: 2
     property real gap: Theme.dp(8)
     property bool standing: false
+    property string look: ""
     // a card behind the tiles and the sliders too; media and gauges always have one
     property bool cards: false
     readonly property bool carded: block.kind === "media" || block.kind === "gauges" || block.cards
@@ -37,10 +40,26 @@ Item {
     // what its pieces need down, before it is given more
     readonly property real natural: body.item ? body.item.natural : 0
 
-    // gauges sharing a card: as many to a row as leave each its 88, in rows as even as can be
-    function gaugeCols(n, width) {
-        const most = Math.max(1, Math.min(n, Math.floor(width / Theme.dp(88))));
+    // gauges sharing a card: as many to a row as leave each its least (88
+    // for a ring), in rows as even as can be
+    function gaugeCols(n, width, least, gap) {
+        const room = least || Theme.dp(88);
+        const most = Math.max(1, Math.min(n, Math.floor((width + (gap || 0)) / (room + (gap || 0)))));
         return Math.max(1, Math.ceil(n / Math.ceil(n / most)));
+    }
+
+    // the shape a tile turns into in the shapes look, the same for a tile
+    // wherever it sits
+    readonly property var litShapes: ["cookie9", "clover4", "sunny", "flower"]
+
+    function shapeOf(k) {
+        if (block.look !== "shapes")
+            return "";
+
+        let h = 0;
+        for (let i = 0; i < k.length; i++)
+            h = (h * 31 + k.charCodeAt(i)) % 997;
+        return block.litShapes[h % block.litShapes.length];
     }
 
     // where piece i sits in the block, and the piece under a point, or -1
@@ -132,6 +151,7 @@ Item {
                         sub: block.host.bigSub(slot.modelData)
                         checked: block.host.tileChecked(slot.modelData)
                         hasPage: slot.hasPage
+                        shape: block.shapeOf(slot.modelData)
                         onToggled: block.host.tileAct(slot.modelData)
                         onExpandRequested: slot.hasPage ? block.host.showView(slot.modelData) : block.host.tileAct(slot.modelData)
                     }
@@ -144,6 +164,7 @@ Item {
                         label: block.host.tileLabel(slot.modelData)
                         checked: block.host.tileChecked(slot.modelData)
                         hasMore: slot.hasPage
+                        shape: block.shapeOf(slot.modelData)
                         onToggled: block.host.tileAct(slot.modelData)
                         onMore: block.host.showView(slot.modelData)
                     }
@@ -165,12 +186,14 @@ Item {
 
             readonly property Item pieces: lyingRep
             readonly property int n: Math.max(1, block.keys.length)
-            readonly property real natural: lying.n * Theme.dp(50) + (lying.n - 1) * Theme.dp(8)
+            // each as tall as its handle
+            readonly property real each: block.look === "bold" ? Theme.dp(64) : Theme.dp(50)
+            readonly property real natural: lying.n * lying.each + (lying.n - 1) * Theme.dp(8)
 
             Column {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width
-                spacing: lying.n > 1 ? Math.max(Theme.dp(8), (lying.height - lying.n * Theme.dp(50)) / (lying.n - 1)) : 0
+                spacing: lying.n > 1 ? Math.max(Theme.dp(8), (lying.height - lying.n * lying.each) / (lying.n - 1)) : 0
 
                 Repeater {
                     id: lyingRep
@@ -187,6 +210,7 @@ Item {
                         iconClickable: modelData !== "brightness"
                         footIcon: modelData === "volume" ? "speaker" : ""
                         easeValue: block.ease
+                        bold: block.look === "bold"
                         onMoved: (v) => {
                             return block.host.sliderMove(modelData, v);
                         }
@@ -232,6 +256,7 @@ Item {
                     iconClickable: modelData !== "brightness"
                     footIcon: modelData === "volume" ? "speaker" : ""
                     easeValue: block.ease
+                    bold: block.look === "bold"
                     onMoved: (v) => {
                         return block.host.sliderMove(modelData, v);
                     }
@@ -258,6 +283,7 @@ Item {
             progress: block.host.mediaProgress
             playing: block.host.mediaPlaying
             easeValue: block.ease
+            look: block.look === "" ? "card" : block.look
             onPrevious: block.host.mediaPrev()
             onToggle: block.host.mediaToggle()
             onNext: block.host.mediaNext()
@@ -275,10 +301,20 @@ Item {
 
             readonly property Item pieces: gaugeRep
             readonly property int n: block.keys.length
-            readonly property int perRow: block.gaugeCols(Math.max(1, gauges.n), gauges.width)
+            readonly property string look: block.look === "" ? "rings" : block.look
+            // tiles stretch to fill the block; the rest spread out over it
+            readonly property bool stretch: gauges.look === "tiles"
+            readonly property real colGap: gauges.look === "tiles" ? Theme.dp(8) : (gauges.look === "bars" ? Theme.dp(20) : 0)
+            readonly property real rowGap: gauges.look === "tiles" ? Theme.dp(8) : Theme.dp(12)
+            readonly property real least: ({
+                "bars": Theme.dp(180),
+                "tiles": Theme.dp(104),
+                "compact": Theme.dp(112)
+            })[gauges.look] || Theme.dp(88)
+            readonly property int perRow: block.gaugeCols(Math.max(1, gauges.n), gauges.width, gauges.least, gauges.colGap)
             readonly property int rows: Math.ceil(gauges.n / gauges.perRow)
             readonly property real gaugeH: gaugeRep.count > 0 && gaugeRep.itemAt(0) ? gaugeRep.itemAt(0).implicitHeight : 0
-            readonly property real natural: gauges.rows * gauges.gaugeH + Math.max(0, gauges.rows - 1) * Theme.dp(12)
+            readonly property real natural: gauges.rows * gauges.gaugeH + Math.max(0, gauges.rows - 1) * gauges.rowGap
             readonly property real spare: Math.max(0, gauges.height - gauges.natural)
 
             Grid {
@@ -287,7 +323,8 @@ Item {
                 anchors.centerIn: parent
                 width: parent.width
                 columns: gauges.perRow
-                rowSpacing: Theme.dp(12) + gauges.spare / (gauges.rows + 1)
+                columnSpacing: gauges.colGap
+                rowSpacing: gauges.stretch ? gauges.rowGap : gauges.rowGap + gauges.spare / (gauges.rows + 1)
 
                 Repeater {
                     id: gaugeRep
@@ -298,7 +335,14 @@ Item {
                         required property string modelData
                         readonly property var reading: block.host.gauge(modelData)
 
-                        width: grid.width / grid.columns
+                        width: (grid.width - grid.columnSpacing * (grid.columns - 1)) / grid.columns
+                        height: gauges.stretch ? Math.max(implicitHeight, (gauges.height - gauges.rowGap * (gauges.rows - 1)) / Math.max(1, gauges.rows)) : implicitHeight
+                        look: gauges.look
+                        icon: (Prefs.systemInfoCatalog.find((c) => {
+                            return c.key === modelData;
+                        }) || {
+                            "icon": ""
+                        }).icon
                         value: reading.value
                         center: reading.center
                         label: reading.label
