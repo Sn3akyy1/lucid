@@ -11,7 +11,8 @@ import qs.lucidui
 // that turns while it plays with how far along round it (disc), or blurred
 // across the whole card under the rest (backdrop); one line with play (mini);
 // the card over a wave to seek along, with the times (wave); or the cover
-// filling the card, the rest over its foot (cover)
+// filling the card, the rest over its foot (cover). with no player it keeps
+// its place in the panel and says so
 Item {
     id: mc
 
@@ -20,6 +21,8 @@ Item {
     property string artUrl: ""
     property real progress: 0
     property bool playing: false
+    // nothing to play: the card stays, its controls greyed out
+    property bool idle: false
     property real radius: Theme.shapeLgInc
     property bool easeValue: true
     // where it is and how long it runs, in seconds, for the wave
@@ -221,7 +224,8 @@ Item {
             spacing: Theme.dp(2)
 
             IconButton {
-                anchors.verticalCenter: parent.verticalCenter
+                                disabled: mc.idle
+anchors.verticalCenter: parent.verticalCenter
                 icon: "skip_previous"
                 iconFill: 1
                 size: "xs"
@@ -230,7 +234,8 @@ Item {
             }
 
             IconButton {
-                anchors.verticalCenter: parent.verticalCenter
+                                disabled: mc.idle
+anchors.verticalCenter: parent.verticalCenter
                 icon: mc.playing ? "pause" : "play_arrow"
                 iconFill: 1
                 variant: "filled"
@@ -238,7 +243,8 @@ Item {
             }
 
             IconButton {
-                anchors.verticalCenter: parent.verticalCenter
+                                disabled: mc.idle
+anchors.verticalCenter: parent.verticalCenter
                 icon: "skip_next"
                 iconFill: 1
                 size: "xs"
@@ -338,7 +344,8 @@ Item {
             spacing: Theme.dp(2)
 
             IconButton {
-                anchors.verticalCenter: parent.verticalCenter
+                                disabled: mc.idle
+anchors.verticalCenter: parent.verticalCenter
                 icon: mc.playing ? "pause" : "play_arrow"
                 iconFill: 1
                 size: "xs"
@@ -347,7 +354,8 @@ Item {
             }
 
             IconButton {
-                anchors.verticalCenter: parent.verticalCenter
+                                disabled: mc.idle
+anchors.verticalCenter: parent.verticalCenter
                 icon: "skip_next"
                 iconFill: 1
                 size: "xs"
@@ -450,7 +458,8 @@ Item {
                 spacing: Theme.dp(2)
 
                 IconButton {
-                    anchors.verticalCenter: parent.verticalCenter
+                                        disabled: mc.idle
+anchors.verticalCenter: parent.verticalCenter
                     icon: "skip_previous"
                     iconFill: 1
                     size: "xs"
@@ -459,7 +468,8 @@ Item {
                 }
 
                 IconButton {
-                    anchors.verticalCenter: parent.verticalCenter
+                                        disabled: mc.idle
+anchors.verticalCenter: parent.verticalCenter
                     icon: mc.playing ? "pause" : "play_arrow"
                     iconFill: 1
                     variant: "filled"
@@ -467,7 +477,8 @@ Item {
                 }
 
                 IconButton {
-                    anchors.verticalCenter: parent.verticalCenter
+                                        disabled: mc.idle
+anchors.verticalCenter: parent.verticalCenter
                     icon: "skip_next"
                     iconFill: 1
                     size: "xs"
@@ -483,7 +494,7 @@ Item {
             width: parent.width
             position: mc.position
             length: mc.length
-            interactive: mc.length > 0
+            interactive: !mc.idle && mc.length > 0
             playing: mc.playing
             flowing: mc.easeValue
             accent: Theme.primary
@@ -597,7 +608,8 @@ Item {
             spacing: Theme.dp(2)
 
             IconButton {
-                anchors.verticalCenter: parent.verticalCenter
+                                disabled: mc.idle
+anchors.verticalCenter: parent.verticalCenter
                 icon: "skip_previous"
                 iconFill: 1
                 size: "xs"
@@ -606,7 +618,8 @@ Item {
             }
 
             IconButton {
-                anchors.verticalCenter: parent.verticalCenter
+                                disabled: mc.idle
+anchors.verticalCenter: parent.verticalCenter
                 icon: mc.playing ? "pause" : "play_arrow"
                 iconFill: 1
                 variant: "filled"
@@ -614,7 +627,8 @@ Item {
             }
 
             IconButton {
-                anchors.verticalCenter: parent.verticalCenter
+                                disabled: mc.idle
+anchors.verticalCenter: parent.verticalCenter
                 icon: "skip_next"
                 iconFill: 1
                 size: "xs"

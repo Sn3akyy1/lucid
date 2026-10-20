@@ -12,7 +12,7 @@ import qs.lucidui
 //           tilePages tileAct(k) showView(v)
 //   sliders sliderIcon(k) sliderValue(k) sliderMuted(k) sliderMove(k, v)
 //           sliderIconClick(k)
-//   media   mediaTitle mediaArtist mediaArt mediaProgress mediaPlaying
+//   media   mediaUp mediaTitle mediaArtist mediaArt mediaProgress mediaPlaying
 //           mediaPosition mediaLength (seconds) mediaPrev() mediaToggle()
 //           mediaNext() mediaOpen() mediaSeek(s)
 //   gauges  gauge(k), as { value, center, label, detail, tone, icon,
@@ -286,6 +286,7 @@ Item {
             artUrl: block.host.mediaArt
             progress: block.host.mediaProgress
             playing: block.host.mediaPlaying
+            idle: block.host.mediaUp === false
             position: block.host.mediaPosition || 0
             length: block.host.mediaLength || 0
             easeValue: block.ease
