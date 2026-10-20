@@ -1309,6 +1309,8 @@ ShellRoot {
 
     Dock {
         id: dock
+
+        osd: osdMod
     }
 
     // edit mode's toolbar and its sheet of options, over everything
@@ -1446,6 +1448,8 @@ ShellRoot {
 
     Osd {
         id: osdMod
+
+        dockWindow: dock
     }
 
     PinnedWindows {
