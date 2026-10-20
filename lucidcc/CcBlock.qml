@@ -13,9 +13,10 @@ import qs.lucidui
 //   sliders sliderIcon(k) sliderValue(k) sliderMuted(k) sliderMove(k, v)
 //           sliderIconClick(k)
 //   media   mediaTitle mediaArtist mediaArt mediaProgress mediaPlaying
-//           mediaPrev() mediaToggle() mediaNext() mediaOpen()
+//           mediaPosition mediaLength (seconds) mediaPrev() mediaToggle()
+//           mediaNext() mediaOpen() mediaSeek(s)
 //   gauges  gauge(k), as { value, center, label, detail, tone, icon,
-//           clickable }, and gaugeClick(k)
+//           clickable, history }, and gaugeClick(k)
 //   expanded, while the values may ease
 // look picks how the block draws its pieces (Prefs.systemStyleCatalog); ""
 // is the first, the look it always had
@@ -187,7 +188,7 @@ Item {
             readonly property Item pieces: lyingRep
             readonly property int n: Math.max(1, block.keys.length)
             // each as tall as its handle
-            readonly property real each: block.look === "bold" ? Theme.dp(64) : Theme.dp(50)
+            readonly property real each: block.look === "bold" ? Theme.dp(64) : (block.look === "thin" ? Theme.dp(36) : Theme.dp(50))
             readonly property real natural: lying.n * lying.each + (lying.n - 1) * Theme.dp(8)
 
             Column {
@@ -210,7 +211,7 @@ Item {
                         iconClickable: modelData !== "brightness"
                         footIcon: modelData === "volume" ? "speaker" : ""
                         easeValue: block.ease
-                        bold: block.look === "bold"
+                        look: block.look === "" ? "plain" : block.look
                         onMoved: (v) => {
                             return block.host.sliderMove(modelData, v);
                         }
@@ -256,7 +257,7 @@ Item {
                     iconClickable: modelData !== "brightness"
                     footIcon: modelData === "volume" ? "speaker" : ""
                     easeValue: block.ease
-                    bold: block.look === "bold"
+                    look: block.look === "" ? "plain" : block.look
                     onMoved: (v) => {
                         return block.host.sliderMove(modelData, v);
                     }
@@ -282,12 +283,17 @@ Item {
             artUrl: block.host.mediaArt
             progress: block.host.mediaProgress
             playing: block.host.mediaPlaying
+            position: block.host.mediaPosition || 0
+            length: block.host.mediaLength || 0
             easeValue: block.ease
             look: block.look === "" ? "card" : block.look
             onPrevious: block.host.mediaPrev()
             onToggle: block.host.mediaToggle()
             onNext: block.host.mediaNext()
             onOpened: block.host.mediaOpen()
+            onSeek: (s) => {
+                return block.host.mediaSeek(s);
+            }
         }
 
     }
@@ -303,13 +309,14 @@ Item {
             readonly property int n: block.keys.length
             readonly property string look: block.look === "" ? "rings" : block.look
             // tiles stretch to fill the block; the rest spread out over it
-            readonly property bool stretch: gauges.look === "tiles"
-            readonly property real colGap: gauges.look === "tiles" ? Theme.dp(8) : (gauges.look === "bars" ? Theme.dp(20) : 0)
-            readonly property real rowGap: gauges.look === "tiles" ? Theme.dp(8) : Theme.dp(12)
+            readonly property bool stretch: gauges.look === "tiles" || gauges.look === "graph"
+            readonly property real colGap: gauges.stretch ? Theme.dp(8) : (gauges.look === "bars" ? Theme.dp(20) : 0)
+            readonly property real rowGap: gauges.stretch ? Theme.dp(8) : Theme.dp(12)
             readonly property real least: ({
                 "bars": Theme.dp(180),
                 "tiles": Theme.dp(104),
-                "compact": Theme.dp(112)
+                "compact": Theme.dp(112),
+                "graph": Theme.dp(140)
             })[gauges.look] || Theme.dp(88)
             readonly property int perRow: block.gaugeCols(Math.max(1, gauges.n), gauges.width, gauges.least, gauges.colGap)
             readonly property int rows: Math.ceil(gauges.n / gauges.perRow)
@@ -344,6 +351,7 @@ Item {
                             "icon": ""
                         }).icon
                         value: reading.value
+                        history: reading.history || []
                         center: reading.center
                         label: reading.label
                         detail: reading.detail

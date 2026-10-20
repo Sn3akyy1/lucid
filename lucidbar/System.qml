@@ -1502,6 +1502,14 @@ BarPill {
     readonly property string mediaArt: root.mprisMod ? root.mprisMod.artSource : ""
     readonly property real mediaProgress: (root.mprisMod && root.mprisMod.lenSec > 0) ? Math.max(0, Math.min(1, root.mprisMod.livePosSec / root.mprisMod.lenSec)) : 0
     readonly property bool mediaPlaying: root.mprisMod ? root.mprisMod.isPlaying : false
+    readonly property real mediaPosition: root.mprisMod ? root.mprisMod.livePosSec : 0
+    readonly property real mediaLength: root.mprisMod ? root.mprisMod.lenSec : 0
+
+    function mediaSeek(sec) {
+        if (root.mprisMod)
+            root.mprisMod.seekTo(sec, true);
+
+    }
 
     function mediaPrev() {
         if (root.mprisPlayer && root.mprisPlayer.canGoPrevious)
@@ -1549,7 +1557,10 @@ BarPill {
                 "label": "CPU",
                 "detail": root.cpuTemp > 0 ? Units.degUnit(root.cpuTemp) : "",
                 "tone": root.cpuTemp >= 85 ? Theme.error : Theme.accent,
-                "icon": ""
+                "icon": "",
+                "history": root.cpuHistory.map((v) => {
+                    return v / 100;
+                })
             };
         case "ram":
             return {
@@ -1558,7 +1569,10 @@ BarPill {
                 "label": "Memory",
                 "detail": root.ramTotalGB > 0 ? root.ramUsedGB.toFixed(1) + " GB" : "",
                 "tone": Theme.accent,
-                "icon": ""
+                "icon": "",
+                "history": root.ramHistory.map((v) => {
+                    return v / 100;
+                })
             };
         case "disk":
             return {

@@ -789,6 +789,8 @@ Item {
         readonly property string mediaArt: ""
         readonly property real mediaProgress: 0.4
         readonly property bool mediaPlaying: false
+        readonly property real mediaPosition: 74
+        readonly property real mediaLength: 185
 
         function tileEntry(k) {
             return builder.entryOf("tiles", k) || {
@@ -855,6 +857,9 @@ Item {
         function mediaOpen() {
         }
 
+        function mediaSeek(s) {
+        }
+
         function gauge(k) {
             const e = builder.entryOf("gauges", k);
             const v = {
@@ -863,13 +868,21 @@ Item {
                 "disk": [0.38, "297 GB free"],
                 "battery": [0.8, "Full"]
             }[k] || [0.5, ""];
+            // a made-up minute for what keeps its last readings
+            const wave = (base, a, f) => {
+                const out = [];
+                for (let i = 0; i < 16; i++)
+                    out.push(Math.max(0, Math.min(1, base + a * Math.sin(i / f) + a * 0.4 * Math.sin(i / 1.3))));
+                return out;
+            };
             return {
                 "value": v[0],
                 "center": Math.round(v[0] * 100) + "",
                 "label": e ? e.name : k,
                 "detail": v[1],
                 "tone": Theme.accent,
-                "icon": ""
+                "icon": "",
+                "history": k === "cpu" ? wave(0.28, 0.14, 2.1) : (k === "ram" ? wave(0.6, 0.03, 3.4) : [])
             };
         }
 

@@ -14,8 +14,10 @@ Item {
     property bool iconClickable: false
     property string footIcon: ""
     property bool easeValue: false
-    // thicker
-    property bool bold: false
+    // plain, bold (thicker), thin (a fine track) or round (capsule ends)
+    property string look: "plain"
+    readonly property bool bold: vs.look === "bold"
+    readonly property bool thin: vs.look === "thin"
 
     signal moved(real v)
     signal iconClicked()
@@ -27,8 +29,8 @@ Item {
         id: room
 
         anchors.top: parent.top
-        anchors.bottom: foot.visible ? foot.top : parent.bottom
-        anchors.bottomMargin: foot.visible ? Theme.dp(8) : 0
+        anchors.bottom: thinIcon.visible ? thinIcon.top : (foot.visible ? foot.top : parent.bottom)
+        anchors.bottomMargin: thinIcon.visible || foot.visible ? Theme.dp(8) : 0
         width: parent.width
 
         Slider {
@@ -38,10 +40,12 @@ Item {
             width: room.height
             rotation: -90
             size: "m"
-            // thicker, handle and all still inside the column
-            trackH: vs.bold ? Theme.dp(46) : Theme.dp(38)
-            handleH: vs.bold ? Theme.dp(52) : Theme.dp(50)
-            icon: vs.icon
+            // thicker or finer, handle and all still inside the column
+            trackH: vs.bold ? Theme.dp(46) : (vs.thin ? Theme.dp(22) : Theme.dp(38))
+            handleH: vs.bold ? Theme.dp(52) : (vs.thin ? Theme.dp(36) : Theme.dp(50))
+            outerR: vs.look === "round" || vs.thin ? trackH / 2 : Theme.dp(12)
+            // a thin track has no room for its icon, which sits under it instead
+            icon: vs.thin ? "" : vs.icon
             iconTurn: 90
             iconClickable: vs.iconClickable
             showValue: false
@@ -88,6 +92,32 @@ Item {
 
     }
 
+    // thin: the icon under the track (a tap mutes, where it can)
+    Item {
+        id: thinIcon
+
+        visible: vs.thin
+        anchors.bottom: foot.visible ? foot.top : parent.bottom
+        anchors.bottomMargin: foot.visible ? Theme.dp(6) : 0
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: Theme.dp(32)
+        height: Theme.dp(32)
+
+        Icon {
+            anchors.centerIn: parent
+            name: vs.icon
+            size: Theme.dp(20)
+            color: vs.muted ? Theme.subtext : Theme.primary
+        }
+
+        StateLayer {
+            visible: vs.iconClickable
+            radius: width / 2
+            onClicked: vs.iconClicked()
+        }
+
+    }
+
     Rectangle {
         id: foot
 
@@ -96,7 +126,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         width: Theme.dp(50)
         height: Theme.dp(38)
-        radius: Theme.rad(12)
+        radius: vs.look === "round" || vs.thin ? Math.min(width, height) / 2 : Theme.rad(12)
         color: Theme.withBlur(Theme.surfaceHighest)
 
         StateLayer {
