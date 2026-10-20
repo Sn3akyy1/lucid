@@ -1355,7 +1355,7 @@ BarPill {
         case "tiles":
             return Prefs.systemSmallTileKeys;
         case "media":
-            return root.mediaUp ? ["media"] : [];
+            return ["media"];
         }
         return Prefs.systemInfoKeys;
     }
@@ -1497,7 +1497,7 @@ BarPill {
     }
 
     readonly property var mprisPlayer: root.mprisMod ? root.mprisMod.player : null
-    readonly property string mediaTitle: root.mprisMod ? root.mprisMod.title : ""
+    readonly property string mediaTitle: root.mprisMod ? root.mprisMod.title : "Nothing playing"
     readonly property string mediaArtist: root.mprisMod ? root.mprisMod.artist : ""
     readonly property string mediaArt: root.mprisMod ? root.mprisMod.artSource : ""
     readonly property real mediaProgress: (root.mprisMod && root.mprisMod.lenSec > 0) ? Math.max(0, Math.min(1, root.mprisMod.livePosSec / root.mprisMod.lenSec)) : 0
@@ -1530,9 +1530,11 @@ BarPill {
     }
 
     function mediaOpen() {
+        if (!root.mprisMod)
+            return ;
+
         root.expanded = false;
-        if (root.mprisMod)
-            root.mprisMod.expanded = true;
+        root.mprisMod.expanded = true;
 
     }
 
