@@ -634,6 +634,28 @@ Column {
         title: "ON-SCREEN DISPLAY"
 
         SettingRow {
+            title: "OSD style"
+            resetKey: "osdStyle"
+            description: "Where volume, brightness and lock-key changes show up. Islands float above the bottom edge; Notches rise out of it, with the dock's curved corners at their sides."
+
+            M3Segmented {
+                width: Theme.dp(260)
+                current: Prefs.osdStyle
+                options: [{
+                    "key": "island",
+                    "label": "Islands"
+                }, {
+                    "key": "notch",
+                    "label": "Notches"
+                }]
+                onChosen: (key) => {
+                    return Prefs.osdStyle = key;
+                }
+            }
+
+        }
+
+        SettingRow {
             title: "Caps Lock"
             resetKey: "osdCapsLock"
             description: Prefs.osdCapsLock ? "A card shows ABC or abc as Caps Lock goes on or off." : "Caps Lock changes without a card. Its sound has a switch of its own in Sound."

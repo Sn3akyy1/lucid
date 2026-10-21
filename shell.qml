@@ -1187,6 +1187,8 @@ ShellRoot {
 
     Dock {
         id: dock
+
+        osd: osdMod
     }
 
     Screenshot {
@@ -1276,6 +1278,8 @@ ShellRoot {
 
     Osd {
         id: osdMod
+
+        dockWindow: dock
     }
 
     PinnedWindows {
@@ -1290,6 +1294,7 @@ ShellRoot {
 
     ToastEvents {
         toast: toastMod
+        osd: osdMod
     }
 
     Lock {
