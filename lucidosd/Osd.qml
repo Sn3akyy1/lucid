@@ -635,6 +635,9 @@ PanelWindow {
         // anchor engine write the height and drop its binding. the notch sits on
         // the bottom edge through the offset, and sinks past it to hide
         anchors.centerIn: parent
+        // centring an odd-height card puts it on a half pixel, which left the
+        // notch's top and bottom rows half drawn; its offset is whole already
+        anchors.alignWhenCentered: !osdWindow.notch
         anchors.verticalCenterOffset: osdWindow.notch ? (parent.height - card.height) / 2 + (osdWindow.cardVisible ? 0 : card.height) : (osdWindow.cardVisible ? 0 : Theme.dp(16))
         height: (osdWindow.isLevelType || osdWindow.isSegmentType) ? Theme.dp(50) : Theme.dp(56)
         width: (osdWindow.isLevelType || osdWindow.isSegmentType) ? card.levelWidth : card.toggleWidth
