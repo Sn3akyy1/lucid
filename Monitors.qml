@@ -128,6 +128,11 @@ Singleton {
             if (event.name === "monitoradded" || event.name === "monitoraddedv2" || event.name === "monitorremoved" || event.name === "monitorremovedv2" || event.name === "configreloaded")
                 probeDebounce.restart();
 
+            if (event.name === "configreloaded" && root.gatherPending) {
+                root.gatherPending = false;
+                Quickshell.execDetached(["hyprctl", "eval", "if LucidMonitors and LucidMonitors.gather then LucidMonitors.gather() end"]);
+            }
+
         }
 
         target: Hyprland
@@ -896,20 +901,35 @@ Singleton {
 
     // ---- workspaces ---------------------------------------------------------
     // shared: a workspace opens wherever you are. split: each one belongs to a
-    // display, stored by key like the rest, so it follows the monitor between ports
+    // display, stored by key like the rest, so it follows the monitor between ports.
+    // a split is kept for each set of displays, so the one made for the laptop
+    // and one monitor comes back with that monitor, whatever another got meanwhile
     readonly property int workspaceCount: 10
-    readonly property var workspacePlan: {
+    readonly property var workspacePrefs: {
         let p = {};
         try {
             p = JSON.parse(Prefs.monitorWorkspaces || "{}") || {};
         } catch (e) {
             p = {};
         }
+        const assign = (p.assign && typeof p.assign === "object") ? p.assign : {};
+        let plans = {};
+        if (p.plans && typeof p.plans === "object")
+            plans = p.plans;
+        else if (Object.keys(assign).length > 0)
+            plans[root.setupName(Object.values(assign))] = assign;
         return {
             "mode": p.mode === "split" ? "split" : "shared",
-            "assign": (p.assign && typeof p.assign === "object") ? p.assign : {}
+            "assign": assign,
+            "plans": plans
         };
     }
+    // the displays that can hold a workspace now, as one name for the set
+    readonly property string workspaceSetup: root.setupName(root.workspaceKeys)
+    readonly property var workspacePlan: ({
+        "mode": root.workspacePrefs.mode,
+        "assign": root.planFor(root.workspaceSetup)
+    })
     readonly property bool workspacesSplit: root.workspacePlan.mode === "split"
     // split, but belonging to nothing plugged in, so hyprland places them itself
     readonly property int strayWorkspaces: {
@@ -926,10 +946,60 @@ Singleton {
         return n;
     }
 
+    function setupName(keys) {
+        const out = [];
+        for (const k of keys) {
+            if (out.indexOf(k) === -1)
+                out.push(k);
+
+        }
+        return out.sort().join("\n");
+    }
+
+    // the split kept for this set, or else the last one set, with what belonged
+    // to a display gone handed in runs to the ones here that hold nothing
+    function planFor(setup) {
+        const kept = root.workspacePrefs.plans[setup];
+        if (kept && typeof kept === "object")
+            return kept;
+
+        const last = root.workspacePrefs.assign;
+        const keys = root.workspaceKeys;
+        const out = {};
+        const loose = [];
+        for (let n = 1; n <= root.workspaceCount; n++) {
+            const k = last[String(n)];
+            if (!k)
+                continue;
+
+            out[String(n)] = k;
+            if (keys.indexOf(k) === -1)
+                loose.push(n);
+
+        }
+        const empty = keys.filter((k) => {
+            return !Object.values(out).includes(k);
+        });
+        if (empty.length === 0)
+            return out;
+
+        const per = Math.ceil(loose.length / empty.length);
+        loose.forEach((n, i) => {
+            out[String(n)] = empty[Math.min(empty.length - 1, Math.floor(i / per))];
+        });
+        return out;
+    }
+
     function writeWorkspaces(mode, assign) {
+        const plans = {};
+        for (const k in root.workspacePrefs.plans) plans[k] = root.workspacePrefs.plans[k]
+        if (root.workspaceSetup !== "")
+            plans[root.workspaceSetup] = assign;
+
         Prefs.set("monitorWorkspaces", JSON.stringify({
             "mode": mode,
-            "assign": assign
+            "assign": assign,
+            "plans": plans
         }));
     }
 
@@ -1044,7 +1114,8 @@ Singleton {
     }
 
     function writeRules() {
-        if (!Prefs.loaded || !dataFile.ready || root.rulesLua === dataFile.current)
+        // the split depends on what is plugged in, so it waits for the first look
+        if (!Prefs.loaded || !dataFile.ready || !root.probed || root.rulesLua === dataFile.current)
             return ;
 
         dataFile.reloadAfter = root.workspacePart(dataFile.current) !== root.workspacePart(root.rulesLua);
@@ -1053,6 +1124,11 @@ Singleton {
     }
 
     onRulesLuaChanged: rulesDebounce.restart()
+    onProbedChanged: rulesDebounce.restart()
+
+    // a workspace rule only places a workspace as it is made, so once the new
+    // rules are in, the open ones are moved to their displays
+    property bool gatherPending: false
 
     // a mode change takes the screen with it, so this waits out a drag
     Timer {
@@ -1093,10 +1169,12 @@ Singleton {
         }
         // the rules live in hyprland, so it re-reads once the file is on disk
         onSaved: {
-            if (dataFile.reloadAfter)
+            if (dataFile.reloadAfter) {
+                root.gatherPending = true;
                 Quickshell.execDetached(["hyprctl", "reload"]);
-            else
+            } else {
                 Quickshell.execDetached(["hyprctl", "eval", "if LucidMonitors then LucidMonitors.apply() end"]);
+            }
             probeDebounce.restart();
         }
         // a dropped write would otherwise stay "current" and never be retried

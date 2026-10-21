@@ -132,15 +132,52 @@ end
 -- workspaces tied to a display. hyprland keeps a workspace rule once it has
 -- one, so the page reloads rather than evals when these change, and they are
 -- only set here, on load
+local owner = {}
+
 local function workspaces(cfg)
     if type(cfg.workspaces) ~= "table" then return end
     for _, w in ipairs(cfg.workspaces) do
         if type(w.workspace) == "string" and type(w.monitor) == "string" and w.monitor ~= "" then
+            owner[w.workspace] = w.monitor
             pcall(hl.workspace_rule, {
                 workspace = w.workspace,
                 monitor   = w.monitor,
                 default   = w.default == true or nil,
             })
+        end
+    end
+end
+
+-- a rule only places a workspace as it is made, and a display plugged in gets
+-- back whatever last sat on its port, so after the rules change the page calls
+-- this to move the open workspaces onto the displays they now belong to
+function M.gather()
+    local name, key = {}, {}
+    for _, mon in ipairs(hl.get_monitors() or {}) do
+        if not mon.is_mirror then
+            local d = mon.description or ""
+            key[mon.name] = d ~= "" and ("desc:" .. d) or mon.name
+            name[key[mon.name]] = mon.name
+            name[mon.name] = mon.name
+        end
+    end
+    for _, ws in ipairs(hl.get_workspaces() or {}) do
+        local want = name[owner[tostring(ws.id)] or ""]
+        if want and ws.monitor and ws.monitor.name ~= want then
+            pcall(hl.dispatch, hl.dsp.workspace.move({ workspace = ws.id, monitor = want }))
+        end
+    end
+    -- a display left showing an empty workspace of nobody's opens on its own
+    -- lowest one, as it would have if the rules had been there when it came
+    for _, mon in ipairs(hl.get_monitors() or {}) do
+        local active = mon.active_workspace
+        if key[mon.name] and active and active.is_empty and owner[tostring(active.id)] ~= key[mon.name] then
+            local first
+            for ws, k in pairs(owner) do
+                local n = tonumber(ws)
+                if n and (k == key[mon.name] or k == mon.name) and (not first or n < first) then first = n end
+            end
+            if first then pcall(function() mon:set_workspace({ workspace = first }) end) end
         end
     end
 end
