@@ -117,9 +117,20 @@ Singleton {
         root.barRetiring = null;
     }
 
-    // every tile the system panel's grid can carry. the panel shows the ones
-    // named in systemTiles, in that order, and its editor offers the rest
-    readonly property var systemTileCatalog: [
+    // every tile the system panel's grid can carry, Lucid's and the user's
+    // own. the panel shows the ones named in systemTiles, in that order, and
+    // the shelf on its card offers the rest
+    readonly property var systemTileCatalog: root.systemTileBuiltins.concat(root.systemOwnTileList.map((t) => {
+        return {
+            "key": t.key,
+            "icon": t.icon,
+            "name": t.name,
+            "own": true
+        };
+    }))
+    readonly property var systemTileBuiltins: [
+        { "key": "wifi", "icon": "wifi", "name": "Wi-Fi" },
+        { "key": "bluetooth", "icon": "bluetooth", "name": "Bluetooth" },
         { "key": "dnd", "icon": "do_not_disturb_on", "name": "Silence" },
         { "key": "awake", "icon": "coffee", "name": "Awake" },
         { "key": "dark", "icon": "dark_mode", "name": "Dark" },
@@ -155,6 +166,83 @@ Singleton {
         { "key": "clear", "icon": "clear_all", "name": "Clear" }
     ]
 
+    // the user's own tiles, each keyed "own<id>". one with a command to turn
+    // it off is a switch, kept in step by the status command (exit 0 is on)
+    // where there is one; one with only the first is a button that runs it
+    readonly property var systemOwnTileList: {
+        let v = [];
+        try {
+            v = JSON.parse(root.systemOwnTiles || "[]");
+        } catch (e) {
+        }
+        return (Array.isArray(v) ? v : []).filter((t) => {
+            return t && Number(t.id) > 0;
+        }).map((t) => {
+            return {
+                "key": "own" + Math.round(Number(t.id)),
+                "id": Math.round(Number(t.id)),
+                "name": String(t.name || "").trim() || "My tile",
+                "icon": String(t.icon || "").trim() || "star",
+                "on": String(t.on || ""),
+                "off": String(t.off || ""),
+                "status": String(t.status || "")
+            };
+        });
+    }
+
+    function systemOwnTile(key) {
+        return root.systemOwnTileList.find((t) => {
+            return t.key === key;
+        }) || null;
+    }
+
+    function setSystemOwnTiles(list) {
+        root.systemOwnTiles = list.length === 0 ? "" : JSON.stringify(list.map((t) => {
+            return {
+                "id": t.id,
+                "name": t.name,
+                "icon": t.icon,
+                "on": t.on,
+                "off": t.off,
+                "status": t.status
+            };
+        }));
+    }
+
+    // a new one goes straight onto the panel, with the small tiles
+    function addSystemOwnTile() {
+        const id = root.systemOwnTileList.reduce((n, t) => {
+            return Math.max(n, t.id);
+        }, 0) + 1;
+        root.setSystemOwnTiles(root.systemOwnTileList.concat([{
+            "id": id,
+            "name": "My tile",
+            "icon": "star",
+            "on": "",
+            "off": "",
+            "status": ""
+        }]));
+        root.setSystemTiles(root.systemTileKeys.concat(["own" + id]));
+        return "own" + id;
+    }
+
+    function setSystemOwnTile(key, fields) {
+        root.setSystemOwnTiles(root.systemOwnTileList.map((t) => {
+            return t.key === key ? Object.assign({}, t, fields) : t;
+        }));
+    }
+
+    function removeSystemOwnTile(key) {
+        if (root.systemTileKeys.indexOf(key) !== -1)
+            root.setSystemTiles(root.systemTileKeys.filter((k) => {
+                return k !== key;
+            }));
+
+        root.setSystemOwnTiles(root.systemOwnTileList.filter((t) => {
+            return t.key !== key;
+        }));
+    }
+
     function systemTileAt(key) {
         for (var i = 0; i < root.systemTileCatalog.length; i++) {
             if (root.systemTileCatalog[i].key === key)
@@ -164,10 +252,12 @@ Singleton {
         return null;
     }
 
-    // same rules as the bar zones: no repeats, nothing the catalogue lacks
-    readonly property var systemTileKeys: String(root.systemTiles).split(",").map((x) => {
+    // same rules as the bar zones: no repeats, nothing the catalogue lacks.
+    // Wi-Fi and Bluetooth sat above the grid before they were tiles of it, so
+    // until the tiles are edited they lead it and a list saved before keeps them
+    readonly property var systemTileKeys: (root.systemTilesRadios ? [] : ["wifi", "bluetooth"]).concat(String(root.systemTiles).split(",").map((x) => {
         return x.trim();
-    }).filter((x, i, all) => {
+    })).filter((x, i, all) => {
         return x !== "" && all.indexOf(x) === i && root.systemTileAt(x) !== null;
     })
     readonly property var systemTileSpare: root.systemTileCatalog.filter((t) => {
@@ -178,6 +268,457 @@ Singleton {
 
     function setSystemTiles(keys) {
         root.systemTiles = keys.join(",");
+        root.systemTilesRadios = true;
+    }
+
+    // a big tile takes half a row, with its name and what it is doing. the
+    // big ones and the small ones are blocks of their own, each in the order
+    // systemTiles keeps
+    readonly property var systemBigKeys: root.prefList(root.systemBigTiles, root.systemTileCatalog)
+    readonly property var systemBigTileKeys: root.systemTileKeys.filter((k) => {
+        return root.systemBigKeys.indexOf(k) !== -1;
+    })
+    readonly property var systemSmallTileKeys: root.systemTileKeys.filter((k) => {
+        return root.systemBigKeys.indexOf(k) === -1;
+    })
+
+    // both tile blocks at once: which are big, and the order of each
+    function setSystemTileBlocks(big, small) {
+        root.systemBigTiles = big.join(",");
+        root.setSystemTiles(big.concat(small));
+    }
+
+    function setTileBig(key, big) {
+        const l = root.systemBigKeys.filter((k) => {
+            return k !== key;
+        });
+        if (big)
+            l.push(key);
+
+        root.systemBigTiles = l.join(",");
+    }
+
+    // the control centre's blocks, and what the sliders and gauges hold; the
+    // tile blocks hold the tiles above
+    readonly property var systemBlockCatalog: [
+        { "key": "sliders", "icon": "tune", "name": "Sliders" },
+        { "key": "bigtiles", "icon": "dashboard", "name": "Big tiles" },
+        { "key": "tiles", "icon": "apps", "name": "Tiles" },
+        { "key": "media", "icon": "music_note", "name": "Media" },
+        { "key": "gauges", "icon": "speed", "name": "Gauges" }
+    ]
+    readonly property var systemSliderCatalog: [
+        { "key": "brightness", "icon": "brightness_medium", "name": "Brightness" },
+        { "key": "volume", "icon": "volume_up", "name": "Volume" },
+        { "key": "mic", "icon": "mic", "name": "Microphone" }
+    ]
+    readonly property var systemInfoCatalog: [
+        { "key": "cpu", "icon": "memory", "name": "CPU" },
+        { "key": "ram", "icon": "memory_alt", "name": "Memory" },
+        { "key": "disk", "icon": "hard_drive", "name": "Disk" },
+        { "key": "battery", "icon": "battery_full", "name": "Battery" }
+    ]
+    // there were three blocks once: toggles held both kinds of tile, and
+    // system the media card (when it was on its list) and the gauges
+    readonly property var systemBlockKeys: {
+        const out = [];
+        const legacyMedia = String(root.systemInfo).split(",").map((x) => {
+            return x.trim();
+        }).indexOf("media") !== -1;
+        for (const k of String(root.systemBlocks || "").split(",").map((x) => {
+            return x.trim();
+        })) {
+            const keys = k === "toggles" ? ["bigtiles", "tiles"] : (k === "system" ? (legacyMedia ? ["media", "gauges"] : ["gauges"]) : [k]);
+            for (const x of keys) {
+                if (out.indexOf(x) === -1 && root.systemBlockCatalog.some((c) => {
+                    return c.key === x;
+                }))
+                    out.push(x);
+
+            }
+        }
+        return out;
+    }
+    readonly property bool systemLegacy: /\b(toggles|system)\b/.test(String(root.systemBlocks)) || /"(toggles|system)"/.test(String(root.systemGrid))
+
+    // writes the three old blocks out as the five, once the layout is edited
+    function systemMigrate() {
+        if (!root.systemLegacy)
+            return ;
+
+        root.systemGrid = JSON.stringify(root.systemGridSaved);
+        root.systemBlocks = root.systemBlockKeys.join(",");
+    }
+    readonly property var systemSliderKeys: root.prefList(root.systemSliders, root.systemSliderCatalog)
+    readonly property var systemInfoKeys: root.prefList(root.systemInfo, root.systemInfoCatalog)
+
+    // the control centre is a grid, bento style: each block sits at a column
+    // and a row and spans as many of each as it is given. a column is a tile
+    // wide and a row a thin strip, so a block is as tall as it is made, never
+    // less than what it holds. systemGrid keeps { key: { x, y, w, h, lie } },
+    // lie laying the sliders down
+    readonly property int systemGridCols: 16
+    readonly property var systemGridSaved: {
+        let v;
+        try {
+            v = JSON.parse(root.systemGrid || "{}");
+        } catch (e) {
+            return {};
+        }
+        if (!v || typeof v !== "object" || Array.isArray(v))
+            return {};
+
+        // an old block leaves its spot to the two it became, one over the other
+        const split = (old, top, under) => {
+            const r = v[old];
+            delete v[old];
+            if (!r)
+                return ;
+
+            if (!v[top])
+                v[top] = Object.assign({}, r, {
+                "h": 1
+            });
+
+            if (!v[under])
+                v[under] = Object.assign({}, r, {
+                "y": (Number(r.y) || 0) + 1,
+                "h": 1
+            });
+
+        };
+        split("toggles", "bigtiles", "tiles");
+        split("system", "media", "gauges");
+        return v;
+    }
+
+    // the fewest columns a block can do with: a standing slider each, room
+    // for the lying sliders' value and the media card, three tiles a row
+    function systemGridMinW(key, lie) {
+        if (key === "sliders")
+            return lie ? 3 : Math.max(1, root.systemSliderKeys.length);
+
+        if (key === "media")
+            return 4;
+
+        if (key === "gauges")
+            return 2;
+
+        return 3;
+    }
+
+    // a width the block can take: standing sliders take whole columns each
+    function systemGridSnapW(key, lie, w) {
+        const least = root.systemGridMinW(key, lie);
+        // standing sliders a column or more each, big tiles three each
+        const n = key === "sliders" && !lie ? least : (key === "bigtiles" ? 3 : 1);
+        if (n > 1)
+            return Math.max(n, Math.min(Math.floor(root.systemGridCols / n), Math.round(w / n)) * n);
+
+        return Math.max(least, Math.min(root.systemGridCols, w));
+    }
+
+    function systemGridOverlap(a, b) {
+        return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+    }
+
+    // a spot made whole: whole cells, inside the grid, no narrower than the
+    // block allows and no shorter than the rows its pieces need. until they
+    // are given a place the blocks make the one column the panel always had,
+    // six tiles wide, with the sliders lying down
+    function systemGridFit(key, r, need) {
+        const lie = r.lie === undefined ? true : !!r.lie;
+        const w = root.systemGridSnapW(key, lie, Math.round(Number(r.w) || 6));
+        return {
+            "x": Math.max(0, Math.min(root.systemGridCols - w, Math.round(Number(r.x) || 0))),
+            "y": Math.max(0, Math.round(Number(r.y) || 0)),
+            "w": w,
+            "h": Math.max(1, need || 1, Math.round(Number(r.h) || 0)),
+            "lie": lie
+        };
+    }
+
+    // where each of keys sits, given the rows each needs. top to bottom, one
+    // that would land on another (it grew, or another did) moves down past it;
+    // one never placed goes under all the rest. grid, when given, stands in
+    // for the saved one, so a layout not in use can be drawn too
+    function systemGridPlace(keys, needs, grid) {
+        const need = needs || {};
+        const saved = grid || root.systemGridSaved;
+        const out = {};
+        const placed = keys.filter((k) => {
+            return !!saved[k];
+        }).map((k) => {
+            return {
+                "key": k,
+                "r": root.systemGridFit(k, saved[k], need[k])
+            };
+        }).sort((a, b) => {
+            return a.r.y - b.r.y || a.r.x - b.r.x;
+        });
+        const taken = [];
+        for (const p of placed) {
+            for (; ; ) {
+                const hit = taken.filter((t) => {
+                    return root.systemGridOverlap(p.r, t);
+                });
+                if (hit.length === 0)
+                    break;
+
+                p.r.y = Math.max(...hit.map((t) => {
+                    return t.y + t.h;
+                }));
+            }
+            out[p.key] = p.r;
+            taken.push(p.r);
+        }
+        for (const k of keys) {
+            if (out[k])
+                continue;
+
+            const r = root.systemGridFit(k, {}, need[k]);
+            r.y = taken.reduce((y, t) => {
+                return Math.max(y, t.y + t.h);
+            }, 0);
+            out[k] = r;
+            taken.push(r);
+        }
+        return out;
+    }
+
+    // puts a block at a new spot or size. a block it lands on takes the spot
+    // it left if it fits there, or else goes under it
+    // the height a block was given by hand, without what its pieces add. what
+    // is saved keeps to that, so a block that holds less later shrinks back
+    function systemGridOwnH(key) {
+        const r = root.systemGridSaved[key];
+        return Math.max(1, Math.round(Number(r && r.h) || 0));
+    }
+
+    function systemGridSet(key, spot, needs) {
+        const need = needs || {};
+        const now = root.systemGridPlace(root.systemBlockKeys, need);
+        const old = now[key] || root.systemGridFit(key, {}, need[key]);
+        const next = Object.assign({}, root.systemGridSaved);
+        for (const k of root.systemBlockKeys)
+            next[k] = Object.assign({}, now[k], {
+            "h": root.systemGridOwnH(k)
+        });
+        const moved = root.systemGridFit(key, Object.assign({}, old, spot), need[key]);
+        next[key] = Object.assign({}, moved, {
+            "h": spot.h === undefined ? root.systemGridOwnH(key) : moved.h
+        });
+        const taken = [moved];
+        const pushed = [];
+        for (const k of root.systemBlockKeys) {
+            if (k === key)
+                continue;
+
+            if (root.systemGridOverlap(now[k], moved))
+                pushed.push(k);
+            else
+                taken.push(now[k]);
+        }
+        for (const k of pushed) {
+            const there = root.systemGridFit(k, Object.assign({}, now[k], {
+                "x": old.x,
+                "y": old.y
+            }), need[k]);
+            const r = taken.some((t) => {
+                return root.systemGridOverlap(there, t);
+            }) ? Object.assign({}, now[k], {
+                "y": moved.y + moved.h
+            }) : there;
+            next[k] = Object.assign({}, r, {
+                "h": root.systemGridOwnH(k)
+            });
+            taken.push(r);
+        }
+        root.systemGrid = JSON.stringify(next);
+    }
+
+    // everything the control centre's layout is: which blocks, where, and
+    // what each holds. a saved layout, and each step undo goes back, is these
+    readonly property var systemLayoutKeys: ["systemBlocks", "systemGrid", "systemTiles", "systemTilesRadios", "systemBigTiles", "systemSliders", "systemInfo", "systemBlockStyles"]
+
+    // the looks each block can take; the first is the one it always had
+    readonly property var systemStyleCatalog: ({
+        "sliders": [{ "key": "plain", "name": "Plain" }, { "key": "bold", "name": "Bold" }, { "key": "thin", "name": "Thin" }, { "key": "wavy", "name": "Wavy" }],
+        "bigtiles": [{ "key": "pill", "name": "Pill" }, { "key": "shapes", "name": "Shapes" }, { "key": "compact", "name": "Compact" }, { "key": "outline", "name": "Outline" }],
+        "tiles": [{ "key": "round", "name": "Round" }, { "key": "shapes", "name": "Shapes" }, { "key": "icons", "name": "Icons only" }, { "key": "square", "name": "Square" }],
+        "media": [{ "key": "card", "name": "Card" }, { "key": "disc", "name": "Disc" }, { "key": "backdrop", "name": "Backdrop" }, { "key": "mini", "name": "Mini" }, { "key": "wave", "name": "Wave" }, { "key": "cover", "name": "Cover" }],
+        "gauges": [{ "key": "rings", "name": "Rings" }, { "key": "bars", "name": "Bars" }, { "key": "tiles", "name": "Tiles" }, { "key": "compact", "name": "Compact" }, { "key": "graph", "name": "Graph" }, { "key": "dial", "name": "Dial" }]
+    })
+    // systemBlockStyles as JSON { block: look }, only the looks the catalogue knows
+    readonly property var systemStyleMap: {
+        let v = {};
+        try {
+            v = JSON.parse(root.systemBlockStyles || "{}");
+        } catch (e) {
+        }
+        const out = {};
+        for (const k in root.systemStyleCatalog) {
+            if (v && root.systemStyleCatalog[k].some((c) => {
+                return c.key === v[k];
+            }))
+                out[k] = v[k];
+
+        }
+        return out;
+    }
+
+    function systemBlockStyle(key) {
+        const l = root.systemStyleCatalog[key];
+        return root.systemStyleMap[key] || (l ? l[0].key : "");
+    }
+
+    // the first look is kept as no entry at all
+    function setSystemBlockStyle(key, look) {
+        const l = root.systemStyleCatalog[key];
+        if (!l)
+            return ;
+
+        const next = Object.assign({}, root.systemStyleMap);
+        if (look === l[0].key)
+            delete next[key];
+        else
+            next[key] = look;
+        root.systemBlockStyles = Object.keys(next).length === 0 ? "" : JSON.stringify(next);
+    }
+
+    function systemLayoutNow() {
+        const out = {};
+        for (const k of root.systemLayoutKeys)
+            out[k] = root[k];
+        return out;
+    }
+
+    function systemLayoutSame(a, b) {
+        return root.systemLayoutKeys.every((k) => {
+            return a[k] === b[k];
+        });
+    }
+
+    // only what a layout knows, and only when it is a value of the right kind
+    function systemLayoutApply(v) {
+        for (const k of root.systemLayoutKeys) {
+            if (v && v[k] !== undefined && typeof v[k] === typeof root[k] && root[k] !== v[k])
+                root[k] = v[k];
+
+        }
+    }
+
+    // the blocks a layout shows and where, without the legacy names
+    function systemLayoutGrid(v) {
+        try {
+            const g = JSON.parse(v.systemGrid || "{}");
+            return g && typeof g === "object" && !Array.isArray(g) ? g : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    // the user's own, as JSON [{ id, name, saved, layout }]
+    readonly property var systemLayoutList: {
+        let v = [];
+        try {
+            v = JSON.parse(root.systemLayouts || "[]");
+        } catch (e) {
+        }
+        return (Array.isArray(v) ? v : []).filter((l) => {
+            return l && l.id && l.layout && typeof l.layout === "object";
+        });
+    }
+
+    function systemLayoutNamed(name) {
+        const n = String(name).trim().toLowerCase();
+        return root.systemLayoutList.find((l) => {
+            return String(l.name).toLowerCase() === n;
+        }) || null;
+    }
+
+    // saving under a name already used updates that one
+    function saveSystemLayout(name) {
+        const n = String(name).trim();
+        if (n === "")
+            return ;
+
+        const was = root.systemLayoutNamed(n);
+        const entry = {
+            "id": was ? was.id : String(Date.now()),
+            "name": n,
+            "saved": Date.now(),
+            "layout": root.systemLayoutNow()
+        };
+        const list = root.systemLayoutList.filter((l) => {
+            return !was || l.id !== was.id;
+        });
+        root.systemLayouts = JSON.stringify(list.concat([entry]));
+    }
+
+    function deleteSystemLayout(id) {
+        const list = root.systemLayoutList.filter((l) => {
+            return l.id !== id;
+        });
+        root.systemLayouts = list.length === 0 ? "" : JSON.stringify(list);
+    }
+
+    function applySystemLayout(id) {
+        const l = root.systemLayoutList.find((x) => {
+            return x.id === id;
+        });
+        if (l)
+            root.systemLayoutApply(l.layout);
+
+    }
+
+    // ready-made arrangements of the blocks that are on: what each holds is left alone
+    readonly property var systemLayoutPresets: [
+        { "id": "column", "name": "Column", "blurb": "One under another, six tiles wide" },
+        { "id": "pair", "name": "Two columns", "blurb": "Sliders and tiles, then media and gauges beside them" },
+        { "id": "wide", "name": "Wide", "blurb": "Standing sliders, the tiles, then media and gauges" }
+    ]
+
+    function systemPresetGrid(id) {
+        if (id === "pair")
+            return {
+                "sliders": { "x": 0, "y": 0, "w": 6, "lie": true },
+                "bigtiles": { "x": 0, "y": 1, "w": 6 },
+                "tiles": { "x": 0, "y": 2, "w": 6 },
+                "media": { "x": 6, "y": 0, "w": 6 },
+                "gauges": { "x": 6, "y": 1, "w": 6 }
+            };
+
+        // standing sliders down the left as tall as the rest, the tiles beside
+        // them, media and the gauges at the right. three sliders take a third
+        // column, and the rest move over for it
+        if (id === "wide") {
+            const sw = root.systemGridMinW("sliders", false);
+            return {
+                "sliders": { "x": 0, "y": 0, "w": sw, "h": 11, "lie": false },
+                "bigtiles": { "x": sw, "y": 0, "w": 6 },
+                "tiles": { "x": sw, "y": 6, "w": 6, "h": 5 },
+                "media": { "x": sw + 6, "y": 0, "w": 5 },
+                "gauges": { "x": sw + 6, "y": 3, "w": 5, "h": 8 }
+            };
+        }
+        return {};
+    }
+
+    function applySystemPreset(id) {
+        const g = root.systemPresetGrid(id);
+        root.systemGrid = Object.keys(g).length === 0 ? "" : JSON.stringify(g);
+    }
+
+    // a comma list kept in a pref, as the keys a catalogue knows, once each
+    function prefList(text, catalogue) {
+        return String(text || "").split(",").map((x) => {
+            return x.trim();
+        }).filter((x, i, all) => {
+            return x !== "" && all.indexOf(x) === i && catalogue.some((c) => {
+                return c.key === x;
+            });
+        });
     }
 
     // every bar module, in one place: the id barLayout arranges it by, the
@@ -279,8 +820,9 @@ Singleton {
         "home": "right",
         "name": "System",
         "desc": "Battery, volume, brightness and quick settings",
-        "more": "Its tiles are set with Edit tiles in the control centre itself; the keyboard layout sign and game mode are in System module, further down this page.",
-        "page": ""
+        "more": "The keyboard layout sign and game mode are in System module, further down this page.",
+        "page": "",
+        "options": ["systemTiles", "systemTilesRadios", "systemBigTiles", "systemBlocks", "systemGrid", "systemBlockCards", "systemBlockStyles", "systemOwnTiles", "systemSliders", "systemInfo", "systemHeaderButtons"]
     },
     {
         "id": "privacy",
@@ -356,14 +898,17 @@ Singleton {
             out[m.id] = m.home;
         return out;
     }
-    // the module the Bar page opens on, set by a right click on its pill
+    // the module the Bar page opens on, set by a right click on its pill, and
+    // the part of its card to bring into view ("" for the top of it)
     property string barModuleFocus: ""
+    property string barModulePart: ""
     // the ids of the modules switched on that the bar leaves out right now,
     // having nothing to show (an empty tray); the bar keeps it up to date, and
     // a module's "when" in barModules says when it comes back
     property var barModulesAway: []
 
-    function openBarModule(id) {
+    function openBarModule(id, part) {
+        root.barModulePart = part || "";
         root.barModuleFocus = id;
         root.settingsRequested("bar");
     }
@@ -478,6 +1023,17 @@ Singleton {
 
     property alias barZoneGap: s.barZoneGap
     property alias systemTiles: s.systemTiles
+    property alias systemTilesRadios: s.systemTilesRadios
+    property alias systemBigTiles: s.systemBigTiles
+    property alias systemBlocks: s.systemBlocks
+    property alias systemSliders: s.systemSliders
+    property alias systemInfo: s.systemInfo
+    property alias systemGrid: s.systemGrid
+    property alias systemBlockCards: s.systemBlockCards
+    property alias systemOwnTiles: s.systemOwnTiles
+    property alias systemBlockStyles: s.systemBlockStyles
+    property alias systemLayouts: s.systemLayouts
+    property alias systemHeaderButtons: s.systemHeaderButtons
     property alias barLayout: s.barLayout
     property alias barJoins: s.barJoins
     property alias barJoinDividers: s.barJoinDividers
@@ -1003,6 +1559,16 @@ Singleton {
         "autoColorMode": false,
         "barZoneGap": 26,
         "systemTiles": "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session",
+        "systemTilesRadios": false,
+        "systemBigTiles": "wifi,bluetooth",
+        "systemBlocks": "sliders,bigtiles,tiles,media,gauges",
+        "systemSliders": "brightness,volume",
+        "systemInfo": "cpu,ram,disk,battery",
+        "systemGrid": "",
+        "systemBlockCards": false,
+        "systemOwnTiles": "",
+        "systemBlockStyles": "",
+        "systemHeaderButtons": "edit,settings,lock,power",
         "barLayout": "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}",
         "barJoins": "[]",
         "barJoinDividers": true,
@@ -1733,6 +2299,27 @@ Singleton {
             property bool autoColorMode: false
             property int barZoneGap: 26
             property string systemTiles: "dnd,awake,dark,airplane,location,mic,capture,record,picker,keyboard,timer,session"
+            // the control centre: its blocks, and what each holds, in order
+            property bool systemTilesRadios: false
+            property string systemBigTiles: "wifi,bluetooth"
+            property string systemBlocks: "sliders,bigtiles,tiles,media,gauges"
+            property string systemSliders: "brightness,volume"
+            property string systemInfo: "cpu,ram,disk,battery"
+            // where each block sits on the panel's grid, as JSON; empty lays
+            // them one under another in the order above
+            property string systemGrid: ""
+            // a card behind the tiles and the sliders too, as media and the gauges have
+            property bool systemBlockCards: false
+            // tiles that run the user's commands, as a JSON list of
+            // { id, name, icon, on, off, status }
+            property string systemOwnTiles: ""
+            // the look each block takes, as JSON { block: look }; one not
+            // named keeps the look it always had
+            property string systemBlockStyles: ""
+            // control centre layouts the user saved, as JSON; kept out of
+            // the defaults, so no reset throws them away
+            property string systemLayouts: ""
+            property string systemHeaderButtons: "edit,settings,lock,power"
             property string barLayout: "{\"left\":[\"workspaces\",\"media\",\"tray\"],\"center\":[\"clock\"],\"right\":[\"notifications\",\"system\"]}"
             property string barJoins: "[]"
             property bool barJoinDividers: true

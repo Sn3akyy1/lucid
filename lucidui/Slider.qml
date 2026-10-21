@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Shapes
 import qs
 
 // m3 expressive slider: a bar handle parted from the track by a gap, a stop dot
@@ -33,6 +34,31 @@ Item {
     property bool held: false
 
     property bool iconClickable: false
+    // turns the icon by this much, so it still reads upright on a slider turned on its side
+    property real iconTurn: 0
+    // the filled part drawn as a wave over a flat empty one, flowing while
+    // waveFlow; waveAmp eases it flat (0) and back (1). the inset icon has
+    // nothing to sit on, so a wavy slider shows none
+    property bool wavy: false
+    property bool waveFlow: true
+    property real waveAmp: 1
+    property real wavePhase: 0
+    readonly property real waveStroke: Math.max(Theme.dp(4), Math.round(sl.trackH * 0.22))
+    readonly property real waveLength: Math.max(Theme.dp(24), sl.trackH * 1.15)
+    readonly property var wavePoints: {
+        const end = sl.handleX - sl.handleW / 2 - sl.gap - sl.waveStroke / 2;
+        const from = sl.waveStroke / 2;
+        if (!sl.wavy || end <= from)
+            return [];
+
+        const amp = (sl.trackH * 0.24) * sl.waveAmp;
+        const mid = sl.height / 2;
+        const out = [];
+        for (let x = from; x < end; x += Theme.dp(2))
+            out.push(Qt.point(x, mid + amp * Math.sin((x / sl.waveLength) * Math.PI * 2 - sl.wavePhase)));
+        out.push(Qt.point(end, mid + amp * Math.sin((end / sl.waveLength) * Math.PI * 2 - sl.wavePhase)));
+        return out;
+    }
 
     signal moved(real value)
     signal released(real value)
@@ -90,6 +116,41 @@ Item {
     implicitHeight: Math.max(sl.handleH, sl.trackH)
     opacity: sl.disabled ? Theme.disabledContent : 1
 
+    Behavior on waveAmp {
+        NumberAnimation {
+            duration: Theme.durDefaultSpatial
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.curveStandard
+        }
+
+    }
+
+    // a turn of the wave every two seconds or so
+    FrameAnimation {
+        running: sl.wavy && sl.waveFlow && sl.waveAmp > 0.01 && sl.visible
+        onTriggered: sl.wavePhase = (sl.wavePhase + frameTime * Math.PI) % (Math.PI * 2)
+    }
+
+    Shape {
+        visible: sl.wavy && sl.wavePoints.length > 1
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+
+        ShapePath {
+            strokeColor: sl.activeColor
+            strokeWidth: sl.waveStroke
+            fillColor: "transparent"
+            capStyle: ShapePath.RoundCap
+            joinStyle: ShapePath.RoundJoin
+
+            PathPolyline {
+                path: sl.wavePoints
+            }
+
+        }
+
+    }
+
     Rectangle {
         id: active
 
@@ -98,7 +159,7 @@ Item {
         width: Math.max(0, sl.handleX - sl.handleW / 2 - sl.gap)
         height: sl.trackHNow
         color: sl.activeColor
-        visible: width > 0.5
+        visible: width > 0.5 && !sl.wavy
         topLeftRadius: sl.outerRNow
         bottomLeftRadius: sl.outerRNow
         topRightRadius: sl.innerR
@@ -121,13 +182,13 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         x: sl.handleX + sl.handleW / 2 + sl.gap
         width: Math.max(0, sl.width - x)
-        height: sl.trackHNow
+        height: sl.wavy ? sl.waveStroke : sl.trackHNow
         color: sl.inactiveColor
         visible: width > 0.5
-        topRightRadius: sl.outerRNow
-        bottomRightRadius: sl.outerRNow
-        topLeftRadius: sl.innerR
-        bottomLeftRadius: sl.innerR
+        topRightRadius: sl.wavy ? height / 2 : sl.outerRNow
+        bottomRightRadius: sl.wavy ? height / 2 : sl.outerRNow
+        topLeftRadius: sl.wavy ? height / 2 : sl.innerR
+        bottomLeftRadius: sl.wavy ? height / 2 : sl.innerR
 
         Behavior on height {
             NumberAnimation {
@@ -204,10 +265,11 @@ Item {
         // a stadium end centres the glyph on its cap, a squarer one needs the nudge
         readonly property int nudge: sl.outerR >= sl.trackH / 2 ? 0 : Theme.dp(2)
 
-        visible: sl.icon !== "" && sl.trackH >= 28
+        visible: sl.icon !== "" && sl.trackH >= 28 && !sl.wavy
         name: sl.icon
         size: sl.iconSize
         fill: 1
+        rotation: sl.iconTurn
         anchors.verticalCenter: parent.verticalCenter
         x: (inset.fitsActive ? 0 : inactive.x) + Math.round((sl.trackH - size) / 2) + inset.nudge
         color: inset.fitsActive ? Theme.fgPrimary : Theme.fgSecondaryContainer

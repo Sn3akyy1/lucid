@@ -263,7 +263,7 @@ them and reordered inside them, or taken out of the bar entirely.
   Bluetooth panels and a switcher for the audio output and input. Two rows of
   tiles underneath: the toggles (silence, awake, dark, airplane, location, mic)
   and the tools (capture, record, colour picker, keyboard, timer, session);
-  Edit tiles adds more, such as the power profile, game mode and **night
+  the shelf on its card in Settings adds more, such as the power profile, game mode and **night
   light**, which warms the screen through hyprsunset, fading in and out, by
   hand or from sunset to sunrise where you are (worked out locally, no
   network) or between set hours. Right-click its tile to pick how warm and
@@ -313,11 +313,15 @@ panels behind them, brightness and volume with the audio devices behind those,
 two rows of tiles you arrange yourself, what is playing, and CPU, memory, disk
 and battery.*
 
-The small tiles are yours to arrange, the way a phone's quick settings are. The
-pencil in the panel's header opens *Edit tiles*: drag a tile to move it, tap its
-− or drag it below the line to take it out, and tap anything under *Tap to add*
-to put it in. Clipboard, Emoji, Wallpaper, Theme, Widgets and Clear wait there
-to begin with, and Reset brings back the set Lucid ships.
+The panel is yours to arrange, the way a phone's quick settings are, only on a
+bento grid. The pencil in its header opens its layout in Settings → Bar →
+System, drawn as the panel draws it: the big tiles, the small ones, the
+sliders, what is playing and the gauges are blocks you drag anywhere on the
+grid and stretch by any edge, and the pieces inside drag into order. A shelf
+above holds everything that is not on the panel; tap it or drag it in, and
+drag anything back onto the shelf to take it off. *Your own tiles*, under it,
+makes tiles that run your commands: one command for a button, or two and a
+check for a switch that stays right when something else turns it on.
 
 <img src="assets/clock-app.webp" alt="The clock app on its Today page, among clock, music, calendar, weather, battery, system and to-do widgets">
 
