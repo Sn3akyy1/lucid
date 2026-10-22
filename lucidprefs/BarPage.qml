@@ -300,6 +300,23 @@ Column {
         }
 
         SettingRow {
+            title: "Merge open panels"
+            resetKey: "barFullMerge"
+            description: "Panels open side by side - a notification next to the system panel, say - join into one shape: the gap between them fills in and the shorter one curves into the side of the taller one."
+            enabled: Prefs.barFull
+            disabledReason: "Only applies to the full bar - set Bar style to Full bar above."
+
+            M3Switch {
+                enabled: Prefs.barFull
+                checked: Prefs.barFullMerge
+                onToggled: (v) => {
+                    return Prefs.barFullMerge = v;
+                }
+            }
+
+        }
+
+        SettingRow {
             title: "Animation speed"
             resetKey: "barMotionScale"
             description: "Scales every transition in the bar - hovers, pills growing and shrinking, modules appearing and leaving - on top of the shell-wide Animation speed on the General page. Above 1.00x the bar moves more slowly than the rest of the shell."
