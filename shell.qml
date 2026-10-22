@@ -280,7 +280,8 @@ ShellRoot {
                 return at.at + 1 < keys.length && bar.widthOf(key) > 0.5 && bar.widthOf(keys[at.at + 1]) > 0.5 && Prefs.barJoinedNow(key, keys[at.at + 1]);
             }
 
-            // per module key, radius caps where a hanging panel meets the islands: {corners, tops, sides, fillets}
+            // per module key, radius caps where a hanging panel meets the islands: {corners, tops, sides, fillets},
+            // plus what the full bar fills between merged open panels: {bridges, merged}
             readonly property var hangPlan: bar.planHangs()
 
             function surfaceSpan(mod) {
@@ -293,7 +294,9 @@ ShellRoot {
                     "corners": ({}),
                     "tops": ({}),
                     "sides": ({}),
-                    "fillets": []
+                    "fillets": [],
+                    "bridges": [],
+                    "merged": ({})
                 });
                 const popups = Prefs.barPopupMode;
                 if (popups && !Prefs.barPopupNotched)
@@ -310,6 +313,40 @@ ShellRoot {
                         plan.fillets.push({ "x": x, "y": y, "size": size, "mirrored": mirrored, "flipped": flipped });
 
                 };
+                // full bar: open panels side by side become one shape. the gap
+                // between them fills in, and the shorter one's shared corner turns
+                // into a fillet against the taller one's side
+                if (Prefs.barFull && !popups && Prefs.barFullMerge) {
+                    const strip = Theme.dp(Prefs.barHeight);
+                    const row = bar.modules.filter((m) => {
+                        return m.visible && m.width > 0.5;
+                    }).sort((p, q) => {
+                        return p.x - q.x;
+                    });
+                    for (let i = 0; i + 1 < row.length; i++) {
+                        const a = row[i];
+                        const b = row[i + 1];
+                        const gap = b.x - (a.x + a.width);
+                        if (a === workspacesMod || b === workspacesMod || a.surfaceOpen !== true || b.surfaceOpen !== true || gap < -0.5 || gap > Theme.dp(Prefs.barFullCorner))
+                            continue;
+
+                        const low = Math.min(a.height, b.height);
+                        const diff = Math.abs(a.height - b.height);
+                        const shortLeft = a.height < b.height;
+                        const f = Math.floor(Math.min(Theme.dp(Prefs.barFullCorner), diff / 2));
+                        (plan.merged[a.modId] || (plan.merged[a.modId] = ({}))).right = true;
+                        (plan.merged[b.modId] || (plan.merged[b.modId] = ({}))).left = true;
+                        cap(a.modId, "br", shortLeft ? 0 : diff - f);
+                        cap(b.modId, "bl", shortLeft ? diff - f : 0);
+                        if (gap > 0.5 && low > strip)
+                            plan.bridges.push({ "x": a.x + a.width, "y": a.y + strip, "w": gap, "h": low - strip });
+
+                        if (shortLeft)
+                            fillet(b.x - f + bite, a.y + low - bite, f, false, false);
+                        else
+                            fillet(a.x + a.width - bite, a.y + low - bite, f, true, false);
+                    }
+                }
                 // islands: runs of joined modules as they stand
                 const islands = [];
                 const shelves = [];
@@ -700,6 +737,11 @@ ShellRoot {
                     // that already rounds that side
                     function sizeFor(toTheLeft) {
                         var m = panelFlares.modelData;
+                        // that side is merged into an open neighbour, which covers it
+                        var merged = bar.hangPlan.merged[m.modId];
+                        if (merged && (toTheLeft ? merged.left : merged.right))
+                            return 0;
+
                         var corner = Theme.dp(Prefs.barFullCorner);
                         var toEdge = toTheLeft ? m.x : bar.width - m.x - m.width;
                         var room = toEdge - (toEdge < corner * 2 ? corner : 0);
@@ -1009,6 +1051,25 @@ ShellRoot {
                     flipped: spec ? spec.flipped : false
                     x: spec ? spec.x : 0
                     y: spec ? spec.y : 0
+                }
+
+            }
+
+            // the gaps filled between open panels the full bar merges
+            Repeater {
+                model: 8
+
+                Rectangle {
+                    required property int index
+                    readonly property var spec: bar.hangPlan.bridges.length > index ? bar.hangPlan.bridges[index] : null
+
+                    z: 0
+                    visible: spec !== null
+                    x: spec ? spec.x : 0
+                    y: spec ? spec.y : 0
+                    width: spec ? spec.w : 0
+                    height: spec ? spec.h : 0
+                    color: Theme.bg
                 }
 
             }
