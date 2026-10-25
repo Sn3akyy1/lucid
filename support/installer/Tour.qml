@@ -2,9 +2,8 @@ import QtQuick
 import Quickshell.Widgets
 import qs
 
-// the README's screenshots, one after another while the installer works. each
-// one hands its strongest colour to `seed`, so the window takes its accent from
-// the picture on show the way the shell takes it from a wallpaper
+// the README's screenshots, in turn while the installer works. each hands its strongest
+// colour to `seed`, the way the shell takes its accent from a wallpaper
 Item {
     id: tour
 

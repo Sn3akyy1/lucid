@@ -455,8 +455,7 @@ Singleton {
     }
 
     // through the launcher, as autostart does. a supervisor that brings the
-    // shell back by itself is left to it. the installer names the shell it put
-    // in place, since its own folder is the source tree
+    // shell back by itself is left to it. the installer passes the installed shell's folder
     function restartNow(shellDir) {
         root.runClosed = true;
         root.remindAt = 0;

@@ -108,8 +108,7 @@ Singleton {
     readonly property real _secondaryHue: -20
     readonly property real _rampShift: root.surfaceTint <= 0 ? 0 : (root.isLight ? Math.max(0, root.toneOf(root.cLowest) - (100 - root.surfaceTint * root._tintLift)) : -(root.surfaceTint * root._tintLift))
 
-    // the graphical installer tints the accent from the screenshot on show, the
-    // way a wallpaper would; the shell never sets it
+    // set by the graphical installer to tint the accent from its screenshots; unset in the shell
     property color seed: "transparent"
     readonly property bool _seeded: root.seed.a > 0
     readonly property color cPrimary: root._seeded ? root.atTone(root.seed, root.isLight ? 40 : 80) : m.primary
