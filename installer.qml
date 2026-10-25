@@ -134,6 +134,16 @@ ShellRoot {
     }
 
     // the same tests install.sh makes, so the switches can say what will happen
+    // the run outlives the window, but a question from the installer waits for it
+    function windowClosed() {
+        if (Updates.installing) {
+            var body = "Open the installer again (./install.sh) to see it. If it asks something, it waits there for your answer.";
+            console.log("Lucid is still installing. " + body);
+            Quickshell.execDetached(["sh", "-c", "command -v notify-send >/dev/null && notify-send -a Lucid -i \"$1\" \"$2\" \"$3\"", "sh", Updates.iconPath, "Lucid is still installing", body]);
+        }
+        Qt.quit();
+    }
+
     Process {
         running: true
         command: ["sh", "-c", "test -d /usr/share/sddm/themes && echo sddm; h=$HOME/.config/hypr; if grep -qs 'qs ipc call' \"$h/modules/binds.lua\"; then echo lucid; elif [ -f \"$h/hyprland.lua\" ]; then echo lua; elif [ -f \"$h/hyprland.conf\" ]; then echo conf; fi"]
@@ -167,7 +177,7 @@ ShellRoot {
         minimumSize: Qt.size(win.implicitWidth, win.implicitHeight)
         maximumSize: Qt.size(win.implicitWidth, win.implicitHeight)
         color: Theme.alpha(Theme.bg, 1)
-        onClosed: Qt.quit()
+        onClosed: root.windowClosed()
 
         Tour {
             id: tour
