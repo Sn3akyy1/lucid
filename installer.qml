@@ -61,7 +61,7 @@ ShellRoot {
         "needsText": "Comes with the colours from your wallpaper"
     }]
     // what install.sh was given besides --gui
-    readonly property var given: Quickshell.env("LUCID_INSTALL_ARGS").split(" ").filter((a) => {
+    readonly property var given: (Quickshell.env("LUCID_INSTALL_ARGS") || "").split(" ").filter((a) => {
         return a !== "";
     })
     // the flags of whatever was switched off, starting from the command line
@@ -142,8 +142,10 @@ ShellRoot {
         id: win
 
         title: "Install Lucid"
-        implicitWidth: Theme.dp(1100)
-        implicitHeight: Theme.dp(700)
+        // as tall as the choices, and as wide as the screenshot needs to fill
+        // that height, unless the screen is narrower
+        implicitHeight: welcome.implicitHeight + Theme.dp(64)
+        implicitWidth: Math.min(side.width + Theme.dp(44) + Math.round((win.implicitHeight - Theme.dp(32) - tour.footHeight) * 16 / 9), (win.screen ? win.screen.width : 1920) - Theme.dp(80))
         // one size: Hyprland floats a window that cannot be resized
         minimumSize: Qt.size(win.implicitWidth, win.implicitHeight)
         maximumSize: Qt.size(win.implicitWidth, win.implicitHeight)
@@ -252,7 +254,7 @@ ShellRoot {
                         readonly property bool locked: root.locked(modelData)
 
                         width: parent.width
-                        height: Theme.dp(58)
+                        height: Theme.dp(54)
                         radius: index === 0 ? Theme.dp(20) : index === root.choices.length - 1 ? Theme.dp(20) : Theme.dp(6)
                         color: rowArea.containsMouse && !row.locked ? Theme.bgHigh : Theme.bgTile
                         opacity: row.locked ? 0.5 : 1

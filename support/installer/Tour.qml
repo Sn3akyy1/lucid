@@ -46,6 +46,8 @@ Item {
         "blurb": "Every colour follows your wallpaper, dark or light"
     }]
     property int index: 0
+    // the caption and the gap above it: the window sizes the picture round it
+    readonly property real footHeight: caption.implicitHeight + Theme.dp(20)
     // the default palette's primary until the first picture is read
     property color seed: "#a8c7fa"
 
@@ -209,7 +211,7 @@ Item {
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodyMd
                     font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
-                    wrapMode: Text.WordWrap
+                    elide: Text.ElideRight
                 }
 
             }
