@@ -108,6 +108,7 @@ class Runner:
         self.timed_out = False
         self.version = ""
         self.sha = a.sha
+        self.hypr_kept = False
 
     # --- the pty ---------------------------------------------------------
 
@@ -167,6 +168,10 @@ class Runner:
     def line(self, text):
         if text.strip() == "@@lucid:authok":
             self.on_authok()
+            return
+        # install.sh left Hyprland's config alone, so nothing starts the shell at login
+        if text.strip() == "@@lucid:hypr-kept":
+            self.hypr_kept = True
             return
         self.log.write(text + "\n")
         self.recent.append(text)
@@ -420,7 +425,7 @@ class Runner:
     def finish(self, code):
         last = [l.strip() for l in self.recent if l.strip()]
         errs = [l for l in last if re.search(r"(?i)\berror\b|failed|not found", l)]
-        out = {"code": code, "backup": self.backup, "version": self.version}
+        out = {"code": code, "backup": self.backup, "version": self.version, "hyprKept": self.hypr_kept}
         if self.cancelled:
             out.update(ok=False, reason="cancelled", text="The install was stopped." if self.a.src else "The update was stopped.")
         elif self.result is not None and not self.result.get("ok"):

@@ -35,8 +35,7 @@ HYPR_FORCE=0
 HYPR_LUA_INSTALLED=0
 ASSUME_YES=0
 SKIP_DEPS=0
-# "" picks: the window when ./install.sh is run bare from a terminal in a
-# Wayland session, the terminal otherwise
+# "" lets the checks below pick the window or the terminal
 WITH_GUI=""
 
 b=$'\e[1m'; dim=$'\e[2m'; red=$'\e[31m'; grn=$'\e[32m'; ylw=$'\e[33m'; r=$'\e[0m'
@@ -88,8 +87,7 @@ for a in "$@"; do
 done
 if [[ -z "$WITH_GUI" ]]; then
     WITH_GUI=0
-    # anything else on the command line is a script or a person who chose the terminal.
-    # the updater (LUCID_UPDATER) runs this to install, never to ask
+    # any option means a script or a chosen terminal; the updater (LUCID_UPDATER) never asks
     if [[ $# -eq 0 && -t 0 && -t 1 && -n "${WAYLAND_DISPLAY:-}" && -z "${LUCID_UPDATER:-}" ]]; then
         WITH_GUI=1
     fi
@@ -125,9 +123,8 @@ ask() {
 
 # ---------------------------------------------------------------------- gui
 
-# the window (installer.qml) is this same install: it runs this script again,
-# through lucidupdate/updater.py, with the flags its switches stand for. only
-# what it takes to open the window is installed here
+# the window (installer.qml) runs this same script through lucidupdate/updater.py,
+# its switches as flags; only what the window itself needs is installed here
 if [[ $WITH_GUI -eq 1 ]]; then
     if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
         warn "no Wayland session here, so the install carries on in the terminal"
@@ -1767,6 +1764,8 @@ else
   Or run ${b}./install.sh --with-hypr${r} to take Lucid's config wholesale.
 
 EOF
+    # the installer window says the same thing on its last page
+    [[ -z "${LUCID_UPDATER:-}" ]] || printf '@@lucid:hypr-kept\n'
 fi
 
 if [[ $DEPS_OK -eq 0 ]]; then

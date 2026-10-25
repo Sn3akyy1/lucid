@@ -7,11 +7,8 @@ import Quickshell.Io
 import qs
 import qs.lucidui
 
-// the graphical installer: ./install.sh opens this from the source tree when
-// it is run bare in a Wayland session, and --gui with options starts the
-// switches from them (LUCID_INSTALL_ARGS). the choices become install.sh's own flags, and the run itself is the
-// updater's (lucidupdate/updater.py --src), so the window asks exactly what
-// the terminal would and nothing is installed twice over
+// the graphical installer, opened by ./install.sh. its switches become install.sh's own flags
+// and the run is the updater's (updater.py --src), so it asks exactly what the terminal would
 //
 //   qs -p ./installer.qml
 ShellRoot {
@@ -72,8 +69,14 @@ ShellRoot {
     })
     // the login screen theme only goes where sddm is
     property bool sddmHere: false
+    // the Hyprland config already in place: "" none, "lucid" from an earlier
+    // install (refreshed without asking), "lua" or "conf" someone else's
+    property string hyprNow: ""
+    // install.sh did not put Lucid's Hyprland config in, so nothing starts it at login
+    readonly property bool hyprKept: !!Updates.result && Updates.result.hyprKept === true
+    readonly property string launcher: "~/.config/lucid/launch-shell.sh"
 
-    // shown, so a new picture fades the accent over rather than snapping
+    // animated, so a new picture fades the accent over rather than snapping
     property color seed: tour.seed
 
     function toggle(flag) {
@@ -84,6 +87,13 @@ ShellRoot {
 
     function locked(c) {
         return (!!c.needs && root.off.indexOf(c.needs) !== -1) || (c.flag === "--no-sddm" && !root.sddmHere);
+    }
+
+    function subOf(c) {
+        if (c.flag !== "--no-hypr" || root.hyprNow === "")
+            return c.sub;
+
+        return root.hyprNow === "lucid" ? "Refreshed from your last install, backed up" : "Yours is backed up, and you are asked first";
     }
 
     function isOn(c) {
@@ -112,11 +122,10 @@ ShellRoot {
         Updates.installHere(args);
     }
 
-    // hyprctl reload puts the new binds and rules live; the shell comes up
-    // through its launcher, as it would at login
+    // reload puts the new binds live; the shell starts through its launcher, as at login
     function leave(start) {
         if (start) {
-            if (Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") !== "" && root.off.indexOf("--no-hypr") === -1)
+            if (Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") !== "" && !root.hyprKept)
                 Quickshell.execDetached(["hyprctl", "reload"]);
 
             Updates.restartNow(root.home + "/.config/quickshell");
@@ -124,12 +133,21 @@ ShellRoot {
         Qt.quit();
     }
 
+    // the same tests install.sh makes, so the switches can say what will happen
     Process {
         running: true
-        command: ["test", "-d", "/usr/share/sddm/themes"]
-        onExited: (code) => {
-            return root.sddmHere = code === 0;
+        command: ["sh", "-c", "test -d /usr/share/sddm/themes && echo sddm; h=$HOME/.config/hypr; if grep -qs 'qs ipc call' \"$h/modules/binds.lua\"; then echo lucid; elif [ -f \"$h/hyprland.lua\" ]; then echo lua; elif [ -f \"$h/hyprland.conf\" ]; then echo conf; fi"]
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var got = this.text.split("\n");
+                root.sddmHere = got.indexOf("sddm") !== -1;
+                root.hyprNow = ["lucid", "lua", "conf"].find((k) => {
+                    return got.indexOf(k) !== -1;
+                }) || "";
+            }
         }
+
     }
 
     Binding {
@@ -142,8 +160,7 @@ ShellRoot {
         id: win
 
         title: "Install Lucid"
-        // as tall as the choices, and as wide as the screenshot needs to fill
-        // that height, unless the screen is narrower
+        // as tall as the choices, and as wide as a 16:9 picture that tall, up to the screen
         implicitHeight: welcome.implicitHeight + Theme.dp(64)
         implicitWidth: Math.min(side.width + Theme.dp(44) + Math.round((win.implicitHeight - Theme.dp(32) - tour.footHeight) * 16 / 9), (win.screen ? win.screen.width : 1920) - Theme.dp(80))
         // one size: Hyprland floats a window that cannot be resized
@@ -301,7 +318,7 @@ ShellRoot {
 
                             Text {
                                 width: parent.width
-                                text: !row.locked ? row.modelData.sub : row.modelData.flag === "--no-sddm" && !root.sddmHere ? "SDDM is not installed" : row.modelData.needsText
+                                text: !row.locked ? root.subOf(row.modelData) : row.modelData.flag === "--no-sddm" && !root.sddmHere ? "SDDM is not installed" : row.modelData.needsText
                                 color: Theme.subtextDim
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontBodySm
@@ -364,6 +381,7 @@ ShellRoot {
                 anchors.margins: Theme.dp(4)
                 color: "transparent"
                 shown: root.running
+                note: !root.hyprKept ? "" : root.hyprNow === "conf" ? "exec-once = " + root.launcher : "hl.on(\"hyprland.start\", function () hl.exec_cmd(\"" + root.launcher + "\") end)"
                 visible: opacity > 0.01
                 onLeave: (start) => {
                     return root.leave(start);

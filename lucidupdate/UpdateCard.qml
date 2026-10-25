@@ -13,6 +13,9 @@ Rectangle {
     // the installer's: Close, or start the shell it just put in place
     signal leave(bool start)
 
+    // the installer's too: a line for a Hyprland config Lucid left alone
+    property string note: ""
+
     property bool shown: false
     // the last real stage, so the card does not empty itself while it fades out
     property string view: "confirm"
@@ -317,6 +320,9 @@ Rectangle {
                     if (card.view === "auth")
                         return "The installer uses sudo to install packages and system files such as the login screen theme. The password goes to sudo once and is not kept.";
 
+                    if (card.view === "restart" && card.fresh && card.note !== "")
+                        return "Start it now. Your Hyprland config was kept, so nothing starts Lucid when you log in yet: add this line to it." + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
+
                     if (card.view === "restart" && card.fresh)
                         return "Start it now, or log out and back in to begin your next session with it." + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
 
@@ -334,6 +340,34 @@ Rectangle {
                 font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
                 lineHeight: 1.35
                 wrapMode: Text.WordWrap
+            }
+
+            Rectangle {
+                width: parent.width
+                height: noteText.implicitHeight + Theme.dp(28)
+                radius: Theme.dp(16)
+                color: Theme.bgSunken
+                visible: card.view === "restart" && card.fresh && card.note !== ""
+
+                // selectable, to be copied into the config
+                TextEdit {
+                    id: noteText
+
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.margins: Theme.dp(16)
+                    text: card.note
+                    readOnly: true
+                    selectByMouse: true
+                    wrapMode: TextEdit.Wrap
+                    color: Theme.text
+                    selectionColor: Theme.accent
+                    selectedTextColor: Theme.fgAccent
+                    font.family: "monospace"
+                    font.pixelSize: Theme.fontLabelMd
+                }
+
             }
 
             // the beta's critical warning, in the error container
