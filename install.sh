@@ -29,11 +29,15 @@ WITH_HYPR=1
 WITH_APPS=1
 WITH_WALLPAPERS=1
 WITH_PLUGINS=1
+WITH_SDDM=1
+SDDM_CURRENT=0
 HYPR_FORCE=0
 HYPR_LUA_INSTALLED=0
 ASSUME_YES=0
 SKIP_DEPS=0
-WITH_GUI=0
+# "" picks: the window when ./install.sh is run bare from a terminal in a
+# Wayland session, the terminal otherwise
+WITH_GUI=""
 
 b=$'\e[1m'; dim=$'\e[2m'; red=$'\e[31m'; grn=$'\e[32m'; ylw=$'\e[33m'; r=$'\e[0m'
 say()  { printf '%s\n' "$*"; }
@@ -62,15 +66,34 @@ ${b}Lucid $VERSION installer${r}
                  is already in place
   --no-plugins   don't build the tilting-cursor Hyprland plugin
                  (hypr-dynamic-cursors)
+  --no-sddm      don't install the login screen theme
+  --login-screen make Lucid's theme the one the login screen shows
+                 (Current=lucid in /etc/sddm.conf, backed up first)
   --skip-deps    don't install packages, only check for them
   -y, --yes      don't prompt, accept every default
-  --gui          do all of this from a window instead: pick what
-                 to install there, and answer its questions with
-                 buttons. needs a Wayland session
+  --gui          do all of this from a window: pick what to install
+                 there, and answer its questions with buttons. the
+                 default when run with no options in a Wayland session;
+                 options given with it start switched that way
+  --terminal     stay in the terminal
   -h, --help     this message
 EOF
     exit 0
 }
+
+# the window gets the same options, minus its own, to start its switches from
+GUI_ARGS=()
+for a in "$@"; do
+    [[ $a == --gui || $a == --terminal ]] || GUI_ARGS+=("$a")
+done
+if [[ -z "$WITH_GUI" ]]; then
+    WITH_GUI=0
+    # anything else on the command line is a script or a person who chose the terminal.
+    # the updater (LUCID_UPDATER) runs this to install, never to ask
+    if [[ $# -eq 0 && -t 0 && -t 1 && -n "${WAYLAND_DISPLAY:-}" && -z "${LUCID_UPDATER:-}" ]]; then
+        WITH_GUI=1
+    fi
+fi
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -83,7 +106,10 @@ while [[ $# -gt 0 ]]; do
         --no-plugins) WITH_PLUGINS=0 ;;
         --skip-deps)  SKIP_DEPS=1 ;;
         -y|--yes)     ASSUME_YES=1 ;;
+        --no-sddm)    WITH_SDDM=0 ;;
+        --login-screen) SDDM_CURRENT=1 ;;
         --gui)        WITH_GUI=1 ;;
+        --terminal)   WITH_GUI=0 ;;
         -h|--help)    usage ;;
         *) die "unknown option: $1 (try --help)" ;;
     esac
@@ -118,7 +144,8 @@ if [[ $WITH_GUI -eq 1 ]]; then
             say "  ${missing[*]}"
             sudo pacman -S --needed "${missing[@]}" || die "could not install ${missing[*]}"
         fi
-        exec qs -p "$SRC/installer.qml"
+        say "  opening the installer window (./install.sh --terminal stays here)"
+        LUCID_INSTALL_ARGS="${GUI_ARGS[*]}" exec qs -p "$SRC/installer.qml"
     fi
 fi
 
@@ -1058,7 +1085,7 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     # needs root. skipped entirely when sddm is not installed, and it never
     # switches the active theme - that stays the user's call. root keeps the
     # theme; every account paints its own corner of it without a password
-    if [[ -d /usr/share/sddm/themes ]]; then
+    if [[ $WITH_SDDM -eq 1 && -d /usr/share/sddm/themes ]]; then
         SDDM_THEME_DIR=/usr/share/sddm/themes/lucid
         # a fingerprint at the login screen needs two lines in sddm's pam
         # service, so it is asked for once and then kept on every re-run
@@ -1070,7 +1097,9 @@ if [[ $WITH_THEMING -eq 1 ]]; then
                 SDDM_FINGER=(--fingerprint)
             fi
         fi
-        if sudo bash "$SRC/support/sddm/install-theme.sh" "$SDDM_THEME_DIR" "${SDDM_FINGER[@]}"; then
+        SDDM_SET=()
+        [[ $SDDM_CURRENT -eq 0 ]] || SDDM_SET=(--current)
+        if sudo bash "$SRC/support/sddm/install-theme.sh" "$SDDM_THEME_DIR" "${SDDM_FINGER[@]}" "${SDDM_SET[@]}"; then
             say "  sddm theme      -> $SDDM_THEME_DIR"
             # the theme no longer carries a shared wallpaper, so paint this
             # account's corner now rather than at its next login. it reads
@@ -1080,7 +1109,11 @@ if [[ $WITH_THEMING -eq 1 ]]; then
             fi
             # /etc/sddm.conf outranks /etc/sddm.conf.d, so point at the file
             # that actually wins rather than at the tidier-looking drop-in
-            say "    enable it with: Current=lucid under [Theme] in /etc/sddm.conf"
+            if [[ $SDDM_CURRENT -eq 1 ]]; then
+                say "    the login screen shows it from the next login"
+            else
+                say "    enable it with: Current=lucid under [Theme] in /etc/sddm.conf (or --login-screen)"
+            fi
         else
             warn "could not install the sddm theme (needs sudo); skipping"
         fi

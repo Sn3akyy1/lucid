@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# install-theme.sh [dest] [--fingerprint | --no-fingerprint] — installs Lucid's
-# sddm theme. needs root: install.sh runs it through sudo, and running it by
-# hand updates the theme alone. --fingerprint lets the login screen take a
-# fingerprint (two lines in /etc/pam.d/sddm), --no-fingerprint takes them out;
-# without either, pam is left as it is.
+# install-theme.sh [dest] [--fingerprint | --no-fingerprint] [--current] —
+# installs Lucid's sddm theme. needs root: install.sh runs it through sudo, and
+# running it by hand updates the theme alone. --fingerprint lets the login
+# screen take a fingerprint (two lines in /etc/pam.d/sddm), --no-fingerprint
+# takes them out; without either, pam is left as it is. --current also makes it
+# the theme sddm shows; without it, which theme is shown stays as it was.
 #
 # root owns the theme. the one writable part is users/, sticky and
 # world-writable like /tmp, where each account's sync-sddm.sh keeps its own
@@ -14,15 +15,18 @@ set -euo pipefail
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DEST=/usr/share/sddm/themes/lucid
 FINGER=""
+CURRENT=0
 for arg in "$@"; do
     case $arg in
         --fingerprint) FINGER=on ;;
         --no-fingerprint) FINGER=off ;;
+        --current) CURRENT=1 ;;
         *) DEST=$arg ;;
     esac
 done
-# overridable so the pam edit can be tried on a copy
+# overridable so the pam and theme edits can be tried on a copy
 PAM_SDDM="${LUCID_PAM_SDDM:-/etc/pam.d/sddm}"
+SDDM_CONF="${LUCID_SDDM_CONF:-/etc/sddm.conf}"
 
 if [[ $EUID -ne 0 ]]; then
     echo "install-theme.sh: needs root, run it with sudo" >&2
@@ -133,3 +137,19 @@ if [[ -f "$PAM_SDDM" ]] && grep -qE '^[[:space:]]*-?auth[[:space:]].*pam_fprintd
     FP_ON=true
 fi
 printf '\n# set by install-theme.sh: whether /etc/pam.d/sddm takes a fingerprint\nfingerprintLogin=%s\n' "$FP_ON" >> "$DEST/theme.conf"
+
+# the theme sddm shows. /etc/sddm.conf outranks /etc/sddm.conf.d, so the line
+# goes in the file that wins, backed up once before the first change
+if [[ $CURRENT -eq 1 ]]; then
+    name=$(basename "$DEST")
+    if ! sed -n '/^\[Theme\]/,/^\[/p' "$SDDM_CONF" 2>/dev/null | grep -qx "Current=$name"; then
+        [[ ! -f "$SDDM_CONF" || -e "$SDDM_CONF.lucid-backup" ]] || cp -p "$SDDM_CONF" "$SDDM_CONF.lucid-backup"
+        if ! grep -qs '^\[Theme\]' "$SDDM_CONF"; then
+            printf '\n[Theme]\nCurrent=%s\n' "$name" >> "$SDDM_CONF"
+        elif sed -n '/^\[Theme\]/,/^\[/p' "$SDDM_CONF" | grep -q '^[[:space:]]*Current='; then
+            sed -i "/^\[Theme\]/,/^\[/ s/^[[:space:]]*Current=.*/Current=$name/" "$SDDM_CONF"
+        else
+            sed -i "/^\[Theme\]/a Current=$name" "$SDDM_CONF"
+        fi
+    fi
+fi

@@ -3,11 +3,13 @@ import "lucidupdate"
 import "support/installer"
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs
 import qs.lucidui
 
-// the graphical installer: ./install.sh --gui opens this from the source tree.
-// the choices below become install.sh's own flags, and the run itself is the
+// the graphical installer: ./install.sh opens this from the source tree when
+// it is run bare in a Wayland session, and --gui with options starts the
+// switches from them (LUCID_INSTALL_ARGS). the choices become install.sh's own flags, and the run itself is the
 // updater's (lucidupdate/updater.py --src), so the window asks exactly what
 // the terminal would and nothing is installed twice over
 //
@@ -47,10 +49,29 @@ ShellRoot {
         "icon": "mouse",
         "label": "Tilting cursor",
         "sub": "Builds hypr-dynamic-cursors, about a minute",
-        "needs": "--no-hypr"
+        "needs": "--no-hypr",
+        "needsText": "Comes with the Hyprland config"
+    }, {
+        "flag": "--no-sddm",
+        "onFlag": "--login-screen",
+        "icon": "login",
+        "label": "Login screen",
+        "sub": "The SDDM theme, from your next login",
+        "needs": "--no-theming",
+        "needsText": "Comes with the colours from your wallpaper"
     }]
-    // the flags of whatever was switched off
-    property var off: []
+    // what install.sh was given besides --gui
+    readonly property var given: Quickshell.env("LUCID_INSTALL_ARGS").split(" ").filter((a) => {
+        return a !== "";
+    })
+    // the flags of whatever was switched off, starting from the command line
+    property var off: root.choices.filter((c) => {
+        return root.given.indexOf(c.flag) !== -1;
+    }).map((c) => {
+        return c.flag;
+    })
+    // the login screen theme only goes where sddm is
+    property bool sddmHere: false
 
     // shown, so a new picture fades the accent over rather than snapping
     property color seed: tour.seed
@@ -61,16 +82,34 @@ ShellRoot {
         });
     }
 
-    function isOn(c) {
-        return root.off.indexOf(c.flag) === -1 && (!c.needs || root.off.indexOf(c.needs) === -1);
+    function locked(c) {
+        return (!!c.needs && root.off.indexOf(c.needs) !== -1) || (c.flag === "--no-sddm" && !root.sddmHere);
     }
 
+    function isOn(c) {
+        return root.off.indexOf(c.flag) === -1 && !root.locked(c);
+    }
+
+    // each switch is its flag when off, or its onFlag when on; anything else
+    // from the command line (-y, --skip-deps, --with-hypr) rides along
     function install() {
-        Updates.installHere(root.choices.filter((c) => {
-            return !root.isOn(c);
-        }).map((c) => {
-            return c.flag;
-        }));
+        var mine = [];
+        root.choices.forEach((c) => {
+            mine.push(c.flag);
+            if (c.onFlag)
+                mine.push(c.onFlag);
+
+        });
+        var args = root.given.filter((a) => {
+            return mine.indexOf(a) === -1;
+        });
+        root.choices.forEach((c) => {
+            if (!root.isOn(c))
+                args.push(c.flag);
+            else if (c.onFlag)
+                args.push(c.onFlag);
+        });
+        Updates.installHere(args);
     }
 
     // hyprctl reload puts the new binds and rules live; the shell comes up
@@ -85,6 +124,14 @@ ShellRoot {
         Qt.quit();
     }
 
+    Process {
+        running: true
+        command: ["test", "-d", "/usr/share/sddm/themes"]
+        onExited: (code) => {
+            return root.sddmHere = code === 0;
+        }
+    }
+
     Binding {
         target: Theme
         property: "seed"
@@ -96,7 +143,10 @@ ShellRoot {
 
         title: "Install Lucid"
         implicitWidth: Theme.dp(1100)
-        implicitHeight: Theme.dp(660)
+        implicitHeight: Theme.dp(700)
+        // one size: Hyprland floats a window that cannot be resized
+        minimumSize: Qt.size(win.implicitWidth, win.implicitHeight)
+        maximumSize: Qt.size(win.implicitWidth, win.implicitHeight)
         color: Theme.alpha(Theme.bg, 1)
         onClosed: Qt.quit()
 
@@ -147,25 +197,32 @@ ShellRoot {
 
                 }
 
-                Image {
-                    width: Theme.dp(52)
-                    height: Theme.dp(52)
-                    source: Qt.resolvedUrl("assets/logo-mark.svg")
-                    sourceSize: Qt.size(width * 2, height * 2)
+                Row {
+                    spacing: Theme.dp(14)
+
+                    Image {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Theme.dp(44)
+                        height: Theme.dp(44)
+                        source: Qt.resolvedUrl("assets/logo-mark.svg")
+                        sourceSize: Qt.size(width * 2, height * 2)
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Welcome to Lucid"
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontHeadlineLg
+                        font.variableAxes: Theme.axes(Theme.fontHeadlineLg, 560, 0)
+                        font.weight: Font.DemiBold
+                    }
+
                 }
 
                 Item {
                     width: 1
-                    height: Theme.dp(10)
-                }
-
-                Text {
-                    text: "Welcome to Lucid"
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontHeadlineLg
-                    font.variableAxes: Theme.axes(Theme.fontHeadlineLg, 560, 0)
-                    font.weight: Font.DemiBold
+                    height: Theme.dp(4)
                 }
 
                 Text {
@@ -192,10 +249,10 @@ ShellRoot {
 
                         required property var modelData
                         required property int index
-                        readonly property bool locked: !!modelData.needs && root.off.indexOf(modelData.needs) !== -1
+                        readonly property bool locked: root.locked(modelData)
 
                         width: parent.width
-                        height: Theme.dp(62)
+                        height: Theme.dp(58)
                         radius: index === 0 ? Theme.dp(20) : index === root.choices.length - 1 ? Theme.dp(20) : Theme.dp(6)
                         color: rowArea.containsMouse && !row.locked ? Theme.bgHigh : Theme.bgTile
                         opacity: row.locked ? 0.5 : 1
@@ -242,7 +299,7 @@ ShellRoot {
 
                             Text {
                                 width: parent.width
-                                text: row.locked ? "Comes with the Hyprland config" : row.modelData.sub
+                                text: !row.locked ? row.modelData.sub : row.modelData.flag === "--no-sddm" && !root.sddmHere ? "SDDM is not installed" : row.modelData.needsText
                                 color: Theme.subtextDim
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontBodySm
@@ -267,27 +324,30 @@ ShellRoot {
 
                 }
 
-            }
+                Item {
+                    width: parent.width
+                    height: Theme.dp(64)
 
-            Row {
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.margins: Theme.dp(32)
-                spacing: Theme.dp(8)
-                opacity: welcome.opacity
-                visible: welcome.visible
+                    Row {
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        spacing: Theme.dp(8)
 
-                M3Button {
-                    text: "Quit"
-                    variant: "text"
-                    onClicked: Qt.quit()
-                }
+                        M3Button {
+                            text: "Quit"
+                            variant: "text"
+                            onClicked: Qt.quit()
+                        }
 
-                M3Button {
-                    text: "Install"
-                    variant: "filled"
-                    iconPath: "download"
-                    onClicked: root.install()
+                        M3Button {
+                            text: "Install"
+                            variant: "filled"
+                            iconPath: "download"
+                            onClicked: root.install()
+                        }
+
+                    }
+
                 }
 
             }
