@@ -33,6 +33,7 @@ HYPR_FORCE=0
 HYPR_LUA_INSTALLED=0
 ASSUME_YES=0
 SKIP_DEPS=0
+WITH_GUI=0
 
 b=$'\e[1m'; dim=$'\e[2m'; red=$'\e[31m'; grn=$'\e[32m'; ylw=$'\e[33m'; r=$'\e[0m'
 say()  { printf '%s\n' "$*"; }
@@ -63,6 +64,9 @@ ${b}Lucid $VERSION installer${r}
                  (hypr-dynamic-cursors)
   --skip-deps    don't install packages, only check for them
   -y, --yes      don't prompt, accept every default
+  --gui          do all of this from a window instead: pick what
+                 to install there, and answer its questions with
+                 buttons. needs a Wayland session
   -h, --help     this message
 EOF
     exit 0
@@ -79,6 +83,7 @@ while [[ $# -gt 0 ]]; do
         --no-plugins) WITH_PLUGINS=0 ;;
         --skip-deps)  SKIP_DEPS=1 ;;
         -y|--yes)     ASSUME_YES=1 ;;
+        --gui)        WITH_GUI=1 ;;
         -h|--help)    usage ;;
         *) die "unknown option: $1 (try --help)" ;;
     esac
@@ -91,6 +96,31 @@ ask() {
     read -rp "$1 [Y/n] " reply
     [[ -z "$reply" || "$reply" =~ ^[Yy] ]]
 }
+
+# ---------------------------------------------------------------------- gui
+
+# the window (installer.qml) is this same install: it runs this script again,
+# through lucidupdate/updater.py, with the flags its switches stand for. only
+# what it takes to open the window is installed here
+if [[ $WITH_GUI -eq 1 ]]; then
+    if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+        warn "no Wayland session here, so the install carries on in the terminal"
+    else
+        [[ -f /etc/arch-release ]] || die "this installer is Arch-only. see the README for a manual install."
+        [[ $EUID -ne 0 ]] || die "don't run this as root — it installs into your home directory"
+        GUI_PKGS=(quickshell qt6-5compat qt6-declarative qt6-multimedia qt6-imageformats python)
+        missing=()
+        for p in "${GUI_PKGS[@]}"; do
+            pacman -Q "$p" &>/dev/null || missing+=("$p")
+        done
+        if [[ ${#missing[@]} -gt 0 ]]; then
+            step "Installing what the installer window needs"
+            say "  ${missing[*]}"
+            sudo pacman -S --needed "${missing[@]}" || die "could not install ${missing[*]}"
+        fi
+        exec qs -p "$SRC/installer.qml"
+    fi
+fi
 
 # ---------------------------------------------------------------- preflight
 
@@ -376,7 +406,7 @@ else
         --exclude='.git' --exclude='.github' --exclude='.claude' \
         --exclude='support' --exclude='defaults' --exclude='__pycache__' \
         --exclude='wallpapers' \
-        --exclude='install.sh' --exclude='uninstall.sh' \
+        --exclude='install.sh' --exclude='uninstall.sh' --exclude='installer.qml' \
         --exclude='README.md' --exclude='LICENSE' --exclude='.gitignore' \
         --exclude='./lucidprefs/prefs.json' \
         --exclude='./lucidbar/blur.json' \

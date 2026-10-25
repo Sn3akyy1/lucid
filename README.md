@@ -59,6 +59,14 @@ cd lucid
 ./install.sh
 ```
 
+Or `./install.sh --gui` for the same install in a window, with Lucid's
+screenshots playing while it works. It installs only what that window needs first
+(Quickshell and its Qt modules), then you pick what comes with Lucid with
+switches, enter your password once, and answer anything the installer asks
+with buttons. At the end, **Start Lucid** puts the new binds live and starts
+the shell. It needs a Wayland session, and without one it carries on in the
+terminal.
+
 That's it — the installer does the rest:
 
 1. **Checks your system** — refuses to run anywhere it can't finish the job,

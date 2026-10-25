@@ -5,15 +5,20 @@ import qs
 import qs.lucidui
 
 // the update start to finish: the warning, the password, the bar with any
-// question the installer asks, and the restart once it is in
+// question the installer asks, and the restart once it is in. the graphical
+// installer shows it too, from the password on (fresh)
 Rectangle {
     id: card
+
+    // the installer's: Close, or start the shell it just put in place
+    signal leave(bool start)
 
     property bool shown: false
     // the last real stage, so the card does not empty itself while it fades out
     property string view: "confirm"
     property bool stopArmed: false
     readonly property bool beta: Updates.flowChannel === "beta"
+    readonly property bool fresh: Updates.flowChannel === "local"
     readonly property var ask: Updates.ask
     readonly property bool asking: card.ask !== null && Updates.askSent !== card.ask.n
     readonly property bool authAsk: card.view === "auth" && card.asking && card.ask.kind === "password"
@@ -21,7 +26,7 @@ Rectangle {
     readonly property bool wantsKeys: card.view === "auth" || (card.runAsk && card.ask.kind !== "yesno")
     readonly property var res: Updates.result || ({
     })
-    readonly property bool canRetry: card.view === "failed" && card.res.reason !== "nosudo"
+    readonly property bool canRetry: card.view === "failed" && card.res.reason !== "nosudo" && !card.fresh
     readonly property string home: Quickshell.env("HOME")
     readonly property bool logOpen: (card.view === "running" || card.view === "failed") && details.expanded
     readonly property int logFull: Theme.dp(220)
@@ -193,7 +198,7 @@ Rectangle {
                                 return Updates.phase === "download" ? "download" : "update";
 
                             if (card.view === "restart")
-                                return "restart_alt";
+                                return card.fresh ? "check" : "restart_alt";
 
                             return "error";
                         }
@@ -224,12 +229,13 @@ Rectangle {
                                 return "Authentication required";
 
                             if (card.view === "running")
-                                return Updates.phase === "stopping" ? "Stopping" : "Updating Lucid";
+                                return Updates.phase === "stopping" ? "Stopping" : card.fresh ? "Installing Lucid" : "Updating Lucid";
 
                             if (card.view === "restart")
-                                return "Update installed";
+                                return card.fresh ? "All done" : "Update installed";
 
-                            return card.res.reason === "cancelled" ? "Update stopped" : "Update failed";
+                            var what = card.fresh ? "Install" : "Update";
+                            return card.res.reason === "cancelled" ? what + " stopped" : what + " failed";
                         }
                         color: {
                             if (card.view === "failed" || (card.view === "confirm" && card.beta))
@@ -275,7 +281,7 @@ Rectangle {
                                 return "The download could not be unpacked";
 
                             if (r === "cancelled")
-                                return "The update was stopped";
+                                return card.fresh ? "The install was stopped" : "The update was stopped";
 
                             if (r === "crash")
                                 return "The updater stopped unexpectedly";
@@ -310,6 +316,9 @@ Rectangle {
                     }
                     if (card.view === "auth")
                         return "The installer uses sudo to install packages and system files such as the login screen theme. The password goes to sudo once and is not kept.";
+
+                    if (card.view === "restart" && card.fresh)
+                        return "Start it now, or log out and back in to begin your next session with it." + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
 
                     if (card.view === "restart")
                         return "Restart Lucid to start using it. Only the shell restarts: your windows and apps stay open." + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
@@ -715,7 +724,7 @@ Rectangle {
                     }
 
                     M3Button {
-                        visible: card.view === "running"
+                        visible: card.view === "running" && !card.fresh
                         text: "Hide"
                         variant: "tonal"
                         onClicked: Updates.hide()
@@ -723,14 +732,29 @@ Rectangle {
 
                     // restart
                     M3Button {
-                        visible: card.view === "restart"
+                        visible: card.view === "restart" && card.fresh
+                        text: "Close"
+                        variant: "text"
+                        onClicked: card.leave(false)
+                    }
+
+                    M3Button {
+                        visible: card.view === "restart" && card.fresh
+                        text: "Start Lucid"
+                        variant: "filled"
+                        iconPath: "play_arrow"
+                        onClicked: card.leave(true)
+                    }
+
+                    M3Button {
+                        visible: card.view === "restart" && !card.fresh
                         text: "Cancel"
                         variant: "text"
                         onClicked: Updates.closeEnd()
                     }
 
                     M3Button {
-                        visible: card.view === "restart"
+                        visible: card.view === "restart" && !card.fresh
                         text: "Remind me later"
                         variant: "tonal"
                         iconPath: "snooze"
@@ -738,7 +762,7 @@ Rectangle {
                     }
 
                     M3Button {
-                        visible: card.view === "restart"
+                        visible: card.view === "restart" && !card.fresh
                         text: "Restart now"
                         variant: "filled"
                         iconPath: "restart_alt"
@@ -762,7 +786,7 @@ Rectangle {
 
                     M3Button {
                         visible: card.view === "failed"
-                        text: "Close"
+                        text: card.fresh ? "Back" : "Close"
                         variant: "filled"
                         onClicked: Updates.closeEnd()
                     }

@@ -108,10 +108,14 @@ Singleton {
     readonly property real _secondaryHue: -20
     readonly property real _rampShift: root.surfaceTint <= 0 ? 0 : (root.isLight ? Math.max(0, root.toneOf(root.cLowest) - (100 - root.surfaceTint * root._tintLift)) : -(root.surfaceTint * root._tintLift))
 
-    readonly property color cPrimary: m.primary
-    readonly property color cOnPrimary: m.on_primary
-    readonly property color cPrimaryContainer: m.primary_container
-    readonly property color cOnPrimaryContainer: m.on_primary_container
+    // the graphical installer tints the accent from the screenshot on show, the
+    // way a wallpaper would; the shell never sets it
+    property color seed: "transparent"
+    readonly property bool _seeded: root.seed.a > 0
+    readonly property color cPrimary: root._seeded ? root.atTone(root.seed, root.isLight ? 40 : 80) : m.primary
+    readonly property color cOnPrimary: root._seeded ? root.atTone(root.seed, root.isLight ? 100 : 20) : m.on_primary
+    readonly property color cPrimaryContainer: root._seeded ? root.atTone(root.seed, root.isLight ? 90 : 30) : m.primary_container
+    readonly property color cOnPrimaryContainer: root._seeded ? root.atTone(root.seed, root.isLight ? 10 : 90) : m.on_primary_container
     readonly property color cSecondary: m.secondary
     readonly property color cSecondaryContainer: m.secondary_container
     readonly property color cTertiary: m.tertiary
@@ -628,7 +632,8 @@ Singleton {
     FontLoader {
         id: flexLoader
 
-        source: "file://" + Quickshell.env("HOME") + "/.config/quickshell/assets/fonts/GoogleSansFlex.ttf"
+        // beside this file: the installed shell, or the source tree the installer runs from
+        source: Qt.resolvedUrl("assets/fonts/GoogleSansFlex.ttf")
     }
 
     // a window whose grab never lands must not hold the palette back

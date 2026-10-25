@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # lucid's updater: fetches a release (or a beta build) and runs that release's
 # own install.sh in a pty, outside the shell, so a reload or a restart of the
-# shell can't take it down halfway.
+# shell can't take it down halfway. --src runs a tree already on disk instead,
+# for the graphical installer (installer.qml).
 #
 # the shell follows <dir>/events.jsonl (one json object a line) and answers on
 # <dir>/answers, a fifo. the password goes into sudo once and is never kept.
@@ -281,6 +282,12 @@ class Runner:
         self.authok = True
         self.ev.emit("authok")
         self.set_progress(0.02)
+        if self.a.src:
+            try:
+                self.prepare(os.path.abspath(self.a.src))
+            except Exception as e:
+                self.result = {"ok": False, "reason": "unpack", "text": "This folder has no usable installer: " + str(e)}
+            return
         self.phase_to("download", "Downloading " + self.a.label, known=False)
         self.worker = threading.Thread(target=self.fetch, daemon=True)
         self.worker.start()
@@ -335,27 +342,30 @@ class Runner:
             tops = [d for d in os.listdir(dest) if os.path.isdir(os.path.join(dest, d))]
             if len(tops) != 1:
                 raise ValueError("the archive has no single top folder")
-            src = os.path.join(dest, tops[0])
-            for need in ("install.sh", "shell.qml"):
-                if not os.path.isfile(os.path.join(src, need)):
-                    raise ValueError("the archive has no " + need)
-            with open(os.path.join(src, "install.sh"), encoding="utf-8", errors="replace") as f:
-                titles = STEP.findall(f.read())
-            self.steps = set(titles)
-            self.step_of = len([t for t in titles if not t.startswith("Skipping")])
-            version = ""
-            vf = os.path.join(src, "VERSION")
-            if os.path.isfile(vf):
-                with open(vf, encoding="utf-8") as f:
-                    version = f.read().strip()
-            self.version = version
             os.unlink(tarpath)
-            self.src = src
-            self.result = {"ok": True}
+            self.prepare(os.path.join(dest, tops[0]))
         except InterruptedError:
             self.result = {"ok": False, "reason": "cancelled"}
         except Exception as e:
             self.result = {"ok": False, "reason": "unpack", "text": "The download could not be unpacked: " + str(e)}
+
+    # the tree the wrapper is handed: its steps give the bar its stages
+    def prepare(self, src):
+        for need in ("install.sh", "shell.qml"):
+            if not os.path.isfile(os.path.join(src, need)):
+                raise ValueError("there is no " + need)
+        with open(os.path.join(src, "install.sh"), encoding="utf-8", errors="replace") as f:
+            titles = STEP.findall(f.read())
+        self.steps = set(titles)
+        self.step_of = len([t for t in titles if not t.startswith("Skipping")])
+        version = ""
+        vf = os.path.join(src, "VERSION")
+        if os.path.isfile(vf):
+            with open(vf, encoding="utf-8") as f:
+                version = f.read().strip()
+        self.version = version
+        self.src = src
+        self.result = {"ok": True}
 
     # --- stopping --------------------------------------------------------
 
@@ -412,7 +422,7 @@ class Runner:
         errs = [l for l in last if re.search(r"(?i)\berror\b|failed|not found", l)]
         out = {"code": code, "backup": self.backup, "version": self.version}
         if self.cancelled:
-            out.update(ok=False, reason="cancelled", text="The update was stopped.")
+            out.update(ok=False, reason="cancelled", text="The install was stopped." if self.a.src else "The update was stopped.")
         elif self.result is not None and not self.result.get("ok"):
             out.update(ok=False, reason=self.result.get("reason", "download"), text=self.result.get("text", ""))
         elif code == 96:
@@ -455,7 +465,9 @@ class Runner:
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--dir", required=True)
-    p.add_argument("--url", required=True)
+    where = p.add_mutually_exclusive_group(required=True)
+    where.add_argument("--url")
+    where.add_argument("--src")
     p.add_argument("--channel", default="release")
     p.add_argument("--ref", default="")
     p.add_argument("--sha", default="")
