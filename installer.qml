@@ -89,6 +89,9 @@ ShellRoot {
     readonly property string desktop: Quickshell.env("XDG_CURRENT_DESKTOP") || ""
     readonly property string elsewhere: Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") ? "" : (root.desktop.split(":").pop() || "another desktop")
 
+    // "light" or "dark" from the button, one of two schemes made with matugen; "" is the one in use
+    property string mode: ""
+
     // animated, so a new picture fades the accent over rather than snapping
     property color seed: tour.seed
 
@@ -199,6 +202,13 @@ ShellRoot {
         value: root.seed
     }
 
+    Binding {
+        target: Theme
+        property: "palettePath"
+        value: Qt.resolvedUrl("support/installer/scheme-" + root.mode + ".json").toString().replace("file://", "")
+        when: root.mode !== ""
+    }
+
     FloatingWindow {
         id: win
 
@@ -237,6 +247,17 @@ ShellRoot {
                     card.dismiss();
                 else
                     Qt.quit();
+            }
+
+            // a taste of the shell: the whole window goes light or dark
+            IconButton {
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.margins: Theme.dp(28)
+                z: 1
+                icon: Theme.isLight ? "dark_mode" : "light_mode"
+                tooltip: Theme.isLight ? "Dark mode" : "Light mode"
+                onClicked: root.mode = Theme.isLight ? "dark" : "light"
             }
 
             // the choices, until Install

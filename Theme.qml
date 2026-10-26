@@ -111,6 +111,8 @@ Singleton {
 
     // set by the graphical installer to tint the accent from its screenshots; unset in the shell
     property color seed: "transparent"
+    // the scheme the colours come from; the installer points it at its own light or dark one
+    property string palettePath: Quickshell.env("HOME") + "/.cache/quickshell/matugen.json"
     readonly property bool _seeded: root.seed.a > 0
     readonly property color cPrimary: root._seeded ? root.atTone(root.seed, root.isLight ? 40 : 80) : m.primary
     readonly property color cOnPrimary: root._seeded ? root.atTone(root.seed, root.isLight ? 100 : 20) : m.on_primary
@@ -647,7 +649,7 @@ Singleton {
     FileView {
         id: paletteFile
 
-        path: Quickshell.env("HOME") + "/.cache/quickshell/matugen.json"
+        path: root.palettePath
         watchChanges: true
         onFileChanged: root._beginRecolour()
         // the adapter below lands an event loop turn after this singleton is
