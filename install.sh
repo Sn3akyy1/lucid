@@ -1079,7 +1079,15 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     # needs root. skipped entirely when sddm is not installed, and it never
     # switches the active theme - that stays the user's call. root keeps the
     # theme; every account paints its own corner of it without a password
-    if [[ $WITH_SDDM -eq 1 && -d /usr/share/sddm/themes ]]; then
+    # sddm installed is not sddm in use: under another display manager the theme never shows
+    OTHER_DM=$(readlink /etc/systemd/system/display-manager.service 2>/dev/null || true)
+    OTHER_DM=${OTHER_DM##*/}; OTHER_DM=${OTHER_DM%.service}
+    [[ $OTHER_DM != sddm ]] || OTHER_DM=""
+    if [[ $WITH_SDDM -eq 1 && -n "$OTHER_DM" ]]; then
+        say "  ${dim}login screen theme skipped: your login screen is ${OTHER_DM^^}, not SDDM${r}"
+    elif [[ $WITH_SDDM -eq 1 && ! -d /usr/share/sddm/themes ]]; then
+        say "  ${dim}login screen theme skipped: SDDM is not installed${r}"
+    elif [[ $WITH_SDDM -eq 1 ]]; then
         SDDM_THEME_DIR=/usr/share/sddm/themes/lucid
         # a fingerprint at the login screen needs two lines in sddm's pam
         # service, so it is asked for once and then kept on every re-run

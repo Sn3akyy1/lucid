@@ -69,6 +69,8 @@ ShellRoot {
     })
     // the login screen theme only goes where sddm is
     property bool sddmHere: false
+    // the display manager that actually starts, when it is not sddm: the theme would never show
+    property string otherDm: ""
     // the Hyprland config already in place: "" none, "lucid" from an earlier
     // install (refreshed without asking), "lua" or "conf" someone else's
     property string hyprNow: ""
@@ -159,12 +161,16 @@ ShellRoot {
 
     Process {
         running: true
-        command: ["sh", "-c", "test -d /usr/share/sddm/themes && echo sddm; h=$HOME/.config/hypr; if grep -qs 'qs ipc call' \"$h/modules/binds.lua\"; then echo lucid; elif [ -f \"$h/hyprland.lua\" ]; then echo lua; elif [ -f \"$h/hyprland.conf\" ]; then echo conf; fi"]
+        command: ["sh", "-c", "test -d /usr/share/sddm/themes && echo sddm; dm=$(readlink /etc/systemd/system/display-manager.service); dm=${dm##*/}; echo \"dm:${dm%.service}\"; h=$HOME/.config/hypr; if grep -qs 'qs ipc call' \"$h/modules/binds.lua\"; then echo lucid; elif [ -f \"$h/hyprland.lua\" ]; then echo lua; elif [ -f \"$h/hyprland.conf\" ]; then echo conf; fi"]
 
         stdout: StdioCollector {
             onStreamFinished: {
                 var got = this.text.split("\n");
-                root.sddmHere = got.indexOf("sddm") !== -1;
+                var dm = (got.find((l) => {
+                    return l.startsWith("dm:");
+                }) || "dm:").slice(3);
+                root.otherDm = dm === "sddm" ? "" : dm.toUpperCase();
+                root.sddmHere = got.indexOf("sddm") !== -1 && root.otherDm === "";
                 root.hyprNow = ["lucid", "lua", "conf"].find((k) => {
                     return got.indexOf(k) !== -1;
                 }) || "";
@@ -341,7 +347,7 @@ ShellRoot {
 
                             Text {
                                 width: parent.width
-                                text: !row.locked ? root.subOf(row.modelData) : row.modelData.flag === "--no-sddm" && !root.sddmHere ? "SDDM is not installed" : row.modelData.needsText
+                                text: !row.locked ? root.subOf(row.modelData) : row.modelData.flag === "--no-sddm" && !root.sddmHere ? (root.otherDm !== "" ? "Your login screen is " + root.otherDm + ", not SDDM" : "SDDM is not installed") : row.modelData.needsText
                                 color: Theme.subtextDim
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontBodySm
