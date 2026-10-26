@@ -71,6 +71,14 @@ ShellRoot {
     // is not sddm, install.sh asks to switch to it
     property bool sddmThere: false
     property string dm: ""
+    readonly property string dmName: ({
+        "gdm": "GDM",
+        "lxdm": "LXDM",
+        "xdm": "XDM",
+        "lightdm": "LightDM",
+        "plasmalogin": "Plasma Login",
+        "ly": "Ly"
+    })[root.dm] || root.dm
     // the Hyprland config already in place: "" none, "lucid" from an earlier
     // install (refreshed without asking), "lua" or "conf" someone else's
     property string hyprNow: ""
@@ -96,11 +104,11 @@ ShellRoot {
 
     function subOf(c) {
         if (c.flag === "--no-sddm" && root.dm !== "sddm") {
-            var other = root.dm.toUpperCase();
+            var other = root.dmName;
             if (root.sddmThere)
                 return (other !== "" ? "Swaps " + other + " for SDDM" : "Makes SDDM your login screen") + ", asked first";
 
-            return (other !== "" ? "Installs SDDM in place of " + other : "Installs SDDM as your login screen") + ", asked first";
+            return (other !== "" ? "Installs SDDM over " + other : "Installs SDDM as your login screen") + ", asked first";
         }
         if (c.flag !== "--no-hypr" || root.hyprNow === "")
             return c.sub;
@@ -168,7 +176,7 @@ ShellRoot {
 
     Process {
         running: true
-        command: ["sh", "-c", "test -d /usr/share/sddm/themes && echo sddm; dm=$(readlink /etc/systemd/system/display-manager.service); dm=${dm##*/}; echo \"dm:${dm%.service}\"; h=$HOME/.config/hypr; if grep -qs 'qs ipc call' \"$h/modules/binds.lua\"; then echo lucid; elif [ -f \"$h/hyprland.lua\" ]; then echo lua; elif [ -f \"$h/hyprland.conf\" ]; then echo conf; fi"]
+        command: ["sh", "-c", "test -d /usr/share/sddm/themes && echo sddm; dm=$(readlink /etc/systemd/system/display-manager.service); [ -n \"$dm\" ] || for u in /etc/systemd/system/multi-user.target.wants/ly@*.service /etc/systemd/system/graphical.target.wants/xdm.service; do [ -L \"$u\" ] && dm=${u%%@*} && break; done; dm=${dm##*/}; echo \"dm:${dm%.service}\"; h=$HOME/.config/hypr; if grep -qs 'qs ipc call' \"$h/modules/binds.lua\"; then echo lucid; elif [ -f \"$h/hyprland.lua\" ]; then echo lua; elif [ -f \"$h/hyprland.conf\" ]; then echo conf; fi"]
 
         stdout: StdioCollector {
             onStreamFinished: {

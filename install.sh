@@ -1084,12 +1084,28 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     # -y with --login-screen is the yes
     CUR_DM=$(readlink /etc/systemd/system/display-manager.service 2>/dev/null || true)
     CUR_DM=${CUR_DM##*/}; CUR_DM=${CUR_DM%.service}
+    # ly and xdm start without that alias, so enable -f would not replace them
+    EXTRA_DM=()
+    for u in /etc/systemd/system/multi-user.target.wants/ly@*.service /etc/systemd/system/graphical.target.wants/xdm.service; do
+        [[ -L "$u" ]] && EXTRA_DM+=("${u##*/}")
+    done
+    if [[ -z "$CUR_DM" && ${#EXTRA_DM[@]} -gt 0 ]]; then
+        CUR_DM=${EXTRA_DM[0]%%@*}; CUR_DM=${CUR_DM%.service}
+    fi
+    case $CUR_DM in
+        gdm|lxdm|xdm) DM_NAME=${CUR_DM^^} ;;
+        lightdm)      DM_NAME=LightDM ;;
+        plasmalogin)  DM_NAME="Plasma Login" ;;
+        ly)           DM_NAME=Ly ;;
+        *)            DM_NAME=$CUR_DM ;;
+    esac
     SDDM_SWITCH=0
     if [[ $WITH_SDDM -eq 1 && $CUR_DM != sddm ]]; then
         if [[ $SDDM_CURRENT -eq 1 || $ASSUME_YES -eq 0 ]] \
-            && ask "  Make SDDM your login screen${CUR_DM:+ instead of ${CUR_DM^^}}, with Lucid's theme? (from the next restart)"; then
+            && ask "  Make SDDM your login screen${DM_NAME:+ instead of $DM_NAME}, with Lucid's theme? (from the next restart)"; then
             # enable -f takes over the display-manager alias; the running one is left alone
-            if sudo pacman -S --needed --noconfirm sddm && sudo systemctl enable -f sddm.service; then
+            if sudo pacman -S --needed --noconfirm sddm && sudo systemctl enable -f sddm.service \
+                && { [[ ${#EXTRA_DM[@]} -eq 0 ]] || sudo systemctl disable "${EXTRA_DM[@]}"; }; then
                 SDDM_SWITCH=1
                 SDDM_CURRENT=1
             else
@@ -1098,7 +1114,7 @@ if [[ $WITH_THEMING -eq 1 ]]; then
             fi
         else
             WITH_SDDM=0
-            say "  ${dim}login screen left as it is${CUR_DM:+ (${CUR_DM^^})}, without Lucid's theme${r}"
+            say "  ${dim}login screen left as it is${DM_NAME:+ ($DM_NAME)}, without Lucid's theme${r}"
         fi
     fi
     if [[ $WITH_SDDM -eq 1 ]]; then
