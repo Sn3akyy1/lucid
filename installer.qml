@@ -67,10 +67,10 @@ ShellRoot {
     }).map((c) => {
         return c.flag;
     })
-    // the login screen theme only goes where sddm is
-    property bool sddmHere: false
-    // the display manager that actually starts, when it is not sddm: the theme would never show
-    property string otherDm: ""
+    // sddm installed, and the display manager that actually starts ("" none). when it
+    // is not sddm, install.sh asks to switch to it
+    property bool sddmThere: false
+    property string dm: ""
     // the Hyprland config already in place: "" none, "lucid" from an earlier
     // install (refreshed without asking), "lua" or "conf" someone else's
     property string hyprNow: ""
@@ -91,10 +91,17 @@ ShellRoot {
     }
 
     function locked(c) {
-        return (!!c.needs && root.off.indexOf(c.needs) !== -1) || (c.flag === "--no-sddm" && !root.sddmHere);
+        return !!c.needs && root.off.indexOf(c.needs) !== -1;
     }
 
     function subOf(c) {
+        if (c.flag === "--no-sddm" && root.dm !== "sddm") {
+            var other = root.dm.toUpperCase();
+            if (root.sddmThere)
+                return (other !== "" ? "Swaps " + other + " for SDDM" : "Makes SDDM your login screen") + ", asked first";
+
+            return (other !== "" ? "Installs SDDM in place of " + other : "Installs SDDM as your login screen") + ", asked first";
+        }
         if (c.flag !== "--no-hypr" || root.hyprNow === "")
             return c.sub;
 
@@ -166,11 +173,10 @@ ShellRoot {
         stdout: StdioCollector {
             onStreamFinished: {
                 var got = this.text.split("\n");
-                var dm = (got.find((l) => {
+                root.dm = (got.find((l) => {
                     return l.startsWith("dm:");
                 }) || "dm:").slice(3);
-                root.otherDm = dm === "sddm" ? "" : dm.toUpperCase();
-                root.sddmHere = got.indexOf("sddm") !== -1 && root.otherDm === "";
+                root.sddmThere = got.indexOf("sddm") !== -1;
                 root.hyprNow = ["lucid", "lua", "conf"].find((k) => {
                     return got.indexOf(k) !== -1;
                 }) || "";
@@ -347,7 +353,7 @@ ShellRoot {
 
                             Text {
                                 width: parent.width
-                                text: !row.locked ? root.subOf(row.modelData) : row.modelData.flag === "--no-sddm" && !root.sddmHere ? (root.otherDm !== "" ? "Your login screen is " + root.otherDm + ", not SDDM" : "SDDM is not installed") : row.modelData.needsText
+                                text: !row.locked ? root.subOf(row.modelData) : row.modelData.needsText
                                 color: Theme.subtextDim
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontBodySm

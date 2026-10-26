@@ -67,7 +67,8 @@ ${b}Lucid $VERSION installer${r}
                  (hypr-dynamic-cursors)
   --no-sddm      don't install the login screen theme
   --login-screen make Lucid's theme the one the login screen shows
-                 (Current=lucid in /etc/sddm.conf, backed up first)
+                 (Current=lucid in /etc/sddm.conf, backed up first),
+                 and offer to make SDDM the login screen when it is not
   --skip-deps    don't install packages, only check for them
   -y, --yes      don't prompt, accept every default
   --gui          do all of this from a window: pick what to install
@@ -1076,18 +1077,31 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     # rules you wrote are yours: only ever placed when there are none
     [[ -f "$LUCID_DIR/wallpaper-outputs.conf" ]] || install -m644 "$SRC/support/lucid/wallpaper-outputs.conf" "$LUCID_DIR/wallpaper-outputs.conf"
     # the sddm theme lives outside $HOME, so it is the one thing here that
-    # needs root. skipped entirely when sddm is not installed, and it never
-    # switches the active theme - that stays the user's call. root keeps the
-    # theme; every account paints its own corner of it without a password
-    # sddm installed is not sddm in use: under another display manager the theme never shows
-    OTHER_DM=$(readlink /etc/systemd/system/display-manager.service 2>/dev/null || true)
-    OTHER_DM=${OTHER_DM##*/}; OTHER_DM=${OTHER_DM%.service}
-    [[ $OTHER_DM != sddm ]] || OTHER_DM=""
-    if [[ $WITH_SDDM -eq 1 && -n "$OTHER_DM" ]]; then
-        say "  ${dim}login screen theme skipped: your login screen is ${OTHER_DM^^}, not SDDM${r}"
-    elif [[ $WITH_SDDM -eq 1 && ! -d /usr/share/sddm/themes ]]; then
-        say "  ${dim}login screen theme skipped: SDDM is not installed${r}"
-    elif [[ $WITH_SDDM -eq 1 ]]; then
+    # needs root. root keeps the theme; every account paints its own corner
+    # of it without a password
+    # sddm installed is not sddm in use, so the display manager that starts is
+    # what counts. moving off another one is always asked: -y alone keeps it,
+    # -y with --login-screen is the yes
+    CUR_DM=$(readlink /etc/systemd/system/display-manager.service 2>/dev/null || true)
+    CUR_DM=${CUR_DM##*/}; CUR_DM=${CUR_DM%.service}
+    SDDM_SWITCH=0
+    if [[ $WITH_SDDM -eq 1 && $CUR_DM != sddm ]]; then
+        if [[ $SDDM_CURRENT -eq 1 || $ASSUME_YES -eq 0 ]] \
+            && ask "  Make SDDM your login screen${CUR_DM:+ instead of ${CUR_DM^^}}, with Lucid's theme? (from the next restart)"; then
+            # enable -f takes over the display-manager alias; the running one is left alone
+            if sudo pacman -S --needed --noconfirm sddm && sudo systemctl enable -f sddm.service; then
+                SDDM_SWITCH=1
+                SDDM_CURRENT=1
+            else
+                warn "could not switch the login screen to sddm; skipping its theme"
+                WITH_SDDM=0
+            fi
+        else
+            WITH_SDDM=0
+            say "  ${dim}login screen left as it is${CUR_DM:+ (${CUR_DM^^})}, without Lucid's theme${r}"
+        fi
+    fi
+    if [[ $WITH_SDDM -eq 1 ]]; then
         SDDM_THEME_DIR=/usr/share/sddm/themes/lucid
         # a fingerprint at the login screen needs two lines in sddm's pam
         # service, so it is asked for once and then kept on every re-run
@@ -1111,7 +1125,9 @@ if [[ $WITH_THEMING -eq 1 ]]; then
             fi
             # /etc/sddm.conf outranks /etc/sddm.conf.d, so point at the file
             # that actually wins rather than at the tidier-looking drop-in
-            if [[ $SDDM_CURRENT -eq 1 ]]; then
+            if [[ $SDDM_SWITCH -eq 1 ]]; then
+                say "    sddm is your login screen from the next restart, with this theme"
+            elif [[ $SDDM_CURRENT -eq 1 ]]; then
                 say "    the login screen shows it from the next login"
             else
                 say "    enable it with: Current=lucid under [Theme] in /etc/sddm.conf (or --login-screen)"
