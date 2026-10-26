@@ -75,6 +75,9 @@ ShellRoot {
     // install.sh did not put Lucid's Hyprland config in, so nothing starts it at login
     readonly property bool hyprKept: !!Updates.result && Updates.result.hyprKept === true
     readonly property string launcher: "~/.config/lucid/launch-shell.sh"
+    // the desktop the window opened on when it is not Hyprland: Lucid waits for a login into Hyprland
+    readonly property string desktop: Quickshell.env("XDG_CURRENT_DESKTOP") || ""
+    readonly property string elsewhere: Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") ? "" : (root.desktop.split(":").pop() || "another desktop")
 
     // animated, so a new picture fades the accent over rather than snapping
     property color seed: tour.seed
@@ -124,13 +127,23 @@ ShellRoot {
 
     // reload puts the new binds live; the shell starts through its launcher, as at login
     function leave(start) {
+        if (start && root.elsewhere !== "") {
+            logOut();
+            return ;
+        }
         if (start) {
-            if (Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") !== "" && !root.hyprKept)
+            if (!root.hyprKept)
                 Quickshell.execDetached(["hyprctl", "reload"]);
 
             Updates.restartNow(root.home + "/.config/quickshell");
         }
         Qt.quit();
+    }
+
+    // the desktop's own logout asks about unsaved work; the window stays if it is cancelled.
+    // loginctl, for the rest, just ends the session
+    function logOut() {
+        Quickshell.execDetached(["sh", "-c", 'case "$1" in\n' + '*GNOME*) exec gnome-session-quit --logout ;;\n' + '*KDE*) exec gdbus call --session --dest org.kde.LogoutPrompt --object-path /LogoutPrompt --method org.kde.LogoutPrompt.promptLogout ;;\n' + '*XFCE*) exec xfce4-session-logout --logout ;;\n' + '*Cinnamon*) exec cinnamon-session-quit --logout ;;\n' + '*MATE*) exec mate-session-save --logout-dialog ;;\n' + '*) exec loginctl terminate-session "${XDG_SESSION_ID:-auto}" ;;\n' + 'esac', "sh", root.desktop]);
     }
 
     // the same tests install.sh makes, so the switches can say what will happen
@@ -391,6 +404,7 @@ ShellRoot {
                 anchors.margins: Theme.dp(4)
                 color: "transparent"
                 shown: root.running
+                elsewhere: root.elsewhere
                 note: !root.hyprKept ? "" : root.hyprNow === "conf" ? "exec-once = " + root.launcher : "hl.on(\"hyprland.start\", function () hl.exec_cmd(\"" + root.launcher + "\") end)"
                 visible: opacity > 0.01
                 onLeave: (start) => {

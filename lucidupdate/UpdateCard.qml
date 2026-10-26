@@ -15,6 +15,8 @@ Rectangle {
 
     // the installer's too: a line for a Hyprland config Lucid left alone
     property string note: ""
+    // the installer on another desktop: its name, and the last page logs out instead of starting Lucid
+    property string elsewhere: ""
 
     property bool shown: false
     // the last real stage, so the card does not empty itself while it fades out
@@ -319,6 +321,9 @@ Rectangle {
                     }
                     if (card.view === "auth")
                         return "The installer uses sudo to install packages and system files such as the login screen theme. The password goes to sudo once and is not kept.";
+
+                    if (card.view === "restart" && card.fresh && card.elsewhere !== "")
+                        return "You are on " + card.elsewhere + " right now, and Lucid runs on Hyprland. Save what you have open, log out, and choose Hyprland on the login screen." + (card.note !== "" ? " Your Hyprland config was kept, so add this line to it first, or nothing starts Lucid there." : " Lucid starts with it.") + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
 
                     if (card.view === "restart" && card.fresh && card.note !== "")
                         return "Start it now. Your Hyprland config was kept, so nothing starts Lucid when you log in yet: add this line to it." + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
@@ -774,9 +779,9 @@ Rectangle {
 
                     M3Button {
                         visible: card.view === "restart" && card.fresh
-                        text: "Start Lucid"
+                        text: card.elsewhere !== "" ? "Log out to Hyprland" : "Start Lucid"
                         variant: "filled"
-                        iconPath: "play_arrow"
+                        iconPath: card.elsewhere !== "" ? "logout" : "play_arrow"
                         onClicked: card.leave(true)
                     }
 

@@ -59,7 +59,8 @@ Singleton {
     // light surfaces come out of matugen near-white, so the accent is what keeps
     // them from reading as flat paper. k also sets how far `surface()` walks off
     // white (k * _tintLift); below ~0.6 the ramp never leaves the tones where no hue can exist
-    readonly property real surfaceTint: pf.surfaceTint >= 0 ? pf.surfaceTint : (root.isLight ? 0.7 : 0)
+    // the installer's seed tints the surfaces too, dark mode included
+    readonly property real surfaceTint: Math.max(root._seeded ? 0.7 : 0, pf.surfaceTint >= 0 ? pf.surfaceTint : (root.isLight ? 0.7 : 0))
     property real accentPunch: pf.accentPunch
     readonly property real motionBaseline: 1.125
     readonly property real motionScale: pf.motionScale * root.motionBaseline

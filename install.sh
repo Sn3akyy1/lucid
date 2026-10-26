@@ -155,9 +155,6 @@ command -v pacman &>/dev/null || die "pacman not found"
 [[ $EUID -ne 0 ]] || die "don't run this as root — it installs into your home directory"
 [[ -f "$SRC/shell.qml" ]] || die "run this from inside the Lucid repo (no shell.qml next to install.sh)"
 
-command -v Hyprland &>/dev/null || command -v hyprctl &>/dev/null \
-    || warn "Hyprland not found. Lucid uses Hyprland-specific APIs and will not work under another compositor."
-
 AUR=""
 for helper in paru yay; do
     command -v "$helper" &>/dev/null && { AUR="$helper"; break; }
@@ -177,7 +174,7 @@ say "  wallpapers      $([[ $WITH_WALLPAPERS -eq 1 ]] && echo yes || echo 'no (-
 # qt6-webengine is here for the qt pdf module it carries: lumen's preview pane
 # imports it, and a window with an import it can't resolve doesn't load at all,
 # which would take SUPER+E and every app's file dialog with it
-PKG_REQUIRED=(quickshell qt6-5compat qt6-declarative qt6-multimedia qt6-webengine)
+PKG_REQUIRED=(hyprland quickshell qt6-5compat qt6-declarative qt6-multimedia qt6-webengine)
 # each of these backs one feature; missing ones degrade that feature only
 PKG_FEATURES=(
     matugen jq imagemagick
@@ -1766,6 +1763,20 @@ else
 EOF
     # the installer window says the same thing on its last page
     [[ -z "${LUCID_UPDATER:-}" ]] || printf '@@lucid:hypr-kept\n'
+fi
+
+# from another desktop none of the above is live until a login into Hyprland
+if [[ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+    HERE=${XDG_CURRENT_DESKTOP:-}
+    if [[ -n "$HERE" ]]; then
+        say "  ${b}You are on ${HERE##*:} right now, and Lucid runs on Hyprland.${r}"
+        say "  Log out and choose Hyprland on the login screen."
+    else
+        say "  ${b}Lucid runs on Hyprland.${r} Start it with ${b}start-hyprland${r}, or"
+        say "  choose Hyprland on your login screen."
+    fi
+    [[ $HYPR_LUA_INSTALLED -eq 1 ]] || say "  Add the autostart line above to your config first."
+    say ""
 fi
 
 if [[ $DEPS_OK -eq 0 ]]; then
