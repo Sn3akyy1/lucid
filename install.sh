@@ -197,6 +197,8 @@ PKG_FEATURES=(
     # the file chooser kde connect sends files with comes from the gtk portal.
     # librsvg renders a cursor theme again when its shadow is turned off
     gsettings-desktop-schemas qt6ct xdg-desktop-portal-gtk librsvg
+    # sharing the screen (browsers, Discord, OBS) goes through Hyprland's own portal
+    xdg-desktop-portal-hyprland
     # the launcher's $ mode runs a command in the user's terminal through this
     xdg-terminal-exec
     # the camera on/off toast hears /dev/video* opened and closed through this
@@ -927,6 +929,29 @@ if [[ $WITH_HYPR -eq 1 ]]; then
         (cd "$SRC/support/hypr/modules" && sha256sum -- *.lua) > "$HYPR_SHIPPED"
         install -m755 "$SRC/support/hypr/scripts/reload.sh" "$HYPR_DIR/scripts/reload.sh"
         install -m755 "$SRC/support/hypr/scripts/cursor-plugin.sh" "$HYPR_DIR/scripts/cursor-plugin.sh"
+        # the keyboard already typed on, so Hyprland does not start in US:
+        # GNOME's input sources, else KDE's, else the system's. Settings > Input still wins
+        KB_LAYOUT=""; KB_VARIANT=""
+        kb_gnome=$(gsettings get org.gnome.desktop.input-sources sources 2>/dev/null | grep -o "'xkb', '[^']*'" | cut -d"'" -f4 || true)
+        if [[ -n "$kb_gnome" ]]; then
+            # us+intl is layout us, variant intl
+            while read -r e; do
+                KB_LAYOUT+=",${e%%+*}"
+                if [[ $e == *+* ]]; then KB_VARIANT+=",${e#*+}"; else KB_VARIANT+=","; fi
+            done <<< "$kb_gnome"
+            KB_LAYOUT=${KB_LAYOUT#,}; KB_VARIANT=${KB_VARIANT#,}
+        elif grep -qs '^LayoutList=.' "$HOME/.config/kxkbrc"; then
+            KB_LAYOUT=$(sed -n 's/^LayoutList=//p' "$HOME/.config/kxkbrc" | head -1)
+            KB_VARIANT=$(sed -n 's/^VariantList=//p' "$HOME/.config/kxkbrc" | head -1)
+        else
+            KB_LAYOUT=$(localectl status 2>/dev/null | sed -n 's/^ *X11 Layout: //p' || true)
+            KB_VARIANT=$(localectl status 2>/dev/null | sed -n 's/^ *X11 Variant: //p' || true)
+        fi
+        # xkb names only, since they go into a sed and a lua string
+        if [[ $KB_LAYOUT =~ ^[A-Za-z0-9_,-]+$ && $KB_VARIANT =~ ^[A-Za-z0-9_,-]*$ && "$KB_LAYOUT/$KB_VARIANT" != "us/" ]]; then
+            sed -i -E "s/^([[:space:]]*kb_layout  = )\"[^\"]*\"/\1\"$KB_LAYOUT\"/; s/^([[:space:]]*kb_variant = )\"[^\"]*\"/\1\"$KB_VARIANT\"/" "$HYPR_DIR/modules/input.lua"
+            say "  keyboard        $KB_LAYOUT, as on this system"
+        fi
         # a hyprland.conf left beside hyprland.lua is ambiguous - Hyprland
         # reads one of them and you cannot tell which, so the install looks
         # like it did nothing. the full directory is already backed up above
@@ -1816,6 +1841,8 @@ if [[ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
         say "  choose Hyprland on your login screen."
     fi
     [[ $HYPR_LUA_INSTALLED -eq 1 ]] || say "  Add the autostart line above to your config first."
+    [[ -z "$HERE" ]] || say "  ${HERE##*:} stays on that list to go back to."
+    say "  ./uninstall.sh takes Lucid out again."
     say ""
 fi
 

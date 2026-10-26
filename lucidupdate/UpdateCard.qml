@@ -323,7 +323,7 @@ Rectangle {
                         return "The installer uses sudo to install packages and system files such as the login screen theme. The password goes to sudo once and is not kept.";
 
                     if (card.view === "restart" && card.fresh && card.elsewhere !== "")
-                        return "You are on " + card.elsewhere + " right now, and Lucid runs on Hyprland. Save what you have open, log out, and choose Hyprland on the login screen." + (card.note !== "" ? " Your Hyprland config was kept, so add this line to it first, or nothing starts Lucid there." : " Lucid starts with it.") + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
+                        return "You are on " + card.elsewhere + " right now, and Lucid runs on Hyprland. Save what you have open, log out, and choose Hyprland on the login screen." + (card.note !== "" ? " Your Hyprland config was kept, so add this line to it first, or nothing starts Lucid there." : " Lucid starts with it.") + " " + (card.elsewhere === "another desktop" ? "Your desktop" : card.elsewhere) + " stays on that list to go back to, and ./uninstall.sh, beside install.sh, takes Lucid out." + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
 
                     if (card.view === "restart" && card.fresh && card.note !== "")
                         return "Start it now. Your Hyprland config was kept, so nothing starts Lucid when you log in yet: add this line to it." + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
