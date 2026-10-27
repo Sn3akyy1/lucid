@@ -345,30 +345,47 @@ ShellRoot {
                 return out;
             }
 
-            // whether the module at i is joined to the one right after it. both
-            // have to be in the bar this moment: one that has emptied out (a tray
-            // with no icons, workspaces off in the overview) parts its group there
+            // whether the module at i is joined to the next one in the bar this
+            // moment. ones that have emptied out between them (a tray with no
+            // icons, workspaces off in the overview) carry the join when every
+            // link across them is on, and part the group where one is off
             function joinedAfter(keys, widths, i) {
-                return i + 1 < keys.length && widths[i] > 0.5 && widths[i + 1] > 0.5 && bar.realWidthOf(keys[i]) > 0.5 && bar.realWidthOf(keys[i + 1]) > 0.5 && Prefs.barJoinedNow(keys[i], keys[i + 1]);
+                if (!(widths[i] > 0.5 && bar.realWidthOf(keys[i]) > 0.5))
+                    return false;
+
+                // an edit-mode stand-in has room but nothing in it: it parts the group
+                for (let j = i + 1; j < keys.length; j++) {
+                    if (!Prefs.barJoinedNow(keys[j - 1], keys[j]))
+                        return false;
+
+                    if (widths[j] > 0.5)
+                        return bar.realWidthOf(keys[j]) > 0.5;
+
+                }
+                return false;
             }
 
             // what a module's pill reads to square off the corners it shares
             function joinedLeftOf(key) {
                 const at = bar.placeMap[key];
-                if (!at || at.at === 0)
+                if (!at || bar.realWidthOf(key) <= 0.5)
                     return false;
 
                 const keys = bar.zoneKeys(at.zone);
-                return bar.realWidthOf(key) > 0.5 && bar.realWidthOf(keys[at.at - 1]) > 0.5 && Prefs.barJoinedNow(keys[at.at - 1], key);
+                for (let j = at.at - 1; j >= 0; j--) {
+                    if (!Prefs.barJoinedNow(keys[j], keys[j + 1]))
+                        return false;
+
+                    if (bar.widthOf(keys[j]) > 0.5)
+                        return bar.realWidthOf(keys[j]) > 0.5;
+
+                }
+                return false;
             }
 
             function joinedRightOf(key) {
                 const at = bar.placeMap[key];
-                if (!at)
-                    return false;
-
-                const keys = bar.zoneKeys(at.zone);
-                return at.at + 1 < keys.length && bar.realWidthOf(key) > 0.5 && bar.realWidthOf(keys[at.at + 1]) > 0.5 && Prefs.barJoinedNow(key, keys[at.at + 1]);
+                return !!at && bar.joinedAfter(bar.zoneKeys(at.zone), bar.widthsOf(at.zone), at.at);
             }
 
             // per module key, radius caps where a hanging panel meets the islands: {corners, tops, sides, fillets}
@@ -409,11 +426,10 @@ ShellRoot {
                     let run = null;
                     for (let i = 0; i < keys.length; i++) {
                         const mod = bar.pillFor[keys[i]];
-                        if (!mod || bar.widthOf(keys[i]) <= 0.5) {
-                            run = null;
+                        if (!mod || bar.widthOf(keys[i]) <= 0.5)
                             continue;
-                        }
-                        if (run && Prefs.barJoinedNow(keys[i - 1], keys[i])) {
+
+                        if (run && bar.joinedLeftOf(keys[i])) {
                             run.keys.push(keys[i]);
                             run.r = bar.surfaceSpan(mod)[1];
                         } else {
