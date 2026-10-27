@@ -329,19 +329,22 @@ ShellRoot {
             function placeGroup(widths, originX, keys) {
                 const gap = Theme.dp(Prefs.barSpacing) + bar.editGap;
                 const out = [];
-                let x = originX;
+                // on whole pixels: two joined modules meeting mid-pixel would each
+                // antialias the shared edge and let the wallpaper through there
+                let x = Math.round(originX);
+                let end = x;
                 let any = false;
-                let trailing = 0;
                 for (let i = 0; i < widths.length; i++) {
                     out.push(x);
                     const w = widths[i];
                     if (w > 0.5) {
-                        trailing = keys && bar.joinedAfter(keys, widths, i) ? 0 : (gap > 0 ? gap * Math.min(1, w / gap) : 0);
-                        x += w + trailing;
+                        end = x + w;
+                        const trailing = keys && bar.joinedAfter(keys, widths, i) ? 0 : (gap > 0 ? gap * Math.min(1, w / gap) : 0);
+                        x = Math.floor(end + trailing);
                         any = true;
                     }
                 }
-                out.push(any ? Math.max(originX, x - trailing) : originX);
+                out.push(any ? end : originX);
                 return out;
             }
 
