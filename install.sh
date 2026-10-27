@@ -22,6 +22,9 @@ MATUGEN_DIR="$HOME/.config/matugen"
 WALL_SCRIPT_DIR="$HOME/.config/hypr/scripts/wallpaper"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP=""
+# how things stood before Lucid first changed them, for uninstall.sh to put
+# back. the first value of a key wins: a re-run would only record Lucid's own
+BEFORE="${XDG_STATE_HOME:-$HOME/.local/state}/lucid/before-install"
 
 WITH_THEMING=1
 WITH_LOOK=1
@@ -120,6 +123,11 @@ ask() {
     local reply
     read -rp "$1 [Y/n] " reply
     [[ -z "$reply" || "$reply" =~ ^[Yy] ]]
+}
+
+remember() {
+    mkdir -p "${BEFORE%/*}"
+    grep -qs "^$1=" "$BEFORE" || printf '%s=%s\n' "$1" "$2" >> "$BEFORE"
 }
 
 # ---------------------------------------------------------------------- gui
@@ -413,6 +421,9 @@ fi
 # --------------------------------------------------------------- the shell
 
 step "Installing the shell"
+
+# the desktop to send you back to. under Hyprland it says Hyprland was all
+[[ -z "${XDG_CURRENT_DESKTOP:-}" ]] || remember desktop "${XDG_CURRENT_DESKTOP##*:}"
 
 if [[ "$SRC" == "$SHELL_DIR" ]]; then
     say "  already at $SHELL_DIR, installing in place"
@@ -902,6 +913,10 @@ if [[ $WITH_HYPR -eq 1 ]]; then
             cp -r "$HYPR_DIR" "$HYPR_DIR.backup-$STAMP"
             say "  your hypr config -> $HYPR_DIR.backup-$STAMP"
         fi
+        # none: Hyprland writes its own default once Lucid's is moved aside
+        if [[ $HYPR_IS_LUCID -eq 0 ]]; then
+            if [[ $HAS_HYPR_CFG -eq 1 ]]; then remember hypr "$HYPR_DIR.backup-$STAMP"; else remember hypr none; fi
+        fi
         mkdir -p "$HYPR_DIR/modules" "$HYPR_DIR/scripts"
         # on a refresh every module is checked against the one in place, so it
         # can say what it changed: a module new in this release, one a release
@@ -1107,8 +1122,8 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     # sddm installed is not sddm in use, so the display manager that starts is
     # what counts. moving off another one is always asked: -y alone keeps it,
     # -y with --login-screen is the yes
-    CUR_DM=$(readlink /etc/systemd/system/display-manager.service 2>/dev/null || true)
-    CUR_DM=${CUR_DM##*/}; CUR_DM=${CUR_DM%.service}
+    DM_UNIT=$(readlink /etc/systemd/system/display-manager.service 2>/dev/null || true)
+    DM_UNIT=${DM_UNIT##*/}; CUR_DM=${DM_UNIT%.service}
     # ly and xdm start without that alias, so enable -f would not replace them
     EXTRA_DM=()
     for u in /etc/systemd/system/multi-user.target.wants/ly@*.service /etc/systemd/system/graphical.target.wants/xdm.service; do
@@ -1133,6 +1148,9 @@ if [[ $WITH_THEMING -eq 1 ]]; then
                 && { [[ ${#EXTRA_DM[@]} -eq 0 ]] || sudo systemctl disable "${EXTRA_DM[@]}"; }; then
                 SDDM_SWITCH=1
                 SDDM_CURRENT=1
+                # the units uninstall.sh enables again; none = nothing started at boot
+                DM_BEFORE=$(echo $DM_UNIT "${EXTRA_DM[@]}")
+                remember dm "${DM_BEFORE:-none}"
             else
                 warn "could not switch the login screen to sddm; skipping its theme"
                 WITH_SDDM=0
@@ -1455,6 +1473,12 @@ if [[ $WITH_THEMING -eq 1 ]]; then
 
         # gnome apps, portals and anything reading dconf take these instead
         if command -v gsettings &>/dev/null; then
+            # a value that is already Lucid's has nothing to go back to
+            for kv in gtk-theme="$GTK_THEME_NAME" color-scheme=prefer-dark icon-theme="$ICON_THEME_NAME"; do
+                [[ -n "${kv#*=}" ]] || continue
+                old=$(gsettings get org.gnome.desktop.interface "${kv%%=*}" 2>/dev/null) || continue
+                [[ "$old" == "'${kv#*=}'" ]] || remember "gsettings.${kv%%=*}" "$old"
+            done
             gsettings set org.gnome.desktop.interface gtk-theme "$GTK_THEME_NAME" 2>/dev/null || true
             gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
             [[ -n "$ICON_THEME_NAME" ]] && \

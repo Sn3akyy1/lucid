@@ -1369,7 +1369,13 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 ```
 
 Moves `~/.config/quickshell` aside rather than deleting it, so your settings
-survive. Packages installed by `install.sh` are left alone. It prints what else
+survive. Packages installed by `install.sh` are left alone. `install.sh` notes
+how things stood before it first changed them, in
+`~/.local/state/lucid/before-install`, and the uninstaller offers to put those
+back: the login screen it replaced with SDDM (or none at all), the GTK theme,
+icons and dark mode GNOME reads, and your own Hyprland config (or Hyprland's
+default, if you had none). It ends by naming the desktop to log back into, or
+the ones still installed if that one is gone. It prints what else
 it left in place — the matugen template blocks, `~/.config/hypr`,
 `starship.toml` and its init lines in your rc files, the fastfetch config,
 kitty's colour and opacity includes — each with a timestamped backup beside it, so you can undo
