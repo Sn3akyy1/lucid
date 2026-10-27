@@ -1349,6 +1349,9 @@ BarPill {
 
     readonly property string brightnessIcon: root.brightnessPercent < 34 ? "brightness_low" : (root.brightnessPercent < 67 ? "brightness_medium" : "brightness_high")
 
+    // what the pill shows of itself in the bar; the keyboard layout keeps its own pref
+    readonly property var barItems: String(Prefs.systemBarItems || "").split(",")
+
     compactContent: [
         Row {
             id: content
@@ -1392,6 +1395,7 @@ BarPill {
             Icon {
                 id: wifiIcon
 
+                visible: root.barItems.indexOf("wifi") !== -1
                 anchors.verticalCenter: parent.verticalCenter
                 name: root.wifiGlyph
                 size: Theme.dp(17)
@@ -1402,7 +1406,7 @@ BarPill {
             Icon {
                 id: btIcon
 
-                visible: root.btEnabled
+                visible: root.btEnabled && root.barItems.indexOf("bluetooth") !== -1
                 anchors.verticalCenter: parent.verticalCenter
                 name: root.btGlyph
                 size: Theme.dp(16)
@@ -1412,6 +1416,7 @@ BarPill {
             Row {
                 id: volIndicator
 
+                visible: root.barItems.indexOf("volume") !== -1
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.dp(3)
 
@@ -1424,7 +1429,7 @@ BarPill {
                 }
 
                 LText {
-                    visible: !root.volMuted
+                    visible: !root.volMuted && root.barItems.indexOf("level") !== -1
                     anchors.verticalCenter: parent.verticalCenter
                     role: "labelMedium"
                     weight: 620
@@ -1437,6 +1442,7 @@ BarPill {
             Icon {
                 id: micIndicator
 
+                visible: root.barItems.indexOf("mic") !== -1
                 anchors.verticalCenter: parent.verticalCenter
                 name: root.micMuted ? "mic_off" : "mic"
                 size: Theme.dp(16)
@@ -1447,7 +1453,7 @@ BarPill {
             BatteryPill {
                 id: batteryRow
 
-                visible: root.batteryPresent
+                visible: root.batteryPresent && root.barItems.indexOf("battery") !== -1
                 anchors.verticalCenter: parent.verticalCenter
                 percent: root.batteryPercent
                 charging: root.batteryCharging
