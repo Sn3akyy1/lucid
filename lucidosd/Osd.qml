@@ -46,7 +46,8 @@ PanelWindow {
     // with the dock's concave corners at its sides. a dock on that edge steps
     // down while it shows; one held up by a menu or a drag keeps the edge, and
     // the card floats above it instead
-    readonly property bool notch: Prefs.osdNotch && !osdWindow.dockStays
+    // over floating islands on the bottom edge there is no edge to rise out of: it floats as a card
+    readonly property bool notch: Prefs.osdNotch && !osdWindow.dockStays && !(Prefs.barHoldsBottom && !Prefs.barFlush)
     // what the dock reads to step aside
     readonly property bool holdsEdge: osdWindow.notch && osdWindow.cardVisible
     // shell.qml hands the dock over
@@ -277,7 +278,9 @@ PanelWindow {
     implicitWidth: Theme.dp(480)
     implicitHeight: osdWindow.notch ? Theme.dp(64) : Theme.dp(140)
     // a bar on the bottom edge keeps it: the notch rises out of the bar's top instead
-    margins.bottom: osdWindow.notch ? (Prefs.barHoldsBottom ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) : 0) : Theme.dp(96)
+    // a notch ignores the bar's reserved strip and stands on the bar; a card
+    // keeps clear of it, so only the gap is added, less the room around the card
+    margins.bottom: osdWindow.notch ? (Prefs.barHoldsBottom ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) : 0) : (Prefs.barHoldsBottom ? Theme.dp(Prefs.barPopupGap) - Math.round((osdWindow.implicitHeight - card.height) / 2) : Theme.dp(96))
     Component.onCompleted: {
         findDeviceProc.running = true;
         findKbdProc.running = true;
