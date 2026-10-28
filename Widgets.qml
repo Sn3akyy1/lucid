@@ -60,9 +60,9 @@ Singleton {
     // the layer covers the whole output, so a card can be dragged under the bar or
     // the dock on purpose. a freshly spawned one should still land clear of them:
     // these mirror the two windows' own exclusive zones
-    readonly property real spawnTop: Prefs.barEnabled ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) + Prefs.shellGap : 0
+    readonly property real spawnTop: Prefs.barEnabled && !Prefs.barBottom ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) + Prefs.shellGap : 0
     // a dynamic dock has no zone but is up whenever the desktop is
-    readonly property real spawnBottom: (Prefs.dockEnabled && (!Prefs.dockAutoHide || Prefs.dockDynamicHide)) ? Theme.dp(Prefs.dockIconSize + 20) + Prefs.effectiveDockBottomMargin + Prefs.shellGap : 0
+    readonly property real spawnBottom: Math.max((Prefs.dockOn && (!Prefs.dockAutoHide || Prefs.dockDynamicHide)) ? Theme.dp(Prefs.dockIconSize + 20) + Prefs.effectiveDockBottomMargin + Prefs.shellGap : 0, Prefs.barEnabled && Prefs.barBottom ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) + Prefs.shellGap : 0)
 
     // one entry per category; a variant is another face on the same data, not another widget
     readonly property var catalogue: [{

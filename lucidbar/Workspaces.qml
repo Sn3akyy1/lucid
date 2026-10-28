@@ -1340,7 +1340,7 @@ Item {
         id: shell
 
         readonly property real cardX: root.hostWindow ? (root.hostWindow.screen.width - root.cardWidth) / 2 - root.hostWindow.margins.left : 0
-        readonly property real cardY: root.hostWindow ? (root.hostWindow.screen.height - root.cardHeight) / 2 - root.hostWindow.margins.top : 0
+        readonly property real cardY: root.hostWindow ? (root.hostWindow.screen.height - root.cardHeight) / 2 - (Prefs.barBottom ? root.hostWindow.margins.bottom : root.hostWindow.margins.top) : 0
 
         width: root.popupMode ? (root.expanded ? root.cardWidth : root.compactWidth) : root.width
         height: root.popupMode ? (root.expanded ? root.cardHeight : root.compactHeight) : root.height
@@ -2165,6 +2165,12 @@ Item {
 
             }
 
+            // the bar is mirrored on the bottom edge; the content stands upright
+            transform: Scale {
+                origin.y: compactFace.height / 2
+                yScale: Prefs.barBottom ? -1 : 1
+            }
+
         }
 
         Item {
@@ -2775,6 +2781,12 @@ Item {
 
             }
 
+            // the bar is mirrored on the bottom edge; the content stands upright
+            transform: Scale {
+                origin.y: expandedFace.height / 2
+                yScale: Prefs.barBottom ? -1 : 1
+            }
+
         }
 
         Behavior on radius {
@@ -2808,7 +2820,7 @@ Item {
             implicitWidth: root.cardWidth
             implicitHeight: root.cardHeight
             x: root.hostWindow ? (root.hostWindow.screen.width - root.cardWidth) / 2 - root.hostWindow.margins.left : (parent.width - root.cardWidth) / 2
-            y: root.hostWindow ? (root.hostWindow.screen.height - root.cardHeight) / 2 - root.hostWindow.margins.top : (parent.height - root.cardHeight) / 2
+            y: root.hostWindow ? (root.hostWindow.screen.height - root.cardHeight) / 2 - (Prefs.barBottom ? root.hostWindow.margins.bottom : root.hostWindow.margins.top) : (parent.height - root.cardHeight) / 2
         }
 
     }

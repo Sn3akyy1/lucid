@@ -1123,13 +1123,14 @@ BarPill {
 
     panelContent: [
     // backdrop: the cover blurred across the whole panel, under a scrim the
-    // text reads on. clipped to the panel's own corners
+    // text reads on. clipped to the panel's own corners, which a bottom bar
+    // draws upside down under content turned back the right way up
     ClippingRectangle {
         anchors.fill: parent
-        topLeftRadius: root.popupItem.topLeftRadius
-        topRightRadius: root.popupItem.topRightRadius
-        bottomLeftRadius: root.popupItem.bottomLeftRadius
-        bottomRightRadius: root.popupItem.bottomRightRadius
+        topLeftRadius: Prefs.barBottom ? root.popupItem.bottomLeftRadius : root.popupItem.topLeftRadius
+        topRightRadius: Prefs.barBottom ? root.popupItem.bottomRightRadius : root.popupItem.topRightRadius
+        bottomLeftRadius: Prefs.barBottom ? root.popupItem.topLeftRadius : root.popupItem.bottomLeftRadius
+        bottomRightRadius: Prefs.barBottom ? root.popupItem.topRightRadius : root.popupItem.bottomRightRadius
         color: "transparent"
         visible: root.backdropPanel && root.player !== null && backdropArt.status === Image.Ready
 

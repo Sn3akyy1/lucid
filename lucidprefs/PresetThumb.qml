@@ -99,7 +99,7 @@ ClippingRectangle {
                 required property var modelData
 
                 x: stage.width * modelData[0]
-                y: Prefs.effectiveBarTopMargin * thumb.fit
+                y: Prefs.barBottom ? stage.height - (Prefs.effectiveBarTopMargin * thumb.fit) - height : Prefs.effectiveBarTopMargin * thumb.fit
                 width: stage.width * modelData[1]
                 height: Math.max(Theme.dp(2), Theme.dp(Prefs.barHeight) * thumb.fit)
                 radius: height / 2
@@ -117,7 +117,7 @@ ClippingRectangle {
             radius: height * 0.3
             color: Theme.bgOpaque
             // a dynamic dock is up whenever the desktop is
-            visible: Prefs.dockEnabled && (!Prefs.dockAutoHide || Prefs.dockDynamicHide)
+            visible: Prefs.dockOn && (!Prefs.dockAutoHide || Prefs.dockDynamicHide)
         }
 
     }
