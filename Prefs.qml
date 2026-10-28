@@ -31,7 +31,24 @@ Singleton {
     readonly property bool barNotch: root.barStyle === "notch"
     readonly property bool barFull: root.barStyle === "full"
     // the bar is drawn as a top bar and mirrored onto the bottom edge
-    readonly property bool barBottom: root.barPosition === "bottom"
+    readonly property bool barBottom: (root.barShownPosition !== "" ? root.barShownPosition : root.barPosition) === "bottom"
+    // the edge the bar is drawn on lags the one asked for: on a change the bar
+    // slides out of the old edge, moves while out of sight, and slides in at the new
+    property string barShownPosition: ""
+    readonly property bool barRelocating: root.barShownPosition !== "" && root.barShownPosition !== root.barPosition
+
+    onBarRelocatingChanged: {
+        if (root.barRelocating)
+            barMoveTimer.restart();
+
+    }
+
+    Timer {
+        id: barMoveTimer
+
+        interval: Theme.durLong
+        onTriggered: root.barShownPosition = root.barPosition
+    }
     // a bottom bar that keeps its strip: what would sit flush on that edge floats above it
     readonly property bool barHoldsBottom: root.barBottom && root.barEnabled && !root.barAutoHide
     // the bottom edge belongs to the bar while it is there: the dock steps aside, and
@@ -1730,7 +1747,13 @@ Singleton {
         watchChanges: true
         onFileChanged: reload()
         onAdapterUpdated: writeDebounce.restart()
-        onLoaded: root.loaded = true
+        onLoaded: {
+            // only the first load: a reload after a write must not skip the slide
+            if (root.barShownPosition === "")
+                root.barShownPosition = root.barPosition;
+
+            root.loaded = true;
+        }
         onLoadFailed: root.loaded = true
 
         adapter: JsonAdapter {
