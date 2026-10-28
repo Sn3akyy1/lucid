@@ -397,6 +397,16 @@ ShellRoot {
                 return covered(x - f) && covered(x + f);
             }
 
+            Connections {
+                function onBarAutoHideChanged() {
+                    Qt.callLater(() => {
+                        return bar.exclusionTick++;
+                    });
+                }
+
+                target: Prefs
+            }
+
             Binding {
                 target: dock
                 property: "barUnderLeft"
@@ -710,13 +720,19 @@ ShellRoot {
                 return m.expanded === true || m.anyOpen === true;
             })
             property bool slidingAway: false
-            readonly property bool heldByPointer: revealArea.containsMouse || (!bar.slidingAway && bar.modules.some((m) => {
+            readonly property bool heldByPointer: revealArea.containsMouse || bandHover.hovered || (!bar.slidingAway && bar.modules.some((m) => {
                 return m.visible && (m.surfaceHovered === true || m.compactHovered === true);
             }))
             readonly property bool barRevealed: (!Prefs.barAutoHide || bar.barBusy || bar.heldByPointer || Edit.active) && !Prefs.barRelocating
+            // a bar that hides reaches the screen edge itself, so the strip that
+            // reveals it sits on the edge; its margin moves inside the window
+            readonly property int edgeGap: Prefs.barAutoHide ? Prefs.effectiveBarTopMargin : 0
+            // a write to exclusiveZone puts exclusionMode back to Normal, so the mode is
+            // asked for again once auto-hide has been switched
+            property int exclusionTick: 0
             // how far the compact content sits above its resting y=0 while
             // hidden - past the window's own top edge, so it clips away for free
-            property real hiddenOffset: bar.barRevealed ? 0 : -(Theme.dp(Prefs.barHeight) + Prefs.effectiveBarTopMargin + Theme.dp(4))
+            property real hiddenOffset: (bar.barRevealed ? 0 : -(Theme.dp(Prefs.barHeight) + Prefs.effectiveBarTopMargin + Theme.dp(4))) + bar.edgeGap
 
             Behavior on hiddenOffset {
                 NumberAnimation {
@@ -758,8 +774,11 @@ ShellRoot {
             }
 
             color: "transparent"
-            implicitHeight: bar.screen ? bar.screen.height - Prefs.effectiveBarTopMargin : Theme.dp(800)
-            exclusiveZone: (Prefs.barEnabled && bar.anyModuleShown && !Prefs.barAutoHide) ? Theme.dp(Prefs.barHeight) + Prefs.shellGap : 0
+            implicitHeight: bar.screen ? bar.screen.height - Prefs.effectiveBarTopMargin + bar.edgeGap : Theme.dp(800)
+            // auto-hide first, so a hiding bar never writes its zone again
+            exclusiveZone: (!Prefs.barAutoHide && Prefs.barEnabled && bar.anyModuleShown) ? Theme.dp(Prefs.barHeight) + Prefs.shellGap : 0
+            // a hiding bar comes out of the edge itself, not above a dock's zone
+            exclusionMode: (bar.exclusionTick, Prefs.barAutoHide) ? ExclusionMode.Ignore : ExclusionMode.Normal
 
             anchors {
                 top: !Prefs.barBottom
@@ -769,8 +788,8 @@ ShellRoot {
             }
 
             margins {
-                top: Prefs.barBottom ? 0 : Prefs.effectiveBarTopMargin
-                bottom: Prefs.barBottom ? Prefs.effectiveBarTopMargin : 0
+                top: Prefs.barBottom ? 0 : Prefs.effectiveBarTopMargin - bar.edgeGap
+                bottom: Prefs.barBottom ? Prefs.effectiveBarTopMargin - bar.edgeGap : 0
             }
 
             // a bottom bar is the top bar mirrored: every shape keeps its maths,
@@ -1301,11 +1320,15 @@ ShellRoot {
                     mod: appsMod
                 }
 
-                // by numbers, not by item: the window does not see the mirror
+                // by numbers, not by item: the window does not see the mirror. once
+                // out it takes the bar's whole band, so crossing the margin or a gap
+                // between islands does not send it away
                 Region {
-                    y: Prefs.barBottom ? bar.height - revealArea.height : 0
+                    readonly property real band: bar.barRevealed ? bar.edgeGap + Theme.dp(Prefs.barHeight) : revealArea.height
+
+                    y: Prefs.barBottom ? bar.height - band : 0
                     width: Prefs.barAutoHide ? revealArea.width : 0
-                    height: revealArea.height
+                    height: band
                 }
 
                 Region {
@@ -1320,6 +1343,13 @@ ShellRoot {
                 id: barEdit
 
                 host: bar
+            }
+
+            // anywhere the window takes the pointer, over a module or not
+            HoverHandler {
+                id: bandHover
+
+                enabled: Prefs.barAutoHide
             }
 
             // touching this strip reveals the bar
