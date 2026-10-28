@@ -729,6 +729,70 @@ SettingCard {
     }
 
     SettingRow {
+        visible: card.moduleId === "apps"
+        title: "Show running applications"
+        resetKey: "dockShowRunning"
+        description: "Apps open but not pinned follow the pinned ones. The same setting as the dock's."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.dockShowRunning
+            onToggled: (v) => {
+                return Prefs.dockShowRunning = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "apps"
+        title: "Running indicator"
+        resetKey: "dockShowIndicators"
+        description: "A dot under an open app, stretched into a bar for the one in focus. The same setting as the dock's."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.dockShowIndicators
+            onToggled: (v) => {
+                return Prefs.dockShowIndicators = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "apps"
+        title: "Tooltips"
+        resetKey: "dockShowTooltips"
+        description: "The app's name, and how many windows it has, over its icon. The same setting as the dock's."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.dockShowTooltips
+            onToggled: (v) => {
+                return Prefs.dockShowTooltips = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "apps"
+        title: "Icon tiles"
+        resetKey: "dockIconTiles"
+        description: "Each icon on a tile of its own. The same setting as the dock's."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.dockIconTiles
+            onToggled: (v) => {
+                return Prefs.dockIconTiles = v;
+            }
+        }
+
+    }
+
+    SettingRow {
         visible: card.moduleId === "window"
         title: "Scroll to switch windows"
         resetKey: "windowModuleScroll"
