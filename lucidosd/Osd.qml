@@ -276,7 +276,8 @@ PanelWindow {
     visible: Monitors.surfacesUp
     implicitWidth: Theme.dp(480)
     implicitHeight: osdWindow.notch ? Theme.dp(64) : Theme.dp(140)
-    margins.bottom: osdWindow.notch ? 0 : Theme.dp(96)
+    // a bar on the bottom edge keeps it: the notch rises out of the bar's top instead
+    margins.bottom: osdWindow.notch ? (Prefs.barHoldsBottom ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) : 0) : Theme.dp(96)
     Component.onCompleted: {
         findDeviceProc.running = true;
         findKbdProc.running = true;
