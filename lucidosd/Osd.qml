@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Services.Pipewire
 import Quickshell.Wayland
@@ -47,7 +48,13 @@ PanelWindow {
     // down while it shows; one held up by a menu or a drag keeps the edge, and
     // the card floats above it instead
     // over floating islands on the bottom edge there is no edge to rise out of: it floats as a card
-    readonly property bool notch: Prefs.osdNotch && !osdWindow.dockStays && !(Prefs.barHoldsBottom && !Prefs.barFlush)
+    readonly property bool notch: Prefs.osdNotch && !osdWindow.dockStays && !(osdWindow.barBelow && !Prefs.barFlush)
+    // hyprland 0.57 draws a fullscreen window over the bar's layer but under the osd's,
+    // so the osd keeps to the screen edge as if there were no bar
+    readonly property bool barBelow: {
+        const m = Hyprland.monitorFor(osdWindow.screen);
+        return Prefs.barHoldsBottom && !(m && m.activeWorkspace && m.activeWorkspace.hasFullscreen);
+    }
     // what the dock reads to step aside
     readonly property bool holdsEdge: osdWindow.notch && osdWindow.cardVisible
     // shell.qml hands the dock over
@@ -280,7 +287,7 @@ PanelWindow {
     // a bar on the bottom edge keeps it: the notch rises out of the bar's top instead
     // a notch ignores the bar's reserved strip and stands on the bar; a card
     // keeps clear of it, so only the gap is added, less the room around the card
-    margins.bottom: osdWindow.notch ? (Prefs.barHoldsBottom ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) : 0) : (Prefs.barHoldsBottom ? Theme.dp(Prefs.barPopupGap) - Math.round((osdWindow.implicitHeight - card.height) / 2) : Theme.dp(96))
+    margins.bottom: osdWindow.notch ? (osdWindow.barBelow ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) : 0) : (osdWindow.barBelow ? Theme.dp(Prefs.barPopupGap) - Math.round((osdWindow.implicitHeight - card.height) / 2) : Theme.dp(96))
     Component.onCompleted: {
         findDeviceProc.running = true;
         findKbdProc.running = true;
