@@ -62,6 +62,9 @@ PALETTES = {
     "neutral": ["#201a1e", "#352e33", "#4c454a", "#645c61", "#7e747a", "#988e94", "#b3a8ae", "#cfc3c9", "#ecdfe5", "#faedf4", "#fffbff"],
 }
 
+# the dark tile's tones: the shell's card colour, which no swatch row carries
+EXTRA = {"container-5": "#150e13", "container-15": "#2a2328", "container-25": "#40393e"}
+
 # slot id, name, optional; kinds pick the keyline a cell shows
 SECTIONS = [
     ("folders", "Folders", "landscape", "landscape keyline 40 × 32", [
@@ -140,7 +143,7 @@ def unique(h, taken):
 
 
 def all_keys():
-    return ["%s-%d" % (p, t) for p in PALETTES for t in TONES]
+    return ["%s-%d" % (p, t) for p in PALETTES for t in TONES] + list(EXTRA)
 
 
 # one key per tone, never shared: palettes meet at the top, where 99 is white in all
@@ -152,6 +155,10 @@ def make_keys():
             k = unique(h, taken)
             taken.add(k)
             keys["%s-%d" % (p, t)] = k
+    for key, h in EXTRA.items():
+        k = unique(h, taken)
+        taken.add(k)
+        keys[key] = k
     return keys, taken
 
 

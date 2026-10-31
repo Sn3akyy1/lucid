@@ -214,7 +214,8 @@ def render(parts, hexof, prefix):
     return defs, body
 
 
-PAL = {"p": "primary", "s": "secondary", "t": "tertiary", "e": "error", "n": "neutral"}
+# "container" is the shell's own card colour, where neutral is near grey on any palette
+PAL = {"p": "primary", "s": "secondary", "t": "tertiary", "e": "error", "n": "neutral", "c": "container"}
 
 
 def k(fam, tone):
@@ -337,7 +338,7 @@ def cloud():
             ("front", symbol("cloud", 2, 10, 40), grad(k("p", 70), k("p", 50), 14, 42))]
 
 
-# ---- apps: one squircle tile each, in the accent, a dark or a light neutral,
+# ---- apps: one squircle tile each, in the accent, the dark card colour or a light neutral,
 # with a bold white, accent or dark mark on it; the plate alone is the fallback
 
 def tile(fam, tone):
@@ -370,7 +371,7 @@ def app_files():
 
 
 def app_terminal():
-    return tile("n", 30) + [("prompt", pill(13, 17, 21, 23.5, 4) + pill(21, 23.5, 13, 30, 4), k("n", 99)),
+    return tile("c", 15) + [("prompt", pill(13, 17, 21, 23.5, 4) + pill(21, 23.5, 13, 30, 4), k("n", 99)),
                             ("cursor", pill(25, 31.5, 34, 31.5, 4), k("p", 60))]
 
 
@@ -394,7 +395,7 @@ def app_editor():
 
 
 def app_code():
-    return tile("n", 30) + [("code", symbol("code", 9, 9, 30), k("p", 60))]
+    return tile("c", 15) + [("code", symbol("code", 9, 9, 30), k("p", 60))]
 
 
 def app_music():
@@ -448,7 +449,7 @@ def app_calculator():
 def app_monitor():
     pts = [(9, 26), (16, 26), (19.5, 17), (25, 33), (28.5, 22), (31, 26), (39, 26)]
     line = "".join(pill(*pts[i], *pts[i + 1], 3.4) for i in range(len(pts) - 1))
-    return tile("n", 30) + [("pulse", line, k("p", 60))]
+    return tile("c", 15) + [("pulse", line, k("p", 60))]
 
 
 def app_software():
@@ -456,7 +457,7 @@ def app_software():
 
 
 def app_games():
-    return tile("n", 30) + [("pad", symbol("sports_esports", 7, 7, 34), k("p", 60))]
+    return tile("c", 15) + [("pad", symbol("sports_esports", 7, 7, 34), k("p", 60))]
 
 
 def brand_glyph(name):
@@ -507,7 +508,7 @@ BADGES = {"badge-link": "link", "badge-locked": "lock", "badge-shared": "group",
 
 def look(kind, name, d):
     if kind == "dark":
-        return tile("n", 30) + [(name, d, k("p", 70))]
+        return tile("c", 15) + [(name, d, k("p", 70))]
     if kind == "light":
         return tile("n", 90) + [(name, d, k("p", 50))]
     return tile("p", 60) + [(name, d, k("n", 99))]

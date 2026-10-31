@@ -60,7 +60,8 @@ Singleton {
         "secondary": Theme.cSecondary,
         "tertiary": Theme.cTertiary,
         "error": Theme.cError,
-        "neutral": Theme.cOnSurface
+        "neutral": Theme.cOnSurface,
+        "container": Theme.cContainer
     })
     property var _cache: ({})
 
