@@ -52,9 +52,12 @@ PanelWindow {
     }
 
     // the toast's blur, a hair inside the rounded edge
+    // clipped to the surface: hyprland frosts the whole layer for a region wholly
+    // outside it, and the pill starts below the edge
     Region {
         id: pillBlur
 
+        intersection: Intersection.Intersect
         x: Math.ceil(pill.x) + 1
         y: Math.ceil(pill.y)
         width: Math.max(0, Math.floor(pill.width) - 2)

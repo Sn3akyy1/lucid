@@ -325,9 +325,12 @@ PanelWindow {
         height: frontCard.height + stack.peek * stack.behind
     }
 
+    // clipped to the surface: hyprland frosts the whole layer for a region wholly
+    // outside it, and a card arrives from past the edge
     Region {
         id: blurArea
 
+        intersection: Intersection.Intersect
         x: Math.round(frontCard.x + frontCard.tx)
         y: frontCard.y
         width: frontCard.width

@@ -1237,8 +1237,12 @@ ShellRoot {
 
             BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && bar.laidOut) ? barBlurRegion : null
 
+            // clipped to the surface: hyprland frosts the whole layer for a region
+            // wholly outside it, which is where a hidden bar's pills are
             Region {
                 id: barBlurRegion
+
+                intersection: Intersection.Intersect
 
                 Region {
                     x: 0

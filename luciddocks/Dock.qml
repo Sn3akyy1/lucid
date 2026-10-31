@@ -3474,9 +3474,13 @@ PanelWindow {
         return Math.floor(v + 0.002);
     }
 
-    // the shell, or while it is split, one part per island
+    // the shell, or while it is split, one part per island. clipped to the surface:
+    // hyprland frosts the whole layer for a region wholly outside it, and the jelly
+    // squashing a hidden dock takes its last row past the edge
     Region {
         id: dockBlurRegion
+
+        intersection: Intersection.Intersect
 
         Region {
             x: dockWindow.regionLo(dockWindow.paintX)
