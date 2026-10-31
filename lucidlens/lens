@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# lens — opens pictures and videos in lens, lucid's picture viewer. one opens
+# with the rest of its folder beside it, in the order lumen shows that folder;
+# several open as a set of their own. a running lens gets them over ipc, so a
+# window shows at once; otherwise one is started first. it goes five minutes
+# after its last window closes
+#
+#   lens [file|folder ...]      a window for them
+#   lens --install              write the desktop entry for this copy
+#   lens --default              that, and make lens what opens pictures
+#   lens --default-videos       that, and what opens videos as well
+#   lens --quit                 stop the running lens
+#   lens --quit-if-idle         stop it unless a window is open
+
+set -u
+
+here=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+entry=$(dirname "$here")/lens.qml
+data=${XDG_DATA_HOME:-$HOME/.local/share}
+apps=$data/applications
+# the window's wayland app id, for window rules and the dock. quickshell reads it
+# before an `//@ pragma Env` line is applied, so it has to come from here
+export QS_APP_ID=lucid.lens
+
+# every kind of picture lens shows
+mimes="image/png;image/jpeg;image/pjpeg;image/gif;image/webp;image/bmp;image/x-bmp;image/x-ms-bmp;image/tiff;image/svg+xml;image/svg+xml-compressed;image/x-icon;image/vnd.microsoft.icon;image/x-icns;image/x-tga;image/x-portable-bitmap;image/x-portable-graymap;image/x-portable-pixmap;image/x-portable-anymap;image/x-xbitmap;image/x-xpixmap;image/vnd.wap.wbmp;image/avif;image/heic;image/heif;image/jxl;image/qoi;image/x-exr;image/x-dds;"
+# every kind of video it plays. the entry lists them only once lens is what
+# opens videos: listed at all, it could become the player by default where
+# nothing else was chosen
+videos="video/mp4;video/x-m4v;video/x-matroska;video/webm;video/quicktime;video/x-msvideo;video/vnd.avi;video/x-ms-wmv;video/x-flv;video/mpeg;video/3gpp;video/3gpp2;video/ogg;video/mp2t;"
+
+# the shell's own trim (launch-shell.sh): with no nvidia module loaded, nvidia's
+# egl driver is 88mb of nothing
+if [[ -z ${__EGL_VENDOR_LIBRARY_FILENAMES:-} && ! -r /proc/driver/nvidia/version && -d /usr/share/glvnd/egl_vendor.d ]]; then
+    keep=$(find /usr/share/glvnd/egl_vendor.d -name '*.json' ! -name '*nvidia*' 2>/dev/null | sort | paste -sd:)
+    if [[ -n $keep ]]; then
+        export __EGL_VENDOR_LIBRARY_FILENAMES=$keep
+    fi
+fi
+
+running() {
+    qs ipc -p "$entry" call -- lens count &>/dev/null
+}
+
+plays_videos() {
+    [[ $(xdg-mime query default video/mp4 2>/dev/null) == lucid.lens.desktop ]]
+}
+
+install_entry() {
+    local types=$mimes
+    if [[ ${1:-} == videos ]] || plays_videos; then
+        types+=$videos
+    fi
+    mkdir -p "$apps"
+    cat > "$apps/lucid.lens.desktop" <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Lens
+GenericName=Image Viewer
+Comment=View, slide through and edit your pictures and videos
+Exec="$here/lens" %U
+Icon=$here/lens.svg
+Terminal=false
+Categories=Graphics;Viewer;Photography;2DGraphics;RasterGraphics;
+Keywords=image;picture;photo;video;viewer;gallery;slideshow;crop;edit;draw;trim;
+StartupNotify=true
+StartupWMClass=lucid.lens
+MimeType=$types
+DESKTOP
+    update-desktop-database -q "$apps" 2>/dev/null || true
+}
+
+paths=()
+for arg in "$@"; do
+    case $arg in
+        --install) install_entry; exit 0 ;;
+        --default)
+            install_entry
+            IFS=';' read -ra each <<< "$mimes"
+            xdg-mime default lucid.lens.desktop "${each[@]}"
+            exit 0
+            ;;
+        --default-videos)
+            install_entry videos
+            IFS=';' read -ra each <<< "$mimes$videos"
+            xdg-mime default lucid.lens.desktop "${each[@]}"
+            exit 0
+            ;;
+        --quit) exec qs kill -p "$entry" ;;
+        --quit-if-idle)
+            open=$(qs ipc -p "$entry" call -- lens count 2>/dev/null) || exit 0
+            if [[ $open == 0 ]]; then
+                qs kill -p "$entry" >/dev/null
+            fi
+            exit 0
+            ;;
+        --help|-h) sed -n '2,14s/^# \{0,1\}//p' "${BASH_SOURCE[0]}"; exit 0 ;;
+        *)
+            # a relative path means the caller's folder, which lens never sees
+            if [[ $arg != *://* && $arg != /* && $arg != "~"* ]]; then
+                arg=$PWD/$arg
+            fi
+            paths+=("$arg")
+            ;;
+    esac
+done
+
+list=""
+if (( ${#paths[@]} > 0 )); then
+    list=$(printf '%s\n' "${paths[@]}")
+fi
+
+# two launches at once must not both start one
+exec 9>"${XDG_RUNTIME_DIR:-/tmp}/lucid-lens.lock"
+flock -w 10 9 || true
+
+if running; then
+    exec qs ipc -p "$entry" call -- lens open "$list" 9>&- >/dev/null
+fi
+
+# 9>&-: lens must not inherit the lock, or it holds it for as long as it runs
+LENS_OPEN=$list qs -p "$entry" -n -d 9>&- &>/dev/null
+
+# hold the lock until it answers, so a launch waiting on it finds it running
+for _ in $(seq 60); do
+    running && exit 0
+    sleep 0.1
+done
+exit 0
