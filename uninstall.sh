@@ -22,10 +22,19 @@ ask() {
 
 # stop only the instance running this config, never someone else's shell
 qs kill -p "$SHELL_DIR" 2>/dev/null || true
+qs kill -p "$SHELL_DIR/lumen.qml" 2>/dev/null || true
+qs kill -p "$SHELL_DIR/lens.qml" 2>/dev/null || true
 
 if [[ -d "$SHELL_DIR" ]]; then
     if ask "Move $SHELL_DIR to $SHELL_DIR.removed-$STAMP?"; then
+        # file dialogs go back to gtk's or gnome's first: the portal would start lumen from there
+        if [[ -x "$SHELL_DIR/lucidlumen/lumen" ]]; then
+            "$SHELL_DIR/lucidlumen/lumen" --portal-off || true
+        fi
         mv "$SHELL_DIR" "$SHELL_DIR.removed-$STAMP"
+        # lumen's entry points into the folder that just moved
+        rm -f "${XDG_DATA_HOME:-$HOME/.local/share}/applications/lucid.lumen.desktop"
+        rm -f "${XDG_DATA_HOME:-$HOME/.local/share}/applications/lucid.lens.desktop"
         echo "  moved (your settings and pins are still in there)"
     fi
 fi
@@ -61,6 +70,8 @@ printf '  ~/.local/share/lucid/plugins    the tilting cursor plugin that config\
 printf '                                  loads (scripts/cursor-plugin.sh remove)\n'
 printf '  ~/.config/starship.toml         the prompt, and its init line in\n'
 printf '                                  .bashrc / .zshrc / config.fish\n'
+printf '  ~/.config/fish/config.fish      the line that keeps fish from greeting\n'
+printf '                                  every new terminal\n'
 printf '  ~/.config/fastfetch/config.jsonc  the fastfetch config, if Lucid put it there\n'
 printf '  ~/.config/kitty/kitty.conf      the matugen-colors.conf and\n'
 printf '                                  lucid-glass.conf includes\n'

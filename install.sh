@@ -119,8 +119,11 @@ say "  wallpapers      $([[ $WITH_WALLPAPERS -eq 1 ]] && echo yes || echo 'no (-
 
 # ------------------------------------------------------------- dependencies
 
-# required — the shell will not start or will visibly break without these
-PKG_REQUIRED=(quickshell qt6-5compat qt6-declarative qt6-multimedia)
+# required — the shell will not start or will visibly break without these.
+# qt6-webengine is here for the qt pdf module it carries: lumen's preview pane
+# imports it, and a window with an import it can't resolve doesn't load at all,
+# which would take SUPER+E and every app's file dialog with it
+PKG_REQUIRED=(quickshell qt6-5compat qt6-declarative qt6-multimedia qt6-webengine)
 # each of these backs one feature; missing ones degrade that feature only
 PKG_FEATURES=(
     matugen jq imagemagick
@@ -134,7 +137,7 @@ PKG_FEATURES=(
     python-pywal noto-fonts-emoji
     # the shell is the session's own polkit agent; polkitd and its setuid
     # helper are the backend it drives
-    xdg-utils zenity swappy polkit
+    xdg-utils zenity polkit
     # the accounts page reads and writes users through this, and asks the
     # shell's polkit dialog whenever a change needs an administrator
     accountsservice
@@ -152,11 +155,21 @@ PKG_FEATURES=(
     smartmontools udisks2
     # the desktop icons: video and music thumbnails, and the drives and trash they show
     ffmpegthumbnailer gvfs
+    # lumen's network drives past sftp and ftp, which gvfs reaches alone: windows
+    # shares and most nas drives, nfs, webdav and the computers nearby (through
+    # avahi), and windows computers nearby
+    gvfs-smb gvfs-nfs gvfs-dnssd gvfs-wsdd
+    # pictures: qt draws webp, tiff, tga and icns through its image plugins and
+    # avif through kde's, in lens, the photo widget and the what's new sheet.
+    # jpegtran and exiv2 let lens turn a jpeg without encoding it again
+    qt6-imageformats kimageformats libjpeg-turbo exiv2
 )
 # invoked by the shipped Hyprland binds and the Lucid look. without these the
-# config installs fine but its keys do nothing and the prompt renders as boxes
+# config installs fine but its keys do nothing and the prompt renders as boxes.
+# the file manager is not among them: SUPER+E opens lumen, which is part of the
+# shell (lucidlumen/), and lumen is every app's file dialog too
 PKG_HYPR=(
-    kitty nautilus playerctl gnome-calculator
+    kitty playerctl gnome-calculator
     starship fish ttf-jetbrains-mono-nerd adw-gtk-theme papirus-icon-theme
 )
 # the dock's default pins. these are the apps Lucid ships pinned, so the dock
@@ -177,6 +190,7 @@ declare -A PKG_ALTS=(
     [adw-gtk-theme]="adw-gtk3 adw-gtk3-git"
     [qt6ct]="qt6ct-kde"
     [xdg-desktop-portal-gtk]="xdg-desktop-portal-gnome xdg-desktop-portal-kde"
+    [kimageformats]="qt6-avif-image-plugin"
 )
 
 # a couple of the dock's AUR packages need something in place before the build
@@ -366,6 +380,7 @@ else
         --exclude='README.md' --exclude='LICENSE' --exclude='.gitignore' \
         --exclude='./lucidprefs/prefs.json' \
         --exclude='./lucidbar/blur.json' \
+        --exclude='./lucidbar/chrono.json' \
         --exclude='./lucidbar/clock_reminders.json' \
         --exclude='./lucidbar/mpris_shazam.json' \
         --exclude='./luciddocks/pinned.json' \
@@ -378,6 +393,34 @@ else
         --exclude='./luciddesktop/icons.json' \
         . | tar -C "$SHELL_DIR" -xf -
     say "  shell files -> $SHELL_DIR"
+fi
+
+# a git checkout knows its commit, so the in-shell updater can tell whether a
+# beta build is newer than this one. the updater records its own installs
+if [[ -z "${LUCID_UPDATER:-}" ]] && SHA="$(git -C "$SRC" rev-parse HEAD 2>/dev/null)"; then
+    mkdir -p "$HOME/.cache/quickshell/lucid-update"
+    printf '{"channel": "git", "ref": "%s", "sha": "%s", "version": "%s", "at": %s000}\n' \
+        "$SHA" "$SHA" "$VERSION" "$(date +%s)" > "$HOME/.cache/quickshell/lucid-update/installed.json"
+fi
+
+# lumen, lucid's file manager, runs as a quickshell of its own. its desktop
+# entry puts it in the app launcher and gives the dock its icon; it opens
+# folders, and every app's open and save dialog comes to it through the
+# portal. one still running holds the old files, so it goes first, unless it
+# is in the middle of a copy: the portal restart starts the new one, and an old
+# one still answering would leave the portal with no file dialogs at all
+if [[ -x "$SHELL_DIR/lucidlumen/lumen" ]]; then
+    "$SHELL_DIR/lucidlumen/lumen" --quit-if-idle || true
+    "$SHELL_DIR/lucidlumen/lumen" --default && say "  lumen -> app launcher, opens folders"
+    "$SHELL_DIR/lucidlumen/lumen" --portal && say "  lumen -> every app's file dialog"
+fi
+
+# lens, lucid's picture viewer, is a quickshell of its own as well. its desktop
+# entry puts it in the app launcher and makes it what opens pictures. one left
+# running with no window holds the old files, so it goes first
+if [[ -x "$SHELL_DIR/lucidlens/lens" ]]; then
+    "$SHELL_DIR/lucidlens/lens" --quit-if-idle || true
+    "$SHELL_DIR/lucidlens/lens" --default && say "  lens -> app launcher, opens pictures"
 fi
 
 # the shell loads its bundled font itself, but the apps the environment page
@@ -437,7 +480,7 @@ detect_pinned() {
         "vscodium codium code code-oss com.visualstudio.code zed dev.zed.Zed"
         "spotify com.spotify.Client spotify-launcher"
         "vesktop dev.vencord.Vesktop discord com.discordapp.Discord webcord"
-        "org.gnome.Nautilus nautilus org.kde.dolphin dolphin thunar nemo pcmanfm-qt pcmanfm"
+        "lucid.lumen org.gnome.Nautilus nautilus org.kde.dolphin dolphin thunar nemo pcmanfm-qt pcmanfm"
         "steam com.valvesoftware.Steam"
         "proton.vpn.app.gtk protonvpn-app"
         "kitty alacritty foot org.wezfurlong.wezterm Alacritty com.mitchellh.ghostty"
@@ -505,18 +548,55 @@ seed blur.json             lucidbar/blur.json
 seed clock_reminders.json  lucidbar/clock_reminders.json
 seed mpris_shazam.json     lucidbar/mpris_shazam.json
 seed_pinned
+# a dock pinned before lumen has nautilus as its files app. that pin becomes
+# lumen, in the same place, unless lumen is pinned already
+migrate_files_pin() {
+    local pins="$SHELL_DIR/luciddocks/pinned.json"
+    local entry="${XDG_DATA_HOME:-$HOME/.local/share}/applications/lucid.lumen.desktop"
+    [[ -s "$pins" && -f "$entry" ]] || return 0
+    grep -qi 'nautilus' "$pins" || return 0
+    python3 - "$pins" "$entry" <<'PY' || return 0
+import json, re, sys
+pins, entry = sys.argv[1:3]
+d = json.load(open(pins, encoding="utf-8"))
+apps = d.get("pinnedApps", [])
+def is_nautilus(p):
+    ids = (p.get("appId", "") + " " + p.get("appKey", "")).lower()
+    return "nautilus" in ids or re.match(r"\s*nautilus\b", p.get("command", "")) is not None
+if any(p.get("appId") == "lucid.lumen" for p in apps):
+    sys.exit(1)
+at = next((i for i, p in enumerate(apps) if is_nautilus(p)), -1)
+if at < 0:
+    sys.exit(1)
+keys = {}
+for line in open(entry, encoding="utf-8"):
+    if line.startswith("[") and keys:
+        break
+    k, _, v = line.rstrip("\n").partition("=")
+    keys.setdefault(k, v)
+cmd = re.sub(r"\s*%[fFuUdDnNickvm]", "", keys.get("Exec", "")).strip()
+apps[at] = {"appId": "lucid.lumen", "appKey": "lucid.lumen", "command": cmd,
+            "iconName": keys.get("Icon", "lucid.lumen"), "name": keys.get("Name", "Lumen")}
+json.dump(d, open(pins, "w", encoding="utf-8"), indent=4)
+PY
+    say "  the dock's files pin is lumen now (it was nautilus)"
+}
+migrate_files_pin
 seed usage.json            luciddocks/usage.json
 seed wallpaper.json        luciddocks/wallpaper.json
 seed moji-config.json      lucidmoji/config.json
 seed moji-state.json       lucidmoji/state.json
 seed keys-state.json       lucidkeys/state.json
 seed widgets.json          lucidwidgets/widgets.json
-# where the desktop icons sit has no shipped default: only carried over
-if [[ ! -s "$SHELL_DIR/luciddesktop/icons.json" && -n "$BACKUP" && -s "$BACKUP/luciddesktop/icons.json" ]]; then
-    mkdir -p "$SHELL_DIR/luciddesktop"
-    cp "$BACKUP/luciddesktop/icons.json" "$SHELL_DIR/luciddesktop/icons.json"
-    say "  carried over luciddesktop/icons.json"
-fi
+# where the desktop icons sit, and the timers and stopwatch that are running,
+# have no shipped default: they are only carried over
+for state in luciddesktop/icons.json lucidbar/chrono.json; do
+    if [[ ! -s "$SHELL_DIR/$state" && -n "$BACKUP" && -s "$BACKUP/$state" ]]; then
+        mkdir -p "$(dirname "$SHELL_DIR/$state")"
+        cp "$BACKUP/$state" "$SHELL_DIR/$state"
+        say "  carried over $state"
+    fi
+done
 
 # the media visualiser runs `cava -p ~/.config/cava/quickshell.conf`. without
 # that file cava falls back to its own defaults, which emit ncurses output
@@ -542,7 +622,8 @@ fi
 # creates that file: it refuses to conjure a config for a toolkit the machine
 # does not use. so on a fresh machine the page's Qt switch is a silent no-op
 # until something writes one. minimal on purpose - the page fills in the style,
-# icons and fonts itself on the first apply.
+# icons and fonts itself on the first apply. its file dialogs are lumen's,
+# through the portal, like every other app's (lucidlumen/lumen --portal).
 QT6CT_CFG="$HOME/.config/qt6ct/qt6ct.conf"
 if ! command -v qt6ct &>/dev/null; then
     say "  ${dim}qt6ct is not installed - the Environment page will skip Qt${r}"
@@ -550,7 +631,7 @@ elif [[ -f "$QT6CT_CFG" ]]; then
     say "  ${dim}keeping qt6ct/qt6ct.conf${r}"
 else
     mkdir -p "$(dirname "$QT6CT_CFG")"
-    printf '[Appearance]\nstyle=Fusion\n' > "$QT6CT_CFG"
+    printf '[Appearance]\nstyle=Fusion\nstandard_dialogs=xdgdesktopportal\n' > "$QT6CT_CFG"
     say "  qt6ct.conf -> ~/.config/qt6ct/qt6ct.conf"
 fi
 
@@ -619,6 +700,26 @@ fi
 # --no-theming should not cost you the binds.
 HYPR_DIR="$HOME/.config/hypr"
 HYPR_LUA_INSTALLED=0
+
+# one of Lucid's modules into a hyprland.lua that is not Lucid's own: the file,
+# and its require line once, the config backed up before its first change
+add_hypr_module() {
+    local name=$1 from=$2
+    mkdir -p "$HYPR_DIR/modules"
+    cp "$from" "$HYPR_DIR/modules/$name.lua"
+    if grep -qF "require(\"modules.$name\")" "$HYPR_DIR/hyprland.lua"; then
+        say "  ${dim}hyprland.lua already requires modules.$name${r}"
+    else
+        [[ -f "$HYPR_DIR/hyprland.lua.backup-$STAMP" ]] \
+            || cp "$HYPR_DIR/hyprland.lua" "$HYPR_DIR/hyprland.lua.backup-$STAMP"
+        printf '\nrequire("modules.%s")\n' "$name" >> "$HYPR_DIR/hyprland.lua"
+        say "  hyprland.lua now requires modules.$name"
+    fi
+}
+
+# what each module was when Lucid installed it, so a refresh can tell a module
+# you changed from one an older release shipped
+HYPR_SHIPPED="$HYPR_DIR/modules/.lucid-shipped"
 
 # the cursor that tilts as it moves is a Hyprland plugin (hypr-dynamic-cursors).
 # scripts/cursor-plugin.sh compiles it against the headers the hyprland package
@@ -735,14 +836,43 @@ if [[ $WITH_HYPR -eq 1 ]]; then
         fi
     fi
 
+    # a config of your own still gets the one module lumen's file dialogs need
+    # (modules/lumen.lua): every app's open and save dialog is lumen either way,
+    # and without it they tile and gtk 3 apps keep their own
+    if [[ $DO_HYPR -eq 0 && -f "$HYPR_DIR/hyprland.lua" ]]; then
+        add_hypr_module lumen "$SRC/support/hypr/modules/lumen.lua"
+    fi
+
     if [[ $DO_HYPR -eq 1 ]]; then
         if [[ $HAS_HYPR_CFG -eq 1 ]]; then
             cp -r "$HYPR_DIR" "$HYPR_DIR.backup-$STAMP"
             say "  your hypr config -> $HYPR_DIR.backup-$STAMP"
         fi
         mkdir -p "$HYPR_DIR/modules" "$HYPR_DIR/scripts"
+        # on a refresh every module is checked against the one in place, so it
+        # can say what it changed: a module new in this release, one a release
+        # changed, and one you edited yourself, which is replaced as well but
+        # named, its edit kept in the backup. the modules Settings writes
+        # (lucid-*.lua) are not Lucid's to ship and are never touched
+        hypr_new=(); hypr_changed=(); hypr_edited=(); hypr_same=0
+        if [[ $HYPR_IS_LUCID -eq 1 ]]; then
+            for f in "$SRC/support/hypr/modules/"*.lua; do
+                m=$(basename "$f")
+                if [[ ! -f "$HYPR_DIR/modules/$m" ]]; then
+                    hypr_new+=("$m")
+                elif cmp -s "$f" "$HYPR_DIR/modules/$m"; then
+                    hypr_same=$((hypr_same + 1))
+                elif [[ -f "$HYPR_SHIPPED" ]] \
+                     && ! grep -qxF "$(sha256sum < "$HYPR_DIR/modules/$m" | cut -d' ' -f1)  $m" "$HYPR_SHIPPED"; then
+                    hypr_edited+=("$m")
+                else
+                    hypr_changed+=("$m")
+                fi
+            done
+        fi
         cp "$SRC/support/hypr/hyprland.lua" "$HYPR_DIR/hyprland.lua"
         cp "$SRC/support/hypr/modules/"*.lua "$HYPR_DIR/modules/"
+        (cd "$SRC/support/hypr/modules" && sha256sum -- *.lua) > "$HYPR_SHIPPED"
         install -m755 "$SRC/support/hypr/scripts/reload.sh" "$HYPR_DIR/scripts/reload.sh"
         install -m755 "$SRC/support/hypr/scripts/cursor-plugin.sh" "$HYPR_DIR/scripts/cursor-plugin.sh"
         # a hyprland.conf left beside hyprland.lua is ambiguous - Hyprland
@@ -771,7 +901,17 @@ if [[ $WITH_HYPR -eq 1 ]]; then
             fi
         fi
         HYPR_LUA_INSTALLED=1
-        say "  hyprland.lua + $(ls "$SRC/support/hypr/modules" | wc -l) modules -> $HYPR_DIR"
+        if [[ $HYPR_IS_LUCID -eq 1 ]]; then
+            say "  checked all $(ls "$SRC/support/hypr/modules/"*.lua | wc -l) modules: $hypr_same already current"
+            (( ${#hypr_new[@]} )) && say "  new:     ${hypr_new[*]}"
+            (( ${#hypr_changed[@]} )) && say "  updated: ${hypr_changed[*]}"
+            if (( ${#hypr_edited[@]} )); then
+                warn "  you had edited ${hypr_edited[*]} — now Lucid's again"
+                say "  ${dim}your versions are in $HYPR_DIR.backup-$STAMP/modules${r}"
+            fi
+        else
+            say "  hyprland.lua + $(ls "$SRC/support/hypr/modules/"*.lua | wc -l) modules -> $HYPR_DIR"
+        fi
         say "  ${dim}binds, window rules, blur, animations and autostart come with it${r}"
         # a refresh replaces hyprland.lua whole, but a require added to it
         # since the last run - hyprmod's require("hyprland-gui"), a module
@@ -800,6 +940,35 @@ if [[ $WITH_HYPR -eq 1 ]]; then
         mkdir -p "$LUCID_DIR"
         if [[ -s "$LUCID_DIR/keybinds.json" ]]; then
             say "  ${dim}keeping existing $LUCID_DIR/keybinds.json${r}"
+            # SUPER+E ran nautilus before lumen. still set to that it is the old
+            # default rather than a choice, so it opens lumen now; a file manager
+            # you picked yourself stays
+            if grep -qE '"cmd"[[:space:]]*:[[:space:]]*"nautilus( --new-window)?"' "$LUCID_DIR/keybinds.json"; then
+                # the file is one bind a line, as Settings writes it, so only that
+                # line changes and the rest of the file stays exactly as it was
+                if python3 - "$LUCID_DIR/keybinds.json" <<'PY'
+import json, re, sys
+path = sys.argv[1]
+lumen = "$HOME/.config/quickshell/lucidlumen/lumen"
+lines = open(path, encoding="utf-8").read().split("\n")
+cmd = re.compile(r'("cmd"\s*:\s*)"nautilus( --new-window)?"')
+hits = [i for i, l in enumerate(lines) if re.search(r'"id"\s*:\s*"files"', l) and cmd.search(l)]
+if len(hits) != 1:
+    sys.exit(1)
+lines[hits[0]] = cmd.sub(lambda m: m.group(1) + json.dumps(lumen), lines[hits[0]], count=1)
+text = "\n".join(lines)
+data = json.loads(text)
+binds = data.get("binds", []) if isinstance(data, dict) else data
+if not any(isinstance(b, dict) and b.get("id") == "files" and b.get("cmd") == lumen for b in binds):
+    sys.exit(1)
+open(path, "w", encoding="utf-8").write(text)
+PY
+                then
+                    say "  SUPER+E opens lumen now (it opened nautilus)"
+                else
+                    say "  ${dim}SUPER+E still opens nautilus; Settings > Keybinds can point it at lumen${r}"
+                fi
+            fi
         else
             cp "$SRC/support/hypr/keybinds.json" "$LUCID_DIR/keybinds.json"
             say "  keybinds -> $LUCID_DIR/keybinds.json"
@@ -815,7 +984,7 @@ if [[ $WITH_HYPR -eq 1 ]]; then
 
         # the binds shell out to these, so a missing one is a dead key rather
         # than a visible error. worth saying now, not after the first F-key
-        for c in kitty nautilus playerctl gnome-calculator wpctl brightnessctl; do
+        for c in kitty playerctl gnome-calculator wpctl brightnessctl; do
             command -v "$c" &>/dev/null || warn "  $c is missing — the binds that use it will do nothing"
         done
 
@@ -1343,6 +1512,21 @@ TRAPWINCH() { zle && { zle reset-prompt; zle -R } }'    zsh
         # always for fish, whatever the login shell is - kitty opens it
         starship_init "$HOME/.config/fish/config.fish" 'starship init fish | source'    fish 1
 
+        # fish greets every terminal it opens in with a paragraph about itself.
+        # an empty fish_greeting leaves the window to the prompt; a greeting of
+        # your own stays, whether config.fish sets it, a function draws it, or
+        # it is a universal variable (set -U, kept in fish_variables)
+        FISH_CFG="$HOME/.config/fish/config.fish"
+        if [[ -f "$HOME/.config/fish/functions/fish_greeting.fish" ]] \
+           || grep -qE '^SETUVAR fish_greeting:' "$HOME/.config/fish/fish_variables" 2>/dev/null \
+           || grep -qE '^[[:space:]]*(set[[:space:]]+(-{1,2}[[:alpha:]]+[[:space:]]+)*fish_greeting([[:space:]]|$)|function[[:space:]]+fish_greeting)' "$FISH_CFG" 2>/dev/null; then
+            say "  ${dim}fish already has its greeting set${r}"
+        elif [[ -f "$FISH_CFG" ]]; then
+            [[ -f "$FISH_CFG.backup-$STAMP" ]] || cp "$FISH_CFG" "$FISH_CFG.backup-$STAMP"
+            printf '\n# added by Lucid: no greeting when a terminal opens\nset -g fish_greeting\n' >> "$FISH_CFG"
+            say "  fish no longer greets every new terminal"
+        fi
+
         # the prompt and kitty.conf are drawn with nerd font glyphs; without
         # the font every segment renders as a replacement box
         fc-list 2>/dev/null | grep -i 'JetBrainsMono Nerd Font' >/dev/null \
@@ -1367,46 +1551,14 @@ TRAPWINCH() { zle && { zle reset-prompt; zle -R } }'    zsh
         if [[ $HYPR_LUA_INSTALLED -eq 1 ]]; then
             say "  ${dim}blur comes from modules/decorations.lua${r}"
         elif [[ -f "$HYPR_DIR/hyprland.lua" ]]; then
-            mkdir -p "$HYPR_DIR/modules"
-            cp "$SRC/support/look/lucid-look.lua" "$HYPR_DIR/modules/lucid-look.lua"
+            add_hypr_module lucid-look "$SRC/support/look/lucid-look.lua"
             # per-app glass rides along: Settings > Glass writes lucid-glass.lua
             # and this is the module that reads it
-            cp "$SRC/support/hypr/modules/glass.lua" "$HYPR_DIR/modules/glass.lua"
+            add_hypr_module glass "$SRC/support/hypr/modules/glass.lua"
             # and so do the options Settings > Windows sets, in lucid-settings.lua
-            cp "$SRC/support/hypr/modules/settings.lua" "$HYPR_DIR/modules/settings.lua"
+            add_hypr_module settings "$SRC/support/hypr/modules/settings.lua"
             # and the apps and variables Settings > Startup keeps, in lucid-startup.lua
-            cp "$SRC/support/hypr/modules/startup.lua" "$HYPR_DIR/modules/startup.lua"
-            if grep -q 'require("modules.lucid-look")' "$HYPR_DIR/hyprland.lua"; then
-                say "  ${dim}hyprland.lua already requires modules.lucid-look${r}"
-            else
-                cp "$HYPR_DIR/hyprland.lua" "$HYPR_DIR/hyprland.lua.backup-$STAMP"
-                printf '\nrequire("modules.lucid-look")\n' >> "$HYPR_DIR/hyprland.lua"
-                say "  hyprland.lua now requires modules.lucid-look"
-            fi
-            if grep -q 'require("modules.glass")' "$HYPR_DIR/hyprland.lua"; then
-                say "  ${dim}hyprland.lua already requires modules.glass${r}"
-            else
-                [[ -f "$HYPR_DIR/hyprland.lua.backup-$STAMP" ]] \
-                    || cp "$HYPR_DIR/hyprland.lua" "$HYPR_DIR/hyprland.lua.backup-$STAMP"
-                printf '\nrequire("modules.glass")\n' >> "$HYPR_DIR/hyprland.lua"
-                say "  hyprland.lua now requires modules.glass"
-            fi
-            if grep -q 'require("modules.settings")' "$HYPR_DIR/hyprland.lua"; then
-                say "  ${dim}hyprland.lua already requires modules.settings${r}"
-            else
-                [[ -f "$HYPR_DIR/hyprland.lua.backup-$STAMP" ]] \
-                    || cp "$HYPR_DIR/hyprland.lua" "$HYPR_DIR/hyprland.lua.backup-$STAMP"
-                printf '\nrequire("modules.settings")\n' >> "$HYPR_DIR/hyprland.lua"
-                say "  hyprland.lua now requires modules.settings"
-            fi
-            if grep -q 'require("modules.startup")' "$HYPR_DIR/hyprland.lua"; then
-                say "  ${dim}hyprland.lua already requires modules.startup${r}"
-            else
-                [[ -f "$HYPR_DIR/hyprland.lua.backup-$STAMP" ]] \
-                    || cp "$HYPR_DIR/hyprland.lua" "$HYPR_DIR/hyprland.lua.backup-$STAMP"
-                printf '\nrequire("modules.startup")\n' >> "$HYPR_DIR/hyprland.lua"
-                say "  hyprland.lua now requires modules.startup"
-            fi
+            add_hypr_module startup "$SRC/support/hypr/modules/startup.lua"
         elif [[ -f "$HYPR_DIR/hyprland.conf" ]]; then
             cp "$SRC/support/look/lucid-look.conf" "$HYPR_DIR/lucid-look.conf"
             if grep -q "lucid-look.conf" "$HYPR_DIR/hyprland.conf"; then
