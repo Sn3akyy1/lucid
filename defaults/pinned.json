@@ -29,11 +29,11 @@
             "name": "Vesktop"
         },
         {
-            "appId": "org.gnome.Nautilus",
-            "appKey": "org.gnome.Nautilus",
-            "command": "nautilus --new-window",
-            "iconName": "org.gnome.Nautilus",
-            "name": "Files"
+            "appId": "lucid.lumen",
+            "appKey": "lucid.lumen",
+            "command": "\"$HOME/.config/quickshell/lucidlumen/lumen\"",
+            "iconName": "system-file-manager",
+            "name": "Lumen"
         },
         {
             "appId": "steam",

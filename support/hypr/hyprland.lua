@@ -36,6 +36,8 @@ require("modules.binds")
 --------------------------------
 require("modules.windowrules")
 require("modules.layerrules")
+-- lumen's file dialogs: the variable gtk 3 needs to ask for them, and their rule
+require("modules.lumen")
 require("modules.glass")
 -- plugin options; each block only applies while its plugin is loaded
 require("modules.plugins")

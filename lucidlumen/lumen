@@ -1,0 +1,207 @@
+#!/usr/bin/env bash
+# lumen — opens folders (or files, in their folder) in lumen, lucid's file
+# manager. a running lumen gets them over ipc, so a window shows at once;
+# otherwise one is started first. one process serves every window; it goes
+# five minutes after the last one closes, unless it was started --background.
+#
+#   lumen [folder|file|uri ...]   a window for the first, tabs for the rest
+#   lumen --background            start with no window and stay running
+#   lumen --install               write the desktop entry for this copy
+#   lumen --default               that, and make lumen what opens folders
+#   lumen --portal                make lumen every app's open and save dialog
+#   lumen --portal-off            give the dialogs back to gtk's or gnome's
+#   lumen --quit                  stop the running lumen
+#   lumen --quit-if-idle          stop it unless a copy or move is running
+
+set -u
+
+here=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+entry=$(dirname "$here")/lumen.qml
+data=${XDG_DATA_HOME:-$HOME/.local/share}
+apps=$data/applications
+portal_conf=${XDG_CONFIG_HOME:-$HOME/.config}/xdg-desktop-portal/hyprland-portals.conf
+qt_conf=${XDG_CONFIG_HOME:-$HOME/.config}/qt6ct/qt6ct.conf
+# the window's wayland app id, for window rules and the dock. quickshell reads it
+# before an `//@ pragma Env` line is applied, so it has to come from here
+export QS_APP_ID=lucid.lumen
+
+# the shell's own trim (launch-shell.sh), for when d-bus starts lumen outside the
+# session: with no nvidia module loaded, nvidia's egl driver is 88mb of nothing
+if [[ -z ${__EGL_VENDOR_LIBRARY_FILENAMES:-} && ! -r /proc/driver/nvidia/version && -d /usr/share/glvnd/egl_vendor.d ]]; then
+    keep=$(find /usr/share/glvnd/egl_vendor.d -name '*.json' ! -name '*nvidia*' 2>/dev/null | sort | paste -sd:)
+    if [[ -n $keep ]]; then
+        export __EGL_VENDOR_LIBRARY_FILENAMES=$keep
+    fi
+fi
+
+running() {
+    qs ipc -p "$entry" call -- lumen count &>/dev/null
+}
+
+install_entry() {
+    mkdir -p "$apps"
+    # folders only once it is chosen: with no default set, a new entry that
+    # claims inode/directory would quietly take over what opens them
+    local mime=""
+    # a reinstall keeps the claim an earlier --default made
+    if [[ ${1:-} == default ]] || grep -qs '^MimeType=inode/directory' "$apps/lucid.lumen.desktop"; then
+        mime=$'\nMimeType=inode/directory;'
+    fi
+    cat > "$apps/lucid.lumen.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=Lumen
+GenericName=File Manager
+Comment=Browse and organise your files
+Exec="$here/lumen" %U
+Icon=$here/lumen.svg
+Terminal=false
+Categories=System;FileTools;FileManager;
+Keywords=files;folders;browse;explorer;manager;
+StartupNotify=true
+StartupWMClass=lucid.lumen
+Actions=new-window;$mime
+
+[Desktop Action new-window]
+Name=New Window
+Exec="$here/lumen"
+EOF
+    update-desktop-database -q "$apps" 2>/dev/null || true
+}
+
+# ini_pick file section key value: that one key, in that section; the rest of
+# the file is left as it was
+ini_pick() {
+    local tmp="$1.tmp"
+    awk -v sect="[$2]" -v key="$3=" -v want="$3=$4" '
+        index($0, key) == 1 { if (!done) print want; done = 1; next }
+        { print }
+        $0 == sect && !done { print want; done = 1 }
+        END { if (!done) { print sect; print want } }
+    ' "$1" > "$tmp" && mv "$tmp" "$1"
+}
+
+# the dialogs to fall back on: gnome's chooser is nautilus, so without it
+# gtk's own goes first
+others() {
+    if command -v nautilus &>/dev/null; then
+        printf 'gnome;gtk'
+    else
+        printf 'gtk;gnome'
+    fi
+}
+
+# the file chooser line of the portal's config, set to $1
+portal_pick() {
+    mkdir -p "$(dirname "$portal_conf")"
+    if [[ ! -s $portal_conf ]]; then
+        printf '[preferred]\ndefault=hyprland;gtk\n' > "$portal_conf"
+    fi
+    ini_pick "$portal_conf" preferred org.freedesktop.impl.portal.FileChooser "$1"
+}
+
+portal_on() {
+    mkdir -p "$data/dbus-1/services" "$data/xdg-desktop-portal/portals"
+    # d-bus starts lumen when an app asks for a dialog and nothing owns the name yet
+    cat > "$data/dbus-1/services/org.freedesktop.impl.portal.desktop.lucid.service" <<EOF
+[D-BUS Service]
+Name=org.freedesktop.impl.portal.desktop.lucid
+Exec=$here/lumen --background
+EOF
+    cat > "$data/xdg-desktop-portal/portals/lucid.portal" <<EOF
+[portal]
+DBusName=org.freedesktop.impl.portal.desktop.lucid
+Interfaces=org.freedesktop.impl.portal.FileChooser
+UseIn=Hyprland
+EOF
+    # the others stay behind it, for a machine where lumen cannot start
+    portal_pick "lucid;$(others)"
+    # qt apps take their dialogs from qt6ct, which asks the portal only when told.
+    # it reads this as each app starts; no qt6ct config, no qt apps to tell
+    if [[ -f $qt_conf ]]; then
+        ini_pick "$qt_conf" Appearance standard_dialogs xdgdesktopportal
+    fi
+    busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus ReloadConfig &>/dev/null || true
+    systemctl --user try-restart xdg-desktop-portal.service &>/dev/null || true
+}
+
+portal_off() {
+    rm -f "$data/dbus-1/services/org.freedesktop.impl.portal.desktop.lucid.service" \
+        "$data/xdg-desktop-portal/portals/lucid.portal"
+    portal_pick "$(others)"
+    if grep -qsx 'standard_dialogs=xdgdesktopportal' "$qt_conf"; then
+        ini_pick "$qt_conf" Appearance standard_dialogs default
+    fi
+    busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus ReloadConfig &>/dev/null || true
+    systemctl --user try-restart xdg-desktop-portal.service &>/dev/null || true
+}
+
+background=0
+paths=()
+for arg in "$@"; do
+    case $arg in
+        --background) background=1 ;;
+        --install) install_entry; exit 0 ;;
+        --default)
+            install_entry default
+            xdg-mime default lucid.lumen.desktop inode/directory
+            exit 0
+            ;;
+        --portal) portal_on; exit 0 ;;
+        --portal-off) portal_off; exit 0 ;;
+        --quit) exec qs kill -p "$entry" ;;
+        --quit-if-idle)
+            jobs=$(qs ipc -p "$entry" call -- lumen busy 2>/dev/null) || exit 0
+            if [[ $jobs == 0 ]]; then
+                qs kill -p "$entry" >/dev/null
+                # gone before this returns, so a start right after is not taken for it
+                for _ in $(seq 30); do
+                    running || exit 0
+                    sleep 0.1
+                done
+            fi
+            exit 0
+            ;;
+        --help|-h) sed -n '2,16s/^# \{0,1\}//p' "${BASH_SOURCE[0]}"; exit 0 ;;
+        *)
+            # a relative path means the caller's folder, which lumen never sees
+            if [[ $arg != *://* && $arg != /* && $arg != "~"* ]]; then
+                arg=$PWD/$arg
+            fi
+            paths+=("$arg")
+            ;;
+    esac
+done
+
+list=""
+if (( ${#paths[@]} > 0 )); then
+    list=$(printf '%s\n' "${paths[@]}")
+fi
+
+# two launches at once must not both start one
+exec 9>"${XDG_RUNTIME_DIR:-/tmp}/lucid-lumen.lock"
+flock -w 10 9 || true
+
+if running; then
+    if (( background )); then
+        exit 0
+    fi
+    exec qs ipc -p "$entry" call -- lumen open "$list" 9>&- >/dev/null
+fi
+
+# 9>&-: lumen must not inherit the lock, or it holds it for as long as it runs
+if (( background )); then
+    # this is how d-bus starts lumen for the portal, which waits on the name
+    # while qt's start waits on the portal: hold the name till lumend takes it
+    python3 "$here/holdname.py" 9>&- &>/dev/null &
+    LUMEN_BACKGROUND=1 qs -p "$entry" -n -d 9>&- &>/dev/null
+else
+    LUMEN_OPEN=$list qs -p "$entry" -n -d 9>&- &>/dev/null
+fi
+
+# hold the lock until it answers, so a launch waiting on it finds it running
+for _ in $(seq 60); do
+    running && exit 0
+    sleep 0.1
+done
+exit 0
