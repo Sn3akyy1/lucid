@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # setup-zen.sh profile
+# setup-zen.sh first-run
 # setup-zen.sh install
 # setup-zen.sh program [--check]
 #
@@ -12,6 +13,9 @@
 #   profile   print the profile zen starts with: installs.ini's default, then
 #             profiles.ini's. several folders can match *.Default*, and the
 #             first of them is often an empty one zen never opens
+#   first-run a zen that has never run has no profile to wire: start it once
+#             with no window, which makes the one its first launch would.
+#             does nothing when it has one
 #   install   wire that profile: the pref that lets zen read userChrome.css,
 #             an @import of lucid-zen.css at the top of userChrome.css and of
 #             lucid-sites.css at the top of userContent.css, and
@@ -69,6 +73,23 @@ running() {
     target=$(readlink "$1/lock" 2>/dev/null) || return 1
     pid=${target##*+}
     [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" 2>/dev/null
+}
+
+first_run() {
+    local bin pid i
+    profile >/dev/null && return 0
+    bin=$(command -v zen-browser || command -v zen) || { echo "error: zen isn't installed" >&2; return 1; }
+    "$bin" --headless --no-remote about:blank &>/dev/null &
+    pid=$!
+    for ((i = 0; i < 150; i++)); do
+        profile >/dev/null && break
+        kill -0 "$pid" 2>/dev/null || break
+        sleep 0.2
+    done
+    sleep 1
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+    profile >/dev/null
 }
 
 install_profile() {
@@ -188,10 +209,11 @@ program() {
 
 case "${1:-}" in
     profile) profile || exit 1 ;;
+    first-run) first_run ;;
     install) install_profile ;;
     program) program "${2:-}" ;;
     *)
-        sed -n '2,4p' "$0" | sed 's/^# /usage: /' >&2
+        sed -n '2,5p' "$0" | sed 's/^# /usage: /' >&2
         exit 2
         ;;
 esac

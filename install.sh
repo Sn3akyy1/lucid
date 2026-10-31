@@ -1089,6 +1089,13 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     # installs.ini: an empty *.Default* folder it never opens often sorts first
     FF_PROFILE=$(find "$HOME/.mozilla/firefox" -maxdepth 1 -type d -name '*.default-release' 2>/dev/null | head -1 || true)
     ZEN_PROFILE=$("$LUCID_DIR/setup-zen.sh" profile 2>/dev/null || true)
+    # a zen that has never run has no profile, and on a fresh install that is
+    # every one: nothing here would add its colours and nothing would later. one
+    # start with no window makes the profile its first launch would have
+    if [[ -z "$ZEN_PROFILE" ]] && "$LUCID_DIR/setup-zen.sh" first-run 2>/dev/null; then
+        ZEN_PROFILE=$("$LUCID_DIR/setup-zen.sh" profile 2>/dev/null || true)
+        say "  zen -> made its profile, so it opens in your colours"
+    fi
 
     # zen's colours used to be rendered straight into userChrome.css, which
     # replaced anything the user kept there, and sometimes into the wrong
