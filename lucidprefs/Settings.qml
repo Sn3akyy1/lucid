@@ -3,6 +3,7 @@ import QtQuick.Controls.Basic
 import Quickshell
 import Quickshell.Io
 import qs
+import qs.lucidicons
 import qs.lucidui
 
 FloatingWindow {
@@ -254,7 +255,9 @@ FloatingWindow {
         else if (kind === "icon") {
             Env.loadPreviews();
             envPicker.open("Icon theme", "icon themes", Env.iconThemes, Prefs.envIconTheme, true);
-        } else if (kind === "gtk")
+        } else if (kind === "iconSet")
+            envPicker.openSets("Icon theme", LucidIcons.sets, Prefs.envIconSet);
+        else if (kind === "gtk")
             envPicker.open("Application theme", "GTK themes", Env.gtkThemes, Prefs.envGtkTheme, false);
         else if (kind === "qtStyle")
             envPicker.open("Qt style", "Qt styles", Env.qtStyles, Prefs.envQtStyle, false);
@@ -279,6 +282,8 @@ FloatingWindow {
             Prefs.envCursorTheme = name;
         else if (k === "icon")
             Prefs.envIconTheme = name;
+        else if (k === "iconSet")
+            Prefs.envIconSet = LucidIcons.idOf(name);
         else if (k === "gtk")
             Prefs.envGtkTheme = name;
         else if (k === "qtStyle")
@@ -647,11 +652,24 @@ FloatingWindow {
             id: rail
 
             readonly property int pad: Theme.dp(12)
+            readonly property int rowH: Theme.dp(50)
+            // the row the pill sits under, or none when the page has no row
+            property Item activeRow: null
+
+            // a row going dark lets go only once the rows have all been told: going to a
+            // row further down, the one above hears first, and letting go there made
+            // the pill vanish and reappear instead of gliding
+            function letGo(r) {
+                if (rail.activeRow === r && !r.selected)
+                    rail.activeRow = null;
+
+            }
 
             width: win.railExpanded ? win.railWide : win.railNarrow
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
+            onActiveRowChanged: glider.follow()
 
             Behavior on width {
                 NumberAnimation {
@@ -780,6 +798,106 @@ FloatingWindow {
                 flickDeceleration: win.flickDecel
                 maximumFlickVelocity: win.maxFlick
 
+                // the pill for the page you are on. going to another row it stretches:
+                // the edge on the way leads, the other follows and closes up behind it,
+                // with nothing overshooting the row. from no row at all it appears in place
+                Rectangle {
+                    id: glider
+
+                    // kept while it fades, so it fades where it was
+                    property Item row: null
+                    // how far each edge still is from the row: rows move as the rail's
+                    // headings shrink, and the pill has to go with them
+                    property real upperGap: 0
+                    property real lowerGap: 0
+                    // its edges: Item's own top and bottom are anchor lines, final, so not these
+                    readonly property real upper: glider.row ? glider.row.rowY + glider.upperGap : 0
+                    readonly property real lower: glider.row ? glider.row.rowY + glider.row.height + glider.lowerGap : 0
+                    // it has been somewhere since it last faded, so the next row is a glide
+                    property bool settled: false
+
+                    function follow() {
+                        const r = rail.activeRow;
+                        if (!r) {
+                            glider.settled = false;
+                            return ;
+                        }
+                        const up = glider.upper - r.rowY;
+                        const low = glider.lower - r.rowY - r.height;
+                        edges.stop();
+                        glider.row = r;
+                        // show() sets the page before the window maps
+                        if (!glider.settled || Theme.motionScale <= 0 || !win.visible) {
+                            glider.upperGap = 0;
+                            glider.lowerGap = 0;
+                            glider.settled = true;
+                            return ;
+                        }
+                        glider.upperGap = up;
+                        glider.lowerGap = low;
+                        const down = up < 0;
+                        const lead = Theme.ms(200);
+                        const trail = Theme.ms(330);
+                        topAnim.duration = down ? trail : lead;
+                        bottomAnim.duration = down ? lead : trail;
+                        topAnim.easing.bezierCurve = down ? Theme.curveStandard : Theme.easeEmphasizedDecel;
+                        bottomAnim.easing.bezierCurve = down ? Theme.easeEmphasizedDecel : Theme.curveStandard;
+                        // the page this row opens builds in the same click: the glide
+                        // waits for it, or the build eats the start of the glide
+                        Qt.callLater(edges.start);
+                    }
+
+                    x: navList.x
+                    y: glider.upper
+                    width: navList.width
+                    height: Math.max(0, glider.lower - glider.upper)
+                    radius: Theme.pill(Math.min(height, rail.rowH))
+                    color: Theme.accentContainer
+                    opacity: rail.activeRow ? 1 : 0
+                    scale: rail.activeRow ? 1 : 0.94
+                    visible: opacity > 0
+
+                    ParallelAnimation {
+                        id: edges
+
+                        NumberAnimation {
+                            id: topAnim
+
+                            target: glider
+                            property: "upperGap"
+                            to: 0
+                            easing.type: Easing.BezierSpline
+                        }
+
+                        NumberAnimation {
+                            id: bottomAnim
+
+                            target: glider
+                            property: "lowerGap"
+                            to: 0
+                            easing.type: Easing.BezierSpline
+                        }
+
+                    }
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Theme.durShort
+                        }
+
+                    }
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: Theme.durShort
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Theme.curveStandard
+                        }
+
+                    }
+
+                }
+
                 Column {
                     id: navList
 
@@ -843,39 +961,55 @@ FloatingWindow {
                                 readonly property bool selected: win.page === navItem.modelData.key
                                 readonly property real iconX: Theme.dp(20) * win.railT + ((navItem.width - Theme.dp(22)) / 2) * (1 - win.railT)
                                 readonly property real labelFade: Math.max(0, (win.railT - 0.5) / 0.5)
-                                readonly property color fg: navItem.selected ? Theme.fgSecondaryContainer : (navArea.containsMouse ? Theme.text : Theme.subtext)
+                                readonly property real rowY: navCell.y + navItem.y
+                                // how much of the row the pill covers right now: its words and
+                                // glyph light as the pill arrives, not before
+                                readonly property real lit: {
+                                    const top = Math.max(navItem.rowY, glider.upper);
+                                    const bottom = Math.min(navItem.rowY + navItem.height, glider.lower);
+                                    return Math.max(0, Math.min(1, (bottom - top) / Math.max(1, navItem.height))) * glider.opacity;
+                                }
+                                readonly property color fg: Qt.tint(Theme.subtext, Qt.rgba(Theme.fgAccentContainer.r, Theme.fgAccentContainer.g, Theme.fgAccentContainer.b, navItem.lit))
+                                // only the row it stops on: the ones it passes just light
+                                readonly property bool arrived: navItem.selected && navItem.lit > 0.5
+                                // the glyph's own swell under the pointer
+                                property real swell: navArea.pressed ? 0.92 : (navArea.containsMouse ? 1.12 : 1)
 
                                 width: parent.width
-                                height: Theme.dp(50)
+                                height: rail.rowH
+                                onSelectedChanged: {
+                                    if (navItem.selected)
+                                        rail.activeRow = navItem;
+                                    else if (rail.activeRow === navItem)
+                                        Qt.callLater(rail.letGo, navItem);
+                                }
+                                Component.onCompleted: {
+                                    if (navItem.selected)
+                                        rail.activeRow = navItem;
 
-                                // m3 active indicator: a full-shape tonal pill
-                                Rectangle {
-                                    anchors.fill: parent
+                                }
+                                Component.onDestruction: {
+                                    if (rail.activeRow === navItem)
+                                        rail.activeRow = null;
+
+                                }
+
+                                Behavior on swell {
+                                    NumberAnimation {
+                                        duration: Theme.durDefaultSpatial
+                                        easing.type: Easing.BezierSpline
+                                        easing.bezierCurve: Theme.curveDefaultSpatial
+                                    }
+
+                                }
+
+                                // the row's own pointer: hover tint, the ripple, and the clicks
+                                StateLayer {
+                                    id: navArea
+
                                     radius: Theme.pill(height)
-                                    color: navItem.selected ? Theme.secondaryContainer : "transparent"
-
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: Theme.durShort
-                                        }
-
-                                    }
-
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        radius: parent.radius
-                                        color: navItem.fg
-                                        opacity: navArea.pressed ? Theme.statePressed : (navArea.containsMouse && !navItem.selected ? Theme.stateHover : 0)
-
-                                        Behavior on opacity {
-                                            NumberAnimation {
-                                                duration: Theme.durQuick
-                                            }
-
-                                        }
-
-                                    }
-
+                                    tint: navItem.selected ? Theme.fgAccentContainer : Theme.text
+                                    onClicked: win.page = navItem.modelData.key
                                 }
 
                                 LucidaMark {
@@ -885,8 +1019,9 @@ FloatingWindow {
                                     strokeWidth: 3.4
                                     anchors.verticalCenter: parent.verticalCenter
                                     visible: navItem.modelData.key === "about"
-                                    ringColor: navItem.selected ? navItem.fg : Theme.subtext
+                                    ringColor: navItem.fg
                                     starColor: navItem.fg
+                                    scale: navItem.swell
                                 }
 
                                 NavGlyph {
@@ -895,15 +1030,9 @@ FloatingWindow {
                                     visible: navItem.modelData.key !== "about"
                                     kind: navItem.modelData.key
                                     color: navItem.fg
-                                    active: navItem.selected
-
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: Theme.durShort
-                                        }
-
-                                    }
-
+                                    animateColor: false
+                                    active: navItem.arrived
+                                    scale: navItem.swell
                                 }
 
                                 Text {
@@ -917,27 +1046,10 @@ FloatingWindow {
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fontBodyLg
                                     font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
-                                    font.weight: navItem.selected ? Font.DemiBold : Font.Medium
+                                    font.weight: navItem.arrived ? Font.DemiBold : Font.Medium
                                     elide: Text.ElideRight
                                     opacity: navItem.labelFade
                                     visible: opacity > 0.01
-
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: Theme.durShort
-                                        }
-
-                                    }
-
-                                }
-
-                                MouseArea {
-                                    id: navArea
-
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: win.page = navItem.modelData.key
                                 }
 
                             }
@@ -1170,6 +1282,8 @@ FloatingWindow {
                                 return "EnvironmentPage.qml";
                             case "keybinds":
                                 return "KeybindsPage.qml";
+                            case "capture":
+                                return "CapturePage.qml";
                             case "displays":
                                 return "MonitorsPage.qml";
                             case "input":

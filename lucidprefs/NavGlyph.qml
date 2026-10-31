@@ -9,6 +9,8 @@ Item {
     property string kind: "general"
     property color color: Theme.subtext
     property bool active: false
+    // off where the colour is already driven frame by frame
+    property bool animateColor: true
 
     implicitWidth: Theme.dp(22)
     implicitHeight: Theme.dp(22)
@@ -19,6 +21,7 @@ Item {
         size: Theme.dp(22)
         fill: glyph.active ? 1 : 0
         color: glyph.color
+        animateColor: glyph.animateColor
     }
 
 }
