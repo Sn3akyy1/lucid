@@ -131,10 +131,16 @@ PanelWindow {
     readonly property var placement: Prefs.monitorShellScreen === "" && osdWindow.aimedScreen && Quickshell.screens.indexOf(osdWindow.aimedScreen) >= 0 ? osdWindow.aimedScreen : null
 
     function trigger() {
+        const fresh = !osdWindow.cardVisible;
         if (!osdWindow.cardVisible && Prefs.monitorShellScreen === "")
             osdWindow.aimedScreen = Monitors.focusedScreen;
 
         osdWindow.setCardVisible(true);
+        // a fresh card lands with a wobble, and every step after jiggles it
+        if (fresh)
+            cardJelly.kickAfter(0.14, Math.round(Theme.durEnter * 0.3));
+        else
+            cardJelly.kick(0.05);
         hideTimer.restart();
         if (osdWindow.isLevelType) {
             if (!levelTrack.dragging)
@@ -452,10 +458,10 @@ PanelWindow {
     Region {
         id: osdBlurRegion
 
-        readonly property real paintedX: card.x + card.width * (1 - card.scale) / 2
-        readonly property real paintedY: card.y + card.height * (1 - card.scale) / 2
-        readonly property real paintedWidth: card.width * card.scale
-        readonly property real paintedHeight: card.height * card.scale
+        readonly property real paintedX: card.x + card.width * (1 - card.scale * cardJelly.xScale) / 2
+        readonly property real paintedY: card.y + card.height * (1 - card.scale * cardJelly.yScale) / 2
+        readonly property real paintedWidth: card.width * card.scale * cardJelly.xScale
+        readonly property real paintedHeight: card.height * card.scale * cardJelly.yScale
 
         x: Math.ceil(osdBlurRegion.paintedX - 0.002)
         y: Math.ceil(osdBlurRegion.paintedY - 0.002)
@@ -479,6 +485,13 @@ PanelWindow {
         opacity: osdWindow.cardVisible ? 1 : 0
         scale: osdWindow.cardVisible ? 1 : 0.9
         visible: opacity > 0.15
+        readonly property bool jellyWobbling: cardJelly.wobbling
+        transform: Jelly {
+            id: cardJelly
+
+            target: card
+            frequency: 4.6
+        }
 
         TextMetrics {
             id: labelMetrics

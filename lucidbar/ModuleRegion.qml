@@ -126,14 +126,18 @@ Region {
     }
 
     readonly property var pop: (reg.mod && reg.mod.popupOpen) ? reg.mod.popupItem : null
-    readonly property real px: reg.pop ? reg.mod.x + reg.pop.x : 0
-    readonly property real py: reg.pop ? reg.mod.y + reg.pop.y : 0
+    // a pop-up bent by jelly reports where it is painted
+    readonly property bool painted: reg.pop !== null && reg.mod.popupPaintX !== undefined
+    readonly property real px: reg.pop ? reg.mod.x + (reg.painted ? reg.mod.popupPaintX : reg.pop.x) : 0
+    readonly property real py: reg.pop ? reg.mod.y + (reg.painted ? reg.mod.popupPaintY : reg.pop.y) : 0
+    readonly property real pw: reg.pop ? (reg.painted ? reg.mod.popupPaintWidth : reg.pop.width) : 0
+    readonly property real ph: reg.pop ? (reg.painted ? reg.mod.popupPaintHeight : reg.pop.height) : 0
 
     Region {
         x: reg.pop ? reg.lo(reg.px) : 0
         y: reg.pop ? reg.lo(reg.py) : 0
-        width: reg.pop ? Math.max(0, reg.hi(reg.px + reg.pop.width) - reg.lo(reg.px)) : 0
-        height: reg.pop ? Math.max(0, reg.hi(reg.py + reg.pop.height) - reg.lo(reg.py)) : 0
+        width: reg.pop ? Math.max(0, reg.hi(reg.px + reg.pw) - reg.lo(reg.px)) : 0
+        height: reg.pop ? Math.max(0, reg.hi(reg.py + reg.ph) - reg.lo(reg.py)) : 0
         radius: reg.mod ? reg.mod.cornerRadius : 0
         topLeftRadius: reg.mod ? (reg.mod.popupTopLeftRadius !== undefined ? reg.mod.popupTopLeftRadius : reg.mod.topRadius) : 0
         topRightRadius: reg.mod ? (reg.mod.popupTopRightRadius !== undefined ? reg.mod.popupTopRightRadius : reg.mod.topRadius) : 0

@@ -40,7 +40,22 @@ Scope {
             host.show(page);
         }
 
+        function onSettingsHideRequested() {
+            host.hide();
+        }
+
         target: Prefs
+    }
+
+    // edit mode wants the desktop in view
+    Connections {
+        function onActiveChanged() {
+            if (Edit.active)
+                host.hide();
+
+        }
+
+        target: Edit
     }
 
     IpcHandler {

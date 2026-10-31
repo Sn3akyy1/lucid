@@ -6,22 +6,8 @@ import qs
 Column {
     id: page
 
-    property string filter: "all"
-    // the preset previews are drawn over this
+    // the map is drawn over this
     property string wallpaper: ""
-
-    readonly property var shownTypes: page.filter === "all" ? Widgets.catalogue : Widgets.catalogue.filter((t) => {
-        return t.id === page.filter;
-    })
-
-    // as many columns as fit, every tile the same width
-    function tileWidth(grid) {
-        return Math.max(0, Math.floor((grid.width - grid.columnSpacing * (grid.columns - 1)) / grid.columns));
-    }
-
-    function columnsFor(width) {
-        return Math.max(2, Math.floor((width + Theme.dp(10)) / Theme.dp(222)));
-    }
 
     spacing: Theme.dp(26)
     // the header switch turns the whole layer off, so the page has nothing left to set
@@ -50,207 +36,35 @@ Column {
     }
 
     SettingCard {
-        title: "PRESETS"
+        title: "ON THE DESKTOP"
 
         SettingRow {
-            title: "Start from a layout"
-            description: "Each one places a set of widgets and spaces them out for you. Cards you already have slide over to their new spot and keep whatever you wrote in them."
+            title: "Widget panel"
+            description: "Every widget there is, to drag out onto the desktop or click in, the ones already out there, and layouts to start from or save. It opens from the desktop's right-click menu too."
             showDivider: false
-            stacked: true
 
-            Grid {
-                id: builtIn
-
-                width: parent.width
-                columns: page.columnsFor(builtIn.width)
-                columnSpacing: Theme.dp(10)
-                rowSpacing: Theme.dp(10)
-
-                Repeater {
-                    model: Widgets.presets
-
-                    PresetTile {
-                        required property var modelData
-
-                        width: page.tileWidth(builtIn)
-                        title: modelData.name
-                        blurb: modelData.blurb
-                        cards: Widgets.presetLayout(modelData.id)
-                        wallpaper: page.wallpaper
-                        selected: Widgets.presetId === modelData.id
-                        onChosen: Widgets.applyPreset(modelData.id)
-                    }
-
+            M3Button {
+                text: "Open the panel"
+                variant: "tonal"
+                iconPath: "widgets"
+                onClicked: {
+                    Prefs.settingsHideRequested();
+                    Widgets.openPanel(Monitors.mainScreen ? Monitors.mainScreen.name : "");
                 }
-
             }
 
         }
 
         SettingRow {
-            title: "Your presets"
-            description: Widgets.userPresets.length === 0 ? "Arrange the desktop the way you like it, then save it here and switch back to it whenever you want." : "Saving again under a name you already used updates that preset."
+            title: "Edit mode"
+            description: "The desktop shades over and everything on it can be moved: widgets, the bar's modules and the dock. Right-click anything for its options."
             showDivider: false
-            stacked: true
 
-            Grid {
-                id: saved
-
-                width: parent.width
-                columns: page.columnsFor(saved.width)
-                columnSpacing: Theme.dp(10)
-                rowSpacing: Theme.dp(10)
-
-                PresetSaveTile {
-                    width: page.tileWidth(saved)
-                    wallpaper: page.wallpaper
-                }
-
-                // an arrangement nobody saved, set aside when a preset replaced it
-                PresetTile {
-                    width: page.tileWidth(saved)
-                    visible: Widgets.canRestore
-                    title: "Last layout"
-                    blurb: "Not saved. What was on your desktop before this preset."
-                    cards: Widgets.lastLayout
-                    wallpaper: page.wallpaper
-                    mark: "refresh"
-                    onChosen: Widgets.restoreLast()
-                }
-
-                Repeater {
-                    model: Widgets.userPresets
-
-                    PresetTile {
-                        required property var modelData
-
-                        width: page.tileWidth(saved)
-                        title: modelData.name
-                        blurb: "Saved " + Qt.formatDate(new Date(modelData.saved || 0), "d MMMM yyyy")
-                        cards: Widgets.presetLayout(modelData.id)
-                        wallpaper: page.wallpaper
-                        selected: Widgets.presetId === modelData.id
-                        removable: true
-                        onChosen: Widgets.applyPreset(modelData.id)
-                        onRemoveRequested: Prefs.askConfirm("Delete “" + modelData.name + "”?", "The preset goes. The widgets on your desktop stay exactly where they are.", "Delete", "widget-preset:" + modelData.id)
-                    }
-
-                }
-
-            }
-
-        }
-
-    }
-
-    SettingCard {
-        title: "ADD A WIDGET"
-
-        SettingRow {
-            title: "Pick a look"
-            description: Widgets.full ? "The desktop holds " + Widgets.capacity + " widgets, and it is full. Take one off below to make room." : "Every tile below is the real widget, drawn live. Click one and it lands on the desktop, where you can drag it anywhere and pin it in place."
-            showDivider: false
-            stacked: true
-
-            Flow {
-                width: parent.width
-                spacing: Theme.dp(6)
-
-                Repeater {
-                    model: [{
-                        "id": "all",
-                        "name": "All"
-                    }].concat(Widgets.catalogue.map((t) => {
-                        return ({
-                            "id": t.id,
-                            "name": t.name
-                        });
-                    }))
-
-                    Rectangle {
-                        id: chip
-
-                        required property var modelData
-
-                        readonly property bool selected: page.filter === chip.modelData.id
-
-                        width: chipLabel.implicitWidth + Theme.dp(26)
-                        height: Theme.dp(32)
-                        radius: Theme.dp(16)
-                        color: chip.selected ? Theme.accentContainer : (chipArea.containsMouse ? Theme.bgHover : Theme.bgSunken)
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.durShort
-                            }
-
-                        }
-
-                        Text {
-                            id: chipLabel
-
-                            anchors.centerIn: parent
-                            text: chip.modelData.name
-                            color: chip.selected ? Theme.fgAccentContainer : Theme.subtext
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontLabel
-                            font.variableAxes: Theme.axes(Theme.fontLabel, (chip.selected) ? 640 : 420, 0)
-                            font.bold: chip.selected
-                        }
-
-                        MouseArea {
-                            id: chipArea
-
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: page.filter = chip.modelData.id
-                        }
-
-                    }
-
-                }
-
-            }
-
-        }
-
-    }
-
-    Repeater {
-        model: page.shownTypes
-
-        SettingCard {
-            id: group
-
-            required property var modelData
-
-            title: group.modelData.name.toUpperCase()
-
-            SettingRow {
-                title: group.modelData.blurb
-                description: group.modelData.variants.length + (group.modelData.variants.length === 1 ? " style" : " styles") + (Widgets.countOfType(group.modelData.id) > 0 ? " · " + Widgets.countOfType(group.modelData.id) + " on the desktop" : "")
-                showDivider: false
-                stacked: true
-
-                Flow {
-                    width: parent.width
-                    spacing: Theme.dp(10)
-
-                    Repeater {
-                        model: group.modelData.variants
-
-                        WidgetTile {
-                            required property var modelData
-
-                            wtype: group.modelData.id
-                            variant: modelData
-                        }
-
-                    }
-
-                }
-
+            M3Button {
+                text: "Edit the desktop"
+                variant: "tonal"
+                iconPath: "edit"
+                onClicked: Edit.enterFromSettings("widgets", "")
             }
 
         }

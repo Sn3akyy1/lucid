@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.lucidui as UI
 
 Rectangle {
     id: preview
@@ -144,7 +145,7 @@ Rectangle {
                     width: bar.slot
                     height: bar.slot
 
-                    LucidaMark {
+                    UI.LauncherGrid {
                         anchors.centerIn: parent
                         width: Math.round(bar.slot * 0.72)
                         height: width

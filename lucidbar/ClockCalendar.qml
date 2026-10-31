@@ -20,6 +20,8 @@ Item {
     property int newMinute: 0
     // the hour is freshTime's next-hour guess, not one anybody chose
     property bool hourGuessed: false
+    // am/pm was set by hand, so a typed hour keeps to it
+    property bool halfPicked: false
     property string newRepeat: ""
     readonly property bool pm: page.newHour >= 12
     readonly property int shownHour: Prefs.clock24h ? page.newHour : (page.newHour % 12 === 0 ? 12 : page.newHour % 12)
@@ -46,6 +48,23 @@ Item {
         return new Date(page.selected.year, page.selected.month, page.selected.day, hour, minute) < new Date(n.getFullYear(), n.getMonth(), n.getDate(), n.getHours(), n.getMinutes());
     }
 
+    function isToday() {
+        return page.gone(0, 0) && !page.gone(23, 59);
+    }
+
+    // every opening of the clock starts on today, unless a reminder is half written
+    function startVisit() {
+        if (nameField.text !== "")
+            return ;
+
+        const n = Loc.now();
+        page.selected = { "year": n.getFullYear(), "month": n.getMonth(), "day": n.getDate() };
+        if (!month.isCurrent)
+            month.goToday();
+
+        page.freshTime();
+    }
+
     // 9:00, or the next hour once 9:00 has gone today; a time already set for a name stays
     function freshTime() {
         if (nameField.text !== "")
@@ -54,6 +73,7 @@ Item {
         page.newHour = 9;
         page.newMinute = 0;
         page.hourGuessed = false;
+        page.halfPicked = false;
         const next = Loc.now().getHours() + 1;
         if (page.gone(9, 0) && next < 24 && !page.gone(next, 0)) {
             page.newHour = next;
@@ -93,22 +113,27 @@ Item {
         page.newMinute = t % 60;
     }
 
-    // typed hours are 0-23, or 1-12 next to the am/pm toggle
+    // typed hours are 0-23, or 1-12 next to the am/pm toggle; on today a
+    // 12-hour one is its next turn, not the half the guessed hour left behind
     function typeHour(h) {
         page.hourGuessed = false;
-        if (Prefs.clock24h)
+        if (Prefs.clock24h) {
             page.newHour = Math.min(23, h);
-        else
+        } else if (page.isToday() && !page.halfPicked) {
+            // the minutes are still to come, so only an hour wholly gone is past
+            const h12 = Math.min(12, h) % 12;
+            page.newHour = page.gone(h12, 59) ? h12 + 12 : h12;
+        } else {
             page.newHour = Math.min(12, h) % 12 + (page.pm ? 12 : 0);
-        page.preferUpcoming();
+            page.preferUpcoming();
+        }
     }
 
     // minutes typed under the guessed hour mean the next time the clock shows
     // them: at 12:19, 20 is 12:20 rather than 1:20
     function typeMinute(m) {
         page.newMinute = Math.min(59, m);
-        const today = page.gone(0, 0) && !page.gone(23, 59);
-        if (page.hourGuessed && today) {
+        if (page.hourGuessed && page.isToday()) {
             const h = Loc.now().getHours();
             if (!page.gone(h, page.newMinute))
                 page.newHour = h;
@@ -120,6 +145,7 @@ Item {
 
     function setPm(wantPm) {
         page.hourGuessed = false;
+        page.halfPicked = true;
         page.newHour = page.newHour % 12 + (wantPm ? 12 : 0);
     }
 
@@ -225,6 +251,16 @@ Item {
     }
 
     implicitHeight: Theme.dp(404)
+
+    Connections {
+        function onExpandedChanged() {
+            if (page.host.expanded)
+                page.startVisit();
+
+        }
+
+        target: page.host
+    }
 
     Rectangle {
         id: monthCard

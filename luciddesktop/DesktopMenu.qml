@@ -29,7 +29,7 @@ Item {
     // a list of its own instead of the desktop's: an icon's menu
     property var custom: null
     readonly property real edge: Theme.dp(10)
-    readonly property real gap: Theme.dp(4)
+    readonly property real gap: Theme.dp(10)
     readonly property real pad: Theme.dp(6)
     readonly property real rowH: Theme.dp(38)
     readonly property real stripH: Theme.dp(46)
@@ -39,6 +39,17 @@ Item {
     readonly property var rootRows: menu.custom !== null ? menu.custom : menu.desktopActions
     readonly property var desktopActions: {
         var arr = menu.icons ? DesktopIcons.desktopRows() : [];
+        // the icons' own rows go with them, but turning them back on stays in reach
+        if (!menu.icons) {
+            var show = DesktopIcons.showRows();
+            if (show.length > 0)
+                arr.push({
+                "label": "View",
+                "glyph": "grid_view",
+                "submenu": show
+            });
+
+        }
         var lead = arr.length > 0;
         arr.push({
             "id": "wallpaper",
@@ -52,34 +63,16 @@ Item {
             "glyph": DockIcons.palette
         });
         arr.push({
-            "id": "widgetPanel",
-            "label": "Widget Panel",
-            "glyph": DockIcons.widgets,
+            "id": "editMode",
+            "label": Edit.active ? "Done Editing" : "Edit Desktop",
+            "glyph": Edit.active ? "check" : "edit",
             "divider": true
         });
-        if (Widgets.count > 0)
-            arr.push(Prefs.widgetsEnabled ? {
-            "id": "hideWidgets",
-            "label": "Hide Widgets",
-            "glyph": DockIcons.hidden
-        } : {
-            "id": "showWidgets",
-            "label": "Show Widgets",
-            "glyph": DockIcons.visible
+        arr.push({
+            "id": "widgetPanel",
+            "label": "Widget Panel",
+            "glyph": DockIcons.widgets
         });
-
-        // put away and back, the way the widgets are; Settings has the switch that turns them off
-        if (Prefs.desktopIcons)
-            arr.push(Prefs.desktopIconsShown ? {
-            "id": "hideIcons",
-            "label": "Hide Icons",
-            "glyph": DockIcons.iconsHidden
-        } : {
-            "id": "showIcons",
-            "label": "Show Icons",
-            "glyph": DockIcons.iconsShown
-        });
-
         arr.push({
             "id": "screenshot",
             "label": "Take a Screenshot",
@@ -214,15 +207,27 @@ Item {
             menu.setLit(level + 1, menu.step(level + 1, -1, 1));
             return ;
         }
-        if (!r.stay)
-            menu.open = false;
-
-        menu.chosen(r.id);
+        if (r.stay) {
+            menu.chosen(r.id);
+            return ;
+        }
+        menu.open = false;
+        menu.chooseLater(r.id);
     }
 
     function choose(id) {
         menu.open = false;
-        menu.chosen(id);
+        menu.chooseLater(id);
+    }
+
+    // what was picked runs once the cards have faded: a heavy action would stall the
+    // fade, and anything it changes would reshape cards still on screen
+    function chooseLater(id) {
+        if (chosenTimer.running)
+            menu.chosen(chosenTimer.pick);
+
+        chosenTimer.pick = id;
+        chosenTimer.restart();
     }
 
     function key(e) {
@@ -280,11 +285,12 @@ Item {
         if (!c || i >= menu.levels.length || c.opacity < 0.01)
             return Qt.rect(0, 0, 0, 0);
 
-        var w = c.width * c.scale;
-        var h = c.height * c.scale;
+        // scale and jelly both hold the same corner still
+        var sx = c.scale * c.jellyX;
+        var sy = c.scale * c.jellyY;
         var ox = c.flipX ? c.width : 0;
         var oy = c.flipY ? c.height : 0;
-        return Qt.rect(c.x + c.slide + ox * (1 - c.scale), c.y + oy * (1 - c.scale), w, h);
+        return Qt.rect(c.x + c.slide + ox * (1 - sx), c.y + oy * (1 - sy), c.width * sx, c.height * sy);
     }
 
     function cardRadius(i) {
@@ -307,6 +313,37 @@ Item {
     }
 
     Timer {
+        id: chosenTimer
+
+        property string pick: ""
+
+        interval: Theme.durQuick + 20
+        onTriggered: menu.chosen(chosenTimer.pick)
+    }
+
+    // one entry a card: an integer model rebuilds every card, the menu itself too,
+    // each time a submenu comes or goes
+    ListModel {
+        id: cardModel
+
+        ListElement {
+            d: 0
+        }
+
+    }
+
+    onLevelsChanged: {
+        while (cardModel.count > menu.levels.length) {
+            cardModel.remove(cardModel.count - 1);
+        }
+        while (cardModel.count < menu.levels.length) {
+            cardModel.append({
+                "d": 0
+            });
+        }
+    }
+
+    Timer {
         id: closeTimer
 
         property int level: 0
@@ -318,7 +355,7 @@ Item {
     Repeater {
         id: cards
 
-        model: menu.levels.length
+        model: cardModel
 
         Rectangle {
             id: card
@@ -338,6 +375,29 @@ Item {
             readonly property bool flipY: card.index === 0 && menu.originY + card.ch > menu.maxY
             // the slide a submenu comes in on, from its parent's side
             property real slide: 0
+            readonly property real jellyX: cardJelly.xScale
+            readonly property real jellyY: cardJelly.yScale
+            readonly property bool jellyWobbling: cardJelly.wobbling
+            readonly property bool menuShown: menu.open
+
+            // in: the menu grows out of the click and wobbles; out: m3's quick fade in
+            // place, never shrinking away, and any wobble left plays out under it
+            onMenuShownChanged: {
+                if (card.menuShown) {
+                    vanish.stop();
+                    cardJelly.rest();
+                    if (card.opacity < 0.05)
+                        card.scale = card.index === 0 ? 0.8 : 1;
+
+                    appear.restart();
+                    if (card.index === 0)
+                        cardJelly.kickAfter(Math.min(0.09, Theme.dp(20) / Math.max(1, card.ch)), Math.round(Theme.durEnter * 0.3));
+
+                } else {
+                    appear.stop();
+                    vanish.restart();
+                }
+            }
 
             function rowY(i) {
                 var y = menu.pad;
@@ -383,11 +443,11 @@ Item {
             color: Theme.bg
             border.width: Theme.blurAmount > 0 ? 0 : 1
             border.color: Theme.alpha(Theme.text, 0.06)
-            opacity: menu.open ? 1 : 0
-            scale: card.index === 0 ? (menu.open ? 1 : 0.8) : 1
             transformOrigin: card.flipX ? (card.flipY ? Item.BottomRight : Item.TopRight) : (card.flipY ? Item.BottomLeft : Item.TopLeft)
             onRowsChanged: measureSoon.restart()
             Component.onCompleted: {
+                // a submenu is made with the menu open; the menu's own card at startup
+                card.opacity = menu.open ? 1 : 0;
                 var c = menu.cardItems.slice();
                 c[card.index] = card;
                 menu.cardItems = c;
@@ -403,9 +463,19 @@ Item {
                 }
             }
 
-            transform: Translate {
-                x: card.slide
-            }
+            transform: [
+                Jelly {
+                    id: cardJelly
+
+                    target: card
+                    anchorX: card.flipX ? 1 : 0
+                    anchorY: card.flipY ? 1 : 0
+                    frequency: 4.4
+                },
+                Translate {
+                    x: card.slide
+                }
+            ]
 
             // measured once the rows are in; a timer goes with the card, where a callLater
             // could outlive a submenu that closed first
@@ -432,7 +502,10 @@ Item {
 
                 property int lastRow: -2
 
-                onStarted: enter.lastRow = card.level ? card.level.row : -2
+                onStarted: {
+                    enter.lastRow = card.level ? card.level.row : -2;
+                    cardJelly.kickAfter(Math.min(0.07, Theme.dp(14) / Math.max(1, card.ch)), Math.round(Theme.durMedium * 0.3));
+                }
 
                 NumberAnimation {
                     target: card
@@ -610,8 +683,11 @@ Item {
 
                                 // m3 expressive: a checked row sits on the secondary container, and a
                                 // lit row's shape rounds out under the pointer
+                                // inset, so two checked rows in a row stay two shapes
                                 Rectangle {
                                     anchors.fill: parent
+                                    anchors.topMargin: Theme.dp(2)
+                                    anchors.bottomMargin: Theme.dp(2)
                                     radius: row.lit || row.opened || row.checked ? Theme.radiusSm : Theme.radiusXs
                                     color: Theme.secondaryContainer
                                     visible: row.checked
@@ -619,6 +695,8 @@ Item {
 
                                 Rectangle {
                                     anchors.fill: parent
+                                    anchors.topMargin: Theme.dp(2)
+                                    anchors.bottomMargin: Theme.dp(2)
                                     radius: row.lit || row.opened ? Theme.radiusSm : Theme.radiusXs
                                     color: row.checked ? Theme.fgSecondaryContainer : Theme.text
                                     opacity: row.disabled ? 0 : (rowTap.pressed ? Theme.statePressed : (row.lit || row.opened ? Theme.stateHover + 0.02 : 0))
@@ -771,22 +849,36 @@ Item {
 
             }
 
-            Behavior on opacity {
+            ParallelAnimation {
+                id: appear
+
                 NumberAnimation {
-                    duration: menu.open ? Theme.durEnter : Theme.durExit
+                    target: card
+                    property: "opacity"
+                    to: 1
+                    duration: Theme.durEnter
                     easing.type: Easing.Bezier
-                    easing.bezierCurve: menu.open ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
+                    easing.bezierCurve: Theme.easeEmphasizedDecel
+                }
+
+                NumberAnimation {
+                    target: card
+                    property: "scale"
+                    to: 1
+                    duration: Theme.durEnter
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.easeEmphasizedDecel
                 }
 
             }
 
-            Behavior on scale {
-                NumberAnimation {
-                    duration: menu.open ? Theme.durEnter : Theme.durExit
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: menu.open ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-                }
+            NumberAnimation {
+                id: vanish
 
+                target: card
+                property: "opacity"
+                to: 0
+                duration: Theme.durQuick
             }
 
             Behavior on radius {

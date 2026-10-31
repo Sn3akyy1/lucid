@@ -47,6 +47,14 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         x: Theme.dp(3) + (Theme.dp(22) - thumb.d) / 2 + thumb.pos * (sw.width - Theme.dp(28))
         color: sw.checked ? Theme.fgPrimary : Theme.outlineStrong
+        readonly property bool jellyWobbling: thumbJelly.wobbling
+        // drawn out like a drop as it slides, then wobbling where it lands
+        transform: Jelly {
+            id: thumbJelly
+
+            target: thumb
+            frequency: 5
+        }
 
         Behavior on pos {
             NumberAnimation {
@@ -103,7 +111,10 @@ Item {
         enabled: !sw.disabled
         cursorShape: Qt.PointingHandCursor
         // the caller owns `checked`; assigning it here would cut their binding
-        onClicked: sw.toggled(!sw.checked)
+        onClicked: {
+            thumbJelly.kick(-0.17);
+            sw.toggled(!sw.checked);
+        }
     }
 
 }

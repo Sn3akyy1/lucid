@@ -6,13 +6,20 @@ import Quickshell.Io
 import Quickshell.Wayland
 
 // the files on the desktop and where each one sits. icons keep to a grid and
-// remember a cell each; a widget always wins the space, and an icon it covers
-// steps to the nearest free cell until the widget moves off
+// remember a cell each; a widget always wins the space, and the icons it covers
+// step aside together, keeping their shape, until the widget moves off
 Singleton {
     id: root
 
     // on in Settings, and not put away from the desktop's menu
     readonly property bool live: Prefs.loaded && Prefs.desktopIcons && Prefs.desktopIconsShown
+    // put away a moment ago: the board stays up while its icons go
+    property bool leaving: false
+    // brought back a moment ago: icons made now come in as a wave from their corner
+    property bool waking: false
+    readonly property bool shown: root.live || root.leaving
+    readonly property int wakeStep: Math.round(22 * Theme.motionScale)
+    readonly property int stowStep: Math.round(12 * Theme.motionScale)
     readonly property string script: Qt.resolvedUrl("./luciddesktop/desktop-icons.py").toString().replace("file://", "")
     readonly property string home: Quickshell.env("HOME")
     // the set picked in Settings > Environment; the helper asks gsettings when it is blank
@@ -374,6 +381,8 @@ Singleton {
     property var placed: ({})
     // the widgets' rectangles on the main screen, padded a little
     property var widgetRects: []
+    // the shift each widget's covered icons last stepped aside by, by "w:" + uid
+    property var shifts: ({})
 
     readonly property real widgetGap: Theme.dp(6)
 
@@ -399,6 +408,7 @@ Singleton {
                 }
                 var t = Widgets.typeAt(e.wtype);
                 out.push({
+                    "uid": e.uid,
                     "name": t ? t.name : "",
                     "x": x - root.widgetGap,
                     "y": y - root.widgetGap,
@@ -435,41 +445,63 @@ Singleton {
         return -1;
     }
 
-    // where a drag of our own icons would put one: { c, r, widget, lc, lr },
-    // lc/lr being the free cell it steps aside to when a widget holds c, r
-    function dragSpot(key) {
-        var from = root.placed[key];
+    // the cell under a drag of our own icons, as text, so the plan below is only
+    // worked out again when the pointer reaches another cell
+    readonly property string dragCell: {
+        if (!root.dragOver || root.dragKey === "")
+            return "";
+
+        var at = root.cellAt(root.dragX, root.dragY);
+        return at.c + "," + at.r;
+    }
+    // where a drop there puts each dragged icon, planned as the drop itself will:
+    // key -> { c, r, widget, lc, lr }, lc/lr being where it lands when a widget holds c, r
+    readonly property var dropPlan: {
+        if (root.dragCell === "" || root.dropInto !== "")
+            return ({});
+
         var anchor = root.placed[root.dragKey];
-        if (!from || !anchor)
-            return null;
+        if (!anchor)
+            return ({});
 
-        var to = root.cellAt(root.dragX, root.dragY);
-        var c = Math.max(0, Math.min(root.cols - 1, from.c + to.c - anchor.c));
-        var r = Math.max(0, Math.min(root.rows - 1, from.r + to.r - anchor.r));
-        var w = root.widgetOn(c, r);
-        var lc = c;
-        var lr = r;
-        if (w >= 0) {
-            var taken = new Array(root.cols * root.rows);
-            var keys = Object.keys(root.placed);
-            for (var i = 0; i < keys.length; i++) {
-                if (root.dragKeys.indexOf(keys[i]) < 0)
-                    taken[root.placed[keys[i]].c * root.rows + root.placed[keys[i]].r] = true;
+        var at = root.dragCell.split(",");
+        var dc = Number(at[0]) - anchor.c;
+        var dr = Number(at[1]) - anchor.r;
+        var homes = Object.assign({}, root.homes);
+        var aim = {};
+        var first = [root.dragKey];
+        for (var i = 0; i < root.dragKeys.length; i++) {
+            var k = root.dragKeys[i];
+            var p = root.placed[k];
+            if (!p)
+                continue;
 
-            }
-            var spot = root.nearestFree(c, r, root.blockedGrid(), taken);
-            if (spot >= 0) {
-                lc = Math.floor(spot / root.rows);
-                lr = spot % root.rows;
-            }
+            aim[k] = [Math.max(0, Math.min(root.cols - 1, p.c + dc)), Math.max(0, Math.min(root.rows - 1, p.r + dr))];
+            homes[k] = aim[k];
+            if (k !== root.dragKey)
+                first.push(k);
+
         }
-        return {
-            "c": c,
-            "r": r,
-            "widget": w,
-            "lc": lc,
-            "lr": lr
-        };
+        var landed = Prefs.desktopIconsAutoArrange || (dc === 0 && dr === 0) ? null : root.plan(homes, first).out;
+        var out = {};
+        for (var key in aim) {
+            var l = landed && landed[key] ? landed[key] : {
+                "c": aim[key][0],
+                "r": aim[key][1]
+            };
+            out[key] = {
+                "c": aim[key][0],
+                "r": aim[key][1],
+                "widget": root.widgetOn(aim[key][0], aim[key][1]),
+                "lc": l.c,
+                "lr": l.r
+            };
+        }
+        return out;
+    }
+
+    function dragSpot(key) {
+        return root.dropPlan[key] || null;
     }
 
     // the widgets a drag of our own icons is running into, by index
@@ -478,10 +510,10 @@ Singleton {
             return [];
 
         var hit = [];
-        for (var i = 0; i < root.dragKeys.length; i++) {
-            var s = root.dragSpot(root.dragKeys[i]);
-            if (s && s.widget >= 0 && hit.indexOf(s.widget) < 0)
-                hit.push(s.widget);
+        for (var k in root.dropPlan) {
+            var w = root.dropPlan[k].widget;
+            if (w >= 0 && hit.indexOf(w) < 0)
+                hit.push(w);
 
         }
         return hit;
@@ -532,17 +564,139 @@ Singleton {
         return -1;
     }
 
-    // first: keys that win their home over anyone else's (the ones just dropped)
-    function relayout(first) {
-        // nothing is placed before both the folder and the widgets are known
-        if (!root.live || !root.listed || !Widgets.loaded)
-            return ;
+    // a group stepping aside fits at this shift: every cell on the desktop, free, and its own
+    function fits(cells, dc, dr, blocked, taken) {
+        var seen = {};
+        for (var i = 0; i < cells.length; i++) {
+            var c = cells[i].c + dc;
+            var r = cells[i].r + dr;
+            if (c < 0 || r < 0 || c >= root.cols || r >= root.rows)
+                return false;
 
-        var n = root.cols * root.rows;
+            var idx = c * root.rows + r;
+            if (blocked[idx] || taken[idx] || seen[idx])
+                return false;
+
+            seen[idx] = true;
+        }
+        return true;
+    }
+
+    // every shift a group could take, nearest first; a tie goes away from the
+    // corner the icons fill from, then down
+    readonly property var shiftOrder: {
+        var out = [];
+        for (var dc = 1 - root.cols; dc < root.cols; dc++) {
+            for (var dr = 1 - root.rows; dr < root.rows; dr++) {
+                if (dc !== 0 || dr !== 0)
+                    out.push({
+                    "dc": dc,
+                    "dr": dr,
+                    "d": Math.hypot(dc * root.cellW, dr * root.cellH),
+                    "t": (dc < 0 ? 2 : 0) + (dr < 0 ? 1 : 0)
+                });
+
+            }
+        }
+        return out.sort((a, b) => {
+            return a.d - b.d || a.t - b.t;
+        });
+    }
+
+    // the nearest shift the whole group fits at; the last one it took while that
+    // still fits and is not much further, so a widget moved about does not set it hopping
+    function fitShift(cells, blocked, taken, last) {
+        var offs = root.shiftOrder;
+        for (var i = 0; i < offs.length; i++) {
+            if (!root.fits(cells, offs[i].dc, offs[i].dr, blocked, taken))
+                continue;
+
+            if (last && (last.dc !== offs[i].dc || last.dr !== offs[i].dr) && root.fits(cells, last.dc, last.dr, blocked, taken) && Math.hypot(last.dc * root.cellW, last.dr * root.cellH) <= offs[i].d * 1.5 + root.cellW / 2)
+                return last;
+
+            return offs[i];
+        }
+        return null;
+    }
+
+    // an icon into a cell; a full desktop stacks the overflow on the last one
+    function seat(out, taken, key, spot, away) {
+        if (spot < 0) {
+            spot = root.cols * root.rows - 1;
+            away = true;
+        } else {
+            taken[spot] = true;
+        }
+        out[key] = {
+            "c": Math.floor(spot / root.rows),
+            "r": spot % root.rows,
+            "away": away
+        };
+    }
+
+    // icons that keep a cell to come back to and wait near it: covered by a widget,
+    // or past the edge of a grid that shrank. each widget's icons, and those past the
+    // edge, step aside as one group, its shape kept; with nowhere to fit as one they
+    // take the nearest free cells, handed out in their own order so none swap places.
+    // returns the shifts
+    function stepAside(list, homes, blocked, taken, out) {
+        var groups = {};
+        var names = [];
+        for (var i = 0; i < list.length; i++) {
+            var h = homes[list[i].key];
+            var c = Math.min(root.cols - 1, h[0]);
+            var r = Math.min(root.rows - 1, h[1]);
+            var w = h[0] < root.cols && h[1] < root.rows ? root.widgetOn(c, r) : -1;
+            // past the side and past the foot are two groups, far apart
+            var g = w >= 0 ? "w:" + root.widgetRects[w].uid : "edge:" + (h[0] >= root.cols ? "c" : "") + (h[1] >= root.rows ? "r" : "");
+            if (!groups[g]) {
+                groups[g] = [];
+                names.push(g);
+            }
+            groups[g].push({
+                "key": list[i].key,
+                "c": c,
+                "r": r
+            });
+        }
+        var shifts = {};
+        for (var k = 0; k < names.length; k++) {
+            var cells = groups[names[k]].sort((a, b) => {
+                return (a.c * root.rows + a.r) - (b.c * root.rows + b.r);
+            });
+            var off = root.fitShift(cells, blocked, taken, root.shifts[names[k]] || null);
+            if (off) {
+                shifts[names[k]] = off;
+                for (var m = 0; m < cells.length; m++)
+                    root.seat(out, taken, cells[m].key, (cells[m].c + off.dc) * root.rows + cells[m].r + off.dr, true);
+                continue;
+            }
+            var spots = [];
+            for (var s = 0; s < cells.length; s++) {
+                var spot = root.nearestFree(cells[s].c, cells[s].r, blocked, taken);
+                if (spot >= 0)
+                    taken[spot] = true;
+
+                spots.push(spot);
+            }
+            var found = spots.filter((q) => {
+                return q >= 0;
+            }).sort((a, b) => {
+                return a - b;
+            });
+            var f = 0;
+            for (var u = 0; u < cells.length; u++)
+                root.seat(out, taken, cells[u].key, spots[u] < 0 ? -1 : found[f++], true);
+        }
+        return shifts;
+    }
+
+    // where every icon goes for these homes: { out: key -> {c, r, away}, rehome:
+    // key -> [c, r] for those that move for good, shifts }. first: keys that win
+    // their home over anyone else's (the ones just dropped)
+    function plan(homes, first) {
         var blocked = root.blockedGrid();
-        var taken = new Array(n);
-        // auto arrange: every icon in the arrange order, nobody keeps a cell of their own
-        var homes = Prefs.desktopIconsAutoArrange ? ({}) : root.homes;
+        var taken = new Array(root.cols * root.rows);
         var out = {};
         var rehome = {};
         var later = [];
@@ -551,7 +705,9 @@ Singleton {
             var pri = {};
             for (var f = 0; f < first.length; f++)
                 pri[first[f]] = f + 1;
-            order.sort((a, b) => (pri[a.key] || 1e+06) - (pri[b.key] || 1e+06));
+            order.sort((a, b) => {
+                return (pri[a.key] || 1e+06) - (pri[b.key] || 1e+06);
+            });
         }
         // whoever can have their own cell gets it
         for (var i = 0; i < order.length; i++) {
@@ -560,57 +716,49 @@ Singleton {
             if (h && h[0] < root.cols && h[1] < root.rows) {
                 var idx = h[0] * root.rows + h[1];
                 if (!blocked[idx] && !taken[idx]) {
-                    out[it.key] = {
-                        "c": h[0],
-                        "r": h[1],
-                        "away": false
-                    };
-                    taken[idx] = true;
+                    root.seat(out, taken, it.key, idx, false);
                     continue;
                 }
             }
             later.push(it);
         }
-        // the rest: pushed off by a widget (they come back), by another icon or
-        // a smaller grid (they move for good), or new (the first free cell)
-        var last = n - 1;
+        // for good: a new icon takes the first free cell, one whose cell another won the nearest
+        var waiting = [];
         for (var j = 0; j < later.length; j++) {
             var e = later[j];
             var hh = homes[e.key];
-            var spot = -1;
-            var away = false;
-            if (hh) {
-                var hc = Math.min(root.cols - 1, hh[0]);
-                var hr = Math.min(root.rows - 1, hh[1]);
-                spot = root.nearestFree(hc, hr, blocked, taken);
-                away = hh[0] < root.cols && hh[1] < root.rows && blocked[hh[0] * root.rows + hh[1]];
-            } else {
-                spot = root.firstFree(blocked, taken);
+            if (hh && (hh[0] >= root.cols || hh[1] >= root.rows || blocked[hh[0] * root.rows + hh[1]])) {
+                waiting.push(e);
+                continue;
             }
-            if (spot < 0) {
-                // a full desktop stacks the overflow on the last cell
-                spot = last;
-                away = true;
-            } else {
-                taken[spot] = true;
-            }
-            var sc = Math.floor(spot / root.rows);
-            var sr = spot % root.rows;
-            out[e.key] = {
-                "c": sc,
-                "r": sr,
-                "away": away
-            };
-            if (!away)
-                rehome[e.key] = [sc, sr];
+            var spot = hh ? root.nearestFree(hh[0], hh[1], blocked, taken) : root.firstFree(blocked, taken);
+            root.seat(out, taken, e.key, spot, false);
+            if (spot >= 0)
+                rehome[e.key] = [out[e.key].c, out[e.key].r];
 
         }
-        root.placed = out;
-        var keys = Object.keys(rehome);
+        return {
+            "out": out,
+            "rehome": rehome,
+            "shifts": root.stepAside(waiting, homes, blocked, taken, out)
+        };
+    }
+
+    function relayout(first) {
+        // nothing is placed before both the folder and the widgets are known
+        if (!root.live || !root.listed || !Widgets.loaded)
+            return ;
+
+        // auto arrange: every icon in the arrange order, nobody keeps a cell of their own
+        var homes = Prefs.desktopIconsAutoArrange ? ({}) : root.homes;
+        var p = root.plan(homes, first);
+        root.placed = p.out;
+        root.shifts = p.shifts;
+        var keys = Object.keys(p.rehome);
         if (keys.length > 0 && !Prefs.desktopIconsAutoArrange) {
             var nh = Object.assign({}, homes);
             for (var k = 0; k < keys.length; k++)
-                nh[keys[k]] = rehome[keys[k]];
+                nh[keys[k]] = p.rehome[keys[k]];
             root.homes = nh;
             root.saveHomes();
         }
@@ -2420,9 +2568,32 @@ Singleton {
         return rows;
     }
 
+    // what shows on the desktop at all; the menu keeps these even while the icons are away
+    function showRows() {
+        var rows = [];
+        if (Prefs.desktopIcons)
+            rows.push(root.row("view:icons", "Show Desktop Icons", "folder", {
+                "check": Prefs.desktopIconsShown
+            }));
+
+        if (Widgets.count > 0)
+            rows.push(root.row("view:widgets", "Show Widgets", "dashboard", {
+                "check": Prefs.widgetsEnabled
+            }));
+
+        return rows;
+    }
+
+    // how long after the wave starts an icon at this spot moves
+    function waveDelay(spot, step) {
+        return spot ? Math.min(30, spot.c + spot.r) * step : 0;
+    }
+
     function viewRows() {
-        return [root.row("view:small", "Small Icons", "", {
-            "check": Prefs.desktopIconSize === "small"
+        var show = root.showRows();
+        return show.concat([root.row("view:small", "Small Icons", "", {
+            "check": Prefs.desktopIconSize === "small",
+            "divider": show.length > 0
         }), root.row("view:medium", "Medium Icons", "", {
             "check": Prefs.desktopIconSize === "medium"
         }), root.row("view:large", "Large Icons", "", {
@@ -2444,7 +2615,7 @@ Singleton {
             "check": !Prefs.desktopIconsHideExt
         }), root.row("view:thumbs", "Show Previews", "", {
             "check": Prefs.desktopIconsThumbs
-        })];
+        })]);
     }
 
     function arrangeRows() {
@@ -2609,6 +2780,10 @@ Singleton {
             Prefs.desktopIconsThumbs = !Prefs.desktopIconsThumbs;
         } else if (id === "view:hide") {
             Prefs.desktopIconsShown = false;
+        } else if (id === "view:icons") {
+            Prefs.desktopIconsShown = !Prefs.desktopIconsShown;
+        } else if (id === "view:widgets") {
+            Prefs.widgetsEnabled = !Prefs.widgetsEnabled;
         } else if (id === "arrange:asc" || id === "arrange:desc") {
             Prefs.desktopIconsSortDesc = id === "arrange:desc";
             Qt.callLater(root.arrange);
@@ -2643,6 +2818,20 @@ Singleton {
     onRowsChanged: root.scheduleLayout()
     onFromRightChanged: root.scheduleLayout()
     onLiveChanged: {
+        if (root.live) {
+            leaveTimer.stop();
+            root.leaving = false;
+            root.waking = true;
+            wakeTimer.restart();
+        } else if (Prefs.loaded) {
+            // up for the last icon's turn in the wave, and its fade
+            var far = 0;
+            for (var k in root.placed)
+                far = Math.max(far, root.waveDelay(root.placed[k], root.stowStep));
+            leaveTimer.interval = far + Theme.durShort + 60;
+            root.leaving = true;
+            leaveTimer.restart();
+        }
         root.restartWatcher();
         if (root.live && root.lumaFor === "")
             root.measureWallpaper(wallFile.text().trim());
@@ -2692,7 +2881,7 @@ Singleton {
         }
 
         function onLiveRectChanged() {
-            widgetTimer.restart();
+            restTimer.restart();
         }
 
         function onLiveUidChanged() {
@@ -2704,12 +2893,25 @@ Singleton {
     }
 
     Connections {
+        // put away, the cards fade before the icons take their room
         function onWidgetsEnabledChanged() {
-            widgetTimer.restart();
+            if (Prefs.widgetsEnabled) {
+                widgetsGone.stop();
+                widgetTimer.restart();
+            } else {
+                widgetsGone.restart();
+            }
         }
 
         target: Prefs
         enabled: root.live
+    }
+
+    Timer {
+        id: widgetsGone
+
+        interval: Widgets.count * Math.round(30 * Theme.motionScale) + Theme.durMedium
+        onTriggered: widgetTimer.restart()
     }
 
     Timer {
@@ -2721,6 +2923,14 @@ Singleton {
             root.collectWidgets();
             root.relayout();
         }
+    }
+
+    // a widget being dragged moves the icons once it rests over them, not on its way across
+    Timer {
+        id: restTimer
+
+        interval: 150
+        onTriggered: widgetTimer.restart()
     }
 
     Timer {
@@ -2822,6 +3032,19 @@ Singleton {
     Component.onCompleted: {
         root.homes = store.homes || ({});
         root.restartWatcher();
+    }
+
+    Timer {
+        id: leaveTimer
+
+        onTriggered: root.leaving = false
+    }
+
+    Timer {
+        id: wakeTimer
+
+        interval: 1500
+        onTriggered: root.waking = false
     }
 
     Process {

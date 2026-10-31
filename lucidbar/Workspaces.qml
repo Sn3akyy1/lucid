@@ -1247,7 +1247,7 @@ Item {
 
     HyprlandFocusGrab {
         active: root.expanded
-        windows: root.hostWindow ? [root.hostWindow] : []
+        windows: root.hostWindow ? [root.hostWindow].concat(Edit.active ? Edit.windows : []) : []
         onCleared: root.expanded = false
     }
 
@@ -1412,10 +1412,12 @@ Item {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
                 // the middle button opens the overview; the right one, this
-                // module's card in Settings, as on the other modules
+                // module's sheet in edit mode, as on the other modules
                 acceptedButtons: Qt.MiddleButton | Qt.RightButton
                 onClicked: (mouse) => {
-                    if (mouse.button === Qt.RightButton)
+                    if (mouse.button === Qt.RightButton && root.hostWindow && root.hostWindow.editModule)
+                        root.hostWindow.editModule("workspaces");
+                    else if (mouse.button === Qt.RightButton)
                         Prefs.openBarModule("workspaces");
                     else
                         root.expanded = !root.expanded;

@@ -22,7 +22,7 @@ Column {
         "desc": "Volume and brightness on-screen display"
     }, {
         "name": "lucidshot",
-        "desc": "Screenshot overlay and region capture"
+        "desc": "Captures, markup, pins and the screen recorder"
     }, {
         "name": "lucidmoji",
         "desc": "Emoji and GIF picker"
@@ -189,11 +189,12 @@ Column {
                     onClicked: Updates.checkBeta()
                 }
 
+                // grey once the newest commit on main is the one installed
                 M3Button {
                     text: "Install beta"
                     variant: "filled"
                     destructive: true
-                    enabled: Updates.betaSha !== "" && !Updates.installing
+                    enabled: Updates.betaAvailable && !Updates.installing
                     onClicked: Updates.startUpdate("beta")
                 }
 

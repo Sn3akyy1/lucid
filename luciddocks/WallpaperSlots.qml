@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 // The picker styles built from slots: every wallpaper is one shape that glides
 // between places as the selection moves, changing width, height and corner
@@ -164,6 +165,7 @@ Item {
                 readonly property var entry: strip.model ? strip.model.get(slot.index) : null
                 readonly property string path: slot.entry ? slot.entry.path : ""
                 readonly property string thumb: slot.entry ? slot.entry.thumb : ""
+                readonly property bool temp: slot.entry ? slot.entry.temp === true : false
                 readonly property bool isCurrent: slot.offset === 0
                 readonly property bool isApplied: strip.appliedPath !== "" && strip.appliedPath === slot.path
                 readonly property bool hovered: slotHover.hovered
@@ -330,6 +332,27 @@ Item {
                     radius: Theme.pill(8)
                     color: Theme.accent
                     visible: slot.isApplied && !slot.wide
+                }
+
+                // set from outside the folder: in the strip only while it is the wallpaper
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.margins: Theme.dp(10)
+                    width: Theme.dp(24)
+                    height: Theme.dp(24)
+                    radius: Theme.pill(24)
+                    color: Theme.secondaryContainer
+                    visible: slot.temp && slot.wide
+
+                    Icon {
+                        anchors.centerIn: parent
+                        name: "hourglass_top"
+                        size: Theme.dp(15)
+                        fill: 1
+                        color: Theme.fgSecondaryContainer
+                    }
+
                 }
 
                 HoverHandler {

@@ -6,6 +6,7 @@ import Quickshell.Hyprland._FocusGrab
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs
+import qs.lucidicons
 import qs.lucidui
 
 BarPill {
@@ -46,6 +47,14 @@ BarPill {
     property var menuItem: null
     property real menuX: 0
     property real menuY: 0
+
+    onMenuItemChanged: {
+        if (root.menuItem)
+            sheetJelly.kickAfter(Math.min(0.09, Theme.dp(18) / Math.max(1, menuSheet.height)), Math.round(Theme.barDurShort * 0.3));
+        else
+            sheetJelly.rest();
+    }
+
     function resolveIconSource(raw) {
         if (!raw)
             return "";
@@ -58,6 +67,20 @@ BarPill {
         const dir = raw.substring(qIdx + 6);
         const fileName = name.substring(name.lastIndexOf("/") + 1);
         return "file://" + dir + "/" + fileName;
+    }
+
+    // an app's lucid icon, unless legacy icons are on or lucid draws none for it.
+    // electron apps all go by chrome_status_icon_n, so their title names them; a
+    // hardware or service icon shows a state (signal, charge) and keeps its own
+    function appSlotOf(item) {
+        if (Prefs.envLegacyIcons || !item || item.category === Category.Hardware || item.category === Category.SystemServices)
+            return "";
+
+        const id = /^chrome_status_icon/.test(item.id || "") ? "" : (item.id || "");
+        const name = item.title || item.tooltipTitle || "";
+        const raw = item.icon || "";
+        const icon = raw.indexOf("image://icon/") === 0 ? raw.slice(13).split("?")[0] : "";
+        return LucidIcons.slotFor(id || name, icon, name);
     }
 
     readonly property int horizontalPadding: Theme.dp(10)
@@ -102,6 +125,7 @@ BarPill {
                     id: inline
 
                     required property var modelData
+                    readonly property string lucidSlot: root.appSlotOf(inline.modelData)
 
                     width: Theme.dp(18)
                     height: Theme.dp(18)
@@ -113,14 +137,26 @@ BarPill {
                         anchors.fill: parent
                         source: root.resolveIconSource(inline.modelData.icon)
                         asynchronous: true
-                        visible: status === Image.Ready
+                        visible: status === Image.Ready && inline.lucidSlot === ""
                         layer.enabled: Prefs.trayIconColor !== "original"
                         layer.effect: TrayTint {
                         }
                     }
 
+                    Loader {
+                        anchors.centerIn: parent
+                        active: inline.lucidSlot !== ""
+
+                        sourceComponent: TonalIcon {
+                            size: Math.round(Theme.dp(18))
+                            slot: inline.lucidSlot
+                            hovered: inlineArea.containsMouse
+                        }
+
+                    }
+
                     Text {
-                        visible: !inlineIcon.visible
+                        visible: !inlineIcon.visible && inline.lucidSlot === ""
                         anchors.centerIn: parent
                         text: (inline.modelData.title || inline.modelData.id || "?").charAt(0).toUpperCase()
                         color: Theme.subtext
@@ -142,8 +178,11 @@ BarPill {
                     }
 
                     MouseArea {
+                        id: inlineArea
+
                         anchors.fill: parent
                         anchors.margins: -Theme.dp(3)
+                        hoverEnabled: true
                         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                         cursorShape: Qt.PointingHandCursor
                         onClicked: (mouse) => {
@@ -406,6 +445,15 @@ BarPill {
                 opacity: root.menuItem !== null ? 1 : 0
                 scale: root.menuItem !== null ? 1 : 0.94
                 transformOrigin: Item.TopLeft
+                readonly property bool jellyWobbling: sheetJelly.wobbling
+                transform: Jelly {
+                    id: sheetJelly
+
+                    target: menuSheet
+                    anchorX: 0
+                    anchorY: 0
+                    frequency: 4.4
+                }
 
                 Behavior on opacity {
                     NumberAnimation {
@@ -563,6 +611,7 @@ BarPill {
         signal requestMenu(var it, real wx, real wy)
 
         readonly property var item: card.modelData
+        readonly property string lucidSlot: root.appSlotOf(card.item)
         readonly property bool needsAttention: card.item.status === Status.NeedsAttention
         readonly property string displayName: card.item.title || card.item.tooltipTitle || card.item.id || "Unknown"
         readonly property string supporting: {
@@ -675,14 +724,26 @@ BarPill {
                     height: Theme.dp(22)
                     source: card.resolvedIcon
                     asynchronous: true
-                    visible: status === Image.Ready
+                    visible: status === Image.Ready && card.lucidSlot === ""
                     layer.enabled: Prefs.trayIconColor !== "original"
                     layer.effect: TrayTint {
                     }
                 }
 
+                Loader {
+                    anchors.centerIn: parent
+                    active: card.lucidSlot !== ""
+
+                    sourceComponent: TonalIcon {
+                        size: Math.round(Theme.dp(24))
+                        slot: card.lucidSlot
+                        hovered: cardArea.containsMouse
+                    }
+
+                }
+
                 Rectangle {
-                    visible: !cardIconImage.visible
+                    visible: !cardIconImage.visible && card.lucidSlot === ""
                     anchors.fill: parent
                     radius: Theme.dp(999)
                     color: Theme.withBlur(Theme.bgHigh)

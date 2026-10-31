@@ -185,6 +185,12 @@ Item {
         });
     }
 
+    // a dropped or new card settles like a jelly set down on the desk
+    function wobble(amp) {
+        const cap = Theme.dp(18) / Math.max(1, frame.height);
+        jelly.kick(Math.max(-cap, Math.min(cap, amp)));
+    }
+
     function beginDrag(mx, my) {
         // a card outside the selection moves on its own and lets the rest go
         if (!frame.selected)
@@ -192,6 +198,8 @@ Item {
 
         if (frame.locked)
             return ;
+
+        jelly.rest();
 
         var crew = [];
         if (frame.selected) {
@@ -305,6 +313,7 @@ Item {
             return ;
         }
         Widgets.setPos(frame.uid, frame.dragX, frame.dragY);
+        var moved = frame.dragX !== frame.homeX || frame.dragY !== frame.homeY;
         for (var i = 0; i < crew.length; i++) {
             var c = crew[i];
             if (!c)
@@ -312,7 +321,13 @@ Item {
 
             Widgets.setPos(c.uid, c.dragX, c.dragY);
             c.dragging = false;
+            if (moved)
+                c.wobble(-0.1);
+
         }
+        if (moved)
+            frame.wobble(-0.1);
+
         // a click that went nowhere lets the selection go
         if (frame.dragX === frame.homeX && frame.dragY === frame.homeY)
             Widgets.clearSelection();
@@ -323,6 +338,8 @@ Item {
     function beginResize(hx, vy, px, py) {
         if (frame.locked || !frame.resizable)
             return ;
+
+        jelly.rest();
 
         frame.gripH = hx;
         frame.gripV = vy;
@@ -419,11 +436,11 @@ Item {
         }
     }
 
-    // what WidgetRegion masks and blurs
-    readonly property real surfaceX: 0
-    readonly property real surfaceY: 0
-    readonly property real surfaceWidth: frame.width
-    readonly property real surfaceHeight: frame.height
+    // what WidgetRegion masks and blurs: the card as painted, jelly and all
+    readonly property real surfaceX: jelly.shiftX
+    readonly property real surfaceY: jelly.shiftY
+    readonly property real surfaceWidth: frame.width * jelly.xScale
+    readonly property real surfaceHeight: frame.height * jelly.yScale
     readonly property int surfaceRadius: frame.radius
 
     visible: frame.onThisScreen && frame.opacity > 0.01
@@ -432,12 +449,40 @@ Item {
     z: frame.zOrder
     x: frame.resizing ? frame.resX : (frame.dragging ? frame.dragX : frame.clampX(frame.wx))
     y: frame.resizing ? frame.resY : (frame.dragging ? frame.dragY : frame.clampY(frame.wy))
-    opacity: (frame.closing || frame.blanked) ? 0 : (frame.appeared ? (frame.overBin ? 0.4 : 1) : 0)
-    scale: frame.closing ? 0.9 : (frame.appeared ? (frame.overBin ? 0.94 : (frame.dragging ? 1.025 : 1)) : (frame.landed ? 1 : (frame.born ? 0.86 : 0.97)))
+    opacity: (frame.closing || frame.blanked || frame.tucked) ? 0 : (frame.appeared ? (frame.overBin ? 0.4 : 1) : 0)
+    scale: frame.closing ? 0.9 : frame.tucked ? 0.86 : (frame.appeared ? (frame.overBin ? 0.94 : (frame.dragging ? 1.025 : 1)) : (frame.landed ? 1 : (frame.born ? 0.86 : 0.97)))
 
     property bool appeared: false
+    readonly property bool jellyWobbling: jelly.wobbling
+    // put away from the menu: the cards go, and come back wobbling, one after another
+    readonly property bool away: frame.board !== null && !frame.board.widgetsOn
+    property bool tucked: false
 
-    Component.onCompleted: appearTimer.start()
+    onAwayChanged: {
+        if (!frame.board) {
+            frame.tucked = false;
+            return ;
+        }
+        tuckTimer.interval = Math.max(1, frame.board.orderOf(frame) * (frame.away ? frame.board.stowStep : frame.board.wakeStep));
+        tuckTimer.restart();
+    }
+
+    transform: Jelly {
+        id: jelly
+
+        target: frame
+        frequency: 3.8
+    }
+
+    onAppearedChanged: {
+        if (frame.appeared && (frame.born || frame.landed))
+            jellyLater.restart();
+
+    }
+    Component.onCompleted: {
+        frame.tucked = frame.away;
+        appearTimer.start();
+    }
     // the box picks cards up and drops them live; letting it go keeps what it held
     onMarkedChanged: {
         if (Widgets.marquee !== null)
@@ -458,6 +503,24 @@ Item {
         }
 
         target: Widgets
+    }
+
+    Timer {
+        id: jellyLater
+
+        interval: Math.round(Theme.durMedium * 0.35)
+        onTriggered: frame.wobble(0.1)
+    }
+
+    Timer {
+        id: tuckTimer
+
+        onTriggered: {
+            frame.tucked = frame.away;
+            if (!frame.tucked)
+                jellyLater.restart();
+
+        }
     }
 
     Timer {
@@ -692,21 +755,25 @@ Item {
     }
 
     // a resizable card has no other affordance, so outline it while it is under
-    // the pointer - the bare variants have no container to hint at an edge
+    // the pointer - the bare variants have no container to hint at an edge. in edit
+    // mode every card is outlined, the way the bar's modules are, and a pinned one
+    // keeps a quieter line
     Item {
         anchors.fill: parent
         z: 7
-        visible: frame.resizable && !frame.locked && outline.opacity > 0.01
+        visible: (Edit.active || (frame.resizable && !frame.locked)) && outline.opacity > 0.01
 
         Rectangle {
             id: outline
 
+            readonly property bool hot: Edit.active && !frame.locked && (frame.active || frame.resizing)
+
             anchors.fill: parent
             radius: frame.radius
             color: "transparent"
-            border.width: 1
-            border.color: Theme.alpha(Theme.accent, 0.55)
-            opacity: (frame.active || frame.resizing) ? 1 : 0
+            border.width: outline.hot ? 2 : 1
+            border.color: Theme.alpha(Edit.active && frame.locked ? Theme.text : Theme.accent, outline.hot ? 1 : (Edit.active && frame.locked ? 0.3 : 0.55))
+            opacity: (frame.active || frame.resizing || Edit.active) ? 1 : 0
 
             Behavior on opacity {
                 NumberAnimation {
@@ -732,7 +799,7 @@ Item {
                 radius: Theme.dp(3)
                 color: Theme.accent
                 opacity: outline.opacity
-                visible: dot.corner
+                visible: dot.corner && frame.resizable && !frame.locked
                 x: dot.modelData.h < 0 ? -Theme.dp(3) : frame.width - Theme.dp(3)
                 y: dot.modelData.v < 0 ? -Theme.dp(3) : frame.height - Theme.dp(3)
             }

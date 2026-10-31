@@ -10,10 +10,11 @@ import "../lucidnotif"
 BarPill {
     id: root
 
-    // Lucid's own screen recorder and the toast, handed in by shell.qml
+    // the toast, handed in by shell.qml; recorder is no longer used, Lucid's
+    // own recorder is the Capture singleton
     property var recorder: null
     property var toast: null
-    readonly property bool recording: !!root.recorder && root.recorder.recordingState !== "idle"
+    readonly property bool recording: Capture.live
     // material symbols, as NotifIcon draws them
     readonly property var icons: ({
         "mic": "mic",
@@ -445,8 +446,7 @@ BarPill {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                if (root.recorder)
-                                    root.recorder.stopRecording();
+                                Capture.stop();
 
                             }
                         }

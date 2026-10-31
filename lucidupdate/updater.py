@@ -106,6 +106,7 @@ class Runner:
         self.backup = ""
         self.timed_out = False
         self.version = ""
+        self.sha = a.sha
 
     # --- the pty ---------------------------------------------------------
 
@@ -321,8 +322,16 @@ class Runner:
             if os.path.isdir(dest):
                 shutil.rmtree(dest)
             os.makedirs(dest)
+            # member by member, so a stop lands between files
             with tarfile.open(tarpath, "r:*") as t:
-                t.extractall(dest, filter="data")
+                for m in t:
+                    if self.cancelled:
+                        raise InterruptedError()
+                    t.extract(m, dest, filter="data")
+                # github's archives carry their commit in the pax header
+                sha = str(t.pax_headers.get("comment", ""))
+            if re.fullmatch(r"[0-9a-f]{40}", sha):
+                self.sha = sha
             tops = [d for d in os.listdir(dest) if os.path.isdir(os.path.join(dest, d))]
             if len(tops) != 1:
                 raise ValueError("the archive has no single top folder")
@@ -343,6 +352,8 @@ class Runner:
             os.unlink(tarpath)
             self.src = src
             self.result = {"ok": True}
+        except InterruptedError:
+            self.result = {"ok": False, "reason": "cancelled"}
         except Exception as e:
             self.result = {"ok": False, "reason": "unpack", "text": "The download could not be unpacked: " + str(e)}
 
@@ -421,7 +432,7 @@ class Runner:
 
     def record(self):
         path = os.path.join(os.path.dirname(self.dir), "installed.json")
-        data = {"channel": self.a.channel, "ref": self.a.ref, "sha": self.a.sha, "version": self.version, "at": int(time.time() * 1000)}
+        data = {"channel": self.a.channel, "ref": self.a.ref, "sha": self.sha, "version": self.version, "at": int(time.time() * 1000)}
         tmp = path + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(data, f)
@@ -472,6 +483,9 @@ def main():
     r.phase_to("auth", "Waiting for your password")
     r.spawn()
     code = r.loop(ffd)
+    # an unpack still running would refill src/ after tidy() emptied it
+    if r.worker is not None:
+        r.worker.join(timeout=120)
     r.finish(code)
     os.close(ffd)
     r.tidy()

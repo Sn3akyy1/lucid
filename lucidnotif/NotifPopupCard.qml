@@ -106,14 +106,17 @@ Item {
                 }
             }
 
+            // let go short of a throw, it springs back and wobbles
             NumberAnimation {
                 id: snapBack
 
                 target: sled
                 property: "y"
                 to: 0
-                duration: Theme.ms(240)
-                easing.type: Easing.Bezier
+                duration: Theme.jelly > 0 ? Theme.ms(560) : Theme.ms(240)
+                easing.type: Theme.jelly > 0 ? Easing.OutElastic : Easing.Bezier
+                easing.amplitude: 1
+                easing.period: 0.42
                 easing.bezierCurve: Theme.easeEmphasizedDecel
             }
 

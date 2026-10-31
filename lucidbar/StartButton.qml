@@ -201,7 +201,10 @@ BarPill {
             cursorShape: Qt.PointingHandCursor
             onClicked: (mouse) => {
                 if (mouse.button === Qt.RightButton) {
-                    Prefs.openBarModule("start");
+                    if (root.hostWindow && root.hostWindow.editModule)
+                        root.hostWindow.editModule("start");
+                    else
+                        Prefs.openBarModule("start");
                     return ;
                 }
                 if (root.launcherOpen)

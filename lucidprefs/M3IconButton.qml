@@ -37,6 +37,13 @@ Item {
     implicitWidth: btn.size
     implicitHeight: btn.size
     opacity: btn.enabled ? 1 : 0.38
+    readonly property bool jellyWobbling: squish.wobbling
+    transform: Jelly {
+        id: squish
+
+        target: btn
+        frequency: 6.5
+    }
 
     Rectangle {
         id: container
@@ -96,6 +103,7 @@ Item {
         enabled: btn.enabled
         cursorShape: Qt.PointingHandCursor
         onClicked: btn.clicked()
+        onPressedChanged: squish.kick(area.pressed ? -0.12 : 0.09)
     }
 
     Behavior on opacity {

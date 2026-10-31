@@ -257,6 +257,21 @@ PanelWindow {
                         readonly property bool hot: tile.focused || tileTap.containsMouse
                         // each tile rises into place a beat after the one before
                         readonly property real enter: Math.max(0, Math.min(1, ses.reveal * 1.6 - tile.index * 0.12))
+                        // and lands with a wobble; it jiggles under the pointer and squashes under a press
+                        readonly property bool landed: tile.enter >= 1
+                        readonly property bool down: tileTap.pressed
+
+                        onLandedChanged: {
+                            if (tile.landed && ses.open)
+                                blobJelly.kick(0.12);
+
+                        }
+                        onHotChanged: {
+                            if (tile.hot && ses.open)
+                                blobJelly.kick(0.06);
+
+                        }
+                        onDownChanged: blobJelly.kick(tile.down ? -0.1 : 0.08)
 
                         width: Theme.dp(136)
                         height: Theme.dp(136) + Theme.dp(44)
@@ -277,6 +292,12 @@ PanelWindow {
                             color: tile.isArmed ? Theme.error : (tile.hot ? Theme.primary : Theme.withBlur(Theme.surfaceHigh))
                             rotation: tile.isArmed ? 360 : (tile.hot ? 22 : 0)
                             scale: tileTap.pressed ? 0.92 : (tile.hot ? 1.06 : 1)
+                            transform: Jelly {
+                                id: blobJelly
+
+                                target: blob
+                                frequency: 4.4
+                            }
 
                             Behavior on morph {
                                 NumberAnimation {
@@ -315,11 +336,22 @@ PanelWindow {
                         }
 
                         Icon {
+                            id: blobIcon
+
+                            // bent with the shape under it
+                            readonly property bool jellyWobbling: blobJelly.wobbling
+
                             anchors.centerIn: blob
                             name: tile.modelData.icon
                             size: Theme.dp(46)
                             fill: tile.hot || tile.isArmed ? 1 : 0
                             color: tile.isArmed ? Theme.fgError : (tile.hot ? Theme.fgPrimary : Theme.text)
+                            transform: Scale {
+                                origin.x: blobIcon.width / 2
+                                origin.y: blobIcon.height / 2
+                                xScale: blobJelly.xScale
+                                yScale: blobJelly.yScale
+                            }
                         }
 
                         // the countdown before an armed action gives up

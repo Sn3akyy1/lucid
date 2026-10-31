@@ -3,6 +3,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Widgets
 import qs
+import qs.lucidicons
 import qs.lucidui
 
 // the launcher's results, on the m3 list item scale: a 40dp leading slot, 16dp
@@ -26,6 +27,7 @@ Item {
     readonly property bool hasSelection: list.count > 0 && list.isSelectable(list.currentIndex)
     // where the pill is this frame; the rows light by it
     readonly property real pillY: selection.slot
+    readonly property real pillHeight: selection.slotHeight
     // what the empty state needs, for the dock to size the panel to
     readonly property real emptyExtent: empty.implicitHeight + 2 * Math.round(16 * list.cs)
     // the view consumes these; reading them back off `view` re-entered the layout
@@ -104,11 +106,11 @@ Item {
         return r.subtitle !== "" ? Prefs.launcherRowTwo : Prefs.launcherRowOne;
     }
 
-    // the m3 trailing supporting text: what Return will do with this row
+    // the m3 trailing supporting text: what Return will do with this row. a kind
+    // that isn't here gets no hint at all
     function actionFor(kind) {
         switch (kind) {
         case "app":
-        case "command":
         case "action":
             return "Open";
         case "window":
@@ -125,10 +127,7 @@ Item {
             return "Terminal";
         case "calc":
         case "emoji":
-        case "clip":
             return "Copy";
-        case "theme":
-            return "Apply";
         }
         return "";
     }
@@ -417,22 +416,32 @@ Item {
             required property bool disabled
             required property bool selectable
             required property string payload
+            required property string appSlot
             required property int index
+            readonly property bool tonal: rowItem.appSlot !== "" && !Prefs.envLegacyIcons
             readonly property bool isHeader: rowItem.kind === "header"
             readonly property bool isCalc: rowItem.kind === "calc"
             readonly property bool selected: list.currentIndex === rowItem.index && rowItem.selectable
             readonly property bool hovering: list.hoveredIndex === rowItem.index && rowItem.selectable && !rowItem.disabled
-            readonly property bool hasLead: rowItem.iconName !== "" || rowItem.glyph !== "" || rowItem.emoji !== "" || rowItem.swatchBg !== "" || rowItem.thumb !== ""
+            readonly property bool hasLead: rowItem.tonal || rowItem.iconName !== "" || rowItem.glyph !== "" || rowItem.emoji !== "" || rowItem.swatchBg !== "" || rowItem.thumb !== ""
             // how much of the pill is under this row this frame. everything that
-            // marks the selection is coloured by it, so none of it leads or trails
-            readonly property real lit: list.hasSelection && rowItem.selectable ? Math.max(0, 1 - Math.abs(list.pillY - rowItem.y) / Math.max(1, rowItem.height)) : 0
+            // marks the selection is coloured by it, so none of it leads or trails.
+            // overlap, not distance: a taller row is closer than its own height to
+            // the row above it, so a distance lit it with the pill nowhere near
+            readonly property real lit: {
+                if (!list.hasSelection || !rowItem.selectable)
+                    return 0;
+
+                var under = Math.min(list.pillY + list.pillHeight, rowItem.y + rowItem.height) - Math.max(list.pillY, rowItem.y);
+                return Math.max(0, under) / Math.max(1, rowItem.height);
+            }
             readonly property color content: list.mix(Theme.text, Theme.fgPrimaryContainer, rowItem.lit)
             readonly property color support: list.mix(Theme.subtext, Theme.alpha(Theme.fgPrimaryContainer, 0.76), rowItem.lit)
             readonly property color mark: list.mix(Theme.primary, Theme.fgPrimaryContainer, rowItem.lit)
-            readonly property bool showsDrop: rowItem.kind === "clip" && (rowItem.hovering || rowItem.selected)
+            readonly property bool showsDrop: rowItem.kind === "clip" && (rowItem.hovering || rowItem.lit > 0)
             // an application the pointer is on can be sent out of the launcher
             readonly property bool showsHide: rowItem.kind === "app" && rowItem.hovering
-            readonly property bool showsHint: Prefs.launcherActionHints && rowItem.lit > 0 && !rowItem.isHeader && !rowItem.isCalc && rowItem.trailing === ""
+            readonly property bool showsHint: Prefs.launcherActionHints && rowItem.lit > 0 && !rowItem.isHeader && !rowItem.isCalc && list.actionFor(rowItem.kind) !== "" && rowItem.trailing === ""
 
             function askThumb() {
                 if (rowItem.thumb !== "")
@@ -581,11 +590,24 @@ Item {
 
                 // an application icon is already a shape and a colour of its
                 // own; standing it on a tile only muddies both
+                // lucid's own tile for an app it knows, moving as the row is reached
+                Loader {
+                    anchors.centerIn: parent
+                    active: rowItem.tonal
+
+                    sourceComponent: TonalIcon {
+                        size: Math.round(list.leadSlot * 0.88)
+                        slot: rowItem.appSlot
+                        hovered: rowItem.hovering || rowItem.selected
+                    }
+
+                }
+
                 IconImage {
                     anchors.centerIn: parent
                     width: Math.round(list.leadSlot * 0.88)
                     height: Math.round(list.leadSlot * 0.88)
-                    visible: rowItem.iconName !== ""
+                    visible: rowItem.iconName !== "" && !rowItem.tonal
                     source: rowItem.iconName === "" ? "" : (IconTheme.generation >= 0 && IconTheme.pathFor(rowItem.iconName) !== "" ? IconTheme.pathFor(rowItem.iconName) : Quickshell.iconPath(rowItem.iconName, true))
                 }
 
@@ -742,7 +764,7 @@ Item {
 
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                width: rowItem.showsDrop || rowItem.showsHide ? Math.round(38 * list.cs) : (rowItem.trailing !== "" ? Math.round(28 * list.cs) : (rowItem.showsHint ? hint.implicitWidth + Math.round(26 * list.cs) : 0))
+                width: rowItem.kind === "clip" || rowItem.showsHide ? Math.round(38 * list.cs) : (rowItem.trailing !== "" ? Math.round(28 * list.cs) : (rowItem.showsHint ? hint.implicitWidth + Math.round(26 * list.cs) : 0))
                 height: 1
             }
 
@@ -754,7 +776,7 @@ Item {
                 anchors.rightMargin: list.edgeSpace
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Math.round(5 * list.cs)
-                visible: rowItem.showsHint && !rowItem.showsDrop && !rowItem.showsHide
+                visible: rowItem.showsHint && !rowItem.showsHide
                 opacity: rowItem.lit
 
                 Icon {
@@ -843,6 +865,8 @@ Item {
                 anchors.rightMargin: Theme.dp(8)
                 anchors.verticalCenter: parent.verticalCenter
                 visible: rowItem.showsDrop
+                // rides on the pill, unless the pointer is the reason it's here
+                opacity: rowItem.hovering ? 1 : rowItem.lit
 
                 Rectangle {
                     anchors.fill: parent

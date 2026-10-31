@@ -94,7 +94,17 @@ Item {
     onMenuVisibleChanged: {
         menu.fadeDuration = menu.menuVisible ? Theme.durEnter : Theme.durExit;
         menu.fadeEasing = menu.menuVisible ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
+        if (menu.menuVisible)
+            cardJelly.kickAfter(0.1, Math.round(Theme.durEnter * 0.3));
+        else
+            cardJelly.rest();
     }
+
+    // the card as painted, jelly and all, for the overlay's blur
+    readonly property real paintX: menu.cardX + cardJelly.shiftX
+    readonly property real paintY: menu.cardY + cardJelly.shiftY
+    readonly property real paintW: menu.cardW * cardJelly.xScale
+    readonly property real paintH: menu.cardH * cardJelly.yScale
 
     HyprlandFocusGrab {
         windows: menu.grabWindow ? [menu.grabWindow] : []
@@ -118,6 +128,14 @@ Item {
         opacity: menu.menuVisible ? 1 : 0
         scale: menu.menuVisible ? 1 : 0.9
         transformOrigin: Item.Bottom
+        readonly property bool jellyWobbling: cardJelly.wobbling
+        transform: Jelly {
+            id: cardJelly
+
+            target: contentRoot
+            anchorY: 1
+            frequency: 4.4
+        }
 
         Column {
             id: list

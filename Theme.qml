@@ -63,6 +63,9 @@ Singleton {
     property real accentPunch: pf.accentPunch
     readonly property real motionBaseline: 1.125
     readonly property real motionScale: pf.motionScale * root.motionBaseline
+    // Settings > General > Jelly motion: how far things wobble as they open and
+    // land. 0 while it is off or nothing animates
+    readonly property real jelly: pf.jellyMotion && pf.motionScale > 0 ? Math.max(0, Math.min(2, pf.jellyAmount)) : 0
     // the ramp below is authored a step large; 1.00x renders it at 0.9
     readonly property real typeBaseline: 0.9
     // the interface size setting. every authored pixel in the shell goes
@@ -719,6 +722,8 @@ Singleton {
             property real surfaceDarkness: -1
             property real surfaceTint: -1
             property real motionScale: 1
+            property bool jellyMotion: true
+            property real jellyAmount: 1
             property real barMotionScale: 1.35
             property string fontFamily: "Google Sans"
             property real fontScale: 1

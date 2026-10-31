@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.lucidicons
 
 Column {
     id: page
@@ -83,15 +84,31 @@ Column {
         title: "THEMES"
 
         SettingRow {
+            title: "Use legacy icons"
+            resetKey: "envLegacyIcons"
+            description: "Turns off Lucid's own icons, coloured by Matugen from your wallpaper, and uses your GTK icon theme instead: on the desktop, the dock, the launcher, the tray and in Lumen."
+
+            M3Switch {
+                checked: Prefs.envLegacyIcons
+                onToggled: (v) => {
+                    return Prefs.envLegacyIcons = v;
+                }
+            }
+
+        }
+
+        // lucid's sets while its own icons are on, the gtk themes once they are off
+        SettingRow {
             title: "Icon theme"
-            description: "Used by application menus, file managers and the shell's own dock. The dock follows a change straight away; open applications repaint when they next redraw."
-            warning: Env.iconMissing ? "“" + Prefs.envIconTheme + "” is not installed on this machine any more." : ""
+            resetKey: Prefs.envLegacyIcons ? "" : "envIconSet"
+            description: Prefs.envLegacyIcons ? "Used by application menus, file managers and the shell's own dock. The dock follows a change straight away; open applications repaint when they next redraw." : "How Lucid draws files, folders and apps, in your wallpaper's colours. Gravity is lit softly from above; Gravity (Simplified) is the same set in flat tones."
+            warning: Prefs.envLegacyIcons && Env.iconMissing ? "“" + Prefs.envIconTheme + "” is not installed on this machine any more." : ""
 
             M3Button {
-                text: page.orUnset(Prefs.envIconTheme)
+                text: Prefs.envLegacyIcons ? page.orUnset(Prefs.envIconTheme) : LucidIcons.nameOf(Prefs.envIconSet)
                 variant: "tonal"
-                enabled: Env.iconThemes.length > 0
-                onClicked: Prefs.envPickerRequested("icon")
+                enabled: !Prefs.envLegacyIcons || Env.iconThemes.length > 0
+                onClicked: Prefs.envPickerRequested(Prefs.envLegacyIcons ? "icon" : "iconSet")
             }
 
         }

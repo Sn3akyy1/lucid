@@ -1,17 +1,29 @@
 #!/usr/bin/env bash
-# wallpaper-thumbs.sh <folder> [live]
+# wallpaper-thumbs.sh <folder> [live] [--also <file>]
 #
 # lists the folder's pictures for the wallpaper strip, sorted, one
 # "<path><TAB><thumbnail>" a line. with "live" the videos come too, their lines
 # ending in "<TAB>video", their thumbnail cut from the first frame by ffmpeg. the thumbnail is a small copy in
 # ~/.cache/lucid/wallpaper-thumbs, or empty while there is none yet: those are
 # made in the background, niced and one at a time, so the next listing has them.
-# the strip used to decode every original, up to 8k, each time it opened
+# the strip used to decode every original, up to 8k, each time it opened.
+# --also is the wallpaper in use when it lives outside the folder (set from
+# lumen, say): it comes first, its line ending in "<TAB>temp", for as long as
+# it is the one in use
 
 set -uo pipefail
 
 DIR="${1:-}"
-LIVE="${2:-}"
+shift || true
+LIVE=""
+if [[ "${1:-}" == live ]]; then
+    LIVE=live
+    shift
+fi
+ALSO=""
+if [[ "${1:-}" == --also ]]; then
+    ALSO="${2:-}"
+fi
 # twice the strip's hero card, covered rather than fitted
 SIZE=680x422
 THUMBS="$HOME/.cache/lucid/wallpaper-thumbs/$SIZE"
@@ -27,6 +39,20 @@ is_video() {
 }
 
 MISSING=()
+# the outside one: a picture, or a video, whatever the live switch says, since
+# it is on the desktop already
+if [[ -n "$ALSO" && -f "$ALSO" && "$(dirname -- "$ALSO")" != "${DIR%/}" && "${ALSO,,}" =~ \.(jpe?g|png|webp|mp4|webm|mkv|mov|m4v)$ ]]; then
+    IFS=$'\t' read -r path key < <(find "$ALSO" -maxdepth 0 -printf '%p\t%i-%s-%T@\n')
+    thumb="$THUMBS/$key.jpg"
+    kind=""
+    is_video "$path" && kind="video"
+    if [[ -f "$thumb" ]]; then
+        printf '%s\t%s\t%s\ttemp\n' "$path" "$thumb" "$kind"
+    else
+        printf '%s\t\t%s\ttemp\n' "$path" "$kind"
+        MISSING+=("$path" "$thumb")
+    fi
+fi
 while IFS=$'\t' read -r path key; do
     [[ -n "$path" ]] || continue
     thumb="$THUMBS/$key.jpg"

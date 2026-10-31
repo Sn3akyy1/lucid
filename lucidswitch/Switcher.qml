@@ -164,6 +164,7 @@ PanelWindow {
         view.contentY = 0;
         sw.open = true;
         settle.restart();
+        cardJelly.kickAfter(Math.min(0.06, Theme.dp(14) / Math.max(1, card.height)), Math.round(Theme.durFastEffects * 0.4));
     }
 
     function hide() {
@@ -331,10 +332,15 @@ PanelWindow {
     Region {
         id: cardRegion
 
-        x: Math.ceil(card.x - 0.002)
-        y: Math.ceil(card.y - 0.002)
-        width: Math.max(0, Math.floor(card.x + card.width + 0.002) - Math.ceil(card.x - 0.002))
-        height: Math.max(0, Math.floor(card.y + card.height + 0.002) - Math.ceil(card.y - 0.002))
+        readonly property real px: card.x + cardJelly.shiftX
+        readonly property real py: card.y + cardJelly.shiftY
+        readonly property real pw: card.width * cardJelly.xScale
+        readonly property real ph: card.height * cardJelly.yScale
+
+        x: Math.ceil(cardRegion.px - 0.002)
+        y: Math.ceil(cardRegion.py - 0.002)
+        width: Math.max(0, Math.floor(cardRegion.px + cardRegion.pw + 0.002) - Math.ceil(cardRegion.px - 0.002))
+        height: Math.max(0, Math.floor(cardRegion.py + cardRegion.ph + 0.002) - Math.ceil(cardRegion.py - 0.002))
         radius: Theme.shapeXl
     }
 
@@ -518,6 +524,13 @@ PanelWindow {
             radius: Theme.shapeXl
             color: Theme.bg
             opacity: sw.reveal
+            readonly property bool jellyWobbling: cardJelly.wobbling
+            transform: Jelly {
+                id: cardJelly
+
+                target: card
+                frequency: 3.8
+            }
 
             // clicks between the tiles must not reach the dimmer
             MouseArea {
@@ -580,6 +593,12 @@ PanelWindow {
                             y: sw.cellY(tile.index)
                             width: sw.fit.w
                             height: sw.fit.h
+                            // the pick wobbles as it lands on each card
+                            onIsSelectedChanged: {
+                                if (tile.isSelected && sw.open)
+                                    thumbJelly.kick(0.07);
+
+                            }
 
                             MouseArea {
                                 id: tap
@@ -613,6 +632,13 @@ PanelWindow {
                                 border.color: tile.isSelected ? Theme.primary : "transparent"
                                 border.width: tile.isSelected ? 3 : 0
                                 scale: tap.pressed ? 0.985 : (tile.isSelected ? 1.03 : 1)
+                                readonly property bool jellyWobbling: thumbJelly.wobbling
+                                transform: Jelly {
+                                    id: thumbJelly
+
+                                    target: thumbCard
+                                    frequency: 5
+                                }
 
                                 // the window fills it, cropped at the sides or the bottom
                                 ClippingRectangle {

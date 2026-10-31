@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import qs
+import qs.lucidicons
 import qs.lucidui
 
 // the shared list behind every picker on the Environment page
@@ -17,6 +18,10 @@ Item {
     property var previews: ({
     })
     property bool showPreviews: false
+    // lucid's own icon sets rather than installed themes: each row draws a few of its icons
+    property bool tonal: false
+    property var tonalSets: []
+    readonly property var tonalSlots: ["folder", "document", "image", "app-settings", "trash"]
     property string filter: ""
     readonly property var matches: {
         var q = picker.filter.trim().toLowerCase();
@@ -35,6 +40,7 @@ Item {
     signal chosen(string name)
 
     function open(heading, noun, items, current, withPreviews) {
+        picker.tonal = false;
         picker.heading = heading;
         picker.noun = noun;
         picker.items = items;
@@ -46,6 +52,33 @@ Item {
         searchInput.forceActiveFocus();
         var idx = picker.matches.indexOf(current);
         list.positionViewAtIndex(idx < 0 ? 0 : idx, ListView.Center);
+    }
+
+    // sets is LucidIcons.sets; the answer is a set's name, its id through LucidIcons.idOf
+    function openSets(heading, sets, currentId) {
+        picker.tonal = true;
+        picker.tonalSets = sets;
+        picker.heading = heading;
+        picker.noun = "icon sets";
+        picker.items = sets.map((t) => {
+            return t.name;
+        });
+        picker.current = LucidIcons.nameOf(currentId);
+        picker.showPreviews = false;
+        picker.filter = "";
+        searchInput.text = "";
+        picker.shown = true;
+        card.forceActiveFocus();
+        list.positionViewAtBeginning();
+    }
+
+    function setNamed(name) {
+        for (var i = 0; i < picker.tonalSets.length; i++) {
+            if (picker.tonalSets[i].name === name)
+                return picker.tonalSets[i];
+
+        }
+        return null;
     }
 
     function dismiss() {
@@ -85,11 +118,13 @@ Item {
 
         anchors.centerIn: parent
         width: Math.min(Theme.dp(460), picker.width - Theme.dp(80))
-        height: Math.min(Theme.dp(520), picker.height - Theme.dp(80))
+        // a short list of sets fits its rows; the installed themes scroll
+        height: picker.tonal ? Math.min(picker.height - Theme.dp(80), searchBox.y + searchBox.height + Theme.dp(22) + list.contentHeight + Theme.dp(12)) : Math.min(Theme.dp(520), picker.height - Theme.dp(80))
         radius: Theme.radiusXl
         color: Theme.bgHigh
         clip: true
         scale: picker.shown ? 1 : 0.92
+        Keys.onEscapePressed: picker.dismiss()
 
         MouseArea {
             anchors.fill: parent
@@ -117,8 +152,9 @@ Item {
             anchors.top: cardTitle.bottom
             anchors.leftMargin: Theme.dp(22)
             anchors.rightMargin: Theme.dp(22)
-            anchors.topMargin: Theme.dp(14)
-            height: Theme.dp(46)
+            anchors.topMargin: picker.tonal ? 0 : Theme.dp(14)
+            height: picker.tonal ? 0 : Theme.dp(46)
+            visible: !picker.tonal
             radius: Theme.shapeLg
             color: Theme.bgSunken
             border.width: searchInput.activeFocus ? 2 : 1
@@ -220,7 +256,7 @@ Item {
             ScrollBar.vertical: ScrollBar {
                 id: listBar
 
-                policy: ScrollBar.AlwaysOn
+                policy: picker.tonal ? ScrollBar.AlwaysOff : ScrollBar.AlwaysOn
                 width: Theme.dp(10)
 
                 contentItem: Rectangle {
@@ -249,10 +285,11 @@ Item {
                 required property string modelData
                 readonly property bool isCurrent: themeRow.modelData === picker.current
                 readonly property string preview: picker.showPreviews ? (picker.previews[themeRow.modelData] || "") : ""
+                readonly property var set: picker.tonal ? picker.setNamed(themeRow.modelData) : null
 
                 width: list.width - Theme.dp(14)
-                height: Theme.dp(50)
-                radius: height / 2
+                height: picker.tonal ? Theme.dp(78) : Theme.dp(50)
+                radius: picker.tonal ? Theme.radiusLg : height / 2
                 color: themeRow.isCurrent ? Theme.accentContainer : "transparent"
 
                 Image {
@@ -273,11 +310,14 @@ Item {
                 }
 
                 Text {
+                    id: rowName
+
                     anchors.left: swatch.visible ? swatch.right : parent.left
                     anchors.leftMargin: swatch.visible ? Theme.dp(12) : Theme.dp(14)
-                    anchors.right: parent.right
+                    anchors.right: samples.visible ? samples.left : parent.right
                     anchors.rightMargin: Theme.dp(14)
                     anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: blurb.visible ? -Math.round(blurb.height / 2) : 0
                     text: themeRow.modelData
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodyLg
@@ -286,7 +326,51 @@ Item {
                     elide: Text.ElideRight
                 }
 
+                Text {
+                    id: blurb
+
+                    anchors.left: rowName.left
+                    anchors.right: rowName.right
+                    anchors.top: rowName.bottom
+                    anchors.topMargin: Theme.dp(2)
+                    visible: themeRow.set !== null
+                    text: themeRow.set ? themeRow.set.blurb : ""
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontBodySm
+                    font.variableAxes: Theme.axes(Theme.fontBodySm, 400, 0)
+                    color: Theme.subtextDim
+                    elide: Text.ElideRight
+                }
+
+                // a few of the set's own icons, drawn from it whichever set is in use
+                Row {
+                    id: samples
+
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.dp(14)
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Theme.dp(6)
+                    visible: themeRow.set !== null
+
+                    Repeater {
+                        model: themeRow.set ? picker.tonalSlots : []
+
+                        TonalIcon {
+                            required property string modelData
+
+                            slot: modelData
+                            set: themeRow.set ? themeRow.set.id : ""
+                            size: Theme.dp(34)
+                            hovered: rowLayer.active
+                        }
+
+                    }
+
+                }
+
                 StateLayer {
+                    id: rowLayer
+
                     radius: parent.radius
                     onClicked: picker.choose(themeRow.modelData)
                 }

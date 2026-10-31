@@ -132,6 +132,7 @@ PanelWindow {
         pillPop.easing.overshoot = Theme.emphasizedOvershoot;
         toastWindow.shown = true;
         hideTimer.restart();
+        pillJelly.kickAfter(0.14, Math.round(Theme.durEnter * 0.35));
     }
 
     function popOut() {
@@ -185,10 +186,11 @@ PanelWindow {
     Region {
         id: toastBlur
 
-        readonly property real paintedX: pill.x + pill.width * (1 - pill.scale) / 2
-        readonly property real paintedY: pill.y + pill.height * (1 - pill.scale) / 2
-        readonly property real paintedWidth: pill.width * pill.scale
-        readonly property real paintedHeight: pill.height * pill.scale
+        // scaled about its centre, then hung from its top edge by the jelly
+        readonly property real paintedX: pill.x + pill.width * (1 - pill.scale * pillJelly.xScale) / 2
+        readonly property real paintedY: pill.y + pillJelly.yScale * pill.height * (1 - pill.scale) / 2
+        readonly property real paintedWidth: pill.width * pill.scale * pillJelly.xScale
+        readonly property real paintedHeight: pill.height * pill.scale * pillJelly.yScale
 
         // stadium pills need the 1px horizontal inset or the hard mask edge shows
         x: Math.ceil(toastBlur.paintedX) + 1
@@ -209,6 +211,15 @@ PanelWindow {
         color: Theme.bg
         opacity: toastWindow.shown ? 1 : 0
         scale: toastWindow.shown ? 1 : 0.92
+        readonly property bool jellyWobbling: pillJelly.wobbling
+        // it drops in from the top edge, so it hangs from there as it settles
+        transform: Jelly {
+            id: pillJelly
+
+            target: pill
+            anchorY: 0
+            frequency: 4.6
+        }
 
         TextMetrics {
             id: labelMetrics

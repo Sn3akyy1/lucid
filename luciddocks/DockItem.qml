@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Widgets
 import qs
+import qs.lucidicons
 
 Item {
     id: dockItem
@@ -79,6 +80,8 @@ Item {
     })
 
     readonly property string iconSource: IconTheme.resolve(dockItem.iconName)
+    // the app's tile in lucid's icons, "" for legacy icons or an app it lacks
+    readonly property string lucidSlot: Prefs.envLegacyIcons || dockItem.iconContent !== null ? "" : LucidIcons.slotFor(dockItem.appId, dockItem.iconName, dockItem.displayName)
     readonly property string monogram: dockItem.displayName !== "" ? dockItem.displayName.charAt(0).toUpperCase() : "?"
 
     readonly property real hoverSwell: (dockItem.active ? 0.12 : 0.08) * Prefs.dockHoverEffect
@@ -92,6 +95,7 @@ Item {
     onHoveredChanged: {
         if (dockItem.hovered) {
             tooltipDelay.restart();
+            iconJelly.kick(0.09);
         } else {
             tooltipDelay.stop();
             dockItem.tooltipReady = false;
@@ -105,10 +109,21 @@ Item {
         onTriggered: dockItem.tooltipReady = true
     }
 
+    // squashes under the press and springs back up off the dock
+    onPressedChanged: iconJelly.kick(dockItem.pressed ? -0.13 : 0.1)
+
     Item {
         id: iconWrap
 
         anchors.fill: parent
+        readonly property bool jellyWobbling: iconJelly.wobbling
+        transform: Jelly {
+            id: iconJelly
+
+            target: iconWrap
+            anchorY: 1
+            frequency: 5.5
+        }
 
         Rectangle {
             id: tile
@@ -116,7 +131,7 @@ Item {
             anchors.fill: parent
             radius: Prefs.dockItemRadius
             color: Theme.withBlur(Theme.bgTile)
-            visible: Prefs.dockIconTiles
+            visible: Prefs.dockIconTiles && dockItem.lucidSlot === ""
         }
 
         Rectangle {
@@ -142,8 +157,22 @@ Item {
 
             anchors.fill: parent
             anchors.margins: Prefs.dockIconInset
-            visible: dockItem.iconContent === null && dockItem.iconSource !== ""
+            visible: dockItem.iconContent === null && dockItem.iconSource !== "" && dockItem.lucidSlot === ""
             source: dockItem.iconSource
+        }
+
+        Loader {
+            anchors.centerIn: parent
+            active: dockItem.lucidSlot !== ""
+
+            sourceComponent: TonalIcon {
+                size: Math.round(dockItem.slot - 2 * Prefs.dockIconInset)
+                slot: dockItem.lucidSlot
+                hovered: dockItem.hovered
+                // drawn at the swollen size while it swells, crisp at rest
+                scaleHint: dockItem.hovered || dockItem.magnifyBoost > 0.005 ? 1.06 + Math.max(dockItem.hoverSwell, dockItem.magnifyBoost) : 1
+            }
+
         }
 
         Rectangle {
@@ -153,7 +182,7 @@ Item {
             anchors.margins: Prefs.dockIconInset
             radius: Math.max(0, Prefs.dockItemRadius - Prefs.dockIconInset)
             color: Theme.bgHigh
-            visible: dockItem.iconContent === null && dockItem.iconSource === ""
+            visible: dockItem.iconContent === null && dockItem.iconSource === "" && dockItem.lucidSlot === ""
 
             Text {
                 anchors.centerIn: parent
@@ -357,6 +386,7 @@ Item {
             return;
 
         Quickshell.execDetached(["sh", "-c", dockItem.command]);
+        iconJelly.kickAfter(0.16, Theme.ms(60));
         dockItem.launched();
     }
 

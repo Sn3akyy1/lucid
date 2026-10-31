@@ -5,68 +5,40 @@ import qs.lucidui
 Column {
     id: page
 
-    readonly property var moduleList: Prefs.barModules
     // whether any corner on the bar blends into something
     readonly property bool blendsAnything: Prefs.barNotch || (Prefs.barPopupMode && Prefs.barPopupNotched) || Object.keys(Prefs.barJoinSet).length > 0
-    // the module whose card shows: the one a right click on the bar asked for,
-    // or the first
-    property string selectedModule: ""
-
-    function paneFlick() {
-        let p = page.parent;
-        while (p) {
-            if (p.contentY !== undefined && p.contentHeight !== undefined)
-                return p;
-
-            p = p.parent;
-        }
-        return null;
-    }
-
-    // brings the module's card into view, for a right click on the bar
-    function revealModule() {
-        const flick = page.paneFlick();
-        if (!flick)
-            return ;
-
-        const y = moduleCard.mapToItem(flick.contentItem, 0, 0).y;
-        flick.contentY = Math.max(0, Math.min(Math.max(0, flick.contentHeight - flick.height), y - 90));
-    }
-
-    Component.onCompleted: {
-        page.selectedModule = Prefs.barModuleFocus !== "" ? Prefs.barModuleFocus : Prefs.barModules[0].id;
-        if (Prefs.barModuleFocus !== "")
-            revealLater.start();
-
-    }
-
-    Timer {
-        id: revealLater
-
-        interval: 120
-        onTriggered: {
-            page.revealModule();
-            Prefs.barModuleFocus = "";
-        }
-    }
-
-    // asked again while the page is already up
-    Connections {
-        function onBarModuleFocusChanged() {
-            if (Prefs.barModuleFocus === "")
-                return ;
-
-            page.selectedModule = Prefs.barModuleFocus;
-            revealLater.restart();
-        }
-
-        target: Prefs
-    }
+    // shown in edit mode's sheet beside the bar itself, which needs no preview, and
+    // whose modules and their options have a sheet of their own
+    property bool inSheet: false
 
     spacing: Theme.dp(26)
 
     BarPreview {
         width: parent.width
+        visible: !page.inSheet
+    }
+
+    SettingCard {
+        title: "MODULES"
+        visible: !page.inSheet
+
+        SettingRow {
+            title: "Arrange the bar"
+            description: "Modules are arranged on the bar itself. In edit mode the desktop shades over: drag a module along the bar to move it, pull one down off the bar to take it out, click the link between two neighbours to join them, and right-click any of them for its looks and options."
+            enabled: Prefs.barEnabled
+            disabledReason: "The bar is switched off, so there is nothing to arrange."
+            showDivider: false
+
+            M3Button {
+                text: "Edit the bar"
+                variant: "filled"
+                iconPath: "edit"
+                enabled: Prefs.barEnabled
+                onClicked: Edit.enterFromSettings("bar", "")
+            }
+
+        }
+
     }
 
     SettingCard {
@@ -364,26 +336,7 @@ Column {
     }
 
     SettingCard {
-        title: "MODULES"
-
-        SettingRow {
-            title: "Arrangement"
-            resetKey: "barLayout"
-            description: "Tap a module to set it up below, or drag it along its group or into another one. Left and right sit against the screen's edges and the centre stays in the middle; a module switched off keeps its place, and an outlined one is on but has nothing to show right now. The link between two neighbours joins them: on the bar they share one island (or one notch), and a panel opens from its own stretch of it."
-            enabled: Prefs.barEnabled
-            disabledReason: "The bar is switched off, so there is nothing to arrange."
-            stacked: true
-
-            BarLayoutEditor {
-                width: parent.width
-                enabled: Prefs.barEnabled
-                selected: page.selectedModule
-                onChosen: (id) => {
-                    return page.selectedModule = id;
-                }
-            }
-
-        }
+        title: "GROUPS"
 
         SettingRow {
             title: "Lines between joined modules"
@@ -423,14 +376,9 @@ Column {
 
     }
 
-    BarModuleCard {
-        id: moduleCard
-
-        moduleId: page.selectedModule
-    }
-
     SettingCard {
         title: "NOTIFICATIONS"
+        visible: !page.inSheet
 
         SettingRow {
             title: "Do not disturb"
@@ -463,6 +411,7 @@ Column {
 
     SettingCard {
         title: "SYSTEM MODULE"
+        visible: !page.inSheet
 
         SettingRow {
             title: "Keyboard layout"

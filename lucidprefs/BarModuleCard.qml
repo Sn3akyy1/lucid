@@ -3,9 +3,9 @@ import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs
 
-// one bar module's card on the Bar page: whether it shows, where the rest of
-// its settings live, and the options it has of its own. every module's rows
-// are here; only the picked one's are visible
+// one bar module's options, in edit mode's sheet: whether it shows, its looks,
+// where the rest of its settings live, and the options it has of its own. every
+// module's rows are here; only its own are visible
 SettingCard {
     id: card
 
@@ -21,6 +21,7 @@ SettingCard {
         return g.center.indexOf(card.moduleId) !== -1 ? "centre" : "right";
     }
     readonly property var pageNames: ({
+        "bar": "Bar",
         "workspaces": "Workspaces",
         "datetime": "Date & Time",
         "notifications": "Notifications"
@@ -63,15 +64,14 @@ SettingCard {
         Prefs.powerModuleActions = list.join(",");
     }
 
-    title: card.mod ? card.mod.name : ""
-    subtitle: card.mod ? card.mod.desc : ""
+    // the sheet's header names it already
     visible: card.mod !== null
 
     SettingRow {
         id: showRow
 
         title: "Show in the bar"
-        description: "In the " + card.groupName + " group. Drag it in the arrangement above to move it." + (card.away ? " Not in the bar right now: it shows " + card.mod.when + "." : "")
+        description: (Prefs[card.mod ? card.mod.key : ""] === true ? "In the " + card.groupName + " group. Drag it along the bar to move it, or down off the bar to take it out." : "Switched on, it goes back where it was.") + (card.away ? " Not in the bar right now: it shows " + card.mod.when + "." : "")
         enabled: card.barOn
         disabledReason: "The bar is switched off, so this module has nothing to appear in."
         showDivider: false
@@ -328,7 +328,7 @@ SettingCard {
         visible: card.moduleId === "tray"
         title: "Icon colours"
         resetKey: "trayIconColor"
-        description: "As each app draws them, or in the shell's colours: grey from the text, or one of the palette's colours. Their light and shade stay either way."
+        description: "As each app draws them, or in the shell's colours: grey from the text, or one of the palette's colours. Their light and shade stay either way. An app Lucid has its own icon for shows that instead, unless legacy icons are on."
         stacked: true
         showDivider: false
 

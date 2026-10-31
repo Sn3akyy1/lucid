@@ -86,6 +86,12 @@ install_profile() {
         echo "warning: $dir/user.js turns $PREF off, so zen won't read the colours" >&2
     fi
 
+    # open and save dialogs through the portal, which is lumen (lumen --portal):
+    # outside a flatpak zen only asks it when told to always. a value set already stays
+    if ! grep -qs '"widget.use-xdg-desktop-portal.file-picker"' "$dir/user.js"; then
+        printf 'user_pref("widget.use-xdg-desktop-portal.file-picker", 1);\n' >> "$dir/user.js"
+    fi
+
     if [[ ! -f "$uc" ]]; then
         printf '%s\n' "$IMPORT" > "$uc"
     elif ! grep -qF 'lucid-zen.css' "$uc"; then

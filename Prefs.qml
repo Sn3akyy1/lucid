@@ -38,7 +38,9 @@ Singleton {
     readonly property int barPillRadius: Math.min(Theme.rad(18), Math.round(Theme.pill(Theme.dp(root.barHeight))))
     readonly property int effectiveBarTopMargin: root.barFlush ? 0 : Theme.dp(root.barTopMargin)
     readonly property int effectiveDockBottomMargin: root.dockNotch ? 0 : Theme.dp(root.dockBottomMargin)
-    readonly property int dockItemRadius: Math.min(Theme.rad(root.dockRadius), Math.round(Theme.pill(Theme.dp(root.dockIconSize))))
+    // concentric with the dock: its corner less the 10dp from its edge to an item,
+    // so a hover, a drop slot or a tile follows the curve it sits in
+    readonly property int dockItemRadius: Math.max(Theme.dp(4), Math.min(Theme.rad(root.dockRadius), Math.round(Theme.pill(Theme.dp(root.dockIconSize) + Theme.dp(20)))) - Theme.dp(10))
     readonly property int dockIconInset: Math.max(0, Math.min(Theme.dp(root.dockIconPadding), Math.floor(Theme.dp(root.dockIconSize) / 2) - Theme.dp(6)))
     // the bar's layout reads through these: the groups in barLayout, keeping
     // only the modules switched on. the names are the zones' from before the
@@ -181,7 +183,7 @@ Singleton {
     }
 
     // every bar module, in one place: the id barLayout arranges it by, the
-    // show* pref that switches it on, the group it starts in, how Settings
+    // show* pref that switches it on, the group it starts in, how edit mode
     // names it, and where any settings it has elsewhere live (more, page), and,
     // for one that leaves the bar while it has nothing to show, when it is
     // there (when). the modules that came with the privacy, power and window
@@ -190,6 +192,7 @@ Singleton {
     readonly property var barModules: [
     {
         "id": "workspaces",
+        "icon": "workspaces",
         "key": "showWorkspaces",
         "home": "left",
         "name": "Workspaces",
@@ -205,6 +208,7 @@ Singleton {
     },
     {
         "id": "media",
+        "icon": "music_note",
         "key": "showMedia",
         "home": "left",
         "name": "Media",
@@ -230,6 +234,7 @@ Singleton {
     },
     {
         "id": "tray",
+        "icon": "inventory_2",
         "key": "showTray",
         "home": "left",
         "name": "Tray",
@@ -244,6 +249,7 @@ Singleton {
     },
     {
         "id": "clock",
+        "icon": "schedule",
         "key": "showClock",
         "home": "center",
         "name": "Clock",
@@ -260,12 +266,13 @@ Singleton {
     },
     {
         "id": "notifications",
+        "icon": "notifications",
         "key": "showNotifications",
         "home": "right",
         "name": "Notifications",
         "desc": "Toasts and the notification list",
         "when": "while a notification is waiting",
-        "more": "Do not disturb is just below; popups, sounds and quiet hours are on the Notifications page.",
+        "more": "Do not disturb, popups, sounds and quiet hours are on the Notifications page.",
         "page": "notifications",
         "style": "notificationsStyle",
         "styles": [
@@ -275,15 +282,17 @@ Singleton {
     },
     {
         "id": "system",
+        "icon": "tune",
         "key": "showSystem",
         "home": "right",
         "name": "System",
         "desc": "Battery, volume, brightness and quick settings",
-        "more": "Its tiles are set with Edit tiles in the control centre itself; the keyboard layout sign and game mode are in System module, further down this page.",
-        "page": ""
+        "more": "Its tiles are set with Edit tiles in the control centre itself; the keyboard layout sign and game mode are on the Bar page in Settings.",
+        "page": "bar"
     },
     {
         "id": "privacy",
+        "icon": "privacy",
         "key": "showPrivacy",
         "home": "right",
         "name": "Privacy",
@@ -298,6 +307,7 @@ Singleton {
     },
     {
         "id": "power",
+        "icon": "power_settings_new",
         "key": "showPower",
         "home": "right",
         "name": "Power",
@@ -316,6 +326,7 @@ Singleton {
     },
     {
         "id": "window",
+        "icon": "select_window",
         "key": "showWindow",
         "home": "right",
         "first": true,
@@ -326,6 +337,7 @@ Singleton {
     },
     {
         "id": "start",
+        "icon": "apps",
         "key": "showStart",
         "home": "left",
         "first": true,
@@ -356,16 +368,14 @@ Singleton {
             out[m.id] = m.home;
         return out;
     }
-    // the module the Bar page opens on, set by a right click on its pill
-    property string barModuleFocus: ""
     // the ids of the modules switched on that the bar leaves out right now,
     // having nothing to show (an empty tray); the bar keeps it up to date, and
     // a module's "when" in barModules says when it comes back
     property var barModulesAway: []
 
+    // a module's options live in edit mode's sheet now
     function openBarModule(id) {
-        root.barModuleFocus = id;
-        root.settingsRequested("bar");
+        Edit.openSheet("module", id, "", "");
     }
 
     readonly property var barModuleById: {
@@ -377,7 +387,7 @@ Singleton {
     readonly property var barLayoutGroups: root.parseBarLayout(root.barLayout)
     readonly property var widgetKeys: ["widgetsEnabled", "widgetSnap", "widgetLockAll", "widgetHideFullscreen", "widgetOnTop"]
     readonly property var idleKeys: ["idleDim", "idleDimAfter", "idleDimLevel", "idleDimKeyboard", "idleLock", "idleLockAfter", "idleScreenOff", "idleScreenOffAfter", "idleSuspend", "idleSuspendAfter", "idleSuspendOnAc", "idleLockBeforeSleep", "idleWakeAfterSleep", "idleRespectInhibitors", "idleWhileMedia"]
-    readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envCursorShadow", "envIconTheme", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
+    readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envCursorShadow", "envIconTheme", "envLegacyIcons", "envIconSet", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
     readonly property var specialKeys: ["specialScratchpad", "specialMusic", "specialComms", "specialTodo", "specialSysmon", "specialMusicApps", "specialCommsApps", "specialTodoApps", "specialSysmonApps", "specialKeepApps", "specialHideOnSwitch", "specialDim", "specialBlur", "specialGaps"]
     readonly property var glassKeys: ["glassApps", "glassValues"]
     readonly property var monitorKeys: ["monitorSetups", "monitorShellScreen", "monitorBarScreen", "monitorDockScreen", "monitorWorkspaces"]
@@ -389,6 +399,8 @@ Singleton {
     property alias surfaceDarkness: s.surfaceDarkness
     property alias surfaceTint: s.surfaceTint
     property alias motionScale: s.motionScale
+    property alias jellyMotion: s.jellyMotion
+    property alias jellyAmount: s.jellyAmount
     property alias fontFamily: s.fontFamily
     property alias fontScale: s.fontScale
     property alias uiScale: s.uiScale
@@ -749,6 +761,15 @@ Singleton {
     property alias desktopIconSpacing: s.desktopIconSpacing
     property alias shotPreview: s.shotPreview
     property alias shotPreviewSeconds: s.shotPreviewSeconds
+    property alias shotFolder: s.shotFolder
+    property alias shotSaveFile: s.shotSaveFile
+    property alias shotRoundWindows: s.shotRoundWindows
+    property alias shotLoupe: s.shotLoupe
+    property alias shotOcrLang: s.shotOcrLang
+    property alias recordFolder: s.recordFolder
+    property alias recordCountdown: s.recordCountdown
+    property alias recordFps: s.recordFps
+    property alias recordEncoder: s.recordEncoder
     property alias osdCapsLock: s.osdCapsLock
     property alias osdNumLock: s.osdNumLock
 
@@ -758,6 +779,9 @@ Singleton {
     property alias envCursorSize: s.envCursorSize
     property alias envCursorShadow: s.envCursorShadow
     property alias envIconTheme: s.envIconTheme
+    property alias envLegacyIcons: s.envLegacyIcons
+    // lucid's own icon set while legacy icons are off: an id from LucidIcons.sets
+    property alias envIconSet: s.envIconSet
     property alias envGtkTheme: s.envGtkTheme
     property alias envQtStyle: s.envQtStyle
     property alias envQtPlatformTheme: s.envQtPlatformTheme
@@ -846,13 +870,14 @@ Singleton {
         { "key": "theme", "icon": "palette", "keys": "colour color scheme wallpaper picker arrow keys live video animated mp4 decoder matugen pywal catppuccin gruvbox nord dark light mode import", "group": "Appearance", "label": "Theme", "title": "Theme and Appearance", "blurb": "Colour schemes, wallpapers and themes you import" },
         { "key": "colours", "icon": "format_color_fill", "keys": "matugen style scheme contrast your colour hex picker templates apps render variables", "group": "Appearance", "label": "Colours", "title": "Colours", "blurb": "How Matugen and Your colour build a palette, the applications that follow it, and templates of your own" },
         { "key": "palettes", "icon": "colors", "keys": "gallery schemes base16 base24 tinted import repo file editor export", "group": "Appearance", "label": "Palettes", "title": "Palettes", "blurb": "A gallery of colour schemes, and themes from a repo or a file" },
-        { "key": "environment", "icon": "format_paint", "keys": "cursor icons gtk qt fonts application theme", "group": "Appearance", "label": "Environment", "title": "Environment", "blurb": "Cursors, icons, fonts and application themes, across GTK, Qt and Hyprland alike" },
-        { "key": "bar", "icon": "toolbar", "keys": "status height margin spacing modules workspaces clock media tray system popup full hover auto-hide autohide corners", "group": "Desktop", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
-        { "key": "dock", "icon": "dock_to_bottom", "keys": "icons size magnify autohide dynamic hiding pinned running indicators tooltips windows notch radius corners rounding padding inset", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
+        { "key": "environment", "icon": "format_paint", "keys": "cursor icons icon set gravity simplified flat legacy gtk qt fonts application theme", "group": "Appearance", "label": "Environment", "title": "Environment", "blurb": "Cursors, icons, fonts and application themes, across GTK, Qt and Hyprland alike" },
+        { "key": "bar", "icon": "toolbar", "keys": "status height margin spacing modules workspaces clock media tray system popup full hover auto-hide autohide corners edit mode arrange move drag join", "group": "Desktop", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
+        { "key": "dock", "icon": "dock_to_bottom", "keys": "icons size magnify autohide dynamic hiding pinned running indicators tooltips windows notch radius corners rounding padding inset edit mode move handle", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
         { "key": "launcher", "icon": "search", "keys": "launcher search spotlight apps results width density rows chips modes prefix engine web emoji run clipboard calculator frequent recent", "group": "Desktop", "label": "Launcher", "title": "Launcher", "blurb": "The search panel the dock opens into: how wide it is, how its results read, and what it looks through" },
-        { "key": "widgets", "icon": "widgets", "keys": "desktop cards clock calendar weather presets", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
+        { "key": "widgets", "icon": "widgets", "keys": "desktop cards clock calendar weather presets layouts panel edit mode", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
         { "key": "windows", "icon": "select_window", "keys": "hyprland gaps exclusive zone reserved distance shell bar dock borders border colour rounding corners shadow dim tiling layout dwindle master scrolling focus follow mouse cursor resize snap animations", "group": "Desktop", "label": "Windows", "title": "Windows", "blurb": "How Hyprland draws your windows, tiles them and hands them the focus" },
         { "key": "workspaces", "icon": "workspaces", "keys": "special scratchpad music chat todo sysmon", "group": "Desktop", "label": "Workspaces", "title": "Special Workspaces", "blurb": "Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key" },
+        { "key": "capture", "icon": "screenshot_region", "keys": "screenshot screen capture lucidshot print region window record recording video gif ocr text colour color picker pin pinned markup annotate edit folder clipboard countdown encoder frame rate", "group": "Desktop", "label": "Screenshots", "title": "Screenshots and Recording", "blurb": "What a capture leaves behind, where it goes, and how the screen recorder works" },
         { "key": "keybinds", "icon": "keyboard", "keys": "shortcuts hotkeys keys bindings hyprland super binds", "group": "Desktop", "label": "Keybinds", "title": "Keybinds", "blurb": "Every Hyprland shortcut: change one, switch it off or add your own" },
         { "key": "input", "icon": "mouse", "keys": "keyboard layout layouts xkb caps lock repeat numlock mouse pointer speed acceleration touchpad tap natural scroll gestures swipe", "group": "Devices", "label": "Input", "title": "Input", "blurb": "Keyboard layouts and key repeat, the mouse, the touchpad and its gestures" },
         { "key": "displays", "icon": "desktop_windows", "keys": "monitor screen resolution refresh rate scale vrr arrangement", "group": "Devices", "label": "Displays", "title": "Displays", "blurb": "Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on" },
@@ -957,6 +982,8 @@ Singleton {
         "surfaceDarkness": -1,
         "surfaceTint": -1,
         "motionScale": 1,
+        "jellyMotion": true,
+        "jellyAmount": 1,
         "fontFamily": "Google Sans",
         "fontScale": 1,
         "uiScale": 1,
@@ -1116,10 +1143,10 @@ Singleton {
         "toastMaxVisible": 3,
         "dockEnabled": true,
         "dockIconSize": 41,
-        "dockSpacing": 10,
-        "dockRadius": 28,
-        "dockIconPadding": 5,
-        "dockBottomMargin": 20,
+        "dockSpacing": 12,
+        "dockRadius": 40,
+        "dockIconPadding": 0,
+        "dockBottomMargin": 13,
         "dockMagnify": true,
         "dockHoverEffect": 1,
         "barMotionScale": 1.35,
@@ -1195,6 +1222,15 @@ Singleton {
         "desktopIconSpacing": "normal",
         "shotPreview": "preview",
         "shotPreviewSeconds": 6,
+        "shotFolder": "",
+        "shotSaveFile": true,
+        "shotRoundWindows": true,
+        "shotLoupe": true,
+        "shotOcrLang": "eng",
+        "recordFolder": "",
+        "recordCountdown": 3,
+        "recordFps": 0,
+        "recordEncoder": "auto",
         "osdCapsLock": true,
         "osdNumLock": true,
         "envAdopted": false,
@@ -1202,6 +1238,8 @@ Singleton {
         "envCursorSize": 24,
         "envCursorShadow": true,
         "envIconTheme": "",
+        "envLegacyIcons": false,
+        "envIconSet": "gravity",
         "envGtkTheme": "",
         "envQtStyle": "Fusion",
         "envQtPlatformTheme": "",
@@ -1293,6 +1331,8 @@ Singleton {
 
     signal pinnedResetRequested()
     signal settingsRequested(string page)
+    // a page handing over to something on the desktop: the window steps aside
+    signal settingsHideRequested()
     signal resetConfirmRequested(string title, string body, string confirmLabel, string action)
     signal wallpaperDeleteRequested(string path)
     signal desktopActionRequested(string action)
@@ -1682,6 +1722,8 @@ Singleton {
             property real surfaceDarkness: -1
             property real surfaceTint: -1
             property real motionScale: 1
+            property bool jellyMotion: true
+            property real jellyAmount: 1
             property string fontFamily: "Google Sans"
             property real fontScale: 1
             property real uiScale: 1
@@ -1846,10 +1888,10 @@ Singleton {
             property int toastMaxVisible: 3
             property bool dockEnabled: true
             property int dockIconSize: 41
-            property int dockSpacing: 10
-            property int dockRadius: 28
-            property int dockIconPadding: 5
-            property int dockBottomMargin: 20
+            property int dockSpacing: 12
+            property int dockRadius: 40
+            property int dockIconPadding: 0
+            property int dockBottomMargin: 13
             property bool dockMagnify: true
             property real dockHoverEffect: 1
             property real barMotionScale: 1.35
@@ -1925,6 +1967,19 @@ Singleton {
             property string desktopIconSpacing: "normal"
             property string shotPreview: "preview"
             property int shotPreviewSeconds: 6
+            // lucidshot: where captures go (empty is ~/Pictures/screenshots), whether
+            // a file is kept at all, window corners, the magnifier, the ocr language
+            property string shotFolder: ""
+            property bool shotSaveFile: true
+            property bool shotRoundWindows: true
+            property bool shotLoupe: true
+            property string shotOcrLang: "eng"
+            // and its recorder: the folder (empty is ~/Videos), the count before it
+            // starts, a fixed frame rate (0 follows the screen) and the encoder
+            property string recordFolder: ""
+            property int recordCountdown: 3
+            property int recordFps: 0
+            property string recordEncoder: "auto"
             // the osd's card as caps lock or num lock goes on or off
             property bool osdCapsLock: true
             property bool osdNumLock: true
@@ -1933,6 +1988,8 @@ Singleton {
             property int envCursorSize: 24
             property bool envCursorShadow: true
             property string envIconTheme: ""
+            property bool envLegacyIcons: false
+            property string envIconSet: "gravity"
             property string envGtkTheme: ""
             property string envQtStyle: "Fusion"
             property string envQtPlatformTheme: ""

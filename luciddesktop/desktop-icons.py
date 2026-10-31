@@ -432,6 +432,87 @@ def hidden_list(folder):
         return set()
 
 
+
+# ---- what each file is drawn as in lucid's own icons: lumen uses this too ------------
+
+SPECIAL_DIRS = [(GLib.UserDirectory.DIRECTORY_DESKTOP, "folder-desktop", "Desktop", "desktop_windows"),
+                (GLib.UserDirectory.DIRECTORY_DOCUMENTS, "folder-documents", "Documents", "description"),
+                (GLib.UserDirectory.DIRECTORY_DOWNLOAD, "folder-download", "Downloads", "download"),
+                (GLib.UserDirectory.DIRECTORY_MUSIC, "folder-music", "Music", "music_note"),
+                (GLib.UserDirectory.DIRECTORY_PICTURES, "folder-pictures", "Pictures", "image"),
+                (GLib.UserDirectory.DIRECTORY_VIDEOS, "folder-videos", "Videos", "movie"),
+                (GLib.UserDirectory.DIRECTORY_TEMPLATES, "folder-templates", "Templates", "file_copy"),
+                (GLib.UserDirectory.DIRECTORY_PUBLIC_SHARE, "folder-public", "Public", "share")]
+
+
+def special_folders():
+    home = os.path.realpath(GLib.get_home_dir())
+    out = {home: "folder-home"}
+    for kind, slot, _, _ in SPECIAL_DIRS:
+        d = GLib.get_user_special_dir(kind)
+        if d and os.path.realpath(d) != home:
+            out[os.path.realpath(d)] = slot
+    return out
+
+
+SPECIALS = special_folders()
+
+MIME_SLOTS = {
+    "application/pdf": "pdf",
+    "application/epub+zip": "ebook", "application/x-mobipocket-ebook": "ebook", "application/vnd.amazon.ebook": "ebook",
+    "image/vnd.djvu": "ebook", "application/x-fictionbook+xml": "ebook",
+    "application/vnd.oasis.opendocument.text": "document", "application/msword": "document", "application/rtf": "document",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "document", "text/rtf": "document",
+    "application/vnd.oasis.opendocument.spreadsheet": "spreadsheet", "application/vnd.ms-excel": "spreadsheet",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "spreadsheet", "text/csv": "spreadsheet",
+    "text/tab-separated-values": "spreadsheet",
+    "application/vnd.oasis.opendocument.presentation": "presentation", "application/vnd.ms-powerpoint": "presentation",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation": "presentation",
+    "application/x-cd-image": "disk-image", "application/x-iso9660-image": "disk-image", "application/x-raw-disk-image": "disk-image",
+    "application/vnd.efi.iso": "disk-image", "application/x-qemu-disk": "disk-image", "application/x-apple-diskimage": "disk-image",
+    "application/vnd.debian.binary-package": "package", "application/x-rpm": "package", "application/vnd.flatpak.ref": "package",
+    "application/vnd.flatpak": "package", "application/vnd.appimage": "package", "application/x-iso9660-appimage": "package",
+    "application/x-shellscript": "script", "application/x-executable": "script", "application/x-pie-executable": "script",
+    "application/x-sharedlib": "script", "application/x-desktop": "script",
+    "text/plain": "text", "text/markdown": "text", "text/x-log": "text", "application/x-zerosize": "file",
+}
+ARCHIVE_HINTS = ("zip", "tar", "rar", "7z", "bzip", "gzip", "xz", "lzma", "zstd", "lz4", "compress", "cpio", "archive")
+CODE_HINTS = ("text/x-", "application/javascript", "application/json", "text/javascript", "application/xml", "text/xml",
+              "text/html", "text/css", "application/x-yaml", "application/toml", "application/x-php", "application/sql",
+              "application/x-perl", "application/x-ruby", "text/x-qml", "application/x-ipynb+json")
+
+
+def named_type(name, mime):
+    # an empty file has no content to go by: its name says what it will be
+    if mime in ("", "application/x-zerosize", "application/octet-stream"):
+        guess, uncertain = Gio.content_type_guess(name, None)
+        if guess and not (uncertain and guess == "application/octet-stream"):
+            return guess
+    return mime
+
+
+def slot_for(item):
+    if item["kind"] == "dir":
+        real = os.path.realpath(item["path"]) if item.get("path") else ""
+        return SPECIALS.get(real, "folder")
+    mime = named_type(item.get("name", ""), item.get("mime") or "")
+    if mime in MIME_SLOTS:
+        return MIME_SLOTS[mime]
+    top = mime.split("/")[0]
+    if top in ("image", "video", "audio"):
+        return top
+    if top == "font" or "font" in mime:
+        return "font"
+    if mime.startswith("application/") and any(h in mime for h in ARCHIVE_HINTS):
+        # pacman's own packages are zstd tarballs with a name to say so
+        return "package" if item["name"].endswith((".pkg.tar.zst", ".pkg.tar.xz")) else "archive"
+    if mime.startswith(CODE_HINTS):
+        return "code"
+    if mime and Gio.content_type_is_a(mime, "text/plain"):
+        return "text"
+    return "file"
+
+
 def entry(folder, info, icons, thumbs=None, hidden_names=()):
     name = info.get_name()
     path = os.path.join(folder, name)
@@ -484,6 +565,13 @@ def entry(folder, info, icons, thumbs=None, hidden_names=()):
             # kde's rule: a launcher runs only once it is executable, so one
             # that came in a download cannot fire on a click
             item["exec"] = info.get_attribute_boolean("access::can-execute")
+            # which app it is, so lucid's icons can give it its own tile
+            app_names = icon_names(app.get_icon())
+            item["appId"] = name[:-8]
+            item["iconName"] = app_names[0] if app_names else ""
+            item["wmClass"] = app.get_startup_wm_class() or ""
+            item["cats"] = [c for c in (app.get_categories() or "").split(";") if c]
+    item["slot"] = slot_for(item)
     return item
 
 
@@ -1227,7 +1315,7 @@ def apps_for(uri, o):
 
 
 # the dock's own order for the files slot, see detect_pinned in install.sh
-FILE_MANAGERS = ["org.gnome.Nautilus", "nautilus", "org.kde.dolphin", "dolphin", "thunar",
+FILE_MANAGERS = ["lucid.lumen", "org.gnome.Nautilus", "nautilus", "org.kde.dolphin", "dolphin", "thunar",
                  "nemo", "pcmanfm-qt", "pcmanfm", "caja"]
 
 

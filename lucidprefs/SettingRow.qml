@@ -39,6 +39,18 @@ Item {
         }
         return null;
     }
+    // in edit mode's sheet: narrow, so a wide control goes under its words, and a
+    // reset happens straight away, with no window around to ask in
+    readonly property bool inSheet: {
+        for (var p = row.parent; p; p = p.parent) {
+            if (p.isEditSheet === true)
+                return true;
+
+        }
+        return false;
+    }
+    // a fixed measure, not the row's width: the anchors below never let go once set
+    readonly property bool stackHere: row.stacked || (row.inSheet && holder.implicitWidth > Theme.dp(170))
 
     // lights the row up for a moment; Settings search does it to the row it opened
     function flash() {
@@ -46,7 +58,7 @@ Item {
     }
 
     implicitWidth: parent ? parent.width : Theme.dp(400)
-    implicitHeight: Math.max(Theme.dp(60), (row.stacked ? labels.implicitHeight + holder.implicitHeight + Theme.dp(14) : Math.max(labels.implicitHeight, holder.implicitHeight)) + row.padV * 2)
+    implicitHeight: Math.max(Theme.dp(60), (row.stackHere ? labels.implicitHeight + holder.implicitHeight + Theme.dp(14) : Math.max(labels.implicitHeight, holder.implicitHeight)) + row.padV * 2)
     onVisibleChanged: {
         if (row.group)
             row.group.regroupLater();
@@ -156,8 +168,8 @@ Item {
 
         anchors.left: parent.left
         anchors.leftMargin: row.padH
-        anchors.right: row.stacked ? parent.right : holder.left
-        anchors.rightMargin: row.stacked ? row.padH : Theme.dp(20)
+        anchors.right: row.stackHere ? parent.right : holder.left
+        anchors.rightMargin: row.stackHere ? row.padH : Theme.dp(20)
         anchors.top: parent.top
         anchors.topMargin: row.padV
         spacing: Theme.dp(4)
@@ -207,7 +219,12 @@ Item {
                 opacity: row.resetVisible ? 1 : 0
                 visible: opacity > 0.01
                 iconPath: "refresh"
-                onClicked: Prefs.askReset("Reset " + row.resetTitle.toLowerCase() + "?", row.resetBody, row.resetAction)
+                onClicked: {
+                    if (row.inSheet && Prefs.defaults[row.resetAction] !== undefined)
+                        Prefs.set(row.resetAction, Prefs.defaults[row.resetAction]);
+                    else
+                        Prefs.askReset("Reset " + row.resetTitle.toLowerCase() + "?", row.resetBody, row.resetAction);
+                }
 
                 Behavior on width {
                     NumberAnimation {
@@ -288,11 +305,11 @@ Item {
         implicitHeight: childrenRect.height
         anchors.right: parent.right
         anchors.rightMargin: row.padH
-        anchors.left: row.stacked ? parent.left : undefined
+        anchors.left: row.stackHere ? parent.left : undefined
         anchors.leftMargin: row.padH
-        anchors.top: row.stacked ? labels.bottom : undefined
-        anchors.topMargin: row.stacked ? Theme.dp(12) : 0
-        anchors.verticalCenter: row.stacked ? undefined : parent.verticalCenter
+        anchors.top: row.stackHere ? labels.bottom : undefined
+        anchors.topMargin: row.stackHere ? Theme.dp(12) : 0
+        anchors.verticalCenter: row.stackHere ? undefined : parent.verticalCenter
     }
 
 }

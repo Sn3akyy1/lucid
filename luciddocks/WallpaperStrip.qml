@@ -184,6 +184,7 @@ Item {
             required property string path
             required property string name
             required property string thumb
+            required property bool temp
             required property int index
 
             readonly property bool isCurrent: view.currentIndex === slot.index
@@ -325,6 +326,28 @@ Item {
                         duration: Theme.durShort
                     }
 
+                }
+
+            }
+
+            // set from outside the folder, from lumen say: in the strip only while
+            // it is the wallpaper, and this says so
+            Rectangle {
+                anchors.left: card.left
+                anchors.top: card.top
+                anchors.margins: Theme.dp(10)
+                width: Theme.dp(26)
+                height: Theme.dp(26)
+                radius: width / 2
+                color: Theme.secondaryContainer
+                visible: slot.temp
+
+                Icon {
+                    anchors.centerIn: parent
+                    name: "hourglass_top"
+                    size: Theme.dp(16)
+                    fill: 1
+                    color: Theme.fgSecondaryContainer
                 }
 
             }

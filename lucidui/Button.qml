@@ -95,6 +95,13 @@ Item {
     implicitHeight: btn.h
     implicitWidth: row.implicitWidth + btn.pad * 2 - (btn.icon !== "" && btn.text !== "" ? Theme.dp(4) : 0)
     opacity: btn.disabled ? 1 : 1
+    readonly property bool jellyWobbling: squish.wobbling
+    transform: Jelly {
+        id: squish
+
+        target: btn
+        frequency: 6
+    }
 
     Rectangle {
         id: box
@@ -127,6 +134,7 @@ Item {
             radius: box.radius
             tint: btn.content
             disabled: btn.disabled
+            onPressedChanged: squish.kick(area.pressed ? -0.1 : 0.08)
             onClicked: {
                 if (btn.checkable)
                     btn.toggled(!btn.checked);

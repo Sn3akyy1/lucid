@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Widgets
 import qs
+import qs.lucidui
 
 // The wallpaper picker as a grid of rounded tiles: two rows that scroll sideways,
 // every wallpaper a rounded tile whose corners open up under the pointer. Same interface as
@@ -186,6 +187,7 @@ Item {
             required property string path
             required property string thumb
             required property string name
+            required property bool temp
             required property int index
 
             readonly property bool isCurrent: view.currentIndex === slot.index
@@ -286,6 +288,26 @@ Item {
                         duration: Theme.durShort
                     }
 
+                }
+
+            }
+
+            // set from outside the folder: in the strip only while it is the wallpaper
+            Rectangle {
+                anchors.left: card.left
+                anchors.top: card.top
+                width: Theme.dp(22)
+                height: Theme.dp(22)
+                radius: Theme.pill(22)
+                color: Theme.secondaryContainer
+                visible: slot.temp
+
+                Icon {
+                    anchors.centerIn: parent
+                    name: "hourglass_top"
+                    size: Theme.dp(14)
+                    fill: 1
+                    color: Theme.fgSecondaryContainer
                 }
 
             }

@@ -31,7 +31,7 @@ Variants {
             }
 
             screen: unit.modelData
-            visible: Prefs.loaded && Widgets.loaded && (deck.panelLive || (Prefs.widgetsEnabled && Widgets.count > 0 && !layer.suppressed))
+            visible: Prefs.loaded && Widgets.loaded && (deck.panelLive || ((Prefs.widgetsEnabled || deck.stowing) && Widgets.count > 0 && !layer.suppressed))
             color: "transparent"
             // reserves nothing and refuses to be shrunk into the bar and dock's strips,
             // so a card can be dragged to a true screen edge and sit under the dock.
@@ -62,6 +62,12 @@ Variants {
             }
 
             Timer {
+                id: stowEnd
+
+                onTriggered: deck.stowing = false
+            }
+
+            Timer {
                 id: fullscreenPoll
 
                 interval: 120
@@ -80,6 +86,35 @@ Variants {
                 // the widget panel is open on this screen, and still on its way out
                 readonly property bool panelUp: Widgets.panelScreen !== "" && Widgets.panelScreen === deck.screenName
                 readonly property bool panelLive: deck.panelUp || panel.shown
+                // the cards are out: on, or the panel is up to place them
+                readonly property bool widgetsOn: Prefs.widgetsEnabled || deck.panelLive
+                // put away a moment ago: the board stays up while the cards go
+                property bool stowing: false
+                readonly property int stowStep: Math.round(30 * Theme.motionScale)
+                readonly property int wakeStep: Math.round(55 * Theme.motionScale)
+
+                // the order the cards go and come back in: down the screen, then across
+                function orderOf(f) {
+                    var n = 0;
+                    for (var i = 0; i < rep.count; i++) {
+                        var o = rep.itemAt(i);
+                        if (o && o !== f && o.onThisScreen && (o.y < f.y - 1 || (Math.abs(o.y - f.y) <= 1 && o.x < f.x)))
+                            n++;
+
+                    }
+                    return n;
+                }
+
+                onWidgetsOnChanged: {
+                    if (deck.widgetsOn) {
+                        stowEnd.stop();
+                        deck.stowing = false;
+                    } else {
+                        stowEnd.interval = rep.count * deck.stowStep + Theme.durMedium + 80;
+                        deck.stowing = true;
+                        stowEnd.restart();
+                    }
+                }
                 readonly property int frameCount: rep.count
                 readonly property bool editing: Widgets.editUid !== "" && deck.editFrame !== null
                 // only ask for keys at all once something you can type into is placed;

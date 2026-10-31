@@ -30,6 +30,16 @@ Item {
     }
     // in quarter steps, so a hover or press animation never reallocates it
     readonly property real _zoom: icon._scale < 1.1 ? 1 : Math.ceil(icon._scale * 4) / 4
+    // under a wobbling jelly, which bends the layer the way a scale does; the
+    // item a Jelly transforms says so with jellyWobbling
+    readonly property bool _bent: {
+        for (var p = icon; p; p = p.parent) {
+            if (p.jellyWobbling === true)
+                return true;
+
+        }
+        return false;
+    }
 
     implicitWidth: icon.size
     implicitHeight: icon.size
@@ -40,7 +50,7 @@ Item {
     layer.enabled: icon.paths !== null && icon.width > 0 && icon.height > 0
     layer.samples: 8
     // 1:1 snaps to the pixel grid; anything scaled has to filter
-    layer.smooth: Math.abs(icon._scale - 1) > 0.001
+    layer.smooth: Math.abs(icon._scale - 1) > 0.001 || icon._bent
     layer.textureSize: icon._zoom === 1 ? Qt.size(0, 0) : Qt.size(Math.ceil(icon.width * icon._zoom * Screen.devicePixelRatio), Math.ceil(icon.height * icon._zoom * Screen.devicePixelRatio))
 
     Behavior on _fill {

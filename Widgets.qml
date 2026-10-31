@@ -117,6 +117,12 @@ Singleton {
             "blurb": "Bold hands on a scalloped face, the seconds as a dot.",
             "w": 220,
             "h": 220
+        }, {
+            "id": "poster",
+            "name": "Poster",
+            "blurb": "Hour over minute in huge figures, no container behind it.",
+            "w": 216,
+            "h": 272
         }],
         "options": [{
             "key": "hourMode",
@@ -149,7 +155,8 @@ Singleton {
             "key": "showDate",
             "label": "Show the date",
             "type": "bool",
-            "def": true
+            "def": true,
+            "variants": ["digital", "stack", "analog", "shape", "minimal", "world", "oval", "dial"]
         }, {
             "key": "shape",
             "label": "Shape",

@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs
+import qs.lucidicons
 
 Column {
     id: page
@@ -183,7 +184,6 @@ Column {
             title: "Animation speed"
             resetKey: "motionScale"
             description: "Scales every transition in the shell. 1.00x is the shipped speed; drag to 0 for no animation at all."
-            showDivider: false
             stacked: true
 
             M3Slider {
@@ -196,6 +196,47 @@ Column {
                 value: Prefs.motionScale
                 onMoved: (v) => {
                     return Prefs.motionScale = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Jelly motion"
+            resetKey: "jellyMotion"
+            enabled: Prefs.motionScale > 0
+            disabledReason: "Animation speed is at 0, so nothing moves."
+            description: "Panels, menus, the dock and the launcher wobble softly as they open and land, and dock icons, buttons and switches squish under the pointer."
+
+            M3Switch {
+                checked: Prefs.jellyMotion
+                enabled: Prefs.motionScale > 0
+                onToggled: (v) => {
+                    return Prefs.jellyMotion = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Wobble"
+            resetKey: "jellyAmount"
+            enabled: Prefs.jellyMotion && Prefs.motionScale > 0
+            disabledReason: Prefs.motionScale > 0 ? "Turn on Jelly motion first." : "Animation speed is at 0, so nothing moves."
+            description: "How far things bend, and how long they keep wobbling."
+            showDivider: false
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: Prefs.jellyMotion && Prefs.motionScale > 0
+                from: 0.5
+                to: 2
+                stepSize: 0.25
+                stepLabels: ["Subtle", "75%", "As shipped", "125%", "150%", "175%", "Bouncy"]
+                value: Prefs.jellyAmount
+                onMoved: (v) => {
+                    return Prefs.jellyAmount = Math.round(v * 100) / 100;
                 }
             }
 
@@ -258,7 +299,7 @@ Column {
             title: "Icon theme"
             enabled: Prefs.desktopIcons
             disabledReason: "Turn on Show icons first."
-            description: "Folders, files and apps are drawn by your icon theme, " + (Prefs.envIconTheme !== "" ? Prefs.envIconTheme.replace(/_/g, " ") : "the system's") + ", the same set your apps use. Change it on the Environment page."
+            description: Prefs.envLegacyIcons ? "Folders, files and apps are drawn by your icon theme, " + (Prefs.envIconTheme !== "" ? Prefs.envIconTheme.replace(/_/g, " ") : "the system's") + ", the same set your apps use. Change it on the Environment page." : "Folders, files and apps are drawn with Lucid's " + LucidIcons.nameOf(Prefs.envIconSet) + " icons, in your wallpaper's colours. Pick another set on the Environment page, or turn on legacy icons there to use your GTK theme."
 
             M3Button {
                 text: "Environment"
@@ -571,59 +612,6 @@ Column {
                 variant: "tonal"
                 enabled: Prefs.desktopIcons
                 onClicked: Prefs.appPickerRequested("::desktop")
-            }
-
-        }
-
-    }
-
-    SettingCard {
-        title: "SCREENSHOTS"
-
-        SettingRow {
-            title: "After a capture"
-            resetKey: "shotPreview"
-            description: Prefs.shotPreview === "preview" ? "A card in the corner shows it, to open, mark up, drag into an app, find in its folder or delete. Recordings get one too." : (Prefs.shotPreview === "notify" ? "A notification says where it went. Screenshots are on the clipboard either way." : "Nothing shows. Screenshots are still copied to the clipboard.")
-
-            M3Segmented {
-                width: Math.max(Theme.dp(300), fitWidth)
-                current: Prefs.shotPreview
-                options: [{
-                    "key": "preview",
-                    "label": "Preview"
-                }, {
-                    "key": "notify",
-                    "label": "Notification"
-                }, {
-                    "key": "none",
-                    "label": "Nothing"
-                }]
-                onChosen: (key) => {
-                    return Prefs.shotPreview = key;
-                }
-            }
-
-        }
-
-        SettingRow {
-            title: "Preview stays for"
-            resetKey: "shotPreviewSeconds"
-            enabled: Prefs.shotPreview === "preview"
-            description: "Resting the pointer on the card holds it for as long as you like."
-            showDivider: false
-            stacked: true
-
-            M3Slider {
-                width: parent.width
-                enabled: Prefs.shotPreview === "preview"
-                from: 3
-                to: 20
-                stepSize: 1
-                suffix: " s"
-                value: Prefs.shotPreviewSeconds
-                onMoved: (v) => {
-                    return Prefs.shotPreviewSeconds = v;
-                }
             }
 
         }

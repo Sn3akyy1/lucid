@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import qs
+import qs.lucidicons
 import qs.lucidui
 
 // one icon on the desktop: the icon theme's picture or a thumbnail in a tonal well,
@@ -45,6 +46,7 @@ Item {
 
         return p ? "file://" + p : "";
     }
+    readonly property string lucidSlot: tile.slotOf(tile.modelData)
     // a thumbnail a file manager or we made, or a picture small enough to show itself
     readonly property string preview: {
         if (!Prefs.desktopIconsThumbs || tile.kind !== "file")
@@ -74,6 +76,29 @@ Item {
     property real pop: 1
     property real gulpK: 1
 
+    // lucid's own icon for an item, unless legacy icons are on: the folder or file kind
+    // the helper named, home's own folder, a full or an empty trash, a drive, and a
+    // launcher's app tile. "" draws the icon theme's picture as before
+    function slotOf(m) {
+        if (Prefs.envLegacyIcons || !m)
+            return "";
+
+        if (m.kind === "home")
+            return "folder-home";
+
+        if (m.kind === "trash")
+            return DesktopIcons.trashCount > 0 ? "trash-full" : "trash";
+
+        // a share on another computer is no disk here
+        if (m.kind === "drive")
+            return /^(smb|sftp|ftps?|ftpis|davs?|nfs|afp):/.test(m.uri || "") ? "network" : m.canEject ? "drive-usb" : "drive";
+
+        if (m.kind === "app")
+            return LucidIcons.appSlot(m.appId, m.wmClass, m.iconName, m.label, m.cats);
+
+        return m.slot || (m.kind === "dir" ? "folder" : "");
+    }
+
     function openIt() {
         if (!DesktopIcons.isSelected(tile.key))
             DesktopIcons.selectOnly(tile.key);
@@ -92,7 +117,10 @@ Item {
     Component.onCompleted: {
         tile.held = DesktopIcons.byKey[tile.key] || tile.held;
         tile.heldSpot = DesktopIcons.placed[tile.key] || null;
-        appearTimer.start();
+        if (DesktopIcons.waking)
+            tile.wakeUp();
+        else
+            appearTimer.start();
         if (DesktopIcons.arrivals[tile.key])
             arrive.restart();
 
@@ -137,6 +165,80 @@ Item {
         leave.restart();
     }
 
+    // the icons turned on and off from the menu: a wave from the corner they fill from
+    function wakeUp() {
+        stow.stop();
+        if (!tile.appeared)
+            tile.pop = 0.6;
+
+        wake.delay = DesktopIcons.waveDelay(tile.spot, DesktopIcons.wakeStep);
+        wake.restart();
+    }
+
+    Connections {
+        function onLiveChanged() {
+            if (tile.gone)
+                return ;
+
+            if (DesktopIcons.live) {
+                tile.wakeUp();
+            } else {
+                wake.stop();
+                stow.delay = DesktopIcons.waveDelay(tile.spot, DesktopIcons.stowStep);
+                stow.restart();
+            }
+        }
+
+        target: DesktopIcons
+    }
+
+    SequentialAnimation {
+        id: wake
+
+        property int delay: 0
+
+        PauseAnimation {
+            duration: wake.delay
+        }
+
+        ScriptAction {
+            script: tile.appeared = true
+        }
+
+        NumberAnimation {
+            target: tile
+            property: "pop"
+            to: 1
+            duration: Theme.durEnter
+            easing.type: Easing.OutBack
+            easing.overshoot: 1.4
+        }
+
+    }
+
+    SequentialAnimation {
+        id: stow
+
+        property int delay: 0
+
+        PauseAnimation {
+            duration: stow.delay
+        }
+
+        ScriptAction {
+            script: tile.appeared = false
+        }
+
+        NumberAnimation {
+            target: tile
+            property: "pop"
+            to: 0.6
+            duration: Theme.durShort
+            easing.type: Easing.InCubic
+        }
+
+    }
+
     Timer {
         id: appearTimer
 
@@ -171,14 +273,14 @@ Item {
         y: tile.flyY
     }
 
-    // stepping aside for a widget, and back, slides rather than jumps
+    // stepping aside for a widget, and back, glides on m3's spatial spring
     Behavior on x {
         enabled: tile.appeared && !tile.gone
 
         NumberAnimation {
-            duration: Theme.durMedium
-            easing.type: Easing.Bezier
-            easing.bezierCurve: Theme.easeEmphasizedDecel
+            duration: Theme.durDefaultSpatial
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Theme.curveDefaultSpatial
         }
 
     }
@@ -187,9 +289,9 @@ Item {
         enabled: tile.appeared && !tile.gone
 
         NumberAnimation {
-            duration: Theme.durMedium
-            easing.type: Easing.Bezier
-            easing.bezierCurve: Theme.easeEmphasizedDecel
+            duration: Theme.durDefaultSpatial
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Theme.curveDefaultSpatial
         }
 
     }
@@ -350,7 +452,7 @@ Item {
         opacity: tile.cut ? 0.45 : (tile.modelData.hidden ? 0.55 : 1)
 
         Behavior on scale {
-            enabled: !tile.gone && !arrive.running && !launch.running
+            enabled: !tile.gone && !arrive.running && !launch.running && !wake.running && !stow.running
 
             NumberAnimation {
                 duration: Theme.durShort
@@ -367,11 +469,25 @@ Item {
 
         }
 
+        Loader {
+            anchors.fill: parent
+            active: !tile.hasThumb && tile.lucidSlot !== ""
+
+            sourceComponent: TonalIcon {
+                size: tile.px
+                slot: tile.lucidSlot
+                hovered: tile.hovered || tile.dropTarget
+                // the tile swells under the pointer: drawn that large then
+                scaleHint: tile.hovered || tile.dropTarget ? 1.1 : 1
+            }
+
+        }
+
         Image {
             id: themed
 
             anchors.fill: parent
-            visible: !tile.hasThumb && tile.iconPath !== ""
+            visible: !tile.hasThumb && tile.iconPath !== "" && tile.lucidSlot === ""
             source: tile.iconPath
             // drawn at the size it is shown: an svg rendered large and shrunk comes out soft
             sourceSize.width: Math.round(tile.px * DesktopIcons.dpr)
@@ -385,7 +501,7 @@ Item {
         Rectangle {
             anchors.fill: parent
             anchors.margins: Math.round(tile.px * 0.08)
-            visible: !tile.hasThumb && (tile.iconPath === "" || themed.status === Image.Error)
+            visible: !tile.hasThumb && tile.lucidSlot === "" && (tile.iconPath === "" || themed.status === Image.Error)
             radius: Theme.rad(Math.round(tile.px * 0.24))
             color: tile.isFolder ? Theme.accentContainer : Theme.surfaceHighest
 
@@ -710,14 +826,20 @@ Item {
         height: tile.px + Theme.dp(28)
         visible: tileArea.containsMouse
 
+        // made only under the pointer: a tile at rest carries no second picture
         Repeater {
-            model: dragFace.stack
+            model: dragFace.visible ? dragFace.stack : []
 
-            Image {
+            Item {
+                id: sheet
+
                 required property string modelData
                 required property int index
                 readonly property var it: DesktopIcons.byKey[modelData] || null
                 readonly property int depth: dragFace.stack.length - 1 - index
+                // a thumbnail where the desktop shows one, else lucid's icon as on the tile
+                readonly property bool photo: sheet.it !== null && Prefs.desktopIconsThumbs && sheet.it.kind === "file" && sheet.it.thumb !== ""
+                readonly property string slot: sheet.photo ? "" : tile.slotOf(sheet.it)
 
                 x: Theme.dp(10) + depth * Theme.dp(4)
                 y: Theme.dp(12) - depth * Theme.dp(4)
@@ -725,11 +847,28 @@ Item {
                 height: tile.px
                 rotation: depth === 0 ? 0 : (depth === 1 ? 7 : -7)
                 opacity: depth === 0 ? 1 : 0.85
-                source: it ? (it.thumb ? "file://" + it.thumb : (it.icon ? "file://" + it.icon : "")) : ""
-                sourceSize.width: tile.px
-                sourceSize.height: tile.px
-                fillMode: Image.PreserveAspectFit
-                smooth: true
+
+                Image {
+                    anchors.fill: parent
+                    visible: sheet.slot === ""
+                    source: sheet.it ? (sheet.photo ? "file://" + sheet.it.thumb : (sheet.it.icon ? "file://" + sheet.it.icon : "")) : ""
+                    sourceSize.width: tile.px
+                    sourceSize.height: tile.px
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                }
+
+                Loader {
+                    anchors.fill: parent
+                    active: sheet.slot !== ""
+
+                    sourceComponent: TonalIcon {
+                        size: tile.px
+                        slot: sheet.slot
+                    }
+
+                }
+
             }
 
         }

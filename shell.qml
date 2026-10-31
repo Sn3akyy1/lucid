@@ -3,6 +3,7 @@
 import "./lucidbar"
 import "./luciddesktop"
 import "./luciddocks"
+import "./lucidedit"
 import "./lucidkeys"
 import "./lucidlock"
 import "./lucidmoji"
@@ -20,6 +21,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import qs.lucidicons
 
 ShellRoot {
     id: root
@@ -67,10 +69,35 @@ ShellRoot {
         void Sounds.dir;
         void Storage.watching;
         void WallTransitions.active;
+        void Edit.active;
         // the combined output is remade at login by the service that keeps it
         if (Prefs.audioCombine !== "")
             void Audio.sink;
 
+    }
+
+    // lucid's icon set, picked on the Environment page; lumen reads prefs.json for its own
+    Binding {
+        target: LucidIcons
+        property: "set"
+        value: Prefs.envIconSet
+    }
+
+    // a capture nobody on screen is showing yet: a card, a notification, or
+    // nothing but the clipboard, as Settings says
+    function announceShot(entry) {
+        if (Prefs.shotPreview === "preview") {
+            shotCards.show(entry);
+            return ;
+        }
+        if (Prefs.shotPreview !== "notify")
+            return ;
+
+        const where = String(entry.file).replace(Quickshell.env("HOME"), "~");
+        if (entry.kind === "video")
+            Quickshell.execDetached(["notify-send", "-a", "LucidShot", "-i", "media-record", "Recording saved", where]);
+        else
+            Quickshell.execDetached(["sh", "-c", "a=$(notify-send -a LucidShot -i \"$1\" -A 'edit=Mark up' -A 'open=Open' --wait \"$2\" \"$3\"); case \"$a\" in edit) qs ipc call snap edit \"$1\" ;; open) xdg-open \"$1\" ;; esac; true", "sh", entry.file, entry.temp ? "Screenshot copied" : "Screenshot saved", entry.temp ? "It is on the clipboard only" : where]);
     }
 
     // the bar that speaks for the shell, of however many there are
@@ -233,10 +260,74 @@ ShellRoot {
 
             visible: Prefs.loaded && Prefs.barEnabled && Monitors.surfacesUp
             property bool laidOut: false
-            readonly property bool anyModuleShown: bar.leftGroupWidth + bar.centreGroupWidth + bar.rightGroupWidth > 0.5
+            // stand-ins take room in edit mode, so this asks after the modules themselves
+            readonly property bool anyModuleShown: Prefs.barZones.some((zone) => {
+                return bar.zoneKeys(zone).some((key) => {
+                    return bar.realWidthOf(key) > 0.5;
+                });
+            })
+            // edit mode: the module in hand, how far it sits off its slot, and the
+            // arrangement the bar shows while it is held
+            property real editT: Edit.active ? 1 : 0
+            // in edit mode the modules part a little, so each gap has room for its clasp
+            readonly property real editGap: Theme.dp(16) * bar.editT
+            property string dragKey: ""
+            property real dragShift: 0
+            property real dragLift: 0
+            property var dragGroups: null
+            property bool dragHeld: false
+
+            Behavior on editT {
+                NumberAnimation {
+                    duration: Theme.barMs(320)
+                    easing.type: Easing.OutCubic
+                }
+
+            }
+
+            function xOf(key) {
+                return bar.placeFor(key) + (key === bar.dragKey ? bar.dragShift : 0);
+            }
+
+            function liftOf(key) {
+                return key === bar.dragKey ? bar.dragLift : 0;
+            }
+
+            // a right click on a module: its sheet, on the side of the screen away from it
+            function editModule(key) {
+                const mod = bar.pillFor[key];
+                const cx = bar.xOf(key) + (mod ? mod.width : 0) / 2;
+                Edit.openSheet("module", key, Edit.sideFor(cx, bar.width), bar.screen ? bar.screen.name : "");
+            }
+
+            // the sheet's open button: this bar's module opens as a click would open it
+            Connections {
+                function onModuleOpenRequested(id, screen) {
+                    if (screen !== "" ? (!bar.screen || bar.screen.name !== screen) : !bar.primary)
+                        return ;
+
+                    const mod = bar.pillFor[id];
+                    if (!mod)
+                        return ;
+
+                    if (id === "start") {
+                        dock.openLauncher("");
+                    } else if (id === "media") {
+                        mod.openPanel("player");
+                    } else {
+                        if (mod.compactClicked)
+                            mod.compactClicked();
+
+                        mod.expanded = true;
+                    }
+                }
+
+                target: Edit
+            }
+
             // keys, when given, lets modules joined to the next one sit flush against it
             function placeGroup(widths, originX, keys) {
-                const gap = Theme.dp(Prefs.barSpacing);
+                const gap = Theme.dp(Prefs.barSpacing) + bar.editGap;
                 const out = [];
                 let x = originX;
                 let any = false;
@@ -258,7 +349,7 @@ ShellRoot {
             // have to be in the bar this moment: one that has emptied out (a tray
             // with no icons, workspaces off in the overview) parts its group there
             function joinedAfter(keys, widths, i) {
-                return i + 1 < keys.length && widths[i] > 0.5 && widths[i + 1] > 0.5 && Prefs.barJoinedNow(keys[i], keys[i + 1]);
+                return i + 1 < keys.length && widths[i] > 0.5 && widths[i + 1] > 0.5 && bar.realWidthOf(keys[i]) > 0.5 && bar.realWidthOf(keys[i + 1]) > 0.5 && Prefs.barJoinedNow(keys[i], keys[i + 1]);
             }
 
             // what a module's pill reads to square off the corners it shares
@@ -268,7 +359,7 @@ ShellRoot {
                     return false;
 
                 const keys = bar.zoneKeys(at.zone);
-                return bar.widthOf(key) > 0.5 && bar.widthOf(keys[at.at - 1]) > 0.5 && Prefs.barJoinedNow(keys[at.at - 1], key);
+                return bar.realWidthOf(key) > 0.5 && bar.realWidthOf(keys[at.at - 1]) > 0.5 && Prefs.barJoinedNow(keys[at.at - 1], key);
             }
 
             function joinedRightOf(key) {
@@ -277,7 +368,7 @@ ShellRoot {
                     return false;
 
                 const keys = bar.zoneKeys(at.zone);
-                return at.at + 1 < keys.length && bar.widthOf(key) > 0.5 && bar.widthOf(keys[at.at + 1]) > 0.5 && Prefs.barJoinedNow(key, keys[at.at + 1]);
+                return at.at + 1 < keys.length && bar.realWidthOf(key) > 0.5 && bar.realWidthOf(keys[at.at + 1]) > 0.5 && Prefs.barJoinedNow(key, keys[at.at + 1]);
             }
 
             // per module key, radius caps where a hanging panel meets the islands: {corners, tops, sides, fillets}
@@ -457,7 +548,9 @@ ShellRoot {
             // pill has finished emptying, so its neighbours close the gap at the
             // rate it shrinks rather than dropping into it
             function zoneKeys(zone) {
-                const live = Prefs.barKeysOf(zone);
+                const live = bar.dragGroups ? bar.dragGroups[zone === "centre" ? "center" : zone].filter((id) => {
+                    return Prefs.barShown(id);
+                }) : Prefs.barKeysOf(zone);
                 const r = Prefs.barRetiring;
                 if (!r || r.zone !== zone || Prefs.barHas(r.key))
                     return live;
@@ -495,12 +588,17 @@ ShellRoot {
 
             // workspaces empties its slot as it flies to the screen centre, so the
             // rest of its zone closes up behind it
-            function widthOf(key) {
+            function realWidthOf(key) {
                 const it = bar.pillFor[key];
                 if (!it)
                     return 0;
 
                 return it === workspacesMod ? it.width * bar.wsCollapse : it.width;
+            }
+
+            // in edit mode a module with nothing to show keeps a stand-in's room
+            function widthOf(key) {
+                return Math.max(bar.realWidthOf(key), barEdit.ghostWidthOf(key));
             }
 
             function widthsOf(zone) {
@@ -582,7 +680,7 @@ ShellRoot {
             readonly property bool heldByPointer: revealArea.containsMouse || (!bar.slidingAway && bar.modules.some((m) => {
                 return m.visible && (m.surfaceHovered === true || m.compactHovered === true);
             }))
-            readonly property bool barRevealed: !Prefs.barAutoHide || bar.barBusy || bar.heldByPointer
+            readonly property bool barRevealed: !Prefs.barAutoHide || bar.barBusy || bar.heldByPointer || Edit.active
             // how far the compact content sits above its resting y=0 while
             // hidden - past the window's own top edge, so it clips away for free
             property real hiddenOffset: bar.barRevealed ? 0 : -(Theme.dp(Prefs.barHeight) + Prefs.effectiveBarTopMargin + Theme.dp(4))
@@ -732,12 +830,13 @@ ShellRoot {
                 popupAlign: bar.alignOf("media")
 
                 hostWindow: bar
-                x: bar.placeFor("media")
+                x: bar.xOf("media")
+                editLifted: bar.dragKey === "media"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset
+                anchors.topMargin: bar.hiddenOffset + bar.liftOf("media")
 
                 Behavior on x {
-                    enabled: bar.laidOut && bar.shuffling
+                    enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "media"
 
                     NumberAnimation {
                         duration: Theme.barDurEnter
@@ -755,12 +854,13 @@ ShellRoot {
                 popupAlign: bar.alignOf("tray")
 
                 hostWindow: bar
-                x: bar.placeFor("tray")
+                x: bar.xOf("tray")
+                editLifted: bar.dragKey === "tray"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset
+                anchors.topMargin: bar.hiddenOffset + bar.liftOf("tray")
 
                 Behavior on x {
-                    enabled: bar.laidOut && bar.shuffling
+                    enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "tray"
 
                     NumberAnimation {
                         duration: Theme.barDurEnter
@@ -779,11 +879,12 @@ ShellRoot {
 
                 hostWindow: bar
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset
-                x: bar.placeFor("clock")
+                anchors.topMargin: bar.hiddenOffset + bar.liftOf("clock")
+                x: bar.xOf("clock")
+                editLifted: bar.dragKey === "clock"
 
                 Behavior on x {
-                    enabled: bar.laidOut && bar.shuffling
+                    enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "clock"
 
                     NumberAnimation {
                         duration: Theme.barDurEnter
@@ -802,12 +903,13 @@ ShellRoot {
                 popupAlign: bar.alignOf("notifications")
 
                 hostWindow: bar
-                x: bar.placeFor("notifications")
+                x: bar.xOf("notifications")
+                editLifted: bar.dragKey === "notifications"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset
+                anchors.topMargin: bar.hiddenOffset + bar.liftOf("notifications")
 
                 Behavior on x {
-                    enabled: bar.laidOut && bar.shuffling
+                    enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "notifications"
 
                     NumberAnimation {
                         duration: Theme.barDurEnter
@@ -823,16 +925,16 @@ ShellRoot {
                 id: privacyMod
 
                 popupAlign: bar.alignOf("privacy")
-                recorder: snapMod
                 toast: bar.primary ? toastMod : null
 
                 hostWindow: bar
-                x: bar.placeFor("privacy")
+                x: bar.xOf("privacy")
+                editLifted: bar.dragKey === "privacy"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset
+                anchors.topMargin: bar.hiddenOffset + bar.liftOf("privacy")
 
                 Behavior on x {
-                    enabled: bar.laidOut && bar.shuffling
+                    enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "privacy"
 
                     NumberAnimation {
                         duration: Theme.barDurEnter
@@ -850,12 +952,13 @@ ShellRoot {
                 popupAlign: bar.alignOf("power")
 
                 hostWindow: bar
-                x: bar.placeFor("power")
+                x: bar.xOf("power")
+                editLifted: bar.dragKey === "power"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset
+                anchors.topMargin: bar.hiddenOffset + bar.liftOf("power")
 
                 Behavior on x {
-                    enabled: bar.laidOut && bar.shuffling
+                    enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "power"
 
                     NumberAnimation {
                         duration: Theme.barDurEnter
@@ -874,12 +977,13 @@ ShellRoot {
 
                 hostWindow: bar
                 dockMod: dock
-                x: bar.placeFor("start")
+                x: bar.xOf("start")
+                editLifted: bar.dragKey === "start"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset
+                anchors.topMargin: bar.hiddenOffset + bar.liftOf("start")
 
                 Behavior on x {
-                    enabled: bar.laidOut && bar.shuffling
+                    enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "start"
 
                     NumberAnimation {
                         duration: Theme.barDurEnter
@@ -897,12 +1001,13 @@ ShellRoot {
                 popupAlign: bar.alignOf("window")
 
                 hostWindow: bar
-                x: bar.placeFor("window")
+                x: bar.xOf("window")
+                editLifted: bar.dragKey === "window"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset
+                anchors.topMargin: bar.hiddenOffset + bar.liftOf("window")
 
                 Behavior on x {
-                    enabled: bar.laidOut && bar.shuffling
+                    enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "window"
 
                     NumberAnimation {
                         duration: Theme.barDurEnter
@@ -921,12 +1026,13 @@ ShellRoot {
 
                 hostWindow: bar
                 mprisMod: mprisMod
-                x: bar.placeFor("system")
+                x: bar.xOf("system")
+                editLifted: bar.dragKey === "system"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset
+                anchors.topMargin: bar.hiddenOffset + bar.liftOf("system")
 
                 Behavior on x {
-                    enabled: bar.laidOut && bar.shuffling
+                    enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "system"
 
                     NumberAnimation {
                         duration: Theme.barDurEnter
@@ -946,7 +1052,7 @@ ShellRoot {
 
                     required property var modelData
 
-                    readonly property bool present: flares.modelData && flares.modelData.width > 0.5 && flares.modelData.visible
+                    readonly property bool present: flares.modelData && flares.modelData.width > 0.5 && flares.modelData.visible && !(bar.dragLift > 0.5 && bar.pillFor[bar.dragKey] === flares.modelData)
                     readonly property bool modHovered: flares.modelData ? (flares.modelData.compactHovered === true && flares.modelData !== workspacesMod) : false
 
                     function flareFor(toTheLeft) {
@@ -1018,11 +1124,12 @@ ShellRoot {
 
                 hostWindow: bar
                 dockMod: dock
-                restX: bar.placeFor("workspaces")
-                restY: bar.hiddenOffset
+                restX: bar.xOf("workspaces")
+                restY: bar.hiddenOffset + bar.liftOf("workspaces")
+                z: bar.dragKey === "workspaces" ? 120 : (workspacesMod.popupOpen ? 100 : 1)
 
                 Behavior on restX {
-                    enabled: bar.laidOut && bar.shuffling
+                    enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "workspaces"
 
                     NumberAnimation {
                         duration: Theme.barDurEnter
@@ -1080,6 +1187,17 @@ ShellRoot {
                     item: Prefs.barAutoHide ? revealArea : null
                 }
 
+                Region {
+                    width: bar.dragHeld || Edit.active ? bar.width : 0
+                    height: bar.dragHeld ? bar.height : (Edit.active ? Theme.dp(Prefs.barHeight) + Theme.dp(4) : 0)
+                }
+
+            }
+
+            BarEdit {
+                id: barEdit
+
+                host: bar
             }
 
             // touching this strip reveals the bar
@@ -1189,56 +1307,104 @@ ShellRoot {
         id: dock
     }
 
-    Screenshot {
-        id: screenshotMod
+    // edit mode's toolbar and its sheet of options, over everything
+    EditLayer {
+    }
 
-        shotPreview: shotPreviewMod
-        onCaptured: snapMod.open = false
-        onSaved: (file, kind) => {
-            return shotPreviewMod.show(file, kind, screenshotMod.screen);
+    // lucidshot: the engine that saves and copies captures, the overlay they
+    // are chosen on, the cards they land in, pins, and the recording controls
+    ShotEngine {
+        id: shotEngine
+
+        cards: shotCards
+        onReady: (entry) => {
+            // the overlay made its card already and only needed the file
+            if (entry.owner === "overlay") {
+                shotCards.update(entry);
+                return ;
+            }
+            if (entry.owner === "pin")
+                return ;
+
+            root.announceShot(entry);
         }
-        onTextResult: (status) => {
-            snapMod.finishTextRead();
-            if (status === "copied")
-                toastMod.popup("copy", "Text copied", false);
-            else if (status === "notool")
-                toastMod.popup("alert", "Install tesseract to copy text", true);
-            else
-                toastMod.popup("alert", "No text found", true);
+        onFailed: (id, why) => {
+            return toastMod.popup("warning", why, true);
         }
-        onColorResult: (value, hex, status) => {
-            if (status === "notool") {
-                toastMod.popup("alert", "Install hyprpicker to pick colours", true);
-            } else if (status === "ok") {
-                snapMod.open = false;
-                if (hex === "")
-                    toastMod.popup("copy", value, false);
+        onTextRead: (r) => {
+            // the overlay and the cards take their own; this is a read over ipc
+            if (!shotEngine.claim(r.id))
+                return ;
+
+            if (r.status === "ok") {
+                if (Prefs.shotPreview === "preview")
+                    shotCards.show({
+                    "id": r.id,
+                    "kind": "text",
+                    "text": r.text,
+                    "codes": r.codes,
+                    "screen": Monitors.focusedScreen ? Monitors.focusedScreen.name : ""
+                });
                 else
-                    toastMod.popupSwatch(hex, value);
+                    toastMod.popup("copy", "Text copied", false);
+            } else if (r.status === "notool") {
+                toastMod.popup("alert", "Install tesseract to copy text", true);
+            } else {
+                toastMod.popup("alert", "No text found", true);
             }
         }
     }
 
-    SnapOverlay {
-        id: snapMod
+    ShotOverlay {
+        id: shotOverlay
 
-        shotPreview: shotPreviewMod
-        onFullscreenRequested: screenshotMod.captureFull(false, snapMod.freezePath)
-        onRegionRequested: (x, y, w, h) => {
-            return screenshotMod.captureRegion(x, y, w, h, false, snapMod.freezePath, snapMod.freezeScale);
+        engine: shotEngine
+        cards: shotCards
+        pins: shotPins
+        onNotify: (icon, text, warn) => {
+            return toastMod.popup(icon, text, warn);
         }
-        onTextRequested: (x, y, w, h) => {
-            return screenshotMod.copyText(x, y, w, h, snapMod.freezePath, snapMod.freezeScale);
+        onSwatch: (hex, text) => {
+            return toastMod.popupSwatch(hex, text);
         }
-        onColorPickRequested: (format) => screenshotMod.pickColor(format)
-        onRecordingSaved: (file) => {
-            return screenshotMod.announce(file, "video");
+        onFreezeFailed: (why) => {
+            return toastMod.popup("alert", "Couldn't capture the screen", true);
         }
-        onFreezeFailed: (why) => toastMod.popup("alert", "Couldn't capture the screen", true)
     }
 
-    ShotPreview {
-        id: shotPreviewMod
+    ShotCards {
+        id: shotCards
+
+        engine: shotEngine
+        pins: shotPins
+        overlay: shotOverlay
+    }
+
+    PinBoard {
+        id: shotPins
+
+        engine: shotEngine
+    }
+
+    RecordHud {
+    }
+
+    Connections {
+        function onSaved(file, seconds) {
+            root.announceShot({
+                "id": "rec-" + Date.now(),
+                "kind": "video",
+                "file": file,
+                "duration": seconds,
+                "screen": Capture.output
+            });
+        }
+
+        function onFailed(why) {
+            toastMod.popup("warning", why, true);
+        }
+
+        target: Capture
     }
 
 
@@ -1438,7 +1604,7 @@ ShellRoot {
             else if (action === "theme")
                 dock.openLauncher(">theme");
             else if (action === "screenshot")
-                snapMod.beginOpen();
+                shotOverlay.begin("shot", "");
 
         }
 

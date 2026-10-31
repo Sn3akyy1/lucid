@@ -15,6 +15,8 @@ Variants {
         required property var modelData
         // the icons live on the main screen only
         readonly property bool icons: DesktopIcons.live && unit.modelData === DesktopIcons.screen
+        // the board stays up, untouchable, while the icons put themselves away
+        readonly property bool iconsUp: DesktopIcons.shown && unit.modelData === DesktopIcons.screen
         // surfaces on one layer stack in the order they were mapped, so a wallpaper
         // daemon that starts after the shell would cover the icons: remap over it
         property bool lifting: false
@@ -24,6 +26,8 @@ Variants {
                 DesktopIcons.runAction(id);
             } else if (id === "widgetPanel") {
                 Widgets.openPanel(unit.modelData.name);
+            } else if (id === "editMode") {
+                Edit.toggle(unit.modelData.name);
             } else if (id === "settings") {
                 Prefs.settingsRequested("");
             } else if (id === "keyboard") {
@@ -46,6 +50,22 @@ Variants {
 
             target: Hyprland
             enabled: unit.icons
+        }
+
+        // edit mode's shade has to sit over the wallpaper, and a video wallpaper is a
+        // background surface of its own that can be over this one: put it back on top
+        Connections {
+            function onActiveChanged() {
+                if (!Edit.active || !LiveWall.wanted)
+                    return ;
+
+                unit.lifting = true;
+                Qt.callLater(() => {
+                    unit.lifting = false;
+                });
+            }
+
+            target: Edit
         }
 
         Timer {
@@ -100,7 +120,7 @@ Variants {
             readonly property bool looking: boardLoader.item !== null && boardLoader.item.looking
 
             screen: unit.modelData
-            visible: Prefs.loaded && (Prefs.desktopSelection || Prefs.desktopMenu || unit.icons) && !unit.lifting
+            visible: Prefs.loaded && (Prefs.desktopSelection || Prefs.desktopMenu || unit.iconsUp || Edit.active || shade.opacity > 0.01) && !unit.lifting
             color: "transparent"
             // reserves nothing and refuses to be shrunk into the bar and dock's
             // strips, so the box can be dragged edge to edge
@@ -114,7 +134,7 @@ Variants {
             WlrLayershell.layer: (layer.lifted || layer.looking) ? WlrLayer.Overlay : WlrLayer.Background
             // never on-demand at rest: hyprland gives an on-demand layer the keys
             // whenever the pointer crosses it, which would take them from a window
-            WlrLayershell.keyboardFocus: !unit.icons ? WlrKeyboardFocus.None : ((layer.grabbing || layer.looking) ? WlrKeyboardFocus.Exclusive : (DesktopIcons.armed ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None))
+            WlrLayershell.keyboardFocus: !unit.icons ? (Edit.active ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None) : ((layer.grabbing || layer.looking) ? WlrKeyboardFocus.Exclusive : (DesktopIcons.armed || Edit.active ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None))
             // click-through while the box fades out up there
             mask: Region {
                 width: (field.armed || !layer.lifted) ? layer.width : 0
@@ -126,6 +146,25 @@ Variants {
                 bottom: true
                 left: true
                 right: true
+            }
+
+            // edit mode: the wallpaper shaded, under the icons, the widgets and the box
+            Rectangle {
+                id: shade
+
+                anchors.fill: parent
+                color: Theme.alpha(Theme.cScrim, 1)
+                opacity: Edit.active ? (Theme.isLight ? 0.34 : 0.5) : 0
+                visible: opacity > 0.01
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Theme.durMedium
+                        easing.type: Easing.OutCubic
+                    }
+
+                }
+
             }
 
             MouseArea {
@@ -195,6 +234,10 @@ Variants {
                 onPressed: (m) => {
                     // any press on bare desktop lets the selected widgets go
                     Widgets.clearSelection();
+                    // and in edit mode puts the sheet away
+                    if (Edit.active && m.button === Qt.LeftButton)
+                        Edit.closeSheet();
+
                     if (unit.icons) {
                         DesktopIcons.arm(false);
                         DesktopIcons.focusVisible = false;
@@ -288,8 +331,16 @@ Variants {
                 id: boardLoader
 
                 anchors.fill: parent
-                active: unit.icons
+                active: unit.iconsUp
+                enabled: unit.icons
                 focus: true
+                // escape leaves edit mode, once the desktop has the keys
+                Keys.onEscapePressed: (event) => {
+                    if (Edit.active)
+                        Edit.backOut();
+                    else
+                        event.accepted = false;
+                }
 
                 sourceComponent: IconBoard {
                 }

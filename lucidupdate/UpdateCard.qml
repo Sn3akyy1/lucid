@@ -23,6 +23,8 @@ Rectangle {
     })
     readonly property bool canRetry: card.view === "failed" && card.res.reason !== "nosudo"
     readonly property string home: Quickshell.env("HOME")
+    readonly property bool logOpen: (card.view === "running" || card.view === "failed") && details.expanded
+    readonly property int logFull: Theme.dp(220)
 
     function tilde(p) {
         return String(p).indexOf(card.home) === 0 ? "~" + String(p).slice(card.home.length) : String(p);
@@ -72,7 +74,7 @@ Rectangle {
     }
 
     width: Theme.dp(480)
-    height: body.implicitHeight + Theme.dp(56)
+    height: body.implicitHeight + Theme.dp(56) + (card.logOpen ? card.logFull + body.spacing : 0)
     radius: Theme.shapeXl
     color: Theme.bg
     scale: card.shown ? 1 : 0.9
@@ -125,520 +127,532 @@ Rectangle {
         onTriggered: card.stopArmed = false
     }
 
-    Column {
-        id: body
+    // a new stage is uncovered by the card's own growth, never drawn past it.
+    // the clip ends at the bottom padding and leaves slack for focus rings
+    Item {
+        id: viewport
 
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.margins: Theme.dp(28)
-        spacing: Theme.dp(14)
+        x: Theme.dp(16)
+        y: Theme.dp(20)
+        width: card.width - Theme.dp(32)
+        height: Math.max(0, card.height - Theme.dp(48))
+        clip: true
 
-        Row {
-            width: parent.width
-            spacing: Theme.dp(16)
+        Column {
+            id: body
 
-            Item {
-                width: Theme.dp(52)
-                height: Theme.dp(52)
+            x: Theme.dp(12)
+            y: Theme.dp(8)
+            width: viewport.width - Theme.dp(24)
+            spacing: Theme.dp(14)
 
-                MaterialShape {
-                    anchors.fill: parent
-                    shape: "cookie9"
-                    color: {
-                        if (card.view === "failed" || (card.view === "confirm" && card.beta))
-                            return Theme.errorContainer;
+            Row {
+                width: parent.width
+                spacing: Theme.dp(16)
 
-                        if (card.view === "restart")
-                            return Theme.alpha(Theme.success, 0.18);
+                Item {
+                    width: Theme.dp(52)
+                    height: Theme.dp(52)
 
-                        return Theme.accentContainer;
-                    }
-                    spin: card.view === "running" && Updates.phase !== "stopping" ? 30 : 0
+                    MaterialShape {
+                        anchors.fill: parent
+                        shape: "cookie9"
+                        color: {
+                            if (card.view === "failed" || (card.view === "confirm" && card.beta))
+                                return Theme.errorContainer;
 
-                    Behavior on spin {
-                        NumberAnimation {
-                            duration: Theme.durSlowSpatial
-                            easing.type: Easing.Bezier
-                            easing.bezierCurve: Theme.curveDefaultSpatial
+                            if (card.view === "restart")
+                                return Theme.alpha(Theme.success, 0.18);
+
+                            return Theme.accentContainer;
+                        }
+                        spin: card.view === "running" && Updates.phase !== "stopping" ? 30 : 0
+
+                        Behavior on spin {
+                            NumberAnimation {
+                                duration: Theme.durSlowSpatial
+                                easing.type: Easing.Bezier
+                                easing.bezierCurve: Theme.curveDefaultSpatial
+                            }
+
                         }
 
                     }
 
-                }
-
-                Icon {
-                    anchors.centerIn: parent
-                    size: Theme.dp(26)
-                    name: {
-                        if (card.view === "confirm")
-                            return card.beta ? "warning" : "update";
-
-                        if (card.view === "auth")
-                            return "key";
-
-                        if (card.view === "running")
-                            return Updates.phase === "download" ? "download" : "update";
-
-                        if (card.view === "restart")
-                            return "restart_alt";
-
-                        return "error";
-                    }
-                    color: {
-                        if (card.view === "failed" || (card.view === "confirm" && card.beta))
-                            return Theme.fgErrorContainer;
-
-                        if (card.view === "restart")
-                            return Theme.success;
-
-                        return Theme.fgAccentContainer;
-                    }
-                }
-
-            }
-
-            Column {
-                width: parent.width - Theme.dp(68)
-                spacing: Theme.dp(3)
-                anchors.verticalCenter: parent.verticalCenter
-
-                Text {
-                    text: {
-                        if (card.view === "confirm")
-                            return card.beta ? "Beta build" : "Update available";
-
-                        if (card.view === "auth")
-                            return "Authentication required";
-
-                        if (card.view === "running")
-                            return Updates.phase === "stopping" ? "Stopping" : "Updating Lucid";
-
-                        if (card.view === "restart")
-                            return "Update installed";
-
-                        return card.res.reason === "cancelled" ? "Update stopped" : "Update failed";
-                    }
-                    color: {
-                        if (card.view === "failed" || (card.view === "confirm" && card.beta))
-                            return Theme.error;
-
-                        if (card.view === "restart")
-                            return Theme.success;
-
-                        return Theme.accent;
-                    }
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontLabelMd
-                    font.variableAxes: Theme.axes(Theme.fontLabelMd, 520, 0)
-                    font.weight: Font.Medium
-                }
-
-                Text {
-                    width: parent.width
-                    text: {
-                        if (card.view === "confirm")
-                            return card.beta ? "Install " + Updates.flowLabel.toLowerCase() + "?" : "Update to " + Updates.flowLabel + "?";
-
-                        if (card.view === "auth")
-                            return "Enter your password";
-
-                        if (card.view === "running")
-                            return Updates.flowLabel;
-
-                        if (card.view === "restart")
-                            return Updates.flowLabel + " is installed";
-
-                        var r = card.res.reason;
-                        if (r === "password")
-                            return "The password was not accepted";
-
-                        if (r === "timeout")
-                            return "No password was given in time";
-
-                        if (r === "download")
-                            return "The download failed";
-
-                        if (r === "unpack")
-                            return "The download could not be unpacked";
-
-                        if (r === "cancelled")
-                            return "The update was stopped";
-
-                        if (r === "crash")
-                            return "The updater stopped unexpectedly";
-
-                        if (r === "nosudo")
-                            return "sudo is not installed";
-
-                        return "The installer stopped with an error";
-                    }
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontTitleLg
-                    font.variableAxes: Theme.axes(Theme.fontTitleLg, 520, 0)
-                    font.weight: Font.Medium
-                    wrapMode: Text.WordWrap
-                    maximumLineCount: 2
-                    elide: Text.ElideRight
-                }
-
-            }
-
-        }
-
-        // what is about to happen, what is needed, or what came of it
-        Text {
-            width: parent.width
-            visible: text !== ""
-            text: {
-                if (card.view === "confirm") {
-                    var what = card.beta ? "This is the newest commit on main, not a release" + (Updates.betaTitle !== "" ? ": “" + Updates.betaTitle + "”" : "") + ". Lucid downloads it from GitHub" : "Lucid downloads v" + Updates.latest + " from its GitHub release";
-                    return what + " and runs the installer that comes with it. Your current setup is moved to a backup in ~/.config first, and your settings, pins and widgets carry over. It takes a few minutes, and the installer may ask you things along the way. Your password is needed next.";
-                }
-                if (card.view === "auth")
-                    return "The installer uses sudo to install packages and system files such as the login screen theme. The password goes to sudo once and is not kept.";
-
-                if (card.view === "restart")
-                    return "Restart Lucid to start using it. Only the shell restarts: your windows and apps stay open." + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
-
-                if (card.view === "failed")
-                    return (card.res.text ? card.res.text + " " : "") + (card.res.backup ? "Your previous setup is kept in " + card.tilde(card.res.backup) + "." : "Your Lucid files were not changed.");
-
-                return "";
-            }
-            color: Theme.subtext
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontBodyMd
-            font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
-            lineHeight: 1.35
-            wrapMode: Text.WordWrap
-        }
-
-        // the beta's critical warning, in the error container
-        Rectangle {
-            width: parent.width
-            height: betaWarn.implicitHeight + Theme.dp(28)
-            radius: Theme.dp(18)
-            color: Theme.errorContainer
-            visible: card.view === "confirm" && card.beta
-
-            Icon {
-                id: betaMark
-
-                anchors.left: parent.left
-                anchors.leftMargin: Theme.dp(16)
-                anchors.top: parent.top
-                anchors.topMargin: Theme.dp(15)
-                name: "warning"
-                fill: 1
-                size: Theme.dp(18)
-                color: Theme.fgErrorContainer
-            }
-
-            Text {
-                id: betaWarn
-
-                anchors.left: betaMark.right
-                anchors.leftMargin: Theme.dp(10)
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.dp(16)
-                anchors.top: parent.top
-                anchors.topMargin: Theme.dp(14)
-                text: "<b>Things may break.</b> Beta builds are untested: the bar, the lock screen or the whole shell can fail to start. If that happens, move the backup back over ~/.config/quickshell from a terminal."
-                textFormat: Text.StyledText
-                color: Theme.fgErrorContainer
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontBodyMd
-                font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
-                lineHeight: 1.3
-                wrapMode: Text.WordWrap
-            }
-
-        }
-
-        // the opening sudo prompt
-        Column {
-            width: parent.width
-            spacing: Theme.dp(10)
-            visible: card.view === "auth"
-
-            SecretField {
-                id: authField
-
-                width: parent.width
-                error: card.authAsk && card.ask.retry && authField.text === ""
-                busy: !card.authAsk
-                placeholder: card.authAsk ? "Password for " + Quickshell.env("USER") : "Getting ready…"
-                onAccepted: card.submitAuth()
-            }
-
-            Text {
-                width: parent.width
-                text: {
-                    if (card.authAsk && card.ask.retry)
-                        return "That password did not work. Try again.";
-
-                    if (card.ask !== null && Updates.askSent === card.ask.n)
-                        return "Checking…";
-
-                    return "";
-                }
-                visible: text !== ""
-                color: card.authAsk && card.ask.retry ? Theme.error : Theme.subtextDim
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontBodySm
-                font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
-            }
-
-        }
-
-        // the bar
-        Column {
-            width: parent.width
-            spacing: Theme.dp(10)
-            visible: card.view === "running"
-
-            Row {
-                width: parent.width
-
-                Text {
-                    width: parent.width - pct.width
-                    text: {
-                        if (Updates.phase === "download")
-                            return "Downloading" + (Updates.bytes > 0 ? " — " + card.mb(Updates.bytes) : "");
-
-                        if (Updates.phase === "install" && Updates.stepText !== "")
-                            return Updates.stepText + (Updates.stepOf > 0 ? "  ·  step " + Updates.stepN + " of " + Updates.stepOf : "");
-
-                        return Updates.phaseText !== "" ? Updates.phaseText : "Starting";
-                    }
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontBodyMd
-                    font.variableAxes: Theme.axes(Theme.fontBodyMd, 480, 0)
-                    elide: Text.ElideRight
-                }
-
-                Text {
-                    id: pct
-
-                    text: Updates.progressKnown ? Math.round(Updates.progress * 100) + "%" : ""
-                    color: Theme.subtext
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontBodyMd
-                    font.variableAxes: Theme.axes(Theme.fontBodyMd, 480, 0)
-                    font.features: {
-                        "tnum": 1
-                    }
-                }
-
-            }
-
-            LinearProgress {
-                width: parent.width
-                value: Updates.progress
-                wavy: true
-                animated: card.shown && card.view === "running" && Updates.phase !== "stopping"
-                // held still while it waits on an answer
-                flowing: !card.runAsk
-                thickness: Theme.dp(5)
-            }
-
-            Text {
-                width: parent.width
-                text: Updates.liveLine.trim()
-                // the question below already says it
-                visible: !card.runAsk
-                color: Theme.subtextDim
-                font.family: "monospace"
-                font.pixelSize: Theme.fontLabelSm
-                elide: Text.ElideRight
-            }
-
-        }
-
-        // a question from the installer, or sudo wanting its password again
-        Rectangle {
-            width: parent.width
-            height: askCol.implicitHeight + Theme.dp(36)
-            radius: Theme.dp(20)
-            color: Theme.bgTile
-            border.width: 1
-            border.color: Theme.alpha(Theme.accent, 0.35)
-            visible: card.runAsk
-
-            Column {
-                id: askCol
-
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.margins: Theme.dp(18)
-                spacing: Theme.dp(10)
-
-                Row {
-                    spacing: Theme.dp(8)
-
                     Icon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        name: card.runAsk && card.ask.kind === "password" ? "key" : "help"
-                        size: Theme.dp(16)
-                        color: Theme.accent
+                        anchors.centerIn: parent
+                        size: Theme.dp(26)
+                        name: {
+                            if (card.view === "confirm")
+                                return card.beta ? "warning" : "update";
+
+                            if (card.view === "auth")
+                                return "key";
+
+                            if (card.view === "running")
+                                return Updates.phase === "download" ? "download" : "update";
+
+                            if (card.view === "restart")
+                                return "restart_alt";
+
+                            return "error";
+                        }
+                        color: {
+                            if (card.view === "failed" || (card.view === "confirm" && card.beta))
+                                return Theme.fgErrorContainer;
+
+                            if (card.view === "restart")
+                                return Theme.success;
+
+                            return Theme.fgAccentContainer;
+                        }
                     }
+
+                }
+
+                Column {
+                    width: parent.width - Theme.dp(68)
+                    spacing: Theme.dp(3)
+                    anchors.verticalCenter: parent.verticalCenter
 
                     Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: card.runAsk && card.ask.kind === "password" ? "sudo needs your password again" : "The installer asks"
-                        color: Theme.accent
+                        text: {
+                            if (card.view === "confirm")
+                                return card.beta ? "Beta build" : "Update available";
+
+                            if (card.view === "auth")
+                                return "Authentication required";
+
+                            if (card.view === "running")
+                                return Updates.phase === "stopping" ? "Stopping" : "Updating Lucid";
+
+                            if (card.view === "restart")
+                                return "Update installed";
+
+                            return card.res.reason === "cancelled" ? "Update stopped" : "Update failed";
+                        }
+                        color: {
+                            if (card.view === "failed" || (card.view === "confirm" && card.beta))
+                                return Theme.error;
+
+                            if (card.view === "restart")
+                                return Theme.success;
+
+                            return Theme.accent;
+                        }
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontLabelMd
                         font.variableAxes: Theme.axes(Theme.fontLabelMd, 520, 0)
                         font.weight: Font.Medium
                     }
 
-                }
+                    Text {
+                        width: parent.width
+                        text: {
+                            if (card.view === "confirm")
+                                return card.beta ? "Install " + Updates.flowLabel.toLowerCase() + "?" : "Update to " + Updates.flowLabel + "?";
 
-                // the lines above the question say what it is about
-                Text {
-                    width: parent.width
-                    visible: card.runAsk && card.ask.kind !== "password" && text !== ""
-                    text: card.runAsk ? (card.ask.context || []).map((l) => {
-                        return l.trim();
-                    }).filter((l) => {
-                        return l !== "";
-                    }).join("\n") : ""
-                    color: Theme.subtextDim
-                    font.family: "monospace"
-                    font.pixelSize: Theme.fontLabelSm
-                    wrapMode: Text.WrapAnywhere
-                    maximumLineCount: 6
-                    elide: Text.ElideRight
-                }
+                            if (card.view === "auth")
+                                return "Enter your password";
 
-                Text {
-                    width: parent.width
-                    visible: card.runAsk && card.ask.kind !== "password"
-                    text: card.runAsk ? card.question(card.ask.text) : ""
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontBodyLg
-                    font.variableAxes: Theme.axes(Theme.fontBodyLg, 480, 0)
-                    wrapMode: Text.WordWrap
-                }
+                            if (card.view === "running")
+                                return Updates.flowLabel;
 
-                SecretField {
-                    id: askField
+                            if (card.view === "restart")
+                                return Updates.flowLabel + " is installed";
 
-                    width: parent.width
-                    visible: card.runAsk && card.ask.kind === "password"
-                    error: card.runAsk && card.ask.retry === true && askField.text === ""
-                    placeholder: card.runAsk && card.ask.retry ? "Wrong password, try again" : "Password for " + Quickshell.env("USER")
-                    onAccepted: card.submitAsk()
-                }
+                            var r = card.res.reason;
+                            if (r === "password")
+                                return "The password was not accepted";
 
-                Rectangle {
-                    width: parent.width
-                    height: Theme.dp(44)
-                    radius: Theme.dp(22)
-                    color: askText.activeFocus ? Theme.bgHigh : Theme.bgSunken
-                    visible: card.runAsk && card.ask.kind === "text"
+                            if (r === "timeout")
+                                return "No password was given in time";
 
-                    TextInput {
-                        id: askText
+                            if (r === "download")
+                                return "The download failed";
 
-                        anchors.fill: parent
-                        anchors.leftMargin: Theme.dp(18)
-                        anchors.rightMargin: Theme.dp(18)
-                        verticalAlignment: TextInput.AlignVCenter
+                            if (r === "unpack")
+                                return "The download could not be unpacked";
+
+                            if (r === "cancelled")
+                                return "The update was stopped";
+
+                            if (r === "crash")
+                                return "The updater stopped unexpectedly";
+
+                            if (r === "nosudo")
+                                return "sudo is not installed";
+
+                            return "The installer stopped with an error";
+                        }
                         color: Theme.text
-                        selectionColor: Theme.accent
-                        selectedTextColor: Theme.fgAccent
                         font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontBodyLg
-                        clip: true
-                        onAccepted: card.submitAsk()
-                    }
-
-                }
-
-                Row {
-                    anchors.right: parent.right
-                    spacing: Theme.dp(8)
-
-                    M3Button {
-                        visible: card.runAsk && card.ask.kind === "yesno"
-                        text: "No"
-                        variant: card.runAsk && card.ask.def === "n" ? "filled" : "outlined"
-                        onClicked: Updates.answer("n")
-                    }
-
-                    M3Button {
-                        visible: card.runAsk && card.ask.kind === "yesno"
-                        text: "Yes"
-                        variant: card.runAsk && card.ask.def === "n" ? "outlined" : "filled"
-                        onClicked: Updates.answer("y")
-                    }
-
-                    M3Button {
-                        visible: card.runAsk && card.ask.kind !== "yesno"
-                        text: "Send"
-                        variant: "filled"
-                        enabled: card.runAsk && (card.ask.kind === "text" || askField.text !== "")
-                        onClicked: card.submitAsk()
+                        font.pixelSize: Theme.fontTitleLg
+                        font.variableAxes: Theme.axes(Theme.fontTitleLg, 520, 0)
+                        font.weight: Font.Medium
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
                     }
 
                 }
 
             }
 
-        }
+            // what is about to happen, what is needed, or what came of it
+            Text {
+                width: parent.width
+                visible: text !== ""
+                text: {
+                    if (card.view === "confirm") {
+                        var what = card.beta ? "This is the newest commit on main, not a release" + (Updates.betaTitle !== "" ? ": “" + Updates.betaTitle + "”" : "") + ". Lucid downloads it from GitHub" : "Lucid downloads v" + Updates.latest + " from its GitHub release";
+                        return what + " and runs the installer that comes with it. Your current setup is moved to a backup in ~/.config first, and your settings, pins and widgets carry over. It takes a few minutes, and the installer may ask you things along the way. Your password is needed next.";
+                    }
+                    if (card.view === "auth")
+                        return "The installer uses sudo to install packages and system files such as the login screen theme. The password goes to sudo once and is not kept.";
 
-        Row {
-            width: parent.width
+                    if (card.view === "restart")
+                        return "Restart Lucid to start using it. Only the shell restarts: your windows and apps stay open." + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
 
-            MouseArea {
-                id: detailsToggle
+                    if (card.view === "failed")
+                        return (card.res.text ? card.res.text + " " : "") + (card.res.backup ? "Your previous setup is kept in " + card.tilde(card.res.backup) + "." : "Your Lucid files were not changed.");
 
-                width: visible ? detailsHead.width + Theme.dp(14) : 0
-                height: Theme.dp(40)
-                visible: card.view === "running" || card.view === "failed"
-                cursorShape: Qt.PointingHandCursor
-                onClicked: details.expanded = !details.expanded
+                    return "";
+                }
+                color: Theme.subtext
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontBodyMd
+                font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
+                lineHeight: 1.35
+                wrapMode: Text.WordWrap
+            }
+
+            // the beta's critical warning, in the error container
+            Rectangle {
+                width: parent.width
+                height: betaWarn.implicitHeight + Theme.dp(28)
+                radius: Theme.dp(18)
+                color: Theme.errorContainer
+                visible: card.view === "confirm" && card.beta
+
+                Icon {
+                    id: betaMark
+
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.dp(16)
+                    anchors.top: parent.top
+                    anchors.topMargin: Theme.dp(15)
+                    name: "warning"
+                    fill: 1
+                    size: Theme.dp(18)
+                    color: Theme.fgErrorContainer
+                }
+
+                Text {
+                    id: betaWarn
+
+                    anchors.left: betaMark.right
+                    anchors.leftMargin: Theme.dp(10)
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.dp(16)
+                    anchors.top: parent.top
+                    anchors.topMargin: Theme.dp(14)
+                    text: "<b>Things may break.</b> Beta builds are untested: the bar, the lock screen or the whole shell can fail to start. If that happens, move the backup back over ~/.config/quickshell from a terminal."
+                    textFormat: Text.StyledText
+                    color: Theme.fgErrorContainer
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontBodyMd
+                    font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
+                    lineHeight: 1.3
+                    wrapMode: Text.WordWrap
+                }
+
+            }
+
+            // the opening sudo prompt
+            Column {
+                width: parent.width
+                spacing: Theme.dp(10)
+                visible: card.view === "auth"
+
+                SecretField {
+                    id: authField
+
+                    width: parent.width
+                    error: card.authAsk && card.ask.retry && authField.text === ""
+                    busy: !card.authAsk
+                    placeholder: card.authAsk ? "Password for " + Quickshell.env("USER") : "Getting ready…"
+                    onAccepted: card.submitAuth()
+                }
+
+                Text {
+                    width: parent.width
+                    text: {
+                        if (card.authAsk && card.ask.retry)
+                            return "That password did not work. Try again.";
+
+                        if (card.ask !== null && Updates.askSent === card.ask.n)
+                            return "Checking…";
+
+                        return "";
+                    }
+                    visible: text !== ""
+                    color: card.authAsk && card.ask.retry ? Theme.error : Theme.subtextDim
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontBodySm
+                    font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
+                }
+
+            }
+
+            // the bar
+            Column {
+                width: parent.width
+                spacing: Theme.dp(10)
+                visible: card.view === "running"
 
                 Row {
-                    id: detailsHead
+                    width: parent.width
 
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Theme.dp(4)
+                    Text {
+                        width: parent.width - pct.width
+                        text: {
+                            if (Updates.phase === "download")
+                                return "Downloading" + (Updates.bytes > 0 ? " — " + card.mb(Updates.bytes) : "");
 
-                    Icon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        name: "terminal"
-                        size: Theme.dp(16)
-                        color: Theme.subtextDim
+                            if (Updates.phase === "install" && Updates.stepText !== "")
+                                return Updates.stepText + (Updates.stepOf > 0 ? "  ·  step " + Updates.stepN + " of " + Updates.stepOf : "");
+
+                            return Updates.phaseText !== "" ? Updates.phaseText : "Starting";
+                        }
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontBodyMd
+                        font.variableAxes: Theme.axes(Theme.fontBodyMd, 480, 0)
+                        elide: Text.ElideRight
                     }
 
                     Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "Details"
-                        color: Theme.subtextDim
+                        id: pct
+
+                        text: Updates.progressKnown ? Math.round(Updates.progress * 100) + "%" : ""
+                        color: Theme.subtext
                         font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontBodySm
-                        font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
+                        font.pixelSize: Theme.fontBodyMd
+                        font.variableAxes: Theme.axes(Theme.fontBodyMd, 480, 0)
+                        font.features: {
+                            "tnum": 1
+                        }
                     }
 
-                    Icon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        name: "chevron_right"
-                        size: Theme.dp(16)
-                        color: Theme.subtextDim
-                        rotation: details.expanded ? 90 : 0
+                }
 
-                        Behavior on rotation {
-                            NumberAnimation {
-                                duration: Theme.durShort
-                                easing.type: Theme.easeStandard
+                LinearProgress {
+                    width: parent.width
+                    value: Updates.progress
+                    wavy: true
+                    animated: card.shown && card.view === "running" && Updates.phase !== "stopping"
+                    // held still while it waits on an answer
+                    flowing: !card.runAsk
+                    thickness: Theme.dp(5)
+                }
+
+                Text {
+                    width: parent.width
+                    text: Updates.liveLine.trim()
+                    // the question below already says it
+                    visible: !card.runAsk
+                    color: Theme.subtextDim
+                    font.family: "monospace"
+                    font.pixelSize: Theme.fontLabelSm
+                    elide: Text.ElideRight
+                }
+
+            }
+
+            // a question from the installer, or sudo wanting its password again
+            Rectangle {
+                width: parent.width
+                height: askCol.implicitHeight + Theme.dp(36)
+                radius: Theme.dp(20)
+                color: Theme.bgTile
+                border.width: 1
+                border.color: Theme.alpha(Theme.accent, 0.35)
+                visible: card.runAsk
+
+                Column {
+                    id: askCol
+
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.margins: Theme.dp(18)
+                    spacing: Theme.dp(10)
+
+                    Row {
+                        spacing: Theme.dp(8)
+
+                        Icon {
+                            anchors.verticalCenter: parent.verticalCenter
+                            name: card.runAsk && card.ask.kind === "password" ? "key" : "help"
+                            size: Theme.dp(16)
+                            color: Theme.accent
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: card.runAsk && card.ask.kind === "password" ? "sudo needs your password again" : "The installer asks"
+                            color: Theme.accent
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontLabelMd
+                            font.variableAxes: Theme.axes(Theme.fontLabelMd, 520, 0)
+                            font.weight: Font.Medium
+                        }
+
+                    }
+
+                    // the lines above the question say what it is about
+                    Text {
+                        width: parent.width
+                        visible: card.runAsk && card.ask.kind !== "password" && text !== ""
+                        text: card.runAsk ? (card.ask.context || []).map((l) => {
+                            return l.trim();
+                        }).filter((l) => {
+                            return l !== "";
+                        }).join("\n") : ""
+                        color: Theme.subtextDim
+                        font.family: "monospace"
+                        font.pixelSize: Theme.fontLabelSm
+                        wrapMode: Text.WrapAnywhere
+                        maximumLineCount: 6
+                        elide: Text.ElideRight
+                    }
+
+                    Text {
+                        width: parent.width
+                        visible: card.runAsk && card.ask.kind !== "password"
+                        text: card.runAsk ? card.question(card.ask.text) : ""
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontBodyLg
+                        font.variableAxes: Theme.axes(Theme.fontBodyLg, 480, 0)
+                        wrapMode: Text.WordWrap
+                    }
+
+                    SecretField {
+                        id: askField
+
+                        width: parent.width
+                        visible: card.runAsk && card.ask.kind === "password"
+                        error: card.runAsk && card.ask.retry === true && askField.text === ""
+                        placeholder: card.runAsk && card.ask.retry ? "Wrong password, try again" : "Password for " + Quickshell.env("USER")
+                        onAccepted: card.submitAsk()
+                    }
+
+                    Rectangle {
+                        width: parent.width
+                        height: Theme.dp(44)
+                        radius: Theme.dp(22)
+                        color: askText.activeFocus ? Theme.bgHigh : Theme.bgSunken
+                        visible: card.runAsk && card.ask.kind === "text"
+
+                        TextInput {
+                            id: askText
+
+                            anchors.fill: parent
+                            anchors.leftMargin: Theme.dp(18)
+                            anchors.rightMargin: Theme.dp(18)
+                            verticalAlignment: TextInput.AlignVCenter
+                            color: Theme.text
+                            selectionColor: Theme.accent
+                            selectedTextColor: Theme.fgAccent
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontBodyLg
+                            clip: true
+                            onAccepted: card.submitAsk()
+                        }
+
+                    }
+
+                    Row {
+                        anchors.right: parent.right
+                        spacing: Theme.dp(8)
+
+                        M3Button {
+                            visible: card.runAsk && card.ask.kind === "yesno"
+                            text: "No"
+                            variant: card.runAsk && card.ask.def === "n" ? "filled" : "outlined"
+                            onClicked: Updates.answer("n")
+                        }
+
+                        M3Button {
+                            visible: card.runAsk && card.ask.kind === "yesno"
+                            text: "Yes"
+                            variant: card.runAsk && card.ask.def === "n" ? "outlined" : "filled"
+                            onClicked: Updates.answer("y")
+                        }
+
+                        M3Button {
+                            visible: card.runAsk && card.ask.kind !== "yesno"
+                            text: "Send"
+                            variant: "filled"
+                            enabled: card.runAsk && (card.ask.kind === "text" || askField.text !== "")
+                            onClicked: card.submitAsk()
+                        }
+
+                    }
+
+                }
+
+            }
+
+            Row {
+                width: parent.width
+
+                MouseArea {
+                    id: detailsToggle
+
+                    width: visible ? detailsHead.width + Theme.dp(14) : 0
+                    height: Theme.dp(40)
+                    visible: card.view === "running" || card.view === "failed"
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: details.expanded = !details.expanded
+
+                    Row {
+                        id: detailsHead
+
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: Theme.dp(4)
+
+                        Icon {
+                            anchors.verticalCenter: parent.verticalCenter
+                            name: "terminal"
+                            size: Theme.dp(16)
+                            color: Theme.subtextDim
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Details"
+                            color: Theme.subtextDim
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontBodySm
+                            font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
+                        }
+
+                        Icon {
+                            anchors.verticalCenter: parent.verticalCenter
+                            name: "chevron_right"
+                            size: Theme.dp(16)
+                            color: Theme.subtextDim
+                            rotation: details.expanded ? 90 : 0
+
+                            Behavior on rotation {
+                                NumberAnimation {
+                                    duration: Theme.durShort
+                                    easing.type: Theme.easeStandard
+                                }
+
                             }
 
                         }
@@ -647,112 +661,112 @@ Rectangle {
 
                 }
 
-            }
-
-            Item {
-                width: Math.max(0, parent.width - actions.width - detailsToggle.width)
-                height: 1
-            }
-
-            Row {
-                id: actions
-
-                spacing: Theme.dp(8)
-
-                // confirm
-                M3Button {
-                    visible: card.view === "confirm" || card.view === "auth"
-                    text: "Cancel"
-                    variant: "text"
-                    onClicked: Updates.cancel()
+                Item {
+                    width: Math.max(0, parent.width - actions.width - detailsToggle.width)
+                    height: 1
                 }
 
-                M3Button {
-                    visible: card.view === "confirm"
-                    text: "OK"
-                    variant: "filled"
-                    destructive: card.beta
-                    onClicked: Updates.confirmUpdate()
-                }
+                Row {
+                    id: actions
 
-                // auth
-                M3Button {
-                    visible: card.view === "auth"
-                    text: "Continue"
-                    variant: "filled"
-                    enabled: card.authAsk && authField.text !== ""
-                    onClicked: card.submitAuth()
-                }
+                    spacing: Theme.dp(8)
 
-                // running: a stop has to be meant, it can leave packages half done
-                M3Button {
-                    visible: card.view === "running"
-                    enabled: Updates.phase !== "stopping"
-                    text: card.stopArmed ? "Stop now" : "Stop"
-                    variant: card.stopArmed ? "tonal" : "text"
-                    destructive: true
-                    onClicked: {
-                        if (!card.stopArmed) {
-                            card.stopArmed = true;
-                            disarm.restart();
-                            return ;
-                        }
-                        card.stopArmed = false;
-                        Updates.cancel();
+                    // confirm
+                    M3Button {
+                        visible: card.view === "confirm" || card.view === "auth"
+                        text: "Cancel"
+                        variant: "text"
+                        onClicked: Updates.cancel()
                     }
-                }
 
-                M3Button {
-                    visible: card.view === "running"
-                    text: "Hide"
-                    variant: "tonal"
-                    onClicked: Updates.hide()
-                }
+                    M3Button {
+                        visible: card.view === "confirm"
+                        text: "OK"
+                        variant: "filled"
+                        destructive: card.beta
+                        onClicked: Updates.confirmUpdate()
+                    }
 
-                // restart
-                M3Button {
-                    visible: card.view === "restart"
-                    text: "Cancel"
-                    variant: "text"
-                    onClicked: Updates.closeEnd()
-                }
+                    // auth
+                    M3Button {
+                        visible: card.view === "auth"
+                        text: "Continue"
+                        variant: "filled"
+                        enabled: card.authAsk && authField.text !== ""
+                        onClicked: card.submitAuth()
+                    }
 
-                M3Button {
-                    visible: card.view === "restart"
-                    text: "Remind me later"
-                    variant: "tonal"
-                    iconPath: "snooze"
-                    onClicked: Updates.remindLater()
-                }
+                    // running: a stop has to be meant, it can leave packages half done
+                    M3Button {
+                        visible: card.view === "running"
+                        enabled: Updates.phase !== "stopping"
+                        text: card.stopArmed ? "Stop now" : "Stop"
+                        variant: card.stopArmed ? "tonal" : "text"
+                        destructive: true
+                        onClicked: {
+                            if (!card.stopArmed) {
+                                card.stopArmed = true;
+                                disarm.restart();
+                                return ;
+                            }
+                            card.stopArmed = false;
+                            Updates.cancel();
+                        }
+                    }
 
-                M3Button {
-                    visible: card.view === "restart"
-                    text: "Restart now"
-                    variant: "filled"
-                    iconPath: "restart_alt"
-                    onClicked: Updates.restartNow()
-                }
+                    M3Button {
+                        visible: card.view === "running"
+                        text: "Hide"
+                        variant: "tonal"
+                        onClicked: Updates.hide()
+                    }
 
-                // failed
-                M3Button {
-                    visible: card.view === "failed"
-                    text: "Open log"
-                    variant: "text"
-                    onClicked: Updates.openLog()
-                }
+                    // restart
+                    M3Button {
+                        visible: card.view === "restart"
+                        text: "Cancel"
+                        variant: "text"
+                        onClicked: Updates.closeEnd()
+                    }
 
-                M3Button {
-                    visible: card.canRetry
-                    text: "Try again"
-                    variant: "tonal"
-                    onClicked: Updates.retry()
-                }
+                    M3Button {
+                        visible: card.view === "restart"
+                        text: "Remind me later"
+                        variant: "tonal"
+                        iconPath: "snooze"
+                        onClicked: Updates.remindLater()
+                    }
 
-                M3Button {
-                    visible: card.view === "failed"
-                    text: "Close"
-                    variant: "filled"
-                    onClicked: Updates.closeEnd()
+                    M3Button {
+                        visible: card.view === "restart"
+                        text: "Restart now"
+                        variant: "filled"
+                        iconPath: "restart_alt"
+                        onClicked: Updates.restartNow()
+                    }
+
+                    // failed
+                    M3Button {
+                        visible: card.view === "failed"
+                        text: "Open log"
+                        variant: "text"
+                        onClicked: Updates.openLog()
+                    }
+
+                    M3Button {
+                        visible: card.canRetry
+                        text: "Try again"
+                        variant: "tonal"
+                        onClicked: Updates.retry()
+                    }
+
+                    M3Button {
+                        visible: card.view === "failed"
+                        text: "Close"
+                        variant: "filled"
+                        onClicked: Updates.closeEnd()
+                    }
+
                 }
 
             }
@@ -765,13 +779,19 @@ Rectangle {
 
             property bool expanded: false
 
-            width: parent.width
-            height: (card.view === "running" || card.view === "failed") && details.expanded ? Theme.dp(220) : 0
+            // whatever room the card has grown so far, so the box never runs ahead of it
+            anchors.left: body.left
+            anchors.right: body.right
+            anchors.top: body.bottom
+            anchors.topMargin: body.spacing
+            height: Math.max(0, Math.min(card.logFull, viewport.height - Theme.dp(8) - body.implicitHeight - body.spacing))
             clip: true
             visible: height > 0
 
+            // full size behind the clip, so it is uncovered rather than reflowed
             Rectangle {
-                anchors.fill: parent
+                width: parent.width
+                height: card.logFull
                 radius: Theme.dp(16)
                 color: Theme.bgSunken
 
@@ -810,14 +830,6 @@ Rectangle {
                         wrapMode: Text.WrapAnywhere
                     }
 
-                }
-
-            }
-
-            Behavior on height {
-                NumberAnimation {
-                    duration: Theme.durShort
-                    easing.type: Theme.easeStandard
                 }
 
             }

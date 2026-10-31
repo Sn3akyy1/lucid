@@ -31,6 +31,8 @@ Item {
     property alias overlayContent: overlayHolder.data
     property bool overlayOpen: false
     property Item overlayItem: null
+    // in hand in edit mode: over its neighbours, and on the full bar a pill of its own
+    property bool editLifted: false
 
     readonly property int morphDuration: Theme.barDurEnter
     readonly property var morphEasing: Theme.easeEmphasizedDecel
@@ -132,6 +134,52 @@ Item {
 
     function beginTransition() {
         panelTransitionTimer.restart();
+        if (pill.anyOpen && !openWobble.running) {
+            pill.resizeFrom = pill.popupMode ? shell.height : pill.height;
+            resizeWobble.restart();
+        }
+    }
+
+    // tied to a neighbour, or to the screen edge by flares, a pill only bobs
+    readonly property bool jellyPinned: pill.joined || Prefs.barFlush || pill.notchedPopup
+    property real resizeFrom: 0
+
+    // a soft cap, so a tall panel bends about as far as a short one
+    function jellyAmp(rel, size) {
+        return Math.min(rel, Theme.dp(26) / Math.max(1, size));
+    }
+
+    // kicked where the morph has slowed to the spring's pace, so it carries on past
+    function wobbleOpen(open) {
+        if (open) {
+            jelly.kickAfter(pill.jellyAmp(0.06, pill.popupMode ? pill.popupHeight : pill.openHeight), Math.round(pill.morphDuration * 0.42));
+        } else if (pill.popupMode) {
+            jelly.rest();
+            pillJelly.kickAfter(-0.15, Math.round(Theme.barDurExit * 0.9));
+        } else {
+            jelly.kickAfter(-0.15, Math.round(pill.morphDuration * 0.5));
+        }
+        openWobble.restart();
+    }
+
+    // an open and a resize in one go wobble once
+    Timer {
+        id: openWobble
+
+        interval: pill.morphDuration
+    }
+
+    Timer {
+        id: resizeWobble
+
+        interval: Math.round(pill.morphDuration * 0.42)
+        onTriggered: {
+            const to = pill.popupMode ? pill.popupHeight : pill.openHeight;
+            const dh = to - pill.resizeFrom;
+            if (pill.anyOpen && !openWobble.running && Math.abs(dh) > Theme.dp(6))
+                jelly.kick((dh > 0 ? 1 : -1) * pill.jellyAmp(0.035, to));
+
+        }
     }
 
     readonly property bool anyOpen: pill.expanded || pill.altOpen
@@ -186,7 +234,12 @@ Item {
 
     property int hoverGrowDuration: Theme.barMs(150)
 
-    onCompactHoveredChanged: pill.hoverGrowDuration = Theme.barMs(pill.compactHovered ? 150 : 220)
+    onCompactHoveredChanged: {
+        pill.hoverGrowDuration = Theme.barMs(pill.compactHovered ? 150 : 220);
+        if (pill.compactHovered && !pill.anyOpen && pill.shown)
+            (pill.popupMode ? pillJelly : jelly).kick(-0.07);
+
+    }
 
     Behavior on hoverGrow {
         NumberAnimation {
@@ -203,7 +256,7 @@ Item {
     // pill promotes it to an ordinary clicked-open panel, grab and all.
     // off for a pill that is only a button, with nothing to unfold
     property bool opensOnHover: true
-    readonly property bool hoverOpens: Prefs.barHoverOpen && pill.shown && pill.opensOnHover
+    readonly property bool hoverOpens: Prefs.barHoverOpen && pill.shown && pill.opensOnHover && !Edit.active
     property bool hoverOpen: false
     readonly property bool surfaceHovered: pill.compactHovered || shellHover.hovered || pillHover.hovered
 
@@ -274,7 +327,7 @@ Item {
     readonly property int pillTopRadius: Prefs.barFlush ? 0 : Prefs.barPillRadius
     // on the full bar the strip behind already paints the resting pill, so the
     // pill itself only shows a hover tint
-    readonly property color restingColor: Prefs.barFull ? Theme.alpha(Theme.bg, 0) : Theme.bg
+    readonly property color restingColor: Prefs.barFull && !pill.editLifted ? Theme.alpha(Theme.bg, 0) : Theme.bg
     // still taller than the pill: a closing panel keeps its colour until it has
     // folded away, or on the full bar its fading contents float over the desktop
     readonly property bool surfaceOpen: pill.anyOpen || pill.height > pill.compactHeight + 0.5
@@ -291,6 +344,7 @@ Item {
             pill.hoverOpen = false;
 
         panelTransitionTimer.restart();
+        pill.wobbleOpen(pill.anyOpen);
     }
 
     readonly property int popupWidth: pill.popupIsAlt ? pill.altWidth : pill.panelWidth
@@ -311,10 +365,16 @@ Item {
     readonly property bool popupOpen: pill.shown && pill.popupMode && (pill.notchedPopup ? shell.height > 0.5 : shell.y > 0.5)
     readonly property Item popupItem: shell
 
-    readonly property real surfaceX: -pill.hoverGrow
-    readonly property real surfaceY: 0
-    readonly property real surfaceWidth: pill.width + pill.hoverGrow * 2
-    readonly property real surfaceHeight: pill.popupMode ? pill.compactHeight : pill.height
+    readonly property real restX: -pill.hoverGrow
+    // the surface as painted, jelly and all: what the mask and the blur follow
+    readonly property real surfaceX: pill.restX + (pill.popupMode ? pillJelly.shiftX : jelly.shiftX)
+    readonly property real surfaceY: pill.popupMode ? pillJelly.shiftY : jelly.shiftY
+    readonly property real surfaceWidth: (pill.width + pill.hoverGrow * 2) * (pill.popupMode ? pillJelly.xScale : jelly.xScale)
+    readonly property real surfaceHeight: pill.popupMode ? pill.compactHeight * pillJelly.yScale : pill.height * jelly.yScale
+    readonly property real popupPaintX: shell.x + jelly.shiftX
+    readonly property real popupPaintY: shell.y + jelly.shiftY
+    readonly property real popupPaintWidth: shell.width * jelly.xScale
+    readonly property real popupPaintHeight: shell.height * jelly.yScale
     // the corners ModuleRegion's mask and blur follow
     readonly property real barTopLeftRadius: pill.popupMode ? pillRect.topLeftRadius : shell.topLeftRadius
     readonly property real barTopRightRadius: pill.popupMode ? pillRect.topRightRadius : shell.topRightRadius
@@ -335,8 +395,8 @@ Item {
     scale: pill.shown ? 1 : 0.86
     transformOrigin: Item.Center
     visible: pill.opacity > 0.01
-    clip: !pill.popupMode && pill.anyOpen && !pill.overlayOpen
-    z: (pill.popupOpen || pill.overlayOpen) ? 100 : 1
+    clip: !pill.popupMode && pill.anyOpen && !pill.overlayOpen && !jelly.wobbling
+    z: pill.editLifted ? 120 : ((pill.popupOpen || pill.overlayOpen) ? 100 : 1)
 
     Behavior on opacity {
         SequentialAnimation {
@@ -383,6 +443,9 @@ Item {
         } else {
             contentExit.stop();
             contentEnter.restart();
+            if (pill.lookSettled)
+                (pill.popupMode ? pillJelly : jelly).kickAfter(0.08, Theme.barMs(120));
+
         }
     }
 
@@ -481,8 +544,8 @@ Item {
         id: pillRect
 
         visible: pill.popupMode
-        x: pill.surfaceX
-        y: pill.surfaceY
+        x: pill.restX
+        y: 0
         width: pill.width + pill.hoverGrow * 2
         height: pill.compactHeight
         color: pill.restingColor
@@ -492,6 +555,15 @@ Item {
         topRightRadius: pill.joinRight ? 0 : pill.pillTopRadius
         bottomLeftRadius: pill.capped(pill.hangCorners, "bl", pill.joinLeft ? 0 : Prefs.barPillRadius)
         bottomRightRadius: pill.capped(pill.hangCorners, "br", pill.joinRight ? 0 : Prefs.barPillRadius)
+        readonly property bool jellyWobbling: pillJelly.wobbling
+        transform: Jelly {
+            id: pillJelly
+
+            target: pillRect
+            anchorY: pill.jellyPinned ? 0 : 0.5
+            spread: pill.jellyPinned ? 0 : pillJelly.naturalSpread
+            frequency: 5
+        }
 
         HoverHandler {
             id: pillHover
@@ -535,8 +607,8 @@ Item {
         // a notched pop-up grows down out of the pill's bottom edge, flush
         width: pill.popupMode ? (pill.anyOpen ? pill.popupWidth : pill.compactWidth + (pill.notchedPopup ? 0 : pill.hoverGrow * 2)) : pill.width + pill.hoverGrow * 2
         height: pill.popupMode ? (pill.anyOpen ? pill.popupHeight : (pill.notchedPopup ? 0 : pill.compactHeight)) : pill.height
-        x: pill.popupMode && pill.anyOpen ? pill.popupX : (pill.notchedPopup ? 0 : pill.surfaceX)
-        y: pill.popupMode && (pill.anyOpen || pill.notchedPopup) ? pill.compactHeight + (pill.notchedPopup ? 0 : Theme.dp(Prefs.barPopupGap)) : pill.surfaceY
+        x: pill.popupMode && pill.anyOpen ? pill.popupX : (pill.notchedPopup ? 0 : pill.restX)
+        y: pill.popupMode && (pill.anyOpen || pill.notchedPopup) ? pill.compactHeight + (pill.notchedPopup ? 0 : Theme.dp(Prefs.barPopupGap)) : 0
         visible: !pill.popupMode || (pill.notchedPopup ? shell.height > 0.5 : shell.y > 0.5)
         color: (pill.popupMode || pill.surfaceOpen) ? Theme.bg : pill.restingColor
         radius: pill.cornerRadius
@@ -549,6 +621,17 @@ Item {
         clip: true
         layer.enabled: pill.surfaceLayered
         layer.samples: 4
+        layer.smooth: jelly.wobbling
+        readonly property bool jellyWobbling: jelly.wobbling
+        // hung from its top edge while open, so it stays on the bar
+        transform: Jelly {
+            id: jelly
+
+            target: shell
+            anchorY: (pill.popupMode || pill.surfaceOpen || Prefs.barFlush) ? 0 : 0.5
+            spread: pill.jellyPinned ? 0 : jelly.naturalSpread
+            frequency: pill.surfaceOpen ? 3.2 : 5
+        }
 
         // handlers on the surface itself, so hovering the panel's own contents
         // still counts as hovering the pill
@@ -700,10 +783,12 @@ Item {
                 onEntered: pill.compactHovered = true
                 onExited: pill.compactHovered = false
                 onClicked: (mouse) => {
-                    // a right click opens this module's card in Settings
+                    // a right click opens this module's sheet in edit mode
                     if (mouse.button === Qt.RightButton) {
                         const id = pill.moduleId();
-                        if (id !== "")
+                        if (id !== "" && pill.hostWindow && pill.hostWindow.editModule)
+                            pill.hostWindow.editModule(id);
+                        else if (id !== "")
                             Prefs.openBarModule(id);
 
                         return ;
@@ -785,7 +870,8 @@ Item {
 
             HyprlandFocusGrab {
                 active: pill.expanded && pill.focusGrabs && !pill.hoverOpen
-                windows: pill.hostWindow ? [pill.hostWindow] : []
+                // in edit mode the sheet beside it does not shut it
+                windows: pill.hostWindow ? [pill.hostWindow].concat(Edit.active ? Edit.windows : []) : []
                 onCleared: pill.expanded = false
             }
 

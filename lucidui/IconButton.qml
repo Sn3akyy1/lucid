@@ -66,6 +66,13 @@ Item {
 
     implicitWidth: ib.btnW
     implicitHeight: ib.btnH
+    readonly property bool jellyWobbling: squish.wobbling
+    transform: Jelly {
+        id: squish
+
+        target: ib
+        frequency: 6.5
+    }
 
     Rectangle {
         id: box
@@ -99,6 +106,7 @@ Item {
             tint: ib.content
             disabled: ib.disabled
             acceptedButtons: Qt.LeftButton | Qt.RightButton
+            onPressedChanged: squish.kick(area.pressed ? -0.12 : 0.09)
             onClicked: (mouse) => {
                 if (mouse.button === Qt.RightButton) {
                     ib.rightClicked();

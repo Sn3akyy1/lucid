@@ -4,10 +4,37 @@ import qs
 Column {
     id: page
 
+    // shown in edit mode's sheet beside the dock itself, which needs no preview
+    property bool inSheet: false
+
     spacing: Theme.dp(26)
 
     DockPreview {
         width: parent.width
+        visible: !page.inSheet
+    }
+
+    SettingCard {
+        title: "ON THE DESKTOP"
+        visible: !page.inSheet
+
+        SettingRow {
+            title: "Edit the dock where it is"
+            description: "In edit mode the desktop shades over and the dock gets a handle: drag it up to float the dock higher, or down into the bottom edge to make it a notch. Right-click the dock for these settings, right beside it."
+            enabled: Prefs.dockEnabled
+            disabledReason: "The dock is switched off."
+            showDivider: false
+
+            M3Button {
+                text: "Edit the dock"
+                variant: "filled"
+                iconPath: "edit"
+                enabled: Prefs.dockEnabled
+                onClicked: Edit.enterFromSettings("dock", "dock")
+            }
+
+        }
+
     }
 
     SettingCard {
@@ -339,6 +366,7 @@ Column {
 
     SettingCard {
         title: "PINNED APPLICATIONS"
+        visible: !page.inSheet
 
         SettingRow {
             title: "Reset pinned applications"

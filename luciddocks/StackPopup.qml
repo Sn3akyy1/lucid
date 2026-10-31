@@ -4,6 +4,7 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Widgets
 import qs
+import qs.lucidicons
 
 // the dock's window previews. a layer window of its own, like the right-click
 // menu: hyprland only frosts layer surfaces, never popups
@@ -17,10 +18,16 @@ Item {
     readonly property real cardH2: popup.cardH + Theme.dp(66)
     readonly property real cardX: Math.max(Theme.dp(8), Math.min(popup.width - popup.cardW2 - Theme.dp(8), popup.originX + popup.anchorLocalX - popup.cardW2 / 2))
     readonly property real cardY: Math.max(Theme.dp(8), popup.originY + popup.anchorLocalY - popup.cardH2 - Theme.dp(12))
+    // the card as painted, jelly and all, for the overlay's blur
+    readonly property real paintX: popup.cardX + cardJelly.shiftX
+    readonly property real paintY: popup.cardY + cardJelly.shiftY
+    readonly property real paintW: popup.cardW2 * cardJelly.xScale
+    readonly property real paintH: popup.cardH2 * cardJelly.yScale
     readonly property bool showing: popup.popupVisible || fadeAnim.running
     property bool popupVisible: false
     property string appId: ""
     property string iconName: ""
+    readonly property string lucidSlot: Prefs.envLegacyIcons ? "" : LucidIcons.slotFor(popup.appId, popup.iconName, "")
     property string launchCommand: ""
     property var groups: []
     property int activeWorkspaceId: -1
@@ -57,6 +64,10 @@ Item {
     onPopupVisibleChanged: {
         popup.fadeDuration = popup.popupVisible ? Theme.durEnter : Theme.durExit;
         popup.fadeEasing = popup.popupVisible ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
+        if (popup.popupVisible)
+            cardJelly.kickAfter(0.08, Math.round(Theme.durEnter * 0.3));
+        else
+            cardJelly.rest();
     }
 
     HyprlandFocusGrab {
@@ -81,6 +92,14 @@ Item {
         opacity: popup.popupVisible ? 1 : 0
         scale: popup.popupVisible ? 1 : 0.92
         transformOrigin: Item.Bottom
+        readonly property bool jellyWobbling: cardJelly.wobbling
+        transform: Jelly {
+            id: cardJelly
+
+            target: contentRoot
+            anchorY: 1
+            frequency: 4
+        }
 
         Row {
             id: row
@@ -154,7 +173,19 @@ Item {
                             height: Theme.dp(40)
                             anchors.centerIn: parent
                             source: popup.iconName === "" ? "" : (IconTheme.generation >= 0 && IconTheme.pathFor(popup.iconName) !== "" ? IconTheme.pathFor(popup.iconName) : Quickshell.iconPath(popup.iconName, true))
-                            visible: !preview.hasContent
+                            visible: !preview.hasContent && popup.lucidSlot === ""
+                        }
+
+                        Loader {
+                            anchors.centerIn: parent
+                            active: !preview.hasContent && popup.lucidSlot !== ""
+
+                            sourceComponent: TonalIcon {
+                                size: Theme.dp(40)
+                                slot: popup.lucidSlot
+                                hovered: entry.hovered
+                            }
+
                         }
 
                         Rectangle {
