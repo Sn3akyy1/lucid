@@ -42,19 +42,30 @@ ARGS = {"M": 2, "L": 2, "H": 1, "V": 1, "C": 6, "S": 4, "Q": 4, "T": 2, "A": 7, 
 
 def tokens(d):
     i = 0
+    cmd = None
+    arg = 0
     while i < len(d):
         c = d[i]
         if c.isalpha():
             yield c
+            cmd = c.upper()
+            arg = 0
             i += 1
-        elif c in " ,\t\n":
+        elif c in " ,\t\n\r":
             i += 1
         else:
-            m = NUM.match(d, i)
-            if not m:
-                raise ValueError("bad path near %r" % d[i:i + 12])
-            yield float(m.group(0))
-            i = m.end()
+            # an arc's two flags are one character each and may touch what follows:
+            # simple icons writes "a19 19 0 00-4.8-1.5" for flags 0 and 0
+            if cmd == "A" and arg % 7 in (3, 4) and c in "01":
+                yield float(c)
+                i += 1
+            else:
+                m = NUM.match(d, i)
+                if not m:
+                    raise ValueError("bad path near %r" % d[i:i + 12])
+                yield float(m.group(0))
+                i = m.end()
+            arg += 1
 
 
 def fmt(v):
@@ -104,6 +115,9 @@ def convert(d, box):
                 axis = "x"
             elif up == "V":
                 axis = "y"
+            elif up == "A":
+                # rx ry rotation large sweep x y: the end point is 5 and 6, not even/odd
+                axis = "x" if j == 5 else "y"
             else:
                 axis = "x" if j % 2 == 0 else "y"
             if rel:
@@ -150,10 +164,10 @@ def despike(d):
         if up == "M":
             x, y = (x + v[0], y + v[1]) if rel and subs else (v[0], v[1])
             sx, sy = x, y
-            subs.append((["M%s %s" % (fmt(x), fmt(y))], [(x, y)]))
+            subs.append((["M%s %s" % (fmt(x), fmt(y))], [(x, y)], []))
             cmd = "l" if rel else "L"
             continue
-        out, pts = subs[-1]
+        out, pts, arcs = subs[-1]
         out.append(cmd + " ".join(fmt(a) for a in v))
         if up == "H":
             x = x + v[0] if rel else v[0]
@@ -164,13 +178,16 @@ def despike(d):
         elif up == "A":
             x, y = (x + v[5], y + v[6]) if rel else (v[5], v[6])
             pts.append((x, y))
+            # a circle drawn as two arcs has no area between its end points
+            if abs(v[0]) > 1e-6 and abs(v[1]) > 1e-6:
+                arcs.append(True)
         else:
             # control points too: a real curve never has a flat control polygon
             ox, oy = x, y
             for j in range(0, n, 2):
                 pts.append((ox + v[j], oy + v[j + 1]) if rel else (v[j], v[j + 1]))
             x, y = pts[-1]
-    return "".join("".join(out) for out, pts in subs if abs(area(pts)) > 1e-6)
+    return "".join("".join(out) for out, pts, arcs in subs if arcs or abs(area(pts)) > 1e-6)
 
 
 # one entry per subpath, every command made absolute on the 24 grid so a shape
