@@ -2,12 +2,7 @@
 
 All notable changes to Lucid are recorded here, newest first.
 
-## v1.20.5.5 — 2026-10-31
-
-A beta on the way to the next release: Lumen, a file manager of Lucid's own
-that is also every app's file dialog, Lens for pictures and video, LucidShot
-rebuilt, edit mode on the desktop, and updates from inside Lucid. It's what I
-use daily, but rough edges are likely.
+## Unreleased
 
 ### New
 
