@@ -6,18 +6,6 @@ All notable changes to Lucid are recorded here, newest first.
 
 ### New
 
-- **Lumen, a file manager of Lucid's own.** It replaces Nautilus: SUPER+E opens
-  it, folders open in it, and every app's open and save dialog is a Lumen
-  window. Tabs can be pinned, coloured and dragged out into a window of their
-  own and back. Ctrl+D keeps a folder in the bookmarks, and Alt+P shows pictures,
-  PDFs, text, video and sound in a preview beside the folder. The sidebar lists
-  your drives with the room left on them, and Enter in the location bar searches
-  the whole disk.
-- **Lucid's own icons.** Folders, files and apps are drawn in one tonal set
-  across Lumen, the desktop, the dock and the launcher, and they move when you
-  hover them. *Settings → Environment* goes back to your icon theme.
-- **Jelly motion.** Panels, pills and dock icons give a slight wobble on a spring
-  as they open and move. *Settings → General* turns it off or sets how much.
 - **LucidShot, rebuilt.** Print freezes the screen under a Material You
   toolbar with a shutter beside it: *Screenshot*, *Record*, *Text* or
   *Colour*, of a region, a window or the whole screen. Drag out a region or
@@ -119,12 +107,6 @@ All notable changes to Lucid are recorded here, newest first.
   edit mode, and widgets come from the Widget Panel on the desktop, which has
   the layouts too. The Bar, Dock and Widgets pages each have a button that
   opens edit mode.
-- **The Settings sidebar highlights the way Lumen's does.** One pill travels
-  between the rows, stretching as it goes, and a row lights up as it arrives.
-- **The installer asks for more.** `qt6-webengine`, a large download, because
-  Lumen's preview needs its PDF module to open at all, and `qt6-imageformats`,
-  `kimageformats`, `libjpeg-turbo` and `exiv2` for pictures in Lens. `swappy` is
-  gone, as nothing uses it now. Running timers and the stopwatch survive an update.
 
 ## v1.20.1 — 2026-10-15
 
