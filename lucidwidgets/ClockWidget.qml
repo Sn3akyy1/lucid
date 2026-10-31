@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs
 import qs.lucidui
 
@@ -35,7 +36,7 @@ WidgetBody {
         return w.use24 ? "" : (d.getHours() < 12 ? "AM" : "PM");
     }
 
-    bare: w.variant === "minimal" || w.variant === "oval" || w.variant === "dial"
+    bare: w.variant === "minimal" || w.variant === "oval" || w.variant === "dial" || w.variant === "poster"
     onZonesChanged: Zones.watch(w.zones)
     Component.onCompleted: Zones.watch(w.zones)
 
@@ -568,6 +569,65 @@ WidgetBody {
             shadow: true
             pixelSize: Theme.dp(15)
             weight: 520
+        }
+
+    }
+
+    // poster: the hour over the minute in big figures, straight onto the wallpaper
+    Item {
+        id: poster
+
+        // the figures stand 0.7em tall, and the widest pair, 44, runs 1.18em
+        readonly property real capEm: 0.7
+        readonly property real gapEm: 0.056
+        readonly property int px: Math.round(Math.min((poster.height - Theme.dp(16)) / (poster.capEm * 2 + poster.gapEm), (poster.width - Theme.dp(16)) / 1.18))
+        readonly property real capH: poster.px * poster.capEm
+        readonly property real gap: poster.px * poster.gapEm
+        readonly property real headroom: (poster.height - poster.capH * 2 - poster.gap) / 2
+        // white on the wallpaper until a swatch says otherwise; a gallery tile is no wallpaper
+        readonly property color figure: {
+            var t = w.opt("tone");
+            if (t !== undefined && t !== "auto" && t !== "")
+                return w.inkAccent;
+
+            return w.preview ? Theme.text : "white";
+        }
+
+        visible: w.variant === "poster"
+        anchors.fill: parent
+
+        FontLoader {
+            id: posterFont
+
+            source: w.variant === "poster" ? "file://" + Quickshell.shellPath("assets/fonts/LucidPoster.ttf") : ""
+        }
+
+        Repeater {
+            model: w.variant === "poster" ? 2 : 0
+
+            Text {
+                id: figures
+
+                required property int index
+
+                // centred by the ink: a 1 hangs its flag off to one side of its stem
+                x: Math.round((poster.width - metrics.tightBoundingRect.width) / 2 - metrics.tightBoundingRect.x)
+                y: Math.round(poster.headroom + poster.capH * (figures.index + 1) + poster.gap * figures.index - figures.baselineOffset)
+                color: poster.figure
+                font.family: posterFont.status === FontLoader.Ready ? posterFont.name : Theme.fontFamily
+                font.pixelSize: poster.px
+                font.weight: Font.Bold
+                text: figures.index === 0 ? w.hourOf(w.now) : w.two(w.now.getMinutes())
+
+                TextMetrics {
+                    id: metrics
+
+                    font: figures.font
+                    text: figures.text
+                }
+
+            }
+
         }
 
     }
