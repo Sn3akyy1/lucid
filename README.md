@@ -11,18 +11,18 @@ an emoji picker, a screenshot tool and a settings app — themed together from
 your wallpaper.
 
 <p>
-  <a href="https://github.com/Sn3akyy1/lucid/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Sn3akyy1/lucid?style=for-the-badge&label=LAST%20COMMIT&labelColor=14100E&color=FF7F50"></a>
-  <a href="https://github.com/Sn3akyy1/lucid/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Sn3akyy1/lucid?style=for-the-badge&label=STARS&labelColor=14100E&color=FFC46B"></a>
-  <a href="https://github.com/Sn3akyy1/lucid/releases"><img alt="Release" src="https://img.shields.io/github/v/tag/Sn3akyy1/lucid?style=for-the-badge&label=RELEASE&labelColor=14100E&color=FFAB91"></a>
-  <img alt="Repo size" src="https://img.shields.io/github/repo-size/Sn3akyy1/lucid?style=for-the-badge&label=REPO%20SIZE&labelColor=14100E&color=E8A87C">
-  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-80CBC4?style=for-the-badge&labelColor=14100E"></a>
+  <a href="https://github.com/Sn3akyy1/lucid/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Sn3akyy1/lucid?style=for-the-badge&label=LAST%20COMMIT&labelColor=131011&color=D3BCCC"></a>
+  <a href="https://github.com/Sn3akyy1/lucid/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Sn3akyy1/lucid?style=for-the-badge&label=STARS&labelColor=131011&color=F5B8A7"></a>
+  <a href="https://github.com/Sn3akyy1/lucid/releases"><img alt="Release" src="https://img.shields.io/github/v/tag/Sn3akyy1/lucid?style=for-the-badge&label=RELEASE&labelColor=131011&color=F1B3E6"></a>
+  <img alt="Repo size" src="https://img.shields.io/github/repo-size/Sn3akyy1/lucid?style=for-the-badge&label=REPO%20SIZE&labelColor=131011&color=D79E8D">
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-80CBC4?style=for-the-badge&labelColor=131011"></a>
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/VERSION-v1.20.1-FF7F50?style=for-the-badge&labelColor=14100E">
-  <img alt="Platform" src="https://img.shields.io/badge/PLATFORM-ARCH%20LINUX-FFAB91?style=for-the-badge&logo=archlinux&logoColor=FFAB91&labelColor=14100E">
-  <img alt="Compositor" src="https://img.shields.io/badge/COMPOSITOR-HYPRLAND-80CBC4?style=for-the-badge&labelColor=14100E">
-  <a href="https://quickshell.org"><img alt="Built on Quickshell" src="https://img.shields.io/badge/BUILT%20ON-QUICKSHELL-FFC46B?style=for-the-badge&labelColor=14100E"></a>
+  <img alt="Version" src="https://img.shields.io/badge/VERSION-v1.20.5.5-D3BCCC?style=for-the-badge&labelColor=131011">
+  <img alt="Platform" src="https://img.shields.io/badge/PLATFORM-ARCH%20LINUX-F1B3E6?style=for-the-badge&logo=archlinux&logoColor=F1B3E6&labelColor=131011">
+  <img alt="Compositor" src="https://img.shields.io/badge/COMPOSITOR-HYPRLAND-80CBC4?style=for-the-badge&labelColor=131011">
+  <a href="https://quickshell.org"><img alt="Built on Quickshell" src="https://img.shields.io/badge/BUILT%20ON-QUICKSHELL-F5B8A7?style=for-the-badge&labelColor=131011"></a>
 </p>
 
 <img src="assets/desktop.webp" alt="The Lucid desktop: the bar along the top, calendar and weather widgets on the left, the clock and what is playing on the right, and the dock along the bottom">
@@ -31,8 +31,10 @@ your wallpaper.
 
 ---
 
-> **v1.20.1.** Lucid 2 with icons on the desktop, bar modules that join into
-> one island, live wallpapers and four ways to pick one, five new widgets, files
+> **v1.20.5.5, a beta.** Lumen, a file manager of Lucid's own that is also every
+> app's file dialog; Lens for pictures and video; LucidShot rebuilt; and edit
+> mode on the desktop. All on top of Lucid 2 with icons on the desktop, bar
+> modules that join into one island, live wallpapers and four ways to pick one, five new widgets, files
 > over Bluetooth, and the fix for Steam opening and closing in a loop. Lucid 2 itself redrew
 > every surface in Material You Expressive, made the clock an app and gave the
 > launcher, the bar and the settings room to be shaped, much of it from
@@ -67,17 +69,24 @@ That's it — the installer does the rest:
    This includes the apps Lucid ships pinned to the dock — several GB, mostly
    from the AUR. `--no-apps` skips them.
 3. **Copies the shell** to `~/.config/quickshell`, moving any existing config to
-   `~/.config/quickshell.backup-<timestamp>` first.
+   `~/.config/quickshell.backup-<timestamp>` first. Lumen, Lucid's file
+   manager, comes with it: it opens folders, `SUPER`+`E` opens it, and it is
+   every app's open and save dialog, through the file chooser portal. Nautilus
+   is not installed any more; a dock pin or a `SUPER`+`E` an earlier release
+   gave it moves over to Lumen.
 4. **Sets up Hyprland** — `hyprland.lua` and its modules: the keybinds, the
    window and layer rules, blur, animations, and an autostart that launches the
    shell on login. If you already have a config it is backed up and you are
-   asked first; `--no-hypr` keeps yours untouched.
+   asked first; `--no-hypr` keeps yours untouched. Keep your own and it still
+   gets `modules/lumen.lua`, the one module Lumen's dialogs need. On a re-run
+   every module is checked against the one in place: new and updated ones are
+   named, and so is one you edited yourself, with your version in the backup.
 5. **Sets up theming** — the palettes, the wallpaper hook, and the matugen
    template. An existing `matugen/config.toml` is appended to, never replaced.
 6. **Applies the look** — kitty's colours, its opacity and its fish shell, the
    starship prompt (wired into `.bashrc`, `.zshrc` and `config.fish`), a
    fastfetch config that wears the theme (only where you have none), the
-   VSCode/VSCodium Matugen theme, and the GTK theme: `adw-gtk3-dark` with the
+   VSCode/VSCodium Matugen theme, fish without its greeting, and the GTK theme: `adw-gtk3-dark` with the
    FairyWren icons, written to `gsettings` and to both `gtk-3.0` and `gtk-4.0`
    `settings.ini`. A `kitty.conf` or prompt an earlier release installed, and
    nobody has changed since, is swapped for the current one, with a backup.
@@ -150,7 +159,7 @@ enough that it is worth installing fresh.
 | `--no-hypr` | Keeps your Hyprland config. Lucid's binds, window rules, blur and autostart are not installed. |
 | `--no-apps` | Doesn't install the apps the dock ships pinned (Zen, VSCodium, Spotify, Vesktop, Files, Steam, Proton VPN). The dock then pins whatever equivalents you already have. |
 | `--no-look` | Doesn't touch `kitty.conf`, `starship.toml`, the fastfetch config, your shell rc files, VSCode settings, or the GTK theme and icons. |
-| `--no-wallpapers` | Doesn't copy the bundled wallpapers into `~/Pictures/wallpapers`. They are ~180 MB, so this is worth passing on a small disk or a slow link. |
+| `--no-wallpapers` | Doesn't copy the bundled wallpapers into `~/Pictures/wallpapers`. They are ~800 MB, live wallpapers included, so this is worth passing on a small disk or a slow link. |
 | `--with-hypr` | Reinstalls Lucid's Hyprland config even when one is already in place. |
 | `--skip-deps` | Never installs packages, just reports what's missing. |
 | `-y`, `--yes` | Accept every prompt. |
@@ -184,7 +193,7 @@ installing to pick them up.
 | `SUPER` + `Print` | Full screenshot |
 | `SUPER` + `SHIFT` + `T` | Copy text from a region (OCR) |
 | `SUPER` + `SHIFT` + `C` | Pick a colour off the screen |
-| `SUPER` + `E` | Files |
+| `SUPER` + `E` | Files (Lumen) |
 | `SUPER` + `C` | Close window |
 | `SUPER` + `V` | Toggle float |
 | `SUPER` + `1`–`0` | Switch workspace (`+SHIFT` moves the window) |
@@ -206,7 +215,7 @@ over IPC:
 
 ```lua
 hl.bind("SUPER + SPACE",   hl.dsp.exec_cmd("qs ipc call -- launcher toggle"))
-hl.bind("SUPER + E",       hl.dsp.exec_cmd("qs ipc call -- moji toggle"))
+hl.bind("SUPER + period",  hl.dsp.exec_cmd("qs ipc call -- moji toggle"))
 hl.bind("SUPER + L",       hl.dsp.exec_cmd("qs ipc call -- lock lock"))
 hl.bind("SUPER + Escape",  hl.dsp.exec_cmd("qs ipc call -- session toggle"))
 hl.bind("SUPER + S",       hl.dsp.exec_cmd("qs ipc call -- snap toggle"))
@@ -280,7 +289,7 @@ module under the pointer without taking the keyboard from your window, and
 *Auto-hide* slides the bar out of sight until the pointer touches the top edge
 or a panel is open, giving its space to the windows meanwhile.
 
-Each module's card under *Settings → Bar* also picks its look, starting from
+Each module's sheet in edit mode (below) also picks its look, starting from
 the one above: the clock in one line or two, or with the time on its accent
 chip, and how the date reads; media as the turning disc, a still cover or just
 its bars, with a large-cover panel; workspaces as dots or numbers, how many
@@ -293,18 +302,18 @@ display* puts a bar on each screen, showing that screen's workspaces. One of
 them, on the shell's display or the one in use, still turns into notification
 popups and answers the bar's `qs ipc` targets.
 
-Drag a module by its handle to move it within a zone or into another one, or
-down into *Not in the bar* to take it out; the arrows and buttons beside it do
-the same thing. The link between two neighbours **joins** them: they sit flush
+In edit mode, drag a module along the bar to move it within a zone or into
+another one, or down off the bar to take it out. The link between two
+neighbours **joins** them: they sit flush
 and share one island (or one notch, its fillets only at the ends), with a faint
 line where they meet if you want one, and a module opened in place hangs its
 panel from its own stretch of the group, its corners curving into the
 neighbours. In pop-up mode the pop-up floats below as it always has, or, with
 *Notched pop-ups*, grows straight down out of its module or group, the corners
-curving into each other as a notch meets the top of the screen. Also in
-Settings: how close the middle
-may come to either side before it gives way, and a button that puts every
-module back where Lucid ships it.
+curving into each other as a notch meets the top of the screen. Settings → Bar
+keeps how close the middle may come to either side before it gives way, and
+the bar's sheet in edit mode has *Start over*, which puts every module back
+where Lucid ships it.
 
 <img src="assets/control-centre.webp" alt="The control centre open from the bar, beside palette, music and quote widgets, with the volume popup above the dock">
 
@@ -443,7 +452,7 @@ what is already out on *On desktop* — hover a row to find its card, click it
 for the card's sheet, lock or remove it there — and switches layouts on
 *Layouts*. While it is open your widgets come up over the windows with a − on
 each, and a card dragged back onto the sheet is taken off the desktop.
-**Settings → Widgets** holds the same gallery and every preset.
+*Settings → Widgets* keeps how they snap, pin and stay over windows.
 
 <img src="assets/widget-panel.webp" alt="The widget panel on its Clock gallery, beside a Coming up card and lucidfetch on the desktop">
 
@@ -451,12 +460,12 @@ each, and a card dragged back onto the sheet is taken off the desktop.
 it to add it. Out on the desktop, a Coming up card and lucidfetch, each with
 its − while the panel is open.*
 
-Twenty-four kinds, eighty-four looks between them — every category ships several
+Twenty-four kinds, eighty-five looks between them — every category ships several
 variants of the same data:
 
 | Widget | Looks |
 | --- | --- |
-| Clock | Digital, stacked, analog with a date window, the time inside an expressive shape, minimal (no card at all), world clocks, the time on a band across a round face, or bold hands on a scalloped dial with the seconds as a dot |
+| Clock | Digital, stacked, analog with a date window, the time inside an expressive shape, minimal (no card at all), world clocks, the time on a band across a round face, bold hands on a scalloped dial with the seconds as a dot, or the hour over the minute in huge figures on the bare wallpaper |
 | Calendar | Full month, this week, today, or your next reminders |
 | Progress | How much of the day, the week, the month and the year has gone: one wavy ring for the stretch you pick, a bar each, or every day of the year as a dot |
 | System | Rings, meters, a two-minute graph, quick-settings tiles, or network throughput — CPU, memory, disk, temperature |
@@ -505,8 +514,9 @@ Environment page, at the exact size they are shown. Pictures, videos, music
 with cover art and office documents show thumbnails, made with the system's
 thumbnailers and shared with your file manager. The Trash fills up, USB sticks
 and phones appear while they are mounted, and names turn dark over a light
-patch of wallpaper. Widgets always keep their space: an icon under one steps to
-the nearest free cell, live while the widget is dragged, and goes back after.
+patch of wallpaper. Widgets always keep their space: the icons under one step
+aside together, in the same arrangement, once the widget rests over them, and go
+back after.
 
 It follows Material You. Each icon sits in a tonal well that lights under the
 pointer; selected, the well takes the primary container and the name becomes a
@@ -529,10 +539,11 @@ Downloads, Pictures… and phones over KDE Connect), **Tags ›** and Copy Path.
 Right-click the desktop for **New Item ›** (folder, text or Markdown document,
 empty file, anything in `~/Templates`, an app shortcut), Paste (a copied picture
 pastes as a PNG), Undo, **View ›** (icon size, auto arrange, hidden files,
-extensions, previews), **Arrange By ›** (name, type, size, modified, ascending
-or descending), Select All, Open in Terminal and Open Desktop in Files. **Hide
-Icons** sits beside Hide Widgets and puts every icon away until Show Icons. Submenus open beside their row on hover or click, and the arrow keys,
-Enter and Escape walk them.
+extensions, previews, and Show Desktop Icons and Show Widgets, which put every
+icon or widget away until you turn them back on), **Arrange By ›** (name, type,
+size, modified, ascending or descending), Select All, Open in Terminal and Open
+Desktop in Files. Submenus open beside their row on hover or click, and the
+arrow keys, Enter and Escape walk them.
 
 **Get Info** shows a file's size (a folder's is counted), location, the app it
 opens with, its dates, owner and permissions, its tags, a drive's free space,
@@ -553,6 +564,29 @@ Desktop icons**; the menus show whatever keys are set. Arrows and Shift+arrows,
 Home/End, typing a name to jump to it, Escape and the Menu key stay as they are.
 These keys only ever reach the desktop: it gives the keyboard back as soon as a
 window is focused, and never takes it when the pointer just passes over.
+
+### Edit mode
+
+Pick **Edit Desktop** from the desktop's right-click menu (or *Edit Desktop* in
+the launcher's commands, or right-click any bar module) and the wallpaper
+shades over while everything on it stays in reach, outlined:
+
+- **The bar.** Drag a module along it, into another zone, or down off the bar
+  to take it out; the others make room as you go. A module that has nothing to
+  show right now, such as an empty tray, keeps a dashed stand-in so it can be
+  moved too. The link between two neighbours joins them into one island. A
+  click still opens a module, so a look you just picked can be seen.
+- **The dock.** Drag the handle above it up to float it higher, or down into
+  the bottom edge to make it a notch, and up again to float it out.
+- **Options beside them.** Right-click a module, or the dock, and a sheet of its
+  options slides in on the far side of the screen: a module's looks, joins and
+  own settings, the bar's style, sizes and every module with its switch, the
+  dock's style and sizes. Everything applies as you set it.
+
+The toolbar along the bottom opens the bar's and the dock's sheets, the widget
+panel and the wallpapers. **Undo** (also Ctrl+Z) takes back the last change and
+**Revert** everything since edit mode began; **Done**, or Escape, leaves it.
+`qs ipc call edit toggle` is there to bind to a key.
 
 ### Special workspaces
 
@@ -735,38 +769,47 @@ Lucid's own lines in them (the shell, the wallpaper daemon, the variables
   anywhere by the strip along its top and it stays there
 - **Emoji picker** — emoji, kaomoji and GIFs (Giphy or Tenor), with recents,
   favourites and skin-tone variants; pastes into the focused window
-- **Screenshots** — region select, full screen, and screen recording with
-  optional mic and system audio. What you took then floats in the corner as a
-  card: click it to open, drag it straight into a chat or a file manager, or
-  copy, mark it up, show it in its folder or send it to the trash. It slides
-  away after a few seconds, or stays while the pointer rests on it; a
-  recording gets the same card with a frame from the video. General →
-  Screenshots swaps the card for the old notification, or for nothing
+- **Screenshots** — *LucidShot*. Print freezes the screen under a floating
+  toolbar: Screenshot, Record, Text or Colour, of a region (drag one out, or
+  click a window), a window or the whole display. A magnifier shows the last
+  few pixels while you drag, edges snap to the windows', Shift keeps the box
+  square, Alt grows it from its middle and Space moves it. What you took flies
+  into a card in the corner: click it to open, drag it straight into a chat or
+  a file manager, or mark it up, pin it over your windows, copy the text in it,
+  show it in its folder or send it to the trash. It slides away after a few
+  seconds, or stays while the pointer rests on it. With *Mark up before
+  saving* on, the selection stays for a pen, a highlighter, arrows, boxes,
+  ellipses, text, numbered steps and pixelation first, with undo. A self-timer
+  takes the shot 3, 5 or 10 seconds later, off the live screen. Recording takes
+  a region, a window or the whole display, with what is playing and the
+  microphone mixed in if you want them (nothing is muted to do it), counts down
+  first and shows a pill with pause, the two sources and stop, which tucks into
+  the bar's clock. A recording carries on through a shell reload, and its card
+  can make a GIF of it. Settings → Screenshots has the folders, the card, the
+  recorder's frame rate and encoder, and the rest
 - **Text copier** — the *Text* mode in the screenshot toolbar. Drag a box over
   anything on screen — an image, a video still, a PDF, an error dialog, a
   window that will not let you select its text — and the words inside it land
   on your clipboard. Runs the crop through tesseract twice, once inverted, and
   keeps the better read, so light-on-dark UI text works as well as a scan.
-  Emoji come across too: tesseract has none in its character set and either
+  Lines that only wrapped on screen come back joined, so a paragraph pastes as
+  a paragraph; lists, short lines and code keep their breaks. Emoji come
+  across too: tesseract has none in its character set and either
   drops them or reads them as junk letters, so anything colourful and square
   is matched against the glyphs of your installed emoji fonts instead. One
   flat colour means text, many means emoji. A shape it cannot name is left
-  out rather than guessed at. Reading takes a moment, so the overlay does not
-  vanish on release: the toolbar, the shade and the box you drew all stay, and
-  a beam sweeps the selection until the text is on the clipboard, at which
-  point it closes itself. The result lands as a toast under the bar rather
-  than a desktop notification
-- **Colour picker** -- the *Colour* mode hands off to `hyprpicker`. Choosing it
-  drops the freeze, the shade and the crosshair and lets clicks through, so the
-  toolbar is left floating over a live, usable desktop. Pick HEX, RGB or HSL,
-  then hit the eyedropper: the toolbar stays up over hyprpicker, you click a
-  pixel, and the value is copied and shown in a toast with the colour beside it.
-  The output template is set per format, so the zoom lens, the clipboard and the
-  toast all read the same and all three are valid CSS (`#RRGGBB`, `rgb(r, g, b)`,
-  `hsl(h, s%, l%)`). Cancelling the pick leaves you on the toolbar;
-  picking a colour ends the session. The toast shows the colour as itself rather than
-  as an icon. hyprpicker is asked for raw components and the string is built
-  here, so the swatch, the clipboard and the format all agree
+  out rather than guessed at. Reading takes a moment, so a beam sweeps the
+  selection until the text is on the clipboard; then the selection flies into
+  a card with the text in it, to copy again, search the web for, or open if it
+  is a link. QR codes are read too once `zbar` is installed, and Settings →
+  Screenshots picks the languages tesseract reads in
+- **Colour picker** -- the *Colour* mode turns the pointer into a lens over the
+  frozen screen, pixel grid and all, so what you pick is exactly what was
+  there. A click copies it as HEX, RGB or HSL (each valid CSS: `#RRGGBB`,
+  `rgb(r, g, b)`, `hsl(h, s%, l%)`) and shows it in a toast with the colour
+  beside it; Shift-click collects up to ten into a palette above the toolbar,
+  to copy one at a time or all at once. It reads the frozen frame itself, so
+  `hyprpicker` is no longer needed
 - **Toasts** -- a compact pill under the bar for things that just need saying.
   Any script can raise one: `qs ipc call -- toast show game "Game Mode On"`,
   or `toast warn alert "..."` for the red variant. Named icons are `copy`,
@@ -1174,7 +1217,10 @@ you know what's being pulled in.
 
 **Required** — the shell won't start without these:
 
-`quickshell` · `qt6-5compat` · `qt6-declarative` · `qt6-multimedia`
+`quickshell` · `qt6-5compat` · `qt6-declarative` · `qt6-multimedia` · `qt6-webengine`
+
+`qt6-webengine` is there for Qt's PDF module: without it Lumen's window doesn't
+open, and neither do the file dialogs it draws for every app.
 
 **Per feature** — a missing one breaks only its own feature:
 
@@ -1194,13 +1240,16 @@ you know what's being pulled in.
 | `inotify-tools` | The camera on/off toast and sound. Without it the camera is never watched; nothing else changes |
 | `smartmontools`, `udisks2` | The Storage page's drive health and mounting. Without them those two rows say so; the map and the cleanup work either way |
 | `ffmpegthumbnailer`, `gvfs` | The desktop icons: thumbnails of videos and music with cover art, and the drives and Trash shown on the desktop |
+| `gvfs-smb`, `gvfs-nfs`, `gvfs-dnssd`, `gvfs-wsdd` | Network drives in Lumen: Windows shares and most NAS drives (`smb://`), NFS exports, WebDAV, and the computers nearby. `sftp://` and `ftp://` need only `gvfs`. Macs, NAS drives and Linux machines show under *Nearby* once Avahi runs (`sudo systemctl enable --now avahi-daemon`); without these Lumen says which one an address needs |
+| `qt6-imageformats`, `kimageformats` | Pictures Qt can't read alone, in Lens, the photo widget and the What's new sheet: WebP, TIFF, TGA and ICNS, then AVIF |
+| `libjpeg-turbo`, `exiv2` | Turning a JPEG in Lens without encoding it again. Without them it is saved again at high quality |
 | `pipewire-audio`, `sound-theme-freedesktop` | The Sound page's Left/Right test: `pw-play`, and the voice that names each side. Without them the test plays nothing |
 | `brightnessctl`, `upower` | Brightness, battery |
 | `hyprsunset` | Night light. Lucid starts it when night light first comes on and talks to it over `hyprctl hyprsunset`; one you already run is used as it is, and never reset unless Lucid warmed it |
 | `hypridle` | The Idle page: dimming, locking, screen off and suspend when you walk away. Without it the page says so and writes nothing |
 | `grim`, `wf-recorder`, `ffmpeg`, `imagemagick` | Screenshots and recording |
-| `tesseract`, `tesseract-data-eng` | The Text mode's OCR. Without them Text mode says so and copies nothing. Add `tesseract-data-<lang>` and set `ocrLang` in `lucidshot/Screenshot.qml` for another language |
-| `python-pillow`, `python-numpy`, `python-fonttools` | Emoji in copied text. Without them the text still copies, minus the emoji. The glyph atlas is built once and cached in `~/.cache/lucidshot-ocr`; `lucidshot/emoji-ocr.py --atlas` builds it up front so the first copy is not slow |
+| `tesseract`, `tesseract-data-eng` | The Text mode's OCR. Without them Text mode says so and copies nothing. Add `tesseract-data-<lang>` and pick it in *Settings → Screenshots* for another language |
+| `python-pillow`, `python-numpy`, `python-fonttools` | Emoji in copied text. Without them the text still copies, minus the emoji. The glyph atlas is built once and cached in `~/.cache/lucidshot-ocr` |
 | `wl-clipboard`, `wtype` | Emoji and GIF pasting |
 | `cliphist` | Clipboard history. Without it the launcher's Clipboard mode says so and the Launcher page's switch is greyed out |
 | `cava` | Audio visualisers — the media panel's strip (its config is installed to `~/.config/cava/quickshell.conf`; the strip needs that file's raw-ascii output settings) and the desktop widget, which writes its own `~/.cache/quickshell/lucid-cava.conf` at whatever band count the widest card asks for |
@@ -1209,7 +1258,6 @@ you know what's being pulled in.
 | `polkit` | Every administrator prompt. The shell registers itself as the session's authentication agent and drives polkit's own setuid helper, so no separate agent is needed — and no other agent should be started, as only one can hold the session |
 | `accountsservice` | The Users and Accounts page. Every change goes through it, so the shell's own polkit dialog asks and nothing runs as root |
 | `libnotify` | Notification actions |
-| `swappy` | Marking up a screenshot, from its preview card or notification |
 | `hyprpicker` | The Colour mode. Without it the mode says so and picks nothing |
 | `xdg-utils` | Opening links and files from the shell |
 | `librsvg` | Turning the pointer's shadow off — the cursor theme is rendered again from its vector sources |
@@ -1222,7 +1270,6 @@ or `--no-look`. The binds shell out to these, so a missing one is a dead key:
 | --- | --- |
 | `kitty` | Terminal (`F9`), and the themed terminal colours |
 | `fish` | The shell kitty opens |
-| `nautilus` | Files (`SUPER`+`E`) |
 | `playerctl` | The media keys |
 | `gnome-calculator` | Calculator (`F12`) |
 | `starship` | The prompt |
@@ -1233,8 +1280,8 @@ or `--no-look`. The binds shell out to these, so a missing one is a dead key:
 **The dock's default pins** — installed unless you pass `--no-apps`. Several
 GB, mostly from the AUR:
 
-`zen-browser-bin` · `vscodium-bin` · `spotify` · `vesktop` · `nautilus` ·
-`steam` · `proton-vpn-gtk-app`
+`zen-browser-bin` · `vscodium-bin` · `spotify` · `vesktop` · `steam` ·
+`proton-vpn-gtk-app`
 
 Anything you already have an equivalent of is left alone — `vscodium` counts
 for `vscodium-bin`, `discord` for `vesktop`, and so on. `steam` is skipped
@@ -1283,6 +1330,7 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 | `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |
 | `desktop` | `icons` (hide or show the desktop icons) `arrange` `selectAll` `undo` `refresh` |
 | `bluetooth` | `send <address> <path>` (an empty path opens the file chooser) |
+| `edit` | `toggle` `on` `off` `bar` `dock` `open <module>` `close` `undo` `revert` `status` — edit mode, its sheets and its history |
 | `widgets` | `panel` `openPanel <screen>` `closePanel` `add <type> <variant>` `remove <uid>` `clear` `toggle` `lock` `unlock` `list` `catalogue` `settings` `resize <uid> <w> <h>` |
 | `moji` | `toggle` `open` `close` `emoji` `kaomoji` `gif` `center` |
 | `keyboard` | `toggle` `open` `close` `letters` `fnkeys` `center` `bigger` `smaller` |
@@ -1418,22 +1466,26 @@ Hyprland version help a lot.
 
 ## The mark
 
-<img src="assets/logo-mark.svg" width="64" align="left" alt="The Lucida mark">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="assets/logo-mark-light.svg">
+  <img src="assets/logo-mark.svg" width="64" align="left" alt="The Lucida mark">
+</picture>
 
 The logo is **Lucida** — the astronomical term for the brightest star in a
 constellation, sharing its Latin root (*lux*) with "Lucid". A broken orbit ring,
 a four-point star at the centre, and one companion dot outside the gap.
 
-Its official colour is **coral `#FF7F50`**. In the shell itself the ring and the
+Its official colour is **mauve `#D3BCCC`**. In the shell itself the ring and the
 companion dot track your accent, so the mark on the dock launcher recolours with
-whatever palette you are running — but coral is the canonical brand colour, and
+whatever palette you are running — but mauve is the canonical brand colour, and
 what you see above.
 
 <br clear="left">
 
 `assets/logo.svg` is the mark on its dark plate; `assets/logo-mark.svg` is the
-bare coral mark for light and dark backgrounds alike. Both are drawn from the
-same 24×24 geometry as [`LucidaMark.qml`](lucidprefs/LucidaMark.qml).
+bare mauve mark for dark backgrounds, and `assets/logo-mark-light.svg` its deep
+plum twin (`#804D7A`, the same seed's light-mode primary) for light ones. All are
+drawn from the same 24×24 geometry as [`LucidaMark.qml`](lucidprefs/LucidaMark.qml).
 
 ## License
 

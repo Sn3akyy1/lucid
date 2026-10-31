@@ -16,7 +16,7 @@ When modifying or adding Python scripts in Lucid:
 
 - Maintain compatibility with standard Linux environments (Python 3.10+).
 - Use standard library modules (`subprocess`, `json`, `sys`, `os`, `pathlib`, `re`, `argparse`) wherever possible.
-- If using external dependencies (e.g. `PIL`, `numpy`, `fontTools`, `pytesseract` in `emoji-ocr.py` or `gi` / `GObject` / `Gio` in `kdeconnect-bridge.py`), fail gracefully or provide readable stderr diagnostics.
+- If using external dependencies (e.g. `PIL`, `numpy`, `fontTools` in `lucidshot/ocr.py` or `gi` / `GObject` / `Gio` in `kdeconnect-bridge.py`), fail gracefully or provide readable stderr diagnostics.
 
 ## Error Handling
 
