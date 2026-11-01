@@ -229,6 +229,9 @@ PanelWindow {
     readonly property real paintSX: shell.width > 0 ? dockWindow.paintW / shell.width : 1
     readonly property real paintY: shell.y + dockJelly.shiftY
     readonly property real paintH: shell.height * dockJelly.yScale
+    // the edge blends beside a notch
+    readonly property int blendSize: dockWindow.renderAsNotch && shell.visible ? Theme.dp(Prefs.dockNotchFlare) : 0
+    readonly property real blendY: dockWindow.paintY + dockWindow.paintH - dockWindow.blendSize
 
     // a drag reads the shell's resting geometry, so nothing wobbles under one
     onDraggingChanged: {
@@ -3523,6 +3526,42 @@ PanelWindow {
             topRightRadius: islandR.topRightRadius
             bottomLeftRadius: islandR.bottomLeftRadius
             bottomRightRadius: islandR.bottomRightRadius
+        }
+
+        // an edge blend: its square less the circle its curve is drawn from, a
+        // pixel wider so the hard edge stays inside the curve's antialiasing
+        Region {
+            x: dockWindow.paintX - dockWindow.blendSize
+            y: dockWindow.regionLo(dockWindow.blendY)
+            width: dockWindow.blendSize
+            height: dockWindow.regionHi(dockWindow.blendY + dockWindow.blendSize) - dockWindow.regionLo(dockWindow.blendY)
+
+            Region {
+                shape: RegionShape.Ellipse
+                intersection: Intersection.Subtract
+                x: dockWindow.paintX - 2 * dockWindow.blendSize - 1
+                y: Math.round(dockWindow.blendY) - dockWindow.blendSize - 1
+                width: 2 * dockWindow.blendSize + 2
+                height: 2 * dockWindow.blendSize + 2
+            }
+
+        }
+
+        Region {
+            x: dockWindow.paintX + dockWindow.paintW
+            y: dockWindow.regionLo(dockWindow.blendY)
+            width: dockWindow.blendSize
+            height: dockWindow.regionHi(dockWindow.blendY + dockWindow.blendSize) - dockWindow.regionLo(dockWindow.blendY)
+
+            Region {
+                shape: RegionShape.Ellipse
+                intersection: Intersection.Subtract
+                x: dockWindow.paintX + dockWindow.paintW - 1
+                y: Math.round(dockWindow.blendY) - dockWindow.blendSize - 1
+                width: 2 * dockWindow.blendSize + 2
+                height: 2 * dockWindow.blendSize + 2
+            }
+
         }
 
     }
