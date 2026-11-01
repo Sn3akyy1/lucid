@@ -969,6 +969,26 @@ PY
                     say "  ${dim}SUPER+E still opens nautilus; Settings > Keybinds can point it at lumen${r}"
                 fi
             fi
+            # SUPER+V only toggled floating before it gave a window a size. still
+            # that plain toggle it is the old default rather than a choice, so it
+            # takes the shipped one; a float bind you changed yourself stays
+            if python3 - "$LUCID_DIR/keybinds.json" "$SRC/support/hypr/keybinds.json" <<'PY'
+import json, re, sys
+path, shipped = sys.argv[1:3]
+old = json.dumps('hl.dsp.window.float({ action = "toggle" })')
+new = next(b["lua"] for b in json.load(open(shipped, encoding="utf-8"))["binds"] if b.get("id") == "float")
+lines = open(path, encoding="utf-8").read().split("\n")
+hits = [i for i, l in enumerate(lines) if re.search(r'"id"\s*:\s*"float"', l) and old in l]
+if len(hits) != 1:
+    sys.exit(1)
+lines[hits[0]] = lines[hits[0]].replace(old, json.dumps(new), 1)
+text = "\n".join(lines)
+json.loads(text)
+open(path, "w", encoding="utf-8").write(text)
+PY
+            then
+                say "  floating a window now sets it to 1366x768, centred"
+            fi
         else
             cp "$SRC/support/hypr/keybinds.json" "$LUCID_DIR/keybinds.json"
             say "  keybinds -> $LUCID_DIR/keybinds.json"

@@ -17,7 +17,7 @@
     { "id": "close", "keys": "SUPER + C", "desc": "Close window", "category": "Windows", "type": "lua", "lua": "hl.dsp.window.close()" },
     { "id": "exit", "keys": "SUPER + M", "desc": "Exit Hyprland", "category": "Windows", "type": "exec", "cmd": "command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'" },
     { "id": "files", "keys": "SUPER + E", "desc": "File manager", "category": "Apps", "type": "exec", "cmd": "$HOME/.config/quickshell/lucidlumen/lumen" },
-    { "id": "float", "keys": "SUPER + V", "desc": "Toggle floating", "category": "Windows", "type": "lua", "lua": "hl.dsp.window.float({ action = \"toggle\" })" },
+    { "id": "float", "keys": "SUPER + V", "desc": "Toggle floating", "category": "Windows", "type": "lua", "lua": "function() hl.dispatch(hl.dsp.window.float({ action = \"toggle\" })) local w = hl.get_active_window() if w and w.floating then hl.dispatch(hl.dsp.window.resize({ x = 1366, y = 768 })) hl.dispatch(hl.dsp.window.center()) end end" },
     { "id": "split", "keys": "SUPER + J", "desc": "Toggle split direction", "category": "Windows", "type": "lua", "lua": "hl.dsp.layout(\"togglesplit\")" },
     { "id": "focus-left", "keys": "SUPER + left", "desc": "Focus left", "category": "Windows", "type": "lua", "lua": "hl.dsp.focus({ direction = \"left\" })" },
     { "id": "focus-right", "keys": "SUPER + right", "desc": "Focus right", "category": "Windows", "type": "lua", "lua": "hl.dsp.focus({ direction = \"right\" })" },
