@@ -804,7 +804,7 @@ PanelWindow {
         else if (dockWindow.mode === "clipboard")
             content = dockWindow.menuContentMax;
         else
-            content = Math.max(dockWindow.menuContentMin, Math.min(dockWindow.resultsHeight, dockWindow.menuContentMax));
+            content = Math.max(dockWindow.menuContentMin, dockWindow.resultsHeight);
         return Math.round(dockWindow.panelPadding + Prefs.launcherChromeH + content);
     }
 
@@ -1533,13 +1533,14 @@ PanelWindow {
     }
 
     // must agree with LauncherList.rowHeight()
+    // a longer list ends with the row that passes the limit, whole: rows come in
+    // several heights, so no fixed height lands on the edge of one
     function measure(rows) {
         if (rows.length === 0)
             return 0;
 
-        // the loop adds one gap too many; the pad is the view's bottom margin
         var gap = Prefs.launcherRowGap;
-        var h = Prefs.launcherListPad - gap;
+        var h = 0;
         for (var i = 0; i < rows.length; i++) {
             if (rows[i].kind === "header")
                 h += Prefs.launcherRowHeader;
@@ -1547,9 +1548,13 @@ PanelWindow {
                 h += Prefs.launcherRowCalc;
             else
                 h += rows[i].subtitle !== "" ? Prefs.launcherRowTwo : Prefs.launcherRowOne;
+            if (h >= dockWindow.menuContentMax && rows[i].kind !== "header")
+                return h;
+
             h += gap;
         }
-        return h;
+        // that last gap was one too many; the pad is the view's bottom margin
+        return h - gap + Prefs.launcherListPad;
     }
 
     function hideResult(index) {
