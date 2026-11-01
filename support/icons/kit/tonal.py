@@ -226,10 +226,10 @@ def k(fam, tone):
 
 def folder(emblem=None, fam="p"):
     out = [("back", rpoly([(4, 8), (15, 8), (19, 11.6), (44, 11.6), (44, 40), (4, 40)], [4, 2.6, 2.6, 5.5, 6, 6]),
-            grad(k(fam, 50), k(fam, 40), 8, 40)),
+            grad(k(fam, 40), k(fam, 30), 8, 40)),
            ("paper", rr(7, 12.8, 34, 22, 3, 6, 3, 3), grad(k("n", 99), k("n", 95), 12.8, 20)),
            ("front", rpoly([(4, 17.8), (15.5, 17.8), (22, 14.2), (44, 14.2), (44, 40), (4, 40)], [4.5, 3.4, 3.4, 5.5, 6, 6]),
-            grad(k(fam, 80), k(fam, 60), 14.2, 40, 10, 38))]
+            grad(k(fam, 70), k(fam, 50), 14.2, 40, 10, 38))]
     if emblem:
         out.append(("emblem", symbol(emblem, 26.4, 22.6, 16, bold=True), k("n", 10), 0.36))
     return out
@@ -237,10 +237,10 @@ def folder(emblem=None, fam="p"):
 
 def folder_open(fam="p"):
     return [("back", rpoly([(4, 8), (15, 8), (19, 11.6), (44, 11.6), (44, 40), (4, 40)], [4, 2.6, 2.6, 5.5, 6, 6]),
-             grad(k(fam, 50), k(fam, 40), 8, 40)),
+             grad(k(fam, 40), k(fam, 30), 8, 40)),
             ("paper", rr(8, 10.6, 31, 22, 3, 6, 3, 3), k("n", 95)),
             ("sheet", rr(10.5, 13.2, 30, 20, 3, 6, 3, 3), grad(k("n", 99), k("n", 95), 13.2, 22)),
-            ("front", rpoly([(9, 20.4), (46, 20.4), (43.2, 40), (4, 40)], [4, 4, 6, 6]), grad(k(fam, 80), k(fam, 60), 20.4, 40, 12, 38))]
+            ("front", rpoly([(9, 20.4), (46, 20.4), (43.2, 40), (4, 40)], [4, 4, 6, 6]), grad(k(fam, 70), k(fam, 50), 20.4, 40, 12, 38))]
 
 
 # one accent and neutrals, as the icon themes this set sits beside do it: most
@@ -367,7 +367,7 @@ def shrink_part(part, s, ox, oy):
 
 
 def app_files():
-    return tile("n", 90) + [shrink_part(p, 0.74, 6.24, 7.2) for p in folder()]
+    return tile("c", 15) + [shrink_part(p, 0.74, 6.24, 7.2) for p in folder()]
 
 
 def app_terminal():
@@ -515,7 +515,7 @@ def look(kind, name, d):
 
 
 def app_lumen():
-    return tile("n", 90) + [shrink_part(p, 0.74, 6.24, 7.2) for p in folder("explore")]
+    return tile("c", 15) + [shrink_part(p, 0.74, 6.24, 7.2) for p in folder("explore")]
 
 
 # lens's picture: a print behind, and in front a white-bordered photo of hills
