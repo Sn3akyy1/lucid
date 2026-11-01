@@ -411,31 +411,15 @@ SettingCard {
         resetKey: "systemBlocks"
         resetVisible: Prefs.isModified("systemBlocks") || Prefs.isModified("systemGrid") || Prefs.isModified("systemBlockStyles")
         resetAction: "prefs:systemBlocks,systemGrid,systemBlockStyles"
-        description: "The control centre as a bento grid, drawn as the panel draws it. Add blocks, tiles, sliders and gauges from the shelf; on the grid, drag a block by anything but its pieces to move it and by an edge or corner to resize it, and drag the pieces inside into order. Click a block to see its looks over the grid; right-click a block or a piece for what it can do. Click a block and the arrow keys move it, Shift with them resizes it, Delete hides it and Tab goes to the next; Ctrl+Z undoes. Empty rows and columns fold away in the panel."
+        description: "The control centre is a bento grid, arranged in its own editor: the panel lifts off the bar to the middle of the display, with everything you can add on its left and each block's looks, size and contents on its right."
         stacked: true
         showDivider: false
 
-        PanelBuilder {
-            id: layoutBuilder
-
-            width: parent.width
-            onEditOwnTile: (key) => {
-                return card.revealOwnTile(key);
-            }
-        }
-
-    }
-
-    SettingRow {
-        visible: card.moduleId === "system"
-        title: "Start from a layout"
-        description: Prefs.systemLayoutList.length === 0 ? "A ready-made one moves the blocks you have on and keeps what each holds. Save the layout you have now to come back to it; Ctrl+Z in the grid above undoes a switch." : "A ready-made one moves the blocks you have on and keeps what each holds; a saved one brings back everything as it was. Saving again under a name you already used updates that one."
-        stacked: true
-        showDivider: false
-
-        PanelLayouts {
-            width: parent.width
-            needs: layoutBuilder.needs
+        M3Button {
+            text: "Open the editor"
+            iconPath: "edit"
+            variant: "filled"
+            onClicked: Edit.requestStudio("system", Edit.sheetScreen)
         }
 
     }

@@ -323,14 +323,18 @@ two rows of tiles you arrange yourself, what is playing, and CPU, memory, disk
 and battery.*
 
 The panel is yours to arrange, the way a phone's quick settings are, only on a
-bento grid. The pencil in its header opens its layout in the System module's sheet
-in edit mode, drawn as the panel draws it: the big tiles, the small ones, the
+bento grid. The pencil in its header opens its editor: the panel lifts off the
+bar to the middle of the display, with a library of everything you can add on
+its left and an inspector on its right. The big tiles, the small ones, the
 sliders, what is playing and the gauges are blocks you drag anywhere on the
-grid and stretch by any edge, and the pieces inside drag into order. A shelf
-above holds everything that is not on the panel; tap it or drag it in, and
-drag anything back onto the shelf to take it off. *Your own tiles*, under it,
-makes tiles that run your commands: one command for a button, or two and a
-check for a switch that stays right when something else turns it on.
+grid, the others stepping aside as you go, and stretch by any edge; the pieces
+inside drag into order. Drag anything in from the library, or back onto it to
+take it off. Click a block and the inspector shows its looks, drawn with what
+your panel reads, each one tried on the grid while the pointer rests on it,
+along with its width and what it holds. With nothing picked it offers layouts
+to start from. *Your own tiles*, on the module's sheet, makes tiles that run
+your commands: one command for a button, or two and a check for a switch that
+stays right when something else turns it on.
 
 <img src="assets/clock-app.webp" alt="The clock app on its Today page, among clock, music, calendar, weather, battery, system and to-do widgets">
 

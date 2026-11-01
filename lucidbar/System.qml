@@ -83,6 +83,27 @@ BarPill {
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
     readonly property int maxPanelHeight: Math.min(Theme.dp(820), Math.max(Theme.dp(200), root.screenH - Theme.dp(40)))
+    readonly property string screenName: root.hostWindow && root.hostWindow.screen ? root.hostWindow.screen.name : ""
+
+    // an item's rect on its display: the window's own coordinates, and the window
+    // hanging from the display's foot when it is anchored there alone
+    function screenRect(item) {
+        const a = item.mapToItem(null, 0, 0), b = item.mapToItem(null, item.width, item.height);
+        const w = root.hostWindow;
+        const dy = w && w.screen && w.anchors.bottom && !w.anchors.top ? w.screen.height - w.height : 0;
+        return Qt.rect(Math.min(a.x, b.x), Math.min(a.y, b.y) + dy, Math.abs(b.x - a.x), Math.abs(b.y - a.y));
+    }
+
+    // the studio asked for from a sheet: it rises out of this module on the bar
+    Connections {
+        function onStudioRequested(id, screen) {
+            if (id === "system" && Edit.studio === "" && (screen === "" || screen === root.screenName))
+                Edit.openStudio("system", root.screenName, root, root.screenRect(root));
+
+        }
+
+        target: Edit
+    }
     readonly property int panelPad: root.sp4
     readonly property int contentWidth: root.panelWidth - root.panelPad * 2
     readonly property int headerHeight: Theme.dp(52)
@@ -1698,9 +1719,9 @@ BarPill {
     function headerAct(key) {
         switch (key) {
         case "edit":
-            // the layout editor on the module's card, in edit mode's sheet
+            // the studio, rising out of the panel where it is
+            Edit.openStudio("system", root.screenName, root, root.screenRect(root.popupItem));
             root.expanded = false;
-            Prefs.openBarModule("system", "layout");
             break;
         case "settings":
             root.expanded = false;

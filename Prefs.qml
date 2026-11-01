@@ -498,6 +498,12 @@ Singleton {
     }
 
     function systemGridSet(key, spot, needs) {
+        root.systemGrid = JSON.stringify(root.systemGridPlan(key, spot, needs));
+    }
+
+    // the grid a move would leave, without writing it: the studio shows it live
+    // while a block is carried, the others stepping aside to where they would go
+    function systemGridPlan(key, spot, needs) {
         const need = needs || {};
         const now = root.systemGridPlace(root.systemBlockKeys, need);
         const old = now[key] || root.systemGridFit(key, {}, need[key]);
@@ -536,7 +542,7 @@ Singleton {
             });
             taken.push(r);
         }
-        root.systemGrid = JSON.stringify(next);
+        return next;
     }
 
     // everything the control centre's layout is: which blocks, where, and
