@@ -231,7 +231,7 @@ Singleton {
         Quickshell.execDetached(["sh", "-c", "A=$(notify-send -a Lucid -i \"$1\" \"$2\" \"$3\" -A \"open=What's new\" -A \"update=Update\" --wait); case \"$A\" in open) xdg-open \"$4\" ;; update) qs ipc call updates update ;; esac; true", "sh", root.iconPath, "Lucid v" + root.latest + " is out", body, root.latestUrl]);
     }
 
-    // the mark on its plate: the bare mauve one fades out on a light-mode card
+    // the mark on its plate: the bare one fades out on a light-mode card
     readonly property string iconPath: Qt.resolvedUrl("assets/logo.svg").toString().replace("file://", "")
 
     function take(body) {

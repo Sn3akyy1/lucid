@@ -2,7 +2,7 @@
 # draws the sheet a lucid icon theme is made on: one cell per slot on the
 # 48-unit grid (drawn at 2x), the keylines, and the tonal palette swatches the
 # importer matches fills against. the colours come from lucid's brand seed,
-# #d3bccc, nudged where two tones share a value so every swatch is a unique key. the cells come filled with gravity (tonal.py), the default
+# #00f0ff, nudged where two tones share a value so every swatch is a unique key. the cells come filled with gravity (tonal.py), the default
 # set, so a theme can start as a remix of it; --blank leaves them empty
 #   python3 support/icons/kit/build-sheet.py [--blank]
 #       writes lucid-icon-sheet-{dark,light}.svg, or lucid-icon-sheet-blank-*.svg
@@ -21,30 +21,30 @@ tonal = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(tonal)
 m3_shape = tonal.m3_shape
 
-# the sheet's own surfaces and text: matugen color hex "#d3bccc", scheme-tonal-spot,
+# the sheet's own surfaces and text: matugen color hex "#00f0ff", scheme-tonal-spot,
 # lucid's brand seed
 SCHEME = {
     "dark": {
-        "primary": "#f1b3e6", "on_primary": "#4c1f49", "primary_container": "#653661",
-        "on_primary_container": "#ffd7f5", "secondary": "#dabfd2", "on_secondary": "#3d2b3a",
-        "secondary_container": "#554151", "on_secondary_container": "#f7daef", "tertiary": "#f5b8a7",
-        "on_tertiary": "#4c261b", "tertiary_container": "#663c2f", "on_tertiary_container": "#ffdbd1",
+        "primary": "#80d4dc", "on_primary": "#00363a", "primary_container": "#004f54",
+        "on_primary_container": "#9df0f8", "secondary": "#b1cbce", "on_secondary": "#1b3437",
+        "secondary_container": "#324b4d", "on_secondary_container": "#cce8ea", "tertiary": "#b7c7ea",
+        "on_tertiary": "#21304c", "tertiary_container": "#384764", "on_tertiary_container": "#d7e2ff",
         "error": "#ffb4ab", "on_error": "#690005", "error_container": "#93000a",
-        "on_error_container": "#ffdad6", "surface": "#171216", "surface_container_lowest": "#120d11",
-        "surface_container_low": "#201a1e", "surface_container": "#241e22", "surface_container_high": "#2f282d",
-        "surface_container_highest": "#3a3338", "on_surface": "#ecdfe5", "on_surface_variant": "#d1c2cb",
-        "outline": "#9a8d95", "outline_variant": "#4e444b",
+        "on_error_container": "#ffdad6", "surface": "#0e1415", "surface_container_lowest": "#090f10",
+        "surface_container_low": "#161d1d", "surface_container": "#1a2121", "surface_container_high": "#252b2c",
+        "surface_container_highest": "#303636", "on_surface": "#dee4e4", "on_surface_variant": "#bec8c9",
+        "outline": "#899393", "outline_variant": "#3f4849",
     },
     "light": {
-        "primary": "#804d7a", "on_primary": "#ffffff", "primary_container": "#ffd7f5",
-        "on_primary_container": "#330832", "secondary": "#6d5869", "on_secondary": "#ffffff",
-        "secondary_container": "#f7daef", "on_secondary_container": "#271624", "tertiary": "#825345",
-        "on_tertiary": "#ffffff", "tertiary_container": "#ffdbd1", "on_tertiary_container": "#321208",
+        "primary": "#006970", "on_primary": "#ffffff", "primary_container": "#9df0f8",
+        "on_primary_container": "#002022", "secondary": "#4a6365", "on_secondary": "#ffffff",
+        "secondary_container": "#cce8ea", "on_secondary_container": "#051f21", "tertiary": "#4f5e7d",
+        "on_tertiary": "#ffffff", "tertiary_container": "#d7e2ff", "on_tertiary_container": "#0a1b36",
         "error": "#ba1a1a", "on_error": "#ffffff", "error_container": "#ffdad6",
-        "on_error_container": "#410002", "surface": "#fff7f9", "surface_container_lowest": "#ffffff",
-        "surface_container_low": "#fdf0f7", "surface_container": "#f7ebf1", "surface_container_high": "#f1e5eb",
-        "surface_container_highest": "#ecdfe5", "on_surface": "#201a1e", "on_surface_variant": "#4e444b",
-        "outline": "#80747c", "outline_variant": "#d1c2cb",
+        "on_error_container": "#410002", "surface": "#f4fafb", "surface_container_lowest": "#ffffff",
+        "surface_container_low": "#eff5f5", "surface_container": "#e9efef", "surface_container_high": "#e3e9ea",
+        "surface_container_highest": "#dee4e4", "on_surface": "#161d1d", "on_surface_variant": "#3f4849",
+        "outline": "#6f797a", "outline_variant": "#bec8c9",
     },
 }
 
@@ -55,15 +55,15 @@ SCHEME = {
 # mode, so a folder looks like itself in both
 TONES = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99]
 PALETTES = {
-    "primary": ["#330832", "#4c1f49", "#653661", "#804d7a", "#9b6594", "#b77eae", "#d498ca", "#f1b3e6", "#ffd7f5", "#ffebf8", "#fffbff"],
-    "secondary": ["#271624", "#3d2b3a", "#554151", "#6d5869", "#877082", "#a2899c", "#bea4b7", "#dabfd2", "#f7daef", "#ffebf8", "#fffbff"],
-    "tertiary": ["#321208", "#4c261b", "#663c2f", "#825345", "#9d6b5c", "#ba8474", "#d79e8d", "#f5b8a7", "#ffdbd1", "#ffede8", "#fffbff"],
+    "primary": ["#002022", "#00363a", "#004f54", "#006970", "#27838a", "#479da5", "#64b8c0", "#80d4dc", "#9df0f8", "#c7faff", "#f4feff"],
+    "secondary": ["#051f21", "#1b3437", "#324b4d", "#4a6365", "#627c7e", "#7c9598", "#96b0b3", "#b1cbce", "#cce8ea", "#dbf6f8", "#f4feff"],
+    "tertiary": ["#0a1b36", "#21304c", "#384764", "#4f5e7d", "#687797", "#8291b2", "#9cabcd", "#b7c7ea", "#d7e2ff", "#ecf0ff", "#fdfbff"],
     "error": ["#410002", "#690005", "#93000a", "#ba1a1a", "#de3730", "#ff5449", "#ff897d", "#ffb4ab", "#ffdad6", "#ffedea", "#fffbff"],
-    "neutral": ["#201a1e", "#352e33", "#4c454a", "#645c61", "#7e747a", "#988e94", "#b3a8ae", "#cfc3c9", "#ecdfe5", "#faedf4", "#fffbff"],
+    "neutral": ["#161d1d", "#2b3232", "#424848", "#596060", "#727879", "#8b9292", "#a6acad", "#c1c8c8", "#dee4e4", "#ecf2f2", "#f7fdfe"],
 }
 
 # the dark tile's tones: the shell's card colour, which no swatch row carries
-EXTRA = {"container-5": "#150e13", "container-15": "#2a2328", "container-25": "#40393e"}
+EXTRA = {"container-5": "#0c1213", "container-15": "#212727", "container-25": "#363d3d"}
 
 # slot id, name, optional; kinds pick the keyline a cell shows
 SECTIONS = [

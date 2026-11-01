@@ -11,18 +11,18 @@ an emoji picker, a screenshot tool and a settings app — themed together from
 your wallpaper.
 
 <p>
-  <a href="https://github.com/Sn3akyy1/lucid/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Sn3akyy1/lucid?style=for-the-badge&label=LAST%20COMMIT&labelColor=131011&color=D3BCCC"></a>
-  <a href="https://github.com/Sn3akyy1/lucid/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Sn3akyy1/lucid?style=for-the-badge&label=STARS&labelColor=131011&color=F5B8A7"></a>
-  <a href="https://github.com/Sn3akyy1/lucid/releases"><img alt="Release" src="https://img.shields.io/github/v/tag/Sn3akyy1/lucid?style=for-the-badge&label=RELEASE&labelColor=131011&color=F1B3E6"></a>
-  <img alt="Repo size" src="https://img.shields.io/github/repo-size/Sn3akyy1/lucid?style=for-the-badge&label=REPO%20SIZE&labelColor=131011&color=D79E8D">
-  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-80CBC4?style=for-the-badge&labelColor=131011"></a>
+  <a href="https://github.com/Sn3akyy1/lucid/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Sn3akyy1/lucid?style=for-the-badge&label=LAST%20COMMIT&labelColor=0C1213&color=00F0FF"></a>
+  <a href="https://github.com/Sn3akyy1/lucid/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Sn3akyy1/lucid?style=for-the-badge&label=STARS&labelColor=0C1213&color=B7C7EA"></a>
+  <a href="https://github.com/Sn3akyy1/lucid/releases"><img alt="Release" src="https://img.shields.io/github/v/tag/Sn3akyy1/lucid?style=for-the-badge&label=RELEASE&labelColor=0C1213&color=80D4DC"></a>
+  <img alt="Repo size" src="https://img.shields.io/github/repo-size/Sn3akyy1/lucid?style=for-the-badge&label=REPO%20SIZE&labelColor=0C1213&color=9CABCD">
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-80CBC4?style=for-the-badge&labelColor=0C1213"></a>
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/VERSION-v1.20.5.5-D3BCCC?style=for-the-badge&labelColor=131011">
-  <img alt="Platform" src="https://img.shields.io/badge/PLATFORM-ARCH%20LINUX-F1B3E6?style=for-the-badge&logo=archlinux&logoColor=F1B3E6&labelColor=131011">
-  <img alt="Compositor" src="https://img.shields.io/badge/COMPOSITOR-HYPRLAND-80CBC4?style=for-the-badge&labelColor=131011">
-  <a href="https://quickshell.org"><img alt="Built on Quickshell" src="https://img.shields.io/badge/BUILT%20ON-QUICKSHELL-F5B8A7?style=for-the-badge&labelColor=131011"></a>
+  <img alt="Version" src="https://img.shields.io/badge/VERSION-v1.20.5.5-00F0FF?style=for-the-badge&labelColor=0C1213">
+  <img alt="Platform" src="https://img.shields.io/badge/PLATFORM-ARCH%20LINUX-80D4DC?style=for-the-badge&logo=archlinux&logoColor=80D4DC&labelColor=0C1213">
+  <img alt="Compositor" src="https://img.shields.io/badge/COMPOSITOR-HYPRLAND-80CBC4?style=for-the-badge&labelColor=0C1213">
+  <a href="https://quickshell.org"><img alt="Built on Quickshell" src="https://img.shields.io/badge/BUILT%20ON-QUICKSHELL-B7C7EA?style=for-the-badge&labelColor=0C1213"></a>
 </p>
 
 <img src="assets/desktop.webp" alt="The Lucid desktop: the bar along the top, calendar and weather widgets on the left, the clock and what is playing on the right, and the dock along the bottom">
@@ -1475,16 +1475,16 @@ The logo is **Lucida** — the astronomical term for the brightest star in a
 constellation, sharing its Latin root (*lux*) with "Lucid". A broken orbit ring,
 a four-point star at the centre, and one companion dot outside the gap.
 
-Its official colour is **mauve `#D3BCCC`**. In the shell itself the ring and the
+Its official colour is **cyan `#00F0FF`**. In the shell itself the ring and the
 companion dot track your accent, so the mark on the dock launcher recolours with
-whatever palette you are running — but mauve is the canonical brand colour, and
+whatever palette you are running — but cyan is the canonical brand colour, and
 what you see above.
 
 <br clear="left">
 
 `assets/logo.svg` is the mark on its dark plate; `assets/logo-mark.svg` is the
-bare mauve mark for dark backgrounds, and `assets/logo-mark-light.svg` its deep
-plum twin (`#804D7A`, the same seed's light-mode primary) for light ones. All are
+bare cyan mark for dark backgrounds, and `assets/logo-mark-light.svg` its deep
+teal twin (`#006970`, the same seed's light-mode primary) for light ones. All are
 drawn from the same 24×24 geometry as [`LucidaMark.qml`](lucidprefs/LucidaMark.qml).
 
 ## License
