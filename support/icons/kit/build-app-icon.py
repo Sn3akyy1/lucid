@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # build-app-icon.py: lumen's launcher icon, the gravity folder with a compass
-# on it, and lens's, a photo print with a magnifier, in the brand palette
+# on it, lens's, a photo print with a magnifier, and lucid settings', a sheet of
+# sliders with a gear, in the brand palette
 # (#d3bccc's tonal-spot ramps). the launcher and dock read a plain svg, so these
 # do not follow matugen.
-# writes <repo>/lucidlumen/lumen.svg and <repo>/lucidlens/lens.svg, or one to --out <file> (--lens for lens's)
+# writes <repo>/lucidlumen/lumen.svg, <repo>/lucidlens/lens.svg and
+# <repo>/lucidprefs/settings.svg, or one to --out <file> (--lens for lens's)
 import importlib.util
 import os
 import sys
@@ -29,7 +31,8 @@ def main():
         return sheet.PALETTES[fam][sheet.TONES.index(int(tone))]
 
     icons = [("lumen", os.path.join(ROOT, "lucidlumen", "lumen.svg"), tonal.folder(emblem="explore")),
-             ("lens", os.path.join(ROOT, "lucidlens", "lens.svg"), tonal.photo_print(emblem="search"))]
+             ("lens", os.path.join(ROOT, "lucidlens", "lens.svg"), tonal.photo_print(emblem="search")),
+             ("settings", os.path.join(ROOT, "lucidprefs", "settings.svg"), tonal.settings_sheet())]
     if "--out" in sys.argv:
         pick = icons[1] if "--lens" in sys.argv else icons[0]
         icons = [(pick[0], sys.argv[sys.argv.index("--out") + 1], pick[2])]

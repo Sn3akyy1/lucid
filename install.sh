@@ -423,6 +423,27 @@ if [[ -x "$SHELL_DIR/lucidlens/lens" ]]; then
     "$SHELL_DIR/lucidlens/lens" --default && say "  lens -> app launcher, opens pictures"
 fi
 
+# the settings window is part of the shell's own process, so it carries
+# quickshell's app id and can't have one of its own. a desktop entry is found by
+# that id and yours wins over the system's, so this one is what names it and gives
+# it its icon in the dock, the launcher, the window switcher and the bar
+if [[ -f "$SHELL_DIR/lucidprefs/settings.svg" ]]; then
+    APPS_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+    mkdir -p "$APPS_DIR"
+    cat > "$APPS_DIR/org.quickshell.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=Lucid Settings
+Comment=Change how Lucid looks and works
+Exec=qs ipc call settings open
+Icon=$SHELL_DIR/lucidprefs/settings.svg
+Terminal=false
+Categories=Settings;DesktopSettings;
+Keywords=settings;preferences;options;configure;
+EOF
+    say "  lucid settings -> app launcher, its own icon"
+fi
+
 # the shell loads its bundled font itself, but the apps the environment page
 # dresses (and its font picker) only see what fontconfig knows. google sans
 # flex is the OFL release, so it may ship; the proprietary google sans may not

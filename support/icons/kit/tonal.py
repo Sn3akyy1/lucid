@@ -536,6 +536,20 @@ def app_lens():
     return tile("n", 90) + [shrink_part(p, 0.78, 5.3, 5.6) for p in photo_print("search")]
 
 
+# lucid settings' picture, lens's build with the sheet in place of the photo: a
+# card behind, two sliders on the sheet, and the gear at its foot
+def settings_sheet(fam="p"):
+    return [("back", rr(12, 6, 30, 24, 4.5), grad(k(fam, 50), k(fam, 40), 6, 30)),
+            ("paper", rr(5, 11, 34, 30, 5), grad(k("n", 99), k("n", 95), 11, 41)),
+            ("tracks", pill(11, 18.5, 33, 18.5, 2.6) + pill(11, 27, 22, 27, 2.6), k(fam, 80)),
+            ("knobs", circle(26.5, 18.5, 3.3) + circle(15, 27, 3.3), k(fam, 50)),
+            ("emblem", symbol("settings", 25.6, 24.6, 17, bold=True), k("n", 10), 0.36)]
+
+
+def app_lucid_settings():
+    return tile("n", 90) + [shrink_part(p, 0.78, 5.3, 5.6) for p in settings_sheet()]
+
+
 BRAND_APPS = {  # slot: (simple icons slug, look)
     "brand-firefox": ("firefoxbrowser", "accent"), "brand-brave": ("brave", "dark"),
     "brand-chrome": ("googlechrome", "light"), "brand-zen": ("zenbrowser", "dark"),
@@ -567,7 +581,7 @@ GLYPH_APPS = {  # slot: (material symbol, look)
     "app-archive": ("folder_zip", "light"), "app-fonts": ("match_case", "light"), "app-help": ("help", "accent"),
     "app-weather": ("partly_cloudy_day", "accent"),
 }
-MORE_APPS = {"app-lumen": app_lumen, "app-lens": app_lens}
+MORE_APPS = {"app-lumen": app_lumen, "app-lens": app_lens, "app-lucid-settings": app_lucid_settings}
 
 
 def _ids(slot, *keys):
@@ -582,6 +596,8 @@ for _slot, _keys in (
                        "pcmanfm-qt", "caja", "files", "system-file-manager", "org.xfce.thunar")),
         ("app-lumen", ("lucid.lumen", "lumen")),
         ("app-lens", ("lucid.lens", "lens")),
+        # the shell's own process, so the settings window goes by quickshell's id
+        ("app-lucid-settings", ("org.quickshell", "quickshell")),
         ("app-terminal", ("kitty", "foot", "footclient", "alacritty", "wezterm", "org.wezfurlong.wezterm", "ghostty",
                           "com.mitchellh.ghostty", "gnome-terminal", "org.gnome.terminal", "org.gnome.ptyxis", "ptyxis",
                           "konsole", "org.kde.konsole", "xterm", "terminal", "utilities-terminal", "tilix", "terminator",

@@ -35,6 +35,11 @@ if [[ -d "$SHELL_DIR" ]]; then
         # lumen's entry points into the folder that just moved
         rm -f "${XDG_DATA_HOME:-$HOME/.local/share}/applications/lucid.lumen.desktop"
         rm -f "${XDG_DATA_HOME:-$HOME/.local/share}/applications/lucid.lens.desktop"
+        # the settings window's entry, which hands the name back to quickshell's own
+        ENTRY="${XDG_DATA_HOME:-$HOME/.local/share}/applications/org.quickshell.desktop"
+        if grep -qs '^Name=Lucid Settings$' "$ENTRY"; then
+            rm -f "$ENTRY"
+        fi
         echo "  moved (your settings and pins are still in there)"
     fi
 fi
