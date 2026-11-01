@@ -115,8 +115,8 @@ Item {
                 tipAbove: bar.tipAbove
                 selected: bar.mode === "record"
                 disabled: bar.recording
-                onFill: Theme.errorContainer
-                onInk: Theme.fgErrorContainer
+                activeFill: Theme.errorContainer
+                activeInk: Theme.fgErrorContainer
                 onClicked: bar.stage.setMode("record")
             }
 

@@ -14,8 +14,8 @@ Item {
     property bool selected: false
     property bool disabled: false
     property bool tipAbove: true
-    property color onFill: Theme.secondaryContainer
-    property color onInk: Theme.fgSecondaryContainer
+    property color activeFill: Theme.secondaryContainer
+    property color activeInk: Theme.fgSecondaryContainer
     readonly property real wide: Theme.dp(16) + Theme.dp(24) + Theme.dp(8) + labelText.implicitWidth + Theme.dp(20)
     readonly property bool jellyWobbling: squish.wobbling
 
@@ -30,13 +30,13 @@ Item {
 
         anchors.fill: parent
         radius: height / 2
-        color: m.selected ? m.onFill : Theme.alpha(m.onFill, 0)
+        color: m.selected ? m.activeFill : Theme.alpha(m.activeFill, 0)
 
         StateLayer {
             id: area
 
             radius: box.radius
-            tint: m.selected ? m.onInk : Theme.text
+            tint: m.selected ? m.activeInk : Theme.text
             disabled: m.disabled
             onPressedChanged: squish.kick(area.pressed ? -0.1 : 0.08)
             onClicked: m.clicked()
@@ -63,7 +63,7 @@ Item {
             name: m.icon
             size: Theme.dp(24)
             fill: m.selected ? 1 : 0
-            color: m.selected ? m.onInk : Theme.subtext
+            color: m.selected ? m.activeInk : Theme.subtext
 
             Behavior on x {
                 NumberAnimation {
@@ -82,7 +82,7 @@ Item {
             x: glyph.x + glyph.width + Theme.dp(8)
             anchors.verticalCenter: parent.verticalCenter
             role: "labelLarge"
-            color: m.onInk
+            color: m.activeInk
             text: m.label
             opacity: m.selected ? 1 : 0
 

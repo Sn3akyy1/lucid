@@ -14,8 +14,8 @@ Item {
     // a count or a number of seconds, in a small primary badge
     property string badge: ""
     property bool tipAbove: true
-    property color onFill: Theme.secondaryContainer
-    property color onInk: Theme.fgSecondaryContainer
+    property color activeFill: Theme.secondaryContainer
+    property color activeInk: Theme.fgSecondaryContainer
     property color ink: Theme.subtext
     property int size: Theme.dp(48)
     // a colour shown as itself in place of the icon
@@ -33,13 +33,13 @@ Item {
 
         anchors.fill: parent
         radius: area.pressed ? Theme.rad(12) : (b.checked ? Theme.rad(16) : height / 2)
-        color: b.checked ? b.onFill : Theme.alpha(b.onFill, 0)
+        color: b.checked ? b.activeFill : Theme.alpha(b.activeFill, 0)
 
         StateLayer {
             id: area
 
             radius: box.radius
-            tint: b.checked ? b.onInk : Theme.text
+            tint: b.checked ? b.activeInk : Theme.text
             disabled: b.disabled
             onPressedChanged: squish.kick(area.pressed ? -0.12 : 0.09)
             onClicked: b.clicked()
@@ -91,7 +91,7 @@ Item {
         name: b.icon
         size: Theme.dp(24)
         fill: b.checked ? 1 : 0
-        color: b.disabled ? Theme.alpha(Theme.text, Theme.disabledContent) : (b.checked ? b.onInk : b.ink)
+        color: b.disabled ? Theme.alpha(Theme.text, Theme.disabledContent) : (b.checked ? b.activeInk : b.ink)
         scale: area.pressed ? 0.9 : 1
 
         Behavior on scale {

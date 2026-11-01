@@ -514,8 +514,8 @@ Item {
             icon: card.armed ? "delete_forever" : "delete"
             tip: card.armed ? "Click again to delete" : "Delete"
             checked: card.armed
-            onFill: Theme.errorContainer
-            onInk: Theme.fgErrorContainer
+            activeFill: Theme.errorContainer
+            activeInk: Theme.fgErrorContainer
             disabled: !card.ready
             onClicked: card.act("delete")
         }
