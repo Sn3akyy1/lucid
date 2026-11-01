@@ -536,18 +536,27 @@ def app_lens():
     return tile("n", 90) + [shrink_part(p, 0.78, 5.3, 5.6) for p in photo_print("search")]
 
 
-# lucid settings' picture, lens's build with the sheet in place of the photo: a
-# card behind, two sliders on the sheet, and the gear at its foot
-def settings_sheet(fam="p"):
-    return [("back", rr(12, 6, 30, 24, 4.5), grad(k(fam, 50), k(fam, 40), 6, 30)),
-            ("paper", rr(5, 11, 34, 30, 5), grad(k("n", 99), k("n", 95), 11, 41)),
-            ("tracks", pill(11, 18.5, 33, 18.5, 2.6) + pill(11, 27, 22, 27, 2.6), k(fam, 80)),
-            ("knobs", circle(26.5, 18.5, 3.3) + circle(15, 27, 3.3), k(fam, 50)),
-            ("emblem", symbol("settings", 25.6, 24.6, 17, bold=True), k("n", 10), 0.36)]
+# lucid's broken orbit as a fill, on the logo's own angles: outer arc, round cap,
+# inner arc, round cap
+def orbit(cx, cy, r, w, a0=58, a1=340):
+    def at(rad, deg):
+        return "%s %s" % (n(cx + rad * math.cos(math.radians(deg))), n(cy - rad * math.sin(math.radians(deg))))
+    ro, ri, cap = r + w / 2, r - w / 2, n(w / 2)
+    return "M%s A%s %s 0 1 0 %s A%s %s 0 0 0 %s A%s %s 0 1 1 %s A%s %s 0 0 0 %sZ" % (
+        at(ro, a0), n(ro), n(ro), at(ro, a1), cap, cap, at(ri, a1), n(ri), n(ri), at(ri, a0), cap, cap, at(ro, a0))
+
+
+# lucid settings' picture: the logo's orbit and companion dot, the gear where its
+# star sits
+def lucid_gear(ring_fill, gear_fill, dot_fill, s=1.56, cx=24, cy=24):
+    g = 5.2 * s
+    return [("ring", orbit(cx, cy, 7.4 * s, 3 * s), ring_fill),
+            ("gear", symbol("settings", cx - g, cy - g, 2 * g, bold=True), gear_fill),
+            ("dot", circle(cx + 9 * s, cy - 2.6 * s, s), dot_fill)]
 
 
 def app_lucid_settings():
-    return tile("n", 90) + [shrink_part(p, 0.78, 5.3, 5.6) for p in settings_sheet()]
+    return tile("c", 15) + lucid_gear(grad(k("p", 80), k("p", 60), 6, 42), k("n", 99), k("p", 70))
 
 
 BRAND_APPS = {  # slot: (simple icons slug, look)
