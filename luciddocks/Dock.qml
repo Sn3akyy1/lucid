@@ -35,7 +35,11 @@ PanelWindow {
     // with the bar on the bottom edge there is no dock, and the launcher stands on the
     // bar: on a notch or full bar it rises out of it, putting out a strip to its width;
     // over islands it floats a little above
-    readonly property bool onBar: Prefs.barHoldsBottom
+    // a fullscreen window hides the bar's layer, so there it comes out of the screen edge
+    readonly property bool onBar: {
+        const m = Hyprland.monitorFor(dockWindow.screen);
+        return Prefs.barHoldsBottom && !(m && m.activeWorkspace && m.activeWorkspace.hasFullscreen);
+    }
     readonly property bool onFlushBar: dockWindow.onBar && Prefs.barFlush && dockWindow.launcherFromHidden
     // floating over the bar there is no edge to sink behind, so going away it fades too
     readonly property bool fadesOnBar: dockWindow.onBar && !dockWindow.onFlushBar
@@ -2165,7 +2169,7 @@ PanelWindow {
     visible: Monitors.surfacesUp
     // on the bar the launcher keeps its own place by margin, over the bar's zone
     margins.bottom: dockWindow.barLift
-    exclusionMode: (dockWindow.exclusionTick, dockWindow.onBar) ? ExclusionMode.Ignore : ExclusionMode.Normal
+    exclusionMode: (dockWindow.exclusionTick, Prefs.barHoldsBottom) ? ExclusionMode.Ignore : ExclusionMode.Normal
     exclusiveZone: (!Prefs.loaded || !Prefs.dockOn || Prefs.dockAutoHide) ? 0 : (shell.implicitHeight + Prefs.effectiveDockBottomMargin + Prefs.shellGap)
     onOnBarChanged: Qt.callLater(() => {
         return dockWindow.exclusionTick++;
