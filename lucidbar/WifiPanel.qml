@@ -1161,7 +1161,8 @@ Item {
 
             Timer {
                 interval: 20000
-                running: scanButton.scanning
+                // a stopped scan drops every network not connected, and with it an open row and its half-typed password
+                running: scanButton.scanning && root.expandedKey === ""
                 onTriggered: {
                     if (root.wifiDevice)
                         root.wifiDevice.scannerEnabled = false;
