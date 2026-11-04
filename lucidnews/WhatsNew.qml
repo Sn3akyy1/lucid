@@ -331,7 +331,7 @@ PanelWindow {
 
                 // the pictures under the intro of the changelog's section
                 Repeater {
-                    model: notes.heroes
+                    model: sheet.visible ? notes.heroes : []
 
                     Shot {
                         required property var modelData
@@ -343,8 +343,10 @@ PanelWindow {
 
                 }
 
+                // the notes are only laid out while the sheet is up; a hidden
+                // sheet would keep every paragraph of them for the whole session
                 Repeater {
-                    model: notes.sections
+                    model: sheet.visible ? notes.sections : []
 
                     Column {
                         id: section
