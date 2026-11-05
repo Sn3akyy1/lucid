@@ -391,9 +391,6 @@ ShellRoot {
                     "edges": ({})
                 });
                 const popups = Prefs.barPopupMode;
-                if (popups && !Prefs.barPopupNotched)
-                    return plan;
-
                 const most = Theme.dp(Prefs.barNotchFlare);
                 const bite = 0.5;
                 const cap = (key, corner, v) => {
@@ -405,6 +402,28 @@ ShellRoot {
                         plan.fillets.push({ "x": x, "y": y, "size": size, "mirrored": mirrored, "flipped": flipped });
 
                 };
+                // notches: a module against a screen side curves into it below
+                // its bottom, or below its panel when that is open
+                if (Prefs.barNotch && Prefs.barNotchEdge) {
+                    const row = bar.modules.filter((m) => {
+                        return m.visible && m.width > 0.5;
+                    }).sort((p, q) => {
+                        return p.x - q.x;
+                    });
+                    const meet = (m, left) => {
+                        cap(m.modId, left ? "bl" : "br", 0);
+                        fillet(left ? -bite : bar.width - most + bite, m.y + (m === workspacesMod ? m.compactHeight : m.height) - bite, most, left, false);
+                    };
+                    if (row.length > 0 && row[0].x < 0.5)
+                        meet(row[0], true);
+
+                    if (row.length > 0 && bar.width - row[row.length - 1].x - row[row.length - 1].width < 0.5)
+                        meet(row[row.length - 1], false);
+
+                }
+                if (popups && !Prefs.barPopupNotched)
+                    return plan;
+
                 // full bar and notches: open panels side by side become one shape.
                 // the gap between them fills in, and the shorter one's shared corner
                 // turns into a fillet against the taller one's side
@@ -731,7 +750,7 @@ ShellRoot {
                 }
 
             }
-            readonly property real sideMargin: Theme.dp(Prefs.barSideMargin)
+            readonly property real sideMargin: (Prefs.barNotch && Prefs.barNotchEdge) ? 0 : Theme.dp(Prefs.barSideMargin)
 
             // busy: a panel is open somewhere on the bar, so it stays out
             // regardless of the pointer. held: the pointer is on the reveal

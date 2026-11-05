@@ -209,10 +209,13 @@ Column {
             title: "Side margin"
             resetKey: "barSideMargin"
             description: "Inset from the left and right screen edges."
+            enabled: !(Prefs.barNotch && Prefs.barNotchEdge)
+            disabledReason: "Meet the screen sides puts the end modules right against them - switch it off below to inset them."
             stacked: true
 
             M3Slider {
                 width: parent.width
+                enabled: !(Prefs.barNotch && Prefs.barNotchEdge)
                 from: 0
                 to: 60
                 stepSize: 1
@@ -220,6 +223,23 @@ Column {
                 value: Prefs.barSideMargin
                 onMoved: (v) => {
                     return Prefs.barSideMargin = v;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Meet the screen sides"
+            resetKey: "barNotchEdge"
+            description: "The modules at either end sit right against the screen's sides and curve down into them, the way the full bar does, and an open panel takes that curve with it. Off, they keep the side margin."
+            enabled: Prefs.barNotch
+            disabledReason: "Only applies to notches - set Bar style to Notches above."
+
+            M3Switch {
+                enabled: Prefs.barNotch
+                checked: Prefs.barNotchEdge
+                onToggled: (v) => {
+                    return Prefs.barNotchEdge = v;
                 }
             }
 

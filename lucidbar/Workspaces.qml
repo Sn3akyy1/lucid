@@ -1133,8 +1133,10 @@ Item {
     // overview is up the module has left its slot, so the bar parts it anyway
     readonly property bool joinLeft: !!root.hostWindow && !!root.hostWindow.joinedLeftOf && root.hostWindow.joinedLeftOf("workspaces")
     readonly property bool joinRight: !!root.hostWindow && !!root.hostWindow.joinedRightOf && root.hostWindow.joinedRightOf("workspaces")
+    // the key the bar's hang plan files this module under, as BarPill's modId
+    readonly property string modId: "workspaces"
     // the bar caps these when a panel hangs from this island
-    readonly property var hangCorners: root.hostWindow && root.hostWindow.hangPlan ? (root.hostWindow.hangPlan.corners["workspaces"] || null) : null
+    readonly property var hangCorners: root.hostWindow && root.hostWindow.hangPlan ? (root.hostWindow.hangPlan.corners[root.modId] || null) : null
 
     function capped(corner, v) {
         return root.hangCorners && root.hangCorners[corner] !== undefined ? Math.max(0, Math.min(v, root.hangCorners[corner])) : v;
