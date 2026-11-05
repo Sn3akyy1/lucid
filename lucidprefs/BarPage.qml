@@ -414,14 +414,59 @@ Column {
         visible: !page.inSheet
 
         SettingRow {
-            title: "Keyboard layout"
-            resetKey: "showKbLayout"
-            description: "Shows the active keyboard layout next to the network icon. Click it to switch to the next layout."
+            title: "In the bar"
+            resetKey: "systemBarItems"
+            description: "What the module shows before it is opened. A click on the keyboard layout switches to the next one. At least one stays on."
+            stacked: true
 
-            M3Switch {
-                checked: Prefs.showKbLayout
-                onToggled: (v) => {
-                    return Prefs.showKbLayout = v;
+            M3Chips {
+                id: barItemChips
+
+                // the keyboard layout predates the list and keeps its own pref
+                readonly property var items: String(Prefs.systemBarItems).split(",").filter((k) => {
+                    return k !== "";
+                })
+
+                width: parent.width
+                multi: true
+                selectedKeys: (Prefs.showKbLayout ? ["kb"] : []).concat(barItemChips.items)
+                options: [{
+                    "key": "kb",
+                    "label": "Keyboard layout"
+                }, {
+                    "key": "wifi",
+                    "label": "Network"
+                }, {
+                    "key": "bluetooth",
+                    "label": "Bluetooth"
+                }, {
+                    "key": "volume",
+                    "label": "Volume"
+                }, {
+                    "key": "level",
+                    "label": "Volume level"
+                }, {
+                    "key": "mic",
+                    "label": "Microphone"
+                }, {
+                    "key": "battery",
+                    "label": "Battery"
+                }]
+                onChosen: (key) => {
+                    const on = barItemChips.selectedKeys.indexOf(key) !== -1;
+                    if (on && barItemChips.selectedKeys.length === 1)
+                        return ;
+
+                    if (key === "kb") {
+                        Prefs.showKbLayout = !on;
+                        return ;
+                    }
+                    const list = on ? barItemChips.items.filter((k) => {
+                        return k !== key;
+                    }) : barItemChips.items.concat([key]);
+                    Prefs.systemBarItems = ["wifi", "bluetooth", "volume", "level", "mic", "battery"].filter((k) => {
+                        return list.indexOf(k) !== -1;
+                    }).join(",");
                 }
             }
 

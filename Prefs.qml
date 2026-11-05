@@ -287,7 +287,7 @@ Singleton {
         "home": "right",
         "name": "System",
         "desc": "Battery, volume, brightness and quick settings",
-        "more": "Its tiles are set with Edit tiles in the control centre itself; the keyboard layout sign and game mode are on the Bar page in Settings.",
+        "more": "Its tiles are set with Edit tiles in the control centre itself; what it shows in the bar and game mode are on the Bar page in Settings.",
         "page": "bar"
     },
     {
@@ -497,6 +497,7 @@ Singleton {
     property alias showMedia: s.showMedia
     property alias showTray: s.showTray
     property alias showKbLayout: s.showKbLayout
+    property alias systemBarItems: s.systemBarItems
     property alias gameModeOnCmd: s.gameModeOnCmd
     property alias gameModeOffCmd: s.gameModeOffCmd
     property alias gameModeStatusCmd: s.gameModeStatusCmd
@@ -1037,6 +1038,7 @@ Singleton {
         "showMedia": true,
         "showTray": true,
         "showKbLayout": true,
+        "systemBarItems": "wifi,bluetooth,volume,level,mic,battery",
         "gameModeOnCmd": "",
         "gameModeOffCmd": "",
         "gameModeStatusCmd": "",
@@ -1782,6 +1784,7 @@ Singleton {
             property bool showMedia: true
             property bool showTray: true
             property bool showKbLayout: true
+            property string systemBarItems: "wifi,bluetooth,volume,level,mic,battery"
             property string gameModeOnCmd: ""
             property string gameModeOffCmd: ""
             property string gameModeStatusCmd: ""
