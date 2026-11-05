@@ -976,6 +976,13 @@ PanelWindow {
         return null;
     }
 
+    // the bar's apps module lists the same pins, by the same icons
+    readonly property var pinnedList: pinnedAdapter.pinnedApps
+
+    function iconFor(name) {
+        return IconTheme.resolve(name);
+    }
+
     // the bar's scratchpad stash goes through this so it shows the icons the dock shows
     function iconForClass(cls) {
         if (!cls || cls === "")
@@ -2097,6 +2104,19 @@ PanelWindow {
             return;
 
         dropResolver.resolve(unresolved, at);
+    }
+
+    // a pin dragged along the bar's apps module to another pin's place
+    function movePinned(appId, to) {
+        for (var i = 0; i < appListModel.count; i++) {
+            if (appListModel.get(i).appId.toLowerCase() === appId.toLowerCase()) {
+                if (i !== to && to >= 0 && to < appListModel.count) {
+                    appListModel.move(i, to, 1);
+                    dockWindow.persistOrder();
+                }
+                return;
+            }
+        }
     }
 
     function unpinApp(appId) {

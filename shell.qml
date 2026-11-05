@@ -625,11 +625,12 @@ ShellRoot {
                 "privacy": privacyMod,
                 "power": powerMod,
                 "window": windowMod,
-                "start": startMod
+                "start": startMod,
+                "apps": appsMod
             })
             // what BarPill looks itself up in, for a right click to its card
             readonly property var moduleById: bar.pillFor
-            readonly property var modules: [workspacesMod, mprisMod, sysTrayMod, clockMod, notifMod, systemMod, privacyMod, powerMod, windowMod, startMod]
+            readonly property var modules: [workspacesMod, mprisMod, sysTrayMod, clockMod, notifMod, systemMod, privacyMod, powerMod, windowMod, startMod, appsMod]
 
             // which modules switched on have left the bar for now, for the Bar
             // page's arrangement
@@ -1101,6 +1102,30 @@ ShellRoot {
 
             }
 
+            Apps {
+                id: appsMod
+
+                popupAlign: bar.alignOf("apps")
+
+                hostWindow: bar
+                dockMod: dock
+                x: bar.placeFor("apps")
+                anchors.top: parent.top
+                anchors.topMargin: bar.hiddenOffset
+
+                Behavior on x {
+                    enabled: bar.laidOut && bar.shuffling
+
+                    NumberAnimation {
+                        duration: Theme.barDurEnter
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.easeEmphasizedDecel
+                    }
+
+                }
+
+            }
+
             ActiveWindow {
                 id: windowMod
 
@@ -1308,6 +1333,10 @@ ShellRoot {
                     mod: startMod
                 }
 
+                ModuleRegion {
+                    mod: appsMod
+                }
+
                 Region {
                     item: Prefs.barAutoHide ? revealArea : null
                 }
@@ -1424,6 +1453,11 @@ ShellRoot {
                 ModuleRegion {
                     blur: true
                     mod: startMod
+                }
+
+                ModuleRegion {
+                    blur: true
+                    mod: appsMod
                 }
 
             }

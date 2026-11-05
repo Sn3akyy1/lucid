@@ -22,7 +22,8 @@ Rectangle {
             "tray": 0.06,
             "clock": 0.115,
             "notifications": 0.04,
-            "system": 0.115
+            "system": 0.115,
+            "apps": 0.2
         })
 
         function cellSpan(key) {
