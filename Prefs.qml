@@ -641,6 +641,8 @@ Singleton {
     property alias barNotchFlare: s.barNotchFlare
     // the concave corners the full bar hangs against the screen sides
     property alias barFullCorner: s.barFullCorner
+    // notches: the modules at either end sit against the screen sides and curve into them
+    property alias barNotchEdge: s.barNotchEdge
     property alias barHoverOpen: s.barHoverOpen
     property alias barAutoHide: s.barAutoHide
     property alias dockNotchFlare: s.dockNotchFlare
@@ -1152,6 +1154,7 @@ Singleton {
         "barMotionScale": 1.35,
         "barNotchFlare": 14,
         "barFullCorner": 18,
+        "barNotchEdge": false,
         "barHoverOpen": false,
         "barAutoHide": false,
         "dockNotchFlare": 14,
@@ -1897,6 +1900,7 @@ Singleton {
             property real barMotionScale: 1.35
             property int barNotchFlare: 14
             property int barFullCorner: 18
+            property bool barNotchEdge: false
             property bool barHoverOpen: false
             property bool barAutoHide: false
             property int dockNotchFlare: 14
