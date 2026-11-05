@@ -1174,15 +1174,21 @@ Item {
 
         }
 
+        // the grid, with a margin round it the blocks reach into: an outer tile's
+        // name, and a block lifted, settling or coming in, is not cut off along
+        // the grid's own edge
         Flickable {
             id: boardView
 
-            x: builder.canvasPad
-            y: builder.canvasHead
-            width: boardWrap.width
-            height: parent.height - builder.canvasHead - builder.canvasPad
+            readonly property real slackX: builder.canvasPad
+            readonly property real slackY: Theme.dp(10)
+
+            x: builder.canvasPad - boardView.slackX
+            y: builder.canvasHead - boardView.slackY
+            width: boardWrap.width + boardView.slackX * 2
+            height: parent.height - builder.canvasHead - builder.canvasPad + boardView.slackY * 2
             contentWidth: width
-            contentHeight: boardWrap.height
+            contentHeight: boardWrap.height + boardView.slackY * 2
             interactive: false
             clip: true
 
@@ -1584,10 +1590,10 @@ Item {
         id: boardWrap
 
         parent: builder.studio ? boardView.contentItem : builder
-        y: builder.studio ? 0 : looksBar.y + looksBar.height + Theme.dp(12)
+        y: builder.studio ? boardView.slackY : looksBar.y + looksBar.height + Theme.dp(12)
         width: Math.round(board.width * builder.k)
         height: Math.round(board.height * builder.k)
-        x: builder.studio ? 0 : Math.max(0, Math.round((builder.width - width) / 2))
+        x: builder.studio ? boardView.slackX : Math.max(0, Math.round((builder.width - width) / 2))
 
         Item {
             id: board
