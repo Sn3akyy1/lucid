@@ -52,7 +52,7 @@ Singleton {
     // "" | "confirm" | "auth" | "running" | "restart" | "failed"
     property string flow: ""
     property bool sheetOpen: false
-    // "release" | "beta"
+    // "release" | "beta" | "local" (the graphical installer, installer.qml)
     property string flowChannel: "release"
     property string flowLabel: ""
     // the run being followed; its folder holds events.jsonl, the log, the answers fifo
@@ -314,13 +314,28 @@ Singleton {
         var tag = root.latestTag !== "" ? root.latestTag : "v" + root.latest;
         var ref = beta ? root.betaSha : tag;
         var url = "https://codeload.github.com/" + root.repo + "/tar.gz/" + (beta ? root.betaSha : "refs/tags/" + encodeURIComponent(tag));
+        root.launch(["--url", url, "--ref", ref, "--sha", beta ? root.betaSha : ""]);
+    }
+
+    // the graphical installer: this tree's own install.sh, nothing to download
+    function installHere(args) {
+        if (root.installing)
+            return ;
+
+        root.flowChannel = "local";
+        root.flowLabel = "Lucid" + (root.current !== "" ? " v" + root.current : "");
+        root.sheetOpen = true;
+        root.launch(["--src", Quickshell.shellDir.replace(/\/$/, ""), "--"].concat(args || []));
+    }
+
+    function launch(source) {
         root.resetRun();
         root.run = "run-" + Date.now();
         root.runClosed = false;
         root.remindAt = 0;
         root.save();
         root.flow = "auth";
-        Quickshell.execDetached(["setsid", "-f", "python3", root.updaterPath, "--dir", root.runDir, "--url", url, "--channel", root.flowChannel, "--ref", ref, "--sha", beta ? root.betaSha : "", "--label", root.flowLabel, "--shell-pid", String(Quickshell.processId)]);
+        Quickshell.execDetached(["setsid", "-f", "python3", root.updaterPath, "--dir", root.runDir, "--channel", root.flowChannel, "--label", root.flowLabel, "--shell-pid", String(Quickshell.processId)].concat(source));
         root.follow(false);
     }
 
@@ -426,10 +441,13 @@ Singleton {
         root.sheetOpen = false;
     }
 
+    // the installer goes back to its choices rather than straight round again
     function retry() {
         var ch = root.flowChannel;
         root.closeEnd();
-        root.startUpdate(ch);
+        if (ch !== "local")
+            root.startUpdate(ch);
+
     }
 
     function openLog() {
@@ -437,13 +455,13 @@ Singleton {
     }
 
     // through the launcher, as autostart does. a supervisor that brings the
-    // shell back by itself is left to it
-    function restartNow() {
+    // shell back by itself is left to it. the installer passes the installed shell's folder
+    function restartNow(shellDir) {
         root.runClosed = true;
         root.remindAt = 0;
         root.save();
         root.sheetOpen = false;
-        var dir = Quickshell.shellDir.replace(/\/$/, "");
+        var dir = (shellDir || Quickshell.shellDir).replace(/\/$/, "");
         Quickshell.execDetached(["setsid", "-f", "sh", "-c", "qs kill -p \"$2\" >/dev/null 2>&1; i=0; while kill -0 \"$1\" 2>/dev/null && [ $i -lt 50 ]; do sleep 0.1; i=$((i+1)); done; sleep 0.8; qs list 2>/dev/null | grep -F \"Config path: $2/shell.qml\" >/dev/null && exit 0; if [ -x \"$3\" ]; then exec \"$3\" -d; else exec qs -d -p \"$2\"; fi", "sh", String(Quickshell.processId), dir, Quickshell.env("HOME") + "/.config/lucid/launch-shell.sh"]);
     }
 

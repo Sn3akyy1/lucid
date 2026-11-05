@@ -59,6 +59,15 @@ cd lucid
 ./install.sh
 ```
 
+In a Wayland session that opens the installer in a window, with Lucid's
+screenshots playing while it works. It installs only what that window needs
+first (Quickshell and its Qt modules), then you pick what comes with Lucid with
+switches, enter your password once, and answer anything the installer asks with
+buttons. At the end, **Start Lucid** puts the new binds live and starts the
+shell. Without a Wayland session, with any option on the command line, or with
+`--terminal`, it runs in the terminal as below; `--gui` opens the window with
+its switches set from the options given.
+
 That's it — the installer does the rest:
 
 1. **Checks your system** — refuses to run anywhere it can't finish the job,
@@ -748,8 +757,10 @@ Lucid's own lines in them (the shell, the wallpaper daemon, the variables
   running shell's own colours, so it follows a theme change. Every account
   keeps its own wallpaper and palette there, and picking another account
   crossfades the screen to theirs. The installer
-  copies it in when SDDM is present but never switches to it — which theme
-  greets you stays your call. With `fprintd` installed it also offers to let
+  copies it in when SDDM is present but only switches to it when you ask — the
+  **Login screen** switch in the installer window, or `--login-screen` in the
+  terminal (`Current=lucid` in `/etc/sddm.conf`, backed up first); `--no-sddm`
+  leaves it out. With `fprintd` installed it also offers to let
   the login screen take a fingerprint: press Enter on an empty field, then touch
   the sensor. That adds two marked lines to `/etc/pam.d/sddm` (a typed password
   is still checked first), which `sudo support/sddm/install-theme.sh
@@ -1358,7 +1369,13 @@ Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
 ```
 
 Moves `~/.config/quickshell` aside rather than deleting it, so your settings
-survive. Packages installed by `install.sh` are left alone. It prints what else
+survive. Packages installed by `install.sh` are left alone. `install.sh` notes
+how things stood before it first changed them, in
+`~/.local/state/lucid/before-install`, and the uninstaller offers to put those
+back: the login screen it replaced with SDDM (or none at all), the GTK theme,
+icons and dark mode GNOME reads, and your own Hyprland config (or Hyprland's
+default, if you had none). It ends by naming the desktop to log back into, or
+the ones still installed if that one is gone. It prints what else
 it left in place — the matugen template blocks, `~/.config/hypr`,
 `starship.toml` and its init lines in your rc files, the fastfetch config,
 kitty's colour and opacity includes — each with a timestamped backup beside it, so you can undo
