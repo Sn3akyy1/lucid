@@ -342,13 +342,19 @@ Rectangle {
 
         }
 
+        // only shapes in here, so the sketch of a bottom bar is the top one mirrored
+        transform: Scale {
+            origin.y: screen.height / 2
+            yScale: Prefs.barBottom ? -1 : 1
+        }
+
     }
 
     Text {
         anchors.right: parent.right
         anchors.rightMargin: Theme.dp(22)
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: Theme.dp(20)
+        // on the side away from the bar
+        y: Prefs.barBottom ? Theme.dp(20) : parent.height - height - Theme.dp(20)
         text: (Prefs.barFull ? "Full bar" : Prefs.barNotch ? "Notches" : "Islands") + "  ·  " + (Prefs.barPopupMode ? (screen.notchedPopup ? "notched pop-up" : "pop-up") : "morph") + (Prefs.barAutoHide ? "  ·  auto-hide" : "")
         color: Theme.subtext
         font.family: Theme.fontFamily

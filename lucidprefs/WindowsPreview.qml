@@ -38,7 +38,7 @@ Rectangle {
     readonly property real areaX: preview.gapsOutShown
     // the bar's own distance from windows comes on top of hyprland's
     readonly property real shellGap: Prefs.barEnabled ? Prefs.shellGap : 0
-    readonly property real areaY: preview.reserved + preview.shellGap + preview.gapsOutShown
+    readonly property real areaY: (Prefs.barBottom ? 0 : preview.reserved + preview.shellGap) + preview.gapsOutShown
     readonly property real areaW: preview.screenW - 2 * preview.gapsOutShown
     readonly property real areaH: preview.screenH - preview.reserved - preview.shellGap - 2 * preview.gapsOutShown
     readonly property var boxes: {
@@ -180,6 +180,7 @@ Rectangle {
 
         // the bar's reserved strip
         Rectangle {
+            y: Prefs.barBottom ? (preview.screenH - preview.reserved) * preview.zoom : 0
             width: parent.width
             height: preview.reserved * preview.zoom
             color: Theme.bgTile

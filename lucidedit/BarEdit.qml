@@ -193,7 +193,8 @@ Item {
             return ;
 
         const want = px - edit.grabDx;
-        const dy = py - edit.grabY;
+        // scene y runs down the screen, and a bottom bar's modules come off upward
+        const dy = Prefs.barBottom ? edit.grabY - py : py - edit.grabY;
         const pulling = dy > edit.pullOff;
         if (pulling !== edit.pulling) {
             edit.pulling = pulling;
@@ -449,9 +450,17 @@ Item {
                         }
 
                         Row {
+                            id: ghostRow
+
                             anchors.centerIn: parent
                             spacing: Theme.dp(6)
                             visible: mark.width > ghostName.implicitWidth + Theme.dp(26)
+
+                            // the bar is mirrored on the bottom edge; the words stand upright
+                            transform: Scale {
+                                origin.y: ghostRow.height / 2
+                                yScale: Prefs.barBottom ? -1 : 1
+                            }
 
                             Icon {
                                 anchors.verticalCenter: parent.verticalCenter
@@ -558,6 +567,12 @@ Item {
 
                             anchors.centerIn: parent
                             spacing: Theme.dp(6)
+
+                            // the bar is mirrored on the bottom edge; the words stand upright
+                            transform: Scale {
+                                origin.y: offRow.height / 2
+                                yScale: Prefs.barBottom ? -1 : 1
+                            }
 
                             Icon {
                                 anchors.verticalCenter: parent.verticalCenter

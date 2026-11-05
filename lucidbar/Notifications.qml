@@ -465,8 +465,8 @@ BarPill {
         Item {
             id: stackSheet
 
-            // parked directly under whichever surface the pill is wearing
-            readonly property real liveY: root.popupItem ? root.popupItem.y + root.popupItem.height + 8 : 0
+            // parked directly off whichever surface the pill is wearing
+            readonly property real liveY: root.popupItem ? root.overlayY(root.popupItem.y + root.popupItem.height, 8, stackSheet.height) : 0
             property real heldY: 0
 
             onLiveYChanged: {
@@ -489,19 +489,26 @@ BarPill {
                 onHoveredChanged: Notifs.popupsPaused = hovered
             }
 
-            Column {
+            // the cards, then what did not fit, going away from the bar: on the
+            // bottom edge that is upwards, so the order turns over
+            Item {
                 id: stackColumn
 
+                readonly property int spacing: Theme.dp(8)
+                readonly property real tail: overflowSlot.visible ? stackColumn.spacing + overflowSlot.height : 0
+
                 width: parent.width
-                spacing: Theme.dp(8)
+                implicitHeight: stackList.height + stackColumn.tail
 
                 ListView {
                     id: stackList
 
+                    y: Prefs.barBottom ? stackColumn.tail : 0
                     width: parent.width
                     height: contentHeight
                     interactive: false
                     spacing: Theme.dp(8)
+                    verticalLayoutDirection: Prefs.barBottom ? ListView.BottomToTop : ListView.TopToBottom
                     model: stackModel
 
                     Behavior on height {
@@ -571,6 +578,7 @@ BarPill {
                 Item {
                     id: overflowSlot
 
+                    y: Prefs.barBottom ? 0 : stackList.height + stackColumn.spacing
                     width: parent.width
                     height: root.popupOverflow > 0 ? Theme.dp(26) : 0
                     opacity: root.popupOverflow > 0 ? 1 : 0

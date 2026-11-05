@@ -47,8 +47,7 @@ Column {
         SettingRow {
             title: "Bar style"
             resetKey: "barStyle"
-            description: "Islands float free of the screen edge. Notches sit flush against it, squaring off the corners that meet it. Full bar joins every module on one continuous strip across the top."
-            showDivider: false
+            description: "Islands float free of the screen edge. Notches sit flush against it, squaring off the corners that meet it. Full bar joins every module on one continuous strip across the screen."
 
             M3Segmented {
                 width: Math.max(Theme.dp(360), fitWidth)
@@ -70,6 +69,29 @@ Column {
 
         }
 
+        SettingRow {
+            title: "Position"
+            resetKey: "barPosition"
+            description: "The screen edge the bar sits on. Panels open away from it." + (Prefs.dockEnabled ? " On the bottom edge the dock steps aside and the launcher rises out of the bar, and the Apps module can bring the dock's apps onto it; the dock is back once the bar returns to the top." : "")
+            showDivider: false
+
+            M3Segmented {
+                width: Math.max(Theme.dp(240), fitWidth)
+                current: Prefs.barPosition
+                options: [{
+                    "key": "top",
+                    "label": "Top"
+                }, {
+                    "key": "bottom",
+                    "label": "Bottom"
+                }]
+                onChosen: (key) => {
+                    return Prefs.barPosition = key;
+                }
+            }
+
+        }
+
     }
 
     SettingCard {
@@ -78,7 +100,7 @@ Column {
         SettingRow {
             title: "Auto-hide"
             resetKey: "barAutoHide"
-            description: "The bar slides off the top of the screen and comes back when the pointer reaches the edge, or while one of its panels is open. Windows use the space it leaves."
+            description: "The bar slides off the edge of the screen and comes back when the pointer reaches it, or while one of its panels is open. Windows use the space it leaves."
 
             M3Switch {
                 checked: Prefs.barAutoHide
@@ -105,7 +127,7 @@ Column {
 
         SettingRow {
             title: "Pop-up mode"
-            description: "Modules stop morphing their own pill into a panel. The pill stays put in the bar and the panel appears below it as a pop-up."
+            description: "Modules stop morphing their own pill into a panel. The pill stays put in the bar and the panel appears next to it as a pop-up."
 
             M3Switch {
                 checked: Prefs.barPopupMode
@@ -119,7 +141,7 @@ Column {
         SettingRow {
             title: "Notched pop-ups"
             resetKey: "barPopupNotched"
-            description: "A pop-up grows straight down out of its module, or out of the group the module is joined into, and their corners curve into each other the way a notch meets the top of the screen. Off, it floats below with a gap."
+            description: "A pop-up grows straight out of its module, or out of the group the module is joined into, and their corners curve into each other the way a notch meets the screen edge. Off, it floats away from the bar with a gap."
             enabled: Prefs.barPopupMode
             disabledReason: "Only applies in pop-up mode."
 
@@ -183,9 +205,9 @@ Column {
         }
 
         SettingRow {
-            title: "Distance from top"
+            title: Prefs.barBottom ? "Distance from bottom" : "Distance from top"
             resetKey: "barTopMargin"
-            description: "How far the bar floats below the top edge of the screen."
+            description: "How far the bar floats from the edge of the screen it sits on."
             enabled: !Prefs.barFlush
             disabledReason: "Notches and the full bar sit flush against the screen edge by definition - set Bar style back to Islands above to float the bar."
             stacked: true
@@ -248,7 +270,7 @@ Column {
         SettingRow {
             title: "Edge blend"
             resetKey: "barNotchFlare"
-            description: "How far notched corners sweep out: a notched module's upper corners into the top of the screen, and a panel's into the bar it hangs from. Only drawn where there is room for it - modules packed close together keep their square corners rather than leaving a spike of wallpaper between them."
+            description: "How far notched corners sweep out: a notched module's corners into the screen edge, and a panel's into the bar it grows from. Only drawn where there is room for it - modules packed close together keep their square corners rather than leaving a spike of wallpaper between them."
             enabled: page.blendsAnything
             disabledReason: "Nothing on the bar is notched - set Bar style to Notches above, turn on notched pop-ups, or join two modules."
             stacked: true

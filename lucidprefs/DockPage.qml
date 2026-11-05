@@ -9,6 +9,44 @@ Column {
 
     spacing: Theme.dp(26)
 
+    // with the bar on the bottom edge the dock is off, and a page of its
+    // settings changing nothing on screen says nothing of why
+    SettingCard {
+        visible: Prefs.barBottom && Prefs.barEnabled
+        title: "DOCK OFF"
+
+        SettingRow {
+            title: "The bar is on the bottom edge"
+            description: "The dock gives the edge to the bar, and the launcher rises out of the bar instead. Its apps can come along: the bar's Apps module shows your pinned apps and the open ones, and keeps to the settings below for running applications, icon tiles, the running indicator and tooltips. The rest wait here for the bar to go back to the top."
+            showDivider: false
+            stacked: true
+
+            Row {
+                spacing: Theme.dp(8)
+
+                M3Button {
+                    text: Prefs.showApps ? "Apps settings" : "Turn on Apps"
+                    variant: "filled"
+                    onClicked: {
+                        if (Prefs.showApps)
+                            Prefs.openBarModule("apps");
+                        else
+                            Prefs.showApps = true;
+                    }
+                }
+
+                M3Button {
+                    text: "Move the bar to the top"
+                    variant: "tonal"
+                    onClicked: Prefs.barPosition = "top"
+                }
+
+            }
+
+        }
+
+    }
+
     DockPreview {
         width: parent.width
         visible: !page.inSheet

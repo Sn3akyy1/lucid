@@ -179,7 +179,7 @@ Singleton {
     readonly property real cellH: root.tileH
     readonly property real pad: Theme.dp(10)
     // the bar's strip and a dock that stays up are never under an icon
-    readonly property real reserveTop: Prefs.barEnabled ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) : 0
+    readonly property real reserveTop: Prefs.barEnabled && !Prefs.barBottom ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) : 0
     readonly property real reserveBottom: Widgets.spawnBottom
     readonly property real areaY: root.reserveTop + root.pad
     readonly property int cols: Math.max(1, Math.floor((root.screenW - 2 * root.pad) / root.tileW))
