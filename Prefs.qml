@@ -984,8 +984,8 @@ Singleton {
         "desc": "A button for the launcher, at the start of the bar: a click opens it or puts it away",
         "style": "startModuleStyle",
         "styles": [
-            {"key": "logo", "name": "Logo", "blurb": "Lucid's mark, as on the dock"},
-            {"key": "grid", "name": "Grid", "blurb": "Nine dots, the middle one in the accent"},
+            {"key": "grid", "name": "Launcher", "blurb": "The dock's launcher button, its squares rounding while the launcher is open"},
+            {"key": "logo", "name": "Logo", "blurb": "Lucid's mark, as at the top of the launcher"},
             {"key": "distro", "name": "Distro", "blurb": "Your distribution's logo, in the accent"},
             {"key": "avatar", "name": "Avatar", "blurb": "Your profile picture"},
             {"key": "label", "name": "Label", "blurb": "The word Start on a chip in the accent"}
@@ -1747,7 +1747,7 @@ Singleton {
         "windowModuleScroll": true,
         "windowModuleMiddleClose": false,
         "showStart": false,
-        "startModuleStyle": "logo",
+        "startModuleStyle": "grid",
         "showApps": false,
         "workspacesByDisplay": true,
         "audioMeters": true,
@@ -2526,7 +2526,7 @@ Singleton {
             property bool windowModuleScroll: true
             property bool windowModuleMiddleClose: false
             property bool showStart: false
-            property string startModuleStyle: "logo"
+            property string startModuleStyle: "grid"
             property bool showApps: false
             property bool workspacesByDisplay: true
             property bool audioMeters: true

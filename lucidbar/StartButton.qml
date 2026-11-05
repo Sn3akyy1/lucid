@@ -4,6 +4,7 @@ import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
 import qs
+import qs.lucidui as UI
 import "../lucidprefs"
 
 // the start button: the launcher, from the bar. a click opens it or puts it
@@ -38,12 +39,6 @@ BarPill {
     // chip is hugged as closely at its ends as at its top and bottom
     readonly property int chipWidth: Math.ceil(startLabel.implicitWidth) + Theme.dp(20)
     readonly property int chipHeight: Math.min(Theme.dp(24), root.compactHeight - Theme.dp(8))
-    // the grid of nine, dots twice their gaps: as wide as the circle is odd or
-    // even, so its edges land on whole pixels with the same clear all round
-    readonly property int gridSize: {
-        const s = Math.round(root.glyph * 0.78);
-        return (root.compactHeight - s) % 2 === 0 ? s : s - 1;
-    }
 
     opensOnHover: false
     compactInteractive: false
@@ -75,7 +70,7 @@ BarPill {
             }
 
         },
-        // Lucid's mark (assets/logo-mark.svg), as on the dock's launcher button
+        // Lucid's mark (assets/logo-mark.svg), as at the top of the launcher
         Shape {
             visible: root.markFace
             anchors.centerIn: parent
@@ -121,25 +116,14 @@ BarPill {
             }
 
         },
-        // or a grid of nine, across as much of the glyph as the mark is
-        Grid {
+        // or the dock's launcher button, lit as the dock lights it. its squares
+        // span about half its box, which puts them at the bar's icon size
+        UI.LauncherGrid {
             visible: root.gridFace
             anchors.centerIn: parent
-            columns: 3
-            spacing: root.gridSize / 8
-
-            Repeater {
-                model: 9
-
-                Rectangle {
-                    width: root.gridSize / 4
-                    height: width
-                    radius: Theme.pill(height)
-                    color: index === 4 ? Theme.accent : Theme.text
-                }
-
-            }
-
+            width: Math.round(root.glyph * 1.3)
+            height: width
+            lit: startArea.containsMouse || root.launcherOpen
         },
         // Distro: the logo /etc/os-release names, in the accent
         Image {
