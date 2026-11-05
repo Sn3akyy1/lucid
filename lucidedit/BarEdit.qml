@@ -393,6 +393,73 @@ Item {
                     readonly property real topR: mark.real && mark.mod.barTopRightRadius !== undefined ? mark.mod.barTopRightRadius : (Prefs.barFlush ? 0 : Prefs.barPillRadius)
                     readonly property real botL: mark.real && mark.mod.barBottomLeftRadius !== undefined ? mark.mod.barBottomLeftRadius : Prefs.barPillRadius
                     readonly property real botR: mark.real && mark.mod.barBottomRightRadius !== undefined ? mark.mod.barBottomRightRadius : Prefs.barPillRadius
+                    // a notch's outline runs out along its edge blends and is left open
+                    // along the screen's edges, as the dock's is. not once it is lifted off
+                    readonly property bool notched: Prefs.barNotch && mark.real && !mark.flown && !!edit.host && !(edit.host.dragKey === mark.key && edit.host.dragLift > 0.5)
+                    readonly property real line: mark.hot ? 2 : 1
+                    readonly property var notchPaths: mark.notched ? mark.notchOutline() : ({
+                        "open": "",
+                        "closed": ""
+                    })
+
+                    // the outline half a line inside the edge, in the mark's own frame: down
+                    // a side from its top blend (or the screen side's curve), along the
+                    // bottom, and up the other side. closed along the screen's edges for the fill
+                    function notchOutline() {
+                        const d = mark.line / 2;
+                        const w = mark.width;
+                        const h = mark.height;
+                        const fl = edit.host.notchFlareOf(mark.mod, true);
+                        const fr = edit.host.notchFlareOf(mark.mod, false);
+                        const meets = edit.host.hangPlan.meets[mark.key] || ({});
+                        const bl = Math.max(mark.botL, d);
+                        const br = Math.max(mark.botR, d);
+                        const arc = (r, sweep, x, y) => {
+                            return " A" + r + "," + r + " 0 0 " + sweep + " " + x + "," + y;
+                        };
+                        let p = "";
+                        let sx = d;
+                        let ex = w - d;
+                        if (meets.left) {
+                            const r = meets.left.size + d;
+                            const cx = meets.left.size - mark.x;
+                            const cy = meets.left.y - mark.y + meets.left.size;
+                            sx = cx - r;
+                            p += "M" + sx + "," + cy + arc(r, 1, cx, cy - r);
+                        } else {
+                            if (fl > 0) {
+                                // a blend deeper than the straight side is met where the corner starts
+                                const r = fl + d;
+                                const yj = Math.min(fl, h - bl);
+                                sx = -fl;
+                                p += "M" + sx + "," + (-d) + arc(r, 1, -fl + Math.sqrt(Math.max(0, r * r - (fl - yj) * (fl - yj))), yj);
+                            } else {
+                                p += "M" + d + "," + (-d);
+                            }
+                            p += " L" + d + "," + (h - bl) + (bl > d ? arc(bl - d, 0, bl, h - d) : "");
+                        }
+                        if (meets.right) {
+                            const r = meets.right.size + d;
+                            const cx = edit.host.width - meets.right.size - mark.x;
+                            const cy = meets.right.y - mark.y + meets.right.size;
+                            ex = cx + r;
+                            p += " L" + cx + "," + (cy - r) + arc(r, 1, ex, cy);
+                        } else {
+                            p += " L" + (w - br) + "," + (h - d) + (br > d ? arc(br - d, 0, w - d, h - br) : "");
+                            if (fr > 0) {
+                                const r = fr + d;
+                                const yj = Math.min(fr, h - br);
+                                ex = w + fr;
+                                p += " L" + (w - d) + "," + yj + " L" + (w + fr - Math.sqrt(Math.max(0, r * r - (fr - yj) * (fr - yj)))) + "," + yj + arc(r, 1, ex, -d);
+                            } else {
+                                p += " L" + (w - d) + "," + (-d);
+                            }
+                        }
+                        return {
+                            "open": p,
+                            "closed": p + " L" + ex + "," + (-d) + " L" + sx + "," + (-d) + " Z"
+                        };
+                    }
 
                     // the surface as drawn, so the outline morphs with a module opening in place
                     x: mark.real ? mark.mod.x + (mark.mod.surfaceX !== undefined ? mark.mod.surfaceX : 0) : (edit.host ? edit.host.xOf(mark.key) : 0)
@@ -487,20 +554,58 @@ Item {
                     // an outline along the pill's own edge, inside it: outside, the bar's
                     // window edge cut its top off and it ran into the neighbours
                     Rectangle {
-                        visible: mark.real
+                        visible: mark.real && !mark.notched
                         anchors.fill: parent
                         topLeftRadius: mark.topL
                         topRightRadius: mark.topR
                         bottomLeftRadius: mark.botL
                         bottomRightRadius: mark.botR
                         color: edit.pulling && mark.held ? Theme.alpha(Theme.error, 0.14) : (mark.hot && !mark.open ? Theme.alpha(Theme.accent, 0.08) : "transparent")
-                        border.width: mark.hot ? 2 : 1
+                        border.width: mark.line
                         border.color: edit.pulling && mark.held ? Theme.error : Theme.alpha(Theme.accent, mark.hot ? 1 : 0.55)
                         opacity: edit.t
 
                         Behavior on color {
                             ColorAnimation {
                                 duration: Theme.durShort
+                            }
+
+                        }
+
+                    }
+
+                    Shape {
+                        visible: mark.notched
+                        anchors.fill: parent
+                        preferredRendererType: Shape.CurveRenderer
+                        opacity: edit.t
+
+                        ShapePath {
+                            strokeColor: "transparent"
+                            fillColor: mark.hot && !mark.open ? Theme.alpha(Theme.accent, 0.08) : "transparent"
+
+                            Behavior on fillColor {
+                                ColorAnimation {
+                                    duration: Theme.durShort
+                                }
+
+                            }
+
+                            PathSvg {
+                                path: mark.notchPaths.closed
+                            }
+
+                        }
+
+                        ShapePath {
+                            fillColor: "transparent"
+                            strokeColor: Theme.alpha(Theme.accent, mark.hot ? 1 : 0.55)
+                            strokeWidth: mark.line
+                            capStyle: ShapePath.FlatCap
+                            joinStyle: ShapePath.RoundJoin
+
+                            PathSvg {
+                                path: mark.notchPaths.open
                             }
 
                         }

@@ -442,6 +442,27 @@ ShellRoot {
                 when: bar.primary
             }
 
+            // how far a notch module's edge blend reaches into the top edge on one side:
+            // the whole Edge blend, less where a neighbour or the screen side is closer
+            function notchFlareOf(mod, toTheLeft) {
+                if (!Prefs.barNotch || !mod || mod.width <= 0.5 || !mod.visible || (bar.dragLift > 0.5 && bar.pillFor[bar.dragKey] === mod))
+                    return 0;
+
+                const edge = toTheLeft ? mod.x : mod.x + mod.width;
+                const toEdge = toTheLeft ? edge : bar.width - edge;
+                let toNeighbour = 100000;
+                for (const o of bar.modules) {
+                    if (!o || o === mod || o.width <= 0.5 || !o.visible)
+                        continue;
+
+                    const d = toTheLeft ? edge - (o.x + o.width) : o.x - edge;
+                    if (d >= 0)
+                        toNeighbour = Math.min(toNeighbour, d);
+
+                }
+                return Math.max(0, Math.min(Theme.dp(Prefs.barNotchFlare), Math.floor(toNeighbour / 2), Math.floor(toEdge)));
+            }
+
             function planHangs() {
                 const plan = ({
                     "corners": ({}),
@@ -450,7 +471,8 @@ ShellRoot {
                     "fillets": [],
                     "bridges": [],
                     "merged": ({}),
-                    "edges": ({})
+                    "edges": ({}),
+                    "meets": ({})
                 });
                 const popups = Prefs.barPopupMode;
                 const most = Theme.dp(Prefs.barNotchFlare);
@@ -473,8 +495,11 @@ ShellRoot {
                         return p.x - q.x;
                     });
                     const meet = (m, left) => {
+                        const y = m.y + (m === workspacesMod ? m.compactHeight : m.height);
                         cap(m.modId, left ? "bl" : "br", 0);
-                        fillet(left ? -bite : bar.width - most + bite, m.y + (m === workspacesMod ? m.compactHeight : m.height) - bite, most, left, false);
+                        fillet(left ? -bite : bar.width - most + bite, y - bite, most, left, false);
+                        // where the curve starts, for edit mode's outline
+                        (plan.meets[m.modId] || (plan.meets[m.modId] = ({})))[left ? "left" : "right"] = ({ "y": y, "size": most });
                     };
                     if (row.length > 0 && row[0].x < 0.5)
                         meet(row[0], true);
@@ -1294,27 +1319,6 @@ ShellRoot {
                     readonly property bool present: flares.modelData && flares.modelData.width > 0.5 && flares.modelData.visible && !(bar.dragLift > 0.5 && bar.pillFor[bar.dragKey] === flares.modelData)
                     readonly property bool modHovered: flares.modelData ? (flares.modelData.compactHovered === true && flares.modelData !== workspacesMod) : false
 
-                    function flareFor(toTheLeft) {
-                        if (!flares.present)
-                            return 0;
-
-                        var mods = bar.modules;
-                        var edge = toTheLeft ? flares.modelData.x : flares.modelData.x + flares.modelData.width;
-                        var toEdge = toTheLeft ? edge : bar.width - edge;
-                        var toNeighbour = 100000;
-                        for (var i = 0; i < mods.length; i++) {
-                            var o = mods[i];
-                            if (!o || o === flares.modelData || o.width <= 0.5 || !o.visible)
-                                continue;
-
-                            var d = toTheLeft ? edge - (o.x + o.width) : o.x - edge;
-                            if (d >= 0)
-                                toNeighbour = Math.min(toNeighbour, d);
-
-                        }
-                        return Math.max(0, Math.min(Theme.dp(Prefs.barNotchFlare), Math.floor(toNeighbour / 2), Math.floor(toEdge)));
-                    }
-
                     anchors.fill: parent
                     z: -1
                     visible: Prefs.barNotch && flares.present
@@ -1323,7 +1327,7 @@ ShellRoot {
 
                     BarFlare {
                         hovered: flares.modHovered
-                        size: flares.flareFor(true)
+                        size: bar.notchFlareOf(flares.modelData, true)
                         x: flares.modelData ? flares.modelData.x - width + flares.bite : 0
                         y: bar.hiddenOffset
                     }
@@ -1331,7 +1335,7 @@ ShellRoot {
                     BarFlare {
                         hovered: flares.modHovered
                         mirrored: true
-                        size: flares.flareFor(false)
+                        size: bar.notchFlareOf(flares.modelData, false)
                         x: flares.modelData ? flares.modelData.x + flares.modelData.width - flares.bite : 0
                         y: bar.hiddenOffset
                     }

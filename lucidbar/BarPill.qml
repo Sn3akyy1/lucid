@@ -260,9 +260,9 @@ Item {
         return limits && limits[corner] !== undefined ? Math.max(0, Math.min(v, limits[corner])) : v;
     }
 
-    // growing sideways would run into a joined neighbour, so a joined pill lights
-    // up in place instead
-    readonly property bool hoverLift: Prefs.barHoverGrow > 0 && pill.compactHovered && !pill.anyOpen && pill.shown && !pill.joined
+    // growing sideways would run into a joined neighbour, or a notch's own edge
+    // blends, so those light up in place instead, blends and all
+    readonly property bool hoverLift: Prefs.barHoverGrow > 0 && pill.compactHovered && !pill.anyOpen && pill.shown && !pill.joined && !Prefs.barNotch
     property real hoverGrow: pill.hoverLift ? Math.min(Theme.dp(Prefs.barHoverGrow), Math.max(0, Theme.dp(Prefs.barSpacing) / 2)) : 0
 
     property int hoverGrowDuration: Theme.barMs(150)
@@ -783,10 +783,10 @@ Item {
 
             }
 
-            // a joined pill doesn't grow on hover, so its stretch of the group lights up
+            // a joined pill or a notch doesn't grow on hover, so it lights up as its edge blends do
             Rectangle {
                 anchors.fill: parent
-                visible: pill.joined && opacity > 0
+                visible: (pill.joined || Prefs.barNotch) && opacity > 0
                 color: Theme.text
                 opacity: pill.compactHovered && !pill.anyOpen ? Theme.stateHover : 0
                 topLeftRadius: compactFace.parent ? compactFace.parent.topLeftRadius : 0
