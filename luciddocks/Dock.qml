@@ -20,9 +20,10 @@ PanelWindow {
     readonly property bool dockBusy: dockWindow.menuOpen || dockWindow.dragging || (dockWindow.morphing && !dockWindow.launcherFromHidden && !dockWindow.closingFromHidden)
     property bool slidingAway: false
     readonly property bool heldByPointer: revealArea.containsMouse || (shellHover.hovered && !dockWindow.slidingAway)
-    // on screen in its own right; a disabled dock never is, nor one stepping
-    // down for the osd's notch
-    readonly property bool dockShown: Prefs.dockEnabled && !dockWindow.yieldsToOsd && (!dockWindow.hides || dockWindow.heldByPointer || Edit.active)
+    // on screen in its own right; a disabled dock never is
+    readonly property bool dockWanted: Prefs.dockEnabled && (!dockWindow.hides || dockWindow.heldByPointer || Edit.active)
+    // nor one stepping down for the osd's notch
+    readonly property bool dockShown: dockWindow.dockWanted && !dockWindow.yieldsToOsd
     // shell.qml hands the osd over
     property var osd: null
     readonly property bool yieldsToOsd: !!dockWindow.osd && dockWindow.osd.holdsEdge && dockWindow.osd.screen === dockWindow.screen
@@ -312,8 +313,9 @@ PanelWindow {
             toplevelRefresh.restart();
 
         if (dockWindow.menuOpen) {
-            // no dock on screen means it was opened from elsewhere, so it notches
-            dockWindow.launcherFromHidden = !dockWindow.dockShown;
+            // no dock on screen means it was opened from elsewhere, so it notches.
+            // one only stepping down for the osd's notch is on its way back up
+            dockWindow.launcherFromHidden = !dockWindow.dockWanted;
             dockWindow.closingFromHidden = false;
             dockWindow.snapPlacement = true;
             snapClear.restart();

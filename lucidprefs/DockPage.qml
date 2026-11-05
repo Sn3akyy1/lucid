@@ -68,14 +68,14 @@ Column {
         SettingRow {
             title: "Edge blend"
             resetKey: "dockNotchFlare"
-            description: "How far the dock's lower corners sweep out into the bottom of the screen, so it reads as carved out of the edge rather than resting on it."
-            enabled: Prefs.dockNotch
-            disabledReason: "Only a notch meets the screen edge, so there is nothing to blend into - set Dock style to Notch above."
+            description: "How far the dock's lower corners sweep out into the bottom of the screen, so it reads as carved out of the edge rather than resting on it. A notched OSD sweeps out the same way."
+            enabled: Prefs.dockNotch || Prefs.osdNotch
+            disabledReason: "Only a notch meets the screen edge, so there is nothing to blend into - set Dock style to Notch above, or OSD style to Notch on the General page."
             stacked: true
 
             M3Slider {
                 width: parent.width
-                enabled: Prefs.dockNotch
+                enabled: Prefs.dockNotch || Prefs.osdNotch
                 from: 0
                 to: 40
                 stepSize: 1

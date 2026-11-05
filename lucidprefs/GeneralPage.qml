@@ -624,17 +624,17 @@ Column {
         SettingRow {
             title: "OSD style"
             resetKey: "osdStyle"
-            description: "Where volume, brightness and lock-key changes show up. Islands float above the bottom edge; Notches rise out of it, with the dock's curved corners at their sides."
+            description: "Where volume, brightness and lock-key changes show up. An island floats above the bottom edge; a notch rises out of it, its corners sweeping out like the dock's, and a dock on that edge steps down while it shows."
 
             M3Segmented {
                 width: Theme.dp(260)
                 current: Prefs.osdStyle
                 options: [{
                     "key": "island",
-                    "label": "Islands"
+                    "label": "Island"
                 }, {
                     "key": "notch",
-                    "label": "Notches"
+                    "label": "Notch"
                 }]
                 onChosen: (key) => {
                     return Prefs.osdStyle = key;

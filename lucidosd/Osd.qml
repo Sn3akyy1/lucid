@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Services.Pipewire
 import Quickshell.Wayland
@@ -40,23 +39,19 @@ PanelWindow {
     property int kbdLast: -1
     property int kbdLevel: 0
     property bool kbdFileWritten: false
+    // a light that is only on or off is a switch, and reads like the lock keys
+    readonly property bool kbdSwitch: osdWindow.kbdMax === 1
     // a handful of steps reads better as blocks than as a bar; a keyboard with
     // a fine-grained level keeps the level track
-    readonly property bool kbdSegmented: osdWindow.kbdMax > 0 && osdWindow.kbdMax <= 6
+    readonly property bool kbdSegmented: osdWindow.kbdMax > 1 && osdWindow.kbdMax <= 6
     // notch style: the card sits flush on the bottom edge and rises out of it,
     // with the dock's concave corners at its sides. a dock on that edge steps
-    // down while it shows; one held up by a menu or a drag keeps the edge, and
-    // the card floats above it instead
-    // over floating islands on the bottom edge there is no edge to rise out of: it floats as a card
-    readonly property bool notch: Prefs.osdNotch && !osdWindow.dockStays && !(osdWindow.barBelow && !Prefs.barFlush)
-    // hyprland 0.57 draws a fullscreen window over the bar's layer but under the osd's,
-    // so the osd keeps to the screen edge as if there were no bar
-    readonly property bool barBelow: {
-        const m = Hyprland.monitorFor(osdWindow.screen);
-        return Prefs.barHoldsBottom && !(m && m.activeWorkspace && m.activeWorkspace.hasFullscreen);
-    }
-    // what the dock reads to step aside
-    readonly property bool holdsEdge: osdWindow.notch && osdWindow.cardVisible
+    // down while it shows; one held up by a menu, a drag, the pointer or edit
+    // mode keeps the edge, and the card floats above it instead
+    readonly property bool notch: Prefs.osdNotch && !osdWindow.dockStays
+    // what the dock reads to step aside. held until the card has faded, or the
+    // dock comes back up under a card still easing out
+    readonly property bool holdsEdge: osdWindow.notch && (osdWindow.cardVisible || card.visible)
     // shell.qml hands the dock over
     property var dockWindow: null
     // taken as the card comes up: switching styles while it is shown would
@@ -85,7 +80,7 @@ PanelWindow {
 
         return osdWindow.levelValue < 34 ? "volume_mute" : (osdWindow.levelValue < 67 ? "volume_down" : "volume_up");
     }
-    readonly property bool isLevelType: osdWindow.oscType === "volume" || osdWindow.oscType === "brightness" || (osdWindow.oscType === "kbdbacklight" && !osdWindow.kbdSegmented)
+    readonly property bool isLevelType: osdWindow.oscType === "volume" || osdWindow.oscType === "brightness" || (osdWindow.oscType === "kbdbacklight" && !osdWindow.kbdSegmented && !osdWindow.kbdSwitch)
     readonly property bool isSegmentType: osdWindow.oscType === "kbdbacklight" && osdWindow.kbdSegmented
     // only volume and brightness are set from the card; the keyboard light is news
     readonly property bool isSettable: osdWindow.oscType === "volume" || osdWindow.oscType === "brightness"
@@ -98,6 +93,8 @@ PanelWindow {
             return "keyboard_capslock";
         case "numlock":
             return "dialpad";
+        case "kbdbacklight":
+            return "keyboard";
         default:
             return "";
         }
@@ -129,6 +126,8 @@ PanelWindow {
             return "ABC";
         case "numlock":
             return "123";
+        case "kbdbacklight":
+            return "On";
         default:
             return "";
         }
@@ -141,6 +140,8 @@ PanelWindow {
             return "abc";
         case "numlock":
             return "Arrows";
+        case "kbdbacklight":
+            return "Off";
         default:
             return "";
         }
@@ -150,8 +151,10 @@ PanelWindow {
     // the params have to be set before the flag flips: a Behavior reads the
     // previous value of anything its animation binds to
     function setCardVisible(v) {
-        if (v && !osdWindow.cardVisible)
-            osdWindow.dockStays = !!osdWindow.dockWindow && osdWindow.dockWindow.dockBusy && osdWindow.dockWindow.screen === osdWindow.screen;
+        if (v && !osdWindow.cardVisible) {
+            const dock = osdWindow.dockWindow;
+            osdWindow.dockStays = !!dock && dock.screen === osdWindow.screen && (dock.dockBusy || dock.heldByPointer || Edit.active);
+        }
 
         cardFade.duration = v ? Theme.durEnter : Theme.durExit;
         cardFade.easing.bezierCurve = v ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
@@ -244,6 +247,7 @@ PanelWindow {
         osdWindow.oscType = "kbdbacklight";
         osdWindow.levelValue = osdWindow.kbdMax > 0 ? Math.round((osdWindow.kbdLevel / osdWindow.kbdMax) * 100) : 0;
         osdWindow.levelMuted = false;
+        osdWindow.toggleState = osdWindow.kbdLevel > 0;
         osdWindow.trigger();
     }
 
@@ -282,12 +286,11 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     // remapped with the rest of the shell when displays change
     visible: Monitors.surfacesUp
-    implicitWidth: Theme.dp(480)
-    implicitHeight: osdWindow.notch ? Theme.dp(64) : Theme.dp(140)
-    // a bar on the bottom edge keeps it: the notch rises out of the bar's top instead
-    // a notch ignores the bar's reserved strip and stands on the bar; a card
-    // keeps clear of it, so only the gap is added, less the room around the card
-    margins.bottom: osdWindow.notch ? (osdWindow.barBelow ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) : 0) : (osdWindow.barBelow ? Theme.dp(Prefs.barPopupGap) - Math.round((osdWindow.implicitHeight - card.height) / 2) : Theme.dp(96))
+    // a notch's surface keeps even sides: centring rounds an odd parent's middle,
+    // which would leave the card's edges half a pixel off
+    implicitWidth: osdWindow.notch ? 2 * Math.ceil(Theme.dp(480) / 2) : Theme.dp(480)
+    implicitHeight: osdWindow.notch ? 2 * Math.ceil(Theme.dp(64) / 2) : Theme.dp(140)
+    margins.bottom: osdWindow.notch ? 0 : Theme.dp(96)
     Component.onCompleted: {
         findDeviceProc.running = true;
         findKbdProc.running = true;
@@ -433,6 +436,18 @@ PanelWindow {
             }
             osdWindow.setCardVisible(false);
         }
+    }
+
+    // the launcher or a drag takes the edge back from a notch
+    Connections {
+        function onDockBusyChanged() {
+            if (osdWindow.dockWindow.dockBusy && osdWindow.holdsEdge && osdWindow.dockWindow.screen === osdWindow.screen)
+                osdWindow.setCardVisible(false);
+
+        }
+
+        target: osdWindow.dockWindow
+        ignoreUnknownSignals: true
     }
 
     Process {
@@ -625,21 +640,69 @@ PanelWindow {
         onTriggered: osdWindow.readLocks()
     }
 
+    // the card and the notch's edge blends. clipped to the surface: hyprland
+    // frosts the whole layer for a region wholly outside it, and the notch
+    // sinks past the edge to hide
     Region {
         id: osdBlurRegion
 
-        readonly property real paintedX: card.x + card.width * (1 - card.scale * cardJelly.xScale) / 2
-        readonly property real paintedY: card.y + card.height * (1 - card.scale * cardJelly.yScale) / 2
+        // the card as painted: its pop works about its centre, inside the jelly,
+        // which a notch holds at its bottom edge
+        readonly property real paintedX: card.x + cardJelly.shiftX + cardJelly.xScale * card.width * (1 - card.scale) / 2
+        readonly property real paintedY: card.y + cardJelly.shiftY + cardJelly.yScale * card.height * (1 - card.scale) / 2
         readonly property real paintedWidth: card.width * card.scale * cardJelly.xScale
         readonly property real paintedHeight: card.height * card.scale * cardJelly.yScale
+        readonly property int blendSize: card.visible ? osdWindow.notchFlare : 0
+        readonly property real blendY: osdBlurRegion.paintedY + osdBlurRegion.paintedHeight - osdBlurRegion.blendSize
 
-        x: Math.ceil(osdBlurRegion.paintedX - 0.002)
-        y: Math.ceil(osdBlurRegion.paintedY - 0.002)
-        width: card.visible ? Math.max(0, Math.floor(osdBlurRegion.paintedX + osdBlurRegion.paintedWidth + 0.002) - Math.ceil(osdBlurRegion.paintedX - 0.002)) : 0
-        height: card.visible ? Math.max(0, Math.floor(osdBlurRegion.paintedY + osdBlurRegion.paintedHeight + 0.002) - Math.ceil(osdBlurRegion.paintedY - 0.002)) : 0
-        radius: Math.round(card.radius * card.scale)
-        bottomLeftRadius: osdWindow.notch ? 0 : Math.round(card.radius * card.scale)
-        bottomRightRadius: osdWindow.notch ? 0 : Math.round(card.radius * card.scale)
+        intersection: Intersection.Intersect
+
+        Region {
+            x: Math.ceil(osdBlurRegion.paintedX - 0.002)
+            y: Math.ceil(osdBlurRegion.paintedY - 0.002)
+            width: card.visible ? Math.max(0, Math.floor(osdBlurRegion.paintedX + osdBlurRegion.paintedWidth + 0.002) - Math.ceil(osdBlurRegion.paintedX - 0.002)) : 0
+            height: card.visible ? Math.max(0, Math.floor(osdBlurRegion.paintedY + osdBlurRegion.paintedHeight + 0.002) - Math.ceil(osdBlurRegion.paintedY - 0.002)) : 0
+            radius: Math.round(card.radius * card.scale)
+            bottomLeftRadius: osdWindow.notch ? 0 : Math.round(card.radius * card.scale)
+            bottomRightRadius: osdWindow.notch ? 0 : Math.round(card.radius * card.scale)
+        }
+
+        // an edge blend: its square less the circle its curve is drawn from, a
+        // pixel wider so the hard edge stays inside the curve's antialiasing
+        Region {
+            x: Math.round(osdBlurRegion.paintedX) - osdBlurRegion.blendSize
+            y: Math.ceil(osdBlurRegion.blendY - 0.002)
+            width: osdBlurRegion.blendSize
+            height: Math.floor(osdBlurRegion.blendY + osdBlurRegion.blendSize + 0.002) - Math.ceil(osdBlurRegion.blendY - 0.002)
+
+            Region {
+                shape: RegionShape.Ellipse
+                intersection: Intersection.Subtract
+                x: Math.round(osdBlurRegion.paintedX) - 2 * osdBlurRegion.blendSize - 1
+                y: Math.round(osdBlurRegion.blendY) - osdBlurRegion.blendSize - 1
+                width: 2 * osdBlurRegion.blendSize + 2
+                height: 2 * osdBlurRegion.blendSize + 2
+            }
+
+        }
+
+        Region {
+            x: Math.round(osdBlurRegion.paintedX + osdBlurRegion.paintedWidth)
+            y: Math.ceil(osdBlurRegion.blendY - 0.002)
+            width: osdBlurRegion.blendSize
+            height: Math.floor(osdBlurRegion.blendY + osdBlurRegion.blendSize + 0.002) - Math.ceil(osdBlurRegion.blendY - 0.002)
+
+            Region {
+                shape: RegionShape.Ellipse
+                intersection: Intersection.Subtract
+                x: Math.round(osdBlurRegion.paintedX + osdBlurRegion.paintedWidth) - 1
+                y: Math.round(osdBlurRegion.blendY) - osdBlurRegion.blendSize - 1
+                width: 2 * osdBlurRegion.blendSize + 2
+                height: 2 * osdBlurRegion.blendSize + 2
+            }
+
+        }
+
     }
 
     Rectangle {
@@ -648,6 +711,13 @@ PanelWindow {
         readonly property int levelWidth: Theme.dp(260)
         readonly property int toggleWidth: osdWindow.cardPadX * 2 + osdWindow.badgeSize + osdWindow.cardGap + Math.ceil(Math.max(labelMetrics.advanceWidth, stateFlip.width)) + Theme.dp(6)
 
+        // how far it has sunk to hide, eased on its own: the rest of the offset
+        // keeps a notch's bottom on the edge exactly while its height morphs
+        property real sunk: osdWindow.cardVisible ? 0 : 1
+        // the width it eases through. a notch keeps it even and its left side
+        // whole, so both sides land on whole pixels where the flares meet them
+        property real easedWidth: (osdWindow.isLevelType || osdWindow.isSegmentType) ? card.levelWidth : card.toggleWidth
+
         // one vertical anchor whatever the style: swapping anchors would let the
         // anchor engine write the height and drop its binding. the notch sits on
         // the bottom edge through the offset, and sinks past it to hide
@@ -655,9 +725,10 @@ PanelWindow {
         // centring an odd-height card puts it on a half pixel, which left the
         // notch's top and bottom rows half drawn; its offset is whole already
         anchors.alignWhenCentered: !osdWindow.notch
-        anchors.verticalCenterOffset: osdWindow.notch ? (parent.height - card.height) / 2 + (osdWindow.cardVisible ? 0 : card.height) : (osdWindow.cardVisible ? 0 : Theme.dp(16))
+        anchors.horizontalCenterOffset: osdWindow.notch ? Math.round((parent.width - card.width) / 2) - (parent.width - card.width) / 2 : 0
+        anchors.verticalCenterOffset: osdWindow.notch ? (parent.height - card.height) / 2 + card.sunk * card.height : card.sunk * Theme.dp(16)
         height: (osdWindow.isLevelType || osdWindow.isSegmentType) ? Theme.dp(50) : Theme.dp(56)
-        width: (osdWindow.isLevelType || osdWindow.isSegmentType) ? card.levelWidth : card.toggleWidth
+        width: osdWindow.notch ? 2 * Math.round(card.easedWidth / 2) : card.easedWidth
         // follows Corner rounding like every other pill in the shell
         radius: Theme.pill(height)
         bottomLeftRadius: osdWindow.notch ? 0 : card.radius
@@ -668,11 +739,15 @@ PanelWindow {
         scale: osdWindow.cardVisible || osdWindow.notch ? 1 : 0.9
         visible: opacity > 0.15
         readonly property bool jellyWobbling: cardJelly.wobbling
+        // a notch is held at the edge it shares with the screen and only bobs,
+        // or its sides would pull away from the flares
         transform: Jelly {
             id: cardJelly
 
             target: card
             frequency: 4.6
+            anchorY: osdWindow.notch ? 1 : 0.5
+            spread: osdWindow.notch ? 0 : cardJelly.naturalSpread
         }
 
         TextMetrics {
@@ -1032,7 +1107,7 @@ PanelWindow {
 
         }
 
-        Behavior on width {
+        Behavior on easedWidth {
             enabled: card.visible
 
             NumberAnimation {
@@ -1076,7 +1151,7 @@ PanelWindow {
 
         }
 
-        Behavior on anchors.verticalCenterOffset {
+        Behavior on sunk {
             NumberAnimation {
                 id: cardRise
 
@@ -1099,8 +1174,8 @@ PanelWindow {
 
             size: osdWindow.notchFlare
             mirrored: isRight
-            x: isRight ? card.x + card.width : card.x - width
-            y: card.y + card.height - height
+            x: isRight ? Math.round(osdBlurRegion.paintedX + osdBlurRegion.paintedWidth) : Math.round(osdBlurRegion.paintedX) - width
+            y: osdBlurRegion.paintedY + osdBlurRegion.paintedHeight - height
             visible: card.visible
             opacity: card.opacity
         }
@@ -1117,6 +1192,8 @@ PanelWindow {
         width: grabs ? Math.round(osdBlurRegion.paintedWidth) : 0
         height: grabs ? Math.round(osdBlurRegion.paintedHeight) : 0
         radius: Math.round(card.radius * card.scale)
+        bottomLeftRadius: osdWindow.notch ? 0 : Math.round(card.radius * card.scale)
+        bottomRightRadius: osdWindow.notch ? 0 : Math.round(card.radius * card.scale)
     }
 
 }
