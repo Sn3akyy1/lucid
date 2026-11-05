@@ -59,7 +59,8 @@ Singleton {
     // light surfaces come out of matugen near-white, so the accent is what keeps
     // them from reading as flat paper. k also sets how far `surface()` walks off
     // white (k * _tintLift); below ~0.6 the ramp never leaves the tones where no hue can exist
-    readonly property real surfaceTint: pf.surfaceTint >= 0 ? pf.surfaceTint : (root.isLight ? 0.7 : 0)
+    // the installer's seed tints the surfaces too, dark mode included
+    readonly property real surfaceTint: Math.max(root._seeded ? 0.7 : 0, pf.surfaceTint >= 0 ? pf.surfaceTint : (root.isLight ? 0.7 : 0))
     property real accentPunch: pf.accentPunch
     readonly property real motionBaseline: 1.125
     readonly property real motionScale: pf.motionScale * root.motionBaseline
@@ -108,10 +109,15 @@ Singleton {
     readonly property real _secondaryHue: -20
     readonly property real _rampShift: root.surfaceTint <= 0 ? 0 : (root.isLight ? Math.max(0, root.toneOf(root.cLowest) - (100 - root.surfaceTint * root._tintLift)) : -(root.surfaceTint * root._tintLift))
 
-    readonly property color cPrimary: m.primary
-    readonly property color cOnPrimary: m.on_primary
-    readonly property color cPrimaryContainer: m.primary_container
-    readonly property color cOnPrimaryContainer: m.on_primary_container
+    // set by the graphical installer to tint the accent from its screenshots; unset in the shell
+    property color seed: "transparent"
+    // the scheme the colours come from; the installer points it at its own light or dark one
+    property string palettePath: Quickshell.env("HOME") + "/.cache/quickshell/matugen.json"
+    readonly property bool _seeded: root.seed.a > 0
+    readonly property color cPrimary: root._seeded ? root.atTone(root.seed, root.isLight ? 40 : 80) : m.primary
+    readonly property color cOnPrimary: root._seeded ? root.atTone(root.seed, root.isLight ? 100 : 20) : m.on_primary
+    readonly property color cPrimaryContainer: root._seeded ? root.atTone(root.seed, root.isLight ? 90 : 30) : m.primary_container
+    readonly property color cOnPrimaryContainer: root._seeded ? root.atTone(root.seed, root.isLight ? 10 : 90) : m.on_primary_container
     readonly property color cSecondary: m.secondary
     readonly property color cSecondaryContainer: m.secondary_container
     readonly property color cTertiary: m.tertiary
@@ -628,7 +634,8 @@ Singleton {
     FontLoader {
         id: flexLoader
 
-        source: "file://" + Quickshell.env("HOME") + "/.config/quickshell/assets/fonts/GoogleSansFlex.ttf"
+        // beside this file: the installed shell, or the source tree the installer runs from
+        source: Qt.resolvedUrl("assets/fonts/GoogleSansFlex.ttf")
     }
 
     // a window whose grab never lands must not hold the palette back
@@ -642,7 +649,7 @@ Singleton {
     FileView {
         id: paletteFile
 
-        path: Quickshell.env("HOME") + "/.cache/quickshell/matugen.json"
+        path: root.palettePath
         watchChanges: true
         onFileChanged: root._beginRecolour()
         // the adapter below lands an event loop turn after this singleton is

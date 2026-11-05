@@ -22,6 +22,9 @@ MATUGEN_DIR="$HOME/.config/matugen"
 WALL_SCRIPT_DIR="$HOME/.config/hypr/scripts/wallpaper"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP=""
+# how things stood before Lucid first changed them, for uninstall.sh to put
+# back. the first value of a key wins: a re-run would only record Lucid's own
+BEFORE="${XDG_STATE_HOME:-$HOME/.local/state}/lucid/before-install"
 
 WITH_THEMING=1
 WITH_LOOK=1
@@ -29,10 +32,14 @@ WITH_HYPR=1
 WITH_APPS=1
 WITH_WALLPAPERS=1
 WITH_PLUGINS=1
+WITH_SDDM=1
+SDDM_CURRENT=0
 HYPR_FORCE=0
 HYPR_LUA_INSTALLED=0
 ASSUME_YES=0
 SKIP_DEPS=0
+# "" lets the checks below pick the window or the terminal
+WITH_GUI=""
 
 b=$'\e[1m'; dim=$'\e[2m'; red=$'\e[31m'; grn=$'\e[32m'; ylw=$'\e[33m'; r=$'\e[0m'
 say()  { printf '%s\n' "$*"; }
@@ -61,12 +68,34 @@ ${b}Lucid $VERSION installer${r}
                  is already in place
   --no-plugins   don't build the tilting-cursor Hyprland plugin
                  (hypr-dynamic-cursors)
+  --no-sddm      don't install the login screen theme
+  --login-screen make Lucid's theme the one the login screen shows
+                 (Current=lucid in /etc/sddm.conf, backed up first),
+                 and offer to make SDDM the login screen when it is not
   --skip-deps    don't install packages, only check for them
   -y, --yes      don't prompt, accept every default
+  --gui          do all of this from a window: pick what to install
+                 there, and answer its questions with buttons. the
+                 default when run with no options in a Wayland session;
+                 options given with it start switched that way
+  --terminal     stay in the terminal
   -h, --help     this message
 EOF
     exit 0
 }
+
+# the window gets the same options, minus its own, to start its switches from
+GUI_ARGS=()
+for a in "$@"; do
+    [[ $a == --gui || $a == --terminal ]] || GUI_ARGS+=("$a")
+done
+if [[ -z "$WITH_GUI" ]]; then
+    WITH_GUI=0
+    # any option means a script or a chosen terminal; the updater (LUCID_UPDATER) never asks
+    if [[ $# -eq 0 && -t 0 && -t 1 && -n "${WAYLAND_DISPLAY:-}" && -z "${LUCID_UPDATER:-}" ]]; then
+        WITH_GUI=1
+    fi
+fi
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -79,6 +108,10 @@ while [[ $# -gt 0 ]]; do
         --no-plugins) WITH_PLUGINS=0 ;;
         --skip-deps)  SKIP_DEPS=1 ;;
         -y|--yes)     ASSUME_YES=1 ;;
+        --no-sddm)    WITH_SDDM=0 ;;
+        --login-screen) SDDM_CURRENT=1 ;;
+        --gui)        WITH_GUI=1 ;;
+        --terminal)   WITH_GUI=0 ;;
         -h|--help)    usage ;;
         *) die "unknown option: $1 (try --help)" ;;
     esac
@@ -92,6 +125,36 @@ ask() {
     [[ -z "$reply" || "$reply" =~ ^[Yy] ]]
 }
 
+remember() {
+    mkdir -p "${BEFORE%/*}"
+    grep -qs "^$1=" "$BEFORE" || printf '%s=%s\n' "$1" "$2" >> "$BEFORE"
+}
+
+# ---------------------------------------------------------------------- gui
+
+# the window (installer.qml) runs this same script through lucidupdate/updater.py,
+# its switches as flags; only what the window itself needs is installed here
+if [[ $WITH_GUI -eq 1 ]]; then
+    if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+        warn "no Wayland session here, so the install carries on in the terminal"
+    else
+        [[ -f /etc/arch-release ]] || die "this installer is Arch-only. see the README for a manual install."
+        [[ $EUID -ne 0 ]] || die "don't run this as root — it installs into your home directory"
+        GUI_PKGS=(quickshell qt6-5compat qt6-declarative qt6-multimedia qt6-imageformats python)
+        missing=()
+        for p in "${GUI_PKGS[@]}"; do
+            pacman -Q "$p" &>/dev/null || missing+=("$p")
+        done
+        if [[ ${#missing[@]} -gt 0 ]]; then
+            step "Installing what the installer window needs"
+            say "  ${missing[*]}"
+            sudo pacman -S --needed "${missing[@]}" || die "could not install ${missing[*]}"
+        fi
+        say "  opening the installer window (./install.sh --terminal stays here)"
+        LUCID_INSTALL_ARGS="${GUI_ARGS[*]}" exec qs -p "$SRC/installer.qml"
+    fi
+fi
+
 # ---------------------------------------------------------------- preflight
 
 step "Checking the system"
@@ -100,9 +163,6 @@ step "Checking the system"
 command -v pacman &>/dev/null || die "pacman not found"
 [[ $EUID -ne 0 ]] || die "don't run this as root — it installs into your home directory"
 [[ -f "$SRC/shell.qml" ]] || die "run this from inside the Lucid repo (no shell.qml next to install.sh)"
-
-command -v Hyprland &>/dev/null || command -v hyprctl &>/dev/null \
-    || warn "Hyprland not found. Lucid uses Hyprland-specific APIs and will not work under another compositor."
 
 AUR=""
 for helper in paru yay; do
@@ -123,7 +183,7 @@ say "  wallpapers      $([[ $WITH_WALLPAPERS -eq 1 ]] && echo yes || echo 'no (-
 # qt6-webengine is here for the qt pdf module it carries: lumen's preview pane
 # imports it, and a window with an import it can't resolve doesn't load at all,
 # which would take SUPER+E and every app's file dialog with it
-PKG_REQUIRED=(quickshell qt6-5compat qt6-declarative qt6-multimedia qt6-webengine)
+PKG_REQUIRED=(hyprland quickshell qt6-5compat qt6-declarative qt6-multimedia qt6-webengine)
 # each of these backs one feature; missing ones degrade that feature only
 PKG_FEATURES=(
     matugen jq imagemagick
@@ -145,6 +205,8 @@ PKG_FEATURES=(
     # the file chooser kde connect sends files with comes from the gtk portal.
     # librsvg renders a cursor theme again when its shadow is turned off
     gsettings-desktop-schemas qt6ct xdg-desktop-portal-gtk librsvg
+    # sharing the screen (browsers, Discord, OBS) goes through Hyprland's own portal
+    xdg-desktop-portal-hyprland
     # the launcher's $ mode runs a command in the user's terminal through this
     xdg-terminal-exec
     # the camera on/off toast hears /dev/video* opened and closed through this
@@ -360,6 +422,9 @@ fi
 
 step "Installing the shell"
 
+# the desktop to send you back to. under Hyprland it says Hyprland was all
+[[ -z "${XDG_CURRENT_DESKTOP:-}" ]] || remember desktop "${XDG_CURRENT_DESKTOP##*:}"
+
 if [[ "$SRC" == "$SHELL_DIR" ]]; then
     say "  already at $SHELL_DIR, installing in place"
 else
@@ -376,7 +441,7 @@ else
         --exclude='.git' --exclude='.github' --exclude='.claude' \
         --exclude='support' --exclude='defaults' --exclude='__pycache__' \
         --exclude='wallpapers' \
-        --exclude='install.sh' --exclude='uninstall.sh' \
+        --exclude='install.sh' --exclude='uninstall.sh' --exclude='installer.qml' \
         --exclude='README.md' --exclude='LICENSE' --exclude='.gitignore' \
         --exclude='./lucidprefs/prefs.json' \
         --exclude='./lucidbar/blur.json' \
@@ -869,6 +934,10 @@ if [[ $WITH_HYPR -eq 1 ]]; then
             cp -r "$HYPR_DIR" "$HYPR_DIR.backup-$STAMP"
             say "  your hypr config -> $HYPR_DIR.backup-$STAMP"
         fi
+        # none: Hyprland writes its own default once Lucid's is moved aside
+        if [[ $HYPR_IS_LUCID -eq 0 ]]; then
+            if [[ $HAS_HYPR_CFG -eq 1 ]]; then remember hypr "$HYPR_DIR.backup-$STAMP"; else remember hypr none; fi
+        fi
         mkdir -p "$HYPR_DIR/modules" "$HYPR_DIR/scripts"
         # on a refresh every module is checked against the one in place, so it
         # can say what it changed: a module new in this release, one a release
@@ -896,6 +965,29 @@ if [[ $WITH_HYPR -eq 1 ]]; then
         (cd "$SRC/support/hypr/modules" && sha256sum -- *.lua) > "$HYPR_SHIPPED"
         install -m755 "$SRC/support/hypr/scripts/reload.sh" "$HYPR_DIR/scripts/reload.sh"
         install -m755 "$SRC/support/hypr/scripts/cursor-plugin.sh" "$HYPR_DIR/scripts/cursor-plugin.sh"
+        # the keyboard already typed on, so Hyprland does not start in US:
+        # GNOME's input sources, else KDE's, else the system's. Settings > Input still wins
+        KB_LAYOUT=""; KB_VARIANT=""
+        kb_gnome=$(gsettings get org.gnome.desktop.input-sources sources 2>/dev/null | grep -o "'xkb', '[^']*'" | cut -d"'" -f4 || true)
+        if [[ -n "$kb_gnome" ]]; then
+            # us+intl is layout us, variant intl
+            while read -r e; do
+                KB_LAYOUT+=",${e%%+*}"
+                if [[ $e == *+* ]]; then KB_VARIANT+=",${e#*+}"; else KB_VARIANT+=","; fi
+            done <<< "$kb_gnome"
+            KB_LAYOUT=${KB_LAYOUT#,}; KB_VARIANT=${KB_VARIANT#,}
+        elif grep -qs '^LayoutList=.' "$HOME/.config/kxkbrc"; then
+            KB_LAYOUT=$(sed -n 's/^LayoutList=//p' "$HOME/.config/kxkbrc" | head -1)
+            KB_VARIANT=$(sed -n 's/^VariantList=//p' "$HOME/.config/kxkbrc" | head -1)
+        else
+            KB_LAYOUT=$(localectl status 2>/dev/null | sed -n 's/^ *X11 Layout: //p' || true)
+            KB_VARIANT=$(localectl status 2>/dev/null | sed -n 's/^ *X11 Variant: //p' || true)
+        fi
+        # xkb names only, since they go into a sed and a lua string
+        if [[ $KB_LAYOUT =~ ^[A-Za-z0-9_,-]+$ && $KB_VARIANT =~ ^[A-Za-z0-9_,-]*$ && "$KB_LAYOUT/$KB_VARIANT" != "us/" ]]; then
+            sed -i -E "s/^([[:space:]]*kb_layout  = )\"[^\"]*\"/\1\"$KB_LAYOUT\"/; s/^([[:space:]]*kb_variant = )\"[^\"]*\"/\1\"$KB_VARIANT\"/" "$HYPR_DIR/modules/input.lua"
+            say "  keyboard        $KB_LAYOUT, as on this system"
+        fi
         # a hyprland.conf left beside hyprland.lua is ambiguous - Hyprland
         # reads one of them and you cannot tell which, so the install looks
         # like it did nothing. the full directory is already backed up above
@@ -1066,10 +1158,50 @@ if [[ $WITH_THEMING -eq 1 ]]; then
     # rules you wrote are yours: only ever placed when there are none
     [[ -f "$LUCID_DIR/wallpaper-outputs.conf" ]] || install -m644 "$SRC/support/lucid/wallpaper-outputs.conf" "$LUCID_DIR/wallpaper-outputs.conf"
     # the sddm theme lives outside $HOME, so it is the one thing here that
-    # needs root. skipped entirely when sddm is not installed, and it never
-    # switches the active theme - that stays the user's call. root keeps the
-    # theme; every account paints its own corner of it without a password
-    if [[ -d /usr/share/sddm/themes ]]; then
+    # needs root. root keeps the theme; every account paints its own corner
+    # of it without a password
+    # sddm installed is not sddm in use, so the display manager that starts is
+    # what counts. moving off another one is always asked: -y alone keeps it,
+    # -y with --login-screen is the yes
+    DM_UNIT=$(readlink /etc/systemd/system/display-manager.service 2>/dev/null || true)
+    DM_UNIT=${DM_UNIT##*/}; CUR_DM=${DM_UNIT%.service}
+    # ly and xdm start without that alias, so enable -f would not replace them
+    EXTRA_DM=()
+    for u in /etc/systemd/system/multi-user.target.wants/ly@*.service /etc/systemd/system/graphical.target.wants/xdm.service; do
+        [[ -L "$u" ]] && EXTRA_DM+=("${u##*/}")
+    done
+    if [[ -z "$CUR_DM" && ${#EXTRA_DM[@]} -gt 0 ]]; then
+        CUR_DM=${EXTRA_DM[0]%%@*}; CUR_DM=${CUR_DM%.service}
+    fi
+    case $CUR_DM in
+        gdm|lxdm|xdm) DM_NAME=${CUR_DM^^} ;;
+        lightdm)      DM_NAME=LightDM ;;
+        plasmalogin)  DM_NAME="Plasma Login" ;;
+        ly)           DM_NAME=Ly ;;
+        *)            DM_NAME=$CUR_DM ;;
+    esac
+    SDDM_SWITCH=0
+    if [[ $WITH_SDDM -eq 1 && $CUR_DM != sddm ]]; then
+        if [[ $SDDM_CURRENT -eq 1 || $ASSUME_YES -eq 0 ]] \
+            && ask "  Make SDDM your login screen${DM_NAME:+ instead of $DM_NAME}, with Lucid's theme? (from the next restart)"; then
+            # enable -f takes over the display-manager alias; the running one is left alone
+            if sudo pacman -S --needed --noconfirm sddm && sudo systemctl enable -f sddm.service \
+                && { [[ ${#EXTRA_DM[@]} -eq 0 ]] || sudo systemctl disable "${EXTRA_DM[@]}"; }; then
+                SDDM_SWITCH=1
+                SDDM_CURRENT=1
+                # the units uninstall.sh enables again; none = nothing started at boot
+                DM_BEFORE=$(echo $DM_UNIT "${EXTRA_DM[@]}")
+                remember dm "${DM_BEFORE:-none}"
+            else
+                warn "could not switch the login screen to sddm; skipping its theme"
+                WITH_SDDM=0
+            fi
+        else
+            WITH_SDDM=0
+            say "  ${dim}login screen left as it is${DM_NAME:+ ($DM_NAME)}, without Lucid's theme${r}"
+        fi
+    fi
+    if [[ $WITH_SDDM -eq 1 ]]; then
         SDDM_THEME_DIR=/usr/share/sddm/themes/lucid
         # a fingerprint at the login screen needs two lines in sddm's pam
         # service, so it is asked for once and then kept on every re-run
@@ -1081,7 +1213,9 @@ if [[ $WITH_THEMING -eq 1 ]]; then
                 SDDM_FINGER=(--fingerprint)
             fi
         fi
-        if sudo bash "$SRC/support/sddm/install-theme.sh" "$SDDM_THEME_DIR" "${SDDM_FINGER[@]}"; then
+        SDDM_SET=()
+        [[ $SDDM_CURRENT -eq 0 ]] || SDDM_SET=(--current)
+        if sudo bash "$SRC/support/sddm/install-theme.sh" "$SDDM_THEME_DIR" "${SDDM_FINGER[@]}" "${SDDM_SET[@]}"; then
             say "  sddm theme      -> $SDDM_THEME_DIR"
             # the theme no longer carries a shared wallpaper, so paint this
             # account's corner now rather than at its next login. it reads
@@ -1091,7 +1225,13 @@ if [[ $WITH_THEMING -eq 1 ]]; then
             fi
             # /etc/sddm.conf outranks /etc/sddm.conf.d, so point at the file
             # that actually wins rather than at the tidier-looking drop-in
-            say "    enable it with: Current=lucid under [Theme] in /etc/sddm.conf"
+            if [[ $SDDM_SWITCH -eq 1 ]]; then
+                say "    sddm is your login screen from the next restart, with this theme"
+            elif [[ $SDDM_CURRENT -eq 1 ]]; then
+                say "    the login screen shows it from the next login"
+            else
+                say "    enable it with: Current=lucid under [Theme] in /etc/sddm.conf (or --login-screen)"
+            fi
         else
             warn "could not install the sddm theme (needs sudo); skipping"
         fi
@@ -1374,6 +1514,12 @@ if [[ $WITH_THEMING -eq 1 ]]; then
 
         # gnome apps, portals and anything reading dconf take these instead
         if command -v gsettings &>/dev/null; then
+            # a value that is already Lucid's has nothing to go back to
+            for kv in gtk-theme="$GTK_THEME_NAME" color-scheme=prefer-dark icon-theme="$ICON_THEME_NAME"; do
+                [[ -n "${kv#*=}" ]] || continue
+                old=$(gsettings get org.gnome.desktop.interface "${kv%%=*}" 2>/dev/null) || continue
+                [[ "$old" == "'${kv#*=}'" ]] || remember "gsettings.${kv%%=*}" "$old"
+            done
             gsettings set org.gnome.desktop.interface gtk-theme "$GTK_THEME_NAME" 2>/dev/null || true
             gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
             [[ -n "$ICON_THEME_NAME" ]] && \
@@ -1745,6 +1891,24 @@ else
   Or run ${b}./install.sh --with-hypr${r} to take Lucid's config wholesale.
 
 EOF
+    # the installer window says the same thing on its last page
+    [[ -z "${LUCID_UPDATER:-}" ]] || printf '@@lucid:hypr-kept\n'
+fi
+
+# from another desktop none of the above is live until a login into Hyprland
+if [[ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+    HERE=${XDG_CURRENT_DESKTOP:-}
+    if [[ -n "$HERE" ]]; then
+        say "  ${b}You are on ${HERE##*:} right now, and Lucid runs on Hyprland.${r}"
+        say "  Log out and choose Hyprland on the login screen."
+    else
+        say "  ${b}Lucid runs on Hyprland.${r} Start it with ${b}start-hyprland${r}, or"
+        say "  choose Hyprland on your login screen."
+    fi
+    [[ $HYPR_LUA_INSTALLED -eq 1 ]] || say "  Add the autostart line above to your config first."
+    [[ -z "$HERE" ]] || say "  ${HERE##*:} stays on that list to go back to."
+    say "  ./uninstall.sh takes Lucid out again."
+    say ""
 fi
 
 if [[ $DEPS_OK -eq 0 ]]; then
