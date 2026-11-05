@@ -173,7 +173,7 @@ Item {
             jelly.rest();
             pillJelly.kickAfter(-0.15, Math.round(Theme.barDurExit * 0.9));
         } else {
-            jelly.kickAfter(-0.15, Math.round(pill.morphDuration * 0.5));
+            jelly.kickAfter(-0.15, Math.round(Theme.barDurExit * 0.9));
         }
         openWobble.restart();
     }
@@ -209,8 +209,25 @@ Item {
     property int popupMorphDuration: pill.morphDuration
     property var popupMorphCurve: Theme.easeEmphasizedDecel
 
+    // a close shrinks on the exit curve, slow at first, so whatever the panel
+    // pushed aside follows it back instead of jumping in the first frame. only
+    // while it closes: the face's own width changes keep the enter curve
+    property bool closing: false
+
+    Timer {
+        id: closingTimer
+
+        interval: Theme.barDurExit
+        onTriggered: pill.closing = false
+    }
+
     function syncFadeTimings() {
         var open = pill.expanded || pill.altOpen;
+        pill.closing = !open;
+        if (open)
+            closingTimer.stop();
+        else
+            closingTimer.restart();
         pill.popupMorphDuration = open ? pill.morphDuration : Theme.barDurExit;
         pill.popupMorphCurve = open ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
         pill.panelFadePause = Theme.barMs(pill.expanded ? 150 : 0);
@@ -440,9 +457,9 @@ Item {
 
     Behavior on implicitWidth {
         NumberAnimation {
-            duration: pill.exiting ? Theme.barMs(360) : pill.morphDuration
+            duration: pill.exiting ? Theme.barMs(360) : (pill.closing ? Theme.barDurExit : pill.morphDuration)
             easing.type: Easing.Bezier
-            easing.bezierCurve: pill.exiting ? Theme.curveStandard : pill.morphEasing
+            easing.bezierCurve: pill.exiting ? Theme.curveStandard : (pill.closing ? Theme.easeEmphasizedAccel : pill.morphEasing)
         }
 
     }
@@ -519,9 +536,9 @@ Item {
             }
 
             NumberAnimation {
-                duration: pill.exiting ? 0 : pill.morphDuration
+                duration: pill.exiting ? 0 : (pill.closing ? Theme.barDurExit : pill.morphDuration)
                 easing.type: Easing.Bezier
-                easing.bezierCurve: pill.morphEasing
+                easing.bezierCurve: pill.closing ? Theme.easeEmphasizedAccel : pill.morphEasing
             }
 
         }
