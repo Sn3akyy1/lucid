@@ -2635,7 +2635,7 @@ BarPill {
             width: Math.ceil(Math.min(Theme.dp(320), Math.max(tipCard.floorW, tipCard.natural + tipCard.pad * 2)))
             height: Math.round(tipCol.implicitHeight + tipCard.pad * 2 - Theme.dp(4))
             x: root.tipCardX
-            y: root.compactHeight + root.tipGap
+            y: root.overlayY(root.compactHeight, root.tipGap, tipCard.height)
             radius: Theme.shapeLg
             color: Theme.bg
             opacity: root.tipShown ? 1 : 0

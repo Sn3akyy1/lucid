@@ -22,8 +22,9 @@ Item {
     opacity: toolbar.reveal
     visible: toolbar.shown
 
+    // it rises from the bottom edge, or drops from the top one over a bottom bar
     transform: Translate {
-        y: (1 - toolbar.reveal) * Theme.dp(28)
+        y: (1 - toolbar.reveal) * Theme.dp(Prefs.barBottom ? -28 : 28)
     }
 
     Rectangle {

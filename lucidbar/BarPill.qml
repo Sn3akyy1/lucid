@@ -121,6 +121,22 @@ Item {
 
     }
 
+    // a height in the pill's own coordinates, in the overlay's. On the bottom edge
+    // the overlay stands upright, turned over its own height, so it counts from
+    // the other end; worked out rather than mapped, so it follows the overlay as
+    // it grows instead of catching it halfway
+    function overlayFromPill(y) {
+        return Prefs.barBottom ? overlayHolder.height - y : y;
+    }
+
+    // where something `h` tall the module lays over the screen goes in the
+    // overlay: `gap` off `fromY`, going away from the bar, so up from it on the
+    // bottom edge
+    function overlayY(fromY, gap, h) {
+        const edge = pill.overlayFromPill(fromY);
+        return Prefs.barBottom ? edge - gap - h : edge + gap;
+    }
+
     // the id the bar knows this pill by
     function moduleId() {
         const map = pill.hostWindow && pill.hostWindow.moduleById ? pill.hostWindow.moduleById : {};
@@ -256,7 +272,8 @@ Item {
     // pill promotes it to an ordinary clicked-open panel, grab and all.
     // off for a pill that is only a button, with nothing to unfold
     property bool opensOnHover: true
-    readonly property bool hoverOpens: Prefs.barHoverOpen && pill.shown && pill.opensOnHover && !Edit.active
+    // not while the launcher stands on a bottom bar: a hover would shut it again
+    readonly property bool hoverOpens: Prefs.barHoverOpen && pill.shown && pill.opensOnHover && !Edit.active && !(pill.hostWindow && pill.hostWindow.launcherUp === true)
     property bool hoverOpen: false
     readonly property bool surfaceHovered: pill.compactHovered || shellHover.hovered || pillHover.hovered
 
@@ -519,6 +536,13 @@ Item {
         width: (pill.overlayOpen && pill.hostWindow) ? Math.max(pill.width, pill.hostWindow.width - pill.x) : pill.width
         height: (pill.overlayOpen && pill.hostWindow) ? Math.max(pill.height, pill.hostWindow.height - pill.y) : pill.height
         z: 200
+
+        // the bar is mirrored on the bottom edge; the content stands upright
+        transform: Scale {
+            origin.y: overlayHolder.height / 2
+            yScale: Prefs.barBottom ? -1 : 1
+        }
+
     }
 
     Timer {
@@ -816,6 +840,13 @@ Item {
                 y: Math.round((compactFace.height - compactHolder.height) / 2)
                 width: pill.compactWidth
                 height: pill.compactHeight
+
+                // the bar is mirrored on the bottom edge; the content stands upright
+                transform: Scale {
+                    origin.y: compactHolder.height / 2
+                    yScale: Prefs.barBottom ? -1 : 1
+                }
+
             }
 
             Behavior on opacity {
@@ -856,6 +887,12 @@ Item {
                     easing.type: Easing.OutCubic
                 }
 
+            }
+
+            // the bar is mirrored on the bottom edge; the content stands upright
+            transform: Scale {
+                origin.y: altHolder.height / 2
+                yScale: Prefs.barBottom ? -1 : 1
             }
 
         }
@@ -903,6 +940,12 @@ Item {
 
                 }
 
+            }
+
+            // the bar is mirrored on the bottom edge; the content stands upright
+            transform: Scale {
+                origin.y: panelHolder.height / 2
+                yScale: Prefs.barBottom ? -1 : 1
             }
 
         }

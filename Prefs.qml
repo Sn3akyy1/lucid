@@ -30,6 +30,30 @@ Singleton {
 
     readonly property bool barNotch: root.barStyle === "notch"
     readonly property bool barFull: root.barStyle === "full"
+    // the bar is drawn as a top bar and mirrored onto the bottom edge
+    readonly property bool barBottom: (root.barShownPosition !== "" ? root.barShownPosition : root.barPosition) === "bottom"
+    // the edge the bar is drawn on lags the one asked for: on a change the bar
+    // slides out of the old edge, moves while out of sight, and slides in at the new
+    property string barShownPosition: ""
+    readonly property bool barRelocating: root.barShownPosition !== "" && root.barShownPosition !== root.barPosition
+
+    onBarRelocatingChanged: {
+        if (root.barRelocating)
+            barMoveTimer.restart();
+
+    }
+
+    Timer {
+        id: barMoveTimer
+
+        interval: Theme.durLong
+        onTriggered: root.barShownPosition = root.barPosition
+    }
+    // a bottom bar that keeps its strip: what would sit flush on that edge floats above it
+    readonly property bool barHoldsBottom: root.barBottom && root.barEnabled && !root.barAutoHide
+    // the bottom edge belongs to the bar while it is there: the dock steps aside, and
+    // comes back when the bar goes to the top. dockEnabled itself is left as it was
+    readonly property bool dockOn: root.dockEnabled && !(root.barBottom && root.barEnabled)
     // notches and the full bar both sit flush against the top edge
     readonly property bool barFlush: root.barNotch || root.barFull
     readonly property bool dockNotch: root.dockStyle === "notch"
@@ -351,6 +375,15 @@ Singleton {
             {"key": "avatar", "name": "Avatar", "blurb": "Your profile picture"},
             {"key": "label", "name": "Label", "blurb": "The word Start on a chip in the accent"}
         ]
+    },
+    {
+        "id": "apps",
+        "key": "showApps",
+        "home": "center",
+        "name": "Apps",
+        "desc": "The dock's pinned apps and the ones open, on the bar: a click opens an app or brings it up; with several windows, or on a right click, a panel lists them",
+        "when": "while there is an app pinned or open",
+        "options": ["dockShowRunning", "dockShowIndicators", "dockShowTooltips", "dockIconTiles"]
     }
     ]
 
@@ -394,6 +427,7 @@ Singleton {
     readonly property var notifKeys: ["toastEnabled", "toastTimeout", "toastUseAppTimeout", "toastCriticalSticky", "toastShowBody", "toastShowActions", "toastBodyLines", "notifShowIcons", "notifMaxHistory", "doNotDisturb", "dndAllowCritical", "dndFullscreen", "quietHours", "quietFrom", "quietTo", "notifSound", "notifSoundName", "notifSoundVolume", "notifSoundUrgentOnly", "notifMutedApps", "notifGrouping", "notifTimestamps", "notifProgress", "notifInlineReply", "toastMaxVisible"]
 
     property alias barStyle: s.barStyle
+    property alias barPosition: s.barPosition
     property alias dockStyle: s.dockStyle
     property alias accentPunch: s.accentPunch
     property alias surfaceDarkness: s.surfaceDarkness
@@ -547,6 +581,7 @@ Singleton {
     property alias windowModuleMiddleClose: s.windowModuleMiddleClose
     property alias showStart: s.showStart
     property alias startModuleStyle: s.startModuleStyle
+    property alias showApps: s.showApps
     property alias workspacesByDisplay: s.workspacesByDisplay
     property alias audioMeters: s.audioMeters
     property alias clockStyle: s.clockStyle
@@ -977,6 +1012,7 @@ Singleton {
 
     readonly property var defaults: ({
         "barStyle": "island",
+        "barPosition": "top",
         "dockStyle": "island",
         "accentPunch": 1,
         "surfaceDarkness": -1,
@@ -1061,6 +1097,7 @@ Singleton {
         "windowModuleMiddleClose": false,
         "showStart": false,
         "startModuleStyle": "logo",
+        "showApps": false,
         "workspacesByDisplay": true,
         "audioMeters": true,
         "clockStyle": "accent",
@@ -1710,13 +1747,20 @@ Singleton {
         watchChanges: true
         onFileChanged: reload()
         onAdapterUpdated: writeDebounce.restart()
-        onLoaded: root.loaded = true
+        onLoaded: {
+            // only the first load: a reload after a write must not skip the slide
+            if (root.barShownPosition === "")
+                root.barShownPosition = root.barPosition;
+
+            root.loaded = true;
+        }
         onLoadFailed: root.loaded = true
 
         adapter: JsonAdapter {
             id: s
 
             property string barStyle: "island"
+            property string barPosition: "top"
             property string dockStyle: "island"
             property real accentPunch: 1
             property real surfaceDarkness: -1
@@ -1806,6 +1850,7 @@ Singleton {
             property bool windowModuleMiddleClose: false
             property bool showStart: false
             property string startModuleStyle: "logo"
+            property bool showApps: false
             property bool workspacesByDisplay: true
             property bool audioMeters: true
             property string clockStyle: "accent"

@@ -379,6 +379,48 @@ ShellRoot {
                 return [l, l + (mod.surfaceWidth !== undefined ? mod.surfaceWidth : mod.width)];
             }
 
+            // the launcher standing on this bar, if it is the one that speaks for the shell
+            readonly property var cover: bar.primary ? dock.barCover : null
+            // whether an island's top runs on under each of the launcher's lower corners
+            function underAt(x) {
+                // the full bar's strip runs under every point, between modules too
+                if (Prefs.barFull)
+                    return true;
+
+                const f = Theme.dp(Prefs.dockNotchFlare);
+                const covered = (p) => {
+                    return bar.modules.some((m) => {
+                        const span = bar.surfaceSpan(m);
+                        return m.visible && span[1] - span[0] > 0.5 && span[0] <= p && span[1] >= p;
+                    });
+                };
+                return covered(x - f) && covered(x + f);
+            }
+
+            Connections {
+                function onBarAutoHideChanged() {
+                    Qt.callLater(() => {
+                        return bar.exclusionTick++;
+                    });
+                }
+
+                target: Prefs
+            }
+
+            Binding {
+                target: dock
+                property: "barUnderLeft"
+                value: !bar.cover || bar.underAt(bar.cover.l)
+                when: bar.primary
+            }
+
+            Binding {
+                target: dock
+                property: "barUnderRight"
+                value: !bar.cover || bar.underAt(bar.cover.r)
+                when: bar.primary
+            }
+
             function planHangs() {
                 const plan = ({
                     "corners": ({}),
@@ -524,11 +566,12 @@ ShellRoot {
                 "privacy": privacyMod,
                 "power": powerMod,
                 "window": windowMod,
-                "start": startMod
+                "start": startMod,
+                "apps": appsMod
             })
             // what BarPill looks itself up in, for a right click to its card
             readonly property var moduleById: bar.pillFor
-            readonly property var modules: [workspacesMod, mprisMod, sysTrayMod, clockMod, notifMod, systemMod, privacyMod, powerMod, windowMod, startMod]
+            readonly property var modules: [workspacesMod, mprisMod, sysTrayMod, clockMod, notifMod, systemMod, privacyMod, powerMod, windowMod, startMod, appsMod]
 
             // which modules switched on have left the bar for now, for the Bar
             // page's arrangement
@@ -677,19 +720,26 @@ ShellRoot {
                 return m.expanded === true || m.anyOpen === true;
             })
             property bool slidingAway: false
-            readonly property bool heldByPointer: revealArea.containsMouse || (!bar.slidingAway && bar.modules.some((m) => {
+            readonly property bool heldByPointer: revealArea.containsMouse || bandHover.hovered || (!bar.slidingAway && bar.modules.some((m) => {
                 return m.visible && (m.surfaceHovered === true || m.compactHovered === true);
             }))
-            readonly property bool barRevealed: !Prefs.barAutoHide || bar.barBusy || bar.heldByPointer || Edit.active
+            readonly property bool barRevealed: (!Prefs.barAutoHide || bar.barBusy || bar.heldByPointer || Edit.active) && !Prefs.barRelocating
+            // a bar that hides reaches the screen edge itself, so the strip that
+            // reveals it sits on the edge; its margin moves inside the window
+            readonly property int edgeGap: Prefs.barAutoHide ? Prefs.effectiveBarTopMargin : 0
+            // a write to exclusiveZone puts exclusionMode back to Normal, so the mode is
+            // asked for again once auto-hide has been switched
+            property int exclusionTick: 0
             // how far the compact content sits above its resting y=0 while
             // hidden - past the window's own top edge, so it clips away for free
-            property real hiddenOffset: bar.barRevealed ? 0 : -(Theme.dp(Prefs.barHeight) + Prefs.effectiveBarTopMargin + Theme.dp(4))
+            property real hiddenOffset: (bar.barRevealed ? 0 : -(Theme.dp(Prefs.barHeight) + Prefs.effectiveBarTopMargin + Theme.dp(4))) + bar.edgeGap
 
             Behavior on hiddenOffset {
                 NumberAnimation {
                     duration: Theme.durLong
                     easing.type: Easing.Bezier
-                    easing.bezierCurve: Theme.easeEmphasizedDecel
+                    // leaving for the other edge it picks up speed, so it is seen to go
+                    easing.bezierCurve: Prefs.barRelocating ? Theme.easeEmphasizedAccel : Theme.easeEmphasizedDecel
                 }
 
             }
@@ -711,7 +761,10 @@ ShellRoot {
                 onTriggered: bar.slidingAway = false
             }
 
-            Component.onCompleted: laidOutTimer.start()
+            Component.onCompleted: {
+                bar.contentItem.transform = [barMirror];
+                laidOutTimer.start();
+            }
 
             Timer {
                 id: laidOutTimer
@@ -721,18 +774,31 @@ ShellRoot {
             }
 
             color: "transparent"
-            implicitHeight: bar.screen ? bar.screen.height - Prefs.effectiveBarTopMargin : Theme.dp(800)
-            exclusiveZone: (Prefs.barEnabled && bar.anyModuleShown && !Prefs.barAutoHide) ? Theme.dp(Prefs.barHeight) + Prefs.shellGap : 0
+            implicitHeight: bar.screen ? bar.screen.height - Prefs.effectiveBarTopMargin + bar.edgeGap : Theme.dp(800)
+            // auto-hide first, so a hiding bar never writes its zone again
+            exclusiveZone: (!Prefs.barAutoHide && Prefs.barEnabled && bar.anyModuleShown) ? Theme.dp(Prefs.barHeight) + Prefs.shellGap : 0
+            // a hiding bar comes out of the edge itself, not above a dock's zone
+            exclusionMode: (bar.exclusionTick, Prefs.barAutoHide) ? ExclusionMode.Ignore : ExclusionMode.Normal
 
             anchors {
-                top: true
-                bottom: false
+                top: !Prefs.barBottom
+                bottom: Prefs.barBottom
                 left: true
                 right: true
             }
 
             margins {
-                top: Prefs.effectiveBarTopMargin
+                top: Prefs.barBottom ? 0 : Prefs.effectiveBarTopMargin - bar.edgeGap
+                bottom: Prefs.barBottom ? Prefs.effectiveBarTopMargin - bar.edgeGap : 0
+            }
+
+            // a bottom bar is the top bar mirrored: every shape keeps its maths,
+            // and the modules turn their own content back the right way up
+            Scale {
+                id: barMirror
+
+                origin.y: bar.height / 2
+                yScale: Prefs.barBottom ? -1 : 1
             }
 
             // full bar: one strip across the whole top edge, under every module
@@ -757,6 +823,49 @@ ShellRoot {
 
                 }
 
+            }
+
+            // a launcher wider than the bar stands on a strip the bar puts out
+            // to its width, curving into the screen edge where it passes the bar
+            Rectangle {
+                id: coverStrip
+
+                // fades once the launcher has sunk, so nothing is left standing on the bar
+                opacity: bar.cover && bar.cover.up ? 1 : 0
+                visible: !!bar.cover && !Prefs.barFull && opacity > 0
+                x: bar.cover ? bar.cover.l : 0
+                y: bar.hiddenOffset
+                z: -2
+                width: bar.cover ? bar.cover.r - bar.cover.l : 0
+                height: Theme.dp(Prefs.barHeight)
+                color: Theme.bg
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Theme.durShort
+                    }
+
+                }
+
+            }
+
+            BarFlare {
+                visible: coverStrip.visible && !dock.barUnderLeft
+                opacity: coverStrip.opacity
+                size: Theme.dp(Prefs.barNotchFlare)
+                x: coverStrip.x - width
+                y: bar.hiddenOffset
+                z: -2
+            }
+
+            BarFlare {
+                visible: coverStrip.visible && !dock.barUnderRight
+                opacity: coverStrip.opacity
+                mirrored: true
+                size: Theme.dp(Prefs.barNotchFlare)
+                x: coverStrip.x + coverStrip.width
+                y: bar.hiddenOffset
+                z: -2
             }
 
             // rounded corners hanging off the strip where it meets the screen sides
@@ -995,6 +1104,30 @@ ShellRoot {
 
             }
 
+            Apps {
+                id: appsMod
+
+                popupAlign: bar.alignOf("apps")
+
+                hostWindow: bar
+                dockMod: dock
+                x: bar.placeFor("apps")
+                anchors.top: parent.top
+                anchors.topMargin: bar.hiddenOffset
+
+                Behavior on x {
+                    enabled: bar.laidOut && bar.shuffling
+
+                    NumberAnimation {
+                        duration: Theme.barDurEnter
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.easeEmphasizedDecel
+                    }
+
+                }
+
+            }
+
             ActiveWindow {
                 id: windowMod
 
@@ -1183,11 +1316,23 @@ ShellRoot {
                     mod: startMod
                 }
 
+                ModuleRegion {
+                    mod: appsMod
+                }
+
+                // by numbers, not by item: the window does not see the mirror. once
+                // out it takes the bar's whole band, so crossing the margin or a gap
+                // between islands does not send it away
                 Region {
-                    item: Prefs.barAutoHide ? revealArea : null
+                    readonly property real band: bar.barRevealed ? bar.edgeGap + Theme.dp(Prefs.barHeight) : revealArea.height
+
+                    y: Prefs.barBottom ? bar.height - band : 0
+                    width: Prefs.barAutoHide ? revealArea.width : 0
+                    height: band
                 }
 
                 Region {
+                    y: Prefs.barBottom ? bar.height - height : 0
                     width: bar.dragHeld || Edit.active ? bar.width : 0
                     height: bar.dragHeld ? bar.height : (Edit.active ? Theme.dp(Prefs.barHeight) + Theme.dp(4) : 0)
                 }
@@ -1198,6 +1343,13 @@ ShellRoot {
                 id: barEdit
 
                 host: bar
+            }
+
+            // anywhere the window takes the pointer, over a module or not
+            HoverHandler {
+                id: bandHover
+
+                enabled: Prefs.barAutoHide
             }
 
             // touching this strip reveals the bar
@@ -1214,6 +1366,20 @@ ShellRoot {
                 visible: Prefs.barAutoHide
             }
 
+            // with the bar on the bottom edge the launcher stands where its panels
+            // open, so a panel and the launcher shut each other as well
+            readonly property bool panelExpanded: bar.modules.some((m) => {
+                return m !== workspacesMod && m.expanded === true;
+            })
+
+            readonly property bool launcherUp: bar.primary && Prefs.barHoldsBottom && dock.menuOpen
+
+            onPanelExpandedChanged: {
+                if (bar.panelExpanded && bar.primary && Prefs.barHoldsBottom)
+                    dock.menuOpen = false;
+
+            }
+
             // the overview and the dock menu shut each other
             Connections {
                 function onExpandedChanged() {
@@ -1227,9 +1393,17 @@ ShellRoot {
 
             Connections {
                 function onMenuOpenChanged() {
-                    if (dock.menuOpen)
-                        workspacesMod.expanded = false;
+                    if (!dock.menuOpen)
+                        return ;
 
+                    workspacesMod.expanded = false;
+                    if (bar.primary && Prefs.barHoldsBottom) {
+                        for (const m of bar.modules) {
+                            if (m.expanded === true)
+                                m.expanded = false;
+
+                        }
+                    }
                 }
 
                 target: dock
@@ -1246,9 +1420,16 @@ ShellRoot {
 
                 Region {
                     x: 0
-                    y: fullStrip.visible ? bar.hiddenOffset : 0
+                    y: !fullStrip.visible ? 0 : (Prefs.barBottom ? bar.height - bar.hiddenOffset - height : bar.hiddenOffset)
                     width: fullStrip.visible ? Math.round(bar.width) : 0
                     height: fullStrip.visible ? Theme.dp(Prefs.barHeight) : 0
+                }
+
+                Region {
+                    x: coverStrip.visible ? Math.round(coverStrip.x) : 0
+                    y: Prefs.barBottom ? bar.height - bar.hiddenOffset - Theme.dp(Prefs.barHeight) : bar.hiddenOffset
+                    width: coverStrip.visible && coverStrip.opacity > 0.5 ? Math.round(coverStrip.width) : 0
+                    height: coverStrip.visible ? Theme.dp(Prefs.barHeight) : 0
                 }
 
                 ModuleRegion {
@@ -1299,6 +1480,11 @@ ShellRoot {
                 ModuleRegion {
                     blur: true
                     mod: startMod
+                }
+
+                ModuleRegion {
+                    blur: true
+                    mod: appsMod
                 }
 
             }

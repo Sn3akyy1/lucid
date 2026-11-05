@@ -21,7 +21,7 @@ PanelWindow {
     property bool slidingAway: false
     readonly property bool heldByPointer: revealArea.containsMouse || (shellHover.hovered && !dockWindow.slidingAway)
     // on screen in its own right; a disabled dock never is
-    readonly property bool dockShown: Prefs.dockEnabled && (!dockWindow.hides || dockWindow.heldByPointer || Edit.active)
+    readonly property bool dockShown: Prefs.dockOn && (!dockWindow.hides || dockWindow.heldByPointer || Edit.active)
     // dynamic hiding only tucks the dock away while the workspace has windows
     readonly property bool hides: Prefs.dockAutoHide && (!Prefs.dockDynamicHide || dockWindow.dynamicHidden)
     readonly property bool dockRevealed: dockWindow.dockShown || dockWindow.dockBusy
@@ -32,7 +32,34 @@ PanelWindow {
     property real editStart: 0
     property real editMargin: 0
     readonly property bool editNotch: dockWindow.editDragging && dockWindow.editMargin <= Theme.dp(2)
-    readonly property bool renderAsNotch: (Prefs.dockNotch && (!dockWindow.editDragging || dockWindow.editNotch)) || dockWindow.launcherFromHidden || dockWindow.editNotch
+    // with the bar on the bottom edge there is no dock, and the launcher stands on the
+    // bar: on a notch or full bar it rises out of it, putting out a strip to its width;
+    // over islands it floats a little above
+    // a fullscreen window hides the bar's layer, so there it comes out of the screen edge
+    readonly property bool onBar: {
+        const m = Hyprland.monitorFor(dockWindow.screen);
+        return Prefs.barHoldsBottom && !(m && m.activeWorkspace && m.activeWorkspace.hasFullscreen);
+    }
+    readonly property bool onFlushBar: dockWindow.onBar && Prefs.barFlush && dockWindow.launcherFromHidden
+    // floating over the bar there is no edge to sink behind, so going away it fades too
+    readonly property bool fadesOnBar: dockWindow.onBar && !dockWindow.onFlushBar
+    readonly property bool renderAsNotch: dockWindow.onBar ? dockWindow.onFlushBar : ((Prefs.dockNotch && (!dockWindow.editDragging || dockWindow.editNotch)) || dockWindow.launcherFromHidden || dockWindow.editNotch)
+    // the window ends on the bar's top, so going away it sinks into the bar
+    readonly property int barLift: dockWindow.onBar ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) : 0
+    // a write to exclusiveZone puts exclusionMode back to Normal, so the mode is
+    // asked for again once a move onto or off the bar has settled
+    property int exclusionTick: 0
+    // where it stands in screen x and how far it has risen, for the bar to meet it;
+    // up until it has sunk out of sight, so the bar draws its strip only then
+    readonly property var barCover: dockWindow.onFlushBar && shell.visible ? ({
+        "l": (dockWindow.screen ? dockWindow.screen.width : dockWindow.width) / 2 - shell.width / 2,
+        "r": (dockWindow.screen ? dockWindow.screen.width : dockWindow.width) / 2 + shell.width / 2,
+        "up": dockWindow.dockRevealed || shell.height + shell.anchors.bottomMargin > 1
+    }) : null
+    // set by the bar: whether its own top runs on past each lower corner, so the
+    // corner curves into it; past the bar's end the bar's strip meets it square
+    property bool barUnderLeft: true
+    property bool barUnderRight: true
     // split: the launcher, the pins and the running apps on islands of their own, which
     // close up into one slab as the launcher grows out of them and part again after
     readonly property int splitPad: Theme.dp(10)
@@ -87,7 +114,8 @@ PanelWindow {
         easing.bezierCurve: Theme.easeEmphasizedAccel
     }
 
-    readonly property int placementMargin: dockWindow.editDragging ? (dockWindow.editNotch ? 0 : Math.round(dockWindow.editMargin)) : (dockWindow.launcherFromHidden ? 0 : Prefs.effectiveDockBottomMargin)
+    // floating over the bar, it keeps the pop-up distance from it
+    readonly property int placementMargin: dockWindow.onBar ? (dockWindow.onFlushBar ? 0 : Theme.dp(Prefs.barPopupGap)) : dockWindow.editDragging ? (dockWindow.editNotch ? 0 : Math.round(dockWindow.editMargin)) : (dockWindow.launcherFromHidden ? 0 : Prefs.effectiveDockBottomMargin)
 
     // the prefs first, while the drag still holds the dock where it is
     function commitEditPlacement() {
@@ -105,9 +133,10 @@ PanelWindow {
         dockWindow.editDragging = false;
         Edit.dragging = false;
     }
-    readonly property real hiddenOffset: dockWindow.dockRevealed ? 0 : -(shell.implicitHeight + dockWindow.placementMargin - 1)
+    // the last pixel left at the screen edge would show as a line over a bar
+    readonly property real hiddenOffset: dockWindow.dockRevealed ? 0 : -(shell.implicitHeight + dockWindow.placementMargin - (dockWindow.onBar ? 0 : 1))
     // a disabled dock's panel exists only while the launcher is up or shrinking away
-    readonly property bool shellShown: Prefs.dockEnabled || dockWindow.menuOpen || dockWindow.morphing
+    readonly property bool shellShown: Prefs.dockOn || dockWindow.menuOpen || dockWindow.morphing
 
     onDockRevealedChanged: {
         if (dockWindow.dockRevealed) {
@@ -254,13 +283,13 @@ PanelWindow {
     property var launcherScreen: null
     // dropped once the dock is back on, or once that display is unplugged:
     // a surface sent to a dead display is never drawn
-    readonly property var launcherPlacement: !Prefs.dockEnabled && dockWindow.launcherScreen && Quickshell.screens.indexOf(dockWindow.launcherScreen) >= 0 ? dockWindow.launcherScreen : null
+    readonly property var launcherPlacement: !Prefs.dockOn && dockWindow.launcherScreen && Quickshell.screens.indexOf(dockWindow.launcherScreen) >= 0 ? dockWindow.launcherScreen : null
 
     function aimLauncher() {
         if (dockWindow.menuOpen)
             return ;
 
-        dockWindow.launcherScreen = Prefs.dockEnabled ? null : Monitors.focusedScreen;
+        dockWindow.launcherScreen = Prefs.dockOn ? null : Monitors.focusedScreen;
     }
 
     function pulseMorph() {
@@ -855,6 +884,13 @@ PanelWindow {
             return dockWindow.classIndex[key.substring(dot + 1)] || null;
 
         return null;
+    }
+
+    // the bar's apps module lists the same pins, by the same icons
+    readonly property var pinnedList: pinnedAdapter.pinnedApps
+
+    function iconFor(name) {
+        return IconTheme.resolve(name);
     }
 
     // the bar's scratchpad stash goes through this so it shows the icons the dock shows
@@ -1980,6 +2016,19 @@ PanelWindow {
         dropResolver.resolve(unresolved, at);
     }
 
+    // a pin dragged along the bar's apps module to another pin's place
+    function movePinned(appId, to) {
+        for (var i = 0; i < appListModel.count; i++) {
+            if (appListModel.get(i).appId.toLowerCase() === appId.toLowerCase()) {
+                if (i !== to && to >= 0 && to < appListModel.count) {
+                    appListModel.move(i, to, 1);
+                    dockWindow.persistOrder();
+                }
+                return;
+            }
+        }
+    }
+
     function unpinApp(appId) {
         for (var i = appListModel.count - 1; i >= 0; i--) {
             if (appListModel.get(i).appId.toLowerCase() === appId.toLowerCase()) {
@@ -2118,8 +2167,13 @@ PanelWindow {
     // off for a beat when displays change, so a surface torn down with an
     // unplugged one is remapped rather than staying gone until a reload
     visible: Monitors.surfacesUp
-    margins.bottom: 0
-    exclusiveZone: (!Prefs.loaded || !Prefs.dockEnabled || Prefs.dockAutoHide) ? 0 : (shell.implicitHeight + Prefs.effectiveDockBottomMargin + Prefs.shellGap)
+    // on the bar the launcher keeps its own place by margin, over the bar's zone
+    margins.bottom: dockWindow.barLift
+    exclusionMode: (dockWindow.exclusionTick, Prefs.barHoldsBottom) ? ExclusionMode.Ignore : ExclusionMode.Normal
+    exclusiveZone: (!Prefs.loaded || !Prefs.dockOn || Prefs.dockAutoHide) ? 0 : (shell.implicitHeight + Prefs.effectiveDockBottomMargin + Prefs.shellGap)
+    onOnBarChanged: Qt.callLater(() => {
+        return dockWindow.exclusionTick++;
+    })
     WlrLayershell.keyboardFocus: dockWindow.menuOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     // over a fullscreen window hyprland fades the top layer out, so a closing
     // launcher keeps the overlay until it has shrunk and gone down
@@ -2330,8 +2384,8 @@ PanelWindow {
         height: dockWindow.dockRevealed ? dockWindow.placementMargin + Theme.dp(3) : Theme.dp(3)
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
-        enabled: Prefs.dockEnabled && Prefs.dockAutoHide
-        visible: Prefs.dockEnabled && Prefs.dockAutoHide
+        enabled: Prefs.dockOn && Prefs.dockAutoHide
+        visible: Prefs.dockOn && Prefs.dockAutoHide
     }
 
     // both dock popups live in one layer window of their own: hyprland frosts
@@ -2951,6 +3005,7 @@ PanelWindow {
         property bool shellReady: false
 
         visible: dockWindow.shellShown
+        opacity: dockWindow.fadesOnBar && !dockWindow.dockRevealed ? 0 : 1
         clip: dockWindow.menuOpen || dockWindow.morphing
         anchors.bottom: parent.bottom
         anchors.bottomMargin: dockWindow.hiddenOffset + dockWindow.placementMargin
@@ -3001,6 +3056,16 @@ PanelWindow {
 
             interval: 50
             onTriggered: shell.shellReady = true
+        }
+
+        Behavior on opacity {
+            enabled: dockWindow.fadesOnBar
+
+            NumberAnimation {
+                duration: Theme.barMs(180)
+                easing.type: Easing.OutCubic
+            }
+
         }
 
         Behavior on anchors.bottomMargin {
@@ -3126,7 +3191,7 @@ PanelWindow {
         DropArea {
             anchors.fill: parent
             keys: ["text/uri-list"]
-            enabled: !dockWindow.menuOpen && Prefs.dockEnabled
+            enabled: !dockWindow.menuOpen && Prefs.dockOn
 
             onEntered: (drag) => {
                 if (dockWindow.localPaths(drag.urls).length === 0) {
@@ -3466,13 +3531,13 @@ PanelWindow {
             x: isRight ? dockWindow.paintX + dockWindow.paintW : dockWindow.paintX - width
             y: dockWindow.paintY + dockWindow.paintH - height
             z: shell.z
-            visible: dockWindow.renderAsNotch && shell.visible
+            visible: dockWindow.renderAsNotch && shell.visible && (isRight ? dockWindow.barUnderRight : dockWindow.barUnderLeft)
         }
 
     }
 
 
-    BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && shell.shellReady && dockWindow.shellShown) ? dockBlurRegion : null
+    BackgroundEffect.blurRegion: (Theme.blurAmount > 0 && shell.shellReady && dockWindow.shellShown && shell.opacity > 0.5) ? dockBlurRegion : null
 
     function regionLo(v) {
         return Math.ceil(v - 0.002);
@@ -3538,7 +3603,8 @@ PanelWindow {
         Region {
             x: dockWindow.paintX - dockWindow.blendSize
             y: dockWindow.regionLo(dockWindow.blendY)
-            width: dockWindow.blendSize
+            // on a bottom bar a blend past the bar's end is not drawn, so it takes no blur
+            width: dockWindow.barUnderLeft ? dockWindow.blendSize : 0
             height: dockWindow.regionHi(dockWindow.blendY + dockWindow.blendSize) - dockWindow.regionLo(dockWindow.blendY)
 
             Region {
@@ -3555,7 +3621,7 @@ PanelWindow {
         Region {
             x: dockWindow.paintX + dockWindow.paintW
             y: dockWindow.regionLo(dockWindow.blendY)
-            width: dockWindow.blendSize
+            width: dockWindow.barUnderRight ? dockWindow.blendSize : 0
             height: dockWindow.regionHi(dockWindow.blendY + dockWindow.blendSize) - dockWindow.regionLo(dockWindow.blendY)
 
             Region {

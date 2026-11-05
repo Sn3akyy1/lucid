@@ -79,7 +79,7 @@ Item {
         return Qt.rect(Math.round((stage.width - w) / 2), Math.round((stage.height - Theme.dp(88) - h) / 2), w, h);
     }
     // the dock's band along the bottom, which the toolbar keeps well clear of
-    readonly property real dockBand: Prefs.dockEnabled ? Theme.dp(Prefs.dockIconSize) + Theme.dp(20) + Prefs.effectiveDockBottomMargin : 0
+    readonly property real dockBand: Prefs.dockOn ? Theme.dp(Prefs.dockIconSize) + Theme.dp(20) + Prefs.effectiveDockBottomMargin : 0
     readonly property real ratio: stage.baseRect.width > 0 && stage.baseSize.width > 0 ? stage.baseSize.width / stage.baseRect.width : 1
     readonly property size naturalSize: Qt.size(base.implicitWidth, base.implicitHeight)
     // the pixel under the pointer, read off the frame
