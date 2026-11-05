@@ -26,8 +26,10 @@ Item {
 
     signal clicked()
 
-    // as big as its share of the card allows, from the old 54 up to 84
-    readonly property real ring: Math.round(Math.max(Theme.dp(54), Math.min(Theme.dp(84), g.width - Theme.dp(20))))
+    // as big as its share of the card allows, from the old 54 up to 84; one that
+    // does not grow is the old gauge, ring and reading alike
+    property bool grows: true
+    readonly property real ring: g.grows ? Math.round(Math.max(Theme.dp(54), Math.min(Theme.dp(84), g.width - Theme.dp(20)))) : Theme.dp(54)
     readonly property string reading: g.center === "" || g.center === "—" ? "—" : g.center + "%"
     readonly property string glyph: g.centerIcon !== "" ? g.centerIcon : g.icon
     // the detail, unless it only says the name again
@@ -399,7 +401,7 @@ Item {
             CircularProgress {
                 anchors.fill: parent
                 value: g.value
-                thickness: Math.round(g.ring * 0.1)
+                thickness: g.grows ? Math.round(g.ring * 0.1) : Theme.dp(5)
                 // past 72 the ring would turn wavy on its own; a gauge reads better plain
                 wavy: false
                 color: g.tone
@@ -414,7 +416,7 @@ Item {
                     visible: g.centerIcon !== ""
                     anchors.verticalCenter: parent.verticalCenter
                     name: g.centerIcon
-                    size: Math.round(g.ring * 0.24)
+                    size: g.grows ? Math.round(g.ring * 0.24) : Theme.dp(13)
                     fill: 1
                     color: g.tone
                 }
@@ -422,7 +424,7 @@ Item {
                 LText {
                     anchors.verticalCenter: parent.verticalCenter
                     role: "labelLarge"
-                    size: Math.round(g.ring * 0.27)
+                    size: g.grows ? Math.round(g.ring * 0.27) : Theme.typeSize("labelLarge")
                     weight: 680
                     rounded: 100
                     text: g.center

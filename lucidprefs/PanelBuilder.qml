@@ -2086,6 +2086,13 @@ Item {
                 card.liveOrder = null;
                 area.mode = 0;
             }
+
+            // the window draws the pointer while a block or a piece is carried
+            HeldPointer {
+                held: area.mode === 1 || area.mode === 3
+                cursor: Qt.ClosedHandCursor
+            }
+
         }
 
         // the cross on the piece the pointer is on
@@ -2257,6 +2264,13 @@ Item {
                     builder.target = null;
                     builder.overShelf = false;
                 }
+
+                // the window draws the pointer while the block is carried by its name
+                HeldPointer {
+                    held: tagArea.pressed
+                    cursor: Qt.ClosedHandCursor
+                }
+
             }
 
         }
@@ -2315,6 +2329,13 @@ Item {
                     builder.sizing = false;
                     builder.target = null;
                 }
+
+                // the window draws the pointer while the block is stretched
+                HeldPointer {
+                    held: parent.pressed
+                    cursor: parent.cursorShape
+                }
+
             }
 
         }
@@ -2427,6 +2448,13 @@ Item {
             }
             onReleased: builder.resizingGrid = false
             onCanceled: builder.resizingGrid = false
+
+            // the window draws the pointer while the panel is pulled out or pushed back
+            HeldPointer {
+                held: gripArea.pressed
+                cursor: gripArea.cursorShape
+            }
+
         }
 
     }
@@ -3073,6 +3101,13 @@ Item {
                 builder.drop = null;
                 siArea.carrying = false;
             }
+
+            // the window draws the pointer while something is carried off the library
+            HeldPointer {
+                held: siArea.carrying
+                cursor: Qt.ClosedHandCursor
+            }
+
         }
 
     }

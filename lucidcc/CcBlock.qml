@@ -35,12 +35,21 @@ Item {
     property string look: ""
     // a card behind the tiles and the sliders too; media and gauges always have one
     property bool cards: false
+    // the panel's single column, as it always was: its ring gauges keep their old
+    // size, four to a row, on the card's old margins
+    property bool classic: false
     readonly property bool carded: block.kind === "media" || block.kind === "gauges" || block.cards
     // the small tile whose name shows, kept over its neighbours
     property string tipKey: ""
     z: block.tipKey !== "" ? 1 : 0
 
     readonly property real pad: block.carded && block.kind !== "media" ? Theme.dp(12) : 0
+    readonly property bool classicRings: block.classic && block.kind === "gauges" && (block.look === "" || block.look === "rings")
+    // 16 across in all, rounded as one, and centred the way anchors centre an odd
+    // width, as the old row was
+    readonly property real padL: block.classicRings ? Math.floor(Theme.dp(16) / 2) : block.pad
+    readonly property real padW: block.classicRings ? Theme.dp(16) : block.pad * 2
+    readonly property real padY: block.classicRings ? Theme.dp(14) : block.pad
     readonly property bool ease: !!block.host && !!block.host.expanded
     // what its pieces need down, before it is given more
     readonly property real natural: body.item ? body.item.natural : 0
@@ -89,7 +98,7 @@ Item {
         return -1;
     }
 
-    implicitHeight: block.natural + block.pad * 2
+    implicitHeight: block.natural + block.padY * 2
 
     Rectangle {
         anchors.fill: parent
@@ -101,10 +110,10 @@ Item {
     Loader {
         id: body
 
-        x: block.pad
-        y: block.pad
-        width: Math.max(0, block.width - block.pad * 2)
-        height: Math.max(0, block.height - block.pad * 2)
+        x: block.padL
+        y: block.padY
+        width: Math.max(0, block.width - block.padW)
+        height: Math.max(0, block.height - block.padY * 2)
         sourceComponent: {
             switch (block.kind) {
             case "sliders":
@@ -126,8 +135,12 @@ Item {
             id: flow
 
             readonly property Item pieces: tileRep
-            readonly property real natural: flow.implicitHeight
             readonly property bool big: block.kind === "bigtiles"
+            // the column's small tiles step down as the old grid did, a name's 20 under
+            // each and 12 between rows, rounded the way it rounded them
+            readonly property bool oldRows: block.classic && !flow.big && block.look !== "icons"
+            readonly property real tail: flow.oldRows ? Theme.dp(12) - block.gap : 0
+            readonly property real natural: flow.implicitHeight - flow.tail
             readonly property int perRow: Math.max(1, flow.big ? block.bigCols : block.cols)
             readonly property real pieceW: Math.floor((flow.width - flow.spacing * (flow.perRow - 1)) / flow.perRow)
 
@@ -148,7 +161,7 @@ Item {
 
                     width: flow.pieceW
                     // the small ones' names sit in the gap, so their row keeps the grid's
-                    height: flow.big ? (block.look === "compact" ? Theme.dp(48) : Theme.dp(64)) : flow.pieceW + (block.look === "icons" ? 0 : Theme.dp(24))
+                    height: flow.big ? (block.look === "compact" ? Theme.dp(48) : Theme.dp(64)) : flow.pieceW + (block.look === "icons" ? 0 : (flow.oldRows ? Theme.dp(20) + flow.tail : Theme.dp(24)))
 
                     CcBigTile {
                         visible: flow.big
@@ -336,7 +349,7 @@ Item {
                 "compact": Theme.dp(112),
                 "graph": Theme.dp(140)
             })[gauges.look] || Theme.dp(88)
-            readonly property int perRow: block.gaugeCols(Math.max(1, gauges.n), gauges.width, gauges.least, gauges.colGap)
+            readonly property int perRow: block.classicRings ? Math.min(Math.max(1, gauges.n), 4) : block.gaugeCols(Math.max(1, gauges.n), gauges.width, gauges.least, gauges.colGap)
             readonly property int rows: Math.ceil(gauges.n / gauges.perRow)
             readonly property real gaugeH: gaugeRep.count > 0 && gaugeRep.itemAt(0) ? gaugeRep.itemAt(0).implicitHeight : 0
             readonly property real natural: gauges.rows * gauges.gaugeH + Math.max(0, gauges.rows - 1) * gauges.rowGap
@@ -363,6 +376,7 @@ Item {
                         width: (grid.width - grid.columnSpacing * (grid.columns - 1)) / grid.columns
                         height: gauges.stretch ? Math.max(implicitHeight, (gauges.height - gauges.rowGap * (gauges.rows - 1)) / Math.max(1, gauges.rows)) : implicitHeight
                         look: gauges.look
+                        grows: !block.classicRings
                         icon: (Prefs.systemInfoCatalog.find((c) => {
                             return c.key === modelData;
                         }) || {

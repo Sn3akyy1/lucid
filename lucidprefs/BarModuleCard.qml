@@ -411,7 +411,7 @@ SettingCard {
         resetKey: "systemBlocks"
         resetVisible: Prefs.isModified("systemBlocks") || Prefs.isModified("systemGrid") || Prefs.isModified("systemBlockStyles")
         resetAction: "prefs:systemBlocks,systemGrid,systemBlockStyles"
-        description: "The control centre is a bento grid, arranged in its own editor: the panel lifts off the bar to the middle of the display, with everything you can add on its left and each block's looks, size and contents on its right."
+        description: "The control centre stays one column until you lay it out as a bento grid in its own editor: the panel lifts off the bar to the middle of the display, with everything you can add on its left and each block's looks, size and contents on its right. A reset brings the column back."
         stacked: true
         showDivider: false
 
@@ -492,7 +492,7 @@ SettingCard {
             catalogue: [{
                 "id": "edit",
                 "label": "Edit",
-                "note": "opens the layout here, in Settings"
+                "note": "opens the layout editor"
             }, {
                 "id": "settings",
                 "label": "Settings"

@@ -105,6 +105,7 @@ BarPill {
         target: Edit
     }
     readonly property int panelPad: root.sp4
+    readonly property int nameSlack: Math.ceil(root.sp3 / 2)
     readonly property int contentWidth: root.panelWidth - root.panelPad * 2
     readonly property int headerHeight: Theme.dp(52)
     readonly property int subHeaderHeight: Theme.dp(44)
@@ -1376,7 +1377,8 @@ BarPill {
         case "tiles":
             return Prefs.systemSmallTileKeys;
         case "media":
-            return ["media"];
+            // on the grid it keeps its place; the column only shows it while something plays
+            return root.laidOut || (root.mprisMod && root.mprisMod.player) ? ["media"] : [];
         }
         return Prefs.systemInfoKeys;
     }
@@ -1453,9 +1455,12 @@ BarPill {
     readonly property int gridWidth: root.gridSpan(root.gridCols.length)
     readonly property real gridHeight: root.gridRowSpan(root.gridRows.length)
     readonly property int gridPanelWidth: root.gridWidth + root.panelPad * 2
+    // the panel stays the single column it always was until a layout is laid
+    // out on the grid in the editor; a reset of the layout brings it back
+    readonly property bool laidOut: Prefs.systemGrid !== ""
     // only the main view, and only while the grid fits the screen: otherwise,
     // and in the other views, which are lists, the usual single column
-    readonly property bool gridMain: root.view === "main" && root.screenW >= root.gridPanelWidth + Theme.dp(34)
+    readonly property bool gridMain: root.view === "main" && root.laidOut && root.screenW >= root.gridPanelWidth + Theme.dp(34)
 
     // across, a block's columns are all it takes; down, the rows decide
     function blockWidth(key) {
@@ -1965,8 +1970,10 @@ BarPill {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
-                    anchors.leftMargin: root.panelPad
-                    anchors.rightMargin: root.panelPad
+                    // half a gutter wider each side than the blocks, which sit back in by
+                    // as much: an outer tile's name may run into its gutter, past the clip
+                    anchors.leftMargin: root.panelPad - root.nameSlack
+                    anchors.rightMargin: root.panelPad - root.nameSlack
                     anchors.bottomMargin: root.panelPad
                     contentWidth: width
                     contentHeight: mainColumn.implicitHeight
@@ -1978,6 +1985,7 @@ BarPill {
                     Item {
                         id: mainColumn
 
+                        x: root.nameSlack
                         width: root.gridMain ? root.gridWidth : root.contentWidth
                         implicitHeight: {
                             if (root.gridMain)
@@ -2011,6 +2019,7 @@ BarPill {
                                 standing: root.gridMain && root.slidersStand
                                 look: Prefs.systemBlockStyle(modelData)
                                 cards: Prefs.systemBlockCards
+                                classic: !root.gridMain
                                 x: root.gridMain ? root.gridBox(modelData).x : 0
                                 y: root.gridMain ? root.gridBox(modelData).y : root.blockStart(modelData)
                                 width: root.blockWidth(modelData)
