@@ -307,8 +307,18 @@ Singleton {
         { "key": "bigtiles", "icon": "dashboard", "name": "Big tiles" },
         { "key": "tiles", "icon": "apps", "name": "Tiles" },
         { "key": "media", "icon": "music_note", "name": "Media" },
-        { "key": "gauges", "icon": "speed", "name": "Gauges" }
+        { "key": "gauges", "icon": "speed", "name": "Gauges" },
+        { "key": "weather", "icon": "partly_cloudy_day", "name": "Weather", "whole": true },
+        { "key": "network", "icon": "swap_vert", "name": "Network", "whole": true },
+        { "key": "power", "icon": "eco", "name": "Power", "whole": true },
+        { "key": "agenda", "icon": "event", "name": "Up next", "whole": true }
     ]
+    // a block that is one piece, as media is: nothing to add to it or take off
+    function systemBlockWhole(key) {
+        return key === "media" || !!(root.systemBlockCatalog.find((c) => {
+            return c.key === key;
+        }) || {}).whole;
+    }
     readonly property var systemSliderCatalog: [
         { "key": "brightness", "icon": "brightness_medium", "name": "Brightness" },
         { "key": "volume", "icon": "volume_up", "name": "Volume" },
@@ -406,6 +416,9 @@ Singleton {
         if (key === "gauges")
             return 2;
 
+        if (key === "agenda")
+            return 4;
+
         return 3;
     }
 
@@ -440,8 +453,9 @@ Singleton {
         };
     }
 
-    // where each of keys sits, given the rows each needs. top to bottom, one
-    // that would land on another (it grew, or another did) moves down past it;
+    // where each of keys sits, given the rows each needs. top to bottom, each
+    // rises as far as the blocks above it in its columns let it, so a block that
+    // grew pushes the ones under it down and no empty rows are left between;
     // one never placed goes under all the rest. grid, when given, stands in
     // for the saved one, so a layout not in use can be drawn too
     function systemGridPlace(keys, needs, grid) {
@@ -460,17 +474,9 @@ Singleton {
         });
         const taken = [];
         for (const p of placed) {
-            for (; ; ) {
-                const hit = taken.filter((t) => {
-                    return root.systemGridOverlap(p.r, t);
-                });
-                if (hit.length === 0)
-                    break;
-
-                p.r.y = Math.max(...hit.map((t) => {
-                    return t.y + t.h;
-                }));
-            }
+            p.r.y = taken.reduce((y, t) => {
+                return t.x < p.r.x + p.r.w && p.r.x < t.x + t.w ? Math.max(y, t.y + t.h) : y;
+            }, 0);
             out[p.key] = p.r;
             taken.push(p.r);
         }
@@ -486,6 +492,57 @@ Singleton {
             taken.push(r);
         }
         return out;
+    }
+
+    // a block that puts more height to use: standing sliders, gauges drawn as
+    // tiles or curves, the network's curves
+    function systemGridStretches(key, lie) {
+        if (key === "sliders")
+            return !lie;
+
+        if (key === "gauges")
+            return ["tiles", "graph"].indexOf(root.systemBlockStyle(key)) !== -1;
+
+        return key === "network" && root.systemBlockStyle(key) !== "line";
+    }
+
+    // the same, each block with nothing under it in its columns drawn down to the
+    // lowest one's foot, so the columns end together: always, for one that puts
+    // the height to use, and the rest only the strip or two rounding left
+    function systemGridFill(place, keys) {
+        const bottom = keys.reduce((y, k) => {
+            return place[k] ? Math.max(y, place[k].y + place[k].h) : y;
+        }, 0);
+        const out = {};
+        for (const k of keys) {
+            const r = place[k];
+            if (!r)
+                continue;
+
+            const under = keys.some((o) => {
+                const q = place[o];
+                return o !== k && !!q && q.y >= r.y + r.h && q.x < r.x + r.w && r.x < q.x + q.w;
+            });
+            const room = bottom - r.y - r.h;
+            out[k] = under || room === 0 || (room > 2 && !root.systemGridStretches(k, r.lie)) ? r : Object.assign({}, r, {
+                "h": bottom - r.y
+            });
+        }
+        return out;
+    }
+
+    // a layout still the one column, every block six across from the left edge,
+    // the sliders lying and nothing stretched by hand: the panel draws it as the
+    // column it always was, so a first change in the editor leaves it be
+    function systemGridColumnar(keys) {
+        const saved = root.systemGridSaved;
+        return keys.every((k) => {
+            const r = saved[k];
+            if (!r)
+                return true;
+
+            return Math.round(Number(r.x) || 0) === 0 && Math.round(Number(r.w) || 6) === 6 && Math.round(Number(r.h) || 0) <= 1 && (k !== "sliders" || r.lie === undefined || !!r.lie);
+        });
     }
 
     // puts a block at a new spot or size. a block it lands on takes the spot
@@ -555,7 +612,11 @@ Singleton {
         "bigtiles": [{ "key": "pill", "name": "Pill" }, { "key": "shapes", "name": "Shapes" }, { "key": "compact", "name": "Compact" }, { "key": "outline", "name": "Outline" }],
         "tiles": [{ "key": "round", "name": "Round" }, { "key": "shapes", "name": "Shapes" }, { "key": "icons", "name": "Icons only" }, { "key": "square", "name": "Square" }],
         "media": [{ "key": "card", "name": "Card" }, { "key": "disc", "name": "Disc" }, { "key": "backdrop", "name": "Backdrop" }, { "key": "mini", "name": "Mini" }, { "key": "wave", "name": "Wave" }, { "key": "cover", "name": "Cover" }],
-        "gauges": [{ "key": "rings", "name": "Rings" }, { "key": "bars", "name": "Bars" }, { "key": "tiles", "name": "Tiles" }, { "key": "compact", "name": "Compact" }, { "key": "graph", "name": "Graph" }, { "key": "dial", "name": "Dial" }]
+        "gauges": [{ "key": "rings", "name": "Rings" }, { "key": "bars", "name": "Bars" }, { "key": "tiles", "name": "Tiles" }, { "key": "compact", "name": "Compact" }, { "key": "graph", "name": "Graph" }, { "key": "dial", "name": "Dial" }],
+        "weather": [{ "key": "card", "name": "Card" }, { "key": "hours", "name": "Hours" }, { "key": "days", "name": "Days" }, { "key": "line", "name": "One line" }],
+        "network": [{ "key": "graph", "name": "Graph" }, { "key": "split", "name": "Side by side" }, { "key": "line", "name": "One line" }],
+        "power": [{ "key": "buttons", "name": "Buttons" }, { "key": "icons", "name": "Icons only" }, { "key": "list", "name": "List" }],
+        "agenda": [{ "key": "list", "name": "List" }, { "key": "next", "name": "Next only" }]
     })
     // systemBlockStyles as JSON { block: look }, only the looks the catalogue knows
     readonly property var systemStyleMap: {
@@ -697,17 +758,17 @@ Singleton {
                 "gauges": { "x": 6, "y": 1, "w": 6 }
             };
 
-        // standing sliders down the left as tall as the rest, the tiles beside
-        // them, media and the gauges at the right. three sliders take a third
-        // column, and the rest move over for it
+        // standing sliders down the left, the tiles beside them, media and the
+        // gauges at the right; each column runs down as far as the longest.
+        // three sliders take a third column, and the rest move over for it
         if (id === "wide") {
             const sw = root.systemGridMinW("sliders", false);
             return {
-                "sliders": { "x": 0, "y": 0, "w": sw, "h": 11, "lie": false },
+                "sliders": { "x": 0, "y": 0, "w": sw, "lie": false },
                 "bigtiles": { "x": sw, "y": 0, "w": 6 },
-                "tiles": { "x": sw, "y": 6, "w": 6, "h": 5 },
+                "tiles": { "x": sw, "y": 1, "w": 6 },
                 "media": { "x": sw + 6, "y": 0, "w": 5 },
-                "gauges": { "x": sw + 6, "y": 3, "w": 5, "h": 8 }
+                "gauges": { "x": sw + 6, "y": 1, "w": 5 }
             };
         }
         return {};

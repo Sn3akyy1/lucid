@@ -528,6 +528,9 @@ BarPill {
         if (root.tipBatteryTime !== "")
             return root.tipBatteryTime;
 
+        if (root.batteryCharging && root.battery && root.battery.state === UPowerDeviceState.FullyCharged)
+            return "full";
+
         return root.batteryCharging ? "charging" : "on battery";
     }
 
@@ -606,16 +609,24 @@ BarPill {
             root.tipClose();
             root.refreshGameMode();
             root.refreshOwnTiles();
+        } else {
+            diskDropdownOpen = false;
+            viewResetTimer.restart();
+        }
+    }
+    // the readings are kept fresh while the panel is open, and while its editor
+    // is, which draws the blocks from them
+    readonly property bool sampling: root.expanded || (Edit.studio === "system" && Edit.studioHost === root)
+    onSamplingChanged: {
+        if (root.sampling) {
             statsTimer.restart();
             lsblkProc.running = true;
         } else {
             statsTimer.stop();
-            diskDropdownOpen = false;
             // the counters keep running while closed, so the first delta after
             // reopening would average over the whole closed span
             root._prevCpuTotal = -1;
             root._prevCpuIdle = -1;
-            viewResetTimer.restart();
         }
     }
 
@@ -1378,9 +1389,23 @@ BarPill {
             return Prefs.systemSmallTileKeys;
         case "media":
             // on the grid it keeps its place; the column only shows it while something plays
-            return root.laidOut || (root.mprisMod && root.mprisMod.player) ? ["media"] : [];
+            return root.gridLaid || (root.mprisMod && root.mprisMod.player) ? ["media"] : [];
+        case "gauges":
+            return Prefs.systemInfoKeys;
         }
-        return Prefs.systemInfoKeys;
+        // the rest are one piece each, there whenever the block is
+        return [key];
+    }
+
+    // a tap on one of the blocks that read the shell's own sources: the network
+    // opens its page here, the weather and what is next the clock's today
+    function blockOpen(kind) {
+        if (kind === "network") {
+            root.showView("wifi");
+            return ;
+        }
+        root.expanded = false;
+        Quickshell.execDetached(["qs", "ipc", "call", "--", "clock", "open", "today"]);
     }
 
     function blockShown(key) {
@@ -1391,8 +1416,10 @@ BarPill {
         return root.blockShown(k);
     })
     // the panel is the grid kept in Prefs.systemGrid: a column is a tile wide
-    // and a row a thin strip, so a block is as tall as it was made, or as its
-    // pieces need. the columns and rows nothing shown sits in fold away
+    // and a row a thin strip. across, the columns nothing shown sits in fold
+    // away. down, the rows are drawn tight: a block is as tall as its pieces
+    // need, and the strips more it was stretched by hand, the blocks that end on
+    // the same row line up, and the last in each column runs down to the foot
     readonly property int gridUnit: Theme.dp(52)
     readonly property int gridRow: Theme.dp(20)
     readonly property int gridGap: root.sp3
@@ -1409,15 +1436,11 @@ BarPill {
         }
         return out;
     }
-    readonly property var gridPlace: Prefs.systemGridPlace(root.blockKeys, root.gridNeeds)
+    readonly property var gridPlace: Prefs.systemGridFill(Prefs.systemGridPlace(root.shownBlocks, root.gridNeeds), root.shownBlocks)
     readonly property bool slidersStand: !!(root.gridSpots.sliders && !root.gridSpots.sliders.lie)
 
     function gridSpan(n) {
         return n * root.gridUnit + Math.max(0, n - 1) * root.gridGap;
-    }
-
-    function gridRowSpan(n) {
-        return n * root.gridRow + Math.max(0, n - 1) * root.gridGap;
     }
 
     // the cells the shown blocks cover, in order: the rest fold away
@@ -1439,28 +1462,71 @@ BarPill {
     }
 
     readonly property var gridCols: root.gridUsed(root.gridSpots, true)
-    readonly property var gridRows: root.gridUsed(root.gridPlace, false)
+
+    // the strips a block was stretched by hand past what it needs, in pixels
+    function gridExtra(key) {
+        return Math.max(0, Prefs.systemGridOwnH(key) - (root.gridNeeds[key] || 1)) * (root.gridRow + root.gridGap);
+    }
+
+    // where each row a block starts or ends on falls, in pixels: just under the
+    // tallest of the blocks that end on it
+    readonly property var gridEdges: {
+        const rows = [];
+        for (const k of root.shownBlocks) {
+            const r = root.gridPlace[k];
+            if (!r)
+                continue;
+
+            for (const v of [r.y, r.y + r.h])
+                if (rows.indexOf(v) === -1)
+                    rows.push(v);
+        }
+        rows.sort((a, b) => {
+            return a - b;
+        });
+        const at = {};
+        let last = 0;
+        for (const row of rows) {
+            let y = last;
+            for (const k of root.shownBlocks) {
+                const r = root.gridPlace[k];
+                const b = root.blockItem(k);
+                if (r && b && r.y + r.h === row)
+                    y = Math.max(y, at[r.y] + b.implicitHeight + root.gridExtra(k) + root.gridGap);
+
+            }
+            at[row] = y;
+            last = y;
+        }
+        return at;
+    }
 
     // a shown block's box on the grid, in pixels
     function gridBox(key) {
         const r = root.gridPlace[key];
         const ci = r ? root.gridCols.indexOf(r.x) : -1;
-        const ri = r ? root.gridRows.indexOf(r.y) : -1;
-        if (ci < 0 || ri < 0)
+        if (ci < 0 || root.gridEdges[r.y] === undefined)
             return Qt.rect(0, 0, root.gridUnit, 0);
 
-        return Qt.rect(ci * (root.gridUnit + root.gridGap), ri * (root.gridRow + root.gridGap), root.gridSpan(r.w), root.gridRowSpan(r.h));
+        const top = root.gridEdges[r.y];
+        return Qt.rect(ci * (root.gridUnit + root.gridGap), top, root.gridSpan(r.w), root.gridEdges[r.y + r.h] - root.gridGap - top);
     }
 
     readonly property int gridWidth: root.gridSpan(root.gridCols.length)
-    readonly property real gridHeight: root.gridRowSpan(root.gridRows.length)
+    readonly property real gridHeight: Math.max(0, Object.values(root.gridEdges).reduce((m, v) => {
+        return Math.max(m, v);
+    }, 0) - root.gridGap)
     readonly property int gridPanelWidth: root.gridWidth + root.panelPad * 2
     // the panel stays the single column it always was until a layout is laid
     // out on the grid in the editor; a reset of the layout brings it back
     readonly property bool laidOut: Prefs.systemGrid !== ""
+    // and laid out as more than that column: one still six across from the left,
+    // nothing stretched, is drawn as the column too, so a first change in the
+    // editor (an order, a look) leaves the panel as it was
+    readonly property bool gridLaid: root.laidOut && !Prefs.systemGridColumnar(root.blockKeys)
     // only the main view, and only while the grid fits the screen: otherwise,
     // and in the other views, which are lists, the usual single column
-    readonly property bool gridMain: root.view === "main" && root.laidOut && root.screenW >= root.gridPanelWidth + Theme.dp(34)
+    readonly property bool gridMain: root.view === "main" && root.gridLaid && root.screenW >= root.gridPanelWidth + Theme.dp(34)
 
     // across, a block's columns are all it takes; down, the rows decide
     function blockWidth(key) {
@@ -1616,7 +1682,7 @@ BarPill {
         return {
             "value": root.batteryPresent ? root.batteryPercent / 100 : 0,
             "center": root.batteryPresent ? root.batteryPercent + "" : "—",
-            "label": root.batteryCharging ? "Charging" : "Battery",
+            "label": "Battery",
             "detail": root.batteryDetail,
             "tone": root.batteryPercent <= 20 && !root.batteryCharging ? Theme.error : Theme.accent,
             "icon": root.batteryCharging ? "bolt" : ""

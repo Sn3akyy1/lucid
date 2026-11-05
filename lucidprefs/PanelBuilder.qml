@@ -4,8 +4,9 @@ import qs.lucidcc
 import qs.lucidui
 
 // the control centre, built like bricks: its blocks (sliders, big tiles,
-// tiles, media, gauges) on the panel's own grid, bento style. each is the
-// panel's own CcBlock with made-up readings, drawn full size and the whole
+// tiles, media, gauges, weather, network, power, what is next) on the panel's
+// own grid, bento style. each is the panel's own CcBlock with made-up
+// readings, drawn full size and the whole
 // grid scaled down to fit, so it reads as the panel does. a block is dragged
 // by anything but its pieces, or by its name, to any cell and stretched by any
 // edge or corner; the shelf above adds blocks and pieces and takes back what is
@@ -135,6 +136,10 @@ Item {
         return out;
     }
     readonly property var place: Prefs.systemGridPlace(Prefs.systemBlockKeys, builder.needs, builder.plan || undefined)
+    // and as drawn: the last block in each column down to the lowest one's foot
+    readonly property var filled: Prefs.systemGridFill(builder.place, Prefs.systemBlockKeys)
+    // a layout still the one plain column, which the panel draws as it always was
+    readonly property bool columnar: Prefs.systemGridColumnar(Prefs.systemBlockKeys)
     readonly property bool slidersStand: !!(builder.spots.sliders && !builder.spots.sliders.lie)
     // down to the lowest block, and room under it to drop one
     readonly property int boardRows: Prefs.systemBlockKeys.reduce((n, key) => {
@@ -381,10 +386,11 @@ Item {
             return Prefs.systemBigTileKeys;
         case "tiles":
             return Prefs.systemSmallTileKeys;
-        case "media":
-            return ["media"];
+        case "gauges":
+            return Prefs.systemInfoKeys;
         }
-        return Prefs.systemInfoKeys;
+        // media and the blocks that read the shell's own sources are one piece
+        return [block];
     }
 
     // what can still go in a block: either tile block offers every tile in neither
@@ -892,6 +898,8 @@ Item {
         id: sample
 
         readonly property bool expanded: false
+        // the blocks that read the shell's own sources show them live here too
+        readonly property bool sampling: true
         readonly property var tilePages: ["wifi", "bluetooth", "profile", "nightlight"]
         readonly property string mediaTitle: "Song title"
         readonly property string mediaArtist: "Artist"
@@ -996,6 +1004,9 @@ Item {
         }
 
         function gaugeClick(k) {
+        }
+
+        function blockOpen(kind) {
         }
 
     }
@@ -1747,8 +1758,9 @@ Item {
         readonly property var order: card.liveOrder || builder.keysOf(card.blockKey)
         readonly property var spot: builder.spots[card.blockKey] || null
         readonly property var cell: builder.place[card.blockKey] || card.spot
-        readonly property rect box: card.cell ? builder.boxOf(card.cell) : Qt.rect(0, 0, 0, 0)
-        readonly property bool editable: card.blockKey !== "media"
+        // drawn down to the foot when nothing is under it, as the panel draws it
+        readonly property rect box: card.cell ? builder.boxOf(builder.filled[card.blockKey] || card.cell) : Qt.rect(0, 0, 0, 0)
+        readonly property bool editable: !Prefs.systemBlockWhole(card.blockKey)
         readonly property int needRows: Math.max(1, Math.ceil((view.implicitHeight + builder.gridGap) / builder.stepY))
         readonly property bool busy: area.mode === 1 || tagArea.pressed || card.sizing
         // carried, by its body or by its name tag
@@ -1954,6 +1966,7 @@ Item {
             standing: card.blockKey === "sliders" && builder.slidersStand
             look: builder.lookFor(card.blockKey)
             cards: Prefs.systemBlockCards
+            classic: builder.columnar
         }
 
         // and their outline, over what it holds; thicker on the one picked
@@ -2663,7 +2676,7 @@ Item {
 
         // what it holds: a click takes one off; more come from the library
         Column {
-            visible: ins.block !== "" && ins.block !== "media"
+            visible: ins.block !== "" && !Prefs.systemBlockWhole(ins.block)
             width: parent.width
             spacing: Theme.dp(10)
 
@@ -2676,7 +2689,7 @@ Item {
                 spacing: Theme.dp(6)
 
                 Repeater {
-                    model: ins.block !== "" && ins.block !== "media" ? builder.keysOf(ins.block) : []
+                    model: ins.block !== "" && !Prefs.systemBlockWhole(ins.block) ? builder.keysOf(ins.block) : []
 
                     Chip {
                         required property string modelData

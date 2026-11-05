@@ -6,7 +6,9 @@ import qs.lucidui
 // one gauge, in one of six looks: a ring with its reading in the middle; a
 // line with a bar under it; a tile the reading fills from the bottom; a
 // small ring with the number beside it; its last readings as a curve (or a
-// bar, for what keeps no history); or a dial, open at the foot
+// bar, for what keeps no history); or a dial, open at the foot. a centre icon
+// (the charging bolt) leads the name under a ring or a dial, so the number
+// stays alone in the middle as every other gauge's does
 Item {
     id: g
 
@@ -148,37 +150,40 @@ Item {
             trackColor: Theme.withBlur(Theme.surfaceHighest)
         }
 
-        Row {
+        LText {
             anchors.centerIn: dial
-            spacing: 0
+            role: "labelLarge"
+            size: Math.round(g.ring * 0.27)
+            weight: 680
+            rounded: 100
+            text: g.center
+        }
+
+        // the name in the gap, after the charging bolt
+        Row {
+            anchors.horizontalCenter: dial.horizontalCenter
+            anchors.bottom: dial.bottom
+            spacing: Theme.dp(2)
 
             Icon {
+                id: dialBolt
+
                 visible: g.centerIcon !== ""
                 anchors.verticalCenter: parent.verticalCenter
                 name: g.centerIcon
-                size: Math.round(g.ring * 0.24)
+                size: Theme.dp(13)
                 fill: 1
                 color: g.tone
             }
 
             LText {
                 anchors.verticalCenter: parent.verticalCenter
-                role: "labelLarge"
-                size: Math.round(g.ring * 0.27)
-                weight: 680
-                rounded: 100
-                text: g.center
+                role: "labelSmall"
+                text: g.label
+                width: Math.max(0, Math.min(implicitWidth, g.ring * 0.62 - (dialBolt.visible ? dialBolt.width + parent.spacing : 0)))
+                elide: Text.ElideRight
             }
 
-        }
-
-        LText {
-            anchors.horizontalCenter: dial.horizontalCenter
-            anchors.bottom: dial.bottom
-            width: Math.min(implicitWidth, g.ring * 0.62)
-            role: "labelSmall"
-            text: g.label
-            elide: Text.ElideRight
         }
 
         LText {
@@ -408,28 +413,13 @@ Item {
                 trackColor: Theme.withBlur(Theme.surfaceHighest)
             }
 
-            Row {
+            LText {
                 anchors.centerIn: parent
-                spacing: 0
-
-                Icon {
-                    visible: g.centerIcon !== ""
-                    anchors.verticalCenter: parent.verticalCenter
-                    name: g.centerIcon
-                    size: g.grows ? Math.round(g.ring * 0.24) : Theme.dp(13)
-                    fill: 1
-                    color: g.tone
-                }
-
-                LText {
-                    anchors.verticalCenter: parent.verticalCenter
-                    role: "labelLarge"
-                    size: g.grows ? Math.round(g.ring * 0.27) : Theme.typeSize("labelLarge")
-                    weight: 680
-                    rounded: 100
-                    text: g.center
-                }
-
+                role: "labelLarge"
+                size: g.grows ? Math.round(g.ring * 0.27) : Theme.typeSize("labelLarge")
+                weight: 680
+                rounded: 100
+                text: g.center
             }
 
             StateLayer {
@@ -444,12 +434,30 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 0
 
-            LText {
+            // the name, after the charging bolt
+            Row {
                 anchors.horizontalCenter: parent.horizontalCenter
-                role: "labelMedium"
-                text: g.label
-                width: Math.min(implicitWidth, g.width - Theme.dp(4))
-                elide: Text.ElideRight
+                spacing: Theme.dp(2)
+
+                Icon {
+                    id: ringBolt
+
+                    visible: g.centerIcon !== ""
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: g.centerIcon
+                    size: Theme.dp(13)
+                    fill: 1
+                    color: g.tone
+                }
+
+                LText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    role: "labelMedium"
+                    text: g.label
+                    width: Math.max(0, Math.min(implicitWidth, g.width - Theme.dp(4) - (ringBolt.visible ? ringBolt.width + parent.spacing : 0)))
+                    elide: Text.ElideRight
+                }
+
             }
 
             LText {

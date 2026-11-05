@@ -4,10 +4,11 @@ import qs.lucidui
 
 // one block of the control centre, drawn the same in the panel and in the
 // editor on its module card: the big tiles, the small ones, the sliders, what
-// is playing or the gauges. it fills the box it is given: standing sliders
-// stretch, lying ones and the gauges spread out, the media card keeps to the
-// middle and the tiles to the top. the host says what each piece shows and
-// takes its taps:
+// is playing, the gauges, or one of the blocks that read the shell's own
+// sources (weather, network, power, agenda). it fills the box it is given:
+// standing sliders stretch, lying ones and the gauges spread out, the media
+// card keeps to the middle and the tiles to the top. the host says what each
+// piece shows and takes its taps:
 //   tiles   tileIcon(k) tileLabel(k) bigName(k) bigSub(k) tileChecked(k)
 //           tilePages tileAct(k) showView(v)
 //   sliders sliderIcon(k) sliderValue(k) sliderMuted(k) sliderMove(k, v)
@@ -17,13 +18,15 @@ import qs.lucidui
 //           mediaNext() mediaOpen() mediaSeek(s)
 //   gauges  gauge(k), as { value, center, label, detail, tone, icon,
 //           clickable, history }, and gaugeClick(k)
-//   expanded, while the values may ease
+//   the rest blockOpen(kind), for a tap on one
+//   expanded, while the values may ease; sampling, while what the blocks
+//           read is kept fresh (the panel open, or its editor)
 // look picks how the block draws its pieces (Prefs.systemStyleCatalog); ""
 // is the first, the look it always had
 Item {
     id: block
 
-    // sliders, bigtiles, tiles, media or gauges
+    // sliders, bigtiles, tiles, media, gauges, weather, network, power or agenda
     property string kind: ""
     property var keys: []
     property var host: null
@@ -38,7 +41,7 @@ Item {
     // the panel's single column, as it always was: its ring gauges keep their old
     // size, four to a row, on the card's old margins
     property bool classic: false
-    readonly property bool carded: block.kind === "media" || block.kind === "gauges" || block.cards
+    readonly property bool carded: block.kind !== "sliders" && block.kind !== "bigtiles" && block.kind !== "tiles" || block.cards
     // the small tile whose name shows, kept over its neighbours
     property string tipKey: ""
     z: block.tipKey !== "" ? 1 : 0
@@ -51,8 +54,11 @@ Item {
     readonly property real padW: block.classicRings ? Theme.dp(16) : block.pad * 2
     readonly property real padY: block.classicRings ? Theme.dp(14) : block.pad
     readonly property bool ease: !!block.host && !!block.host.expanded
+    readonly property bool live: !!block.host && !!block.host.sampling
     // what its pieces need down, before it is given more
     readonly property real natural: body.item ? body.item.natural : 0
+    // big tiles keep to the middle of a taller box, beside the media card they line up with
+    readonly property real lift: block.kind === "bigtiles" ? Math.max(0, Math.floor((block.height - block.padY * 2 - block.natural) / 2)) : 0
 
     // gauges sharing a card: as many to a row as leave each its least (88
     // for a ring), in rows as even as can be
@@ -111,9 +117,9 @@ Item {
         id: body
 
         x: block.padL
-        y: block.padY
+        y: block.padY + block.lift
         width: Math.max(0, block.width - block.padW)
-        height: Math.max(0, block.height - block.padY * 2)
+        height: Math.max(0, block.height - block.padY * 2 - block.lift * 2)
         sourceComponent: {
             switch (block.kind) {
             case "sliders":
@@ -122,6 +128,14 @@ Item {
                 return mediaC;
             case "gauges":
                 return gaugesC;
+            case "weather":
+                return weatherC;
+            case "network":
+                return networkC;
+            case "power":
+                return powerC;
+            case "agenda":
+                return agendaC;
             }
             return tilesC;
         }
@@ -325,6 +339,59 @@ Item {
             onSeek: (s) => {
                 return block.host.mediaSeek(s);
             }
+        }
+
+    }
+
+    Component {
+        id: weatherC
+
+        CcWeather {
+            readonly property Item pieces: null
+            readonly property real natural: implicitHeight
+
+            look: block.look === "" ? "card" : block.look
+            live: block.live
+            onOpened: block.host.blockOpen("weather")
+        }
+
+    }
+
+    Component {
+        id: networkC
+
+        CcNetwork {
+            readonly property Item pieces: null
+            readonly property real natural: implicitHeight
+
+            look: block.look === "" ? "graph" : block.look
+            live: block.live
+            onOpened: block.host.blockOpen("network")
+        }
+
+    }
+
+    Component {
+        id: powerC
+
+        CcPower {
+            readonly property Item pieces: null
+            readonly property real natural: implicitHeight
+
+            look: block.look === "" ? "buttons" : block.look
+        }
+
+    }
+
+    Component {
+        id: agendaC
+
+        CcAgenda {
+            readonly property Item pieces: null
+            readonly property real natural: implicitHeight
+
+            look: block.look === "" ? "list" : block.look
+            onOpened: block.host.blockOpen("agenda")
         }
 
     }
