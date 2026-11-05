@@ -272,7 +272,7 @@ them and reordered inside them, or taken out of the bar entirely.
   Bluetooth panels and a switcher for the audio output and input. Two rows of
   tiles underneath: the toggles (silence, awake, dark, airplane, location, mic)
   and the tools (capture, record, colour picker, keyboard, timer, session);
-  Edit tiles adds more, such as the power profile, game mode and **night
+  the shelf on its card in Settings adds more, such as the power profile, game mode and **night
   light**, which warms the screen through hyprsunset, fading in and out, by
   hand or from sunset to sunrise where you are (worked out locally, no
   network) or between set hours. Right-click its tile to pick how warm and
@@ -322,11 +322,19 @@ panels behind them, brightness and volume with the audio devices behind those,
 two rows of tiles you arrange yourself, what is playing, and CPU, memory, disk
 and battery.*
 
-The small tiles are yours to arrange, the way a phone's quick settings are. The
-pencil in the panel's header opens *Edit tiles*: drag a tile to move it, tap its
-− or drag it below the line to take it out, and tap anything under *Tap to add*
-to put it in. Clipboard, Emoji, Wallpaper, Theme, Widgets and Clear wait there
-to begin with, and Reset brings back the set Lucid ships.
+The panel is yours to arrange, the way a phone's quick settings are, only on a
+bento grid. The pencil in its header opens its editor: the panel lifts off the
+bar to the middle of the display, with a library of everything you can add on
+its left and an inspector on its right. The big tiles, the small ones, the
+sliders, what is playing and the gauges are blocks you drag anywhere on the
+grid, the others stepping aside as you go, and stretch by any edge; the pieces
+inside drag into order. Drag anything in from the library, or back onto it to
+take it off. Click a block and the inspector shows its looks, drawn with what
+your panel reads, each one tried on the grid while the pointer rests on it,
+along with its width and what it holds. With nothing picked it offers layouts
+to start from. *Your own tiles*, on the module's sheet, makes tiles that run
+your commands: one command for a button, or two and a check for a switch that
+stays right when something else turns it on.
 
 <img src="assets/clock-app.webp" alt="The clock app on its Today page, among clock, music, calendar, weather, battery, system and to-do widgets">
 

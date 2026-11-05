@@ -35,6 +35,15 @@ Singleton {
     property string returnPage: ""
     // the dock's style to go back to once it is pulled out of the edge
     property string dockFloatStyle: "island"
+    // a module's own editor over a whole display (the control centre's): which
+    // module, on which display, the module it reads from, and the rect on that
+    // display it rose from, to go back into
+    property string studio: ""
+    property string studioScreen: ""
+    property var studioHost: null
+    property rect studioFrom: Qt.rect(0, 0, 0, 0)
+    // edit mode was started for the studio alone, so it ends with it
+    property bool studioOwnsEdit: false
 
     // every pref the bar and the dock read, the modules' own options and looks with them
     readonly property var keys: {
@@ -84,6 +93,8 @@ Singleton {
 
     // asks the bar on that display to open a module, so the sheet can show its panel
     signal moduleOpenRequested(string id, string screen)
+    // asks the module on that display to open its studio, so it can say where from
+    signal studioRequested(string id, string screen)
     signal launcherRequested()
 
     function enter(screen) {
@@ -123,8 +134,18 @@ Singleton {
         if (!root.active)
             return ;
 
+        // a studio goes back into the bar first, and edit mode ends once it has
+        if (root.studio !== "") {
+            root.studio = "";
+            root.studioOwnsEdit = false;
+            studioExit.restart();
+            return ;
+        }
+
         root.sheet = "";
         root.back = "";
+        root.studio = "";
+        root.studioOwnsEdit = false;
         root.active = false;
         root.dragging = false;
         const page = root.returnPage;
@@ -178,9 +199,41 @@ Singleton {
         }
     }
 
-    // escape: the sheet first, then edit mode itself
+    function openStudio(id, screen, host, from) {
+        if (!root.active)
+            root.studioOwnsEdit = true;
+
+        root.enter(screen);
+        root.studioScreen = screen || root.toolbarScreen;
+        root.studioHost = host || null;
+        root.studioFrom = from || Qt.rect(0, 0, 0, 0);
+        root.studio = id;
+    }
+
+    // from a sheet or a settings page: the module on that display answers with
+    // where it is; with none in the bar, the studio opens on its own
+    function requestStudio(id, screen) {
+        root.studioRequested(id, screen);
+        Qt.callLater(() => {
+            if (root.studio === "")
+                root.openStudio(id, screen, null, null);
+
+        });
+    }
+
+    function closeStudio() {
+        root.studio = "";
+        if (root.studioOwnsEdit) {
+            root.studioOwnsEdit = false;
+            studioExit.restart();
+        }
+    }
+
+    // escape: the studio, then the sheet, then edit mode itself
     function backOut() {
-        if (root.sheet !== "")
+        if (root.studio !== "")
+            root.closeStudio();
+        else if (root.sheet !== "")
             root.goBack();
         else
             root.exit();
@@ -252,6 +305,18 @@ Singleton {
 
         interval: 450
         onTriggered: root.record()
+    }
+
+    // after the studio has gone back into the bar
+    Timer {
+        id: studioExit
+
+        interval: Theme.durLong + 60
+        onTriggered: {
+            if (root.studio === "")
+                root.exit();
+
+        }
     }
 
     IpcHandler {
