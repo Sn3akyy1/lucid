@@ -351,6 +351,15 @@ Singleton {
             {"key": "avatar", "name": "Avatar", "blurb": "Your profile picture"},
             {"key": "label", "name": "Label", "blurb": "The word Start on a chip in the accent"}
         ]
+    },
+    {
+        "id": "apps",
+        "key": "showApps",
+        "home": "center",
+        "name": "Apps",
+        "desc": "The dock's pinned apps and the ones open, on the bar: a click opens an app or brings it up; with several windows, or on a right click, a panel lists them",
+        "when": "while there is an app pinned or open",
+        "options": ["dockShowRunning", "dockShowIndicators", "dockShowTooltips", "dockIconTiles"]
     }
     ]
 
@@ -547,6 +556,7 @@ Singleton {
     property alias windowModuleMiddleClose: s.windowModuleMiddleClose
     property alias showStart: s.showStart
     property alias startModuleStyle: s.startModuleStyle
+    property alias showApps: s.showApps
     property alias workspacesByDisplay: s.workspacesByDisplay
     property alias audioMeters: s.audioMeters
     property alias clockStyle: s.clockStyle
@@ -1061,6 +1071,7 @@ Singleton {
         "windowModuleMiddleClose": false,
         "showStart": false,
         "startModuleStyle": "logo",
+        "showApps": false,
         "workspacesByDisplay": true,
         "audioMeters": true,
         "clockStyle": "accent",
@@ -1806,6 +1817,7 @@ Singleton {
             property bool windowModuleMiddleClose: false
             property bool showStart: false
             property string startModuleStyle: "logo"
+            property bool showApps: false
             property bool workspacesByDisplay: true
             property bool audioMeters: true
             property string clockStyle: "accent"
