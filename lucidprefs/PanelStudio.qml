@@ -11,22 +11,46 @@ Item {
     property bool hosted: false
     // the free band of the display, between edit mode's toolbar and the bar
     property rect area: Qt.rect(0, 0, stage.width, stage.height)
-    property real t: stage.hosted ? 1 : 0
+    // how far in it has come, driven from hosted below
+    property real t: 0
     readonly property bool shown: stage.t > 0.001
     // for the layer's blur, once the panes have arrived
-    readonly property bool settled: stage.hosted && stage.t > 0.99 && !!loader.item
+    readonly property bool settled: stage.hosted && stage.t > 0.998 && !!loader.item
     readonly property rect libRect: loader.item ? loader.item.libRect : Qt.rect(0, 0, 0, 0)
     readonly property rect canvasRect: loader.item ? loader.item.canvasRect : Qt.rect(0, 0, 0, 0)
     readonly property rect inspRect: loader.item ? loader.item.inspRect : Qt.rect(0, 0, 0, 0)
 
-    visible: stage.shown
+    // in as the shell's surfaces open, decelerating; out quicker, accelerating
+    // into the bar. set before it starts, so each way runs on its own curve
+    function travel() {
+        enter.stop();
+        enter.to = stage.hosted ? 1 : 0;
+        enter.duration = stage.hosted ? Theme.durLong : Theme.durMedium;
+        enter.easing.bezierCurve = stage.hosted ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
+        enter.start();
+    }
+
+    // shown while it warms up too: every pane is clear at the start, but drawn,
+    // so its first frame is paid for before it moves
+    visible: stage.shown || warm.running
+    // from closed it is built first, and set off once that and its first frame
+    // are behind it, or the cost eats the start of the way in
     onHostedChanged: {
+        if (stage.hosted && stage.t === 0)
+            warm.restart();
+        else
+            stage.travel();
         if (stage.hosted)
             Qt.callLater(() => {
             if (loader.item)
                 loader.item.forceActiveFocus();
 
         });
+
+    }
+    Component.onCompleted: {
+        if (stage.hosted)
+            warm.restart();
 
     }
 
@@ -67,13 +91,23 @@ Item {
 
     }
 
-    // one curve both ways, so going back retraces the way it came
-    Behavior on t {
-        NumberAnimation {
-            duration: Theme.durLong
-            easing.type: Easing.InOutCubic
-        }
+    Timer {
+        id: warm
 
+        interval: 50
+        onTriggered: {
+            if (stage.hosted)
+                stage.travel();
+
+        }
+    }
+
+    NumberAnimation {
+        id: enter
+
+        target: stage
+        property: "t"
+        easing.type: Easing.Bezier
     }
 
 }

@@ -46,14 +46,28 @@ Item {
         const r = builder.restSpots[key];
         return r ? Math.max(n, r.x + r.w) : n;
     }, 0)
-    // room past the blocks to grow into: two columns and three rows to start, more
-    // pulled out by the panel's edges, and rows added as a block is carried down
-    property int extraCols: 2
-    property int extraRows: 3
-    readonly property int boardCols: builder.studio ? Math.min(Prefs.systemGridCols, builder.usedCols + Math.max(0, builder.extraCols)) : Prefs.systemGridCols
+    // room past the blocks to grow into: none at rest, so the panel is drawn the
+    // size it will be; two columns and two rows open while something is carried
+    // or stretched, more rows as a block is carried down, and the panel's edges
+    // pull out what is kept
+    property int extraCols: 0
+    property int extraRows: 0
+    property int carryRows: 0
+    readonly property bool carrying: builder.plan !== null || builder.carry !== null || builder.target !== null
+    readonly property int roomCols: Math.max(builder.extraCols, builder.carrying ? 2 : 0)
+    readonly property int roomRows: Math.max(builder.extraRows, builder.carrying ? 2 + builder.carryRows : 0)
+    readonly property int boardCols: builder.studio ? Math.min(Prefs.systemGridCols, builder.usedCols + builder.roomCols) : Prefs.systemGridCols
+    // and without what a carry opens: the panel is centred on this and the grid
+    // scaled by it, so neither moves while something is in hand
+    readonly property int restCols: builder.studio ? Math.min(Prefs.systemGridCols, builder.usedCols + builder.extraCols) : Prefs.systemGridCols
     // how much the grid is drawn down to fit the page, or the studio's middle
-    readonly property real k: builder.studio ? Math.max(0.5, Math.min(1, (builder.area.width - builder.colW * 2 - builder.colGap * 2 - builder.canvasPad * 2) / builder.span(builder.boardCols))) : Math.max(0.3, Math.min(1, builder.width / builder.span(builder.boardCols)))
+    readonly property real k: builder.studio ? Math.max(0.5, Math.min(1, (builder.area.width - builder.colW * 2 - builder.colGap * 2 - builder.canvasPad * 2) / builder.span(builder.restCols))) : Math.max(0.3, Math.min(1, builder.width / builder.span(builder.boardCols)))
     readonly property real canvasW: boardWrap.width + builder.canvasPad * 2
+    readonly property real canvasRestW: Math.round(builder.span(builder.restCols) * builder.k) + builder.canvasPad * 2
+    // the panel's size as drawn: it eases to what the grid takes, and the blur
+    // behind it and the inspector beside it follow
+    property real canvasWShown: builder.canvasW
+    property real boardHShown: boardWrap.height
     readonly property int restRows: {
         const at = Prefs.systemGridPlace(Prefs.systemBlockKeys, builder.needs);
         return Prefs.systemBlockKeys.reduce((n, key) => {
@@ -67,13 +81,13 @@ Item {
     readonly property bool holding: builder.plan !== null || builder.carry !== null || builder.target !== null || builder.resizingGrid
     property real heldX: 0
     property real heldY: 0
-    readonly property real groupXFree: builder.area.x + Math.max(0, (builder.area.width - builder.colW * 2 - builder.colGap * 2 - builder.canvasW) / 2)
+    readonly property real groupXFree: builder.area.x + Math.max(0, (builder.area.width - builder.colW * 2 - builder.colGap * 2 - builder.canvasRestW) / 2)
     readonly property real canvasYFree: builder.area.y + Math.max(0, (builder.area.height - builder.canvasRestH) / 2)
     property real groupX: builder.holding ? builder.heldX : builder.groupXFree
     property real canvasY: builder.holding ? builder.heldY : builder.canvasYFree
     readonly property rect libRect: Qt.rect(builder.groupX, builder.area.y, builder.colW, builder.area.height)
-    readonly property rect canvasRect: Qt.rect(builder.groupX + builder.colW + builder.colGap, builder.canvasY, builder.canvasW, Math.min(builder.area.y + builder.area.height - builder.canvasY, builder.canvasHead + boardWrap.height + builder.canvasPad))
-    readonly property rect inspRect: Qt.rect(builder.canvasRect.x + builder.canvasW + builder.colGap, builder.area.y, builder.colW, builder.area.height)
+    readonly property rect canvasRect: Qt.rect(builder.groupX + builder.colW + builder.colGap, builder.canvasY, builder.canvasWShown, Math.min(builder.area.y + builder.area.height - builder.canvasY, builder.canvasHead + builder.boardHShown + builder.canvasPad))
+    readonly property rect inspRect: Qt.rect(builder.canvasRect.x + builder.canvasWShown + builder.colGap, builder.area.y, builder.colW, builder.area.height)
 
     onHoldingChanged: {
         if (builder.holding) {
@@ -81,12 +95,17 @@ Item {
             builder.heldY = builder.canvasYFree;
         }
     }
+    onCarryingChanged: {
+        if (!builder.carrying)
+            builder.carryRows = 0;
+
+    }
 
     Behavior on groupX {
         enabled: builder.studio && builder.enterT > 0.99 && !builder.holding
 
         NumberAnimation {
-            duration: Theme.durMedium
+            duration: Theme.durEnter
             easing.type: Easing.Bezier
             easing.bezierCurve: Theme.easeEmphasizedDecel
         }
@@ -97,7 +116,30 @@ Item {
         enabled: builder.studio && builder.enterT > 0.99 && !builder.holding
 
         NumberAnimation {
-            duration: Theme.durMedium
+            duration: Theme.durEnter
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.easeEmphasizedDecel
+        }
+
+    }
+
+    // no overshoot on the panel's own size: the blur behind it reads it
+    Behavior on canvasWShown {
+        enabled: builder.studio && builder.enterT > 0.99
+
+        NumberAnimation {
+            duration: Theme.durEnter
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.easeEmphasizedDecel
+        }
+
+    }
+
+    Behavior on boardHShown {
+        enabled: builder.studio && builder.enterT > 0.99
+
+        NumberAnimation {
+            duration: Theme.durEnter
             easing.type: Easing.Bezier
             easing.bezierCurve: Theme.easeEmphasizedDecel
         }
@@ -107,7 +149,7 @@ Item {
     // a block carried past the last row brings another under it
     function growTo(t) {
         if (builder.studio && t && t.y + t.h >= builder.boardRows)
-            builder.extraRows += t.y + t.h - builder.boardRows + 1;
+            builder.carryRows += t.y + t.h - builder.boardRows + 1;
 
     }
 
@@ -145,8 +187,8 @@ Item {
     readonly property int boardRows: Prefs.systemBlockKeys.reduce((n, key) => {
         const r = builder.place[key];
         return r ? Math.max(n, r.y + r.h) : n;
-    }, 0) + (builder.studio ? builder.extraRows : 6)
-    readonly property int usedRows: builder.boardRows - (builder.studio ? builder.extraRows : 6)
+    }, 0) + (builder.studio ? builder.roomRows : 6)
+    readonly property int usedRows: builder.boardRows - (builder.studio ? builder.roomRows : 6)
     // where a block is being carried or stretched to, outlined on the grid
     property var target: null
     // the shelf's page: blocks, tiles, sliders or gauges
@@ -783,11 +825,33 @@ Item {
             builder.menu = null;
         }
     }
+    // the board's blocks, kept as rows rather than rebuilt with every change to
+    // the list, so the ones that stay glide to their new places
+    function syncBoard() {
+        const want = Prefs.systemBlockKeys;
+        for (let i = boardKeys.count - 1; i >= 0; i--) {
+            if (want.indexOf(boardKeys.get(i).block) === -1)
+                boardKeys.remove(i);
+
+        }
+        for (const k of want) {
+            let has = false;
+            for (let i = 0; i < boardKeys.count; i++)
+                has = has || boardKeys.get(i).block === k;
+            if (!has)
+                boardKeys.append({
+                "block": k
+            });
+
+        }
+    }
+
     // the three blocks there were once are written out as the five, and the
     // layout from here on is what undo goes back to
     Component.onCompleted: {
         Prefs.systemMigrate();
         builder.last = Prefs.systemLayoutNow();
+        builder.syncBoard();
     }
     // ctrl+z and ctrl+shift+z (or ctrl+y) step back and forth; tab picks the
     // blocks in turn, the arrows move the one picked, with shift they
@@ -864,6 +928,10 @@ Item {
     Connections {
         function onSystemBlocksChanged() {
             settle.restart();
+        }
+
+        function onSystemBlockKeysChanged() {
+            builder.syncBoard();
         }
 
         function onSystemGridChanged() {
@@ -1099,7 +1167,7 @@ Item {
                     role: "bodySmall"
                     color: builder.notice !== "" ? Theme.accent : Theme.subtext
                     elide: Text.ElideRight
-                    text: builder.resizingGrid ? builder.boardCols + " columns × " + builder.boardRows + " rows" : (builder.notice !== "" ? builder.notice + " · Ctrl+Z puts it back" : (builder.selected !== "" ? "Drag it, stretch it by an edge, or pick its look on the right" : "Drag blocks to arrange them · pull the panel's edges for more room"))
+                    text: builder.resizingGrid ? builder.boardCols + " columns × " + builder.boardRows + " rows" : (builder.notice !== "" ? builder.notice + " · Ctrl+Z puts it back" : (builder.selected !== "" ? "Drag it, stretch it by an edge, or pick its look" : "Drag blocks to arrange them"))
                 }
 
             }
@@ -1328,19 +1396,43 @@ Item {
                 onClicked: builder.redo()
             }
 
+            // every block as high as it goes, the lot against the left edge; it
+            // slides in only while there is something to tidy, so the day keeps its room
             Item {
-                width: Theme.dp(4)
-                height: 1
-            }
-
-            // every block as high as it goes, the lot against the left edge
-            M3Button {
                 anchors.verticalCenter: parent.verticalCenter
-                variant: "tonal"
-                text: "Tidy up"
-                iconPath: "vertical_align_top"
-                enabled: builder.tidied !== null
-                onClicked: builder.tidy()
+                width: builder.tidied !== null ? tidyButton.width + Theme.dp(4) : 0
+                height: tidyButton.height
+                visible: width > 0
+                clip: true
+
+                M3Button {
+                    id: tidyButton
+
+                    x: Theme.dp(4)
+                    variant: "tonal"
+                    text: "Tidy up"
+                    iconPath: "vertical_align_top"
+                    opacity: builder.tidied !== null ? 1 : 0
+                    onClicked: builder.tidy()
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Theme.durShort
+                        }
+
+                    }
+
+                }
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: Theme.durEnter
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.easeEmphasizedDecel
+                    }
+
+                }
+
             }
 
         }
@@ -1533,17 +1625,82 @@ Item {
 
             }
 
-            // where the block being carried or stretched would go
+            // where the block being carried or stretched would go: it fades in where
+            // it first is, glides from cell to cell, and fades out where it last was
             Rectangle {
                 id: targetBox
 
-                readonly property rect box: builder.target ? builder.boxOf(builder.target) : Qt.rect(0, 0, 0, 0)
+                property var last: null
+                readonly property rect box: targetBox.last ? builder.boxOf(targetBox.last) : Qt.rect(0, 0, 0, 0)
 
-                visible: builder.target !== null
+                visible: opacity > 0
+                opacity: builder.target !== null ? 1 : 0
                 x: box.x
                 y: box.y
                 width: box.width
                 height: box.height
+
+                Connections {
+                    function onTargetChanged() {
+                        if (builder.target)
+                            targetBox.last = builder.target;
+
+                    }
+
+                    target: builder
+                }
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Theme.durShort
+                    }
+
+                }
+
+                Behavior on x {
+                    enabled: targetBox.opacity > 0
+
+                    NumberAnimation {
+                        duration: Theme.durFastSpatial
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.curveDefaultSpatial
+                    }
+
+                }
+
+                Behavior on y {
+                    enabled: targetBox.opacity > 0
+
+                    NumberAnimation {
+                        duration: Theme.durFastSpatial
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.curveDefaultSpatial
+                    }
+
+                }
+
+                Behavior on width {
+                    enabled: targetBox.opacity > 0
+
+                    NumberAnimation {
+                        duration: Theme.durFastSpatial
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.curveDefaultSpatial
+                    }
+
+                }
+
+                Behavior on height {
+                    enabled: targetBox.opacity > 0
+
+                    NumberAnimation {
+                        duration: Theme.durFastSpatial
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.curveDefaultSpatial
+                    }
+
+                }
+
                 radius: Theme.radiusMd
                 color: Theme.alpha(Theme.accent, 0.12)
                 border.width: Theme.dp(2)
@@ -1576,15 +1733,19 @@ Item {
 
             }
 
+            ListModel {
+                id: boardKeys
+            }
+
             Repeater {
                 id: boardRepeater
 
-                model: Prefs.systemBlockKeys
+                model: boardKeys
 
                 BlockCard {
-                    required property string modelData
+                    required property string block
 
-                    blockKey: modelData
+                    blockKey: block
                 }
 
             }
@@ -1772,15 +1933,18 @@ Item {
         readonly property int hovered: hover.hovered && builder.ghost === null && card.editable ? view.pieceAt(hover.point.position.x, hover.point.position.y) : -1
         property int crossAt: -1
         // how far the pointer has carried this block, and where it took hold
-        property real dragDX: 0
-        property real dragDY: 0
+        // between carries they follow where it is drawn, so a press, which marks it
+        // carried before it is told where it was taken, never moves it
+        property real dragDX: card.easedX
+        property real dragDY: card.easedY
         property point grab
 
         // carrying the block: the card follows the pointer, its outline snaps to a cell
+        // from where it is drawn now, which may be mid-glide
         function moveFrom(p) {
-            card.grab = Qt.point(p.x - card.x, p.y - card.y);
-            card.dragDX = card.x;
-            card.dragDY = card.y;
+            card.dragDX = card.easedX;
+            card.dragDY = card.easedY;
+            card.grab = Qt.point(p.x - card.dragDX, p.y - card.dragDY);
         }
 
         function moveTo(p) {
@@ -1809,8 +1973,7 @@ Item {
 
         // the blocks it lands on take the spot it left, or go under it
         function moveEnd() {
-            card.dragDX = 0;
-            card.dragDY = 0;
+            card.land();
             const t = builder.target;
             builder.target = null;
             builder.plan = null;
@@ -1901,44 +2064,125 @@ Item {
             else if (!crossArea.containsMouse)
                 card.crossAt = -1;
         }
-        // carried, it is where the pointer has it; otherwise its cell, eased there
-        x: card.carried ? card.dragDX : card.box.x
-        y: card.carried ? card.dragDY : card.box.y
-        // its width from its columns alone; down, the rows decide
-        width: card.spot ? builder.span(card.spot.w) : 0
-        height: card.box.height
+        // its cell, eased there on the shell's spatial spring: across from its
+        // columns alone, down as the rows decide
+        property real easedX: card.box.x
+        property real easedY: card.box.y
+        property real easedW: card.spot ? builder.span(card.spot.w) : 0
+        property real easedH: card.box.height
+        // set while the eased place is put somewhere at once
+        property bool jump: false
+        // a block added while the studio is up comes in; the rest are there already
+        property real born: 1
+        readonly property bool jellyWobbling: cardJelly.wobbling
+
+        // let go: from where the pointer left it, it glides to its cell and settles
+        function land() {
+            card.jump = true;
+            card.easedX = card.dragDX;
+            card.easedY = card.dragDY;
+            card.jump = false;
+            card.easedX = Qt.binding(() => {
+                return card.box.x;
+            });
+            card.easedY = Qt.binding(() => {
+                return card.box.y;
+            });
+            card.dragDX = Qt.binding(() => {
+                return card.easedX;
+            });
+            card.dragDY = Qt.binding(() => {
+                return card.easedY;
+            });
+            const cap = Theme.dp(14) / Math.max(1, card.height);
+            cardJelly.kickAfter(-Math.min(0.08, cap), Math.round(Theme.durDefaultSpatial * 0.4));
+        }
+
+        // carried, it is where the pointer has it
+        x: card.carried ? card.dragDX : card.easedX
+        y: card.carried ? card.dragDY : card.easedY
+        width: card.easedW
+        height: card.easedH
         z: card.busy ? 5 : 0
         // lifted while carried
-        scale: card.carried && builder.studio ? 1.03 : 1
+        scale: (card.carried && builder.studio ? 1.03 : 1) * (0.9 + 0.1 * card.born)
+        opacity: card.born
+        Component.onCompleted: {
+            if (builder.studio && builder.enterT > 0.99)
+                bornAnim.start();
 
-        Behavior on x {
-            enabled: builder.studio && !card.carried
+        }
+
+        Behavior on easedX {
+            enabled: builder.studio && !card.jump
 
             NumberAnimation {
-                duration: Theme.durMedium
+                duration: Theme.durDefaultSpatial
                 easing.type: Easing.Bezier
-                easing.bezierCurve: Theme.easeEmphasizedDecel
+                easing.bezierCurve: Theme.curveDefaultSpatial
             }
 
         }
 
-        Behavior on y {
-            enabled: builder.studio && !card.carried
+        Behavior on easedY {
+            enabled: builder.studio && !card.jump
 
             NumberAnimation {
-                duration: Theme.durMedium
+                duration: Theme.durDefaultSpatial
                 easing.type: Easing.Bezier
-                easing.bezierCurve: Theme.easeEmphasizedDecel
+                easing.bezierCurve: Theme.curveDefaultSpatial
             }
 
+        }
+
+        Behavior on easedW {
+            enabled: builder.studio
+
+            NumberAnimation {
+                duration: Theme.durDefaultSpatial
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.curveDefaultSpatial
+            }
+
+        }
+
+        Behavior on easedH {
+            enabled: builder.studio
+
+            NumberAnimation {
+                duration: Theme.durDefaultSpatial
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.curveDefaultSpatial
+            }
+
+        }
+
+        NumberAnimation {
+            id: bornAnim
+
+            target: card
+            property: "born"
+            from: 0
+            to: 1
+            duration: Theme.durDefaultSpatial
+            easing.type: Easing.Bezier
+            easing.bezierCurve: Theme.curveDefaultSpatial
         }
 
         Behavior on scale {
             NumberAnimation {
-                duration: Theme.durShort
-                easing.type: Easing.OutCubic
+                duration: Theme.durFastSpatial
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.curveDefaultSpatial
             }
 
+        }
+
+        transform: Jelly {
+            id: cardJelly
+
+            target: card
+            frequency: 3.8
         }
 
         HoverHandler {
@@ -2089,8 +2333,9 @@ Item {
                 area.mode = 0;
             }
             onCanceled: {
-                card.dragDX = 0;
-                card.dragDY = 0;
+                if (area.mode === 1)
+                    card.land();
+
                 builder.target = null;
                 builder.plan = null;
                 builder.ghost = null;
@@ -2272,9 +2517,9 @@ Item {
                 }
                 onReleased: card.moveEnd()
                 onCanceled: {
-                    card.dragDX = 0;
-                    card.dragDY = 0;
+                    card.land();
                     builder.target = null;
+                    builder.plan = null;
                     builder.overShelf = false;
                 }
 
@@ -2457,7 +2702,7 @@ Item {
                 if (grip.across)
                     builder.extraCols = Math.max(0, Math.min(Prefs.systemGridCols - builder.usedCols, n));
                 else
-                    builder.extraRows = Math.max(1, Math.min(40, n));
+                    builder.extraRows = Math.max(0, Math.min(40, n));
             }
             onReleased: builder.resizingGrid = false
             onCanceled: builder.resizingGrid = false

@@ -462,15 +462,17 @@ Singleton {
         const need = needs || {};
         const saved = grid || root.systemGridSaved;
         const out = {};
+        // two on the same row keep the order of keys, whatever the sort does with a tie
         const placed = keys.filter((k) => {
             return !!saved[k];
-        }).map((k) => {
+        }).map((k, i) => {
             return {
                 "key": k,
+                "i": i,
                 "r": root.systemGridFit(k, saved[k], need[k])
             };
         }).sort((a, b) => {
-            return a.r.y - b.r.y || a.r.x - b.r.x;
+            return a.r.y - b.r.y || a.r.x - b.r.x || a.i - b.i;
         });
         const taken = [];
         for (const p of placed) {
@@ -584,6 +586,10 @@ Singleton {
             else
                 taken.push(now[k]);
         }
+        // the ones that go under it keep the order they were in
+        const top = pushed.reduce((y, k) => {
+            return Math.min(y, now[k].y);
+        }, Infinity);
         for (const k of pushed) {
             const there = root.systemGridFit(k, Object.assign({}, now[k], {
                 "x": old.x,
@@ -592,7 +598,7 @@ Singleton {
             const r = taken.some((t) => {
                 return root.systemGridOverlap(there, t);
             }) ? Object.assign({}, now[k], {
-                "y": moved.y + moved.h
+                "y": moved.y + moved.h + now[k].y - top
             }) : there;
             next[k] = Object.assign({}, r, {
                 "h": root.systemGridOwnH(k)
