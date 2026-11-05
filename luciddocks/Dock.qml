@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import qs
 import qs.lucidicons
+import qs.lucidosd as OSD
 import qs.lucidprefs as LP
 import qs.lucidui as UI
 
@@ -27,9 +28,28 @@ PanelWindow {
     // shell.qml hands the osd over
     property var osd: null
     readonly property bool yieldsToOsd: !!dockWindow.osd && dockWindow.osd.holdsEdge && dockWindow.osd.screen === dockWindow.screen
+    // with both notches the dock turns into the osd's card itself. the osd hands
+    // itself over through stageOsd before it shows or goes
+    readonly property bool osdHosted: !!dockWindow.osd && dockWindow.osd.dockHosts && dockWindow.osd.cardVisible
+    // free to: notched, and nothing else holding it
+    readonly property bool canHostOsd: Prefs.dockEnabled && Prefs.dockNotch && !dockWindow.dockBusy && !dockWindow.heldByPointer && !Edit.active && !dockWindow.editDragging
+    // still the card while it sinks back into hiding after it
+    property bool osdLeaving: false
+    readonly property bool osdShaped: dockWindow.osdHosted || dockWindow.osdLeaving
+    // came up from hiding already the card, so nothing on it morphs or fades
+    property bool osdRising: false
+    property bool osdMorphing: false
+    // the two faces hand over in turn rather than both half there: ms, scaled where used
+    property int osdFaceDelay: 0
+    property int osdFaceFade: 0
+    property int dockFaceDelay: 0
+    property int dockFaceFade: 200
+    readonly property int osdWidth: dockWindow.osd ? dockWindow.osd.targetWidth : 0
+    readonly property int osdHeight: dockWindow.osd ? dockWindow.osd.targetHeight : 0
+    readonly property var osdFace: osdFaceLoader.item
     // dynamic hiding only tucks the dock away while the workspace has windows
     readonly property bool hides: Prefs.dockAutoHide && (!Prefs.dockDynamicHide || dockWindow.dynamicHidden)
-    readonly property bool dockRevealed: dockWindow.dockShown || dockWindow.dockBusy
+    readonly property bool dockRevealed: dockWindow.dockShown || dockWindow.dockBusy || dockWindow.osdHosted
     property bool launcherFromHidden: false
     // edit mode: the dock carried by its handle; pushed into the edge it notches,
     // pulled out of it it floats again
@@ -225,6 +245,8 @@ PanelWindow {
 
     property int shellResizeMs: Theme.ms(60)
     readonly property var morphCurve: [0.4, 0, 0.2, 1, 1, 1]
+    // the shell's resize curve: the launcher's morph, or the osd's
+    property var shellCurve: dockWindow.morphCurve
     // the shell as painted, jelly and all, sides on whole pixels: a flare meeting
     // one on a fractional line leaves a hairline of desktop between two soft edges
     readonly property real rawPaintX: shell.x + dockJelly.shiftX
@@ -270,8 +292,97 @@ PanelWindow {
 
     function pulseMorph() {
         dockWindow.shellResizeMs = Theme.ms(480);
+        dockWindow.shellCurve = dockWindow.morphCurve;
+        dockWindow.dockFaceDelay = 0;
+        dockWindow.dockFaceFade = 200;
         dockWindow.morphing = true;
         morphTimer.restart();
+    }
+
+    function morphOsd(ms, curve) {
+        dockWindow.shellResizeMs = ms;
+        dockWindow.shellCurve = curve;
+        dockWindow.osdMorphing = true;
+        osdMorphTimer.interval = ms + Theme.ms(40);
+        osdMorphTimer.restart();
+    }
+
+    // the osd is about to show as the dock, or to leave it. the morph is set up
+    // here, before the shape changes: a Behavior reads its animation as it starts
+    function stageOsd(show) {
+        if (show === dockWindow.osdHosted)
+            return ;
+
+        osdLeave.stop();
+        dockWindow.osdLeaving = false;
+        if (show) {
+            // on screen, or still sliding away, it morphs in place; tucked away it
+            // comes up already the card, on the dock's own way up
+            dockWindow.osdRising = !dockWindow.dockShown && !dockWindow.slidingAway;
+            dockWindow.osdFaceDelay = dockWindow.osdRising ? 0 : 100;
+            dockWindow.osdFaceFade = dockWindow.osdRising ? 0 : 150;
+            dockWindow.dockFaceDelay = 0;
+            dockWindow.dockFaceFade = 110;
+            if (!dockWindow.osdRising) {
+                dockWindow.morphOsd(Theme.durEnter, Theme.easeEmphasizedDecel);
+                dockJelly.kickAfter(0.1, Math.round(Theme.durEnter * 0.35));
+            }
+            return ;
+        }
+        // whatever else keeps it up keeps it there, so it turns back into the dock
+        // in place. otherwise it sinks as the card and turns back out of sight
+        if (dockWindow.dockShown || dockWindow.dockBusy) {
+            dockWindow.osdRising = false;
+            dockWindow.osdFaceDelay = 0;
+            dockWindow.osdFaceFade = 100;
+            dockWindow.dockFaceDelay = 90;
+            dockWindow.dockFaceFade = 200;
+            if (!dockWindow.menuOpen) {
+                dockWindow.morphOsd(Theme.durLong, dockWindow.morphCurve);
+                dockJelly.kickAfter(-0.1, Math.round(Theme.durLong * 0.85));
+            }
+        } else {
+            dockWindow.osdLeaving = true;
+            osdLeave.restart();
+        }
+    }
+
+    // a step on the card it has turned into
+    function jiggle(amp) {
+        dockJelly.kick(amp);
+    }
+
+    // the card changing kind while the dock is it, volume to caps lock say
+    onOsdWidthChanged: if (dockWindow.osdShaped && !dockWindow.menuOpen)
+        dockWindow.morphOsd(Theme.durMedium, Theme.easeEmphasizedDecel)
+    onOsdHeightChanged: if (dockWindow.osdShaped && !dockWindow.menuOpen)
+        dockWindow.morphOsd(Theme.durMedium, Theme.easeEmphasizedDecel)
+
+    Timer {
+        id: osdMorphTimer
+
+        onTriggered: {
+            dockWindow.osdMorphing = false;
+            dockWindow.dockFaceDelay = 0;
+            dockWindow.dockFaceFade = 200;
+            if (!dockWindow.morphing) {
+                dockWindow.shellResizeMs = Theme.ms(60);
+                dockWindow.shellCurve = dockWindow.morphCurve;
+            }
+        }
+    }
+
+    // down and out of sight: the dock again
+    Timer {
+        id: osdLeave
+
+        interval: Theme.durLong
+        onTriggered: {
+            dockWindow.osdFaceDelay = 0;
+            dockWindow.osdFaceFade = 0;
+            dockWindow.osdLeaving = false;
+            dockWindow.osdRising = false;
+        }
     }
 
     property bool snapPlacement: false
@@ -380,7 +491,9 @@ PanelWindow {
         interval: Theme.ms(520)
         onTriggered: {
             dockWindow.morphing = false;
-            dockWindow.shellResizeMs = Theme.ms(60);
+            if (!dockWindow.osdMorphing)
+                dockWindow.shellResizeMs = Theme.ms(60);
+
             dockWindow.closingFromHidden = false;
         }
     }
@@ -2957,14 +3070,14 @@ PanelWindow {
         property bool shellReady: false
 
         visible: dockWindow.shellShown
-        clip: dockWindow.menuOpen || dockWindow.morphing
+        clip: dockWindow.menuOpen || dockWindow.morphing || dockWindow.osdMorphing
         anchors.bottom: parent.bottom
         anchors.bottomMargin: dockWindow.hiddenOffset + dockWindow.placementMargin
         anchors.horizontalCenter: parent.horizontalCenter
         implicitWidth: dockFace.implicitWidth
         implicitHeight: dockWindow.iconSlot + Theme.dp(20)
-        width: dockWindow.menuOpen ? dockWindow.menuWidth : shell.implicitWidth
-        height: dockWindow.menuOpen ? dockWindow.menuHeight : shell.implicitHeight
+        width: dockWindow.menuOpen ? dockWindow.menuWidth : (dockWindow.osdShaped ? dockWindow.osdWidth : shell.implicitWidth)
+        height: dockWindow.menuOpen ? dockWindow.menuHeight : (dockWindow.osdShaped ? dockWindow.osdHeight : shell.implicitHeight)
         radius: Math.min(Theme.rad(Prefs.dockRadius), Math.round(Theme.pill(shell.height)))
         // split, the islands below paint it
         color: dockWindow.splitDrawn ? "transparent" : Theme.bg
@@ -3021,12 +3134,12 @@ PanelWindow {
         }
 
         Behavior on width {
-            enabled: shell.shellReady && dockWindow.morphing
+            enabled: shell.shellReady && (dockWindow.morphing || dockWindow.osdMorphing)
 
             NumberAnimation {
                 duration: dockWindow.shellResizeMs
                 easing.type: Easing.Bezier
-                easing.bezierCurve: dockWindow.morphCurve
+                easing.bezierCurve: dockWindow.shellCurve
             }
 
         }
@@ -3037,7 +3150,7 @@ PanelWindow {
             NumberAnimation {
                 duration: dockWindow.shellResizeMs
                 easing.type: Easing.Bezier
-                easing.bezierCurve: dockWindow.morphCurve
+                easing.bezierCurve: dockWindow.shellCurve
             }
 
         }
@@ -3167,16 +3280,26 @@ PanelWindow {
             implicitWidth: iconRow.implicitWidth + (Prefs.dockSplit ? dockWindow.splitPad * 2 : Theme.dp(24))
             width: shell.implicitWidth
             height: shell.implicitHeight
-            anchors.left: parent.left
+            // centred while the shell is narrower, as it is on its way to the osd's
+            // card. an x rather than a left margin: the anchor reran it as the
+            // shell resized and looped
+            x: Math.min(0, (shell.width - shell.implicitWidth) / 2)
             anchors.bottom: parent.bottom
-            opacity: (dockWindow.menuOpen || dockWindow.launcherFromHidden) ? 0 : 1
+            opacity: (dockWindow.menuOpen || dockWindow.launcherFromHidden || dockWindow.osdShaped) ? 0 : 1
             visible: dockFace.opacity > 0
 
             Behavior on opacity {
-                enabled: !dockWindow.launcherFromHidden
+                enabled: !dockWindow.launcherFromHidden && !dockWindow.osdRising
 
-                NumberAnimation {
-                    duration: Theme.ms(200)
+                SequentialAnimation {
+                    PauseAnimation {
+                        duration: Theme.ms(dockWindow.dockFaceDelay)
+                    }
+
+                    NumberAnimation {
+                        duration: Theme.ms(dockWindow.dockFaceFade)
+                    }
+
                 }
 
             }
@@ -3286,6 +3409,39 @@ PanelWindow {
                             dockWindow.pinRunningApp(appId, index);
                             pinnedRow.landFrom = -1;
                         }
+                    }
+
+                }
+
+            }
+
+        }
+
+        // the osd, while the dock is its card. built only where that can happen
+        Loader {
+            id: osdFaceLoader
+
+            active: !!dockWindow.osd && ((Prefs.osdDockMorph && Prefs.osdNotch && Prefs.dockNotch) || dockWindow.osdShaped)
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            width: dockWindow.osdShaped ? shell.width : dockWindow.osdWidth
+            height: dockWindow.osdShaped ? shell.height : dockWindow.osdHeight
+            opacity: dockWindow.osdShaped ? 1 : 0
+            visible: osdFaceLoader.opacity > 0
+
+            sourceComponent: OSD.OsdFace {
+                osd: dockWindow.osd
+                live: osdFaceLoader.visible
+            }
+
+            Behavior on opacity {
+                SequentialAnimation {
+                    PauseAnimation {
+                        duration: Theme.ms(dockWindow.osdFaceDelay)
+                    }
+
+                    NumberAnimation {
+                        duration: Theme.ms(dockWindow.osdFaceFade)
                     }
 
                 }

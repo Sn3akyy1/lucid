@@ -51,13 +51,22 @@ PanelWindow {
     readonly property bool notch: Prefs.osdNotch && !osdWindow.dockStays
     // what the dock reads to step aside. held until the card has faded, or the
     // dock comes back up under a card still easing out
-    readonly property bool holdsEdge: osdWindow.notch && (osdWindow.cardVisible || card.visible)
+    readonly property bool holdsEdge: osdWindow.notch && (osdWindow.cardShown || card.visible)
     // shell.qml hands the dock over
     property var dockWindow: null
     // taken as the card comes up: switching styles while it is shown would
     // make it jump
     property bool dockStays: false
+    // with the dock a notch too, the dock itself turns into the card and this
+    // window shows nothing. taken as it comes up, like dockStays
+    property bool dockHosts: false
+    readonly property bool cardShown: osdWindow.cardVisible && !osdWindow.dockHosts
     readonly property int notchFlare: osdWindow.notch ? Theme.dp(Prefs.dockNotchFlare) : 0
+    // the card's size for what it shows, which the dock morphs to as well
+    readonly property int targetWidth: (osdWindow.isLevelType || osdWindow.isSegmentType) ? Theme.dp(260) : cardFace.toggleWidth
+    readonly property int targetHeight: (osdWindow.isLevelType || osdWindow.isSegmentType) ? Theme.dp(50) : Theme.dp(56)
+    // the face showing it: the card's own, or the dock's while it stands in
+    readonly property var face: osdWindow.dockHosts && osdWindow.dockWindow && osdWindow.dockWindow.osdFace ? osdWindow.dockWindow.osdFace : cardFace
 
     // m3 shape, spacing and slider metrics, shared with lucidbar/System.qml
     readonly property int cardPadX: Theme.dp(12)
@@ -153,8 +162,13 @@ PanelWindow {
     function setCardVisible(v) {
         if (v && !osdWindow.cardVisible) {
             const dock = osdWindow.dockWindow;
-            osdWindow.dockStays = !!dock && dock.screen === osdWindow.screen && (dock.dockBusy || dock.heldByPointer || Edit.active);
+            const here = !!dock && dock.screen === osdWindow.screen;
+            osdWindow.dockHosts = here && Prefs.osdNotch && Prefs.osdDockMorph && dock.canHostOsd;
+            osdWindow.dockStays = here && !osdWindow.dockHosts && (dock.dockBusy || dock.heldByPointer || Edit.active);
         }
+        // the dock sets up its morph before the card's state changes under it
+        if (osdWindow.dockHosts && osdWindow.dockWindow)
+            osdWindow.dockWindow.stageOsd(v);
 
         cardFade.duration = v ? Theme.durEnter : Theme.durExit;
         cardFade.easing.bezierCurve = v ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
@@ -185,23 +199,29 @@ PanelWindow {
             osdWindow.aimedScreen = Monitors.focusedScreen;
 
         osdWindow.setCardVisible(true);
-        // a fresh card lands with a wobble, and every step after jiggles it
-        if (fresh)
-            cardJelly.kickAfter(0.14, Math.round(Theme.durEnter * 0.3));
-        else
-            cardJelly.kick(0.05);
-        hideTimer.restart();
-        if (osdWindow.isLevelType) {
-            if (!levelTrack.dragging)
-                levelPulseAnim.restart();
+        // a fresh card lands with a wobble, and every step after jiggles it.
+        // the dock lands its own morph
+        if (osdWindow.dockHosts) {
+            if (!fresh)
+                osdWindow.dockWindow.jiggle(0.05);
 
-        } else if (osdWindow.isSegmentType) {
-            segmentPulseAnim.restart();
-        } else if (osdWindow.oscType === "mic") {
-            pulseAnim.restart();
+        } else if (fresh) {
+            cardJelly.kickAfter(0.14, Math.round(Theme.durEnter * 0.3));
         } else {
-            nudgeAnim.restart();
+            cardJelly.kick(0.05);
         }
+        hideTimer.restart();
+        osdWindow.face.pulse();
+    }
+
+    // a hand on the level track keeps the card up
+    function keepUp() {
+        hideTimer.restart();
+    }
+
+    function held() {
+        const docked = osdWindow.dockWindow ? osdWindow.dockWindow.osdFace : null;
+        return cardFace.dragging || cardFace.hovered || (!!docked && (docked.dragging || docked.hovered));
     }
 
     function setBrightness(percent) {
@@ -430,7 +450,7 @@ PanelWindow {
 
         interval: 1600
         onTriggered: {
-            if (levelTrack.dragging || levelTrack.hovered) {
+            if (osdWindow.held()) {
                 hideTimer.restart();
                 return ;
             }
@@ -438,10 +458,11 @@ PanelWindow {
         }
     }
 
-    // the launcher or a drag takes the edge back from a notch
+    // the launcher or a drag takes the edge back from a notch, or the dock back
+    // from the card it turned into
     Connections {
         function onDockBusyChanged() {
-            if (osdWindow.dockWindow.dockBusy && osdWindow.holdsEdge && osdWindow.dockWindow.screen === osdWindow.screen)
+            if (osdWindow.dockWindow.dockBusy && (osdWindow.holdsEdge || (osdWindow.dockHosts && osdWindow.cardVisible)) && osdWindow.dockWindow.screen === osdWindow.screen)
                 osdWindow.setCardVisible(false);
 
         }
@@ -708,15 +729,13 @@ PanelWindow {
     Rectangle {
         id: card
 
-        readonly property int levelWidth: Theme.dp(260)
-        readonly property int toggleWidth: osdWindow.cardPadX * 2 + osdWindow.badgeSize + osdWindow.cardGap + Math.ceil(Math.max(labelMetrics.advanceWidth, stateFlip.width)) + Theme.dp(6)
 
         // how far it has sunk to hide, eased on its own: the rest of the offset
         // keeps a notch's bottom on the edge exactly while its height morphs
-        property real sunk: osdWindow.cardVisible ? 0 : 1
+        property real sunk: osdWindow.cardShown ? 0 : 1
         // the width it eases through. a notch keeps it even and its left side
         // whole, so both sides land on whole pixels where the flares meet them
-        property real easedWidth: (osdWindow.isLevelType || osdWindow.isSegmentType) ? card.levelWidth : card.toggleWidth
+        property real easedWidth: osdWindow.targetWidth
 
         // one vertical anchor whatever the style: swapping anchors would let the
         // anchor engine write the height and drop its binding. the notch sits on
@@ -727,16 +746,16 @@ PanelWindow {
         anchors.alignWhenCentered: !osdWindow.notch
         anchors.horizontalCenterOffset: osdWindow.notch ? Math.round((parent.width - card.width) / 2) - (parent.width - card.width) / 2 : 0
         anchors.verticalCenterOffset: osdWindow.notch ? (parent.height - card.height) / 2 + card.sunk * card.height : card.sunk * Theme.dp(16)
-        height: (osdWindow.isLevelType || osdWindow.isSegmentType) ? Theme.dp(50) : Theme.dp(56)
+        height: osdWindow.targetHeight
         width: osdWindow.notch ? 2 * Math.round(card.easedWidth / 2) : card.easedWidth
         // follows Corner rounding like every other pill in the shell
         radius: Theme.pill(height)
         bottomLeftRadius: osdWindow.notch ? 0 : card.radius
         bottomRightRadius: osdWindow.notch ? 0 : card.radius
         color: Theme.bg
-        opacity: osdWindow.cardVisible ? 1 : 0
+        opacity: osdWindow.cardShown ? 1 : 0
         // the notch rises out of the edge rather than popping
-        scale: osdWindow.cardVisible || osdWindow.notch ? 1 : 0.9
+        scale: osdWindow.cardShown || osdWindow.notch ? 1 : 0.9
         visible: opacity > 0.15
         readonly property bool jellyWobbling: cardJelly.wobbling
         // a notch is held at the edge it shares with the screen and only bobs,
@@ -750,361 +769,12 @@ PanelWindow {
             spread: osdWindow.notch ? 0 : cardJelly.naturalSpread
         }
 
-        TextMetrics {
-            id: labelMetrics
+        OsdFace {
+            id: cardFace
 
-            text: osdWindow.currentLabel
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.typeSize("labelSmall")
-            font.variableAxes: Theme.axes(Theme.typeSize("labelSmall"), 560, 0)
-        }
-
-        Slider {
-            id: levelTrack
-
-            visible: osdWindow.isLevelType
-            anchors.left: parent.left
-            anchors.leftMargin: Theme.dp(10)
-            anchors.right: parent.right
-            anchors.rightMargin: Theme.dp(10)
-            anchors.verticalCenter: parent.verticalCenter
-            size: "m"
-            trackH: osdWindow.levelTrackH
-            handleH: osdWindow.levelHandleH
-            // a full stadium cap, as round as the card behind it, squaring
-            // off with it under Corner rounding
-            outerR: Theme.pill(osdWindow.levelTrackH)
-            iconSize: Theme.dp(18)
-            from: 0
-            to: 100
-            value: osdWindow.levelMuted ? 0 : osdWindow.levelValue
-            icon: osdWindow.levelIcon
-            showValue: false
-            inlineValue: true
-            valueText: (v) => {
-                return osdWindow.levelMuted ? "Off" : Math.round(v) + "%";
-            }
-            activeColor: osdWindow.levelMuted ? Theme.outlineStrong : Theme.primary
-            inactiveColor: Theme.withBlur(Theme.surfaceHighest)
-            easeValue: card.visible
-            onMoved: (v) => {
-                return osdWindow.applyLevel(v);
-            }
-            onReleased: hideTimer.restart()
-            onHoveredChanged: {
-                if (!levelTrack.hovered)
-                    hideTimer.restart();
-
-            }
-
-        }
-
-        // a keyboard light with a few whole steps: one block per step. only the
-        // steps that are on have a full body, the rest are a thin rail, since
-        // blocks of one thickness side by side read as a bar cut in pieces
-        Item {
-            id: segmentRow
-
-            readonly property int steps: Math.max(1, osdWindow.kbdMax)
-            readonly property int gap: Theme.dp(4)
-
-            visible: osdWindow.isSegmentType
             anchors.fill: parent
-            anchors.leftMargin: Theme.dp(16)
-            anchors.rightMargin: Theme.dp(16)
-
-            Icon {
-                id: segmentIcon
-
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                name: "keyboard"
-                size: Theme.dp(18)
-                fill: osdWindow.kbdLevel > 0 ? 1 : 0
-                color: osdWindow.kbdLevel > 0 ? Theme.primary : Theme.subtextDim
-            }
-
-            LText {
-                id: segmentReadout
-
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                role: "labelLarge"
-                tabular: true
-                color: osdWindow.kbdLevel > 0 ? Theme.text : Theme.subtextDim
-                text: osdWindow.kbdLevel > 0 ? osdWindow.kbdLevel + "/" + segmentRow.steps : "Off"
-            }
-
-            Row {
-                id: segmentBlocks
-
-                readonly property real blockW: (segmentBlocks.width - segmentRow.gap * (segmentRow.steps - 1)) / segmentRow.steps
-
-                anchors.left: segmentIcon.right
-                anchors.leftMargin: Theme.dp(12)
-                anchors.right: segmentReadout.left
-                anchors.rightMargin: Theme.dp(12)
-                anchors.verticalCenter: parent.verticalCenter
-                height: osdWindow.levelTrackH / 2
-                spacing: segmentRow.gap
-
-                Repeater {
-                    model: segmentRow.steps
-
-                    Item {
-                        required property int index
-                        readonly property bool lit: index < osdWindow.kbdLevel
-
-                        width: segmentBlocks.blockW
-                        height: segmentBlocks.height
-
-                        Rectangle {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width
-                            height: parent.lit ? parent.height : Theme.dp(4)
-                            radius: Theme.pill(height)
-                            color: parent.lit ? Theme.primary : Theme.withBlur(Theme.surfaceHighest)
-
-                            Behavior on height {
-                                enabled: card.visible
-
-                                NumberAnimation {
-                                    duration: Theme.durMedium
-                                    easing.type: Easing.Bezier
-                                    easing.bezierCurve: Theme.easeEmphasizedDecel
-                                }
-
-                            }
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Theme.durShort
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-        }
-
-        Item {
-            id: iconBadge
-
-            visible: !osdWindow.isLevelType && !osdWindow.isSegmentType
-            anchors.left: parent.left
-            anchors.leftMargin: osdWindow.cardPadX
-            anchors.verticalCenter: parent.verticalCenter
-            width: osdWindow.badgeSize
-            height: osdWindow.badgeSize
-
-            readonly property color fillColor: osdWindow.badgeActive ? Theme.accent : Theme.withBlur(Theme.surfaceHighest)
-
-            MaterialShape {
-                id: badgeShape
-
-                anchors.fill: parent
-                shape: "cookie9"
-                color: iconBadge.fillColor
-                rotation: osdWindow.badgeActive ? 20 : 0
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.durShort
-                    }
-
-                }
-
-                Behavior on rotation {
-                    NumberAnimation {
-                        duration: Theme.durSlowSpatial
-                        easing.type: Easing.Bezier
-                        easing.bezierCurve: Theme.curveDefaultSpatial
-                    }
-
-                }
-
-            }
-
-            Icon {
-                id: toggleGlyph
-
-                anchors.centerIn: parent
-                name: osdWindow.toggleIcon
-                size: osdWindow.glyphSize + Theme.dp(2)
-                fill: osdWindow.badgeActive ? 1 : 0
-                color: osdWindow.badgeActive ? Theme.fgAccent : Theme.text
-            }
-
-        }
-
-        Column {
-            visible: !osdWindow.isLevelType && !osdWindow.isSegmentType
-            anchors.left: iconBadge.right
-            anchors.leftMargin: osdWindow.cardGap
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.dp(2)
-
-            LText {
-                role: "labelSmall"
-                color: Theme.subtext
-                text: osdWindow.currentLabel
-            }
-
-            // off sits above on, so flipping rolls the column up one line
-            Item {
-                id: stateFlip
-
-                readonly property int lineHeight: Math.ceil(offMetrics.height)
-
-                width: Math.ceil(Math.max(onMetrics.advanceWidth, offMetrics.advanceWidth))
-                height: stateFlip.lineHeight
-                clip: true
-
-                TextMetrics {
-                    id: onMetrics
-
-                    text: osdWindow.toggleOnText
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.typeSize("titleMedium")
-                    font.variableAxes: Theme.axes(Theme.typeSize("titleMedium"), 640, 60)
-                }
-
-                TextMetrics {
-                    id: offMetrics
-
-                    text: osdWindow.toggleOffText
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.typeSize("titleMedium")
-                    font.variableAxes: Theme.axes(Theme.typeSize("titleMedium"), 640, 60)
-                }
-
-                Column {
-                    width: parent.width
-                    y: osdWindow.toggleState ? -stateFlip.lineHeight : 0
-
-                    LText {
-                        width: parent.width
-                        height: stateFlip.lineHeight
-                        role: "titleMedium"
-                        weight: 640
-                        rounded: 60
-                        text: osdWindow.toggleOffText
-                        color: osdWindow.toggleOffColor
-                    }
-
-                    LText {
-                        width: parent.width
-                        height: stateFlip.lineHeight
-                        role: "titleMedium"
-                        weight: 640
-                        rounded: 60
-                        text: osdWindow.toggleOnText
-                        color: Theme.accent
-                    }
-
-                    Behavior on y {
-                        enabled: card.visible
-
-                        NumberAnimation {
-                            duration: Theme.durMedium
-                            easing.type: Easing.Bezier
-                            easing.bezierCurve: Theme.easeEmphasizedDecel
-                        }
-
-                    }
-
-                }
-
-            }
-
-        }
-
-        NumberAnimation {
-            id: nudgeAnim
-
-            target: toggleGlyph
-            property: "anchors.verticalCenterOffset"
-            from: osdWindow.toggleState ? 6 : -6
-            to: 0
-            duration: Theme.durLong
-            easing.type: Easing.OutBack
-            easing.overshoot: 2.4
-        }
-
-        SequentialAnimation {
-            id: pulseAnim
-
-            NumberAnimation {
-                target: iconBadge
-                property: "scale"
-                to: 1.12
-                duration: Theme.durQuick
-                easing.type: Easing.Bezier
-                easing.bezierCurve: Theme.easeEmphasizedDecel
-            }
-
-            NumberAnimation {
-                target: iconBadge
-                property: "scale"
-                to: 1
-                duration: Theme.durShort
-                easing.type: Easing.Bezier
-                easing.bezierCurve: Theme.easeEmphasizedDecel
-            }
-
-        }
-
-        SequentialAnimation {
-            id: segmentPulseAnim
-
-            NumberAnimation {
-                target: segmentReadout
-                property: "scale"
-                to: 1.12
-                duration: Theme.durQuick
-                easing.type: Easing.Bezier
-                easing.bezierCurve: Theme.easeEmphasizedDecel
-            }
-
-            NumberAnimation {
-                target: segmentReadout
-                property: "scale"
-                to: 1
-                duration: Theme.durMedium
-                easing.type: Easing.OutBack
-                easing.overshoot: Theme.emphasizedOvershoot
-            }
-
-        }
-
-        // the reading answers the keypress
-        SequentialAnimation {
-            id: levelPulseAnim
-
-            NumberAnimation {
-                target: levelTrack.valueItem
-                property: "scale"
-                to: 1.12
-                duration: Theme.durQuick
-                easing.type: Easing.Bezier
-                easing.bezierCurve: Theme.easeEmphasizedDecel
-            }
-
-            NumberAnimation {
-                target: levelTrack.valueItem
-                property: "scale"
-                to: 1
-                duration: Theme.durMedium
-                easing.type: Easing.OutBack
-                easing.overshoot: Theme.emphasizedOvershoot
-            }
-
+            osd: osdWindow
+            live: card.visible
         }
 
         Behavior on easedWidth {

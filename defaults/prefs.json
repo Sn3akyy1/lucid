@@ -44,6 +44,7 @@
     "matugenSourceImage": "",
     "matugenSourceIndex": 0,
     "motionScale": 1,
+    "osdDockMorph": true,
     "osdStyle": "island",
     "osdToggles": "osd",
     "showClock": true,

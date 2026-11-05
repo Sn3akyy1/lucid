@@ -584,6 +584,8 @@ Singleton {
     // caps lock, num lock and the microphone show as a toast instead of on the osd
     readonly property bool osdTogglesToast: root.osdToggles === "toast"
     property alias osdStyle: s.osdStyle
+    // with the dock a notch too, the dock itself turns into the osd
+    property alias osdDockMorph: s.osdDockMorph
     property alias osdToggles: s.osdToggles
     property alias toastTimeout: s.toastTimeout
     property alias toastOnLayout: s.toastOnLayout
@@ -1100,6 +1102,7 @@ Singleton {
         "timeZoneAuto": true,
         "doNotDisturb": false,
         "osdStyle": "island",
+        "osdDockMorph": true,
         "osdToggles": "osd",
         "toastTimeout": 5,
         "toastOnLayout": true,
@@ -1847,6 +1850,7 @@ Singleton {
             property bool timeZoneAuto: true
             property bool doNotDisturb: false
             property string osdStyle: "island"
+            property bool osdDockMorph: true
             property string osdToggles: "osd"
             property int toastTimeout: 5
             property bool toastOnLayout: true

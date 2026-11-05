@@ -624,7 +624,7 @@ Column {
         SettingRow {
             title: "OSD style"
             resetKey: "osdStyle"
-            description: "Where volume, brightness and lock-key changes show up. An island floats above the bottom edge; a notch rises out of it, its corners sweeping out like the dock's, and a dock on that edge steps down while it shows."
+            description: "Where volume, brightness and lock-key changes show up. An island floats above the bottom edge; a notch rises out of it, its corners sweeping out like the dock's."
 
             M3Segmented {
                 width: Theme.dp(260)
@@ -638,6 +638,23 @@ Column {
                 }]
                 onChosen: (key) => {
                     return Prefs.osdStyle = key;
+                }
+            }
+
+        }
+
+        SettingRow {
+            title: "Morph the dock"
+            resetKey: "osdDockMorph"
+            description: Prefs.osdDockMorph ? "With the dock a notch as well, the dock itself turns into the OSD and back. A dock tucked away rises out of the edge as the OSD." :"The OSD rises as a notch of its own, and the dock steps down while it shows."
+            enabled: Prefs.osdNotch && Prefs.dockNotch
+            disabledReason: "Only when the OSD and the dock are both notches - set OSD style to Notch above, and Dock style to Notch on the Dock page."
+
+            M3Switch {
+                enabled: Prefs.osdNotch && Prefs.dockNotch
+                checked: Prefs.osdDockMorph
+                onToggled: (v) => {
+                    Prefs.osdDockMorph = v;
                 }
             }
 
