@@ -584,7 +584,7 @@ Column {
                     return "Shared: a workspace opens on the display you are on when you switch to it.";
 
                 const stray = Monitors.strayWorkspaces;
-                return "Per display: each workspace opens on its own display, and each display starts on its lowest one." + (stray > 0 ? " " + stray + (stray === 1 ? " workspace belongs" : " workspaces belong") + " to a display that is not plugged in, so it opens wherever you are." : "");
+                return "Per display: each workspace opens on its own display, and each display starts on its lowest one. Each set of displays keeps its own split, so plugging the same ones in again brings it back." + (stray > 0 ? " " + stray + (stray === 1 ? " workspace belongs" : " workspaces belong") + " to a display that is not plugged in, so it opens wherever you are." : "");
             }
             stacked: true
 
