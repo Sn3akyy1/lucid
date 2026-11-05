@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs
+import qs.lucidprefs as LP
 
 // edit mode's own surface on every display, over everything: the toolbar on the one
 // edit mode was started from, the sheet on the one it was asked for. only those two
@@ -24,9 +25,13 @@ Variants {
         // the dock, its handle above it, and a gap
         readonly property real bottomClear: win.dockHere ? Theme.dp(Prefs.dockIconSize) + Theme.dp(20) + Prefs.effectiveDockBottomMargin + Theme.dp(30) : 0
         readonly property bool overlap: sheet.x < toolbar.x + toolbar.width && sheet.x + sheet.width > toolbar.x
+        // the band a studio has: clear of the bar and of the toolbar, on whichever edge it is
+        readonly property bool toolbarLow: toolbar.y > win.height / 2
+        readonly property real bandTop: win.toolbarLow ? win.topClear + Theme.dp(16) : toolbar.y + toolbar.height + Theme.dp(16)
+        readonly property real bandBottom: win.toolbarLow ? toolbar.y - Theme.dp(16) : win.height - win.bottomClear - Theme.dp(16)
 
         screen: win.modelData
-        visible: Monitors.surfacesUp && (toolbar.shown || sheet.shown)
+        visible: Monitors.surfacesUp && (toolbar.shown || sheet.shown || studio.shown)
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
@@ -50,8 +55,14 @@ Variants {
             right: true
         }
 
-        // only the two of them take input; everything else falls through
+        // only the two of them take input, or a studio the whole display; everything
+        // else falls through
         mask: Region {
+            Region {
+                width: studio.shown ? win.width : 0
+                height: studio.shown ? win.height : 0
+            }
+
             Region {
                 x: toolbar.x
                 y: toolbar.y
@@ -68,7 +79,7 @@ Variants {
 
         }
 
-        BackgroundEffect.blurRegion: Theme.blurAmount > 0 && (toolbar.settled || sheet.settled) ? glass : null
+        BackgroundEffect.blurRegion: Theme.blurAmount > 0 && (toolbar.settled || sheet.settled || studio.settled) ? glass : null
 
         Region {
             id: glass
@@ -89,6 +100,30 @@ Variants {
                 radius: sheet.radius
             }
 
+            Region {
+                x: Math.ceil(studio.libRect.x)
+                y: Math.ceil(studio.libRect.y)
+                width: studio.settled ? Math.floor(studio.libRect.width) : 0
+                height: studio.settled ? Math.floor(studio.libRect.height) : 0
+                radius: Theme.shapeXl
+            }
+
+            Region {
+                x: Math.ceil(studio.canvasRect.x)
+                y: Math.ceil(studio.canvasRect.y)
+                width: studio.settled ? Math.floor(studio.canvasRect.width) : 0
+                height: studio.settled ? Math.floor(studio.canvasRect.height) : 0
+                radius: Theme.shapeXl
+            }
+
+            Region {
+                x: Math.ceil(studio.inspRect.x)
+                y: Math.ceil(studio.inspRect.y)
+                width: studio.settled ? Math.floor(studio.inspRect.width) : 0
+                height: studio.settled ? Math.floor(studio.inspRect.height) : 0
+                radius: Theme.shapeXl
+            }
+
         }
 
         Item {
@@ -100,6 +135,14 @@ Variants {
                     Edit.undo();
                     event.accepted = true;
                 }
+            }
+
+            LP.PanelStudio {
+                id: studio
+
+                anchors.fill: parent
+                hosted: Edit.active && Edit.studio !== "" && win.name === Edit.studioScreen
+                area: Qt.rect(Theme.dp(24), win.bandTop, win.width - Theme.dp(48), Math.max(0, win.bandBottom - win.bandTop))
             }
 
             EditToolbar {
@@ -114,7 +157,7 @@ Variants {
             EditSheet {
                 id: sheet
 
-                hosted: Edit.active && Edit.sheet !== "" && win.name === Edit.sheetScreen
+                hosted: Edit.active && Edit.sheet !== "" && win.name === Edit.sheetScreen && Edit.studio === ""
                 y: Math.round(win.topClear + Theme.dp(12))
                 height: Math.max(Theme.dp(200), (win.overlap ? toolbar.y - Theme.dp(12) : win.height - Theme.dp(12)) - sheet.y)
             }

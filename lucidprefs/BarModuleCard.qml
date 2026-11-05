@@ -60,6 +60,86 @@ SettingCard {
         return card.powerOn.indexOf(id) === -1;
     }))
 
+    // one of the user's own tiles brought into view, its name ready to change
+    function revealOwnTile(key) {
+        let flick = card.parent;
+        while (flick && (flick.contentY === undefined || flick.contentHeight === undefined))
+            flick = flick.parent;
+        for (let i = 0; i < ownTileRepeater.count; i++) {
+            const ed = ownTileRepeater.itemAt(i);
+            if (!ed || ed.key !== key)
+                continue;
+
+            if (flick) {
+                const y = ed.mapToItem(flick.contentItem, 0, 0).y;
+                flick.contentY = Math.max(0, Math.min(Math.max(0, flick.contentHeight - flick.height), y - Theme.dp(90)));
+            }
+            ed.flash();
+            return ;
+        }
+    }
+
+    // a part of the card a link can land on, or null for its top
+    function partItem(name) {
+        return ({
+            "layout": layoutRow,
+            "owntiles": ownTilesRow
+        })[name] || null;
+    }
+
+    // the part Prefs.openBarModule asked for, until the card has scrolled to it
+    property string pendingPart: ""
+    property int revealTries: 0
+
+    function askReveal() {
+        if (Prefs.barModulePart === "")
+            return ;
+
+        card.pendingPart = Prefs.barModulePart;
+        card.revealTries = 0;
+        revealLater.restart();
+        // every card that heard it has it now (edit mode has a sheet per display)
+        Qt.callLater(() => {
+            return Prefs.barModulePart = "";
+        });
+    }
+
+    // scrolls whatever holds the card (edit mode's sheet) to the part asked for
+    function revealPart() {
+        const part = card.partItem(card.pendingPart);
+        let flick = card.parent;
+        while (flick && (flick.contentY === undefined || flick.contentHeight === undefined))
+            flick = flick.parent;
+        const y = part && flick ? part.mapToItem(flick.contentItem, 0, 0).y : 0;
+        // the sheet lays itself out once its window shows; until then the part sits at 0
+        if (y <= 0 && part && flick && ++card.revealTries < 30)
+            return ;
+
+        revealLater.stop();
+        card.pendingPart = "";
+        if (y > 0)
+            flick.contentY = Math.max(0, Math.min(Math.max(0, flick.contentHeight - flick.height), y - Theme.dp(24)));
+
+    }
+
+    Component.onCompleted: card.askReveal()
+
+    Timer {
+        id: revealLater
+
+        interval: 60
+        repeat: true
+        onTriggered: card.revealPart()
+    }
+
+    Connections {
+        function onBarModulePartChanged() {
+            card.askReveal();
+        }
+
+        target: Prefs
+    }
+
     function setPower(list) {
         Prefs.powerModuleActions = list.join(",");
     }
@@ -323,6 +403,114 @@ SettingCard {
 
     // notifications
     // system
+    SettingRow {
+        id: layoutRow
+
+        visible: card.moduleId === "system"
+        title: "Layout"
+        resetKey: "systemBlocks"
+        resetVisible: Prefs.isModified("systemBlocks") || Prefs.isModified("systemGrid") || Prefs.isModified("systemBlockStyles")
+        resetAction: "prefs:systemBlocks,systemGrid,systemBlockStyles"
+        description: "The control centre is a bento grid, arranged in its own editor: the panel lifts off the bar to the middle of the display, with everything you can add on its left and each block's looks, size and contents on its right."
+        stacked: true
+        showDivider: false
+
+        M3Button {
+            text: "Open the editor"
+            iconPath: "edit"
+            variant: "filled"
+            onClicked: Edit.requestStudio("system", Edit.sheetScreen)
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "system"
+        title: "Cards behind every block"
+        resetKey: "systemBlockCards"
+        description: "Media and the gauges always sit on a card; on, the tiles and the sliders get one too, for an even bento look."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.systemBlockCards
+            onToggled: (v) => {
+                return Prefs.systemBlockCards = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        id: ownTilesRow
+
+        visible: card.moduleId === "system"
+        title: "Your own tiles"
+        resetKey: "systemOwnTiles"
+        description: "Tiles that run commands of yours, for what Lucid has no tile for: a VPN, a server, a script. With only the first command a tap runs it; give one to turn it off too and it is a switch, kept right by the check when something else changes it. They run through bash, so pipes and && work. A new one goes onto the panel with the small tiles, and the shelf above holds it when it is off."
+        stacked: true
+        showDivider: false
+
+        Column {
+            width: parent.width
+            spacing: Theme.dp(8)
+
+            Repeater {
+                id: ownTileRepeater
+
+                model: Prefs.systemOwnTileList
+
+                OwnTileEditor {
+                    required property var modelData
+
+                    tile: modelData
+                }
+
+            }
+
+            M3Button {
+                text: "Add a tile"
+                iconPath: "add"
+                variant: "tonal"
+                onClicked: Prefs.addSystemOwnTile()
+            }
+
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "system"
+        title: "Header buttons"
+        resetKey: "systemHeaderButtons"
+        description: "Beside the date, in this order."
+        stacked: true
+        showDivider: false
+
+        OrderedPicker {
+            width: parent.width
+            value: Prefs.systemHeaderButtons
+            catalogue: [{
+                "id": "edit",
+                "label": "Edit",
+                "note": "opens the layout here, in Settings"
+            }, {
+                "id": "settings",
+                "label": "Settings"
+            }, {
+                "id": "lock",
+                "label": "Lock"
+            }, {
+                "id": "power",
+                "label": "Power",
+                "note": "suspend, restart, shut down"
+            }]
+            onPicked: (v) => {
+                return Prefs.systemHeaderButtons = v;
+            }
+        }
+
+    }
+
     // system tray
     SettingRow {
         visible: card.moduleId === "tray"
