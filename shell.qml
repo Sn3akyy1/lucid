@@ -489,7 +489,7 @@ ShellRoot {
                 // full bar and notches: open panels side by side become one shape.
                 // the gap between them fills in, and the shorter one's shared corner
                 // turns into a fillet against the taller one's side
-                if ((Prefs.barFull || Prefs.barNotch) && !popups && Prefs.barFullMerge) {
+                if ((Prefs.barFull || Prefs.barNotch) && !popups) {
                     // a notch has no strip under the gap, so it fills from the top
                     const strip = Prefs.barFull ? Theme.dp(Prefs.barHeight) : 0;
                     const corner = Prefs.barFull ? Theme.dp(Prefs.barFullCorner) : most;
@@ -1358,9 +1358,9 @@ ShellRoot {
 
             }
 
-            // the gaps filled between open panels the full bar merges
+            // the gaps filled between open panels the bar merges
             Repeater {
-                model: 8
+                model: 6
 
                 Rectangle {
                     required property int index
@@ -1443,6 +1443,36 @@ ShellRoot {
 
                 ModuleRegion {
                     mod: appsMod
+                }
+
+                BridgeRegion {
+                    host: bar
+                    index: 0
+                }
+
+                BridgeRegion {
+                    host: bar
+                    index: 1
+                }
+
+                BridgeRegion {
+                    host: bar
+                    index: 2
+                }
+
+                BridgeRegion {
+                    host: bar
+                    index: 3
+                }
+
+                BridgeRegion {
+                    host: bar
+                    index: 4
+                }
+
+                BridgeRegion {
+                    host: bar
+                    index: 5
                 }
 
                 // by numbers, not by item: the window does not see the mirror. once
@@ -1610,6 +1640,36 @@ ShellRoot {
                 ModuleRegion {
                     blur: true
                     mod: appsMod
+                }
+
+                BridgeRegion {
+                    host: bar
+                    index: 0
+                }
+
+                BridgeRegion {
+                    host: bar
+                    index: 1
+                }
+
+                BridgeRegion {
+                    host: bar
+                    index: 2
+                }
+
+                BridgeRegion {
+                    host: bar
+                    index: 3
+                }
+
+                BridgeRegion {
+                    host: bar
+                    index: 4
+                }
+
+                BridgeRegion {
+                    host: bar
+                    index: 5
                 }
 
             }

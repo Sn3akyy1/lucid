@@ -22,7 +22,7 @@ Item {
         "glass": "blur transparency transparent opacity translucent frosted",
         "theme": "palette wallpaper background dark light matugen",
         "environment": "gtk qt cursor icon theme font",
-        "bar": "panel status tray top style mode island islands notch notches full flush",
+        "bar": "panel status tray top bottom position edge style mode island islands notch notches full flush",
         "dock": "taskbar pinned style mode island islands notch notches split flush",
         "launcher": "app menu start",
         "widgets": "desktop cards",

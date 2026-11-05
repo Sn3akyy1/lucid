@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Services.Pipewire
 import Quickshell.Wayland
@@ -47,8 +48,16 @@ PanelWindow {
     // notch style: the card sits flush on the bottom edge and rises out of it,
     // with the dock's concave corners at its sides. a dock on that edge steps
     // down while it shows; one held up by a menu, a drag, the pointer or edit
-    // mode keeps the edge, and the card floats above it instead
-    readonly property bool notch: Prefs.osdNotch && !osdWindow.dockStays
+    // mode keeps the edge, and the card floats above it instead. on a bottom bar
+    // only the full bar's strip runs under it all; over islands or notches it
+    // would stand on nothing past a module's ends, so it floats as a card
+    readonly property bool notch: Prefs.osdNotch && !osdWindow.dockStays && !(osdWindow.barBelow && !Prefs.barFull)
+    // a fullscreen window covers the bar's layer but not this one, so the osd
+    // keeps to the screen edge then, as if there were no bar
+    readonly property bool barBelow: {
+        const m = Hyprland.monitorFor(osdWindow.screen);
+        return Prefs.barHoldsBottom && !(m && m.activeWorkspace && m.activeWorkspace.hasFullscreen);
+    }
     // what the dock reads to step aside. held until the card has faded, or the
     // dock comes back up under a card still easing out
     readonly property bool holdsEdge: osdWindow.notch && (osdWindow.cardShown || card.visible)
@@ -310,7 +319,9 @@ PanelWindow {
     // which would leave the card's edges half a pixel off
     implicitWidth: osdWindow.notch ? 2 * Math.ceil(Theme.dp(480) / 2) : Theme.dp(480)
     implicitHeight: osdWindow.notch ? 2 * Math.ceil(Theme.dp(64) / 2) : Theme.dp(140)
-    margins.bottom: osdWindow.notch ? 0 : Theme.dp(96)
+    // a notch stands on a bottom bar, ignoring its reserved strip; a card keeps
+    // clear of it, so only the gap is added, less the room around the card
+    margins.bottom: osdWindow.notch ? (osdWindow.barBelow ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) : 0) : (osdWindow.barBelow ? Theme.dp(Prefs.barPopupGap) - Math.round((osdWindow.implicitHeight - card.height) / 2) : Theme.dp(96))
     Component.onCompleted: {
         findDeviceProc.running = true;
         findKbdProc.running = true;

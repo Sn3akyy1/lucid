@@ -505,15 +505,12 @@ BarPill {
 
                     }
 
-                    Image {
+                    BarAppIcon {
                         anchors.centerIn: parent
-                        width: root.glyph
-                        height: root.glyph
-                        sourceSize.width: root.glyph * 2
-                        sourceSize.height: root.glyph * 2
+                        size: root.glyph
+                        app: cell.app
                         source: root.iconOf(cell.app.icon)
-                        asynchronous: true
-                        smooth: true
+                        hovered: cellArea.containsMouse
                     }
 
                     // open windows: a dot, stretched into a bar for the focused one
@@ -610,6 +607,11 @@ BarPill {
                         }
                     }
 
+                    HeldPointer {
+                        held: cell.held
+                        cursor: Qt.ClosedHandCursor
+                    }
+
                 }
 
             }
@@ -661,16 +663,13 @@ BarPill {
 
             // the held icon, following the pointer; pulled off the bar it shrinks
             // and fades, as a pin pulled off the dock does
-            Image {
+            BarAppIcon {
                 visible: root.dragFrom >= 0
                 x: Math.round(root.dragAt.x - width / 2)
                 y: Math.round(root.dragAt.y - height / 2)
-                width: root.glyph
-                height: root.glyph
-                sourceSize.width: root.glyph * 2
-                sourceSize.height: root.glyph * 2
+                size: root.glyph
+                app: root.dragItem
                 source: root.dragItem ? root.iconOf(root.dragItem.icon) : ""
-                smooth: true
                 scale: root.pulling ? 0.7 : 1.12
                 opacity: root.pulling ? 0.35 : 1
 
@@ -778,16 +777,13 @@ BarPill {
                     radius: Theme.radiusMd
                     color: Theme.alpha(Theme.text, gridArea.containsMouse ? 0.08 : 0)
 
-                    Image {
+                    BarAppIcon {
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: Theme.dp(10)
-                        width: Theme.dp(32)
-                        height: Theme.dp(32)
-                        sourceSize.width: Theme.dp(64)
-                        sourceSize.height: Theme.dp(64)
+                        size: Theme.dp(32)
+                        app: gridCell.modelData
                         source: root.iconOf(gridCell.modelData.icon)
-                        asynchronous: true
-                        smooth: true
+                        hovered: gridArea.containsMouse
                     }
 
                     Rectangle {
@@ -855,15 +851,11 @@ BarPill {
                     radius: Theme.radiusMd
                     color: Theme.accentContainer
 
-                    Image {
+                    BarAppIcon {
                         anchors.centerIn: parent
-                        width: Theme.dp(30)
-                        height: Theme.dp(30)
-                        sourceSize.width: Theme.dp(60)
-                        sourceSize.height: Theme.dp(60)
+                        size: Theme.dp(30)
+                        app: root.chosenItem
                         source: root.chosenItem ? root.iconOf(root.chosenItem.icon) : ""
-                        asynchronous: true
-                        smooth: true
                     }
 
                 }
@@ -947,15 +939,12 @@ BarPill {
 
                             }
 
-                            Image {
+                            BarAppIcon {
                                 visible: !preview.hasContent
                                 anchors.centerIn: parent
-                                width: Theme.dp(40)
-                                height: Theme.dp(40)
-                                sourceSize.width: Theme.dp(80)
-                                sourceSize.height: Theme.dp(80)
+                                size: Theme.dp(40)
+                                app: root.chosenItem
                                 source: root.chosenItem ? root.iconOf(root.chosenItem.icon) : ""
-                                asynchronous: true
                             }
 
                             Rectangle {

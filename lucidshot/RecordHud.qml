@@ -26,8 +26,8 @@ PanelWindow {
     }
     readonly property real restY: {
         const h = pill.height;
-        // clear of the dock along the bottom
-        const low = hud.height - (Prefs.dockOn ? Theme.dp(Prefs.dockIconSize) + Theme.dp(20) + Prefs.effectiveDockBottomMargin : 0) - Theme.dp(40) - h;
+        // clear of the dock along the bottom, or of a bottom bar
+        const low = hud.height - (Prefs.dockOn ? Theme.dp(Prefs.dockIconSize) + Theme.dp(20) + Prefs.effectiveDockBottomMargin : (Prefs.barEnabled && Prefs.barBottom ? Prefs.effectiveBarTopMargin + Theme.dp(Prefs.barHeight) : 0)) - Theme.dp(40) - h;
         if (!hud.area)
             return low;
 

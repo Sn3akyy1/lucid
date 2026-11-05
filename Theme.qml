@@ -634,8 +634,8 @@ Singleton {
     FontLoader {
         id: flexLoader
 
-        // beside this file: the installed shell, or the source tree the installer runs from
-        source: Qt.resolvedUrl("assets/fonts/GoogleSansFlex.ttf")
+        // beside shell.qml: the installed shell, or the source tree the installer runs from
+        source: "file://" + Quickshell.shellDir.replace(/\/$/, "") + "/assets/fonts/GoogleSansFlex.ttf"
     }
 
     // a window whose grab never lands must not hold the palette back

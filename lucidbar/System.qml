@@ -90,7 +90,8 @@ BarPill {
     function screenRect(item) {
         const a = item.mapToItem(null, 0, 0), b = item.mapToItem(null, item.width, item.height);
         const w = root.hostWindow;
-        const dy = w && w.screen && w.anchors.bottom && !w.anchors.top ? w.screen.height - w.height : 0;
+        // the window's own top on the screen, whichever edge it hangs from
+        const dy = !w || !w.screen ? 0 : (w.anchors.bottom && !w.anchors.top ? w.screen.height - w.margins.bottom - w.height : w.margins.top);
         return Qt.rect(Math.min(a.x, b.x), Math.min(a.y, b.y) + dy, Math.abs(b.x - a.x), Math.abs(b.y - a.y));
     }
 
