@@ -389,6 +389,10 @@ BarPill {
     readonly property bool folded: !!root.dockMod && !!root.dockMod.launcherHost && root.dockMod.launcherHost.hostWindow === root.hostWindow
     // taken from folded in its handler, once the timings the animations read are set
     property bool foldedNow: false
+    // and stands at the Start module's height meanwhile, so the island is one shape
+    // from its first frame: the bar merges the two side by side
+    readonly property var foldPartner: !!root.hostWindow && root.hostWindow.startHostsLauncher === true ? (root.hostWindow.pillFor["start"] || null) : null
+    matchHeight: !!root.foldPartner && root.foldPartner.height > root.compactHeight + 0.5 ? root.foldPartner.height : -1
     property int foldFadePause: 0
     property int foldFadeDuration: Theme.barMs(120)
 
@@ -472,6 +476,8 @@ BarPill {
         // the icons as wide as the pill is drawn, so folding away they go with it
         Item {
             x: Math.round((parent.width - root.width) / 2)
+            // kept on the bar's own band while the pill stands taller
+            y: (Prefs.barBottom ? 1 : -1) * Math.round((root.height - root.compactHeight) / 2)
             width: root.width
             height: parent.height
             clip: root.foldedNow || root.width < root.compactWidth - 0.5

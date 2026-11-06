@@ -223,6 +223,10 @@ Item {
         onTriggered: pill.closing = false
     }
 
+    // a neighbour's height to stand at, frame by frame, while it morphs and this
+    // folds into it; -1 for its own
+    property real matchHeight: -1
+
     // a width change that goes with a neighbour's close, on that close's curve
     function closeAlong() {
         pill.closing = true;
@@ -432,13 +436,16 @@ Item {
     property bool exiting: false
 
     implicitWidth: !pill.shown ? 0 : (pill.popupMode ? pill.compactWidth : pill.openWidth)
-    implicitHeight: !pill.shown ? 0 : (pill.popupMode ? pill.compactHeight : pill.openHeight)
-    opacity: pill.shown ? 1 : 0
+    implicitHeight: !pill.shown ? 0 : (pill.popupMode ? pill.compactHeight : (pill.matchHeight >= 0 ? pill.matchHeight : pill.openHeight))
+    // an open panel standing over it: out of the way until it shuts, not cut off at its edge
+    readonly property bool covered: !!pill.hostWindow && !!pill.hostWindow.covers && pill.hostWindow.covers(pill)
+    opacity: pill.shown && !pill.covered ? 1 : 0
     scale: pill.shown ? 1 : 0.86
     transformOrigin: Item.Center
     visible: pill.opacity > 0.01
     clip: !pill.popupMode && pill.anyOpen && !pill.overlayOpen && !jelly.wobbling
-    z: pill.editLifted ? 120 : ((pill.popupOpen || pill.overlayOpen) ? 100 : 1)
+    // open in place, a panel stands over its neighbours, as wide as it may be
+    z: pill.editLifted ? 120 : ((pill.popupOpen || pill.overlayOpen) ? 100 : (pill.surfaceOpen && !pill.popupMode ? 50 : 1))
 
     Behavior on opacity {
         SequentialAnimation {
@@ -536,7 +543,7 @@ Item {
     }
 
     Behavior on implicitHeight {
-        enabled: !pill.anyOpen || pill.panelTransitioning || pill.shownTransition
+        enabled: (!pill.anyOpen || pill.panelTransitioning || pill.shownTransition) && pill.matchHeight < 0
 
         SequentialAnimation {
             PauseAnimation {

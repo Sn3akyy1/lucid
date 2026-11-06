@@ -19,6 +19,7 @@ import "./lucidupdate"
 import "./lucidwidgets"
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import qs.lucidicons
@@ -513,8 +514,9 @@ ShellRoot {
 
                 // full bar and notches: open panels side by side become one shape.
                 // the gap between them fills in, and the shorter one's shared corner
-                // turns into a fillet against the taller one's side
-                if ((Prefs.barFull || Prefs.barNotch) && !popups) {
+                // turns into a fillet against the taller one's side. on islands, only
+                // joined ones: one island stays one shape
+                if (!popups) {
                     // a notch has no strip under the gap, so it fills from the top
                     const strip = Prefs.barFull ? Theme.dp(Prefs.barHeight) : 0;
                     const corner = Prefs.barFull ? Theme.dp(Prefs.barFullCorner) : most;
@@ -530,6 +532,9 @@ ShellRoot {
                         // counting that as apart made the corner flicker
                         const gap = b.x - (a.x + a.width);
                         if (a === workspacesMod || b === workspacesMod || a.surfaceOpen !== true || b.surfaceOpen !== true || Math.abs(gap) > corner)
+                            continue;
+
+                        if (!Prefs.barFull && !Prefs.barNotch && !Prefs.barJoinedNow(a.modId, b.modId))
                             continue;
 
                         const low = Math.min(a.height, b.height);
@@ -1538,6 +1543,44 @@ ShellRoot {
                     dock.menuOpen = false;
 
             }
+
+            // whether an open panel stands over this module, as one can only once the
+            // centre is too narrow for it
+            function covers(mod) {
+                if (!mod || mod.surfaceOpen === true || mod.width <= 0.5)
+                    return false;
+
+                const l = mod.x;
+                const r = mod.x + mod.width;
+                return bar.modules.some((o) => {
+                    return o !== mod && o.surfaceOpen === true && o.popupMode !== true && o.x < r - 0.5 && o.x + o.width > l + 0.5;
+                });
+            }
+
+            // a fullscreen window hides the bar's layer, so while one of its panels is
+            // open there, and as it shuts, the bar goes up to the overlay with it
+            readonly property bool fullscreenHere: {
+                const m = Hyprland.monitorFor(bar.screen);
+                return !!m && !!m.activeWorkspace && m.activeWorkspace.hasFullscreen;
+            }
+            readonly property bool panelUp: bar.modules.some((m) => {
+                return m.expanded === true;
+            })
+
+            onPanelUpChanged: {
+                if (bar.panelUp)
+                    panelDownTimer.stop();
+                else
+                    panelDownTimer.restart();
+            }
+
+            Timer {
+                id: panelDownTimer
+
+                interval: Theme.barDurEnter + Theme.barMs(80)
+            }
+
+            WlrLayershell.layer: bar.fullscreenHere && (bar.panelUp || panelDownTimer.running) ? WlrLayer.Overlay : WlrLayer.Top
 
             // linked to the Apps module, the Start module is where the launcher opens.
             // the link as set, on the full bar too, which draws no joins
