@@ -18,6 +18,9 @@ BarPill {
     // into the launcher, the dock lending it the launcher's face meanwhile
     readonly property bool hosting: !!root.dockMod && root.dockMod.launcherHost === root
     readonly property Item faceSlot: launcherSlot
+    // linked, it is the first icon of one row with the Apps module and lights as
+    // they do, a square of its own, not as a module
+    readonly property bool linked: !!root.hostWindow && root.hostWindow.startHostsLauncher === true
     lookPref: Prefs.startModuleStyle
     readonly property bool gridFace: root.look === "grid"
     // the distribution's logo, the account picture, or a word; the logo falls
@@ -46,7 +49,7 @@ BarPill {
 
     opensOnHover: false
     compactInteractive: false
-    compactHovered: startArea.containsMouse
+    compactHovered: !root.linked && startArea.containsMouse
     shown: Prefs.showStart && root.dockMod !== null
     compactWidth: root.labelFace ? root.chipWidth + root.compactHeight - root.chipHeight : root.compactHeight
     panelWidth: root.dockMod ? Math.round(root.dockMod.menuWidth) : Theme.dp(480)
@@ -104,10 +107,29 @@ BarPill {
             }
 
         },
+        // the Apps module's state layer, on its own icon's square
+        Rectangle {
+            visible: root.linked
+            anchors.centerIn: parent
+            width: root.compactHeight - Theme.dp(8)
+            height: root.compactHeight - Theme.dp(8)
+            radius: Theme.radiusMd
+            color: Theme.text
+            opacity: startArea.pressed ? Theme.statePressed + 0.04 : (startArea.containsMouse ? Theme.stateHover + 0.02 : 0)
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Theme.durShort
+                    easing.type: Easing.OutCubic
+                }
+
+            }
+
+        },
         // pressed, the face squashes and springs back as it is let go
         Item {
             anchors.fill: parent
-            scale: startArea.pressed ? 0.86 : 1
+            scale: startArea.pressed ? 0.9 : 1
 
             Behavior on scale {
                 NumberAnimation {

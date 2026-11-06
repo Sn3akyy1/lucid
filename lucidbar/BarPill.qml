@@ -223,6 +223,12 @@ Item {
         onTriggered: pill.closing = false
     }
 
+    // a width change that goes with a neighbour's close, on that close's curve
+    function closeAlong() {
+        pill.closing = true;
+        closingTimer.restart();
+    }
+
     function syncFadeTimings() {
         var open = pill.expanded || pill.altOpen;
         pill.closing = !open;
