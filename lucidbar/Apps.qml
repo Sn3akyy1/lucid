@@ -390,9 +390,10 @@ BarPill {
     // taken from folded in its handler, once the timings the animations read are set
     property bool foldedNow: false
     // and stands at the Start module's height meanwhile, so the island is one shape
-    // from its first frame: the bar merges the two side by side
+    // from its first frame: the bar merges the two side by side. folded away to
+    // nothing it stands no more, or the bar hangs its corners off a strip of nothing
     readonly property var foldPartner: !!root.hostWindow && root.hostWindow.startHostsLauncher === true ? (root.hostWindow.pillFor["start"] || null) : null
-    matchHeight: !!root.foldPartner && root.foldPartner.height > root.compactHeight + 0.5 ? root.foldPartner.height : -1
+    matchHeight: !!root.foldPartner && root.width > 0.5 && root.foldPartner.height > root.compactHeight + 0.5 ? root.foldPartner.height : -1
     property int foldFadePause: 0
     property int foldFadeDuration: Theme.barMs(120)
 
