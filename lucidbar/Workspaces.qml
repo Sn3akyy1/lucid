@@ -1162,7 +1162,9 @@ Item {
 
     implicitWidth: root.shown ? root.compactWidth : 0
     implicitHeight: root.shown ? root.compactHeight : 0
-    opacity: root.shown ? 1 : 0
+    // out of the way while an open panel stands over the bar
+    readonly property bool covered: !!root.hostWindow && !!root.hostWindow.covers && root.hostWindow.covers(root)
+    opacity: root.shown && !root.covered ? 1 : 0
     scale: root.shown ? 1 : 0.86
     transformOrigin: Item.Center
     visible: root.opacity > 0.01

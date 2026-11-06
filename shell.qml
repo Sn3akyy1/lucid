@@ -1544,17 +1544,23 @@ ShellRoot {
 
             }
 
-            // whether an open panel stands over this module, as one can only once the
-            // centre is too narrow for it
-            function covers(mod) {
-                if (!mod || mod.surfaceOpen === true || mod.width <= 0.5)
-                    return false;
+            // an open panel too wide for its place stands over other modules, as one
+            // can only once the centre is too narrow for it: then the whole bar steps
+            // aside while it is open, not just the modules under it
+            readonly property bool panelOverBar: bar.modules.some((m) => {
+                return m.width > 0.5 && m.surfaceOpen !== true && bar.overlapped(m);
+            })
 
+            function overlapped(mod) {
                 const l = mod.x;
                 const r = mod.x + mod.width;
                 return bar.modules.some((o) => {
                     return o !== mod && o.surfaceOpen === true && o.popupMode !== true && o.x < r - 0.5 && o.x + o.width > l + 0.5;
                 });
+            }
+
+            function covers(mod) {
+                return !!mod && mod.surfaceOpen !== true && bar.panelOverBar;
             }
 
             // a fullscreen window hides the bar's layer, so while one of its panels is
