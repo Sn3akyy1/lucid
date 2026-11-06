@@ -14,6 +14,10 @@ BarPill {
 
     property var dockMod: null
     readonly property bool launcherOpen: !!root.dockMod && root.dockMod.menuOpen
+    // linked to the Apps module, the launcher opens out of this module: it grows
+    // into the launcher, the dock lending it the launcher's face meanwhile
+    readonly property bool hosting: !!root.dockMod && root.dockMod.launcherHost === root
+    readonly property Item faceSlot: launcherSlot
     lookPref: Prefs.startModuleStyle
     readonly property bool gridFace: root.look === "grid"
     // the distribution's logo, the account picture, or a word; the logo falls
@@ -45,6 +49,36 @@ BarPill {
     compactHovered: startArea.containsMouse
     shown: Prefs.showStart && root.dockMod !== null
     compactWidth: root.labelFace ? root.chipWidth + root.compactHeight - root.chipHeight : root.compactHeight
+    panelWidth: root.dockMod ? Math.round(root.dockMod.menuWidth) : Theme.dp(480)
+    panelHeight: root.dockMod ? Math.round(root.dockMod.menuHeight) : Theme.dp(400)
+    expandedRadius: Theme.shapeXl
+    onHostingChanged: {
+        if (root.hosting)
+            faceHome.stop();
+
+        root.expanded = root.hosting;
+    }
+    onExpandedChanged: {
+        // shut from the bar's side, by a click away say
+        if (!root.expanded && root.hosting)
+            root.dockMod.menuOpen = false;
+
+        if (!root.expanded)
+            faceHome.restart();
+
+    }
+
+    // the face goes back to the dock once the panel has shut
+    Timer {
+        id: faceHome
+
+        interval: Theme.barDurEnter + Theme.barMs(120)
+        onTriggered: {
+            if (root.dockMod)
+                root.dockMod.returnFace(root);
+
+        }
+    }
 
     FileView {
         id: osRelease
@@ -70,109 +104,129 @@ BarPill {
             }
 
         },
-        // Lucid's mark (assets/logo-mark.svg), as at the top of the launcher
-        Shape {
-            visible: root.markFace
-            anchors.centerIn: parent
-            width: root.glyph
-            height: root.glyph
-            preferredRendererType: Shape.CurveRenderer
+        // pressed, the face squashes and springs back as it is let go
+        Item {
+            anchors.fill: parent
+            scale: startArea.pressed ? 0.86 : 1
 
-            ShapePath {
-                strokeColor: Theme.accent
-                strokeWidth: 3
-                fillColor: "transparent"
-                capStyle: ShapePath.RoundCap
-
-                PathSvg {
-                    path: "M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53"
+            Behavior on scale {
+                NumberAnimation {
+                    duration: Theme.durMedium
+                    easing.type: Easing.OutBack
+                    easing.overshoot: 1.8
                 }
 
             }
 
-            ShapePath {
-                strokeWidth: 0
-                fillColor: Theme.text
-
-                PathSvg {
-                    path: "M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"
-                }
-
-            }
-
-            ShapePath {
-                strokeWidth: 0
-                fillColor: Theme.accent
-
-                PathSvg {
-                    path: "M20,9.4 A1,1 0 1 0 22,9.4 A1,1 0 1 0 20,9.4 Z"
-                }
-
-            }
-
-            transform: Scale {
-                xScale: root.glyph / 24
-                yScale: root.glyph / 24
-            }
-
-        },
-        // or the dock's launcher button, lit as the dock lights it. its squares
-        // span about half its box, which puts them at the bar's icon size
-        UI.LauncherGrid {
-            visible: root.gridFace
-            anchors.centerIn: parent
-            width: Math.round(root.glyph * 1.3)
-            height: width
-            lit: startArea.containsMouse || root.launcherOpen
-        },
-        // Distro: the logo /etc/os-release names, in the accent
-        Image {
-            id: distroLogo
-
-            visible: false
-            width: root.glyph
-            height: root.glyph
-            source: Prefs.startModuleStyle === "distro" ? root.osLogoSource : ""
-            sourceSize.width: root.glyph * 2
-            sourceSize.height: root.glyph * 2
-            fillMode: Image.PreserveAspectFit
-            asynchronous: true
-        },
-        MultiEffect {
-            visible: root.distroFace
-            anchors.centerIn: parent
-            width: root.glyph
-            height: root.glyph
-            source: distroLogo
-            colorization: 1
-            colorizationColor: Theme.accent
-            brightness: 0.25
-        },
-        // Avatar: the account picture, round
-        UserAvatar {
-            visible: root.avatarFace
-            anchors.centerIn: parent
-            user: Users.me
-            size: root.glyph + Theme.dp(2)
-        },
-        // Label: the word, on a chip in the accent
-        Rectangle {
-            visible: root.labelFace
-            anchors.centerIn: parent
-            width: root.chipWidth
-            height: root.chipHeight
-            radius: Theme.pill(height)
-            color: root.launcherOpen ? Theme.accentHover : Theme.accent
-
-            Text {
-                id: startLabel
-
+            // Lucid's mark (assets/logo-mark.svg), as at the top of the launcher
+            Shape {
+                visible: root.markFace
                 anchors.centerIn: parent
-                text: "Start"
-                color: Theme.fgAccent
-                font.family: Theme.fontFamily
-                font.bold: true
-                font.pixelSize: Theme.fs(12)
+                width: root.glyph
+                height: root.glyph
+                preferredRendererType: Shape.CurveRenderer
+
+                ShapePath {
+                    strokeColor: Theme.accent
+                    strokeWidth: 3
+                    fillColor: "transparent"
+                    capStyle: ShapePath.RoundCap
+
+                    PathSvg {
+                        path: "M15.92,5.72 A7.4,7.4 0 1 0 18.95,14.53"
+                    }
+
+                }
+
+                ShapePath {
+                    strokeWidth: 0
+                    fillColor: Theme.text
+
+                    PathSvg {
+                        path: "M12,7.4 C12.598,10.62 13.38,11.402 16.6,12 C13.38,12.598 12.598,13.38 12,16.6 C11.402,13.38 10.62,12.598 7.4,12 C10.62,11.402 11.402,10.62 12,7.4 Z"
+                    }
+
+                }
+
+                ShapePath {
+                    strokeWidth: 0
+                    fillColor: Theme.accent
+
+                    PathSvg {
+                        path: "M20,9.4 A1,1 0 1 0 22,9.4 A1,1 0 1 0 20,9.4 Z"
+                    }
+
+                }
+
+                transform: Scale {
+                    xScale: root.glyph / 24
+                    yScale: root.glyph / 24
+                }
+
+            }
+
+            // or the dock's launcher button, lit as the dock lights it. its squares
+            // span about half its box, which puts them at the bar's icon size
+            UI.LauncherGrid {
+                visible: root.gridFace
+                anchors.centerIn: parent
+                width: Math.round(root.glyph * 1.3)
+                height: width
+                lit: startArea.containsMouse || root.launcherOpen
+            }
+
+            // Distro: the logo /etc/os-release names, in the accent
+            Image {
+                id: distroLogo
+
+                visible: false
+                width: root.glyph
+                height: root.glyph
+                source: Prefs.startModuleStyle === "distro" ? root.osLogoSource : ""
+                sourceSize.width: root.glyph * 2
+                sourceSize.height: root.glyph * 2
+                fillMode: Image.PreserveAspectFit
+            }
+
+            MultiEffect {
+                visible: root.distroFace
+                anchors.centerIn: parent
+                width: root.glyph
+                height: root.glyph
+                source: distroLogo
+                colorization: 1
+                colorizationColor: Theme.accent
+                brightness: 0.25
+            }
+
+            // Avatar: the account picture, round
+            UserAvatar {
+                visible: root.avatarFace
+                anchors.centerIn: parent
+                user: Users.me
+                size: root.glyph + Theme.dp(2)
+            }
+
+            // Label: the word, on a chip in the accent
+            Rectangle {
+                visible: root.labelFace
+                anchors.centerIn: parent
+                width: root.chipWidth
+                height: root.chipHeight
+                radius: Theme.pill(height)
+                color: root.launcherOpen ? Theme.accentHover : Theme.accent
+
+                Text {
+                    id: startLabel
+
+                    anchors.centerIn: parent
+                    text: "Start"
+                    color: Theme.fgAccent
+                    font.family: Theme.fontFamily
+                    font.bold: true
+                    font.pixelSize: Theme.fs(12)
+                }
+
             }
 
         },
@@ -196,6 +250,17 @@ BarPill {
                 else
                     root.dockMod.openLauncher("");
             }
+        }
+    ]
+
+    panelContent: [
+        // where the dock's launcher face sits while this module is the launcher
+        Item {
+            id: launcherSlot
+
+            anchors.centerIn: parent
+            width: root.dockMod ? root.dockMod.menuWidth - root.dockMod.panelPadding : 0
+            height: root.dockMod ? root.dockMod.menuHeight - root.dockMod.panelPadding : 0
         }
     ]
 }

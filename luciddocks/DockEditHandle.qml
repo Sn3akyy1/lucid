@@ -10,7 +10,7 @@ Item {
     property var dock: null
     property Item shellItem: null
 
-    readonly property bool shown: Edit.active && Prefs.dockOn && !!handle.dock && !handle.dock.menuOpen && !handle.dock.morphing
+    readonly property bool shown: Edit.active && Prefs.dockOn && !!handle.dock && !handle.dock.menuInDock && !handle.dock.morphing
     readonly property bool hot: hover.hovered || drag.active
 
     // over the dock as painted, so it rides a wobble with the top edge

@@ -91,6 +91,14 @@ BarPill {
     }
     // the panel shows the apps that did not fit, rather than one app
     property bool overflowOpen: false
+    // cells made once the module is up grow in; the first ones are just there
+    property bool cellsReady: false
+
+    Timer {
+        running: true
+        interval: 1500
+        onTriggered: root.cellsReady = true
+    }
     readonly property var chosenItem: root.items.find((i) => {
         return i.appId === root.chosen;
     }) || null
@@ -457,12 +465,67 @@ BarPill {
                     readonly property var app: root.placed.shown[cell.index] || root.noApp
                     readonly property var wins: root.windowsOf(cell.app.appId)
                     readonly property bool focused: cell.wins.indexOf(Hyprland.activeToplevel) >= 0
+                    readonly property bool urgent: cell.wins.some((t) => {
+                        return t.urgent === true;
+                    })
                     readonly property bool held: root.dragFrom === cell.index
+                    readonly property bool hot: cellArea.containsMouse && !cell.held
+                    readonly property bool pressed: cellArea.pressed && !cellArea.dragged
+                    // launched from here: its dot breathes until the first window comes
+                    property bool launching: false
+                    // set once as it is made: a binding would empty every cell when the module comes up
+                    property real born: 1
+
+                    function launchNow() {
+                        if (cell.wins.length === 0) {
+                            cell.launching = true;
+                            launchTimeout.restart();
+                        }
+                        cellJelly.kickAfter(0.16, Theme.ms(60));
+                    }
 
                     width: root.slot
                     height: root.compactHeight
                     // the held icon is drawn in the overlay, where it can leave the bar
-                    opacity: cell.held ? 0 : 1
+                    opacity: cell.held ? 0 : cell.born
+                    onWinsChanged: {
+                        if (cell.wins.length > 0)
+                            cell.launching = false;
+
+                    }
+                    // as the dock's icons do: a kick as the pointer comes, a squash
+                    // under the press and a spring back off it
+                    onHotChanged: {
+                        if (cell.hot)
+                            cellJelly.kick(0.09);
+
+                    }
+                    onPressedChanged: cellJelly.kick(cell.pressed ? -0.13 : 0.1)
+                    Component.onCompleted: {
+                        if (!root.cellsReady)
+                            return ;
+
+                        cell.born = 0;
+                        bornAnim.start();
+                    }
+
+                    NumberAnimation {
+                        id: bornAnim
+
+                        target: cell
+                        property: "born"
+                        to: 1
+                        duration: Theme.durMedium
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.easeEmphasizedDecel
+                    }
+
+                    Timer {
+                        id: launchTimeout
+
+                        interval: 10000
+                        onTriggered: cell.launching = false
+                    }
 
                     transform: Translate {
                         x: root.shiftOf(cell.index)
@@ -480,51 +543,155 @@ BarPill {
 
                     }
 
-                    Rectangle {
-                        visible: Prefs.dockIconTiles
-                        anchors.centerIn: parent
-                        width: root.slot - Theme.dp(4)
-                        height: root.compactHeight - Theme.dp(8)
-                        radius: Theme.radiusMd
-                        color: Theme.withBlur(Theme.bgTile)
-                    }
+                    // hover swells the icon and lifts it off the bar's edge, a press
+                    // squashes it; a new cell grows in
+                    Item {
+                        id: face
 
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: root.slot - Theme.dp(4)
-                        height: root.compactHeight - Theme.dp(8)
-                        radius: Theme.radiusMd
-                        color: Theme.alpha(Theme.text, cellArea.containsMouse ? 0.1 : (cell.focused ? 0.06 : 0))
+                        readonly property bool jellyWobbling: cellJelly.wobbling
 
-                        Behavior on color {
-                            ColorAnimation {
+                        anchors.fill: parent
+                        scale: (cell.pressed ? 0.88 : (cell.hot ? 1 + 0.1 * Prefs.dockHoverEffect : 1)) * (0.6 + 0.4 * cell.born)
+                        transform: [
+                            Translate {
+                                y: cell.hot && !cell.pressed ? Math.round(Theme.dp(2) * Prefs.dockHoverEffect) : 0
+
+                                Behavior on y {
+                                    NumberAnimation {
+                                        duration: Theme.durShort
+                                        easing.type: Easing.OutCubic
+                                    }
+
+                                }
+
+                            },
+                            Jelly {
+                                id: cellJelly
+
+                                target: face
+                                anchorY: 0
+                                frequency: 5.5
+                            }
+                        ]
+
+                        Rectangle {
+                            visible: Prefs.dockIconTiles
+                            anchors.centerIn: parent
+                            width: root.slot - Theme.dp(4)
+                            height: root.compactHeight - Theme.dp(8)
+                            radius: Theme.radiusMd
+                            color: Theme.withBlur(Theme.bgTile)
+                        }
+
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: root.slot - Theme.dp(4)
+                            height: root.compactHeight - Theme.dp(8)
+                            radius: Theme.radiusMd
+                            color: Theme.text
+                            opacity: cell.pressed ? 0.14 : (cell.hot ? 0.1 : (cell.focused ? 0.06 : 0))
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Theme.durShort
+                                    easing.type: Easing.OutCubic
+                                }
+
+                            }
+
+                        }
+
+                        BarAppIcon {
+                            anchors.centerIn: parent
+                            size: root.glyph
+                            app: cell.app
+                            source: root.iconOf(cell.app.icon)
+                            hovered: cell.hot
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation {
                                 duration: Theme.durShort
+                                easing.type: Easing.OutBack
+                                easing.overshoot: 1.6
                             }
 
                         }
 
                     }
 
-                    BarAppIcon {
-                        anchors.centerIn: parent
-                        size: root.glyph
-                        app: cell.app
-                        source: root.iconOf(cell.app.icon)
-                        hovered: cellArea.containsMouse
-                    }
+                    // as the dock's: a segment for each window, up to three, longer on
+                    // the app in focus; red and breathing while one wants attention,
+                    // and a breathing dot while a launch is on its way
+                    Row {
+                        id: indicator
 
-                    // open windows: a dot, stretched into a bar for the focused one
-                    Rectangle {
-                        visible: Prefs.dockShowIndicators && cell.wins.length > 0
+                        readonly property int segments: Math.max(1, Math.min(3, cell.wins.length))
+                        readonly property real segW: cell.focused ? (indicator.segments === 1 ? Theme.dp(12) : Theme.dp(6)) : Theme.dp(4)
+                        readonly property bool breathing: (cell.urgent || (cell.launching && cell.wins.length === 0)) && root.shown && indicator.visible
+                        property real pulse: 1
+
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: Theme.dp(3)
-                        width: cell.focused ? Theme.dp(12) : Theme.dp(4)
-                        height: Theme.dp(3)
-                        radius: height / 2
-                        color: cell.focused ? Theme.accent : Theme.alpha(Theme.text, 0.6)
+                        spacing: Theme.dp(2)
+                        opacity: Prefs.dockShowIndicators && (cell.wins.length > 0 || cell.launching) ? 1 : 0
+                        visible: indicator.opacity > 0
 
-                        Behavior on width {
+                        Repeater {
+                            model: indicator.segments
+
+                            Rectangle {
+                                width: indicator.segW
+                                height: Theme.dp(3)
+                                radius: height / 2
+                                opacity: indicator.pulse
+                                color: cell.urgent ? Theme.error : (cell.focused ? Theme.accent : Theme.alpha(Theme.text, 0.6))
+
+                                Behavior on width {
+                                    NumberAnimation {
+                                        duration: Theme.durShort
+                                        easing.type: Easing.Bezier
+                                        easing.bezierCurve: Theme.easeEmphasizedDecel
+                                    }
+
+                                }
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Theme.durShort
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                        SequentialAnimation on pulse {
+                            running: indicator.breathing
+                            loops: Animation.Infinite
+                            onRunningChanged: {
+                                if (!running)
+                                    indicator.pulse = 1;
+
+                            }
+
+                            NumberAnimation {
+                                to: 0.3
+                                duration: Theme.ms(500)
+                                easing.type: Easing.InOutSine
+                            }
+
+                            NumberAnimation {
+                                to: 1
+                                duration: Theme.ms(500)
+                                easing.type: Easing.InOutSine
+                            }
+
+                        }
+
+                        Behavior on opacity {
                             NumberAnimation {
                                 duration: Theme.durShort
                             }
@@ -598,12 +765,17 @@ BarPill {
                                 return ;
 
                             root.hover(null);
-                            if (mouse.button === Qt.RightButton)
+                            if (mouse.button === Qt.RightButton) {
                                 root.openFor(cell.app);
-                            else if (mouse.button === Qt.MiddleButton)
+                            } else if (mouse.button === Qt.MiddleButton) {
+                                cell.launchNow();
                                 root.launch(cell.app);
-                            else
+                            } else {
+                                if (cell.wins.length === 0)
+                                    cell.launchNow();
+
                                 root.activate(cell.app);
+                            }
                         }
                     }
 
@@ -620,13 +792,33 @@ BarPill {
                 visible: root.placed.rest.length > 0
                 width: root.slot
                 height: root.compactHeight
+                scale: moreArea.pressed ? 0.88 : 1
 
                 Rectangle {
                     anchors.centerIn: parent
                     width: root.slot - Theme.dp(4)
                     height: root.compactHeight - Theme.dp(8)
                     radius: Theme.radiusMd
-                    color: Theme.alpha(Theme.text, moreArea.containsMouse ? 0.1 : 0)
+                    color: Theme.text
+                    opacity: moreArea.pressed ? 0.14 : (moreArea.containsMouse ? 0.1 : 0)
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Theme.durShort
+                            easing.type: Easing.OutCubic
+                        }
+
+                    }
+
+                }
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: Theme.durShort
+                        easing.type: Easing.OutBack
+                        easing.overshoot: 1.6
+                    }
+
                 }
 
                 Text {
@@ -705,6 +897,10 @@ BarPill {
                 color: Theme.bgHigh
                 opacity: root.tipOpen ? 1 : 0
                 visible: opacity > 0.01
+
+                transform: Translate {
+                    y: (1 - tip.opacity) * (root.tipAbove ? Theme.dp(4) : -Theme.dp(4))
+                }
 
                 Column {
                     id: tipColumn

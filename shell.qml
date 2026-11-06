@@ -1531,12 +1531,29 @@ ShellRoot {
                 return m !== workspacesMod && m.expanded === true;
             })
 
-            readonly property bool launcherUp: bar.primary && Prefs.barHoldsBottom && dock.menuOpen
+            readonly property bool launcherUp: bar.primary && Prefs.barHoldsBottom && dock.menuInDock
 
             onPanelExpandedChanged: {
-                if (bar.panelExpanded && bar.primary && Prefs.barHoldsBottom)
+                if (bar.panelExpanded && bar.primary && Prefs.barHoldsBottom && dock.menuInDock)
                     dock.menuOpen = false;
 
+            }
+
+            // linked to the Apps module, the Start module is where the launcher opens.
+            // the link as set, on the full bar too, which draws no joins
+            readonly property bool startHostsLauncher: Prefs.barJoined("start", "apps") && startMod.shown && appsMod.shown && bar.adjacent("start", "apps")
+
+            function adjacent(a, b) {
+                const p = bar.placeMap[a];
+                const q = bar.placeMap[b];
+                return !!p && !!q && p.zone === q.zone && Math.abs(p.at - q.at) === 1;
+            }
+
+            Binding {
+                target: dock
+                property: "barLauncher"
+                value: bar.startHostsLauncher ? startMod : null
+                when: bar.primary
             }
 
             // the overview and the dock menu shut each other
@@ -1556,9 +1573,10 @@ ShellRoot {
                         return ;
 
                     workspacesMod.expanded = false;
-                    if (bar.primary && Prefs.barHoldsBottom) {
+                    // the launcher is a panel of the bar's own now, or stands where they open
+                    if (bar.primary && (dock.launcherHost || Prefs.barHoldsBottom)) {
                         for (const m of bar.modules) {
-                            if (m.expanded === true)
+                            if (m.expanded === true && m !== dock.launcherHost)
                                 m.expanded = false;
 
                         }
@@ -1911,7 +1929,7 @@ ShellRoot {
     PanelWindow {
         id: clickCatcher
 
-        visible: dock.menuOpen && Monitors.surfacesUp
+        visible: dock.menuInDock && Monitors.surfacesUp
         color: "transparent"
         exclusiveZone: 0
         WlrLayershell.layer: WlrLayer.Top
