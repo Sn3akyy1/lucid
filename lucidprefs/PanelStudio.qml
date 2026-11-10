@@ -52,7 +52,6 @@ Item {
         sourceComponent: PanelBuilder {
             width: stage.width
             height: stage.height
-            studio: true
             area: stage.area
             enterT: stage.t
             from: Edit.studioFrom

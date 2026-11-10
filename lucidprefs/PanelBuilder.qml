@@ -24,7 +24,6 @@ Item {
     // the studio (PanelStudio): the panel in the middle of a display, the library
     // to its left and the inspector to its right, in the free band it is given.
     // enterT is how far in it has come, from the rect it rose from on the bar
-    property bool studio: false
     property rect area: Qt.rect(0, 0, builder.width, builder.height)
     property real enterT: 1
     property rect from: Qt.rect(0, 0, 0, 0)
@@ -49,9 +48,9 @@ Item {
     // pulled out by the panel's edges, and rows added as a block is carried down
     property int extraCols: 2
     property int extraRows: 3
-    readonly property int boardCols: builder.studio ? Math.min(Prefs.systemGridCols, builder.usedCols + Math.max(0, builder.extraCols)) : Prefs.systemGridCols
+    readonly property int boardCols: Math.min(Prefs.systemGridCols, builder.usedCols + Math.max(0, builder.extraCols))
     // how much the grid is drawn down to fit the page, or the studio's middle
-    readonly property real k: builder.studio ? Math.max(0.5, Math.min(1, (builder.area.width - builder.colW * 2 - builder.colGap * 2 - builder.canvasPad * 2) / builder.span(builder.boardCols))) : Math.max(0.3, Math.min(1, builder.width / builder.span(builder.boardCols)))
+    readonly property real k: Math.max(0.5, Math.min(1, (builder.area.width - builder.colW * 2 - builder.colGap * 2 - builder.canvasPad * 2) / builder.span(builder.boardCols)))
     readonly property real canvasW: boardWrap.width + builder.canvasPad * 2
     readonly property int restRows: {
         const at = Prefs.systemGridPlace(Prefs.systemBlockKeys, builder.needs);
@@ -82,7 +81,7 @@ Item {
     }
 
     Behavior on groupX {
-        enabled: builder.studio && builder.enterT > 0.99 && !builder.holding
+        enabled: builder.enterT > 0.99 && !builder.holding
 
         NumberAnimation {
             duration: Theme.durMedium
@@ -93,7 +92,7 @@ Item {
     }
 
     Behavior on canvasY {
-        enabled: builder.studio && builder.enterT > 0.99 && !builder.holding
+        enabled: builder.enterT > 0.99 && !builder.holding
 
         NumberAnimation {
             duration: Theme.durMedium
@@ -105,7 +104,7 @@ Item {
 
     // a block carried past the last row brings another under it
     function growTo(t) {
-        if (builder.studio && t && t.y + t.h >= builder.boardRows)
+        if (t && t.y + t.h >= builder.boardRows)
             builder.extraRows += t.y + t.h - builder.boardRows + 1;
 
     }
@@ -140,8 +139,8 @@ Item {
     readonly property int boardRows: Prefs.systemBlockKeys.reduce((n, key) => {
         const r = builder.place[key];
         return r ? Math.max(n, r.y + r.h) : n;
-    }, 0) + (builder.studio ? builder.extraRows : 6)
-    readonly property int usedRows: builder.boardRows - (builder.studio ? builder.extraRows : 6)
+    }, 0) + builder.extraRows
+    readonly property int usedRows: builder.boardRows - builder.extraRows
     // where a block is being carried or stretched to, outlined on the grid
     property var target: null
     // the shelf's page: blocks, tiles, sliders or gauges
@@ -220,7 +219,7 @@ Item {
 
     // over the shelf, or in the studio anywhere on the library's pane
     function shelfHas(p) {
-        const over = builder.studio ? libPane : shelf;
+        const over = libPane;
         const q = over.mapFromItem(builder, p.x, p.y);
         return q.x >= 0 && q.x < over.width && q.y >= 0 && q.y < over.height;
     }
@@ -282,7 +281,7 @@ Item {
             } : null;
             const t = builder.target;
             builder.growTo(t);
-            if (builder.studio && (!t || !was || t.x !== was.x || t.y !== was.y))
+            if ((!t || !was || t.x !== was.x || t.y !== was.y))
                 builder.plan = t ? Prefs.systemGridPlan(builder.carry.key, {
                 "x": t.x,
                 "y": t.y
@@ -728,12 +727,6 @@ Item {
     width: parent ? parent.width : 0
     implicitHeight: boardWrap.y + boardWrap.height
     activeFocusOnTab: true
-    onActiveFocusChanged: {
-        if (!builder.activeFocus && !builder.studio) {
-            builder.selected = "";
-            builder.menu = null;
-        }
-    }
     // the three blocks there were once are written out as the five
     Component.onCompleted: Prefs.systemMigrate()
     // ctrl+z is edit mode's own undo; tab picks the blocks in turn, the arrows
@@ -911,7 +904,6 @@ Item {
     Rectangle {
         id: libPane
 
-        visible: builder.studio
         x: builder.libRect.x - (builder.libRect.x + builder.colW + Theme.dp(24)) * (1 - builder.enterT)
         y: builder.libRect.y
         width: builder.libRect.width
@@ -954,7 +946,6 @@ Item {
         readonly property real fy: canvasPane.rose ? builder.from.y : builder.canvasRect.y + Theme.dp(24)
         readonly property real fs: canvasPane.rose ? Math.max(0.2, builder.from.width / Math.max(1, builder.canvasRect.width)) : 0.96
 
-        visible: builder.studio
         x: builder.lerp(canvasPane.fx, builder.canvasRect.x, builder.enterT)
         y: builder.lerp(canvasPane.fy, builder.canvasRect.y, builder.enterT)
         width: builder.canvasRect.width
@@ -1042,7 +1033,6 @@ Item {
     Rectangle {
         id: inspPane
 
-        visible: builder.studio
         x: builder.inspRect.x + (builder.width - builder.inspRect.x + Theme.dp(24)) * (1 - builder.enterT)
         y: builder.inspRect.y
         width: builder.inspRect.width
@@ -1078,13 +1068,11 @@ Item {
         id: shelf
 
         // in the studio, the library pane's content, the pane itself doing the warning
-        parent: builder.studio ? libView.contentItem : builder
-        width: builder.studio ? libView.width : builder.width
+        parent: libView.contentItem
+        width: libView.width
         height: shelfCol.implicitHeight + Theme.dp(32)
         radius: Theme.radiusLg
-        color: builder.studio ? "transparent" : (builder.overShelf ? Theme.alpha(Theme.error, 0.12) : Theme.bgSunken)
-        border.width: builder.overShelf && !builder.studio ? Theme.dp(2) : 0
-        border.color: Theme.error
+        color: "transparent"
 
         Column {
             id: shelfCol
@@ -1194,11 +1182,10 @@ Item {
         id: toolbar
 
         // in the studio, the right end of the panel's header
-        parent: builder.studio ? canvasHeader : builder
-        anchors.right: builder.studio ? parent.right : undefined
-        anchors.verticalCenter: builder.studio ? parent.verticalCenter : undefined
-        y: builder.studio ? 0 : shelf.height + Theme.dp(12)
-        width: builder.studio ? tools.width : parent.width
+        parent: canvasHeader
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        width: tools.width
         height: Theme.dp(40)
 
         Row {
@@ -1219,157 +1206,15 @@ Item {
 
         }
 
-        Row {
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.dp(4)
-            visible: builder.notice !== "" && !builder.studio
-
-            LText {
-                anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, toolbar.width - tools.width - Theme.dp(110))
-                role: "bodyMedium"
-                color: Theme.subtext
-                elide: Text.ElideRight
-                text: builder.notice
-            }
-
-            M3Button {
-                anchors.verticalCenter: parent.verticalCenter
-                variant: "text"
-                text: "Undo"
-                onClicked: Edit.undo()
-            }
-
-        }
-
-    }
-
-    // how each block is drawn. with none picked, the blocks and the look each
-    // has, to pick one; with one picked, each of its looks drawn as the panel
-    // would draw it, a click away
-    Rectangle {
-        id: looksBar
-
-        readonly property string block: builder.selected !== "" && (Prefs.systemStyleCatalog[builder.selected] || []).length > 1 ? builder.selected : ""
-
-        visible: !builder.studio
-        y: toolbar.y + toolbar.height + Theme.dp(8)
-        width: parent.width
-        height: looksCol.implicitHeight + Theme.dp(28)
-        radius: Theme.radiusLg
-        color: Theme.bgSunken
-
-        Column {
-            id: looksCol
-
-            x: Theme.dp(16)
-            y: Theme.dp(14)
-            width: parent.width - Theme.dp(32)
-            spacing: Theme.dp(10)
-
-            // the same height whichever it shows, so the grid under it never moves
-            Item {
-                width: parent.width
-                height: Theme.dp(40)
-
-                Column {
-                    anchors.left: parent.left
-                    anchors.right: allBlocks.left
-                    anchors.rightMargin: Theme.dp(8)
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Theme.dp(2)
-
-                    LText {
-                        width: parent.width
-                        role: "titleSmall"
-                        weight: 600
-                        text: looksBar.block === "" ? "Looks" : builder.blockName(looksBar.block) + ": its look"
-                        elide: Text.ElideRight
-                    }
-
-                    LText {
-                        width: parent.width
-                        role: "bodySmall"
-                        color: Theme.subtext
-                        text: looksBar.block === "" ? "Every block can be drawn more than one way. Pick one here, or click it on the grid, for its looks." : "Click one to use it; Ctrl+Z goes back."
-                        elide: Text.ElideRight
-                    }
-
-                }
-
-                M3Button {
-                    id: allBlocks
-
-                    visible: looksBar.block !== ""
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    variant: "text"
-                    text: "All blocks"
-                    onClicked: builder.selected = ""
-                }
-
-            }
-
-            // one row, sliding sideways where it is wider than the page: the
-            // blocks in the look each has, or the picked block's looks
-            Flickable {
-                width: parent.width
-                height: Theme.dp(150)
-                contentWidth: looksRow.width
-                flickableDirection: Flickable.HorizontalFlick
-                boundsBehavior: Flickable.StopAtBounds
-                clip: true
-
-                Row {
-                    id: looksRow
-
-                    spacing: Theme.dp(8)
-
-                    Repeater {
-                        model: looksBar.block === "" ? builder.readingOrder() : []
-
-                        LookTile {
-                            required property string modelData
-
-                            block: modelData
-                            look: (Prefs.systemStyleCatalog[modelData] || []).find((l) => {
-                                return l.key === Prefs.systemBlockStyle(modelData);
-                            }) || null
-                            picker: true
-                        }
-
-                    }
-
-                    Repeater {
-                        model: looksBar.block !== "" ? Prefs.systemStyleCatalog[looksBar.block] : []
-
-                        LookTile {
-                            required property var modelData
-
-                            block: looksBar.block
-                            look: modelData
-                        }
-
-                    }
-
-                }
-
-            }
-
-        }
-
     }
 
     // the grid, full size and scaled down as one
     Item {
         id: boardWrap
 
-        parent: builder.studio ? boardView.contentItem : builder
-        y: builder.studio ? 0 : looksBar.y + looksBar.height + Theme.dp(12)
+        parent: boardView.contentItem
         width: Math.round(board.width * builder.k)
         height: Math.round(board.height * builder.k)
-        x: builder.studio ? 0 : Math.max(0, Math.round((builder.width - width) / 2))
 
         Item {
             id: board
@@ -1402,7 +1247,7 @@ Item {
                     height: board.height
                     radius: Theme.dp(8)
                     // in the studio, only while something is carried or stretched
-                    color: Theme.alpha(Theme.text, builder.target || builder.resizingGrid ? 0.07 : (builder.studio ? 0 : 0.035))
+                    color: Theme.alpha(Theme.text, builder.target || builder.resizingGrid ? 0.07 : 0)
                 }
 
             }
@@ -1639,7 +1484,7 @@ Item {
         // carried, by its body or by its name tag
         readonly property bool carried: area.mode === 1 || tagArea.pressed
         // picked by a click or tab, for the keys
-        readonly property bool picked: builder.selected === card.blockKey && (builder.activeFocus || builder.studio)
+        readonly property bool picked: builder.selected === card.blockKey
         property bool sizing: false
         // the piece the pointer is on, and the one showing its cross
         readonly property int hovered: hover.hovered && builder.ghost === null && card.editable ? view.pieceAt(hover.point.position.x, hover.point.position.y) : -1
@@ -1672,7 +1517,7 @@ Item {
             // in the studio the others step aside to where they would go, live
             const t = builder.target;
             builder.growTo(t);
-            if (builder.studio && (!t || !was || t.x !== was.x || t.y !== was.y))
+            if ((!t || !was || t.x !== was.x || t.y !== was.y))
                 builder.plan = t ? Prefs.systemGridPlan(card.blockKey, {
                 "x": t.x,
                 "y": t.y
@@ -1782,10 +1627,10 @@ Item {
         height: card.box.height
         z: card.busy ? 5 : 0
         // lifted while carried
-        scale: card.carried && builder.studio ? 1.03 : 1
+        scale: card.carried ? 1.03 : 1
 
         Behavior on x {
-            enabled: builder.studio && !card.carried
+            enabled: !card.carried
 
             NumberAnimation {
                 duration: Theme.durMedium
@@ -1796,7 +1641,7 @@ Item {
         }
 
         Behavior on y {
-            enabled: builder.studio && !card.carried
+            enabled: !card.carried
 
             NumberAnimation {
                 duration: Theme.durMedium
@@ -2238,13 +2083,6 @@ Item {
 
     }
 
-    // one look of a block, the block drawn in it at the width it has on the
-    // grid, with its name; the one in use is ticked. as a picker it is the
-    // block in the look it has, and a click picks the block
-    // the studio's right pane: with a block picked, its looks (each drawn with
-    // what the panel reads, and shown on the grid while the pointer is on it),
-    // its width, what it holds and its options; with none, layouts to start
-    // from, what goes for every block, and the keys
     // a handle on an edge of the studio's panel that makes its grid wider (across)
     // or taller, a column or a row at a time as it is pulled
     component GridGrip: Item {
@@ -2326,6 +2164,9 @@ Item {
         font.capitalization: Font.AllUppercase
     }
 
+    // the right pane: with a block picked, its looks, its width, what it holds
+    // and its options; with none, layouts to start from, what goes for every
+    // block, and the keys
     component Inspector: Column {
         id: ins
 
@@ -2673,13 +2514,14 @@ Item {
 
     }
 
+    // one look of a block, the block drawn in it, with its name; the one in
+    // use is ticked, and a look shows on the grid while the pointer is on it
     component LookTile: Item {
         id: lt
 
         property string block: ""
         property var look: null
-        property bool picker: false
-        readonly property bool on: !lt.picker && !!lt.look && Prefs.systemBlockStyle(lt.block) === lt.look.key
+        readonly property bool on: !!lt.look && Prefs.systemBlockStyle(lt.block) === lt.look.key
         readonly property var cell: builder.place[lt.block] || null
 
         width: Theme.dp(176)
@@ -2737,7 +2579,7 @@ Item {
             anchors.bottom: parent.bottom
             anchors.margins: Theme.dp(10)
             role: "labelLarge"
-            text: lt.picker ? builder.blockName(lt.block) + (lt.look ? " · " + lt.look.name : "") : (lt.look ? lt.look.name : "")
+            text: lt.look ? lt.look.name : ""
             elide: Text.ElideRight
         }
 
@@ -2767,9 +2609,8 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: lt.on ? Qt.ArrowCursor : Qt.PointingHandCursor
-            // in the studio a look shows on the grid while the pointer is on it
             onContainsMouseChanged: {
-                if (!builder.studio || lt.picker || !lt.look)
+                if (!lt.look)
                     return ;
 
                 if (ltArea.containsMouse)
@@ -2781,10 +2622,7 @@ Item {
                     builder.previewLook = null;
             }
             onClicked: {
-                if (lt.picker) {
-                    builder.forceActiveFocus();
-                    builder.selected = lt.block;
-                } else if (lt.look) {
+                if (lt.look) {
                     Prefs.setSystemBlockStyle(lt.block, lt.look.key);
                     builder.previewLook = null;
                 }
