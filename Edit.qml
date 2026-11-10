@@ -168,6 +168,7 @@ Singleton {
     }
 
     function openSheet(kind, id, side, screen) {
+        root.leaveStudio();
         root.enter(screen);
         root.back = kind === "module" && root.sheet === "bar" ? "bar" : (kind === root.sheet ? root.back : "");
         root.module = id || "";
@@ -179,13 +180,20 @@ Singleton {
     }
 
     function toggleSheet(kind, screen) {
-        if (root.sheet === kind)
+        if (root.sheet === kind && root.studio === "")
             root.closeSheet();
         else
             root.openSheet(kind, "", "right", screen);
     }
 
+    // a sheet opened, or a tool picked off the toolbar: the studio makes way and edit mode stays
+    function leaveStudio() {
+        root.studio = "";
+        root.studioOwnsEdit = false;
+    }
+
     function closeSheet() {
+        root.leaveStudio();
         root.sheet = "";
         root.back = "";
     }
