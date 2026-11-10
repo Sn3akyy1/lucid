@@ -1351,7 +1351,9 @@ Item {
         x: root.popupMode && root.expanded ? shell.cardX - root.x : 0
         y: root.popupMode && root.expanded ? shell.cardY - root.y : 0
         visible: !root.popupMode || shell.y > 0.5
-        color: (root.popupMode || root.expanded) ? Theme.bg : root.restingColor
+        // open on the full bar it stays as the strip paints it: a fill of its own
+        // over the strip doubled the tint
+        color: root.popupMode || (root.expanded && !Prefs.barFull) ? Theme.bg : root.restingColor
         radius: root.cornerRadius
         topLeftRadius: root.joinLeft && !root.popupMode ? 0 : root.topRadius
         topRightRadius: root.joinRight && !root.popupMode ? 0 : root.topRadius

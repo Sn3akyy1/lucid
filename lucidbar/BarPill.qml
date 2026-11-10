@@ -367,6 +367,9 @@ Item {
     // still taller than the pill: a closing panel keeps its colour until it has
     // folded away, or on the full bar its fading contents float over the desktop
     readonly property bool surfaceOpen: pill.anyOpen || pill.height > pill.compactHeight + 0.5
+    // on the full bar the strip already paints the band an open panel stands in, so
+    // the panel paints only what hangs below it: both at once doubled the tint
+    readonly property bool bodyBelowStrip: Prefs.barFull && !pill.popupMode && pill.surfaceOpen && !pill.editLifted
     readonly property int barRadius: pill.popupMode ? Prefs.barPillRadius : pill.cornerRadius
     readonly property int barTopRadius: pill.popupMode ? pill.pillTopRadius : pill.topRadius
 
@@ -656,7 +659,7 @@ Item {
         x: pill.popupMode && pill.anyOpen ? pill.popupX : (pill.notchedPopup ? 0 : pill.restX)
         y: pill.popupMode && (pill.anyOpen || pill.notchedPopup) ? pill.compactHeight + (pill.notchedPopup ? 0 : Theme.dp(Prefs.barPopupGap)) : 0
         visible: !pill.popupMode || (pill.notchedPopup ? shell.height > 0.5 : shell.y > 0.5)
-        color: (pill.popupMode || pill.surfaceOpen) ? Theme.bg : pill.restingColor
+        color: (pill.popupMode || pill.surfaceOpen) && !pill.bodyBelowStrip ? Theme.bg : pill.restingColor
         radius: pill.cornerRadius
         // opened in place, the panel hangs from its own stretch of the group: the
         // shared top corners stay square, the bottom ones round off below it
@@ -677,6 +680,18 @@ Item {
             anchorY: (pill.popupMode || pill.surfaceOpen || Prefs.barFlush) ? 0 : 0.5
             spread: pill.jellyPinned ? 0 : jelly.naturalSpread
             frequency: pill.surfaceOpen ? 3.2 : 5
+        }
+
+        // the panel below the strip. it starts where the strip ends on screen, so a
+        // bob of the jelly opens no gap between them
+        Rectangle {
+            visible: pill.bodyBelowStrip
+            y: Math.min(shell.height, pill.compactHeight / Math.max(0.5, jelly.yScale))
+            width: shell.width
+            height: Math.max(0, shell.height - y)
+            color: Theme.bg
+            bottomLeftRadius: shell.bottomLeftRadius
+            bottomRightRadius: shell.bottomRightRadius
         }
 
         // handlers on the surface itself, so hovering the panel's own contents
