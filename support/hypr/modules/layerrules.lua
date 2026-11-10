@@ -10,10 +10,8 @@ hl.layer_rule({ match = { namespace = "rofi" }, animation = "popin" })
 -- xray points the blur at the background instead, so every pill, the dock
 -- and the OSD frost the wallpaper and nothing else. The lock screen is
 -- unaffected - it blurs the wallpaper client-side, not through the region.
--- It was off for a while, so a panel over a window frosted the window. But
--- without xray each surface is blurred on its own, and two that meet came out
--- in different shades: the launcher standing on the bar, or a panel hanging
--- from it, showed a seam where they join. On, all of them sample the same
--- blurred background and the glass matches wherever it joins; a panel over a
--- window frosts the wallpaper, not the window.
-hl.layer_rule({ match = { namespace = "quickshell" }, xray = true })
+-- Turned off deliberately: xray made the glass frost the wallpaper instead
+-- of whatever is actually behind it, so a panel opened over a window showed
+-- blurred wallpaper rather than the window. Real see-through glass is worth
+-- the tint drift described above.
+-- hl.layer_rule({ match = { namespace = "quickshell" }, xray = true })
