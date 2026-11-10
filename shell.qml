@@ -520,8 +520,10 @@ ShellRoot {
                     // a notch has no strip under the gap, so it fills from the top
                     const strip = Prefs.barFull ? Theme.dp(Prefs.barHeight) : 0;
                     const corner = Prefs.barFull ? Theme.dp(Prefs.barFullCorner) : most;
+                    // a module an open panel covers fades out where it stood, under it;
+                    // counted, it sorted between two open panels and parted them
                     const row = bar.modules.filter((m) => {
-                        return m.visible && m.width > 0.5;
+                        return m.visible && m.width > 0.5 && m.covered !== true;
                     }).sort((p, q) => {
                         return p.x - q.x;
                     });
@@ -545,8 +547,10 @@ ShellRoot {
                         (plan.merged[b.modId] || (plan.merged[b.modId] = ({}))).left = true;
                         cap(a.modId, "br", shortLeft ? 0 : diff - f);
                         cap(b.modId, "bl", shortLeft ? diff - f : 0);
+                        // whole pixels, out to both panels: a fill ending mid-pixel against
+                        // a panel's soft edge left a dark seam while they moved
                         if (gap > 0.5 && low > strip)
-                            plan.bridges.push({ "x": a.x + a.width, "y": a.y + strip, "w": gap, "h": low - strip });
+                            plan.bridges.push({ "x": Math.floor(a.x + a.width), "y": a.y + strip, "w": Math.ceil(b.x) - Math.floor(a.x + a.width), "h": low - strip });
 
                         if (shortLeft)
                             fillet(b.x - f + bite, a.y + low - bite, f, false, false);
@@ -564,7 +568,7 @@ ShellRoot {
                         plan.edges[side] = true;
                         cap(m.modId, left ? "bl" : "br", 0);
                         if (gap > 0.5 && m.height > strip)
-                            plan.bridges.push({ "x": left ? 0 : m.x + m.width, "y": m.y + strip, "w": gap, "h": m.height - strip });
+                            plan.bridges.push({ "x": left ? 0 : Math.floor(m.x + m.width), "y": m.y + strip, "w": left ? Math.ceil(m.x) : bar.width - Math.floor(m.x + m.width), "h": m.height - strip });
 
                         fillet(left ? -bite : bar.width - corner + bite, m.y + m.height - bite, corner, left, false);
                     };
@@ -1032,7 +1036,7 @@ ShellRoot {
 
                     // surfaceOpen, not the height alone: a pill that is only
                     // resizing its compact face is see-through on the full bar
-                    readonly property real reach: (panelFlares.modelData.visible && panelFlares.modelData.surfaceOpen === true) ? panelFlares.modelData.height - Theme.dp(Prefs.barHeight) : 0
+                    readonly property real reach: (panelFlares.modelData.visible && panelFlares.modelData.width > 0.5 && panelFlares.modelData.surfaceOpen === true) ? panelFlares.modelData.height - Theme.dp(Prefs.barHeight) : 0
 
                     // never past the screen edge, and never into the screen corner
                     // that already rounds that side
@@ -1559,8 +1563,10 @@ ShellRoot {
                 });
             }
 
+            // not the Apps module folded into the Start launcher: it is that shape's
+            // own edge, and faded out it came back see-through as it unfolded
             function covers(mod) {
-                return !!mod && mod.surfaceOpen !== true && bar.panelOverBar;
+                return !!mod && mod.surfaceOpen !== true && !(mod.foldPartner && mod.foldPartner.surfaceOpen === true) && bar.panelOverBar;
             }
 
             // a fullscreen window hides the bar's layer, so while one of its panels is
