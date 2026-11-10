@@ -207,16 +207,6 @@ Item {
         });
     }
 
-    // what is left to add, whatever the search narrows the page to
-    function shelfCount(tab) {
-        if (tab !== "blocks")
-            return builder.spareOf(tab).length;
-
-        return builder.shelfItems(tab).filter((i) => {
-            return !i.on;
-        }).length;
-    }
-
     // over the shelf, or in the studio anywhere on the library's pane
     function shelfHas(p) {
         const over = libPane;
@@ -985,7 +975,7 @@ Item {
                     role: "bodySmall"
                     color: builder.notice !== "" ? Theme.accent : Theme.subtext
                     elide: Text.ElideRight
-                    text: builder.resizingGrid ? builder.boardCols + " columns × " + builder.boardRows + " rows" : (builder.notice !== "" ? builder.notice + " · Ctrl+Z puts it back" : (builder.selected !== "" ? "Drag it, stretch it by an edge, or pick its look on the right" : "Drag blocks to arrange them · pull the panel's edges for more room"))
+                    text: builder.resizingGrid ? builder.boardCols + " columns × " + builder.boardRows + " rows" : (builder.notice !== "" ? builder.notice + " · Ctrl+Z puts it back" : (builder.selected !== "" ? "Drag it, stretch an edge, or pick a look" : "Drag a block to move it, click it for its looks"))
                 }
 
             }
@@ -1098,7 +1088,7 @@ Item {
                     role: "bodySmall"
                     color: Theme.subtext
                     wrapMode: Text.WordWrap
-                    text: "Click one to add it, or drag it onto the grid: a tile, a slider or a gauge into its block, a whole block onto any spot. To take something off, drag it back here."
+                    text: "Drag one onto the panel, or click to add it"
                 }
 
             }
@@ -1112,10 +1102,8 @@ Item {
 
                     Chip {
                         required property var modelData
-                        readonly property int count: builder.shelfCount(modelData.key)
-
                         kind: "filter"
-                        text: modelData.label + (count > 0 ? "  " + count : "")
+                        text: modelData.label
                         selected: builder.tab === modelData.key
                         onClicked: {
                             builder.tab = modelData.key;
@@ -1897,12 +1885,22 @@ Item {
 
         }
 
-        // its name, with a handle, while the pointer is on the block or it is picked
+        // its name, with a handle, while the pointer is on the block or it is
+        // picked: over the block, clear of what it holds, where there is room
         Rectangle {
-            visible: hover.hovered || card.busy || card.picked
-            x: Theme.dp(6)
-            y: Theme.dp(6)
+            id: tag
+
+            readonly property bool above: card.y >= tag.height
+
+            visible: hover.hovered || tagHover.hovered || card.busy || card.picked
+            x: tag.above ? 0 : Theme.dp(6)
+            y: tag.above ? -tag.height : Theme.dp(6)
             z: 3
+
+            HoverHandler {
+                id: tagHover
+            }
+
             width: tagRow.implicitWidth + Theme.dp(12)
             height: Theme.dp(30)
             radius: height / 2
