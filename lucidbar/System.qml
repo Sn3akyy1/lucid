@@ -1337,7 +1337,7 @@ BarPill {
             }
             break;
         case "dock":
-            Prefs.dockEnabled = !Prefs.dockEnabled;
+            Prefs.setSurface("dockEnabled", !Prefs.dockEnabled);
             break;
         case "lock":
             root.expanded = false;

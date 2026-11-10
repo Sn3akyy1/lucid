@@ -1484,6 +1484,7 @@ FloatingWindow {
 
                         anchors.verticalCenter: parent.verticalCenter
                         visible: surfaceToggle.key !== ""
+                        enabled: !Prefs.surfaceLocked(surfaceToggle.key)
                         checked: surfaceToggle.key !== "" ? Prefs[surfaceToggle.key] : false
                         onToggled: (v) => {
                             return Prefs.setSurface(surfaceToggle.key, v);

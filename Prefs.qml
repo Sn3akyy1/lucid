@@ -52,8 +52,33 @@ Singleton {
     // a bottom bar that keeps its strip: what would sit flush on that edge floats above it
     readonly property bool barHoldsBottom: root.barBottom && root.barEnabled && !root.barAutoHide
     // the bottom edge belongs to the bar while it is there: the dock steps aside, and
-    // comes back when the bar goes to the top. dockEnabled itself is left as it was
+    // comes back when the bar goes to the top
     readonly property bool dockOn: root.dockEnabled && !(root.barBottom && root.barEnabled)
+    // and its switch goes with it: off as the bar moves down, on again as the bar
+    // leaves, when it was the bar that switched it off
+    readonly property bool barTakesDockEdge: root.barPosition === "bottom" && root.barEnabled
+
+    // after the rest of a reload has landed, or its later keys undo this
+    onBarTakesDockEdgeChanged: Qt.callLater(root.syncDockAside)
+    onLoadedChanged: Qt.callLater(root.syncDockAside)
+
+    function syncDockAside() {
+        if (!root.loaded)
+            return ;
+
+        if (root.barTakesDockEdge && root.dockEnabled) {
+            root.dockAsideForBar = true;
+            root.dockEnabled = false;
+        } else if (!root.barTakesDockEdge && root.dockAsideForBar) {
+            root.dockAsideForBar = false;
+            root.dockEnabled = true;
+        }
+    }
+
+    // a surface switch that cannot be turned on as things stand
+    function surfaceLocked(key) {
+        return key === "dockEnabled" && root.barTakesDockEdge;
+    }
     // notches and the full bar both sit flush against the top edge
     readonly property bool barFlush: root.barNotch || root.barFull
     readonly property bool dockNotch: root.dockStyle === "notch"
@@ -1303,6 +1328,7 @@ Singleton {
     property alias toastMaxVisible: s.toastMaxVisible
 
     property alias dockEnabled: s.dockEnabled
+    property alias dockAsideForBar: s.dockAsideForBar
     property alias dockIconSize: s.dockIconSize
     property alias dockSpacing: s.dockSpacing
     property alias dockRadius: s.dockRadius
@@ -2183,6 +2209,11 @@ Singleton {
 
             root.barEnabled = v;
         } else if (key === "dockEnabled") {
+            if (root.surfaceLocked(key))
+                return ;
+
+            // set by hand, it stays as set when the bar moves
+            root.dockAsideForBar = false;
             root.dockEnabled = v;
         } else if (key === "widgetsEnabled") {
             root.widgetsEnabled = v;
@@ -2612,6 +2643,8 @@ Singleton {
             property bool notifInlineReply: true
             property int toastMaxVisible: 3
             property bool dockEnabled: true
+            // switched off by the bar taking the bottom edge, not by hand
+            property bool dockAsideForBar: false
             property int dockIconSize: 41
             property int dockSpacing: 12
             property int dockRadius: 40

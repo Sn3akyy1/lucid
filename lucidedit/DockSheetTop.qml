@@ -7,10 +7,11 @@ import qs.lucidprefs
 SettingCard {
     SettingRow {
         title: "Show the dock"
-        description: Prefs.dockEnabled ? "Off, the dock goes, and the launcher opens from the bottom edge on its own." : "The dock is switched off."
+        description: Prefs.surfaceLocked("dockEnabled") ? "Off while the bar is on the bottom edge. It comes back when the bar moves to the top." : (Prefs.dockEnabled ? "Off, the dock goes, and the launcher opens from the bottom edge on its own." : "The dock is switched off.")
         showDivider: false
 
         M3Switch {
+            enabled: !Prefs.surfaceLocked("dockEnabled")
             checked: Prefs.dockEnabled
             onToggled: (v) => {
                 return Prefs.setSurface("dockEnabled", v);
