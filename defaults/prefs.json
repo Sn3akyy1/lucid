@@ -56,6 +56,7 @@
     "systemInfo": "cpu,ram,disk,battery",
     "systemGrid": "",
     "systemBlockCards": false,
+    "systemBlockStyles": "",
     "systemOwnTiles": "",
     "systemHeaderButtons": "edit,settings,lock,power",
     "showPrivacy": false,

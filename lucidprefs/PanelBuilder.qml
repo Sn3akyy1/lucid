@@ -164,11 +164,6 @@ Item {
     property string query: ""
     // a line after something came off the panel, with undo beside it
     property string notice: ""
-    // the layout before each change, to step back through; what undo stepped
-    // back from, to step forward again; and the layout as it was last seen
-    property var undoStack: []
-    property var redoStack: []
-    property var last: null
     // one of the user's own tiles, to be brought up where it is edited
     signal editOwnTile(string key)
 
@@ -501,44 +496,6 @@ Item {
         builder.tell((e ? e.name : key) + " is off the panel");
     }
 
-    // a change is kept once the prefs settle, so a drag, or a turn that
-    // writes twice, is one step back
-    function record() {
-        settle.stop();
-        const now = Prefs.systemLayoutNow();
-        if (builder.last && !Prefs.systemLayoutSame(now, builder.last)) {
-            builder.undoStack = builder.undoStack.slice(-29).concat([builder.last]);
-            builder.redoStack = [];
-        }
-        builder.last = now;
-    }
-
-    function undo() {
-        builder.record();
-        if (builder.undoStack.length === 0)
-            return ;
-
-        const to = builder.undoStack[builder.undoStack.length - 1];
-        builder.undoStack = builder.undoStack.slice(0, -1);
-        builder.redoStack = builder.redoStack.concat([builder.last]);
-        builder.last = to;
-        builder.notice = "";
-        Prefs.systemLayoutApply(to);
-    }
-
-    function redo() {
-        builder.record();
-        if (builder.redoStack.length === 0)
-            return ;
-
-        const to = builder.redoStack[builder.redoStack.length - 1];
-        builder.redoStack = builder.redoStack.slice(0, -1);
-        builder.undoStack = builder.undoStack.concat([builder.last]);
-        builder.last = to;
-        builder.notice = "";
-        Prefs.systemLayoutApply(to);
-    }
-
     // the blocks top to bottom, then left to right, as they read
     function readingOrder() {
         return Prefs.systemBlockKeys.filter((k) => {
@@ -777,28 +734,17 @@ Item {
             builder.menu = null;
         }
     }
-    // the three blocks there were once are written out as the five, and the
-    // layout from here on is what undo goes back to
-    Component.onCompleted: {
-        Prefs.systemMigrate();
-        builder.last = Prefs.systemLayoutNow();
-    }
-    // ctrl+z and ctrl+shift+z (or ctrl+y) step back and forth; tab picks the
-    // blocks in turn, the arrows move the one picked, with shift they
-    // stretch it, and delete hides it
+    // the three blocks there were once are written out as the five
+    Component.onCompleted: Prefs.systemMigrate()
+    // ctrl+z is edit mode's own undo; tab picks the blocks in turn, the arrows
+    // move the one picked, with shift they stretch it, and delete hides it
     Keys.onPressed: (e) => {
         const ctrl = (e.modifiers & Qt.ControlModifier) !== 0;
         const shift = (e.modifiers & Qt.ShiftModifier) !== 0;
         e.accepted = true;
         if (ctrl && e.key === Qt.Key_Z) {
-            if (shift)
-                builder.redo();
-            else
-                builder.undo();
-            return ;
-        }
-        if (ctrl && e.key === Qt.Key_Y) {
-            builder.redo();
+            builder.notice = "";
+            Edit.undo();
             return ;
         }
         if (e.key === Qt.Key_Escape && (builder.menu || builder.selected !== "")) {
@@ -841,50 +787,10 @@ Item {
     }
 
     Timer {
-        id: settle
-
-        interval: 250
-        onTriggered: builder.record()
-    }
-
-    Timer {
         id: noticeTimer
 
         interval: 6000
         onTriggered: builder.notice = ""
-    }
-
-    // every change to the layout, from here or anywhere, is a step undo can take back
-    Connections {
-        function onSystemBlocksChanged() {
-            settle.restart();
-        }
-
-        function onSystemGridChanged() {
-            settle.restart();
-        }
-
-        function onSystemTilesChanged() {
-            settle.restart();
-        }
-
-        function onSystemTilesRadiosChanged() {
-            settle.restart();
-        }
-
-        function onSystemBigTilesChanged() {
-            settle.restart();
-        }
-
-        function onSystemSlidersChanged() {
-            settle.restart();
-        }
-
-        function onSystemInfoChanged() {
-            settle.restart();
-        }
-
-        target: Prefs
     }
 
     // made-up readings, so the blocks show as they would in the panel
@@ -1283,7 +1189,7 @@ Item {
 
     }
 
-    // undo and redo, tidying up, and a word after something came off
+    // tidying up, and a word after something came off
     Item {
         id: toolbar
 
@@ -1300,27 +1206,6 @@ Item {
 
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.dp(4)
-
-            M3IconButton {
-                anchors.verticalCenter: parent.verticalCenter
-                size: Theme.dp(36)
-                iconPath: "undo"
-                enabled: builder.undoStack.length > 0 || settle.running
-                onClicked: builder.undo()
-            }
-
-            M3IconButton {
-                anchors.verticalCenter: parent.verticalCenter
-                size: Theme.dp(36)
-                iconPath: "redo"
-                enabled: builder.redoStack.length > 0
-                onClicked: builder.redo()
-            }
-
-            Item {
-                width: Theme.dp(4)
-                height: 1
-            }
 
             // every block as high as it goes, the lot against the left edge
             M3Button {
@@ -1353,7 +1238,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 variant: "text"
                 text: "Undo"
-                onClicked: builder.undo()
+                onClicked: Edit.undo()
             }
 
         }
