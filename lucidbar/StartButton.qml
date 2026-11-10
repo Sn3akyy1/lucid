@@ -14,13 +14,9 @@ BarPill {
 
     property var dockMod: null
     readonly property bool launcherOpen: !!root.dockMod && root.dockMod.menuOpen
-    // linked to the Apps module, the launcher opens out of this module: it grows
-    // into the launcher, the dock lending it the launcher's face meanwhile
-    readonly property bool hosting: !!root.dockMod && root.dockMod.launcherHost === root
-    readonly property Item faceSlot: launcherSlot
     // linked, it is the first icon of one row with the Apps module and lights as
     // they do, a square of its own, not as a module
-    readonly property bool linked: !!root.hostWindow && root.hostWindow.startHostsLauncher === true
+    readonly property bool linked: !!root.hostWindow && root.hostWindow.startJoinsApps === true
     lookPref: Prefs.startModuleStyle
     readonly property bool gridFace: root.look === "grid"
     // the distribution's logo, the account picture, or a word; the logo falls
@@ -52,36 +48,6 @@ BarPill {
     compactHovered: !root.linked && startArea.containsMouse
     shown: Prefs.showStart && root.dockMod !== null
     compactWidth: root.labelFace ? root.chipWidth + root.compactHeight - root.chipHeight : root.compactHeight
-    panelWidth: root.dockMod ? Math.round(root.dockMod.menuWidth) : Theme.dp(480)
-    panelHeight: root.dockMod ? Math.round(root.dockMod.menuHeight) : Theme.dp(400)
-    expandedRadius: Theme.shapeXl
-    onHostingChanged: {
-        if (root.hosting)
-            faceHome.stop();
-
-        root.expanded = root.hosting;
-    }
-    onExpandedChanged: {
-        // shut from the bar's side, by a click away say
-        if (!root.expanded && root.hosting)
-            root.dockMod.menuOpen = false;
-
-        if (!root.expanded)
-            faceHome.restart();
-
-    }
-
-    // the face goes back to the dock once the panel has shut
-    Timer {
-        id: faceHome
-
-        interval: Theme.barDurEnter + Theme.barMs(120)
-        onTriggered: {
-            if (root.dockMod)
-                root.dockMod.returnFace(root);
-
-        }
-    }
 
     FileView {
         id: osRelease
@@ -272,17 +238,6 @@ BarPill {
                 else
                     root.dockMod.openLauncher("");
             }
-        }
-    ]
-
-    panelContent: [
-        // where the dock's launcher face sits while this module is the launcher
-        Item {
-            id: launcherSlot
-
-            anchors.centerIn: parent
-            width: root.dockMod ? root.dockMod.menuWidth - root.dockMod.panelPadding : 0
-            height: root.dockMod ? root.dockMod.menuHeight - root.dockMod.panelPadding : 0
         }
     ]
 }

@@ -514,9 +514,8 @@ ShellRoot {
 
                 // full bar and notches: open panels side by side become one shape.
                 // the gap between them fills in, and the shorter one's shared corner
-                // turns into a fillet against the taller one's side. on islands, only
-                // joined ones: one island stays one shape
-                if (!popups) {
+                // turns into a fillet against the taller one's side
+                if ((Prefs.barFull || Prefs.barNotch) && !popups) {
                     // a notch has no strip under the gap, so it fills from the top
                     const strip = Prefs.barFull ? Theme.dp(Prefs.barHeight) : 0;
                     const corner = Prefs.barFull ? Theme.dp(Prefs.barFullCorner) : most;
@@ -534,9 +533,6 @@ ShellRoot {
                         // counting that as apart made the corner flicker
                         const gap = b.x - (a.x + a.width);
                         if (a === workspacesMod || b === workspacesMod || a.surfaceOpen !== true || b.surfaceOpen !== true || Math.abs(gap) > corner)
-                            continue;
-
-                        if (!Prefs.barFull && !Prefs.barNotch && !Prefs.barJoinedNow(a.modId, b.modId))
                             continue;
 
                         const low = Math.min(a.height, b.height);
@@ -1540,10 +1536,10 @@ ShellRoot {
                 return m !== workspacesMod && m.expanded === true;
             })
 
-            readonly property bool launcherUp: bar.primary && Prefs.barHoldsBottom && dock.menuInDock
+            readonly property bool launcherUp: bar.primary && Prefs.barHoldsBottom && dock.menuOpen
 
             onPanelExpandedChanged: {
-                if (bar.panelExpanded && bar.primary && Prefs.barHoldsBottom && dock.menuInDock)
+                if (bar.panelExpanded && bar.primary && Prefs.barHoldsBottom)
                     dock.menuOpen = false;
 
             }
@@ -1563,10 +1559,8 @@ ShellRoot {
                 });
             }
 
-            // not the Apps module folded into the Start launcher: it is that shape's
-            // own edge, and faded out it came back see-through as it unfolded
             function covers(mod) {
-                return !!mod && mod.surfaceOpen !== true && !(mod.foldPartner && mod.foldPartner.surfaceOpen === true) && bar.panelOverBar;
+                return !!mod && mod.surfaceOpen !== true && bar.panelOverBar;
             }
 
             // a fullscreen window hides the bar's layer, so while one of its panels is
@@ -1594,21 +1588,14 @@ ShellRoot {
 
             WlrLayershell.layer: bar.fullscreenHere && (bar.panelUp || panelDownTimer.running) ? WlrLayer.Overlay : WlrLayer.Top
 
-            // linked to the Apps module, the Start module is where the launcher opens.
-            // the link as set, on the full bar too, which draws no joins
-            readonly property bool startHostsLauncher: Prefs.barJoined("start", "apps") && startMod.shown && appsMod.shown && bar.adjacent("start", "apps")
+            // the Start module linked to the Apps module lights as the first icon of its
+            // row. the link as set, on the full bar too, which draws no joins
+            readonly property bool startJoinsApps: Prefs.barJoined("start", "apps") && startMod.shown && appsMod.shown && bar.adjacent("start", "apps")
 
             function adjacent(a, b) {
                 const p = bar.placeMap[a];
                 const q = bar.placeMap[b];
                 return !!p && !!q && p.zone === q.zone && Math.abs(p.at - q.at) === 1;
-            }
-
-            Binding {
-                target: dock
-                property: "barLauncher"
-                value: bar.startHostsLauncher ? startMod : null
-                when: bar.primary
             }
 
             // the overview and the dock menu shut each other
@@ -1628,10 +1615,9 @@ ShellRoot {
                         return ;
 
                     workspacesMod.expanded = false;
-                    // the launcher is a panel of the bar's own now, or stands where they open
-                    if (bar.primary && (dock.launcherHost || Prefs.barHoldsBottom)) {
+                    if (bar.primary && Prefs.barHoldsBottom) {
                         for (const m of bar.modules) {
-                            if (m.expanded === true && m !== dock.launcherHost)
+                            if (m.expanded === true)
                                 m.expanded = false;
 
                         }
@@ -1984,7 +1970,7 @@ ShellRoot {
     PanelWindow {
         id: clickCatcher
 
-        visible: dock.menuInDock && Monitors.surfacesUp
+        visible: dock.menuOpen && Monitors.surfacesUp
         color: "transparent"
         exclusiveZone: 0
         WlrLayershell.layer: WlrLayer.Top

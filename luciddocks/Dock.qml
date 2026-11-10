@@ -18,7 +18,7 @@ PanelWindow {
 
     property bool morphing: false
     property bool closingFromHidden: false
-    readonly property bool dockBusy: dockWindow.menuInDock || dockWindow.dragging || (dockWindow.morphing && !dockWindow.launcherFromHidden && !dockWindow.closingFromHidden)
+    readonly property bool dockBusy: dockWindow.menuOpen || dockWindow.dragging || (dockWindow.morphing && !dockWindow.launcherFromHidden && !dockWindow.closingFromHidden)
     property bool slidingAway: false
     readonly property bool heldByPointer: revealArea.containsMouse || (shellHover.hovered && !dockWindow.slidingAway)
     // on screen in its own right; a disabled dock never is
@@ -91,7 +91,7 @@ PanelWindow {
     readonly property int splitGap: Theme.dp(Prefs.dockSplitGap)
     // 1 while the islands stand apart, 0 once they are one slab
     property real seam: 0
-    readonly property bool splitWanted: Prefs.dockSplit && !dockWindow.menuInDock && !dockWindow.launcherFromHidden
+    readonly property bool splitWanted: Prefs.dockSplit && !dockWindow.menuOpen && !dockWindow.launcherFromHidden
     readonly property bool splitDrawn: Prefs.dockSplit && dockWindow.seam > 0.001
 
     onSplitWantedChanged: {
@@ -161,13 +161,13 @@ PanelWindow {
     // the last pixel left at the screen edge would show as a line over a bar
     readonly property real hiddenOffset: dockWindow.dockRevealed ? 0 : -(shell.implicitHeight + dockWindow.placementMargin - (dockWindow.onBar ? 0 : 1))
     // a disabled dock's panel exists only while the launcher is up or shrinking away
-    readonly property bool shellShown: Prefs.dockOn || dockWindow.menuInDock || dockWindow.morphing
+    readonly property bool shellShown: Prefs.dockOn || dockWindow.menuOpen || dockWindow.morphing
 
     onDockRevealedChanged: {
         if (dockWindow.dockRevealed) {
             dockWindow.slidingAway = false;
             slideAwayTimer.stop();
-            if (!dockWindow.menuInDock && !dockWindow.morphing && !dockWindow.dragging && !dockWindow.snapPlacement)
+            if (!dockWindow.menuOpen && !dockWindow.morphing && !dockWindow.dragging && !dockWindow.snapPlacement)
                 dockJelly.kickAfter(0.12, Math.round(Theme.durLong * 0.35));
 
         } else {
@@ -366,7 +366,7 @@ PanelWindow {
             dockWindow.osdFaceFade = 100;
             dockWindow.dockFaceDelay = 90;
             dockWindow.dockFaceFade = 200;
-            if (!dockWindow.menuInDock) {
+            if (!dockWindow.menuOpen) {
                 dockWindow.morphOsd(Theme.durLong, dockWindow.morphCurve);
                 dockJelly.kickAfter(-0.1, Math.round(Theme.durLong * 0.85));
             }
@@ -382,9 +382,9 @@ PanelWindow {
     }
 
     // the card changing kind while the dock is it, volume to caps lock say
-    onOsdWidthChanged: if (dockWindow.osdShaped && !dockWindow.menuInDock)
+    onOsdWidthChanged: if (dockWindow.osdShaped && !dockWindow.menuOpen)
         dockWindow.morphOsd(Theme.durMedium, Theme.easeEmphasizedDecel)
-    onOsdHeightChanged: if (dockWindow.osdShaped && !dockWindow.menuInDock)
+    onOsdHeightChanged: if (dockWindow.osdShaped && !dockWindow.menuOpen)
         dockWindow.morphOsd(Theme.durMedium, Theme.easeEmphasizedDecel)
 
     Timer {
@@ -417,33 +417,6 @@ PanelWindow {
     property bool snapPlacement: false
     property int contentFadeDelay: 0
     property bool menuOpen: false
-    // a bar's Start module linked to the Apps module (shell.qml hands it over) takes
-    // the launcher in the dock's stead, unless the dock's own button asked for it
-    property var barLauncher: null
-    property bool openedFromDock: false
-    // where it is this time. both from the same inputs, so they never disagree
-    readonly property bool menuInDock: dockWindow.menuOpen && (dockWindow.openedFromDock || !dockWindow.barLauncher)
-    readonly property var launcherHost: dockWindow.menuOpen && !dockWindow.openedFromDock ? dockWindow.barLauncher : null
-    // the module the face is lent to, from when it hosts until its panel has shut again
-    property var faceLent: null
-
-    onLauncherHostChanged: {
-        if (dockWindow.launcherHost)
-            dockWindow.faceLent = dockWindow.launcherHost;
-
-    }
-    // a Start module that stops hosting while open (unlinked, say) shuts it
-    onBarLauncherChanged: {
-        if (dockWindow.menuOpen && !dockWindow.openedFromDock)
-            dockWindow.menuOpen = false;
-
-    }
-
-    function returnFace(host) {
-        if (dockWindow.faceLent === host && dockWindow.launcherHost !== host)
-            dockWindow.faceLent = null;
-
-    }
     // the launcher face is ~64mb of delegates and nothing shows it until the
     // menu opens, so it is built on the first open and then kept
     property bool launcherBuilt: false
@@ -464,14 +437,34 @@ PanelWindow {
     onMenuOpenChanged: {
         if (dockWindow.menuOpen)
             dockWindow.launcherBuilt = true;
-        else
-            dockWindow.openedFromDock = false;
+
+        dockWindow.pulseMorph();
+        // the launcher's momentum carries it past and back; a dock on screen squashes
+        // as it lands, one tucked away has nowhere to land
+        if (dockWindow.menuOpen)
+            dockJelly.kickAfter(Math.min(0.045, Theme.dp(26) / Math.max(1, dockWindow.menuHeight)), Math.round(Theme.ms(480) * 0.68));
+        else if (!dockWindow.launcherFromHidden)
+            dockJelly.kickAfter(-0.12, Math.round(Theme.ms(480) * 0.85));
+        dockWindow.contentFadeDelay = dockWindow.menuOpen ? 190 : 0;
         powerDisarm.stop();
         dockWindow.armedPower = "";
         // window titles only reach lastIpcObject on a refresh, and search reads them
         if (dockWindow.menuOpen)
             toplevelRefresh.restart();
 
+        if (dockWindow.menuOpen) {
+            // no dock on screen means it was opened from elsewhere, so it notches.
+            // one only stepping down for the osd's notch is on its way back up
+            dockWindow.launcherFromHidden = !dockWindow.dockWanted;
+            dockWindow.closingFromHidden = false;
+            dockWindow.snapPlacement = true;
+            snapClear.restart();
+        } else if (dockWindow.launcherFromHidden) {
+            dockWindow.closingFromHidden = true;
+            hideAfterClose.restart();
+        } else {
+            dockWindow.launcherFromHidden = false;
+        }
         if (dockWindow.menuOpen) {
             // opened on the picker it was shut on: the mode stays the same, so
             // onModeChanged never rescans, and the strip would be as it was left
@@ -484,35 +477,6 @@ PanelWindow {
         } else {
             dockWindow.dropStaleTemps();
             dockWindow.syncStripToCurrent();
-        }
-    }
-
-    // the dock grows into the launcher only while it is in the dock; lent to a bar
-    // module, the dock stays as it is
-    onMenuInDockChanged: {
-        if (dockWindow.menuInDock)
-            dockWindow.faceLent = null;
-
-        dockWindow.pulseMorph();
-        // the launcher's momentum carries it past and back; a dock on screen squashes
-        // as it lands, one tucked away has nowhere to land
-        if (dockWindow.menuInDock)
-            dockJelly.kickAfter(Math.min(0.045, Theme.dp(26) / Math.max(1, dockWindow.menuHeight)), Math.round(Theme.ms(480) * 0.68));
-        else if (!dockWindow.launcherFromHidden)
-            dockJelly.kickAfter(-0.12, Math.round(Theme.ms(480) * 0.85));
-        dockWindow.contentFadeDelay = dockWindow.menuInDock ? 190 : 0;
-        if (dockWindow.menuInDock) {
-            // no dock on screen means it was opened from elsewhere, so it notches.
-            // one only stepping down for the osd's notch is on its way back up
-            dockWindow.launcherFromHidden = !dockWindow.dockWanted;
-            dockWindow.closingFromHidden = false;
-            dockWindow.snapPlacement = true;
-            snapClear.restart();
-        } else if (dockWindow.launcherFromHidden) {
-            dockWindow.closingFromHidden = true;
-            hideAfterClose.restart();
-        } else {
-            dockWindow.launcherFromHidden = false;
         }
     }
 
@@ -545,9 +509,9 @@ PanelWindow {
         onTriggered: dockWindow.snapPlacement = false
     }
 
-    onMenuWidthChanged: if (dockWindow.menuInDock)
+    onMenuWidthChanged: if (dockWindow.menuOpen)
         dockWindow.pulseMorph()
-    onMenuHeightChanged: if (dockWindow.menuInDock)
+    onMenuHeightChanged: if (dockWindow.menuOpen)
         dockWindow.pulseMorph()
 
     Timer {
@@ -2106,7 +2070,7 @@ PanelWindow {
         pinnedRow.bump(index);
     }
 
-    readonly property bool pointerOnDock: shellHover.hovered && !dockWindow.menuInDock
+    readonly property bool pointerOnDock: shellHover.hovered && !dockWindow.menuOpen
 
     readonly property int pinDropIndex: {
         if (runningRow.pinDragCenter < 0)
@@ -2329,10 +2293,10 @@ PanelWindow {
     onOnBarChanged: Qt.callLater(() => {
         return dockWindow.exclusionTick++;
     })
-    WlrLayershell.keyboardFocus: dockWindow.menuInDock ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: dockWindow.menuOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     // over a fullscreen window hyprland fades the top layer out, so a closing
     // launcher keeps the overlay until it has shrunk and gone down
-    WlrLayershell.layer: (dockWindow.menuInDock || dockWindow.morphing) ? WlrLayer.Overlay : WlrLayer.Top
+    WlrLayershell.layer: (dockWindow.menuOpen || dockWindow.morphing) ? WlrLayer.Overlay : WlrLayer.Top
     color: "transparent"
     implicitWidth: Math.max(dockWindow.maxDockWidth, dockWindow.menuWidth)
     implicitHeight: dockWindow.menuMaxHeight + dockWindow.dragHeadroom
@@ -2506,7 +2470,7 @@ PanelWindow {
         id: launcherGrab
 
         windows: [dockWindow].concat(Edit.active ? Edit.windows : [])
-        active: dockWindow.menuInDock && grabArm.armed
+        active: dockWindow.menuOpen && grabArm.armed
         onCleared: {
             if (grabArm.armed)
                 dockWindow.menuOpen = false;
@@ -2520,7 +2484,7 @@ PanelWindow {
         property bool armed: false
 
         interval: 250
-        running: dockWindow.menuInDock
+        running: dockWindow.menuOpen
         onTriggered: grabArm.armed = true
         onRunningChanged: {
             if (!grabArm.running)
@@ -3161,14 +3125,14 @@ PanelWindow {
 
         visible: dockWindow.shellShown
         opacity: dockWindow.fadesOnBar && !dockWindow.dockRevealed ? 0 : 1
-        clip: dockWindow.menuInDock || dockWindow.morphing || dockWindow.osdMorphing
+        clip: dockWindow.menuOpen || dockWindow.morphing || dockWindow.osdMorphing
         anchors.bottom: parent.bottom
         anchors.bottomMargin: dockWindow.hiddenOffset + dockWindow.placementMargin
         anchors.horizontalCenter: parent.horizontalCenter
         implicitWidth: dockFace.implicitWidth
         implicitHeight: dockWindow.iconSlot + Theme.dp(20)
-        width: dockWindow.menuInDock ? dockWindow.menuWidth : (dockWindow.osdShaped ? dockWindow.osdWidth : shell.implicitWidth)
-        height: dockWindow.menuInDock ? dockWindow.menuHeight : (dockWindow.osdShaped ? dockWindow.osdHeight : shell.implicitHeight)
+        width: dockWindow.menuOpen ? dockWindow.menuWidth : (dockWindow.osdShaped ? dockWindow.osdWidth : shell.implicitWidth)
+        height: dockWindow.menuOpen ? dockWindow.menuHeight : (dockWindow.osdShaped ? dockWindow.osdHeight : shell.implicitHeight)
         radius: Math.min(Theme.rad(Prefs.dockRadius), Math.round(Theme.pill(shell.height)))
         // split, the islands below paint it
         color: dockWindow.splitDrawn ? "transparent" : Theme.bg
@@ -3201,7 +3165,7 @@ PanelWindow {
         }
 
         TapHandler {
-            enabled: Edit.active && !dockWindow.menuInDock
+            enabled: Edit.active && !dockWindow.menuOpen
             acceptedButtons: Qt.RightButton
             onTapped: dockWindow.editDock()
         }
@@ -3346,7 +3310,7 @@ PanelWindow {
         DropArea {
             anchors.fill: parent
             keys: ["text/uri-list"]
-            enabled: !dockWindow.menuInDock && Prefs.dockOn
+            enabled: !dockWindow.menuOpen && Prefs.dockOn
 
             onEntered: (drag) => {
                 if (dockWindow.localPaths(drag.urls).length === 0) {
@@ -3386,7 +3350,7 @@ PanelWindow {
             // shell resized and looped
             x: Math.min(0, (shell.width - shell.implicitWidth) / 2)
             anchors.bottom: parent.bottom
-            opacity: (dockWindow.menuInDock || dockWindow.launcherFromHidden || dockWindow.osdShaped) ? 0 : 1
+            opacity: (dockWindow.menuOpen || dockWindow.launcherFromHidden || dockWindow.osdShaped) ? 0 : 1
             visible: dockFace.opacity > 0
 
             Behavior on opacity {
@@ -3419,24 +3383,18 @@ PanelWindow {
                     displayName: "Launcher"
                     isToggle: true
                     pointerInside: dockWindow.pointerOnDock
-                    toggleActive: dockWindow.menuInDock
+                    toggleActive: dockWindow.menuOpen
                     iconContent: Component {
                         UI.LauncherGrid {
                             anchors.fill: parent
-                            lit: launcherItem.hovered || dockWindow.menuInDock
+                            lit: launcherItem.hovered || dockWindow.menuOpen
                         }
 
                     }
                     onRequestToggle: {
-                        // open in a bar's Start module, it comes down here instead
-                        if (dockWindow.launcherHost) {
-                            dockWindow.openedFromDock = true;
-                            return ;
-                        }
                         if (!dockWindow.menuOpen)
                             dockWindow.setSearchText("");
 
-                        dockWindow.openedFromDock = !dockWindow.menuOpen;
                         dockWindow.aimLauncher();
                         dockWindow.menuOpen = !dockWindow.menuOpen;
                     }
@@ -3564,7 +3522,7 @@ PanelWindow {
             width: dockWindow.menuWidth - dockWindow.panelPadding
             height: dockWindow.menuHeight - dockWindow.panelPadding
             anchors.centerIn: parent
-            opacity: dockWindow.menuInDock ? 1 : 0
+            opacity: dockWindow.menuOpen ? 1 : 0
             visible: launcherLoader.opacity > 0
 
             sourceComponent: LauncherFace {
@@ -3655,16 +3613,6 @@ PanelWindow {
 
         }
 
-    }
-
-    // the face goes where the launcher is shown, and stays with a bar module until
-    // its panel has shut
-    Binding {
-        target: launcherLoader.item
-        property: "parent"
-        value: dockWindow.faceLent && dockWindow.faceLent.faceSlot ? dockWindow.faceLent.faceSlot : launcherLoader
-        when: launcherLoader.item !== null
-        restoreMode: Binding.RestoreNone
     }
 
     // edit mode: an outline along the dock's own edge, and a handle above it to carry it up or down

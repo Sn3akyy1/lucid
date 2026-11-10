@@ -383,31 +383,7 @@ BarPill {
     // each icon lights on its own, so the module as a whole never does
     compactHovered: false
     shown: Prefs.showApps && root.dockMod !== null && root.items.length > 0
-    compactWidth: root.foldedNow ? 0 : (root.placed.shown.length + (root.placed.rest.length > 0 ? 1 : 0)) * root.slot + root.horizontalPadding * 2
-    // linked to the Start module, it folds into it as that grows into the launcher, on
-    // the same curve, so the two morph as one shape; it unfolds as the launcher shuts
-    readonly property bool folded: !!root.dockMod && !!root.dockMod.launcherHost && root.dockMod.launcherHost.hostWindow === root.hostWindow
-    // taken from folded in its handler, once the timings the animations read are set
-    property bool foldedNow: false
-    // and stands at the Start module's height meanwhile, so the island is one shape
-    // from its first frame: the bar merges the two side by side. folded away to
-    // nothing it stands no more, or the bar hangs its corners off a strip of nothing
-    readonly property var foldPartner: !!root.hostWindow && root.hostWindow.startHostsLauncher === true ? (root.hostWindow.pillFor["start"] || null) : null
-    matchHeight: !!root.foldPartner && root.width > 0.5 && root.foldPartner.height > root.compactHeight + 0.5 ? root.foldPartner.height : -1
-    property int foldFadePause: 0
-    property int foldFadeDuration: Theme.barMs(120)
-
-    onFoldedChanged: {
-        if (!root.folded)
-            root.closeAlong();
-
-        root.foldFadePause = root.folded ? 0 : Theme.barMs(150);
-        root.foldFadeDuration = root.folded ? Theme.barMs(120) : Theme.barMs(220);
-        if (root.folded)
-            root.hover(null);
-
-        root.foldedNow = root.folded;
-    }
+    compactWidth: (root.placed.shown.length + (root.placed.rest.length > 0 ? 1 : 0)) * root.slot + root.horizontalPadding * 2
     panelWidth: root.overflowOpen ? Theme.dp(360) : Math.max(Theme.dp(360), root.cardColumns * root.cardW + (root.cardColumns - 1) * Theme.dp(12) + Theme.dp(36))
     panelHeight: (root.overflowOpen ? overflowGrid.implicitHeight : panelColumn.implicitHeight) + Theme.dp(36)
     expandedRadius: Theme.shapeXl
@@ -470,374 +446,88 @@ BarPill {
             id: faceArea
 
             anchors.fill: parent
-            enabled: !root.foldedNow
             acceptedButtons: Qt.RightButton
             onClicked: Prefs.openBarModule("apps")
         },
-        // the icons as wide as the pill is drawn, so folding away they go with it
-        Item {
-            x: Math.round((parent.width - root.width) / 2)
-            // kept on the bar's own band while the pill stands taller
-            y: (Prefs.barBottom ? 1 : -1) * Math.round((root.height - root.compactHeight) / 2)
-            width: root.width
-            height: parent.height
-            clip: root.foldedNow || root.width < root.compactWidth - 0.5
-            enabled: !root.foldedNow
-            opacity: root.foldedNow ? 0 : 1
+        Row {
+            anchors.centerIn: parent
 
-            Behavior on opacity {
-                SequentialAnimation {
-                    PauseAnimation {
-                        duration: root.foldFadePause
+            // by count, the app read from the list: the list is rebuilt on every
+            // focus change, and a list for a model would rebuild the icons with
+            // it, the one held in a drag too
+            Repeater {
+                model: root.placed.shown.length
+
+                Item {
+                    id: cell
+
+                    required property int index
+                    readonly property var app: root.placed.shown[cell.index] || root.noApp
+                    readonly property var wins: root.windowsOf(cell.app.appId)
+                    readonly property bool focused: cell.wins.indexOf(Hyprland.activeToplevel) >= 0
+                    readonly property bool urgent: cell.wins.some((t) => {
+                        return t.urgent === true;
+                    })
+                    readonly property bool held: root.dragFrom === cell.index
+                    readonly property bool hot: cellArea.containsMouse && !cell.held
+                    readonly property bool pressed: cellArea.pressed && !cellArea.dragged
+                    // launched from here: its dot breathes until the first window comes
+                    property bool launching: false
+                    // set once as it is made: a binding would empty every cell when the module comes up
+                    property real born: 1
+
+                    function launchNow() {
+                        if (cell.wins.length === 0) {
+                            cell.launching = true;
+                            launchTimeout.restart();
+                        }
+                        cellJelly.kickAfter(0.16, Theme.ms(60));
+                    }
+
+                    width: root.slot
+                    height: root.compactHeight
+                    // the held icon is drawn in the overlay, where it can leave the bar
+                    opacity: cell.held ? 0 : cell.born
+                    onWinsChanged: {
+                        if (cell.wins.length > 0)
+                            cell.launching = false;
+
+                    }
+                    // a squash under the press and a spring back off it, as on the dock
+                    onPressedChanged: cellJelly.kick(cell.pressed ? -0.13 : 0.1)
+                    Component.onCompleted: {
+                        if (!root.cellsReady)
+                            return ;
+
+                        cell.born = 0;
+                        bornAnim.start();
                     }
 
                     NumberAnimation {
-                        duration: root.foldFadeDuration
-                        easing.type: Easing.OutCubic
+                        id: bornAnim
+
+                        target: cell
+                        property: "born"
+                        to: 1
+                        duration: Theme.durMedium
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.easeEmphasizedDecel
                     }
 
-                }
+                    Timer {
+                        id: launchTimeout
 
-            }
-
-            Row {
-                anchors.centerIn: parent
-
-                // by count, the app read from the list: the list is rebuilt on every
-                // focus change, and a list for a model would rebuild the icons with
-                // it, the one held in a drag too
-                Repeater {
-                    model: root.placed.shown.length
-
-                    Item {
-                        id: cell
-
-                        required property int index
-                        readonly property var app: root.placed.shown[cell.index] || root.noApp
-                        readonly property var wins: root.windowsOf(cell.app.appId)
-                        readonly property bool focused: cell.wins.indexOf(Hyprland.activeToplevel) >= 0
-                        readonly property bool urgent: cell.wins.some((t) => {
-                            return t.urgent === true;
-                        })
-                        readonly property bool held: root.dragFrom === cell.index
-                        readonly property bool hot: cellArea.containsMouse && !cell.held
-                        readonly property bool pressed: cellArea.pressed && !cellArea.dragged
-                        // launched from here: its dot breathes until the first window comes
-                        property bool launching: false
-                        // set once as it is made: a binding would empty every cell when the module comes up
-                        property real born: 1
-
-                        function launchNow() {
-                            if (cell.wins.length === 0) {
-                                cell.launching = true;
-                                launchTimeout.restart();
-                            }
-                            cellJelly.kickAfter(0.16, Theme.ms(60));
-                        }
-
-                        width: root.slot
-                        height: root.compactHeight
-                        // the held icon is drawn in the overlay, where it can leave the bar
-                        opacity: cell.held ? 0 : cell.born
-                        onWinsChanged: {
-                            if (cell.wins.length > 0)
-                                cell.launching = false;
-
-                        }
-                        // a squash under the press and a spring back off it, as on the dock
-                        onPressedChanged: cellJelly.kick(cell.pressed ? -0.13 : 0.1)
-                        Component.onCompleted: {
-                            if (!root.cellsReady)
-                                return ;
-
-                            cell.born = 0;
-                            bornAnim.start();
-                        }
-
-                        NumberAnimation {
-                            id: bornAnim
-
-                            target: cell
-                            property: "born"
-                            to: 1
-                            duration: Theme.durMedium
-                            easing.type: Easing.Bezier
-                            easing.bezierCurve: Theme.easeEmphasizedDecel
-                        }
-
-                        Timer {
-                            id: launchTimeout
-
-                            interval: 10000
-                            onTriggered: cell.launching = false
-                        }
-
-                        transform: Translate {
-                            x: root.shiftOf(cell.index)
-
-                            // a drop puts each app in its cell at once, so the slide stops there
-                            Behavior on x {
-                                enabled: !root.settling
-
-                                NumberAnimation {
-                                    duration: Theme.durShort
-                                    easing.type: Easing.OutCubic
-                                }
-
-                            }
-
-                        }
-
-                        // the icon stays where it is under the pointer: a press squashes
-                        // it, and a new cell grows in
-                        Item {
-                            id: face
-
-                            readonly property bool jellyWobbling: cellJelly.wobbling
-
-                            anchors.fill: parent
-                            scale: (cell.pressed ? 0.9 : 1) * (0.6 + 0.4 * cell.born)
-
-                            transform: Jelly {
-                                id: cellJelly
-
-                                target: face
-                                anchorY: 0
-                                frequency: 5.5
-                            }
-
-                            // a tile of its own only for an icon that is not one already, as on the dock
-                            Rectangle {
-                                visible: Prefs.dockIconTiles && cellIcon.lucidSlot === ""
-                                anchors.centerIn: parent
-                                width: root.slot - Theme.dp(4)
-                                height: root.compactHeight - Theme.dp(8)
-                                radius: Theme.radiusMd
-                                color: Theme.withBlur(Theme.bgTile)
-                            }
-
-                            Rectangle {
-                                anchors.centerIn: parent
-                                width: root.slot - Theme.dp(4)
-                                height: root.compactHeight - Theme.dp(8)
-                                radius: Theme.radiusMd
-                                color: Theme.text
-                                opacity: cell.pressed ? Theme.statePressed + 0.04 : (cell.hot ? Theme.stateHover + 0.02 : (cell.focused ? 0.06 : 0))
-
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: Theme.durShort
-                                        easing.type: Easing.OutCubic
-                                    }
-
-                                }
-
-                            }
-
-                            BarAppIcon {
-                                id: cellIcon
-
-                                anchors.centerIn: parent
-                                size: root.glyph
-                                app: cell.app
-                                source: root.iconOf(cell.app.icon)
-                                hovered: cell.hot
-                            }
-
-                            Behavior on scale {
-                                NumberAnimation {
-                                    duration: Theme.durShort
-                                    easing.type: Easing.OutBack
-                                    easing.overshoot: 1.6
-                                }
-
-                            }
-
-                        }
-
-                        // as the dock's: a segment for each window, up to three, longer on
-                        // the app in focus; red and breathing while one wants attention,
-                        // and a breathing dot while a launch is on its way
-                        Row {
-                            id: indicator
-
-                            readonly property int segments: Math.max(1, Math.min(3, cell.wins.length))
-                            readonly property real segW: cell.focused ? (indicator.segments === 1 ? Theme.dp(12) : Theme.dp(6)) : Theme.dp(4)
-                            readonly property bool breathing: (cell.urgent || (cell.launching && cell.wins.length === 0)) && root.shown && indicator.visible
-                            property real pulse: 1
-
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: Theme.dp(3)
-                            spacing: Theme.dp(2)
-                            opacity: Prefs.dockShowIndicators && (cell.wins.length > 0 || cell.launching) ? 1 : 0
-                            visible: indicator.opacity > 0
-
-                            Repeater {
-                                model: indicator.segments
-
-                                Rectangle {
-                                    width: indicator.segW
-                                    height: Theme.dp(3)
-                                    radius: height / 2
-                                    opacity: indicator.pulse
-                                    color: cell.urgent ? Theme.error : (cell.focused ? Theme.accent : Theme.alpha(Theme.text, 0.6))
-
-                                    Behavior on width {
-                                        NumberAnimation {
-                                            duration: Theme.durShort
-                                            easing.type: Easing.Bezier
-                                            easing.bezierCurve: Theme.easeEmphasizedDecel
-                                        }
-
-                                    }
-
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: Theme.durShort
-                                        }
-
-                                    }
-
-                                }
-
-                            }
-
-                            SequentialAnimation on pulse {
-                                running: indicator.breathing
-                                loops: Animation.Infinite
-                                onRunningChanged: {
-                                    if (!running)
-                                        indicator.pulse = 1;
-
-                                }
-
-                                NumberAnimation {
-                                    to: 0.3
-                                    duration: Theme.ms(500)
-                                    easing.type: Easing.InOutSine
-                                }
-
-                                NumberAnimation {
-                                    to: 1
-                                    duration: Theme.ms(500)
-                                    easing.type: Easing.InOutSine
-                                }
-
-                            }
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Theme.durShort
-                                }
-
-                            }
-
-                        }
-
-                        MouseArea {
-                            id: cellArea
-
-                            property real pressX: 0
-                            property real pressY: 0
-                            // a drag ends on a release, and the click that comes with it is no click
-                            property bool dragged: false
-
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            preventStealing: true
-                            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-                            cursorShape: cell.held ? Qt.ClosedHandCursor : Qt.PointingHandCursor
-                            onEntered: root.hover(cell)
-                            onExited: {
-                                if (root.tipCell === cell)
-                                    root.hover(null);
-
-                            }
-                            onPressed: (mouse) => {
-                                cellArea.pressX = mouse.x;
-                                cellArea.pressY = mouse.y;
-                                cellArea.dragged = false;
-                            }
-                            onPositionChanged: (mouse) => {
-                                if (!(cellArea.pressedButtons & Qt.LeftButton))
-                                    return ;
-
-                                const dx = mouse.x - cellArea.pressX;
-                                const dy = mouse.y - cellArea.pressY;
-                                if (!cell.held && Math.hypot(dx, dy) > Theme.dp(6)) {
-                                    root.hover(null);
-                                    root.dragCell = cell;
-                                    root.dragApp = cell.app.appId;
-                                    cellArea.dragged = true;
-                                }
-                                if (cell.held) {
-                                    root.dragDx = dx;
-                                    root.dragDy = dy;
-                                }
-                            }
-                            onReleased: {
-                                if (cellArea.dragged)
-                                    root.drop();
-
-                            }
-                            onCanceled: {
-                                if (cellArea.dragged) {
-                                    root.dragApp = "";
-                                    root.dragCell = null;
-                                }
-                            }
-                            onWheel: (wheel) => {
-                                if (cell.wins.length < 2) {
-                                    wheel.accepted = false;
-                                    return ;
-                                }
-                                root.hover(null);
-                                root.cycle(cell.app.appId, wheel.angleDelta.y > 0 ? -1 : 1);
-                            }
-                            onClicked: (mouse) => {
-                                if (cellArea.dragged)
-                                    return ;
-
-                                root.hover(null);
-                                if (mouse.button === Qt.RightButton) {
-                                    root.openFor(cell.app);
-                                } else if (mouse.button === Qt.MiddleButton) {
-                                    cell.launchNow();
-                                    root.launch(cell.app);
-                                } else {
-                                    if (cell.wins.length === 0)
-                                        cell.launchNow();
-
-                                    root.activate(cell.app);
-                                }
-                            }
-                        }
-
-                        HeldPointer {
-                            held: cell.held
-                            cursor: Qt.ClosedHandCursor
-                        }
-
+                        interval: 10000
+                        onTriggered: cell.launching = false
                     }
 
-                }
+                    transform: Translate {
+                        x: root.shiftOf(cell.index)
 
-                Item {
-                    visible: root.placed.rest.length > 0
-                    width: root.slot
-                    height: root.compactHeight
-                    scale: moreArea.pressed ? 0.88 : 1
+                        // a drop puts each app in its cell at once, so the slide stops there
+                        Behavior on x {
+                            enabled: !root.settling
 
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: root.slot - Theme.dp(4)
-                        height: root.compactHeight - Theme.dp(8)
-                        radius: Theme.radiusMd
-                        color: Theme.text
-                        opacity: moreArea.pressed ? 0.14 : (moreArea.containsMouse ? 0.1 : 0)
-
-                        Behavior on opacity {
                             NumberAnimation {
                                 duration: Theme.durShort
                                 easing.type: Easing.OutCubic
@@ -847,36 +537,293 @@ BarPill {
 
                     }
 
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: Theme.durShort
-                            easing.type: Easing.OutBack
-                            easing.overshoot: 1.6
+                    // the icon stays where it is under the pointer: a press squashes
+                    // it, and a new cell grows in
+                    Item {
+                        id: face
+
+                        readonly property bool jellyWobbling: cellJelly.wobbling
+
+                        anchors.fill: parent
+                        scale: (cell.pressed ? 0.9 : 1) * (0.6 + 0.4 * cell.born)
+
+                        transform: Jelly {
+                            id: cellJelly
+
+                            target: face
+                            anchorY: 0
+                            frequency: 5.5
+                        }
+
+                        // a tile of its own only for an icon that is not one already, as on the dock
+                        Rectangle {
+                            visible: Prefs.dockIconTiles && cellIcon.lucidSlot === ""
+                            anchors.centerIn: parent
+                            width: root.slot - Theme.dp(4)
+                            height: root.compactHeight - Theme.dp(8)
+                            radius: Theme.radiusMd
+                            color: Theme.withBlur(Theme.bgTile)
+                        }
+
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: root.slot - Theme.dp(4)
+                            height: root.compactHeight - Theme.dp(8)
+                            radius: Theme.radiusMd
+                            color: Theme.text
+                            opacity: cell.pressed ? Theme.statePressed + 0.04 : (cell.hot ? Theme.stateHover + 0.02 : (cell.focused ? 0.06 : 0))
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Theme.durShort
+                                    easing.type: Easing.OutCubic
+                                }
+
+                            }
+
+                        }
+
+                        BarAppIcon {
+                            id: cellIcon
+
+                            anchors.centerIn: parent
+                            size: root.glyph
+                            app: cell.app
+                            source: root.iconOf(cell.app.icon)
+                            hovered: cell.hot
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: Theme.durShort
+                                easing.type: Easing.OutBack
+                                easing.overshoot: 1.6
+                            }
+
                         }
 
                     }
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: "+" + root.placed.rest.length
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontLabelLg
-                        font.weight: Font.DemiBold
+                    // as the dock's: a segment for each window, up to three, longer on
+                    // the app in focus; red and breathing while one wants attention,
+                    // and a breathing dot while a launch is on its way
+                    Row {
+                        id: indicator
+
+                        readonly property int segments: Math.max(1, Math.min(3, cell.wins.length))
+                        readonly property real segW: cell.focused ? (indicator.segments === 1 ? Theme.dp(12) : Theme.dp(6)) : Theme.dp(4)
+                        readonly property bool breathing: (cell.urgent || (cell.launching && cell.wins.length === 0)) && root.shown && indicator.visible
+                        property real pulse: 1
+
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: Theme.dp(3)
+                        spacing: Theme.dp(2)
+                        opacity: Prefs.dockShowIndicators && (cell.wins.length > 0 || cell.launching) ? 1 : 0
+                        visible: indicator.opacity > 0
+
+                        Repeater {
+                            model: indicator.segments
+
+                            Rectangle {
+                                width: indicator.segW
+                                height: Theme.dp(3)
+                                radius: height / 2
+                                opacity: indicator.pulse
+                                color: cell.urgent ? Theme.error : (cell.focused ? Theme.accent : Theme.alpha(Theme.text, 0.6))
+
+                                Behavior on width {
+                                    NumberAnimation {
+                                        duration: Theme.durShort
+                                        easing.type: Easing.Bezier
+                                        easing.bezierCurve: Theme.easeEmphasizedDecel
+                                    }
+
+                                }
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Theme.durShort
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                        SequentialAnimation on pulse {
+                            running: indicator.breathing
+                            loops: Animation.Infinite
+                            onRunningChanged: {
+                                if (!running)
+                                    indicator.pulse = 1;
+
+                            }
+
+                            NumberAnimation {
+                                to: 0.3
+                                duration: Theme.ms(500)
+                                easing.type: Easing.InOutSine
+                            }
+
+                            NumberAnimation {
+                                to: 1
+                                duration: Theme.ms(500)
+                                easing.type: Easing.InOutSine
+                            }
+
+                        }
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.durShort
+                            }
+
+                        }
+
                     }
 
                     MouseArea {
-                        id: moreArea
+                        id: cellArea
+
+                        property real pressX: 0
+                        property real pressY: 0
+                        // a drag ends on a release, and the click that comes with it is no click
+                        property bool dragged: false
 
                         anchors.fill: parent
                         hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
+                        preventStealing: true
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                        cursorShape: cell.held ? Qt.ClosedHandCursor : Qt.PointingHandCursor
+                        onEntered: root.hover(cell)
+                        onExited: {
+                            if (root.tipCell === cell)
+                                root.hover(null);
+
+                        }
+                        onPressed: (mouse) => {
+                            cellArea.pressX = mouse.x;
+                            cellArea.pressY = mouse.y;
+                            cellArea.dragged = false;
+                        }
+                        onPositionChanged: (mouse) => {
+                            if (!(cellArea.pressedButtons & Qt.LeftButton))
+                                return ;
+
+                            const dx = mouse.x - cellArea.pressX;
+                            const dy = mouse.y - cellArea.pressY;
+                            if (!cell.held && Math.hypot(dx, dy) > Theme.dp(6)) {
+                                root.hover(null);
+                                root.dragCell = cell;
+                                root.dragApp = cell.app.appId;
+                                cellArea.dragged = true;
+                            }
+                            if (cell.held) {
+                                root.dragDx = dx;
+                                root.dragDy = dy;
+                            }
+                        }
+                        onReleased: {
+                            if (cellArea.dragged)
+                                root.drop();
+
+                        }
+                        onCanceled: {
+                            if (cellArea.dragged) {
+                                root.dragApp = "";
+                                root.dragCell = null;
+                            }
+                        }
+                        onWheel: (wheel) => {
+                            if (cell.wins.length < 2) {
+                                wheel.accepted = false;
+                                return ;
+                            }
                             root.hover(null);
-                            root.openOverflow();
+                            root.cycle(cell.app.appId, wheel.angleDelta.y > 0 ? -1 : 1);
+                        }
+                        onClicked: (mouse) => {
+                            if (cellArea.dragged)
+                                return ;
+
+                            root.hover(null);
+                            if (mouse.button === Qt.RightButton) {
+                                root.openFor(cell.app);
+                            } else if (mouse.button === Qt.MiddleButton) {
+                                cell.launchNow();
+                                root.launch(cell.app);
+                            } else {
+                                if (cell.wins.length === 0)
+                                    cell.launchNow();
+
+                                root.activate(cell.app);
+                            }
                         }
                     }
 
+                    HeldPointer {
+                        held: cell.held
+                        cursor: Qt.ClosedHandCursor
+                    }
+
+                }
+
+            }
+
+            Item {
+                visible: root.placed.rest.length > 0
+                width: root.slot
+                height: root.compactHeight
+                scale: moreArea.pressed ? 0.88 : 1
+
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: root.slot - Theme.dp(4)
+                    height: root.compactHeight - Theme.dp(8)
+                    radius: Theme.radiusMd
+                    color: Theme.text
+                    opacity: moreArea.pressed ? 0.14 : (moreArea.containsMouse ? 0.1 : 0)
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Theme.durShort
+                            easing.type: Easing.OutCubic
+                        }
+
+                    }
+
+                }
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: Theme.durShort
+                        easing.type: Easing.OutBack
+                        easing.overshoot: 1.6
+                    }
+
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "+" + root.placed.rest.length
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontLabelLg
+                    font.weight: Font.DemiBold
+                }
+
+                MouseArea {
+                    id: moreArea
+
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        root.hover(null);
+                        root.openOverflow();
+                    }
                 }
 
             }
