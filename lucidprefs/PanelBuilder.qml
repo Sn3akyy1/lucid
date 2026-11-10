@@ -10,7 +10,7 @@ import qs.lucidui
 // by anything but its pieces, or by its name, to any cell and stretched by any
 // edge or corner; the shelf above adds blocks and pieces and takes back what is
 // dragged onto it. inside a block the pieces are dragged into order and taken
-// out with their cross; a tile is dragged, or tapped, across to the other kind
+// out with their cross; a tile is dragged across to the other kind
 // of tile. a right click offers what a block or piece can do, a picked block
 // moves and stretches with the keys, and every change can be undone
 Item {
@@ -1686,8 +1686,7 @@ Item {
             border.color: lit ? Theme.accent : Theme.alpha(Theme.text, 0.1)
         }
 
-        // a press on a piece drags it, anywhere else the block; a tap on a
-        // tile sends it to the other tile block
+        // a press on a piece drags it, anywhere else the block; a tap only picks the block
         MouseArea {
             id: area
 
@@ -1769,12 +1768,6 @@ Item {
             onReleased: {
                 if (area.mode === 1) {
                     card.moveEnd();
-                } else if (area.mode === 2) {
-                    // a tap: a tile goes to the end of the other tile block
-                    const key = card.order[area.from];
-                    if (builder.isTiles(card.blockKey))
-                        builder.moveTile(key, card.blockKey === "tiles" ? "bigtiles" : "tiles", -1);
-
                 } else if (area.mode === 3) {
                     const key = builder.ghost.key;
                     const d = builder.drop;
