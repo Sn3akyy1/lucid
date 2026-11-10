@@ -11,26 +11,6 @@ Item {
     property int size: Theme.dp(14)
     property color fillColor: Theme.bg
     property bool hovered: false
-    // a corner where a panel meets the full bar's strip: the strip's glass along its
-    // top edge, thickening downwards as the panel beside it does
-    property bool ramped: false
-    readonly property LinearGradient rampFill: LinearGradient {
-        x1: 0
-        y1: 0
-        x2: 0
-        y2: Theme.glassRamp
-
-        GradientStop {
-            position: 0
-            color: Theme.bg
-        }
-
-        GradientStop {
-            position: 1
-            color: Theme.bgDense
-        }
-
-    }
 
     property real tint: flare.hovered ? 0.08 : 0
 
@@ -61,7 +41,6 @@ Item {
         ShapePath {
             strokeWidth: 0
             fillColor: Qt.tint(flare.fillColor, Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, flare.tint))
-            fillGradient: flare.ramped ? flare.rampFill : null
             startX: flare.size
             startY: flare.size
 

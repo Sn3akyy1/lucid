@@ -159,18 +159,6 @@ Singleton {
     readonly property color mBright: root.surface(root.cSurfaceBright, root._toneShift)
 
     readonly property color bg: root.alpha(root.mContainer, 1 - root.blurAmount * 0.85)
-    // big glass, the launcher and a bar panel, lets far less through than the bar's
-    // strip, so a bright wallpaper behind it does not wash it out against the bar
-    readonly property color bgDense: root.alpha(root.mContainer, 1 - root.blurAmount * 0.17)
-    // where big glass meets the strip it starts at the strip's density and thickens
-    // over this far, so the two join without a line
-    readonly property int glassRamp: root.dp(48)
-
-    // the glass that far into big glass from where it meets the strip
-    function glassAt(depth) {
-        const t = Math.max(0, Math.min(1, depth / Math.max(1, root.glassRamp)));
-        return root.alpha(root.mContainer, root.bg.a + (root.bgDense.a - root.bg.a) * t);
-    }
     readonly property color bgTransparent: root.alpha(root.bg, 0)
     readonly property color bgOpaque: root.mContainer
     readonly property color bgSunken: root.mLow

@@ -723,7 +723,7 @@ ShellRoot {
             })
             // what BarPill looks itself up in, for a right click to its card
             readonly property var moduleById: bar.pillFor
-            readonly property var modules: [workspacesMod, mprisMod, sysTrayMod, clockMod, notifMod, systemMod, privacyMod, powerMod, windowMod, startMod, appsMod]
+            readonly property var modules: [workspacesMod, mprisMod, sysTrayMod, clockMod, notifMod, systemMod, privacyMod, powerMod, windowMod, startMod, appsMod, launcherPanel]
 
             // which modules switched on have left the bar for now, for the Bar
             // page's arrangement
@@ -1055,7 +1055,6 @@ ShellRoot {
                     z: -1
 
                     BarFlare {
-                        ramped: true
                         size: bar.panelFlareSize(panelFlares.modelData, true)
                         // butted against the panel: half a pixel over it was a second coat on its edge
                         x: panelFlares.modelData.x - width
@@ -1063,7 +1062,6 @@ ShellRoot {
                     }
 
                     BarFlare {
-                        ramped: true
                         mirrored: true
                         size: bar.panelFlareSize(panelFlares.modelData, false)
                         x: panelFlares.modelData.x + panelFlares.modelData.width
@@ -1220,6 +1218,17 @@ ShellRoot {
 
             }
 
+            // the launcher, when this bar draws it: centred on the strip it grows out of
+            LauncherPanel {
+                id: launcherPanel
+
+                hostWindow: bar
+                dockMod: dock
+                x: Math.round((bar.width - width) / 2)
+                anchors.top: parent.top
+                anchors.topMargin: bar.rowY
+            }
+
             StartButton {
                 id: startMod
 
@@ -1363,8 +1372,6 @@ ShellRoot {
                     readonly property var spec: bar.hangPlan.fillets.length > index ? bar.hangPlan.fillets[index] : null
 
                     z: 0
-                    // as dense as the panels around it, that far below the strip
-                    fillColor: Prefs.barFull && spec ? Theme.glassAt(spec.y - Theme.dp(Prefs.barHeight)) : Theme.bg
                     size: spec ? spec.size : 0
                     mirrored: spec ? spec.mirrored : false
                     flipped: spec ? spec.flipped : false
@@ -1388,26 +1395,7 @@ ShellRoot {
                     y: spec ? spec.y : 0
                     width: spec ? spec.w : 0
                     height: spec ? spec.h : 0
-
-                    // on the full bar it runs from the strip down between two panels, so it
-                    // thickens as they do
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0
-                            color: Theme.bg
-                        }
-
-                        GradientStop {
-                            position: Prefs.barFull ? Math.min(1, Theme.glassRamp / Math.max(1, spec ? spec.h : 1)) : 1
-                            color: Prefs.barFull ? Theme.bgDense : Theme.bg
-                        }
-
-                        GradientStop {
-                            position: 1
-                            color: Prefs.barFull ? Theme.bgDense : Theme.bg
-                        }
-
-                    }
+                    color: Theme.bg
                 }
 
             }
@@ -1478,6 +1466,10 @@ ShellRoot {
 
                 ModuleRegion {
                     mod: appsMod
+                }
+
+                ModuleRegion {
+                    mod: launcherPanel
                 }
 
                 BridgeRegion {
@@ -1562,10 +1554,10 @@ ShellRoot {
                 return m !== workspacesMod && m.expanded === true;
             })
 
-            readonly property bool launcherUp: bar.primary && Prefs.barHoldsBottom && dock.menuOpen
+            readonly property bool launcherUp: bar.primary && Prefs.barHoldsBottom && dock.menuInDock
 
             onPanelExpandedChanged: {
-                if (bar.panelExpanded && bar.primary && Prefs.barHoldsBottom)
+                if (bar.panelExpanded && bar.primary && Prefs.barHoldsBottom && dock.menuInDock)
                     dock.menuOpen = false;
 
             }
@@ -1581,7 +1573,7 @@ ShellRoot {
                 const l = mod.x;
                 const r = mod.x + mod.width;
                 return bar.modules.some((o) => {
-                    return o !== mod && o.surfaceOpen === true && o.popupMode !== true && o.x < r - 0.5 && o.x + o.width > l + 0.5;
+                    return o !== mod && o.surfaceOpen === true && o.popupMode !== true && o.coversBar !== false && o.x < r - 0.5 && o.x + o.width > l + 0.5;
                 });
             }
 
@@ -1612,17 +1604,25 @@ ShellRoot {
                 interval: Theme.barDurEnter + Theme.barMs(80)
             }
 
-            // a layer drawn later frosts what the earlier ones painted. under the bar,
-            // the launcher standing on it frosted the bar's icons and stood a shade off
-            // the strip; drawn after it, the bar frosts only the launcher's edge, which is
-            // the same glass, and the launcher frosts the windows behind it
-            readonly property bool overLauncher: bar.primary && dock.onBar && (dock.menuOpen || dock.morphing)
-
-            WlrLayershell.layer: (bar.fullscreenHere && (bar.panelUp || panelDownTimer.running)) || bar.overLauncher ? WlrLayer.Overlay : WlrLayer.Top
+            WlrLayershell.layer: bar.fullscreenHere && (bar.panelUp || panelDownTimer.running) ? WlrLayer.Overlay : WlrLayer.Top
 
             // the Start module linked to the Apps module lights as the first icon of its
             // row. the link as set, on the full bar too, which draws no joins
             readonly property bool startJoinsApps: Prefs.barJoined("start", "apps") && startMod.shown && appsMod.shown && bar.adjacent("start", "apps")
+
+            // on a full bottom bar the bar draws the launcher, so it grows out of the strip
+            // as one piece of glass with it; elsewhere the dock keeps it
+            readonly property bool hostsLauncher: Prefs.barFull && Prefs.barHoldsBottom && !Prefs.barPopupMode
+
+            Binding {
+                target: dock
+                property: "barLauncher"
+                value: bar.hostsLauncher ? launcherPanel : null
+                when: bar.primary
+            }
+
+            // the launcher's search takes the keyboard here while the bar holds it
+            WlrLayershell.keyboardFocus: dock.launcherHost === launcherPanel ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
             function adjacent(a, b) {
                 const p = bar.placeMap[a];
@@ -1647,9 +1647,10 @@ ShellRoot {
                         return ;
 
                     workspacesMod.expanded = false;
-                    if (bar.primary && Prefs.barHoldsBottom) {
+                    // the launcher is a panel of the bar's own now, or stands where they open
+                    if (bar.primary && (dock.launcherHost || Prefs.barHoldsBottom)) {
                         for (const m of bar.modules) {
-                            if (m.expanded === true)
+                            if (m.expanded === true && m !== dock.launcherHost)
                                 m.expanded = false;
 
                         }
@@ -1735,6 +1736,11 @@ ShellRoot {
                 ModuleRegion {
                     blur: true
                     mod: appsMod
+                }
+
+                ModuleRegion {
+                    blur: true
+                    mod: launcherPanel
                 }
 
                 BridgeRegion {
@@ -2043,7 +2049,7 @@ ShellRoot {
     PanelWindow {
         id: clickCatcher
 
-        visible: dock.menuOpen && Monitors.surfacesUp
+        visible: dock.menuInDock && Monitors.surfacesUp
         color: "transparent"
         exclusiveZone: 0
         WlrLayershell.layer: WlrLayer.Top

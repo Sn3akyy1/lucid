@@ -35,7 +35,7 @@ Item {
 
     anchors.fill: parent
     z: 2
-    opacity: Edit.active && !!outline.dock && outline.dock.shellShown && !outline.dock.menuOpen && !outline.dock.morphing ? 1 : 0
+    opacity: Edit.active && !!outline.dock && outline.dock.shellShown && !outline.dock.menuInDock && !outline.dock.morphing ? 1 : 0
     visible: outline.opacity > 0.01
 
     Rectangle {
