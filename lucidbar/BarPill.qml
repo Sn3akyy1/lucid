@@ -685,13 +685,34 @@ Item {
         // the panel below the strip. it starts where the strip ends on screen, so a
         // bob of the jelly opens no gap between them
         Rectangle {
+            id: panelBody
+
             visible: pill.bodyBelowStrip
             y: Math.min(shell.height, pill.compactHeight / Math.max(0.5, jelly.yScale))
             width: shell.width
             height: Math.max(0, shell.height - y)
-            color: Theme.bg
             bottomLeftRadius: shell.bottomLeftRadius
             bottomRightRadius: shell.bottomRightRadius
+
+            // the strip's glass where it joins the strip, then the denser glass of a panel
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: Theme.bg
+                }
+
+                GradientStop {
+                    position: Math.min(1, Theme.glassRamp / Math.max(1, panelBody.height))
+                    color: Theme.bgDense
+                }
+
+                GradientStop {
+                    position: 1
+                    color: Theme.bgDense
+                }
+
+            }
+
         }
 
         // handlers on the surface itself, so hovering the panel's own contents

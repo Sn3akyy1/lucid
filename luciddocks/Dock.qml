@@ -3138,6 +3138,37 @@ PanelWindow {
         radius: Math.min(Theme.rad(Prefs.dockRadius), Math.round(Theme.pill(shell.height)))
         // split, the islands below paint it
         color: dockWindow.splitDrawn ? "transparent" : Theme.bg
+        // the launcher is big glass, denser than the dock, so a bright wallpaper does not
+        // wash it out; standing on the bar its foot keeps the bar's glass, so the two
+        // join without a line
+        property color bodyGlass: dockWindow.menuOpen ? Theme.bgDense : Theme.bg
+        readonly property color footGlass: dockWindow.onBar ? Theme.bg : shell.bodyGlass
+
+        Behavior on bodyGlass {
+            ColorAnimation {
+                duration: Theme.durLong
+                easing.type: Easing.OutCubic
+            }
+
+        }
+
+        gradient: Gradient {
+            GradientStop {
+                position: 0
+                color: dockWindow.splitDrawn ? "transparent" : shell.bodyGlass
+            }
+
+            GradientStop {
+                position: dockWindow.onBar ? Math.max(0, 1 - Theme.glassRamp / Math.max(1, shell.height)) : 1
+                color: dockWindow.splitDrawn ? "transparent" : shell.bodyGlass
+            }
+
+            GradientStop {
+                position: 1
+                color: dockWindow.splitDrawn ? "transparent" : shell.footGlass
+            }
+
+        }
         // corners meeting the screen edge square off in notch mode
         bottomLeftRadius: dockWindow.renderAsNotch ? 0 : shell.radius
         bottomRightRadius: dockWindow.renderAsNotch ? 0 : shell.radius
@@ -3689,6 +3720,8 @@ PanelWindow {
             required property int index
 
             readonly property bool isRight: index === 1
+
+            fillColor: shell.footGlass
 
             size: Theme.dp(Prefs.dockNotchFlare)
             mirrored: isRight

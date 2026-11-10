@@ -1055,6 +1055,7 @@ ShellRoot {
                     z: -1
 
                     BarFlare {
+                        ramped: true
                         size: bar.panelFlareSize(panelFlares.modelData, true)
                         // butted against the panel: half a pixel over it was a second coat on its edge
                         x: panelFlares.modelData.x - width
@@ -1062,6 +1063,7 @@ ShellRoot {
                     }
 
                     BarFlare {
+                        ramped: true
                         mirrored: true
                         size: bar.panelFlareSize(panelFlares.modelData, false)
                         x: panelFlares.modelData.x + panelFlares.modelData.width
@@ -1361,6 +1363,8 @@ ShellRoot {
                     readonly property var spec: bar.hangPlan.fillets.length > index ? bar.hangPlan.fillets[index] : null
 
                     z: 0
+                    // as dense as the panels around it, that far below the strip
+                    fillColor: Prefs.barFull && spec ? Theme.glassAt(spec.y - Theme.dp(Prefs.barHeight)) : Theme.bg
                     size: spec ? spec.size : 0
                     mirrored: spec ? spec.mirrored : false
                     flipped: spec ? spec.flipped : false
@@ -1384,7 +1388,26 @@ ShellRoot {
                     y: spec ? spec.y : 0
                     width: spec ? spec.w : 0
                     height: spec ? spec.h : 0
-                    color: Theme.bg
+
+                    // on the full bar it runs from the strip down between two panels, so it
+                    // thickens as they do
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0
+                            color: Theme.bg
+                        }
+
+                        GradientStop {
+                            position: Prefs.barFull ? Math.min(1, Theme.glassRamp / Math.max(1, spec ? spec.h : 1)) : 1
+                            color: Prefs.barFull ? Theme.bgDense : Theme.bg
+                        }
+
+                        GradientStop {
+                            position: 1
+                            color: Prefs.barFull ? Theme.bgDense : Theme.bg
+                        }
+
+                    }
                 }
 
             }
