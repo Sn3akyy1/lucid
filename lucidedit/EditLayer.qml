@@ -116,14 +116,6 @@ Variants {
                 radius: Theme.shapeXl
             }
 
-            Region {
-                x: Math.ceil(studio.inspRect.x)
-                y: Math.ceil(studio.inspRect.y)
-                width: studio.settled ? Math.floor(studio.inspRect.width) : 0
-                height: studio.settled ? Math.floor(studio.inspRect.height) : 0
-                radius: Theme.shapeXl
-            }
-
         }
 
         Item {

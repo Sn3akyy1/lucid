@@ -489,21 +489,7 @@ SettingCard {
         OrderedPicker {
             width: parent.width
             value: Prefs.systemHeaderButtons
-            catalogue: [{
-                "id": "edit",
-                "label": "Edit",
-                "note": "opens the layout here, in Settings"
-            }, {
-                "id": "settings",
-                "label": "Settings"
-            }, {
-                "id": "lock",
-                "label": "Lock"
-            }, {
-                "id": "power",
-                "label": "Power",
-                "note": "suspend, restart, shut down"
-            }]
+            catalogue: Prefs.systemHeaderCatalog
             onPicked: (v) => {
                 return Prefs.systemHeaderButtons = v;
             }

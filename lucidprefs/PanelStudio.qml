@@ -2,9 +2,8 @@ import QtQuick
 import qs
 
 // the control centre's studio (Edit.studio === "system"): over one display, the
-// panel lifted off the bar to the middle, the library to its left and the
-// inspector to its right, never over each other. it rises out of where the
-// panel was and goes back into it on the way out
+// panel where it hangs from the bar and one sheet beside it, to add from and to
+// set what is picked. it rises out of where the panel was and goes back into it
 Item {
     id: stage
 
@@ -17,7 +16,6 @@ Item {
     readonly property bool settled: stage.hosted && stage.t > 0.99 && !!loader.item
     readonly property rect libRect: loader.item ? loader.item.libRect : Qt.rect(0, 0, 0, 0)
     readonly property rect canvasRect: loader.item ? loader.item.canvasRect : Qt.rect(0, 0, 0, 0)
-    readonly property rect inspRect: loader.item ? loader.item.inspRect : Qt.rect(0, 0, 0, 0)
 
     visible: stage.shown
     onHostedChanged: {

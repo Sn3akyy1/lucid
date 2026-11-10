@@ -547,6 +547,12 @@ Singleton {
 
     // everything the control centre's layout is: which blocks, where, and
     // what each holds. a saved layout, and each step undo goes back, is these
+    readonly property var systemHeaderCatalog: [
+        { "id": "edit", "label": "Edit", "note": "opens this editor" },
+        { "id": "settings", "label": "Settings" },
+        { "id": "lock", "label": "Lock" },
+        { "id": "power", "label": "Power", "note": "suspend, restart, shut down" }
+    ]
     readonly property var systemLayoutKeys: ["systemBlocks", "systemGrid", "systemTiles", "systemTilesRadios", "systemBigTiles", "systemSliders", "systemInfo", "systemBlockStyles"]
 
     // the looks each block can take; the first is the one it always had

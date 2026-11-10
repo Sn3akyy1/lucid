@@ -21,11 +21,13 @@ Item {
     readonly property real unit: Theme.dp(52)
     readonly property real rowUnit: Theme.dp(20)
     readonly property real gridGap: Theme.dp(12)
-    // the studio (PanelStudio): the panel in the middle of a display, the library
-    // to its left and the inspector to its right, in the free band it is given.
+    // the studio (PanelStudio): the panel where it hangs from the bar and one
+    // sheet beside it, in the free band it is given.
     // enterT is how far in it has come, from the rect it rose from on the bar
     property rect area: Qt.rect(0, 0, builder.width, builder.height)
     property real enterT: 1
+    // the sheet with nothing picked: add, or layouts
+    property string page: "add"
     property rect from: Qt.rect(0, 0, 0, 0)
     // what the blocks read: a live panel's own, or made up
     property var readings: null
@@ -50,44 +52,36 @@ Item {
     property int extraRows: 3
     readonly property int boardCols: Math.min(Prefs.systemGridCols, builder.usedCols + Math.max(0, builder.extraCols))
     // how much the grid is drawn down to fit the page, or the studio's middle
-    readonly property real k: Math.max(0.5, Math.min(1, (builder.area.width - builder.colW * 2 - builder.colGap * 2 - builder.canvasPad * 2) / builder.span(builder.boardCols)))
+    readonly property real k: Math.max(0.5, Math.min(1, (builder.area.width - builder.colW - builder.colGap - builder.canvasPad * 2) / builder.span(builder.boardCols)))
     readonly property real canvasW: boardWrap.width + builder.canvasPad * 2
-    readonly property int restRows: {
-        const at = Prefs.systemGridPlace(Prefs.systemBlockKeys, builder.needs);
-        return Prefs.systemBlockKeys.reduce((n, key) => {
-            return at[key] ? Math.max(n, at[key].y + at[key].h) : n;
-        }, 0);
-    }
-    readonly property real canvasRestH: Math.min(builder.area.height, builder.canvasHead + Math.round(builder.rowSpan(builder.restRows + builder.extraRows) * builder.k) + builder.canvasPad)
-    // while something is in hand (a block, a stretch, the grid's own edge) the panel
-    // stays where it is and grows right and down; let go, it settles to the middle
+    // the panel stays where it hangs: against the side of the display it is on and
+    // the edge of the band nearest the bar, growing away from both. the sheet is
+    // beside it, on the side it grows to
+    readonly property bool hangsRight: builder.from.width > 1 ? builder.from.x + builder.from.width / 2 > builder.width / 2 : true
+    readonly property bool hangsLow: builder.from.width > 1 && builder.from.y + builder.from.height / 2 > builder.height / 2
     property bool resizingGrid: false
     readonly property bool holding: builder.plan !== null || builder.carry !== null || builder.target !== null || builder.resizingGrid
-    property real heldX: 0
-    property real heldY: 0
-    readonly property real groupXFree: builder.area.x + Math.max(0, (builder.area.width - builder.colW * 2 - builder.colGap * 2 - builder.canvasW) / 2)
-    readonly property real canvasYFree: builder.area.y + Math.max(0, (builder.area.height - builder.canvasRestH) / 2)
-    property real groupX: builder.holding ? builder.heldX : builder.groupXFree
-    property real canvasY: builder.holding ? builder.heldY : builder.canvasYFree
-    readonly property rect libRect: Qt.rect(builder.groupX, builder.area.y, builder.colW, builder.area.height)
-    readonly property rect canvasRect: Qt.rect(builder.groupX + builder.colW + builder.colGap, builder.canvasY, builder.canvasW, Math.min(builder.area.y + builder.area.height - builder.canvasY, builder.canvasHead + boardWrap.height + builder.canvasPad))
-    readonly property rect inspRect: Qt.rect(builder.canvasRect.x + builder.canvasW + builder.colGap, builder.area.y, builder.colW, builder.area.height)
+    readonly property real canvasFullH: builder.canvasHead + boardWrap.height + builder.canvasPad
+    readonly property real canvasX: {
+        const a = builder.area, room = builder.colW + builder.colGap;
+        if (builder.hangsRight)
+            return Math.max(a.x + room, Math.min(a.x + a.width, builder.from.width > 1 ? builder.from.x + builder.from.width : a.x + a.width) - builder.canvasW);
 
-    onHoldingChanged: {
-        if (builder.holding) {
-            builder.heldX = builder.groupXFree;
-            builder.heldY = builder.canvasYFree;
-        }
+        return Math.min(a.x + a.width - room - builder.canvasW, Math.max(a.x, builder.from.x));
     }
+    readonly property real canvasYFree: builder.hangsLow ? builder.area.y + Math.max(0, builder.area.height - builder.canvasFullH) : builder.area.y
+    // on a bar at the bottom it grows up; while a block is carried it keeps its
+    // top instead, so the grid does not slide under the pointer as rows come
+    property real heldY: 0
+    readonly property bool heldDown: builder.hangsLow && (builder.plan !== null || builder.carry !== null || builder.target !== null)
+    property real canvasY: builder.heldDown ? builder.heldY : builder.canvasYFree
+    readonly property rect canvasRect: Qt.rect(builder.canvasX, builder.canvasY, builder.canvasW, Math.min(builder.area.y + builder.area.height - builder.canvasY, builder.canvasFullH))
+    readonly property rect libRect: Qt.rect(builder.hangsRight ? builder.canvasX - builder.colGap - builder.colW : builder.canvasX + builder.canvasW + builder.colGap, builder.area.y, builder.colW, builder.area.height)
 
-    Behavior on groupX {
-        enabled: builder.enterT > 0.99 && !builder.holding
-
-        NumberAnimation {
-            duration: Theme.durMedium
-            easing.type: Easing.Bezier
-            easing.bezierCurve: Theme.easeEmphasizedDecel
-        }
+    onHoldingChanged: Qt.callLater(builder.fold)
+    onHeldDownChanged: {
+        if (builder.heldDown)
+            builder.heldY = builder.canvasYFree;
 
     }
 
@@ -527,8 +521,52 @@ Item {
         if (!builder.tidied)
             return ;
 
+        builder.writeSpots(builder.tidied);
+    }
+
+    // the panel folds away the rows and columns nothing sits in, so once a
+    // block is let go, or one comes off, the grid here closes up the same
+    readonly property var folded: {
+        const keys = builder.readingOrder();
+        const rows = {}, cols = {};
+        for (const k of keys) {
+            const r = builder.place[k];
+            for (let i = 0; i < r.h; i++)
+                rows[r.y + i] = true;
+            for (let i = 0; i < r.w; i++)
+                cols[r.x + i] = true;
+        }
+        const gone = (used, upTo) => {
+            let n = 0;
+            for (let i = 0; i < upTo; i++)
+                if (!used[i])
+                    n++;
+            return n;
+        };
+        const out = keys.map((k) => {
+            const r = builder.place[k];
+            return Object.assign({
+                "key": k
+            }, r, {
+                "x": r.x - gone(cols, r.x),
+                "y": r.y - gone(rows, r.y)
+            });
+        });
+        return out.some((r) => {
+            return r.x !== builder.place[r.key].x || r.y !== builder.place[r.key].y;
+        }) ? out : null;
+    }
+
+    function fold() {
+        if (builder.holding || !builder.folded)
+            return ;
+
+        builder.writeSpots(builder.folded);
+    }
+
+    function writeSpots(spots) {
         const next = Object.assign({}, Prefs.systemGridSaved);
-        for (const r of builder.tidied)
+        for (const r of spots)
             next[r.key] = {
             "x": r.x,
             "y": r.y,
@@ -769,6 +807,14 @@ Item {
         }
     }
 
+    Connections {
+        function onSystemBlocksChanged() {
+            Qt.callLater(builder.fold);
+        }
+
+        target: Prefs
+    }
+
     Timer {
         id: noticeTimer
 
@@ -894,7 +940,8 @@ Item {
     Rectangle {
         id: libPane
 
-        x: builder.libRect.x - (builder.libRect.x + builder.colW + Theme.dp(24)) * (1 - builder.enterT)
+        // it comes in from the side of the display it is nearer
+        x: builder.libRect.x + (builder.hangsRight ? -(builder.libRect.x + builder.colW + Theme.dp(24)) : builder.width - builder.libRect.x + Theme.dp(24)) * (1 - builder.enterT)
         y: builder.libRect.y
         width: builder.libRect.width
         height: builder.libRect.height
@@ -904,11 +951,93 @@ Item {
         border.width: builder.overShelf ? Theme.dp(2) : 0
         border.color: Theme.error
 
+        // nothing picked: what the sheet is, and its two pages
+        Column {
+            id: sheetHead
+
+            visible: builder.selected === ""
+            x: Theme.dp(20)
+            y: Theme.dp(20)
+            width: parent.width - Theme.dp(40)
+            spacing: Theme.dp(12)
+
+            Item {
+                width: parent.width
+                height: Theme.dp(48)
+
+                Rectangle {
+                    id: sheetGlyph
+
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.dp(44)
+                    height: Theme.dp(44)
+                    radius: Theme.radiusLg
+                    color: builder.overShelf ? Theme.errorContainer : Theme.accentContainer
+
+                    Icon {
+                        anchors.centerIn: parent
+                        name: builder.overShelf ? "delete" : "tune"
+                        size: Theme.dp(22)
+                        color: builder.overShelf ? Theme.fgErrorContainer : Theme.fgAccentContainer
+                    }
+
+                }
+
+                Column {
+                    anchors.left: sheetGlyph.right
+                    anchors.leftMargin: Theme.dp(12)
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Theme.dp(1)
+
+                    LText {
+                        width: parent.width
+                        role: "titleMedium"
+                        weight: 600
+                        elide: Text.ElideRight
+                        text: "Control centre"
+                    }
+
+                    LText {
+                        width: parent.width
+                        role: "bodySmall"
+                        color: builder.overShelf ? Theme.error : Theme.subtext
+                        elide: Text.ElideRight
+                        text: builder.overShelf ? "Let go to take it off the panel" : (builder.page === "add" ? "Drag one onto the panel, or click to add it" : "Start from one, or keep the one you made")
+                    }
+
+                }
+
+            }
+
+            Tabs {
+                width: parent.width
+                inline: true
+                options: [{
+                    "key": "add",
+                    "label": "Add",
+                    "icon": "add"
+                }, {
+                    "key": "layouts",
+                    "label": "Layouts",
+                    "icon": "dashboard"
+                }]
+                current: builder.page
+                onPicked: (key) => {
+                    return builder.page = key;
+                }
+            }
+
+        }
+
         Flickable {
             id: libView
 
-            anchors.fill: parent
-            anchors.margins: Theme.dp(4)
+            visible: builder.selected === "" && builder.page === "add"
+            x: Theme.dp(4)
+            y: sheetHead.y + sheetHead.height
+            width: parent.width - Theme.dp(8)
+            height: parent.height - y - Theme.dp(4)
             contentWidth: width
             contentHeight: shelf.height
             // the wheel scrolls it; a drag on it carries what is under the pointer
@@ -921,6 +1050,29 @@ Item {
                     const maxY = Math.max(0, libView.contentHeight - libView.height);
                     libView.contentY = Math.max(0, Math.min(maxY, libView.contentY - (event.angleDelta.y / 120) * Theme.dp(90)));
                 }
+            }
+
+        }
+
+
+        // a block picked, or the layouts page: the same room, the inspector in it
+        Flickable {
+            id: inspView
+
+            visible: !libView.visible
+            x: Theme.dp(20)
+            y: builder.selected === "" ? sheetHead.y + sheetHead.height + Theme.dp(16) : Theme.dp(20)
+            width: parent.width - Theme.dp(40)
+            height: parent.height - y - Theme.dp(20)
+            contentWidth: width
+            contentHeight: inspector.implicitHeight
+            boundsBehavior: Flickable.StopAtBounds
+            clip: true
+
+            Inspector {
+                id: inspector
+
+                width: inspView.width
             }
 
         }
@@ -1008,45 +1160,14 @@ Item {
         // pushed in, fewer, down to what the blocks take
         GridGrip {
             across: true
-            x: parent.width - width - Theme.dp(4)
+            x: builder.hangsRight ? Theme.dp(4) : parent.width - width - Theme.dp(4)
             y: builder.canvasHead + Math.max(0, (parent.height - builder.canvasHead - height) / 2)
         }
 
         GridGrip {
             across: false
             x: builder.canvasPad + Math.max(0, (boardWrap.width - width) / 2)
-            y: parent.height - height - Theme.dp(4)
-        }
-
-    }
-
-    Rectangle {
-        id: inspPane
-
-        x: builder.inspRect.x + (builder.width - builder.inspRect.x + Theme.dp(24)) * (1 - builder.enterT)
-        y: builder.inspRect.y
-        width: builder.inspRect.width
-        height: builder.inspRect.height
-        opacity: builder.enterT
-        radius: Theme.shapeXl
-        color: Theme.bg
-
-        Flickable {
-            id: inspView
-
-            anchors.fill: parent
-            anchors.margins: Theme.dp(20)
-            contentWidth: width
-            contentHeight: inspector.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
-            clip: true
-
-            Inspector {
-                id: inspector
-
-                width: inspView.width
-            }
-
+            y: builder.hangsLow ? Theme.dp(2) : parent.height - height - Theme.dp(4)
         }
 
     }
@@ -1068,30 +1189,9 @@ Item {
             id: shelfCol
 
             x: Theme.dp(16)
-            y: Theme.dp(16)
+            y: Theme.dp(12)
             width: parent.width - Theme.dp(32)
             spacing: Theme.dp(12)
-
-            Column {
-                width: parent.width
-                spacing: Theme.dp(2)
-
-                LText {
-                    role: "titleSmall"
-                    weight: 600
-                    text: builder.overShelf ? "Let go to take it off the panel" : "Add to the panel"
-                    color: builder.overShelf ? Theme.error : Theme.text
-                }
-
-                LText {
-                    width: parent.width
-                    role: "bodySmall"
-                    color: Theme.subtext
-                    wrapMode: Text.WordWrap
-                    text: "Drag one onto the panel, or click to add it"
-                }
-
-            }
 
             Flow {
                 width: parent.width
@@ -1613,7 +1713,7 @@ Item {
         // its width from its columns alone; down, the rows decide
         width: card.spot ? builder.span(card.spot.w) : 0
         height: card.box.height
-        z: card.busy ? 5 : 0
+        z: card.busy ? 5 : (card.picked ? 2 : (hover.hovered || tagHover.hovered ? 1 : 0))
         // lifted while carried
         scale: card.carried ? 1.03 : 1
 
@@ -2133,7 +2233,9 @@ Item {
 
                 const p = mapToItem(builder, mouse.x, mouse.y);
                 const step = (grip.across ? builder.stepX : builder.stepY) * builder.k;
-                const n = gripArea.was + Math.round(((grip.across ? p.x : p.y) - gripArea.start) / step);
+                // the side that hangs keeps still, so the pull is away from it
+            const away = (grip.across ? builder.hangsRight : builder.hangsLow) ? -1 : 1;
+            const n = gripArea.was + Math.round(away * ((grip.across ? p.x : p.y) - gripArea.start) / step);
                 if (grip.across)
                     builder.extraCols = Math.max(0, Math.min(Prefs.systemGridCols - builder.usedCols, n));
                 else
@@ -2387,30 +2489,7 @@ Item {
                 role: "bodySmall"
                 color: Theme.subtextDim
                 wrapMode: Text.WordWrap
-                text: "Drag more in from the library, or drag one out of the block to take it off."
-            }
-
-        }
-
-        // none picked: where to start
-        Column {
-            visible: ins.block === ""
-            width: parent.width
-            spacing: Theme.dp(4)
-
-            LText {
-                width: parent.width
-                role: "titleMedium"
-                weight: 600
-                text: "Control centre"
-            }
-
-            LText {
-                width: parent.width
-                role: "bodySmall"
-                color: Theme.subtext
-                wrapMode: Text.WordWrap
-                text: "Drag anything from the library onto the panel, and back to take it off. Click a block for its looks and size."
+                text: "Drag more in from Add, or drag one out of the block to take it off."
             }
 
         }
@@ -2463,6 +2542,26 @@ Item {
                     }
                 }
 
+            }
+
+        }
+
+        Column {
+            visible: ins.block === ""
+            width: parent.width
+            spacing: Theme.dp(10)
+
+            Heading {
+                text: "Header buttons"
+            }
+
+            OrderedPicker {
+                width: parent.width
+                value: Prefs.systemHeaderButtons
+                catalogue: Prefs.systemHeaderCatalog
+                onPicked: (v) => {
+                    return Prefs.systemHeaderButtons = v;
+                }
             }
 
         }
