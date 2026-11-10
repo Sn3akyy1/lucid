@@ -162,4 +162,43 @@ Region {
         bottomRightRadius: reg.mirrored ? reg.popTopRight : reg.popRadius
     }
 
+    // on the blur only, the concave corners the bar draws beside the module: where
+    // its open panel meets the full bar's strip, or its notch meets the top edge
+    readonly property var host: reg.mod ? reg.mod.hostWindow : null
+    readonly property bool flaring: reg.blur && !!reg.host && !!reg.host.notchFlareOf
+    readonly property int panelLeft: reg.flaring ? reg.host.panelFlareSize(reg.mod, true) : 0
+    readonly property int panelRight: reg.flaring ? reg.host.panelFlareSize(reg.mod, false) : 0
+    readonly property int notchLeft: reg.flaring ? reg.host.notchFlareOf(reg.mod, true) : 0
+    readonly property int notchRight: reg.flaring ? reg.host.notchFlareOf(reg.mod, false) : 0
+
+    FlareRegion {
+        host: reg.host
+        size: reg.panelLeft
+        fx: reg.mod ? reg.mod.x - size : 0
+        fy: Theme.dp(Prefs.barHeight)
+    }
+
+    FlareRegion {
+        host: reg.host
+        mirrored: true
+        size: reg.panelRight
+        fx: reg.mod ? reg.mod.x + reg.mod.width : 0
+        fy: Theme.dp(Prefs.barHeight)
+    }
+
+    FlareRegion {
+        host: reg.host
+        size: reg.notchLeft
+        fx: reg.mod ? reg.mod.x - size + 0.5 : 0
+        fy: reg.host ? reg.host.rowY : 0
+    }
+
+    FlareRegion {
+        host: reg.host
+        mirrored: true
+        size: reg.notchRight
+        fx: reg.mod ? reg.mod.x + reg.mod.width - 0.5 : 0
+        fy: reg.host ? reg.host.rowY : 0
+    }
+
 }

@@ -464,6 +464,27 @@ ShellRoot {
                 return Math.max(0, Math.min(Theme.dp(Prefs.barNotchFlare), Math.floor(toNeighbour / 2), Math.floor(toEdge)));
             }
 
+            // full bar: how far the concave corner where an open panel's side meets the
+            // strip's lower edge reaches. it grows with the panel's height, so a folding
+            // panel takes it with it; never past the screen edge, never into the screen
+            // corner that already rounds that side, none where a merged neighbour covers it
+            function panelFlareSize(mod, toTheLeft) {
+                if (!Prefs.barFull || Prefs.barPopupMode || !mod || mod === workspacesMod)
+                    return 0;
+
+                // surfaceOpen, not the height alone: a pill that is only resizing its
+                // compact face is see-through on the full bar
+                const reach = mod.visible && mod.width > 0.5 && mod.surfaceOpen === true ? mod.height - Theme.dp(Prefs.barHeight) : 0;
+                const merged = bar.hangPlan.merged[mod.modId];
+                if (merged && (toTheLeft ? merged.left : merged.right))
+                    return 0;
+
+                const corner = Theme.dp(Prefs.barFullCorner);
+                const toEdge = toTheLeft ? mod.x : bar.width - mod.x - mod.width;
+                const room = toEdge - (toEdge < corner * 2 ? corner : 0);
+                return Math.max(0, Math.floor(Math.min(corner, reach, room)));
+            }
+
             function planHangs() {
                 const plan = ({
                     "corners": ({}),
@@ -1030,38 +1051,20 @@ ShellRoot {
 
                     required property var modelData
 
-                    // surfaceOpen, not the height alone: a pill that is only
-                    // resizing its compact face is see-through on the full bar
-                    readonly property real reach: (panelFlares.modelData.visible && panelFlares.modelData.width > 0.5 && panelFlares.modelData.surfaceOpen === true) ? panelFlares.modelData.height - Theme.dp(Prefs.barHeight) : 0
-
-                    // never past the screen edge, and never into the screen corner
-                    // that already rounds that side
-                    function sizeFor(toTheLeft) {
-                        var m = panelFlares.modelData;
-                        // that side is merged into an open neighbour, which covers it
-                        var merged = bar.hangPlan.merged[m.modId];
-                        if (merged && (toTheLeft ? merged.left : merged.right))
-                            return 0;
-
-                        var corner = Theme.dp(Prefs.barFullCorner);
-                        var toEdge = toTheLeft ? m.x : bar.width - m.x - m.width;
-                        var room = toEdge - (toEdge < corner * 2 ? corner : 0);
-                        return Math.max(0, Math.floor(Math.min(corner, panelFlares.reach, room)));
-                    }
-
                     anchors.fill: parent
                     z: -1
 
                     BarFlare {
-                        size: panelFlares.sizeFor(true)
-                        x: panelFlares.modelData.x - width + 0.5
+                        size: bar.panelFlareSize(panelFlares.modelData, true)
+                        // butted against the panel: half a pixel over it was a second coat on its edge
+                        x: panelFlares.modelData.x - width
                         y: Theme.dp(Prefs.barHeight)
                     }
 
                     BarFlare {
                         mirrored: true
-                        size: panelFlares.sizeFor(false)
-                        x: panelFlares.modelData.x + panelFlares.modelData.width - 0.5
+                        size: bar.panelFlareSize(panelFlares.modelData, false)
+                        x: panelFlares.modelData.x + panelFlares.modelData.width
                         y: Theme.dp(Prefs.barHeight)
                     }
 
@@ -1733,6 +1736,47 @@ ShellRoot {
                 BridgeRegion {
                     host: bar
                     index: 5
+                }
+
+                // the concave corners the bar draws outside any module: the full
+                // strip's ends at the screen sides, a cover strip's ends, and the
+                // hang plan's fillets. the modules' own come with their regions
+                FlareRegion {
+                    host: bar
+                    on: fullStrip.visible && !bar.hangPlan.edges.left
+                    mirrored: true
+                    size: Theme.dp(Prefs.barFullCorner)
+                    fx: 0
+                    fy: Theme.dp(Prefs.barHeight) + bar.rowY
+                }
+
+                FlareRegion {
+                    host: bar
+                    on: fullStrip.visible && !bar.hangPlan.edges.right
+                    size: Theme.dp(Prefs.barFullCorner)
+                    fx: bar.width - size
+                    fy: Theme.dp(Prefs.barHeight) + bar.rowY
+                }
+
+                FlareRegion {
+                    host: bar
+                    on: coverStrip.visible && coverStrip.opacity > 0.5 && !dock.barUnderLeft
+                    size: Theme.dp(Prefs.barNotchFlare)
+                    fx: coverStrip.x - size
+                    fy: bar.rowY
+                }
+
+                FlareRegion {
+                    host: bar
+                    on: coverStrip.visible && coverStrip.opacity > 0.5 && !dock.barUnderRight
+                    mirrored: true
+                    size: Theme.dp(Prefs.barNotchFlare)
+                    fx: coverStrip.x + coverStrip.width
+                    fy: bar.rowY
+                }
+
+                FilletRegions {
+                    host: bar
                 }
 
             }
