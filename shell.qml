@@ -1589,7 +1589,13 @@ ShellRoot {
                 interval: Theme.barDurEnter + Theme.barMs(80)
             }
 
-            WlrLayershell.layer: bar.fullscreenHere && (bar.panelUp || panelDownTimer.running) ? WlrLayer.Overlay : WlrLayer.Top
+            // a layer drawn later frosts what the earlier ones painted. under the bar,
+            // the launcher standing on it frosted the bar's icons and stood a shade off
+            // the strip; drawn after it, the bar frosts only the launcher's edge, which is
+            // the same glass, and the launcher frosts the windows behind it
+            readonly property bool overLauncher: bar.primary && dock.onBar && (dock.menuOpen || dock.morphing)
+
+            WlrLayershell.layer: (bar.fullscreenHere && (bar.panelUp || panelDownTimer.running)) || bar.overLauncher ? WlrLayer.Overlay : WlrLayer.Top
 
             // the Start module linked to the Apps module lights as the first icon of its
             // row. the link as set, on the full bar too, which draws no joins

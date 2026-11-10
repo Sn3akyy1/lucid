@@ -2295,8 +2295,10 @@ PanelWindow {
     })
     WlrLayershell.keyboardFocus: dockWindow.menuOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     // over a fullscreen window hyprland fades the top layer out, so a closing
-    // launcher keeps the overlay until it has shrunk and gone down
-    WlrLayershell.layer: (dockWindow.menuOpen || dockWindow.morphing) ? WlrLayer.Overlay : WlrLayer.Top
+    // launcher keeps the overlay until it has shrunk and gone down. standing on the
+    // bar it stays there throughout, so the bar, lifted to the overlay as the
+    // launcher opens, lands above it (see the bar's layer)
+    WlrLayershell.layer: (dockWindow.menuOpen || dockWindow.morphing || dockWindow.onBar) ? WlrLayer.Overlay : WlrLayer.Top
     color: "transparent"
     implicitWidth: Math.max(dockWindow.maxDockWidth, dockWindow.menuWidth)
     implicitHeight: dockWindow.menuMaxHeight + dockWindow.dragHeadroom
