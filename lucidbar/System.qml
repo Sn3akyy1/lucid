@@ -1376,7 +1376,8 @@ BarPill {
         case "tiles":
             return Prefs.systemSmallTileKeys;
         case "media":
-            return ["media"];
+            // on a grid someone arranged it keeps its place; in the column it had, it goes with the player
+            return root.gridArranged || root.mediaUp ? ["media"] : [];
         }
         return Prefs.systemInfoKeys;
     }
@@ -1455,7 +1456,9 @@ BarPill {
     readonly property int gridPanelWidth: root.gridWidth + root.panelPad * 2
     // only the main view, and only while the grid fits the screen: otherwise,
     // and in the other views, which are lists, the usual single column
-    readonly property bool gridMain: root.view === "main" && root.screenW >= root.gridPanelWidth + Theme.dp(34)
+    // until someone arranges it, the panel is the column it always was
+    readonly property bool gridArranged: Object.keys(Prefs.systemGridSaved).length > 0
+    readonly property bool gridMain: root.gridArranged && root.view === "main" && root.screenW >= root.gridPanelWidth + Theme.dp(34)
 
     // across, a block's columns are all it takes; down, the rows decide
     function blockWidth(key) {

@@ -27,7 +27,7 @@ Item {
     signal clicked()
 
     // as big as its share of the card allows, from the old 54 up to 84
-    readonly property real ring: Math.round(Math.max(Theme.dp(54), Math.min(Theme.dp(84), g.width - Theme.dp(20))))
+    readonly property real ring: Math.round(Math.max(Theme.dp(54), Math.min(Theme.dp(84), g.width - Theme.dp(32))))
     readonly property string reading: g.center === "" || g.center === "—" ? "—" : g.center + "%"
     readonly property string glyph: g.centerIcon !== "" ? g.centerIcon : g.icon
     // the detail, unless it only says the name again

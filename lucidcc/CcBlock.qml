@@ -45,10 +45,10 @@ Item {
     // what its pieces need down, before it is given more
     readonly property real natural: body.item ? body.item.natural : 0
 
-    // gauges sharing a card: as many to a row as leave each its least (88
+    // gauges sharing a card: as many to a row as leave each its least (84
     // for a ring), in rows as even as can be
     function gaugeCols(n, width, least, gap) {
-        const room = least || Theme.dp(88);
+        const room = least || Theme.dp(84);
         const most = Math.max(1, Math.min(n, Math.floor((width + (gap || 0)) / (room + (gap || 0)))));
         return Math.max(1, Math.ceil(n / Math.ceil(n / most)));
     }
@@ -335,7 +335,7 @@ Item {
                 "tiles": Theme.dp(104),
                 "compact": Theme.dp(112),
                 "graph": Theme.dp(140)
-            })[gauges.look] || Theme.dp(88)
+            })[gauges.look] || Theme.dp(84)
             readonly property int perRow: block.gaugeCols(Math.max(1, gauges.n), gauges.width, gauges.least, gauges.colGap)
             readonly property int rows: Math.ceil(gauges.n / gauges.perRow)
             readonly property real gaugeH: gaugeRep.count > 0 && gaugeRep.itemAt(0) ? gaugeRep.itemAt(0).implicitHeight : 0
