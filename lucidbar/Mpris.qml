@@ -1479,7 +1479,7 @@ BarPill {
 
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width - Theme.dp(92)
+                    width: parent.width - Theme.dp(Prefs.mediaLyrics ? 92 : 62)
                     spacing: Theme.dp(1)
                     opacity: heroVol.open ? 0 : 1
 
@@ -1518,7 +1518,7 @@ BarPill {
                     icon: root.lyricsGlyph
                     tintOverride: Theme.subtext
                     opacity: heroVol.open ? 0 : 1
-                    visible: opacity > 0.01
+                    visible: Prefs.mediaLyrics && opacity > 0.01
                     onClicked: root.openPanel("lyrics")
 
                     Behavior on opacity {
@@ -1810,7 +1810,7 @@ BarPill {
                     anchors.right: sideIdentify.right
                     anchors.top: sideIdentify.bottom
                     size: "xs"
-                    visible: root.player !== null
+                    visible: root.player !== null && Prefs.mediaLyrics
                     icon: root.lyricsGlyph
                     tintOverride: Theme.subtext
                     onClicked: root.openPanel("lyrics")

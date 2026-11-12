@@ -401,6 +401,22 @@ SettingCard {
 
     }
 
+    SettingRow {
+        visible: card.moduleId === "media"
+        title: "Lyrics button"
+        resetKey: "mediaLyrics"
+        description: "In the panel, beside Identify: the words of the song, from lrclib.net, looked up only while the page is open."
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.mediaLyrics
+            onToggled: (v) => {
+                return Prefs.mediaLyrics = v;
+            }
+        }
+
+    }
+
     // notifications
     // system
     SettingRow {

@@ -877,7 +877,7 @@ Singleton {
         "name": "Media",
         "desc": "Now-playing pill and player controls",
         "when": "while something plays",
-        "options": ["mediaHideIdle", "mediaArtist", "mediaTitleWidth", "mediaPlayButton", "mediaWheelVolume"],
+        "options": ["mediaHideIdle", "mediaArtist", "mediaTitleWidth", "mediaPlayButton", "mediaWheelVolume", "mediaLyrics"],
         "style": "mediaStyle",
         "styles": [
             {"key": "disc", "name": "Disc", "blurb": "The cover turning in a ring that fills as it plays"},
@@ -1249,6 +1249,7 @@ Singleton {
     property alias mediaTitleWidth: s.mediaTitleWidth
     property alias mediaPlayButton: s.mediaPlayButton
     property alias mediaWheelVolume: s.mediaWheelVolume
+    property alias mediaLyrics: s.mediaLyrics
     property alias workspacesStyle: s.workspacesStyle
     property alias workspacesShown: s.workspacesShown
     property alias workspacesWheel: s.workspacesWheel
@@ -1786,6 +1787,7 @@ Singleton {
         "mediaTitleWidth": 170,
         "mediaPlayButton": true,
         "mediaWheelVolume": true,
+        "mediaLyrics": true,
         "workspacesStyle": "dots",
         "workspacesShown": 6,
         "workspacesWheel": true,
@@ -2570,6 +2572,7 @@ Singleton {
             property int mediaTitleWidth: 170
             property bool mediaPlayButton: true
             property bool mediaWheelVolume: true
+            property bool mediaLyrics: true
             property string workspacesStyle: "dots"
             property int workspacesShown: 6
             property bool workspacesWheel: true

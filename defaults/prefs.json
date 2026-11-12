@@ -90,6 +90,7 @@
     "mediaTitleWidth": 170,
     "mediaPlayButton": true,
     "mediaWheelVolume": true,
+    "mediaLyrics": true,
     "workspacesStyle": "dots",
     "workspacesShown": 6,
     "workspacesWheel": true,
