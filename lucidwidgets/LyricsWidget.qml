@@ -27,6 +27,13 @@ WidgetBody {
     readonly property int index: w.preview ? Lyrics.lineAt(w.demoLines, w.demoPos, -1) : lyr.index
     readonly property var line: w.index >= 0 && w.index < w.lines.length ? w.lines[w.index] : null
     readonly property var nextLine: w.index + 1 < w.lines.length ? w.lines[w.index + 1] : null
+    // the pause being waited through: a line with no words, or the song's intro before the first one
+    readonly property var pauseLine: w.line ? w.line : (w.synced && w.lines.length && w.lines[0].t > 0 ? {
+        "t": 0,
+        "end": w.lines[0].t,
+        "text": "",
+        "words": []
+    } : null)
     // the word being sung in the current line, -1 between words
     readonly property int wordIndex: {
         if (!w.line)
@@ -208,12 +215,17 @@ WidgetBody {
             }
             readonly property int px: Math.round(Math.max(Theme.dp(16), Math.min(Theme.dp(72), cap.height * (w.twoRows ? 0.3 : 0.42))))
 
-            LText {
+            LyricLine {
                 anchors.centerIn: parent
+                width: parent.width
                 visible: !w.line || w.line.words.length === 0
-                text: "♪"
-                size: cap.px
-                color: w.fgFaint
+                line: w.pauseLine
+                when: 0
+                pos: w.pos
+                px: cap.px
+                centred: true
+                ink: w.fgFaint
+                inkLit: w.fgLit
             }
 
             Column {
@@ -245,6 +257,8 @@ WidgetBody {
                         readonly property bool now: word.sung && w.pos < word.modelData.end
                         // by start and text: a Repeater hands its delegate a copy of the word, never the same object
                         readonly property bool hollow: cap.hollow !== null && word.modelData.t === cap.hollow.t && word.modelData.text === cap.hollow.text
+                        // which way it leans before it lands, picked from its start so it holds still
+                        readonly property real tilt: (Math.round(word.modelData.t * 100) % 2 === 0 ? 1 : -1) * 9
 
                         text: word.modelData.text
                         size: cap.px
@@ -255,7 +269,8 @@ WidgetBody {
                         style: word.hollow ? Text.Outline : Text.Normal
                         styleColor: word.now ? w.fgLit : w.fg
                         opacity: word.sung ? 1 : 0
-                        scale: word.sung ? (word.now ? 1.08 : 1) : 0.55
+                        scale: word.sung ? (word.now ? 1.1 : 1) : 0.55
+                        rotation: word.sung ? 0 : word.tilt
                         transform: Translate {
                             y: word.sung ? 0 : cap.px * 0.35
 
@@ -281,6 +296,15 @@ WidgetBody {
                                 duration: Theme.durMedium
                                 easing.type: Easing.OutBack
                                 easing.overshoot: 2.2
+                            }
+
+                        }
+
+                        Behavior on rotation {
+                            NumberAnimation {
+                                duration: Theme.durMedium
+                                easing.type: Easing.OutBack
+                                easing.overshoot: 1.6 + Theme.jelly
                             }
 
                         }
@@ -316,36 +340,130 @@ WidgetBody {
             // a gallery tile shrinks the whole card, so its sample line is drawn larger
             readonly property int px: Math.round(Math.max(Theme.dp(15), Math.min(Theme.dp(56), kar.height * (w.preview ? 0.45 : 0.3))))
 
-            onVisibleChanged: enter.restart()
+            // the line on screen, so the one just sung can be shown leaving
+            property string shownText: ""
+
+            Component.onCompleted: kar.shownText = w.line ? w.line.text : ""
+            onVisibleChanged: {
+                kar.shownText = w.line ? w.line.text : "";
+                promote.restart();
+            }
 
             Connections {
                 function onIndexChanged() {
-                    enter.restart();
+                    ghost.text = kar.shownText;
+                    kar.shownText = w.line ? w.line.text : "";
+                    leave.restart();
+                    promote.restart();
                 }
 
                 target: w
             }
 
+            // the line that was waiting under it comes up into its place, growing to full size
             ParallelAnimation {
-                id: enter
-
-                NumberAnimation {
-                    target: karCol
-                    property: "opacity"
-                    from: 0.25
-                    to: 1
-                    duration: Theme.durMedium
-                }
+                id: promote
 
                 NumberAnimation {
                     target: karShift
                     property: "y"
-                    from: kar.px * 0.6
+                    from: Math.round(kar.px * 1.3) + karCol.spacing
                     to: 0
-                    duration: Theme.durMedium
+                    duration: Theme.durLong
                     easing.type: Easing.OutCubic
                 }
 
+                NumberAnimation {
+                    target: karNow
+                    property: "scale"
+                    from: 0.62
+                    to: 1
+                    duration: Theme.durLong
+                    easing.type: Theme.jelly > 0 ? Easing.OutBack : Easing.OutCubic
+                    easing.overshoot: 1 + Theme.jelly
+                }
+
+                SequentialAnimation {
+                    PropertyAction {
+                        target: karNext
+                        property: "opacity"
+                        value: 0
+                    }
+
+                    PauseAnimation {
+                        duration: Theme.durShort
+                    }
+
+                    ParallelAnimation {
+                        NumberAnimation {
+                            target: karNext
+                            property: "opacity"
+                            to: 1
+                            duration: Theme.durMedium
+                        }
+
+                        NumberAnimation {
+                            target: karNextShift
+                            property: "y"
+                            from: Math.round(kar.px * 0.5)
+                            to: 0
+                            duration: Theme.durMedium
+                            easing.type: Easing.OutCubic
+                        }
+
+                    }
+
+                }
+
+            }
+
+            // and the line just sung goes up and away, shrinking
+            ParallelAnimation {
+                id: leave
+
+                NumberAnimation {
+                    target: ghostShift
+                    property: "y"
+                    from: 0
+                    to: -Math.round(kar.px * 1.6)
+                    duration: Theme.durLong
+                    easing.type: Easing.OutCubic
+                }
+
+                NumberAnimation {
+                    target: ghost
+                    property: "scale"
+                    from: 1
+                    to: 0.7
+                    duration: Theme.durLong
+                    easing.type: Easing.OutCubic
+                }
+
+                NumberAnimation {
+                    target: ghost
+                    property: "opacity"
+                    from: 0.9
+                    to: 0
+                    duration: Theme.durLong
+                }
+
+            }
+
+            LText {
+                id: ghost
+
+                width: parent.width
+                y: karCol.y + karNow.y + Math.round((karNow.height - ghost.height) / 2)
+                visible: ghost.opacity > 0.01 && ghost.text !== ""
+                opacity: 0
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                size: kar.px
+                weight: 720
+                color: w.fgLit
+                transform: Translate {
+                    id: ghostShift
+                }
             }
 
             Column {
@@ -358,17 +476,24 @@ WidgetBody {
                     id: karShift
                 }
 
-                // a line height even with no words, or the column drops it and the note with it
+                // a line height even with no words, or the column drops it and the dots with it
                 Item {
+                    id: karNow
+
                     width: parent.width
                     height: Math.max(karRow.height, Math.round(kar.px * 1.3))
 
-                    LText {
+                    LyricLine {
                         anchors.centerIn: parent
+                        width: parent.width
                         visible: !w.line || w.line.words.length === 0
-                        text: "♪"
-                        size: kar.px
-                        color: w.fgFaint
+                        line: w.pauseLine
+                        when: 0
+                        pos: w.pos
+                        px: kar.px
+                        centred: true
+                        ink: w.fgFaint
+                        inkLit: w.fgLit
                     }
 
                     Row {
@@ -400,8 +525,35 @@ WidgetBody {
                                     return a + (kw.sung - kw.whole) * (kwMetrics.advanceWidth(t.slice(0, kw.whole + 1)) - a);
                                 }
 
+                                // the word being sung stands up a little
+                                readonly property bool now: kw.sung > 0 && kw.sung < kw.modelData.text.length
+
                                 width: kwBase.implicitWidth
                                 height: kwBase.implicitHeight
+                                transformOrigin: Item.Bottom
+                                scale: kw.now ? 1.08 : 1
+                                transform: Translate {
+                                    y: kw.now ? -Math.round(kar.px * 0.08) : 0
+
+                                    Behavior on y {
+                                        NumberAnimation {
+                                            duration: Theme.durShort
+                                            easing.type: Theme.jelly > 0 ? Easing.OutBack : Easing.OutCubic
+                                            easing.overshoot: 1.2 + Theme.jelly
+                                        }
+
+                                    }
+
+                                }
+
+                                Behavior on scale {
+                                    NumberAnimation {
+                                        duration: Theme.durShort
+                                        easing.type: Theme.jelly > 0 ? Easing.OutBack : Easing.OutCubic
+                                        easing.overshoot: 1.2 + Theme.jelly
+                                    }
+
+                                }
 
                                 LText {
                                     id: kwBase
@@ -442,12 +594,17 @@ WidgetBody {
                 }
 
                 LText {
+                    id: karNext
+
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
                     visible: !w.preview
                     text: w.nextLine ? w.nextLine.text : ""
                     size: Math.round(kar.px * 0.62)
+                    transform: Translate {
+                        id: karNextShift
+                    }
                     weight: 600
                     color: w.fgFaint
                 }
@@ -479,25 +636,37 @@ WidgetBody {
             highlightMoveDuration: Theme.durLong
             highlightMoveVelocity: -1
 
-            delegate: LText {
+            delegate: Item {
                 id: cl
 
                 required property var modelData
                 required property int index
-                readonly property int away: Math.abs(cl.index - w.index)
+                readonly property int away: cl.index - w.index
 
                 // room for the lit line to grow without the list clipping its ends
                 x: Math.round(list.width * 0.03)
                 width: Math.round(list.width * 0.94)
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.Wrap
-                text: cl.modelData.text !== "" ? cl.modelData.text : "♪"
-                size: list.px
-                weight: 680
-                color: w.synced && cl.away === 0 ? w.fgLit : w.fg
+                height: clWords.implicitHeight
                 // distance shows in steps, none of them too faint to read
-                opacity: !w.synced ? 0.9 : Math.max(0.72, 1 - cl.away * 0.14)
-                scale: w.synced && cl.away === 0 ? 1.06 : 1
+                opacity: !w.synced ? 0.9 : Math.max(0.72, 1 - Math.abs(cl.away) * 0.14)
+                // the line being sung comes up to full size, the rest wait smaller
+                scale: !w.synced || cl.away === 0 ? 1 : 0.84
+
+                LyricLine {
+                    id: clWords
+
+                    width: parent.width
+                    line: cl.modelData
+                    synced: w.synced
+                    when: !w.synced ? 1 : (cl.away < 0 ? -1 : (cl.away === 0 ? 0 : 1))
+                    pos: w.synced && cl.away === 0 ? w.pos : 0
+                    px: list.px
+                    weight: 680
+                    centred: true
+                    ink: w.fg
+                    inkAhead: w.fg
+                    inkLit: w.fgLit
+                }
 
                 Behavior on opacity {
                     NumberAnimation {
@@ -508,15 +677,9 @@ WidgetBody {
 
                 Behavior on scale {
                     NumberAnimation {
-                        duration: Theme.durMedium
-                        easing.type: Easing.OutCubic
-                    }
-
-                }
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.durMedium
+                        duration: Theme.durLong
+                        easing.type: Theme.jelly > 0 ? Easing.OutBack : Easing.OutCubic
+                        easing.overshoot: 1 + Theme.jelly
                     }
 
                 }

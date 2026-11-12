@@ -2932,12 +2932,28 @@ BarPill {
                     preferredHighlightEnd: Math.round(height * 0.32) + Theme.dp(40)
                     highlightMoveDuration: Theme.durLong
                     highlightMoveVelocity: -1
+                    // ms into the lines rising in, one after another, when the page opens or a song's words come in
+                    property real entryT: 1e6
+
                     // opened mid-song, or the words just came in: straight to the line being sung
                     onCountChanged: Qt.callLater(lyricList.snapToLine)
                     function snapToLine() {
                         if (lyricList.currentIndex >= 0)
                             lyricList.positionViewAtIndex(lyricList.currentIndex, ListView.Center);
 
+                        if (lyricList.count > 0)
+                            lyricEntry.restart();
+
+                    }
+
+                    NumberAnimation {
+                        id: lyricEntry
+
+                        target: lyricList
+                        property: "entryT"
+                        from: 0
+                        to: Theme.durLong + 10 * 45
+                        duration: Theme.durLong + 10 * 45
                     }
 
                     Connections {
@@ -2959,27 +2975,43 @@ BarPill {
                         height: panelLyrics.synced ? Math.round(lyricList.height * 0.6) : Theme.dp(4)
                     }
 
-                    delegate: LText {
+                    delegate: Item {
                         id: lyricLine
 
                         required property var modelData
                         required property int index
-                        readonly property bool current: panelLyrics.synced && lyricLine.index === panelLyrics.index
+                        readonly property int away: lyricLine.index - panelLyrics.index
+                        readonly property bool current: panelLyrics.synced && lyricLine.away === 0
+                        // 0..1 into its own rise, a beat after the line above it
+                        readonly property real entry: {
+                            const at = Math.max(0, Math.min(10, lyricLine.index - Math.max(0, panelLyrics.index - 2)));
+                            const x = Math.max(0, Math.min(1, (lyricList.entryT - at * 45) / Math.max(1, Theme.durLong)));
+                            return 1 - Math.pow(1 - x, 3);
+                        }
 
                         width: lyricList.width
-                        role: "titleMedium"
-                        // the line being sung stands out by weight: some palettes put subtext as bright as text,
-                        // and dimming the rest is what stopped them reading on the translucent panel
-                        weight: !panelLyrics.synced ? 560 : (lyricLine.current ? 720 : 460)
-                        wrapMode: Text.Wrap
-                        text: lyricLine.modelData.text !== "" ? lyricLine.modelData.text : "\u266a"
-                        color: !panelLyrics.synced || lyricLine.current ? Theme.text : Theme.subtext
+                        height: lyricWords.implicitHeight
+                        // the line being sung comes up to full size; the rest wait smaller, and fainter the further off
+                        transformOrigin: Item.Left
+                        scale: (!panelLyrics.synced || lyricLine.current ? 1 : 0.86) * (0.94 + 0.06 * lyricLine.entry)
+                        opacity: lyricLine.entry * (!panelLyrics.synced ? 1 : Math.max(0.6, 1 - Math.max(0, Math.abs(lyricLine.away) - 1) * 0.13))
 
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.durMedium
+                        LyricLine {
+                            id: lyricWords
+
+                            width: parent.width
+                            line: lyricLine.modelData
+                            synced: panelLyrics.synced
+                            when: !panelLyrics.synced ? 1 : (lyricLine.away < 0 ? -1 : (lyricLine.away === 0 ? 0 : 1))
+                            pos: lyricLine.current ? panelLyrics.pos : 0
+                            px: Theme.typeSize("titleMedium")
+                            weight: 640
+                            ink: panelLyrics.synced ? Theme.subtext : Theme.text
+                            inkAhead: Theme.text
+                            inkLit: Theme.accent
+                            transform: Translate {
+                                y: Math.round((1 - lyricLine.entry) * Theme.dp(18))
                             }
-
                         }
 
                         MouseArea {
@@ -2987,6 +3019,26 @@ BarPill {
                             enabled: panelLyrics.synced && root.player !== null && root.player.canSeek
                             cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                             onClicked: panelLyrics.seekLine(lyricLine.index)
+                        }
+
+                        Behavior on scale {
+                            enabled: lyricList.entryT > Theme.durLong + 10 * 45 - 1
+
+                            NumberAnimation {
+                                duration: Theme.durLong
+                                easing.type: Theme.jelly > 0 ? Easing.OutBack : Easing.OutCubic
+                                easing.overshoot: 1 + Theme.jelly
+                            }
+
+                        }
+
+                        Behavior on opacity {
+                            enabled: lyricList.entryT > Theme.durLong + 10 * 45 - 1
+
+                            NumberAnimation {
+                                duration: Theme.durMedium
+                            }
+
                         }
 
                     }

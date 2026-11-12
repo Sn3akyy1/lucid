@@ -111,13 +111,17 @@ All notable changes to Lucid are recorded here, newest first.
 ### From Ciro Rivera
 
 - **Lyrics.** The media panel has a *Lyrics* button beside *Identify*: the song
-  scrolls by with the line being sung in bold, and a click on a line jumps
-  there. `qs ipc call media lyrics` opens it too, and a switch on the media
-  module's card in edit mode takes the button away. The new *Lyrics* widget
-  follows the song in three looks: *Word by word*, captions that pop in as they
-  are sung; *Karaoke*, the line filling letter by letter; and *Classic*, the
-  whole song scrolling by. The words come from lrclib.net, looked up only while
-  something shows them and kept on disk, so each song is fetched once. #109.
+  scrolls by, the line being sung springs up to full size and fills with colour
+  letter by letter, the word being sung stands up a little, and a pause is three
+  dots that fill through it and let go just before the next line. A click on a
+  line jumps there. `qs ipc call media lyrics` opens it too, and a switch on the
+  media module's card in edit mode takes the button away. The new *Lyrics*
+  widget follows the song in three looks: *Word by word*, captions that tip in
+  and land as they are sung; *Karaoke*, the line filling letter by letter, the
+  next one zooming up into its place as the last flies off; and *Classic*, the
+  whole song scrolling by with the sung line lit. The words come from
+  lrclib.net, looked up only while something shows them and kept on disk, so
+  each song is fetched once. #109.
 - **The control centre over IPC.** `qs ipc call controlcentre toggle` (or
   `open`, `close`) opens it on the main bar, for a keybind of your own. #108.
 - **A Wi-Fi password being typed survives network updates**, and the search
