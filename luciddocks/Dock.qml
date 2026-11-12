@@ -31,8 +31,13 @@ PanelWindow {
     // with both notches the dock turns into the osd's card itself. the osd hands
     // itself over through stageOsd before it shows or goes
     readonly property bool osdHosted: !!dockWindow.osd && dockWindow.osd.dockHosts && dockWindow.osd.cardVisible
-    // free to: notched, and nothing else holding it
-    readonly property bool canHostOsd: Prefs.dockOn && Prefs.dockNotch && !dockWindow.dockBusy && !dockWindow.heldByPointer && !Edit.active && !dockWindow.editDragging
+    // free to: notched, and nothing else holding it. a fullscreen window covers the
+    // dock's layer but not the osd's, so over one the osd shows as its own card
+    readonly property bool canHostOsd: Prefs.dockOn && Prefs.dockNotch && !dockWindow.dockBusy && !dockWindow.heldByPointer && !Edit.active && !dockWindow.editDragging && !dockWindow.underFullscreen
+    readonly property bool underFullscreen: {
+        const m = Hyprland.monitorFor(dockWindow.screen);
+        return !!(m && m.activeWorkspace && m.activeWorkspace.hasFullscreen);
+    }
     // still the card while it sinks back into hiding after it
     property bool osdLeaving: false
     readonly property bool osdShaped: dockWindow.osdHosted || dockWindow.osdLeaving
