@@ -712,6 +712,61 @@ Singleton {
             "def": true
         }]
     }, {
+        "id": "lyrics",
+        "name": "Lyrics",
+        "blurb": "The words of whatever is playing, in time with it. Looked up on lrclib.net.",
+        "variants": [{
+            "id": "words",
+            "name": "Word by word",
+            "blurb": "Each word pops in as it is sung, a few at a time, the way short videos caption a song.",
+            "w": 560,
+            "h": 140,
+            "resizable": true,
+            "minW": 200,
+            "minH": 70,
+            "maxW": 3840,
+            "maxH": 600
+        }, {
+            "id": "karaoke",
+            "name": "Karaoke",
+            "blurb": "The line fills with colour as it is sung, the next one waiting under it.",
+            "w": 620,
+            "h": 150,
+            "resizable": true,
+            "minW": 240,
+            "minH": 80,
+            "maxW": 3840,
+            "maxH": 600
+        }, {
+            "id": "classic",
+            "name": "Classic",
+            "blurb": "The whole song scrolling by, the line being sung lit up in the middle.",
+            "w": 380,
+            "h": 320,
+            "resizable": true,
+            "minW": 200,
+            "minH": 140,
+            "maxW": 1600,
+            "maxH": 2000
+        }],
+        "options": [{
+            "key": "card",
+            "label": "Card behind the words",
+            "type": "bool",
+            "def": true
+        }, {
+            "key": "outline",
+            "label": "Outline a word now and then",
+            "type": "bool",
+            "def": true,
+            "variants": ["words"]
+        }, {
+            "key": "idleFade",
+            "label": "Hide without lyrics",
+            "type": "bool",
+            "def": true
+        }]
+    }, {
         "id": "games",
         "name": "Games",
         "blurb": "Your installed Steam games, one click from playing.",

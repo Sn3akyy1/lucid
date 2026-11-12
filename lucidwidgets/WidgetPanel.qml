@@ -115,6 +115,7 @@ Item {
         "battery": "power charge laptop",
         "media": "music song player spotify mpris audio album",
         "visualiser": "visualizer audio music sound cava spectrum bars",
+        "lyrics": "lyrics words karaoke song letra captions sing",
         "games": "steam play gaming library",
         "github": "git contributions commits code streak heatmap",
         "weather": "forecast temperature rain sun",

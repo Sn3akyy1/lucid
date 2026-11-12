@@ -177,6 +177,13 @@ ShellRoot {
             b.mprisModule.startListening();
         }
 
+        function lyrics(): void {
+            const b = root.mainBar();
+            if (b)
+                b.mprisModule.openPanel("lyrics");
+
+        }
+
         function playPause(): void {
             const b = root.mainBar();
             if (b)

@@ -14,6 +14,7 @@ Item {
         "media": "music_note",
         "weather": "partly_cloudy_day",
         "visualiser": "equalizer",
+        "lyrics": "lyrics",
         "notes": "sticky_note_2",
         "todo": "checklist",
         "palette": "palette",
