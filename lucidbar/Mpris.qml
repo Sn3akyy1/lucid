@@ -2964,25 +2964,17 @@ BarPill {
                         required property var modelData
                         required property int index
                         readonly property bool current: panelLyrics.synced && lyricLine.index === panelLyrics.index
-                        readonly property bool sung: panelLyrics.synced && lyricLine.index < panelLyrics.index
 
                         width: lyricList.width
                         role: "titleMedium"
                         weight: 650
                         wrapMode: Text.Wrap
                         text: lyricLine.modelData.text !== "" ? lyricLine.modelData.text : "\u266a"
-                        color: !panelLyrics.synced || lyricLine.current ? Theme.text : (lyricLine.sung ? Theme.subtext : Theme.subtextDim)
-                        opacity: !panelLyrics.synced || lyricLine.current ? 1 : (lyricLine.sung ? 0.55 : 0.8)
+                        // the rest in the artist line's colour: dimmer than that stops reading on a translucent panel
+                        color: !panelLyrics.synced || lyricLine.current ? Theme.text : Theme.subtext
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Theme.durMedium
-                            }
-
-                        }
-
-                        Behavior on opacity {
-                            NumberAnimation {
                                 duration: Theme.durMedium
                             }
 

@@ -64,22 +64,22 @@ WidgetBody {
     readonly property var demoLines: Lyrics.finish([{
         "t": 0,
         "end": -1,
-        "text": "City lights are calling out my name",
+        "text": "City lights calling",
         "words": []
     }, {
         "t": 3.2,
         "end": -1,
-        "text": "Every street a song I used to know",
+        "text": "Every street a song",
         "words": []
     }, {
         "t": 6.4,
         "end": -1,
-        "text": "Hold the night a little longer",
+        "text": "Hold the night",
         "words": []
     }, {
         "t": 9.4,
         "end": -1,
-        "text": "Till the morning finds us here",
+        "text": "Till the morning",
         "words": []
     }], 12.4)
 
@@ -294,7 +294,8 @@ WidgetBody {
         Item {
             id: kar
 
-            readonly property int px: Math.round(Math.max(Theme.dp(15), Math.min(Theme.dp(56), kar.height * 0.3)))
+            // a gallery tile shrinks the whole card, so its sample line is drawn larger
+            readonly property int px: Math.round(Math.max(Theme.dp(15), Math.min(Theme.dp(56), kar.height * (w.preview ? 0.45 : 0.3))))
 
             onVisibleChanged: enter.restart()
 
@@ -425,6 +426,7 @@ WidgetBody {
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
+                    visible: !w.preview
                     text: w.nextLine ? w.nextLine.text : ""
                     size: Math.round(kar.px * 0.62)
                     weight: 600
@@ -444,7 +446,7 @@ WidgetBody {
         ListView {
             id: list
 
-            readonly property int px: Math.round(Math.max(Theme.dp(13), Math.min(Theme.dp(30), w.width * 0.05)))
+            readonly property int px: Math.round(w.preview ? Math.min(Theme.dp(48), w.width * 0.085) : Math.max(Theme.dp(13), Math.min(Theme.dp(30), w.width * 0.05)))
 
             clip: true
             model: w.lines
@@ -474,7 +476,8 @@ WidgetBody {
                 size: list.px
                 weight: 680
                 color: w.synced && cl.away === 0 ? w.fgLit : w.fg
-                opacity: !w.synced ? 0.9 : Math.max(0.18, 1 - cl.away * 0.28)
+                // distance shows in steps, none of them too faint to read
+                opacity: !w.synced ? 0.9 : Math.max(0.72, 1 - cl.away * 0.14)
                 scale: w.synced && cl.away === 0 ? 1.06 : 1
 
                 Behavior on opacity {

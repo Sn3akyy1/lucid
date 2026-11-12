@@ -718,7 +718,7 @@ Singleton {
         "variants": [{
             "id": "words",
             "name": "Word by word",
-            "blurb": "Each word pops in as it is sung, a few at a time, the way short videos caption a song.",
+            "blurb": "Words pop in as they're sung, like video captions.",
             "w": 560,
             "h": 140,
             "resizable": true,
@@ -729,7 +729,7 @@ Singleton {
         }, {
             "id": "karaoke",
             "name": "Karaoke",
-            "blurb": "The line fills with colour as it is sung, the next one waiting under it.",
+            "blurb": "The line fills letter by letter as it is sung.",
             "w": 620,
             "h": 150,
             "resizable": true,
@@ -740,7 +740,7 @@ Singleton {
         }, {
             "id": "classic",
             "name": "Classic",
-            "blurb": "The whole song scrolling by, the line being sung lit up in the middle.",
+            "blurb": "The whole song scrolling by, the sung line lit.",
             "w": 380,
             "h": 320,
             "resizable": true,
