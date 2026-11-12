@@ -1166,7 +1166,7 @@ Singleton {
         "widgetsEnabled": true,
         "widgetSnap": true,
         "widgetLockAll": false,
-        "widgetHideFullscreen": true,
+        "widgetHideFullscreen": false,
         "widgetOnTop": false,
         "btScanOnOpen": true,
         "btShowUnnamed": false,
@@ -1911,7 +1911,7 @@ Singleton {
             property bool widgetsEnabled: true
             property bool widgetSnap: true
             property bool widgetLockAll: false
-            property bool widgetHideFullscreen: true
+            property bool widgetHideFullscreen: false
             property bool widgetOnTop: false
             property bool btScanOnOpen: true
             property bool btShowUnnamed: false
