@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import Quickshell.Networking
 import qs
@@ -1160,7 +1161,8 @@ Item {
 
             Timer {
                 interval: 20000
-                running: scanButton.scanning
+                // a stopped scan drops every network not connected, and with it an open row and its half-typed password
+                running: scanButton.scanning && root.expandedKey === ""
                 onTriggered: {
                     if (root.wifiDevice)
                         root.wifiDevice.scannerEnabled = false;
@@ -1264,7 +1266,10 @@ Item {
                 }
 
                 Repeater {
-                    model: root.connectedNetworks
+                    // ScriptModel keeps rows alive across signal/scan updates; a plain array rebuilt them and ate a half-typed password
+                    model: ScriptModel {
+                        values: root.connectedNetworks
+                    }
 
                     NetRow {
                     }
@@ -1290,7 +1295,9 @@ Item {
                 }
 
                 Repeater {
-                    model: root.savedNetworks
+                    model: ScriptModel {
+                        values: root.savedNetworks
+                    }
 
                     NetRow {
                     }
@@ -1316,7 +1323,9 @@ Item {
                 }
 
                 Repeater {
-                    model: root.nearbyNetworks
+                    model: ScriptModel {
+                        values: root.nearbyNetworks
+                    }
 
                     NetRow {
                     }

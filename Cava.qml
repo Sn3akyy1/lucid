@@ -28,6 +28,8 @@ Singleton {
     property double lastMotion: 0
     // false once nothing has moved for a moment, so a card can dim itself
     property bool active: false
+    // with nothing playing cava would still send 60 frames of silence a second
+    readonly property bool sounding: Audio.playbackStreams.length > 0
 
     function want(uid, n) {
         if (uid === "")
@@ -62,7 +64,7 @@ Singleton {
     }
 
     function apply() {
-        if (root.bands <= 0) {
+        if (root.bands <= 0 || !root.sounding) {
             proc.running = false;
             root.liveBands = 0;
             root.levels = [];
@@ -80,6 +82,7 @@ Singleton {
     }
 
     onBandsChanged: restart.restart()
+    onSoundingChanged: restart.restart()
 
     // a resize walks the band count across many values, so settle before respawning
     Timer {

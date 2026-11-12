@@ -10,11 +10,13 @@ Scope {
     id: host
 
     readonly property bool shown: window.item !== null && window.item.visible
+    // the page it was on when it let go, so a rebuilt window opens there again
+    property string lastPage: ""
 
     function show(page: string): void {
         window.active = true;
         if (window.item)
-            window.item.show(page);
+            window.item.show(page !== "" ? page : host.lastPage);
     }
 
     function hide(): void {
@@ -33,6 +35,16 @@ Scope {
             }
         }
 
+    }
+
+    // and once it has been closed a minute, the pages it built go again
+    Timer {
+        interval: 60000
+        running: window.active && !host.shown
+        onTriggered: {
+            host.lastPage = window.item.page === "search" ? window.item.searchReturn : window.item.page;
+            window.active = false;
+        }
     }
 
     Connections {

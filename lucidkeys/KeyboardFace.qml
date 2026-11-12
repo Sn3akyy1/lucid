@@ -306,10 +306,13 @@ Item {
             anchors.topMargin: face.gap
             anchors.horizontalCenter: parent.horizontalCenter
             width: face.rowWidth
+            // held to what the keys take, so the panel keeps its size while they are gone
+            height: face.rows.length * face.unit + (face.rows.length - 1) * face.gap
             spacing: face.gap
 
+            // the keys are only built while the keyboard is up
             Repeater {
-                model: face.rows
+                model: !face.host || face.host.rendered ? face.rows : []
 
                 Row {
                     id: keyRow
