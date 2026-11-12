@@ -253,6 +253,7 @@ BarPill {
     readonly property string repeatGlyph: "repeat"
     readonly property string repeatOneGlyph: "repeat_one"
     readonly property string identifyGlyph: "graphic_eq"
+    readonly property string lyricsGlyph: "lyrics"
     readonly property string backGlyph: "arrow_back"
     readonly property string openGlyph: "open_in_new"
     readonly property string copyGlyph: "content_copy"
@@ -605,7 +606,7 @@ BarPill {
 
     compactWidth: compactRow.implicitWidth + Theme.dp(20)
     panelWidth: Math.min(root.miniPanel ? Theme.dp(320) : Theme.dp(400), root.screenW - Theme.dp(34))
-    panelHeight: root.pad * 2 + (root.page === "player" ? playerColumn.implicitHeight : shazamColumn.implicitHeight)
+    panelHeight: root.pad * 2 + (root.page === "player" ? playerColumn.implicitHeight : (root.page === "lyrics" ? lyricsColumn.implicitHeight : shazamColumn.implicitHeight))
     expandedRadius: Theme.radiusXl
     compactCollapseScale: 0.94
     compactInteractive: false
@@ -1478,7 +1479,7 @@ BarPill {
 
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width - Theme.dp(62)
+                    width: parent.width - Theme.dp(92)
                     spacing: Theme.dp(1)
                     opacity: heroVol.open ? 0 : 1
 
@@ -1511,6 +1512,27 @@ BarPill {
                 }
 
                 IconButton {
+                    anchors.right: heroIdentify.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    size: "xs"
+                    icon: root.lyricsGlyph
+                    tintOverride: Theme.subtext
+                    opacity: heroVol.open ? 0 : 1
+                    visible: opacity > 0.01
+                    onClicked: root.openPanel("lyrics")
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Theme.barDurShort
+                        }
+
+                    }
+
+                }
+
+                IconButton {
+                    id: heroIdentify
+
                     anchors.right: heroVol.left
                     anchors.verticalCenter: parent.verticalCenter
                     size: "xs"
@@ -1772,6 +1794,8 @@ BarPill {
                 }
 
                 IconButton {
+                    id: sideIdentify
+
                     anchors.right: parent.right
                     anchors.rightMargin: -Theme.dp(6)
                     anchors.top: parent.top
@@ -1780,6 +1804,16 @@ BarPill {
                     icon: root.identifyGlyph
                     tintOverride: Theme.subtext
                     onClicked: root.openPanel("shazam")
+                }
+
+                IconButton {
+                    anchors.right: sideIdentify.right
+                    anchors.top: sideIdentify.bottom
+                    size: "xs"
+                    visible: root.player !== null
+                    icon: root.lyricsGlyph
+                    tintOverride: Theme.subtext
+                    onClicked: root.openPanel("lyrics")
                 }
 
                 // the player's own volume; its icon mutes and unmutes
@@ -2789,6 +2823,214 @@ BarPill {
                             onClicked: root.openUrl(histRow.modelData.url)
                         }
 
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+,
+    Item {
+        id: lyricsPage
+
+        y: 0
+        width: parent.width
+        height: parent.height
+        x: root.page === "lyrics" ? 0 : root.panelWidth
+        visible: lyricsPage.x < root.panelWidth - 0.5
+
+        Behavior on x {
+            enabled: root.pageSwitching
+
+            NumberAnimation {
+                duration: root.morphDuration
+                easing.type: Easing.Bezier
+                easing.bezierCurve: root.morphEasing
+            }
+
+        }
+
+        LyricsSource {
+            id: panelLyrics
+
+            player: root.player
+            active: root.expanded && root.page === "lyrics"
+        }
+
+        Column {
+            id: lyricsColumn
+
+            x: root.pad
+            y: root.pad
+            width: root.contentWidth
+            spacing: Theme.dp(8)
+
+            Item {
+                width: root.contentWidth
+                height: Theme.dp(36)
+
+                IconButton {
+                    id: lyricsBack
+
+                    anchors.left: parent.left
+                    anchors.leftMargin: -Theme.dp(8)
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: root.backGlyph
+                    tintOverride: Theme.text
+                    onClicked: root.setPage("player")
+                }
+
+                Column {
+                    anchors.left: lyricsBack.right
+                    anchors.leftMargin: Theme.dp(4)
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Marquee {
+                        width: parent.width
+                        content: root.title
+                        scrolling: root.isPlaying
+                        bold: true
+                        weight: 600
+                        textColor: Theme.text
+                        pixelSize: Theme.typeSize("titleSmall")
+                    }
+
+                    Marquee {
+                        width: parent.width
+                        visible: content !== ""
+                        content: root.artist
+                        scrolling: root.isPlaying
+                        textColor: Theme.subtext
+                        pixelSize: Theme.typeSize("bodySmall")
+                    }
+
+                }
+
+            }
+
+            Item {
+                width: root.contentWidth
+                height: Theme.dp(320)
+
+                ListView {
+                    id: lyricList
+
+                    anchors.fill: parent
+                    clip: true
+                    visible: panelLyrics.status === "found"
+                    model: panelLyrics.lines
+                    spacing: Theme.dp(10)
+                    boundsBehavior: Flickable.StopAtBounds
+                    currentIndex: panelLyrics.index
+                    // the line being sung rides a third of the way down; a flick still reads ahead, until the next line
+                    highlightRangeMode: panelLyrics.synced ? ListView.ApplyRange : ListView.NoHighlightRange
+                    preferredHighlightBegin: Math.round(height * 0.32)
+                    preferredHighlightEnd: Math.round(height * 0.32) + Theme.dp(40)
+                    highlightMoveDuration: Theme.durLong
+                    highlightMoveVelocity: -1
+                    // opened mid-song, or the words just came in: straight to the line being sung
+                    onCountChanged: Qt.callLater(lyricList.snapToLine)
+                    function snapToLine() {
+                        if (lyricList.currentIndex >= 0)
+                            lyricList.positionViewAtIndex(lyricList.currentIndex, ListView.Center);
+
+                    }
+
+                    Connections {
+                        function onActiveChanged() {
+                            if (panelLyrics.active)
+                                Qt.callLater(lyricList.snapToLine);
+
+                        }
+
+                        target: panelLyrics
+                    }
+
+                    header: Item {
+                        width: 1
+                        height: Theme.dp(4)
+                    }
+                    footer: Item {
+                        width: 1
+                        height: panelLyrics.synced ? Math.round(lyricList.height * 0.6) : Theme.dp(4)
+                    }
+
+                    delegate: LText {
+                        id: lyricLine
+
+                        required property var modelData
+                        required property int index
+                        readonly property bool current: panelLyrics.synced && lyricLine.index === panelLyrics.index
+
+                        width: lyricList.width
+                        role: "titleMedium"
+                        // the line being sung stands out by weight: some palettes put subtext as bright as text,
+                        // and dimming the rest is what stopped them reading on the translucent panel
+                        weight: !panelLyrics.synced ? 560 : (lyricLine.current ? 720 : 460)
+                        wrapMode: Text.Wrap
+                        text: lyricLine.modelData.text !== "" ? lyricLine.modelData.text : "\u266a"
+                        color: !panelLyrics.synced || lyricLine.current ? Theme.text : Theme.subtext
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.durMedium
+                            }
+
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: panelLyrics.synced && root.player !== null && root.player.canSeek
+                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onClicked: panelLyrics.seekLine(lyricLine.index)
+                        }
+
+                    }
+
+                }
+
+                Column {
+                    anchors.centerIn: parent
+                    width: parent.width - Theme.dp(32)
+                    spacing: Theme.dp(10)
+                    visible: panelLyrics.status !== "found"
+
+                    LoadingIndicator {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible: panelLyrics.status === "loading"
+                    }
+
+                    Icon {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible: panelLyrics.status !== "loading"
+                        name: root.lyricsGlyph
+                        size: Theme.dp(32)
+                        color: Theme.subtextDim
+                    }
+
+                    LText {
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.Wrap
+                        role: "bodyMedium"
+                        color: Theme.subtext
+                        text: {
+                            switch (panelLyrics.status) {
+                            case "loading":
+                                return "Looking for the words";
+                            case "instrumental":
+                                return "Instrumental";
+                            case "none":
+                                return "No lyrics for this track";
+                            case "offline":
+                                return "Couldn't reach lrclib.net";
+                            }
+                            return "Nothing playing";
+                        }
                     }
 
                 }

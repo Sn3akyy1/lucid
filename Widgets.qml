@@ -712,6 +712,74 @@ Singleton {
             "def": true
         }]
     }, {
+        "id": "lyrics",
+        "name": "Lyrics",
+        "blurb": "The words of whatever is playing, in time with it. Looked up on lrclib.net.",
+        "variants": [{
+            "id": "words",
+            "name": "Word by word",
+            "blurb": "Words pop in as they're sung, like video captions.",
+            "w": 560,
+            "h": 140,
+            "resizable": true,
+            "minW": 200,
+            "minH": 70,
+            "maxW": 3840,
+            "maxH": 600
+        }, {
+            "id": "karaoke",
+            "name": "Karaoke",
+            "blurb": "The line fills letter by letter as it is sung.",
+            "w": 620,
+            "h": 150,
+            "resizable": true,
+            "minW": 240,
+            "minH": 80,
+            "maxW": 3840,
+            "maxH": 600
+        }, {
+            "id": "classic",
+            "name": "Classic",
+            "blurb": "The whole song scrolling by, the sung line lit.",
+            "w": 380,
+            "h": 320,
+            "resizable": true,
+            "minW": 200,
+            "minH": 140,
+            "maxW": 1600,
+            "maxH": 2000
+        }],
+        "options": [{
+            "key": "card",
+            "label": "Card behind the words",
+            "type": "bool",
+            "def": true
+        }, {
+            "key": "outline",
+            "label": "Outline a word now and then",
+            "type": "bool",
+            "def": true,
+            "variants": ["words"]
+        }, {
+            "key": "lines",
+            "label": "Lines",
+            "type": "choice",
+            "def": "two",
+            "choices": [{
+                "key": "one",
+                "label": "One"
+            }, {
+                "key": "two",
+                "label": "Two"
+            }],
+            "variants": ["words"]
+        }, {
+            "key": "idleFade",
+            "label": "Hide without lyrics",
+            "type": "bool",
+            "def": true
+        }]
+    }, {
         "id": "games",
         "name": "Games",
         "blurb": "Your installed Steam games, one click from playing.",
