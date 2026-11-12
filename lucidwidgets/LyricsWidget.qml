@@ -243,7 +243,8 @@ WidgetBody {
                         required property var modelData
                         readonly property bool sung: w.pos >= word.modelData.t
                         readonly property bool now: word.sung && w.pos < word.modelData.end
-                        readonly property bool hollow: word.modelData === cap.hollow
+                        // by start and text: a Repeater hands its delegate a copy of the word, never the same object
+                        readonly property bool hollow: cap.hollow !== null && word.modelData.t === cap.hollow.t && word.modelData.text === cap.hollow.text
 
                         text: word.modelData.text
                         size: cap.px
