@@ -2967,10 +2967,11 @@ BarPill {
 
                         width: lyricList.width
                         role: "titleMedium"
-                        weight: 650
+                        // the line being sung stands out by weight: some palettes put subtext as bright as text,
+                        // and dimming the rest is what stopped them reading on the translucent panel
+                        weight: !panelLyrics.synced ? 560 : (lyricLine.current ? 720 : 460)
                         wrapMode: Text.Wrap
                         text: lyricLine.modelData.text !== "" ? lyricLine.modelData.text : "\u266a"
-                        // the rest in the artist line's colour: dimmer than that stops reading on a translucent panel
                         color: !panelLyrics.synced || lyricLine.current ? Theme.text : Theme.subtext
 
                         Behavior on color {
