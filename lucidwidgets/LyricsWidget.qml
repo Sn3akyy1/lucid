@@ -83,6 +83,9 @@ WidgetBody {
         "words": []
     }], 12.4)
 
+    // captions in two rows unless the card is set to one
+    readonly property bool twoRows: w.opt("lines") !== "one"
+
     // a line cut into the few words a caption shows at once, so a long one never shrinks to fit
     function pagesOf(l) {
         var out = [];
@@ -92,7 +95,7 @@ WidgetBody {
         var cur = [], chars = 0;
         for (var i = 0; i < l.words.length; i++) {
             var n = l.words[i].text.length;
-            if (cur.length && (chars + n > 20 || cur.length >= 5)) {
+            if (cur.length && (chars + n > (w.twoRows ? 34 : 20) || cur.length >= (w.twoRows ? 9 : 5))) {
                 out.push(cur);
                 cur = [];
                 chars = 0;
@@ -184,24 +187,26 @@ WidgetBody {
                 return 0;
             }
             readonly property var shown: cap.pages.length ? cap.pages[cap.page] : []
+            // a new array per page: the words of the next one start from nothing
+            readonly property var rows: w.twoRows ? Lyrics.splitRows(cap.shown) : [cap.shown.slice()]
             // now and then one word of a page is drawn as its outline only, the
             // way edited captions vary them. picked from the line, so it holds still
-            readonly property int hollow: {
+            readonly property var hollow: {
                 if (w.opt("outline") === false || cap.shown.length < 2 || !w.line)
-                    return -1;
+                    return null;
 
                 var key = w.line.text + "\u0001" + cap.page, h = 5381;
                 for (var i = 0; i < key.length; i++) h = ((h * 33) ^ key.charCodeAt(i)) >>> 0
                 // about two pages in three, and never a word too short to read hollow
                 if (h % 3 === 0)
-                    return -1;
+                    return null;
 
-                var fit = [];
-                for (var k = 0; k < cap.shown.length; k++) if (cap.shown[k].text.length >= 3)
-                    fit.push(k);
-                return fit.length ? fit[(h >>> 2) % fit.length] : -1;
+                var fit = cap.shown.filter((wd) => {
+                    return wd.text.length >= 3;
+                });
+                return fit.length ? fit[(h >>> 2) % fit.length] : null;
             }
-            readonly property int px: Math.round(Math.max(Theme.dp(16), Math.min(Theme.dp(72), cap.height * 0.42)))
+            readonly property int px: Math.round(Math.max(Theme.dp(16), Math.min(Theme.dp(72), cap.height * (w.twoRows ? 0.3 : 0.42))))
 
             LText {
                 anchors.centerIn: parent
@@ -211,25 +216,34 @@ WidgetBody {
                 color: w.fgFaint
             }
 
-            Row {
-                id: capRow
+            Column {
+                id: capRows
 
                 anchors.centerIn: parent
-                spacing: Math.round(cap.px * 0.28)
-                scale: capRow.implicitWidth > cap.width ? cap.width / capRow.implicitWidth : 1
+                spacing: -Math.round(cap.px * 0.12)
+                scale: Math.min(1, cap.width / Math.max(1, capRows.implicitWidth), cap.height / Math.max(1, capRows.implicitHeight))
 
                 Repeater {
-                    // a new array per page: the words of the next one start from nothing
-                    model: cap.shown.slice()
+                    model: cap.rows
+
+                    delegate: Row {
+                        id: capRow
+
+                        required property var modelData
+
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: Math.round(cap.px * 0.28)
+
+                        Repeater {
+                            model: capRow.modelData
 
                     delegate: LText {
                         id: word
 
                         required property var modelData
-                        required property int index
                         readonly property bool sung: w.pos >= word.modelData.t
                         readonly property bool now: word.sung && w.pos < word.modelData.end
-                        readonly property bool hollow: word.index === cap.hollow
+                        readonly property bool hollow: word.modelData === cap.hollow
 
                         text: word.modelData.text
                         size: cap.px
@@ -274,6 +288,10 @@ WidgetBody {
                             ColorAnimation {
                                 duration: Theme.durShort
                             }
+
+                        }
+
+                    }
 
                         }
 

@@ -761,6 +761,19 @@ Singleton {
             "def": true,
             "variants": ["words"]
         }, {
+            "key": "lines",
+            "label": "Lines",
+            "type": "choice",
+            "def": "two",
+            "choices": [{
+                "key": "one",
+                "label": "One"
+            }, {
+                "key": "two",
+                "label": "Two"
+            }],
+            "variants": ["words"]
+        }, {
             "key": "idleFade",
             "label": "Hide without lyrics",
             "type": "bool",

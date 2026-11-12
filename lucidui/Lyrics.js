@@ -226,3 +226,26 @@ function lettersSung(wd, sec) {
     }
     return n;
 }
+
+// a caption's words in two rows as even as their letters allow, the first
+// row the longer one on a tie, the way subtitles break a line
+function splitRows(words) {
+    if (!words || words.length < 2)
+        return [words || []];
+    var len = function(a, b) {
+        var n = 0;
+        for (var i = a; i < b; i++)
+            n += words[i].text.length + (i > a ? 1 : 0);
+        return n;
+    };
+    var best = 1, diff = 1e9;
+    for (var k = 1; k < words.length; k++) {
+        var d = len(0, k) - len(k, words.length);
+        var score = Math.abs(d) + (d < 0 ? 0.5 : 0);
+        if (score < diff) {
+            diff = score;
+            best = k;
+        }
+    }
+    return [words.slice(0, best), words.slice(best)];
+}
