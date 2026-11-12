@@ -130,6 +130,9 @@ All notable changes to Lucid are recorded here, newest first.
   plays. Settings is taken down a minute after it closes and opens again on
   the page it was left on, and What's new and the on-screen keyboard lay
   themselves out only while they are up. #98, #101.
+- **Widgets no longer hide for fullscreen windows by default**, on a new
+  install; *Hide for fullscreen windows* is still in *Settings → Widgets*, and
+  a choice already saved stays as it is. #111.
 
 ## v1.20.1 — 2026-10-15
 

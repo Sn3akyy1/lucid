@@ -520,8 +520,9 @@ Dragging snaps to the screen edges and centre lines and lines up with the other
 widgets, with guides while you drag. They can go anywhere on the screen,
 including the strips the bar and the dock reserve — a full-width visualiser
 tucked under the dock is the point. Widgets sit **below** your windows by
-default so they behave like a desktop, and step aside for fullscreen windows;
-both are switches on the Widgets page if you would rather they float on top.
+default so they behave like a desktop, and stay where they are when something
+goes fullscreen; switches on the Widgets page float them on top instead, or
+have them step aside for fullscreen windows.
 
 ### Desktop icons
 
