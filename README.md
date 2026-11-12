@@ -231,6 +231,7 @@ hl.bind("SUPER + S",       hl.dsp.exec_cmd("qs ipc call -- snap toggle"))
 hl.bind("SUPER + SHIFT + T", hl.dsp.exec_cmd("qs ipc call -- snap text"))
 hl.bind("SUPER + SHIFT + C", hl.dsp.exec_cmd("qs ipc call -- snap color"))
 hl.bind("SUPER + comma",   hl.dsp.exec_cmd("qs ipc call -- settings open"))
+hl.bind("SUPER + A",       hl.dsp.exec_cmd("qs ipc call -- controlcentre toggle"))
 ```
 
 Special workspaces are Hyprland Lua rather than IPC. On a Lua config of your

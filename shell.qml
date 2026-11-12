@@ -227,6 +227,32 @@ ShellRoot {
 
     }
 
+    IpcHandler {
+        target: "controlcentre"
+
+        function toggle(): void {
+            const b = root.mainBar();
+            if (b)
+                b.systemModule.expanded = !b.systemModule.expanded;
+
+        }
+
+        function open(): void {
+            const b = root.mainBar();
+            if (b)
+                b.systemModule.expanded = true;
+
+        }
+
+        function close(): void {
+            const b = root.mainBar();
+            if (b)
+                b.systemModule.expanded = false;
+
+        }
+
+    }
+
     // one bar, or one on every display when Settings > Displays asks for it
     Variants {
         id: bars
@@ -245,6 +271,7 @@ ShellRoot {
             readonly property var clockModule: clockMod
             readonly property var mprisModule: mprisMod
             readonly property var workspacesModule: workspacesMod
+            readonly property var systemModule: systemMod
 
             PaletteFade {
                 active: bar.visible
