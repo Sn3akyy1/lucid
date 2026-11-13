@@ -26,7 +26,7 @@ Rectangle {
     property real py: hero.follow ? Math.max(-1, Math.min(1, (hov.point.position.y - hero.height / 2) / (hero.height / 2))) : 0
     property bool copied: false
     // main between releases; false in a release commit
-    readonly property bool beta: true
+    readonly property bool beta: false
     // radius, stroke, alpha, turn direction, ms per turn, companion radius, colour
     readonly property var orbits: [{
         "r": 74,
