@@ -257,6 +257,9 @@ def dirs_with(sub):
 
 
 NOSHADOW = "-noshadow"
+# lucid's own pointer, which cursortheme.py draws; the environment page turns it
+# on and off with its own switch, so it is never offered as an installed theme
+LUCID_CURSORS = "lucid-cursors"
 XCURSOR_MARK = "# written by lucid settings > environment\n"
 
 
@@ -283,8 +286,9 @@ def loops_back(theme, path=("default",)):
 
 
 def cursor_themes():
-    """The shadowless rebuilds are variants of a theme, not themes to offer."""
-    return sorted((n for n in dirs_with("cursors") if not n.endswith(NOSHADOW)),
+    """The shadowless rebuilds are variants of a theme, not themes to offer, and
+    lucid's own pointer has a switch of its own."""
+    return sorted((n for n in dirs_with("cursors") if not n.endswith(NOSHADOW) and n != LUCID_CURSORS),
                   key=str.lower)
 
 
@@ -490,6 +494,10 @@ def probe():
     shadow = not cursor.endswith(NOSHADOW)
     if not shadow:
         cursor = cursor[:-len(NOSHADOW)]
+    # lucid's own pointer is not an installed theme to remember
+    lucid_cursor = cursor == LUCID_CURSORS
+    if lucid_cursor:
+        cursor = ""
 
     return {
         "cursorThemes": cursor_themes(),
@@ -498,6 +506,7 @@ def probe():
         "qtStyles": qt_styles(),
         "current": {
             "cursorTheme": cursor,
+            "cursorLucid": lucid_cursor,
             "cursorShadow": shadow,
             "cursorSize": csize,
             "iconTheme": (gsettings_get("icon-theme")
@@ -642,9 +651,11 @@ def apply(cfg):
             if ok:
                 touched.append(name)
 
-    # new clients only, and only after a reload
+    # new clients only, and only after a reload. hyprcursor's pair as well: left
+    # unset, Hyprland starts on the first hyprcursor theme it finds instead
     if scope_hypr:
-        env = {"XCURSOR_THEME": cursor, "XCURSOR_SIZE": str(csize) if csize else None}
+        env = {"XCURSOR_THEME": cursor, "XCURSOR_SIZE": str(csize) if csize else None,
+               "HYPRCURSOR_THEME": cursor, "HYPRCURSOR_SIZE": str(csize) if csize else None}
         if icons:
             env["QS_ICON_THEME"] = icons
         pt = cfg.get("qtPlatformTheme")
@@ -653,8 +664,15 @@ def apply(cfg):
         if lua_env_set(env):
             touched.append("hyprland")
 
+    # through cursortheme.py's lock: the cursor plugin loads a theme on a thread
+    # of its own after a change, and a setcursor landing meanwhile crashes Hyprland
     if cursor and csize and have("hyprctl"):
-        run(["hyprctl", "setcursor", cursor, str(csize)])
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "cursortheme", os.path.join(os.path.dirname(os.path.abspath(__file__)), "cursortheme.py"))
+        ct = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(ct)
+        ct.setcursor_safely(cursor, int(csize))
         touched.append("hyprctl")
 
     # gtk clients only repaint when the name changes, so nudge it off and back

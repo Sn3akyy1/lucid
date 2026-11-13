@@ -75,6 +75,9 @@ Singleton {
     // Settings > General > Corner rounding: 0 is square, 1 as shipped, 1.5 rounder
     readonly property real cornerScale: Math.max(0, Math.min(1.5, pf.cornerScale === undefined ? 1 : pf.cornerScale))
     readonly property real fontScale: pf.fontScale * root.typeBaseline * root.uiScale
+    // Settings > Bar > Content size: what the modules draw on the bar, apart from
+    // the bar's own height. their open panels keep dp() and fs()
+    readonly property real barContent: Math.max(0.8, Math.min(1.4, pf.barContentScale || 1))
     readonly property real blurAmount: blurAdapter.value || 0
 
     function setBlurAmount(v) {
@@ -343,6 +346,12 @@ Singleton {
         return Math.round(r[0] * root.fontScale);
     }
 
+    // typeSize() for a module's face on the bar
+    function barType(role) {
+        var r = root.typeRoles[role] || root.typeRoles.bodyMedium;
+        return Math.round(r[0] * root.fontScale * root.barContent);
+    }
+
     function typeWeight(role) {
         var r = root.typeRoles[role] || root.typeRoles.bodyMedium;
         return r[1];
@@ -390,6 +399,15 @@ Singleton {
 
     function dp(px) {
         return Math.round(px * root.uiScale);
+    }
+
+    // dp() and fs() for a module's face on the bar, through its content size
+    function barDp(px) {
+        return Math.round(px * root.uiScale * root.barContent);
+    }
+
+    function barFs(px) {
+        return Math.round(px * root.fontScale * root.barContent);
     }
 
     // a radius through the corner rounding dial as well as the interface size.
@@ -736,6 +754,7 @@ Singleton {
             property real fontScale: 1
             property real uiScale: 1
             property real cornerScale: 1
+            property real barContentScale: 1
         }
 
     }

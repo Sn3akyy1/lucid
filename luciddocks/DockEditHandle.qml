@@ -106,6 +106,11 @@ Item {
         cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.SizeVerCursor
     }
 
+    HeldPointer {
+        held: drag.active
+        cursor: Qt.ClosedHandCursor
+    }
+
     DragHandler {
         id: drag
 

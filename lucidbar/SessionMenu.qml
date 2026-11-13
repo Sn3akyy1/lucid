@@ -62,7 +62,7 @@ BarPill {
     // the action waiting for its second click
     property string armed: ""
     property string uptime: ""
-    readonly property int horizontalPadding: Theme.dp(11)
+    readonly property int horizontalPadding: Theme.barDp(11)
 
     function run(id) {
         const a = root.actions.find((x) => {
@@ -88,7 +88,7 @@ BarPill {
     readonly property bool gridPanel: Prefs.powerModulePanelStyle === "grid"
 
     shown: Prefs.showPower
-    compactWidth: (root.accentFace ? Theme.dp(24) : Theme.dp(18)) + root.horizontalPadding * 2
+    compactWidth: (root.accentFace ? Theme.barDp(24) : Theme.barDp(18)) + root.horizontalPadding * 2
     panelWidth: root.gridPanel ? Theme.dp(300) : Theme.dp(260)
     panelHeight: panelColumn.implicitHeight + Theme.dp(32)
     expandedRadius: Theme.shapeXl
@@ -131,15 +131,15 @@ BarPill {
     compactContent: [
         Rectangle {
             anchors.centerIn: parent
-            width: Theme.dp(24)
-            height: Theme.dp(24)
+            width: Theme.barDp(24)
+            height: Theme.barDp(24)
             radius: height / 2
             color: Theme.accent
             visible: root.accentFace
         },
         NotifIcon {
             anchors.centerIn: parent
-            size: root.accentFace ? Theme.dp(15) : Theme.dp(17)
+            size: root.accentFace ? Theme.barDp(15) : Theme.barDp(17)
             path: root.icons.power
             color: root.accentFace ? Theme.fgAccent : Theme.text
         }

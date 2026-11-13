@@ -1792,6 +1792,10 @@ Singleton {
         if (name === "")
             return ;
 
+        // the panel is part of edit mode, so asking for it from anywhere starts that
+        if (!Edit.active)
+            Edit.enter(name);
+
         // the panel is where widgets are put out, so they come back with it
         Prefs.widgetsEnabled = true;
         root.menuUid = "";
@@ -2771,6 +2775,17 @@ Singleton {
         }
 
         target: Prefs
+    }
+
+    // and it goes when edit mode ends
+    Connections {
+        function onActiveChanged() {
+            if (!Edit.active)
+                root.closePanel();
+
+        }
+
+        target: Edit
     }
 
     ListModel {

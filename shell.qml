@@ -41,8 +41,10 @@ ShellRoot {
     // ever opened, the clipboard, which owns the wl-paste watchers and so
     // has to be up long before the launcher is first opened, and night
     // light, whose schedule runs whether or not the System pill is shown,
-    // the sounds, so their ipc target answers before anything has played, and
-    // storage, which warns when space runs low and empties old trash
+    // the sounds, so their ipc target answers before anything has played,
+    // storage, which warns when space runs low and empties old trash, the
+    // alarms, which ring whether or not anything shows them, and the clock
+    // app's line, which has to be listening before the app is opened
     Component.onCompleted: {
         void KdeConnect.installed;
         void Bt.present;
@@ -51,6 +53,7 @@ ShellRoot {
         void Net.connectivity;
         void Idle.probed;
         void Env.probed;
+        void Pointer.ready;
         void Specials.moduleProbed;
         void Glass.probed;
         void Monitors.probed;
@@ -63,6 +66,8 @@ ShellRoot {
         void Polkit.registered;
         void Chrono.now;
         void Agenda.tick;
+        void Alarms.tick;
+        void ClockLink.peerCount;
         void Zones.offsets;
         void Capture.state;
         void NightLight.active;
@@ -123,6 +128,11 @@ ShellRoot {
             if (b)
                 b.clockModule.openTab(page === "" ? "today" : page);
 
+        }
+
+        // the clock app, on a page or where it was left
+        function app(page: string): void {
+            Quickshell.execDetached(page === "" ? [Quickshell.shellPath("lucidclock/clock")] : [Quickshell.shellPath("lucidclock/clock"), page]);
         }
 
         function toggle(): void {
@@ -282,6 +292,9 @@ ShellRoot {
 
             PaletteFade {
                 active: bar.visible
+            }
+
+            PointerPoke {
             }
 
             // the display Settings > Displays picks, or this one's own. gated,
@@ -483,11 +496,20 @@ ShellRoot {
                 if (!Prefs.barNotch || !mod || mod.width <= 0.5 || !mod.visible || (bar.dragLift > 0.5 && bar.pillFor[bar.dragKey] === mod))
                     return 0;
 
+                // the workspace overview off its slot, until it has fully landed: its seat blends there instead
+                if (mod.detach > 0)
+                    return 0;
+
+                // a side that meets the screen's is filled out to it instead
+                const meets = bar.hangPlan.meets[mod.modId];
+                if (meets && meets[toTheLeft ? "left" : "right"])
+                    return 0;
+
                 const edge = toTheLeft ? mod.x : mod.x + mod.width;
                 const toEdge = toTheLeft ? edge : bar.width - edge;
                 let toNeighbour = 100000;
                 for (const o of bar.modules) {
-                    if (!o || o === mod || o.width <= 0.5 || !o.visible)
+                    if (!o || o === mod || o.width <= 0.5 || !o.visible || o.detach > 0)
                         continue;
 
                     const d = toTheLeft ? edge - (o.x + o.width) : o.x - edge;
@@ -496,6 +518,20 @@ ShellRoot {
 
                 }
                 return Math.max(0, Math.min(Theme.dp(Prefs.barNotchFlare), Math.floor(toNeighbour / 2), Math.floor(toEdge)));
+            }
+
+            // how far down the module's side that blend reaches: as far as it sweeps
+            // out, but no further than the side runs straight. past where the far
+            // corner starts to round, the curve's tip would stand off it in a step,
+            // so a short module takes a wide blend as a quarter ellipse instead
+            function notchDepthOf(mod, toTheLeft) {
+                const reach = bar.notchFlareOf(mod, toTheLeft);
+                if (reach <= 0)
+                    return 0;
+
+                const far = toTheLeft ? mod.barBottomLeftRadius : mod.barBottomRightRadius;
+                const side = (mod === workspacesMod ? mod.compactHeight : mod.height) - (far !== undefined ? far : Prefs.barPillRadius);
+                return Math.max(0, Math.min(reach, Math.floor(side)));
             }
 
             // full bar: how far the concave corner where an open panel's side meets the
@@ -532,36 +568,58 @@ ShellRoot {
                 });
                 const popups = Prefs.barPopupMode;
                 const most = Theme.dp(Prefs.barNotchFlare);
-                const bite = 0.5;
                 const cap = (key, corner, v) => {
                     const c = plan.corners[key] || (plan.corners[key] = ({}));
                     c[corner] = Math.min(c[corner] === undefined ? 1e6 : c[corner], Math.max(0, v));
                 };
-                const fillet = (x, y, size, mirrored, flipped) => {
+                const fillet = (x, y, size, mirrored, flipped, owner) => {
                     if (size >= 1)
-                        plan.fillets.push({ "x": x, "y": y, "size": size, "mirrored": mirrored, "flipped": flipped });
+                        plan.fillets.push({ "x": x, "y": y, "size": size, "mirrored": mirrored, "flipped": flipped, "mod": owner || null });
 
                 };
                 // notches: a module against a screen side curves into it below
-                // its bottom, or below its panel when that is open
+                // its bottom, or below its panel when that is open. one kept off it
+                // by the side margin reaches it all the same, the margin filled in
                 if (Prefs.barNotch && Prefs.barNotchEdge) {
                     const row = bar.modules.filter((m) => {
-                        return m.visible && m.width > 0.5;
+                        return m.visible && m.width > 0.5 && !(m.detach > 0);
                     }).sort((p, q) => {
                         return p.x - q.x;
                     });
                     const meet = (m, left) => {
-                        const y = m.y + (m === workspacesMod ? m.compactHeight : m.height);
+                        const h = m === workspacesMod ? m.compactHeight : m.height;
+                        const y = m.y + h;
                         cap(m.modId, left ? "bl" : "br", 0);
-                        fillet(left ? -bite : bar.width - most + bite, y - bite, most, left, false);
+                        fillet(left ? 0 : bar.width - most, y, most, left, false, m);
+                        const gap = left ? m.x : bar.width - m.x - m.width;
+                        if (gap > 0.5)
+                            plan.bridges.push({ "x": left ? 0 : Math.floor(m.x + m.width), "y": m.y, "w": left ? Math.ceil(m.x) : bar.width - Math.floor(m.x + m.width), "h": h, "mod": m });
+
                         // where the curve starts, for edit mode's outline
                         (plan.meets[m.modId] || (plan.meets[m.modId] = ({})))[left ? "left" : "right"] = ({ "y": y, "size": most });
                     };
-                    if (row.length > 0 && row[0].x < 0.5)
+                    // the overview's seat closing up at a side: the module sliding in behind
+                    // fuses with it, its facing corner matching the seat's as that narrows
+                    // (by its width: the gap is floored to whole pixels and would jitter), so
+                    // it takes the meet over already square
+                    const fuse = (seat, next, left) => {
+                        const f = Math.max(0, Math.min(Prefs.barPillRadius, seat.width / 2));
+                        cap(next.modId, left ? "bl" : "br", f);
+                        cap(seat.modId, left ? "br" : "bl", f);
+                    };
+                    if (row.length > 0 && row[0].x < bar.sideMargin + 0.5) {
                         meet(row[0], true);
+                        if (row[0] === wsSeat && row.length > 1)
+                            fuse(row[0], row[1], true);
 
-                    if (row.length > 0 && bar.width - row[row.length - 1].x - row[row.length - 1].width < 0.5)
-                        meet(row[row.length - 1], false);
+                    }
+                    const last = row.length - 1;
+                    if (last >= 0 && bar.width - row[last].x - row[last].width < bar.sideMargin + 0.5) {
+                        meet(row[last], false);
+                        if (row[last] === wsSeat && last > 0)
+                            fuse(row[last], row[last - 1], false);
+
+                    }
 
                 }
                 if (popups && !Prefs.barPopupNotched)
@@ -604,9 +662,9 @@ ShellRoot {
                             plan.bridges.push({ "x": Math.floor(a.x + a.width), "y": a.y + strip, "w": Math.ceil(b.x) - Math.floor(a.x + a.width), "h": low - strip });
 
                         if (shortLeft)
-                            fillet(b.x - f + bite, a.y + low - bite, f, false, false);
+                            fillet(b.x - f, a.y + low, f, false, false);
                         else
-                            fillet(a.x + a.width - bite, a.y + low - bite, f, true, false);
+                            fillet(a.x + a.width, a.y + low, f, true, false);
                     }
                     // on the full bar, a panel this close to a screen side merges into
                     // it the same way, the side standing in for an endlessly tall neighbour
@@ -621,7 +679,7 @@ ShellRoot {
                         if (gap > 0.5 && m.height > strip)
                             plan.bridges.push({ "x": left ? 0 : Math.floor(m.x + m.width), "y": m.y + strip, "w": left ? Math.ceil(m.x) : bar.width - Math.floor(m.x + m.width), "h": m.height - strip });
 
-                        fillet(left ? -bite : bar.width - corner + bite, m.y + m.height - bite, corner, left, false);
+                        fillet(left ? 0 : bar.width - corner, m.y + m.height, corner, left, false);
                     };
                     if (Prefs.barFull && row.length > 0) {
                         edge(row[0], "left", row[0].x);
@@ -662,19 +720,45 @@ ShellRoot {
                             const side = ({});
                             // a side merged into an open neighbour has no island bottom to meet
                             const merged = plan.merged[isle.keys[j]] || ({});
+                            // a neighbour open as well is a side to meet, not the island's
+                            // bottom: the shorter one's shared corner squares off and the
+                            // taller one curves out under it
+                            const openAt = (k) => {
+                                const n = bar.pillFor[isle.keys[k]];
+                                return n !== workspacesMod && n.height - n.compactHeight > 0.5 ? n : null;
+                            };
+                            const meetOpen = (n, left) => {
+                                const below = m.y + m.height - (n.y + n.height);
+                                if (below <= 0.5)
+                                    return 0;
+
+                                const f = Math.floor(Math.min(most, below / 2, n.width / 2));
+                                fillet(left ? m.x - f : m.x + m.width, n.y + n.height, f, !left, false);
+                                return below - f;
+                            };
                             if (j > 0 && !merged.left) {
-                                const run = m.x - isle.l;
-                                const f = Math.floor(Math.min(most, run / 2, depth / 2));
-                                fillet(m.x - f + bite, isle.bottom - bite, f, false, false);
-                                cap(isle.keys[0], "bl", run - f);
-                                side.bl = depth - f;
+                                const n = openAt(j - 1);
+                                if (n) {
+                                    side.bl = meetOpen(n, true);
+                                } else {
+                                    const run = m.x - isle.l;
+                                    const f = Math.floor(Math.min(most, run / 2, depth / 2));
+                                    fillet(m.x - f, isle.bottom, f, false, false);
+                                    cap(isle.keys[0], "bl", run - f);
+                                    side.bl = depth - f;
+                                }
                             }
                             if (j < isle.keys.length - 1 && !merged.right) {
-                                const run = isle.r - (m.x + m.width);
-                                const f = Math.floor(Math.min(most, run / 2, depth / 2));
-                                fillet(m.x + m.width - bite, isle.bottom - bite, f, true, false);
-                                cap(isle.keys[isle.keys.length - 1], "br", run - f);
-                                side.br = depth - f;
+                                const n = openAt(j + 1);
+                                if (n) {
+                                    side.br = meetOpen(n, false);
+                                } else {
+                                    const run = isle.r - (m.x + m.width);
+                                    const f = Math.floor(Math.min(most, run / 2, depth / 2));
+                                    fillet(m.x + m.width, isle.bottom, f, true, false);
+                                    cap(isle.keys[isle.keys.length - 1], "br", run - f);
+                                    side.br = depth - f;
+                                }
                             }
                             plan.sides[isle.keys[j]] = side;
                         }
@@ -698,16 +782,16 @@ ShellRoot {
                         const dl = isle.l - shelf.l;
                         if (k > 0) {
                             const f = Math.floor(Math.min(most, (isle.l - over[k - 1].r) / 2, tall));
-                            fillet(isle.l - f + bite, shelf.y - f + bite, f, false, true);
+                            fillet(isle.l - f, shelf.y - f, f, false, true);
                             cap(first, "bl", 0);
                         } else if (dl > 0.5) {
                             const f = Math.floor(Math.min(most, dl / 2, tall));
-                            fillet(isle.l - f + bite, shelf.y - f + bite, f, false, true);
+                            fillet(isle.l - f, shelf.y - f, f, false, true);
                             cap(first, "bl", 0);
                             top.tl = dl - f;
                         } else if (dl < -0.5) {
                             const f = Math.floor(Math.min(most, -dl / 2, shelf.depth / 2));
-                            fillet(shelf.l - f + bite, shelf.y - bite, f, false, false);
+                            fillet(shelf.l - f, shelf.y, f, false, false);
                             cap(first, "bl", -dl - f);
                             top.tl = 0;
                         } else {
@@ -717,16 +801,16 @@ ShellRoot {
                         const dr = shelf.r - isle.r;
                         if (k < over.length - 1) {
                             const f = Math.floor(Math.min(most, (over[k + 1].l - isle.r) / 2, tall));
-                            fillet(isle.r - bite, shelf.y - f + bite, f, true, true);
+                            fillet(isle.r, shelf.y - f, f, true, true);
                             cap(last, "br", 0);
                         } else if (dr > 0.5) {
                             const f = Math.floor(Math.min(most, dr / 2, tall));
-                            fillet(isle.r - bite, shelf.y - f + bite, f, true, true);
+                            fillet(isle.r, shelf.y - f, f, true, true);
                             cap(last, "br", 0);
                             top.tr = dr - f;
                         } else if (dr < -0.5) {
                             const f = Math.floor(Math.min(most, -dr / 2, shelf.depth / 2));
-                            fillet(shelf.r - bite, shelf.y - bite, f, true, false);
+                            fillet(shelf.r, shelf.y, f, true, false);
                             cap(last, "br", -dr - f);
                             top.tr = 0;
                         } else {
@@ -757,7 +841,7 @@ ShellRoot {
             })
             // what BarPill looks itself up in, for a right click to its card
             readonly property var moduleById: bar.pillFor
-            readonly property var modules: [workspacesMod, mprisMod, sysTrayMod, clockMod, notifMod, systemMod, privacyMod, powerMod, windowMod, startMod, appsMod, launcherPanel]
+            readonly property var modules: [workspacesMod, mprisMod, sysTrayMod, clockMod, notifMod, systemMod, privacyMod, powerMod, windowMod, startMod, appsMod, launcherPanel, wsSeat]
 
             // which modules switched on have left the bar for now, for the Bar
             // page's arrangement
@@ -816,13 +900,17 @@ ShellRoot {
             }
 
             // workspaces empties its slot as it flies to the screen centre, so the
-            // rest of its zone closes up behind it
+            // rest of its zone closes up behind it. the slot is the pill's, not the
+            // growing card's: that widened it first and pushed the neighbours away
             function realWidthOf(key) {
                 const it = bar.pillFor[key];
                 if (!it)
                     return 0;
 
-                return it === workspacesMod ? it.width * bar.wsCollapse : it.width;
+                if (it === workspacesMod && bar.wsCollapse < 1)
+                    return (it.shown ? it.compactWidth : 0) * bar.wsCollapse;
+
+                return it.width;
             }
 
             // in edit mode a module with nothing to show keeps a stand-in's room
@@ -897,7 +985,9 @@ ShellRoot {
                 }
 
             }
-            readonly property real sideMargin: (Prefs.barNotch && Prefs.barNotchEdge) ? 0 : Theme.dp(Prefs.barSideMargin)
+            // kept when notches meet the screen sides too: the end modules reach the
+            // sides across it, and it keeps their contents off them
+            readonly property real sideMargin: Theme.dp(Prefs.barSideMargin)
 
             // busy: a panel is open somewhere on the bar, so it stays out
             // regardless of the pointer. held: the pointer is on the reveal
@@ -906,21 +996,43 @@ ShellRoot {
                 return m.expanded === true || m.anyOpen === true;
             })
             property bool slidingAway: false
-            readonly property bool heldByPointer: revealArea.containsMouse || bandHover.hovered || (!bar.slidingAway && bar.modules.some((m) => {
+            readonly property bool pointerOnBar: revealArea.containsMouse || (!bar.slidingAway && bar.modules.some((m) => {
                 return m.visible && (m.surfaceHovered === true || m.compactHovered === true);
             }))
-            readonly property bool barRevealed: (!Prefs.barAutoHide || bar.barBusy || bar.heldByPointer || Edit.active) && !Prefs.barRelocating
-            // a bar that hides reaches the screen edge itself, so the strip that
-            // reveals it sits on the edge; its margin moves inside the window
-            readonly property int edgeGap: Prefs.barAutoHide ? Prefs.effectiveBarTopMargin : 0
+            // let go a beat after the pointer leaves: passing between the strip
+            // and a pill can read as off both for a moment, and the slide away
+            // would start in that gap
+            property bool heldByPointer: false
             // a write to exclusiveZone puts exclusionMode back to Normal, so the mode is
             // asked for again once auto-hide has been switched
             property int exclusionTick: 0
-            // how far the compact content sits above its resting y=0 while
-            // hidden - past the window's own top edge, so it clips away for free
-            property real hiddenOffset: (bar.barRevealed ? 0 : -(Theme.dp(Prefs.barHeight) + Prefs.effectiveBarTopMargin + Theme.dp(4))) + bar.edgeGap
 
-            Behavior on hiddenOffset {
+            onPointerOnBarChanged: {
+                if (bar.pointerOnBar) {
+                    letGoTimer.stop();
+                    bar.heldByPointer = true;
+                } else {
+                    letGoTimer.restart();
+                }
+            }
+
+            Timer {
+                id: letGoTimer
+
+                interval: 180
+                onTriggered: bar.heldByPointer = bar.pointerOnBar
+            }
+
+            readonly property bool barRevealed: (!Prefs.barAutoHide || bar.barBusy || bar.heldByPointer || Edit.active) && !Prefs.barRelocating
+            // auto-hide puts the window's top at the screen's own edge and lowers
+            // the row by the gap instead, so the bar slides out from the edge
+            // rather than appearing at the gap's lower line
+            readonly property real topInset: Prefs.barAutoHide ? Prefs.effectiveBarTopMargin : 0
+            // where the compact row sits in the window: below the gap while out,
+            // and past the window's top edge while hidden, so it clips away for free
+            property real rowY: bar.barRevealed ? bar.topInset : -(Theme.dp(Prefs.barHeight) + Theme.dp(4))
+
+            Behavior on rowY {
                 NumberAnimation {
                     duration: Theme.durLong
                     easing.type: Easing.Bezier
@@ -960,7 +1072,7 @@ ShellRoot {
             }
 
             color: "transparent"
-            implicitHeight: bar.screen ? bar.screen.height - Prefs.effectiveBarTopMargin + bar.edgeGap : Theme.dp(800)
+            implicitHeight: bar.screen ? bar.screen.height - (Prefs.barBottom ? bar.margins.bottom : bar.margins.top) : Theme.dp(800)
             // auto-hide first, so a hiding bar never writes its zone again
             exclusiveZone: (!Prefs.barAutoHide && Prefs.barEnabled && bar.anyModuleShown) ? Theme.dp(Prefs.barHeight) + Prefs.shellGap : 0
             // a hiding bar comes out of the edge itself, not above a dock's zone
@@ -974,8 +1086,8 @@ ShellRoot {
             }
 
             margins {
-                top: Prefs.barBottom ? 0 : Prefs.effectiveBarTopMargin - bar.edgeGap
-                bottom: Prefs.barBottom ? Prefs.effectiveBarTopMargin - bar.edgeGap : 0
+                top: Prefs.barBottom ? 0 : Prefs.effectiveBarTopMargin - bar.topInset
+                bottom: Prefs.barBottom ? Prefs.effectiveBarTopMargin - bar.topInset : 0
             }
 
             // a bottom bar is the top bar mirrored: every shape keeps its maths,
@@ -993,7 +1105,7 @@ ShellRoot {
 
                 visible: Prefs.barFull && bar.anyModuleShown
                 x: 0
-                y: bar.hiddenOffset
+                y: bar.rowY
                 z: -2
                 width: bar.width
                 height: Theme.dp(Prefs.barHeight)
@@ -1020,7 +1132,7 @@ ShellRoot {
                 opacity: bar.cover && bar.cover.up ? 1 : 0
                 visible: !!bar.cover && !Prefs.barFull && opacity > 0
                 x: bar.cover ? bar.cover.l : 0
-                y: bar.hiddenOffset
+                y: bar.rowY
                 z: -2
                 width: bar.cover ? bar.cover.r - bar.cover.l : 0
                 height: Theme.dp(Prefs.barHeight)
@@ -1039,8 +1151,9 @@ ShellRoot {
                 visible: coverStrip.visible && !dock.barUnderLeft
                 opacity: coverStrip.opacity
                 size: Theme.dp(Prefs.barNotchFlare)
+                depth: Math.min(size, Theme.dp(Prefs.barHeight))
                 x: coverStrip.x - width
-                y: bar.hiddenOffset
+                y: bar.rowY
                 z: -2
             }
 
@@ -1049,8 +1162,9 @@ ShellRoot {
                 opacity: coverStrip.opacity
                 mirrored: true
                 size: Theme.dp(Prefs.barNotchFlare)
+                depth: Math.min(size, Theme.dp(Prefs.barHeight))
                 x: coverStrip.x + coverStrip.width
-                y: bar.hiddenOffset
+                y: bar.rowY
                 z: -2
             }
 
@@ -1060,7 +1174,7 @@ ShellRoot {
                 mirrored: true
                 size: Theme.dp(Prefs.barFullCorner)
                 x: 0
-                y: Theme.dp(Prefs.barHeight) + bar.hiddenOffset
+                y: Theme.dp(Prefs.barHeight) + bar.rowY
                 z: -2
             }
 
@@ -1068,7 +1182,7 @@ ShellRoot {
                 visible: fullStrip.visible && size > 0 && !bar.hangPlan.edges.right
                 size: Theme.dp(Prefs.barFullCorner)
                 x: bar.width - width
-                y: Theme.dp(Prefs.barHeight) + bar.hiddenOffset
+                y: Theme.dp(Prefs.barHeight) + bar.rowY
                 z: -2
             }
 
@@ -1115,7 +1229,7 @@ ShellRoot {
                 x: bar.xOf("media")
                 editLifted: bar.dragKey === "media"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset + bar.liftOf("media")
+                anchors.topMargin: bar.rowY + bar.liftOf("media")
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "media"
@@ -1139,7 +1253,7 @@ ShellRoot {
                 x: bar.xOf("tray")
                 editLifted: bar.dragKey === "tray"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset + bar.liftOf("tray")
+                anchors.topMargin: bar.rowY + bar.liftOf("tray")
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "tray"
@@ -1161,7 +1275,7 @@ ShellRoot {
 
                 hostWindow: bar
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset + bar.liftOf("clock")
+                anchors.topMargin: bar.rowY + bar.liftOf("clock")
                 x: bar.xOf("clock")
                 editLifted: bar.dragKey === "clock"
 
@@ -1188,7 +1302,7 @@ ShellRoot {
                 x: bar.xOf("notifications")
                 editLifted: bar.dragKey === "notifications"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset + bar.liftOf("notifications")
+                anchors.topMargin: bar.rowY + bar.liftOf("notifications")
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "notifications"
@@ -1213,7 +1327,7 @@ ShellRoot {
                 x: bar.xOf("privacy")
                 editLifted: bar.dragKey === "privacy"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset + bar.liftOf("privacy")
+                anchors.topMargin: bar.rowY + bar.liftOf("privacy")
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "privacy"
@@ -1237,7 +1351,7 @@ ShellRoot {
                 x: bar.xOf("power")
                 editLifted: bar.dragKey === "power"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset + bar.liftOf("power")
+                anchors.topMargin: bar.rowY + bar.liftOf("power")
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "power"
@@ -1273,7 +1387,7 @@ ShellRoot {
                 x: bar.xOf("start")
                 editLifted: bar.dragKey === "start"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset + bar.liftOf("start")
+                anchors.topMargin: bar.rowY + bar.liftOf("start")
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "start"
@@ -1297,7 +1411,7 @@ ShellRoot {
                 dockMod: dock
                 x: bar.placeFor("apps")
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset
+                anchors.topMargin: bar.rowY
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling
@@ -1321,7 +1435,7 @@ ShellRoot {
                 x: bar.xOf("window")
                 editLifted: bar.dragKey === "window"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset + bar.liftOf("window")
+                anchors.topMargin: bar.rowY + bar.liftOf("window")
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "window"
@@ -1346,7 +1460,7 @@ ShellRoot {
                 x: bar.xOf("system")
                 editLifted: bar.dragKey === "system"
                 anchors.top: parent.top
-                anchors.topMargin: bar.hiddenOffset + bar.liftOf("system")
+                anchors.topMargin: bar.rowY + bar.liftOf("system")
 
                 Behavior on x {
                     enabled: bar.laidOut && bar.shuffling && bar.dragKey !== "system"
@@ -1376,21 +1490,23 @@ ShellRoot {
                     z: -1
                     visible: Prefs.barNotch && flares.present
 
-                    readonly property real bite: 0.5
-
+                    // butted against the module, not tucked under it: an overlap is
+                    // a second coat of the translucent fill, a light seam down the side
                     BarFlare {
                         hovered: flares.modHovered
                         size: bar.notchFlareOf(flares.modelData, true)
-                        x: flares.modelData ? flares.modelData.x - width + flares.bite : 0
-                        y: bar.hiddenOffset
+                        depth: bar.notchDepthOf(flares.modelData, true)
+                        x: flares.modelData ? flares.modelData.x - width : 0
+                        y: bar.rowY
                     }
 
                     BarFlare {
                         hovered: flares.modHovered
                         mirrored: true
                         size: bar.notchFlareOf(flares.modelData, false)
-                        x: flares.modelData ? flares.modelData.x + flares.modelData.width - flares.bite : 0
-                        y: bar.hiddenOffset
+                        depth: bar.notchDepthOf(flares.modelData, false)
+                        x: flares.modelData ? flares.modelData.x + flares.modelData.width : 0
+                        y: bar.rowY
                     }
 
                 }
@@ -1404,8 +1520,11 @@ ShellRoot {
                 BarFlare {
                     required property int index
                     readonly property var spec: bar.hangPlan.fillets.length > index ? bar.hangPlan.fillets[index] : null
+                    // the curve a module meets the screen side with lights up with it
+                    readonly property var owner: spec && spec.mod ? spec.mod : null
 
                     z: 0
+                    hovered: owner !== null && owner !== workspacesMod && owner.compactHovered === true && owner.anyOpen !== true
                     size: spec ? spec.size : 0
                     mirrored: spec ? spec.mirrored : false
                     flipped: spec ? spec.flipped : false
@@ -1415,13 +1534,18 @@ ShellRoot {
 
             }
 
-            // the gaps filled between open panels the bar merges
+            // the gaps filled between open panels the bar merges, and between a
+            // notch and the screen side it meets across the side margin
             Repeater {
-                model: 6
+                model: 8
 
                 Rectangle {
+                    id: bridge
+
                     required property int index
                     readonly property var spec: bar.hangPlan.bridges.length > index ? bar.hangPlan.bridges[index] : null
+                    // a module's own stretch lights up with it, as its edge blends do
+                    readonly property var owner: bridge.spec && bridge.spec.mod ? bridge.spec.mod : null
 
                     z: 0
                     visible: spec !== null
@@ -1430,8 +1554,65 @@ ShellRoot {
                     width: spec ? spec.w : 0
                     height: spec ? spec.h : 0
                     color: Theme.bg
+
+                    Rectangle {
+                        anchors.fill: parent
+                        visible: opacity > 0
+                        color: Theme.text
+                        opacity: bridge.owner && bridge.owner !== workspacesMod && bridge.owner.compactHovered === true && bridge.owner.anyOpen !== true ? Theme.stateHover : 0
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.barMs(150)
+                                easing.type: Easing.OutCubic
+                            }
+
+                        }
+
+                    }
+
                 }
 
+            }
+
+            // where the workspace overview sat, on a notch bar, while its card is off it:
+            // the slot stays a stretch of the bar, closing up as the zone slides in (and
+            // opening as the card comes home), so its side meet and blends hand over to
+            // the next module instead of vanishing there and turning up on it
+            Rectangle {
+                id: wsSeat
+
+                readonly property string modId: "workspacesSeat"
+                readonly property var hostWindow: bar
+                readonly property bool active: Prefs.barNotch && workspacesMod.shown && workspacesMod.detach > 0
+                readonly property real compactHeight: workspacesMod.compactHeight
+                readonly property var hangCorners: bar.hangPlan.corners[wsSeat.modId] || null
+                readonly property int pillRadius: Prefs.barPillRadius
+                // the corners ModuleRegion's blur follows
+                readonly property int barRadius: wsSeat.pillRadius
+                readonly property int barTopRadius: 0
+                readonly property int topRadius: 0
+                readonly property int cornerRadius: wsSeat.pillRadius
+                readonly property real barTopLeftRadius: 0
+                readonly property real barTopRightRadius: 0
+                readonly property real barBottomLeftRadius: wsSeat.bottomLeftRadius
+                readonly property real barBottomRightRadius: wsSeat.bottomRightRadius
+
+                function capped(corner, v) {
+                    return wsSeat.hangCorners && wsSeat.hangCorners[corner] !== undefined ? Math.max(0, Math.min(v, wsSeat.hangCorners[corner])) : v;
+                }
+
+                z: 0
+                visible: wsSeat.active && !bar.covers(wsSeat)
+                x: bar.xOf("workspaces")
+                y: workspacesMod.restY
+                width: wsSeat.active ? bar.realWidthOf("workspaces") : 0
+                height: wsSeat.compactHeight
+                color: Theme.bg
+                topLeftRadius: 0
+                topRightRadius: 0
+                bottomLeftRadius: wsSeat.capped("bl", bar.joinedLeftOf("workspaces") ? 0 : wsSeat.pillRadius)
+                bottomRightRadius: wsSeat.capped("br", bar.joinedRightOf("workspaces") ? 0 : wsSeat.pillRadius)
             }
 
             Workspaces {
@@ -1440,7 +1621,7 @@ ShellRoot {
                 hostWindow: bar
                 dockMod: dock
                 restX: bar.xOf("workspaces")
-                restY: bar.hiddenOffset + bar.liftOf("workspaces")
+                restY: bar.rowY + bar.liftOf("workspaces")
                 z: bar.dragKey === "workspaces" ? 120 : (workspacesMod.popupOpen ? 100 : 1)
 
                 Behavior on restX {
@@ -1536,21 +1717,27 @@ ShellRoot {
                     index: 5
                 }
 
-                // by numbers, not by item: the window does not see the mirror. once
-                // out it takes the bar's whole band, so crossing the margin or a gap
-                // between islands does not send it away
-                Region {
-                    readonly property real band: bar.barRevealed ? bar.edgeGap + Theme.dp(Prefs.barHeight) : revealArea.height
+                BridgeRegion {
+                    host: bar
+                    index: 6
+                }
 
-                    y: Prefs.barBottom ? bar.height - band : 0
+                BridgeRegion {
+                    host: bar
+                    index: 7
+                }
+
+                // by numbers, not by item: the window does not see the mirror
+                Region {
+                    y: Prefs.barBottom ? bar.height - revealArea.height : 0
                     width: Prefs.barAutoHide ? revealArea.width : 0
-                    height: band
+                    height: revealArea.height
                 }
 
                 Region {
                     y: Prefs.barBottom ? bar.height - height : 0
                     width: bar.dragHeld || Edit.active ? bar.width : 0
-                    height: bar.dragHeld ? bar.height : (Edit.active ? Theme.dp(Prefs.barHeight) + Theme.dp(4) : 0)
+                    height: bar.dragHeld ? bar.height : (Edit.active ? bar.topInset + Theme.dp(Prefs.barHeight) + Theme.dp(4) : 0)
                 }
 
             }
@@ -1561,21 +1748,16 @@ ShellRoot {
                 host: bar
             }
 
-            // anywhere the window takes the pointer, over a module or not
-            HoverHandler {
-                id: bandHover
-
-                enabled: Prefs.barAutoHide
-            }
-
-            // touching this strip reveals the bar
+            // touching this strip at the screen's edge reveals the bar. once the
+            // pointer has it out, it reaches through the gap and the row under
+            // the pills, so neither drops it on the way to a pill
             MouseArea {
                 id: revealArea
 
                 x: 0
                 y: 0
                 width: bar.width
-                height: Theme.dp(4)
+                height: bar.heldByPointer ? bar.topInset + Theme.dp(Prefs.barHeight) : Theme.dp(4)
                 hoverEnabled: true
                 acceptedButtons: Qt.NoButton
                 enabled: Prefs.barAutoHide
@@ -1603,11 +1785,14 @@ ShellRoot {
                 return m.width > 0.5 && m.surfaceOpen !== true && bar.overlapped(m);
             })
 
+            // a whole pixel or more: placeGroup starts a joined neighbour at the floor of
+            // this one's end, so while a width animates the two share under a pixel.
+            // read as standing over it, that faded the whole bar out and back every frame
             function overlapped(mod) {
                 const l = mod.x;
                 const r = mod.x + mod.width;
                 return bar.modules.some((o) => {
-                    return o !== mod && o.surfaceOpen === true && o.popupMode !== true && o.coversBar !== false && o.x < r - 0.5 && o.x + o.width > l + 0.5;
+                    return o !== mod && o.surfaceOpen === true && o.popupMode !== true && o.coversBar !== false && o.x <= r - 1 && o.x + o.width >= l + 1;
                 });
             }
 
@@ -1705,14 +1890,14 @@ ShellRoot {
 
                 Region {
                     x: 0
-                    y: !fullStrip.visible ? 0 : (Prefs.barBottom ? bar.height - bar.hiddenOffset - height : bar.hiddenOffset)
+                    y: !fullStrip.visible ? 0 : (Prefs.barBottom ? bar.height - bar.rowY - height : bar.rowY)
                     width: fullStrip.visible ? Math.round(bar.width) : 0
                     height: fullStrip.visible ? Theme.dp(Prefs.barHeight) : 0
                 }
 
                 Region {
                     x: coverStrip.visible ? Math.round(coverStrip.x) : 0
-                    y: Prefs.barBottom ? bar.height - bar.hiddenOffset - Theme.dp(Prefs.barHeight) : bar.hiddenOffset
+                    y: Prefs.barBottom ? bar.height - bar.rowY - Theme.dp(Prefs.barHeight) : bar.rowY
                     width: coverStrip.visible && coverStrip.opacity > 0.5 ? Math.round(coverStrip.width) : 0
                     height: coverStrip.visible ? Theme.dp(Prefs.barHeight) : 0
                 }
@@ -1720,6 +1905,11 @@ ShellRoot {
                 ModuleRegion {
                     blur: true
                     mod: workspacesMod
+                }
+
+                ModuleRegion {
+                    blur: true
+                    mod: wsSeat
                 }
 
                 ModuleRegion {
@@ -1807,6 +1997,16 @@ ShellRoot {
                     index: 5
                 }
 
+                BridgeRegion {
+                    host: bar
+                    index: 6
+                }
+
+                BridgeRegion {
+                    host: bar
+                    index: 7
+                }
+
                 // the concave corners the bar draws outside any module: the full
                 // strip's ends at the screen sides, a cover strip's ends, and the
                 // hang plan's fillets. the modules' own come with their regions
@@ -1831,6 +2031,7 @@ ShellRoot {
                     host: bar
                     on: coverStrip.visible && coverStrip.opacity > 0.5 && !dock.barUnderLeft
                     size: Theme.dp(Prefs.barNotchFlare)
+                    depth: Math.min(size, Theme.dp(Prefs.barHeight))
                     fx: coverStrip.x - size
                     fy: bar.rowY
                 }
@@ -1840,6 +2041,7 @@ ShellRoot {
                     on: coverStrip.visible && coverStrip.opacity > 0.5 && !dock.barUnderRight
                     mirrored: true
                     size: Theme.dp(Prefs.barNotchFlare)
+                    depth: Math.min(size, Theme.dp(Prefs.barHeight))
                     fx: coverStrip.x + coverStrip.width
                     fy: bar.rowY
                 }

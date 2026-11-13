@@ -104,6 +104,12 @@ Item {
                         popupCard.activate();
 
                 }
+
+                HeldPointer {
+                    held: dragArea.drag.active
+                    cursor: Qt.PointingHandCursor
+                }
+
             }
 
             // let go short of a throw, it springs back and wobbles

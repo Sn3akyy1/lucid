@@ -79,7 +79,7 @@ BarPill {
 
     }
 
-    readonly property int horizontalPadding: Theme.dp(16)
+    readonly property int horizontalPadding: Theme.barDp(16)
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
     readonly property int maxPanelHeight: Math.min(Theme.dp(820), Math.max(Theme.dp(200), root.screenH - Theme.dp(40)))
@@ -1822,7 +1822,7 @@ BarPill {
             id: content
 
             anchors.centerIn: parent
-            spacing: Theme.dp(10)
+            spacing: Theme.barDp(10)
 
             // the active keyboard layout; a click steps to the next one, the
             // rest of the pill still opens the panel
@@ -1831,8 +1831,8 @@ BarPill {
 
                 visible: Prefs.showKbLayout && root.kbLayout !== ""
                 anchors.verticalCenter: parent.verticalCenter
-                width: kbText.implicitWidth + Theme.dp(10)
-                height: Theme.dp(20)
+                width: kbText.implicitWidth + Theme.barDp(10)
+                height: Theme.barDp(20)
                 radius: height / 2
                 color: kbArea.containsMouse ? Theme.alpha(Theme.text, 0.1) : "transparent"
 
@@ -1841,6 +1841,7 @@ BarPill {
 
                     anchors.centerIn: parent
                     role: "labelMedium"
+                    size: Theme.barType("labelMedium")
                     weight: 620
                     text: root.kbLayout
                     color: Theme.text
@@ -1863,7 +1864,7 @@ BarPill {
                 visible: root.barItems.indexOf("wifi") !== -1
                 anchors.verticalCenter: parent.verticalCenter
                 name: root.wifiGlyph
-                size: Theme.dp(17)
+                size: Theme.barDp(17)
                 fill: 1
                 color: (wifiPanel.wifiConnected || wifiPanel.primaryIsEthernet) ? Theme.accent : Theme.subtext
             }
@@ -1874,7 +1875,7 @@ BarPill {
                 visible: root.btEnabled && root.barItems.indexOf("bluetooth") !== -1
                 anchors.verticalCenter: parent.verticalCenter
                 name: root.btGlyph
-                size: Theme.dp(16)
+                size: Theme.barDp(16)
                 color: btPanel.connectedDevices.length > 0 ? Theme.accent : Theme.subtext
             }
 
@@ -1883,12 +1884,12 @@ BarPill {
 
                 visible: root.barItems.indexOf("volume") !== -1
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: Theme.dp(3)
+                spacing: Theme.barDp(3)
 
                 Icon {
                     anchors.verticalCenter: parent.verticalCenter
                     name: root.volumeIcon(root.volumePercent, root.volMuted)
-                    size: Theme.dp(17)
+                    size: Theme.barDp(17)
                     fill: 1
                     color: root.volMuted ? Theme.error : Theme.text
                 }
@@ -1897,6 +1898,7 @@ BarPill {
                     visible: !root.volMuted && root.barItems.indexOf("level") !== -1
                     anchors.verticalCenter: parent.verticalCenter
                     role: "labelMedium"
+                    size: Theme.barType("labelMedium")
                     weight: 620
                     text: root.volumePercent
                     color: Theme.text
@@ -1910,7 +1912,7 @@ BarPill {
                 visible: root.barItems.indexOf("mic") !== -1
                 anchors.verticalCenter: parent.verticalCenter
                 name: root.micMuted ? "mic_off" : "mic"
-                size: Theme.dp(16)
+                size: Theme.barDp(16)
                 fill: 1
                 color: root.micMuted ? Theme.error : Theme.subtext
             }
@@ -1922,6 +1924,7 @@ BarPill {
                 anchors.verticalCenter: parent.verticalCenter
                 percent: root.batteryPercent
                 charging: root.batteryCharging
+                content: Theme.barContent
             }
 
         },
@@ -2516,6 +2519,12 @@ BarPill {
 
                     wheel.accepted = true;
                 }
+
+                HeldPointer {
+                    held: root.tipDragging
+                    cursor: root.tipViewKind === "volume" ? Qt.PointingHandCursor : Qt.ArrowCursor
+                }
+
             }
 
             TextMetrics {

@@ -18,7 +18,7 @@ Singleton {
     property bool moduleProbed: false
 
     // every option a page shows, read back in one hyprctl call
-    readonly property var keys: ["general.gaps_in", "general.gaps_out", "general.border_size", "general.col.active_border", "general.col.inactive_border", "decoration.rounding", "decoration.rounding_power", "decoration.shadow.enabled", "decoration.shadow.range", "decoration.shadow.render_power", "decoration.dim_inactive", "decoration.dim_strength", "general.layout", "dwindle.split_width_multiplier", "dwindle.force_split", "dwindle.default_split_ratio", "dwindle.preserve_split", "master.orientation", "master.mfact", "master.new_status", "master.new_on_top", "scrolling.column_width", "scrolling.fullscreen_on_one_column", "input.follow_mouse", "misc.focus_on_activate", "cursor.no_warps", "cursor.warp_on_change_workspace", "general.resize_on_border", "general.extend_border_grab_area", "general.snap.enabled", "general.snap.window_gap", "general.snap.monitor_gap", "cursor.hide_on_key_press", "cursor.inactive_timeout", "animations.enabled", "input.kb_layout", "input.kb_variant", "input.kb_options", "input.repeat_rate", "input.repeat_delay", "input.numlock_by_default", "input.sensitivity", "input.accel_profile", "input.natural_scroll", "input.scroll_factor", "input.left_handed", "input.touchpad.tap-to-click", "input.touchpad.natural_scroll", "input.touchpad.scroll_factor", "input.touchpad.disable_while_typing", "input.touchpad.clickfinger_behavior", "input.touchpad.tap-and-drag", "input.touchpad.middle_button_emulation", "gestures.workspace_swipe_distance", "gestures.workspace_swipe_invert", "gestures.workspace_swipe_cancel_ratio", "gestures.workspace_swipe_min_speed_to_force", "gestures.workspace_swipe_forever", "gestures.workspace_swipe_create_new"]
+    readonly property var keys: ["general.gaps_in", "general.gaps_out", "general.border_size", "general.col.active_border", "general.col.inactive_border", "decoration.rounding", "decoration.rounding_power", "decoration.shadow.enabled", "decoration.shadow.range", "decoration.shadow.render_power", "decoration.dim_inactive", "decoration.dim_strength", "general.layout", "dwindle.split_width_multiplier", "dwindle.force_split", "dwindle.default_split_ratio", "dwindle.preserve_split", "master.orientation", "master.mfact", "master.new_status", "master.new_on_top", "scrolling.column_width", "scrolling.fullscreen_on_one_column", "input.follow_mouse", "misc.focus_on_activate", "cursor.no_warps", "cursor.warp_on_change_workspace", "general.resize_on_border", "general.extend_border_grab_area", "general.snap.enabled", "general.snap.window_gap", "general.snap.monitor_gap", "cursor.hide_on_key_press", "cursor.inactive_timeout", "animations.enabled", "input.kb_layout", "input.kb_variant", "input.kb_options", "input.repeat_rate", "input.repeat_delay", "input.numlock_by_default", "input.sensitivity", "input.accel_profile", "input.natural_scroll", "input.scroll_factor", "input.left_handed", "input.touchpad.tap-to-click", "input.touchpad.natural_scroll", "input.touchpad.scroll_factor", "input.touchpad.disable_while_typing", "input.touchpad.clickfinger_behavior", "input.touchpad.tap-and-drag", "input.touchpad.middle_button_emulation", "gestures.workspace_swipe_distance", "gestures.workspace_swipe_invert", "gestures.workspace_swipe_cancel_ratio", "gestures.workspace_swipe_min_speed_to_force", "gestures.workspace_swipe_forever", "gestures.workspace_swipe_create_new", "plugin.dynamic_cursors.mode", "plugin.dynamic_cursors.tilt.limit", "plugin.dynamic_cursors.tilt.full", "plugin.dynamic_cursors.tilt.window", "plugin.dynamic_cursors.tilt.activation", "plugin.dynamic_cursors.shake.enabled", "plugin.dynamic_cursors.shake.base", "plugin.dynamic_cursors.shake.threshold", "plugin.dynamic_cursors.shake.timeout"]
     // not Hyprland options but choices Lucid turns into some
     readonly property var borderModes: [{
         "key": "none",
@@ -32,6 +32,25 @@ Singleton {
     }]
     // Hyprland as it is now, key -> value
     property var live: ({})
+    // Hyprland has been read at least once, so a missing option means missing
+    property bool liveRead: false
+    // hypr-dynamic-cursors, the plugin that tilts the pointer, is loaded: its
+    // options only exist while it is
+    readonly property bool cursorPlugin: root.live["plugin.dynamic_cursors.mode"] !== undefined
+    // the script install.sh puts the plugin together with, for this Hyprland
+    readonly property string pluginScript: root.hyprDir + "/scripts/cursor-plugin.sh"
+    property bool pluginScriptFound: false
+    property bool pluginBuilding: false
+    property string pluginError: ""
+
+    function buildCursorPlugin() {
+        if (pluginProc.running || !root.pluginScriptFound)
+            return ;
+
+        root.pluginError = "";
+        root.pluginBuilding = true;
+        pluginProc.running = true;
+    }
     // written by modules/settings.lua: which options your config overrides
     property var status: ({})
     // what Settings set, key -> value
@@ -124,6 +143,22 @@ Singleton {
             return Math.abs(p - b) < 0.0001;
 
         return p === b;
+    }
+
+    // Lucid's own switches have no config value behind them, so their default is known here
+    readonly property var choiceDefaults: ({
+        "lucid.solo": false,
+        "lucid.cursor_tilt": true,
+        "lucid.cursor_tilt_apps": true
+    })
+
+    // a value that changes nothing, so Settings need not keep it
+    function isDefault(key, v) {
+        if (root.choiceDefaults[key] !== undefined)
+            return root.choiceDefaults[key] === v;
+
+        const t = root.targetOf(key, v);
+        return root.sameAsBase(t.option, t.value);
     }
 
     // a pinned window's border, from the palette like the others: off, accent,
@@ -226,6 +261,14 @@ Singleton {
         if (root.mine["lucid.solo"] === true)
             out += "    solo = true,\n";
 
+        // the pointers that lean as they move, named in modules/plugins.lua, and
+        // whether those of apps that draw their own lean with them
+        if (root.mine["lucid.cursor_tilt"] !== undefined)
+            out += "    cursor_tilt = " + (root.mine["lucid.cursor_tilt"] === true ? "true" : "false") + ",\n";
+
+        if (root.mine["lucid.cursor_tilt_apps"] !== undefined)
+            out += "    cursor_tilt_apps = " + (root.mine["lucid.cursor_tilt_apps"] === true ? "true" : "false") + ",\n";
+
         // one colour for every pinned window, in focus or not; a gradient only
         // on the focused one, as its own rule: given in one rule, Hyprland
         // keeps the out-of-focus colour but never draws it
@@ -241,6 +284,44 @@ Singleton {
             out += "        [" + root.luaStr(k) + "] = " + root.luaValue(w[k]) + ",\n";
         out += "    },\n}\n";
         return out;
+    }
+
+    // options the cursor plugin reads once per config load, so a change to one
+    // takes a reload rather than a live apply
+    readonly property var reloadKeys: ["plugin.dynamic_cursors.tilt.activation"]
+    // the size shake to find grows to: the plugin loads its large copy of the
+    // theme again after it changes, which has to go through cursortheme.py's lock
+    readonly property var nudgeKeys: ["plugin.dynamic_cursors.shake.base"]
+
+    property var _pending: null
+
+    // Hyprland takes the file, then the shell's windows ask for their pointer
+    // again: the cursor plugin only applies its settings when the shape changes
+    function applySaved(reload, restoring, nudge) {
+        if (applyProc.running) {
+            const p = root._pending || {
+                "reload": false,
+                "restoring": [],
+                "nudge": false
+            };
+            root._pending = {
+                "reload": p.reload || reload,
+                "restoring": p.restoring.concat(restoring),
+                "nudge": p.nudge || nudge
+            };
+            return ;
+        }
+        const restore = restoring.length > 0 ? "LucidSettings.restore({ " + restoring.map(root.luaStr).join(", ") + " }) " : "";
+        if (reload)
+            applyProc.command = ["bash", "-c", "hyprctl reload >/dev/null; python3 \"$0\" settle >/dev/null", Pointer.helper];
+        else
+            applyProc.command = ["bash", "-c", "hyprctl eval \"$1\" >/dev/null" + (nudge ? "; python3 \"$0\" nudge >/dev/null" : ""), Pointer.helper, "if LucidSettings then " + restore + "LucidSettings.apply(true) end"];
+        applyProc.running = true;
+    }
+
+    function lineOf(text, key) {
+        const m = new RegExp("^\\s*\\[\"" + key.replace(/\./g, "\\.") + "\"\\]\\s*=\\s*(.*)$", "m").exec(text || "");
+        return m ? m[1] : "";
     }
 
     function keysIn(text) {
@@ -350,8 +431,7 @@ Singleton {
 
     // putting an option back to what your config gives it hands it back
     function set(key, v) {
-        const t = root.targetOf(key, v);
-        if (root.sameAsBase(t.option, t.value)) {
+        if (root.isDefault(key, v)) {
             root.resetKeys([key]);
             return ;
         }
@@ -365,7 +445,7 @@ Singleton {
     function setMany(values) {
         const keys = Object.keys(values);
         if (keys.every((k) => {
-            return root.sameAsBase(k, values[k]);
+            return root.isDefault(k, values[k]);
         })) {
             root.resetKeys(keys);
             return ;
@@ -475,8 +555,7 @@ Singleton {
     // come to set the same, stops being Settings'
     function prune() {
         const same = Object.keys(root.mine).filter((k) => {
-            const t = root.targetOf(k, root.mine[k]);
-            return root.sameAsBase(t.option, t.value);
+            return root.isDefault(k, root.mine[k]);
         });
         if (same.length > 0)
             root.resetKeys(same);
@@ -525,7 +604,12 @@ Singleton {
         dataFile.restoring = gone.filter((k) => {
             return root.restoreQueue.indexOf(k) !== -1;
         });
-        dataFile.dropped = gone.length > dataFile.restoring.length;
+        dataFile.dropped = gone.length > dataFile.restoring.length || root.reloadKeys.some((k) => {
+            return root.lineOf(root.rendered, k) !== root.lineOf(dataFile.current, k);
+        });
+        dataFile.nudge = root.nudgeKeys.some((k) => {
+            return root.lineOf(root.rendered, k) !== root.lineOf(dataFile.current, k);
+        });
         root.restoreQueue = [];
         dataFile.current = root.rendered;
         dataFile.setText(root.rendered);
@@ -595,9 +679,36 @@ Singleton {
                     }
                 }
                 root.live = out;
+                root.liveRead = true;
             }
         }
 
+    }
+
+    // fetches the plugin, compiles it against the hyprland package's own
+    // headers and loads it; it says why when it cannot
+    Process {
+        id: pluginProc
+
+        command: ["bash", "-c", "\"$0\" build && \"$0\" load", root.pluginScript]
+        onExited: (code) => {
+            root.pluginBuilding = false;
+            const lines = pluginErr.text.trim().split("\n");
+            root.pluginError = code === 0 ? "" : (lines[lines.length - 1] || "the plugin did not build").replace(/^cursor-plugin: /, "");
+            root.refresh();
+        }
+
+        stderr: StdioCollector {
+            id: pluginErr
+        }
+
+    }
+
+    FileView {
+        path: root.pluginScript
+        printErrors: false
+        onLoaded: root.pluginScriptFound = true
+        onLoadFailed: root.pluginScriptFound = false
     }
 
     FileView {
@@ -607,6 +718,7 @@ Singleton {
         property string current: ""
         property bool dropped: false
         property var restoring: []
+        property bool nudge: false
 
         path: root.dataPath
         blockLoading: true
@@ -622,13 +734,24 @@ Singleton {
             writeDebounce.restart();
         }
         onSaved: {
-            if (dataFile.dropped)
-                Quickshell.execDetached(["hyprctl", "reload"]);
-            else
-                Quickshell.execDetached(["hyprctl", "eval", "if LucidSettings then " + (dataFile.restoring.length > 0 ? "LucidSettings.restore({ " + dataFile.restoring.map(root.luaStr).join(", ") + " }) " : "") + "LucidSettings.apply(true) end"]);
+            root.applySaved(dataFile.dropped, dataFile.restoring, dataFile.nudge);
             dataFile.dropped = false;
             dataFile.restoring = [];
+            dataFile.nudge = false;
             refreshAgain.restart();
+        }
+    }
+
+    Process {
+        id: applyProc
+
+        onExited: {
+            Pointer.poke();
+            if (root._pending) {
+                const p = root._pending;
+                root._pending = null;
+                root.applySaved(p.reload, p.restoring, p.nudge);
+            }
         }
     }
 

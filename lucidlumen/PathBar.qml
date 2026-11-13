@@ -35,8 +35,12 @@ Rectangle {
                 "glyph": "schedule"
             }];
 
+        // someone else's folder through gvfs's admin://: its folders as they are
+        // here, the last one where it's open now
+        var admin = t.path.indexOf("admin://") === 0;
+        var p = admin ? (decodeURIComponent(t.path.replace(/^admin:\/\/[^\/]*/, "")).replace(/\/+$/, "") || "/") : t.path;
         // an address: its server, then its folders
-        if (t.path.indexOf("://") !== -1) {
+        if (!admin && t.path.indexOf("://") !== -1) {
             var m = /^([a-z0-9+.-]+:\/\/[^\/]*)(\/.*)?$/i.exec(t.path);
             if (m) {
                 var at = m[1], list = [{
@@ -58,7 +62,7 @@ Rectangle {
                 return list;
             }
         }
-        var p = t.path, home = bar.app.home, out = [];
+        var home = bar.app.home, out = [];
         var rest;
         if (p === home || p.indexOf(home + "/") === 0) {
             out.push({
@@ -93,6 +97,9 @@ Rectangle {
                 "glyph": ""
             });
         }
+        if (admin)
+            out[out.length - 1].path = t.path;
+
         return out;
     }
 

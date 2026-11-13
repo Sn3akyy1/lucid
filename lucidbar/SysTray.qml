@@ -1,303 +1,558 @@
 import QtQuick
-import QtQuick.Effects
-import QtQuick.Shapes
 import Quickshell
 import Quickshell.Hyprland._FocusGrab
 import Quickshell.Services.SystemTray
-import Quickshell.Widgets
 import qs
-import qs.lucidicons
 import qs.lucidui
 
+// the system tray. its two looks share one line of apps: each app in a slot of
+// its own as the apps module has them, or the first few stacked with a count.
+// a click on either opens the panel, grouped rows whose menus open in place,
+// and a right click on a slot hangs the app's menu off the bar in the desktop
+// menu's card
 BarPill {
     id: root
 
-    readonly property var hiddenKeywords: ["blueman"]
-    // the ones switched off on the module's card, by their id
-    readonly property var hiddenIds: String(Prefs.trayHidden).split(",").filter((id) => {
-        return id !== "";
-    })
-    // the look picked on the module's card: collapsed, or every app's icon
+    // the look picked on the module's card: every app in a slot, or the stack
     lookPref: Prefs.trayStyle
     readonly property bool iconFace: root.look === "icons"
-    readonly property var trayItems: {
-        const raw = SystemTray.items ? SystemTray.items.values : [];
-        const visible = raw.filter((i) => {
-            const key = ((i.id || "") + " " + (i.title || "")).toLowerCase();
-            return root.hiddenIds.indexOf(i.id || "") === -1 && !root.hiddenKeywords.some((kw) => {
-                return key.indexOf(kw) !== -1;
-            });
-        });
-        const nameOf = (i) => {
-            return (i.title || i.tooltipTitle || i.id || "").toLowerCase();
-        };
-        return visible.slice().sort((a, b) => {
-            const aAttn = a.status === Status.NeedsAttention ? 0 : 1;
-            const bAttn = b.status === Status.NeedsAttention ? 0 : 1;
-            if (aAttn !== bAttn)
-                return aAttn - bAttn;
 
-            return nameOf(a).localeCompare(nameOf(b));
-        });
-    }
-    readonly property int trayCount: root.trayItems.length
-    readonly property int attentionCount: root.trayItems.filter((i) => {
-        return i.status === Status.NeedsAttention;
+    // the apps shown, in order: asking for attention, at work, idle; then by name
+    readonly property var ordered: Tray.ordered(SystemTray.items ? SystemTray.items.values : [])
+    readonly property int trayCount: root.ordered.length
+    readonly property int attentionCount: root.ordered.filter((i) => {
+        return Tray.wantsYou(i);
     }).length
-    property var menuItem: null
-    property real menuX: 0
-    // where the menu hangs from, in the pill's own coordinates: off an icon on
-    // the bar, or the point a card was clicked. It goes away from the bar, so up
-    // from there on the bottom edge
-    property real menuFromY: 0
-    readonly property real menuY: root.overlayY(root.menuFromY, 0, menuSheet.height)
-    onMenuItemChanged: {
-        if (root.menuItem)
-            sheetJelly.kickAfter(Math.min(0.09, Theme.dp(18) / Math.max(1, menuSheet.height)), Math.round(Theme.barDurShort * 0.3));
-        else
-            sheetJelly.rest();
+    // the ones running that the module's card switched off
+    readonly property int hiddenCount: (SystemTray.items ? SystemTray.items.values : []).filter((i) => {
+        return !Tray.isBuiltin(i) && Tray.isHidden(i);
+    }).length
+
+    // each app keeps a number for as long as it stays. the slots, the stack and
+    // the panel's rows all draw from one list of those numbers, brought into line
+    // by moves, so a title or a status changing rebuilds nothing, and an app that
+    // quits shrinks away where it was before its neighbours close up
+    property var registry: ({})
+    property var serials: []
+    property int nextSerial: 1
+    // what came with the module is already there; what comes later grows in
+    property bool slotsReady: false
+
+    function itemOf(serial) {
+        return root.registry[serial] || null;
     }
 
-    function resolveIconSource(raw) {
-        if (!raw)
-            return "";
-
-        const qIdx = raw.indexOf("?path=");
-        if (qIdx === -1)
-            return raw;
-
-        const name = raw.substring(0, qIdx);
-        const dir = raw.substring(qIdx + 6);
-        const fileName = name.substring(name.lastIndexOf("/") + 1);
-        return "file://" + dir + "/" + fileName;
+    // its place among the apps staying, -1 for one on its way out
+    function rankOf(serial) {
+        return root.serials.indexOf(serial);
     }
 
-    // an app's lucid icon, unless legacy icons are on or lucid draws none for it.
-    // electron apps all go by chrome_status_icon_n, so their title names them; a
-    // hardware or service icon shows a state (signal, charge) and keeps its own
-    function appSlotOf(item) {
-        if (Prefs.envLegacyIcons || !item || item.category === Category.Hardware || item.category === Category.SystemServices)
-            return "";
+    function sync() {
+        const want = root.ordered;
+        const leavingNow = [];
+        for (let i = 0; i < slots.count; i++) {
+            if (slots.get(i).leaving)
+                leavingNow.push(slots.get(i).serial);
 
-        const id = /^chrome_status_icon/.test(item.id || "") ? "" : (item.id || "");
-        const name = item.title || item.tooltipTitle || "";
-        const raw = item.icon || "";
-        const icon = raw.indexOf("image://icon/") === 0 ? raw.slice(13).split("?")[0] : "";
-        return LucidIcons.slotFor(id || name, icon, name);
+        }
+        const reg = Object.assign({}, root.registry);
+        let regChanged = false;
+        const wanted = [];
+        for (const it of want) {
+            let s = -1;
+            for (const k in reg) {
+                const n = Number(k);
+                if (reg[k] === it && leavingNow.indexOf(n) === -1) {
+                    s = n;
+                    break;
+                }
+            }
+            if (s < 0) {
+                // back while its old slot still shrinks: that one keeps the face it
+                // had, and the app comes in anew
+                for (const k in reg) {
+                    if (reg[k] === it)
+                        delete reg[k];
+
+                }
+                s = root.nextSerial++;
+                reg[s] = it;
+                regChanged = true;
+            }
+            wanted.push(s);
+        }
+        // the rest shrink away where they are, with nothing left pointing at an
+        // app that may be gone: they keep the face they had
+        let leavingAny = false;
+        for (let i = 0; i < slots.count; i++) {
+            const r = slots.get(i);
+            if (!r.leaving && wanted.indexOf(r.serial) === -1) {
+                delete reg[r.serial];
+                regChanged = true;
+                slots.setProperty(i, "leaving", true);
+                leavingAny = true;
+            }
+        }
+        if (regChanged)
+            root.registry = reg;
+
+        // the rest into line, among the ones still leaving
+        for (let k = 0; k < wanted.length; k++) {
+            let target = 0;
+            let seen = 0;
+            for (; target < slots.count; target++) {
+                if (slots.get(target).leaving)
+                    continue;
+
+                if (seen === k)
+                    break;
+
+                seen++;
+            }
+            let cur = -1;
+            for (let i = 0; i < slots.count; i++) {
+                if (slots.get(i).serial === wanted[k] && !slots.get(i).leaving) {
+                    cur = i;
+                    break;
+                }
+            }
+            if (cur === -1)
+                slots.insert(target, {
+                "serial": wanted[k],
+                "leaving": false
+            });
+            else if (cur !== target)
+                slots.move(cur, target, 1);
+        }
+        root.serials = wanted;
+        if (leavingAny)
+            retire.restart();
+
     }
 
-    readonly property int horizontalPadding: Theme.dp(10)
+    onOrderedChanged: root.sync()
+    Component.onCompleted: {
+        root.sync();
+        readyLater.start();
+    }
+
+    ListModel {
+        id: slots
+    }
+
+    // the ones that left have shrunk away by now: a slot goes quicker than a row
+    // in the open panel, and only what is on screen is waited for
+    Timer {
+        id: retire
+
+        interval: (root.expanded ? Theme.durMedium : Theme.durShort) + 40
+        onTriggered: {
+            for (let i = slots.count - 1; i >= 0; i--) {
+                if (slots.get(i).leaving)
+                    slots.remove(i);
+
+            }
+        }
+    }
+
+    Timer {
+        id: readyLater
+
+        interval: 600
+        onTriggered: root.slotsReady = true
+    }
+
+    // sizes: a slot and a glyph as the apps module has them
+    readonly property int slot: root.compactHeight - Theme.dp(4)
+    readonly property int glyph: Math.min(root.compactHeight - Theme.dp(12), Math.max(Theme.barDp(12), Math.round(Math.min(root.compactHeight * 0.55, root.compactHeight - Theme.dp(16)) * Theme.barContent)))
+    readonly property int horizontalPadding: root.iconFace ? Theme.dp(6) : Theme.barDp(10)
+    readonly property int pileMax: 3
+    // each one behind shows about two thirds of itself
+    readonly property int pileStep: Math.round(root.glyph * 0.78)
+    readonly property int pileShown: Math.min(root.trayCount, root.pileMax)
+    readonly property int pileWidth: root.pileShown > 0 ? root.glyph + (root.pileShown - 1) * root.pileStep : 0
+    readonly property int moreCount: Math.max(0, root.trayCount - root.pileMax)
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
-    readonly property int maxPanelHeight: Math.min(Theme.dp(380), Math.max(Theme.dp(180), root.screenH - Theme.dp(40)))
+    // tall enough that an app's menu opened in its row rarely has to scroll
+    readonly property int maxPanelHeight: Math.min(Theme.dp(760), Math.max(Theme.dp(200), root.screenH - Theme.dp(90)))
+    readonly property int rowGap: Theme.dp(3)
+    // a panel taller than it may be scrolls under the wheel, rows and all
+    readonly property bool panelScrolls: panelFlick.contentHeight > panelFlick.height + 0.5
 
     shown: Prefs.barHas("tray") && root.trayCount > 0
-    compactWidth: compactRow.implicitWidth + root.horizontalPadding * 2
-    panelWidth: Math.min(Theme.dp(300), root.screenW - Theme.dp(34))
-    panelHeight: Math.min(root.maxPanelHeight, expandedColumn.implicitHeight + Theme.dp(28))
-    expandedRadius: Theme.radiusLg
+    compactWidth: root.iconFace ? slots.count * root.slot + root.horizontalPadding * 2 : root.pileWidth + (root.moreCount > 0 ? Theme.barDp(5) + moreText.implicitWidth : 0) + root.horizontalPadding * 2
+    panelWidth: Math.min(Theme.dp(340), root.screenW - Theme.dp(34))
+    // the flickable's own margins, each rounded as it is: dp(24) is a pixel short of two dp(12)s
+    panelHeight: Math.min(root.maxPanelHeight, panelCol.implicitHeight + 2 * Theme.dp(12))
+    expandedRadius: Theme.shapeXl
     compactCollapseScale: 0.94
+    // in the icons look each slot lights on its own, so the pill does not light
+    // as a whole; a click on it still opens the panel, as on any pill
+    compactInteractive: !root.iconFace
 
     onTrayCountChanged: {
-        if (root.trayCount === 0)
+        if (root.trayCount === 0) {
             root.expanded = false;
+            root.closeMenu();
+        }
+    }
+    onExpandedChanged: {
+        root.closeMenu();
+        root.hover(null);
+        // a row left open is put away once the panel has gone, not while it goes
+        if (root.expanded)
+            rowReset.stop();
+        else
+            rowReset.restart();
+    }
+
+    // ---- the panel: which row has its menu out
+    property int openSerial: -1
+
+    function toggleRow(serial) {
+        root.openSerial = root.openSerial === serial ? -1 : serial;
+        if (root.openSerial !== -1)
+            rowReveal.restart();
 
     }
-    // opening the panel over a bar menu, or shutting it, takes the menu away
-    onExpandedChanged: root.menuItem = null
 
-    // a menu opened from the bar has no panel's grab behind it, so it keeps its own
+    // a menu row was picked: everything the tray had open goes
+    function chosen() {
+        root.closeMenu();
+        root.expanded = false;
+    }
+
+    function openSheet() {
+        root.closeMenu();
+        root.expanded = false;
+        if (root.hostWindow && root.hostWindow.editModule)
+            root.hostWindow.editModule("tray");
+        else
+            Prefs.openBarModule("tray");
+    }
+
+    // a click on the icons look, on an icon or between them: the panel, as a
+    // click on any pill. a right click between them, the module's sheet
+    function barClicked(button) {
+        if (button === Qt.RightButton) {
+            root.openSheet();
+            return ;
+        }
+        if (root.popupMode && root.expanded && !root.hoverOpen) {
+            root.expanded = false;
+            return ;
+        }
+        root.hoverOpen = false;
+        root.compactClicked();
+        root.expanded = true;
+    }
+
+    Timer {
+        id: rowReset
+
+        interval: Theme.barDurEnter + 120
+        onTriggered: root.openSerial = -1
+    }
+
+    // a row that opened below the fold scrolls up into view once it has grown
+    Timer {
+        id: rowReveal
+
+        interval: Theme.durMedium + 30
+        onTriggered: {
+            for (let i = 0; i < rowsRep.count; i++) {
+                const r = rowsRep.itemAt(i);
+                if (!r || r.serial !== root.openSerial)
+                    continue;
+
+                const top = rowsCol.y + r.y;
+                const bottom = top + r.height;
+                const maxY = Math.max(0, panelFlick.contentHeight - panelFlick.height);
+                let y = panelFlick.contentY;
+                if (bottom > y + panelFlick.height)
+                    y = bottom - panelFlick.height;
+
+                if (top < y)
+                    y = top;
+
+                scrollTo.to = Math.max(0, Math.min(maxY, y));
+                scrollTo.restart();
+                return ;
+            }
+        }
+    }
+
+    NumberAnimation {
+        id: scrollTo
+
+        target: panelFlick
+        property: "contentY"
+        duration: Theme.durMedium
+        easing.type: Easing.Bezier
+        easing.bezierCurve: Theme.easeEmphasizedDecel
+    }
+
+    // ---- the menu off a slot
+    property int menuSerial: -1
+    property bool menuShown: false
+    property real menuAtX: 0
+    // where the menu hangs from, in the pill's own coordinates: the slot's far
+    // side. it goes away from the bar, so up from there on the bottom edge
+    property real menuFromY: 0
+    readonly property var menuItem: root.menuSerial >= 0 ? root.itemOf(root.menuSerial) : null
+    readonly property real menuY: root.overlayY(root.menuFromY, 0, card.height)
+    readonly property bool menuVisible: root.menuShown || card.opacity > 0.01
+
+    function toggleMenu(cell) {
+        if (!cell)
+            return ;
+
+        if (root.menuShown && root.menuSerial === cell.serial) {
+            root.closeMenu();
+            return ;
+        }
+        root.hover(null);
+        const a = root.mapFromItem(cell, 0, 0).y;
+        const b = root.mapFromItem(cell, 0, cell.height).y;
+        root.menuFromY = Math.max(a, b) + Theme.dp(6);
+        root.menuAtX = menuLayer.mapFromItem(cell, 0, 0).x - Theme.dp(2);
+        const swapped = root.menuShown;
+        root.menuSerial = cell.serial;
+        menu.reset();
+        if (swapped)
+            card.popIn();
+        else
+            root.menuShown = true;
+    }
+
+    function closeMenu() {
+        root.menuShown = false;
+    }
+
+    // the app quit with its menu open
+    onMenuItemChanged: {
+        if (!root.menuItem)
+            root.closeMenu();
+
+    }
+    onMenuShownChanged: {
+        if (root.menuShown)
+            card.appear();
+        else
+            card.vanish();
+    }
+
+    // a menu off the bar has no panel's grab behind it, so it keeps its own
     HyprlandFocusGrab {
-        active: root.overlayOpen && !root.expanded
+        active: root.menuShown && !root.expanded
         windows: root.hostWindow ? [root.hostWindow] : []
-        onCleared: root.menuItem = null
+        onCleared: root.closeMenu()
     }
+
+    // ---- the name under a slot, after a beat
+    property Item tipCell: null
+    property bool tipShown: false
+    property bool tipAbove: false
+    readonly property bool tipOpen: Prefs.dockShowTooltips && root.iconFace && root.tipShown && !!root.tipCell && !root.menuShown && !root.expanded
+    readonly property var tipItem: root.tipCell ? root.tipCell.item : null
+    // what the tip says and where, held while it fades: the slot it named is
+    // already gone from under the pointer by then
+    readonly property bool tipLive: !!root.tipCell && root.tipShown && !!root.tipItem
+    property point tipAt: Qt.point(0, 0)
+    property string tipName: ""
+    property string tipDetail: ""
+    property bool tipWants: false
+    // mapped again once the overlay has grown to take it, since on the bottom
+    // edge the overlay counts from its far end
+    readonly property point tipLiveAt: root.tipLive ? (menuLayer.width, menuLayer.height, menuLayer.mapFromItem(root.tipCell, root.tipCell.width / 2, root.tipAbove ? -Theme.dp(8) : root.tipCell.height + Theme.dp(8))) : Qt.point(0, 0)
+    readonly property string tipLiveName: root.tipLive ? Tray.nameOf(root.tipItem) : ""
+    readonly property bool tipLiveWants: root.tipLive && Tray.wantsYou(root.tipItem)
+    readonly property string tipLiveDetail: root.tipLive ? (Tray.detailOf(root.tipItem) || (root.tipLiveWants ? "Wants your attention" : "")) : ""
+
+    onTipLiveAtChanged: {
+        if (root.tipLive)
+            root.tipAt = root.tipLiveAt;
+
+    }
+    onTipLiveNameChanged: {
+        if (root.tipLive)
+            root.tipName = root.tipLiveName;
+
+    }
+    onTipLiveDetailChanged: {
+        if (root.tipLive)
+            root.tipDetail = root.tipLiveDetail;
+
+    }
+    onTipLiveWantsChanged: {
+        if (root.tipLive)
+            root.tipWants = root.tipLiveWants;
+
+    }
+    onTipLiveChanged: {
+        if (!root.tipLive)
+            return ;
+
+        root.tipAt = root.tipLiveAt;
+        root.tipName = root.tipLiveName;
+        root.tipDetail = root.tipLiveDetail;
+        root.tipWants = root.tipLiveWants;
+    }
+
+    function hover(cell) {
+        root.tipCell = cell;
+        root.tipShown = false;
+        if (cell)
+            tipDelay.restart();
+        else
+            tipDelay.stop();
+    }
+
+    function unhover(cell) {
+        if (root.tipCell === cell)
+            root.hover(null);
+
+    }
+
+    Timer {
+        id: tipDelay
+
+        interval: 500
+        onTriggered: {
+            if (!root.tipCell)
+                return ;
+
+            const g = root.tipCell.mapToGlobal(0, 0);
+            root.tipAbove = g.y > root.screenH / 2;
+            root.tipShown = true;
+        }
+    }
+
+    // the menu card takes the pointer and the blur; the tip takes neither
+    overlayOpen: root.menuVisible || root.tipOpen || tip.opacity > 0.01
+    overlayItem: card
+    readonly property bool overlayBlurReady: card.opacity > 0.95
+    readonly property var overlayRects: root.menuShown ? [{
+        "x": card.x + cardJelly.shiftX,
+        "y": card.y + cardJelly.shiftY,
+        "w": card.width * cardJelly.xScale,
+        "h": card.height * cardJelly.yScale,
+        "r": card.radius
+    }] : []
 
     compactContent: [
-        Row {
-            id: compactRow
+        // the icons look: a click between the icons opens the panel, a right
+        // click there the module's sheet; the slots above pass their clicks on
+        MouseArea {
+            anchors.fill: parent
+            enabled: root.iconFace
+            visible: root.iconFace
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            cursorShape: Qt.PointingHandCursor
+            onClicked: (mouse) => {
+                return root.barClicked(mouse.button);
+            }
+        },
+        Item {
+            id: strip
 
-            anchors.centerIn: parent
-            spacing: root.iconFace ? Theme.dp(6) : Theme.dp(4)
+            visible: root.iconFace
+            x: root.horizontalPadding
+            width: slots.count * root.slot
+            height: root.compactHeight
 
-            // the icons look: each app in the bar, clicked as in the panel
             Repeater {
-                model: root.iconFace ? root.trayItems : []
+                model: root.iconFace ? slots : null
 
-                Item {
-                    id: inline
-
-                    required property var modelData
-                    readonly property string lucidSlot: root.appSlotOf(inline.modelData)
-
-                    width: Theme.dp(18)
-                    height: Theme.dp(18)
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    IconImage {
-                        id: inlineIcon
-
-                        anchors.fill: parent
-                        source: root.resolveIconSource(inline.modelData.icon)
-                        asynchronous: true
-                        visible: status === Image.Ready && inline.lucidSlot === ""
-                        layer.enabled: Prefs.trayIconColor !== "original"
-                        layer.effect: TrayTint {
-                        }
-                    }
-
-                    Loader {
-                        anchors.centerIn: parent
-                        active: inline.lucidSlot !== ""
-
-                        sourceComponent: TonalIcon {
-                            size: Math.round(Theme.dp(18))
-                            slot: inline.lucidSlot
-                            hovered: inlineArea.containsMouse
-                        }
-
-                    }
-
-                    Text {
-                        visible: !inlineIcon.visible && inline.lucidSlot === ""
-                        anchors.centerIn: parent
-                        text: (inline.modelData.title || inline.modelData.id || "?").charAt(0).toUpperCase()
-                        color: Theme.subtext
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        font.pixelSize: Theme.fs(12)
-                    }
-
-                    // one asking for attention
-                    Rectangle {
-                        visible: inline.modelData.status === Status.NeedsAttention
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.top: parent.bottom
-                        anchors.topMargin: Theme.dp(2)
-                        width: Theme.dp(4)
-                        height: Theme.dp(4)
-                        radius: height / 2
-                        color: Theme.accent
-                    }
-
-                    MouseArea {
-                        id: inlineArea
-
-                        anchors.fill: parent
-                        anchors.margins: -Theme.dp(3)
-                        hoverEnabled: true
-                        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: (mouse) => {
-                            if (mouse.button === Qt.RightButton) {
-                                // its menu on its own, under the icon; the pill stays shut
-                                if (root.menuItem === inline.modelData && root.overlayOpen) {
-                                    root.menuItem = null;
-                                    return ;
-                                }
-                                const p = menuLayer.mapFromItem(inline, 0, inline.height + Theme.dp(6));
-                                // the icon's far side, which mapping gives as the larger y
-                                const a = root.mapFromItem(inline, 0, 0).y;
-                                const b = root.mapFromItem(inline, 0, inline.height).y;
-                                root.menuFromY = Math.max(a, b) + Theme.dp(6);
-                                root.menuItem = inline.modelData;
-                                root.menuX = p.x;
-                                return ;
-                            }
-                            root.menuItem = null;
-                            if (mouse.button === Qt.MiddleButton)
-                                inline.modelData.secondaryActivate();
-                            else
-                                inline.modelData.activate();
-                        }
-                        onWheel: (wheel) => {
-                            inline.modelData.scroll(wheel.angleDelta.y, false);
-                            wheel.accepted = true;
-                        }
-                    }
-
+                TraySlot {
+                    tray: root
                 }
 
             }
 
-            Item {
-                visible: !root.iconFace
-                width: Theme.dp(16)
-                height: Theme.dp(16)
-                anchors.verticalCenter: parent.verticalCenter
+        },
+        // the stack: the first apps overlapped, then how many more
+        Item {
+            id: pile
 
-                Icon {
-                    anchors.centerIn: parent
-                    name: "dashboard"
-                    size: Theme.dp(18)
-                    fill: 1
-                    color: Theme.text
+            visible: !root.iconFace
+            x: root.horizontalPadding
+            anchors.verticalCenter: parent.verticalCenter
+            width: root.pileWidth
+            height: root.glyph
+
+            Repeater {
+                model: root.iconFace ? null : slots
+
+                TrayPileIcon {
+                    tray: root
                 }
 
             }
 
-            Rectangle {
-                id: countBadge
+            Behavior on width {
+                enabled: root.slotsReady
 
-                visible: !root.iconFace
-                anchors.verticalCenter: parent.verticalCenter
-                height: Theme.dp(16)
-                width: root.trayCount > 0 ? Math.max(Theme.dp(16), countText.implicitWidth + Theme.dp(8)) : 0
-                radius: Theme.dp(999)
-                color: Theme.accent
-                opacity: root.trayCount > 0 ? 1 : 0
-                scale: root.trayCount > 0 ? 1 : 0.4
-                clip: true
-
-                TextMetrics {
-                    id: countCap
-
-                    font: countText.font
-                    text: "7"
+                NumberAnimation {
+                    duration: Theme.durMedium
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.easeEmphasizedDecel
                 }
 
-                FontMetrics {
-                    id: countFm
+            }
 
-                    font: countText.font
-                }
+        },
+        Text {
+            id: moreText
 
-                Text {
-                    id: countText
+            visible: !root.iconFace && root.moreCount > 0
+            anchors.left: pile.right
+            anchors.leftMargin: Theme.barDp(5)
+            anchors.verticalCenter: parent.verticalCenter
+            text: "+" + root.moreCount
+            color: Theme.subtext
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.barFs(12)
+            font.variableAxes: Theme.axes(Theme.barFs(12), 600, 0)
+            font.weight: Font.DemiBold
+        },
+        // the one in front asking for attention: the slots' red mark, under it
+        Rectangle {
+            id: pileMark
 
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    // centre the cap-height box, not the line box
-                    y: (countBadge.height - countCap.tightBoundingRect.height) / 2 - countCap.tightBoundingRect.y - countFm.ascent
-                    text: root.trayCount > 9 ? "9+" : String(root.trayCount)
-                    color: Theme.fgAccent
-                    font.family: Theme.fontFamily
-                    font.bold: true
-                    font.pixelSize: Theme.fs(11)
-                    font.variableAxes: Theme.axes(Theme.fs(11), 640, 0)
-                }
+            property real pulse: 1
+            readonly property bool wants: !root.iconFace && root.attentionCount > 0
 
-                Behavior on width {
-                    NumberAnimation {
-                        duration: Theme.barDurShort
-                        easing.type: Easing.OutCubic
-                    }
+            x: pile.x + Math.round((root.glyph - width) / 2)
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: Theme.dp(3)
+            width: Theme.barDp(4)
+            height: Theme.barDp(3)
+            radius: height / 2
+            color: Theme.error
+            opacity: pileMark.wants ? pileMark.pulse : 0
+            visible: opacity > 0.01
 
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.barDurShort
-                        easing.type: Easing.OutCubic
-                    }
+            SequentialAnimation on pulse {
+                running: pileMark.wants && root.shown
+                loops: Animation.Infinite
+                onRunningChanged: {
+                    if (!running)
+                        pileMark.pulse = 1;
 
                 }
 
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: Theme.barDurShort
-                        easing.type: Easing.OutCubic
-                    }
+                NumberAnimation {
+                    to: 0.3
+                    duration: Theme.ms(500)
+                    easing.type: Easing.InOutSine
+                }
 
+                NumberAnimation {
+                    to: 1
+                    duration: Theme.ms(500)
+                    easing.type: Easing.InOutSine
                 }
 
             }
@@ -306,288 +561,150 @@ BarPill {
     ]
 
     panelContent: [
-        Column {
-            id: expandedColumn
+        Flickable {
+            id: panelFlick
 
             anchors.fill: parent
-            anchors.margins: Theme.dp(14)
-            spacing: Theme.dp(10)
+            anchors.margins: Theme.dp(12)
+            contentWidth: width
+            contentHeight: panelCol.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            interactive: contentHeight > height + 0.5
+            flickDeceleration: 6000
+            maximumFlickVelocity: 6000
 
-            Item {
-                width: parent.width
-                height: Theme.dp(28)
+            Column {
+                id: panelCol
 
-                Rectangle {
-                    anchors.bottom: parent.bottom
+                width: panelFlick.width
+
+                Item {
                     width: parent.width
-                    height: 1
-                    color: Theme.outline
+                    height: Theme.dp(44)
+
+                    // on the rows' icon column
+                    LText {
+                        anchors.left: parent.left
+                        anchors.leftMargin: Theme.dp(14)
+                        anchors.verticalCenter: parent.verticalCenter
+                        role: "titleMedium"
+                        weight: 600
+                        text: "Tray"
+                        color: Theme.text
+                    }
+
+                    LText {
+                        anchors.right: sheetButton.left
+                        anchors.rightMargin: Theme.dp(4)
+                        anchors.verticalCenter: parent.verticalCenter
+                        role: "labelMedium"
+                        text: root.attentionCount > 0 ? (root.attentionCount === 1 ? "1 wants attention" : root.attentionCount + " want attention") : (root.trayCount === 1 ? "1 app" : root.trayCount + " apps")
+                        color: root.attentionCount > 0 ? Theme.error : Theme.subtext
+                    }
+
+                    IconButton {
+                        id: sheetButton
+
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        icon: "settings"
+                        size: "s"
+                        onClicked: root.openSheet()
+                    }
+
                 }
 
-                Text {
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "Tray"
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.bold: true
-                    font.pixelSize: Theme.fs(13)
-                    font.variableAxes: Theme.axes(Theme.fs(13), 640, 0)
+                Item {
+                    width: 1
+                    height: Theme.dp(4)
                 }
 
-                Text {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.attentionCount > 0 ? root.attentionCount + " needs attention" : (root.trayCount === 1 ? "1 running" : root.trayCount + " running")
-                    color: root.attentionCount > 0 ? Theme.accent : Theme.subtext
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(11)
-                    font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
+                Column {
+                    id: rowsCol
 
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Theme.barDurShort
+                    width: parent.width
+
+                    Repeater {
+                        id: rowsRep
+
+                        model: slots
+
+                        TrayRow {
+                            tray: root
                         }
 
                     }
 
                 }
 
-            }
+                // apps switched off on the card still run; say so, and where to bring them back
+                Item {
+                    visible: root.hiddenCount > 0
+                    width: parent.width
+                    height: visible ? Theme.dp(44) : 0
 
-            ListView {
-                id: trayList
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.topMargin: Theme.dp(6)
+                        radius: height / 2
+                        color: Theme.text
+                        opacity: hiddenArea.pressed ? Theme.statePressed : (hiddenHover.hovered && root.expanded ? Theme.stateHover : 0)
 
-                width: parent.width
-                clip: true
-                spacing: 0
-                model: root.trayItems
-                height: Math.min(contentHeight, root.maxPanelHeight - Theme.dp(60))
-                flickDeceleration: 6000
-                maximumFlickVelocity: 6000
-
-                MouseArea {
-                    anchors.fill: parent
-                    acceptedButtons: Qt.NoButton
-                    onWheel: (wheel) => {
-                        const maxY = Math.max(0, trayList.contentHeight - trayList.height);
-                        trayList.contentY = Math.max(0, Math.min(maxY, trayList.contentY - (wheel.angleDelta.y / 120) * 90));
-                        wheel.accepted = true;
-                    }
-                }
-
-                delegate: TrayCard {
-                    onRequestMenu: (it, wx, wy) => {
-                        const p = menuLayer.mapFromItem(null, wx, wy);
-                        root.menuFromY = root.mapFromItem(null, wx, wy).y;
-                        root.menuItem = it;
-                        root.menuX = p.x;
-                    }
-                }
-
-                add: Transition {
-                    NumberAnimation {
-                        property: "opacity"
-                        from: 0
-                        to: 1
-                        duration: Theme.barDurShort
-                    }
-
-                }
-
-                remove: Transition {
-                    NumberAnimation {
-                        property: "opacity"
-                        to: 0
-                        duration: Theme.barDurQuick
-                    }
-
-                }
-
-                displaced: Transition {
-                    NumberAnimation {
-                        property: "y"
-                        duration: Theme.barDurMedium
-                        easing.type: Easing.Bezier
-                        easing.bezierCurve: Theme.easeEmphasizedDecel
-                    }
-
-                }
-
-            }
-
-        }
-    ]
-
-    overlayOpen: root.menuItem !== null && entryRep.count > 0
-    overlayItem: menuSheet
-
-    overlayContent: [
-        Item {
-            id: menuLayer
-
-            anchors.fill: parent
-            visible: root.menuItem !== null && entryRep.count > 0
-
-            QsMenuOpener {
-                id: menuOpener
-
-                menu: root.menuItem ? root.menuItem.menu : null
-            }
-
-            Rectangle {
-                id: menuSheet
-
-                readonly property real wanted: entryCol.implicitHeight + Theme.dp(12)
-
-                width: Theme.dp(196)
-                height: Math.min(menuSheet.wanted, root.screenH - Theme.dp(80))
-                // kept on screen, whichever side of the bar the tray sits on
-                x: Math.max(Theme.dp(10) - root.x, Math.min(root.menuX, menuLayer.width - menuSheet.width - Theme.dp(10)))
-                y: root.menuY
-                radius: Theme.radiusSm
-                color: Theme.bg
-                clip: true
-                opacity: root.menuItem !== null ? 1 : 0
-                scale: root.menuItem !== null ? 1 : 0.94
-                transformOrigin: Prefs.barBottom ? Item.BottomLeft : Item.TopLeft
-                readonly property bool jellyWobbling: sheetJelly.wobbling
-                transform: Jelly {
-                    id: sheetJelly
-
-                    target: menuSheet
-                    anchorX: 0
-                    anchorY: Prefs.barBottom ? 1 : 0
-                    frequency: 4.4
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.barDurShort
-                        easing.type: Easing.OutCubic
-                    }
-
-                }
-
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: Theme.barDurShort
-                        easing.type: Easing.Bezier
-                        easing.bezierCurve: Theme.easeEmphasizedDecel
-                    }
-
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-                    onWheel: (wheel) => {
-                        wheel.accepted = true;
-                    }
-                }
-
-                Flickable {
-                    anchors.fill: parent
-                    anchors.margins: Theme.dp(6)
-                    contentWidth: width
-                    contentHeight: entryCol.implicitHeight
-                    clip: true
-                    boundsBehavior: Flickable.StopAtBounds
-                    interactive: contentHeight > height
-
-                    Column {
-                        id: entryCol
-
-                        width: parent.width
-
-                        Repeater {
-                            id: entryRep
-
-                            model: menuOpener.children
-
-                            delegate: Item {
-                                id: entryRow
-
-                                required property var modelData
-
-                                readonly property var entry: entryRow.modelData
-                                readonly property bool isSep: entryRow.entry.isSeparator || entryRow.entry.text === ""
-
-                                width: entryCol.width
-                                height: entryRow.isSep ? Theme.dp(7) : Theme.dp(28)
-
-                                Rectangle {
-                                    visible: entryRow.isSep
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    anchors.margins: Theme.dp(6)
-                                    height: 1
-                                    color: Theme.outline
-                                }
-
-                                Rectangle {
-                                    visible: !entryRow.isSep
-                                    anchors.fill: parent
-                                    radius: Theme.radiusXs
-                                    color: Theme.text
-                                    opacity: (entryArea.containsMouse && entryRow.entry.enabled) ? Theme.stateHover : 0
-
-                                    Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: Theme.barDurQuick
-                                        }
-
-                                    }
-
-                                }
-
-                                Icon {
-                                    id: tick
-
-                                    visible: !entryRow.isSep && entryRow.entry.checkState !== Qt.Unchecked
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: Theme.dp(4)
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    name: "check"
-                                    size: Theme.dp(14)
-                                    color: Theme.accent
-                                }
-
-                                Text {
-                                    visible: !entryRow.isSep
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: tick.visible ? Theme.dp(22) : Theme.dp(10)
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: Theme.dp(10)
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: entryRow.entry.text
-                                    color: entryRow.entry.enabled ? Theme.text : Theme.subtextDim
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fs(11)
-                                    font.variableAxes: Theme.axes(Theme.fs(11), 420, 0)
-                                    elide: Text.ElideRight
-                                }
-
-                                MouseArea {
-                                    id: entryArea
-
-                                    anchors.fill: parent
-                                    enabled: !entryRow.isSep && entryRow.entry.enabled
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        entryRow.entry.triggered();
-                                        root.menuItem = null;
-                                    }
-                                }
-
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.durQuick
                             }
 
                         }
 
                     }
 
+                    Row {
+                        anchors.left: parent.left
+                        anchors.leftMargin: Theme.dp(14)
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: Theme.dp(3)
+                        spacing: Theme.dp(10)
+
+                        Icon {
+                            anchors.verticalCenter: parent.verticalCenter
+                            name: "visibility_off"
+                            size: Theme.dp(18)
+                            color: Theme.subtext
+                        }
+
+                        LText {
+                            anchors.verticalCenter: parent.verticalCenter
+                            role: "bodyMedium"
+                            text: root.hiddenCount === 1 ? "1 app hidden" : root.hiddenCount + " apps hidden"
+                            color: Theme.subtext
+                        }
+
+                    }
+
+                    LText {
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.dp(14)
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: Theme.dp(3)
+                        role: "labelLarge"
+                        text: "Manage"
+                        color: Theme.primary
+                    }
+
+                    HoverHandler {
+                        id: hiddenHover
+                    }
+
+                    MouseArea {
+                        id: hiddenArea
+
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.openSheet()
+                    }
+
                 }
 
             }
@@ -595,224 +712,279 @@ BarPill {
         }
     ]
 
-
-    // an app's icon in the shell's colours: its light and shade kept, the hue
-    // taken from the text (grey) or from one of the palette's colours
-    component TrayTint: MultiEffect {
-        readonly property color role: Prefs.trayIconColor === "accent" ? Theme.cPrimary : (Prefs.trayIconColor === "tertiary" ? Theme.cTertiary : Theme.cSecondary)
-
-        // lifted first, so a mid-tone icon reads on the bar like its text
-        brightness: 0.4
-        colorization: 1
-        // the palette colour at a tone that reads on the bar, keeping its hue
-        colorizationColor: Prefs.trayIconColor === "grey" ? Theme.text : Theme.atTone(role, Theme.isLight ? 40 : 80)
-    }
-
-    component TrayCard: Rectangle {
-        id: card
-
-        required property var modelData
-        required property int index
-
-        signal requestMenu(var it, real wx, real wy)
-
-        readonly property var item: card.modelData
-        readonly property string lucidSlot: root.appSlotOf(card.item)
-        readonly property bool needsAttention: card.item.status === Status.NeedsAttention
-        readonly property string displayName: card.item.title || card.item.tooltipTitle || card.item.id || "Unknown"
-        readonly property string supporting: {
-            const desc = (card.item.tooltipDescription || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
-            if (desc.length > 0)
-                return desc;
-
-            const tip = (card.item.tooltipTitle || "").trim();
-            if (tip.length > 0 && tip !== card.displayName)
-                return tip;
-
-            switch (card.item.category) {
-            case Category.Hardware:
-                return "Hardware";
-            case Category.SystemServices:
-                return "System service";
-            case Category.Communications:
-                return "Communications";
-            default:
-                return "";
-            }
-        }
-        readonly property string resolvedIcon: {
-            const raw = card.item.icon;
-            if (!raw)
-                return "";
-
-            const qIdx = raw.indexOf("?path=");
-            if (qIdx === -1)
-                return raw;
-
-            const name = raw.substring(0, qIdx);
-            const dir = raw.substring(qIdx + 6);
-            const fileName = name.substring(name.lastIndexOf("/") + 1);
-            return "file://" + dir + "/" + fileName;
-        }
-
-        width: ListView.view.width
-        height: card.supporting !== "" ? Theme.dp(54) : Theme.dp(44)
-        color: "transparent"
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: 1
-            radius: Theme.radiusXs
-            color: Theme.text
-            opacity: cardArea.pressed ? Theme.statePressed : (cardArea.containsMouse ? Theme.stateHover : 0)
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.barDurQuick
-                    easing.type: Easing.OutCubic
-                }
-
-            }
-
-        }
-
-        Rectangle {
-            visible: card.index < card.ListView.view.count - 1
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.leftMargin: Theme.dp(48)
-            height: 1
-            color: Theme.outline
-        }
-
-        MouseArea {
-            id: cardArea
+    overlayContent: [
+        Item {
+            id: menuLayer
 
             anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-            onClicked: (mouse) => {
-                if (mouse.button === Qt.RightButton) {
-                    const p = cardArea.mapToItem(null, mouse.x, mouse.y);
-                    card.requestMenu(card.item, p.x, p.y);
-                } else if (mouse.button === Qt.MiddleButton) {
-                    card.item.secondaryActivate();
-                } else {
-                    card.item.activate();
+
+            // the app's menu, the desktop menu's card: its name on top, then the
+            // rows, a submenu sliding in over them
+            Rectangle {
+                id: card
+
+                readonly property real headH: Theme.dp(52)
+                readonly property real headWant: Theme.dp(13) + Theme.dp(26) + Theme.dp(12) + Math.max(cardName.implicitWidth, cardDetail.visible ? cardDetail.implicitWidth : 0) + Theme.dp(18)
+                readonly property bool jellyWobbling: cardJelly.wobbling
+
+                function appear() {
+                    vanishAnim.stop();
+                    cardJelly.rest();
+                    if (card.opacity < 0.05)
+                        card.scale = 0.8;
+
+                    appearAnim.restart();
+                    cardJelly.kickAfter(Math.min(0.09, Theme.dp(20) / Math.max(1, card.height)), Math.round(Theme.barDurEnter * 0.3));
                 }
-            }
-            onWheel: (wheel) => {
-                card.item.scroll(wheel.angleDelta.y, false);
-                wheel.accepted = true;
-            }
-        }
 
-        Row {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.leftMargin: Theme.dp(8)
-            anchors.rightMargin: Theme.dp(10)
-            spacing: Theme.dp(12)
+                function vanish() {
+                    appearAnim.stop();
+                    vanishAnim.restart();
+                }
 
-            Item {
-                width: Theme.dp(28)
-                height: Theme.dp(28)
-                anchors.verticalCenter: parent.verticalCenter
+                // another app's menu while one is up: it comes in again from where it hangs
+                function popIn() {
+                    vanishAnim.stop();
+                    card.scale = 0.92;
+                    appearAnim.restart();
+                    cardJelly.kickAfter(0.05, Math.round(Theme.barDurEnter * 0.3));
+                }
 
-                IconImage {
-                    id: cardIconImage
+                width: Math.round(Math.max(Theme.dp(220), Math.min(Theme.dp(320), Math.max(card.headWant, menu.implicitWidth))))
+                height: Math.round(card.headH + Theme.dp(1) + menu.implicitHeight)
+                // kept on screen, whichever side of the bar the tray sits on
+                x: Math.round(Math.max(Theme.dp(10) - root.x, Math.min(root.menuAtX, menuLayer.width - card.width - Theme.dp(10))))
+                y: Math.round(root.menuY)
+                // m3 expressive: the card rounds out further while a submenu is in
+                radius: menu.shown > 0 ? Theme.radiusLg : Theme.radiusMd
+                color: Theme.bg
+                border.width: Theme.blurAmount > 0 ? 0 : 1
+                border.color: Theme.alpha(Theme.text, 0.06)
+                clip: true
+                opacity: 0
+                visible: card.opacity > 0.01
+                transformOrigin: Prefs.barBottom ? Item.BottomLeft : Item.TopLeft
 
-                    anchors.centerIn: parent
-                    width: Theme.dp(22)
-                    height: Theme.dp(22)
-                    source: card.resolvedIcon
-                    asynchronous: true
-                    visible: status === Image.Ready && card.lucidSlot === ""
-                    layer.enabled: Prefs.trayIconColor !== "original"
-                    layer.effect: TrayTint {
+                // who the menu is for
+                Item {
+                    id: cardHead
+
+                    width: card.width
+                    height: card.headH
+
+                    // centred on the rows' icon column
+                    TrayIcon {
+                        id: cardIcon
+
+                        x: Theme.dp(13)
+                        anchors.verticalCenter: parent.verticalCenter
+                        item: root.menuItem
+                        size: Theme.dp(26)
                     }
-                }
 
-                Loader {
-                    anchors.centerIn: parent
-                    active: card.lucidSlot !== ""
+                    Column {
+                        anchors.left: cardIcon.right
+                        anchors.leftMargin: Theme.dp(12)
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.dp(14)
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 0
 
-                    sourceComponent: TonalIcon {
-                        size: Math.round(Theme.dp(24))
-                        slot: card.lucidSlot
-                        hovered: cardArea.containsMouse
+                        LText {
+                            id: cardName
+
+                            width: parent.width
+                            role: "titleSmall"
+                            weight: 600
+                            text: root.menuItem ? Tray.nameOf(root.menuItem) : ""
+                            color: Theme.text
+                            elide: Text.ElideRight
+                        }
+
+                        LText {
+                            id: cardDetail
+
+                            readonly property bool wants: Tray.wantsYou(root.menuItem)
+
+                            width: parent.width
+                            visible: text !== ""
+                            role: "bodySmall"
+                            text: root.menuItem ? (Tray.detailOf(root.menuItem) || (cardDetail.wants ? "Wants your attention" : "")) : ""
+                            color: cardDetail.wants ? Theme.error : Theme.subtext
+                            elide: Text.ElideRight
+                        }
+
                     }
 
                 }
 
                 Rectangle {
-                    visible: !cardIconImage.visible && card.lucidSlot === ""
+                    y: card.headH
+                    x: Theme.dp(12)
+                    width: card.width - Theme.dp(24)
+                    height: 1
+                    color: Theme.alpha(Theme.text, 0.1)
+                }
+
+                // an app with no menu, or an empty one, still gets one row: open it
+                TrayMenu {
+                    id: menu
+
+                    y: card.headH + Theme.dp(1)
+                    width: card.width
+                    handle: root.menuItem && root.menuItem.hasMenu ? root.menuItem.menu : null
+                    onChosen: root.closeMenu()
+                    onOpenRequested: {
+                        if (root.menuItem)
+                            root.menuItem.activate();
+
+                        root.closeMenu();
+                    }
+                }
+
+                // wheel over the menu stays in it
+                MouseArea {
                     anchors.fill: parent
-                    radius: Theme.dp(999)
-                    color: Theme.withBlur(Theme.bgHigh)
+                    z: -1
+                    acceptedButtons: Qt.NoButton
+                    onWheel: (wheel) => {
+                        wheel.accepted = true;
+                    }
+                }
+
+                ParallelAnimation {
+                    id: appearAnim
+
+                    NumberAnimation {
+                        target: card
+                        property: "opacity"
+                        to: 1
+                        duration: Theme.barDurEnter
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.easeEmphasizedDecel
+                    }
+
+                    NumberAnimation {
+                        target: card
+                        property: "scale"
+                        to: 1
+                        duration: Theme.barDurEnter
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.easeEmphasizedDecel
+                    }
+
+                }
+
+                // out: m3's quick fade in place, never shrinking away
+                NumberAnimation {
+                    id: vanishAnim
+
+                    target: card
+                    property: "opacity"
+                    to: 0
+                    duration: Theme.barDurQuick
+                }
+
+                Behavior on radius {
+                    NumberAnimation {
+                        duration: Theme.barDurEnter
+                        easing.type: Easing.Bezier
+                        easing.bezierCurve: Theme.easeEmphasizedDecel
+                    }
+
+                }
+
+                transform: Jelly {
+                    id: cardJelly
+
+                    target: card
+                    anchorX: 0
+                    anchorY: Prefs.barBottom ? 1 : 0
+                    frequency: 4.4
+                }
+
+            }
+
+            // the app's name, as the apps module names its icons
+            Rectangle {
+                id: tip
+
+                x: Math.round(Math.max(Theme.dp(6) - root.x, Math.min(root.tipAt.x - width / 2, (root.hostWindow ? root.hostWindow.width : menuLayer.width) - root.x - width - Theme.dp(6))))
+                y: Math.round(root.tipAbove ? root.tipAt.y - height : root.tipAt.y)
+                width: Math.min(Theme.dp(260), Math.max(tipNameMetrics.width, tipDetail.visible ? tipDetailMetrics.width : 0) + Theme.dp(22))
+                height: tipColumn.implicitHeight + Theme.dp(12)
+                radius: Theme.radiusXs
+                color: Theme.bgHigh
+                opacity: root.tipOpen ? 1 : 0
+                visible: opacity > 0.01
+
+                // measured, not read off the texts: an eliding text's own width is
+                // the width it was given
+                TextMetrics {
+                    id: tipNameMetrics
+
+                    font: tipName.font
+                    text: tipName.text
+                }
+
+                TextMetrics {
+                    id: tipDetailMetrics
+
+                    font: tipDetail.font
+                    text: tipDetail.text
+                }
+
+                Column {
+                    id: tipColumn
+
+                    anchors.centerIn: parent
+                    width: tip.width - Theme.dp(20)
+                    spacing: 1
 
                     Text {
-                        anchors.centerIn: parent
-                        text: card.displayName.charAt(0).toUpperCase()
-                        color: Theme.subtext
+                        id: tipName
+
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        text: root.tipName
+                        color: Theme.text
                         font.family: Theme.fontFamily
-                        font.bold: true
-                        font.pixelSize: Theme.fs(11)
-                        font.variableAxes: Theme.axes(Theme.fs(11), 640, 0)
+                        font.pixelSize: Theme.fontBody
+                        font.variableAxes: Theme.axes(Theme.fontBody, 520, 0)
+                        font.weight: Font.Medium
+                        elide: Text.ElideRight
+                    }
+
+                    Text {
+                        id: tipDetail
+
+                        width: parent.width
+                        visible: text !== ""
+                        horizontalAlignment: Text.AlignHCenter
+                        text: root.tipDetail
+                        color: root.tipWants ? Theme.error : Theme.subtext
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontLabel
+                        font.variableAxes: Theme.axes(Theme.fontLabel, 420, 0)
+                        elide: Text.ElideRight
                     }
 
                 }
 
-                Rectangle {
-                    visible: card.needsAttention
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    width: Theme.dp(8)
-                    height: Theme.dp(8)
-                    radius: Theme.dp(999)
-                    color: Theme.accent
-                    border.width: 2
-                    border.color: Theme.bgOpaque
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Theme.durShort
+                        easing.type: Easing.OutCubic
+                    }
+
                 }
 
-            }
-
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - Theme.dp(28) - parent.spacing
-                spacing: 1
-
-                Text {
-                    width: parent.width
-                    text: card.displayName
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.bold: true
-                    font.pixelSize: Theme.fs(12)
-                    font.variableAxes: Theme.axes(Theme.fs(12), 640, 0)
-                    elide: Text.ElideRight
-                }
-
-                Text {
-                    width: parent.width
-                    visible: card.supporting !== ""
-                    text: card.supporting
-                    color: card.needsAttention ? Theme.accent : Theme.subtext
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fs(10)
-                    font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
-                    elide: Text.ElideRight
+                transform: Translate {
+                    y: (1 - tip.opacity) * (root.tipAbove ? Theme.dp(4) : -Theme.dp(4))
                 }
 
             }
 
         }
-
-    }
-
+    ]
 }
-
-

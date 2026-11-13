@@ -229,8 +229,7 @@ PanelWindow {
     }
 
     function held() {
-        const docked = osdWindow.dockWindow ? osdWindow.dockWindow.osdFace : null;
-        return cardFace.dragging || cardFace.hovered || (!!docked && (docked.dragging || docked.hovered));
+        return cardFace.dragging || cardFace.hovered || (!!osdWindow.dockWindow && osdWindow.dockWindow.osdFaceHeld);
     }
 
     function setBrightness(percent) {
@@ -685,35 +684,67 @@ PanelWindow {
         readonly property real paintedWidth: card.width * card.scale * cardJelly.xScale
         readonly property real paintedHeight: card.height * card.scale * cardJelly.yScale
         readonly property int blendSize: card.visible ? osdWindow.notchFlare : 0
-        readonly property real blendY: osdBlurRegion.paintedY + osdBlurRegion.paintedHeight - osdBlurRegion.blendSize
+        // up the side no further than it runs straight: past where the top corner
+        // starts to round, the curve's tip would stand off it in a step, so a short
+        // card takes its blends as quarter ellipses
+        readonly property int blendDepth: Math.max(0, Math.min(osdBlurRegion.blendSize, Math.floor(osdBlurRegion.paintedHeight - card.radius * card.scale)))
+        readonly property real blendY: osdBlurRegion.paintedY + osdBlurRegion.paintedHeight - osdBlurRegion.blendDepth
+
+        // the card pulled in a pixel along its curved corners only: kept to the
+        // painted curve, the hard-edged region frosts its antialiasing, a ragged
+        // rim. two bands put the flat edges back at full extent
+        readonly property int cardRadius: Math.round(card.radius * card.scale)
+        readonly property int bottomIn: osdWindow.notch ? 0 : osdBlurRegion.cardRadius
+
+        function lo(v) {
+            return Math.ceil(v - 0.002);
+        }
+
+        function hi(v) {
+            return Math.floor(v + 0.002);
+        }
 
         intersection: Intersection.Intersect
 
         Region {
-            x: Math.ceil(osdBlurRegion.paintedX - 0.002)
-            y: Math.ceil(osdBlurRegion.paintedY - 0.002)
-            width: card.visible ? Math.max(0, Math.floor(osdBlurRegion.paintedX + osdBlurRegion.paintedWidth + 0.002) - Math.ceil(osdBlurRegion.paintedX - 0.002)) : 0
-            height: card.visible ? Math.max(0, Math.floor(osdBlurRegion.paintedY + osdBlurRegion.paintedHeight + 0.002) - Math.ceil(osdBlurRegion.paintedY - 0.002)) : 0
-            radius: Math.round(card.radius * card.scale)
-            bottomLeftRadius: osdWindow.notch ? 0 : Math.round(card.radius * card.scale)
-            bottomRightRadius: osdWindow.notch ? 0 : Math.round(card.radius * card.scale)
+            x: osdBlurRegion.lo(osdBlurRegion.paintedX + 1)
+            y: osdBlurRegion.lo(osdBlurRegion.paintedY + 1)
+            width: card.visible ? Math.max(0, osdBlurRegion.hi(osdBlurRegion.paintedX + osdBlurRegion.paintedWidth - 1) - osdBlurRegion.lo(osdBlurRegion.paintedX + 1)) : 0
+            height: card.visible ? Math.max(0, osdBlurRegion.hi(osdBlurRegion.paintedY + osdBlurRegion.paintedHeight - 1) - osdBlurRegion.lo(osdBlurRegion.paintedY + 1)) : 0
+            radius: Math.max(0, osdBlurRegion.cardRadius - 1)
+            bottomLeftRadius: Math.max(0, osdBlurRegion.bottomIn - 1)
+            bottomRightRadius: Math.max(0, osdBlurRegion.bottomIn - 1)
         }
 
-        // an edge blend: its square less the circle its curve is drawn from, a
+        Region {
+            x: osdBlurRegion.lo(osdBlurRegion.paintedX + osdBlurRegion.cardRadius)
+            y: osdBlurRegion.lo(osdBlurRegion.paintedY)
+            width: card.visible ? Math.max(0, osdBlurRegion.hi(osdBlurRegion.paintedX + osdBlurRegion.paintedWidth - osdBlurRegion.cardRadius) - osdBlurRegion.lo(osdBlurRegion.paintedX + osdBlurRegion.cardRadius)) : 0
+            height: card.visible ? Math.max(0, osdBlurRegion.hi(osdBlurRegion.paintedY + osdBlurRegion.paintedHeight) - osdBlurRegion.lo(osdBlurRegion.paintedY)) : 0
+        }
+
+        Region {
+            x: osdBlurRegion.lo(osdBlurRegion.paintedX)
+            y: osdBlurRegion.lo(osdBlurRegion.paintedY + osdBlurRegion.cardRadius)
+            width: card.visible ? Math.max(0, osdBlurRegion.hi(osdBlurRegion.paintedX + osdBlurRegion.paintedWidth) - osdBlurRegion.lo(osdBlurRegion.paintedX)) : 0
+            height: card.visible ? Math.max(0, osdBlurRegion.hi(osdBlurRegion.paintedY + osdBlurRegion.paintedHeight - osdBlurRegion.bottomIn) - osdBlurRegion.lo(osdBlurRegion.paintedY + osdBlurRegion.cardRadius)) : 0
+        }
+
+        // an edge blend: its box less the ellipse its curve is drawn from, a
         // pixel wider so the hard edge stays inside the curve's antialiasing
         Region {
             x: Math.round(osdBlurRegion.paintedX) - osdBlurRegion.blendSize
             y: Math.ceil(osdBlurRegion.blendY - 0.002)
-            width: osdBlurRegion.blendSize
-            height: Math.floor(osdBlurRegion.blendY + osdBlurRegion.blendSize + 0.002) - Math.ceil(osdBlurRegion.blendY - 0.002)
+            width: osdBlurRegion.blendDepth > 0 ? osdBlurRegion.blendSize : 0
+            height: Math.floor(osdBlurRegion.blendY + osdBlurRegion.blendDepth + 0.002) - Math.ceil(osdBlurRegion.blendY - 0.002)
 
             Region {
                 shape: RegionShape.Ellipse
                 intersection: Intersection.Subtract
                 x: Math.round(osdBlurRegion.paintedX) - 2 * osdBlurRegion.blendSize - 1
-                y: Math.round(osdBlurRegion.blendY) - osdBlurRegion.blendSize - 1
+                y: Math.round(osdBlurRegion.blendY) - osdBlurRegion.blendDepth - 1
                 width: 2 * osdBlurRegion.blendSize + 2
-                height: 2 * osdBlurRegion.blendSize + 2
+                height: 2 * osdBlurRegion.blendDepth + 2
             }
 
         }
@@ -721,16 +752,16 @@ PanelWindow {
         Region {
             x: Math.round(osdBlurRegion.paintedX + osdBlurRegion.paintedWidth)
             y: Math.ceil(osdBlurRegion.blendY - 0.002)
-            width: osdBlurRegion.blendSize
-            height: Math.floor(osdBlurRegion.blendY + osdBlurRegion.blendSize + 0.002) - Math.ceil(osdBlurRegion.blendY - 0.002)
+            width: osdBlurRegion.blendDepth > 0 ? osdBlurRegion.blendSize : 0
+            height: Math.floor(osdBlurRegion.blendY + osdBlurRegion.blendDepth + 0.002) - Math.ceil(osdBlurRegion.blendY - 0.002)
 
             Region {
                 shape: RegionShape.Ellipse
                 intersection: Intersection.Subtract
                 x: Math.round(osdBlurRegion.paintedX + osdBlurRegion.paintedWidth) - 1
-                y: Math.round(osdBlurRegion.blendY) - osdBlurRegion.blendSize - 1
+                y: Math.round(osdBlurRegion.blendY) - osdBlurRegion.blendDepth - 1
                 width: 2 * osdBlurRegion.blendSize + 2
-                height: 2 * osdBlurRegion.blendSize + 2
+                height: 2 * osdBlurRegion.blendDepth + 2
             }
 
         }
@@ -854,6 +885,7 @@ PanelWindow {
             readonly property bool isRight: index === 1
 
             size: osdWindow.notchFlare
+            depth: osdBlurRegion.blendDepth
             mirrored: isRight
             x: isRight ? Math.round(osdBlurRegion.paintedX + osdBlurRegion.paintedWidth) : Math.round(osdBlurRegion.paintedX) - width
             y: osdBlurRegion.paintedY + osdBlurRegion.paintedHeight - height

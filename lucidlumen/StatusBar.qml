@@ -47,7 +47,7 @@ Item {
         if (t.searching)
             return n + (n === 1 ? " result" : " results") + (t.searchDone ? (t.searchTruncated ? " (stopped at " + n + ")" : "") : " so far…");
 
-        return n + (n === 1 ? " item" : " items") + (t.filter !== "" ? " match “" + t.filter + "”" : "");
+        return n + (n === 1 ? " item" : " items") + (t.filter !== "" ? " match “" + t.filter + "”" : "") + (t.asAdmin ? " · As administrator" : "");
     }
 
     implicitHeight: Theme.dp(36) + jobsCol.implicitHeight

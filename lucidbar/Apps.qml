@@ -19,8 +19,9 @@ BarPill {
     readonly property var windows: Hyprland.toplevels.values.filter((t) => {
         return !!t && root.classOf(t) !== "";
     })
-    // about half the bar's height, leaving room under it for the running dot
-    readonly property int glyph: Math.max(Theme.dp(12), Math.min(Math.round(root.compactHeight * 0.55), root.compactHeight - Theme.dp(16)))
+    // about half the bar's height, leaving room under it for the running dot,
+    // then through the bar's content size; never past the square it lights in
+    readonly property int glyph: Math.min(root.compactHeight - Theme.dp(12), Math.max(Theme.barDp(12), Math.round(Math.min(root.compactHeight * 0.55, root.compactHeight - Theme.dp(16)) * Theme.barContent)))
     readonly property int slot: root.compactHeight - Theme.dp(4)
     readonly property int horizontalPadding: Theme.dp(4)
     // pins first, in the dock's order, then the open apps not pinned, in the
@@ -611,14 +612,14 @@ BarPill {
                         id: indicator
 
                         readonly property int segments: Math.max(1, Math.min(3, cell.wins.length))
-                        readonly property real segW: cell.focused ? (indicator.segments === 1 ? Theme.dp(12) : Theme.dp(6)) : Theme.dp(4)
+                        readonly property real segW: cell.focused ? (indicator.segments === 1 ? Theme.barDp(12) : Theme.barDp(6)) : Theme.barDp(4)
                         readonly property bool breathing: (cell.urgent || (cell.launching && cell.wins.length === 0)) && root.shown && indicator.visible
                         property real pulse: 1
 
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: Theme.dp(3)
-                        spacing: Theme.dp(2)
+                        spacing: Theme.barDp(2)
                         opacity: Prefs.dockShowIndicators && (cell.wins.length > 0 || cell.launching) ? 1 : 0
                         visible: indicator.opacity > 0
 
@@ -627,7 +628,7 @@ BarPill {
 
                             Rectangle {
                                 width: indicator.segW
-                                height: Theme.dp(3)
+                                height: Theme.barDp(3)
                                 radius: height / 2
                                 opacity: indicator.pulse
                                 color: cell.urgent ? Theme.error : (cell.focused ? Theme.accent : Theme.alpha(Theme.text, 0.6))
@@ -810,7 +811,7 @@ BarPill {
                     text: "+" + root.placed.rest.length
                     color: Theme.text
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontLabelLg
+                    font.pixelSize: Theme.barFs(13)
                     font.weight: Font.DemiBold
                 }
 

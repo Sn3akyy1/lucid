@@ -19,7 +19,7 @@ BarPill {
     // the look picked on the module's card: a count, or a dot
     lookPref: Prefs.notificationsStyle
     readonly property bool dotFace: root.look === "dot"
-    readonly property int horizontalPadding: Theme.dp(10)
+    readonly property int horizontalPadding: Theme.barDp(10)
     readonly property real screenW: root.hostWindow ? root.hostWindow.screen.width : 1600
     readonly property real screenH: root.hostWindow ? root.hostWindow.screen.height : 900
     readonly property int maxPanelHeight: Math.min(Theme.dp(560), Math.max(Theme.dp(220), root.screenH - Theme.dp(80)))
@@ -189,16 +189,16 @@ BarPill {
             id: compactRow
 
             anchors.centerIn: parent
-            spacing: Theme.dp(5)
+            spacing: Theme.barDp(5)
 
             Item {
-                width: Theme.dp(17)
-                height: Theme.dp(17)
+                width: Theme.barDp(17)
+                height: Theme.barDp(17)
                 anchors.verticalCenter: parent.verticalCenter
 
                 NotifIcon {
                     anchors.centerIn: parent
-                    size: Theme.dp(17)
+                    size: Theme.barDp(17)
                     path: Notifs.icons.notifications
                     color: Theme.text
                     fill: root.notifCount > 0 ? 1 : 0
@@ -235,7 +235,7 @@ BarPill {
 
                 NotifIcon {
                     anchors.centerIn: parent
-                    size: Theme.dp(17)
+                    size: Theme.barDp(17)
                     path: Notifs.icons.bedtime
                     color: Theme.accent
                     opacity: root.silenced ? 1 : 0
@@ -273,9 +273,9 @@ BarPill {
                 Rectangle {
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    anchors.rightMargin: -Theme.dp(1)
-                    width: Theme.dp(7)
-                    height: Theme.dp(7)
+                    anchors.rightMargin: -Theme.barDp(1)
+                    width: Theme.barDp(7)
+                    height: Theme.barDp(7)
                     radius: height / 2
                     color: root.badgeColor
                     opacity: root.dotFace && root.notifCount > 0 ? 1 : 0
@@ -308,9 +308,9 @@ BarPill {
                 readonly property bool on: root.notifCount > 0 && !root.dotFace
 
                 anchors.verticalCenter: parent.verticalCenter
-                height: Theme.dp(16)
-                width: badge.on ? Math.max(Theme.dp(16), badgeText.implicitWidth + Theme.dp(8)) : 0
-                radius: Theme.dp(999)
+                height: Theme.barDp(16)
+                width: badge.on ? Math.max(Theme.barDp(16), badgeText.implicitWidth + Theme.barDp(8)) : 0
+                radius: Theme.barDp(999)
                 color: root.badgeColor
                 opacity: badge.on ? 1 : 0
                 scale: badge.on ? 1 : 0.4
@@ -343,8 +343,8 @@ BarPill {
                     color: root.badgeTextColor
                     font.family: Theme.fontFamily
                     font.bold: true
-                    font.pixelSize: Theme.fs(11)
-                    font.variableAxes: Theme.axes(Theme.fs(11), 640, 0)
+                    font.pixelSize: Theme.barFs(11)
+                    font.variableAxes: Theme.axes(Theme.barFs(11), 640, 0)
                     Component.onCompleted: badgeText.displayedText = root.badgeDisplayText
                 }
 

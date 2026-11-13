@@ -184,6 +184,12 @@ Item {
             onWheel: (wheel) => {
                 wheel.accepted = false;
             }
+
+            HeldPointer {
+                held: area.pressed
+                cursor: Qt.PointingHandCursor
+            }
+
         }
 
     }

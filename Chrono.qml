@@ -226,6 +226,12 @@ Singleton {
         });
     }
 
+    function rename(id, label) {
+        root.update(id, (t) => {
+            t.label = label !== "" ? label : root.label(t.total / 1000);
+        });
+    }
+
     function remove(id) {
         root.timers = root.timers.filter((t) => {
             return t.id !== id;
@@ -544,6 +550,9 @@ Singleton {
 
         path: Quickshell.env("HOME") + "/.config/quickshell/lucidbar/chrono.json"
         blockLoading: true
+        // the save is finished inside writeAdapter(): written off the thread, its
+        // echo back into the adapter landed on any change made meanwhile
+        blockWrites: true
         // absent until the first timer; nothing to report
         printErrors: false
         onAdapterUpdated: saveDebounce.restart()

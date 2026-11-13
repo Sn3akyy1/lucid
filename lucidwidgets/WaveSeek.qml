@@ -194,6 +194,12 @@ Item {
         onWheel: (wheel) => {
             return seek.seekRequested(seek.position + (wheel.angleDelta.y > 0 ? 5 : -5));
         }
+
+        HeldPointer {
+            held: seek.dragging
+            cursor: Qt.PointingHandCursor
+        }
+
     }
 
     Item {

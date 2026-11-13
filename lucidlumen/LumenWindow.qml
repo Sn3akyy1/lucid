@@ -722,7 +722,7 @@ FloatingWindow {
         } else {
             win.app.call("open", {
                 "uris": [it.uri]
-            });
+            }, win.opened);
         }
     }
 
@@ -750,7 +750,7 @@ FloatingWindow {
             "uris": files.map(function(it) {
                 return it.uri;
             })
-        });
+        }, win.opened);
 
         if (dirs.length === 1 && files.length === 0 && !inNewTabs)
             win.go(dirs[0].path || dirs[0].target || dirs[0].uri);
@@ -1308,10 +1308,18 @@ FloatingWindow {
                 t.rememberNext = "";
                 if (!r.ok) {
                     t.connectUri = uri;
-                    t.error = r.cancelled ? "Not connected to " + win.app.hostOf(uri) : (r.error || "Could not connect");
+                    t.error = r.cancelled ? (t.locked ? "An administrator's password opens it." : "Not connected to " + win.app.hostOf(uri)) : (r.error || "Could not connect");
                 }
             }
         });
+    }
+
+    // someone else's file, through admin://, opens as a copy nothing but lumen could fetch
+    function opened(r) {
+        if (r && r.copies > 0)
+            win.say(r.copies === 1 ? "Opened a copy: it's someone else's file, so changes stay in the copy" : "Opened copies: they're someone else's files, so changes stay in the copies");
+        else if (r && r.error)
+            win.say(r.error);
     }
 
     function mount(v) {
@@ -1492,6 +1500,10 @@ FloatingWindow {
                 "id": "extract",
                 "label": "Extract here",
                 "icon": "unarchive"
+            } : null, one && one.slot === "archive" ? {
+                "id": "extractInto",
+                "label": "Extract to folder",
+                "icon": "folder_zip"
             } : null, {
                 "sep": true
             }, dir ? {
@@ -1580,8 +1592,10 @@ FloatingWindow {
             });
             break;
         case "extract":
+        case "extractInto":
             win.app.call("extract", {
-                "path": one.path
+                "path": one.path,
+                "into": id === "extractInto"
             }, function(r) {
                 if (r.ok)
                     win.pendingSelect = r.name;
@@ -2304,6 +2318,7 @@ FloatingWindow {
                     win.reconnect(t);
 
             }
+
             t.wantConnect = false;
             if (t === win.tab && win.pendingSelect !== "") {
                 var i = t.selectByName(win.pendingSelect);

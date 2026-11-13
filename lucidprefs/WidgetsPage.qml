@@ -40,7 +40,7 @@ Column {
 
         SettingRow {
             title: "Widget panel"
-            description: "Every widget there is, to drag out onto the desktop or click in, the ones already out there, and layouts to start from or save. It opens from the desktop's right-click menu too."
+            description: "Every widget there is, to drag out onto the desktop or click in, the ones already out there, and layouts to start from or save. It's part of edit mode, under Widgets in its toolbar."
             showDivider: false
 
             M3Button {
@@ -48,7 +48,7 @@ Column {
                 variant: "tonal"
                 iconPath: "widgets"
                 onClicked: {
-                    Prefs.settingsHideRequested();
+                    Edit.enterFromSettings("widgets", "");
                     Widgets.openPanel(Monitors.mainScreen ? Monitors.mainScreen.name : "");
                 }
             }

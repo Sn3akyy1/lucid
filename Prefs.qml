@@ -906,8 +906,8 @@ Singleton {
         "options": ["trayHidden", "trayIconColor"],
         "style": "trayStyle",
         "styles": [
-            {"key": "collapsed", "name": "Collapsed", "blurb": "One icon and how many are running"},
-            {"key": "icons", "name": "Icons", "blurb": "Each app's icon in the bar"}
+            {"key": "collapsed", "name": "Collapsed", "blurb": "The first three apps stacked, then how many more"},
+            {"key": "icons", "name": "Icons", "blurb": "Each app in a slot of its own, named when you point at it"}
         ]
     },
     {
@@ -1064,7 +1064,7 @@ Singleton {
     readonly property var barLayoutGroups: root.parseBarLayout(root.barLayout)
     readonly property var widgetKeys: ["widgetsEnabled", "widgetSnap", "widgetLockAll", "widgetHideFullscreen", "widgetOnTop"]
     readonly property var idleKeys: ["idleDim", "idleDimAfter", "idleDimLevel", "idleDimKeyboard", "idleLock", "idleLockAfter", "idleScreenOff", "idleScreenOffAfter", "idleSuspend", "idleSuspendAfter", "idleSuspendOnAc", "idleLockBeforeSleep", "idleWakeAfterSleep", "idleRespectInhibitors", "idleWhileMedia"]
-    readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envCursorShadow", "envIconTheme", "envLegacyIcons", "envIconSet", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
+    readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envCursorShadow", "envLegacyCursor", "envCursorStyle", "envIconTheme", "envLegacyIcons", "envIconSet", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
     readonly property var specialKeys: ["specialScratchpad", "specialMusic", "specialComms", "specialTodo", "specialSysmon", "specialMusicApps", "specialCommsApps", "specialTodoApps", "specialSysmonApps", "specialKeepApps", "specialHideOnSwitch", "specialDim", "specialBlur", "specialGaps"]
     readonly property var glassKeys: ["glassApps", "glassValues"]
     readonly property var monitorKeys: ["monitorSetups", "monitorShellScreen", "monitorBarScreen", "monitorDockScreen", "monitorWorkspaces"]
@@ -1151,6 +1151,7 @@ Singleton {
     property alias barPopupGap: s.barPopupGap
     property alias barPopupNotched: s.barPopupNotched
     property alias barHeight: s.barHeight
+    property alias barContentScale: s.barContentScale
     property alias barTopMargin: s.barTopMargin
     property alias barSideMargin: s.barSideMargin
     property alias barSpacing: s.barSpacing
@@ -1480,6 +1481,10 @@ Singleton {
     property alias envCursorTheme: s.envCursorTheme
     property alias envCursorSize: s.envCursorSize
     property alias envCursorShadow: s.envCursorShadow
+    // an installed cursor theme instead of lucid's own pointer
+    property alias envLegacyCursor: s.envLegacyCursor
+    // how lucid's own pointer takes the palette: an id from Pointer.styles
+    property alias envCursorStyle: s.envCursorStyle
     property alias envIconTheme: s.envIconTheme
     property alias envLegacyIcons: s.envLegacyIcons
     // lucid's own icon set while legacy icons are off: an id from LucidIcons.sets
@@ -1726,6 +1731,7 @@ Singleton {
         "barPopupGap": 10,
         "barPopupNotched": false,
         "barHeight": 35,
+        "barContentScale": 1,
         "barTopMargin": 22,
         "barSideMargin": 17,
         "barSpacing": 8,
@@ -1957,6 +1963,8 @@ Singleton {
         "envCursorTheme": "",
         "envCursorSize": 24,
         "envCursorShadow": true,
+        "envLegacyCursor": false,
+        "envCursorStyle": "dark",
         "envIconTheme": "",
         "envLegacyIcons": false,
         "envIconSet": "gravity",
@@ -2500,6 +2508,7 @@ Singleton {
             property int barPopupGap: 10
             property bool barPopupNotched: false
             property int barHeight: 35
+            property real barContentScale: 1
             property int barTopMargin: 22
             property int barSideMargin: 17
             property int barSpacing: 8
@@ -2749,6 +2758,8 @@ Singleton {
             property string envCursorTheme: ""
             property int envCursorSize: 24
             property bool envCursorShadow: true
+            property bool envLegacyCursor: false
+            property string envCursorStyle: "dark"
             property string envIconTheme: ""
             property bool envLegacyIcons: false
             property string envIconSet: "gravity"

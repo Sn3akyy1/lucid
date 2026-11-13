@@ -1,6 +1,9 @@
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Shapes
+import Quickshell.Services.SystemTray
 import qs
+import qs.lucidicons
 import qs.lucidui
 import "../lucidui/Shapes.js" as Shapes
 
@@ -15,6 +18,8 @@ Item {
     property bool panel: false
 
     readonly property string sampleKey: sample.moduleId + "/" + (sample.panel ? "panel/" : "") + sample.styleKey
+    // the apps in the tray right now, for its samples
+    readonly property var trayApps: sample.moduleId === "tray" ? Tray.ordered(SystemTray.items ? SystemTray.items.values : []) : []
     readonly property var samples: ({
         "clock/inline": clockInline,
         "clock/stacked": clockStacked,
@@ -1055,33 +1060,109 @@ Item {
 
     }
 
+    // the tray's samples show the apps in it now, or the palette's colours with none
     Component {
         id: trayCollapsed
 
         Row {
-            spacing: Theme.dp(4)
+            spacing: Theme.dp(5)
 
-            MiniGlyph {
-                name: "dashboard"
-                implicitWidth: Theme.dp(16)
-                implicitHeight: Theme.dp(16)
-                anchors.verticalCenter: parent.verticalCenter
-            }
+            Item {
+                id: stack
 
-            Rectangle {
-                width: Theme.dp(16)
-                height: Theme.dp(16)
-                radius: height / 2
-                color: Theme.accent
+                readonly property int tile: Theme.dp(16)
+                readonly property int step: Math.round(stack.tile * 0.78)
+                readonly property int gap: Theme.dp(2)
+
+                width: stack.tile + 2 * stack.step
+                height: stack.tile
                 anchors.verticalCenter: parent.verticalCenter
 
-                BarText {
-                    anchors.centerIn: parent
-                    text: "3"
-                    color: Theme.bgOpaque
-                    font.pixelSize: Theme.fs(11)
+                Repeater {
+                    model: 3
+
+                    Item {
+                        id: stacked
+
+                        required property int index
+                        readonly property var app: sample.trayApps[stacked.index] || null
+                        readonly property string slot: stacked.app ? Tray.slotOf(stacked.app) : ""
+
+                        x: stacked.index * stack.step
+                        z: -stacked.index
+                        width: stack.tile
+                        height: stack.tile
+                        layer.enabled: stacked.index > 0
+
+                        Rectangle {
+                            anchors.fill: parent
+                            visible: !stacked.app
+                            radius: Theme.dp(4)
+                            color: [Theme.accent, Theme.subtext, Theme.accentContainer][stacked.index]
+                        }
+
+                        Image {
+                            anchors.fill: parent
+                            visible: !!stacked.app && stacked.slot === ""
+                            source: stacked.app && stacked.slot === "" ? Tray.iconSource(stacked.app.icon) : ""
+                            sourceSize.width: stack.tile * 2
+                            sourceSize.height: stack.tile * 2
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                            asynchronous: false
+                        }
+
+                        Loader {
+                            anchors.centerIn: parent
+                            active: stacked.slot !== ""
+
+                            sourceComponent: TonalIcon {
+                                size: stack.tile
+                                slot: stacked.slot
+                            }
+
+                        }
+
+                        // the one in front, a gap larger all round
+                        layer.effect: MultiEffect {
+                            maskEnabled: true
+                            maskInverted: true
+                            maskSource: stackCut
+                            maskThresholdMin: 0.5
+                            maskSpreadAtMin: 1
+                        }
+
+                    }
+
                 }
 
+                Item {
+                    id: stackCut
+
+                    width: stack.tile
+                    height: stack.tile
+                    visible: false
+                    layer.enabled: true
+
+                    Rectangle {
+                        x: -stack.step - stack.gap
+                        y: -stack.gap
+                        width: stack.tile + 2 * stack.gap
+                        height: stack.tile + 2 * stack.gap
+                        radius: width * 0.32
+                        color: "black"
+                    }
+
+                }
+
+            }
+
+            BarText {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: sample.trayApps.length === 0 || sample.trayApps.length > 3
+                text: "+" + (sample.trayApps.length > 3 ? sample.trayApps.length - 3 : 2)
+                color: Theme.subtext
+                font.pixelSize: Theme.fs(11)
             }
 
         }
@@ -1092,19 +1173,65 @@ Item {
         id: trayIcons
 
         Row {
-            spacing: Theme.dp(6)
+            spacing: 0
 
             Repeater {
-                model: [Theme.accent, Theme.subtext, Theme.accentContainer]
+                model: 3
 
-                Rectangle {
-                    required property color modelData
+                Item {
+                    id: slotted
 
-                    width: Theme.dp(16)
-                    height: Theme.dp(16)
-                    radius: Theme.dp(4)
-                    color: modelData
+                    required property int index
+                    readonly property var app: sample.trayApps[slotted.index] || null
+                    readonly property string slot: slotted.app ? Tray.slotOf(slotted.app) : ""
+
+                    width: Theme.dp(22)
+                    height: Theme.dp(22)
                     anchors.verticalCenter: parent.verticalCenter
+
+                    // a slot lit as under the pointer
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: Theme.dp(21)
+                        height: Theme.dp(21)
+                        radius: width / 2
+                        color: Theme.text
+                        opacity: slotted.index === 1 ? 0.12 : 0
+                    }
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: Theme.dp(15)
+                        height: Theme.dp(15)
+                        visible: !slotted.app
+                        radius: Theme.dp(4)
+                        color: [Theme.accent, Theme.subtext, Theme.accentContainer][slotted.index]
+                    }
+
+                    Image {
+                        anchors.centerIn: parent
+                        width: Theme.dp(15)
+                        height: Theme.dp(15)
+                        visible: !!slotted.app && slotted.slot === ""
+                        source: slotted.app && slotted.slot === "" ? Tray.iconSource(slotted.app.icon) : ""
+                        sourceSize.width: Theme.dp(15) * 2
+                        sourceSize.height: Theme.dp(15) * 2
+                        fillMode: Image.PreserveAspectFit
+                        smooth: true
+                        asynchronous: false
+                    }
+
+                    Loader {
+                        anchors.centerIn: parent
+                        active: slotted.slot !== ""
+
+                        sourceComponent: TonalIcon {
+                            size: Theme.dp(15)
+                            slot: slotted.slot
+                        }
+
+                    }
+
                 }
 
             }

@@ -13,6 +13,9 @@ FloatingWindow {
         active: win.visible
     }
 
+    PointerPoke {
+    }
+
     readonly property int wheelStep: 190
     readonly property int flickDecel: 6000
     readonly property int maxFlick: 9000

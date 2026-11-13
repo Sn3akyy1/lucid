@@ -143,6 +143,12 @@ Item {
                     fr.stage.reshapeMove(p.x, p.y, mouse.modifiers);
                 }
                 onReleased: fr.stage.reshapeEnd()
+
+                HeldPointer {
+                    held: grab.pressed
+                    cursor: grab.cursorShape
+                }
+
             }
 
         }

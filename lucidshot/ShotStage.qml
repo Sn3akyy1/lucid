@@ -46,6 +46,9 @@ Item {
     property real px: -1
     property real py: -1
     property bool pointerIn: false
+    // the stage draws the pointer while the guides or a dragged corner follow
+    // it: the compositor shows its own a frame or two before a window catches up
+    readonly property bool aiming: input.containsMouse && !stage.editing && stage.mode !== "colour" && stage.target === "region" && (stage.phase === "select" || stage.phase === "drag")
     property bool spaceHeld: false
     property bool busy: false
     // options, kept between opens by the overlay
@@ -1356,7 +1359,7 @@ Item {
     // crosshair guides through the pointer, before a drag starts
     Item {
         anchors.fill: parent
-        visible: stage.phase === "select" && stage.mode !== "colour" && stage.target === "region" && stage.pointerIn && !stage.editing
+        visible: stage.aiming && stage.phase === "select"
 
         Rectangle {
             x: Math.round(stage.px)
@@ -1374,6 +1377,66 @@ Item {
 
     }
 
+    // the pointer while the stage draws it: the theme's own crosshair, or a
+    // plain one in its colours when a theme of the machine's is in use
+    DrawnPointer {
+        id: aim
+
+        cursor: Qt.CrossCursor
+        px: stage.px
+        py: stage.py
+        visible: stage.aiming
+        z: 11
+
+        Item {
+            id: plain
+
+            readonly property int core: 2 * Math.max(1, Math.round(aim.width / 24))
+            readonly property int rim: plain.core + 2 * Math.max(2, Math.round(aim.width / 12))
+
+            anchors.fill: parent
+            visible: !aim.ready
+
+            Rectangle {
+                x: (aim.width - plain.rim) / 2
+                y: 1
+                width: plain.rim
+                height: aim.height - 2
+                radius: width / 2
+                color: Pointer.colours.ink
+            }
+
+            Rectangle {
+                x: 1
+                y: (aim.height - plain.rim) / 2
+                width: aim.width - 2
+                height: plain.rim
+                radius: height / 2
+                color: Pointer.colours.ink
+            }
+
+            Rectangle {
+                x: (aim.width - plain.core) / 2
+                y: 1 + (plain.rim - plain.core) / 2
+                width: plain.core
+                height: aim.height - 2 - (plain.rim - plain.core)
+                radius: width / 2
+                color: Pointer.colours.body
+            }
+
+            Rectangle {
+                x: 1 + (plain.rim - plain.core) / 2
+                y: (aim.height - plain.core) / 2
+                width: aim.width - 2 - (plain.rim - plain.core)
+                height: plain.core
+                radius: height / 2
+                color: Pointer.colours.body
+            }
+
+        }
+
+    }
+
     MouseArea {
         id: input
 
@@ -1382,6 +1445,9 @@ Item {
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         enabled: !stage.passThrough && stage.phase !== "fly"
         cursorShape: {
+            if (stage.aiming)
+                return aim.onScreen ? Qt.BlankCursor : Qt.CrossCursor;
+
             if (stage.moving)
                 return Qt.ClosedHandCursor;
 
@@ -1408,8 +1474,19 @@ Item {
         onReleased: (mouse) => {
             return stage.pointerRelease(mouse.x, mouse.y, mouse.button, mouse.modifiers);
         }
-        onEntered: stage.pointerIn = true
+        // a window that maps under a still pointer hears of it only here
+        onEntered: {
+            stage.px = input.mouseX;
+            stage.py = input.mouseY;
+            stage.pointerIn = true;
+        }
         onExited: stage.pointerIn = false
+
+        HeldPointer {
+            held: stage.moving
+            cursor: Qt.ClosedHandCursor
+        }
+
     }
 
     // the editor's pen, over the selection while marking up
@@ -1434,6 +1511,12 @@ Item {
         }
         onReleased: marks.release()
         onCanceled: marks.release()
+
+        HeldPointer {
+            held: pen.pressed
+            cursor: pen.cursorShape
+        }
+
     }
 
     // a window under the pointer that a click would take
@@ -1640,6 +1723,8 @@ Item {
         layer.enabled: stage.leaving || flyAnim.running
         z: 8
         visible: opacity > 0.01 && !stage.passThrough
+        // a drag passing over it keeps the stage's pointer, not a button's
+        enabled: stage.phase !== "drag"
         width: implicitWidth
         height: implicitHeight
 

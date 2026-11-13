@@ -170,6 +170,8 @@ Region {
     readonly property int panelRight: reg.flaring ? reg.host.panelFlareSize(reg.mod, false) : 0
     readonly property int notchLeft: reg.flaring ? reg.host.notchFlareOf(reg.mod, true) : 0
     readonly property int notchRight: reg.flaring ? reg.host.notchFlareOf(reg.mod, false) : 0
+    readonly property int notchLeftDepth: reg.flaring ? reg.host.notchDepthOf(reg.mod, true) : 0
+    readonly property int notchRightDepth: reg.flaring ? reg.host.notchDepthOf(reg.mod, false) : 0
 
     FlareRegion {
         host: reg.host
@@ -189,7 +191,8 @@ Region {
     FlareRegion {
         host: reg.host
         size: reg.notchLeft
-        fx: reg.mod ? reg.mod.x - size + 0.5 : 0
+        depth: reg.notchLeftDepth
+        fx: reg.mod ? reg.mod.x - size : 0
         fy: reg.host ? reg.host.rowY : 0
     }
 
@@ -197,7 +200,8 @@ Region {
         host: reg.host
         mirrored: true
         size: reg.notchRight
-        fx: reg.mod ? reg.mod.x + reg.mod.width - 0.5 : 0
+        depth: reg.notchRightDepth
+        fx: reg.mod ? reg.mod.x + reg.mod.width : 0
         fy: reg.host ? reg.host.rowY : 0
     }
 

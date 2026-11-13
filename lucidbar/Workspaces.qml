@@ -164,21 +164,25 @@ Item {
         });
     }
     readonly property bool sunk: root.shownSpecialSlot >= 0 && !root.rowHovered
-    // a square cell per workspace, inset from the pill's edge as far all round
-    readonly property int cellInset: Theme.dp(4)
-    readonly property int cellSize: Math.max(Theme.dp(16), root.compactHeight - root.cellInset * 2)
+    // a cell per workspace: square, as a default 35px bar's is (a taller bar
+    // doesn't grow it, a shorter one shrinks it), then through the content size.
+    // it widens with it freely, but grows no taller than the bar has room for
+    readonly property int cellInset: Theme.barDp(4)
+    readonly property int cellRoom: Math.max(Theme.dp(16), root.compactHeight - Theme.dp(8))
+    readonly property int cellSize: Math.round(Math.min(Theme.dp(27), root.cellRoom) * Theme.barContent)
+    readonly property int cellHeight: Math.min(root.cellSize, root.cellRoom)
     readonly property int horizontalPadding: root.cellInset
     readonly property int dotGap: 0
-    readonly property int specialGap: Theme.dp(6)
-    readonly property int displayGap: Theme.dp(6)
-    readonly property int badgeSize: Theme.dp(20)
-    readonly property int badgeGap: Theme.dp(6)
-    readonly property int litGrow: Theme.dp(14)
-    readonly property int sunkSize: Theme.dp(14)
-    readonly property int stashIcon: Theme.dp(16)
-    readonly property int stashLead: Theme.dp(6)
+    readonly property int specialGap: Theme.barDp(6)
+    readonly property int displayGap: Theme.barDp(6)
+    readonly property int badgeSize: Theme.barDp(20)
+    readonly property int badgeGap: Theme.barDp(6)
+    readonly property int litGrow: Theme.barDp(14)
+    readonly property int sunkSize: Theme.barDp(14)
+    readonly property int stashIcon: Theme.barDp(16)
+    readonly property int stashLead: Theme.barDp(6)
     readonly property int stashMax: 3
-    readonly property int stashFan: Theme.dp(20)
+    readonly property int stashFan: Theme.barDp(20)
     readonly property int compactHeight: Theme.dp(Prefs.barHeight)
     property int hoveredSlot: -1
     readonly property bool rowHovered: rowHover.hovered && !root.expanded
@@ -560,9 +564,9 @@ Item {
 
     function slotHeight(index) {
         if (index >= root.slotCount)
-            return root.cellSize;
+            return root.cellHeight;
 
-        return root.sunk ? root.sunkSize : root.cellSize;
+        return root.sunk ? root.sunkSize : root.cellHeight;
     }
 
     // a special workspace's chip is there only while that workspace is on view
@@ -577,7 +581,7 @@ Item {
     }
 
     function chipIconsEnd(k) {
-        return k > 0 ? root.stashLead + root.stashIcon + (k - 1) * root.stashFan + Theme.dp(6) : Theme.dp(12);
+        return k > 0 ? root.stashLead + root.stashIcon + (k - 1) * root.stashFan + Theme.barDp(6) : Theme.barDp(12);
     }
 
     function chipWidth(index) {
@@ -586,7 +590,7 @@ Item {
         if (!root.chipOpen(index))
             return 0;
 
-        return root.chipIconsEnd(k) + root.textWidth(root.chipLabel(j)) + Theme.dp(12);
+        return root.chipIconsEnd(k) + root.textWidth(root.chipLabel(j)) + Theme.barDp(12);
     }
 
     function textWidth(s) {
@@ -1141,7 +1145,12 @@ Item {
     function capped(corner, v) {
         return root.hangCorners && root.hangCorners[corner] !== undefined ? Math.max(0, Math.min(v, root.hangCorners[corner])) : v;
     }
-    readonly property int topRadius: Prefs.barFlush && !root.popupMode ? 0 : root.cornerRadius
+    // how far the in-place overview has left the bar: 0 in its slot, 1 as the
+    // centred card. above 0 the bar leaves it out and keeps its seat instead
+    property real detach: 0
+    // a flush bar's square top rounds as the card comes off the edge, fully once
+    // it is a radius clear of it, so it floats (and squares off again landing)
+    readonly property int topRadius: Prefs.barFlush && !root.popupMode ? Math.round(Math.min(root.cornerRadius, Math.max(0, root.y - root.restY))) : root.cornerRadius
     readonly property int pillTopRadius: Prefs.barFlush ? 0 : Prefs.barPillRadius
     // on the full bar the strip behind already paints the resting pill
     readonly property color restingColor: Prefs.barFull ? Theme.alpha(Theme.bg, 0) : Theme.bg
@@ -1204,9 +1213,9 @@ Item {
         id: nameMetrics
 
         font.family: Theme.fontFamily
-        font.pixelSize: Theme.fs(12)
+        font.pixelSize: Theme.barFs(12)
         font.bold: true
-        font.variableAxes: Theme.axes(Theme.fs(12), 620, 0)
+        font.variableAxes: Theme.axes(Theme.barFs(12), 620, 0)
     }
 
     // the "workspaces" ipc target lives in shell.qml, which can have a bar per display
@@ -1351,9 +1360,9 @@ Item {
         x: root.popupMode && root.expanded ? shell.cardX - root.x : 0
         y: root.popupMode && root.expanded ? shell.cardY - root.y : 0
         visible: !root.popupMode || shell.y > 0.5
-        // open on the full bar it stays as the strip paints it: a fill of its own
-        // over the strip doubled the tint
-        color: root.popupMode || (root.expanded && !Prefs.barFull) ? Theme.bg : root.restingColor
+        // on the full bar the strip paints it in its slot (a fill of its own there
+        // doubled the tint), so the card's own fill comes in as it leaves the strip
+        color: Prefs.barFull && !root.popupMode ? Theme.alpha(Theme.bg, Theme.bg.a * root.detach) : (root.popupMode || root.expanded ? Theme.bg : root.restingColor)
         radius: root.cornerRadius
         topLeftRadius: root.joinLeft && !root.popupMode ? 0 : root.topRadius
         topRightRadius: root.joinRight && !root.popupMode ? 0 : root.topRadius
@@ -1453,7 +1462,7 @@ Item {
 
                 anchors.centerIn: parent
                 width: root.dotsWidthAnim
-                height: root.cellSize
+                height: root.cellHeight
 
                 // one surface under each run of workspaces in use, drawn solid and
                 // faded as a whole so the joins between cells leave no seam
@@ -1676,8 +1685,8 @@ Item {
                                 color: dot.isUrgent ? Theme.error : (dot.isFocused && root.litSlot !== dot.index ? Theme.accent : (dot.isFocused || dot.occupied || dot.elsewhere ? Theme.text : Theme.alpha(Theme.subtext, 0.55)))
                                 font.family: Theme.fontFamily
                                 font.bold: true
-                                font.pixelSize: Theme.fs(root.rowHovered ? 13 : 12)
-                                font.variableAxes: Theme.axes(Theme.fs(root.rowHovered ? 13 : 12), 680, 100)
+                                font.pixelSize: Theme.barFs(root.rowHovered ? 13 : 12)
+                                font.variableAxes: Theme.axes(Theme.barFs(root.rowHovered ? 13 : 12), 680, 100)
 
                                 Behavior on opacity {
                                     NumberAnimation {
@@ -2603,6 +2612,11 @@ Item {
                         z: dragHandler.active ? 10 : 1
                         opacity: dragHandler.active ? 0.94 : root.stagger(thumb.slotIndex, 0.08)
 
+                        HeldPointer {
+                            held: dragHandler.active
+                            cursor: Qt.PointingHandCursor
+                        }
+
                         DragHandler {
                             id: dragHandler
 
@@ -2825,6 +2839,7 @@ Item {
             target: root
             implicitWidth: root.cardWidth
             implicitHeight: root.cardHeight
+            detach: 1
             x: root.hostWindow ? (root.hostWindow.screen.width - root.cardWidth) / 2 - root.hostWindow.margins.left : (parent.width - root.cardWidth) / 2
             y: root.hostWindow ? (root.hostWindow.screen.height - root.cardHeight) / 2 - (Prefs.barBottom ? root.hostWindow.margins.bottom : root.hostWindow.margins.top) : (parent.height - root.cardHeight) / 2
         }
@@ -2836,7 +2851,7 @@ Item {
             to: "expanded"
 
             NumberAnimation {
-                properties: "x,y"
+                properties: "x,y,detach"
                 duration: Theme.barMs(380)
                 easing.type: Easing.OutCubic
             }
@@ -2853,7 +2868,7 @@ Item {
             to: ""
 
             NumberAnimation {
-                properties: "x,y,implicitWidth,implicitHeight"
+                properties: "x,y,implicitWidth,implicitHeight,detach"
                 duration: Theme.barMs(380)
                 easing.type: Easing.OutCubic
             }

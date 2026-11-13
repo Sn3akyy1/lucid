@@ -65,8 +65,6 @@ Item {
     // dropped here from the panel: it settles where the ghost was rather than popping in
     readonly property bool landed: Widgets.landingUid !== "" && Widgets.landingUid === frame.uid
     readonly property bool editMode: frame.board !== null && frame.board.panelUp === true
-    // held over the open widget panel, where letting go takes it off the desktop
-    readonly property bool overBin: frame.dragging && frame.editMode && frame.board.binHit(frame.pointerX, frame.pointerY)
 
     property bool dragging: false
     property bool resizing: false
@@ -81,9 +79,6 @@ Item {
     property real grabY: 0
     property real guideX: -1
     property real guideY: -1
-    // the pointer during a drag, in board coordinates
-    property real pointerX: -1
-    property real pointerY: -1
     // the other selected cards riding along with this one's drag
     property var crew: []
     // where the card sat when the drag began
@@ -92,6 +87,7 @@ Item {
     // -1 / 0 / 1 for the edge the held grip pulls on
     property int gripH: 0
     property int gripV: 0
+    readonly property int gripCursor: frame.gripH === 0 ? Qt.SizeVerCursor : (frame.gripV === 0 ? Qt.SizeHorCursor : (frame.gripH === frame.gripV ? Qt.SizeFDiagCursor : Qt.SizeBDiagCursor))
     property real pressBX: 0
     property real pressBY: 0
     property real startX: 0
@@ -242,11 +238,6 @@ Item {
         if (!frame.dragging)
             return ;
 
-        if (frame.board) {
-            var at = frame.mapToItem(frame.board, mx, my);
-            frame.pointerX = at.x;
-            frame.pointerY = at.y;
-        }
         var snapped = frame.snapTo(frame.dragX + (mx - frame.grabX), frame.dragY + (my - frame.grabY));
         var dx = snapped.x - frame.homeX;
         var dy = snapped.y - frame.homeY;
@@ -286,7 +277,6 @@ Item {
         if (!frame.dragging)
             return ;
 
-        var binned = frame.overBin;
         var crew = frame.crew;
         frame.crew = [];
         frame.dragging = false;
@@ -298,20 +288,6 @@ Item {
         if (Widgets.dragUid === frame.uid)
             Widgets.dragUid = "";
 
-        frame.pointerX = -1;
-        frame.pointerY = -1;
-        // dropped on the panel: the card and whatever rode along with it go
-        if (binned) {
-            for (var b = 0; b < crew.length; b++) {
-                if (crew[b]) {
-                    crew[b].dragging = false;
-                    Widgets.close(crew[b].uid);
-                }
-            }
-            Widgets.clearSelection();
-            Widgets.close(frame.uid);
-            return ;
-        }
         Widgets.setPos(frame.uid, frame.dragX, frame.dragY);
         var moved = frame.dragX !== frame.homeX || frame.dragY !== frame.homeY;
         for (var i = 0; i < crew.length; i++) {
@@ -449,8 +425,8 @@ Item {
     z: frame.zOrder
     x: frame.resizing ? frame.resX : (frame.dragging ? frame.dragX : frame.clampX(frame.wx))
     y: frame.resizing ? frame.resY : (frame.dragging ? frame.dragY : frame.clampY(frame.wy))
-    opacity: (frame.closing || frame.blanked || frame.tucked) ? 0 : (frame.appeared ? (frame.overBin ? 0.4 : 1) : 0)
-    scale: frame.closing ? 0.9 : frame.tucked ? 0.86 : (frame.appeared ? (frame.overBin ? 0.94 : (frame.dragging ? 1.025 : 1)) : (frame.landed ? 1 : (frame.born ? 0.86 : 0.97)))
+    opacity: (frame.closing || frame.blanked || frame.tucked) ? 0 : (frame.appeared ? 1 : 0)
+    scale: frame.closing ? 0.9 : frame.tucked ? 0.86 : (frame.appeared ? (frame.dragging ? 1.025 : 1) : (frame.landed ? 1 : (frame.born ? 0.86 : 0.97)))
 
     property bool appeared: false
     readonly property bool jellyWobbling: jelly.wobbling
@@ -593,6 +569,11 @@ Item {
         enabled: !frame.closing
         onHoveredChanged: frame.hovered = hoverHandler.hovered
         cursorShape: (frame.locked || frame.resizing) ? Qt.ArrowCursor : (frame.dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor)
+    }
+
+    HeldPointer {
+        held: frame.dragging || frame.resizing
+        cursor: frame.resizing ? frame.gripCursor : Qt.ClosedHandCursor
     }
 
     // sits under the body so buttons and fields inside the widget win the click

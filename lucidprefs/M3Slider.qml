@@ -279,6 +279,12 @@ Item {
             }
             onReleased: slider.dragging = false
             onCanceled: slider.dragging = false
+
+            HeldPointer {
+                held: slider.dragging
+                cursor: Qt.PointingHandCursor
+            }
+
         }
 
     }

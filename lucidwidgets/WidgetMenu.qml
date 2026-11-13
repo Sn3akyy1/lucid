@@ -70,6 +70,9 @@ Item {
     }]
     // eases 0..1 as the sheet opens; the blur follows its height, so it grows with it
     property real reveal: menu.open ? 1 : 0
+    // the blur can't fade, so it's behind the sheet only while the sheet is all there.
+    // left on, it outlasts the fade and hyprland's unmap fade plays on the bare frost
+    readonly property bool blurReady: panel.opacity > 0.95
 
     function clampY(want) {
         var hi = menu.fieldH - menu.height - menu.edge;

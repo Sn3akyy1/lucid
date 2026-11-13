@@ -85,6 +85,11 @@ Item {
         cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
     }
 
+    HeldPointer {
+        held: drag.active
+        cursor: Qt.ClosedHandCursor
+    }
+
     DragHandler {
         id: drag
 

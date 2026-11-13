@@ -127,13 +127,17 @@ Singleton {
         var i = key.lastIndexOf("-");
         var fam = key.slice(0, i);
         var t = Number(key.slice(i + 1));
-        var base = root.bases[fam] || root.bases.neutral;
+        // a dark tile is the shell's own raised surface: its face (tone 25, the flat
+        // tone and the lit top) is surfaceHigh itself, its shade and base step down
+        // from there. light mode keeps them dark, or their light glyphs would wash out
+        var raised = fam === "container" && !Theme.isLight;
+        var base = raised ? Theme.surfaceHigh : (root.bases[fam] || root.bases.neutral);
         var id = fam + base + t;
         var hit = root._cache[id];
         if (hit !== undefined)
             return hit;
 
-        var c = root._atTone(base, t);
+        var c = !raised ? root._atTone(base, t) : (t === 25 ? base : root._atTone(base, Math.max(0, Theme.toneOf(base) + t - 25)));
         root._cache[id] = c;
         return c;
     }

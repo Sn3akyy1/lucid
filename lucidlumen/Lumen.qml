@@ -209,6 +209,13 @@ Scope {
         if (p.indexOf("trash:") === 0)
             return app.home;
 
+        // someone else's folder: up is the folder above as it is here, which goes
+        // through admin:// again only if it has to
+        if (p.indexOf("admin://") === 0) {
+            var local = decodeURIComponent(p.replace(/^admin:\/\/[^\/]*/, "")).replace(/\/+$/, "");
+            var j = local.lastIndexOf("/");
+            return j <= 0 ? "/" : local.slice(0, j);
+        }
         // an address goes up its own path, never above the server
         if (p.indexOf("://") !== -1) {
             var m = /^([a-z0-9+.-]+:\/\/[^\/]*)(\/.*)?$/i.exec(p);

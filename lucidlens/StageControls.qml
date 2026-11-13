@@ -243,6 +243,12 @@ Item {
                     seek(mouse.x, mouse.y);
 
             }
+
+            HeldPointer {
+                held: parent.pressed
+                cursor: Qt.PointingHandCursor
+            }
+
         }
 
         Behavior on opacity {

@@ -99,6 +99,19 @@ Singleton {
 
     }
 
+    // one place up (by -1) or down (by 1) the list
+    function moveCity(tz, by) {
+        const list = root.cities.slice();
+        const i = list.indexOf(tz);
+        const j = i + by;
+        if (i < 0 || j < 0 || j >= list.length)
+            return ;
+
+        list.splice(i, 1);
+        list.splice(j, 0, tz);
+        Prefs.clockWorldZones = list.join(",");
+    }
+
     function removeCity(tz) {
         Prefs.clockWorldZones = root.cities.filter((z) => {
             return z !== tz;

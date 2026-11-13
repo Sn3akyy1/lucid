@@ -16,11 +16,14 @@ PanelWindow {
         active: dockWindow.visible
     }
 
+    PointerPoke {
+    }
+
     property bool morphing: false
     property bool closingFromHidden: false
     readonly property bool dockBusy: dockWindow.menuInDock || dockWindow.dragging || (dockWindow.morphing && !dockWindow.launcherFromHidden && !dockWindow.closingFromHidden)
     property bool slidingAway: false
-    readonly property bool heldByPointer: revealArea.containsMouse || (shellHover.hovered && !dockWindow.slidingAway)
+    readonly property bool heldByPointer: revealArea.containsMouse || restArea.containsMouse || (shellHover.hovered && !dockWindow.slidingAway)
     // on screen in its own right; a disabled dock never is
     readonly property bool dockWanted: Prefs.dockOn && (!dockWindow.hides || dockWindow.heldByPointer || Edit.active)
     // nor one stepping down for the osd's notch
@@ -31,13 +34,21 @@ PanelWindow {
     // with both notches the dock turns into the osd's card itself. the osd hands
     // itself over through stageOsd before it shows or goes
     readonly property bool osdHosted: !!dockWindow.osd && dockWindow.osd.dockHosts && dockWindow.osd.cardVisible
-    // free to: notched, and nothing else holding it. a fullscreen window covers the
-    // dock's layer but not the osd's, so over one the osd shows as its own card
-    readonly property bool canHostOsd: Prefs.dockOn && Prefs.dockNotch && !dockWindow.dockBusy && !dockWindow.heldByPointer && !Edit.active && !dockWindow.editDragging && !dockWindow.underFullscreen
+    // free to: notched, and nothing else holding it. the pointer on it is no hold:
+    // it turns into the card under the pointer and back. a fullscreen window covers
+    // the dock's layer but not the osd's, so over one the osd shows as its own card
+    readonly property bool canHostOsd: Prefs.dockOn && Prefs.dockNotch && !dockWindow.dockBusy && !Edit.active && !dockWindow.editDragging && !dockWindow.underFullscreen
     readonly property bool underFullscreen: {
         const m = Hyprland.monitorFor(dockWindow.screen);
         return !!(m && m.activeWorkspace && m.activeWorkspace.hasFullscreen);
     }
+    // a hidden dock the pointer brought up keeps its resting spot while it is the
+    // card, so a pointer still there has it back in place after
+    property bool osdPointerHold: false
+    // the track came up under a resting pointer: no reach for it until the pointer
+    // is off it once, or the card settled with the pointer elsewhere
+    property bool osdHoverStale: false
+    readonly property bool osdFaceHeld: !!dockWindow.osdFace && (dockWindow.osdFace.dragging || (dockWindow.osdFace.hovered && !dockWindow.osdHoverStale))
     // still the card while it sinks back into hiding after it
     property bool osdLeaving: false
     readonly property bool osdShaped: dockWindow.osdHosted || dockWindow.osdLeaving
@@ -163,8 +174,9 @@ PanelWindow {
         dockWindow.editDragging = false;
         Edit.dragging = false;
     }
-    // the last pixel left at the screen edge would show as a line over a bar
-    readonly property real hiddenOffset: dockWindow.dockRevealed ? 0 : -(shell.implicitHeight + dockWindow.placementMargin - (dockWindow.onBar ? 0 : 1))
+    // wholly past the edge: a last row left on screen reads as a line. the blur
+    // region's intersect keeps an off-surface shell from frosting the whole layer
+    readonly property real hiddenOffset: dockWindow.dockRevealed ? 0 : -(shell.implicitHeight + dockWindow.placementMargin)
     // a disabled dock's panel exists only while the launcher is up or shrinking away
     readonly property bool shellShown: Prefs.dockOn || dockWindow.menuInDock || dockWindow.morphing
 
@@ -292,7 +304,11 @@ PanelWindow {
     readonly property real paintH: shell.height * dockJelly.yScale
     // the edge blends beside a notch
     readonly property int blendSize: dockWindow.renderAsNotch && shell.visible ? Theme.dp(Prefs.dockNotchFlare) : 0
-    readonly property real blendY: dockWindow.paintY + dockWindow.paintH - dockWindow.blendSize
+    // how far up the side the blends reach: no further than it runs straight. past
+    // where the top corner starts to round, the curve's tip would stand off it in
+    // a step, so a short card (the osd) takes them as quarter ellipses
+    readonly property int blendDepth: Math.max(0, Math.min(dockWindow.blendSize, Math.floor(dockWindow.paintH - shell.radius)))
+    readonly property real blendY: dockWindow.paintY + dockWindow.paintH - dockWindow.blendDepth
 
     // a drag reads the shell's resting geometry, so nothing wobbles under one
     onDraggingChanged: {
@@ -350,6 +366,8 @@ PanelWindow {
         osdLeave.stop();
         dockWindow.osdLeaving = false;
         if (show) {
+            dockWindow.osdHoverStale = dockWindow.heldByPointer;
+            dockWindow.osdPointerHold = dockWindow.heldByPointer && dockWindow.hides;
             // on screen, or still sliding away, it morphs in place; tucked away it
             // comes up already the card, on the dock's own way up
             dockWindow.osdRising = !dockWindow.dockShown && !dockWindow.slidingAway;
@@ -376,6 +394,7 @@ PanelWindow {
                 dockJelly.kickAfter(-0.1, Math.round(Theme.durLong * 0.85));
             }
         } else {
+            dockWindow.osdPointerHold = false;
             dockWindow.osdLeaving = true;
             osdLeave.restart();
         }
@@ -399,6 +418,12 @@ PanelWindow {
             dockWindow.osdMorphing = false;
             dockWindow.dockFaceDelay = 0;
             dockWindow.dockFaceFade = 200;
+            if (!dockWindow.osdFace || !dockWindow.osdFace.hovered)
+                dockWindow.osdHoverStale = false;
+
+            if (!dockWindow.osdShaped)
+                dockWindow.osdPointerHold = false;
+
             if (!dockWindow.morphing) {
                 dockWindow.shellResizeMs = Theme.ms(60);
                 dockWindow.shellCurve = dockWindow.morphCurve;
@@ -417,6 +442,17 @@ PanelWindow {
             dockWindow.osdLeaving = false;
             dockWindow.osdRising = false;
         }
+    }
+
+    Connections {
+        function onHoveredChanged() {
+            if (!dockWindow.osdFace.hovered)
+                dockWindow.osdHoverStale = false;
+
+        }
+
+        target: dockWindow.osdFace
+        ignoreUnknownSignals: true
     }
 
     property bool snapPlacement: false
@@ -833,11 +869,6 @@ PanelWindow {
         "name": "Power",
         "desc": "The full-screen way out: lock, sleep, log out, restart",
         "glyph": DockIcons.power
-    }, {
-        "id": "widgets",
-        "name": "Widget Panel",
-        "desc": "Drag clocks, meters and notes onto the desktop, or take them off",
-        "glyph": DockIcons.widgets
     }, {
         "id": "keyboard",
         "name": "On-Screen Keyboard",
@@ -1862,8 +1893,6 @@ PanelWindow {
         } else if (id === "settings") {
             dockWindow.menuOpen = false;
             Prefs.settingsRequested("");
-        } else if (id === "widgets") {
-            dockWindow.openWidgetPanel();
         } else if (id === "edit") {
             dockWindow.menuOpen = false;
             Edit.enter("");
@@ -2000,11 +2029,6 @@ PanelWindow {
         themeSwitchProbe.command = ["sh", "-c", "d=\"" + Prefs.wallpaperDirFor(id) + "\"; " + "[ -d \"$d\" ] && find \"$d\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | sort | head -n1; true"];
         themeSwitchProbe.running = true;
         dockWindow.menuOpen = false;
-    }
-
-    function openWidgetPanel() {
-        dockWindow.menuOpen = false;
-        Widgets.openPanel(dockWindow.screen ? dockWindow.screen.name : "");
     }
 
     function openSession() {
@@ -2532,6 +2556,21 @@ PanelWindow {
                 grabArm.armed = false;
 
         }
+    }
+
+    // where the dock rests, while the pointer that brought it up has it turned
+    // into the osd's narrower card: still the dock's to the pointer
+    MouseArea {
+        id: restArea
+
+        x: Math.round((parent.width - shell.implicitWidth) / 2)
+        width: shell.implicitWidth
+        anchors.bottom: parent.bottom
+        height: shell.implicitHeight + dockWindow.placementMargin
+        hoverEnabled: true
+        acceptedButtons: Qt.NoButton
+        enabled: dockWindow.osdPointerHold && !dockWindow.osdLeaving
+        visible: restArea.enabled
     }
 
     // touching this strip reveals the dock
@@ -3605,10 +3644,6 @@ PanelWindow {
                         dockWindow.openSession();
                         return ;
                     }
-                    if (m === "widgets") {
-                        dockWindow.openWidgetPanel();
-                        return ;
-                    }
                     dockWindow.setSearchText(dockWindow.prefixFor(m));
                 }
                 onDeleteRequested: (index) => dockWindow.deleteResult(index)
@@ -3729,6 +3764,10 @@ PanelWindow {
         }
 
         Region {
+            item: restArea.enabled ? restArea : null
+        }
+
+        Region {
             x: editHandle.x
             y: editHandle.y
             width: editHandle.shown ? editHandle.width : 0
@@ -3746,6 +3785,7 @@ PanelWindow {
             readonly property bool isRight: index === 1
 
             size: Theme.dp(Prefs.dockNotchFlare)
+            depth: Math.max(0, Math.min(size, Math.floor(dockWindow.paintH - shell.radius)))
             mirrored: isRight
             x: isRight ? dockWindow.paintX + dockWindow.paintW : dockWindow.paintX - width
             y: dockWindow.paintY + dockWindow.paintH - height
@@ -3772,16 +3812,38 @@ PanelWindow {
     Region {
         id: dockBlurRegion
 
+        // the shell (the osd too, while it is the card) pulled in a pixel along its
+        // curved corners only: the region is hard-edged, and kept to the painted
+        // curve it frosts the curve's antialiasing, a ragged rim. two bands put the
+        // flat edges back at full extent
+        readonly property real topIn: shell.radius
+        readonly property real bottomIn: Math.max(shell.bottomLeftRadius, shell.bottomRightRadius)
+        readonly property real sideIn: Math.max(shell.radius, dockBlurRegion.bottomIn)
+
         intersection: Intersection.Intersect
 
         Region {
-            x: dockWindow.regionLo(dockWindow.paintX)
+            x: dockWindow.regionLo(dockWindow.paintX + 1)
+            y: dockWindow.regionLo(dockWindow.paintY + 1)
+            width: dockWindow.splitDrawn ? 0 : Math.max(0, dockWindow.regionHi(dockWindow.paintX + dockWindow.paintW - 1) - dockWindow.regionLo(dockWindow.paintX + 1))
+            height: Math.max(0, dockWindow.regionHi(dockWindow.paintY + dockWindow.paintH - 1) - dockWindow.regionLo(dockWindow.paintY + 1))
+            radius: Math.max(0, shell.radius - 1)
+            bottomLeftRadius: Math.max(0, shell.bottomLeftRadius - 1)
+            bottomRightRadius: Math.max(0, shell.bottomRightRadius - 1)
+        }
+
+        Region {
+            x: dockWindow.regionLo(dockWindow.paintX + dockBlurRegion.sideIn)
             y: dockWindow.regionLo(dockWindow.paintY)
-            width: dockWindow.splitDrawn ? 0 : Math.max(0, dockWindow.regionHi(dockWindow.paintX + dockWindow.paintW) - dockWindow.regionLo(dockWindow.paintX))
+            width: dockWindow.splitDrawn ? 0 : Math.max(0, dockWindow.regionHi(dockWindow.paintX + dockWindow.paintW - dockBlurRegion.sideIn) - dockWindow.regionLo(dockWindow.paintX + dockBlurRegion.sideIn))
             height: Math.max(0, dockWindow.regionHi(dockWindow.paintY + dockWindow.paintH) - dockWindow.regionLo(dockWindow.paintY))
-            radius: shell.radius
-            bottomLeftRadius: shell.bottomLeftRadius
-            bottomRightRadius: shell.bottomRightRadius
+        }
+
+        Region {
+            x: dockWindow.regionLo(dockWindow.paintX)
+            y: dockWindow.regionLo(dockWindow.paintY + dockBlurRegion.topIn)
+            width: dockWindow.splitDrawn ? 0 : Math.max(0, dockWindow.regionHi(dockWindow.paintX + dockWindow.paintW) - dockWindow.regionLo(dockWindow.paintX))
+            height: Math.max(0, dockWindow.regionHi(dockWindow.paintY + dockWindow.paintH - dockBlurRegion.bottomIn) - dockWindow.regionLo(dockWindow.paintY + dockBlurRegion.topIn))
         }
 
         Region {
@@ -3823,16 +3885,16 @@ PanelWindow {
             x: dockWindow.paintX - dockWindow.blendSize
             y: dockWindow.regionLo(dockWindow.blendY)
             // on a bottom bar a blend past the bar's end is not drawn, so it takes no blur
-            width: dockWindow.barUnderLeft ? dockWindow.blendSize : 0
-            height: dockWindow.regionHi(dockWindow.blendY + dockWindow.blendSize) - dockWindow.regionLo(dockWindow.blendY)
+            width: dockWindow.barUnderLeft && dockWindow.blendDepth > 0 ? dockWindow.blendSize : 0
+            height: dockWindow.regionHi(dockWindow.blendY + dockWindow.blendDepth) - dockWindow.regionLo(dockWindow.blendY)
 
             Region {
                 shape: RegionShape.Ellipse
                 intersection: Intersection.Subtract
                 x: dockWindow.paintX - 2 * dockWindow.blendSize - 1
-                y: Math.round(dockWindow.blendY) - dockWindow.blendSize - 1
+                y: Math.round(dockWindow.blendY) - dockWindow.blendDepth - 1
                 width: 2 * dockWindow.blendSize + 2
-                height: 2 * dockWindow.blendSize + 2
+                height: 2 * dockWindow.blendDepth + 2
             }
 
         }
@@ -3840,16 +3902,16 @@ PanelWindow {
         Region {
             x: dockWindow.paintX + dockWindow.paintW
             y: dockWindow.regionLo(dockWindow.blendY)
-            width: dockWindow.barUnderRight ? dockWindow.blendSize : 0
-            height: dockWindow.regionHi(dockWindow.blendY + dockWindow.blendSize) - dockWindow.regionLo(dockWindow.blendY)
+            width: dockWindow.barUnderRight && dockWindow.blendDepth > 0 ? dockWindow.blendSize : 0
+            height: dockWindow.regionHi(dockWindow.blendY + dockWindow.blendDepth) - dockWindow.regionLo(dockWindow.blendY)
 
             Region {
                 shape: RegionShape.Ellipse
                 intersection: Intersection.Subtract
                 x: dockWindow.paintX + dockWindow.paintW - 1
-                y: Math.round(dockWindow.blendY) - dockWindow.blendSize - 1
+                y: Math.round(dockWindow.blendY) - dockWindow.blendDepth - 1
                 width: 2 * dockWindow.blendSize + 2
-                height: 2 * dockWindow.blendSize + 2
+                height: 2 * dockWindow.blendDepth + 2
             }
 
         }

@@ -25,7 +25,7 @@ Singleton {
     readonly property var platformThemes: ["qt6ct", "qt5ct", "gtk3", "gnome", "kde", ""]
     // the app font follows the shell's own unless it has been set apart
     readonly property string appFont: Prefs.envFontSync ? Prefs.fontFamily : Prefs.envAppFont
-    readonly property bool cursorMissing: root.probed && !root.has(root.cursorThemes, Prefs.envCursorTheme)
+    readonly property bool cursorMissing: Prefs.envLegacyCursor && root.probed && !root.has(root.cursorThemes, Prefs.envCursorTheme)
     // hyprland has no cursor-shadow option; the shade is painted into the theme
     // itself, so turning it off means rebuilding the theme from its svg sources
     property var shadowThemes: ({
@@ -35,13 +35,15 @@ Singleton {
     readonly property bool shadowCapable: root.shadowInfo.capable === true
     readonly property bool shadowBuilt: root.shadowInfo.built === true
     readonly property string shadowReason: root.shadowInfo.reason || ""
-    readonly property bool shadowOff: root.shadowCapable && !Prefs.envCursorShadow
+    // lucid's own pointer draws its shade itself; this is for an installed theme
+    readonly property bool shadowOff: Prefs.envLegacyCursor && root.shadowCapable && !Prefs.envCursorShadow
     readonly property bool shadowNeedsBuild: root.shadowOff && !root.shadowBuilt
     property bool shadowProbed: false
     property bool shadowBuilding: false
     property string shadowError: ""
-    // what the eight files are actually told, which is the variant when it exists
-    readonly property string cursorTheme: root.shadowOff && root.shadowBuilt ? root.shadowInfo.variant : Prefs.envCursorTheme
+    // what the eight files are actually told: lucid's own pointer once it is
+    // drawn, otherwise the installed theme, or its shadowless copy when there is one
+    readonly property string cursorTheme: !Prefs.envLegacyCursor && Pointer.ready ? Pointer.themeName : (root.shadowOff && root.shadowBuilt ? root.shadowInfo.variant : Prefs.envCursorTheme)
     readonly property bool iconMissing: root.probed && !root.has(root.iconThemes, Prefs.envIconTheme)
     readonly property bool gtkMissing: root.probed && !root.has(root.gtkThemes, Prefs.envGtkTheme)
     readonly property int scopeCount: (Prefs.envApplyGtk ? 1 : 0) + (Prefs.envApplyQt ? 1 : 0) + (Prefs.envApplyHypr ? 1 : 0)
@@ -377,6 +379,9 @@ Singleton {
 
         onExited: {
             root.busy = false;
+            // Hyprland swaps the theme but keeps the old image on screen until
+            // the shape changes; the shell's own windows can ask for it again
+            Pointer.poke();
             // the pickers list what is installed; a theme may have arrived since
             root.rescan();
         }

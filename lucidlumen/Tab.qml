@@ -66,6 +66,11 @@ QtObject {
     property bool wantConnect: false
     // an address typed in: kept with the recent servers once it connects
     property string rememberNext: ""
+    // someone else's folder: shut until gvfs's admin:// opens it with a password
+    // (whose it is), and open that way now
+    readonly property bool locked: tab.connectUri.indexOf("admin:") === 0
+    property string lockedOwner: ""
+    readonly property bool asAdmin: tab.path.indexOf("admin:") === 0
 
     onPathChanged: {
         if (tab.pinned && tab.pinKey !== "" && tab.path !== "")
@@ -188,7 +193,10 @@ QtObject {
 
         tab.writable = ev.writable !== false && !tab.isRecent;
         tab.connectUri = ev.connect || "";
-        if (ev.connect)
+        tab.lockedOwner = ev.owner || "";
+        if (tab.locked)
+            tab.error = "An administrator's password opens it.";
+        else if (ev.connect)
             tab.error = "Not connected to " + tab.app.hostOf(ev.connect);
         else if (ev.error)
             tab.error = ev.error;

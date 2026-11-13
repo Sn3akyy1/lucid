@@ -122,6 +122,12 @@ Item {
                         warmth.setAt(mouse.x);
 
                 }
+
+                HeldPointer {
+                    held: parent.pressed
+                    cursor: Qt.PointingHandCursor
+                }
+
             }
 
         }

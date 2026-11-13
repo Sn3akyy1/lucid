@@ -13,9 +13,16 @@ Item {
     property Item board: null
 
     readonly property bool open: wp.board !== null && wp.board.panelUp === true
+    // a card is being moved or resized (one out of the gallery too), or is the one
+    // you are working on: the sheet slides back out of its way until it's done.
+    // live, not dragUid: a card takes the drag on press, and a click is no move
+    readonly property bool away: wp.open && (ghost.carried || Widgets.liveUid !== "" || Widgets.menuUid !== "" || Widgets.editUid !== "")
+    readonly property bool inward: wp.open && !wp.away
     readonly property bool shown: wp.open || wp.reveal > 0.01
-    // eases 0..1 as the sheet slides in
-    property real reveal: wp.open ? 1 : 0
+    // eases 0..1 as the sheet slides in. set from onInwardChanged, after slidingIn,
+    // so the slide starts on the new direction's timing and not the last one's
+    property real reveal: 0
+    property bool slidingIn: false
     // "add" | "placed" | "layouts"
     property string tab: "add"
     readonly property var tabs: [{
@@ -48,6 +55,8 @@ Item {
     readonly property int wheelStep: 190
     readonly property real sheetW: Math.min(Theme.dp(452), wp.width - wp.edge * 2)
     readonly property real sheetH: Math.max(0, wp.height - wp.edge * 2)
+    // the sheet as drawn, for the board to frost behind and cut out of its cards
+    readonly property Item sheetBox: sheet
     readonly property real innerW: wp.sheetW - wp.pad * 2
     readonly property real tileW: Math.floor((wp.innerW - Theme.dp(10)) / 2)
     // a card on another screen than the main one remembers which
@@ -159,11 +168,6 @@ Item {
         return q === "" || (p.name + " " + (p.blurb || "")).toLowerCase().indexOf(q) >= 0;
     }
 
-    // the sheet's resting place, so a drop test never sees it mid-slide
-    function sheetHit(px, py) {
-        return px >= wp.edge && px <= wp.edge + wp.sheetW && py >= wp.edge && py <= wp.edge + wp.sheetH;
-    }
-
     function close() {
         Widgets.closePanel();
     }
@@ -253,10 +257,9 @@ Item {
         if (!ghost.carried || !wp.board)
             return ;
 
-        ghost.overSheet = wp.sheetHit(px, py);
         var nx = px - ghost.grabX;
         var ny = py - ghost.grabY;
-        if (Prefs.widgetSnap && !ghost.overSheet) {
+        if (Prefs.widgetSnap) {
             var s = Widgets.snapBox(wp.width, wp.height, ghost.natW, ghost.natH, nx, ny, wp.cardsHere());
             nx = s.x;
             ny = s.y;
@@ -284,7 +287,7 @@ Item {
         if (!ghost.carried)
             return ;
 
-        var back = ghost.overSheet || Widgets.full;
+        var back = Widgets.full;
         wp.letGo();
         if (back) {
             wp.abandon();
@@ -295,7 +298,7 @@ Item {
         settle.restart();
     }
 
-    // let go over the sheet, or lost: the ghost shrinks back toward the gallery
+    // no room left for it, or lost: the ghost shrinks back toward the gallery
     function abandon() {
         wp.letGo();
         if (ghost.wtype === "")
@@ -325,6 +328,10 @@ Item {
     }
 
     visible: wp.shown || ghost.visible
+    onInwardChanged: {
+        wp.slidingIn = wp.inward;
+        wp.reveal = wp.inward ? 1 : 0;
+    }
     onOpenChanged: {
         if (wp.open)
             return ;
@@ -343,9 +350,9 @@ Item {
 
     Behavior on reveal {
         NumberAnimation {
-            duration: wp.open ? Theme.durLong : Theme.durExit
+            duration: wp.slidingIn ? Theme.durLong : Theme.durExit
             easing.type: Easing.Bezier
-            easing.bezierCurve: wp.open ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
+            easing.bezierCurve: wp.slidingIn ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
         }
 
     }
@@ -385,11 +392,13 @@ Item {
     Rectangle {
         id: sheet
 
+        readonly property int cornerRadius: Theme.radiusXl
+
         x: wp.edge - (1 - wp.reveal) * (wp.sheetW + wp.edge + Theme.dp(24))
         y: wp.edge
         width: wp.sheetW
         height: wp.sheetH
-        radius: Theme.radiusXl
+        radius: sheet.cornerRadius
         color: Theme.withBlur(Theme.surfaceContainer)
         visible: wp.shown
         clip: true
@@ -413,82 +422,6 @@ Item {
 
     }
 
-    // a card carried over the sheet is taken off the desktop when it is let go
-    Rectangle {
-        id: bin
-
-        readonly property Item carried: (wp.board && wp.board.dragFrame && wp.board.dragFrame !== ghost) ? wp.board.dragFrame : null
-        readonly property bool hot: bin.carried !== null && bin.carried.overBin === true
-        // only once the card is brought toward the sheet, so an ordinary move is left alone
-        readonly property bool near: bin.carried !== null && bin.carried.pointerX >= 0 && bin.carried.pointerX < wp.edge + wp.sheetW + 160
-
-        x: sheet.x
-        y: sheet.y
-        width: sheet.width
-        height: sheet.height
-        radius: sheet.radius
-        color: bin.hot ? Theme.alpha(Theme.errorContainer, 0.94) : Theme.alpha(Theme.surfaceHighest, 0.9)
-        border.width: 2
-        border.color: bin.hot ? Theme.error : Theme.alpha(Theme.text, 0.14)
-        opacity: wp.open && (bin.hot || bin.near) ? 1 : 0
-        visible: opacity > 0.01
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Theme.durFastEffects
-            }
-
-        }
-
-        Behavior on color {
-            ColorAnimation {
-                duration: Theme.durFastEffects
-            }
-
-        }
-
-        Column {
-            anchors.centerIn: parent
-            spacing: Theme.dp(14)
-
-            MaterialShape {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: Theme.dp(72)
-                height: Theme.dp(72)
-                shape: "cookie9"
-                color: bin.hot ? Theme.error : Theme.primaryContainer
-                scale: bin.hot ? 1.12 : 1
-
-                Icon {
-                    anchors.centerIn: parent
-                    name: "delete"
-                    size: Theme.dp(30)
-                    fill: bin.hot ? 1 : 0
-                    color: bin.hot ? Theme.fgError : Theme.fgPrimaryContainer
-                }
-
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: Theme.durFastSpatial
-                        easing.type: Easing.Bezier
-                        easing.bezierCurve: Theme.curveFastSpatial
-                    }
-
-                }
-
-            }
-
-            LText {
-                anchors.horizontalCenter: parent.horizontalCenter
-                role: "titleMedium"
-                color: bin.hot ? Theme.fgErrorContainer : Theme.text
-                text: bin.hot ? "Let go to remove it" : "Drop here to remove"
-            }
-
-        }
-
-    }
-
     // a card on its way out of the gallery. the board draws its snap guides off it,
     // the same way it does for a card being moved
     Item {
@@ -506,23 +439,14 @@ Item {
         // 0 on top of the preview, 1 lifted at full size
         property real lift: 0
         property real fade: 1
-        property bool overSheet: false
         property real guideX: -1
         property real guideY: -1
-        property real dim: ghost.overSheet ? 0.5 : 0.95
 
         width: ghost.natW
         height: ghost.natH
         z: 2
         visible: ghost.wtype !== ""
-        opacity: ghost.fade * ghost.dim
-
-        Behavior on dim {
-            NumberAnimation {
-                duration: Theme.durFastEffects
-            }
-
-        }
+        opacity: ghost.fade * 0.95
 
         transform: Scale {
             origin.x: ghost.grabX
@@ -590,10 +514,7 @@ Item {
         }
 
         ScriptAction {
-            script: {
-                ghost.wtype = "";
-                ghost.overSheet = false;
-            }
+            script: ghost.wtype = ""
         }
 
     }

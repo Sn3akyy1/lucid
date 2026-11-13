@@ -42,7 +42,7 @@ BarPill {
 
         return root.title;
     }
-    readonly property int horizontalPadding: Theme.dp(11)
+    readonly property int horizontalPadding: Theme.barDp(11)
     readonly property bool iconOnly: Prefs.windowModuleText === "icon"
     // every window on the workspace in view, in Hyprland's order
     readonly property var here: root.active && root.active.workspace && root.active.workspace.toplevels ? root.active.workspace.toplevels.values.filter((t) => {
@@ -259,14 +259,14 @@ BarPill {
             id: compactRow
 
             anchors.centerIn: parent
-            spacing: Theme.dp(8)
+            spacing: Theme.barDp(8)
 
             Image {
                 anchors.verticalCenter: parent.verticalCenter
-                width: Theme.dp(17)
-                height: Theme.dp(17)
-                sourceSize.width: Theme.dp(34)
-                sourceSize.height: Theme.dp(34)
+                width: Theme.barDp(17)
+                height: Theme.barDp(17)
+                sourceSize.width: Theme.barDp(34)
+                sourceSize.height: Theme.barDp(34)
                 source: root.iconOf(root.active)
                 asynchronous: true
                 smooth: true
@@ -275,14 +275,14 @@ BarPill {
             Text {
                 visible: !root.iconOnly
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, Theme.dp(Prefs.windowModuleWidth))
+                width: Math.min(implicitWidth, Theme.barDp(Prefs.windowModuleWidth))
                 text: root.faceText
                 color: Theme.text
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontLabelLg
+                font.pixelSize: Theme.barFs(13)
                 // the media title's weight, the other title on the bar
                 font.bold: true
-                font.variableAxes: Theme.axes(Theme.fontLabelLg, 640, 0)
+                font.variableAxes: Theme.axes(Theme.barFs(13), 640, 0)
                 elide: Text.ElideRight
             }
 

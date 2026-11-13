@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+# clock — opens clock, lucid's clock app, on one of its pages. a running clock
+# gets it over ipc, so the window shows at once; otherwise one is started first.
+# it goes five minutes after its window closes. the alarms, timers and
+# reminders it shows run in the shell, so they ring with the app closed
+#
+#   clock [alarms|clock|timer|stopwatch|focus|reminders|settings]
+#   clock --install        write the desktop entry for this copy
+#   clock --quit           stop the running clock
+#   clock --quit-if-idle   stop it unless its window is open
+
+set -u
+
+here=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+entry=$(dirname "$here")/clock.qml
+data=${XDG_DATA_HOME:-$HOME/.local/share}
+apps=$data/applications
+# the window's wayland app id, for window rules and the dock. quickshell reads it
+# before an `//@ pragma Env` line is applied, so it has to come from here
+export QS_APP_ID=lucid.clock
+
+# the shell's own trim (launch-shell.sh): with no nvidia module loaded, nvidia's
+# egl driver is 88mb of nothing
+if [[ -z ${__EGL_VENDOR_LIBRARY_FILENAMES:-} && ! -r /proc/driver/nvidia/version && -d /usr/share/glvnd/egl_vendor.d ]]; then
+    keep=$(find /usr/share/glvnd/egl_vendor.d -name '*.json' ! -name '*nvidia*' 2>/dev/null | sort | paste -sd:)
+    if [[ -n $keep ]]; then
+        export __EGL_VENDOR_LIBRARY_FILENAMES=$keep
+    fi
+fi
+
+running() {
+    qs ipc -p "$entry" call -- clock count &>/dev/null
+}
+
+install_entry() {
+    mkdir -p "$apps"
+    cat > "$apps/lucid.clock.desktop" <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Clock
+GenericName=Clock
+Comment=Alarms, the time around the world, timers, a stopwatch, focus sessions and reminders
+Exec="$here/clock"
+Icon=$here/clock.svg
+Terminal=false
+Categories=Utility;Clock;
+Keywords=clock;alarm;timer;stopwatch;world;time;zone;countdown;pomodoro;focus;reminder;calendar;
+StartupNotify=true
+StartupWMClass=lucid.clock
+Actions=alarms;timer;stopwatch;reminders;
+
+[Desktop Action alarms]
+Name=Alarms
+Exec="$here/clock" alarms
+
+[Desktop Action timer]
+Name=Timer
+Exec="$here/clock" timer
+
+[Desktop Action stopwatch]
+Name=Stopwatch
+Exec="$here/clock" stopwatch
+
+[Desktop Action reminders]
+Name=Reminders
+Exec="$here/clock" reminders
+DESKTOP
+    update-desktop-database -q "$apps" 2>/dev/null || true
+}
+
+page=""
+for arg in "$@"; do
+    case $arg in
+        --install) install_entry; exit 0 ;;
+        --quit) exec qs kill -p "$entry" ;;
+        --quit-if-idle)
+            open=$(qs ipc -p "$entry" call -- clock count 2>/dev/null) || exit 0
+            if [[ $open == 0 ]]; then
+                qs kill -p "$entry" >/dev/null
+            fi
+            exit 0
+            ;;
+        --help|-h) sed -n '2,11s/^# \{0,1\}//p' "${BASH_SOURCE[0]}"; exit 0 ;;
+        alarms|alarm|clock|world|timer|timers|stopwatch|focus|pomodoro|reminders|calendar|settings)
+            case $arg in
+                alarm) page=alarms ;;
+                world) page=clock ;;
+                timers) page=timer ;;
+                pomodoro) page=focus ;;
+                calendar) page=reminders ;;
+                *) page=$arg ;;
+            esac
+            ;;
+        *) echo "clock: no page called '$arg'" >&2; exit 2 ;;
+    esac
+done
+
+# two launches at once must not both start one
+exec 9>"${XDG_RUNTIME_DIR:-/tmp}/lucid-clock.lock"
+flock -w 10 9 || true
+
+if running; then
+    exec qs ipc -p "$entry" call -- clock open "$page" 9>&- >/dev/null
+fi
+
+# 9>&-: clock must not inherit the lock, or it holds it for as long as it runs
+CLOCK_PAGE=$page qs -p "$entry" -n -d 9>&- &>/dev/null
+
+# hold the lock until it answers, so a launch waiting on it finds it running
+for _ in $(seq 60); do
+    running && exit 0
+    sleep 0.1
+done
+exit 0

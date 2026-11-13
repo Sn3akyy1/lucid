@@ -14,6 +14,7 @@ import importlib.util
 import io
 import json
 import os
+import pwd
 import re
 import shutil
 import signal
@@ -147,16 +148,138 @@ def send(obj):
 
 
 def captured(fn, *args):
-    # the desktop helper's one-shot commands print what they made
+    # the desktop helper's one-shot commands print what they made, and sys.exit()
+    # when they fail, which inside the main loop would end the daemon
     buf = io.StringIO()
-    with contextlib.redirect_stdout(buf):
-        fn(*args)
+    try:
+        with contextlib.redirect_stdout(buf):
+            fn(*args)
+    except SystemExit as e:
+        raise RuntimeError(e.code if isinstance(e.code, str) else "it failed") from None
     return buf.getvalue().strip()
 
 
 # ---- what each file is drawn as: shared with the desktop, in desktop-icons.py
 
 SPECIAL_DIRS, SPECIALS, named_type, slot_for = dk.SPECIAL_DIRS, dk.SPECIALS, dk.named_type, dk.slot_for
+
+
+# ---- folders you can't read: another user's home, say ------------------------------
+#
+# a listing turned down for permission comes back with gvfs's admin:// address for
+# it to connect to, as a share's does: mounting it runs gvfsd-admin through pkexec,
+# so lucid's polkit agent asks for the password, and the folder is read through gvfs.
+# nothing else can read it there: an outside thumbnailer or app would be a client of
+# its own, with a password prompt of its own. so lumend makes the thumbnails, and the
+# preview and whatever opens a file get a private copy it fetched
+
+ADMIN_COPIES = os.path.join(GLib.get_user_cache_dir(), "lucid", "lumen-admin")
+
+
+def fetch_copy(gf, mtime):
+    """a private copy of a file only gio can reach, fetched once per version"""
+    os.makedirs(ADMIN_COPIES, mode=0o700, exist_ok=True)
+    os.chmod(ADMIN_COPIES, 0o700)
+    folder = os.path.join(ADMIN_COPIES, hashlib.md5(gf.get_uri().encode()).hexdigest())
+    dest = os.path.join(folder, gf.get_basename())
+    try:
+        if int(os.stat(dest).st_mtime) == int(mtime):
+            return dest
+    except OSError:
+        pass
+    os.makedirs(folder, mode=0o700, exist_ok=True)
+    part = dest + ".part"
+    gf.copy(Gio.File.new_for_path(part), Gio.FileCopyFlags.OVERWRITE | Gio.FileCopyFlags.NOFOLLOW_SYMLINKS, None, None, None)
+    os.chmod(part, 0o600)
+    os.utime(part, (mtime, mtime))
+    os.replace(part, dest)
+    return dest
+
+
+class AdminThumbs:
+    """pictures only gio can reach, decoded here in a thread of their own straight to
+    thumbnail size, and kept where every thumbnail is"""
+
+    LIMIT = 64 << 20
+
+    def __init__(self, done):
+        self.done = done
+        self.mimes = {m for f in GdkPixbuf.Pixbuf.get_formats() for m in f.get_mime_types()} if GdkPixbuf else set()
+        self.queue = collections.deque()
+        self.tried = set()
+        self.cv = threading.Condition()
+        self.worker = None
+
+    def can(self, mime):
+        return mime in self.mimes
+
+    @staticmethod
+    def dest(uri):
+        return os.path.join(dk.THUMB_ROOT, "large", hashlib.md5(uri.encode()).hexdigest() + ".png")
+
+    def cached(self, uri, mtime):
+        try:
+            return self.dest(uri) if os.stat(self.dest(uri)).st_mtime >= mtime else ""
+        except OSError:
+            return ""
+
+    def want(self, uri, mtime, size):
+        if size > self.LIMIT or (uri, mtime) in self.tried:
+            return
+        self.tried.add((uri, mtime))
+        with self.cv:
+            self.queue.append((uri, mtime))
+            self.cv.notify()
+        if self.worker is None:
+            self.worker = threading.Thread(target=self.run, daemon=True)
+            self.worker.start()
+
+    def run(self):
+        while True:
+            with self.cv:
+                while not self.queue:
+                    self.cv.wait()
+                uri, mtime = self.queue.popleft()
+            path = self.make(uri, mtime)
+            if path:
+                GLib.idle_add(lambda u=uri, p=path: (self.done(u, p), False)[1])
+
+    def make(self, uri, mtime):
+        dest = self.dest(uri)
+        try:
+            stream = Gio.File.new_for_uri(uri).read(None)
+            try:
+                pb = GdkPixbuf.Pixbuf.new_from_stream_at_scale(stream, dk.THUMB_SIZE, dk.THUMB_SIZE, True, None)
+            finally:
+                stream.close(None)
+            pb = pb.apply_embedded_orientation() or pb
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            part = dest + ".part"
+            pb.savev(part, "png", ["tEXt::Thumb::URI", "tEXt::Thumb::MTime", "tEXt::Software"], [uri, str(mtime), "Lucid"])
+            os.replace(part, dest)
+            return dest
+        except (GLib.Error, OSError):
+            return ""
+
+def owner_of(path):
+    """whose a folder is, by the nearest part of its path that can be looked at"""
+    p = path
+    while p and p != "/":
+        try:
+            uid = os.stat(p).st_uid
+            break
+        except OSError:
+            p = os.path.dirname(p)
+    else:
+        return ""
+    if uid == os.getuid():
+        return ""
+    try:
+        pw = pwd.getpwuid(uid)
+    except KeyError:
+        return ""
+    return pw.pw_gecos.split(",")[0] or pw.pw_name
+
 
 
 # ---- the daemon -------------------------------------------------------------------
@@ -185,6 +308,8 @@ class Lumen:
         self.icons = dk.Icons(dk.theme_or_system(""), 64)
         self.app_icons = self.icons
         self.thumbs = Thumbs(self.thumbs_done)
+        self.admin_thumbs = AdminThumbs(lambda uri, path: send({"ev": "thumb", "uri": uri, "thumb": path}))
+        self.tidy_admin_copies()
         self.volumes = Gio.VolumeMonitor.get()
         for sig in ("mount-added", "mount-removed", "mount-changed", "volume-added", "volume-removed", "volume-changed"):
             self.volumes.connect(sig, lambda *_: self.later("volumes", 250, self.volumes_moved))
@@ -352,6 +477,15 @@ class Lumen:
         try:
             en = src.enumerate_children_finish(res)
         except GLib.Error as e:
+            # someone else's folder: the window connects to it as gvfs's admin://, which
+            # asks for the password, and lists it from there
+            if e.matches(Gio.io_error_quark(), Gio.IOErrorEnum.PERMISSION_DENIED) and "://" not in v.path \
+                    and "admin" in self.schemes():
+                admin = Gio.File.new_for_path(v.path).get_uri().replace("file://", "admin://", 1)
+                send({"ev": "list", "view": v.vid, "gen": gen, "path": v.path, "reset": True, "items": []})
+                send({"ev": "listDone", "view": v.vid, "gen": gen, "path": v.path, "count": 0, "error": e.message,
+                      "connect": admin, "owner": owner_of(v.path)})
+                return
             if not e.matches(Gio.io_error_quark(), Gio.IOErrorEnum.CANCELLED):
                 # a share not connected (now, or since the last login): the window
                 # connects to its address and comes back
@@ -449,6 +583,11 @@ class Lumen:
             # with no fuse folder it has only its address, not a path to hand os
             if "://" in it["path"]:
                 it["path"] = ""
+            if folder.startswith("admin:") and it["kind"] == "file" and self.admin_thumbs.can(it.get("mime", "")):
+                it["thumb"] = self.admin_thumbs.cached(it["uri"], it["mtime"])
+                if not it["thumb"]:
+                    it["canThumb"] = True
+                    self.admin_thumbs.want(it["uri"], it["mtime"], it["size"])
         if it["kind"] != "dir":
             named = named_type(it["name"], it.get("mime") or "")
             if named != it.get("mime"):
@@ -637,8 +776,45 @@ class Lumen:
 
     # -- opening
 
+    @staticmethod
+    def tidy_admin_copies():
+        # the copies fetched out of someone else's folders are kept a day
+        try:
+            names = os.listdir(ADMIN_COPIES)
+        except OSError:
+            return
+        cutoff = time.time() - 86400
+        for n in names:
+            p = os.path.join(ADMIN_COPIES, n)
+            with contextlib.suppress(OSError):
+                st = os.lstat(p)
+                if max(st.st_mtime, st.st_ctime) < cutoff:
+                    shutil.rmtree(p)
+
+    def open_admin(self, rid, uris):
+        made, failed = [], ""
+        for uri in uris:
+            gf = Gio.File.new_for_uri(uri)
+            try:
+                mtime = gf.query_info("time::modified", Gio.FileQueryInfoFlags.NONE, None).get_attribute_uint64("time::modified")
+                made.append(fetch_copy(gf, mtime))
+            except (GLib.Error, OSError) as e:
+                failed = getattr(e, "message", None) or str(e)
+
+        def launch():
+            for dest in made:
+                Gio.AppInfo.launch_default_for_uri_async(Gio.File.new_for_path(dest).get_uri(), None, None, None)
+            send({"id": rid, "ok": not failed, "copies": len(made), "error": failed})
+            return False
+        GLib.idle_add(launch)
+
     def op_open(self, req):
+        admin = [u for u in req.get("uris", []) if u.startswith("admin:")]
+        if admin:
+            threading.Thread(target=self.open_admin, args=(req.get("id"), admin), daemon=True).start()
         for uri in req.get("uris", []):
+            if uri.startswith("admin:"):
+                continue
             gf = Gio.File.new_for_uri(uri)
             path = gf.get_path() or ""
             if path.endswith(".desktop") and os.access(path, os.X_OK):
@@ -650,7 +826,7 @@ class Lumen:
                     app.launch_uris_async([], None, None, None)
                     continue
             Gio.AppInfo.launch_default_for_uri_async(uri, None, None, None)
-        return {}
+        return None if admin else {}
 
     def op_appsFor(self, req):
         # by the name's type when the file is empty, so a new .pdf offers pdf apps
@@ -793,7 +969,11 @@ class Lumen:
         return {"name": name, "path": os.path.join(os.path.dirname(paths[0]), name) if paths and name else ""}
 
     def op_extract(self, req):
-        name = captured(dk.extract, req["path"])
+        # into: always a new folder named after the archive, even for one thing inside
+        try:
+            name = captured(dk.extract, req["path"], bool(req.get("into")))
+        except RuntimeError:
+            return {"ok": False, "error": "Could not extract “%s”" % os.path.basename(req["path"])}
         return {"name": name}
 
     def op_trash(self, req):
@@ -946,6 +1126,19 @@ class Lumen:
                "mtime": info.get_attribute_uint64("time::modified"),
                "ctime": info.get_attribute_uint64("time::created") or 0,
                "isDir": is_dir, "where": os.path.dirname(path)}
+        if not path and not is_dir and out["uri"].startswith("admin:") and size <= AdminThumbs.LIMIT:
+            rid = req.get("id")
+
+            def fetched():
+                try:
+                    local = fetch_copy(gf, out["mtime"])
+                except (GLib.Error, OSError):
+                    local = ""
+                if local:
+                    out.update(self.peek_local(local, ctype, size), local=Gio.File.new_for_path(local).get_uri())
+                send(dict(out, id=rid, ok=True))
+            threading.Thread(target=fetched, daemon=True).start()
+            return None
         if is_dir and path:
             files = dirs = seen = 0
             try:
@@ -966,14 +1159,21 @@ class Lumen:
             except OSError:
                 pass
             out.update(files=files, dirs=dirs, more=seen > 20000)
-        elif path and ctype.startswith("image/") and GdkPixbuf is not None:
+        elif path:
+            out.update(self.peek_local(path, ctype, size))
+        return out
+
+    @staticmethod
+    def peek_local(path, ctype, size):
+        out = {}
+        if ctype.startswith("image/") and GdkPixbuf is not None:
             try:
                 fmt, w, h = GdkPixbuf.Pixbuf.get_file_info(path)
                 if fmt is not None:
                     out.update(width=w, height=h)
             except (GLib.Error, TypeError):
                 pass
-        elif path and size <= 8 * 1024 * 1024 and (Gio.content_type_is_a(ctype, "text/plain") or ctype in (
+        elif size <= 8 * 1024 * 1024 and (Gio.content_type_is_a(ctype, "text/plain") or ctype in (
                 "application/json", "application/xml", "application/x-shellscript", "application/javascript",
                 "application/toml", "application/x-yaml", "application/x-desktop")):
             try:
@@ -1587,7 +1787,11 @@ class Job(threading.Thread):
                 src = Gio.File.new_for_uri(uri)
                 spath = src.get_path()
                 if not spath:
-                    errors.append({"uri": uri, "error": "not a local file"})
+                    # someone else's file through gvfs's admin://, which has no folder here
+                    if uri.startswith("admin:"):
+                        plan.append((uri, "admin-move" if self.mode == "move" else "admin"))
+                    else:
+                        errors.append({"uri": uri, "error": "not a local file"})
                     continue
                 if os.path.isdir(spath) and not os.path.islink(spath) and \
                         (os.path.abspath(self.dest) + "/").startswith(os.path.abspath(spath) + "/"):
@@ -1610,6 +1814,12 @@ class Job(threading.Thread):
                 if how == "rename":
                     self.count += 1
                     continue
+                if how.startswith("admin"):
+                    for _f, info in self.walk_gio(Gio.File.new_for_uri(spath)):
+                        if info.get_file_type() != Gio.FileType.DIRECTORY:
+                            self.total += info.get_size()
+                            self.count += 1
+                    continue
                 for root, _d, fnames in self.walk(spath):
                     for f in fnames:
                         try:
@@ -1621,10 +1831,22 @@ class Job(threading.Thread):
             for spath, how in plan:
                 if self.cancel.is_cancelled():
                     break
-                name = dk.free_name(self.dest, os.path.basename(spath))
+                base = Gio.File.new_for_uri(spath).get_basename() if how.startswith("admin") else os.path.basename(spath)
+                name = dk.free_name(self.dest, base)
                 target = os.path.join(self.dest, name)
-                self.current = os.path.basename(spath)
+                self.current = base
                 try:
+                    if how.startswith("admin"):
+                        src = Gio.File.new_for_uri(spath)
+                        self.copy_gio(src, target)
+                        # a move takes the original away too; there's no putting it back from here
+                        if how == "admin-move" and not self.cancel.is_cancelled():
+                            self.delete_gio(src)
+                        made.append(target)
+                        if how == "admin":
+                            copied.append(target)
+                        self.report()
+                        continue
                     if how == "rename":
                         try:
                             os.rename(spath, target)
@@ -1651,7 +1873,8 @@ class Job(threading.Thread):
                     else:
                         copied.append(target)
                 except (OSError, GLib.Error) as e:
-                    errors.append({"uri": Gio.File.new_for_path(spath).get_uri(), "error": str(getattr(e, "message", e))})
+                    errors.append({"uri": spath if "://" in spath else Gio.File.new_for_path(spath).get_uri(),
+                                   "error": str(getattr(e, "message", e))})
                 self.report()
         except (OSError, GLib.Error) as e:
             errors.append({"uri": "", "error": str(getattr(e, "message", e))})
@@ -1667,6 +1890,50 @@ class Job(threading.Thread):
         if path.startswith(REMOTE_ROOT + "/"):
             return path[len(REMOTE_ROOT) + 1:].split("/")[0]
         return dev
+
+    def walk_gio(self, top):
+        """a tree only gio can reach, as (file, info) pairs, its folders included"""
+        attrs = "standard::name,standard::type,standard::size"
+        todo = [top]
+        while todo:
+            f = todo.pop()
+            try:
+                info = f.query_info(attrs, Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, self.cancel)
+            except GLib.Error:
+                continue
+            yield f, info
+            if info.get_file_type() == Gio.FileType.DIRECTORY:
+                try:
+                    for child in f.enumerate_children("standard::name", Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, self.cancel):
+                        todo.append(f.get_child(child.get_name()))
+                except GLib.Error:
+                    pass
+
+    def copy_gio(self, src, dst):
+        info = src.query_info("standard::type,standard::size", Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, self.cancel)
+        if info.get_file_type() == Gio.FileType.DIRECTORY:
+            os.makedirs(dst)
+            for child in src.enumerate_children("standard::name", Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, self.cancel):
+                if self.cancel.is_cancelled():
+                    return
+                self.copy_gio(src.get_child(child.get_name()), os.path.join(dst, child.get_name()))
+            return
+        self.current = src.get_basename()
+        self.base = self.done
+
+        def progress(cur, _total, *_):
+            self.done = self.base + cur
+            self.report()
+        # the copy is yours: gvfs's owner and the rest stay behind
+        src.copy(Gio.File.new_for_path(dst), Gio.FileCopyFlags.NOFOLLOW_SYMLINKS, self.cancel, progress, None)
+        self.done = self.base + info.get_size()
+        self.files += 1
+
+    def delete_gio(self, f):
+        if f.query_info("standard::type", Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, None).get_file_type() == Gio.FileType.DIRECTORY:
+            for child in f.enumerate_children("standard::name", Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, None):
+                self.delete_gio(f.get_child(child.get_name()))
+        f.delete(None)
 
     def walk(self, path):
         if os.path.isdir(path) and not os.path.islink(path):

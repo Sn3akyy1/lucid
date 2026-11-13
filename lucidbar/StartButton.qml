@@ -37,11 +37,11 @@ BarPill {
     readonly property bool avatarFace: root.look === "avatar"
     readonly property bool labelFace: root.look === "label"
     readonly property bool markFace: !root.gridFace && !root.distroFace && !root.avatarFace && !root.labelFace
-    readonly property int glyph: Math.max(Theme.dp(16), Math.min(Theme.dp(22), root.compactHeight - Theme.dp(14)))
+    readonly property int glyph: Math.min(root.compactHeight - Theme.dp(8), Math.max(Theme.barDp(16), Math.min(Theme.barDp(22), root.compactHeight - Theme.dp(14))))
     // the icon faces sit in a circle, as wide as the bar is tall; the word's
     // chip is hugged as closely at its ends as at its top and bottom
-    readonly property int chipWidth: Math.ceil(startLabel.implicitWidth) + Theme.dp(20)
-    readonly property int chipHeight: Math.min(Theme.dp(24), root.compactHeight - Theme.dp(8))
+    readonly property int chipWidth: Math.ceil(startLabel.implicitWidth) + Theme.barDp(20)
+    readonly property int chipHeight: Math.min(Theme.barDp(24), root.compactHeight - Theme.dp(8))
 
     opensOnHover: false
     compactInteractive: false
@@ -192,7 +192,7 @@ BarPill {
                 visible: root.avatarFace
                 anchors.centerIn: parent
                 user: Users.me
-                size: root.glyph + Theme.dp(2)
+                size: root.glyph + Theme.barDp(2)
             }
 
             // Label: the word, on a chip in the accent
@@ -212,7 +212,7 @@ BarPill {
                     color: Theme.fgAccent
                     font.family: Theme.fontFamily
                     font.bold: true
-                    font.pixelSize: Theme.fs(12)
+                    font.pixelSize: Theme.barFs(12)
                 }
 
             }

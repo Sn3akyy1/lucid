@@ -322,6 +322,12 @@ Item {
             pad._panning = false;
             pad.win.draft = null;
         }
+
+        HeldPointer {
+            held: area.pressed
+            cursor: area.cursorShape
+        }
+
     }
 
     // the words as they are typed, the size and colour they will have

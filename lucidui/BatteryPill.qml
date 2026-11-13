@@ -10,6 +10,8 @@ Item {
     property bool charging: false
     property bool low: bp.percent <= 20 && !bp.charging
     property bool showText: true
+    // how large it draws against its shipped size; the bar passes its content size
+    property real content: 1
     // charging reads on the accent, only capped: a fill level with the grey one
     // beside it out-shouts the whole bar, so a light accent is brought under it
     // and a dark one is left alone
@@ -22,18 +24,22 @@ Item {
     readonly property color emptyColor: Theme.alpha(Theme.text, 0.28)
     readonly property real level: Math.max(0, Math.min(1, bp.percent / 100))
 
-    implicitWidth: bp.showText ? Theme.dp(30) : Theme.dp(22)
-    implicitHeight: Theme.dp(15)
+    implicitWidth: bp.showText ? bp.u(30) : bp.u(22)
+    implicitHeight: bp.u(15)
+
+    function u(px) {
+        return Math.round(px * Theme.uiScale * bp.content);
+    }
 
     Item {
         id: body
 
-        width: bp.width - Theme.dp(3)
+        width: bp.width - bp.u(3)
         height: bp.height
 
         Rectangle {
             anchors.fill: parent
-            radius: 4.5
+            radius: 4.5 * bp.content
             color: bp.emptyColor
         }
 
@@ -47,7 +53,7 @@ Item {
             Rectangle {
                 width: body.width
                 height: body.height
-                radius: 4.5
+                radius: 4.5 * bp.content
                 color: bp.fillColor
 
                 Behavior on color {
@@ -65,7 +71,7 @@ Item {
                 height: body.height
                 horizontalAlignment: Text.AlignHCenter
                 role: "labelSmall"
-                size: Theme.fs(10.5)
+                size: Math.round(10.5 * Theme.fontScale * bp.content)
                 weight: 700
                 text: bp.percent
                 color: Theme.bgOpaque
@@ -86,7 +92,7 @@ Item {
                 height: body.height
                 horizontalAlignment: Text.AlignHCenter
                 role: "labelSmall"
-                size: Theme.fs(10.5)
+                size: Math.round(10.5 * Theme.fontScale * bp.content)
                 weight: 700
                 text: bp.percent
                 color: Theme.text
@@ -100,8 +106,8 @@ Item {
         anchors.left: body.right
         anchors.leftMargin: 1
         anchors.verticalCenter: parent.verticalCenter
-        width: Theme.dp(2)
-        height: Theme.dp(6)
+        width: bp.u(2)
+        height: bp.u(6)
         radius: 1
         color: bp.level >= 0.99 ? bp.fillColor : bp.emptyColor
     }
@@ -110,7 +116,7 @@ Item {
         visible: bp.charging && !bp.showText
         anchors.centerIn: body
         name: "bolt"
-        size: Theme.dp(12)
+        size: bp.u(12)
         fill: 1
         color: Theme.bgOpaque
     }

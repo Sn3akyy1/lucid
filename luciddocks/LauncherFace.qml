@@ -102,11 +102,6 @@ Item {
         "label": "Themes",
         "icon": "palette"
     }, {
-        "key": "widgets",
-        "label": "Widgets",
-        "icon": "widgets",
-        "leaves": true
-    }, {
         "key": "power",
         "label": "Power",
         "icon": "power_settings_new",

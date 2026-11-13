@@ -451,6 +451,11 @@ Column {
                             cursorShape: themeDrag.active ? Qt.ClosedHandCursor : Qt.PointingHandCursor
                         }
 
+                        HeldPointer {
+                            held: themeDrag.active
+                            cursor: Qt.ClosedHandCursor
+                        }
+
                         DragHandler {
                             id: themeDrag
 

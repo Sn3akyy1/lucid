@@ -76,7 +76,7 @@ BarPill {
     }
 
     shown: Prefs.barHas("clock")
-    compactWidth: compactRow.implicitWidth + Theme.dp(30)
+    compactWidth: compactRow.implicitWidth + Theme.barDp(30)
     panelWidth: Math.min(Theme.dp(720), root.screenW - Theme.dp(34))
     panelHeight: Math.min(root.screenH - Theme.dp(60), root.pad + tabsBar.height + Theme.dp(10) + Theme.dp(404) + root.pad)
     expandedRadius: Theme.shapeXl
@@ -124,7 +124,7 @@ BarPill {
             id: compactRow
 
             anchors.centerIn: parent
-            spacing: Theme.dp(8)
+            spacing: Theme.barDp(8)
 
             // lucidshot is recording; a click brings its toolbar back
             Rectangle {
@@ -132,22 +132,22 @@ BarPill {
 
                 visible: Capture.active
                 anchors.verticalCenter: parent.verticalCenter
-                width: recRow.implicitWidth + Theme.dp(16)
-                height: Theme.dp(24)
-                radius: Theme.dp(12)
+                width: recRow.implicitWidth + Theme.barDp(16)
+                height: Theme.barDp(24)
+                radius: Theme.barDp(12)
                 color: Theme.errorContainer
 
                 Row {
                     id: recRow
 
                     anchors.centerIn: parent
-                    spacing: Theme.dp(6)
+                    spacing: Theme.barDp(6)
 
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: Theme.dp(8)
-                        height: Theme.dp(8)
-                        radius: Theme.dp(4)
+                        width: Theme.barDp(8)
+                        height: Theme.barDp(8)
+                        radius: Theme.barDp(4)
                         color: Theme.error
 
                         SequentialAnimation on opacity {
@@ -171,6 +171,7 @@ BarPill {
                     LText {
                         anchors.verticalCenter: parent.verticalCenter
                         role: "labelLarge"
+                        size: Theme.barType("labelLarge")
                         weight: 660
                         tabular: true
                         color: Theme.fgErrorContainer
@@ -195,20 +196,20 @@ BarPill {
 
                 visible: Prefs.clockShowTimer && timerChip.h !== null
                 anchors.verticalCenter: parent.verticalCenter
-                width: chipRow.implicitWidth + Theme.dp(16)
-                height: Theme.dp(24)
-                radius: Theme.dp(12)
+                width: chipRow.implicitWidth + Theme.barDp(16)
+                height: Theme.barDp(24)
+                radius: Theme.barDp(12)
                 color: Theme.secondaryContainer
 
                 Row {
                     id: chipRow
 
                     anchors.centerIn: parent
-                    spacing: Theme.dp(5)
+                    spacing: Theme.barDp(5)
 
                     Item {
-                        width: Theme.dp(15)
-                        height: Theme.dp(15)
+                        width: Theme.barDp(15)
+                        height: Theme.barDp(15)
                         anchors.verticalCenter: parent.verticalCenter
 
                         CircularProgress {
@@ -224,7 +225,7 @@ BarPill {
                             anchors.centerIn: parent
                             visible: timerChip.h !== null && timerChip.h.total <= 0
                             name: "timer"
-                            size: Theme.dp(15)
+                            size: Theme.barDp(15)
                             fill: 1
                             color: Theme.fgSecondaryContainer
                         }
@@ -234,6 +235,7 @@ BarPill {
                     LText {
                         anchors.verticalCenter: parent.verticalCenter
                         role: "labelLarge"
+                        size: Theme.barType("labelLarge")
                         weight: 660
                         rounded: 100
                         tabular: true
@@ -264,13 +266,13 @@ BarPill {
             Row {
                 visible: Prefs.clockShowDate && root.accentFace
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: Theme.dp(4)
+                spacing: Theme.barDp(4)
 
                 LText {
                     visible: root.dayText !== ""
                     anchors.verticalCenter: parent.verticalCenter
                     role: "labelLarge"
-                    size: Theme.fs(12.5)
+                    size: Theme.barFs(12.5)
                     weight: 700
                     color: Theme.subtext
                     text: root.dayText
@@ -279,7 +281,7 @@ BarPill {
                 LText {
                     anchors.verticalCenter: parent.verticalCenter
                     role: "labelLarge"
-                    size: Theme.fs(12.5)
+                    size: Theme.barFs(12.5)
                     weight: 700
                     color: Theme.accent
                     text: root.dayDateText
@@ -291,8 +293,8 @@ BarPill {
                 id: timeChip
 
                 anchors.verticalCenter: parent.verticalCenter
-                width: root.accentFace ? timeRow.implicitWidth + Theme.dp(17) : timeStack.implicitWidth
-                height: root.accentFace ? Math.min(parent.height, Math.round(Theme.dp(Prefs.barHeight) * 0.66)) : timeStack.implicitHeight
+                width: root.accentFace ? timeRow.implicitWidth + Theme.barDp(17) : timeStack.implicitWidth
+                height: root.accentFace ? Math.min(parent.height, Math.round(Theme.barDp(Prefs.barHeight) * 0.66)) : timeStack.implicitHeight
                 radius: height / 2
                 color: root.accentFace ? Theme.primary : "transparent"
 
@@ -300,7 +302,7 @@ BarPill {
                     id: timeStack
 
                     anchors.centerIn: parent
-                    spacing: -Theme.dp(2)
+                    spacing: -Theme.barDp(2)
 
                     // the ink on an accent fill, not the deepest surface tone: that one is
                     // near-black on most palettes and carries none of their hue
@@ -314,7 +316,7 @@ BarPill {
                             id: hourText
 
                             role: "labelLarge"
-                            size: Theme.fs(root.stacked ? 12 : 13.5)
+                            size: Theme.barFs(root.stacked ? 12 : 13.5)
                             weight: 700
                             rounded: 100
                             tabular: true
@@ -324,7 +326,7 @@ BarPill {
 
                         LText {
                             role: "labelLarge"
-                            size: Theme.fs(root.stacked ? 12 : 13.5)
+                            size: Theme.barFs(root.stacked ? 12 : 13.5)
                             weight: 700
                             rounded: 100
                             color: root.timeInk
@@ -342,7 +344,7 @@ BarPill {
 
                         LText {
                             role: "labelLarge"
-                            size: Theme.fs(root.stacked ? 12 : 13.5)
+                            size: Theme.barFs(root.stacked ? 12 : 13.5)
                             weight: 700
                             rounded: 100
                             tabular: true
@@ -353,8 +355,9 @@ BarPill {
                         LText {
                             visible: Prefs.clockShowSeconds
                             anchors.baseline: hourText.baseline
-                            leftPadding: Theme.dp(2)
+                            leftPadding: Theme.barDp(2)
                             role: "labelMedium"
+                            size: Theme.barType("labelMedium")
                             weight: 600
                             tabular: true
                             color: Theme.alpha(root.timeInk, 0.7)
@@ -364,8 +367,9 @@ BarPill {
                         LText {
                             visible: !Prefs.clock24h
                             anchors.baseline: hourText.baseline
-                            leftPadding: Theme.dp(4)
+                            leftPadding: Theme.barDp(4)
                             role: "labelMedium"
+                            size: Theme.barType("labelMedium")
                             weight: 600
                             color: Theme.alpha(root.timeInk, 0.7)
                             // the locale's own meridiem ("PM", "P.M.", "午後")
@@ -378,13 +382,13 @@ BarPill {
                     Row {
                         visible: Prefs.clockShowDate && root.stacked
                         anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: Theme.dp(3)
+                        spacing: Theme.barDp(3)
 
                         LText {
                             visible: root.dayText !== ""
                             anchors.verticalCenter: parent.verticalCenter
                             role: "labelMedium"
-                            size: Theme.fs(10)
+                            size: Theme.barFs(10)
                             weight: 700
                             color: Theme.subtext
                             text: root.dayText
@@ -393,7 +397,7 @@ BarPill {
                         LText {
                             anchors.verticalCenter: parent.verticalCenter
                             role: "labelMedium"
-                            size: Theme.fs(10)
+                            size: Theme.barFs(10)
                             weight: 700
                             color: Theme.accent
                             text: root.dayDateText
@@ -409,8 +413,8 @@ BarPill {
             Rectangle {
                 visible: Prefs.clockShowDate && root.inlineFace
                 anchors.verticalCenter: parent.verticalCenter
-                width: Theme.dp(3)
-                height: Theme.dp(3)
+                width: Theme.barDp(3)
+                height: Theme.barDp(3)
                 radius: height / 2
                 color: Theme.subtextDim
             }
@@ -418,13 +422,13 @@ BarPill {
             Row {
                 visible: Prefs.clockShowDate && root.inlineFace
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: Theme.dp(4)
+                spacing: Theme.barDp(4)
 
                 LText {
                     visible: root.dayText !== ""
                     anchors.verticalCenter: parent.verticalCenter
                     role: "labelLarge"
-                    size: Theme.fs(12.5)
+                    size: Theme.barFs(12.5)
                     weight: 700
                     color: Theme.subtext
                     text: root.dayText
@@ -433,7 +437,7 @@ BarPill {
                 LText {
                     anchors.verticalCenter: parent.verticalCenter
                     role: "labelLarge"
-                    size: Theme.fs(12.5)
+                    size: Theme.barFs(12.5)
                     weight: 700
                     color: Theme.accent
                     text: root.dayDateText
@@ -444,11 +448,11 @@ BarPill {
             Row {
                 visible: Prefs.clockShowWeather && root.wx !== null
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: Theme.dp(3)
+                spacing: Theme.barDp(3)
 
                 WeatherIcon {
                     anchors.verticalCenter: parent.verticalCenter
-                    size: Theme.dp(20)
+                    size: Theme.barDp(20)
                     animate: false
                     kind: root.wx ? WeatherSource.kindFor(root.wx.code, !root.wx.isDay) : "clear"
                     tint: Theme.accent
@@ -458,7 +462,7 @@ BarPill {
                 LText {
                     anchors.verticalCenter: parent.verticalCenter
                     role: "labelLarge"
-                    size: Theme.fs(13.5)
+                    size: Theme.barFs(13.5)
                     weight: 600
                     rounded: 100
                     text: root.wx ? Units.deg(root.wx.tempC, root.wx.tempF) : ""
@@ -472,7 +476,7 @@ BarPill {
                 visible: Agenda.soon
                 anchors.verticalCenter: parent.verticalCenter
                 name: "notifications_active"
-                size: Theme.dp(15)
+                size: Theme.barDp(15)
                 fill: 1
                 color: Theme.accent
                 transformOrigin: Item.Top

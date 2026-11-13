@@ -281,6 +281,12 @@ Item {
                                         tr.movie.play();
                                     }
                                 }
+
+                                HeldPointer {
+                                    held: grip.pressed
+                                    cursor: Qt.SizeHorCursor
+                                }
+
                             }
 
                             Behavior on scale {

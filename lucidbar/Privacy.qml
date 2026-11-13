@@ -79,7 +79,7 @@ BarPill {
 
         return out;
     }
-    readonly property int horizontalPadding: Theme.dp(10)
+    readonly property int horizontalPadding: Theme.barDp(10)
 
     // one entry per program, in the order they turned up
     function names(list) {
@@ -234,13 +234,13 @@ BarPill {
             id: compactRow
 
             anchors.centerIn: parent
-            spacing: Theme.dp(4)
+            spacing: Theme.barDp(4)
 
             // nothing in use, kept in place: a quiet shield
             NotifIcon {
                 visible: root.rows.length === 0
                 anchors.verticalCenter: parent.verticalCenter
-                size: Theme.dp(16)
+                size: Theme.barDp(16)
                 path: root.icons.shield
                 color: Theme.subtextDim
             }
@@ -250,9 +250,9 @@ BarPill {
 
                 visible: root.dotFace && root.rows.length > 0
                 anchors.verticalCenter: parent.verticalCenter
-                width: Theme.dp(10)
-                height: Theme.dp(10)
-                radius: Theme.dp(5)
+                width: Theme.barDp(10)
+                height: Theme.barDp(10)
+                radius: Theme.barDp(5)
                 color: root.colourOf(root.topKind)
 
                 SequentialAnimation on opacity {
@@ -284,14 +284,14 @@ BarPill {
                     required property var modelData
 
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Theme.dp(26)
-                    height: Theme.dp(22)
-                    radius: Theme.dp(11)
+                    width: Theme.barDp(26)
+                    height: Theme.barDp(22)
+                    radius: Theme.barDp(11)
                     color: Theme.alpha(root.colourOf(mark.modelData.kind), 0.2)
 
                     NotifIcon {
                         anchors.centerIn: parent
-                        size: Theme.dp(15)
+                        size: Theme.barDp(15)
                         path: root.icons[mark.modelData.kind]
                         color: root.colourOf(mark.modelData.kind)
                     }

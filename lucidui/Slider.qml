@@ -364,6 +364,12 @@ Item {
             sl.moved(sl.live);
             sl.released(sl.live);
         }
+
+        HeldPointer {
+            held: area.pressed
+            cursor: Qt.PointingHandCursor
+        }
+
     }
 
 

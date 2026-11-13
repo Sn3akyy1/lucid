@@ -132,6 +132,43 @@ Singleton {
         root.tick++;
     }
 
+    // a reminder edited keeps its id, and rings afresh at its new time
+    function update(id, fields) {
+        const f = fields || {
+        };
+        root.items = root.items.map((r) => {
+            if (r.id !== id)
+                return r;
+
+            const c = Object.assign({
+            }, r);
+            for (const k of ["year", "month", "day", "hour", "minute"]) {
+                if (f[k] !== undefined && !isNaN(parseInt(f[k], 10)))
+                    c[k] = parseInt(f[k], 10);
+
+            }
+            if (f.name !== undefined)
+                c.name = String(f.name).slice(0, 120);
+
+            if (f.repeat !== undefined)
+                c.repeat = String(f.repeat);
+
+            return c;
+        });
+        const s = Object.assign({
+        }, root.snoozedUntil);
+        delete s[id];
+        root.snoozedUntil = s;
+        const d = Object.assign({
+        }, root.dismissedAt);
+        delete d[id];
+        root.dismissedAt = d;
+        root.ringing = root.ringing.filter((r) => {
+            return r.id !== id;
+        });
+        root.tick++;
+    }
+
     function remove(id) {
         root.items = root.items.filter((r) => {
             return r.id !== id;
@@ -291,6 +328,8 @@ Singleton {
 
         path: Quickshell.env("HOME") + "/.config/quickshell/lucidbar/clock_reminders.json"
         blockLoading: true
+        // finished inside writeAdapter(), as Chrono's: see there
+        blockWrites: true
         onAdapterUpdated: saveDebounce.restart()
 
         adapter: JsonAdapter {

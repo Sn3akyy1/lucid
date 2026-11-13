@@ -445,6 +445,12 @@ Item {
                             map.finish();
 
                     }
+
+                    HeldPointer {
+                        held: drag.pressed && plate.lifted
+                        cursor: drag.cursorShape
+                    }
+
                 }
 
                 Behavior on color {

@@ -69,11 +69,6 @@ Item {
             "divider": true
         });
         arr.push({
-            "id": "widgetPanel",
-            "label": "Widget Panel",
-            "glyph": DockIcons.widgets
-        });
-        arr.push({
             "id": "screenshot",
             "label": "Take a Screenshot",
             "glyph": DockIcons.camera,

@@ -215,6 +215,12 @@ Item {
                     scrub.held = false;
                     vb.movie.scrubbing = false;
                 }
+
+                HeldPointer {
+                    held: scrubArea.pressed
+                    cursor: Qt.PointingHandCursor
+                }
+
             }
 
             // the time under the pointer

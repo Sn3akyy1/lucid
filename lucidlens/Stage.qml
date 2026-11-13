@@ -509,6 +509,11 @@ Item {
 
     // a drag pans a picture bigger than the stage, and otherwise pulls the next
     // one in; let go past a fifth of the way (or flicked) and it goes
+    HeldPointer {
+        held: drag.active
+        cursor: Qt.ClosedHandCursor
+    }
+
     DragHandler {
         id: drag
 

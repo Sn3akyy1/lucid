@@ -390,6 +390,11 @@ Item {
                 }
             }
 
+            HeldPointer {
+                held: dragHandler.active && !slot.outward
+                cursor: Qt.ArrowCursor
+            }
+
             DragHandler {
                 id: dragHandler
 

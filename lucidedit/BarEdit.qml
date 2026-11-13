@@ -411,11 +411,18 @@ Item {
                         const h = mark.height;
                         const fl = edit.host.notchFlareOf(mark.mod, true);
                         const fr = edit.host.notchFlareOf(mark.mod, false);
+                        // a blend can sweep out further than it reaches down: a quarter ellipse
+                        const dl = edit.host.notchDepthOf(mark.mod, true);
+                        const dr = edit.host.notchDepthOf(mark.mod, false);
                         const meets = edit.host.hangPlan.meets[mark.key] || ({});
                         const bl = Math.max(mark.botL, d);
                         const br = Math.max(mark.botR, d);
-                        const arc = (r, sweep, x, y) => {
-                            return " A" + r + "," + r + " 0 0 " + sweep + " " + x + "," + y;
+                        const arc = (rx, ry, sweep, x, y) => {
+                            return " A" + rx + "," + ry + " 0 0 " + sweep + " " + x + "," + y;
+                        };
+                        // how far across from its centre an ellipse reaches at the height y
+                        const across = (rx, ry, cy, y) => {
+                            return rx * Math.sqrt(Math.max(0, 1 - Math.pow((cy - y) / ry, 2)));
                         };
                         let p = "";
                         let sx = d;
@@ -425,32 +432,34 @@ Item {
                             const cx = meets.left.size - mark.x;
                             const cy = meets.left.y - mark.y + meets.left.size;
                             sx = cx - r;
-                            p += "M" + sx + "," + cy + arc(r, 1, cx, cy - r);
+                            p += "M" + sx + "," + cy + arc(r, r, 1, cx, cy - r);
                         } else {
-                            if (fl > 0) {
+                            if (fl > 0 && dl > 0) {
                                 // a blend deeper than the straight side is met where the corner starts
-                                const r = fl + d;
-                                const yj = Math.min(fl, h - bl);
+                                const rx = fl + d;
+                                const ry = dl + d;
+                                const yj = Math.min(dl, h - bl);
                                 sx = -fl;
-                                p += "M" + sx + "," + (-d) + arc(r, 1, -fl + Math.sqrt(Math.max(0, r * r - (fl - yj) * (fl - yj))), yj);
+                                p += "M" + sx + "," + (-d) + arc(rx, ry, 1, -fl + across(rx, ry, dl, yj), yj);
                             } else {
                                 p += "M" + d + "," + (-d);
                             }
-                            p += " L" + d + "," + (h - bl) + (bl > d ? arc(bl - d, 0, bl, h - d) : "");
+                            p += " L" + d + "," + (h - bl) + (bl > d ? arc(bl - d, bl - d, 0, bl, h - d) : "");
                         }
                         if (meets.right) {
                             const r = meets.right.size + d;
                             const cx = edit.host.width - meets.right.size - mark.x;
                             const cy = meets.right.y - mark.y + meets.right.size;
                             ex = cx + r;
-                            p += " L" + cx + "," + (cy - r) + arc(r, 1, ex, cy);
+                            p += " L" + cx + "," + (cy - r) + arc(r, r, 1, ex, cy);
                         } else {
-                            p += " L" + (w - br) + "," + (h - d) + (br > d ? arc(br - d, 0, w - d, h - br) : "");
-                            if (fr > 0) {
-                                const r = fr + d;
-                                const yj = Math.min(fr, h - br);
+                            p += " L" + (w - br) + "," + (h - d) + (br > d ? arc(br - d, br - d, 0, w - d, h - br) : "");
+                            if (fr > 0 && dr > 0) {
+                                const rx = fr + d;
+                                const ry = dr + d;
+                                const yj = Math.min(dr, h - br);
                                 ex = w + fr;
-                                p += " L" + (w - d) + "," + yj + " L" + (w + fr - Math.sqrt(Math.max(0, r * r - (fr - yj) * (fr - yj)))) + "," + yj + arc(r, 1, ex, -d);
+                                p += " L" + (w - d) + "," + yj + " L" + (w + fr - across(rx, ry, dr, yj)) + "," + yj + arc(rx, ry, 1, ex, -d);
                             } else {
                                 p += " L" + (w - d) + "," + (-d);
                             }
@@ -463,7 +472,7 @@ Item {
 
                     // the surface as drawn, so the outline morphs with a module opening in place
                     x: mark.real ? mark.mod.x + (mark.mod.surfaceX !== undefined ? mark.mod.surfaceX : 0) : (edit.host ? edit.host.xOf(mark.key) : 0)
-                    y: mark.real ? mark.mod.y + (mark.mod.surfaceY !== undefined ? mark.mod.surfaceY : 0) : (edit.host ? edit.host.hiddenOffset + edit.host.liftOf(mark.key) : 0)
+                    y: mark.real ? mark.mod.y + (mark.mod.surfaceY !== undefined ? mark.mod.surfaceY : 0) : (edit.host ? edit.host.rowY + edit.host.liftOf(mark.key) : 0)
                     width: mark.real ? (mark.mod.surfaceWidth !== undefined ? mark.mod.surfaceWidth : mark.mod.width) : mark.ghostW
                     height: mark.real ? (mark.mod.surfaceHeight !== undefined ? mark.mod.surfaceHeight : mark.mod.height) : edit.stripH
                     visible: mark.real || mark.ghost
@@ -741,6 +750,11 @@ Item {
                     // lent to the module itself: a handler on an item above it would swallow
                     // every press, so a click never opened it. as its own, a press that never
                     // moves still reaches the module, and once it moves the drag is ours
+                    HeldPointer {
+                        held: dragger.active
+                        cursor: Qt.ClosedHandCursor
+                    }
+
                     DragHandler {
                         id: dragger
 

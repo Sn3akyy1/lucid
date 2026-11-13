@@ -197,6 +197,12 @@ Item {
 
             area.carrying = false;
         }
+
+        HeldPointer {
+            held: area.carrying
+            cursor: Qt.ClosedHandCursor
+        }
+
     }
 
 }

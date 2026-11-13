@@ -573,6 +573,12 @@ FocusScope {
                 pane.win.backgroundMenu(p.x, p.y);
             }
         }
+
+        HeldPointer {
+            held: pane.banding
+            cursor: Qt.ArrowCursor
+        }
+
     }
 
     // while a band touches the top or bottom edge, the view scrolls under it
@@ -896,6 +902,12 @@ FocusScope {
                 var f = Math.max(0, Math.min(1, (mouse.y - thumbArea.grabY) / span));
                 track.v.contentY = f * Math.max(0, track.v.contentHeight - track.v.height);
             }
+
+            HeldPointer {
+                held: thumbArea.pressed
+                cursor: thumbArea.cursorShape
+            }
+
         }
 
     }
@@ -910,7 +922,7 @@ FocusScope {
         TonalIcon {
             anchors.horizontalCenter: parent.horizontalCenter
             size: Theme.dp(88)
-            slot: !pane.tab ? "folder-open" : pane.tab.isTrash ? "trash" : pane.tab.searching ? "file" : pane.tab.connectUri !== "" ? "folder-remote" : pane.tab.isNetwork ? "network" : pane.tab.error !== "" ? "file" : "folder-open"
+            slot: !pane.tab ? "folder-open" : pane.tab.locked ? "folder" : pane.tab.isTrash ? "trash" : pane.tab.searching ? "file" : pane.tab.connectUri !== "" ? "folder-remote" : pane.tab.isNetwork ? "network" : pane.tab.error !== "" ? "file" : "folder-open"
             opacity: 0.85
         }
 
@@ -918,7 +930,7 @@ FocusScope {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             role: "titleMedium"
-            text: !pane.tab ? "" : pane.tab.connectUri !== "" ? "This share isn't connected" : pane.tab.error !== "" ? "This folder can't be opened" : pane.tab.isNetwork ? "No computers found nearby" : pane.tab.searching ? "Nothing matches “" + pane.tab.searchQuery + "”" : pane.tab.filter !== "" ? "Nothing here matches “" + pane.tab.filter + "”" : pane.tab.isTrash ? "Trash is empty" : pane.tab.isRecent ? "No recent files" : "This folder is empty"
+            text: !pane.tab ? "" : pane.tab.locked ? (pane.tab.lockedOwner !== "" ? "This folder belongs to " + pane.tab.lockedOwner : "You can't open this folder") : pane.tab.connectUri !== "" ? "This share isn't connected" : pane.tab.error !== "" ? "This folder can't be opened" : pane.tab.isNetwork ? "No computers found nearby" : pane.tab.searching ? "Nothing matches “" + pane.tab.searchQuery + "”" : pane.tab.filter !== "" ? "Nothing here matches “" + pane.tab.filter + "”" : pane.tab.isTrash ? "Trash is empty" : pane.tab.isRecent ? "No recent files" : "This folder is empty"
             color: Theme.text
             wrapMode: Text.Wrap
         }
@@ -937,8 +949,8 @@ FocusScope {
             anchors.horizontalCenter: parent.horizontalCenter
             visible: pane.tab !== null && pane.tab.connectUri !== ""
             variant: "tonal"
-            icon: "login"
-            text: "Connect"
+            icon: pane.tab && pane.tab.locked ? "lock_open" : "login"
+            text: pane.tab && pane.tab.locked ? "Unlock" : "Connect"
             onClicked: pane.win.reconnect(pane.tab)
         }
 
@@ -958,7 +970,7 @@ FocusScope {
         anchors.horizontalCenter: parent.horizontalCenter
         visible: waiting.visible && pane.tab.connecting
         role: "bodyMedium"
-        text: pane.tab ? "Connecting to " + pane.app.hostOf(pane.tab.connectUri || pane.tab.path) + "…" : ""
+        text: !pane.tab ? "" : pane.tab.locked ? "Waiting for the password…" : "Connecting to " + pane.app.hostOf(pane.tab.connectUri || pane.tab.path) + "…"
         color: Theme.subtext
     }
 

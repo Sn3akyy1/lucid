@@ -888,7 +888,7 @@ def archive_stem(base):
     return base
 
 
-def extract(path):
+def extract(path, into=False):
     folder, base = os.path.split(path)
     stem = archive_stem(base)
     work = os.path.join(folder, "." + stem + ".extracting")
@@ -903,8 +903,9 @@ def extract(path):
         shutil.rmtree(work, ignore_errors=True)
         sys.exit("extract failed: %s" % e)
     inside = os.listdir(work)
-    # one thing inside comes out as itself, not wrapped in a folder of its own name
-    if len(inside) == 1:
+    # one thing inside comes out as itself, not wrapped in a folder of its own name,
+    # unless it was asked into a new folder
+    if len(inside) == 1 and not into:
         name = unique(folder, inside[0])
         os.rename(os.path.join(work, inside[0]), os.path.join(folder, name))
         os.rmdir(work)

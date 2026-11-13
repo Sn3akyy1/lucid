@@ -604,7 +604,7 @@ BarPill {
 
     shown: Prefs.barHas("media") && !(Prefs.mediaHideIdle && root.player === null)
 
-    compactWidth: compactRow.implicitWidth + Theme.dp(20)
+    compactWidth: compactRow.implicitWidth + Theme.barDp(20)
     panelWidth: Math.min(root.miniPanel ? Theme.dp(320) : Theme.dp(400), root.screenW - Theme.dp(34))
     panelHeight: root.pad * 2 + (root.page === "player" ? playerColumn.implicitHeight : (root.page === "lyrics" ? lyricsColumn.implicitHeight : shazamColumn.implicitHeight))
     expandedRadius: Theme.radiusXl
@@ -858,13 +858,13 @@ BarPill {
             id: compactRow
 
             anchors.centerIn: parent
-            spacing: Theme.dp(8)
+            spacing: Theme.barDp(8)
 
             // Controls: previous, play and next before the track
             Row {
                 visible: root.controlsFace && root.player !== null
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: Theme.dp(2)
+                spacing: Theme.barDp(2)
 
                 BarSkip {
                     glyph: root.prevGlyph
@@ -873,9 +873,9 @@ BarPill {
                 }
 
                 Rectangle {
-                    width: Math.round(Theme.dp(24) * 1.3)
-                    height: Theme.dp(24)
-                    radius: controlsPlay.pressed ? Theme.dp(8) : Theme.dp(12)
+                    width: Math.round(Theme.barDp(24) * 1.3)
+                    height: Theme.barDp(24)
+                    radius: controlsPlay.pressed ? Theme.barDp(8) : Theme.barDp(12)
                     anchors.verticalCenter: parent.verticalCenter
                     color: Theme.accent
                     opacity: root.player !== null && root.player.canTogglePlaying ? 1 : 0.4
@@ -883,7 +883,7 @@ BarPill {
                     Icon {
                         anchors.centerIn: parent
                         name: root.isPlaying ? root.pauseGlyph : root.playGlyph
-                        size: Theme.dp(16)
+                        size: Theme.barDp(16)
                         fill: 1
                         color: Theme.fgAccent
                     }
@@ -909,7 +909,7 @@ BarPill {
 
             Item {
                 visible: !(root.controlsFace && root.player !== null)
-                width: root.coverFace ? Theme.dp(22) : Theme.dp(26)
+                width: root.coverFace ? Theme.barDp(22) : Theme.barDp(26)
                 height: width
                 anchors.verticalCenter: parent.verticalCenter
 
@@ -927,9 +927,9 @@ BarPill {
                     id: compactArt
 
                     anchors.centerIn: parent
-                    width: Theme.dp(18)
-                    height: Theme.dp(18)
-                    radius: Theme.dp(9)
+                    width: Theme.barDp(18)
+                    height: Theme.barDp(18)
+                    radius: Theme.barDp(9)
                     color: Theme.surfaceHighest
                     visible: root.player !== null && compactArtImg.status === Image.Ready && root.discFace
 
@@ -940,8 +940,8 @@ BarPill {
                         source: root.discFace ? root.artSource : ""
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
-                        sourceSize.width: Theme.dp(64)
-                        sourceSize.height: Theme.dp(64)
+                        sourceSize.width: Theme.barDp(64)
+                        sourceSize.height: Theme.barDp(64)
                     }
 
                     RotationAnimation on rotation {
@@ -959,7 +959,7 @@ BarPill {
                     id: coverArt
 
                     anchors.fill: parent
-                    radius: Theme.dp(6)
+                    radius: Theme.barDp(6)
                     color: Theme.surfaceHighest
                     visible: root.player !== null && coverArtImg.status === Image.Ready
 
@@ -970,8 +970,8 @@ BarPill {
                         source: root.coverFace ? root.artSource : ""
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
-                        sourceSize.width: Theme.dp(64)
-                        sourceSize.height: Theme.dp(64)
+                        sourceSize.width: Theme.barDp(64)
+                        sourceSize.height: Theme.barDp(64)
                     }
 
                 }
@@ -980,7 +980,7 @@ BarPill {
                     id: compactBars
 
                     anchors.centerIn: parent
-                    spacing: Theme.dp(2)
+                    spacing: Theme.barDp(2)
                     visible: root.player !== null && !compactArt.visible && !coverArt.visible
 
                     Repeater {
@@ -990,10 +990,10 @@ BarPill {
                             required property int index
 
                             width: 2.5
-                            radius: Theme.dp(999)
+                            radius: Theme.barDp(999)
                             color: Theme.accent
                             anchors.verticalCenter: parent.verticalCenter
-                            height: root.isPlaying ? Math.max(Theme.dp(3), root.bandLevel(1 + index * 11, 10 + index * 11) * 11) : Theme.dp(3)
+                            height: root.isPlaying ? Math.max(Theme.barDp(3), root.bandLevel(1 + index * 11, 10 + index * 11) * 11 * Theme.barContent) : Theme.barDp(3)
 
                             Behavior on height {
                                 NumberAnimation {
@@ -1013,7 +1013,7 @@ BarPill {
                     anchors.centerIn: parent
                     visible: root.player === null
                     name: "music_note"
-                    size: Theme.dp(16)
+                    size: Theme.barDp(16)
                     fill: 1
                     color: Theme.accent
                 }
@@ -1024,8 +1024,8 @@ BarPill {
                 id: compactTitleSlot
 
                 visible: !root.compactFace || root.volumeFlash
-                width: root.volumeFlash ? volumeFlashRow.implicitWidth : Math.min(Theme.dp(Prefs.mediaTitleWidth), Math.max(Theme.dp(60), compactTitle.naturalWidth))
-                height: Theme.dp(18)
+                width: root.volumeFlash ? volumeFlashRow.implicitWidth : Math.min(Theme.barDp(Prefs.mediaTitleWidth), Math.max(Theme.barDp(60), compactTitle.naturalWidth))
+                height: Theme.barDp(18)
                 anchors.verticalCenter: parent.verticalCenter
 
                 Marquee {
@@ -1036,7 +1036,7 @@ BarPill {
                     content: root.displayTitle
                     scrolling: root.isPlaying
                     bold: true
-                    pixelSize: Theme.fs(13)
+                    pixelSize: Theme.barFs(13)
                     opacity: root.volumeFlash ? 0 : 1
 
                     Behavior on opacity {
@@ -1052,13 +1052,13 @@ BarPill {
                     id: volumeFlashRow
 
                     anchors.centerIn: parent
-                    spacing: Theme.dp(5)
+                    spacing: Theme.barDp(5)
                     opacity: root.volumeFlash ? 1 : 0
 
                     Icon {
                         anchors.verticalCenter: parent.verticalCenter
                         name: root.playerVolume <= 0 ? "volume_off" : (root.playerVolume < 0.5 ? "volume_down" : "volume_up")
-                        size: Theme.dp(16)
+                        size: Theme.barDp(16)
                         fill: 1
                         color: Theme.accent
                     }
@@ -1066,7 +1066,7 @@ BarPill {
                     LText {
                         anchors.verticalCenter: parent.verticalCenter
                         role: "labelLarge"
-                        size: Theme.fs(13)
+                        size: Theme.barFs(13)
                         weight: 640
                         text: Math.round(root.playerVolume * 100) + "%"
                     }
@@ -1084,9 +1084,9 @@ BarPill {
 
             Rectangle {
                 visible: Prefs.mediaPlayButton && !(root.controlsFace && root.player !== null)
-                width: Math.round(Theme.dp(24) * 1.3)
-                height: Theme.dp(24)
-                radius: playArea.pressed ? Theme.dp(8) : Theme.dp(12)
+                width: Math.round(Theme.barDp(24) * 1.3)
+                height: Theme.barDp(24)
+                radius: playArea.pressed ? Theme.barDp(8) : Theme.barDp(12)
                 anchors.verticalCenter: parent.verticalCenter
                 color: Theme.accent
                 opacity: root.player !== null && root.player.canTogglePlaying ? 1 : 0.4
@@ -1103,7 +1103,7 @@ BarPill {
                 Icon {
                     anchors.centerIn: parent
                     name: root.isPlaying ? "pause" : "play_arrow"
-                    size: Theme.dp(16)
+                    size: Theme.barDp(16)
                     fill: 1
                     color: Theme.fgAccent
                 }
@@ -2072,6 +2072,12 @@ BarPill {
                             onWheel: (wheel) => {
                                 return root.seekTo(root.livePosSec + (wheel.angleDelta.y > 0 ? 5 : -5), true);
                             }
+
+                            HeldPointer {
+                                held: trackHitArea.dragging
+                                cursor: Qt.PointingHandCursor
+                            }
+
                         }
 
                     }
@@ -3102,15 +3108,15 @@ BarPill {
 
         signal activated()
 
-        width: Theme.dp(24)
-        height: Theme.dp(24)
+        width: Theme.barDp(24)
+        height: Theme.barDp(24)
         anchors.verticalCenter: parent.verticalCenter
         opacity: skipBtn.enabled ? 1 : 0.4
 
         Icon {
             anchors.centerIn: parent
             name: skipBtn.glyph
-            size: Theme.dp(18)
+            size: Theme.barDp(18)
             fill: 1
             color: Theme.text
         }

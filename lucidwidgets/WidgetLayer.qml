@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
@@ -21,7 +22,12 @@ Variants {
                 active: layer.visible
             }
 
+            PointerPoke {
+            }
+
             readonly property bool suppressed: Prefs.widgetHideFullscreen && layer.fullscreenUp
+            // what can cover a pointer drawn here (HeldPointer): windows, unless lifted
+            readonly property int pointerSurface: deck.panelLive ? WlrLayer.Overlay : WlrLayer.Bottom
             readonly property bool fullscreenUp: {
                 var t = Hyprland.activeToplevel;
                 if (!t || !t.lastIpcObject)
@@ -86,6 +92,9 @@ Variants {
                 // the widget panel is open on this screen, and still on its way out
                 readonly property bool panelUp: Widgets.panelScreen !== "" && Widgets.panelScreen === deck.screenName
                 readonly property bool panelLive: deck.panelUp || panel.shown
+                // the sheet while it's out, for the blur region (whose own panel property
+                // would shadow the id)
+                readonly property Item sheetFrost: panel.shown ? panel.sheetBox : null
                 // the cards are out: on, or the panel is up to place them
                 readonly property bool widgetsOn: Prefs.widgetsEnabled || deck.panelLive
                 // put away a moment ago: the board stays up while the cards go
@@ -166,11 +175,6 @@ Variants {
                     return null;
                 }
 
-                // a board point over the open panel, where a dragged card is let go of
-                function binHit(px, py) {
-                    return deck.panelUp && panel.sheetHit(px, py);
-                }
-
                 // the topmost card under a board point, for the menu overlay: it
                 // covers the screen while it is up, so the cards never see the press
                 function frameUnder(px, py) {
@@ -247,9 +251,24 @@ Variants {
                     }
                 }
 
-                // the cards stack among themselves, under the guides and the panel
+                // the cards stack among themselves, under the guides and the panel.
+                // they share the sheet's surface, so the compositor can't frost them
+                // behind it: under a see-through sheet they're cut away instead,
+                // leaving the frosted desktop
                 Item {
+                    id: cards
+
                     anchors.fill: parent
+                    layer.enabled: Theme.blurAmount > 0 && panel.shown
+
+                    layer.effect: MultiEffect {
+                        maskEnabled: true
+                        maskInverted: true
+                        maskSource: sheetCut
+                        // past the defaults the cut's rounded corners come out aliased
+                        maskThresholdMin: 0.5
+                        maskSpreadAtMin: 1
+                    }
 
                     Repeater {
                         id: rep
@@ -298,6 +317,25 @@ Variants {
                             duration: Theme.durQuick
                         }
 
+                    }
+
+                }
+
+                // the sheet's shape, for the cards' mask
+                Item {
+                    id: sheetCut
+
+                    anchors.fill: parent
+                    visible: false
+                    layer.enabled: cards.layer.enabled
+
+                    Rectangle {
+                        x: panel.sheetBox.x
+                        y: panel.sheetBox.y
+                        width: panel.sheetBox.width
+                        height: panel.sheetBox.height
+                        radius: panel.sheetBox.cornerRadius
+                        color: "black"
                     }
 
                 }
@@ -400,18 +438,21 @@ Variants {
 
             }
 
-            // the open panel frosts the whole screen behind its dim, cards and sheet alike
-            BackgroundEffect.blurRegion: Theme.blurAmount > 0 ? (deck.panelUp ? wholeBlur : widgetBlur) : null
+            // the cards, and the open panel's sheet; the desktop around it stays clear
+            BackgroundEffect.blurRegion: Theme.blurAmount > 0 ? widgetBlur : null
 
-            Region {
-                id: wholeBlur
-
-                width: layer.width
-                height: layer.height
-            }
-
+            // clipped to the surface: hyprland frosts the whole layer for a region
+            // wholly outside it, which is where the sheet slides to
             Region {
                 id: widgetBlur
+
+                intersection: Intersection.Intersect
+
+            WidgetRegion {
+                blur: true
+                part: "sheet"
+                panel: deck.sheetFrost
+            }
 
             WidgetRegion {
                 blur: true
@@ -585,7 +626,7 @@ Variants {
                 height: menuLayer.target ? menuLayer.height : 0
             }
 
-            BackgroundEffect.blurRegion: Theme.blurAmount > 0 ? menuBlur : null
+            BackgroundEffect.blurRegion: Theme.blurAmount > 0 && menu.blurReady ? menuBlur : null
 
             Region {
                 id: menuBlur

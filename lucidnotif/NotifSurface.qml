@@ -134,6 +134,12 @@ Item {
                     }
                 }
             }
+
+            HeldPointer {
+                held: dragArea.drag.active
+                cursor: Qt.PointingHandCursor
+            }
+
         }
 
         NumberAnimation {

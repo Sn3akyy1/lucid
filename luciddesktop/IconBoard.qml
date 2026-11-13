@@ -301,23 +301,23 @@ Item {
 
     }
 
-    // the selection box, drawn over the icons, with how many it holds on its corner
+    // the selection box, drawn over the icons, with how many it holds on its corner.
+    // square, on whole pixels, a solid edge over a clear tint, as Desktop's own box
     Rectangle {
         id: band
 
         readonly property int count: DesktopIcons.selectedKeys.length
 
-        x: DesktopIcons.band.x
-        y: DesktopIcons.band.y
-        width: DesktopIcons.band.width
-        height: DesktopIcons.band.height
+        x: Math.round(DesktopIcons.band.x)
+        y: Math.round(DesktopIcons.band.y)
+        width: Math.round(DesktopIcons.band.width)
+        height: Math.round(DesktopIcons.band.height)
         visible: DesktopIcons.banding
         z: 10
-        radius: Math.min(Theme.dp(6), width / 2, height / 2)
-        color: Theme.alpha(Theme.accent, 0.14)
+        color: Theme.alpha(Theme.accent, 0.28)
         border.width: 1
-        border.color: Theme.alpha(Theme.accent, 0.85)
-        antialiasing: true
+        border.color: Theme.accent
+        antialiasing: false
 
         Rectangle {
             anchors.right: parent.right

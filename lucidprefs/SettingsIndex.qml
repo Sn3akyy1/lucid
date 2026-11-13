@@ -21,7 +21,7 @@ Item {
         "general": "accent animation motion jelly wobble wobbly bounce bouncy springy elastic squish rounding corners size scale zoom smaller bigger larger compact density desktop icons files folders trash recycle bin drives osd pop-up popup caps lock num lock on-screen display",
         "glass": "blur transparency transparent opacity translucent frosted",
         "theme": "palette wallpaper background dark light matugen",
-        "environment": "gtk qt cursor icon theme font",
+        "environment": "gtk qt cursor pointer mouse arrow tilt tilting lean shake find legacy icon theme font",
         "bar": "panel status tray top bottom position edge style mode island islands notch notches full flush",
         "dock": "taskbar pinned style mode island islands notch notches split flush",
         "launcher": "app menu start",

@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs
+import qs.lucidicons
 
 // one bar module's options, in edit mode's sheet: whether it shows, its looks,
 // where the rest of its settings live, and the options it has of its own. every
@@ -581,45 +582,81 @@ SettingCard {
                     id: trayRow
 
                     required property var modelData
-                    readonly property bool shownInBar: String(Prefs.trayHidden).split(",").indexOf(trayRow.modelData.id) === -1
+                    // an app whose job the bar does elsewhere (blueman, the system
+                    // module's bluetooth) is never in the tray
+                    readonly property bool builtin: Tray.isBuiltin(trayRow.modelData)
+                    readonly property bool shownInBar: !Tray.isHidden(trayRow.modelData)
+                    readonly property string lucidSlot: Tray.slotOf(trayRow.modelData)
 
                     width: parent.width
-                    height: Theme.dp(48)
+                    height: Theme.dp(52)
                     radius: Theme.radiusMd
                     color: Theme.bgSunken
 
-                    IconImage {
+                    Item {
                         id: trayRowIcon
 
                         anchors.left: parent.left
                         anchors.leftMargin: Theme.dp(14)
                         anchors.verticalCenter: parent.verticalCenter
-                        width: Theme.dp(20)
-                        height: Theme.dp(20)
+                        width: Theme.dp(24)
+                        height: Theme.dp(24)
                         opacity: trayRow.shownInBar ? 1 : 0.4
-                        source: {
-                            const raw = trayRow.modelData.icon || "";
-                            const q = raw.indexOf("?path=");
-                            if (q === -1)
-                                return raw;
 
-                            const name = raw.substring(0, q);
-                            return "file://" + raw.substring(q + 6) + "/" + name.substring(name.lastIndexOf("/") + 1);
+                        // never off the main thread: an icon theme source loaded
+                        // asynchronously takes the whole shell down
+                        Image {
+                            anchors.fill: parent
+                            visible: trayRow.lucidSlot === ""
+                            source: trayRow.lucidSlot === "" ? Tray.iconSource(trayRow.modelData.icon) : ""
+                            sourceSize.width: Theme.dp(24) * 2
+                            sourceSize.height: Theme.dp(24) * 2
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                            mipmap: true
+                            asynchronous: false
                         }
-                        asynchronous: true
+
+                        Loader {
+                            anchors.centerIn: parent
+                            active: trayRow.lucidSlot !== ""
+
+                            sourceComponent: TonalIcon {
+                                size: Theme.dp(24)
+                                slot: trayRow.lucidSlot
+                            }
+
+                        }
+
                     }
 
-                    Text {
+                    Column {
                         anchors.left: trayRowIcon.right
                         anchors.leftMargin: Theme.dp(12)
                         anchors.right: trayRowSwitch.left
                         anchors.rightMargin: Theme.dp(12)
                         anchors.verticalCenter: parent.verticalCenter
-                        text: trayRow.modelData.title || trayRow.modelData.tooltipTitle || trayRow.modelData.id
-                        color: trayRow.shownInBar ? Theme.text : Theme.subtextDim
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontBodyLg
-                        elide: Text.ElideRight
+                        spacing: 1
+
+                        Text {
+                            width: parent.width
+                            text: Tray.nameOf(trayRow.modelData)
+                            color: trayRow.shownInBar ? Theme.text : Theme.subtextDim
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontBodyLg
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            width: parent.width
+                            visible: trayRow.builtin
+                            text: "In the system module instead"
+                            color: Theme.subtextDim
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontLabel
+                            elide: Text.ElideRight
+                        }
+
                     }
 
                     M3Switch {
@@ -628,15 +665,10 @@ SettingCard {
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.dp(12)
                         anchors.verticalCenter: parent.verticalCenter
+                        enabled: !trayRow.builtin
                         checked: trayRow.shownInBar
                         onToggled: (v) => {
-                            const list = String(Prefs.trayHidden).split(",").filter((id) => {
-                                return id !== "" && id !== trayRow.modelData.id;
-                            });
-                            if (!v)
-                                list.push(trayRow.modelData.id);
-
-                            Prefs.trayHidden = list.join(",");
+                            return Tray.setHidden(trayRow.modelData, !v);
                         }
                     }
 

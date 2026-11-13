@@ -264,6 +264,22 @@ def page(emblem=None, style="doc", lines=0):
     return out
 
 
+# an archive is an accent page zipped shut, as the themes this set sits beside draw
+# one: a checker of teeth down from the top edge, the slider, and a white pull with
+# its hole. left of centre, clear of the fold. the track runs on under the slider,
+# so sliding it down on hover opens the zip rather than a gap
+def zipped(cx=22, sq=2.6, n=8):
+    x0, b = cx - sq, 4 + n * sq
+    teeth = "".join(rr(x0 + sq * (i % 2), 4 + i * sq, sq, sq, 0.35) for i in range(n))
+    return page(None, "media") + [
+        ("track", rr(x0, 4, sq * 2, n * sq + 3, 0.6), k("p", 30)),
+        ("teeth", teeth, k("n", 99)),
+        ("slider", rpoly([(cx - 3.6, b - 0.8), (cx + 3.6, b - 0.8), (cx + 2.4, b + 4.6), (cx - 2.4, b + 4.6)], [1.4, 1.4, 1.6, 1.6]),
+         grad(k("p", 30), k("p", 20), b - 0.8, b + 4.6)),
+        ("pull", rr(cx - 2.7, b + 3.4, 5.4, 9, 2.7), grad(k("n", 99), k("n", 90), b + 3.4, b + 12.4)),
+        ("hole", rr(cx - 0.95, b + 6, 1.9, 4, 0.95), k("p", 40))]
+
+
 # ---- places and devices: neutral objects, the accent on what lights up
 
 def trash(full=False):
@@ -474,7 +490,7 @@ FOLDERS = {"folder": None, "folder-home": "home", "folder-desktop": "desktop_win
            "folder-templates": "content_copy", "folder-public": "share", "folder-remote": "lan"}
 FILES = {"file": (None, "doc"), "text": (None, "doc", 4), "document": ("format_paragraph", "doc"), "pdf": ("picture_as_pdf", "pdf"),
          "spreadsheet": ("table", "doc"), "presentation": ("slideshow", "doc"), "image": ("image", "media"),
-         "video": ("movie", "media"), "audio": ("music_note", "media"), "archive": ("archive", "doc"), "code": ("code", "doc"),
+         "video": ("movie", "media"), "audio": ("music_note", "media"), "archive": (None, "media"), "code": ("code", "doc"),
          "script": ("terminal", "doc"), "font": ("match_case", "doc"), "disk-image": ("album", "doc"),
          "package": ("deployed_code", "doc"), "ebook": ("menu_book", "doc")}
 PLACES = {"trash": lambda: trash(), "trash-full": lambda: trash(True), "recent": recent, "starred": starred,
@@ -719,6 +735,8 @@ def draw(slot):
         return folder(FOLDERS[slot])
     if slot == "folder-open":
         return folder_open()
+    if slot == "archive":
+        return zipped()
     if slot in FILES:
         return page(*FILES[slot])
     if slot in PLACES:
@@ -763,6 +781,10 @@ def motion(slot, names):
         out.update({"flap": peel, "shadow": dict(peel)})
         if "emblem" in names:
             out["emblem"] = {"dy": -1.6, "sx": 1.08, "sy": 1.08, "ox": "c", "oy": "c"}
+        # an archive unzips a little: the slider and its pull slide down the track
+        for part in ("slider", "pull", "hole"):
+            if part in names:
+                out[part] = {"dy": 0.4}
         return out
     if slot.startswith("trash"):
         lid = {"dy": -1.2, "rot": -14, "ox": "min", "oy": "max", "box": "lid"}

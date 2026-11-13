@@ -16,17 +16,110 @@ Column {
         "label": "Auto"
     }]
 
+    readonly property var responseOptions: [{
+        "key": "negative_quadratic",
+        "label": "Eager"
+    }, {
+        "key": "linear",
+        "label": "Even"
+    }, {
+        "key": "quadratic",
+        "label": "Lazy"
+    }]
+    // unset is modules/plugins.lua's own, which tilts
+    readonly property bool tiltOn: HyprConfig.mine["lucid.cursor_tilt"] !== false
+    readonly property bool shakeOn: HyprConfig.bool("plugin.dynamic_cursors.shake.enabled", true)
+    readonly property bool motionReady: HyprConfig.moduleInstalled && HyprConfig.cursorPlugin
+    readonly property string motionReason: {
+        if (!HyprConfig.liveRead)
+            return "";
+
+        if (HyprConfig.moduleProbed && !HyprConfig.moduleInstalled)
+            return "Your Hyprland config does not read ~/.config/hypr/lucid-settings.lua, where these go. Run the installer with --with-hypr, or add Lucid's modules/settings.lua and require it in hyprland.lua.";
+
+        if (!HyprConfig.cursorPlugin)
+            return "The pointer moves through hypr-dynamic-cursors, a Hyprland plugin that is not loaded right now.";
+
+        return "";
+    }
+
     function orUnset(v) {
         return v === "" ? "Not set" : v;
     }
 
     spacing: Theme.dp(26)
+    Component.onCompleted: HyprConfig.refresh()
 
     SettingCard {
         title: "POINTER"
         subtitle: Env.probed ? "" : "Reading what this machine has installed…"
 
         SettingRow {
+            title: "Use legacy cursor theme"
+            resetKey: "envLegacyCursor"
+            description: "Turns off Lucid's own pointer, Bibata Modern drawn in your palette's colours, and uses a cursor theme installed on this machine instead."
+
+            M3Switch {
+                checked: Prefs.envLegacyCursor
+                onToggled: (v) => {
+                    return Prefs.envLegacyCursor = v;
+                }
+            }
+
+        }
+
+        // lucid's own pointer: how it takes the palette, and what that looks like
+        SettingRow {
+            visible: !Prefs.envLegacyCursor
+            title: "Pointer colour"
+            resetKey: "envCursorStyle"
+            description: "Dark is Bibata's classic look, a dark pointer with a light outline, and Light turns it over; both keep one look in light and dark mode. Accent is your palette's own colour and turns deep in light mode, the way a filled button does. When the palette changes, the pointer fades across to its new colours along with the rest of the shell."
+            warning: Pointer.error
+            stacked: true
+
+            Column {
+                width: parent.width
+                spacing: Theme.dp(16)
+
+                M3Segmented {
+                    width: Math.min(parent.width, Theme.dp(320))
+                    current: Prefs.envCursorStyle
+                    options: Pointer.styles
+                    onChosen: (key) => {
+                        return Prefs.envCursorStyle = key;
+                    }
+                }
+
+                // a few of the shapes, as the theme on disk draws them right now
+                Row {
+                    visible: Pointer.drawn
+                    spacing: Theme.dp(20)
+
+                    Repeater {
+                        model: ["left_ptr", "hand2", "xterm", "wait", "crossed_circle", "bd_double_arrow"]
+
+                        Image {
+                            required property string modelData
+
+                            width: Theme.dp(40)
+                            height: Theme.dp(40)
+                            source: Pointer.drawn ? "file://" + Pointer.themeDir + "/preview/" + modelData + ".png?" + Pointer.revision : ""
+                            sourceSize: Qt.size(96, 96)
+                            cache: false
+                            smooth: true
+                            mipmap: true
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        SettingRow {
+            visible: Prefs.envLegacyCursor
             title: "Cursor theme"
             description: "Applied to GTK, Qt, XWayland and Hyprland at once. The pointer on screen changes as soon as you pick one; applications you open later pick it up from the environment."
             warning: Env.cursorMissing ? "“" + Prefs.envCursorTheme + "” is not installed on this machine any more." : ""
@@ -43,10 +136,10 @@ Column {
         SettingRow {
             title: "Pointer shadow"
             resetKey: "envCursorShadow"
-            enabled: Env.shadowCapable && !Env.shadowBuilding
+            enabled: !Prefs.envLegacyCursor || (Env.shadowCapable && !Env.shadowBuilding)
             disabledReason: Env.shadowBuilding ? "Rendering the pointer without its shadow\u2026 this takes a few seconds." : (Env.shadowReason !== "" ? "\u201c" + Prefs.envCursorTheme + "\u201d " + Env.shadowReason + "." : "Reading the theme\u2019s sources\u2026")
-            description: "The soft shade behind the pointer. Hyprland has no switch for it \u2014 it is painted into the theme itself \u2014 so turning it off renders the theme again from its vector sources and points everything at that copy. The pointer keeps its exact shape, sizes and hotspots."
-            warning: Env.shadowError
+            description: Prefs.envLegacyCursor ? "The soft shade behind the pointer. Hyprland has no switch for it \u2014 it is painted into the theme itself \u2014 so turning it off renders the theme again from its vector sources and points everything at that copy. The pointer keeps its exact shape, sizes and hotspots." : "A soft shade under the pointer, which lifts it off whatever it passes over. Bibata draws none of its own."
+            warning: Prefs.envLegacyCursor ? Env.shadowError : ""
 
             M3Switch {
                 checked: Prefs.envCursorShadow
@@ -77,6 +170,270 @@ Column {
             }
 
         }
+
+    }
+
+    // hypr-dynamic-cursors does the moving; modules/plugins.lua names the
+    // pointers that lean, and modules/settings.lua applies what is set here
+    SettingCard {
+        title: "POINTER MOTION"
+        subtitle: page.motionReason
+
+        HyprRow {
+            id: tiltRow
+
+            title: "Tilt as it moves"
+            option: "lucid.cursor_tilt"
+            description: "The arrow, the busy and help pointers drawn on it, and the pointing hand lean into the way you move, as if they had a little weight. Text, resizing, moving, the crosshair and every other pointer stay upright."
+            available: page.motionReady
+            unavailableReason: page.motionReason
+
+            M3Switch {
+                enabled: tiltRow.enabled
+                checked: page.tiltOn
+                onToggled: (v) => {
+                    return HyprConfig.set("lucid.cursor_tilt", v);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: appsRow
+
+            title: "Also in apps that draw their own pointer"
+            option: "lucid.cursor_tilt_apps"
+            description: "Zen and Firefox, GTK 3 and X11 applications draw their pointer themselves and never tell Hyprland which one it is, so in them every pointer leans, the text one included, or none does."
+            available: page.motionReady && page.tiltOn
+            unavailableReason: page.motionReady ? "Turn tilting on to choose this." : page.motionReason
+
+            M3Switch {
+                enabled: appsRow.enabled
+                checked: HyprConfig.mine["lucid.cursor_tilt_apps"] !== false
+                onToggled: (v) => {
+                    return HyprConfig.set("lucid.cursor_tilt_apps", v);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: leanRow
+
+            title: "How far it leans"
+            option: "plugin.dynamic_cursors.tilt.full"
+            description: "The furthest it tips to either side, when you move fast."
+            available: page.motionReady && page.tiltOn
+            unavailableReason: page.motionReady ? "Turn tilting on to set how it leans." : page.motionReason
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: leanRow.enabled
+                from: 10
+                to: 180
+                stepSize: 5
+                suffix: "°"
+                value: HyprConfig.num("plugin.dynamic_cursors.tilt.full", 60)
+                onMoved: (v) => {
+                    return HyprConfig.set("plugin.dynamic_cursors.tilt.full", Math.round(v));
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: speedRow
+
+            title: "Speed for a full lean"
+            option: "plugin.dynamic_cursors.tilt.limit"
+            description: "How fast the pointer has to travel to lean all the way, in pixels a second. Lower leans sooner."
+            available: page.motionReady && page.tiltOn
+            unavailableReason: page.motionReady ? "Turn tilting on to set how it leans." : page.motionReason
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: speedRow.enabled
+                from: 1000
+                to: 10000
+                stepSize: 250
+                suffix: " px/s"
+                value: HyprConfig.num("plugin.dynamic_cursors.tilt.limit", 5000)
+                onMoved: (v) => {
+                    return HyprConfig.set("plugin.dynamic_cursors.tilt.limit", Math.round(v));
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: responseRow
+
+            title: "How it picks up"
+            option: "plugin.dynamic_cursors.tilt.activation"
+            description: "Eager leans early and eases into the rest, Even keeps step with your speed, and Lazy waits for a quick flick."
+            available: page.motionReady && page.tiltOn
+            unavailableReason: page.motionReady ? "Turn tilting on to set how it leans." : page.motionReason
+            stacked: true
+
+            M3Segmented {
+                width: Math.min(parent.width, Theme.dp(320))
+                enabled: responseRow.enabled
+                current: HyprConfig.value("plugin.dynamic_cursors.tilt.activation") || "negative_quadratic"
+                options: page.responseOptions
+                onChosen: (key) => {
+                    return HyprConfig.set("plugin.dynamic_cursors.tilt.activation", key);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: smoothRow
+
+            title: "Smoothing"
+            option: "plugin.dynamic_cursors.tilt.window"
+            description: "How much of your last movement it weighs. Higher is steadier, but trails your hand a little."
+            available: page.motionReady && page.tiltOn
+            unavailableReason: page.motionReady ? "Turn tilting on to set how it leans." : page.motionReason
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: smoothRow.enabled
+                from: 20
+                to: 300
+                stepSize: 10
+                suffix: " ms"
+                value: HyprConfig.num("plugin.dynamic_cursors.tilt.window", 100)
+                onMoved: (v) => {
+                    return HyprConfig.set("plugin.dynamic_cursors.tilt.window", Math.round(v));
+                }
+            }
+
+        }
+
+        // the plugin is a compile away on a machine that skipped it at install
+        SettingRow {
+            visible: HyprConfig.liveRead && !HyprConfig.cursorPlugin && HyprConfig.pluginScriptFound
+            title: "Cursor plugin"
+            description: HyprConfig.pluginBuilding ? "Building it for the Hyprland on this machine\u2026 this takes about a minute." : "Tilting and shake to find come from hypr-dynamic-cursors, a Hyprland plugin Lucid builds here for the exact Hyprland you have. It needs git and base-devel, and no password."
+            warning: HyprConfig.pluginError
+            showDivider: false
+
+            M3Button {
+                text: HyprConfig.pluginBuilding ? "Building\u2026" : "Build and load"
+                variant: "tonal"
+                enabled: !HyprConfig.pluginBuilding
+                onClicked: HyprConfig.buildCursorPlugin()
+            }
+
+        }
+
+    // the same plugin grows the pointer when it is shaken, drawn sharp from a
+    // large copy of the theme it keeps
+    SettingCard {
+        title: "SHAKE TO FIND"
+        subtitle: page.motionReason
+
+        HyprRow {
+            id: shakeRow
+
+            title: "Grow the pointer when you shake it"
+            option: "plugin.dynamic_cursors.shake.enabled"
+            description: "Shake the pointer and it grows for a moment, so it is easy to find on a busy screen. It stays sharp however large it gets."
+            available: page.motionReady
+            unavailableReason: page.motionReason
+
+            M3Switch {
+                enabled: shakeRow.enabled
+                checked: page.shakeOn
+                onToggled: (v) => {
+                    return HyprConfig.set("plugin.dynamic_cursors.shake.enabled", v);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: shakeSize
+
+            title: "How big it grows"
+            option: "plugin.dynamic_cursors.shake.base"
+            description: "Its size the moment a shake is noticed, as a multiple of the pointer's own. Keep shaking and it grows a little more."
+            available: page.motionReady && page.shakeOn
+            unavailableReason: page.motionReady ? "Turn growing on to set how it grows." : page.motionReason
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: shakeSize.enabled
+                from: 1.5
+                to: 6
+                stepSize: 0.5
+                decimals: 1
+                suffix: "×"
+                value: HyprConfig.num("plugin.dynamic_cursors.shake.base", 4)
+                onMoved: (v) => {
+                    return HyprConfig.set("plugin.dynamic_cursors.shake.base", Math.round(v * 2) / 2);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: shakeHard
+
+            title: "How hard to shake"
+            option: "plugin.dynamic_cursors.shake.threshold"
+            description: "Lower grows on a small shake, higher waits for a big one, so it never grows by accident."
+            available: page.motionReady && page.shakeOn
+            unavailableReason: page.motionReady ? "Turn growing on to set how it grows." : page.motionReason
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: shakeHard.enabled
+                from: 2
+                to: 12
+                stepSize: 0.5
+                decimals: 1
+                value: HyprConfig.num("plugin.dynamic_cursors.shake.threshold", 6)
+                onMoved: (v) => {
+                    return HyprConfig.set("plugin.dynamic_cursors.shake.threshold", Math.round(v * 2) / 2);
+                }
+            }
+
+        }
+
+        HyprRow {
+            id: shakeLong
+
+            title: "Stays big for"
+            option: "plugin.dynamic_cursors.shake.timeout"
+            description: "How long it stays grown once you stop shaking."
+            available: page.motionReady && page.shakeOn
+            unavailableReason: page.motionReady ? "Turn growing on to set how it grows." : page.motionReason
+            showDivider: false
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                enabled: shakeLong.enabled
+                from: 250
+                to: 5000
+                stepSize: 250
+                suffix: " ms"
+                value: HyprConfig.num("plugin.dynamic_cursors.shake.timeout", 2000)
+                onMoved: (v) => {
+                    return HyprConfig.set("plugin.dynamic_cursors.shake.timeout", Math.round(v));
+                }
+            }
+
+        }
+
+    }
 
     }
 

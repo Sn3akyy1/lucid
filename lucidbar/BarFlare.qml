@@ -8,11 +8,16 @@ Item {
     property bool mirrored: false
     // upside down, for an edge below it
     property bool flipped: false
+    // how far it sweeps out along the edge it meets
     property int size: Theme.dp(14)
+    // how far down the side it reaches; shallower than size makes the curve a
+    // quarter ellipse, so a short side still takes a wide sweep without a step
+    property int depth: flare.size
     property color fillColor: Theme.bg
     property bool hovered: false
 
-    property real tint: flare.hovered ? 0.08 : 0
+    // a wash over the fill, as the module's own hover lays one over its body
+    property real tint: flare.hovered ? Theme.stateHover : 0
 
     Behavior on tint {
         NumberAnimation {
@@ -23,8 +28,8 @@ Item {
     }
 
     implicitWidth: flare.size
-    implicitHeight: flare.size
-    visible: flare.size > 0
+    implicitHeight: flare.depth
+    visible: flare.size > 0 && flare.depth > 0
 
     Shape {
         anchors.fill: parent
@@ -40,15 +45,15 @@ Item {
 
         ShapePath {
             strokeWidth: 0
-            fillColor: Qt.tint(flare.fillColor, Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, flare.tint))
+            fillColor: flare.fillColor
             startX: flare.size
-            startY: flare.size
+            startY: flare.depth
 
             PathArc {
                 x: 0
                 y: 0
                 radiusX: flare.size
-                radiusY: flare.size
+                radiusY: flare.depth
                 direction: PathArc.Counterclockwise
             }
 
@@ -59,7 +64,33 @@ Item {
 
             PathLine {
                 x: flare.size
-                y: flare.size
+                y: flare.depth
+            }
+
+        }
+
+        ShapePath {
+            strokeWidth: 0
+            fillColor: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, flare.tint)
+            startX: flare.size
+            startY: flare.depth
+
+            PathArc {
+                x: 0
+                y: 0
+                radiusX: flare.size
+                radiusY: flare.depth
+                direction: PathArc.Counterclockwise
+            }
+
+            PathLine {
+                x: flare.size
+                y: 0
+            }
+
+            PathLine {
+                x: flare.size
+                y: flare.depth
             }
 
         }

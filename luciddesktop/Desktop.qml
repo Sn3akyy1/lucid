@@ -24,8 +24,6 @@ Variants {
         function run(id) {
             if (DesktopIcons.owns(id)) {
                 DesktopIcons.runAction(id);
-            } else if (id === "widgetPanel") {
-                Widgets.openPanel(unit.modelData.name);
             } else if (id === "editMode") {
                 Edit.toggle(unit.modelData.name);
             } else if (id === "settings") {
@@ -112,8 +110,13 @@ Variants {
         PanelWindow {
             id: layer
 
+            PointerPoke {
+            }
+
             // up on the overlay from the press until the box has faded, see below
             readonly property bool lifted: field.lift && (field.armed || box.visible)
+            // what can cover a pointer drawn here (HeldPointer)
+            readonly property int pointerSurface: layer.lifted ? WlrLayer.Overlay : WlrLayer.Background
             // a moment of exclusive keys after a click on the icons, see DesktopIcons.arm
             property bool grabbing: false
             // quick look is a modal over everything, windows included
@@ -295,18 +298,25 @@ Variants {
                 }
                 onCanceled: field.finish()
 
+                // drawn here while lifted; under the windows it goes up on the pointer layer
+                HeldPointer {
+                    held: field.dragging
+                    stage: layer.lifted ? null : pointerStage
+                }
+
+                // square, on whole pixels, a solid edge over a clear tint: the way
+                // windows and macos draw it, so it reads on any wallpaper
                 Rectangle {
                     id: box
 
-                    x: Math.min(field.ax, field.bx)
-                    y: Math.min(field.ay, field.by)
-                    width: Math.abs(field.bx - field.ax)
-                    height: Math.abs(field.by - field.ay)
-                    radius: Math.min(Theme.dp(4), box.width / 2, box.height / 2)
-                    color: Theme.alpha(Theme.accent, 0.16)
+                    x: Math.round(Math.min(field.ax, field.bx))
+                    y: Math.round(Math.min(field.ay, field.by))
+                    width: Math.round(Math.abs(field.bx - field.ax))
+                    height: Math.round(Math.abs(field.by - field.ay))
+                    color: Theme.alpha(Theme.accent, 0.28)
                     border.width: 1
-                    border.color: Theme.alpha(Theme.accent, 0.8)
-                    antialiasing: true
+                    border.color: Theme.accent
+                    antialiasing: false
                     // set outright on drag start and only ever animated back down,
                     // so the box tracks the cursor from the first frame
                     opacity: 0
@@ -364,6 +374,36 @@ Variants {
                 onDropped: (d) => {
                     DesktopIcons.dropped(d);
                 }
+            }
+
+        }
+
+        // with a window focused the box stays down under the windows, so the pointer
+        // it pulls is drawn up here, over everything, from the press on so it is
+        // mapped before the drag starts. no input, and no fade (layerrules.lua)
+        PanelWindow {
+            id: pointerLayer
+
+            screen: unit.modelData
+            visible: field.armed && !field.lift && PointerPictures.usable
+            color: "transparent"
+            exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.namespace: "lucid-pointer"
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+            mask: Region {}
+
+            anchors {
+                top: true
+                bottom: true
+                left: true
+                right: true
+            }
+
+            Item {
+                id: pointerStage
+
+                anchors.fill: parent
             }
 
         }

@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Shapes
+import QtQuick.Window
 import qs
 
 // one slot of lucid's icon theme, drawn from its parts on the 48 grid: each part
@@ -18,6 +19,22 @@ Item {
     property real scaleHint: 1
     readonly property var parts: LucidIcons.parts(icon.slot, icon.set)
     readonly property bool moving: icon.hovered && Theme.motionScale > 0
+    // every scale the drawing sits under, its own included
+    readonly property real _scale: {
+        var k = 1;
+        for (var p = icon; p; p = p.parent)
+            k *= p.scale;
+        return k;
+    }
+    // under a wobbling jelly, which bends the layer the way a scale does
+    readonly property bool _bent: {
+        for (var p = icon; p; p = p.parent) {
+            if (p.jellyWobbling === true)
+                return true;
+
+        }
+        return false;
+    }
 
     implicitWidth: icon.size
     implicitHeight: icon.size
@@ -33,13 +50,16 @@ Item {
 
         x: -canvas.pad
         y: -canvas.pad
-        width: icon.size + 2 * canvas.pad
-        height: icon.size + 2 * canvas.pad
+        // whole pixels, so the texture is never stretched by a fraction to fit
+        width: Math.ceil(icon.size) + 2 * canvas.pad
+        height: Math.ceil(icon.size) + 2 * canvas.pad
         // the geometry renderer chips joins at small sizes, a multisampled layer does not
         layer.enabled: icon.parts.length > 0 && icon.width > 0
-        layer.samples: 4
-        layer.smooth: true
-        layer.textureSize: icon.scaleHint > 1 ? Qt.size(Math.ceil(canvas.width * icon.scaleHint), Math.ceil(canvas.height * icon.scaleHint)) : Qt.size(0, 0)
+        layer.samples: 8
+        // 1:1 every texel lands on a pixel. filtered, an icon centred on a half pixel
+        // (a stretched grid cell) smears each edge across two, so only scaled ones filter
+        layer.smooth: Math.abs(icon._scale - 1) > 0.001 || icon._bent
+        layer.textureSize: icon.scaleHint > 1 ? Qt.size(Math.ceil(canvas.width * icon.scaleHint * Screen.devicePixelRatio), Math.ceil(canvas.height * icon.scaleHint * Screen.devicePixelRatio)) : Qt.size(0, 0)
 
         Item {
             x: canvas.pad

@@ -31,6 +31,8 @@ Item {
     property var info: null
     readonly property bool infoFits: prev.info !== null && prev.info.forUri === prev.subject
     readonly property string mime: prev.one ? prev.one.mime : ""
+    // what the views load: someone else's file, through admin://, from the copy the daemon fetched
+    readonly property string media: !prev.one ? "" : prev.one.uri.indexOf("admin:") !== 0 ? prev.one.uri : prev.infoFits && prev.info.local ? prev.info.local : ""
     readonly property string kind: {
         if (prev.items.length > 1)
             return "many";
@@ -413,7 +415,7 @@ Item {
                 anchors.fill: parent
                 anchors.margins: Theme.dp(8)
                 // only once it has a size: before that a decode would be the original's
-                source: prev.one && width > 0 ? prev.one.uri : ""
+                source: prev.one && width > 0 ? prev.media : ""
                 asynchronous: true
                 fillMode: Image.PreserveAspectFit
                 sourceSize: Qt.size(Math.ceil(width * 2), Math.ceil(height * 2))
@@ -440,7 +442,7 @@ Item {
         AnimatedImage {
             anchors.fill: parent
             anchors.margins: Theme.dp(8)
-            source: prev.one ? prev.one.uri : ""
+            source: prev.media
             fillMode: Image.PreserveAspectFit
             playing: prev.visible && prev.width > 0
             asynchronous: true
@@ -456,7 +458,7 @@ Item {
             PdfDocument {
                 id: doc
 
-                source: prev.one ? prev.one.uri : ""
+                source: prev.media
                 onPageCountChanged: prev.pages = doc.pageCount
             }
 
@@ -567,7 +569,7 @@ Item {
                     MediaPlayer {
                         id: player
 
-                        source: prev.one ? prev.one.uri : ""
+                        source: prev.media
                         videoOutput: out
                         loops: MediaPlayer.Infinite
                         onDurationChanged: prev.duration = player.duration
@@ -649,7 +651,7 @@ Item {
                 active: av.started
 
                 sourceComponent: MediaPlayer {
-                    source: prev.one ? prev.one.uri : ""
+                    source: prev.media
                     onDurationChanged: prev.duration = duration
                     Component.onCompleted: play()
 

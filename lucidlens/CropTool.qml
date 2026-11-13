@@ -319,6 +319,12 @@ Item {
             }
             onReleased: tool.end()
             onDoubleClicked: tool.win.tab = "adjust"
+
+            HeldPointer {
+                held: parent.pressed
+                cursor: parent.cursorShape
+            }
+
         }
 
         Repeater {
@@ -389,6 +395,12 @@ Item {
                         tool.drag(handle.hx, handle.hy, p.x, p.y, (mouse.modifiers & Qt.ShiftModifier) !== 0);
                     }
                     onReleased: tool.end()
+
+                    HeldPointer {
+                        held: parent.pressed
+                        cursor: parent.cursorShape
+                    }
+
                 }
 
             }

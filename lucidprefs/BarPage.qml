@@ -205,6 +205,26 @@ Column {
         }
 
         SettingRow {
+            title: "Content size"
+            resetKey: "barContentScale"
+            description: "Scales what every module shows on the bar — icons, text, workspaces and the space between them — whatever the bar's height. Open panels keep their size."
+            stacked: true
+
+            M3Slider {
+                width: parent.width
+                from: 80
+                to: 140
+                stepSize: 5
+                suffix: "%"
+                value: Math.round(Prefs.barContentScale * 100)
+                onMoved: (v) => {
+                    return Prefs.barContentScale = v / 100;
+                }
+            }
+
+        }
+
+        SettingRow {
             title: Prefs.barBottom ? "Distance from bottom" : "Distance from top"
             resetKey: "barTopMargin"
             description: "How far the bar floats from the edge of the screen it sits on."
@@ -230,14 +250,11 @@ Column {
         SettingRow {
             title: "Side margin"
             resetKey: "barSideMargin"
-            description: "Inset from the left and right screen edges."
-            enabled: !(Prefs.barNotch && Prefs.barNotchEdge)
-            disabledReason: "Meet the screen sides puts the end modules right against them - switch it off below to inset them."
+            description: Prefs.barNotch && Prefs.barNotchEdge ? "How far the end modules' contents sit from the screen's sides. The modules themselves still reach the sides." : "Inset from the left and right screen edges."
             stacked: true
 
             M3Slider {
                 width: parent.width
-                enabled: !(Prefs.barNotch && Prefs.barNotchEdge)
                 from: 0
                 to: 60
                 stepSize: 1
@@ -253,7 +270,7 @@ Column {
         SettingRow {
             title: "Meet the screen sides"
             resetKey: "barNotchEdge"
-            description: "The modules at either end sit right against the screen's sides and curve down into them, the way the full bar does, and an open panel takes that curve with it. Off, they keep the side margin."
+            description: "The modules at either end sit right against the screen's sides and curve down into them, the way the full bar does, and an open panel takes that curve with it. The side margin above keeps their contents off the edge. Off, the side margin leaves a gap."
             enabled: Prefs.barNotch
             disabledReason: "Only applies to notches - set Bar style to Notches above."
 
@@ -279,7 +296,7 @@ Column {
                 width: parent.width
                 enabled: page.blendsAnything
                 from: 0
-                to: 32
+                to: 64
                 stepSize: 1
                 suffix: " px"
                 value: Prefs.barNotchFlare
