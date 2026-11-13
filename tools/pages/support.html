@@ -1,0 +1,36 @@
+<!--{"title": "Support · Lucid", "desc": "Report a bug in Lucid or suggest a feature: the form writes the issue for you and opens it on GitHub.", "nav": "support", "out": "support.html"}-->
+<section class="page-head" data-rise>
+  <p class="eyebrow">Support</p>
+  <h1 class="display sm">Something off? Say so.</h1>
+  <p class="lede">Fill this in and it writes the issue for you, then opens it on GitHub to send. Nothing is sent from this page.</p>
+</section>
+
+<div class="support" data-rise>
+  <form class="report card" data-report>
+    <div class="seg wide" role="group" aria-label="What is it">
+      <button type="button" class="on" data-kind="bug">{{icon check}}A bug</button><button type="button" data-kind="feature">{{icon check}}An idea</button>
+    </div>
+    <label class="field"><span>Title</span><input name="title" required maxlength="120" placeholder="The bar's clock shows the wrong time zone"></label>
+    <label class="field"><span data-l-what>What happened</span><textarea name="what" rows="4" required placeholder="What you saw, and what you expected instead"></textarea></label>
+    <div data-bug-only>
+      <label class="field"><span>How to make it happen</span><textarea name="steps" rows="3" placeholder="1. Open Settings → Displays&#10;2. …"></textarea></label>
+      <div class="field-row">
+        <label class="field"><span>Lucid version</span><input name="version" placeholder="{{version}}"></label>
+        <label class="field"><span>Hyprland version</span><input name="hypr" placeholder="hyprctl version"></label>
+        <label class="field"><span>Graphics</span><select name="gpu"><option value="">Pick one</option><option>AMD</option><option>Intel</option><option>NVIDIA</option><option>NVIDIA and Intel or AMD</option><option>Other</option></select></label>
+      </div>
+      <label class="field"><span>What <code>qs log</code> says</span><textarea name="log" rows="4" class="mono" placeholder="Paste the lines around the error"></textarea></label>
+    </div>
+    <div class="actions">
+      <button class="btn accent" type="submit">{{icon open_in_new}}Open it on GitHub</button>
+      <span class="hint">It opens a new tab with the issue written out.</span>
+    </div>
+  </form>
+
+  <aside class="help-cards">
+    <a class="card link-card" href="https://github.com/Sn3akyy1/lucid/issues">{{shape cookie9 tile}}<span class="glyph">{{icon search}}</span><span class="row-text"><strong>Search the issues</strong><small>Someone may have seen it first</small></span></a>
+    <a class="card link-card" href="docs.html#faq">{{shape clover4 tile}}<span class="glyph">{{icon help}}</span><span class="row-text"><strong>Questions and answers</strong><small>Grey colours, choppy animations, keybinds</small></span></a>
+    <a class="card link-card" href="docs.html">{{shape sunny tile}}<span class="glyph">{{icon description}}</span><span class="row-text"><strong>Read the docs</strong><small>Install, keybinds and the IPC reference</small></span></a>
+    <a class="card link-card" href="https://github.com/Sn3akyy1/lucid/pulls">{{shape puffy tile}}<span class="glyph">{{icon code}}</span><span class="row-text"><strong>Send a pull request</strong><small>Fixes and features land with your name on them</small></span></a>
+  </aside>
+</div>

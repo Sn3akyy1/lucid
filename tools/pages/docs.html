@@ -1,0 +1,86 @@
+<!--{"title": "Docs · Lucid", "desc": "Install, update and set up Lucid: the installer, what is in the shell, theming, keybinds, the IPC reference, requirements and answers to common questions.", "nav": "docs", "out": "docs.html"}-->
+<div class="settings-layout">
+  <aside class="rail" data-rail>
+    <label class="search">{{icon search}}<input type="search" placeholder="Search the docs" data-doc-search aria-label="Search the docs"></label>
+    <nav class="rail-nav" data-rail-nav aria-label="Docs">
+      <span class="rail-pill" aria-hidden="true"></span>
+      <p class="rail-group">Getting started</p>
+      <a href="#install">{{icon download}}<span>Install</span></a>
+      <a href="#updating">{{icon update}}<span>Updating</span></a>
+      <p class="rail-group">The desktop</p>
+      <a href="#whats-in-it">{{icon widgets}}<span>What's in it</span></a>
+      <a href="#theming">{{icon palette}}<span>Theming</span></a>
+      <p class="rail-group">Reference</p>
+      <a href="#keybinds">{{icon keyboard}}<span>Keybinds</span></a>
+      <a href="#ipc-reference">{{icon terminal}}<span>IPC</span></a>
+      <a href="#requirements">{{icon inventory_2}}<span>Requirements</span></a>
+      <a href="#faq">{{icon help}}<span>Questions</span></a>
+    </nav>
+  </aside>
+
+  <div class="doc" data-doc>
+    <header class="page-head left" data-rise>
+      <p class="eyebrow">Docs</p>
+      <h1 class="display sm">How Lucid works.</h1>
+      <p class="lede">The README, laid out to read. The search at the top of the rail finds any part of it, the way Settings finds an option.</p>
+    </header>
+    <p class="doc-empty" data-doc-empty hidden>Nothing here matches that. Try other words, or <a href="support.html">ask</a>.</p>
+
+    <section class="doc-sec card" id="install" data-sec><h2>Install</h2>{{readme Install}}</section>
+    <section class="doc-sec card" id="whats-in-it" data-sec><h2>What's in it</h2>{{readme What's in it}}</section>
+    <section class="doc-sec card" id="theming" data-sec><h2>Theming</h2>{{readme Theming}}</section>
+    <section class="doc-sec card" id="keybinds" data-sec><h2>Keybinds</h2>{{readme Keybinds}}</section>
+    <section class="doc-sec card" id="ipc-reference" data-sec><h2>IPC reference</h2>{{readme IPC reference}}</section>
+    <section class="doc-sec card" id="requirements" data-sec><h2>Requirements</h2>{{readme Requirements}}</section>
+
+    <section class="doc-sec card" id="faq" data-sec>
+      <h2>Questions</h2>
+
+      <details class="qa"><summary>What do I need to run Lucid?{{icon expand_more}}</summary>
+        <p><strong>Arch Linux and Hyprland 0.55 or newer.</strong> Lucid uses Hyprland's own APIs for workspaces and windows, so it does not run on Sway, niri, GNOME or KDE, and the installer relies on pacman and the AUR. The installer brings Hyprland itself when it is missing; the shell needs <code>quickshell</code>, its Qt modules and <code>qt6-webengine</code>, and everything else backs one feature each.</p>
+      </details>
+      <details class="qa"><summary>Will the installer overwrite my own config?{{icon expand_more}}</summary>
+        <p>Not without asking, and never without a backup. A Hyprland config of your own is backed up and you are asked first; an existing <code>matugen/config.toml</code> is appended to; your old <code>~/.config/quickshell</code> moves aside with a timestamp. <code>--no-hypr</code>, <code>--no-look</code> and <code>--no-theming</code> keep each part entirely yours.</p>
+      </details>
+      <details class="qa"><summary>What does Lucid connect to?{{icon expand_more}}</summary>
+        <p>The update check asks <code>api.github.com/repos/Sn3akyy1/lucid/releases/latest</code> once a day, a plain <code>curl</code> that carries nothing about you; Settings → About turns it off. The weather comes from <a href="https://open-meteo.com">Open-Meteo</a>, lyrics from <a href="https://lrclib.net">lrclib.net</a> only while something shows them, and GIF search talks to Giphy or Tenor only if you gave it a key.</p>
+      </details>
+      <details class="qa"><summary>Nothing appears when I run <code>qs</code>{{icon expand_more}}</summary>
+        <p>Check <code>qs log</code> for QML errors, and make sure you are on Hyprland. If the log names an error you can't place, it belongs in a <a href="support.html">bug report</a>: it is the most useful thing to include.</p>
+      </details>
+      <details class="qa"><summary>Everything is grey, or the colours look wrong{{icon expand_more}}</summary>
+        <p>The palette cache is missing. Set a wallpaper through Settings → General, or copy a bundled palette: <code>cp ~/.config/lucid/themes/nord/quickshell.json ~/.cache/quickshell/matugen.json</code></p>
+      </details>
+      <details class="qa"><summary>The glass shows my windows, not the wallpaper{{icon expand_more}}</summary>
+        <p>That is on purpose: the glass frosts whatever is really behind it. To frost only the wallpaper, uncomment the <code>xray</code> rule in <code>~/.config/hypr/modules/layerrules.lua</code> and reload Hyprland. <em>Settings → Glass</em> sets how far anything shows through at all.</p>
+      </details>
+      <details class="qa"><summary>How do I add my own theme, or switch to light mode?{{icon expand_more}}</summary>
+        <p><em>Settings → Palettes</em> has a gallery of a few hundred base16 and base24 schemes, takes the link of any scheme repo or file, and has an editor; nothing from a repo is ever run. <em>Light or dark</em> on the Theme page switches every palette, and the theme can follow each new wallpaper into light or dark by itself.</p>
+      </details>
+      <details class="qa"><summary>Can each display have its own wallpaper, or its own bar?{{icon expand_more}}</summary>
+        <p>Yes. A line per output in <code>~/.config/lucid/wallpaper-outputs.conf</code> gives it its own picture, and <em>Settings → Displays</em> puts a bar on every display or sends the bar and the dock to the display you pick: <code>qs ipc call -- displays shell next</code>.</p>
+      </details>
+      <details class="qa"><summary>Do I need Google Sans installed?{{icon expand_more}}</summary>
+        <p>No. Lucid ships Google Sans Flex itself, under the Open Font License. Any installed font can be picked in Settings → General instead.</p>
+      </details>
+      <details class="qa"><summary>Animations feel choppy on an NVIDIA card{{icon expand_more}}</summary>
+        <p>Qt refuses threaded OpenGL on the NVIDIA driver, which pins animations to about 60 fps. Lucid starts through <code>~/.config/lucid/launch-shell.sh</code>, which moves such machines to Qt's Vulkan backend; <code>launch-shell.sh --explain</code> says what it decided.</p>
+      </details>
+      <details class="qa"><summary>Another app's notifications show instead of Lucid's{{icon expand_more}}</summary>
+        <p>Only one program can own <code>org.freedesktop.Notifications</code>, and an installed daemon (swaync, dunst, mako) is started by the first notification. Check with <code>busctl --user status org.freedesktop.Notifications | grep PID</code>, then mask the other daemon (<code>systemctl --user mask swaync.service</code>) and log back in. The installer offers to.</p>
+      </details>
+      <details class="qa"><summary>A keybind with an argument does nothing{{icon expand_more}}</summary>
+        <p>Put <code>--</code> before the target: <code>qs ipc call -- settings show bar</code>. Without it <code>qs</code> reads the argument as its own.</p>
+      </details>
+      <details class="qa"><summary>Where is the full list of shortcuts?{{icon expand_more}}</summary>
+        <p><kbd>Super</kbd> + <kbd>/</kbd> lays every keybind over the screen, and Settings → Keybinds lists, searches, edits, adds and switches them off. They live in <code>~/.config/lucid/keybinds.json</code>.</p>
+      </details>
+      <details class="qa"><summary>Which password unlocks the lock screen, and what is “Too many attempts”?{{icon expand_more}}</summary>
+        <p>Your account password, checked through PAM; nothing in the <code>lock</code> IPC target gets past it. “Too many attempts” is faillock's real count: with Arch's defaults three failures in 15 minutes lock the account for 10, and the screen counts down. Cancelled administrator prompts count too.</p>
+      </details>
+      <details class="qa"><summary>How do I use the Lucid login screen?{{icon expand_more}}</summary>
+        <p>Turn on <em>Login screen</em> in the installer window, or run <code>./install.sh --login-screen</code>. It sets <code>Current=lucid</code> in <code>/etc/sddm.conf</code> (backed up first), and offers to make SDDM the login screen when another one is in use.</p>
+      </details>
+    </section>
+  </div>
+</div>

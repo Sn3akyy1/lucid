@@ -1,13 +1,21 @@
 {
   "name": "Lucid",
   "short_name": "Lucid",
-  "description": "A Material 3 Expressive desktop shell for Hyprland, built on Quickshell.",
+  "description": "Lucid is an ecosystem: a Material 3 Expressive desktop for Hyprland, built on Quickshell.",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#0f0807",
-  "theme_color": "#0f0807",
+  "background_color": "#050a0b",
+  "theme_color": "#050a0b",
   "icons": [
-    { "src": "assets/images/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "assets/images/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "assets/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ]
 }

@@ -1,132 +1,67 @@
 # Lucid website
 
-The website for [Lucid](https://github.com/Sn3akyy1/lucid). It is plain HTML, CSS and
-JavaScript with no build step and no framework. Open `index.html` in a browser to preview it.
+The website for [Lucid](https://github.com/Sn3akyy1/lucid), published from the `gh-pages`
+branch to https://sn3akyy1.github.io/lucid/. Plain HTML, CSS and JavaScript, no framework.
+Open `index.html` in a browser to preview it.
+
+It is dressed as Lucid itself, from Lucid's own pieces: the navigation is the shell's bar
+(the pages are its workspaces), the hero carries the Poster clock and real widgets telling the
+real time, the icons are the shell's Material Symbols and its Gravity icon set, the shapes are
+the Material 3 Expressive shapes the shell draws, the sound board plays the shell's own
+sounds, and the palettes are the shell's. Surfaces are flat and opaque: no blur, no glow.
+
+## Building
+
+The pages are written by `tools/build.py` from the sources in `tools/pages/`:
+
+```sh
+python3 tools/build.py              # reads the lucid repo at ~/lucid
+python3 tools/build.py --repo PATH  # or another checkout
+```
+
+It takes from the repo: the icons (`lucidui/SymbolPaths.js`), the shapes
+(`lucidui/ShapeRadii.js`), the Gravity icons (`lucidicons/themes/gravity.json`), `VERSION`,
+and the words of `README.md` (the Docs page) and `CHANGELOG.md` (the Changelog page). Run it
+again after a release, or after editing a page source. `styles.css` and `script.js` are
+edited by hand and need no build.
+
+A page source starts with a one-line JSON comment (`title`, `desc`, `nav`, `out`, or
+`redirect`) and may use `{{icon NAME}}`, `{{icon NAME fill}}`, `{{shape NAME CLASS}}`,
+`{{app SLOT CLASS}}`, `{{readme SECTION}}`, `{{changelog}}` and `{{version}}`. The bar and
+the footer dock are in `build.py`, so they change on every page at once.
 
 ## Pages
 
 | File | What it is |
 | --- | --- |
-| `index.html` | Home: the hero, a screenshot, what's in Lucid, the palette switcher, install, keybinds |
-| `features.html` | Everything in Lucid, section by section |
-| `screenshots.html` | The gallery, with a full-size viewer (arrow keys and swipe) |
-| `docs.html` | Install, updating, installer options, keybinds, IPC reference, theming, requirements, uninstall |
-| `help.html` | Help Center: searchable troubleshooting articles, filtered by topic |
-| `support.html` | Support: a bug report and feature request builder that opens a pre-filled GitHub issue, what to include, and how to contribute |
-| `changelog.html` | What landed in each release |
-| `creator.html` | The creator, how Lucid got here, contributors, and the Lucida mark |
-| `404.html` | Not found |
+| `index.html` | Home: the headline, live widgets, the ecosystem, the apps, edit mode, lyrics, the sound board, palettes, news and install |
+| `tour.html` | The screenshots, with a viewer modelled on Lens (filmstrip, arrow keys) |
+| `docs.html` | The README laid out like Settings: a searchable rail and grouped cards, then questions and answers |
+| `changelog.html` | Every version from CHANGELOG.md, the newest open |
+| `support.html` | A bug report and idea builder that opens a written-out GitHub issue |
+| `creator.html` | The creator, live GitHub numbers, the timeline, contributors, the mark and credits |
+| `404.html` | Nothing on this workspace |
+| `features.html`, `screenshots.html`, `help.html` | Redirects from the old site's pages |
 
 ## Layout
 
 ```
 Lucid/
-├── index.html … 404.html   the pages
-├── styles.css              every style, including the palettes
-├── script.js               every behaviour
-├── favicon.ico
-├── site.webmanifest
-├── robots.txt
+├── *.html            the pages, written by tools/build.py
+├── styles.css        every style, the shell's palettes included
+├── script.js         every behaviour
+├── tools/            build.py and the page sources
 └── assets/
-    ├── fonts/        Google Sans and Noto Sans Mono (woff2) and their licences
+    ├── fonts/        Google Sans Flex (subset, every axis), the Poster figures, Noto Sans Mono, licences
     ├── images/       logo, mark, favicons, app icons, social card
-    ├── screenshots/    full-size shots and 960px versions
-    └── announcements/  one folder of images per announcement, like v1.1.0/
+    ├── screenshots/  full-size shots and 960px versions
+    ├── sounds/       the shell's sounds, as .ogg and .m4a (for Safari)
+    └── shapes.js     the shapes' radii, written by build.py, for the morphs
 ```
 
-## Where things come from
+## Releasing
 
-- **Colours** are the shell's own Material 3 roles. The default is Matugen with the brand
-  coral `#FF7F50` as the seed. The other palettes at the bottom of `styles.css` are copied
-  colour for colour from `support/lucid/themes/<name>/quickshell.json` and
-  `quickshell-light.json` in the Lucid repo. A visitor's choice of palette and of light or
-  dark is saved in their browser (`localStorage`, keys `lucid-palette` and `lucid-theme`).
-  Every page applies it in its `<head>` before anything is drawn, so nothing flashes the
-  default first. Other open tabs of the site follow at once. Until a visitor picks a mode,
-  the site follows their system's light or dark.
-- **The theme controls** are ports of Lucid's own: the connected Dark/Light button group
-  (`M3Segmented.qml`), the Theme page's tiles with each palette's catalogue swatch, the
-  grouped setting rows, and the Palette widget. The Theme glyph and the four-point star in
-  the header come from the shell (`NavGlyph.qml` and the Lucida mark).
-- **Radii, easing and durations** match `Theme.qml`: radii of 8, 12, 16, 20 and 28 px, the
-  emphasized decelerate curve `cubic-bezier(0.05, 0.7, 0.1, 1)`, and durations scaled by the
-  shell's 1.125 motion baseline.
-- **Buttons** behave like Lucid's `M3Button`: a pill at rest and on hover, where hover lays an
-  8% state layer in the label colour. Accent-filled buttons change their fill instead, as
-  Lucid's accent chips do: `--accent-hover` and `--accent-pressed` are the accent six tone
-  steps lighter or darker (Theme.qml's `accentHover`/`accentPressed`). On hover they also
-  swell to 106% on the fast spring, which overshoots a touch and settles; a press squishes
-  them to 97%. The swell only applies to devices with a real pointer, so a tap on a phone
-  doesn't leave the button swollen. A press morphs the
-  corners to 12px with Lucid's emphasized overshoot. Nothing lifts or changes shape on hover.
-- **Motion** uses Material 3 Expressive's spatial springs (Compose's `MotionScheme.expressive`),
-  sampled into CSS `linear()` curves: `--spring-fast` for press and selection morphs, `--spring`
-  for movement. On top of that:
-  - headings rise in on load, and sections fade up as they scroll into view
-  - moving between pages, the nav's active pill glides from the link you left to the new
-    one, the way Lucid's workspace pill moves (OutCubic, 340 ms, no overshoot)
-  - menus grow out of their pill
-  - a gallery thumbnail grows into the full-size viewer, and the announcement notification
-    grows into its dialog
-  - the hero's Lucida orbit turns as you scroll, and the header logo spins on hover
-  - a palette or mode change spreads from the clicked button in a circle
-  - pages cross-fade with the bar held still
-
-  The morphs, the circle and the page fades use View Transitions. If a browser has no frame
-  ready within 400 ms, a watchdog applies the change without the animation, so a click always
-  does something. Visitors with reduced motion get none of it. The scroll reveal is armed by a
-  small script in each page's `<head>`, and shows everything after 2.5 seconds if `script.js`
-  fails to load.
-- **Icons** are Material Symbols Rounded (Apache 2.0), inlined into each page as an SVG
-  sprite so they also work when a page is opened straight from disk. The GitHub mark is
-  from Octicons (MIT).
-- **Fonts** are the SIL OFL releases from [google/fonts](https://github.com/google/fonts).
-  Keep the `OFL-*.txt` files next to them. Do not swap in the Google Sans files from
-  `/usr/share/fonts/TTF`: that older release is not open source.
-- **Star and fork counts** come from the GitHub API on every visit, cached for 30 minutes
-  per browser tab. The numbers written into the HTML only show if that request fails
-  (offline, or past GitHub's 60 requests an hour for one visitor).
-
-## Editing
-
-The header, the mobile menu and the footer are repeated in every page. To change a
-navigation link, change it in all nine files.
-
-When a new version ships, update:
-
-- the version chip in every page's header (`brand-ver`, currently `v1.20`),
-- the news pill on `index.html`,
-- `changelog.html`, by adding a new `<article class="release">` at the top and moving the
-  "Latest" chip to it,
-- the timeline and the "Tagged versions" count on `creator.html`.
-
-## Announcements
-
-The **Announcements** section on the home page is for anything worth telling people:
-releases, upcoming updates, notices. Each announcement is two pieces in `index.html`:
-
-1. **A card** in the `#announcements` section, styled like the notification Lucid posts
-   when a version lands. Give it `data-ann="<id>"`, set its kind chip (`Release`,
-   `Coming soon`, `Notice` and so on), and point its `href` somewhere useful for visitors
-   without JavaScript. Put the newest card first, under the "New" label. Older ones go
-   under an "Earlier" label with the `is-earlier` class, which drops the tint. Update the
-   number in `ann-count`.
-2. **A dialog** at the bottom of `<main>`: `<dialog class="ann-dialog" id="ann-<id>">`. Copy
-   the v1.1.0 one and change its text and images. Images go in `assets/announcements/<id>/`.
-
-Anything with `data-ann="<id>"` opens that dialog, including the news pill in the hero, so
-point that pill at the newest announcement. `index.html#ann-<id>` opens a dialog straight
-from a link.
-
-## Deploying
-
-It works on any static host. For GitHub Pages, push this folder to a repository and turn
-on Pages for the branch. Two things to fill in once the address is known:
-
-- Social cards need an absolute URL. Change `og:image` in each page's `<head>` from
-  `assets/images/og-image.jpg` to the full address, like
-  `https://example.github.io/lucid/assets/images/og-image.jpg`.
-- `404.html` uses relative links. That works for a missing page at the top level, like
-  `/lucid/nope.html`. For a missing page deeper in the path, its styles and links would
-  point at the wrong folder. Making its `href`/`src` paths absolute (`/lucid/styles.css`)
-  fixes that. Don't use `<base href>` for this: it can break the inline SVG icons.
+For a new version: copy the new screenshots into `assets/screenshots/` (and 960px
+versions), update the hero and the news card in `tools/pages/index.html` and the timeline in
+`tools/pages/creator.html`, run `python3 tools/build.py`, then commit and push `gh-pages`.
+Pages publishes it in about a minute.

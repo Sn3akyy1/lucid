@@ -1,0 +1,210 @@
+<!--{"title": "Lucid is an ecosystem", "desc": "Lucid is a Material 3 Expressive desktop for Hyprland, built on Quickshell: the shell, its own apps, its own icons, pointer and login screen, all coloured by your wallpaper.", "nav": "home", "out": "index.html"}-->
+<section class="hero">
+  <div class="hero-copy" data-rise>
+    <a class="news-chip" href="changelog.html#v1-21"><span class="chip accent">v{{version}}</span><span>An ecosystem</span>{{icon arrow_forward}}</a>
+    <h1 class="display hero-title" aria-label="Lucid is your whole desktop.">
+      <span class="ht-line" data-words aria-hidden="true">Lucid is your</span>
+      <span class="ht-cycle" data-cycle="bar.|dock.|file manager.|picture viewer.|screenshot tool.|control centre.|lock screen.|login screen.|palette.|whole desktop." aria-hidden="true"><span class="ht-word">whole desktop.</span></span>
+    </h1>
+    <p class="lede">A Material 3 Expressive desktop for Hyprland, built on Quickshell. Not just a bar and a dock: its own file manager, picture viewer and screenshot tool, its own icons, pointer, sounds and login screen, every one of them coloured by your wallpaper.</p>
+    <div class="actions">
+      <a class="btn accent" href="#install">{{icon download}}Install Lucid</a>
+      <a class="btn tonal" href="https://github.com/Sn3akyy1/lucid">{{icon code}}View on GitHub</a>
+    </div>
+  </div>
+
+  <div class="widgets" aria-label="Lucid's own widgets, telling the time here">
+    <div class="w poster" data-rise>
+      <span class="poster-h" data-poster-h>12</span><span class="poster-m" data-poster-m>00</span>
+      <span class="poster-date" data-poster-date>Today</span>
+    </div>
+    <div class="w today" data-rise>
+      <span class="today-day" data-today-day>Friday</span>
+      <span class="today-num" data-today-num>13</span>
+      <span class="today-month"><span data-today-month>November</span><i class="dot"></i></span>
+    </div>
+    <div class="w progress" data-rise>
+      <svg class="wave-ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="48"/><path class="fill" data-wave d=""/></svg>
+      <div class="progress-copy"><strong data-day-pct>50%</strong><span>of the day</span><small data-day-left>12 h left</small></div>
+    </div>
+    <a class="w github" href="https://github.com/Sn3akyy1/lucid" data-rise>
+      <span class="gh-head">{{icon star fill}}GitHub</span>
+      <span class="gh-num" data-stars>332</span>
+      <span class="gh-sub"><span data-forks>18</span> forks · MIT</span>
+    </a>
+  </div>
+</section>
+
+<figure class="hero-shot" data-rise>
+  <img src="assets/screenshots/desktop.webp" alt="The Lucid desktop in blue: a clock, a calendar, the song playing and the weather on the left, battery, system and to-do widgets on the right, and the visualiser along the bottom" width="1920" height="1080" fetchpriority="high">
+</figure>
+
+<section class="band" id="ecosystem">
+  <header class="band-head" data-rise>
+    <p class="eyebrow">The ecosystem</p>
+    <h2>Everything between logging in and logging out.</h2>
+    <p>Lucid began as a shell around your windows. Now the files, the pictures, the screenshots, the icons, the pointer and the login screen are its own too, and they all belong together.</p>
+  </header>
+  <div class="eco">
+    <div class="eco-col" data-rise>
+      <h3>The shell</h3>
+      <a class="row" href="docs.html#the-bar">{{shape cookie4 tile}}<span class="glyph">{{icon toolbar}}</span><span class="row-text"><strong>The bar</strong><small>Islands, notches or one strip, top or bottom</small></span></a>
+      <a class="row" href="docs.html#dock-and-launcher">{{shape clover4 tile}}<span class="glyph">{{icon dock_to_bottom}}</span><span class="row-text"><strong>Dock and launcher</strong><small>One field for apps, emoji, commands and wallpapers</small></span></a>
+      <a class="row" href="docs.html#control-centre">{{shape cookie9 tile}}<span class="glyph">{{icon tune}}</span><span class="row-text"><strong>Control centre</strong><small>Quick settings on a grid you lay out</small></span></a>
+      <a class="row" href="docs.html#desktop-widgets">{{shape sunny tile}}<span class="glyph">{{icon widgets}}</span><span class="row-text"><strong>Widgets</strong><small>Twenty-five kinds, close to ninety looks</small></span></a>
+      <a class="row" href="docs.html#edit-mode">{{shape puffy tile}}<span class="glyph">{{icon edit}}</span><span class="row-text"><strong>Edit mode</strong><small>Arrange the desktop where it stands</small></span></a>
+      <a class="row" href="docs.html#lock-login-and-session">{{shape gem tile}}<span class="glyph">{{icon lock}}</span><span class="row-text"><strong>Lock and login</strong><small>A PAM lock screen, and SDDM to match</small></span></a>
+    </div>
+    <div class="eco-col" data-rise>
+      <h3>Its apps</h3>
+      <a class="row" href="#apps">{{app app-lumen icon48}}<span class="row-text"><strong>Lumen</strong><small>Your files, and every app's file dialog</small></span></a>
+      <a class="row" href="#apps">{{app app-lens icon48}}<span class="row-text"><strong>Lens</strong><small>Pictures and videos, edited without losing the original</small></span></a>
+      <a class="row" href="#apps">{{app app-camera icon48}}<span class="row-text"><strong>LucidShot</strong><small>Screenshots, recordings, text and colours</small></span></a>
+      <a class="row" href="#apps">{{app app-lucid-settings icon48}}<span class="row-text"><strong>Settings</strong><small>The whole desktop without a config file</small></span></a>
+      <a class="row" href="#music">{{app app-music icon48}}<span class="row-text"><strong>Music</strong><small>Lyrics, covers and a visualiser</small></span></a>
+      <a class="row" href="docs.html#settings">{{app app-phone icon48}}<span class="row-text"><strong>Phone</strong><small>A KDE Connect client of its own</small></span></a>
+    </div>
+    <div class="eco-col" data-rise>
+      <h3>Its look</h3>
+      <a class="row" href="#palette">{{shape flower tile}}<span class="glyph">{{icon palette}}</span><span class="row-text"><strong>Your wallpaper's colours</strong><small>On the shell and every app beside it</small></span></a>
+      <a class="row" href="docs.html#look-and-motion">{{app folder icon48}}<span class="row-text"><strong>Icons of its own</strong><small>Folders, files and apps in your palette</small></span></a>
+      <a class="row" href="docs.html#look-and-motion">{{shape cookie12 tile}}<span class="glyph">{{icon mouse}}</span><span class="row-text"><strong>A pointer of its own</strong><small>In your colours, tilting as it moves</small></span></a>
+      <a class="row" href="#sounds">{{shape softBurst tile}}<span class="glyph">{{icon graphic_eq}}</span><span class="row-text"><strong>Sounds of its own</strong><small>Synthesised for Lucid, one key, one loudness</small></span></a>
+      <a class="row" href="docs.html#look-and-motion">{{shape clover8 tile}}<span class="glyph">{{icon water_drop}}</span><span class="row-text"><strong>Motion on springs</strong><small>Panels and icons settle with a little wobble</small></span></a>
+      <a class="row" href="creator.html#credits">{{shape pentagon tile}}<span class="glyph">{{icon text_fields}}</span><span class="row-text"><strong>Google Sans Flex</strong><small>Built in, rounded where it is loud</small></span></a>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="apps">
+  <header class="band-head" data-rise>
+    <p class="eyebrow">Its own apps</p>
+    <h2>Opened from the dock, drawn by the shell.</h2>
+  </header>
+  <div class="feature" data-rise>
+    <div class="feature-copy">
+      <div class="feature-icon">{{app app-lumen icon64}}</div>
+      <h3>Lumen</h3>
+      <p>A file manager of Lucid's own, and the <em>Open</em> and <em>Save</em> dialog of every app on the machine. Tabs you pin, colour and drag into windows of their own, bookmarks, your drives, a preview pane, and shares on other computers with <em>Connect to server</em>.</p>
+    </div>
+    <figure class="shot"><img src="assets/screenshots/lumen.webp" alt="Lumen in a green palette: places on the left, folders in the middle and the Home folder's details on the right" loading="lazy" width="1920" height="1080"></figure>
+  </div>
+  <div class="feature flip" data-rise>
+    <div class="feature-copy">
+      <div class="feature-icon">{{app app-lens icon64}}{{app app-lucid-settings icon64}}</div>
+      <h3>Lens and Settings</h3>
+      <p>Lens opens a picture with its whole folder behind it, edits it without ever losing the original, and plays the videos beside it. Settings runs the rest of the machine, from displays and sound to accounts and the login screen, with a search that finds any option.</p>
+    </div>
+    <figure class="shot"><img src="assets/screenshots/apps.webp" alt="Settings, Lumen and Lens open together in a red palette, with the desktop's icons on the right" loading="lazy" width="1920" height="1080"></figure>
+  </div>
+  <div class="feature" data-rise>
+    <div class="feature-copy">
+      <div class="feature-icon">{{app app-camera icon64}}</div>
+      <h3>LucidShot</h3>
+      <p>Print freezes the screen under one toolbar: a screenshot, a recording, the text in any part of the screen, or a colour off it. Drag a region or click a window, mark it up, pin it over your windows, or drag it straight into a chat.</p>
+    </div>
+    <figure class="shot"><img src="assets/screenshots/lucidshot.webp" alt="LucidShot over a frozen screen: the hint to drag a region or click a window at the top, crosshairs, and the toolbar above the dock" loading="lazy" width="1920" height="1080"></figure>
+  </div>
+</section>
+
+<section class="band" id="arrange">
+  <header class="band-head" data-rise>
+    <p class="eyebrow">Yours to arrange</p>
+    <h2>Set it up where you see it.</h2>
+    <p>Edit mode shades the wallpaper and leaves everything in reach: drag modules along the bar, float the dock or sink it into the edge, and drop widgets from the panel. The control centre gets an editor of its own.</p>
+  </header>
+  <div class="pair" data-rise>
+    <figure class="shot"><img src="assets/screenshots/edit-mode.webp" alt="Edit mode: the widget panel on the left with its clock, calendar and progress galleries, widgets on the shaded desktop, and the edit toolbar above the dock" loading="lazy" width="1920" height="1080"><figcaption>Edit mode and the widget panel</figcaption></figure>
+    <figure class="shot"><img src="assets/screenshots/control-centre-editor.webp" alt="The control centre's editor: the blocks to add on the left, the panel being laid out in the middle, and layouts to start from on the right" loading="lazy" width="1920" height="1080"><figcaption>The control centre's editor</figcaption></figure>
+    <figure class="shot"><img src="assets/screenshots/bottom-bar.webp" alt="The bar as one full strip along the bottom edge, with the dock's apps in the middle of it" loading="lazy" width="1920" height="1080"><figcaption>One full bar on the bottom edge</figcaption></figure>
+    <figure class="shot"><img src="assets/screenshots/desktop-icons.webp" alt="Desktop icons down the left of an evening city wallpaper, and on the right a shaped clock, the song playing, today's date and how much of the day has gone" loading="lazy" width="1920" height="1080"><figcaption>Desktop icons beside the widgets</figcaption></figure>
+  </div>
+</section>
+
+<section class="band" id="music">
+  <header class="band-head" data-rise>
+    <p class="eyebrow">Music</p>
+    <h2>Whatever plays comes with its words.</h2>
+    <p>The media panel scrolls with the song, the line being sung springing up and filling with colour, and the Lyrics widget sings along on the desktop: word by word, as karaoke, or the whole song going by.</p>
+  </header>
+  <div class="pair two" data-rise>
+    <figure class="shot"><img src="assets/screenshots/lyrics-widget.webp" alt="The Lyrics widget singing along word by word over a red and grey wallpaper" loading="lazy" width="1920" height="1080"><figcaption>The Lyrics widget</figcaption></figure>
+    <figure class="shot"><img src="assets/screenshots/lyrics-panel.webp" alt="The media panel's Lyrics page for Skyfall by Adele, the line being sung lit" loading="lazy" width="1920" height="1080"><figcaption>Lyrics in the media panel</figcaption></figure>
+  </div>
+</section>
+
+<section class="band" id="sounds">
+  <header class="band-head" data-rise>
+    <p class="eyebrow">Sounds of its own</p>
+    <h2>Hear it.</h2>
+    <p>Every sound in Lucid is synthesised for it, FM bells, plucks and blips in one key and one loudness. These are the files the shell plays.</p>
+  </header>
+  <div class="board" data-rise>
+    <p class="board-title">Notifications</p>
+    <div class="pads">
+      <button class="pad" type="button" data-sound="glint" data-shape="sunny">{{shape sunny pad-shape}}<span class="pad-glyph">{{icon auto_awesome}}</span><span>Glint</span></button>
+      <button class="pad" type="button" data-sound="pulse" data-shape="cookie9">{{shape cookie9 pad-shape}}<span class="pad-glyph">{{icon graphic_eq}}</span><span>Pulse</span></button>
+      <button class="pad" type="button" data-sound="chime" data-shape="flower">{{shape flower pad-shape}}<span class="pad-glyph">{{icon notifications}}</span><span>Chime</span></button>
+      <button class="pad" type="button" data-sound="tap" data-shape="clover4">{{shape clover4 pad-shape}}<span class="pad-glyph">{{icon touch_app}}</span><span>Tap</span></button>
+      <button class="pad" type="button" data-sound="orbit" data-shape="cookie12">{{shape cookie12 pad-shape}}<span class="pad-glyph">{{icon sync}}</span><span>Orbit</span></button>
+      <button class="pad" type="button" data-sound="halo" data-shape="softBurst">{{shape softBurst pad-shape}}<span class="pad-glyph">{{icon brightness_high}}</span><span>Halo</span></button>
+      <button class="pad" type="button" data-sound="beacon" data-shape="burst">{{shape burst pad-shape}}<span class="pad-glyph">{{icon notifications_active}}</span><span>Beacon</span></button>
+    </div>
+    <p class="board-title">The system</p>
+    <div class="pads">
+      <button class="pad" type="button" data-sound="usb-in" data-shape="puffy">{{shape puffy pad-shape}}<span class="pad-glyph">{{icon usb}}</span><span>USB in</span></button>
+      <button class="pad" type="button" data-sound="power-in" data-shape="gem">{{shape gem pad-shape}}<span class="pad-glyph">{{icon bolt}}</span><span>Charging</span></button>
+      <button class="pad" type="button" data-sound="charged" data-shape="pentagon">{{shape pentagon pad-shape}}<span class="pad-glyph">{{icon battery_full}}</span><span>Charged</span></button>
+      <button class="pad" type="button" data-sound="capture" data-shape="clover8">{{shape clover8 pad-shape}}<span class="pad-glyph">{{icon screenshot_region}}</span><span>Screenshot</span></button>
+      <button class="pad" type="button" data-sound="camera-on" data-shape="cookie6">{{shape cookie6 pad-shape}}<span class="pad-glyph">{{icon videocam}}</span><span>Camera</span></button>
+      <button class="pad" type="button" data-sound="bt-in" data-shape="ghostish">{{shape ghostish pad-shape}}<span class="pad-glyph">{{icon bluetooth}}</span><span>Bluetooth</span></button>
+      <button class="pad" type="button" data-sound="reminder" data-shape="verySunny">{{shape verySunny pad-shape}}<span class="pad-glyph">{{icon event}}</span><span>Reminder</span></button>
+      <button class="pad" type="button" data-sound="alarm" data-shape="cookie7">{{shape cookie7 pad-shape}}<span class="pad-glyph">{{icon alarm}}</span><span>Alarm</span></button>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="palette">
+  <header class="band-head" data-rise>
+    <p class="eyebrow">Colour</p>
+    <h2>Wear any palette.</h2>
+    <p>Lucid builds a Material 3 palette from your wallpaper, or wears a fixed one, in dark or light, and hands it to GTK, Qt, kitty, Zen and VSCodium too. Pick one and this page wears it, icons included. Click a colour to copy it.</p>
+  </header>
+  <div class="palette-grid" data-rise>
+    <div class="palettes big" data-palettes></div>
+    <div class="roles" data-roles aria-label="The palette on screen"></div>
+  </div>
+</section>
+
+<section class="band closing">
+<div id="news">
+  <header class="band-head" data-rise>
+    <p class="eyebrow">News</p>
+    <h2>From Lucid itself.</h2>
+    <p>When a release lands, the shell tells you once, in a notification just like this one, and updates itself from Settings.</p>
+  </header>
+  <div class="notif" data-rise>
+    <div class="notif-app"><span class="notif-mark">{{shape cookie12 notif-shape}}<span>{{icon update}}</span></span><span>Lucid</span><span class="notif-time">13 Nov</span></div>
+    <p class="notif-title">Lucid v{{version}} is out</p>
+    <p class="notif-body">Lucid is an ecosystem: Lumen, Lens, LucidShot rebuilt, edit mode, a bar on the bottom edge, a control centre you lay out, lyrics, and icons and a pointer of its own.</p>
+    <div class="notif-actions"><a class="btn tonal sm" href="changelog.html#v1-21">What's new</a><a class="btn tonal sm" href="#install">Update</a></div>
+  </div>
+</div>
+<div id="install">
+  <header class="band-head" data-rise>
+    <p class="eyebrow">Install</p>
+    <h2>Three commands.</h2>
+    <p>Arch Linux and Hyprland 0.55 or newer. In a Wayland session the installer opens a window of its own, backs up whatever it replaces, and asks before it touches your system.</p>
+  </header>
+  <div class="term" data-rise>
+    <div class="term-bar"><span>kitty</span><button class="copy" type="button" data-copy="git clone https://github.com/Sn3akyy1/lucid.git&#10;cd lucid&#10;./install.sh" aria-label="Copy the commands">{{icon content_copy}}</button></div>
+<pre><code><span class="pr">~</span> <span class="ps">❯</span> git clone https://github.com/Sn3akyy1/lucid.git
+<span class="pr">~</span> <span class="ps">❯</span> cd lucid
+<span class="pr">~/lucid</span> <span class="ps">❯</span> ./install.sh</code></pre>
+  </div>
+  <div class="actions center" data-rise>
+    <a class="btn tonal" href="docs.html#install">{{icon description}}Read the install guide</a>
+    <a class="btn tonal" href="tour.html">{{icon photo_library}}Take the tour</a>
+  </div>
+</div>
+</section>

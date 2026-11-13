@@ -1,0 +1,33 @@
+<!--{"title": "Tour · Lucid", "desc": "Lucid in pictures: the desktop, Lumen, Lens, Settings, edit mode, the control centre's editor, lyrics, LucidShot and the bar on the bottom edge.", "nav": "tour", "out": "tour.html"}-->
+<section class="page-head" data-rise>
+  <p class="eyebrow">Tour</p>
+  <h1 class="display sm">Lucid, as it looks.</h1>
+  <p class="lede">Every picture here is a real screen, taken with LucidShot. Click one to look closer; the arrow keys walk through them, as they do in Lens.</p>
+</section>
+
+<section class="gallery" data-gallery data-rise>
+  <button class="tile wide" type="button" data-src="assets/screenshots/desktop.webp" data-title="The desktop"><img src="assets/screenshots/desktop-960.webp" alt="The Lucid desktop in blue: a clock, a calendar, the song playing and the weather on the left, battery, system and to-do widgets on the right, and the visualiser along the bottom" loading="lazy" width="960" height="540"><span class="tile-title">The desktop</span></button>
+  <button class="tile" type="button" data-src="assets/screenshots/apps.webp" data-title="Settings, Lumen and Lens"><img src="assets/screenshots/apps-960.webp" alt="Settings, Lumen and Lens open together in a red palette" loading="lazy" width="960" height="540"><span class="tile-title">Settings, Lumen and Lens</span></button>
+  <button class="tile" type="button" data-src="assets/screenshots/lumen.webp" data-title="Lumen"><img src="assets/screenshots/lumen-960.webp" alt="Lumen in a green palette over a bamboo wallpaper" loading="lazy" width="960" height="540"><span class="tile-title">Lumen</span></button>
+  <button class="tile" type="button" data-src="assets/screenshots/edit-mode.webp" data-title="Edit mode"><img src="assets/screenshots/edit-mode-960.webp" alt="Edit mode with the widget panel open beside the shaded desktop" loading="lazy" width="960" height="540"><span class="tile-title">Edit mode</span></button>
+  <button class="tile" type="button" data-src="assets/screenshots/control-centre-editor.webp" data-title="The control centre's editor"><img src="assets/screenshots/control-centre-editor-960.webp" alt="The control centre's editor: blocks to add, the panel and layouts to start from" loading="lazy" width="960" height="540"><span class="tile-title">The control centre's editor</span></button>
+  <button class="tile" type="button" data-src="assets/screenshots/lyrics-widget.webp" data-title="The Lyrics widget"><img src="assets/screenshots/lyrics-widget-960.webp" alt="The Lyrics widget singing along word by word over a red and grey wallpaper" loading="lazy" width="960" height="540"><span class="tile-title">The Lyrics widget</span></button>
+  <button class="tile" type="button" data-src="assets/screenshots/lyrics-panel.webp" data-title="Lyrics in the media panel"><img src="assets/screenshots/lyrics-panel-960.webp" alt="The media panel's Lyrics page for Skyfall by Adele" loading="lazy" width="960" height="540"><span class="tile-title">Lyrics in the media panel</span></button>
+  <button class="tile" type="button" data-src="assets/screenshots/bottom-bar.webp" data-title="The bar on the bottom edge"><img src="assets/screenshots/bottom-bar-960.webp" alt="The bar as one full strip along the bottom edge" loading="lazy" width="960" height="540"><span class="tile-title">The bar on the bottom edge</span></button>
+  <button class="tile" type="button" data-src="assets/screenshots/lucidshot.webp" data-title="LucidShot"><img src="assets/screenshots/lucidshot-960.webp" alt="LucidShot over a frozen screen" loading="lazy" width="960" height="540"><span class="tile-title">LucidShot</span></button>
+  <button class="tile" type="button" data-src="assets/screenshots/desktop-icons.webp" data-title="Desktop icons"><img src="assets/screenshots/desktop-icons-960.webp" alt="Desktop icons beside a shaped clock, the song playing, today's date and the day's progress" loading="lazy" width="960" height="540"><span class="tile-title">Desktop icons</span></button>
+</section>
+
+<dialog class="viewer" data-viewer aria-label="Picture viewer">
+  <div class="viewer-top">
+    <span class="viewer-title" data-viewer-title></span>
+    <span class="viewer-count" data-viewer-count></span>
+    <button class="icon-btn" type="button" data-viewer-close aria-label="Close">{{icon close}}</button>
+  </div>
+  <div class="viewer-stage">
+    <button class="icon-btn nav prev" type="button" data-viewer-prev aria-label="Previous">{{icon chevron_left}}</button>
+    <img data-viewer-img alt="">
+    <button class="icon-btn nav next" type="button" data-viewer-next aria-label="Next">{{icon chevron_right}}</button>
+  </div>
+  <div class="filmstrip" data-filmstrip></div>
+</dialog>
