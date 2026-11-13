@@ -8,276 +8,321 @@ import QtQuick
 QtObject {
     // the sheet opens by itself once, on the first start of a shell whose
     // VERSION file says this
-    readonly property string version: "1.20.1"
-    readonly property string name: ""
-    readonly property string date: "15 October 2026"
+    readonly property string version: "1.21"
+    readonly property string name: "An ecosystem"
+    readonly property string date: "13 November 2026"
     readonly property bool placeholders: false
-    readonly property var heroes: []
-    readonly property string intro: "A point release on top of Lucid 2: icons on the desktop, bar modules that join into one island, live wallpapers and three new ways to pick a wallpaper, five new widgets, files over Bluetooth, a Startup page, fingerprint unlock, and the fix for Steam opening and closing in a loop. Much of it is once again the work of <b>Ciro Rivera</b>, fifteen pull requests of it."
+    readonly property var heroes: [
+        {
+            "src": "assets/desktop.webp",
+            "alt": "The Lucid desktop in blue: a clock, a calendar, the song playing and the weather on the left, battery, system and to-do widgets on the right, and the visualiser along the bottom"
+        }
+    ]
+    readonly property string intro: "<b>Lucid is an ecosystem.</b> It began as a shell around your windows; now it is everything between logging in and logging out, made to belong together. It has apps of its own: Lumen for your files and every app's file dialog, Lens for pictures and videos, and a rebuilt LucidShot. Its own icons and its own pointer are drawn in your palette, and the login screen matches the lock. The desktop is arranged in edit mode right where it stands, the bar can take the bottom edge and open its panels as one shape with it, the control centre is laid out on a grid of your own, whatever plays comes with its lyrics, and everything moves on springs.<br><br>Twenty-three of the pull requests in this one are <b>Ciro Rivera</b>'s, the entries marked with a number below unless someone else is named. Thank you, Ciro, and thank you @SKetU-l and @naevui."
     readonly property var sections: [
         {
             "level": 1,
-            "icon": "build",
-            "title": "Fixed",
+            "icon": "apps",
+            "title": "Apps of Lucid's own",
             "intro": "",
-            "images": [],
+            "images": [
+                {
+                    "src": "assets/apps.webp",
+                    "alt": "Settings, Lumen and Lens open together in a red palette, with the desktop's icons on the right"
+                },
+                {
+                    "src": "assets/lumen.webp",
+                    "alt": "Lumen in a green palette over a bamboo wallpaper: places on the left, folders in the middle and the Home folder's details on the right"
+                }
+            ],
             "items": [
                 {
-                    "text": "<b>Steam no longer opens and closes in a loop.</b> <i>Settings → Environment</i> writes the cursor theme into <code>~/.icons/default/index.theme</code>, the file that says what the default cursor theme is, and on first start it takes the name the machine already uses. On a machine where that name was <code>default</code>, the default theme ended up inheriting itself. Steam's window, a Chromium inside, follows that chain with no end and crashed each time it needed a cursor, so it flashed up and vanished over and over (#55, #57). Lucid never writes such a chain now and takes back one it wrote before, so the next start repairs it with nothing to do. Thanks to @xherqs, who found the file.",
+                    "text": "<b>Lumen, a file manager of Lucid's own, and every app's file dialog.</b> SUPER+E opens it, folders open in it, and the <i>Open</i> and <i>Save</i> dialogs of every app are Lumen windows too, filters, overwrite check and all. Tabs with a strip that always shows: pin one and it stays at the front of every new window, give it a colour, drag it out into a window of its own and back. Bookmarks with names and colours (Ctrl+D), Recent, Trash, your drives under <i>Devices</i> with eject, a path bar you can type into, a grid or a list that zooms from 24 to 256 pixels, and a preview pane. Right-click for <i>Open with…</i>, <i>Set as wallpaper</i>, copying the path, compressing and extracting, and more. Copies and moves run in the background, and Lumen does not quit until they are done.",
                     "code": ""
                 },
                 {
-                    "text": "<b>Steam gets the right graphics driver.</b> The installer left Steam's Vulkan drivers to pacman, which picks NVIDIA's whenever no 32-bit driver is installed yet. On an AMD or Intel machine that left Steam and every 32-bit game without Vulkan. It now installs the drivers for the graphics cards the machine has, and a re-run adds the one an earlier install left out.",
+                    "text": "<b>Network drives in Lumen.</b> <i>Connect to server</i> (Ctrl+K, the sidebar's new <i>Network</i> section or the ⋮ menu) opens a shared folder on another computer, a NAS or a server. Type its address (<code>smb://nas.local/media</code>, <code>sftp://you@server</code>, <code>ftp://…</code>, Windows' own <code>\\\\server\\share</code>, or just a name) and sign in if it asks: as a registered user or a guest, with the password kept in your keyring if you tick it. A host Lumen has never seen asks first. Connected shares sit under <i>Network</i> with their free space and a button that disconnects them, and their files open, copy, move, rename and delete like any others; a share has no trash, so deleting says it can't be undone. Apps' open and save dialogs reach them too. Bookmark a folder on a share and a click on it connects again later; the addresses you typed stay in the dialog's <i>Recent</i> list, and <i>Nearby</i> shows the computers sharing folders on your network once Avahi runs.",
                     "code": ""
                 },
                 {
-                    "text": "<b>A second click on a bar module closes its pop-up</b>, as a click anywhere else already did (#70).",
+                    "text": "<b>Lens, a picture viewer of Lucid's own.</b> Open a picture and the rest of its folder comes with it, in the order Lumen shows that folder: the arrow keys, a swipe or a drag slide to the next one, the filmstrip jumps to any, and <i>All pictures</i> (G) lays out the whole folder to search by name. The wheel or a pinch zooms where the pointer is, a double click goes to 100%, and a zoomed picture pans with a map of where you are. <i>Edit</i> (E) crops it (free, its own shape, square, 4:3, 3:2, 16:9 or your screen's), turns, flips and straightens it, adjusts its light and colour, or gives it one of twelve looks; <i>Draw</i> (D) adds pen, highlighter, arrows, lines, boxes, rings, words and boxes that pixelate what is under them. Edits wait for each picture until they are saved, over it or as a copy; a turned JPEG is saved without losing any quality. Saving over a picture keeps its original, for good: <i>Revert to original</i> (right-click, the editor or <i>Details</i>) brings it back whenever you like, and holding \\ shows it in the edited one's place. Right-click for <i>Set as wallpaper</i>, <i>Open with…</i>, <i>Show in Lumen</i>, copying the picture, its path, the text in it or a colour off it, sending it to your phone, renaming it and the trash. <i>Details</i> (I) show the camera's settings, where it was taken, a histogram and the colours it is made of. Slideshow (F5) and full screen (F) too.",
                     "code": ""
                 },
                 {
-                    "text": "<b>The region screenshot opens after a reboot.</b> On a machine whose built-in screen is switched off just after start-up, it kept asking for that screen and gave up without a word. It now captures the display it is on, a capture that fails says so, and <code>qs ipc call snap status</code> shows what it tried. It also no longer waits for hours when the clock is set back after login.",
-                    "code": ""
-                },
-                {
-                    "text": "<b>Live wallpapers keep playing behind your windows.</b> By default they now hold still only under a fullscreen window, instead of under any window, which left them looking like a still picture whenever something was open. <i>Settings → Theme → Pause under windows</i> still offers <i>Any window</i>. A setting saved by an earlier version stays as it was.",
+                    "text": "<b>Videos in Lens.</b> Videos sit in the folder with the pictures and play where they are, with a time line that waves while they play, volume, speed and play-on-repeat; a click pauses, a double click goes full screen, and J, L, comma and full stop step back and on. A frame can be saved as a picture or copied, a sideways phone video turned upright without encoding it again (its original kept), and <i>Trim</i> (E) cuts a part out as a copy: exactly at the handles, or at once at the nearest keyframe. <code>lens --default-videos</code> makes Lens what opens videos as well.",
                     "code": ""
                 }
             ]
         },
         {
             "level": 1,
-            "icon": "favorite",
-            "title": "From Ciro Rivera",
-            "intro": "Fifteen pull requests, some reworked on the way in. Thank you, Ciro.",
-            "images": [],
-            "items": []
-        },
-        {
-            "level": 2,
-            "icon": "notes",
-            "title": "Desktop icons",
+            "icon": "edit",
+            "title": "Edit mode",
             "intro": "",
             "images": [
                 {
-                    "src": "assets/whatsnew/1.20.1/desktop-icons.webp",
-                    "alt": "Folders, files and the Trash on the desktop beside the widgets"
+                    "src": "assets/edit-mode.webp",
+                    "alt": "Edit mode: the widget panel on the left with its clock, calendar and progress galleries, widgets on the shaded desktop, and the edit toolbar above the dock"
                 }
             ],
             "items": [
                 {
-                    "text": "<b>Icons on the desktop.</b> Your <code>~/Desktop</code> folder on the wallpaper of the main display, the way Windows, macOS and GNOME have it, turned on in <i>Settings → General → Desktop icons</i>. Folders, files and apps are drawn by the icon theme picked on the Environment page; pictures, videos, music with cover art and documents show thumbnails; the Trash fills up, and USB sticks and phones appear while they are mounted. Widgets keep their space: an icon under one steps aside, live while the widget is dragged. In #64.",
+                    "text": "<b>Arrange the desktop where it stands.</b> Pick <i>Edit Desktop</i> from the desktop's right-click menu, or right-click any bar module, and the wallpaper shades over so everything on the desktop can be arranged in place. Drag a bar module along the bar to move it, into another group, or down off the bar to take it out; one that has nothing to show right now keeps a dashed stand-in, so it can be moved too, and the link between two neighbours joins them into one island. Right-click a module, or the dock, for a sheet of its options beside it: its looks, the bar's or the dock's style and sizes. A click still opens a module, so the look just picked can be seen. The dock gets a handle: drag it up to float the dock higher, or down into the bottom edge to make it a notch. <b>Undo</b> takes back the last change and <b>Revert</b> everything since edit mode began; <b>Done</b>, or Escape, leaves it.",
                     "code": ""
                 },
                 {
-                    "text": "<b>It works like a real desktop.</b> Click, Ctrl- or Shift-click, or draw a box; drag into a folder, onto the Trash or a drive, or out to a file manager or a browser. Space opens a quick look, F2 renames, and the right-click menu cascades into submenus: <i>New Item</i> from <code>~/Templates</code>, <i>Open With</i>, compress and extract, tags, <i>Get Info</i>, undo, and <i>Send to</i> your folders, a phone over KDE Connect or a device over Bluetooth (#66).",
-                    "code": ""
-                },
-                {
-                    "text": "<b>Pins make shortcuts.</b> Pull a pinned app up off the dock and drop it on the desktop for a launcher there; the pin stays on the dock.",
-                    "code": ""
-                }
-            ]
-        },
-        {
-            "level": 2,
-            "icon": "notes",
-            "title": "Bar",
-            "intro": "",
-            "images": [
-                {
-                    "src": "assets/whatsnew/1.20.1/bar-islands.webp",
-                    "alt": "Bar modules joined into islands, one with its panel open"
-                }
-            ],
-            "items": [
-                {
-                    "text": "<b>Modules that join into one island.</b> In <i>Settings → Bar → Arrangement</i> a link sits between every two neighbours. Tap it and they sit flush as one island, or one notch with its fillets only at the ends, with a faint line where they meet (<i>Lines between joined modules</i>). A module opened in place hangs its panel from its own stretch of the group, its corners curving into the neighbours. In #67.",
-                    "code": ""
-                },
-                {
-                    "text": "<b>Notched pop-ups</b>, off by default in <i>Settings → Bar</i>: in pop-up mode the pop-up grows straight down out of its module or group, its corners blending into the bar the way the notch's do.",
-                    "code": ""
-                },
-                {
-                    "text": "<b>A full bar.</b> A third shape beside islands and notches: one strip across the whole top edge with every module on it, hanging into the screen's corners (<i>Screen corners</i> sizes them). Hovering a module lifts its own island out of the strip, and an open panel curves into the strip where it meets it. In #16.",
-                    "code": ""
-                },
-                {
-                    "text": "<b>Open on hover and auto-hide</b>, both off by default. A module can unfold under the pointer without taking the keyboard from the window you are typing in, and a click makes it an ordinary open panel. Auto-hide slides the bar up out of sight and hands its space to the windows, and it comes back when the pointer touches the top of the screen or a panel is open. In #16.",
-                    "code": ""
-                }
-            ]
-        },
-        {
-            "level": 2,
-            "icon": "notes",
-            "title": "Wallpapers",
-            "intro": "",
-            "images": [
-                {
-                    "src": "assets/whatsnew/1.20.1/wallpaper-picker.webp",
-                    "alt": "The wallpaper picker in its Tiles style, with the Pictures and Live switch beside it"
-                }
-            ],
-            "items": [
-                {
-                    "text": "<b>Four picker styles</b>, each with a live thumbnail in <i>Settings → Theme → Wallpaper picker</i>: <i>Strip</i> (the carousel), <i>Pills</i>, <i>Tiles</i> and <i>Bento</i>. <i>Arrow keys</i> on the same page moves the wallpaper with ← → or ↑ ↓, so the arrows can stay with the search field. In #65.",
-                    "code": ""
-                },
-                {
-                    "text": "<b>The transition is yours.</b> Presets (Soft, Circle, Sweep, Wave, Instant, Random) or your own, saved and named: the effect, its length, angle and curve, and whether it grows from the centre, the picked card or the cursor. <i>Try transition</i> runs it on the wallpaper you have.",
-                    "code": ""
-                },
-                {
-                    "text": "<b>Live wallpapers.</b> Videos in the wallpaper folder (mp4, webm, mkv, mov) get a side of the picker of their own, and <code>&gt;live</code> goes straight to them. A video plays behind the desktop's icons and widgets, the colours come from its first frame, and it holds still under windows, behind the lock screen and, if you like, in game mode. <i>Settings → Theme → Live wallpapers</i> turns it off and picks the decoder; on a hybrid laptop <i>Automatic</i> keeps the graphics card asleep, and the same page lists the videos beside the pictures. In #73.",
-                    "code": ""
-                }
-            ]
-        },
-        {
-            "level": 2,
-            "icon": "notes",
-            "title": "Bluetooth",
-            "intro": "",
-            "images": [],
-            "items": [
-                {
-                    "text": "<b>Files, both ways.</b> A phone or laptop sending something brings a notification with Accept and Decline, which then follows the transfer and opens what arrived; <i>Settings → Bluetooth</i> picks the folder and whether paired devices skip the question. <i>Send files</i> on a paired phone or computer, in the control centre and in Settings, sends one file after another, with one notification following it all. In #60.",
-                    "code": ""
-                },
-                {
-                    "text": "<b>A pairing agent.</b> Nothing answered Bluetooth's pairing questions before, so AirPods could come up connected with no sound and a phone that confirms a code could not pair. The code now arrives as a notification with Pair and Decline. <i>Answer pairing questions</i> turns it off where another app already does.",
-                    "code": ""
-                }
-            ]
-        },
-        {
-            "level": 2,
-            "icon": "notes",
-            "title": "Windows and displays",
-            "intro": "",
-            "images": [],
-            "items": [
-                {
-                    "text": "<b>Pinned windows stand out</b> with a border of their own from the palette and a tab with a pin in a corner, which unpins the window on a click. <b>A window asking for attention</b> gets a tab with a ringing bell once you are on its workspace. Both are on <i>Settings → Windows</i>. In #61.",
-                    "code": ""
-                },
-                {
-                    "text": "<b>The display map</b> lands a dragged display against a neighbour when it is let go, never on top of one, and the arrow keys move a picked one. Pointing at a box shows its number on the real screen. Resolution, refresh rate, scale, rotation and mirroring now ask <i>Keep these display settings?</i> and go back by themselves after 15 seconds. In #62.",
-                    "code": ""
-                },
-                {
-                    "text": "<b>The launcher and the OSD</b> open on the display you are working on, unless <i>Settings → Displays</i> pins the shell to one. In #63.",
-                    "code": ""
-                }
-            ]
-        },
-        {
-            "level": 2,
-            "icon": "notes",
-            "title": "Widgets and apps",
-            "intro": "",
-            "images": [],
-            "items": [
-                {
-                    "text": "<b>A GitHub widget</b>: your contributions as your profile draws them, as many weeks as you drag it wide, or your streak. It needs only your username, no token. In #69.",
-                    "code": ""
-                },
-                {
-                    "text": "<b>The battery widget</b> no longer shows days of time left while plugged in and full, and a battery held below a charge limit reads <i>Plugged in</i>, not <i>Charging</i>. In #74.",
-                    "code": ""
-                },
-                {
-                    "text": "<b>Qt and KDE apps follow the theme.</b> Prism Launcher, Dolphin, Kate and the rest came up in light colours whatever the theme. With qt6ct installed, the installer now gives Qt and KDE apps a colour scheme made from the theme; one you picked yourself stays. In #68.",
-                    "code": ""
-                },
-                {
-                    "text": "<b>Open GTK4 and libadwaita apps repaint</b> when the theme or the wallpaper changes, instead of on their next start. In #75.",
-                    "code": ""
-                }
-            ]
-        },
-        {
-            "level": 2,
-            "icon": "notes",
-            "title": "Startup",
-            "intro": "",
-            "images": [],
-            "items": [
-                {
-                    "text": "<b>A Startup page.</b> <i>Settings → Startup</i> opens apps at login, sets environment variables, and starts what apps put in <code>~/.config/autostart</code> when the session does not (the plain Hyprland session never did, so an app's own <i>Start at login</i> switch did nothing). It is kept in <code>~/.config/hypr/lucid-startup.lua</code>, which an update never overwrites, unlike lines added by hand to <code>modules/autostart.lua</code> and <code>modules/env.lua</code>. The page lists those lines too and moves them over with one button, and variables that no longer help, such as <code>MOZ_ENABLE_WAYLAND</code>, come with a note saying why. In #77.",
+                    "text": "<b>The bar and the widgets are set up there now.</b> <i>Settings → Bar</i> loses its arrangement editor and the per-module cards, and <i>Settings → Widgets</i> its layouts and its catalogue: modules are moved and set up in edit mode, and widgets come from the widget panel on the desktop, which has the layouts too. The Bar, Dock and Widgets pages each have a button that opens edit mode.",
                     "code": ""
                 }
             ]
         },
         {
             "level": 1,
-            "icon": "notes",
-            "title": "New widgets",
+            "icon": "toolbar",
+            "title": "The bar",
             "intro": "",
             "images": [
                 {
-                    "src": "assets/whatsnew/1.20.1/widgets.webp",
-                    "alt": "The Expressive preset: shaped quick toggles and shortcuts, the sun and the day's progress"
+                    "src": "assets/bottom-bar.webp",
+                    "alt": "The bar as one full strip along the bottom edge, with workspaces, the song playing and the clock on the left, the dock's apps in the middle and the system tray on the right"
                 }
             ],
             "items": [
                 {
-                    "text": "<b>Five new widgets, in Material You's shapes.</b> <i>Progress</i> shows how much of the day, the week, the month and the year has gone, as a wavy ring, a bar each, or the whole year as dots. <i>Quick toggles</i> puts Wi-Fi, Bluetooth, Do not disturb and more on the desktop, as switches that turn into shapes when they come on, a pill of buttons or Quick Settings tiles. <i>Shortcuts</i> sets your dock's apps on shapes of their own, in a pill that blooms under the pointer, or as a folder like a phone's. <i>Search</i> keeps the launcher's search on the desktop, as a phone's search bar or over the launcher's modes. <i>Sun</i> works out sunrise, sunset and the daylight left where you are.",
+                    "text": "<b>The bottom edge.</b> <i>Position</i> puts the bar on the bottom of the screen, and it slides over to the new edge. Its pop-ups open upwards, one that hides comes out of the bottom edge, and over a fullscreen window the launcher still rises from the edge. With the bar there the dock steps aside, and on a full bar the launcher rises out of the bar itself, one piece of glass with the strip. #100",
                     "code": ""
                 },
                 {
-                    "text": "<b>New faces.</b> The clock gains <i>Oval</i>, the time on a band across a round face, and <i>Dial</i>, bold hands on a scalloped face with the seconds as a dot. The weather gains <i>Details</i>. What is playing gets four that are not square: <i>Pill</i>, <i>Orbit</i>, <i>Capsule</i>, and <i>Shape</i>, the cover cut to a shape of its own that morphs with every track.",
+                    "text": "<b>Panels open as one shape with the bar.</b> On a full bar and with notches, an open panel grows out of the bar with no seam, panels side by side merge into one shape, and a module at either end can meet the screen's side and curve into it. #92, #95",
                     "code": ""
                 },
                 {
-                    "text": "<b>An <i>Expressive</i> preset</b> lays the new ones out together.",
+                    "text": "<b>Start and Apps.</b> <i>Start</i> is a button for the launcher, in a circle of its own, drawn as the dock's launcher button by default, or as Lucid's mark, your distro's logo, your picture or the word Start (#88). <i>Apps</i> puts the dock's pinned and running apps on the bar, with their dots, names and right-click menus; drag a pin to reorder it (#99). Joined, the two hover as one row.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>The system tray, redesigned.</b> Both looks are rebuilt in Material You. <i>Icons</i> gives each app a slot like <i>Apps</i> does, with a mark that breathes when one wants your attention; <i>Collapsed</i> stacks the first three icons with a count. A click opens the tray: each app is a row with its real name, and its menu opens right in the row, submenus sliding in beside it. A right click on an icon opens that app's menu, a middle click and the wheel go to the app as before, and any app can be hidden from the bar.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>The System module shows what you pick</b> of Wi-Fi, Bluetooth, the volume and its level, the microphone and the battery. #97",
+                    "code": ""
+                },
+                {
+                    "text": "<b>Content size.</b> <i>Settings → Bar → Content size</i> scales what is in the bar, 80 to 140%, without changing the bar's own height.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>Joins hold.</b> A link between two modules carries across one that has emptied out between them, and modules sit on whole pixels, so joined ones leave no seam. #96",
+                    "code": ""
+                },
+                {
+                    "text": "<b>Notch edges.</b> A notch's edge blends are frosted like the rest of the bar, light up with it on hover, curve as a quarter ellipse beside a short module instead of stepping, and can reach up to 64 pixels.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>Calmer motion.</b> A panel closes on the exit curve, modules leave the bar in order instead of all at once, a module's contents hold still while hover grows its pill, switching a look animates, and a panel too wide for its place clears the bar around it. Over a fullscreen window an open panel stands above it.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>Fewer, clearer looks.</b> The clock's day and date are bold, the date in the accent, and the window title is bolder. The Notifications module's <i>Accent</i> look and the window title's <i>Chip</i> look are gone; a bar that used them takes the default.",
                     "code": ""
                 }
             ]
         },
         {
             "level": 1,
-            "icon": "notes",
-            "title": "Also new",
+            "icon": "music_note",
+            "title": "Music",
             "intro": "",
-            "images": [],
+            "images": [
+                {
+                    "src": "assets/lyrics-widget.webp",
+                    "alt": "The Lyrics widget singing along word by word over a red and grey wallpaper, beside a clock, a calendar, a to-do list and a note"
+                },
+                {
+                    "src": "assets/lyrics-panel.webp",
+                    "alt": "The media panel's Lyrics page for Skyfall by Adele, the line being sung lit and the ones around it fainter"
+                }
+            ],
             "items": [
                 {
-                    "text": "<b>A dock that hides only when it is in the way.</b> <i>Settings → Dock → Auto-hide → Dynamic</i> tucks it away while a tiled window is open on the workspace, or a floating one overlaps it, and leaves it up on a clear desktop.",
+                    "text": "<b>Lyrics.</b> The media panel has a <i>Lyrics</i> button beside <i>Identify</i>: the song scrolls by, the line being sung springs up to full size and fills with colour letter by letter, the word being sung stands up a little, and a pause is three dots that fill through it and let go just before the next line. A click on a line jumps there. <code>qs ipc call media lyrics</code> opens it too, and a switch on the media module's card in edit mode takes the button away. The new <i>Lyrics</i> widget follows the song in three looks: <i>Word by word</i>, captions that tip in and land as they are sung; <i>Karaoke</i>, the line filling letter by letter, the next one zooming up into its place as the last flies off; and <i>Classic</i>, the whole song scrolling by with the sung line lit. The words come from lrclib.net, looked up only while something shows them and kept on disk, so each song is fetched once. #109",
                     "code": ""
                 },
                 {
-                    "text": "<b>A notched launcher.</b> With the dock hidden or turned off, the launcher opens as a notch from the bottom edge.",
+                    "text": "<b>The media module and its panel, rebuilt.</b> In the bar, <i>Progress</i> fills the pill as the song goes and <i>Controls</i> puts previous, play and next before the track; the panel comes as <i>Vinyl</i>, a record that turns while it plays, <i>Backdrop</i>, over the cover blurred across the panel, and <i>Mini</i>, besides side by side and the large cover (#89). The wave rests while a song is paused, and a track with no cover shows a crisp note.",
                     "code": ""
                 },
                 {
-                    "text": "<b>The Caps Lock and Num Lock cards can be turned off</b>, in <i>Settings → General → On-screen display</i> (#59).",
-                    "code": ""
-                },
-                {
-                    "text": "<b>Metric or imperial</b>, in <i>Settings → Date &amp; Time → Units</i>: the weather in the bar, on the lock screen and in the widgets, and the temperatures of the processor, graphics card and drives, in °C and km/h or °F and mph, all at once. It takes over from the °C or °F the weather widgets each had (#76).",
-                    "code": ""
-                },
-                {
-                    "text": "<b>Apps match the shell in light mode.</b> Lucid's light bars and panels are tinted toward the accent rather than plain white, but the apps it themes (VSCodium, GTK and Qt apps, kitty and the rest) were given the raw, near-white palette. They now get the same tinted surfaces. Dark mode is unchanged.",
-                    "code": ""
-                },
-                {
-                    "text": "<b>A new prompt and terminal.</b> The starship prompt shows how long the last command took, then the folder and the git branch, with the prompt on a line of its own. kitty draws a block cursor that leaves a short trail as it jumps and stays a block at the prompt.",
+                    "text": "<b>Covers that never stall the shell.</b> Covers and GIFs from the internet are fetched into a cache of their own instead of through Qt's network stack, which could take the whole shell down. By @naevui in #86.",
                     "code": ""
                 }
             ]
         },
         {
             "level": 1,
-            "icon": "group",
-            "title": "Contributed",
+            "icon": "tune",
+            "title": "Control centre",
+            "intro": "",
+            "images": [
+                {
+                    "src": "assets/control-centre-editor.webp",
+                    "alt": "The control centre's editor in edit mode: the blocks to add on the left, the panel being laid out in the middle, and layouts to start from on the right"
+                }
+            ],
+            "items": [
+                {
+                    "text": "<b>Lay it out your way.</b> The control centre can become a bento grid of blocks in an editor of its own, lifted off the bar to the middle of the display: sliders lying or standing (also <i>Wavy</i>), big tiles and small ones, what is playing, gauges, and four new blocks, the weather, the network, power profiles and what is up next. Each has looks of its own. Add them from a shelf with a search, drag them, undo, start from a ready layout, and make tiles of your own. Untouched, it stays the column it was, and a charging battery's gauge reads plainly. #90",
+                    "code": ""
+                },
+                {
+                    "text": "<b>Open it over IPC:</b> <code>qs ipc call controlcentre toggle</code> (or <code>open</code>, <code>close</code>), for a keybind of your own. #108",
+                    "code": ""
+                }
+            ]
+        },
+        {
+            "level": 1,
+            "icon": "wallpaper",
+            "title": "The desktop",
+            "intro": "",
+            "images": [
+                {
+                    "src": "assets/desktop-icons.webp",
+                    "alt": "Desktop icons down the left of an evening city wallpaper, and on the right a shaped clock, the song playing, today's date and how much of the day has gone"
+                }
+            ],
+            "items": [
+                {
+                    "text": "<b>A Poster clock.</b> The hour over the minute in huge figures, straight on the wallpaper with no card behind them, in white or a colour from your palette.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>The Lyrics widget</b>, in <i>Music</i> above. #109",
+                    "code": ""
+                },
+                {
+                    "text": "<b>Widgets stay over fullscreen windows by default</b> on a new install; <i>Hide for fullscreen windows</i> is still in <i>Settings → Widgets</i>, and a choice already saved stays as it is. #111",
+                    "code": ""
+                }
+            ]
+        },
+        {
+            "level": 1,
+            "icon": "screenshot_region",
+            "title": "LucidShot",
+            "intro": "",
+            "images": [
+                {
+                    "src": "assets/lucidshot.webp",
+                    "alt": "LucidShot over a frozen screen: the hint to drag a region or click a window at the top, crosshairs, and the toolbar above the dock"
+                }
+            ],
+            "items": [
+                {
+                    "text": "<b>LucidShot, rebuilt.</b> Print freezes the screen under a Material You toolbar with a shutter beside it: <i>Screenshot</i>, <i>Record</i>, <i>Text</i> or <i>Colour</i>, of a region, a window or the whole screen. Drag out a region or click a window; a magnifier shows the pixels under the pointer, edges snap to the windows', Shift keeps it square, Alt grows it from the middle and Space moves it. The capture flies into a card in the corner to open in Lens, mark up, pin to the screen, read the text off, drag into an app, find in its folder or delete. With <i>Mark up before saving</i> (E) the selection stays put instead: pen, highlighter, arrows, boxes, ellipses, text, numbered steps and pixelation, with undo, then save, copy without saving or pin. Text read off the screen pastes the way it was written: lines that only wrapped on screen join up again, while lists, short lines and code keep their breaks. The self-timer takes it 3, 5 or 10 seconds later, live.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>Colour and recording.</b> <i>Colour</i> turns the pointer into a lens over the frozen screen: a click copies HEX, RGB or HSL, Shift-click collects a palette. <i>Record</i> takes a region, a window or the screen with what is playing and, if you like, the microphone, mixed without muting anything; a countdown first, a pill with pause, the two sources and stop that tucks into the bar, and a recording carries on through a shell reload. A recording's card makes a GIF of it.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>Settings and pins.</b> <i>Settings → Screenshots</i> has the folders, the card, window corners, the magnifier, the languages text is read in and the recorder's countdown, frame rate and encoder. Pinned captures float over your windows: drag them, scroll to size them, Ctrl and scroll to see through them, double-click to let go.",
+                    "code": ""
+                }
+            ]
+        },
+        {
+            "level": 1,
+            "icon": "palette",
+            "title": "Look and feel",
             "intro": "",
             "images": [],
             "items": [
                 {
-                    "text": "<b>Fingerprint unlock.</b> With <code>fprintd</code> installed and a finger enrolled, the lock screen takes a fingerprint at the same time as the password, whichever comes first; a machine without a reader behaves as before. By @SKetU-l in #78. The login screen takes one as well: press Enter on an empty field, then touch the sensor.",
+                    "text": "<b>Jelly motion.</b> Panels, pills, menus, the dock and its icons, the OSD and widgets settle on a spring, with a little wobble as they open and land. <i>Settings → General → Motion</i> turns it off or sets how much.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>A pointer of Lucid's own.</b> The arrow, the hand and every other shape take the colours of your palette, <i>Dark</i>, <i>Light</i> or <i>Accent</i>, and fade along when the palette changes. The shapes are Bibata Modern's: Lucid fetches its source once and draws them on your machine, so nothing of Bibata ships with Lucid. <i>Settings → Environment</i> has it, the cursor tilt (only the arrows and hands lean as they move), and a switch back to any cursor theme you have. While you drag a widget, a pin, a slider or a block, the shell draws the pointer itself, so it stays right on what it holds.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>Icons of Lucid's own.</b> Folders, files, places, drives and many apps get one tonal set drawn from your palette, in Lumen, on the desktop, in the dock and in the launcher, folders in the accent. An app the set doesn't know keeps its own icon.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>Light or dark, by the wallpaper.</b> The theme can follow each new wallpaper into light or dark mode, whichever suits it (#79). A built-in theme you never use can be taken off the list.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>The OSD as a notch.</b> <i>Notch</i> rises the OSD out of the bottom edge, the Caps Lock, Num Lock and microphone cards can be toasts instead, and a keyboard with a backlight gets a card of its own (#22). With the dock a notch as well, the dock itself turns into the OSD and back (<i>Morph the dock</i>).",
+                    "code": ""
+                },
+                {
+                    "text": "<b>A Split dock.</b> The launcher in a circle, the pins in a pill and the running apps in a third island, which fuse into one when the launcher opens and spring apart again. A running app dragged onto the pins pushes them aside, and the dock's edge blends are frosted like the dock.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>Settings</b> has an icon and a name of its own, Lucid's orbit around a gear, its sidebar highlights the way Lumen's does, and the style tiles draw each module exactly as the bar does. Zen follows the palette live.",
+                    "code": ""
+                }
+            ]
+        },
+        {
+            "level": 1,
+            "icon": "volume_up",
+            "title": "Sound",
+            "intro": "",
+            "images": [],
+            "items": [
+                {
+                    "text": "<b>Several outputs at once.</b> Play through your speakers and headphones together, with a volume slider under each device (#82). The audio panel has a slider for every app playing sound. By @SKetU-l in #84.",
+                    "code": ""
+                }
+            ]
+        },
+        {
+            "level": 1,
+            "icon": "lock",
+            "title": "Login and lock screen",
+            "intro": "",
+            "images": [],
+            "items": [
+                {
+                    "text": "<b>A live login screen.</b> The login screen plays your live wallpaper behind its blur (#83), takes the lock screen's size, corners and glance chips, and the lock screen plays it too. Fingerprint login tries again with a short wait instead of giving up, and a password typed meanwhile waits its turn. By @SKetU-l in #80 and #81.",
+                    "code": ""
+                }
+            ]
+        },
+        {
+            "level": 1,
+            "icon": "update",
+            "title": "Updates",
+            "intro": "",
+            "images": [],
+            "items": [
+                {
+                    "text": "<b>Update from inside Lucid.</b> When a new release is out, <i>Settings → About</i> (and the notification that announces it) has an <b>Update</b> button. It warns you what is about to happen, asks for your password once, and then installs the release's own source with its own installer, in a pop-up with a progress bar. Anything the installer would ask in a terminal, a yes or no or sudo wanting the password again, is asked in the pop-up. When it is done, <b>Restart now</b>, <b>Remind me later</b> (an hour) or <b>Cancel</b>. The updater runs outside the shell, so it survives a reload, and the pop-up picks up where it was. Only a published release counts as an update, not a push to <code>main</code>. The password goes to <code>sudo</code> once and is never stored.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>Beta updates.</b> A switch under <i>Settings → About</i>, with a warning that things may break, offers the newest commit on <code>main</code> before it becomes a release. It installs the same way and needs the password too.",
+                    "code": ""
+                }
+            ]
+        },
+        {
+            "level": 1,
+            "icon": "computer",
+            "title": "Displays",
+            "intro": "",
+            "images": [],
+            "items": [
+                {
+                    "text": "<b>Stop mirroring</b> stops the mirror, and the display gets its own wallpaper and bar back (#87). Each set of displays keeps its own split of workspaces, so plugging a monitor in or out puts them back where they were (#91).",
                     "code": ""
                 }
             ]
@@ -290,23 +335,53 @@ QtObject {
             "images": [],
             "items": [
                 {
-                    "text": "New packages: <code>bluez-obex</code> (Bluetooth files), and <code>ffmpegthumbnailer</code> with <code>gvfs</code> (the desktop icons' thumbnails, drives and Trash). Installing Steam brings the Vulkan drivers for the machine's own graphics cards.",
+                    "text": "<b>Install from a window.</b> In a Wayland session <code>./install.sh</code> opens a window: pick what to install, watch it work beside a tour of Lucid, and answer its questions with buttons (<code>./install.sh --terminal</code> stays in the terminal). It installs Hyprland itself when it is missing, works with any login manager or offers to make SDDM the one, takes the keyboard layout you already type on, sets up screen sharing, and says so when the window is closed mid-install. #94",
                     "code": ""
                 },
                 {
-                    "text": "<b>The new <code>starship.toml</code> and <code>kitty.conf</code></b> replace the copies an earlier release installed, keeping a backup. One you have changed is left alone; the new ones are in <code>support/look/</code>.",
+                    "text": "<b>A way back.</b> The uninstaller puts back the login screen, the GTK settings and the Hyprland config you had before Lucid. #94",
                     "code": ""
                 },
                 {
-                    "text": "Where the desktop icons sit carries over a reinstall.",
+                    "text": "<b>Hyprland, refreshed.</b> The glass has no grain or vibrancy boost now, the tilting cursor turns smoother and further, and SUPER+V floats a window at 1366 by 768, centred (a plain float bind you never changed moves to it). Zen takes Matugen's colours on a fresh install.",
+                    "code": ""
+                }
+            ]
+        },
+        {
+            "level": 1,
+            "icon": "speed",
+            "title": "Performance",
+            "intro": "",
+            "images": [],
+            "items": [
+                {
+                    "text": "<b>Less memory for what is hidden.</b> The visualiser's cava rests while nothing plays. Settings is taken down a minute after it closes and opens again on the page it was left on, and What's new and the on-screen keyboard lay themselves out only while they are up. #98, #101",
+                    "code": ""
+                }
+            ]
+        },
+        {
+            "level": 1,
+            "icon": "build",
+            "title": "Fixed",
+            "intro": "",
+            "images": [],
+            "items": [
+                {
+                    "text": "<b>A timer or reminder made just as the one before it was being saved no longer goes missing.</b> The save finished off to one side and then wrote the older list back over the new one.",
                     "code": ""
                 },
                 {
-                    "text": "<b>The login screen's fingerprint</b> is asked about when <code>fprintd</code> is installed, since it adds two marked lines to <code>/etc/pam.d/sddm</code> (backed up first, a typed password still checked before the reader). <code>sudo support/sddm/install-theme.sh --no-fingerprint</code> takes them out.",
+                    "text": "<b>A Wi-Fi password being typed survives network updates</b>, and the search for networks keeps going while one is open. #93, #106",
                     "code": ""
                 },
                 {
-                    "text": "A Hyprland config of your own gets <code>require(\"modules.startup\")</code> appended, so the Startup page works there too.",
+                    "text": "<b>A panel sliding off its layer no longer frosts the whole layer</b> for a moment, and a long list in the launcher ends on a whole row.",
+                    "code": ""
+                },
+                {
+                    "text": "<b>The camera's on and off toasts</b> no longer flicker when an app opens it several times in a row, and the CPU temperature comes from the processor's own sensor before any other. By @naevui in #86.",
                     "code": ""
                 }
             ]

@@ -12,37 +12,41 @@ Item {
         "title": "Your desktop",
         "blurb": "The bar along the top, widgets on the desktop and the dock below"
     }, {
-        "file": "control-centre",
+        "file": "edit-mode",
+        "title": "Edit mode",
+        "blurb": "Move the bar, the dock and your widgets right on the desktop"
+    }, {
+        "file": "control-centre-editor",
         "title": "Control centre",
-        "blurb": "Sliders, toggles and what is playing, laid out the way you want"
+        "blurb": "Your quick settings laid out on a grid, block by block"
     }, {
-        "file": "launcher-wallpapers",
-        "title": "Launcher",
-        "blurb": "Apps, commands, emoji and wallpapers from one place"
+        "file": "lumen",
+        "title": "Lumen",
+        "blurb": "A file manager of Lucid's own, and every app's file dialog"
     }, {
-        "file": "widget-panel",
-        "title": "Widgets",
-        "blurb": "Clocks, weather, calendars and more, dropped onto the desktop"
+        "file": "apps",
+        "title": "Lucid's own apps",
+        "blurb": "Settings, Lumen and Lens, all in the colours of your wallpaper"
     }, {
-        "file": "clock-app",
-        "title": "Clock",
-        "blurb": "Alarms, timers and world clocks, beside the widgets"
+        "file": "lyrics-widget",
+        "title": "Lyrics",
+        "blurb": "The words of what is playing, sung along on the desktop"
     }, {
-        "file": "lock-screen",
-        "title": "Lock screen",
-        "blurb": "The weather, a big clock, your music and notifications"
+        "file": "lyrics-panel",
+        "title": "Music",
+        "blurb": "Covers, controls and lyrics, one click away in the bar"
     }, {
-        "file": "screenshot-toolbar",
+        "file": "bottom-bar",
+        "title": "Your bar, your way",
+        "blurb": "Islands, notches or one full bar, along the top or the bottom"
+    }, {
+        "file": "lucidshot",
         "title": "Screenshots",
         "blurb": "Photos, recordings, text and colours from any part of the screen"
     }, {
-        "file": "settings-sound",
-        "title": "Settings",
-        "blurb": "Everything in one window, with a page for each part of the system"
-    }, {
-        "file": "light-mode",
-        "title": "Light mode",
-        "blurb": "Every colour follows your wallpaper, dark or light"
+        "file": "desktop-icons",
+        "title": "Desktop icons",
+        "blurb": "Your Desktop folder on the wallpaper, beside the widgets"
     }]
     property int index: 0
     // the caption and the gap above it: the window sizes the picture round it

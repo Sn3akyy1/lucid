@@ -35,6 +35,18 @@ ICONS = {
     "authentication": "lock",
     "users and accounts": "group",
     "notifications": "notifications",
+    "apps of lucid's own": "apps",
+    "edit mode": "edit",
+    "the bar": "toolbar",
+    "music": "music_note",
+    "control centre": "tune",
+    "the desktop": "wallpaper",
+    "lucidshot": "screenshot_region",
+    "look and feel": "palette",
+    "sound": "volume_up",
+    "login and lock screen": "lock",
+    "updates": "update",
+    "displays": "computer",
 }
 
 # top-level sections the changelog keeps for itself: how to update is no news

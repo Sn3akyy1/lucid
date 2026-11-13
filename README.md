@@ -1,57 +1,125 @@
 <div align="center">
 
-<img src="assets/logo.svg" width="104" alt="Lucid">
+<img src="assets/logo.svg" width="96" alt="Lucid">
 
 # Lucid
 
-**A Material 3 Expressive desktop shell for Hyprland, built on [Quickshell](https://quickshell.org).**
+### Lucid is an ecosystem.
 
-A bar, a dock that morphs into a launcher, desktop widgets, a lock screen,
-an emoji picker, a screenshot tool and a settings app — themed together from
-your wallpaper.
+A Material 3 Expressive desktop for Hyprland, built on [Quickshell](https://quickshell.org).<br>
+The shell, its own apps, its own icons, pointer and login screen, all coloured by your wallpaper.
+
+**[Website](https://sn3akyy1.github.io/lucid/)** &nbsp;·&nbsp;
+**[Install](#install)** &nbsp;·&nbsp;
+**[Tour](#a-tour)** &nbsp;·&nbsp;
+**[What's in it](#whats-in-it)** &nbsp;·&nbsp;
+**[Keybinds](#keybinds)** &nbsp;·&nbsp;
+**[IPC](#ipc-reference)** &nbsp;·&nbsp;
+**[Changelog](CHANGELOG.md)**
 
 <p>
-  <a href="https://github.com/Sn3akyy1/lucid/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Sn3akyy1/lucid?style=for-the-badge&label=LAST%20COMMIT&labelColor=0C1213&color=00F0FF"></a>
+  <a href="https://github.com/Sn3akyy1/lucid/releases"><img alt="Version" src="https://img.shields.io/badge/VERSION-v1.21-00F0FF?style=for-the-badge&labelColor=0C1213"></a>
   <a href="https://github.com/Sn3akyy1/lucid/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Sn3akyy1/lucid?style=for-the-badge&label=STARS&labelColor=0C1213&color=B7C7EA"></a>
-  <a href="https://github.com/Sn3akyy1/lucid/releases"><img alt="Release" src="https://img.shields.io/github/v/tag/Sn3akyy1/lucid?style=for-the-badge&label=RELEASE&labelColor=0C1213&color=80D4DC"></a>
-  <img alt="Repo size" src="https://img.shields.io/github/repo-size/Sn3akyy1/lucid?style=for-the-badge&label=REPO%20SIZE&labelColor=0C1213&color=9CABCD">
+  <a href="https://github.com/Sn3akyy1/lucid/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Sn3akyy1/lucid?style=for-the-badge&label=LAST%20COMMIT&labelColor=0C1213&color=80D4DC"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-80CBC4?style=for-the-badge&labelColor=0C1213"></a>
 </p>
-
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/VERSION-v1.20.5.5-00F0FF?style=for-the-badge&labelColor=0C1213">
-  <img alt="Platform" src="https://img.shields.io/badge/PLATFORM-ARCH%20LINUX-80D4DC?style=for-the-badge&logo=archlinux&logoColor=80D4DC&labelColor=0C1213">
-  <img alt="Compositor" src="https://img.shields.io/badge/COMPOSITOR-HYPRLAND-80CBC4?style=for-the-badge&labelColor=0C1213">
+  <img alt="Arch Linux" src="https://img.shields.io/badge/ARCH%20LINUX-80D4DC?style=for-the-badge&logo=archlinux&logoColor=0C1213">
+  <img alt="Hyprland" src="https://img.shields.io/badge/HYPRLAND%200.55%2B-80CBC4?style=for-the-badge&labelColor=0C1213">
   <a href="https://quickshell.org"><img alt="Built on Quickshell" src="https://img.shields.io/badge/BUILT%20ON-QUICKSHELL-B7C7EA?style=for-the-badge&labelColor=0C1213"></a>
+  <a href="https://sn3akyy1.github.io/lucid/"><img alt="Website" src="https://img.shields.io/badge/WEBSITE-SN3AKYY1.GITHUB.IO%2FLUCID-00F0FF?style=for-the-badge&labelColor=0C1213"></a>
 </p>
 
-<img src="assets/desktop.webp" alt="The Lucid desktop: the bar along the top, calendar and weather widgets on the left, the clock and what is playing on the right, and the dock along the bottom">
+<img src="assets/desktop.webp" alt="The Lucid desktop in blue: a clock, a calendar, the song playing and the weather on the left, battery, system and to-do widgets on the right, and the visualiser along the bottom">
 
 </div>
 
----
+> [!TIP]
+> **New in v1.21: Lucid is an ecosystem.** Lumen for your files and every app's
+> file dialog, Lens for pictures and videos, LucidShot rebuilt, edit mode on the
+> desktop, a bar that can take the bottom edge, a control centre you lay out
+> yourself, lyrics for whatever plays, and icons and a pointer of Lucid's own.
+> The shell shows the highlights once after you update; everything is in the
+> [changelog](CHANGELOG.md#v121--2026-11-13).
 
-> **v1.20.5.5, a beta.** Lumen, a file manager of Lucid's own that is also every
-> app's file dialog; Lens for pictures and video; LucidShot rebuilt; and edit
-> mode on the desktop. All on top of Lucid 2 with icons on the desktop, bar
-> modules that join into one island, live wallpapers and four ways to pick one, five new widgets, files
-> over Bluetooth, and the fix for Steam opening and closing in a loop. Lucid 2 itself redrew
-> every surface in Material You Expressive, made the clock an app and gave the
-> launcher, the bar and the settings room to be shaped, much of it from
-> contributors. It's what I use daily. The shell shows the highlights once after
-> you update; everything that landed in it, and in every version before it, is
-> in the [changelog](CHANGELOG.md). Rough edges are still possible and bug
-> reports are welcome.
+> [!NOTE]
+> **Hear about new versions** with **Watch → Custom → Releases** at the top of
+> this page, or let Lucid tell you: it asks GitHub once a day and updates itself
+> from *Settings → About* when a release is out. See [Updating](#updating).
 
-> **To hear about new versions**, press **Watch → Custom → Releases** at the top
-> of this page. Lucid also checks for itself: once a day it asks GitHub for the
-> newest release and says so once, in a notification. See
-> [Updating](#updating).
+## The ecosystem
+
+<table>
+<tr>
+<th width="33%">The shell</th>
+<th width="33%">Its apps</th>
+<th width="33%">Its look</th>
+</tr>
+<tr valign="top">
+<td>
+
+[The bar](#the-bar) in islands, notches or one full strip, top or bottom<br>
+[A dock that grows into the launcher](#dock-and-launcher)<br>
+[The control centre](#control-centre), laid out by you<br>
+[Desktop widgets](#desktop-widgets) and [desktop icons](#desktop-icons)<br>
+[Edit mode](#edit-mode) to arrange it all in place<br>
+[Notifications, the OSD and toasts](#notifications-osd-and-sounds)<br>
+[Lock and login screen](#lock-login-and-session)
+
+</td>
+<td>
+
+[**Lumen**](#lumen), files and every file dialog<br>
+[**Lens**](#lens), pictures and videos<br>
+[**LucidShot**](#lucidshot), screenshots, text, colour and recording<br>
+[**Settings**](#settings), the whole desktop without a config file<br>
+[Lyrics, music and the visualiser](#music)<br>
+[Emoji, GIFs and the clipboard](#dock-and-launcher)<br>
+[A phone, over KDE Connect](#settings)
+
+</td>
+<td>
+
+[One palette from your wallpaper](#theming), light or dark<br>
+Every app themed along: GTK, Qt, KDE, kitty, Zen, VSCodium<br>
+[Icons of Lucid's own](#look-and-motion)<br>
+[A pointer of Lucid's own](#look-and-motion)<br>
+[Sounds of its own](#notifications-osd-and-sounds)<br>
+[Motion on springs](#look-and-motion)<br>
+Google Sans Flex, built in
+
+</td>
+</tr>
+</table>
+
+## A tour
+
+<table>
+<tr>
+<td width="50%"><img src="assets/apps.webp" alt="Settings, Lumen and Lens open together in a red palette"><br><sub><b>Its own apps.</b> Settings, Lumen and Lens, all in the colours of the wallpaper.</sub></td>
+<td width="50%"><img src="assets/edit-mode.webp" alt="Edit mode with the widget panel open"><br><sub><b>Edit mode.</b> The widget panel beside the desktop it arranges.</sub></td>
+</tr>
+<tr>
+<td><img src="assets/control-centre-editor.webp" alt="The control centre's editor: blocks to add, the panel and layouts to start from"><br><sub><b>The control centre's editor.</b> Blocks to add, the panel itself, and layouts to start from.</sub></td>
+<td><img src="assets/lumen.webp" alt="Lumen in a green palette"><br><sub><b>Lumen.</b> Places, folders and a preview pane, in a green palette.</sub></td>
+</tr>
+<tr>
+<td><img src="assets/lyrics-widget.webp" alt="The Lyrics widget singing along word by word"><br><sub><b>Lyrics on the desktop.</b> The widget sings along, word by word.</sub></td>
+<td><img src="assets/lyrics-panel.webp" alt="The media panel's Lyrics page"><br><sub><b>Lyrics in the bar.</b> The media panel follows the song line by line.</sub></td>
+</tr>
+<tr>
+<td><img src="assets/bottom-bar.webp" alt="The bar as one strip along the bottom edge"><br><sub><b>The bottom edge.</b> One full bar, the dock's apps in the middle of it.</sub></td>
+<td><img src="assets/lucidshot.webp" alt="LucidShot over a frozen screen"><br><sub><b>LucidShot.</b> Drag out a region or click a window on the frozen screen.</sub></td>
+</tr>
+<tr>
+<td colspan="2"><img src="assets/desktop-icons.webp" alt="Desktop icons beside a shaped clock, the song playing, today's date and the day's progress"><br><sub><b>Desktop icons and widgets.</b> Your Desktop folder on the wallpaper, a shaped clock, what is playing, today and how much of the day has gone.</sub></td>
+</tr>
+</table>
 
 ## Install
 
-Lucid installs to `~/.config/quickshell` and needs **Arch Linux** and
-**Hyprland**. Three commands:
+Lucid needs **Arch Linux** and **Hyprland 0.55 or newer** (the installer brings
+Hyprland if it is missing), and installs to `~/.config/quickshell`:
 
 ```sh
 git clone https://github.com/Sn3akyy1/lucid.git
@@ -59,88 +127,94 @@ cd lucid
 ./install.sh
 ```
 
-In a Wayland session that opens the installer in a window, with Lucid's
-screenshots playing while it works. It installs only what that window needs
-first (Quickshell and its Qt modules), then you pick what comes with Lucid with
-switches, enter your password once, and answer anything the installer asks with
-buttons. At the end, **Start Lucid** puts the new binds live and starts the
-shell. Without a Wayland session, with any option on the command line, or with
-`--terminal`, it runs in the terminal as below; `--gui` opens the window with
-its switches set from the options given.
+In a Wayland session that opens the installer in a window, with a tour of Lucid
+playing while it works: pick what comes with it with switches, enter your
+password once, and answer anything it asks with buttons. **Start Lucid** at the
+end puts the new binds live and starts the shell. Without a Wayland session,
+with any option on the command line, or with `--terminal`, it runs in the
+terminal instead. Set a wallpaper from **Settings → General** on first run;
+that is what your colours come from.
 
-That's it — the installer does the rest:
+<details>
+<summary><b>What the installer does</b></summary>
+<br>
 
-1. **Checks your system** — refuses to run anywhere it can't finish the job,
+1. **Checks your system** and refuses to start anything it cannot finish,
    rather than leaving you half-installed.
-2. **Installs dependencies** — finds `paru` or `yay` and uses it, falling back
-   to `pacman` for repo packages. It lists everything and asks before touching
-   your system. Say no and it carries on, telling you which features won't work.
-   This includes the apps Lucid ships pinned to the dock — several GB, mostly
-   from the AUR. `--no-apps` skips them.
-3. **Copies the shell** to `~/.config/quickshell`, moving any existing config to
-   `~/.config/quickshell.backup-<timestamp>` first. Lumen, Lucid's file
-   manager, comes with it: it opens folders, `SUPER`+`E` opens it, and it is
-   every app's open and save dialog, through the file chooser portal. Nautilus
-   is not installed any more; a dock pin or a `SUPER`+`E` an earlier release
-   gave it moves over to Lumen.
-4. **Sets up Hyprland** — `hyprland.lua` and its modules: the keybinds, the
-   window and layer rules, blur, animations, and an autostart that launches the
-   shell on login. If you already have a config it is backed up and you are
-   asked first; `--no-hypr` keeps yours untouched. Keep your own and it still
-   gets `modules/lumen.lua`, the one module Lumen's dialogs need. On a re-run
-   every module is checked against the one in place: new and updated ones are
-   named, and so is one you edited yourself, with your version in the backup.
-5. **Sets up theming** — the palettes, the wallpaper hook, and the matugen
-   template. An existing `matugen/config.toml` is appended to, never replaced.
-6. **Applies the look** — kitty's colours, its opacity and its fish shell, the
-   starship prompt (wired into `.bashrc`, `.zshrc` and `config.fish`), a
-   fastfetch config that wears the theme (only where you have none), the
-   VSCode/VSCodium Matugen theme, fish without its greeting, and the GTK theme: `adw-gtk3-dark` with the
-   FairyWren icons, written to `gsettings` and to both `gtk-3.0` and `gtk-4.0`
-   `settings.ini`. A `kitty.conf` or prompt an earlier release installed, and
-   nobody has changed since, is swapped for the current one, with a backup.
-   `--no-look` skips this.
-7. **Pins the dock** — reads your installed `.desktop` files and pins the real
-   apps, so the dock is never a row of blank letter tiles.
-8. **Offers to restart** a running instance onto the new files.
+2. **Installs dependencies** through `paru` or `yay` when there is one, `pacman`
+   otherwise. It lists everything and asks first; say no and it carries on,
+   naming the features that won't work. This includes the apps the dock ships
+   pinned, several GB and mostly from the AUR (`--no-apps` skips them).
+3. **Copies the shell** to `~/.config/quickshell`, moving an existing one to
+   `~/.config/quickshell.backup-<timestamp>` first, and carries your settings,
+   pins, reminders and keys forward. Lumen and Lens come with it: Lumen opens
+   folders, `SUPER`+`E` and every app's open and save dialog, and Lens opens
+   pictures.
+4. **Sets up Hyprland:** `hyprland.lua` and its modules, the keybinds, window
+   and layer rules, blur, animations and an autostart. A config of your own is
+   backed up and you are asked first (`--no-hypr` keeps it untouched, and it
+   still gets the one module Lumen's dialogs need). On a re-run every module is
+   checked against the one in place: new and updated ones are named, and so is
+   one you edited, with your version in the backup.
+5. **Sets up theming:** the palettes, the wallpaper hook and the matugen
+   templates. An existing `matugen/config.toml` is appended to, never replaced.
+6. **Applies the look:** kitty's colours, opacity and fish, the starship prompt,
+   a fastfetch config (only where you have none), the VSCodium theme, and GTK as
+   `adw-gtk3-dark` with the FairyWren icons, in `gsettings` and both
+   `settings.ini`. `--no-look` skips it.
+7. **Builds the tilting cursor**, a Hyprland plugin compiled against your own
+   Hyprland and rebuilt by itself after an update (`--no-plugins` skips it).
+8. **Offers the login screen** when SDDM is there, or to make SDDM the login
+   screen, and **pins the dock** with the apps you actually have.
 
-Then reload Hyprland so the new binds and rules take effect:
+</details>
 
-```sh
-hyprctl reload
-```
+<details>
+<summary><b>Installer options</b></summary>
+<br>
 
-Or log out and back in, which picks up the autostart too. To start the shell by
-hand in the meantime, run `qs`.
+| Flag | What it does |
+| --- | --- |
+| `--gui` | The installer window, its switches set from the other options given. The default in a Wayland session |
+| `--terminal` | Stays in the terminal |
+| `--no-theming` | Skips the palette layer and leaves `~/.config/lucid` and `~/.config/matugen` alone |
+| `--no-hypr` | Keeps your Hyprland config. Lucid's binds, rules, blur and autostart are not installed |
+| `--with-hypr` | Reinstalls Lucid's Hyprland config even when one is in place |
+| `--no-apps` | Doesn't install the apps the dock ships pinned (Zen, VSCodium, Spotify, Vesktop, Steam, Proton VPN) |
+| `--no-look` | Leaves kitty, starship, fastfetch, your shell rc files, VSCode and GTK alone |
+| `--no-wallpapers` | Doesn't copy the bundled wallpapers (about 800 MB, live ones included) |
+| `--no-plugins` | Doesn't build the tilting-cursor plugin |
+| `--no-sddm` | Leaves the login screen theme out |
+| `--login-screen` | Makes Lucid's theme the one the login screen shows (`Current=lucid`, backed up first) |
+| `--skip-deps` | Never installs packages, only reports what is missing |
+| `-y`, `--yes` | Accepts every prompt |
 
-Set a wallpaper from **Settings → General** on first run — that's what generates
-your colour palette.
+</details>
 
 ### Updating
 
-Pull and re-run. Your settings, pinned apps, reminders, Shazam history and API
-keys are carried forward into the new install:
+From v1.21 on, **Settings → About** has an **Update** button whenever a new
+release is out (the notification that announces it has one too): a warning,
+your password once, then a pop-up with a progress bar that also asks anything
+the installer would ask in a terminal. It runs that release's own installer and
+offers to restart Lucid at the end. The password goes to `sudo` once and is
+never stored. Only a published release counts, unless you turn on **Beta
+updates**, which offers the newest commit on `main` and warns that beta builds
+are untested. By hand it is the same as installing:
 
 ```sh
 git pull
 ./install.sh
 ```
 
-Lucid tells you when there is something to pull. Once a day it asks GitHub's
-public API for the newest release, and when that is newer than the version you
-installed it posts one notification — once per version, never again for the same
-one. The request is a plain `curl` for
-`api.github.com/repos/Sn3akyy1/lucid/releases/latest` and carries nothing about
-you or your machine; **Settings → About** shows what it found and turns it off.
+<details>
+<summary><b>How the update check works, and older versions</b></summary>
+<br>
 
-**Update** (on the About page, or on the notification) installs the release
-for you: a warning, your password, then a pop-up with a progress bar that also
-asks anything the installer would ask in a terminal. It downloads the release's
-source from GitHub and runs that release's own `install.sh`, the same as doing
-it by hand below, and offers to restart Lucid at the end. The password goes to
-`sudo` once and is not kept. Only a published release counts, never a push to
-`main`, unless you turn on **Beta updates**, which offers the newest commit on
-`main` instead and comes with a warning: beta builds are untested.
+Once a day Lucid asks GitHub's public API for the newest release, a plain
+`curl` for `api.github.com/repos/Sn3akyy1/lucid/releases/latest` that carries
+nothing about you, and posts one notification per version. *Settings → About*
+shows what it found and turns it off.
 
 ```sh
 qs ipc call updates status   # what it knows
@@ -148,1004 +222,394 @@ qs ipc call updates check    # ask now
 qs ipc call updates update   # install the new release (warning first)
 ```
 
-### Older versions
+Older versions stay on the [releases page](https://github.com/Sn3akyy1/lucid/releases)
+and as tags: `git clone --branch v1.20.1 https://github.com/Sn3akyy1/lucid.git`.
 
-`v0.57 beta` is a tag, so it stays exactly where it is:
+</details>
+
+<details>
+<summary><b>Uninstall</b></summary>
+<br>
 
 ```sh
-git clone --branch v0.57 https://github.com/Sn3akyy1/lucid.git
+./uninstall.sh
 ```
 
-It is on the [releases page](https://github.com/Sn3akyy1/lucid/releases)
-too, as a source archive. Nothing carries over between the two — v1.0.0 moved
-enough that it is worth installing fresh.
+It moves `~/.config/quickshell` aside rather than deleting it, so your settings
+survive, and leaves the packages alone. The installer notes how things stood
+before it first changed them, and the uninstaller offers to put those back: the
+login screen, the GTK theme, icons and dark mode, and your own Hyprland config
+(or Hyprland's default). It ends by naming the desktop to log back into, and
+lists what else it left in place, each with a timestamped backup beside it.
 
-### Installer options
-
-| Flag | What it does |
-| --- | --- |
-| `--no-theming` | Skips the palette layer. Leaves `~/.config/lucid` and `~/.config/matugen` alone — use this if you already have a matugen setup you don't want touched. |
-| `--no-hypr` | Keeps your Hyprland config. Lucid's binds, window rules, blur and autostart are not installed. |
-| `--no-apps` | Doesn't install the apps the dock ships pinned (Zen, VSCodium, Spotify, Vesktop, Files, Steam, Proton VPN). The dock then pins whatever equivalents you already have. |
-| `--no-look` | Doesn't touch `kitty.conf`, `starship.toml`, the fastfetch config, your shell rc files, VSCode settings, or the GTK theme and icons. |
-| `--no-wallpapers` | Doesn't copy the bundled wallpapers into `~/Pictures/wallpapers`. They are ~800 MB, live wallpapers included, so this is worth passing on a small disk or a slow link. |
-| `--with-hypr` | Reinstalls Lucid's Hyprland config even when one is already in place. |
-| `--skip-deps` | Never installs packages, just reports what's missing. |
-| `-y`, `--yes` | Accept every prompt. |
-
-Re-running the installer is how you update. It moves your existing
-`~/.config/quickshell` to `~/.config/quickshell.backup-<timestamp>`, installs
-the new shell files, then carries your settings, pinned apps, reminders,
-Shazam history and API keys forward into it. Nothing is deleted, and the
-backup stays where it is until you remove it.
-
-## Keybinds
-
-The installer ships these in `~/.config/hypr/modules/binds.lua`, along with the
-window rules, blur, animations and the autostart. Run `hyprctl reload` after
-installing to pick them up.
-
-| Key | Does |
-| --- | --- |
-| `SUPER` (tap) | Launcher |
-| `SUPER` + `P` | Command palette |
-| `SUPER` + `T` | Theme picker |
-| `SUPER` + `B` | Wallpaper picker |
-| `SUPER` + `SHIFT` + `V` | Clipboard history |
-| `SUPER` + `S` | Settings |
-| `SUPER` + `.` | Emoji picker |
-| `SUPER` + `K` | On-screen keyboard |
-| `SUPER` + `W` | Workspace overview (also: three-finger swipe) |
-| `CTRL` + `ALT` + `TAB` | Window switcher — every window on every workspace, newest first (`+SHIFT` steps back) |
-| `SUPER` + `Esc` | Session screen — lock, sleep, log out, restart, shut down |
-| `SUPER` + `D` / `Print` | Region screenshot |
-| `SUPER` + `Print` | Full screenshot |
-| `SUPER` + `SHIFT` + `T` | Copy text from a region (OCR) |
-| `SUPER` + `SHIFT` + `C` | Pick a colour off the screen |
-| `SUPER` + `E` | Files (Lumen) |
-| `SUPER` + `C` | Close window |
-| `SUPER` + `V` | Toggle float |
-| `SUPER` + `1`–`0` | Switch workspace (`+SHIFT` moves the window) |
-| `SUPER` + `SHIFT` + `S` | Scratchpad, or put away whichever special workspace is up |
-| `SUPER` + `ALT` + `S` | Stash the focused window in the scratchpad, or send it back |
-| `SUPER` + `SHIFT` + `M` | Music workspace |
-| `SUPER` + `SHIFT` + `D` | Comms workspace |
-| `SUPER` + `SHIFT` + `R` | To-do workspace |
-| `CTRL` + `SHIFT` + `Esc` | System monitor workspace |
-| `SUPER` + arrows | Move focus |
-| `SUPER` + `R` | Reload Hyprland |
-| `F1`–`F6` | Volume, mic, brightness |
-| `F9` | Terminal |
-| `F10` | Lock |
-| `F12` | Calculator |
-
-Ran with `--no-hypr`, or want to bind things yourself? Everything is exposed
-over IPC:
-
-```lua
-hl.bind("SUPER + SPACE",   hl.dsp.exec_cmd("qs ipc call -- launcher toggle"))
-hl.bind("SUPER + period",  hl.dsp.exec_cmd("qs ipc call -- moji toggle"))
-hl.bind("SUPER + L",       hl.dsp.exec_cmd("qs ipc call -- lock lock"))
-hl.bind("SUPER + Escape",  hl.dsp.exec_cmd("qs ipc call -- session toggle"))
-hl.bind("SUPER + S",       hl.dsp.exec_cmd("qs ipc call -- snap toggle"))
-hl.bind("SUPER + SHIFT + T", hl.dsp.exec_cmd("qs ipc call -- snap text"))
-hl.bind("SUPER + SHIFT + C", hl.dsp.exec_cmd("qs ipc call -- snap color"))
-hl.bind("SUPER + comma",   hl.dsp.exec_cmd("qs ipc call -- settings open"))
-hl.bind("SUPER + A",       hl.dsp.exec_cmd("qs ipc call -- controlcentre toggle"))
-```
-
-Special workspaces are Hyprland Lua rather than IPC. On a Lua config of your
-own, copy `support/hypr/modules/specials.lua` into `~/.config/hypr/modules/`
-and bind its functions the way Lucid's `modules/binds.lua` does:
-
-```lua
-local specials = require("modules.specials")
-hl.bind("SUPER + SHIFT + M", specials.toggle("music"))
-```
-
-Keep the `--`. It is only strictly required when the call takes an argument —
-`qs ipc call settings show bar` fails with *"The following argument was not
-expected: bar"*, while `qs ipc call -- settings show bar` works. It is harmless
-on argument-free calls, so using it everywhere saves you the surprise.
+</details>
 
 ## What's in it
 
-### Bar
+Every surface is themed from the same palette and moves the same way. Click a
+part to open it.
 
-Six modules, each a pill that expands into a panel. Settings lays them out: the
-bar has a left, a middle and a right zone, and every module can be moved between
-them and reordered inside them, or taken out of the bar entirely.
+### The bar
 
-- **Workspaces** — live window previews per workspace, click to switch.
-  With more than one display the dots gather into a run per display, marked
-  on hover with its number from Settings → Displays, and the overview lays
-  out a block per display, left to right as they stand on the desk.
-  A scratchpad (special workspace) shows beside the dots only while it is open:
-  the dots sink, and a chip comes up with its name and a glyph for each app
-  stashed in it — a terminal for a terminal, a note for an editor, read off each
-  app's own categories. Click a glyph to jump to that window, or drag windows in
-  and out from the overview's scratchpad row
-- **Media** — MPRIS controls, seek bar, art, and Shazam-style song ID (`songrec`)
-- **Tray** — SNI system tray with working context menus
-- **Clock** — the date beside the time, the time itself in a filled chip, and a
-  five-page clock app behind them: the day with the weather
-  and what is next, a month calendar with reminders that toast when they are
-  due, countdown timers and a pomodoro, a stopwatch with laps, and world
-  clocks. Whatever is counting shows in the pill as a chip with a ring. The
-  pomodoro card opens onto its own options: presets, every length, a daily
-  goal, whether breaks and focus sessions start by themselves, and
-  do-not-disturb for as long as you are focusing
-- **Notifications** — grouped by application, with inline reply for chat apps
-  and progress bars for transfers. New ones stack under the bar, the newest
-  growing out of the pill itself; do-not-disturb holds them back
-- **System** — volume, brightness, battery, disk stats, plus full Wi-Fi and
-  Bluetooth panels and a switcher for the audio output and input. Two rows of
-  tiles underneath: the toggles (silence, awake, dark, airplane, location, mic)
-  and the tools (capture, record, colour picker, keyboard, timer, session);
-  the shelf on its card in Settings adds more, such as the power profile, game mode and **night
-  light**, which warms the screen through hyprsunset, fading in and out, by
-  hand or from sunset to sunrise where you are (worked out locally, no
-  network) or between set hours. Right-click its tile to pick how warm and
-  when; Settings → Displays has the same. Turning it on or off while a
-  schedule runs holds until the schedule next changes. The compact strip shows
-  the keyboard layout (click it to switch). Hover any icon there and it names
-  itself; click it and the panel opens on the page that icon belongs to
+<details>
+<summary><b>Islands, notches or one full strip, along the top or the bottom</b></summary>
+<br>
 
-Three shapes, set in Settings: **island** (floating rounded pills), **notch**
-(flush to the screen edge, with flares that blend into it) or the **full bar**
-(one strip across the whole top edge, hanging into the screen's corners). Two
-more switches on the Bar page, both off by default: *Open on hover* unfolds a
-module under the pointer without taking the keyboard from your window, and
-*Auto-hide* slides the bar out of sight until the pointer touches the top edge
-or a panel is open, giving its space to the windows meanwhile.
+Eleven modules, each a pill that opens into a panel: **Workspaces**, **Media**,
+**Tray**, **Clock**, **Notifications**, **System**, **Privacy**, **Power**, the
+**window title**, **Start** and **Apps**. Three shapes: **islands** (floating
+pills), **notches** (flush with the edge, blending into it) and the **full
+bar** (one strip across the screen, hanging into its corners). *Position* puts
+it on the top or the bottom edge, and it slides over to the new one.
 
-Each module's sheet in edit mode (below) also picks its look, starting from
-the one above: the clock in one line or two, or with the time on its accent
-chip, and how the date reads; media as the turning disc, a still cover or just
-its bars, with a large-cover panel; workspaces as dots or numbers, how many
-always show and whether the wheel switches them; notifications as a count, a dot
-or an accent chip; and the tray collapsed or as every app's icon, in the app's
-own colours or the palette's, with a switch per app to keep it out.
+- **Panels open as one shape with the bar.** On a full bar and with notches an
+  open panel grows out of the bar with no seam, panels side by side merge, and a
+  module at either end can meet the screen's side and curve into it.
+- **Joins.** In edit mode the link between two neighbours joins them into one
+  island or one notch, and a join holds across a module that has emptied out.
+- **Workspaces** with live window previews, a run of dots per display, and the
+  scratchpad's apps as glyphs while it is open.
+- **Media** as a turning disc, a still cover, bars, a progress pill or with
+  previous, play and next; its panel side by side, with a large cover, as a
+  turning record, over the blurred cover, or mini. Lyrics are a click away.
+- **Tray**, rebuilt: each app in a slot of its own, or three stacked with a
+  count. A click opens the tray, where each app is a row with its real name and
+  its menu opens right in the row.
+- **Clock** with the date, the time on an accent chip, and behind it today, the
+  month with reminders, timers and a pomodoro, a stopwatch and world clocks.
+- **System**: whichever of Wi-Fi, Bluetooth, the volume and its level, the
+  microphone and the battery you pick, opening onto the control centre.
+- **Start** opens the launcher, drawn as the dock's launcher button, Lucid's
+  mark, your distro's logo, your picture or the word Start. **Apps** puts the
+  dock's apps on the bar, with dots, names, menus and drag to reorder.
+- **On the bottom edge** the dock steps aside, and on a full bar the launcher
+  rises out of the bar itself, one piece of glass with it.
+- *Open on hover*, *Auto-hide*, a bar on every display, and **Content size**,
+  which scales what is in the bar from 80 to 140% without changing its height.
 
-With more than one display, *Settings → Displays → The bar on its own → Every
-display* puts a bar on each screen, showing that screen's workspaces. One of
-them, on the shell's display or the one in use, still turns into notification
-popups and answers the bar's `qs ipc` targets.
+</details>
 
-In edit mode, drag a module along the bar to move it within a zone or into
-another one, or down off the bar to take it out. The link between two
-neighbours **joins** them: they sit flush
-and share one island (or one notch, its fillets only at the ends), with a faint
-line where they meet if you want one, and a module opened in place hangs its
-panel from its own stretch of the group, its corners curving into the
-neighbours. In pop-up mode the pop-up floats below as it always has, or, with
-*Notched pop-ups*, grows straight down out of its module or group, the corners
-curving into each other as a notch meets the top of the screen. Settings → Bar
-keeps how close the middle may come to either side before it gives way, and
-the bar's sheet in edit mode has *Start over*, which puts every module back
-where Lucid ships it.
+### Control centre
 
-<img src="assets/control-centre.webp" alt="The control centre open from the bar, beside palette, music and quote widgets, with the volume popup above the dock">
+<details>
+<summary><b>Quick settings on a grid you lay out yourself</b></summary>
+<br>
 
-*The System pill opens into a control centre — Wi-Fi and Bluetooth with full
-panels behind them, brightness and volume with the audio devices behind those,
-two rows of tiles you arrange yourself, what is playing, and CPU, memory, disk
-and battery.*
+<img src="assets/control-centre-editor.webp" alt="The control centre's editor">
 
-The panel is yours to arrange, the way a phone's quick settings are, only on a
-bento grid. The pencil in its header opens its editor: the panel lifts off the
-bar to the middle of the display, with a library of everything you can add on
-its left and an inspector on its right. The big tiles, the small ones, the
-sliders, what is playing and the gauges are blocks you drag anywhere on the
-grid, the others stepping aside as you go, and stretch by any edge; the pieces
-inside drag into order. Drag anything in from the library, or back onto it to
-take it off. Click a block and the inspector shows its looks, drawn with what
-your panel reads, each one tried on the grid while the pointer rests on it,
-along with its width and what it holds. With nothing picked it offers layouts
-to start from. *Your own tiles*, on the module's sheet, makes tiles that run
-your commands: one command for a button, or two and a check for a switch that
-stays right when something else turns it on.
+The System pill opens the control centre: brightness and volume with their
+devices behind them, Wi-Fi and Bluetooth with full panels, tiles, what is
+playing, and gauges for the CPU, memory, disk and battery. Untouched it is one
+column; the pencil opens its editor, lifted off the bar to the middle of the
+display. Drag blocks in from the library on the left (sliders lying or
+standing, big tiles and small ones, media, gauges, the weather, the network,
+power profiles and what is up next), stretch them by any edge, and pick each
+one's look on the right, or start from a layout. Undo, a right-click menu, keys
+for everything, and tiles of your own that run your commands.
+`qs ipc call controlcentre toggle` opens it from a keybind.
 
-<img src="assets/clock-app.webp" alt="The clock app on its Today page, among clock, music, calendar, weather, battery, system and to-do widgets">
-
-*The clock pill opens into the clock app, here on its Today page: the time, the
-weather through the day and the week ahead, and the next reminder. Around it, a
-stacked clock, what is playing, the month, the weather, the battery, the system
-and a to-do list.*
+</details>
 
 ### Dock and launcher
 
-A floating M3 toolbar that grows into the launcher rather than opening a
-second window over it. Pinned apps, running-window indicators, drag to
-reorder, optional magnification and auto-hide - always, or *Dynamic*, which
-only tucks the dock away while a tiled window is open on the workspace or a
-floating one overlaps it, so it is there whenever the desktop is clear. With the dock hidden or turned off, the launcher
-opens as a notch from the bottom edge. Pull a pinned app up off the dock and drop
-it on the desktop for a launcher there, the way Windows makes a shortcut; the pin
-stays put (unpin from its right-click menu). A pinned folder or file lands as a
-link. With desktop icons off, pulling a pin off unpins it as before.
+<details>
+<summary><b>A dock that grows into the launcher, with eight modes in one field</b></summary>
+<br>
 
-The launcher opens with a head that carries the Lucida mark, the modes as one
-row of pills, and what the results add up to. It is one search field over eight
-modes, each reachable by a pill, by `Ctrl` and its number, by `Tab`, or by a
-prefix you can type:
+A floating toolbar with your pinned apps and running windows, drag to reorder,
+optional magnification, and auto-hide that can be *Dynamic*: tucked away only
+while a window is in the way. Three styles: **island**, **notch** (with edge
+blends) and **split**, the launcher, the pins and the running apps as three
+islands that fuse when the launcher opens and spring apart again. Pull a pin up
+onto the desktop for a shortcut there. With the dock hidden the launcher opens
+as a notch from the bottom edge.
+
+The launcher is one search field over eight modes, each reachable by a pill,
+`Ctrl` and its number, `Tab`, or a prefix:
 
 | Mode | Prefix | What it does |
 | --- | --- | --- |
-| Apps | — | Fuzzy search over `.desktop` entries — word boundaries and initials both hit, so `vsc` finds Visual Studio Code |
-| Commands | `>` | Shell commands and shell actions |
-| Emoji | `:` | The emoji picker's own list, searched by name and keyword; Return copies one |
-| Web | `?` | Searches your engine of choice, or opens the address if what you typed is one |
-| Run | `$` | Runs a command line, in the background or in a terminal that stays open |
-| Theme | `>theme` | Switch between the seven bundled palettes, and any you have imported |
-| Wallpaper | `>wallpaper` | Your wallpaper folder, as a carousel, pills, tiles or a bento grid |
-| Clipboard | `>clip` | What you copied earlier, images included — pick one to put it back on the clipboard |
+| Apps | | Fuzzy search over your apps, their own actions and open windows; `vsc` finds Visual Studio Code |
+| Commands | `>` | The shell's commands, power actions included |
+| Emoji | `:` | The emoji picker's list; Return copies one |
+| Web | `?` | Searches your engine, or opens what you typed if it is an address |
+| Run | `$` | Runs a command, in the background or in a terminal that stays open |
+| Theme | `>theme` | Switches palettes |
+| Wallpaper | `>wallpaper` | Your wallpapers as a strip, pills, tiles or a bento grid, live ones beside them |
+| Clipboard | `>clip` | What you copied, images included |
 
-The wallpaper picker comes in four styles, picked in **Settings → Theme →
-Wallpaper picker** with a live thumbnail of each: *Strip* (the carousel, with
-how fast the neighbours shrink and two or three of them on each side),
-*Pills* (slim pills that open into the picture: even, full height, or a
-wave), *Tiles* (a grid of two to five rows, square or wide, the panel cut to
-fit it) and *Bento* (a large picture beside smaller ones, with or without the
-previous one). ← and → change the wallpaper, or ↑ and ↓ (**Arrow
-keys**, same page) so ← and → stay with the search field; Tiles, a grid, takes
-all four. The same page picks the **transition** the wallpaper changes
-with — fade, wipe, wave, grow, outer and the rest of what `awww` can do, its
-length, angle and easing — from presets or your own, saved and named, and can
-grow it from the card you picked or from the cursor. *Try transition* runs it
-on the wallpaper you have, without changing anything. The choice is written to
-`~/.config/lucid/wallpaper-transition.conf`, which `set-wallpaper.sh` reads
-line by line (never sourced); anything it does not recognise falls back to the
-plain fade.
+Type a sum for a calculator. Wallpapers change with a transition you pick
+(fade, wipe, wave, grow and the rest of what `awww` does), and **live
+wallpapers** play videos behind the desktop, holding still under a fullscreen
+window.
 
-**Live wallpapers** (Settings → Theme → *Live wallpapers*, on by default):
-videos in the wallpaper folder (mp4, webm, mkv, mov) get a side of the picker of
-their own, in the same four styles: a tall *Pictures* / *Live* switch sits beside
-the picker, which opens on whichever kind is on the desktop (`>live` goes
-straight to the videos). A video plays
-behind the desktop's icons and widgets; its first frame is what `awww` holds
-under it and what the colours come from, so the palette matches the picture the
-video starts on. The player is a quickshell of its own (`lucidlive/`), started
-by `LiveWall.qml` with the decoder you pick: *Automatic* tries VA-API (the
-integrated GPU) before NVIDIA, so a hybrid laptop keeps its graphics card asleep;
-Intel needs `intel-media-driver` for that. It holds still on a screen with a
-fullscreen window (or under any window, or never), behind the lock screen, and
-in game mode it keeps playing, pauses, or stops and leaves the first frame.
-It sits between `awww` and the desktop through layer-rule `order`, which
-`LiveWall.qml` sets with `hyprctl eval` before the player starts.
-
-Type a sum in the search field for a calculator (`2^3^2`, right-associative).
-The answer takes a card above the results, set in display type; Return copies it.
-
-Applications with a window already open carry the dock's own running mark
-beside their name, and the selected row says what Return will do with it. A
-search that finds nothing offers the four prefixes as chips you can click.
-
-A typed search ranks more than apps: open windows, by their app or their title
-(Return switches to the window); apps' own actions such as *New Private
-Window*, listed under the app when you type its name; and lock, suspend, log
-out, restart and shut down from three letters, the last three asking for a
-second Return. Something that reads as an address gets a row of its own at the
-top when nothing matches it better. Each of these is a switch on the Launcher
-settings page, which can also put power buttons at the end of the empty search
-field.
-
-The application list follows the desktop-entry spec properly: `~/.local/share/
-applications` overrides `/usr/share/applications` entry for entry, so an
-override marked `NoDisplay` really does hide the system copy, and `OnlyShowIn` /
-`NotShowIn` are honoured against `XDG_CURRENT_DESKTOP`. Whatever is left that
-you still do not want, hover it and press the eye on the right of the row — the
-Launcher settings page lists everything you hid and brings any of it back.
-Hidden applications still launch from the dock and still name their windows.
-
-The **Power** pill, and the Power row in the command palette, hand over to the
-full-screen session screen — the same one `SUPER` + `Esc` raises.
-
-Searching apps ends with a **web search** row, so one field covers "open it"
-and "look it up". It is a switch on the Launcher settings page, along with the
-search engine — DuckDuckGo, Google, Brave, Startpage or Kagi.
-
-Clipboard mode keeps what you copy and hands it back: pick an entry to put it
-back on the clipboard, `Delete` (or the button on the row) to drop one, and
-*Clear history* on the Launcher settings page to drop the lot. Images are kept
-too and preview in the row. `cliphist` is the store; the shell owns the
-`wl-paste` watchers that feed it, so history records for as long as the shell
-is running. Turn the whole thing off with the switch on the Launcher page.
-
-<img src="assets/launcher-wallpapers.webp" alt="The launcher in its wallpaper mode, its other modes along the top">
-
-*Wallpaper mode: a carousel that previews as you move through it, and applies
-on the second press.*
+</details>
 
 ### Desktop widgets
 
-Cards you place on the wallpaper yourself. Right-click the desktop and pick
-**Widget Panel**, or pick Widgets in the launcher's mode bar, and a sheet slides
-in with every widget drawn live: drag one straight out to where it should sit,
-or click it to drop it in the first free spot. Drag it anywhere afterwards, pin
-it so it stops moving, and it comes back where you left it after a reboot.
+<details>
+<summary><b>Twenty-five kinds, close to ninety looks, placed on the wallpaper</b></summary>
+<br>
 
-The panel searches by name or by what a widget does, filters by kind, lists
-what is already out on *On desktop* — hover a row to find its card, click it
-for the card's sheet, lock or remove it there — and switches layouts on
-*Layouts*. While it is open your widgets come up over the windows with a − on
-each, and a card dragged back onto the sheet is taken off the desktop.
-*Settings → Widgets* keeps how they snap, pin and stay over windows.
-
-<img src="assets/widget-panel.webp" alt="The widget panel on its Clock gallery, beside a Coming up card and lucidfetch on the desktop">
-
-*The widget panel on its Clock gallery: drag a card onto the desktop, or click
-it to add it. Out on the desktop, a Coming up card and lucidfetch, each with
-its − while the panel is open.*
-
-Twenty-four kinds, eighty-five looks between them — every category ships several
-variants of the same data:
+Open the widget panel (edit mode, the desktop's right-click menu or the
+launcher's Widgets pill) and drag a widget out, or click it to drop it in the
+first free spot. Each one has a sheet with every look drawn live, its colour,
+size and own options, and snaps to the edges, the centre lines and the others.
 
 | Widget | Looks |
 | --- | --- |
-| Clock | Digital, stacked, analog with a date window, the time inside an expressive shape, minimal (no card at all), world clocks, the time on a band across a round face, bold hands on a scalloped dial with the seconds as a dot, or the hour over the minute in huge figures on the bare wallpaper |
-| Calendar | Full month, this week, today, or your next reminders |
-| Progress | How much of the day, the week, the month and the year has gone: one wavy ring for the stretch you pick, a bar each, or every day of the year as a dot |
-| System | Rings, meters, a two-minute graph, quick-settings tiles, or network throughput — CPU, memory, disk, temperature |
-| Quick toggles | Wi-Fi, Bluetooth, Do not disturb and more, a tap away: round switches that turn into shapes as they come on, a pill of buttons that square up, or Quick Settings tiles that spell out each one's state |
-| Battery | Ring, cell, full detail, or every wireless device that reports a charge |
-| Media | Artwork card, compact row, cover art with the controls over it, a record that turns while it plays, a capsule with the progress circling the cover, a round face with a wavy ring of progress, a tall pill with the track on its side, or the cover cut to a shape of its own that morphs with every track — and it takes its colours from the artwork |
-| Visualiser | Bars, mirrored bands, or one filled wave — live off whatever is playing. Drag any edge to size it, right across the screen if you want |
-| Weather | Now, a forecast, an icon and a number, the next twelve hours as a curve, or the reading with feels like, high and low, rain, humidity and wind beside it |
-| Sun | Sunrise, sunset and the daylight left, worked out where you are: the sun on its road across the sky, sunrise over sunset with a wave between, or whichever comes next |
-| Notes | A sticky square, a ruled sheet that counts your words, or one line in display type |
-| To-do | A checklist with real checkboxes, or just the next thing with Done and Later |
-| Timer | A countdown with one-tap lengths, a pomodoro with a dot per round, or a stopwatch — the same timers the bar's clock keeps |
-| At a Glance | The date and weather, and under them the one thing worth knowing now: a running timer, your next reminder, what is playing, a low battery, sunset, or rain |
-| Photo | A frame that turns over your pictures on its own — filling the card, cut to a shape, or as a print with the date under it |
-| Fetch | Your machine the way a fetch script prints it, as a card or as terminal output |
-| Thermals | The graphics card in full with each fan and the power profile, arc gauges for GPU and CPU heat and the fans, or two temperatures and a fan speed in a row |
-| Network | A minute of download and upload drawn as a graph, the connection in detail (address, signal, VPN and whether the internet answers), or down and up as two numbers |
-| Games | Your installed Steam games, one click from playing: covers on a shelf, the last one you played over its artwork, or a list |
-| Shortcuts | Your dock's apps on shapes of their own, one tap from open: four on four shapes straight on the wallpaper, a pill that blooms under the pointer, or a folder like a phone's |
-| Search | The launcher's search, kept on the desktop: a search bar like a phone's with emoji and the clipboard at its end, or the bar over the launcher's modes |
-| GitHub | Your contributions as your profile draws them, with as many weeks as you drag it wide, or your streak with today and the year. It reads the public profile page, so it only needs your username, no token |
-| Palette | The Material roles the shell is currently built from, click one to copy the hex |
-| Phone | Card, compact row, or a remote — the paired phone's battery and signal, with ring, ping, send a file and send the clipboard a click away; the remote drives whatever the phone is playing |
+| Clock | Digital, stacked, analog, inside an expressive shape, minimal, world clocks, a band across a round face, a scalloped dial, or the hour over the minute as a poster on the bare wallpaper |
+| Calendar | The month, this week, today, or your next reminders |
+| Progress | How much of the day, week, month and year has gone, as a wavy ring, bars or dots |
+| System | Rings, meters, a graph, tiles or network throughput |
+| Quick toggles | Round switches that turn into shapes, a pill of buttons, or Quick Settings tiles |
+| Battery | A ring, a cell, full detail, or every wireless device that reports a charge |
+| Media | Eight looks, from an artwork card to a cover cut to a shape that morphs with every track |
+| Lyrics | Word by word, karaoke, or the whole song scrolling by |
+| Visualiser | Bars, mirrored bands or a wave, sized by dragging any edge |
+| Weather and Sun | Now, a forecast, a curve of the next hours, sunrise and sunset |
+| Notes and To-do | A sticky note, a ruled sheet, one line; a checklist or just the next thing |
+| Timer | Countdown, pomodoro or stopwatch |
+| At a Glance | The date, the weather and the one thing worth knowing now |
+| And more | Photo, Fetch, Thermals, Network, Games, Shortcuts, Search, GitHub, Palette, Phone |
 
-Every widget has its own sheet — right-click it, or use the gear that appears on
-hover. It draws every style of that widget as a live thumbnail, so you pick the
-look by seeing it, and holds the card's colour (auto, or any Material container),
-its size, and its own options: 12- or 24-hour, which
-metrics to show, a note's tint, and so on. Most take one of four
-sizes; the visualiser instead grows an outline with handles when you hover it,
-and you drag any edge or corner to whatever shape you want.
-
-Dragging snaps to the screen edges and centre lines and lines up with the other
-widgets, with guides while you drag. They can go anywhere on the screen,
-including the strips the bar and the dock reserve — a full-width visualiser
-tucked under the dock is the point. Widgets sit **below** your windows by
-default so they behave like a desktop, and stay where they are when something
-goes fullscreen; switches on the Widgets page float them on top instead, or
-have them step aside for fullscreen windows.
+</details>
 
 ### Desktop icons
 
-Your `~/Desktop` folder on the wallpaper of the main display, the way it is on
-Windows, macOS or GNOME. Turn it on in **Settings → General → Desktop icons**.
-Folders, files and apps are drawn by your **icon theme**, the one picked on the
-Environment page, at the exact size they are shown. Pictures, videos, music
-with cover art and office documents show thumbnails, made with the system's
-thumbnailers and shared with your file manager. The Trash fills up, USB sticks
-and phones appear while they are mounted, and names turn dark over a light
-patch of wallpaper. Widgets always keep their space: the icons under one step
-aside together, in the same arrangement, once the widget rests over them, and go
-back after.
+<details>
+<summary><b>Your Desktop folder on the wallpaper, the way a real desktop has it</b></summary>
+<br>
 
-It follows Material You. Each icon sits in a tonal well that lights under the
-pointer; selected, the well takes the primary container and the name becomes a
-pill (grey once a window has the keyboard). Arrow keys draw a focus ring. Cut
-files fade, tagged ones wear coloured dots, new ones pop in, and whatever goes
-to the Trash or into a folder flies there.
+Turned on in **Settings → General → Desktop icons**. Icons from your icon theme
+(or Lucid's own), thumbnails, the Trash and your drives; click, Ctrl- or
+Shift-click or draw a box, drag into folders, the Trash, a drive or another app.
+Right-click for Cut, Copy, Rename and Delete along the top, *Open With*, Quick
+Look (Space), *Get Info*, Compress and Extract, *Send To* (folders and phones),
+tags and more; right-click the desktop for *New Item*, *View* and *Arrange By*.
+Everything can be undone, and every key can be changed on the Keybinds page.
+Widgets keep their space: icons step aside together and come back after.
 
-**Selecting and dragging.** Click, Ctrl- or Shift-click, or draw a box, which
-counts what it holds. Drag into a folder, onto the Trash or a drive, out to a
-file manager or a browser, or anywhere on the grid; a chip beside the pointer
-says what letting go will do (*Move to Projects*, *Copy to Projects* with Ctrl,
-*Link* with Ctrl+Shift). Several icons drag as a stack with a count. Hold a drag
-on a folder and it springs open in the file manager, as on a Mac.
-
-**Right-click** an icon for Cut, Copy, Rename and Delete as buttons along the top
-(Windows 11 style), then Open, **Open With ›** (the apps for that type, the
-default marked), Quick Look, **Get Info**, Open in Terminal, Paste Into Folder,
-Compress or Extract Here, Duplicate, Make Link, **Send To ›** (Documents,
-Downloads, Pictures… and phones over KDE Connect), **Tags ›** and Copy Path.
-Right-click the desktop for **New Item ›** (folder, text or Markdown document,
-empty file, anything in `~/Templates`, an app shortcut), Paste (a copied picture
-pastes as a PNG), Undo, **View ›** (icon size, auto arrange, hidden files,
-extensions, previews, and Show Desktop Icons and Show Widgets, which put every
-icon or widget away until you turn them back on), **Arrange By ›** (name, type,
-size, modified, ascending or descending), Select All, Open in Terminal and Open
-Desktop in Files. Submenus open beside their row on hover or click, and the
-arrow keys, Enter and Escape walk them.
-
-**Get Info** shows a file's size (a folder's is counted), location, the app it
-opens with, its dates, owner and permissions, its tags, a drive's free space,
-and a switch to let a file run as a program. **Quick Look** (Space) shows
-pictures, text, a folder's contents, and plays video and music.
-
-Moving to the Trash, moving, copying, renaming, tagging, compressing and new
-items can all be undone, from the snackbar that follows or with Ctrl+Z.
-Emptying the Trash and Shift+Delete ask first. Folders always open in a real
-file manager, even when an editor has claimed folders on the system.
-
-After a click the desktop has the keyboard: Enter, Space, F2, Delete,
-Shift+Delete, Alt+Enter, Ctrl+A/I/C/X/V/Z/D, Ctrl+Shift+C (copy path),
-Ctrl+Shift+N (new folder), Ctrl+Alt+N (new text document), Ctrl+Alt+T
-(terminal), Ctrl+H (hidden files) and F5. Every one of them, plus Compress,
-Arrange Icons and Hide Icons, can be changed under **Settings → Keybinds →
-Desktop icons**; the menus show whatever keys are set. Arrows and Shift+arrows,
-Home/End, typing a name to jump to it, Escape and the Menu key stay as they are.
-These keys only ever reach the desktop: it gives the keyboard back as soon as a
-window is focused, and never takes it when the pointer just passes over.
+</details>
 
 ### Edit mode
 
-Pick **Edit Desktop** from the desktop's right-click menu (or *Edit Desktop* in
-the launcher's commands, or right-click any bar module) and the wallpaper
-shades over while everything on it stays in reach, outlined:
+<details>
+<summary><b>Arrange the bar, the dock and the widgets where they stand</b></summary>
+<br>
 
-- **The bar.** Drag a module along it, into another zone, or down off the bar
-  to take it out; the others make room as you go. A module that has nothing to
-  show right now, such as an empty tray, keeps a dashed stand-in so it can be
-  moved too. The link between two neighbours joins them into one island. A
-  click still opens a module, so a look you just picked can be seen.
-- **The dock.** Drag the handle above it up to float it higher, or down into
-  the bottom edge to make it a notch, and up again to float it out.
-- **Options beside them.** Right-click a module, or the dock, and a sheet of its
-  options slides in on the far side of the screen: a module's looks, joins and
-  own settings, the bar's style, sizes and every module with its switch, the
-  dock's style and sizes. Everything applies as you set it.
+<img src="assets/edit-mode.webp" alt="Edit mode with the widget panel">
 
-The toolbar along the bottom opens the bar's and the dock's sheets, the widget
-panel and the wallpapers. **Undo** (also Ctrl+Z) takes back the last change and
-**Revert** everything since edit mode began; **Done**, or Escape, leaves it.
-`qs ipc call edit toggle` is there to bind to a key.
+Pick **Edit Desktop** from the desktop's right-click menu, or right-click any
+bar module, and the wallpaper shades over. Drag a bar module along the bar,
+into another group, or down off it; join neighbours into one island; drag the
+dock's handle up to float it or down into the edge to make it a notch.
+Right-click a module or the dock for a sheet of its options beside it. The
+toolbar opens the bar, dock, widgets and wallpaper; **Undo** (Ctrl+Z) and
+**Revert** take changes back, and **Done** or Escape leaves.
+
+</details>
+
+### Lumen
+
+<details>
+<summary><b>A file manager of Lucid's own, and every app's file dialog</b></summary>
+<br>
+
+<img src="assets/lumen.webp" alt="Lumen">
+
+`SUPER`+`E`, the dock or any folder opens it, and every app's *Open* and *Save*
+dialog is a Lumen window, with filters and an overwrite check. Tabs you can pin,
+colour and drag out into a window of their own; bookmarks with names and
+colours (Ctrl+D); Recent, Trash and your drives; a grid or a list from 24 to 256
+pixels and a preview pane. **Network drives**: *Connect to server* (Ctrl+K)
+opens `smb://`, `sftp://`, `ftp://` or a Windows `\\server\share`, signs in as a
+user or a guest with the password in your keyring, and shows the computers
+nearby. Copies and moves run in the background, and Lumen waits for them before
+it quits.
+
+</details>
+
+### Lens
+
+<details>
+<summary><b>Pictures and videos, with an editor that never loses the original</b></summary>
+<br>
+
+Open a picture and its whole folder comes along: arrow keys, swipes and a
+filmstrip, *All pictures* (G) to search the folder, zoom and pan with a map.
+*Edit* (E) crops, turns, straightens, adjusts light and colour or applies one of
+twelve looks; *Draw* (D) adds pens, arrows, shapes, words and pixelation. Saving
+over a picture keeps its original for good, to bring back whenever you like.
+Videos play in place with a waving time line, speed, frames to save and *Trim*.
+Details, slideshow, full screen, and sending to your phone.
+
+</details>
+
+### LucidShot
+
+<details>
+<summary><b>Screenshots, recordings, text and colours from one toolbar</b></summary>
+<br>
+
+<img src="assets/lucidshot.webp" alt="LucidShot">
+
+Print freezes the screen under a toolbar: **Screenshot**, **Record**, **Text** or
+**Colour**, of a region, a window or the whole screen. A magnifier, edges that
+snap to windows, Shift for a square, Space to move. The capture flies into a
+card to open in Lens, mark up, pin over your windows, read the text off or drag
+into an app. *Text* reads the words in any part of the screen (tesseract, emoji
+and QR codes included) and pastes paragraphs as paragraphs; *Colour* copies HEX,
+RGB or HSL and collects palettes; *Record* takes what is playing and the
+microphone, with a countdown, a pill in the bar, and a GIF from the card.
+
+</details>
+
+### Music
+
+<details>
+<summary><b>Lyrics, covers, song identification and a visualiser</b></summary>
+<br>
+
+<img src="assets/lyrics-panel.webp" alt="The media panel's Lyrics page">
+
+The media panel's **Lyrics** page scrolls with the song: the line being sung
+springs up and fills with colour letter by letter, and a click on a line seeks
+there. The **Lyrics widget** sings along on the desktop word by word, as
+karaoke, or as the whole song scrolling by. Words come from lrclib.net, looked
+up only while something shows them and kept on disk. **Identify** names the
+song playing around you (`songrec`), and **cava** draws the visualiser, resting
+while nothing plays.
+
+</details>
+
+### Lock, login and session
+
+<details>
+<summary><b>A lock screen, a matching login screen, and the session screen</b></summary>
+<br>
+
+- **Lock screen**: a real session lock checked through PAM, with an oversized
+  clock in the wallpaper's colour, the weather, battery, network and Bluetooth
+  at a glance, what is playing, notifications and a power bar. It counts your
+  tries against faillock, warns about Caps Lock, plays a live wallpaper behind
+  its blur, and takes a fingerprint (with `fprintd`) as well as the password.
+- **Login screen**: the lock ported to SDDM, painted from the shell's own
+  colours, each account with its own wallpaper and palette, live wallpapers
+  included, and fingerprint login if you want it.
+- **Session screen** (`SUPER`+`Esc`): lock, sleep, log out, restart and shut
+  down on expressive shapes; the ones that cost you work ask twice.
+- **Authentication**: Lucid is the session's polkit agent, so every
+  administrator prompt comes up in its own dialog.
+
+</details>
+
+### Notifications, OSD and sounds
+
+<details>
+<summary><b>Grouped notifications, a notch OSD, toasts and Lucid's own sounds</b></summary>
+<br>
+
+Notifications are grouped by app with inline reply and progress bars, the
+newest growing out of the bell; do-not-disturb has quiet hours and a rule for
+fullscreen windows. The **OSD** shows volume, brightness, the microphone, Caps
+Lock and Num Lock as a card or as a notch rising out of the bottom edge, and
+with the dock a notch too, the dock itself turns into it. **Toasts** say small
+things under the bar, and any script can raise one
+(`qs ipc call -- toast show game "Game Mode On"`). **Sounds**: eight
+notification sounds and the system's own, synthesised for Lucid, each with a
+switch.
+
+</details>
+
+### Settings
+
+<details>
+<summary><b>The whole desktop, without a config file</b></summary>
+<br>
+
+A searchable app (`Ctrl+F`, or just type) with a page for every part of the
+system, a reset arrow on anything you changed, and a What's new sheet after
+each update. Among the pages:
+
+- **General** with *Interface size* (75 to 125%), *Corner rounding* and *Motion*
+- **Bar**, **Dock**, **Launcher**, **Widgets** and **Workspaces**
+- **Theme**, **Colours**, **Palettes** and **Glass**
+- **Windows** (gaps, borders, corners, shadows, tiling, focus) and **Input**
+  (layouts, repeat, mouse, touchpad, swipes), live through Hyprland
+- **Displays**: resolution, refresh, scale, rotation, arrangement and mirroring
+- **Network**, **Bluetooth** (files both ways) and **Phone**, a full KDE Connect
+  client with files, notifications, a media remote and a touchpad
+- **Sound**, every device, socket and profile, a slider per app, and outputs
+  played together
+- **Notifications**, **Idle** (hypridle with sliders), **Storage** (what fills
+  the disk, as a map), **Date & Time** (location, weather, units, time zone)
+- **Environment**: cursor, icons, GTK and Qt themes and fonts, set everywhere at
+  once, Lucid's own pointer included
+- **Startup**: apps at login, system autostart and environment variables
+- **Keybinds**, **Users and Accounts**, **Screenshots** and **About**
+
+</details>
 
 ### Special workspaces
 
-Scratchpads that slide over whatever workspace you are on, and hide again with
-the same keys.
+<details>
+<summary><b>Scratchpads for music, chats, to-dos and the system monitor</b></summary>
+<br>
 
 | Keys | Workspace | Opens |
 | --- | --- | --- |
-| `SUPER` + `SHIFT` + `S` | Scratchpad | Nothing of its own — somewhere to park windows |
-| `SUPER` + `SHIFT` + `M` | Music | Spotify, Feishin, Supersonic, Cider, YouTube Music, TIDAL… |
+| `SUPER` + `SHIFT` + `S` | Scratchpad | Somewhere to park windows |
+| `SUPER` + `SHIFT` + `M` | Music | Spotify, Feishin, Cider, YouTube Music, TIDAL… |
 | `SUPER` + `SHIFT` + `D` | Comms | Discord, Vesktop, Telegram, Signal, Element, Slack… |
-| `SUPER` + `SHIFT` + `R` | To-do | Todoist, Planify, Errands, Endeavour, Obsidian… |
-| `CTRL` + `SHIFT` + `Esc` | System | btop in a terminal, Mission Center, Resources… |
+| `SUPER` + `SHIFT` + `R` | To-do | Todoist, Planify, Errands, Obsidian… |
+| `CTRL` + `SHIFT` + `Esc` | System | btop, Mission Center, Resources… |
 
-A key starts its workspace's app if it is not running, and pulls it back in if
-you moved it somewhere else; opened from the launcher or the dock, the app lands
-in its workspace too. `SUPER` + `ALT` + `S` stashes the focused window in the
-scratchpad and, pressed inside a special workspace, sends it back. The
-scratchpad key also puts away whichever workspace is up, so one key always
-returns you to what you were doing.
+A key starts its app if needed and slides the workspace over the one you are
+on; the same key hides it. `SUPER`+`ALT`+`S` stashes a window in the
+scratchpad. *Settings → Workspaces* picks the apps, the dimming and blur, and
+makes workspaces of your own.
 
-**Settings → Workspaces** picks each one's apps, turns any of them off, and sets
-how far the screen behind dims, whether it blurs too, how much margin the windows
-keep from the screen's edges, and whether switching workspace puts them away.
-*New workspace* makes one of your own, with a name, a mark for the bar and any
-apps; its key goes into `keybinds.json` like any other, so it shows on the
-cheatsheet and is changed on the Keybinds page. Deleting it brings its windows
-back to the workspace you are on.
-*Add an app* offers everything installed, not only the catalogue above, and
-works out what to match its window by. It writes `~/.config/hypr/lucid-specials.lua`, which
-`modules/specials.lua` reads on every key press, so a change applies without a
-Hyprland reload.
+</details>
 
-### Windows
+### Look and motion
 
-**Settings → Windows** changes how Hyprland draws your windows, live, with a
-preview drawn from the values in force: the gaps between windows and around the
-screen, border width and colour (none, your palette's accent, or a gradient
-through three of its colours, which follows the theme as it changes), a faint
-border on the other windows, how round the corners are and their shape, a
-shadow, and dimming the windows you are not in. Under *Tiling*: the layout
-(dwindle, master or scrolling) and each one's own options — which way dwindle
-splits and where a new window goes, the master's side and size, the width of a
-scrolling column — with a preview of the whole screen for one to five windows,
-and a switch that takes a lone window edge to edge, without gaps, border or
-rounded corners. Under *Behaviour*: whether focus follows the cursor or waits
-for a click, whether an app may take the focus when it asks, the cursor jumping
-with the focus, resizing a window by its edges, floating windows snapping to
-each other and to the screen, hiding the cursor while typing or after a while,
-and window animations.
+<details>
+<summary><b>Springs, Lucid's own icons and Lucid's own pointer</b></summary>
+<br>
 
-Two cards mark windows that need telling apart. A **pinned** window (it floats
-over the rest and follows you to every workspace) wears a border of its own —
-accent, tertiary or a gradient — a tab with a pin tucked into the corner you
-pick, which unpins it on a click and steps away while the window moves, and a
-ripple the moment it is pinned. A window **asking for attention** (a message
-in, a download done, a terminal's bell) gets a tab with a ringing bell in its
-corner, in the colour the bar gives its workspace, and rings the first time
-you see it; a click takes you to it and the tab goes once you are there.
+- **Jelly motion.** Panels, pills, menus, the dock, the OSD and widgets settle
+  on a spring with a little wobble. *Settings → General → Motion* sets how much,
+  or turns it off.
+- **Icons.** Folders, files, places, drives and many apps share one tonal set
+  drawn from your palette, in Lumen, on the desktop, in the dock and the
+  launcher. An app the set doesn't know keeps its own icon.
+- **Pointer.** Bibata Modern's shapes in your palette's colours (Dark, Light or
+  Accent), fading along when the palette changes, drawn on your machine from
+  Bibata's source. A tilting cursor leans the arrows and hands as they move,
+  and in a drag the shell draws the pointer itself so it stays on what it holds.
+  Any other cursor theme is a switch away.
+- **Glass.** One slider for how far the desktop shows through the shell, kitty
+  and your windows.
 
-Only what you change there is Lucid's. It goes to
-`~/.config/hypr/lucid-settings.lua`, which `modules/settings.lua` applies without
-a reload; everything else stays as your Hyprland config has it, and each row's
-reset hands its option back to your config. `hyprland.lua` requires the module
-before anything of your own, so a file you add after it — `hypr-user.lua`,
-HyprMod's `hyprland-gui` — still wins: the row says which file sets the option
-and stays shut until it is taken out there.
-
-### Input
-
-**Settings → Input** holds the keyboard side of Hyprland, through the same
-`lucid-settings.lua` as the Windows page and with the same rule that your own
-config wins: your layouts in order (the first is the one every keyboard starts
-with), each picked by name from the system's list of layouts and variants, the
-key that switches between them, what Caps Lock does — the other keyboard options
-your config sets are kept — key repeat delay and speed, and Num Lock at sign-in,
-with a field to try it all out. Then the mouse — pointer speed, acceleration,
-natural scrolling, scroll speed, left-handed buttons — and, when there is one,
-the touchpad: tap to click, natural scrolling, scroll speed, off while typing,
-two-finger right click, tap and drag, and a middle click from both buttons —
-and the swipe between workspaces: how far the fingers travel, which way, how
-fast a flick switches anyway, how far along letting go still switches, going
-past the neighbour and making a new workspace at the end.
-
-### Startup
-
-**Settings → Startup** holds what would otherwise mean editing
-`modules/autostart.lua` and `modules/env.lua`. *Apps* are opened each time you
-log in: pick an installed app or type a command, switch one off without losing
-it, or open it now. *System autostart* lists the entries apps and packages put
-in `~/.config/autostart` and `/etc/xdg/autostart`. Hyprland alone does not read
-them; a session manager such as uwsm does, and the page says which you have.
-Without one, a switch has Lucid start them the way a desktop session would,
-through systemd's own `xdg-desktop-autostart.target`. Each entry can be switched
-off for you alone with the spec's `Hidden=true`, and the page flags an app that
-two of these would start twice. *Environment variables* are set for every app:
-those opened from keybinds see a change at once, the dock and the launcher at
-the next login, and the page shows which is which. The session's own variables
-(`WAYLAND_DISPLAY`, `HOME` and the like) cannot be set there.
-
-Under the variables, a few suggestions show up when Lucid finds what they fix
-on the machine: Java apps (`_JAVA_AWT_WM_NONREPARENTING`), an NVIDIA card alone
-with its VA-API driver (`LIBVA_DRIVER_NAME`), a screen scaled 2× or more with
-XWayland left unscaled (`GDK_SCALE`). The ones Hyprland's wiki lists for every
-machine are left out on purpose: the toolkits pick Wayland on their own now,
-and `SDL_VIDEODRIVER=wayland` breaks games. Those, and others that guides still copy around,
-get a word of warning when you type them or keep them in `env.lua` — what each
-does now and why it is not a good idea — without being refused:
-`ELECTRON_OZONE_PLATFORM_HINT` (gone since Electron 38), `MOZ_ENABLE_WAYLAND`
-(Firefox is on Wayland since 121), `GDK_BACKEND` and `QT_QPA_PLATFORM` (and
-worse with no fallback), `SDL_VIDEODRIVER=wayland`, `NVD_BACKEND=egl`,
-`STEAM_FORCE_DESKTOPUI_SCALING`, `LIBVA_DRIVER_NAME=nvidia` on a machine with a
-second graphics card, `GDK_SCALE` without `force_zero_scaling`, `AQ_NO_ATOMIC`.
-
-All of it goes to `~/.config/hypr/lucid-startup.lua`, which `modules/startup.lua`
-reads, so a reinstall, which rewrites `autostart.lua` and `env.lua`, keeps it.
-What you added to those two files by hand shows in the same lists, with a
-button that moves a line here and leaves it in the file commented out; a line
-that is more than one plain call stays there, with a button to open the file.
-Lucid's own lines in them (the shell, the wallpaper daemon, the variables
-*Environment* sets) are left out.
-
-### Everything else
-
-- **Users and accounts** — the card at the top of the Settings rail opens a
-  *Users and Accounts* page for every account on the machine: full name,
-  username, account type, login shell, email and location, with the guards that
-  matter — the last administrator cannot demote themselves and a signed-in
-  account cannot be renamed. Set a password or have the account choose its own
-  at the next sign-in, add and remove accounts, toggle supplementary groups, and
-  pick a picture from the stock faces or any image. It all goes through
-  AccountsService, so the shell's own polkit dialog does the asking and nothing
-  runs as root
-- **Account picture history** — changing your account picture keeps the old one
-  on a shelf in the picker, newest first, so any picture you have worn is a
-  click away. It holds twelve or 8 MB, drops the oldest as new ones arrive,
-  files nothing twice, and can be emptied outright
-- **Authentication prompts** — Lucid is the session's polkit agent, so every
-  request for an administrator on the machine comes up in the shell's own
-  dialog rather than KDE's. polkitd and PAM are still the backend; the dialog
-  names the action, shows which account's password it wants (with the picture
-  from the Users page) and lets you pick a different administrator when polkit
-  will accept more than one
-- **Lock screen** — a real `WlSessionLock` that checks the password through
-  PAM, laid out the way Material You lays out a lock screen: an oversized
-  two-line clock in the wallpaper's own colour, the weather, battery, network
-  and Bluetooth at a glance, what is playing, the notifications and a power bar
-  that asks before it logs you out. Start typing and it focuses — the wallpaper
-  blurs further and everything but the sign-in card steps back. It counts your
-  remaining tries against faillock, warns about Caps Lock, shows the keyboard
-  layout, and will not let a notification launch anything while it is up. With
-  `fprintd` installed and a finger enrolled (`fprintd-enroll`), it takes a
-  fingerprint at the same time as the password: touch the sensor or type,
-  whichever comes first
-- **Login screen** — the lock screen ported to SDDM, so the machine looks like
-  itself before you have signed in: the same clock, the same palette and the
-  same wallpaper, blurred once in advance rather than on a cold GPU, with the
-  user and session pickers where the glance chips sit. It is painted from the
-  running shell's own colours, so it follows a theme change. Every account
-  keeps its own wallpaper and palette there, and picking another account
-  crossfades the screen to theirs. The installer
-  copies it in when SDDM is present but only switches to it when you ask — the
-  **Login screen** switch in the installer window, or `--login-screen` in the
-  terminal (`Current=lucid` in `/etc/sddm.conf`, backed up first); `--no-sddm`
-  leaves it out. With `fprintd` installed it also offers to let
-  the login screen take a fingerprint: press Enter on an empty field, then touch
-  the sensor. That adds two marked lines to `/etc/pam.d/sddm` (a typed password
-  is still checked first), which `sudo support/sddm/install-theme.sh
-  --no-fingerprint` takes out again. A fingerprint login leaves GNOME Keyring
-  locked until you next type the password, since the keyring opens with it
-- **Session screen** — `SUPER` + `Esc`, the control centre's Session tile or
-  the launcher's command list. Lock, sleep, log out, restart and shut down, each
-  on its own expressive shape that morphs as you move along the row with the
-  arrow keys. The three that cost you work ask twice: the first press arms the
-  shape in red with a ring that runs out after four seconds, and only the second
-  goes through
-- **On-screen keyboard** — `SUPER` + `K`, the desktop's right-click menu or the
-  launcher's command list. It never takes the focus off what you are typing
-  into, and clicks outside it reach the application underneath, so the caret
-  stays where you put it. A letters layer and a function layer, modifiers that
-  latch on one press and lock on two, and chords sent as chords. Drag it
-  anywhere by the strip along its top and it stays there
-- **Emoji picker** — emoji, kaomoji and GIFs (Giphy or Tenor), with recents,
-  favourites and skin-tone variants; pastes into the focused window
-- **Screenshots** — *LucidShot*. Print freezes the screen under a floating
-  toolbar: Screenshot, Record, Text or Colour, of a region (drag one out, or
-  click a window), a window or the whole display. A magnifier shows the last
-  few pixels while you drag, edges snap to the windows', Shift keeps the box
-  square, Alt grows it from its middle and Space moves it. What you took flies
-  into a card in the corner: click it to open, drag it straight into a chat or
-  a file manager, or mark it up, pin it over your windows, copy the text in it,
-  show it in its folder or send it to the trash. It slides away after a few
-  seconds, or stays while the pointer rests on it. With *Mark up before
-  saving* on, the selection stays for a pen, a highlighter, arrows, boxes,
-  ellipses, text, numbered steps and pixelation first, with undo. A self-timer
-  takes the shot 3, 5 or 10 seconds later, off the live screen. Recording takes
-  a region, a window or the whole display, with what is playing and the
-  microphone mixed in if you want them (nothing is muted to do it), counts down
-  first and shows a pill with pause, the two sources and stop, which tucks into
-  the bar's clock. A recording carries on through a shell reload, and its card
-  can make a GIF of it. Settings → Screenshots has the folders, the card, the
-  recorder's frame rate and encoder, and the rest
-- **Text copier** — the *Text* mode in the screenshot toolbar. Drag a box over
-  anything on screen — an image, a video still, a PDF, an error dialog, a
-  window that will not let you select its text — and the words inside it land
-  on your clipboard. Runs the crop through tesseract twice, once inverted, and
-  keeps the better read, so light-on-dark UI text works as well as a scan.
-  Lines that only wrapped on screen come back joined, so a paragraph pastes as
-  a paragraph; lists, short lines and code keep their breaks. Emoji come
-  across too: tesseract has none in its character set and either
-  drops them or reads them as junk letters, so anything colourful and square
-  is matched against the glyphs of your installed emoji fonts instead. One
-  flat colour means text, many means emoji. A shape it cannot name is left
-  out rather than guessed at. Reading takes a moment, so a beam sweeps the
-  selection until the text is on the clipboard; then the selection flies into
-  a card with the text in it, to copy again, search the web for, or open if it
-  is a link. QR codes are read too once `zbar` is installed, and Settings →
-  Screenshots picks the languages tesseract reads in
-- **Colour picker** -- the *Colour* mode turns the pointer into a lens over the
-  frozen screen, pixel grid and all, so what you pick is exactly what was
-  there. A click copies it as HEX, RGB or HSL (each valid CSS: `#RRGGBB`,
-  `rgb(r, g, b)`, `hsl(h, s%, l%)`) and shows it in a toast with the colour
-  beside it; Shift-click collects up to ten into a palette above the toolbar,
-  to copy one at a time or all at once. It reads the frozen frame itself, so
-  `hyprpicker` is no longer needed
-- **Toasts** -- a compact pill under the bar for things that just need saying.
-  Any script can raise one: `qs ipc call -- toast show game "Game Mode On"`,
-  or `toast warn alert "..."` for the red variant. Named icons are `copy`,
-  `check`, `alert`, `info`, `text`, `game` and `camera`; anything else is
-  taken as a raw SVG path
-- **Notifications** — a *Notifications* page for how they behave: whether
-  popups appear at all, how long one stays and whether an application may set
-  its own timeout, how much of the message and how many action buttons show,
-  do-not-disturb with quiet hours between two times and a rule for fullscreen
-  windows, a notification sound picked from Lucid's own eight with its own
-  volume, how many the list keeps, per-application muting, and switches for
-  grouping by application, showing how long ago each arrived, progress bars,
-  inline reply, and how many popups stack at once. Its *System events* card
-  picks what the machine itself gets a toast for: the keyboard layout, game
-  mode, the charger and battery, Bluetooth and USB devices (the laptop's
-  built-in parts stay quiet), the camera turning on and off with the app using
-  it, Wi-Fi, the sound output, displays and the power profile
-- **OSD** — volume, brightness and microphone, each a badge and a level; Caps
-  Lock and Num Lock get one too, showing the letters the next keystroke will
-  make — `ABC` against `abc` — rather than the words on and off. Either can be
-  switched off in Settings → General → On-screen display
-- **Desktop** — drag across empty desktop and a translucent accent box follows
-  the cursor, the way it does on Windows and macOS; it is cosmetic and selects
-  nothing. Right-click the desktop for wallpaper, theme, the widget panel,
-  a screenshot and settings. Both are switches on the General page
-- **Date and time** — a *Date & Time* page in Settings holds where the shell
-  thinks it is. Turn on **Auto-detect location** — the same switch as the GPS
-  tile in the bar's system panel — and your position is read from your network
-  connection every few hours; leave it off and name a town yourself. One
-  forecast is fetched for that position from
-  [Open-Meteo](https://open-meteo.com) and shared by the bar clock, the lock
-  screen and the weather widget, so the three can never disagree. *Units* on
-  the same page shows it, and every other temperature in the shell, in °C and
-  km/h or °F and mph. The time zone
-  on that page is the **machine's**, not a private one: picking a zone runs
-  `timedatectl set-timezone` behind a polkit prompt, so every application on
-  the box moves together and Lucid can never drift from the rest of your
-  desktop. Switch on *Set it from my location* and a new position brings the
-  zone with it. A program reads the zone once when it starts, so anything
-  already open stays on the old one until you restart it — Lucid corrects for
-  that itself and is right either way
-- **Network** — a *Network* page covering what NetworkManager can do. Wi-Fi
-  radio, a live network list grouped into connected, saved and nearby, with a
-  filter, a scan you can stop, per-network join with password, forget and
-  join-automatically, and a form for hidden networks. **Share** on a saved
-  network shows it as a QR code a phone camera joins from, with the password
-  beside it, dotted until you ask and copied without landing in clipboard
-  history; the Wi-Fi panel in the bar has the same code behind a button. Below that: wired devices
-  with link speed, VPN and WireGuard profiles to connect and disconnect, a
-  Wi-Fi hotspot to share the connection, and every saved profile with its
-  autoconnect switch. Each device also gets its addressing — IPv4, IPv6,
-  gateway, DNS, MAC, MTU, link rate — and an **IP configuration** editor that
-  switches between DHCP and a hand-set address, gateway and DNS, or just
-  overrides DNS while leaving the rest automatic. Scriptable with
-  `qs ipc call network status | list | rescan`
-- **Sound** — a *Sound* page for what plays and what listens. Every output and
-  every input the machine has, each one named, with what it is doing right now
-  — its mode and the socket the sound comes out of — and a tick on the one in
-  use. Click another and it takes over; anything already playing moves across
-  with it, which is the part that is usually missing. Open a device for its own
-  volume, its **socket** — speakers, the headphone jack, the digital output,
-  with the unplugged ones said to be unplugged — and its **mode**, the card
-  profile that decides what devices it offers at all. Below that, everything
-  making or taking sound right now: a volume and a mute of its own per program,
-  and a device of its own, so one application can play somewhere else while the
-  rest stay put. A visualiser or a screen recorder sitting on a monitor is left
-  where it is rather than dragged onto a microphone. It reads PipeWire directly
-  and hears about changes as they happen, so it agrees with `pavucontrol` and
-  with whatever else you use. **System sounds** mark a USB or Bluetooth device
-  coming and going, the charger, low battery, the camera turning on and off and
-  a screenshot, each with its own switch and a button to hear it, under one
-  volume; they keep quiet while you are silenced, apart from the battery
-  warnings. Tiny ticks answer the volume, brightness, Caps Lock and microphone
-  keys — once where a drag or a held key starts and once where it stops.
-  The page also shows what a device is doing: a live meter under the output and
-  the microphone volume, balance and a Left/Right test for a stereo output, a
-  way to put an app back on the default device, and a *Behaviour* card for
-  WirePlumber's own settings (remembering each app's volume and device,
-  following the default, pausing when headphones go, headset call mode, mono).
-  The sounds are synthesised by `support/sounds/build-sounds.py` into
-  `assets/sounds`; the ticks start from [Kenney](https://kenney.nl)'s Interface
-  Sounds, which are CC0. Scriptable with
-  `qs ipc call settings sound`, and `qs ipc call sounds play <name>` plays any
-  of them
-- **Bluetooth** — a *Bluetooth* page in Settings is a full manager: the radio,
-  discoverability, whether the machine accepts pairing requests, and the name
-  other devices see. Below it every device the adapter knows, grouped into
-  connected, paired and available, with a filter, a scan that stops itself
-  after a minute, and per device: connect, pair, forget, rename, auto-reconnect,
-  allow-wake, block, and battery where the device reports it. A connected pair
-  of headphones also gets its **audio mode** — high quality versus headset,
-  whichever profiles PipeWire offers for it — so switching to the microphone
-  no longer means a trip to `pavucontrol`. **Receiving files**: a phone or
-  laptop sending something over Bluetooth gets a notification with Accept and
-  Decline; accepted, the same notification follows the transfer and the last
-  one opens the file or shows it in its folder. Pick the folder (Downloads by
-  default) and whether paired devices skip the question. **Sending files**: a
-  paired phone or computer gets *Send files* in its row, here and in the
-  control centre; pick the files and one notification follows it all —
-  waiting for the other side to accept, progress, Cancel, and how it ended
-- **Phone** — a *Phone* page that is a real KDE Connect client, not a launcher
-  for someone else's. It drives the KDE Connect daemon over D-Bus, so it pairs,
-  unpairs and answers pairing requests with the verification key shown on both
-  sides. Open a connected device and you get: **send files** through the
-  desktop's own file chooser, send text or a link, ring it, lock it, mount and
-  browse its storage, send your clipboard, run the commands you set up on it,
-  its **notifications** with dismiss and inline reply, a **media remote** with
-  seek and volume for whichever player it is running, **its** system volume,
-  and a **touchpad and keyboard** that drive the phone from this machine. Every
-  per-device feature can be switched off individually. The phone widget on the
-  desktop browses the phone's files too, greys out whatever the phone has
-  switched off, and steps between phones when more than one is paired.
-  Scriptable too —
-  `qs ipc call kdeconnect status`, `list`, `rescan`, and
-  `qs ipc call -- kdeconnect ring <id>`
-- **Storage** — a *Storage* page for what fills your drives: how much each
-  kind of file takes, a map you can zoom through from your home folder or the
-  whole disk, what could go (package caches, old trash, duplicates and large
-  files in your own folders, each with a confirm), and the drives themselves,
-  with their health from `smartctl` and mounting through `udisksctl`. It warns
-  when space runs low and can empty trash after a number of days
-- **Idle and sleep** — an *Idle* page that owns hypridle for you. It writes
-  `~/.config/hypr/hypridle.conf` and restarts the daemon whenever something on
-  the page changes, so the ladder — dim, lock, screen off, suspend — is set with
-  sliders rather than by hand. A rail at the top of the page shows the sequence
-  in the order it actually fires and warns when two steps are out of turn.
-  Extras worth knowing: **keep awake**, a caffeine toggle that holds every step
-  until you turn it off; **never interrupt something playing**, which asks
-  playerctl before each step; a suspend that can be limited to battery only; and
-  lock-before-sleep plus wake-the-screen-on-resume. Whatever was in your
-  hypridle.conf first is read into the page once and copied to
-  `hypridle.conf.pre-lucid`, so nothing is lost. Scriptable with
-  `qs ipc call idle status | keepawake | on | off | restart`
-- **Environment** — an *Environment* page that owns the desktop's appearance
-  outside the shell. Cursor theme, size and shadow, icon theme, GTK theme,
-  light or dark, the Qt style, and the interface, application, document and
-  monospace fonts. *Pointer shadow* has no compositor switch behind it — the
-  shade is painted into the cursor theme's own images — so turning it off
-  renders the theme again from its vector sources into
-  `~/.local/share/icons/<theme>-noshadow`, copying the original's sizes,
-  hotspots and frame delays exactly, and points everything at that copy.
-  The point is that one choice reaches everywhere: each change is written
-  to GTK 2, 3 and 4, to `gsettings`, to the XCursor fallback theme, to
-  qt5ct and qt6ct, and to Hyprland's env module, and `hyprctl setcursor` runs
-  so the pointer changes under your hand rather than at the next login. The dock
-  picks a new icon theme up the moment you choose it — Qt only reads the icon
-  theme when a process starts, so Lucid walks the theme directories itself. Only
-  the keys Lucid owns are touched — every comment and every other setting in
-  those files stays where it was, and a toolkit this machine does not use is
-  skipped rather than conjured. It starts by reading what the machine already
-  says, so opening the page changes nothing; **Re-read from the system** picks
-  those values up again after you have changed appearance with another tool.
-  Turn GTK, Qt or Hyprland off individually if you would rather keep one of
-  them by hand. Scriptable with `qs ipc call settings environment`
-- **Displays** — a *Displays* page for the screens themselves: resolution,
-  refresh rate, scale, orientation and adaptive sync, one card per output, which
-  names the panel and its size and says what it is doing right now. Only modes
-  the display actually reports are offered, so there is no picking one it cannot
-  show, and each scale is labelled with the room it leaves for windows — with a
-  word of warning on the ones that do not divide the panel evenly. More than one
-  screen adds an arrangement you drag: displays snap to their neighbours' edges
-  so the pointer has no gaps to fall into, and moving one pins them all where
-  they already are rather than letting Hyprland shuffle the rest. A display can
-  mirror another or be switched off, except the last one left on, which neither
-  the page nor the Hyprland module will let go. The shell itself — the bar, the
-  dock, the volume popup and the toasts — sits on whichever display you pick,
-  and widgets with no display of their own follow it; the bar and the dock can
-  each be sent to a display of their own if you would rather have them apart.
-  The wallpaper and the desktop menu are drawn on all of them either way, and
-  so is the lock screen — though only the display the shell is on carries the
-  password field; the rest show the clock. Unplug the
-  display it was pinned to and it moves to one that is left, without losing the
-  pick, so plugging back in puts it back. It all becomes monitor rules in
-  `~/.config/hypr/lucid-monitors.lua`, applied without a reload, and a display is
-  keyed by its description rather than its port, so moving the cable keeps what
-  you set. Scriptable with `qs ipc call settings displays`, and the display the
-  shell sits on with `qs ipc call -- displays shell <name|here|next|auto>` —
-  worth a keybind if you move between screens
-- **Glass** — a *Glass* page holding one slider for how far the desktop shows
-  through what is in front of it, and a readout of where that lands. Three
-  surfaces follow it, each as far as it can take: the shell's own panels, kitty
-  — whose `background_opacity` leaves the text alone, so it can go all the way —
-  and app windows, a quarter as far, because Hyprland fades a window's text
-  along with its background. Any installed app can be frosted on its own, and
-  anything else you have open can be added by its window class. Per-app values
-  become Hyprland window rules in `~/.config/hypr/lucid-glass.lua`, applied
-  without a reload and pushed onto windows that are already open. Scriptable
-  with `qs ipc call settings glass`
-- **Settings** — a GUI for all of the above, no config file editing.
-  Twenty-five pages behind a collapsible rail, grouped-list cards, an app bar that collapses
-  as you scroll, and a reset arrow on anything you have moved off its default.
-  The search field at the head of the rail finds any option by its name or its
-  description and opens its page scrolled to it; `Ctrl+F`, or just start typing.
-  Scriptable with `qs ipc call -- settings search <words>`. The General page
-  sets how big the whole shell is (*Interface size*, 75 to 125 %, without
-  touching the monitor's scale) and how round (*Corner rounding*, square to
-  half as round again). The first start after an update opens a *What's new*
-  sheet once; *About → What's new* brings it back
-
-<img src="assets/lock-screen.webp" alt="The Lucid lock screen: the weather and a large clock on the left, and the sign-in card, the song playing and notifications on the right">
-
-*The lock screen — the clock in the wallpaper's own colour, the weather,
-battery, network and Bluetooth at a glance, what is playing, the notifications,
-and the power bar in the corner.*
-
-<img src="assets/screenshot-toolbar.webp" alt="The screenshot toolbar over the dimmed desktop: photo, video, text and colour, then a region or the whole display">
-
-*The screenshot toolbar — Photo, Video, Text and Colour, then a region or the
-whole display — over the desktop it is about to take.*
-
-<img src="assets/settings-sound.webp" alt="Settings on the Sound page: the system sounds, each with a switch and a play button">
-
-*Settings on the Sound page: Lucid's own system sounds, each with a switch and
-a play button, under one volume for all of them.*
-
-<img src="assets/settings-storage.webp" alt="Settings on the Storage page, with the control centre and the on-screen keyboard open beside it">
-
-*Settings on the Storage page — what fills the drive, by kind and as a map you
-can zoom through — with the control centre and the on-screen keyboard open
-beside it.*
+</details>
 
 ## Theming
 
-Colours come from one of eight palettes, picked in Settings or via the
-launcher's Theme mode:
+<details>
+<summary><b>One palette from your wallpaper, everywhere</b></summary>
+<br>
 
-**Matugen** and **Pywal** generate a palette from your current wallpaper.
-**Your colour** builds one from a single colour you pick, and leaves the
-wallpaper alone. **Catppuccin Mocha**, **Gruvbox**, **Nightfox**, **Nord** and **Tokyo Night**
-are fixed palettes that don't change with the wallpaper. Anything you import
-sits alongside them, and the whole list can be dragged into the order you want.
+**Matugen** and **Pywal** build a palette from your wallpaper, **Your colour**
+from one colour you pick, and **Catppuccin Mocha**, **Gruvbox**, **Nightfox**,
+**Nord** and **Tokyo Night** are fixed palettes. Every one has a light mode, and
+the theme can follow each new wallpaper into light or dark. *Settings → Colours*
+sets Matugen's style, its contrast and which of the wallpaper's colours to start
+from.
 
-Every palette has a light mode too — **Light or dark** on the Theme page.
-Matugen and Pywal re-extract the wallpaper in the mode you pick, Your colour is
-built again from its colour; the fixed
-palettes get a light version built from their own colours, so Nord lands on its
-own Snow Storm and Gruvbox on its own cream. An imported light scheme goes the
-other way: light mode keeps it exactly as its author made it, and its dark mode
-is built from its own colours. Light surfaces carry a trace of the
-accent, and *Accent tint* on the General page sets how much. The mode is
-remembered beside the theme, and GTK and Qt applications follow it, switching to
-the light or dark counterpart of their theme where one is installed.
-
-**Generated palettes**, at the top of **Settings → Colours**, shapes what
-Matugen and Your colour build:
-
-- **Your colour** — the colour itself: typed as hex, picked from anywhere on
-  screen (with `hyprpicker`), or one of a handful to start from.
-- **Style** — matugen's nine scheme types, from the calm *Tonal* it uses by
-  default through *Vibrant*, *Expressive* and *Fidelity* to *Neutral* and
-  *Monochrome*.
-- **Contrast** — from −100 % to +100 %; 0 is the design as specified.
-- **Colour from the wallpaper** — Matugen starts from the wallpaper's most
-  dominant colour. This shows the others it finds (up to four), each as the
-  accent it would give, to start from instead. The pick belongs to that
-  wallpaper: change the picture and it starts from its most dominant again.
-
-Changes apply as you make them, to the shell and every app template.
-
-<img src="assets/light-mode.webp" alt="Lucid in light mode: pale blue widgets, bar and dock over a pixel-art city at night">
-
-*Light mode, with the palette taken from the wallpaper. The bar, the dock and
-every widget follow it.*
-
-Whichever is active, the shell reads `~/.cache/quickshell/matugen.json` — a
-flat map of Material 3 colour roles. Changing your wallpaper through Lucid
-runs `~/.config/hypr/scripts/wallpaper/set-wallpaper.sh`, which sets the
-wallpaper and then regenerates that file if the active theme is wallpaper-derived.
-
-Hyprland's window borders follow it as well. `modules/decorations.lua` reads the
-same file, primary for the focused window and surface container for the rest,
-and the shell re-applies it every time the palette changes, light mode included.
-
-So does the starship prompt, without Lucid owning it: only the `[palettes.colors]`
-table in `~/.config/starship.toml` is repainted, so a prompt you have designed
-yourself keeps its shape. Point its styles at `color1` to `color9` (the comment
-above that table says which colour each one carries) and they follow every theme.
-
-Every display gets the same picture, cropped to fill. To treat one differently —
-a portrait screen that should letterbox rather than crop, or a second screen
-with a picture of its own — put a rule in `~/.config/lucid/wallpaper-outputs.conf`,
-one output a line:
-
-```
-DP-3      --resize fit --fill-color 000000
-HDMI-A-1  ~/Pictures/wallpapers/second.jpg
-```
-
-Any argument that is a file becomes that output's picture; the rest is passed to
-`awww`/`swww`. Outputs with no rule keep the wallpaper you picked, and colours
-are still generated from that one. `qs ipc call displays list` prints your
-outputs, left to right.
-
-If you already use matugen, the installer **appends** its Quickshell template
-to your `config.toml` and backs up the original — your existing templates are
-left alone.
-
-Qt and KDE apps follow the theme too when qt6ct is installed. Qt widget apps
-read their palette from qt6ct, so the installer points `qt6ct.conf` at the one
-a template writes, `~/.config/qt6ct/colors/lucid.conf`. KDE apps (Dolphin,
-Kate, Okular…) need one more step: outside Plasma, they swap that palette for
-Breeze as they start unless `kdeglobals` names a colour scheme. So a second
-template writes `~/.local/share/color-schemes/Lucid.colors`, and `kdeglobals`
-gets `[UiSettings] ColorScheme=Lucid`. A palette you already picked in qt6ct,
-or a scheme already named in `kdeglobals`, stays as it is. An open Qt app
-repaints a few seconds after the theme changes: qt6ct rereads its palette when
-something in `~/.config/qt6ct` changes, and the template's hook touches
-`qt6ct.conf`. KDE apps only read their colour scheme as they start, so one that
-is already open changes the next time you open it.
-
-Every template in `~/.config/matugen/config.toml` follows whichever palette is
-active, not only the wallpaper ones: picking Nord or Catppuccin renders them
-with that theme's colours. That makes the config the place to theme any other
-application — put a template in `~/.config/matugen/templates/` and add a block
-for it:
+The palette reaches beyond the shell: Hyprland's borders, kitty, starship, GTK,
+Qt and KDE apps (through qt6ct and a colour scheme), Zen, VSCodium and the login
+screen follow it, and any app can through a matugen template:
 
 ```toml
 [templates.myapp]
@@ -1154,342 +618,273 @@ output_path = '~/.config/myapp/colors.css'
 post_hook = 'pkill -USR1 myapp'   # optional: tell the app to reload
 ```
 
-Templates use [matugen's syntax](https://github.com/InioX/matugen) —
-`{{colors.primary.default.hex}}` and so on. A fixed palette fills every role it
-defines with its own colour; the few it doesn't (the `*_fixed` family, the
-tonal palettes, base16) come from a scheme matugen derives from its primary.
-Each template renders on its own, so one that fails doesn't hold the rest back:
-a toast names it, and `~/.cache/lucid/templates.json` keeps what happened to
-every template on the last change, with matugen's error for the ones that
-failed. `~/.config/lucid/render-templates.sh` is what renders them, for the
-wallpaper and the fixed palettes alike.
-
-**Settings → Colours** (`qs ipc call settings colours`) shows the same thing
-without opening the file:
-
-- **App templates** lists every template with the file it writes and how the
-  last change went, matugen's reason included when one failed. A switch turns
-  a template off (its block stays in the config, commented out) or back on, in
-  which case it renders at once with the current colours. *Render again* redoes
-  all of them without touching the wallpaper.
-- **Add an app** offers the templates Lucid ships for applications you have
-  installed but that aren't wired up yet — installed after Lucid, say.
-- **Your own template** adds one from a file or an `https://` link. *Try it*
-  shows what it writes with your colours, or why it can't, before it's added.
-  Below it, every colour role of the current palette: click one to copy the
-  variable that writes it, as `#rrggbb`, `rrggbb`, `rgb()`, `rgba()` or `hsl()`.
-
-`~/.config/lucid/templates.py` does the editing, and runs from a terminal too
-(`templates.py list`, `set <name> on|off`, `add`, `remove`, `try`). The config
-is copied to `config.toml.lucid-backup` before each change.
-
-### Adding your own theme
-
-**Settings → Palettes** (`qs ipc call settings palettes`) has a **gallery** of
-the few hundred base16 and base24 schemes that
-[tinted-theming](https://github.com/tinted-theming/schemes) collects, each drawn
-in its own colours, searchable, and split into dark and light. *Download* fetches
-the whole collection once (about half a megabyte, kept in
-`~/.cache/lucid/schemes`); after that, hovering a scheme offers *Add*, which
-makes it one of your themes, and *Use*, which also switches to it.
-
-The same page takes the URL of any colour-scheme repo, or a scheme file you
-already have, clones or reads it, and builds a full Material 3 palette out of
-what it finds. Scheme repos
-agree on no common format, so detection is tiered: base16 and base24 YAML,
-name-keyed JSON (Catppuccin and friends) and palettes Lucid exported are read
-exactly, and anything else
-falls back to harvesting hex codes and sorting them by tone and chroma. A repo
-carrying several variants lists them so you can pick one, and wallpapers in the
-repo come along with it.
-
-Nothing from the repo is ever executed — only text is parsed and only images
-are copied.
-
-It writes `~/.config/lucid/themes/<id>/{quickshell.json,meta.json}` and
-`~/Pictures/wallpapers/<id>/`, which you can also do by hand: a
-`quickshell.json` with the same keys as the bundled palettes is all a theme is.
-The importer runs from a terminal too, on a repo URL or a local file or folder:
+*Settings → Colours* lists every template with how its last render went, adds
+the ones Lucid ships for apps you have, and takes your own from a file or a
+link. *Settings → Palettes* adds themes from a gallery of a few hundred base16
+and base24 schemes, from any scheme repo or file, or from its editor, and
+exports the palette on screen as a Lucid palette or base16 YAML.
 
 ```sh
 python3 ~/.config/lucid/add-theme.py <repo-url|file|folder> [--list] [--variant <name>] [--name <label>]
-python3 ~/.config/lucid/scheme-gallery.py update    # the gallery, downloaded and indexed
 ```
 
-Further down the page, the **editor** works on the palette on screen. Six key
-colours (background, text, primary, secondary, tertiary, error) each rebuild
-the whole palette the way an imported scheme is built, and every other role can
-be set by itself; the shell wears the draft while you work, and *Save as theme*
-keeps it (*Discard*, or closing Settings, puts the palette back). **Export**
-writes the palette on screen to a file: a *Lucid palette*, which keeps every
-role and imports back exactly, or *base16 YAML* for tinted-theming's tools and
-anything else that reads base16.
+</details>
 
-The exporter runs from a terminal too:
+## Keybinds
 
-```sh
-python3 ~/.config/lucid/palette-edit.py export ~/.cache/quickshell/matugen.json <lucid|base16> <file> [<name>]
+<details>
+<summary><b>The binds Lucid ships</b> &nbsp;(<code>SUPER</code> + <code>/</code> shows them all, and Settings → Keybinds changes any of them)</summary>
+<br>
+
+| Key | Does |
+| --- | --- |
+| `SUPER` (tap) | Launcher |
+| `SUPER` + `P` | Commands |
+| `SUPER` + `T` / `B` | Theme / wallpaper picker |
+| `SUPER` + `SHIFT` + `V` | Clipboard history |
+| `SUPER` + `S` | Settings |
+| `SUPER` + `.` | Emoji picker |
+| `SUPER` + `K` | On-screen keyboard |
+| `SUPER` + `/` | Every keybind |
+| `SUPER` + `W` | Workspace overview (or a three-finger swipe) |
+| `SUPER` + `Esc` | Session screen |
+| `CTRL` + `ALT` + `TAB` | Window switcher, newest first (`+SHIFT` steps back) |
+| `Print` / `SUPER` + `D` | LucidShot |
+| `SUPER` + `Print` | Whole screen |
+| `SUPER` + `SHIFT` + `T` / `C` | Copy text / pick a colour |
+| `SUPER` + `E` | Lumen |
+| `SUPER` + `C` | Close the window |
+| `SUPER` + `V` | Float it at 1366×768, centred, or tile it again |
+| `SUPER` + `J` | Toggle the split |
+| `SUPER` + `1`–`0` | Workspace (`+SHIFT` moves the window there) |
+| `SUPER` + arrows | Move focus |
+| `SUPER` + `R` | Reload Hyprland |
+| `SUPER` + `M` | Exit Hyprland |
+| `F1`–`F6` | Mute, volume, microphone, brightness |
+| `F8` / `F9` / `F10` / `F12` | Radios / terminal / lock / calculator |
+
+Everything is also reachable over IPC, so a config of your own can bind it:
+
+```lua
+hl.bind("SUPER + SPACE", hl.dsp.exec_cmd("qs ipc call -- launcher toggle"))
+hl.bind("SUPER + L",     hl.dsp.exec_cmd("qs ipc call -- lock lock"))
+hl.bind("SUPER + A",     hl.dsp.exec_cmd("qs ipc call -- controlcentre toggle"))
 ```
+
+Keep the `--`: a call that takes an argument fails without it
+(`qs ipc call -- settings show bar`), and it does no harm elsewhere.
+
+</details>
+
+## IPC reference
+
+<details>
+<summary><b>Every surface is scriptable:</b> <code>qs ipc call -- &lt;target&gt; &lt;function&gt; [arg]</code></summary>
+<br>
+
+| Target | Functions |
+| --- | --- |
+| `launcher` | `toggle` `open` `close` `wallpaper` `live` `theme` `power` `emoji` `clipboard` `blur` `command` `shuffle` `search <query>` `hide <id>` `unhide <id>` `hidden` |
+| `controlcentre` | `toggle` `open` `close` |
+| `media` | `toggle` `open` `close` `identify` `lyrics` `playPause` `next` `previous` |
+| `clock` | `open <tab>` `toggle` `close`, *tab* being `today`, `calendar`, `timer`, `stopwatch` or `world` |
+| `timer` | `start <seconds>` `stopwatch` `pomodoro` `pomodoroSkip` `pomodoroStop` `pomodoroAdd <minutes>` `status` |
+| `alarm` | `add <hour> <minute> <label>` `remove <id>` `list` `stop` `snooze` `status` |
+| `workspaces` | `toggle` `open` `close` |
+| `settings` | `toggle` `open` `close` `show <page>` `search <words>` `reset`, and a function per page (`bar`, `sound`, `displays`…) |
+| `edit` | `toggle` `on` `off` `bar` `dock` `open <module>` `close` `undo` `revert` `status` |
+| `widgets` | `panel` `openPanel <screen>` `closePanel` `add <type> <variant>` `remove <uid>` `preset <name>` `save <name>` `list` `catalogue` `toggle` `lock` `unlock`… |
+| `desktop` | `icons` `arrange` `selectAll` `undo` `refresh` |
+| `snap` | `toggle` `open` `close` `text` `color` `video` |
+| `recorder` | `toggle` `start` `stop` `pause` `status` |
+| `screenshot` | `full` `text` |
+| `notifs` | `toggle` `open` `close` `clear` `toggleDnd` `expandAll` `settings` `count` |
+| `toast` | `show <icon> <label>` `warn <icon> <label>` |
+| `sounds` | `play <name>` `list` |
+| `lock` | `lock` `unlock` `isLocked` `status` (nothing here gets past the password) |
+| `session` | `toggle` `open` `close` |
+| `switcher` | `next` `prev` `toggle` `open` `close` `status` |
+| `keybinds` | `toggle` `open` `close` `edit` `editBind <id>` |
+| `moji` | `toggle` `open` `close` `emoji` `kaomoji` `gif` `center` |
+| `keyboard` | `toggle` `open` `close` `letters` `fnkeys` `center` `bigger` `smaller` |
+| `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
+| `network` | `status` `list` `rescan` |
+| `bluetooth` | `send <address> <path>` |
+| `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |
+| `nightlight` | `toggle` `on` `off` `status` |
+| `displays` | `list` `settings` `shell <where>` `bar <where>` `dock <where>` |
+| `updates` | `status` `check` `whatsnew` `update` `beta` `show` |
+| `whatsnew` | `open` `close` `status` |
+| `polkit` | `status` `demo <action-id>` `fail` `grant` `close` |
+| `debug` | `toggle` `on` `off` (draws input and blur regions) |
+
+Lumen and Lens run as their own processes with launchers of their own:
+`~/.config/quickshell/lucidlumen/lumen [folder]` and
+`~/.config/quickshell/lucidlens/lens <file>`.
+
+</details>
 
 ## Requirements
 
-Arch Linux and Hyprland. The installer handles all of this, listed here so
-you know what's being pulled in.
+<details>
+<summary><b>What the installer pulls in</b></summary>
+<br>
 
-**Required** — the shell won't start without these:
+**Required:** `hyprland` · `quickshell` · `qt6-5compat` · `qt6-declarative` ·
+`qt6-multimedia` · `qt6-webengine` (Qt's PDF module, which Lumen's window needs)
 
-`quickshell` · `qt6-5compat` · `qt6-declarative` · `qt6-multimedia` · `qt6-webengine`
+**Per feature**, where a missing one breaks only its own feature:
 
-`qt6-webengine` is there for Qt's PDF module: without it Lumen's window doesn't
-open, and neither do the file dialogs it draws for every app.
-
-**Per feature** — a missing one breaks only its own feature:
-
-| Package | Backs |
+| Packages | Back |
 | --- | --- |
-| `matugen`, `jq` | Wallpaper-derived colours, theme switching |
-| `git` | Importing a theme from a scheme repo on Settings → Theme |
-| `awww` | Setting the wallpaper |
-| `python-pywal` | The Pywal theme |
-| `networkmanager` | Wi-Fi panel |
-| `qrencode` | The QR code that shares a saved Wi-Fi network. Without it the password still shows, with no code |
-| `bluez`, `bluez-utils` | Bluetooth panel and the Bluetooth settings page |
-| `bluez-obex`, `python-gobject` | Sending and receiving files over Bluetooth. Without `bluez-obex` the page says so, files sent to the machine are turned away and sending says what is missing |
-| `kdeconnect`, `python-gobject` | The KDE Connect page. The daemon is the backend and starts itself; `python-gobject` backs the bridge Lucid talks to it through. Without either the page says so and does nothing else |
-| `sshfs` | Browsing a phone's files from the phone widget or the KDE Connect page. Without it KDE Connect cannot mount the phone and the button does nothing |
-| `libpulse`, `wireplumber` | Volume, audio devices, and playing Lucid's sounds |
-| `inotify-tools` | The camera on/off toast and sound. Without it the camera is never watched; nothing else changes |
-| `smartmontools`, `udisks2` | The Storage page's drive health and mounting. Without them those two rows say so; the map and the cleanup work either way |
-| `ffmpegthumbnailer`, `gvfs` | The desktop icons: thumbnails of videos and music with cover art, and the drives and Trash shown on the desktop |
-| `gvfs-smb`, `gvfs-nfs`, `gvfs-dnssd`, `gvfs-wsdd` | Network drives in Lumen: Windows shares and most NAS drives (`smb://`), NFS exports, WebDAV, and the computers nearby. `sftp://` and `ftp://` need only `gvfs`. Macs, NAS drives and Linux machines show under *Nearby* once Avahi runs (`sudo systemctl enable --now avahi-daemon`); without these Lumen says which one an address needs |
-| `qt6-imageformats`, `kimageformats` | Pictures Qt can't read alone, in Lens, the photo widget and the What's new sheet: WebP, TIFF, TGA and ICNS, then AVIF |
-| `libjpeg-turbo`, `exiv2` | Turning a JPEG in Lens without encoding it again. Without them it is saved again at high quality |
-| `pipewire-audio`, `sound-theme-freedesktop` | The Sound page's Left/Right test: `pw-play`, and the voice that names each side. Without them the test plays nothing |
-| `brightnessctl`, `upower` | Brightness, battery |
-| `hyprsunset` | Night light. Lucid starts it when night light first comes on and talks to it over `hyprctl hyprsunset`; one you already run is used as it is, and never reset unless Lucid warmed it |
-| `hypridle` | The Idle page: dimming, locking, screen off and suspend when you walk away. Without it the page says so and writes nothing |
-| `grim`, `wf-recorder`, `ffmpeg`, `imagemagick` | Screenshots and recording |
-| `tesseract`, `tesseract-data-eng` | The Text mode's OCR. Without them Text mode says so and copies nothing. Add `tesseract-data-<lang>` and pick it in *Settings → Screenshots* for another language |
-| `python-pillow`, `python-numpy`, `python-fonttools` | Emoji in copied text. Without them the text still copies, minus the emoji. The glyph atlas is built once and cached in `~/.cache/lucidshot-ocr` |
-| `wl-clipboard`, `wtype` | Emoji and GIF pasting |
-| `cliphist` | Clipboard history. Without it the launcher's Clipboard mode says so and the Launcher page's switch is greyed out |
-| `cava` | Audio visualisers — the media panel's strip (its config is installed to `~/.config/cava/quickshell.conf`; the strip needs that file's raw-ascii output settings) and the desktop widget, which writes its own `~/.cache/quickshell/lucid-cava.conf` at whatever band count the widest card asks for |
-| `songrec` | Song identification |
-| `curl` | Weather, location lookup and GIF search |
-| `polkit` | Every administrator prompt. The shell registers itself as the session's authentication agent and drives polkit's own setuid helper, so no separate agent is needed — and no other agent should be started, as only one can hold the session |
-| `accountsservice` | The Users and Accounts page. Every change goes through it, so the shell's own polkit dialog asks and nothing runs as root |
-| `libnotify` | Notification actions |
-| `hyprpicker` | The Colour mode. Without it the mode says so and picks nothing |
-| `xdg-utils` | Opening links and files from the shell |
-| `librsvg` | Turning the pointer's shadow off — the cursor theme is rendered again from its vector sources |
-| `noto-fonts-emoji` | Emoji rendering |
+| `matugen` `jq` `python-pywal` `awww` `git` | Colours, themes, wallpapers, importing schemes |
+| `networkmanager` `qrencode` | Wi-Fi and sharing a network as a QR code |
+| `bluez` `bluez-utils` `bluez-obex` `python-gobject` | Bluetooth, and files both ways |
+| `kdeconnect` `sshfs` | The Phone page and browsing a phone's files |
+| `libpulse` `wireplumber` `pipewire-audio` `sound-theme-freedesktop` | Sound, its devices and its tests |
+| `gvfs` `gvfs-smb` `gvfs-nfs` `gvfs-dnssd` `gvfs-wsdd` `ffmpegthumbnailer` | Drives, network shares and thumbnails |
+| `qt6-imageformats` `kimageformats` `libjpeg-turbo` `exiv2` | Lens and pictures in every format |
+| `grim` `wf-recorder` `ffmpeg` `imagemagick` | Screenshots and recording |
+| `tesseract` `tesseract-data-eng` `python-pillow` `python-numpy` `python-fonttools` | Reading text off the screen, emoji included |
+| `wl-clipboard` `wtype` `cliphist` | Pasting and clipboard history |
+| `cava` `songrec` | The visualiser and song identification |
+| `brightnessctl` `upower` `hypridle` `hyprsunset` | Brightness, battery, idle and night light |
+| `polkit` `accountsservice` | Administrator prompts and the Users page |
+| `librsvg` `python-cairo` | Lucid's pointer and the cursor shadow switch |
+| `xdg-desktop-portal-hyprland` `xdg-desktop-portal-gtk` | Screen sharing and portals |
+| `smartmontools` `udisks2` `inotify-tools` | Drive health, mounting, the camera toast |
+| `curl` `libnotify` `xdg-utils` `noto-fonts-emoji` | Weather, lyrics, notifications, links, emoji |
 
-**The Hyprland config and the look** — installed unless you pass `--no-hypr`
-or `--no-look`. The binds shell out to these, so a missing one is a dead key:
+**The Hyprland config and the look** (unless `--no-hypr` / `--no-look`): `kitty`
+· `fish` · `playerctl` · `gnome-calculator` · `starship` ·
+`ttf-jetbrains-mono-nerd` · `adw-gtk-theme` · `papirus-icon-theme`
 
-| Package | Backs |
-| --- | --- |
-| `kitty` | Terminal (`F9`), and the themed terminal colours |
-| `fish` | The shell kitty opens |
-| `playerctl` | The media keys |
-| `gnome-calculator` | Calculator (`F12`) |
-| `starship` | The prompt |
-| `ttf-jetbrains-mono-nerd` | The glyphs the prompt and kitty are drawn with |
-| `adw-gtk-theme` | Provides `adw-gtk3-dark`, the GTK theme Lucid selects |
-| `papirus-icon-theme` | Fallback icons — FairyWren declares `Inherits=Papirus` |
+**The dock's default pins** (unless `--no-apps`): `zen-browser-bin` ·
+`vscodium-bin` · `spotify` · `vesktop` · `steam` · `proton-vpn-gtk-app`. An
+equivalent you already have counts, and Steam brings the Vulkan drivers for the
+graphics cards you have.
 
-**The dock's default pins** — installed unless you pass `--no-apps`. Several
-GB, mostly from the AUR:
+**Fonts:** Google Sans Flex ships with Lucid under the Open Font License, so
+nothing needs installing; any installed font can be picked in Settings.
 
-`zen-browser-bin` · `vscodium-bin` · `spotify` · `vesktop` · `steam` ·
-`proton-vpn-gtk-app`
+</details>
 
-Anything you already have an equivalent of is left alone — `vscodium` counts
-for `vscodium-bin`, `discord` for `vesktop`, and so on. `steam` is skipped
-unless the `multilib` repo is enabled; with it come the Vulkan drivers for the
-graphics cards the machine has (`vulkan-radeon`, `vulkan-intel`, NVIDIA's own or
-nouveau, and their 32-bit halves), so pacman never has to guess one.
+<details>
+<summary><b>Optional setup</b></summary>
+<br>
 
-Lucid uses Hyprland-specific APIs for workspaces and window management. It
-will not work on other compositors.
-
-### Fonts
-
-The default UI font is **Google Sans**, which is not in the Arch repos. If you
-don't have it, Qt falls back to your default sans and everything still works —
-or pick any installed font in Settings → General.
-
-## Optional setup
-
-**GIF search** needs a free Giphy key (email only, no card) from
-[developers.giphy.com](https://developers.giphy.com/dashboard/). Put it in
-`~/.config/quickshell/lucidmoji/config.json`:
+**GIF search** needs a free Giphy key from
+[developers.giphy.com](https://developers.giphy.com/dashboard/) (Tenor works
+too), in `~/.config/quickshell/lucidmoji/config.json`:
 
 ```json
 { "giphyKey": "your-key-here", "tenorKey": "", "gifDir": "" }
 ```
 
-Tenor works too if you'd rather use that. Emoji and kaomoji need no key.
+**Wallpapers** live in `~/Pictures/wallpapers`, a folder per theme; the folder
+can be changed in Settings → General.
 
-**Wallpapers** default to `~/Pictures/wallpapers`, one folder per theme —
-`~/Pictures/wallpapers/gruvbox` is what the strip shows while you are on
-Gruvbox. The installer puts a set in each of them, skipping any file you already
-have, and `--no-wallpapers` leaves the folder alone entirely. Change the folder
-in Settings → General, which then applies to every theme.
-
-## IPC reference
-
-Every surface is scriptable. `qs ipc call -- <target> <function> [arg]`:
-
-| Target | Functions |
-| --- | --- |
-| `launcher` | `toggle` `open` `close` `wallpaper` `theme` `power` `blur` `command` `shuffle` `clipboard` `emoji` `search <query>` `hide <id>` `unhide <id>` `hidden` |
-| `settings` | `toggle` `open` `close` `show <page>` `general` `users` `glass` `bar` `dock` `colours` `palettes` `environment` `keybinds` `input` `displays` `widgets` `windows` `workspaces` `notifications` `sound` `network` `bluetooth` `kdeconnect` `idle` `datetime` `font` `search <words>` `reset` |
-| `idle` | `status` `keepawake` `awake` `normal` `on` `off` `restart` |
-| `network` | `status` `list` `rescan` |
-| `nightlight` | `toggle` `on` `off` `status` |
-| `kdeconnect` | `status` `list` `rescan` `ring <id>` `ping <id>` `clipboard <id>` `files <id>` `send <id> <path>` |
-| `desktop` | `icons` (hide or show the desktop icons) `arrange` `selectAll` `undo` `refresh` |
-| `bluetooth` | `send <address> <path>` (an empty path opens the file chooser) |
-| `edit` | `toggle` `on` `off` `bar` `dock` `open <module>` `close` `undo` `revert` `status` — edit mode, its sheets and its history |
-| `widgets` | `panel` `openPanel <screen>` `closePanel` `add <type> <variant>` `remove <uid>` `clear` `toggle` `lock` `unlock` `list` `catalogue` `settings` `resize <uid> <w> <h>` |
-| `moji` | `toggle` `open` `close` `emoji` `kaomoji` `gif` `center` |
-| `keyboard` | `toggle` `open` `close` `letters` `fnkeys` `center` `bigger` `smaller` |
-| `notifs` | `toggle` `open` `close` `clear` `toggleDnd` `expandAll` `settings` `count` |
-| `lock` | `lock` `unlock` `isLocked` `status` — nothing here bypasses the password; PAM is the only way in |
-| `snap` | `toggle` `open` `close` `text` `color` `video` |
-| `session` | `toggle` `open` `close` |
-| `switcher` | `next` `prev` `toggle` `open` `close` `status` — `next`/`prev` open it when it is closed |
-| `timer` | `start <seconds>` `stopwatch` `pomodoro` `pomodoroSkip` `pomodoroStop` `pomodoroAdd <minutes>` `status` |
-| `clock` | `open <tab>` `toggle` `close` — *tab* is `today`, `calendar`, `timer`, `stopwatch` or `world` |
-| `toast` | `show <icon> <label>` `warn <icon> <label>` |
-| `sounds` | `play <name>` `list` — at the system-sound volume |
-| `screenshot` | `full` `text` |
-| `media` | `toggle` `open` `close` `identify` `playPause` `next` `previous` |
-| `workspaces` | `toggle` `open` `close` |
-| `updates` | `status` `check` `whatsnew` (the What's new sheet for this version) `update` (install the newest release) `beta` (install the newest commit on `main`) `show` (bring back a hidden update pop-up) |
-| `displays` | `list` `settings` `shell <where>` `bar <where>` `dock <where>` — *where* is an output name, `left`/`middle`/`right`, `here`, `next`, `prev` or `auto` |
-| `polkit` | `status` `demo <action-id>` `fail` `grant` `close` — `demo` raises the dialog with no PAM session behind it, for previewing a theme |
-| `debug` | `toggle` `on` `off` — draws input and blur region outlines |
-
-## Uninstall
-
-```sh
-./uninstall.sh
-```
-
-Moves `~/.config/quickshell` aside rather than deleting it, so your settings
-survive. Packages installed by `install.sh` are left alone. `install.sh` notes
-how things stood before it first changed them, in
-`~/.local/state/lucid/before-install`, and the uninstaller offers to put those
-back: the login screen it replaced with SDDM (or none at all), the GTK theme,
-icons and dark mode GNOME reads, and your own Hyprland config (or Hyprland's
-default, if you had none). It ends by naming the desktop to log back into, or
-the ones still installed if that one is gone. It prints what else
-it left in place — the matugen template blocks, `~/.config/hypr`,
-`starship.toml` and its init lines in your rc files, the fastfetch config,
-kitty's colour and opacity includes — each with a timestamped backup beside it, so you can undo
-them by hand.
+</details>
 
 ## Troubleshooting
 
-**The media popup's visualiser sits flat and never moves.**
-cava is running without `~/.config/cava/quickshell.conf` — its own defaults emit
-ncurses output rather than the raw ascii frames the strip parses, so there is
-nothing to draw. Re-run the installer, or copy `support/cava/quickshell.conf`
-there yourself. Before v1.0.0 this showed as one enormous bar covering the
-popup instead.
+<details>
+<summary><b>Nothing appears when I run <code>qs</code></b></summary>
+<br>
 
-**Another app's notifications show instead of Lucid's.**
-`org.freedesktop.Notifications` is a single-owner D-Bus name. Lucid's bar
-serves it, but any other notification daemon that is merely *installed* —
-swaync, dunst, mako — gets D-Bus-activated by the first notification and then
-keeps the name for the whole session. It does not need to be autostarted to
-win. Check who holds it:
+Check `qs log` for QML errors, and make sure you are on Hyprland: Lucid needs
+its Wayland protocols and will not run on other compositors.
+
+</details>
+
+<details>
+<summary><b>Another app's notifications show instead of Lucid's</b></summary>
+<br>
+
+`org.freedesktop.Notifications` belongs to whoever takes it first, and an
+installed daemon (swaync, dunst, mako) is started by the first notification.
+Check who holds it, mask the other one and log back in (the installer offers to):
 
 ```sh
 busctl --user status org.freedesktop.Notifications | grep PID
-```
-
-If that is not `quickshell`, mask the daemon and log back in:
-
-```sh
 systemctl --user mask swaync.service   # or dunst.service, mako.service
-pkill swaync
 ```
 
-The installer offers to do this for you.
+</details>
 
+<details>
+<summary><b>Everything is grey, or the colours look wrong</b></summary>
+<br>
 
-**GTK apps are light, or their icons are wrong.**
-Under Hyprland there is no xsettings daemon, so GTK3/GTK4 read
-`~/.config/gtk-{3,4}.0/settings.ini` while GNOME apps and portals read
-`gsettings`. The installer writes both. If only some apps changed, check they
-agree:
+The palette cache is missing. Set a wallpaper through Settings → General, or
+copy a bundled palette:
+`cp ~/.config/lucid/themes/nord/quickshell.json ~/.cache/quickshell/matugen.json`
+
+</details>
+
+<details>
+<summary><b>GTK apps are light, or their icons are wrong</b></summary>
+<br>
+
+GTK reads `~/.config/gtk-{3,4}.0/settings.ini` while GNOME apps and portals read
+`gsettings`; the installer writes both. Check they agree:
 
 ```sh
 gsettings get org.gnome.desktop.interface gtk-theme    # adw-gtk3-dark
 gsettings get org.gnome.desktop.interface icon-theme   # FairyWren_Dark
-grep -E 'theme-name' ~/.config/gtk-3.0/settings.ini ~/.config/gtk-4.0/settings.ini
 ```
 
-The icons live in `~/.local/share/icons/FairyWren_Dark`. If that directory is
-missing the installer could not reach GitLab — clone it by hand from
-`https://gitlab.com/FreshDoctor/FairyWren-Icons`.
+</details>
 
-**Nothing appears when I run `qs`.** Check `qs log` for QML errors, and
-confirm you're on Hyprland — Lucid needs its Wayland protocols.
+<details>
+<summary><b>The media panel's visualiser never moves</b></summary>
+<br>
 
-**Everything is grey / colours look wrong.** The palette cache is missing or
-empty. Set a wallpaper through Settings → General, or copy a bundled palette:
-`cp ~/.config/lucid/themes/nord/quickshell.json ~/.cache/quickshell/matugen.json`
+cava is running without `~/.config/cava/quickshell.conf`. Re-run the installer,
+or copy `support/cava/quickshell.conf` there.
 
-**The blur frosts my windows instead of the desktop.** Hyprland's blur samples
-whatever is behind the layer. Lucid leaves that on so a panel opened over a
-window shows the window; if you would rather have every pill frost the
-wallpaper, uncomment the `xray` line at the end of
-`~/.config/hypr/modules/layerrules.lua`, or add this to `hyprland.lua`:
+</details>
 
-```lua
-hl.layer_rule({ match = { namespace = "quickshell" }, xray = true })
-```
+<details>
+<summary><b>Animations feel choppy on an NVIDIA card</b></summary>
+<br>
 
-A Lua config cannot source a `.conf` file, so the old `layerrule = xray 1,
-quickshell` line has nowhere to go.
+Qt refuses threaded OpenGL on the NVIDIA driver, which pins animations to about
+60 fps. Lucid starts through `~/.config/lucid/launch-shell.sh`, which moves such
+machines to Qt's Vulkan backend; `launch-shell.sh --explain` says what it
+decided, and `LUCID_RHI_BACKEND=vulkan` or `opengl` overrides it.
 
-**Icons look blurry.** A fractional `monitor` scale factor puts icons on
-fractional pixels. Use an integer scale, or adjust the icon size in Settings.
+</details>
 
-**Animations feel choppy on an NVIDIA card, even at 144Hz or higher.** Qt's
-Wayland plugin refuses threaded OpenGL on the proprietary NVIDIA driver — that
-is its workaround for [QTBUG-95817](https://bugreports.qt.io/browse/QTBUG-95817)
-— so Qt Quick falls back to the basic render loop, whose animation driver is a
-fixed ~16ms timer with no vsync awareness. Every animation in the shell is then
-pinned to ~60fps however fast the monitor runs, which is why Hyprland stays
-smooth while Lucid does not.
+<details>
+<summary><b>A keybind with an argument does nothing</b></summary>
+<br>
 
-Lucid starts through `~/.config/lucid/launch-shell.sh`, which moves those
-machines to Qt's Vulkan backend — Vulkan carries no such vendor check, so the
-threaded loop and its vsync-driven animations come back. Ask it what it decided:
+Put `--` before the target: `qs ipc call -- settings show bar`.
 
-```sh
-~/.config/lucid/launch-shell.sh --explain
-```
+</details>
 
-It only switches when NVIDIA is the GPU the compositor actually renders on, the
-driver is 555 or newer, and an NVIDIA Vulkan driver is present. Mesa already
-gets the threaded loop and is left alone. Override the detection with
-`LUCID_RHI_BACKEND=vulkan` or `LUCID_RHI_BACKEND=opengl`; an existing
-`QSG_RHI_BACKEND` in your environment always wins.
+<details>
+<summary><b>Icons look blurry</b></summary>
+<br>
 
-**A keybind with an argument does nothing.** Add `--` before the target:
-`qs ipc call -- settings show bar`. Without it `qs` parses the argument as its
-own and refuses the call. Argument-free calls work either way.
+A fractional monitor scale puts icons on fractional pixels. Use a whole-number
+scale, and size the shell with *Interface size* in Settings → General instead.
+
+</details>
 
 ## Contributing
 
-Issues and PRs welcome. If you're reporting a bug, `qs log` output and your
-Hyprland version help a lot.
+Issues and pull requests are welcome. For a bug, `qs log` and your Hyprland
+version help a lot. A good part of Lucid is the work of its contributors, above
+all **Ciro Rivera**, Lucid's co-developer:
+
+<a href="https://github.com/Sn3akyy1/lucid/graphs/contributors"><img src="https://contrib.rocks/image?repo=Sn3akyy1/lucid" alt="Contributors"></a>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Sn3akyy1/lucid&type=Date&theme=dark">
+  <img alt="Star history" src="https://api.star-history.com/svg?repos=Sn3akyy1/lucid&type=Date" width="600">
+</picture>
 
 ## The mark
 
@@ -1498,26 +893,17 @@ Hyprland version help a lot.
   <img src="assets/logo-mark.svg" width="64" align="left" alt="The Lucida mark">
 </picture>
 
-The logo is **Lucida** — the astronomical term for the brightest star in a
-constellation, sharing its Latin root (*lux*) with "Lucid". A broken orbit ring,
-a four-point star at the centre, and one companion dot outside the gap.
-
-Its official colour is **cyan `#00F0FF`**. In the shell itself the ring and the
-companion dot track your accent, so the mark on the dock launcher recolours with
-whatever palette you are running — but cyan is the canonical brand colour, and
-what you see above.
+The logo is **Lucida**, the astronomical name for the brightest star in a
+constellation, from the same Latin root (*lux*) as Lucid: a broken orbit ring, a
+four-point star at the centre and one companion outside the gap. Its colour is
+**cyan `#00F0FF`**; in the shell the ring and the companion follow your accent.
 
 <br clear="left">
 
-`assets/logo.svg` is the mark on its dark plate; `assets/logo-mark.svg` is the
-bare cyan mark for dark backgrounds, and `assets/logo-mark-light.svg` its deep
-teal twin (`#006970`, the same seed's light-mode primary) for light ones. All are
-drawn from the same 24×24 geometry as [`LucidaMark.qml`](lucidprefs/LucidaMark.qml).
-
 ## License
 
-MIT — see [LICENSE](LICENSE).
-
-Built on [Quickshell](https://quickshell.org). Colour generation by
-[matugen](https://github.com/InioX/matugen). Design follows
+MIT, see [LICENSE](LICENSE). Google Sans Flex and the Poster clock's figures are
+under the Open Font License (`assets/fonts`). Built on
+[Quickshell](https://quickshell.org), with colours by
+[matugen](https://github.com/InioX/matugen), following
 [Material 3 Expressive](https://m3.material.io).
