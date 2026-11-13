@@ -57,6 +57,9 @@ local skip = {}
 local failed = {}
 -- rules cannot be removed, only switched off, so each apply retires the last set
 local rules = {}
+-- whether the pointer leans as it moves, and in apps that draw their own, as
+-- Settings last set them
+local tilt, tiltApps = nil, nil
 
 -- a value as JSON for Settings: gaps as one number (or "t r b l"), colours as
 -- "aarrggbb,…@angle"
@@ -157,6 +160,18 @@ function M.apply(live)
                 border_color = cfg.pinned.focused,
             })
             if fok and frule then rules[#rules + 1] = frule end
+        end
+    end
+    -- the pointers that lean as they move, which modules/plugins.lua names.
+    -- shape rules cannot be removed either: handing the choice back puts
+    -- plugins.lua's own back, which is on
+    if cfg.cursor_tilt ~= nil or cfg.cursor_tilt_apps ~= nil or tilt ~= nil or tiltApps ~= nil then
+        tilt, tiltApps = cfg.cursor_tilt, cfg.cursor_tilt_apps
+        if LucidCursor and hl.plugin.dynamic_cursors then
+            local ok, err = pcall(LucidCursor.tilt, tilt ~= false, tiltApps ~= false)
+            if not ok then failed["lucid.cursor_tilt"] = tostring(err) end
+        elseif tilt ~= nil or tiltApps ~= nil then
+            failed["lucid.cursor_tilt"] = "the cursor plugin is not loaded"
         end
     end
     write_status()

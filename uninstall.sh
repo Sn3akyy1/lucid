@@ -43,6 +43,7 @@ dm_name() {
 qs kill -p "$SHELL_DIR" 2>/dev/null || true
 qs kill -p "$SHELL_DIR/lumen.qml" 2>/dev/null || true
 qs kill -p "$SHELL_DIR/lens.qml" 2>/dev/null || true
+qs kill -p "$SHELL_DIR/clock.qml" 2>/dev/null || true
 
 if [[ -d "$SHELL_DIR" ]]; then
     if ask "Move $SHELL_DIR to $SHELL_DIR.removed-$STAMP?"; then
@@ -54,6 +55,7 @@ if [[ -d "$SHELL_DIR" ]]; then
         # lumen's entry points into the folder that just moved
         rm -f "${XDG_DATA_HOME:-$HOME/.local/share}/applications/lucid.lumen.desktop"
         rm -f "${XDG_DATA_HOME:-$HOME/.local/share}/applications/lucid.lens.desktop"
+        rm -f "${XDG_DATA_HOME:-$HOME/.local/share}/applications/lucid.clock.desktop"
         # the settings window's entry, which hands the name back to quickshell's own
         ENTRY="${XDG_DATA_HOME:-$HOME/.local/share}/applications/org.quickshell.desktop"
         if grep -qs '^Name=Lucid Settings$' "$ENTRY"; then
@@ -174,6 +176,8 @@ printf '  ~/Pictures/wallpapers           the wallpapers, yours and the\n'
 printf '                                  bundled ones alike\n'
 printf '  ~/.local/share/icons/*-noshadow  cursor themes rebuilt without\n'
 printf '                                  their shadow, if you asked for that\n'
+printf '  ~/.local/share/icons/lucid-cursors  Lucid'"'"'s pointer, still the cursor\n'
+printf '                                  theme until you pick another one\n'
 printf 'Installed packages are left alone too.\n'
 printf '%sRestore from a .backup-* file, or undo these by hand.%s\n' "$ylw" "$r"
 

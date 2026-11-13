@@ -119,11 +119,18 @@ load() {
         die "built for a newer Hyprland than the one running — log out and back in"
     fi
 
-    local out
+    # coming in, the plugin loads its large copy of the cursor theme on a thread
+    # of its own, and a setcursor landing meanwhile crashes Hyprland. Lucid's
+    # setcursors take this lock and wait a moment after lucid-cursor.changed
+    local rt="${XDG_RUNTIME_DIR:-/tmp}" out
+    exec 8>>"$rt/lucid-cursor.lock"
+    flock 8
     out=$(hyprctl plugin load "$SO" 2>&1) || true
     # the plugin reloads the config itself once it is in, which is when the
     # settings in modules/plugins.lua take hold
     sleep 0.5
+    touch "$rt/lucid-cursor.changed"
+    exec 8>&-
     is_loaded || die "Hyprland would not load it: ${out:-no reason given}"
     say "loaded"
 }

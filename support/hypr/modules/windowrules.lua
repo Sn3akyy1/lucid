@@ -42,6 +42,15 @@ hl.window_rule({
     center = true,
 })
 
+-- lucid's clock app keeps a window of its own size, floated in the middle
+hl.window_rule({
+    name  = "float-lucid-clock",
+    match = { class = "^(lucid\\.clock)$" },
+
+    float  = true,
+    center = true,
+})
+
 hl.window_rule({
     match = { class = "org.gnome.Calculator" },
 

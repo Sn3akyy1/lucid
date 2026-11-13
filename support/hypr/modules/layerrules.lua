@@ -1,6 +1,9 @@
 hl.layer_rule({ match = { namespace = "logout_dialog" }, blur = true })
 hl.layer_rule({ match = { namespace = "rofi" }, dim_around = true })
 hl.layer_rule({ match = { namespace = "rofi" }, animation = "popin" })
+-- the pointer the desktop draws itself while a box is dragged under the windows
+-- (luciddesktop/Desktop.qml) maps with the press: faded in, it would show faint
+hl.layer_rule({ match = { namespace = "lucid-pointer" }, no_anim = true })
 -- The shell's glass surfaces blur through ext-background-effect-v1, and
 -- Hyprland renders windows *before* top layers, so without this their blur
 -- samples whatever window happens to be underneath. The kernel reaches far

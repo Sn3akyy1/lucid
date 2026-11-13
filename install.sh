@@ -203,8 +203,9 @@ PKG_FEATURES=(
     accountsservice
     # the environment page writes the desktop's appearance through these, and
     # the file chooser kde connect sends files with comes from the gtk portal.
-    # librsvg renders a cursor theme again when its shadow is turned off
-    gsettings-desktop-schemas qt6ct xdg-desktop-portal-gtk librsvg
+    # librsvg renders a cursor theme again when its shadow is turned off, and
+    # draws lucid's own pointer (bibata modern in the palette) through python-cairo
+    gsettings-desktop-schemas qt6ct xdg-desktop-portal-gtk librsvg python-cairo
     # sharing the screen (browsers, Discord, OBS) goes through Hyprland's own portal
     xdg-desktop-portal-hyprland
     # the launcher's $ mode runs a command in the user's terminal through this
@@ -486,6 +487,15 @@ fi
 if [[ -x "$SHELL_DIR/lucidlens/lens" ]]; then
     "$SHELL_DIR/lucidlens/lens" --quit-if-idle || true
     "$SHELL_DIR/lucidlens/lens" --default && say "  lens -> app launcher, opens pictures"
+fi
+
+# clock, lucid's clock app, is a quickshell of its own too. alarms, timers and
+# reminders ring from the shell, so it can stay closed; its desktop entry puts it
+# in the app launcher with its pages as actions. one left running with no window
+# holds the old files, so it goes first
+if [[ -x "$SHELL_DIR/lucidclock/clock" ]]; then
+    "$SHELL_DIR/lucidclock/clock" --quit-if-idle || true
+    "$SHELL_DIR/lucidclock/clock" --install && say "  clock -> app launcher"
 fi
 
 # the settings window is part of the shell's own process, so it carries
