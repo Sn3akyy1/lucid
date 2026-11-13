@@ -182,7 +182,7 @@ that is what your colours come from.
 | `--with-hypr` | Reinstalls Lucid's Hyprland config even when one is in place |
 | `--no-apps` | Doesn't install the apps the dock ships pinned (Zen, VSCodium, Spotify, Vesktop, Steam, Proton VPN) |
 | `--no-look` | Leaves kitty, starship, fastfetch, your shell rc files, VSCode and GTK alone |
-| `--no-wallpapers` | Doesn't copy the bundled wallpapers (about 800 MB, live ones included) |
+| `--no-wallpapers` | Doesn't copy the bundled wallpapers (about 1.3 GB, live ones included) |
 | `--no-plugins` | Doesn't build the tilting-cursor plugin |
 | `--no-sddm` | Leaves the login screen theme out |
 | `--login-screen` | Makes Lucid's theme the one the login screen shows (`Current=lucid`, backed up first) |
