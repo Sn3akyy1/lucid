@@ -335,16 +335,16 @@ Item {
             parts.push(Math.max(1, Math.round(n.s / parent.s * 100)) + "% of " + (map.stack.length > 1 ? parent.n : map.volName));
 
         if (n.t === 1 && n.f !== undefined)
-            parts.push(n.f === 1 ? "1 file" : (n.f || 0).toLocaleString(Qt.locale(), "f", 0) + " files");
+            parts.push(n.f === 1 ? "1 file" : (n.f || 0).toLocaleString(I18n.locale, "f", 0) + " files");
 
         if (n.t === 0 && n.m && map.pal)
-            parts.push("changed " + map.pal.ago(n.m));
+            parts.push(I18n.tr("changed %1", map.pal.ago(n.m)));
 
         if (n.t === 2)
-            parts.push("too small to draw one by one" + (map.current && map.current.d !== 1 ? ", click to look closer" : ""));
+            parts.push(I18n.tr("too small to draw one by one") + (map.current && map.current.d !== 1 ? I18n.tr(", click to look closer") : ""));
 
         if (n.u)
-            parts.push("you are not allowed in");
+            parts.push(I18n.tr("you are not allowed in"));
 
         return parts.join("  ·  ");
     }
@@ -509,14 +509,14 @@ Item {
                 M3Button {
                     variant: "tonal"
                     visible: map.homeStack !== null && map.homeStack.length > 1
-                    text: map.atHome ? "Whole disk" : "Home"
+                    text: map.atHome ? I18n.tr("Whole disk") : I18n.tr("Home")
                     iconPath: map.atHome ? "hard_drive" : "home"
                     onClicked: map.atHome ? map.goTo(map.scan.root) : map.goTo(map.scan.home)
                 }
 
                 M3Button {
                     variant: "tonal"
-                    text: "Open"
+                    text: I18n.tr("Open")
                     iconPath: "folder_open"
                     enabled: map.currentPath !== ""
                     onClicked: Storage.open(map.currentPath)
@@ -616,7 +616,7 @@ Item {
                 Text {
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    text: map.current && map.current.u ? "You are not allowed to look inside this folder." : "Nothing in here takes up any room."
+                    text: map.current && map.current.u ? I18n.tr("You are not allowed to look inside this folder.") : I18n.tr("Nothing in here takes up any room.")
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodyMd
@@ -644,7 +644,7 @@ Item {
 
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: "Looking closer…"
+                        text: I18n.tr("Looking closer…")
                         color: Theme.subtext
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBodyMd
@@ -734,7 +734,7 @@ Item {
                                 return "";
 
                             if (n.t === 2)
-                                return n.o === 1 ? "1 small item" : (n.o || 0).toLocaleString(Qt.locale(), "f", 0) + " small items";
+                                return n.o === 1 ? "1 small item" : (n.o || 0).toLocaleString(I18n.locale, "f", 0) + " small items";
 
                             return n === map.current ? (map.stack.length > 1 ? n.n : map.volName) : n.n;
                         }
@@ -822,7 +822,7 @@ Item {
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: map.pal ? (kindKey.modelData === 0 ? "Folders and other files" : map.pal.kindName(kindKey.modelData)) : ""
+                        text: map.pal ? (kindKey.modelData === 0 ? I18n.tr("Folders and other files") : map.pal.kindName(kindKey.modelData)) : ""
                         color: Theme.subtext
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontLabelMd
@@ -833,7 +833,7 @@ Item {
             }
 
             Text {
-                text: "Click a folder to go in, right-click anything for more"
+                text: I18n.tr("Click a folder to go in, right-click anything for more")
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelMd

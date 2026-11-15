@@ -211,7 +211,7 @@ Scope {
 
         function reset(): void {
             host.show("");
-            Prefs.askReset("Reset every setting?", "Every setting on every page goes back to the value it ships with. Your theme, wallpaper, pinned applications and placed widgets are not touched.", Prefs.resetAllToken);
+            Prefs.askReset(I18n.tr("Reset every setting?"), I18n.tr("Every setting on every page goes back to the value it ships with. Your theme, wallpaper, pinned applications and placed widgets are not touched."), Prefs.resetAllToken);
         }
 
     }

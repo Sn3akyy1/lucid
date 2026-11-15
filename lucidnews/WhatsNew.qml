@@ -101,7 +101,7 @@ PanelWindow {
 
         // why it did or did not open by itself
         function status(): string {
-            return "notes v" + notes.version + ", shell v" + Updates.current + ", seen v" + (Updates.seen || "none") + (Lockscreen.locked ? ", locked" : "") + (sheet.open ? ", open" : "");
+            return I18n.tr("notes v%1, shell v%2, seen v", notes.version, Updates.current) + (Updates.seen || "none") + (Lockscreen.locked ? I18n.tr(", locked") : "") + (sheet.open ? I18n.tr(", open") : "");
         }
 
     }
@@ -200,13 +200,13 @@ PanelWindow {
                 LText {
                     role: "labelLarge"
                     color: Theme.accent
-                    text: "What's new"
+                    text: I18n.tr("What's new")
                 }
 
                 LText {
                     width: parent.width
                     role: "headlineSmall"
-                    text: "Lucid v" + notes.version + (notes.name !== "" ? " · " + notes.name : "")
+                    text: I18n.tr("Lucid v%1%2", notes.version, (notes.name !== "" ? " · " + notes.name : ""))
                     elide: Text.ElideRight
                 }
 
@@ -224,7 +224,7 @@ PanelWindow {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "close"
-                tooltip: "Close"
+                tooltip: I18n.tr("Close")
                 onClicked: sheet.hide()
             }
 
@@ -518,7 +518,7 @@ PanelWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 variant: "text"
                 icon: "open_in_new"
-                text: "Every change"
+                text: I18n.tr("Every change")
                 onClicked: {
                     Qt.openUrlExternally(notes.fullUrl);
                     sheet.hide();
@@ -529,7 +529,7 @@ PanelWindow {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 variant: "filled"
-                text: "Got it"
+                text: I18n.tr("Got it")
                 onClicked: sheet.hide()
             }
 
@@ -576,7 +576,7 @@ PanelWindow {
         wrapMode: Text.WordWrap
         textFormat: Text.RichText
         // code spans as github draws them: monospace on a tint, a little smaller
-        text: rich.markup.replace(/<code>/g, "<span style=\"background-color:" + css(Theme.surfaceHighest) + "\">&#8201;<span style=\"font-family:monospace;font-size:" + Math.round(rich.size * 0.9) + "px\">").replace(/<\/code>/g, "</span>&#8201;</span>").replace(/<a href=/g, "<a style=\"color:" + css(Theme.accent) + ";text-decoration:none\" href=")
+        text: rich.markup.replace(/<code>/g, "<span style=\"background-color:" + css(Theme.surfaceHighest) + "\">&#8201;<span style=\"font-family:monospace;font-size:" + Math.round(rich.size * 0.9) + "px\">").replace(/<\/code>/g, I18n.tr("</span>&#8201;</span>")).replace(/<a href=/g, "<a style=\"color:" + css(Theme.accent) + ";text-decoration:none\" href=") // i18n-skip: markup
         onLinkActivated: (link) => {
             return Qt.openUrlExternally(link);
         }
@@ -633,7 +633,7 @@ PanelWindow {
                     horizontalAlignment: Text.AlignHCenter
                     role: "labelLarge"
                     color: Theme.subtext
-                    text: "A picture goes here"
+                    text: I18n.tr("A picture goes here")
                 }
 
                 LText {

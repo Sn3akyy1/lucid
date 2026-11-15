@@ -17,7 +17,7 @@ Item {
     // a beat for the words that drift with the time: "in 3 h", "Tomorrow"
     property int tick: 0
     readonly property string primaryIcon: "add"
-    readonly property string primaryLabel: "New alarm"
+    readonly property string primaryLabel: I18n.tr("New alarm")
     readonly property var nextUp: {
         page.tick;
         return page.app ? page.app.nextAlarm() : null;
@@ -33,7 +33,7 @@ Item {
     function primaryAction() {
         const n = page.app.now();
         const h = (n.getHours() + 1) % 24;
-        page.win.pickTime(h, 0, "New alarm", (hour, minute) => {
+        page.win.pickTime(h, 0, I18n.tr("New alarm"), (hour, minute) => {
             page.app.send("alarm.add", {
                 "hour": hour,
                 "minute": minute
@@ -118,7 +118,7 @@ Item {
         page.app.send("alarm.remove", {
             "id": a.id
         });
-        page.win.toast("Alarm deleted", "Undo", {
+        page.win.toast(I18n.tr("Alarm deleted"), I18n.tr("Undo"), {
             "undo": () => {
                 return page.app.send("alarm.add", copy);
             }
@@ -130,30 +130,30 @@ Item {
         page.app.send("alarm.add", {
             "hour": at.getHours(),
             "minute": at.getMinutes(),
-            "label": minutes < 60 ? minutes + " min nap" : "Nap"
+            "label": minutes < 60 ? I18n.tr("%1 min nap", minutes) : I18n.tr("Nap")
         });
-        page.win.toast("Alarm set for " + CM.time(at.getHours(), at.getMinutes(), page.app.h24));
+        page.win.toast(I18n.tr("Alarm set for %1", CM.time(at.getHours(), at.getMinutes(), page.app.h24)));
     }
 
     function napMenu(anchor) {
         const p = anchor.mapToItem(page.win.contentItem, 0, anchor.height + Theme.dp(4));
         page.win.openMenu([{
-            "heading": "Ring once, in"
+            "heading": I18n.tr("Ring once, in")
         }, {
             "id": 10,
-            "label": "10 minutes"
+            "label": I18n.tr("10 minutes")
         }, {
             "id": 20,
-            "label": "20 minutes"
+            "label": I18n.tr("20 minutes")
         }, {
             "id": 30,
-            "label": "30 minutes"
+            "label": I18n.tr("30 minutes")
         }, {
             "id": 60,
-            "label": "An hour"
+            "label": I18n.tr("An hour")
         }, {
             "id": 90,
-            "label": "An hour and a half"
+            "label": I18n.tr("An hour and a half")
         }], p.x - Theme.dp(150), p.y, (id) => {
             return page.quick(id);
         });
@@ -187,20 +187,20 @@ Item {
 
         x: page.edge
         width: parent.width - page.edge * 2
-        title: "Alarm"
+        title: I18n.tr("Alarm")
         subtitle: {
             const n = page.app ? page.app.alarms.length : 0;
             const on = page.app ? page.app.alarms.filter((a) => {
                 return a.on;
             }).length : 0;
-            return n === 0 ? "Alarms ring with this window closed" : (on + " of " + n + " on");
+            return n === 0 ? I18n.tr("Alarms ring with this window closed") : (on + " of " + n + " on");
         }
 
         IconButton {
             id: napBtn
 
             icon: "more_time"
-            tooltip: "Quick alarm"
+            tooltip: I18n.tr("Quick alarm")
             onClicked: page.napMenu(napBtn)
         }
 
@@ -244,7 +244,7 @@ Item {
             role: "labelLarge"
             weight: 600
             color: Theme.alpha(page.ink, 0.75)
-            text: page.nextUp ? "Next alarm" : "No alarm is on"
+            text: page.nextUp ? I18n.tr("Next alarm") : I18n.tr("No alarm is on")
         }
 
         Column {
@@ -260,7 +260,7 @@ Item {
                 role: "labelLarge"
                 weight: 600
                 color: Theme.alpha(page.ink, 0.75)
-                text: page.nextUp ? "Next alarm" : "No alarm is on"
+                text: page.nextUp ? I18n.tr("Next alarm") : I18n.tr("No alarm is on")
             }
 
             Row {
@@ -284,7 +284,7 @@ Item {
                     role: "titleMedium"
                     weight: 600
                     color: Theme.alpha(page.ink, 0.7)
-                    text: page.nextUp && new Date(page.nextUp.at).getHours() < 12 ? "AM" : "PM"
+                    text: page.nextUp && new Date(page.nextUp.at).getHours() < 12 ? I18n.tr("AM") : I18n.tr("PM")
                 }
 
             }
@@ -320,7 +320,7 @@ Item {
                 visible: page.nextUp === null
                 variant: "filled"
                 icon: "add"
-                text: "New alarm"
+                text: I18n.tr("New alarm")
                 onClicked: page.primaryAction()
             }
 
@@ -423,13 +423,13 @@ Item {
 
                     LText {
                         role: "titleMedium"
-                        text: "No alarms yet"
+                        text: I18n.tr("No alarms yet")
                     }
 
                     LText {
                         role: "bodyMedium"
                         color: Theme.subtext
-                        text: "New alarm, up the side, or press N"
+                        text: I18n.tr("New alarm, up the side, or press N")
                     }
 
                 }

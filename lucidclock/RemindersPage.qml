@@ -35,7 +35,7 @@ Item {
     // the month as big as the room it has, within reason
     readonly property int cell: Math.round(Math.max(Theme.dp(40), Math.min(Theme.dp(76), (page.calZoneW - Theme.dp(40)) / 7, page.wide ? (page.bodyH - Theme.dp(110)) / 6.5 : Theme.dp(52))))
     readonly property string primaryIcon: "add"
-    readonly property string primaryLabel: "New reminder"
+    readonly property string primaryLabel: I18n.tr("New reminder")
 
     function primaryAction() {
         page.win.editReminder(null, page.selected);
@@ -68,7 +68,7 @@ Item {
         page.app.send("rem.remove", {
             "id": r.id
         });
-        page.win.toast("Reminder deleted", "Undo", {
+        page.win.toast(I18n.tr("Reminder deleted"), I18n.tr("Undo"), {
             "undo": () => {
                 return page.app.send("rem.add", copy);
             }
@@ -78,7 +78,8 @@ Item {
     function dayTitle() {
         const d = new Date(page.selected.year, page.selected.month, page.selected.day);
         const w = CM.dayWord(d.getTime(), page.today.getTime());
-        return w === "Today" || w === "Tomorrow" ? w : d.toLocaleDateString(Qt.locale(), "dddd");
+        return w === "Today" || w === "Tomorrow" ? I18n.tr(w) : // i18n-dynamic
+             d.toLocaleDateString(I18n.locale, "dddd");
     }
 
     Timer {
@@ -94,8 +95,8 @@ Item {
 
         x: page.edge
         width: parent.width - page.edge * 2
-        title: "Reminders"
-        subtitle: page.coming.length === 0 ? "Nothing coming up this week" : page.coming.length + " coming up this week"
+        title: I18n.tr("Reminders")
+        subtitle: page.coming.length === 0 ? I18n.tr("Nothing coming up this week") : I18n.tr("%1 coming up this week", page.coming.length)
     }
 
     // ---- the month
@@ -161,7 +162,7 @@ Item {
                     LText {
                         role: "bodyMedium"
                         color: Theme.subtext
-                        text: new Date(page.selected.year, page.selected.month, page.selected.day).toLocaleDateString(Qt.locale(), "d MMMM yyyy") + (page.dayItems.length ? "  ·  " + page.dayItems.length + (page.dayItems.length === 1 ? " reminder" : " reminders") : "")
+                        text: new Date(page.selected.year, page.selected.month, page.selected.day).toLocaleDateString(I18n.locale, I18n.tr("d MMMM yyyy")) + (page.dayItems.length ? "  ·  " + page.dayItems.length + (page.dayItems.length === 1 ? I18n.tr(" reminder") : I18n.tr(" reminders")) : "")
                     }
 
                 }
@@ -171,7 +172,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     variant: "tonal"
                     icon: "add"
-                    text: "Add"
+                    text: I18n.tr("Add")
                     onClicked: page.primaryAction()
                 }
 
@@ -243,7 +244,7 @@ Item {
                             role: "bodyMedium"
                             color: row.ringing ? Theme.fgTertiaryContainer : Theme.subtext
                             elide: Text.ElideRight
-                            text: page.app.time(row.modelData.hour, row.modelData.minute) + (row.modelData.repeat ? "  ·  " + CM.repeatText(row.modelData) : "") + (row.ringing ? "  ·  ringing now" : "")
+                            text: page.app.time(row.modelData.hour, row.modelData.minute) + (row.modelData.repeat ? "  ·  " + CM.repeatText(row.modelData) : "") + (row.ringing ? I18n.tr("  ·  ringing now") : "")
                         }
 
                     }
@@ -257,13 +258,13 @@ Item {
 
                         IconButton {
                             icon: "edit"
-                            tooltip: "Change"
+                            tooltip: I18n.tr("Change")
                             onClicked: page.win.editReminder(row.modelData, null)
                         }
 
                         IconButton {
                             icon: "delete"
-                            tooltip: "Delete"
+                            tooltip: I18n.tr("Delete")
                             onClicked: page.remove(row.modelData)
                         }
 
@@ -304,13 +305,13 @@ Item {
 
                         LText {
                             role: "titleMedium"
-                            text: "A free day"
+                            text: I18n.tr("A free day")
                         }
 
                         LText {
                             role: "bodyMedium"
                             color: Theme.subtext
-                            text: "Nothing to be reminded of"
+                            text: I18n.tr("Nothing to be reminded of")
                         }
 
                     }
@@ -331,7 +332,7 @@ Item {
                 leftPadding: Theme.dp(4)
                 role: "titleSmall"
                 color: Theme.primary
-                text: "Coming up"
+                text: I18n.tr("Coming up")
             }
 
             Repeater {
@@ -397,7 +398,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     role: "bodyMedium"
                     color: Theme.subtext
-                    text: "Nothing in the next seven days"
+                    text: I18n.tr("Nothing in the next seven days")
                 }
 
             }

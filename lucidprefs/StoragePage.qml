@@ -40,77 +40,77 @@ Column {
     // tile and segment colours: the accent, then evenly round the wheel from it
     readonly property real hue0: Theme.accent.hslHue >= 0 ? Theme.accent.hslHue * 360 : 100
     readonly property var kindColors: [Theme.accentContainer, page.hue(33), page.hue(65), page.hue(98), page.hue(131), page.hue(164), page.hue(196), page.hue(229)]
-    readonly property var kindNames: ["Other", "Videos", "Pictures", "Music", "Documents", "Archives", "Code", "Apps and libraries"]
+    readonly property var kindNames: [I18n.tr("Other"), I18n.tr("Videos"), I18n.tr("Pictures"), I18n.tr("Music"), I18n.tr("Documents"), I18n.tr("Archives"), I18n.tr("Code"), I18n.tr("Apps and libraries")]
     readonly property var kindIcons: ["category", "movie", "image", "music_note", "description", "archive", "code", "apps"]
     readonly property var cats: [{
         "key": "system",
-        "label": "System",
+        "label": I18n.tr("System"),
         "color": Theme.accent
     }, {
         "key": "apps",
-        "label": "Apps and libraries",
+        "label": I18n.tr("Apps and libraries"),
         "color": page.kindColors[7]
     }, {
         "key": "pkgcache",
-        "label": "Package cache",
+        "label": I18n.tr("Package cache"),
         "color": page.hue(295)
     }, {
         "key": "caches",
-        "label": "Caches",
+        "label": I18n.tr("Caches"),
         "color": page.hue(262)
     }, {
         "key": "trash",
-        "label": "Trash",
+        "label": I18n.tr("Trash"),
         "color": Theme.error
     }, {
         "key": "video",
-        "label": "Videos",
+        "label": I18n.tr("Videos"),
         "color": page.kindColors[1]
     }, {
         "key": "image",
-        "label": "Pictures",
+        "label": I18n.tr("Pictures"),
         "color": page.kindColors[2]
     }, {
         "key": "audio",
-        "label": "Music",
+        "label": I18n.tr("Music"),
         "color": page.kindColors[3]
     }, {
         "key": "docs",
-        "label": "Documents",
+        "label": I18n.tr("Documents"),
         "color": page.kindColors[4]
     }, {
         "key": "archive",
-        "label": "Archives",
+        "label": I18n.tr("Archives"),
         "color": page.kindColors[5]
     }, {
         "key": "code",
-        "label": "Code",
+        "label": I18n.tr("Code"),
         "color": page.kindColors[6]
     }, {
         "key": "other",
-        "label": "Other files",
+        "label": I18n.tr("Other files"),
         "color": Theme.accentContainer
     }, {
         "key": "hidden",
-        "label": "Restricted",
+        "label": I18n.tr("Restricted"),
         "color": Theme.alpha(Theme.text, 0.22)
     }]
     readonly property var cacheNotes: ({
-        "cache:thumbnails": "Small previews of your pictures and videos, made again as folders are opened.",
-        "cache:pip": "Python packages pip downloaded, fetched again when a project needs them.",
-        "cache:yay": "Sources and builds left over from installing AUR packages.",
-        "cache:paru": "Sources and builds left over from installing AUR packages.",
-        "cache:npm": "JavaScript packages npm downloaded, fetched again when a project needs them.",
-        "cache:yarn": "JavaScript packages Yarn downloaded, fetched again when a project needs them.",
-        "cache:bun": "JavaScript packages Bun downloaded, fetched again when a project needs them.",
-        "cache:gobuild": "Compiled Go packages, rebuilt on the next build.",
-        "cache:nodegyp": "Headers for building native Node modules, downloaded again when needed.",
-        "cache:cargo": "Crates Cargo downloaded, fetched again on the next build.",
-        "cache:gradle": "Dependencies of Java and Android builds, fetched again on the next build.",
-        "cache:maven": "Dependencies of Java builds, fetched again on the next build.",
-        "cache:electron": "Electron builds that development tools downloaded.",
-        "cache:composer": "PHP packages Composer downloaded.",
-        "cache:shaders": "Compiled shaders. Games and apps build them again, so their next start is slower."
+        "cache:thumbnails": I18n.tr("Small previews of your pictures and videos, made again as folders are opened."),
+        "cache:pip": I18n.tr("Python packages pip downloaded, fetched again when a project needs them."),
+        "cache:yay": I18n.tr("Sources and builds left over from installing AUR packages."),
+        "cache:paru": I18n.tr("Sources and builds left over from installing AUR packages."),
+        "cache:npm": I18n.tr("JavaScript packages npm downloaded, fetched again when a project needs them."),
+        "cache:yarn": I18n.tr("JavaScript packages Yarn downloaded, fetched again when a project needs them."),
+        "cache:bun": I18n.tr("JavaScript packages Bun downloaded, fetched again when a project needs them."),
+        "cache:gobuild": I18n.tr("Compiled Go packages, rebuilt on the next build."),
+        "cache:nodegyp": I18n.tr("Headers for building native Node modules, downloaded again when needed."),
+        "cache:cargo": I18n.tr("Crates Cargo downloaded, fetched again on the next build."),
+        "cache:gradle": I18n.tr("Dependencies of Java and Android builds, fetched again on the next build."),
+        "cache:maven": I18n.tr("Dependencies of Java builds, fetched again on the next build."),
+        "cache:electron": I18n.tr("Electron builds that development tools downloaded."),
+        "cache:composer": I18n.tr("PHP packages Composer downloaded."),
+        "cache:shaders": I18n.tr("Compiled shaders. Games and apps build them again, so their next start is slower.")
     })
     readonly property var items: Storage.cleanup ? Storage.cleanup.items : []
     readonly property var systemItems: page.items.filter((it) => {
@@ -158,7 +158,7 @@ Column {
     }
 
     function kindName(k) {
-        return page.kindNames[k] || "Other";
+        return page.kindNames[k] || I18n.tr("Other");
     }
 
     function low(v) {
@@ -168,29 +168,29 @@ Column {
     function ago(t) {
         var d = Math.max(0, Date.now() / 1000 - t);
         if (d < 90)
-            return "just now";
+            return I18n.tr("just now");
 
         if (d < 3600)
-            return Math.round(d / 60) + " minutes ago";
+            return I18n.tr("%1 minutes ago", Math.round(d / 60));
 
         if (d < 86400) {
             var h = Math.round(d / 3600);
-            return h === 1 ? "an hour ago" : h + " hours ago";
+            return h === 1 ? I18n.tr("an hour ago") : I18n.tr("%1 hours ago", h);
         }
         var days = Math.round(d / 86400);
         if (days === 1)
-            return "yesterday";
+            return I18n.tr("yesterday");
 
         if (days < 14)
-            return days + " days ago";
+            return I18n.tr("%1 days ago", days);
 
         if (days < 60)
-            return Math.round(days / 7) + " weeks ago";
+            return I18n.tr("%1 weeks ago", Math.round(days / 7));
 
         if (days < 730)
-            return Math.round(days / 30) + " months ago";
+            return I18n.tr("%1 months ago", Math.round(days / 30));
 
-        return Math.round(days / 365) + " years ago";
+        return I18n.tr("%1 years ago", Math.round(days / 365));
     }
 
     function tilde(p) {
@@ -206,7 +206,7 @@ Column {
     }
 
     function count(n, one, many) {
-        return n === 1 ? "1 " + one : Number(n).toLocaleString(Qt.locale(), "f", 0) + " " + many;
+        return n === 1 ? "1 " + one : Number(n).toLocaleString(I18n.locale, "f", 0) + " " + many;
     }
 
     function listOf(names, shown) {
@@ -220,20 +220,20 @@ Column {
     function about(it) {
         if (it.id === "trash")
             return {
-            "title": "Trash",
-            "body": page.count(it.count, "item", "items") + " you deleted, still taking up room.",
-            "verb": "Empty",
-            "ask": "Empty the trash?",
-            "askBody": "Everything in it is deleted for good. This cannot be undone."
+            "title": I18n.tr("Trash"),
+            "body": I18n.tr("%1 you deleted, still taking up room.", page.count(it.count, "item", "items")),
+            "verb": I18n.tr("Empty"),
+            "ask": I18n.tr("Empty the trash?"),
+            "askBody": I18n.tr("Everything in it is deleted for good. This cannot be undone.")
         };
 
         if (it.id === "pacman")
             return {
-            "title": "Old package downloads",
-            "body": "pacman keeps every package it downloads. " + page.count(it.old, "is an older version", "are older versions") + " of what you have, and " + page.count(it.gone, "belongs", "belong") + " to software you removed. The version you have installed of each one stays. Asks for your password.",
-            "verb": "Clean",
-            "ask": "Clean the package cache?",
-            "askBody": "pacman -Sc runs as root and keeps only the packages you have installed. Downgrading to an older version would mean downloading it again."
+            "title": I18n.tr("Old package downloads"),
+            "body": I18n.tr("pacman keeps every package it downloads. %1 of what you have, and %2 to software you removed. The version you have installed of each one stays. Asks for your password.", page.count(it.old, I18n.tr("is an older version"), I18n.tr("are older versions")), page.count(it.gone, I18n.tr("belongs"), I18n.tr("belong"))),
+            "verb": I18n.tr("Clean"),
+            "ask": I18n.tr("Clean the package cache?"),
+            "askBody": I18n.tr("pacman -Sc runs as root and keeps only the packages you have installed. Downgrading to an older version would mean downloading it again.")
         };
 
         if (it.id === "orphans") {
@@ -241,28 +241,28 @@ Column {
                 return x.n;
             });
             return {
-                "title": "Unused dependencies",
-                "body": page.count(it.count, "package was", "packages were") + " installed for something that is gone: " + page.listOf(names, 3) + ". Asks for your password.",
-                "verb": "Remove",
-                "ask": "Remove " + page.count(it.count, "package", "packages") + "?",
-                "askBody": "pacman -Rns removes " + page.listOf(names, 24) + ". Each was pulled in by something no longer installed. If you use one of them directly, install it on purpose first."
+                "title": I18n.tr("Unused dependencies"),
+                "body": I18n.tr("%1 installed for something that is gone: %2. Asks for your password.", page.count(it.count, I18n.tr("package was"), I18n.tr("packages were")), page.listOf(names, 3)),
+                "verb": I18n.tr("Remove"),
+                "ask": I18n.tr("Remove %1?", page.count(it.count, "package", "packages")),
+                "askBody": I18n.tr("pacman -Rns removes %1. Each was pulled in by something no longer installed. If you use one of them directly, install it on purpose first.", page.listOf(names, 24))
             };
         }
         if (it.id === "journal")
             return {
-            "title": "System logs",
-            "body": "The journal takes " + Storage.size(it.total) + ". Shrinking it keeps the newest " + Storage.size(it.keep) + ". Asks for your password.",
-            "verb": "Shrink",
-            "ask": "Shrink the system logs?",
-            "askBody": "journalctl deletes the oldest log files until " + Storage.size(it.keep) + " is left."
+            "title": I18n.tr("System logs"),
+            "body": I18n.tr("The journal takes %1. Shrinking it keeps the newest %2. Asks for your password.", Storage.size(it.total), Storage.size(it.keep)),
+            "verb": I18n.tr("Shrink"),
+            "ask": I18n.tr("Shrink the system logs?"),
+            "askBody": I18n.tr("journalctl deletes the oldest log files until %1 is left.", Storage.size(it.keep))
         };
 
         if (it.id === "coredumps")
             return {
-            "title": "Crash dumps",
-            "body": page.count(it.count, "memory snapshot", "memory snapshots") + " saved when programs crashed. They only matter if you are debugging those crashes. Asks for your password.",
-            "verb": "Delete",
-            "ask": "Delete the crash dumps?",
+            "title": I18n.tr("Crash dumps"),
+            "body": I18n.tr("%1 saved when programs crashed. They only matter if you are debugging those crashes. Asks for your password.", page.count(it.count, I18n.tr("memory snapshot"), I18n.tr("memory snapshots"))),
+            "verb": I18n.tr("Delete"),
+            "ask": I18n.tr("Delete the crash dumps?"),
             "askBody": "Everything in /var/lib/systemd/coredump goes, and coredumpctl can no longer show those crashes."
         };
 
@@ -271,38 +271,38 @@ Column {
                 return x.n;
             });
             return {
-                "title": "Unused Flatpak runtimes",
-                "body": page.count(it.count, "runtime", "runtimes") + " that no installed app needs any more.",
-                "verb": "Remove",
-                "ask": "Remove unused runtimes?",
+                "title": I18n.tr("Unused Flatpak runtimes"),
+                "body": I18n.tr("%1 that no installed app needs any more.", page.count(it.count, "runtime", "runtimes")),
+                "verb": I18n.tr("Remove"),
+                "ask": I18n.tr("Remove unused runtimes?"),
                 "askBody": "flatpak uninstall --unused removes " + page.listOf(refs, 12) + "."
             };
         }
         if (it.id === "othercaches")
             return {
-            "title": "Other app caches",
-            "body": "Kept by your apps, biggest first: " + (it.top || []).map((t) => {
+            "title": I18n.tr("Other app caches"),
+            "body": I18n.tr("Kept by your apps, biggest first: %1. Close an app before clearing its cache by hand.", (it.top || []).map((t) => {
                 return t.n + " " + Storage.size(t.s);
-            }).join(", ") + ". Close an app before clearing its cache by hand.",
-            "verb": "Show",
+            }).join(", ")),
+            "verb": I18n.tr("Show"),
             "show": it.path
         };
 
         if (it.id === "downloads")
             return {
-            "title": "Old downloads",
-            "body": page.count(it.count, "thing", "things") + " in " + page.tilde(it.path) + " have not changed in " + it.days + " days.",
-            "verb": "Show",
+            "title": I18n.tr("Old downloads"),
+            "body": I18n.tr("%1 in %2 have not changed in %3 days.", page.count(it.count, "thing", "things"), page.tilde(it.path), it.days),
+            "verb": I18n.tr("Show"),
             "show": it.path
         };
 
-        var note = page.cacheNotes[it.id] || "Made again when needed.";
+        var note = page.cacheNotes[it.id] || I18n.tr("Made again when needed.");
         return {
             "title": it.title || it.id,
             "body": note,
-            "verb": "Clear",
-            "ask": "Clear " + (it.title || "this cache").toLowerCase() + "?",
-            "askBody": note + " Nothing you made is kept in here."
+            "verb": I18n.tr("Clear"),
+            "ask": I18n.tr("Clear %1?", (it.title || I18n.tr("this cache")).toLowerCase()),
+            "askBody": I18n.tr("%1 Nothing you made is kept in here.", note)
         };
     }
 
@@ -315,7 +315,7 @@ Column {
     }
 
     function askTrash(path, size) {
-        Prefs.askConfirm("Move to the trash?", "“" + page.baseName(path) + "” (" + Storage.size(size) + ") goes to the trash. The space comes back once the trash is emptied.", "Move", "storage-trash:" + path);
+        Prefs.askConfirm(I18n.tr("Move to the trash?"), I18n.tr("“%1” (%2) goes to the trash. The space comes back once the trash is emptied.", page.baseName(path), Storage.size(size)), I18n.tr("Move"), "storage-trash:" + path);
     }
 
     function showInMap(path) {
@@ -403,17 +403,17 @@ Column {
     Connections {
         function onCleaned(r) {
             if (r.ok) {
-                page.notice = r.freed > 0 ? "Done. " + Storage.size(r.freed) + " came back." : "Done.";
+                page.notice = r.freed > 0 ? I18n.tr("Done. %1 came back.", Storage.size(r.freed)) : "Done.";
                 page.noticeBad = false;
             } else if (r.error !== "cancelled") {
-                page.notice = "That did not work: " + r.error;
+                page.notice = I18n.tr("That did not work: %1", r.error);
                 page.noticeBad = true;
             }
         }
 
         function onTrashed(path, ok) {
             if (!ok) {
-                page.notice = "“" + page.baseName(path) + "” could not be moved to the trash.";
+                page.notice = I18n.tr("“%1” could not be moved to the trash.", page.baseName(path));
                 page.noticeBad = true;
             }
         }
@@ -437,7 +437,7 @@ Column {
     }
 
     SettingCard {
-        title: "OVERVIEW"
+        title: I18n.tr("OVERVIEW")
 
         StorageOverview {
             width: parent.width
@@ -452,7 +452,7 @@ Column {
     SettingCard {
         id: mapCard
 
-        title: "USAGE MAP"
+        title: I18n.tr("USAGE MAP")
         visible: page.scan !== null
 
         StorageMap {
@@ -470,12 +470,12 @@ Column {
     }
 
     SettingCard {
-        title: "FREE UP SPACE"
-        subtitle: page.notice !== "" ? page.notice : (Storage.cleanup ? (page.reclaimable > 0 ? "About " + Storage.size(page.reclaimable) + " could go without touching anything you made. Each item asks before it deletes." : "Nothing here is worth clearing right now.") : "")
+        title: I18n.tr("FREE UP SPACE")
+        subtitle: page.notice !== "" ? page.notice : (Storage.cleanup ? (page.reclaimable > 0 ? I18n.tr("About %1 could go without touching anything you made. Each item asks before it deletes.", Storage.size(page.reclaimable)) : I18n.tr("Nothing here is worth clearing right now.")) : "")
 
         SettingRow {
-            title: Storage.measuring ? "Measuring" : "Waiting to measure"
-            description: "Looking at caches, old packages and the trash."
+            title: Storage.measuring ? I18n.tr("Measuring") : I18n.tr("Waiting to measure")
+            description: I18n.tr("Looking at caches, old packages and the trash.")
             visible: !Storage.cleanup
 
             LoadingIndicator {
@@ -498,8 +498,8 @@ Column {
     }
 
     SettingCard {
-        title: "CACHES AND TRASH"
-        subtitle: "Things your apps and tools keep around to save time. They come back on their own when needed."
+        title: I18n.tr("CACHES AND TRASH")
+        subtitle: I18n.tr("Things your apps and tools keep around to save time. They come back on their own when needed.")
         visible: page.cacheItems.length > 0
 
         Repeater {
@@ -514,8 +514,8 @@ Column {
     }
 
     SettingCard {
-        title: "WORTH A LOOK"
-        subtitle: "Not deleted from here, because only you can say what is still needed. Show opens them in the usage map."
+        title: I18n.tr("WORTH A LOOK")
+        subtitle: I18n.tr("Not deleted from here, because only you can say what is still needed. Show opens them in the usage map.")
         visible: page.reviewItems.length > 0
 
         Repeater {
@@ -530,8 +530,8 @@ Column {
     }
 
     SettingCard {
-        title: "DUPLICATES"
-        subtitle: "The same file in more than one place, matched by size and by samples of what is inside. Keeping one of each gets " + Storage.size(page.dupeWaste) + " back."
+        title: I18n.tr("DUPLICATES")
+        subtitle: I18n.tr("The same file in more than one place, matched by size and by samples of what is inside. Keeping one of each gets %1 back.", Storage.size(page.dupeWaste))
         visible: page.dupes.length > 0
 
         Repeater {
@@ -543,7 +543,7 @@ Column {
                 required property var modelData
 
                 title: page.baseName(dupeRow.modelData.files[0].p)
-                description: dupeRow.modelData.files.length + " copies of " + Storage.size(dupeRow.modelData.size) + ". Keeping one gets " + Storage.size(dupeRow.modelData.waste) + " back."
+                description: I18n.tr("%1 copies of %2. Keeping one gets %3 back.", dupeRow.modelData.files.length, Storage.size(dupeRow.modelData.size), Storage.size(dupeRow.modelData.waste))
                 stacked: true
 
                 Column {
@@ -597,7 +597,7 @@ Column {
 
                                 Text {
                                     width: parent.width
-                                    text: (copy.index === 0 ? "Oldest copy, changed " : "Changed ") + page.ago(copy.modelData.m)
+                                    text: (copy.index === 0 ? I18n.tr("Oldest copy, changed ") : I18n.tr("Changed ")) + page.ago(copy.modelData.m)
                                     color: Theme.subtext
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fontLabelMd
@@ -639,7 +639,7 @@ Column {
         }
 
         SettingRow {
-            title: page.allDupes ? "Show fewer" : "Show " + (page.dupes.length - 4) + " more"
+            title: page.allDupes ? I18n.tr("Show fewer") : I18n.tr("Show %1 more", (page.dupes.length - 4))
             visible: page.dupes.length > 4
 
             M3IconButton {
@@ -652,8 +652,8 @@ Column {
     }
 
     SettingCard {
-        title: "LARGEST FILES"
-        subtitle: page.vol ? "Your biggest files on " + page.vol.name + "." : ""
+        title: I18n.tr("LARGEST FILES")
+        subtitle: page.vol ? I18n.tr("Your biggest files on %1.", page.vol.name) : ""
         visible: page.large.length > 0
 
         Repeater {
@@ -665,7 +665,7 @@ Column {
                 required property var modelData
 
                 title: page.baseName(bigRow.modelData.p)
-                description: page.tilde(page.dirName(bigRow.modelData.p)) + "  ·  changed " + page.ago(bigRow.modelData.m)
+                description: I18n.tr("%1  ·  changed %2", page.tilde(page.dirName(bigRow.modelData.p)), page.ago(bigRow.modelData.m))
 
                 Row {
                     spacing: Theme.dp(4)
@@ -701,7 +701,7 @@ Column {
         }
 
         SettingRow {
-            title: page.allLarge ? "Show fewer" : "Show " + (Math.min(30, page.large.length) - 8) + " more"
+            title: page.allLarge ? I18n.tr("Show fewer") : I18n.tr("Show %1 more", (Math.min(30, page.large.length) - 8))
             visible: page.large.length > 8
 
             M3IconButton {
@@ -714,7 +714,7 @@ Column {
     }
 
     SettingCard {
-        title: "DRIVES"
+        title: I18n.tr("DRIVES")
         subtitle: Storage.mountError
         visible: Storage.drives.length > 0
 
@@ -727,7 +727,7 @@ Column {
                 required property var modelData
                 readonly property var d: driveRow.modelData
                 readonly property var h: Storage.health[driveRow.d.path] || null
-                readonly property string kind: driveRow.d.removable ? "Removable drive" : (driveRow.d.rota ? "Hard drive" : (driveRow.d.tran === "nvme" ? "NVMe SSD" : "SSD"))
+                readonly property string kind: driveRow.d.removable ? I18n.tr("Removable drive") : (driveRow.d.rota ? I18n.tr("Hard drive") : (driveRow.d.tran === "nvme" ? I18n.tr("NVMe SSD") : "SSD"))
 
                 title: driveRow.d.model || driveRow.d.name
                 description: [driveRow.kind, Storage.size(driveRow.d.size), driveRow.d.temp > 0 ? Units.degUnit(driveRow.d.temp) : ""].filter((s) => {
@@ -752,7 +752,7 @@ Column {
                     M3Button {
                         anchors.right: parent.right
                         variant: "tonal"
-                        text: "Eject"
+                        text: I18n.tr("Eject")
                         visible: driveRow.d.removable
                         enabled: Storage.mounting === ""
                         onClicked: Storage.eject(driveRow.d.path, driveRow.d.parts.filter((p) => {
@@ -797,26 +797,26 @@ Column {
                             text: {
                                 var h = driveRow.h;
                                 if (Storage.checking === driveRow.d.path)
-                                    return "Asking the drive…";
+                                    return I18n.tr("Asking the drive…");
 
                                 if (!h)
-                                    return "Health not checked. Reading it needs your password.";
+                                    return I18n.tr("Health not checked. Reading it needs your password.");
 
                                 if (!h.ok)
-                                    return h.error === "cancelled" ? "Health not checked." : "Could not read its health: " + h.error;
+                                    return h.error === "cancelled" ? I18n.tr("Health not checked.") : I18n.tr("Could not read its health: %1", h.error);
 
-                                var bits = [h.passed === false ? "The drive reports it is failing. Back up what matters on it." : "Healthy"];
+                                var bits = [h.passed === false ? I18n.tr("The drive reports it is failing. Back up what matters on it.") : I18n.tr("Healthy")];
                                 if (h.wear !== undefined && h.wear !== null)
-                                    bits.push(h.wear + "% worn");
+                                    bits.push(I18n.tr("%1% worn", h.wear));
 
                                 if (h.hours)
-                                    bits.push(Number(h.hours).toLocaleString(Qt.locale(), "f", 0) + " hours on");
+                                    bits.push(Number(h.hours).toLocaleString(I18n.locale, "f", 0) + " hours on");
 
                                 if (h.written)
-                                    bits.push(Storage.size(h.written) + " written");
+                                    bits.push(I18n.tr("%1 written", Storage.size(h.written)));
 
                                 if (h.mediaErrors)
-                                    bits.push(h.mediaErrors + " media errors");
+                                    bits.push(I18n.tr("%1 media errors", h.mediaErrors));
 
                                 return bits.join("  ·  ");
                             }
@@ -833,7 +833,7 @@ Column {
                             anchors.rightMargin: Theme.dp(4)
                             anchors.verticalCenter: parent.verticalCenter
                             variant: "text"
-                            text: driveRow.h && driveRow.h.ok ? "Check again" : "Check"
+                            text: driveRow.h && driveRow.h.ok ? I18n.tr("Check again") : I18n.tr("Check")
                             enabled: Storage.checking === ""
                             onClicked: Storage.checkHealth(driveRow.d.path)
                         }
@@ -847,8 +847,8 @@ Column {
         }
 
         SettingRow {
-            title: "Trim SSDs every week"
-            description: "Tells each SSD which blocks are free, which keeps writes fast. This is fstrim.timer, and changing it asks for your password."
+            title: I18n.tr("Trim SSDs every week")
+            description: I18n.tr("Tells each SSD which blocks are free, which keeps writes fast. This is fstrim.timer, and changing it asks for your password.")
             visible: Storage.trimKnown && Storage.drives.some((d) => {
                 return !d.rota;
             })
@@ -865,12 +865,12 @@ Column {
     }
 
     SettingCard {
-        title: "HOUSEKEEPING"
+        title: I18n.tr("HOUSEKEEPING")
 
         SettingRow {
-            title: "Warn when space runs low"
+            title: I18n.tr("Warn when space runs low")
             resetKey: "storageLowWarn"
-            description: "A notification when the system drive, or the one your home is on, gets below " + Prefs.storageLowPercent + "% free. Checked every ten minutes."
+            description: I18n.tr("A notification when the system drive, or the one your home is on, gets below %1% free. Checked every ten minutes.", Prefs.storageLowPercent)
 
             M3Switch {
                 checked: Prefs.storageLowWarn
@@ -882,10 +882,10 @@ Column {
         }
 
         SettingRow {
-            title: "Warn below"
+            title: I18n.tr("Warn below")
             resetKey: "storageLowPercent"
             enabled: Prefs.storageLowWarn
-            disabledReason: "Warnings are off."
+            disabledReason: I18n.tr("Warnings are off.")
             stacked: true
 
             M3Slider {
@@ -904,25 +904,25 @@ Column {
         }
 
         SettingRow {
-            title: "Empty the trash by itself"
+            title: I18n.tr("Empty the trash by itself")
             resetKey: "storageTrashDays"
-            description: "Deletes what has been in the trash longer than this. Lucid checks when it starts and every six hours."
+            description: I18n.tr("Deletes what has been in the trash longer than this. Lucid checks when it starts and every six hours.")
             stacked: true
 
             M3Chips {
                 width: parent.width
                 options: [{
                     "key": 0,
-                    "label": "Never"
+                    "label": I18n.tr("Never")
                 }, {
                     "key": 7,
-                    "label": "After a week"
+                    "label": I18n.tr("After a week")
                 }, {
                     "key": 30,
-                    "label": "After a month"
+                    "label": I18n.tr("After a month")
                 }, {
                     "key": 90,
-                    "label": "After three months"
+                    "label": I18n.tr("After three months")
                 }]
                 current: Prefs.storageTrashDays
                 onChosen: (k) => {

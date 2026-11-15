@@ -72,25 +72,25 @@ Item {
         var out = [];
         out.push({
             "kind": "fav",
-            "label": "Favourites",
+            "label": I18n.tr("Favourites"),
             "preview": pane.host.favGifs.length > 0 ? pane.host.favGifs[0].preview : "",
             "count": pane.host.favGifs.length
         });
         out.push({
             "kind": "trending",
-            "label": "Trending GIFs",
+            "label": I18n.tr("Trending GIFs"),
             "preview": pane.trendingGifs.length > 0 ? pane.trendingGifs[0].preview : "",
             "count": pane.trendingGifs.length
         });
         out.push({
             "kind": "recent",
-            "label": "Recents",
+            "label": I18n.tr("Recents"),
             "preview": pane.host.recentGifsView.length > 0 ? pane.host.recentGifsView[0].preview : "",
             "count": pane.host.recentGifsView.length
         });
         out.push({
             "kind": "local",
-            "label": "Local",
+            "label": I18n.tr("Local"),
             "preview": pane.localGifs.length > 0 ? pane.localGifs[0].preview : "",
             "count": pane.localGifs.length
         });
@@ -430,11 +430,11 @@ Item {
                     try {
                         apiFetch.callback(body);
                     } catch (e) {
-                        pane.errorText = "Could not read the response";
+                        pane.errorText = I18n.tr("Could not read the response");
                     }
                 } else {
                     var who = pane.provider === "giphy" ? "Giphy" : "Tenor";
-                    pane.errorText = !code ? ("No connection to " + who) : (who + " returned " + code + " — check your key");
+                    pane.errorText = !code ? (I18n.tr("No connection to %1", who)) : (I18n.tr("%1 returned %2 — check your key", who, code));
                 }
                 pane.loading = pane.apiQueue.length > 0;
                 if (pane.apiQueue.length > 0)
@@ -549,7 +549,7 @@ Item {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: pane.mode === "results" ? pane.resultsTitle : (pane.loading ? "Loading…" : "Browse")
+                text: pane.mode === "results" ? pane.resultsTitle : (pane.loading ? I18n.tr("Loading…") : I18n.tr("Browse"))
                 color: pane.errorText !== "" ? Theme.error : Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
@@ -846,7 +846,7 @@ Item {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Add a Giphy key for Trending and search"
+                text: I18n.tr("Add a Giphy key for Trending and search")
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
@@ -858,7 +858,7 @@ Item {
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "developers.giphy.com → config.json as \"giphyKey\""
+            text: I18n.tr("developers.giphy.com → config.json as \"giphyKey\"")
             color: Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(10)
@@ -887,21 +887,21 @@ Item {
             wrapMode: Text.WordWrap
             text: {
                 if (!pane.hasKey)
-                    return "Add a free Giphy API key to browse and search GIFs";
+                    return I18n.tr("Add a free Giphy API key to browse and search GIFs");
 
                 if (pane.errorText !== "")
                     return pane.errorText;
 
                 if (pane.resultsKind === "fav")
-                    return "Hover a GIF and hit the star to keep it here";
+                    return I18n.tr("Hover a GIF and hit the star to keep it here");
 
                 if (pane.resultsKind === "recent")
-                    return "GIFs you send show up here";
+                    return I18n.tr("GIFs you send show up here");
 
                 if (pane.resultsKind === "local")
-                    return "No .gif files in " + (pane.host ? pane.host.gifDir : "");
+                    return I18n.tr("No .gif files in ") + (pane.host ? pane.host.gifDir : "");
 
-                return "No GIFs found";
+                return I18n.tr("No GIFs found");
             }
             color: Theme.subtext
             font.family: Theme.fontFamily
@@ -915,7 +915,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
             visible: !pane.hasKey
-            text: "Get one at developers.giphy.com (email only, no card),\nthen put it in lucidmoji/config.json as \"giphyKey\""
+            text: I18n.tr("Get one at developers.giphy.com (email only, no card),\nthen put it in lucidmoji/config.json as \"giphyKey\"")
             color: Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(10)

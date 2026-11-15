@@ -19,7 +19,7 @@ QtObject {
     // stand-ins so a tile shows a filled-in widget rather than an empty one
     readonly property var samples: ({
         "notes": {
-            "text": "Pick up the parcel.\nRing the landlord about\nthe radiator."
+            "text": I18n.tr("Pick up the parcel.\nRing the landlord about\nthe radiator.")
         },
         "todo": {
             "items": "[{\"t\":\"Reply to Ana\",\"d\":false},{\"t\":\"Book the train\",\"d\":false},{\"t\":\"Water the plants\",\"d\":true}]"

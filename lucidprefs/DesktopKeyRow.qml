@@ -26,8 +26,8 @@ SettingRow {
     }
 
     title: dk.action.label
-    description: dk.recording ? "Press the keys you want. Esc cancels, Backspace leaves it without a key." : (dk.keys === "" ? "No key" : "")
-    warning: dk.clash !== "" ? "Same keys as " + dk.clash + ": the one higher in this list wins." : ""
+    description: dk.recording ? I18n.tr("Press the keys you want. Esc cancels, Backspace leaves it without a key.") : (dk.keys === "" ? I18n.tr("No key") : "")
+    warning: dk.clash !== "" ? I18n.tr("Same keys as %1: the one higher in this list wins.", dk.clash) : ""
     onRecordingChanged: {
         if (dk.recording) {
             dk.awaitingRelease = false;
@@ -101,7 +101,7 @@ SettingRow {
                 id: listening
 
                 anchors.centerIn: parent
-                text: "Press keys…"
+                text: I18n.tr("Press keys…")
                 color: Theme.accent
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelLg
@@ -112,7 +112,7 @@ SettingRow {
 
         M3Button {
             anchors.verticalCenter: parent.verticalCenter
-            text: dk.recording ? "Cancel" : "Change"
+            text: dk.recording ? I18n.tr("Cancel") : I18n.tr("Change")
             variant: dk.recording ? "filled" : "tonal"
             onClicked: dk.recording ? dk.finish() : dk.startRecording(dk.action.id)
         }

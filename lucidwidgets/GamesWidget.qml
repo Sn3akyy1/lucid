@@ -20,27 +20,27 @@ WidgetBody {
         var t = Date.now() / 1000;
         return [{
             "id": "s1",
-            "name": "Hollow Knight",
+            "name": I18n.tr("Hollow Knight"),
             "lastPlayed": t - 3600 * 5,
             "playtime": 2830
         }, {
             "id": "s2",
-            "name": "Hades II",
+            "name": I18n.tr("Hades II"),
             "lastPlayed": t - 86400 * 2,
             "playtime": 1260
         }, {
             "id": "s3",
-            "name": "Celeste",
+            "name": I18n.tr("Celeste"),
             "lastPlayed": t - 86400 * 9,
             "playtime": 540
         }, {
             "id": "s4",
-            "name": "Outer Wilds",
+            "name": I18n.tr("Outer Wilds"),
             "lastPlayed": t - 86400 * 40,
             "playtime": 1900
         }, {
             "id": "s5",
-            "name": "Balatro",
+            "name": I18n.tr("Balatro"),
             "lastPlayed": 0,
             "playtime": 0
         }];
@@ -59,33 +59,33 @@ WidgetBody {
     readonly property var hoverGame: w.shown.find((g) => {
         return g.id === w.hoverId;
     }) || null
-    readonly property string emptyText: !w.scanned && !w.preview ? "" : (!w.found ? "Steam is not installed" : "No games installed yet")
+    readonly property string emptyText: !w.scanned && !w.preview ? "" : (!w.found ? I18n.tr("Steam is not installed") : I18n.tr("No games installed yet"))
 
     function ago(ts) {
         if (!ts)
-            return "Not played yet";
+            return I18n.tr("Not played yet");
 
         var s = Date.now() / 1000 - ts;
         if (s < 3600)
-            return "Played just now";
+            return I18n.tr("Played just now");
 
         if (s < 86400)
-            return "Played " + Math.floor(s / 3600) + " h ago";
+            return I18n.tr("%1 h ago", "Played " + Math.floor(s / 3600));
 
         var d = Math.floor(s / 86400);
         if (d === 1)
-            return "Played yesterday";
+            return I18n.tr("Played yesterday");
 
         if (d < 14)
-            return "Played " + d + " days ago";
+            return I18n.tr("Played %1 days ago", d);
 
         if (d < 60)
-            return "Played " + Math.floor(d / 7) + " weeks ago";
+            return I18n.tr("%1 weeks ago", "Played " + Math.floor(d / 7));
 
         if (d < 730)
-            return "Played " + Math.floor(d / 30) + " months ago";
+            return I18n.tr("%1 months ago", "Played " + Math.floor(d / 30));
 
-        return "Played " + Math.floor(d / 365) + " years ago";
+        return I18n.tr("%1 years ago", "Played " + Math.floor(d / 365));
     }
 
     function hours(minutes) {
@@ -93,7 +93,7 @@ WidgetBody {
             return "";
 
         if (minutes < 60)
-            return minutes + " min";
+            return I18n.tr("%1 min", minutes);
 
         var h = minutes / 60;
         return (h < 10 ? h.toFixed(1) : Math.round(h)) + " h";
@@ -205,7 +205,7 @@ WidgetBody {
 
             anchors.left: parent.left
             anchors.top: parent.top
-            text: w.opt("order") === "name" ? "LIBRARY" : "RECENTLY PLAYED"
+            text: w.opt("order") === "name" ? I18n.tr("LIBRARY") : I18n.tr("RECENTLY PLAYED")
             color: Theme.accent
             font.family: Theme.fontFamily
             font.pixelSize: Theme.dp(10)
@@ -216,7 +216,7 @@ WidgetBody {
         Text {
             anchors.right: parent.right
             anchors.baseline: shelfHead.baseline
-            text: w.library.length === 0 ? "" : w.library.length + (w.library.length === 1 ? " game" : " games")
+            text: w.library.length === 0 ? "" : w.library.length + (w.library.length === 1 ? I18n.tr(" game") : I18n.tr(" games"))
             color: Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.dp(10)
@@ -313,7 +313,7 @@ WidgetBody {
 
             Text {
                 width: parent.width
-                text: shelf.focusGame ? (w.launchingId === shelf.focusGame.id ? "Starting " + shelf.focusGame.name + "…" : shelf.focusGame.name) : ""
+                text: shelf.focusGame ? (w.launchingId === shelf.focusGame.id ? I18n.tr("Starting %1…", shelf.focusGame.name) : shelf.focusGame.name) : ""
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.dp(13)
@@ -391,7 +391,7 @@ WidgetBody {
             spacing: Theme.dp(6)
 
             Text {
-                text: "LAST PLAYED"
+                text: I18n.tr("LAST PLAYED")
                 color: Theme.accent
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.dp(10)
@@ -462,7 +462,7 @@ WidgetBody {
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: (hero.game && w.launchingId === hero.game.id) ? "Starting…" : "Play"
+                        text: (hero.game && w.launchingId === hero.game.id) ? I18n.tr("Starting…") : I18n.tr("Play")
                         color: Theme.fgAccent
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.dp(13)
@@ -517,7 +517,7 @@ WidgetBody {
 
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                text: "GAMES"
+                text: I18n.tr("GAMES")
                 color: Theme.accent
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.dp(10)
@@ -529,7 +529,7 @@ WidgetBody {
                 anchors.left: listTitle.right
                 anchors.leftMargin: Theme.dp(8)
                 anchors.verticalCenter: parent.verticalCenter
-                text: w.library.length === 0 ? "" : w.library.length + " installed"
+                text: w.library.length === 0 ? "" : I18n.tr("%1 installed", w.library.length)
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.dp(10)
@@ -610,7 +610,7 @@ WidgetBody {
 
                             Text {
                                 width: parent.width
-                                text: w.launchingId === row.modelData.id ? "Starting…" : w.detail(row.modelData)
+                                text: w.launchingId === row.modelData.id ? I18n.tr("Starting…") : w.detail(row.modelData)
                                 color: w.launchingId === row.modelData.id ? Theme.accent : Theme.subtextDim
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.dp(11)

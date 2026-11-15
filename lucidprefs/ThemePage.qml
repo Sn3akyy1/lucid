@@ -12,14 +12,14 @@ Column {
     readonly property string currentTheme: Prefs.currentTheme
     readonly property var modeOptions: [{
         "key": "dark",
-        "label": "Dark"
+        "label": I18n.tr("Dark")
     }, {
         "key": "light",
-        "label": "Light"
+        "label": I18n.tr("Light")
     }]
     // the two wallpaper-derived themes re-extract; everything else is authored
     // dark and gets a light variant built from its own colours
-    readonly property string modeHint: page.currentTheme === "matugen" || page.currentTheme === "pywal" ? "Re-derives the palette from your wallpaper in the mode you pick. Applications are asked to match." : (page.currentTheme === "colour" ? "Builds the palette from your colour again in the mode you pick. Applications are asked to match." : "Builds a light palette from this theme's own colours. Applications are asked to match.")
+    readonly property string modeHint: page.currentTheme === "matugen" || page.currentTheme === "pywal" ? I18n.tr("Re-derives the palette from your wallpaper in the mode you pick. Applications are asked to match.") : (page.currentTheme === "colour" ? I18n.tr("Builds the palette from your colour again in the mode you pick. Applications are asked to match.") : I18n.tr("Builds a light palette from this theme's own colours. Applications are asked to match."))
     property string appliedWallpaper: ""
     // same folder the dock's wallpaper strip browses
     readonly property string wallpaperDir: Prefs.wallpaperDir
@@ -264,10 +264,10 @@ Column {
     }
 
     SettingCard {
-        title: "THEME"
+        title: I18n.tr("THEME")
 
         SettingRow {
-            title: "Light or dark"
+            title: I18n.tr("Light or dark")
             description: page.modeHint
 
             M3Segmented {
@@ -282,8 +282,8 @@ Column {
         }
 
         SettingRow {
-            title: "Follow the wallpaper"
-            description: "Picks light for a bright wallpaper and dark for a dark one, every time the wallpaper changes. A hand-picked mode holds until the wallpaper changes next."
+            title: I18n.tr("Follow the wallpaper")
+            description: I18n.tr("Picks light for a bright wallpaper and dark for a dark one, every time the wallpaper changes. A hand-picked mode holds until the wallpaper changes next.")
 
             M3Switch {
                 checked: Prefs.autoColorMode
@@ -295,8 +295,8 @@ Column {
         }
 
         SettingRow {
-            title: "Colour scheme"
-            description: "Switching also swaps the wallpaper folder below to that theme's own."
+            title: I18n.tr("Colour scheme")
+            description: I18n.tr("Switching also swaps the wallpaper folder below to that theme's own.")
             showDivider: false
             stacked: true
 
@@ -533,9 +533,9 @@ Column {
                                 onTapped: {
                                     // a built-in theme has nothing on disk to delete, it only leaves the list
                                     if (!swatch.isUser)
-                                        Prefs.askConfirm("Remove this theme?", "\"" + swatch.themeName + "\" leaves the theme list and the launcher." + (swatch.selected ? " The palette switches to Matugen." : "") + " Use it again from Colours to bring it back.", "Remove", "theme-hide:" + swatch.themeId);
+                                        Prefs.askConfirm(I18n.tr("Remove this theme?"), I18n.tr("\"%1\" leaves the theme list and the launcher.", swatch.themeName) + (swatch.selected ? I18n.tr(" The palette switches to Matugen.") : "") + I18n.tr(" Use it again from Colours to bring it back."), I18n.tr("Remove"), "theme-hide:" + swatch.themeId);
                                     else
-                                        Prefs.askConfirm("Remove this theme?", "\"" + swatch.themeName + "\" and its generated palette are deleted. The wallpaper folder is left alone.", "Remove", "theme:" + swatch.themeId);
+                                        Prefs.askConfirm(I18n.tr("Remove this theme?"), I18n.tr("\"%1\" and its generated palette are deleted. The wallpaper folder is left alone.", swatch.themeName), I18n.tr("Remove"), "theme:" + swatch.themeId);
                                 }
                             }
 
@@ -552,14 +552,14 @@ Column {
     }
 
     SettingCard {
-        title: "MORE ON COLOUR"
+        title: I18n.tr("MORE ON COLOUR")
 
         SettingRow {
-            title: "Palettes and applications"
-            description: "How Matugen and Your colour build a palette, which applications follow it, and templates of your own."
+            title: I18n.tr("Palettes and applications")
+            description: I18n.tr("How Matugen and Your colour build a palette, which applications follow it, and templates of your own.")
 
             M3Button {
-                text: "Colours"
+                text: I18n.tr("Colours")
                 variant: "tonal"
                 onClicked: Prefs.settingsRequested("colours")
             }
@@ -567,12 +567,12 @@ Column {
         }
 
         SettingRow {
-            title: "More themes"
-            description: "A gallery of hundreds of schemes, and importing one from a repo or a file."
+            title: I18n.tr("More themes")
+            description: I18n.tr("A gallery of hundreds of schemes, and importing one from a repo or a file.")
             showDivider: false
 
             M3Button {
-                text: "Palettes"
+                text: I18n.tr("Palettes")
                 variant: "tonal"
                 onClicked: Prefs.settingsRequested("palettes")
             }
@@ -582,11 +582,11 @@ Column {
     }
 
     SettingCard {
-        title: "WALLPAPER"
+        title: I18n.tr("WALLPAPER")
 
         SettingRow {
-            title: "Wallpaper strip"
-            description: wallpapers.count + " in " + page.wallpaperDir.replace(page.home, "~")
+            title: I18n.tr("Wallpaper strip")
+            description: I18n.tr("%1 in %2", wallpapers.count, page.wallpaperDir.replace(page.home, "~"))
             stacked: true
 
             Column {
@@ -612,7 +612,7 @@ Column {
                 }
 
                 Text {
-                    text: "No images in this folder yet - add one below."
+                    text: I18n.tr("No images in this folder yet - add one below.")
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBody
@@ -624,7 +624,7 @@ Column {
                     spacing: Theme.dp(10)
 
                     M3Button {
-                        text: "Add wallpaper..."
+                        text: I18n.tr("Add wallpaper...")
                         variant: "filled"
                         iconPath: "add"
                         onClicked: {
@@ -634,12 +634,12 @@ Column {
                     }
 
                     M3Button {
-                        text: "Open folder"
+                        text: I18n.tr("Open folder")
                         onClicked: Quickshell.execDetached(["sh", "-c", "xdg-open '" + page.wallpaperDir + "'"])
                     }
 
                     M3Button {
-                        text: "Rescan"
+                        text: I18n.tr("Rescan")
                         variant: "text"
                         onClicked: wallpaperScan.restart()
                     }
@@ -651,8 +651,8 @@ Column {
         }
 
         SettingRow {
-            title: "Live wallpapers"
-            description: liveWalls.count + (liveWalls.count === 1 ? " video" : " videos") + " in the same folder, played behind the desktop"
+            title: I18n.tr("Live wallpapers")
+            description: liveWalls.count + (liveWalls.count === 1 ? I18n.tr(" video") : I18n.tr(" videos")) + I18n.tr(" in the same folder, played behind the desktop")
             visible: Prefs.liveWallpapers
             stacked: true
 
@@ -680,7 +680,7 @@ Column {
                 }
 
                 Text {
-                    text: "No videos in this folder yet - add an mp4, webm or mkv below."
+                    text: I18n.tr("No videos in this folder yet - add an mp4, webm or mkv below.")
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBody
@@ -689,7 +689,7 @@ Column {
                 }
 
                 M3Button {
-                    text: "Add live wallpaper..."
+                    text: I18n.tr("Add live wallpaper...")
                     variant: "filled"
                     iconPath: "add"
                     onClicked: {
@@ -703,14 +703,14 @@ Column {
         }
 
         SettingRow {
-            title: "Custom folder"
-            description: "Leave empty to follow the current theme's own wallpaper folder."
+            title: I18n.tr("Custom folder")
+            description: I18n.tr("Leave empty to follow the current theme's own wallpaper folder.")
             showDivider: false
 
             M3TextField {
                 width: Theme.dp(260)
                 text: Prefs.wallpaperFolder
-                placeholder: "~/Pictures/wallpapers/" + page.currentTheme
+                placeholder: I18n.tr("~/Pictures/wallpapers/%1", page.currentTheme)
                 onAccepted: (v) => {
                     return Prefs.wallpaperFolder = v.trim().replace("~", page.home);
                 }
@@ -721,11 +721,11 @@ Column {
     }
 
     SettingCard {
-        title: "LIVE WALLPAPERS"
+        title: I18n.tr("LIVE WALLPAPERS")
 
         SettingRow {
-            title: "Live wallpapers"
-            description: "Videos in the wallpaper folder (mp4, webm, mkv) get a Live tab in the launcher and play behind the desktop. The colours come from the first frame."
+            title: I18n.tr("Live wallpapers")
+            description: I18n.tr("Videos in the wallpaper folder (mp4, webm, mkv) get a Live tab in the launcher and play behind the desktop. The colours come from the first frame.")
             showDivider: Prefs.liveWallpapers
 
             M3Switch {
@@ -738,8 +738,8 @@ Column {
         }
 
         SettingRow {
-            title: "Decoder"
-            description: "What decodes the video. Automatic tries the integrated GPU first, so a laptop does not wake its graphics card for a wallpaper, then NVIDIA. The CPU always works, and costs the most."
+            title: I18n.tr("Decoder")
+            description: I18n.tr("What decodes the video. Automatic tries the integrated GPU first, so a laptop does not wake its graphics card for a wallpaper, then NVIDIA. The CPU always works, and costs the most.")
             visible: Prefs.liveWallpapers
             stacked: true
 
@@ -748,16 +748,16 @@ Column {
                 current: Prefs.liveDecoder
                 options: [{
                     "key": "auto",
-                    "label": "Automatic"
+                    "label": I18n.tr("Automatic")
                 }, {
                     "key": "vaapi",
-                    "label": "VA-API"
+                    "label": I18n.tr("VA-API")
                 }, {
                     "key": "cuda",
-                    "label": "NVIDIA"
+                    "label": I18n.tr("NVIDIA")
                 }, {
                     "key": "cpu",
-                    "label": "CPU"
+                    "label": I18n.tr("CPU")
                 }]
                 onChosen: (key) => Prefs.liveDecoder = key
             }
@@ -765,8 +765,8 @@ Column {
         }
 
         SettingRow {
-            title: "Pause under windows"
-            description: "Hold the video still on a screen whose workspace has windows, or only behind a fullscreen one."
+            title: I18n.tr("Pause under windows")
+            description: I18n.tr("Hold the video still on a screen whose workspace has windows, or only behind a fullscreen one.")
             visible: Prefs.liveWallpapers
             stacked: true
 
@@ -775,13 +775,13 @@ Column {
                 current: Prefs.livePauseUnder
                 options: [{
                     "key": "any",
-                    "label": "Any window"
+                    "label": I18n.tr("Any window")
                 }, {
                     "key": "fullscreen",
-                    "label": "Fullscreen"
+                    "label": I18n.tr("Fullscreen")
                 }, {
                     "key": "never",
-                    "label": "Never"
+                    "label": I18n.tr("Never")
                 }]
                 onChosen: (key) => Prefs.livePauseUnder = key
             }
@@ -789,8 +789,8 @@ Column {
         }
 
         SettingRow {
-            title: "In game mode"
-            description: "Keep playing, pause, or stop the player and leave the first frame, which frees what the video was using."
+            title: I18n.tr("In game mode")
+            description: I18n.tr("Keep playing, pause, or stop the player and leave the first frame, which frees what the video was using.")
             visible: Prefs.liveWallpapers
             showDivider: false
             stacked: true
@@ -800,13 +800,13 @@ Column {
                 current: Prefs.liveGameMode
                 options: [{
                     "key": "play",
-                    "label": "Keep playing"
+                    "label": I18n.tr("Keep playing")
                 }, {
                     "key": "pause",
-                    "label": "Pause"
+                    "label": I18n.tr("Pause")
                 }, {
                     "key": "still",
-                    "label": "Still frame"
+                    "label": I18n.tr("Still frame")
                 }]
                 onChosen: (key) => Prefs.liveGameMode = key
             }
@@ -816,11 +816,11 @@ Column {
     }
 
     SettingCard {
-        title: "WALLPAPER PICKER"
+        title: I18n.tr("WALLPAPER PICKER")
 
         SettingRow {
-            title: "Picker style"
-            description: "How the wallpapers are laid out when you open the picker from the launcher."
+            title: I18n.tr("Picker style")
+            description: I18n.tr("How the wallpapers are laid out when you open the picker from the launcher.")
             stacked: true
 
             Flow {
@@ -829,22 +829,22 @@ Column {
 
                 WallpaperStyleThumb {
                     styleId: "strip"
-                    label: "Strip"
+                    label: I18n.tr("Strip")
                 }
 
                 WallpaperStyleThumb {
                     styleId: "pills"
-                    label: "Pills"
+                    label: I18n.tr("Pills")
                 }
 
                 WallpaperStyleThumb {
                     styleId: "tiles"
-                    label: "Tiles"
+                    label: I18n.tr("Tiles")
                 }
 
                 WallpaperStyleThumb {
                     styleId: "bento"
-                    label: "Bento"
+                    label: I18n.tr("Bento")
                 }
 
             }
@@ -852,8 +852,8 @@ Column {
         }
 
         SettingRow {
-            title: "Arrow keys"
-            description: Prefs.wallpaperPickerStyle === "tiles" ? "Tiles is a grid, so it takes all four arrows. In the other styles, which pair changes the wallpaper; the other pair moves through the search field." : "Which pair changes the wallpaper. The other pair moves through the search field, to edit what you typed."
+            title: I18n.tr("Arrow keys")
+            description: Prefs.wallpaperPickerStyle === "tiles" ? I18n.tr("Tiles is a grid, so it takes all four arrows. In the other styles, which pair changes the wallpaper; the other pair moves through the search field.") : I18n.tr("Which pair changes the wallpaper. The other pair moves through the search field, to edit what you typed.")
             stacked: true
 
             M3Segmented {
@@ -861,10 +861,10 @@ Column {
                 current: Prefs.wallpaperPickerKeys
                 options: [{
                     "key": "sides",
-                    "label": "Left and right"
+                    "label": I18n.tr("Left and right")
                 }, {
                     "key": "updown",
-                    "label": "Up and down"
+                    "label": I18n.tr("Up and down")
                 }]
                 onChosen: (key) => Prefs.wallpaperPickerKeys = key
             }
@@ -872,8 +872,8 @@ Column {
         }
 
         SettingRow {
-            title: "Pill shape"
-            description: "How tall the pills are around the open one: all alike, the full height of the panel, or rising to a peak."
+            title: I18n.tr("Pill shape")
+            description: I18n.tr("How tall the pills are around the open one: all alike, the full height of the panel, or rising to a peak.")
             visible: Prefs.wallpaperPickerStyle === "pills"
             showDivider: false
             stacked: true
@@ -883,13 +883,13 @@ Column {
                 current: Prefs.wallpaperPillsShape
                 options: [{
                     "key": "uniform",
-                    "label": "Uniform"
+                    "label": I18n.tr("Uniform")
                 }, {
                     "key": "full",
-                    "label": "Full height"
+                    "label": I18n.tr("Full height")
                 }, {
                     "key": "wave",
-                    "label": "Wave"
+                    "label": I18n.tr("Wave")
                 }]
                 onChosen: (key) => Prefs.wallpaperPillsShape = key
             }
@@ -897,8 +897,8 @@ Column {
         }
 
         SettingRow {
-            title: "Step"
-            description: "How quickly the cards shrink away from the middle one."
+            title: I18n.tr("Step")
+            description: I18n.tr("How quickly the cards shrink away from the middle one.")
             visible: Prefs.wallpaperPickerStyle === "strip"
             stacked: true
 
@@ -907,13 +907,13 @@ Column {
                 current: Prefs.wallpaperStripSteps
                 options: [{
                     "key": "soft",
-                    "label": "Soft"
+                    "label": I18n.tr("Soft")
                 }, {
                     "key": "normal",
-                    "label": "Normal"
+                    "label": I18n.tr("Normal")
                 }, {
                     "key": "steep",
-                    "label": "Marked"
+                    "label": I18n.tr("Marked")
                 }]
                 onChosen: (key) => Prefs.wallpaperStripSteps = key
             }
@@ -921,8 +921,8 @@ Column {
         }
 
         SettingRow {
-            title: "Neighbours"
-            description: "How many cards show on each side of the middle one."
+            title: I18n.tr("Neighbours")
+            description: I18n.tr("How many cards show on each side of the middle one.")
             visible: Prefs.wallpaperPickerStyle === "strip"
             showDivider: false
             stacked: true
@@ -943,8 +943,8 @@ Column {
         }
 
         SettingRow {
-            title: "Rows"
-            description: "How many rows of tiles the picker shows."
+            title: I18n.tr("Rows")
+            description: I18n.tr("How many rows of tiles the picker shows.")
             visible: Prefs.wallpaperPickerStyle === "tiles"
             stacked: true
 
@@ -970,8 +970,8 @@ Column {
         }
 
         SettingRow {
-            title: "Tile shape"
-            description: "Square tiles, or wide ones that show more of each picture."
+            title: I18n.tr("Tile shape")
+            description: I18n.tr("Square tiles, or wide ones that show more of each picture.")
             visible: Prefs.wallpaperPickerStyle === "tiles"
             showDivider: false
             stacked: true
@@ -981,10 +981,10 @@ Column {
                 current: Prefs.wallpaperTilesAspect
                 options: [{
                     "key": "square",
-                    "label": "Square"
+                    "label": I18n.tr("Square")
                 }, {
                     "key": "wide",
-                    "label": "Wide"
+                    "label": I18n.tr("Wide")
                 }]
                 onChosen: (key) => Prefs.wallpaperTilesAspect = key
             }
@@ -992,8 +992,8 @@ Column {
         }
 
         SettingRow {
-            title: "Main wallpaper"
-            description: "How much of the panel the selected wallpaper takes."
+            title: I18n.tr("Main wallpaper")
+            description: I18n.tr("How much of the panel the selected wallpaper takes.")
             visible: Prefs.wallpaperPickerStyle === "bento"
             stacked: true
 
@@ -1002,13 +1002,13 @@ Column {
                 current: Prefs.wallpaperBentoHero
                 options: [{
                     "key": "small",
-                    "label": "Small"
+                    "label": I18n.tr("Small")
                 }, {
                     "key": "medium",
-                    "label": "Medium"
+                    "label": I18n.tr("Medium")
                 }, {
                     "key": "large",
-                    "label": "Large"
+                    "label": I18n.tr("Large")
                 }]
                 onChosen: (key) => Prefs.wallpaperBentoHero = key
             }
@@ -1016,8 +1016,8 @@ Column {
         }
 
         SettingRow {
-            title: "Show previous"
-            description: "Keep the two wallpapers before the selected one at the edge, or give their room to the rest."
+            title: I18n.tr("Show previous")
+            description: I18n.tr("Keep the two wallpapers before the selected one at the edge, or give their room to the rest.")
             visible: Prefs.wallpaperPickerStyle === "bento"
             showDivider: false
 
@@ -1038,11 +1038,11 @@ Column {
         readonly property string type: Prefs.wallTransType
         readonly property bool fades: transCard.type === "none" || transCard.type === "simple"
 
-        title: "WALLPAPER TRANSITION"
+        title: I18n.tr("WALLPAPER TRANSITION")
 
         SettingRow {
-            title: "Presets"
-            description: "A starting point; changing anything below makes it your own."
+            title: I18n.tr("Presets")
+            description: I18n.tr("A starting point; changing anything below makes it your own.")
             stacked: true
 
             Flow {
@@ -1065,8 +1065,8 @@ Column {
         }
 
         SettingRow {
-            title: "Effect"
-            description: "Fade and Simple blend the two pictures; the others reveal the new one from a side, a line or a circle."
+            title: I18n.tr("Effect")
+            description: I18n.tr("Fade and Simple blend the two pictures; the others reveal the new one from a side, a line or a circle.")
             stacked: true
 
             M3Chips {
@@ -1074,40 +1074,40 @@ Column {
                 current: Prefs.wallTransType
                 options: [{
                     "key": "fade",
-                    "label": "Fade"
+                    "label": I18n.tr("Fade")
                 }, {
                     "key": "simple",
-                    "label": "Simple"
+                    "label": I18n.tr("Simple")
                 }, {
                     "key": "none",
-                    "label": "None"
+                    "label": I18n.tr("None")
                 }, {
                     "key": "left",
-                    "label": "From left"
+                    "label": I18n.tr("From left")
                 }, {
                     "key": "right",
-                    "label": "From right"
+                    "label": I18n.tr("From right")
                 }, {
                     "key": "top",
-                    "label": "From top"
+                    "label": I18n.tr("From top")
                 }, {
                     "key": "bottom",
-                    "label": "From bottom"
+                    "label": I18n.tr("From bottom")
                 }, {
                     "key": "wipe",
-                    "label": "Wipe"
+                    "label": I18n.tr("Wipe")
                 }, {
                     "key": "wave",
-                    "label": "Wave"
+                    "label": I18n.tr("Wave")
                 }, {
                     "key": "grow",
-                    "label": "Grow"
+                    "label": I18n.tr("Grow")
                 }, {
                     "key": "outer",
-                    "label": "Shrink"
+                    "label": I18n.tr("Shrink")
                 }, {
                     "key": "random",
-                    "label": "Random"
+                    "label": I18n.tr("Random")
                 }]
                 onChosen: (key) => WallTransitions.set("type", key)
             }
@@ -1115,7 +1115,7 @@ Column {
         }
 
         SettingRow {
-            title: "Duration"
+            title: I18n.tr("Duration")
             visible: !transCard.fades
             stacked: true
 
@@ -1133,8 +1133,8 @@ Column {
         }
 
         SettingRow {
-            title: "Angle"
-            description: "0° sweeps right to left, 90° top to bottom."
+            title: I18n.tr("Angle")
+            description: I18n.tr("0° sweeps right to left, 90° top to bottom.")
             visible: transCard.type === "wipe" || transCard.type === "wave"
             stacked: true
 
@@ -1151,7 +1151,7 @@ Column {
         }
 
         SettingRow {
-            title: "Wave size"
+            title: I18n.tr("Wave size")
             visible: transCard.type === "wave"
             stacked: true
 
@@ -1168,8 +1168,8 @@ Column {
         }
 
         SettingRow {
-            title: "Starts from"
-            description: "Where the circle opens. \"Chosen card\" grows it from the wallpaper you are previewing in the picker."
+            title: I18n.tr("Starts from")
+            description: I18n.tr("Where the circle opens. \"Chosen card\" grows it from the wallpaper you are previewing in the picker.")
             visible: transCard.type === "grow" || transCard.type === "outer"
             stacked: true
 
@@ -1178,13 +1178,13 @@ Column {
                 current: Prefs.wallTransOrigin
                 options: [{
                     "key": "center",
-                    "label": "Centre"
+                    "label": I18n.tr("Centre")
                 }, {
                     "key": "card",
-                    "label": "Chosen card"
+                    "label": I18n.tr("Chosen card")
                 }, {
                     "key": "cursor",
-                    "label": "Pointer"
+                    "label": I18n.tr("Pointer")
                 }]
                 onChosen: (key) => WallTransitions.set("origin", key)
             }
@@ -1192,8 +1192,8 @@ Column {
         }
 
         SettingRow {
-            title: "Curve"
-            description: "How the change speeds up and slows down."
+            title: I18n.tr("Curve")
+            description: I18n.tr("How the change speeds up and slows down.")
             visible: !transCard.fades
             stacked: true
 
@@ -1202,16 +1202,16 @@ Column {
                 current: Prefs.wallTransBezier
                 options: [{
                     "key": ".54,0,.34,.99",
-                    "label": "Smooth"
+                    "label": I18n.tr("Smooth")
                 }, {
                     "key": ".05,.7,.1,1",
-                    "label": "Snappy"
+                    "label": I18n.tr("Snappy")
                 }, {
                     "key": ".4,0,.2,1",
-                    "label": "Gentle"
+                    "label": I18n.tr("Gentle")
                 }, {
                     "key": "0,0,1,1",
-                    "label": "Linear"
+                    "label": I18n.tr("Linear")
                 }]
                 onChosen: (key) => WallTransitions.set("bezier", key)
             }
@@ -1219,8 +1219,8 @@ Column {
         }
 
         SettingRow {
-            title: "Save as preset"
-            description: "Keep the settings above under a name of your own."
+            title: I18n.tr("Save as preset")
+            description: I18n.tr("Keep the settings above under a name of your own.")
 
             Row {
                 spacing: Theme.dp(10)
@@ -1229,7 +1229,7 @@ Column {
                     id: presetName
 
                     width: Theme.dp(200)
-                    placeholder: "Preset name"
+                    placeholder: I18n.tr("Preset name")
                     onAccepted: (v) => {
                         WallTransitions.saveCurrent(v);
                         presetName.text = "";
@@ -1237,7 +1237,7 @@ Column {
                 }
 
                 M3Button {
-                    text: "Save"
+                    text: I18n.tr("Save")
                     variant: "tonal"
                     onClicked: {
                         WallTransitions.saveCurrent(presetName.text);
@@ -1250,12 +1250,12 @@ Column {
         }
 
         SettingRow {
-            title: "Try it"
-            description: "Plays the transition from a flat colour taken from your wallpaper into it."
+            title: I18n.tr("Try it")
+            description: I18n.tr("Plays the transition from a flat colour taken from your wallpaper into it.")
             showDivider: false
 
             M3Button {
-                text: "Try transition"
+                text: I18n.tr("Try transition")
                 variant: "tonal"
                 onClicked: {
                     if (page.appliedWallpaper !== "")

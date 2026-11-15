@@ -23,13 +23,13 @@ Item {
             return "";
 
         if (!share.info.found)
-            return "There is no saved profile for this network, so there is nothing to share.";
+            return I18n.tr("There is no saved profile for this network, so there is nothing to share.");
 
         if (share.info.security === "enterprise")
-            return "This network signs in with an account, not a password a phone could scan.";
+            return I18n.tr("This network signs in with an account, not a password a phone could scan.");
 
         if (!share.open && !share.info.psk)
-            return share.info.agentOwned ? "The password is kept in your keyring, not by NetworkManager, so it can't be read from here." : "No password is saved for this network.";
+            return share.info.agentOwned ? I18n.tr("The password is kept in your keyring, not by NetworkManager, so it can't be read from here.") : I18n.tr("No password is saved for this network.");
 
         return "";
     }
@@ -108,7 +108,7 @@ Item {
             visible: share.rows.length === 0
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
-            text: share.loading ? "Reading…" : (share.ready ? "Install qrencode to show a code." : "No code")
+            text: share.loading ? I18n.tr("Reading…") : (share.ready ? I18n.tr("Install qrencode to show a code.") : I18n.tr("No code"))
             color: Theme.alpha(share.ink, 0.6)
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabel
@@ -122,7 +122,7 @@ Item {
         Text {
             width: parent.width
             wrapMode: Text.WordWrap
-            text: share.problem !== "" ? share.problem : (share.open ? "Point a phone's camera at the code to join " + share.ssid + ". It's an open network, so there is no password." : "Point a phone's camera at the code to join " + share.ssid + ", or type the password in.")
+            text: share.problem !== "" ? share.problem : (share.open ? I18n.tr("Point a phone's camera at the code to join %1. It's an open network, so there is no password.", share.ssid) : I18n.tr("Point a phone's camera at the code to join %1, or type the password in.", share.ssid))
             color: share.problem !== "" ? Theme.error : Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBody
@@ -169,7 +169,7 @@ Item {
             visible: share.ready && !share.open
             // outlined in the bar panel, where the buttons beside it are
             variant: share.compact ? "outlined" : "tonal"
-            text: share.copied ? "Copied" : "Copy password"
+            text: share.copied ? I18n.tr("Copied") : I18n.tr("Copy password")
             onClicked: {
                 Net.copyShared();
                 share.copied = true;

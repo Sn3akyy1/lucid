@@ -23,52 +23,52 @@ WidgetBody {
     readonly property color tint: w.low ? Theme.error : w.inkAccent
     readonly property string stateText: {
         if (!w.present)
-            return "No battery";
+            return I18n.tr("No battery");
 
         if (w.full)
-            return "Fully charged";
+            return I18n.tr("Fully charged");
 
         if (w.charging)
-            return "Charging";
+            return I18n.tr("Charging");
 
         if (w.held)
-            return "Plugged in";
+            return I18n.tr("Plugged in");
 
         if (w.state === UPowerDeviceState.Empty)
-            return "Empty";
+            return I18n.tr("Empty");
 
-        return "On battery";
+        return I18n.tr("On battery");
     }
     // only the figures this battery actually reports, so no column reads as a dash
     readonly property var stats: {
         var out = [];
         if (w.timeText !== "")
             out.push({
-                "label": w.charging ? "UNTIL FULL" : "REMAINING",
+                "label": w.charging ? I18n.tr("UNTIL FULL") : I18n.tr("REMAINING"),
                 "value": w.timeText.replace(" to full", "").replace(" left", "")
             });
 
         if (w.rate > 0.05)
             out.push({
-                "label": w.charging ? "CHARGING AT" : "DRAWING",
+                "label": w.charging ? I18n.tr("CHARGING AT") : I18n.tr("DRAWING"),
                 "value": w.rate.toFixed(1) + " W"
             });
 
         if (w.capacity > 0)
             out.push({
-                "label": "CAPACITY",
+                "label": I18n.tr("CAPACITY"),
                 "value": w.capacity.toFixed(1) + " Wh"
             });
 
         if (w.health >= 0)
             out.push({
-                "label": "HEALTH",
+                "label": I18n.tr("HEALTH"),
                 "value": Math.round(w.health) + "%"
             });
 
         if (out.length === 0)
             out.push({
-                "label": "STATE",
+                "label": I18n.tr("STATE"),
                 "value": w.stateText
             });
 
@@ -91,7 +91,7 @@ WidgetBody {
         var h = Math.floor(secs / 3600);
         var m = Math.round((secs % 3600) / 60);
         var body = h > 0 ? h + " h " + m + " m" : m + " m";
-        return w.charging ? body + " to full" : body + " left";
+        return w.charging ? I18n.tr("%1 to full", body) : I18n.tr("%1 left", body);
     }
 
     // every other battery upower can see: mice, headsets, a paired phone
@@ -370,7 +370,7 @@ WidgetBody {
                     rounded: 100
                     tabular: true
                     color: w.level > 0.25 ? (w.low ? Theme.fgError : w.fgInkAccent) : w.ink
-                    text: w.present ? w.percent + "%" : "No battery"
+                    text: w.present ? w.percent + "%" : I18n.tr("No battery")
                 }
 
             }
@@ -518,7 +518,7 @@ WidgetBody {
             first: true
             last: w.others.length === 0
             glyph: "laptop_chromebook"
-            label: "This computer"
+            label: I18n.tr("This computer")
             value: w.level
             plugged: w.charging || w.held || w.full
         }
@@ -533,7 +533,7 @@ WidgetBody {
                 first: !w.present && index === 0
                 last: index === Math.min(3, w.others.length) - 1
                 glyph: w.glyphFor(modelData)
-                label: modelData.model || "Device"
+                label: modelData.model || I18n.tr("Device")
                 value: modelData.percentage
                 plugged: modelData.state === UPowerDeviceState.Charging
             }
@@ -547,7 +547,7 @@ WidgetBody {
             horizontalAlignment: Text.AlignHCenter
             role: "labelMedium"
             color: w.inkFaint
-            text: "Wireless devices show up here when they report a charge"
+            text: I18n.tr("Wireless devices show up here when they report a charge")
             wrapMode: Text.Wrap
         }
 

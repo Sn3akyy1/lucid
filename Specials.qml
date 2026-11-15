@@ -14,11 +14,11 @@ Singleton {
 
     // the keys match modules/binds.lua, and show until keybinds.json is read
     readonly property var builtinSpaces: [
-        { "key": "special", "glyph": "layers", "label": "Scratchpad", "pref": "specialScratchpad", "apps": "", "keys": ["Super", "Shift", "S"] },
-        { "key": "music", "glyph": "music_note", "label": "Music", "pref": "specialMusic", "apps": "specialMusicApps", "keys": ["Super", "Shift", "M"] },
-        { "key": "comms", "glyph": "chat", "label": "Comms", "pref": "specialComms", "apps": "specialCommsApps", "keys": ["Super", "Shift", "D"] },
-        { "key": "todo", "glyph": "checklist", "label": "To-do", "pref": "specialTodo", "apps": "specialTodoApps", "keys": ["Super", "Shift", "R"] },
-        { "key": "sysmon", "glyph": "monitor_heart", "label": "System", "pref": "specialSysmon", "apps": "specialSysmonApps", "keys": ["Ctrl", "Shift", "Escape"] }
+        { "key": "special", "glyph": "layers", "label": I18n.tr("Scratchpad"), "pref": "specialScratchpad", "apps": "", "keys": ["Super", "Shift", "S"] },
+        { "key": "music", "glyph": "music_note", "label": I18n.tr("Music"), "pref": "specialMusic", "apps": "specialMusicApps", "keys": ["Super", "Shift", "M"] },
+        { "key": "comms", "glyph": "chat", "label": I18n.tr("Comms"), "pref": "specialComms", "apps": "specialCommsApps", "keys": ["Super", "Shift", "D"] },
+        { "key": "todo", "glyph": "checklist", "label": I18n.tr("To-do"), "pref": "specialTodo", "apps": "specialTodoApps", "keys": ["Super", "Shift", "R"] },
+        { "key": "sysmon", "glyph": "monitor_heart", "label": I18n.tr("System"), "pref": "specialSysmon", "apps": "specialSysmonApps", "keys": ["Ctrl", "Shift", "Escape"] }
     ]
     readonly property var stashKeys: ["Super", "Alt", "S"]
     // the ones made in settings, after the ones lucid ships

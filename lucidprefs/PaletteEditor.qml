@@ -16,22 +16,22 @@ Column {
     readonly property string palettePath: editor.home + "/.cache/quickshell/matugen.json"
     readonly property var keys: [{
         "role": "surface",
-        "label": "Background"
+        "label": I18n.tr("Background")
     }, {
         "role": "on_surface",
-        "label": "Text"
+        "label": I18n.tr("Text")
     }, {
         "role": "primary",
-        "label": "Primary"
+        "label": I18n.tr("Primary")
     }, {
         "role": "secondary",
-        "label": "Secondary"
+        "label": I18n.tr("Secondary")
     }, {
         "role": "tertiary",
-        "label": "Tertiary"
+        "label": I18n.tr("Tertiary")
     }, {
         "role": "error",
-        "label": "Error"
+        "label": I18n.tr("Error")
     }]
     // the palette on screen, as read, and the file's text, to put it back
     property var onScreen: ({})
@@ -56,7 +56,7 @@ Column {
 
     // the name a saved theme starts from, and the one typed over it
     property string baseName: ""
-    property string themeName: editor.baseName !== "" ? editor.baseName + " (edited)" : "My palette"
+    property string themeName: editor.baseName !== "" ? I18n.tr("%1 (edited)", editor.baseName) : I18n.tr("My palette")
 
     function begin() {
         if (editor.editing)
@@ -172,7 +172,7 @@ Column {
                 // is the one to keep now, so the draft goes without putting anything back
                 editor.editing = false;
                 editor.phase = "idle";
-                editor.message = "The theme changed underneath, so the draft was dropped.";
+                editor.message = I18n.tr("The theme changed underneath, so the draft was dropped.");
             } else if (editor.written[t] && t !== editor.lastWrite) {
                 // a draft read back after it was discarded
                 return ;
@@ -193,7 +193,7 @@ Column {
                 }
                 if (!r || !r.ok) {
                     editor.phase = "error";
-                    editor.message = r ? r.error : "The palette could not be built.";
+                    editor.message = r ? r.error : I18n.tr("The palette could not be built.");
                     return ;
                 }
                 editor.phase = "idle";
@@ -217,14 +217,14 @@ Column {
                 }
                 if (!r || !r.ok) {
                     editor.phase = "error";
-                    editor.message = r ? r.error : "The theme could not be saved.";
+                    editor.message = r ? r.error : I18n.tr("The theme could not be saved.");
                     return ;
                 }
                 // the new theme takes over the palette file from the draft
                 editor.onScreen = editor.draft;
                 editor.editing = false;
                 editor.phase = "saved";
-                editor.message = r.name + " is one of your themes now, and the one on screen.";
+                editor.message = I18n.tr("%1 is one of your themes now, and the one on screen.", r.name);
                 Prefs.rescanThemes();
                 Prefs.themeChangeRequested(r.id);
             }
@@ -313,7 +313,7 @@ Column {
     }
 
     M3Button {
-        text: editor.allRoles ? "Hide the other roles" : "Every role (" + editor.roles.length + ")"
+        text: editor.allRoles ? I18n.tr("Hide the other roles") : I18n.tr("Every role (%1)", editor.roles.length)
         variant: "text"
         onClicked: editor.allRoles = !editor.allRoles
     }
@@ -388,7 +388,7 @@ Column {
 
             width: Theme.dp(260)
             text: editor.themeName
-            placeholder: "Name for the theme"
+            placeholder: I18n.tr("Name for the theme")
             onEdited: (v) => {
                 return editor.themeName = v;
             }
@@ -399,7 +399,7 @@ Column {
 
         M3Button {
             anchors.verticalCenter: parent.verticalCenter
-            text: editor.phase === "saving" ? "Saving..." : "Save as theme"
+            text: editor.phase === "saving" ? I18n.tr("Saving...") : I18n.tr("Save as theme")
             variant: "filled"
             enabled: editor.phase !== "saving" && editor.phase !== "building" && editor.themeName.trim() !== ""
             onClicked: editor.save(editor.themeName)
@@ -407,7 +407,7 @@ Column {
 
         M3Button {
             anchors.verticalCenter: parent.verticalCenter
-            text: "Discard"
+            text: I18n.tr("Discard")
             onClicked: editor.discard()
         }
 
@@ -416,7 +416,7 @@ Column {
     Text {
         width: editor.width
         visible: editor.editing || editor.message !== ""
-        text: editor.message !== "" ? editor.message : "The shell is showing the draft. Save it as a theme to keep it, which also carries it to your applications, or discard it."
+        text: editor.message !== "" ? editor.message : I18n.tr("The shell is showing the draft. Save it as a theme to keep it, which also carries it to your applications, or discard it.")
         color: editor.phase === "error" ? Theme.error : Theme.subtext
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBody

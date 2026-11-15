@@ -11,11 +11,11 @@ Singleton {
     id: root
 
     readonly property var actions: [
-        { "id": "lock", "label": "Lock", "icon": "lock" },
-        { "id": "suspend", "label": "Suspend", "icon": "bedtime" },
-        { "id": "logout", "label": "Log out", "icon": "logout" },
-        { "id": "reboot", "label": "Restart", "icon": "restart_alt" },
-        { "id": "shutdown", "label": "Shut down", "icon": "power_settings_new" }
+        { "id": "lock", "label": I18n.tr("Lock"), "icon": "lock" },
+        { "id": "suspend", "label": I18n.tr("Suspend"), "icon": "bedtime" },
+        { "id": "logout", "label": I18n.tr("Log out"), "icon": "logout" },
+        { "id": "reboot", "label": I18n.tr("Restart"), "icon": "restart_alt" },
+        { "id": "shutdown", "label": I18n.tr("Shut down"), "icon": "power_settings_new" }
     ]
 
     readonly property int profile: PowerProfiles.profile
@@ -50,22 +50,22 @@ Singleton {
 
     function name(p) {
         if (p === PowerProfile.Performance)
-            return "Performance";
+            return I18n.tr("Performance");
 
         if (p === PowerProfile.PowerSaver)
-            return "Power saver";
+            return I18n.tr("Power saver");
 
-        return "Balanced";
+        return I18n.tr("Balanced");
     }
 
     function description(p) {
         if (p === PowerProfile.Performance)
-            return "Full speed, for more heat and less battery";
+            return I18n.tr("Full speed, for more heat and less battery");
 
         if (p === PowerProfile.PowerSaver)
-            return "Cooler and quieter, and the battery lasts longer";
+            return I18n.tr("Cooler and quieter, and the battery lasts longer");
 
-        return "Speed and battery life kept in step";
+        return I18n.tr("Speed and battery life kept in step");
     }
 
     // a bolt, a leaf and a gauge, as material symbol names
@@ -81,12 +81,12 @@ Singleton {
 
     function degradationText(reason) {
         if (reason === "lap-detected")
-            return "Performance is held back while the laptop sits on a lap.";
+            return I18n.tr("Performance is held back while the laptop sits on a lap.");
 
         if (reason === "high-operating-temperature")
-            return "Performance is held back until the machine cools down.";
+            return I18n.tr("Performance is held back until the machine cools down.");
 
-        return "Performance is held back (" + reason + ").";
+        return I18n.tr("Performance is held back (%1).", reason);
     }
 
     function set(p) {

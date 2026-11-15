@@ -304,7 +304,7 @@ FloatingWindow {
             "hidden": win.app.lumen.hidden
         }, function(r) {
             if (!r.ok) {
-                win.say(r.error || "Can't open that folder");
+                win.say(r.error || I18n.tr("Can't open that folder"));
                 return ;
             }
             win.raw = r.items || [];
@@ -602,7 +602,7 @@ FloatingWindow {
         }
         if (!win.canEdit) {
             if (win.current && win.current.animated)
-                win.say("Moving pictures can't be edited yet");
+                win.say(I18n.tr("Moving pictures can't be edited yet"));
 
             return ;
         }
@@ -695,7 +695,7 @@ FloatingWindow {
             var pic = stage.current, req = grabLater.req;
             if (!pic || !pic.ready) {
                 win.busy = false;
-                win.say("The picture isn't ready yet");
+                win.say(I18n.tr("The picture isn't ready yet"));
                 return ;
             }
             var tmp = win.app.home + "/.cache/lucid/lens/render-" + Date.now() + ".tiff";
@@ -703,7 +703,7 @@ FloatingWindow {
             var ok = pic.grabToImage(function(r) {
                 if (!r.saveToFile(tmp)) {
                     win.busy = false;
-                    win.say("Couldn't draw the edited picture");
+                    win.say(I18n.tr("Couldn't draw the edited picture"));
                     return ;
                 }
                 req.tmp = tmp;
@@ -711,7 +711,7 @@ FloatingWindow {
             }, Qt.size(Math.round(pic.width), Math.round(pic.height)));
             if (!ok) {
                 win.busy = false;
-                win.say("Couldn't draw the edited picture");
+                win.say(I18n.tr("Couldn't draw the edited picture"));
             }
         }
     }
@@ -720,7 +720,7 @@ FloatingWindow {
         win.busy = false;
         var c = win.current;
         if (!r.ok) {
-            win.say(r.error || "Couldn't save it");
+            win.say(r.error || I18n.tr("Couldn't save it"));
             return ;
         }
         if (c)
@@ -745,18 +745,18 @@ FloatingWindow {
                 }
                 win.rebuild();
             }
-            win.say("Saved as “" + name + "”", "Show", {
+            win.say(I18n.tr("Saved as “%1”", name), I18n.tr("Show"), {
                 "kind": "show",
                 "path": r.path
             });
         } else {
             win.rewritten(r);
             // the first save over a picture is when lens files its original away
-            var said = r.lossless ? "Saved, without losing any quality" : "Saved";
+            var said = r.lossless ? I18n.tr("Saved, without losing any quality") : I18n.tr("Saved");
             if (r.first)
-                said = r.lossless ? "Saved without losing quality  ·  original kept" : "Saved  ·  original kept";
+                said = r.lossless ? I18n.tr("Saved without losing quality  ·  original kept") : I18n.tr("Saved  ·  original kept");
 
-            win.say(said, r.backup ? "Undo" : "", r.backup ? {
+            win.say(said, r.backup ? I18n.tr("Undo") : "", r.backup ? {
                 "kind": "unsave",
                 "path": r.path,
                 "backup": r.backup,
@@ -825,14 +825,14 @@ FloatingWindow {
                 "first": p.first === true
             }, function(r) {
                 if (!r.ok) {
-                    win.say(r.error || "Couldn't put it back");
+                    win.say(r.error || I18n.tr("Couldn't put it back"));
                     return ;
                 }
                 if (p.first)
                     win.clearKept(r.path);
 
                 win.rewritten(r);
-                win.say("Put back as it was");
+                win.say(I18n.tr("Put back as it was"));
             });
         } else if (p.kind === "unrevert") {
             win.app.call("unrevert", {
@@ -841,18 +841,18 @@ FloatingWindow {
                 "entry": p.entry
             }, function(r) {
                 if (!r.ok) {
-                    win.say(r.error || "Couldn't put the edits back");
+                    win.say(r.error || I18n.tr("Couldn't put the edits back"));
                     return ;
                 }
                 win.rewritten(r);
-                win.say("Edited version put back");
+                win.say(I18n.tr("Edited version put back"));
             });
         } else if (p.kind === "restore") {
             win.app.call("restore", {
                 "path": p.path
             }, function(r) {
                 if (!r.ok) {
-                    win.say(r.error || "Couldn't restore it");
+                    win.say(r.error || I18n.tr("Couldn't restore it"));
                     return ;
                 }
                 win.landOn = p.path;
@@ -860,13 +860,13 @@ FloatingWindow {
                     win.raw = win.raw.concat([p.entry]);
 
                 win.rebuild();
-                win.say("Restored “" + win.app.nameOf(p.path) + "”");
+                win.say(I18n.tr("Restored “%1”", win.app.nameOf(p.path)));
             });
         } else if (p.kind === "wallpaper") {
             win.app.call("wallpaper", {
                 "path": p.previous
             });
-            win.say("Wallpaper put back");
+            win.say(I18n.tr("Wallpaper put back"));
         } else if (p.kind === "show") {
             win.reveal(p.path);
         } else if (p.kind === "jump") {
@@ -897,7 +897,7 @@ FloatingWindow {
                 "path": c.path
             }, function(r) {
                 if (!r.ok) {
-                    win.say(r.error || "Couldn't move it to the trash");
+                    win.say(r.error || I18n.tr("Couldn't move it to the trash"));
                     return ;
                 }
                 win.forget(c.path);
@@ -905,7 +905,7 @@ FloatingWindow {
                     return it.path !== c.path;
                 });
                 win.rebuild();
-                win.say("Moved “" + c.name + "” to the trash", "Undo", {
+                win.say(I18n.tr("Moved “%1” to the trash", c.name), I18n.tr("Undo"), {
                     "kind": "restore",
                     "path": c.path,
                     "entry": entry
@@ -917,9 +917,9 @@ FloatingWindow {
             return ;
         }
         dialog.ask({
-            "title": "Move “" + c.name + "” to the trash?",
-            "text": "It can be brought back from the trash later.",
-            "confirm": "Move to trash",
+            "title": I18n.tr("Move “%1” to the trash?", c.name),
+            "text": I18n.tr("It can be brought back from the trash later."),
+            "confirm": I18n.tr("Move to trash"),
             "danger": true
         }, function(ok) {
             if (ok)
@@ -935,17 +935,17 @@ FloatingWindow {
         if (!c || !k || win.busy)
             return ;
 
-        var text = "It goes back to how it was before your first saved edit, " + win.app.whenText(k.at) + ".";
+        var text = I18n.tr("It goes back to how it was before your first saved edit, %1.", win.app.whenText(k.at));
         if (k.changed)
-            text += " It has been changed by something else since then, and that goes too.";
+            text += I18n.tr(" It has been changed by something else since then, and that goes too.");
 
         if (win.dirty)
-            text += " So do the edits you haven't saved.";
+            text += I18n.tr(" So do the edits you haven't saved.");
 
         dialog.ask({
-            "title": "Revert to the original?",
+            "title": I18n.tr("Revert to the original?"),
             "text": text,
-            "confirm": "Revert",
+            "confirm": I18n.tr("Revert"),
             "glyph": k.thumb ? {
                 "slot": "image",
                 "thumb": k.thumb
@@ -964,13 +964,13 @@ FloatingWindow {
         }, function(r) {
             win.busy = false;
             if (!r.ok) {
-                win.say(r.error || "Couldn't revert it");
+                win.say(r.error || I18n.tr("Couldn't revert it"));
                 return ;
             }
             win.forget(path);
             win.clearKept(path);
             win.rewritten(r);
-            win.say("Back to the original", "Undo", {
+            win.say(I18n.tr("Back to the original"), I18n.tr("Undo"), {
                 "kind": "unrevert",
                 "path": r.path,
                 "backup": r.backup,
@@ -986,9 +986,9 @@ FloatingWindow {
             return ;
 
         dialog.ask({
-            "title": "Delete the original?",
-            "text": "“" + c.name + "” stays as it is now, and Lens can't revert it any more. The original goes to the trash, freeing " + win.app.sizeText(k.size) + ".",
-            "confirm": "Delete",
+            "title": I18n.tr("Delete the original?"),
+            "text": I18n.tr("“%1” stays as it is now, and Lens can't revert it any more. The original goes to the trash, freeing %2.", c.name, win.app.sizeText(k.size)),
+            "confirm": I18n.tr("Delete"),
             "danger": true
         }, function(ok) {
             if (!ok)
@@ -998,11 +998,11 @@ FloatingWindow {
                 "path": c.path
             }, function(r) {
                 if (!r.ok) {
-                    win.say(r.error || "Couldn't delete it");
+                    win.say(r.error || I18n.tr("Couldn't delete it"));
                     return ;
                 }
                 win.clearKept(c.path);
-                win.say("Original moved to the trash");
+                win.say(I18n.tr("Original moved to the trash"));
             });
         });
     }
@@ -1015,10 +1015,10 @@ FloatingWindow {
         var dot = c.name.lastIndexOf(".");
         dialog.ask({
             "mode": "input",
-            "title": "Rename",
+            "title": I18n.tr("Rename"),
             "input": c.name,
             "selectEnd": dot > 0 ? dot : c.name.length,
-            "confirm": "Rename",
+            "confirm": I18n.tr("Rename"),
             "taken": win.raw.map(function(it) {
                 return it.name;
             }).filter(function(n) {
@@ -1033,7 +1033,7 @@ FloatingWindow {
                 "name": name
             }, function(r) {
                 if (!r.ok) {
-                    win.say(r.error || "Couldn't rename it");
+                    win.say(r.error || I18n.tr("Couldn't rename it"));
                     return ;
                 }
                 var p = Object.assign({}, win.pending);
@@ -1066,10 +1066,10 @@ FloatingWindow {
             "path": c.video ? c.path : (c.decoded || c.path)
         }, function(r) {
             if (!r.ok) {
-                win.say(r.error || "Couldn't set the wallpaper");
+                win.say(r.error || I18n.tr("Couldn't set the wallpaper"));
                 return ;
             }
-            win.say("Wallpaper set", r.previous ? "Undo" : "", r.previous ? {
+            win.say(I18n.tr("Wallpaper set"), r.previous ? I18n.tr("Undo") : "", r.previous ? {
                 "kind": "wallpaper",
                 "previous": r.previous
             } : null);
@@ -1085,13 +1085,13 @@ FloatingWindow {
             win.app.call("copyFile", {
                 "path": c.path
             });
-            win.say("Video copied");
+            win.say(I18n.tr("Video copied"));
             return ;
         }
         win.app.call("copyImage", {
             "path": c.decoded || c.path
         }, function(r) {
-            win.say(r.ok ? "Picture copied" : (r.error || "Couldn't copy it"));
+            win.say(r.ok ? I18n.tr("Picture copied") : (r.error || I18n.tr("Couldn't copy it")));
         });
     }
 
@@ -1101,7 +1101,7 @@ FloatingWindow {
             return ;
 
         Quickshell.execDetached(["wl-copy", c.path]);
-        win.say("Path copied");
+        win.say(I18n.tr("Path copied"));
     }
 
     function readText() {
@@ -1109,16 +1109,16 @@ FloatingWindow {
         if (!c)
             return ;
 
-        win.say("Reading the text…");
+        win.say(I18n.tr("Reading the text…"));
         win.app.call("ocr", {
             "path": c.decoded || c.path
         }, function(r) {
             if (!r.ok)
-                win.say(r.error || "Couldn't read it");
+                win.say(r.error || I18n.tr("Couldn't read it"));
             else if (r.words === 0)
-                win.say("There's no text to read in it");
+                win.say(I18n.tr("There's no text to read in it"));
             else
-                win.say("Copied " + r.words + (r.words === 1 ? " word" : " words") + " of text");
+                win.say(I18n.tr("Copied %1", r.words) + (r.words === 1 ? I18n.tr(" word") : I18n.tr(" words")) + I18n.tr(" of text"));
         });
     }
 
@@ -1139,14 +1139,14 @@ FloatingWindow {
             "path": c.path
         }, function(r) {
             if (!r.ok || r.apps.length === 0) {
-                win.say("No other app opens this kind of picture");
+                win.say(I18n.tr("No other app opens this kind of picture"));
                 return ;
             }
             dialog.ask({
                 "mode": "apps",
-                "title": "Open “" + c.name + "” with",
+                "title": I18n.tr("Open “%1” with", c.name),
                 "apps": r.apps,
-                "confirm": "Open"
+                "confirm": I18n.tr("Open")
             }, function(ok, v) {
                 if (!ok || !v || !v.app)
                     return ;
@@ -1170,7 +1170,7 @@ FloatingWindow {
             "device": device.id,
             "path": c.video ? c.path : (c.decoded || c.path)
         }, function(r) {
-            win.say(r.ok ? "Sent to " + device.name : (r.error || "Couldn't send it"));
+            win.say(r.ok ? I18n.tr("Sent to %1", device.name) : (r.error || I18n.tr("Couldn't send it")));
         });
     }
 
@@ -1178,7 +1178,7 @@ FloatingWindow {
         win.app.call("paste", {
         }, function(r) {
             if (!r.ok) {
-                win.say(r.error || "There's no picture on the clipboard");
+                win.say(r.error || I18n.tr("There's no picture on the clipboard"));
                 return ;
             }
             if (!win.confirmLeave(function() {
@@ -1212,9 +1212,9 @@ FloatingWindow {
             return true;
 
         dialog.ask({
-            "title": win.dirtyCount === 1 ? "Discard your edits?" : "Discard edits to " + win.dirtyCount + " pictures?",
-            "text": "They haven't been saved.",
-            "confirm": "Discard",
+            "title": win.dirtyCount === 1 ? I18n.tr("Discard your edits?") : I18n.tr("Discard edits to %1 pictures?", win.dirtyCount),
+            "text": I18n.tr("They haven't been saved."),
+            "confirm": I18n.tr("Discard"),
             "danger": true
         }, function(ok) {
             if (ok) {
@@ -1324,11 +1324,11 @@ FloatingWindow {
 
     function rateMenu(x, y) {
         menu.open([{
-            "heading": "Speed"
+            "heading": I18n.tr("Speed")
         }].concat([0.25, 0.5, 0.75, 1, 1.25, 1.5, 2].map(function(r) {
             return {
                 "id": "rate:" + r,
-                "label": r === 1 ? "Normal" : win.rateText(r),
+                "label": r === 1 ? I18n.tr("Normal") : win.rateText(r),
                 "radio": true,
                 "checked": win.rate === r
             };
@@ -1346,10 +1346,10 @@ FloatingWindow {
             "at": stage.movie ? stage.movie.position / 1000 : 0
         }, function(r) {
             if (!r.ok) {
-                win.say(r.error || "Couldn't save that frame");
+                win.say(r.error || I18n.tr("Couldn't save that frame"));
                 return ;
             }
-            win.say("Saved “" + r.name + "”", "Show", {
+            win.say(I18n.tr("Saved “%1”", r.name), I18n.tr("Show"), {
                 "kind": "jump",
                 "path": r.path
             });
@@ -1366,7 +1366,7 @@ FloatingWindow {
             "at": stage.movie ? stage.movie.position / 1000 : 0,
             "clipboard": true
         }, function(r) {
-            win.say(r.ok ? "Frame copied" : (r.error || "Couldn't copy that frame"));
+            win.say(r.ok ? I18n.tr("Frame copied") : (r.error || I18n.tr("Couldn't copy that frame")));
         });
     }
 
@@ -1412,12 +1412,12 @@ FloatingWindow {
         }, function(r) {
             win.trimJob = "";
             if (!r.ok) {
-                win.say(r.error === "Stopped" ? "Trim stopped" : (r.error || "Couldn't trim it"));
+                win.say(r.error === "Stopped" ? I18n.tr("Trim stopped") : (r.error || I18n.tr("Couldn't trim it")));
                 return ;
             }
             win.trimming = false;
             keys.forceActiveFocus();
-            win.say("Saved “" + r.name + "”", "Show", {
+            win.say(I18n.tr("Saved “%1”", r.name), I18n.tr("Show"), {
                 "kind": "jump",
                 "path": r.path
             });
@@ -1438,94 +1438,94 @@ FloatingWindow {
         var caps = win.app.caps;
         var items = [{
             "id": "openWith",
-            "label": "Open with…",
+            "label": I18n.tr("Open with…"),
             "icon": "apps"
         }, caps.lumen ? {
             "id": "reveal",
-            "label": "Show in Lumen",
+            "label": I18n.tr("Show in Lumen"),
             "icon": "folder_open"
         } : null, {
             "sep": true
         }, caps.wallpaper ? {
             "id": "wallpaper",
-            "label": "Set as wallpaper",
+            "label": I18n.tr("Set as wallpaper"),
             "icon": "wallpaper"
         } : null, {
             "id": "copy",
-            "label": "Copy picture",
+            "label": I18n.tr("Copy picture"),
             "icon": "content_copy",
-            "hint": "Ctrl+C"
+            "hint": I18n.tr("Ctrl+C")
         }, {
             "id": "copyPath",
-            "label": "Copy path",
+            "label": I18n.tr("Copy path"),
             "icon": "link",
-            "hint": "Ctrl+Shift+C"
+            "hint": I18n.tr("Ctrl+Shift+C")
         }, {
             "id": "pick",
-            "label": "Pick a colour",
+            "label": I18n.tr("Pick a colour"),
             "icon": "colorize",
-            "hint": "P"
+            "hint": I18n.tr("P")
         }, caps.ocr ? {
             "id": "ocr",
-            "label": "Copy text in it",
+            "label": I18n.tr("Copy text in it"),
             "icon": "document_scanner"
         } : null, caps.phone ? {
             "id": "phone",
-            "label": "Send to phone…",
+            "label": I18n.tr("Send to phone…"),
             "icon": "send_to_mobile"
         } : null, {
             "sep": true
         }, {
             "id": "turnLeft",
-            "label": "Rotate left",
+            "label": I18n.tr("Rotate left"),
             "icon": "rotate_left",
-            "hint": "Shift+R",
+            "hint": I18n.tr("Shift+R"),
             "disabled": !win.canEdit
         }, {
             "id": "turnRight",
-            "label": "Rotate right",
+            "label": I18n.tr("Rotate right"),
             "icon": "rotate_right",
-            "hint": "R",
+            "hint": I18n.tr("R"),
             "disabled": !win.canEdit
         }, {
             "id": "edit",
-            "label": "Edit",
+            "label": I18n.tr("Edit"),
             "icon": "tune",
-            "hint": "E",
+            "hint": I18n.tr("E"),
             "disabled": !win.canEdit
         }, {
             "id": "markup",
-            "label": "Draw on it",
+            "label": I18n.tr("Draw on it"),
             "icon": "draw",
-            "hint": "D",
+            "hint": I18n.tr("D"),
             "disabled": !win.canEdit
         }, win.kept ? {
             "id": "revert",
-            "label": "Revert to original",
+            "label": I18n.tr("Revert to original"),
             "icon": "history",
             "disabled": win.busy
         } : null, {
             "sep": true
         }, {
             "id": "rename",
-            "label": "Rename…",
+            "label": I18n.tr("Rename…"),
             "icon": "edit",
-            "hint": "F2",
+            "hint": I18n.tr("F2"),
             "disabled": win.pasted
         }, {
             "id": "trash",
-            "label": "Move to trash",
+            "label": I18n.tr("Move to trash"),
             "icon": "delete",
-            "hint": "Delete",
+            "hint": I18n.tr("Delete"),
             "danger": true,
             "disabled": win.pasted
         }, {
             "sep": true
         }, {
             "id": "info",
-            "label": win.showInfo ? "Hide details" : "Details",
+            "label": win.showInfo ? I18n.tr("Hide details") : I18n.tr("Details"),
             "icon": "info",
-            "hint": "I"
+            "hint": I18n.tr("I")
         }];
         menu.open(items.filter(function(it) {
             return it !== null;
@@ -1536,83 +1536,83 @@ FloatingWindow {
         var c = win.current, caps = win.app.caps;
         var items = [{
             "id": "openWith",
-            "label": "Open with…",
+            "label": I18n.tr("Open with…"),
             "icon": "apps"
         }, caps.lumen ? {
             "id": "reveal",
-            "label": "Show in Lumen",
+            "label": I18n.tr("Show in Lumen"),
             "icon": "folder_open"
         } : null, {
             "sep": true
         }, caps.wallpaper && win.app.liveKind(c.path) ? {
             "id": "wallpaper",
-            "label": "Set as wallpaper",
+            "label": I18n.tr("Set as wallpaper"),
             "icon": "wallpaper"
         } : null, {
             "id": "copy",
-            "label": "Copy video",
+            "label": I18n.tr("Copy video"),
             "icon": "content_copy",
-            "hint": "Ctrl+C"
+            "hint": I18n.tr("Ctrl+C")
         }, {
             "id": "copyFrame",
-            "label": "Copy this frame",
+            "label": I18n.tr("Copy this frame"),
             "icon": "image"
         }, {
             "id": "saveFrame",
-            "label": "Save this frame as a picture",
+            "label": I18n.tr("Save this frame as a picture"),
             "icon": "photo_camera"
         }, {
             "id": "copyPath",
-            "label": "Copy path",
+            "label": I18n.tr("Copy path"),
             "icon": "link",
-            "hint": "Ctrl+Shift+C"
+            "hint": I18n.tr("Ctrl+Shift+C")
         }, caps.phone ? {
             "id": "phone",
-            "label": "Send to phone…",
+            "label": I18n.tr("Send to phone…"),
             "icon": "send_to_mobile"
         } : null, {
             "sep": true
         }, win.canTurn ? {
             "id": "turnLeft",
-            "label": "Rotate left",
+            "label": I18n.tr("Rotate left"),
             "icon": "rotate_left",
-            "hint": "Shift+R"
+            "hint": I18n.tr("Shift+R")
         } : null, win.canTurn ? {
             "id": "turnRight",
-            "label": "Rotate right",
+            "label": I18n.tr("Rotate right"),
             "icon": "rotate_right",
-            "hint": "R"
+            "hint": I18n.tr("R")
         } : null, {
             "id": "trim",
-            "label": "Trim…",
+            "label": I18n.tr("Trim…"),
             "icon": "content_cut",
-            "hint": "E",
+            "hint": I18n.tr("E"),
             "disabled": c.broken === true
         }, win.kept ? {
             "id": "revert",
-            "label": "Revert to original",
+            "label": I18n.tr("Revert to original"),
             "icon": "history",
             "disabled": win.busy
         } : null, {
             "sep": true
         }, {
             "id": "rename",
-            "label": "Rename…",
+            "label": I18n.tr("Rename…"),
             "icon": "edit",
-            "hint": "F2"
+            "hint": I18n.tr("F2")
         }, {
             "id": "trash",
-            "label": "Move to trash",
+            "label": I18n.tr("Move to trash"),
             "icon": "delete",
-            "hint": "Delete",
+            "hint": I18n.tr("Delete"),
             "danger": true
         }, {
             "sep": true
         }, {
             "id": "info",
-            "label": win.showInfo ? "Hide details" : "Details",
+            "label": win.showInfo ? I18n.tr("Hide details") : I18n.tr("Details"),
             "icon": "info",
-            "hint": "I"
+            "hint": I18n.tr("I")
         }];
         menu.open(items.filter(function(it) {
             return it !== null;
@@ -1623,77 +1623,77 @@ FloatingWindow {
         var p = win.app.prefs;
         var items = [{
             "id": "slideshow",
-            "label": "Slideshow",
+            "label": I18n.tr("Slideshow"),
             "icon": "slideshow",
-            "hint": "F5",
+            "hint": I18n.tr("F5"),
             "disabled": win.items.length < 2
         }, {
             "id": "fullscreen",
-            "label": win.immersive ? "Leave full screen" : "Full screen",
+            "label": win.immersive ? I18n.tr("Leave full screen") : I18n.tr("Full screen"),
             "icon": win.immersive ? "fullscreen_exit" : "fullscreen",
-            "hint": "F"
+            "hint": I18n.tr("F")
         }, {
             "id": "overview",
-            "label": "All pictures",
+            "label": I18n.tr("All pictures"),
             "icon": "grid_view",
-            "hint": "G"
+            "hint": I18n.tr("G")
         }, {
             "id": "strip",
-            "label": "Filmstrip",
+            "label": I18n.tr("Filmstrip"),
             "icon": "view_carousel",
-            "hint": "T",
+            "hint": I18n.tr("T"),
             "checked": p.filmstrip
         }, {
             "sep": true
         }, {
             "id": "background",
-            "label": "Background",
+            "label": I18n.tr("Background"),
             "icon": "palette",
             "sub": [{
                 "id": "bg:theme",
-                "label": "Lucid",
+                "label": I18n.tr("Lucid"),
                 "radio": true,
                 "checked": p.background === "theme"
             }, {
                 "id": "bg:dark",
-                "label": "Dark",
+                "label": I18n.tr("Dark"),
                 "radio": true,
                 "checked": p.background === "dark"
             }, {
                 "id": "bg:black",
-                "label": "Black",
+                "label": I18n.tr("Black"),
                 "radio": true,
                 "checked": p.background === "black"
             }, {
                 "sep": true
             }, {
                 "id": "checker",
-                "label": "Checks behind see-through parts",
+                "label": I18n.tr("Checks behind see-through parts"),
                 "checked": p.checker
             }]
         }, {
             "id": "wheel",
-            "label": "Mouse wheel",
+            "label": I18n.tr("Mouse wheel"),
             "icon": "zoom_in",
             "sub": [{
                 "id": "wheel:zoom",
-                "label": "Zooms",
+                "label": I18n.tr("Zooms"),
                 "radio": true,
                 "checked": p.wheel === "zoom"
             }, {
                 "id": "wheel:browse",
-                "label": "Goes to the next picture",
+                "label": I18n.tr("Goes to the next picture"),
                 "radio": true,
                 "checked": p.wheel === "browse"
             }]
         }, {
             "id": "slideOpts",
-            "label": "Slideshow",
+            "label": I18n.tr("Slideshow"),
             "icon": "timer",
             "sub": [3, 5, 10, 20, 60].map(function(s) {
                 return {
                     "id": "secs:" + s,
-                    "label": s < 60 ? s + " seconds each" : "A minute each",
+                    "label": s < 60 ? I18n.tr("%1 seconds each", s) : I18n.tr("A minute each"),
                     "radio": true,
                     "checked": p.slideSecs === s
                 };
@@ -1701,46 +1701,46 @@ FloatingWindow {
                 "sep": true
             }, {
                 "id": "shuffle",
-                "label": "Shuffle",
+                "label": I18n.tr("Shuffle"),
                 "checked": p.shuffle
             }])
         }, (win.app.caps.videos || []).length > 0 ? {
             "id": "videoOpts",
-            "label": "Videos",
+            "label": I18n.tr("Videos"),
             "icon": "movie",
             "sub": [{
                 "id": "videos",
-                "label": "Show them with the pictures",
+                "label": I18n.tr("Show them with the pictures"),
                 "checked": p.videos
             }, {
                 "id": "autoplay",
-                "label": "Play one when it's shown",
+                "label": I18n.tr("Play one when it's shown"),
                 "checked": p.autoplay
             }, {
                 "id": "loopVideos",
-                "label": "Play them round and round",
+                "label": I18n.tr("Play them round and round"),
                 "checked": p.loopVideos
             }]
         } : null, {
             "id": "wrap",
-            "label": "Go round from the last to the first",
+            "label": I18n.tr("Go round from the last to the first"),
             "icon": "repeat",
             "checked": p.wrap
         }, {
             "sep": true
         }, {
             "id": "open",
-            "label": "Open…",
+            "label": I18n.tr("Open…"),
             "icon": "folder_open",
-            "hint": "Ctrl+O"
+            "hint": I18n.tr("Ctrl+O")
         }, {
             "id": "paste",
-            "label": "Paste a picture",
+            "label": I18n.tr("Paste a picture"),
             "icon": "content_paste",
-            "hint": "Ctrl+V"
+            "hint": I18n.tr("Ctrl+V")
         }, {
             "id": "keys",
-            "label": "Keyboard shortcuts",
+            "label": I18n.tr("Keyboard shortcuts"),
             "icon": "keyboard",
             "hint": "?"
         }];
@@ -1753,9 +1753,9 @@ FloatingWindow {
         var levels = [0.25, 0.5, 1, 2, 4];
         menu.open([{
             "id": "zoom:fit",
-            "label": "Fit to window",
+            "label": I18n.tr("Fit to window"),
             "icon": "fit_screen",
-            "hint": "0",
+            "hint": I18n.tr("0"),
             "radio": false
         }].concat(levels.map(function(z) {
             return {
@@ -1771,7 +1771,7 @@ FloatingWindow {
         }, function(r) {
             var list = r.devices || [];
             if (list.length === 0) {
-                win.say("No phone is connected right now");
+                win.say(I18n.tr("No phone is connected right now"));
                 return ;
             }
             if (list.length === 1) {
@@ -1780,7 +1780,7 @@ FloatingWindow {
             }
             var p = stage.mapToItem(root, stage.width / 2 - Theme.dp(120), stage.height / 3);
             menu.open([{
-                "heading": "Send to"
+                "heading": I18n.tr("Send to")
             }].concat(list.map(function(d) {
                 return {
                     "id": "send:" + d.id,
@@ -1928,61 +1928,61 @@ FloatingWindow {
     function showKeys() {
         dialog.ask({
             "mode": "info",
-            "title": "Keyboard shortcuts",
+            "title": I18n.tr("Keyboard shortcuts"),
             "rows": [{
                 "label": "← →",
-                "value": "The previous and next picture (Home, End: the first and last)"
+                "value": I18n.tr("The previous and next picture (Home, End: the first and last)")
             }, {
                 "label": "+  −  0  1",
-                "value": "Zoom in, out, to fit, to 100%"
+                "value": I18n.tr("Zoom in, out, to fit, to 100%")
             }, {
-                "label": "R  Shift+R",
-                "value": "Rotate right, left"
+                "label": I18n.tr("R  Shift+R"),
+                "value": I18n.tr("Rotate right, left")
             }, {
-                "label": "E  C  D",
-                "value": "Edit, crop, draw"
+                "label": I18n.tr("E  C  D"),
+                "value": I18n.tr("Edit, crop, draw")
             }, {
-                "label": "Ctrl+Z  Ctrl+Y",
-                "value": "Undo, redo an edit"
+                "label": I18n.tr("Ctrl+Z  Ctrl+Y"),
+                "value": I18n.tr("Undo, redo an edit")
             }, {
-                "label": "Ctrl+S",
-                "value": "Save (Ctrl+Shift+S: as a copy)"
+                "label": I18n.tr("Ctrl+S"),
+                "value": I18n.tr("Save (Ctrl+Shift+S: as a copy)")
             }, {
-                "label": "I  T  G",
-                "value": "Details, filmstrip, all pictures"
+                "label": I18n.tr("I  T  G"),
+                "value": I18n.tr("Details, filmstrip, all pictures")
             }, {
-                "label": "F  F5",
-                "value": "Full screen, slideshow"
+                "label": I18n.tr("F  F5"),
+                "value": I18n.tr("Full screen, slideshow")
             }, {
-                "label": "Ctrl+C",
-                "value": "Copy the picture"
+                "label": I18n.tr("Ctrl+C"),
+                "value": I18n.tr("Copy the picture")
             }, {
-                "label": "F2  Delete",
-                "value": "Rename, move to the trash"
+                "label": I18n.tr("F2  Delete"),
+                "value": I18n.tr("Rename, move to the trash")
             }, {
-                "label": "P",
-                "value": "Pick a colour off the picture"
+                "label": I18n.tr("P"),
+                "value": I18n.tr("Pick a colour off the picture")
             }, {
                 "label": "\\",
-                "value": "Hold to compare with the original"
+                "value": I18n.tr("Hold to compare with the original")
             }].concat((win.app.caps.videos || []).length === 0 ? [] : [{
-                "label": "Space  K",
-                "value": "Play or pause a video (E: trim it)"
+                "label": I18n.tr("Space  K"),
+                "value": I18n.tr("Play or pause a video (E: trim it)")
             }, {
-                "label": "J  L",
-                "value": "Back or on ten seconds"
+                "label": I18n.tr("J  L"),
+                "value": I18n.tr("Back or on ten seconds")
             }, {
                 "label": ",  .",
-                "value": "A frame back or on, paused"
+                "value": I18n.tr("A frame back or on, paused")
             }, {
-                "label": "M  ↑  ↓",
-                "value": "Mute, louder, quieter"
+                "label": I18n.tr("M  ↑  ↓"),
+                "value": I18n.tr("Mute, louder, quieter")
             }])
         });
     }
 
     visible: true
-    title: win.current ? win.current.name : "Lens"
+    title: win.current ? win.current.name : I18n.tr("Lens")
     // one step under solid, so hyprland can still blur it
     color: win.immersive ? "black" : Theme.alpha(Theme.bg, Math.min(Theme.bg.a, 254 / 255))
     implicitWidth: Theme.dp(win.app.prefs.width)

@@ -87,15 +87,15 @@ Rectangle {
             return "Checking…";
 
         if (Updates.available)
-            return "v" + Updates.latest + " is out";
+            return I18n.tr("v%1 is out", Updates.latest);
 
         if (Updates.problem !== "")
-            return "Couldn't check";
+            return I18n.tr("Couldn't check");
 
         if (Updates.checkedAt > 0 && Updates.latest === "")
             return "";
 
-        return Updates.checkedAt > 0 ? "Up to date" : "Check for updates";
+        return Updates.checkedAt > 0 ? I18n.tr("Up to date") : I18n.tr("Check for updates");
     }
     readonly property string statusIcon: Updates.busy ? "sync" : Updates.available ? "download" : (Updates.problem === "" && Updates.checkedAt > 0 ? "check_circle" : "update")
 
@@ -625,7 +625,7 @@ Rectangle {
             role: "bodyLarge"
             color: Theme.subtext
             wrapMode: Text.WordWrap
-            text: "The brightest thing in your setup."
+            text: I18n.tr("The brightest thing in your setup.")
             opacity: hero.outCubic(tagline.k)
 
             transform: Translate {
@@ -651,7 +651,7 @@ Rectangle {
 
                 kind: "assist"
                 icon: hero.copied ? "check" : "deployed_code"
-                text: hero.copied ? "Copied" : Updates.currentLabel
+                text: hero.copied ? I18n.tr("Copied") : Updates.currentLabel
                 opacity: hero.outCubic(versionChip.k)
                 onClicked: {
                     Quickshell.execDetached(["wl-copy", "Lucid " + Updates.currentLabel]);
@@ -684,7 +684,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     x: Theme.dp(14)
                     role: "labelLarge"
-                    text: "Beta"
+                    text: I18n.tr("Beta")
                     color: Theme.fgTertiaryContainer
                 }
 

@@ -66,22 +66,22 @@ Singleton {
         if (Prefs.desktopIconsHome)
             out.push(root.blank({
                 "key": "::home",
-                "label": "Home",
+                "label": I18n.tr("Home"),
                 "kind": "home",
                 "path": root.home,
                 "uri": "file://" + root.home,
                 "mime": "inode/directory",
-                "desc": "Your home folder",
+                "desc": I18n.tr("Your home folder"),
                 "icon": root.specials.home || ""
             }));
 
         if (Prefs.desktopIconsTrash)
             out.push(root.blank({
                 "key": "::trash",
-                "label": "Trash",
+                "label": I18n.tr("Trash"),
                 "kind": "trash",
                 "uri": "trash:///",
-                "desc": root.trashCount > 0 ? (root.trashCount === 1 ? "1 item" : root.trashCount + " items") : "Empty",
+                "desc": root.trashCount > 0 ? (root.trashCount === 1 ? I18n.tr("1 item") : I18n.tr("%1 items", root.trashCount)) : I18n.tr("Empty"),
                 "icon": (root.trashCount > 0 ? root.specials.trashFull : root.specials.trash) || ""
             }));
 
@@ -95,7 +95,7 @@ Singleton {
                     "path": v.path,
                     "uri": v.uri,
                     "mime": "inode/directory",
-                    "desc": "Drive",
+                    "desc": I18n.tr("Drive"),
                     "icon": v.icon || root.specials.drive || "",
                     "canEject": v.canEject,
                     "canUnmount": v.canUnmount
@@ -352,7 +352,7 @@ Singleton {
             v /= 1000;
             i++;
         }
-        return i === 0 ? (n === 1 ? "1 byte" : n + " bytes") : v.toFixed(v < 10 ? 1 : 0) + " " + u[i];
+        return i === 0 ? (n === 1 ? I18n.tr("1 byte") : I18n.tr("%1 bytes", n)) : v.toFixed(v < 10 ? 1 : 0) + " " + u[i];
     }
 
     // a file's time the way a file manager says it: today, yesterday, a date
@@ -365,10 +365,10 @@ Singleton {
         var now = new Date();
         var day = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
         if (d.getTime() >= day)
-            return "Today, " + t;
+            return I18n.tr("Today, %1", t);
 
         if (d.getTime() >= day - 86400000)
-            return "Yesterday, " + t;
+            return I18n.tr("Yesterday, %1", t);
 
         return Qt.formatDate(d, d.getFullYear() === now.getFullYear() ? "d MMM" : "d MMM yyyy") + ", " + t;
     }
@@ -1039,91 +1039,91 @@ Singleton {
     // only while the desktop has the keys, so a plain ctrl+c never leaves an app
     readonly property var keyActions: [{
         "id": "open",
-        "label": "Open",
+        "label": I18n.tr("Open"),
         "keys": "Return"
     }, {
         "id": "look",
-        "label": "Quick Look",
+        "label": I18n.tr("Quick Look"),
         "keys": "space"
     }, {
         "id": "info",
-        "label": "Get Info",
+        "label": I18n.tr("Get Info"),
         "keys": "ALT + Return"
     }, {
         "id": "rename",
-        "label": "Rename",
+        "label": I18n.tr("Rename"),
         "keys": "F2"
     }, {
         "id": "cut",
-        "label": "Cut",
+        "label": I18n.tr("Cut"),
         "keys": "CTRL + X"
     }, {
         "id": "copy",
-        "label": "Copy",
+        "label": I18n.tr("Copy"),
         "keys": "CTRL + C"
     }, {
         "id": "paste",
-        "label": "Paste",
+        "label": I18n.tr("Paste"),
         "keys": "CTRL + V"
     }, {
         "id": "copyPath",
-        "label": "Copy Path",
+        "label": I18n.tr("Copy Path"),
         "keys": "CTRL + SHIFT + C"
     }, {
         "id": "duplicate",
-        "label": "Duplicate",
+        "label": I18n.tr("Duplicate"),
         "keys": "CTRL + D"
     }, {
         "id": "trash",
-        "label": "Move to Trash",
+        "label": I18n.tr("Move to Trash"),
         "keys": "Delete"
     }, {
         "id": "delete",
-        "label": "Delete for Good",
+        "label": I18n.tr("Delete for Good"),
         "keys": "SHIFT + Delete"
     }, {
         "id": "undo",
-        "label": "Undo",
+        "label": I18n.tr("Undo"),
         "keys": "CTRL + Z"
     }, {
         "id": "selectAll",
-        "label": "Select All",
+        "label": I18n.tr("Select All"),
         "keys": "CTRL + A"
     }, {
         "id": "invert",
-        "label": "Invert Selection",
+        "label": I18n.tr("Invert Selection"),
         "keys": "CTRL + I"
     }, {
         "id": "newFolder",
-        "label": "New Folder",
+        "label": I18n.tr("New Folder"),
         "keys": "CTRL + SHIFT + N"
     }, {
         "id": "newText",
-        "label": "New Text Document",
+        "label": I18n.tr("New Text Document"),
         "keys": "CTRL + ALT + N"
     }, {
         "id": "compress",
-        "label": "Compress",
+        "label": I18n.tr("Compress"),
         "keys": ""
     }, {
         "id": "terminal",
-        "label": "Open in Terminal",
+        "label": I18n.tr("Open in Terminal"),
         "keys": "CTRL + ALT + T"
     }, {
         "id": "hidden",
-        "label": "Show Hidden Files",
+        "label": I18n.tr("Show Hidden Files"),
         "keys": "CTRL + H"
     }, {
         "id": "arrange",
-        "label": "Arrange Icons",
+        "label": I18n.tr("Arrange Icons"),
         "keys": ""
     }, {
         "id": "refresh",
-        "label": "Refresh",
+        "label": I18n.tr("Refresh"),
         "keys": "F5"
     }, {
         "id": "hideIcons",
-        "label": "Hide Icons",
+        "label": I18n.tr("Hide Icons"),
         "keys": ""
     }]
     // the changes from those, by id: a combo, or "" for none
@@ -1539,11 +1539,11 @@ Singleton {
         if (d.action.op === "delete") {
             root.flyAll(d.action.keys, null);
             root.run(["python3", root.script, "delete"].concat(d.action.paths));
-            root.notify(d.action.paths.length === 1 ? "Deleted “" + d.action.name + "”" : "Deleted " + d.action.paths.length + " items", false);
+            root.notify(d.action.paths.length === 1 ? I18n.tr("Deleted “%1”", d.action.name) : I18n.tr("Deleted %1 items", d.action.paths.length), false);
             root.clearSelection();
         } else if (d.action.op === "empty") {
             root.run(["gio", "trash", "--empty"]);
-            root.notify("Emptied the Trash", false);
+            root.notify(I18n.tr("Emptied the Trash"), false);
         }
     }
 
@@ -1650,8 +1650,9 @@ Singleton {
         });
     }
 
-    function named(items, one, many) {
-        return items.length === 1 ? one.replace("%1", "“" + items[0].label + "”") : many.replace("%n", items.length);
+    function named(items, one, many, extra) {
+        const t = items.length === 1 ? one.replace("%1", "“" + items[0].label + "”") : many.replace("%n", items.length);
+        return extra === undefined ? t : t.replace("%2", extra);
     }
 
     function trash(keys) {
@@ -1670,12 +1671,12 @@ Singleton {
 
         });
         root.pushUndo({
-            "label": "Undo Move to Trash",
+            "label": I18n.tr("Undo Move to Trash"),
             "kind": "trash",
             "paths": root.pathsOf(f),
             "tags": tags
         });
-        root.notify(root.named(f, "Moved %1 to the Trash", "Moved %n items to the Trash"), true);
+        root.notify(root.named(f, I18n.tr("Moved %1 to the Trash"), I18n.tr("Moved %n items to the Trash")), true);
         root.clearSelection();
     }
 
@@ -1684,7 +1685,7 @@ Singleton {
         if (f.length === 0)
             return ;
 
-        root.ask("delete_forever", f.length === 1 ? "Delete “" + f[0].label + "” for good?" : "Delete " + f.length + " items for good?", "They skip the Trash, and this can't be undone.", "Delete", {
+        root.ask("delete_forever", f.length === 1 ? I18n.tr("Delete “%1” for good?", f[0].label) : I18n.tr("Delete %1 items for good?", f.length), I18n.tr("They skip the Trash, and this can't be undone."), I18n.tr("Delete"), {
             "op": "delete",
             "paths": root.pathsOf(f),
             "keys": f.map((e) => {
@@ -1698,7 +1699,7 @@ Singleton {
         if (root.trashCount === 0)
             return ;
 
-        root.ask("delete_sweep", "Empty the Trash?", (root.trashCount === 1 ? "The item in it is" : "All " + root.trashCount + " items in it are") + " deleted for good. This can't be undone.", "Empty Trash", {
+        root.ask("delete_sweep", I18n.tr("Empty the Trash?"), (root.trashCount === 1 ? I18n.tr("The item in it is") : I18n.tr("All %1 items in it are", root.trashCount)) + I18n.tr(" deleted for good. This can't be undone."), I18n.tr("Empty Trash"), {
             "op": "empty"
         });
     }
@@ -1742,13 +1743,13 @@ Singleton {
             return e.kind !== "dir";
         });
         if (f.length === 0) {
-            root.notify("Folders can't be sent to a phone", false);
+            root.notify(I18n.tr("Folders can't be sent to a phone"), false);
             return ;
         }
         KdeConnect.shareFiles(id, f.map((e) => {
             return e.uri;
         }));
-        root.notify(root.named(f, "Sending %1 to " + name, "Sending %n files to " + name), false);
+        root.notify(root.named(f, I18n.tr("Sending %1 to %2"), I18n.tr("Sending %n files to %2"), name), false);
     }
 
     // object push carries files, not folders
@@ -1757,7 +1758,7 @@ Singleton {
             return e.kind === "file";
         });
         if (f.length === 0) {
-            root.notify("Only files can be sent over Bluetooth", false);
+            root.notify(I18n.tr("Only files can be sent over Bluetooth"), false);
             return ;
         }
         var dev = Bt.deviceAt(address);
@@ -1811,7 +1812,7 @@ Singleton {
         p.command = ["python3", root.script, op].concat(root.pathsOf(op === "extract" ? [f[0]] : f));
         p.running = true;
         if (op === "compress" || op === "extract")
-            root.notify(op === "compress" ? root.named(f, "Compressing %1…", "Compressing %n items…") : "Extracting “" + f[0].label + "”…", false);
+            root.notify(op === "compress" ? root.named(f, I18n.tr("Compressing %1…"), I18n.tr("Compressing %n items…")) : I18n.tr("Extracting “%1”…", f[0].label), false);
 
     }
 
@@ -1840,7 +1841,7 @@ Singleton {
             root.run(["python3", root.script, "set-tags", next.join(","), e.path]);
         }
         root.pushUndo({
-            "label": "Undo Tag",
+            "label": I18n.tr("Undo Tag"),
             "kind": "tags",
             "before": before
         });
@@ -1861,7 +1862,7 @@ Singleton {
             root.run(["python3", root.script, "set-tags", "", f[i].path]);
         }
         root.pushUndo({
-            "label": "Undo Clear Tags",
+            "label": I18n.tr("Undo Clear Tags"),
             "kind": "tags",
             "before": before
         });
@@ -2016,7 +2017,7 @@ Singleton {
             "intoDesktop": dest === "",
             "mode": mode,
             "destDir": dest || root.dir,
-            "destLabel": into ? into.label : "the Desktop",
+            "destLabel": into ? into.label : I18n.tr("the Desktop"),
             "destKey": intoKey || ""
         });
         p.command = ["python3", root.script, "put", mode, dest].concat(uris.map((x) => {
@@ -2070,11 +2071,11 @@ Singleton {
         }), root.centreOf("::trash"));
         root.run(["gio", "trash", "--"].concat(paths));
         root.pushUndo({
-            "label": "Undo Move to Trash",
+            "label": I18n.tr("Undo Move to Trash"),
             "kind": "trash",
             "paths": paths
         });
-        root.notify(paths.length === 1 ? "Moved “" + root.baseOf(paths[0]) + "” to the Trash" : "Moved " + paths.length + " items to the Trash", true);
+        root.notify(paths.length === 1 ? I18n.tr("Moved “%1” to the Trash", root.baseOf(paths[0])) : I18n.tr("Moved %1 items to the Trash", paths.length), true);
     }
 
     function rename(key, name) {
@@ -2102,7 +2103,7 @@ Singleton {
         root.quiet = qn;
         if (it.kind !== "app")
             root.pushUndo({
-                "label": "Undo Rename",
+                "label": I18n.tr("Undo Rename"),
                 "kind": "rename",
                 "dir": root.dir,
                 "from": it.name,
@@ -2301,23 +2302,23 @@ Singleton {
             return "";
 
         if (root.dragApp)
-            return "Add to Desktop";
+            return I18n.tr("Add to Desktop");
 
         var t = root.byKey[root.dropInto];
         if (t) {
             if (t.kind === "trash")
-                return "Move to Trash";
+                return I18n.tr("Move to Trash");
 
             if (t.kind === "app")
-                return "Open with " + t.label;
+                return I18n.tr("Open with %1", t.label);
 
-            var verb = root.dropAction === "copy" ? "Copy" : (root.dropAction === "link" ? "Link" : "Move");
+            var verb = root.dropAction === "copy" ? I18n.tr("Copy") : (root.dropAction === "link" ? I18n.tr("Link") : I18n.tr("Move"));
             return verb + " to " + t.label;
         }
         if (root.dragKey === "")
-            return root.dropAction === "link" ? "Link here" : "Drop on the Desktop";
+            return root.dropAction === "link" ? I18n.tr("Link here") : I18n.tr("Drop on the Desktop");
 
-        return root.dropAction === "copy" ? "Copy here" : (root.dropAction === "link" ? "Link here" : "");
+        return root.dropAction === "copy" ? I18n.tr("Copy here") : (root.dropAction === "link" ? I18n.tr("Link here") : "");
     }
     readonly property string dropHintIcon: {
         if (root.dragApp)
@@ -2375,20 +2376,20 @@ Singleton {
                 "strip": [{
                     "id": "icon:cut",
                     "glyph": "content_cut",
-                    "label": root.withHint("Cut", "cut")
+                    "label": root.withHint(I18n.tr("Cut"), "cut") // i18n-skip: ids for the key-hint lookup
                 }, {
                     "id": "icon:copy",
                     "glyph": "content_copy",
-                    "label": root.withHint("Copy", "copy")
+                    "label": root.withHint(I18n.tr("Copy"), "copy") // i18n-skip: ids for the key-hint lookup
                 }, {
                     "id": "icon:rename",
                     "glyph": "edit",
-                    "label": root.withHint("Rename", "rename"),
+                    "label": root.withHint(I18n.tr("Rename"), "rename"), // i18n-skip: ids for the key-hint lookup
                     "disabled": !(one && files.length === 1)
                 }, {
                     "id": "icon:trash",
                     "glyph": "delete",
-                    "label": root.withHint("Move to Trash", "trash"),
+                    "label": root.withHint(I18n.tr("Move to Trash"), "trash"), // i18n-skip: ids for the key-hint lookup
                     "danger": true
                 }]
             });
@@ -2403,7 +2404,7 @@ Singleton {
                 "divider": rows.length > 0
             }));
         if (one && (one.kind === "file" || one.kind === "dir" || one.kind === "app")) {
-            rows.push(root.row("", "Open With", "apps", {
+            rows.push(root.row("", I18n.tr("Open With"), "apps", {
                 "submenu": "openWith"
             }));
             root.fetchApps(one.uri);
@@ -2441,10 +2442,10 @@ Singleton {
             if (one)
                 group.push(root.row("icon:link", "Make Link", "add_link"));
 
-            group.push(root.row("", "Send To", "share", {
+            group.push(root.row("", I18n.tr("Send To"), "share", {
                 "submenu": root.sendRows()
             }));
-            group.push(root.row("", "Tags", "label", {
+            group.push(root.row("", I18n.tr("Tags"), "label", {
                 "submenu": root.tagRows(files)
             }));
         }
@@ -2490,7 +2491,7 @@ Singleton {
                 "divider": k === 0 && rows.length > 0
             }));
         if (rows.length === 0)
-            rows.push(root.row("", "Nowhere to send", "", {
+            rows.push(root.row("", I18n.tr("Nowhere to send"), "", {
                 "disabled": true
             }));
 
@@ -2508,7 +2509,7 @@ Singleton {
                 })
             }));
         }
-        rows.push(root.row("tag:clear", "Clear Tags", "label_off", {
+        rows.push(root.row("tag:clear", I18n.tr("Clear Tags"), "label_off", {
             "divider": true,
             "disabled": !files.some((e) => {
                 return e.tags.length > 0;
@@ -2520,10 +2521,10 @@ Singleton {
     // the desktop's own entries, at the top of its menu
     function desktopRows() {
         var rows = [];
-        rows.push(root.row("", "New Item", "note_add", {
+        rows.push(root.row("", I18n.tr("New Item"), "note_add", {
             "submenu": root.newRows()
         }));
-        rows.push(root.row("paste", root.clip.uris.length === 0 && root.clip.image ? "Paste Picture" : "Paste", "content_paste", {
+        rows.push(root.row("paste", root.clip.uris.length === 0 && root.clip.image ? I18n.tr("Paste Picture") : I18n.tr("Paste"), "content_paste", {
             "shortcut": root.keyHint("paste"),
             "disabled": !root.canPaste,
             "divider": true
@@ -2533,36 +2534,36 @@ Singleton {
                 "shortcut": root.keyHint("undo")
             }));
 
-        rows.push(root.row("", "View", "grid_view", {
+        rows.push(root.row("", I18n.tr("View"), "grid_view", {
             "submenu": root.viewRows(),
             "divider": true
         }));
-        rows.push(root.row("", "Arrange By", "sort", {
+        rows.push(root.row("", I18n.tr("Arrange By"), "sort", {
             "submenu": root.arrangeRows()
         }));
-        rows.push(root.row("selectAll", "Select All", "select_all", {
+        rows.push(root.row("selectAll", I18n.tr("Select All"), "select_all", {
             "shortcut": root.keyHint("selectAll")
         }));
-        rows.push(root.row("terminal", "Open in Terminal", "terminal", {
+        rows.push(root.row("terminal", I18n.tr("Open in Terminal"), "terminal", {
             "shortcut": root.keyHint("terminal"),
             "divider": true
         }));
-        rows.push(root.row("openDesktop", "Open Desktop in Files", "folder_open"));
+        rows.push(root.row("openDesktop", I18n.tr("Open Desktop in Files"), "folder_open"));
         return rows;
     }
 
     function newRows() {
-        var rows = [root.row("new:folder", "Folder", "create_new_folder", {
+        var rows = [root.row("new:folder", I18n.tr("Folder"), "create_new_folder", {
             "shortcut": root.keyHint("newFolder")
-        }), root.row("new:text", "Text Document", "description", {
+        }), root.row("new:text", I18n.tr("Text Document"), "description", {
             "shortcut": root.keyHint("newText")
-        }), root.row("new:markdown", "Markdown Document", "description"), root.row("new:empty", "Empty File", "draft")];
+        }), root.row("new:markdown", I18n.tr("Markdown Document"), "description"), root.row("new:empty", I18n.tr("Empty File"), "draft")];
         for (var i = 0; i < root.templates.length; i++)
             rows.push(root.row("new:tpl:" + i, root.templates[i].label, root.templates[i].icon ? "" : "description", {
                 "image": root.templates[i].icon ? "file://" + root.templates[i].icon : "",
                 "divider": i === 0
             }));
-        rows.push(root.row("new:app", "App Shortcut…", "apps", {
+        rows.push(root.row("new:app", I18n.tr("App Shortcut…"), "apps", {
             "divider": true
         }));
         return rows;
@@ -2572,12 +2573,12 @@ Singleton {
     function showRows() {
         var rows = [];
         if (Prefs.desktopIcons)
-            rows.push(root.row("view:icons", "Show Desktop Icons", "folder", {
+            rows.push(root.row("view:icons", I18n.tr("Show Desktop Icons"), "folder", {
                 "check": Prefs.desktopIconsShown
             }));
 
         if (Widgets.count > 0)
-            rows.push(root.row("view:widgets", "Show Widgets", "dashboard", {
+            rows.push(root.row("view:widgets", I18n.tr("Show Widgets"), "dashboard", {
                 "check": Prefs.widgetsEnabled
             }));
 
@@ -2591,45 +2592,45 @@ Singleton {
 
     function viewRows() {
         var show = root.showRows();
-        return show.concat([root.row("view:small", "Small Icons", "", {
+        return show.concat([root.row("view:small", I18n.tr("Small Icons"), "", {
             "check": Prefs.desktopIconSize === "small",
             "divider": show.length > 0
-        }), root.row("view:medium", "Medium Icons", "", {
+        }), root.row("view:medium", I18n.tr("Medium Icons"), "", {
             "check": Prefs.desktopIconSize === "medium"
-        }), root.row("view:large", "Large Icons", "", {
+        }), root.row("view:large", I18n.tr("Large Icons"), "", {
             "check": Prefs.desktopIconSize === "large"
-        }), root.row("view:compact", "Compact Spacing", "", {
+        }), root.row("view:compact", I18n.tr("Compact Spacing"), "", {
             "check": Prefs.desktopIconSpacing === "compact",
             "divider": true
-        }), root.row("view:normal", "Normal Spacing", "", {
+        }), root.row("view:normal", I18n.tr("Normal Spacing"), "", {
             "check": Prefs.desktopIconSpacing === "normal"
-        }), root.row("view:roomy", "Roomy Spacing", "", {
+        }), root.row("view:roomy", I18n.tr("Roomy Spacing"), "", {
             "check": Prefs.desktopIconSpacing === "roomy"
-        }), root.row("view:auto", "Auto Arrange", "", {
+        }), root.row("view:auto", I18n.tr("Auto Arrange"), "", {
             "check": Prefs.desktopIconsAutoArrange,
             "divider": true
-        }), root.row("view:hidden", "Show Hidden Files", "", {
+        }), root.row("view:hidden", I18n.tr("Show Hidden Files"), "", {
             "check": Prefs.desktopIconsHidden,
             "shortcut": root.keyHint("hidden")
-        }), root.row("view:ext", "Show File Extensions", "", {
+        }), root.row("view:ext", I18n.tr("Show File Extensions"), "", {
             "check": !Prefs.desktopIconsHideExt
-        }), root.row("view:thumbs", "Show Previews", "", {
+        }), root.row("view:thumbs", I18n.tr("Show Previews"), "", {
             "check": Prefs.desktopIconsThumbs
         })]);
     }
 
     function arrangeRows() {
-        var hows = [["name", "Name"], ["type", "Type"], ["size", "Size"], ["date", "Modified"]];
+        var hows = [["name", I18n.tr("Name")], ["type", I18n.tr("Type")], ["size", I18n.tr("Size")], ["date", I18n.tr("Modified")]];
         var rows = [];
         for (var i = 0; i < hows.length; i++)
             rows.push(root.row("arrange:" + hows[i][0], hows[i][1], "", {
                 "check": Prefs.desktopIconsSort === hows[i][0]
             }));
-        rows.push(root.row("arrange:asc", "Ascending", "", {
+        rows.push(root.row("arrange:asc", I18n.tr("Ascending"), "", {
             "check": !Prefs.desktopIconsSortDesc,
             "divider": true
         }));
-        rows.push(root.row("arrange:desc", "Descending", "", {
+        rows.push(root.row("arrange:desc", I18n.tr("Descending"), "", {
             "check": Prefs.desktopIconsSortDesc
         }));
         return rows;
@@ -2666,10 +2667,10 @@ Singleton {
         for (var i = 0; i < apps.length; i++)
             rows.push(root.row("app:" + i, apps[i].name, apps[i].icon ? "" : "apps", {
                 "image": apps[i].icon ? "file://" + apps[i].icon : "",
-                "shortcut": apps[i]["default"] ? "Default" : ""
+                "shortcut": apps[i]["default"] ? I18n.tr("Default") : ""
             }));
         if (apps.length === 0)
-            rows.push(root.row("", root.openWithBusy ? "Looking…" : "No apps for this file", "", {
+            rows.push(root.row("", root.openWithBusy ? "Looking…" : I18n.tr("No apps for this file"), "", {
                 "disabled": true
             }));
 
@@ -3156,29 +3157,29 @@ Singleton {
             onExited: (code) => {
                 if (mp.made.length > 0) {
                     var labels = {
-                        "folder": "Undo New Folder",
-                        "text": "Undo New Document",
-                        "markdown": "Undo New Document",
-                        "empty": "Undo New File",
-                        "template": "Undo New Document",
-                        "duplicate": "Undo Duplicate",
-                        "link": "Undo Make Link",
-                        "compress": "Undo Compress",
-                        "extract": "Undo Extract",
-                        "app": "Undo Add to Desktop",
-                        "image": "Undo Paste"
+                        "folder": I18n.tr("Undo New Folder"),
+                        "text": I18n.tr("Undo New Document"),
+                        "markdown": I18n.tr("Undo New Document"),
+                        "empty": I18n.tr("Undo New File"),
+                        "template": I18n.tr("Undo New Document"),
+                        "duplicate": I18n.tr("Undo Duplicate"),
+                        "link": I18n.tr("Undo Make Link"),
+                        "compress": I18n.tr("Undo Compress"),
+                        "extract": I18n.tr("Undo Extract"),
+                        "app": I18n.tr("Undo Add to Desktop"),
+                        "image": I18n.tr("Undo Paste")
                     };
                     root.pushUndo({
-                        "label": labels[mp.what] || "Undo",
+                        "label": labels[mp.what] || I18n.tr("Undo"),
                         "kind": "created",
                         "paths": mp.made
                     });
                     if (mp.what === "compress")
-                        root.notify("Compressed to “" + root.baseOf(mp.made[0]) + "”", true);
+                        root.notify(I18n.tr("Compressed to “%1”", root.baseOf(mp.made[0])), true);
                     else if (mp.what === "extract")
-                        root.notify("Extracted “" + root.baseOf(mp.made[0]) + "”", true);
+                        root.notify(I18n.tr("Extracted “%1”", root.baseOf(mp.made[0])), true);
                 } else if (code !== 0 && mp.what !== "") {
-                    root.notify(mp.what === "image" ? "There's no picture on the clipboard" : "That didn't work", false);
+                    root.notify(mp.what === "image" ? I18n.tr("There's no picture on the clipboard") : I18n.tr("That didn't work"), false);
                 }
                 mp.destroy();
             }
@@ -3229,7 +3230,7 @@ Singleton {
                         return m[1] !== "";
                     })) {
                         root.pushUndo({
-                            "label": "Undo Move",
+                            "label": I18n.tr("Undo Move"),
                             "kind": "relocate",
                             "pairs": proc.moved.filter((m) => {
                                 return m[1] !== "";
@@ -3237,7 +3238,7 @@ Singleton {
                         });
                     } else {
                         root.pushUndo({
-                            "label": proc.mode === "link" ? "Undo Make Link" : "Undo Copy",
+                            "label": proc.mode === "link" ? I18n.tr("Undo Make Link") : I18n.tr("Undo Copy"),
                             "kind": "created",
                             "paths": proc.moved.map((m) => {
                                 return m[0];
@@ -3246,8 +3247,8 @@ Singleton {
                     }
                     if (!proc.intoDesktop) {
                         var n = proc.moved.length;
-                        var verb = proc.mode === "copy" ? "Copied" : (proc.mode === "link" ? "Linked" : "Moved");
-                        root.notify(verb + " " + (n === 1 ? "“" + root.baseOf(proc.moved[0][0]) + "”" : n + " items") + " to " + proc.destLabel, true);
+                        var verb = proc.mode === "copy" ? I18n.tr("Copied") : (proc.mode === "link" ? I18n.tr("Linked") : I18n.tr("Moved"));
+                        root.notify(verb + " " + (n === 1 ? "“" + root.baseOf(proc.moved[0][0]) + "”" : I18n.tr("%1 items", n)) + " to " + proc.destLabel, true);
                         if (proc.destKey !== "") {
                             root.received = proc.destKey;
                             root.receiveTick++;

@@ -15,7 +15,7 @@ SettingRow {
     title: cleanRow.info.title || ""
     description: cleanRow.info.body || ""
     enabled: !cleanRow.needsRoot || !!(Storage.cleanup && Storage.cleanup.pkexec)
-    disabledReason: "pkexec is not installed, so nothing here can run as root."
+    disabledReason: I18n.tr("pkexec is not installed, so nothing here can run as root.")
 
     Row {
         spacing: Theme.dp(14)

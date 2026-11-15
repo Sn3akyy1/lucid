@@ -19,12 +19,12 @@ Item {
         if (!row.on || ids.length === 0)
             return "";
 
-        return "Same keys as " + ids.map((id) => {
+        return I18n.tr("Same keys as %1 — both fire", ids.map((id) => {
             var b = Keybinds.find(id);
             return b ? "“" + Keybinds.displayDesc(b) + "”" : id;
-        }).join(", ") + " — both fire";
+        }).join(", "));
     }
-    readonly property string problem: row.failure !== "" ? "Did not bind: " + row.failure : row.clashText
+    readonly property string problem: row.failure !== "" ? I18n.tr("Did not bind: %1", row.failure) : row.clashText
     readonly property int outerRadius: Theme.rad(26)
     readonly property int innerRadius: Theme.dp(6)
     readonly property int keysWidth: Math.min(Theme.dp(280), Math.round(row.width * 0.32))

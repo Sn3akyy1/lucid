@@ -41,9 +41,9 @@ WidgetBody {
         const h = Math.floor(min / 60);
         const m = min % 60;
         if (h === 0)
-            return m + " min";
+            return I18n.tr("%1 min", m);
 
-        return m === 0 ? h + " h" : h + " h " + m + " min";
+        return m === 0 ? h + " h" : I18n.tr("%1 h %2 min", h, m);
     }
 
     defaultTone: "tertiary"
@@ -150,7 +150,7 @@ WidgetBody {
                 anchors.horizontalCenter: parent.horizontalCenter
                 role: "labelMedium"
                 color: w.inkDim
-                text: w.next === "set" ? "Sunset in" : "Sunrise in"
+                text: w.next === "set" ? I18n.tr("Sunset in") : I18n.tr("Sunrise in")
             }
 
             LText {
@@ -172,7 +172,7 @@ WidgetBody {
             LText {
                 role: "labelMedium"
                 color: w.inkDim
-                text: "Sunrise"
+                text: I18n.tr("Sunrise")
             }
 
             LText {
@@ -195,7 +195,7 @@ WidgetBody {
                 anchors.right: parent.right
                 role: "labelMedium"
                 color: w.inkDim
-                text: "Sunset"
+                text: I18n.tr("Sunset")
             }
 
             LText {
@@ -226,7 +226,7 @@ WidgetBody {
                 anchors.horizontalCenter: parent.horizontalCenter
                 role: "labelSmall"
                 color: w.inkFaint
-                text: "of daylight"
+                text: I18n.tr("of daylight")
             }
 
         }
@@ -278,7 +278,7 @@ WidgetBody {
                         elide: Text.ElideRight
                         role: "labelLarge"
                         color: srow.isNext ? w.inkAccent : w.inkDim
-                        text: (srow.rise ? "Sunrise" : "Sunset") + (srow.isNext ? " · in " + w.span(w.nextIn) : "")
+                        text: (srow.rise ? I18n.tr("Sunrise") : I18n.tr("Sunset")) + (srow.isNext ? I18n.tr(" · in %1", w.span(w.nextIn)) : "")
                     }
 
                     LText {
@@ -336,7 +336,7 @@ WidgetBody {
             LText {
                 role: "labelLarge"
                 color: w.inkDim
-                text: (w.next === "rise" ? "Sunrise" : "Sunset") + " · in " + w.span(w.nextIn)
+                text: (w.next === "rise" ? I18n.tr("Sunrise") : I18n.tr("Sunset")) + I18n.tr(" · in %1", w.span(w.nextIn))
             }
 
             LText {

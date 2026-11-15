@@ -55,7 +55,7 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             width: Theme.dp(150)
             text: picker.colour
-            placeholder: "#rrggbb"
+            placeholder: I18n.tr("#rrggbb")
             error: picker.invalid
             onEdited: (v) => {
                 // a full colour applies as it is typed; half of one waits
@@ -71,7 +71,7 @@ Column {
 
         M3Button {
             anchors.verticalCenter: parent.verticalCenter
-            text: screenPick.running ? "Picking..." : "Pick from screen"
+            text: screenPick.running ? I18n.tr("Picking...") : I18n.tr("Pick from screen")
             enabled: !screenPick.running
             // eyedropper
             iconPath: "colorize"
@@ -84,7 +84,7 @@ Column {
 
         M3Button {
             anchors.verticalCenter: parent.verticalCenter
-            text: "Use it"
+            text: I18n.tr("Use it")
             variant: "filled"
             visible: !picker.inUse
             onClicked: picker.useIt()

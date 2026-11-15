@@ -477,10 +477,10 @@ Singleton {
     }
 
     readonly property var transforms: [
-        { "key": 0, "label": "Landscape", "short": "0°" },
-        { "key": 1, "label": "Portrait", "short": "90°" },
-        { "key": 2, "label": "Landscape flipped", "short": "180°" },
-        { "key": 3, "label": "Portrait flipped", "short": "270°" }
+        { "key": 0, "label": I18n.tr("Landscape"), "short": "0°" },
+        { "key": 1, "label": I18n.tr("Portrait"), "short": "90°" },
+        { "key": 2, "label": I18n.tr("Landscape flipped"), "short": "180°" },
+        { "key": 3, "label": I18n.tr("Portrait flipped"), "short": "270°" }
     ]
 
     function transformLabel(t) {

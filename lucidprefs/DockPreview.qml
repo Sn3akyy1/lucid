@@ -212,7 +212,7 @@ Rectangle {
         anchors.rightMargin: Theme.dp(16)
         anchors.top: parent.top
         anchors.topMargin: Theme.dp(10)
-        text: (Prefs.dockSplit ? "Split" : (Prefs.dockNotch ? "Notch" : "Island")) + (Prefs.dockAutoHide ? (Prefs.dockDynamicHide ? " · dynamic hiding" : " · auto-hide") : "")
+        text: (Prefs.dockSplit ? I18n.tr("Split") : (Prefs.dockNotch ? I18n.tr("Notch") : I18n.tr("Island"))) + (Prefs.dockAutoHide ? (Prefs.dockDynamicHide ? I18n.tr(" · dynamic hiding") : I18n.tr(" · auto-hide")) : "")
         color: Theme.subtextDim
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontLabel

@@ -120,7 +120,7 @@ Item {
                     icon: tr.movie && tr.movie.playing ? "pause" : "play_arrow"
                     variant: "tonal"
                     size: "m"
-                    tooltip: tr.movie && tr.movie.playing ? "Pause (Space)" : "Play the part kept (Space)"
+                    tooltip: tr.movie && tr.movie.playing ? I18n.tr("Pause (Space)") : I18n.tr("Play the part kept (Space)")
 
                     Tip {
                     }
@@ -323,7 +323,7 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     role: "labelLarge"
                     tabular: true
-                    text: ((tr.to - tr.from) / 1000).toFixed(1) + " s kept"
+                    text: I18n.tr("%1 s kept", ((tr.to - tr.from) / 1000).toFixed(1))
                 }
 
                 LText {
@@ -360,13 +360,13 @@ Item {
 
                         LText {
                             role: "labelLarge"
-                            text: "Precise cut"
+                            text: I18n.tr("Precise cut")
                         }
 
                         LText {
                             role: "bodySmall"
                             color: Theme.subtext
-                            text: tr.win.app.prefs.exactTrim ? "Exactly at the handles, encoded again: takes a while" : "Off: quick and lossless, but it starts at the nearest keyframe before"
+                            text: tr.win.app.prefs.exactTrim ? I18n.tr("Exactly at the handles, encoded again: takes a while") : I18n.tr("Off: quick and lossless, but it starts at the nearest keyframe before")
                         }
 
                     }
@@ -383,7 +383,7 @@ Item {
                     LText {
                         role: "labelLarge"
                         tabular: true
-                        text: "Trimming…  " + Math.round(tr.win.trimDone * 100) + "%"
+                        text: I18n.tr("Trimming…  %1%", Math.round(tr.win.trimDone * 100))
                     }
 
                     LinearProgress {
@@ -404,7 +404,7 @@ Item {
                         id: cancelBtn
 
                         variant: "text"
-                        text: tr.saving ? "Stop" : "Cancel"
+                        text: tr.saving ? I18n.tr("Stop") : I18n.tr("Cancel")
                         onClicked: tr.saving ? tr.win.app.call("cancel", {
                             "job": tr.win.trimJob
                         }) : tr.win.closeTrim()
@@ -413,7 +413,7 @@ Item {
                     Button {
                         variant: "filled"
                         icon: "content_cut"
-                        text: "Save copy"
+                        text: I18n.tr("Save copy")
                         disabled: tr.saving || tr.dur <= 0 || (tr.from < 50 && tr.to > tr.dur - 50)
                         onClicked: tr.win.saveTrim(tr.from, tr.to, tr.win.app.prefs.exactTrim)
                     }

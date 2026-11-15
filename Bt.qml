@@ -39,10 +39,10 @@ Singleton {
 
     readonly property string blockReason: {
         if (root.hardBlocked)
-            return "A hardware switch or an Fn key has Bluetooth blocked. The radio cannot come on until that is released.";
+            return I18n.tr("A hardware switch or an Fn key has Bluetooth blocked. The radio cannot come on until that is released.");
 
         if (root.softBlocked && !root.on)
-            return "Bluetooth is blocked in software. Turning it on here releases the block.";
+            return I18n.tr("Bluetooth is blocked in software. Turning it on here releases the block.");
 
         return "";
     }
@@ -164,17 +164,17 @@ Singleton {
 
     function profileLabel(name) {
         const map = {
-            "a2dp-sink": "High quality audio",
-            "a2dp-sink-sbc": "High quality audio (SBC)",
-            "a2dp-sink-sbc_xq": "High quality audio (SBC-XQ)",
-            "a2dp-sink-aac": "High quality audio (AAC)",
-            "a2dp-sink-aptx": "High quality audio (aptX)",
-            "a2dp-sink-aptx_hd": "High quality audio (aptX HD)",
-            "a2dp-sink-ldac": "High quality audio (LDAC)",
-            "headset-head-unit": "Headset — mic works, lower quality",
-            "headset-head-unit-cvsd": "Headset (CVSD)",
-            "headset-head-unit-msbc": "Headset — wideband mic",
-            "off": "Audio off"
+            "a2dp-sink": I18n.tr("High quality audio"),
+            "a2dp-sink-sbc": I18n.tr("High quality audio (SBC)"),
+            "a2dp-sink-sbc_xq": I18n.tr("High quality audio (SBC-XQ)"),
+            "a2dp-sink-aac": I18n.tr("High quality audio (AAC)"),
+            "a2dp-sink-aptx": I18n.tr("High quality audio (aptX)"),
+            "a2dp-sink-aptx_hd": I18n.tr("High quality audio (aptX HD)"),
+            "a2dp-sink-ldac": I18n.tr("High quality audio (LDAC)"),
+            "headset-head-unit": I18n.tr("Headset — mic works, lower quality"),
+            "headset-head-unit-cvsd": I18n.tr("Headset (CVSD)"),
+            "headset-head-unit-msbc": I18n.tr("Headset — wideband mic"),
+            "off": I18n.tr("Audio off")
         };
         return map[name] || name;
     }
@@ -372,7 +372,7 @@ Singleton {
 
         onExited: (code) => {
             root.aliasBusy = false;
-            root.aliasError = code === 0 ? "" : "bluetoothctl would not take that name";
+            root.aliasError = code === 0 ? "" : I18n.tr("bluetoothctl would not take that name");
             root.refresh();
         }
     }

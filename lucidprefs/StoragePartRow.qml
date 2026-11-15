@@ -80,7 +80,7 @@ Item {
 
         Text {
             anchors.right: parent.right
-            text: Storage.size(row.part.avail) + " free"
+            text: I18n.tr("%1 free", Storage.size(row.part.avail))
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontLabelMd
@@ -122,7 +122,7 @@ Item {
         M3Button {
             anchors.verticalCenter: parent.verticalCenter
             variant: "text"
-            text: row.mounted ? "Unmount" : "Mount"
+            text: row.mounted ? I18n.tr("Unmount") : I18n.tr("Mount")
             visible: !row.busy && (row.mountable || (row.mounted && !row.system))
             enabled: Storage.mounting === ""
             onClicked: Storage.udisks(row.mounted ? "unmount" : "mount", row.part.path)

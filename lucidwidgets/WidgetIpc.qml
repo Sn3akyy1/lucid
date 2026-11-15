@@ -54,24 +54,24 @@ IpcHandler {
 
     function presets(): string {
         return Widgets.userPresets.concat(Widgets.presets).map((p) => {
-            return (Widgets.presetId === p.id ? "* " : "  ") + p.id + "  " + p.name + (p.blurb ? " - " + p.blurb : "  (saved, " + p.cards.length + " widgets)");
+            return (Widgets.presetId === p.id ? "* " : "  ") + p.id + "  " + p.name + (p.blurb ? " - " + p.blurb : I18n.tr("  (saved, %1 widgets)", p.cards.length));
         }).join("\n");
     }
 
     // keeps the desktop as a preset; an existing name is updated
     function save(name: string): string {
         var id = Widgets.savePreset(name);
-        return id !== "" ? id : "give it a name, and place a widget first";
+        return id !== "" ? id : I18n.tr("give it a name, and place a widget first");
     }
 
     function discard(name: string): string {
         var p = Widgets.userPresetNamed(name) || Widgets.presetAt(name);
-        return (p !== null && Widgets.deletePreset(p.id)) ? "" : "no saved preset called \"" + name + "\"";
+        return (p !== null && Widgets.deletePreset(p.id)) ? "" : I18n.tr("no saved preset called \"%1\"", name);
     }
 
     // back to the unsaved arrangement the last preset replaced
     function restore(): string {
-        return Widgets.restoreLast() ? "" : "nothing to go back to";
+        return Widgets.restoreLast() ? "" : I18n.tr("nothing to go back to");
     }
 
     function toggle(): void {

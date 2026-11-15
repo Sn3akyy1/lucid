@@ -2238,7 +2238,7 @@ Item {
                     visible: root.specialCount > 0
                     opacity: root.stagger(root.slotCount, 0)
                     verticalAlignment: Text.AlignVCenter
-                    text: root.specialCount > 1 ? "Scratchpads" : "Scratchpad"
+                    text: root.specialCount > 1 ? I18n.tr("Scratchpads") : I18n.tr("Scratchpad")
                     color: Theme.primary
                     font.family: Theme.fontFamily
                     font.bold: true
@@ -2313,7 +2313,7 @@ Item {
                             if (w && w.name && w.name !== String(tile.index + 1))
                                 return w.name;
 
-                            return "Workspace " + (tile.index + 1);
+                            return I18n.tr("Workspace %1", (tile.index + 1));
                         }
 
                         visible: !!root.slotPos[tile.index]
@@ -2499,7 +2499,7 @@ Item {
                             anchors.top: plusCard.bottom
                             anchors.horizontalCenter: plusCard.horizontalCenter
                             anchors.topMargin: root.labelGap
-                            text: "New workspace"
+                            text: I18n.tr("New workspace")
                             color: plusTile.highlighted ? Theme.text : Theme.subtext
                             font.family: Theme.fontFamily
                             font.pixelSize: root.labelFontSize

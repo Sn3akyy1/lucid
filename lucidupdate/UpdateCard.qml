@@ -228,19 +228,19 @@ Rectangle {
                     Text {
                         text: {
                             if (card.view === "confirm")
-                                return card.beta ? "Beta build" : "Update available";
+                                return card.beta ? I18n.tr("Beta build") : I18n.tr("Update available");
 
                             if (card.view === "auth")
-                                return "Authentication required";
+                                return I18n.tr("Authentication required");
 
                             if (card.view === "running")
-                                return Updates.phase === "stopping" ? "Stopping" : card.fresh ? "Installing Lucid" : "Updating Lucid";
+                                return Updates.phase === "stopping" ? I18n.tr("Stopping") : card.fresh ? I18n.tr("Installing Lucid") : I18n.tr("Updating Lucid");
 
                             if (card.view === "restart")
-                                return card.fresh ? "All done" : "Update installed";
+                                return card.fresh ? I18n.tr("All done") : I18n.tr("Update installed");
 
-                            var what = card.fresh ? "Install" : "Update";
-                            return card.res.reason === "cancelled" ? what + " stopped" : what + " failed";
+                            var what = card.fresh ? I18n.tr("Install") : I18n.tr("Update");
+                            return card.res.reason === "cancelled" ? I18n.tr("%1 stopped", what) : I18n.tr("%1 failed", what);
                         }
                         color: {
                             if (card.view === "failed" || (card.view === "confirm" && card.beta))
@@ -261,40 +261,40 @@ Rectangle {
                         width: parent.width
                         text: {
                             if (card.view === "confirm")
-                                return card.beta ? "Install " + Updates.flowLabel.toLowerCase() + "?" : "Update to " + Updates.flowLabel + "?";
+                                return card.beta ? I18n.tr("Install %1?", Updates.flowLabel.toLowerCase()) : I18n.tr("Update to %1?", Updates.flowLabel);
 
                             if (card.view === "auth")
-                                return "Enter your password";
+                                return I18n.tr("Enter your password");
 
                             if (card.view === "running")
                                 return Updates.flowLabel;
 
                             if (card.view === "restart")
-                                return Updates.flowLabel + " is installed";
+                                return I18n.tr("%1 is installed", Updates.flowLabel);
 
                             var r = card.res.reason;
                             if (r === "password")
-                                return "The password was not accepted";
+                                return I18n.tr("The password was not accepted");
 
                             if (r === "timeout")
-                                return "No password was given in time";
+                                return I18n.tr("No password was given in time");
 
                             if (r === "download")
-                                return "The download failed";
+                                return I18n.tr("The download failed");
 
                             if (r === "unpack")
-                                return "The download could not be unpacked";
+                                return I18n.tr("The download could not be unpacked");
 
                             if (r === "cancelled")
-                                return card.fresh ? "The install was stopped" : "The update was stopped";
+                                return card.fresh ? I18n.tr("The install was stopped") : I18n.tr("The update was stopped");
 
                             if (r === "crash")
-                                return "The updater stopped unexpectedly";
+                                return I18n.tr("The updater stopped unexpectedly");
 
                             if (r === "nosudo")
-                                return "sudo is not installed";
+                                return I18n.tr("sudo is not installed");
 
-                            return "The installer stopped with an error";
+                            return I18n.tr("The installer stopped with an error");
                         }
                         color: Theme.text
                         font.family: Theme.fontFamily
@@ -316,26 +316,26 @@ Rectangle {
                 visible: text !== ""
                 text: {
                     if (card.view === "confirm") {
-                        var what = card.beta ? "This is the newest commit on main, not a release" + (Updates.betaTitle !== "" ? ": “" + Updates.betaTitle + "”" : "") + ". Lucid downloads it from GitHub" : "Lucid downloads v" + Updates.latest + " from its GitHub release";
+                        var what = card.beta ? I18n.tr("This is the newest commit on main, not a release") + (Updates.betaTitle !== "" ? ": “" + Updates.betaTitle + "”" : "") + I18n.tr(". Lucid downloads it from GitHub") : I18n.tr("Lucid downloads v%1 from its GitHub release", Updates.latest);
                         return what + " and runs the installer that comes with it. Your current setup is moved to a backup in ~/.config first, and your settings, pins and widgets carry over. It takes a few minutes, and the installer may ask you things along the way. Your password is needed next.";
                     }
                     if (card.view === "auth")
-                        return "The installer uses sudo to install packages and system files such as the login screen theme. The password goes to sudo once and is not kept.";
+                        return I18n.tr("The installer uses sudo to install packages and system files such as the login screen theme. The password goes to sudo once and is not kept.");
 
                     if (card.view === "restart" && card.fresh && card.elsewhere !== "")
-                        return "You are on " + card.elsewhere + " right now, and Lucid runs on Hyprland. Save what you have open, log out, and choose Hyprland on the login screen." + (card.note !== "" ? " Your Hyprland config was kept, so add this line to it first, or nothing starts Lucid there." : " Lucid starts with it.") + " " + (card.elsewhere === "another desktop" ? "Your desktop" : card.elsewhere) + " stays on that list to go back to, and ./uninstall.sh, beside install.sh, takes Lucid out." + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
+                        return I18n.tr("You are on %1 right now, and Lucid runs on Hyprland. Save what you have open, log out, and choose Hyprland on the login screen.", card.elsewhere) + (card.note !== "" ? I18n.tr(" Your Hyprland config was kept, so add this line to it first, or nothing starts Lucid there.") : I18n.tr(" Lucid starts with it.")) + " " + (card.elsewhere === "another desktop" ? I18n.tr("Your desktop") : card.elsewhere) + " stays on that list to go back to, and ./uninstall.sh, beside install.sh, takes Lucid out." + (card.res.backup ? I18n.tr(" Your previous setup is in %1.", card.tilde(card.res.backup)) : "");
 
                     if (card.view === "restart" && card.fresh && card.note !== "")
-                        return "Start it now. Your Hyprland config was kept, so nothing starts Lucid when you log in yet: add this line to it." + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
+                        return I18n.tr("Start it now. Your Hyprland config was kept, so nothing starts Lucid when you log in yet: add this line to it.") + (card.res.backup ? I18n.tr(" Your previous setup is in %1.", card.tilde(card.res.backup)) : "");
 
                     if (card.view === "restart" && card.fresh)
-                        return "Start it now, or log out and back in to begin your next session with it." + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
+                        return I18n.tr("Start it now, or log out and back in to begin your next session with it.") + (card.res.backup ? I18n.tr(" Your previous setup is in %1.", card.tilde(card.res.backup)) : "");
 
                     if (card.view === "restart")
-                        return "Restart Lucid to start using it. Only the shell restarts: your windows and apps stay open." + (card.res.backup ? " Your previous setup is in " + card.tilde(card.res.backup) + "." : "");
+                        return I18n.tr("Restart Lucid to start using it. Only the shell restarts: your windows and apps stay open.") + (card.res.backup ? I18n.tr(" Your previous setup is in %1.", card.tilde(card.res.backup)) : "");
 
                     if (card.view === "failed")
-                        return (card.res.text ? card.res.text + " " : "") + (card.res.backup ? "Your previous setup is kept in " + card.tilde(card.res.backup) + "." : "Your Lucid files were not changed.");
+                        return (card.res.text ? card.res.text + " " : "") + (card.res.backup ? I18n.tr("Your previous setup is kept in %1.", card.tilde(card.res.backup)) : I18n.tr("Your Lucid files were not changed."));
 
                     return "";
                 }
@@ -405,7 +405,7 @@ Rectangle {
                     anchors.rightMargin: Theme.dp(16)
                     anchors.top: parent.top
                     anchors.topMargin: Theme.dp(14)
-                    text: "<b>Things may break.</b> Beta builds are untested: the bar, the lock screen or the whole shell can fail to start. If that happens, move the backup back over ~/.config/quickshell from a terminal."
+                    text: I18n.tr("<b>Things may break.</b> Beta builds are untested: the bar, the lock screen or the whole shell can fail to start. If that happens, move the backup back over ~/.config/quickshell from a terminal.")
                     textFormat: Text.StyledText
                     color: Theme.fgErrorContainer
                     font.family: Theme.fontFamily
@@ -429,7 +429,7 @@ Rectangle {
                     width: parent.width
                     error: card.authAsk && card.ask.retry && authField.text === ""
                     busy: !card.authAsk
-                    placeholder: card.authAsk ? "Password for " + Quickshell.env("USER") : "Getting ready…"
+                    placeholder: card.authAsk ? I18n.tr("Password for %1", Quickshell.env("USER")) : I18n.tr("Getting ready…")
                     onAccepted: card.submitAuth()
                 }
 
@@ -437,7 +437,7 @@ Rectangle {
                     width: parent.width
                     text: {
                         if (card.authAsk && card.ask.retry)
-                            return "That password did not work. Try again.";
+                            return I18n.tr("That password did not work. Try again.");
 
                         if (card.ask !== null && Updates.askSent === card.ask.n)
                             return "Checking…";
@@ -466,12 +466,12 @@ Rectangle {
                         width: parent.width - pct.width
                         text: {
                             if (Updates.phase === "download")
-                                return "Downloading" + (Updates.bytes > 0 ? " — " + card.mb(Updates.bytes) : "");
+                                return I18n.tr("Downloading") + (Updates.bytes > 0 ? " — " + card.mb(Updates.bytes) : "");
 
                             if (Updates.phase === "install" && Updates.stepText !== "")
-                                return Updates.stepText + (Updates.stepOf > 0 ? "  ·  step " + Updates.stepN + " of " + Updates.stepOf : "");
+                                return Updates.stepText + (Updates.stepOf > 0 ? I18n.tr("  ·  step %1 of %2", Updates.stepN, Updates.stepOf) : "");
 
-                            return Updates.phaseText !== "" ? Updates.phaseText : "Starting";
+                            return Updates.phaseText !== "" ? Updates.phaseText : I18n.tr("Starting");
                         }
                         color: Theme.text
                         font.family: Theme.fontFamily
@@ -549,7 +549,7 @@ Rectangle {
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: card.runAsk && card.ask.kind === "password" ? "sudo needs your password again" : "The installer asks"
+                            text: card.runAsk && card.ask.kind === "password" ? I18n.tr("sudo needs your password again") : I18n.tr("The installer asks")
                             color: Theme.accent
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabelMd
@@ -593,7 +593,7 @@ Rectangle {
                         width: parent.width
                         visible: card.runAsk && card.ask.kind === "password"
                         error: card.runAsk && card.ask.retry === true && askField.text === ""
-                        placeholder: card.runAsk && card.ask.retry ? "Wrong password, try again" : "Password for " + Quickshell.env("USER")
+                        placeholder: card.runAsk && card.ask.retry ? I18n.tr("Wrong password, try again") : I18n.tr("Password for %1", Quickshell.env("USER"))
                         onAccepted: card.submitAsk()
                     }
 
@@ -628,21 +628,21 @@ Rectangle {
 
                         M3Button {
                             visible: card.runAsk && card.ask.kind === "yesno"
-                            text: "No"
+                            text: I18n.tr("No")
                             variant: card.runAsk && card.ask.def === "n" ? "filled" : "outlined"
                             onClicked: Updates.answer("n")
                         }
 
                         M3Button {
                             visible: card.runAsk && card.ask.kind === "yesno"
-                            text: "Yes"
+                            text: I18n.tr("Yes")
                             variant: card.runAsk && card.ask.def === "n" ? "outlined" : "filled"
                             onClicked: Updates.answer("y")
                         }
 
                         M3Button {
                             visible: card.runAsk && card.ask.kind !== "yesno"
-                            text: "Send"
+                            text: I18n.tr("Send")
                             variant: "filled"
                             enabled: card.runAsk && (card.ask.kind === "text" || askField.text !== "")
                             onClicked: card.submitAsk()
@@ -681,7 +681,7 @@ Rectangle {
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "Details"
+                            text: I18n.tr("Details")
                             color: Theme.subtextDim
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontBodySm
@@ -722,14 +722,14 @@ Rectangle {
                     // confirm
                     M3Button {
                         visible: card.view === "confirm" || card.view === "auth"
-                        text: "Cancel"
+                        text: I18n.tr("Cancel")
                         variant: "text"
                         onClicked: Updates.cancel()
                     }
 
                     M3Button {
                         visible: card.view === "confirm"
-                        text: "OK"
+                        text: I18n.tr("OK")
                         variant: "filled"
                         destructive: card.beta
                         onClicked: Updates.confirmUpdate()
@@ -738,7 +738,7 @@ Rectangle {
                     // auth
                     M3Button {
                         visible: card.view === "auth"
-                        text: "Continue"
+                        text: I18n.tr("Continue")
                         variant: "filled"
                         enabled: card.authAsk && authField.text !== ""
                         onClicked: card.submitAuth()
@@ -748,7 +748,7 @@ Rectangle {
                     M3Button {
                         visible: card.view === "running"
                         enabled: Updates.phase !== "stopping"
-                        text: card.stopArmed ? "Stop now" : "Stop"
+                        text: card.stopArmed ? I18n.tr("Stop now") : I18n.tr("Stop")
                         variant: card.stopArmed ? "tonal" : "text"
                         destructive: true
                         onClicked: {
@@ -764,7 +764,7 @@ Rectangle {
 
                     M3Button {
                         visible: card.view === "running" && !card.fresh
-                        text: "Hide"
+                        text: I18n.tr("Hide")
                         variant: "tonal"
                         onClicked: Updates.hide()
                     }
@@ -772,14 +772,14 @@ Rectangle {
                     // restart
                     M3Button {
                         visible: card.view === "restart" && card.fresh
-                        text: "Close"
+                        text: I18n.tr("Close")
                         variant: "text"
                         onClicked: card.leave(false)
                     }
 
                     M3Button {
                         visible: card.view === "restart" && card.fresh
-                        text: card.elsewhere !== "" ? "Log out to Hyprland" : "Start Lucid"
+                        text: card.elsewhere !== "" ? I18n.tr("Log out to Hyprland") : I18n.tr("Start Lucid")
                         variant: "filled"
                         iconPath: card.elsewhere !== "" ? "logout" : "play_arrow"
                         onClicked: card.leave(true)
@@ -787,14 +787,14 @@ Rectangle {
 
                     M3Button {
                         visible: card.view === "restart" && !card.fresh
-                        text: "Cancel"
+                        text: I18n.tr("Cancel")
                         variant: "text"
                         onClicked: Updates.closeEnd()
                     }
 
                     M3Button {
                         visible: card.view === "restart" && !card.fresh
-                        text: "Remind me later"
+                        text: I18n.tr("Remind me later")
                         variant: "tonal"
                         iconPath: "snooze"
                         onClicked: Updates.remindLater()
@@ -802,7 +802,7 @@ Rectangle {
 
                     M3Button {
                         visible: card.view === "restart" && !card.fresh
-                        text: "Restart now"
+                        text: I18n.tr("Restart now")
                         variant: "filled"
                         iconPath: "restart_alt"
                         onClicked: Updates.restartNow()
@@ -811,21 +811,21 @@ Rectangle {
                     // failed
                     M3Button {
                         visible: card.view === "failed"
-                        text: "Open log"
+                        text: I18n.tr("Open log")
                         variant: "text"
                         onClicked: Updates.openLog()
                     }
 
                     M3Button {
                         visible: card.canRetry
-                        text: "Try again"
+                        text: I18n.tr("Try again")
                         variant: "tonal"
                         onClicked: Updates.retry()
                     }
 
                     M3Button {
                         visible: card.view === "failed"
-                        text: card.fresh ? "Back" : "Close"
+                        text: card.fresh ? I18n.tr("Back") : I18n.tr("Close")
                         variant: "filled"
                         onClicked: Updates.closeEnd()
                     }

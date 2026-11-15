@@ -9,7 +9,7 @@ Rectangle {
 
     property bool error: false
     property bool busy: false
-    property string placeholder: "Password"
+    property string placeholder: I18n.tr("Password")
     property real focusLift: input.activeFocus ? 1 : 0
     property real shakeOffset: 0
     property bool vacant: true

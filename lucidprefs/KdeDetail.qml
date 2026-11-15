@@ -93,7 +93,7 @@ Column {
 
             Text {
                 width: parent.width
-                text: detail.dev.links.length > 0 ? "Connected over " + detail.dev.links.join(", ") : "Connected"
+                text: detail.dev.links.length > 0 ? I18n.tr("Connected over %1", detail.dev.links.join(", ")) : I18n.tr("Connected")
                 color: Theme.accent
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
@@ -142,13 +142,13 @@ Column {
     }
 
     SettingCard {
-        title: "SEND TO THIS DEVICE"
+        title: I18n.tr("SEND TO THIS DEVICE")
 
         SettingRow {
-            title: "Files"
-            description: detail.sentRecently ? (KdeConnect.lastSent === 1 ? "Sent 1 file." : "Sent " + KdeConnect.lastSent + " files.") : "Pick anything on this machine and it lands in the phone's downloads."
+            title: I18n.tr("Files")
+            description: detail.sentRecently ? (KdeConnect.lastSent === 1 ? I18n.tr("Sent 1 file.") : I18n.tr("Sent %1 files.", KdeConnect.lastSent)) : I18n.tr("Pick anything on this machine and it lands in the phone's downloads.")
             enabled: detail.has("kdeconnect_share")
-            disabledReason: "This device has file sharing turned off."
+            disabledReason: I18n.tr("This device has file sharing turned off.")
 
             Row {
                 spacing: Theme.dp(10)
@@ -156,14 +156,14 @@ Column {
                 M3Button {
                     variant: "filled"
                     enabled: detail.has("kdeconnect_share")
-                    text: "Choose files…"
-                    onClicked: KdeConnect.pickFiles(detail.dev.id, "Send to " + detail.dev.name)
+                    text: I18n.tr("Choose files…")
+                    onClicked: KdeConnect.pickFiles(detail.dev.id, I18n.tr("Send to %1", detail.dev.name))
                 }
 
                 M3Button {
                     variant: "text"
                     enabled: detail.has("kdeconnect_share")
-                    text: "Where files arrive"
+                    text: I18n.tr("Where files arrive")
                     onClicked: KdeConnect.openDest(detail.dev.id)
                 }
 
@@ -172,8 +172,8 @@ Column {
         }
 
         SettingRow {
-            title: "Text or a link"
-            description: "A link opens on the phone. Anything else is copied to its clipboard."
+            title: I18n.tr("Text or a link")
+            description: I18n.tr("A link opens on the phone. Anything else is copied to its clipboard.")
             enabled: detail.has("kdeconnect_share")
             stacked: true
             showDivider: false
@@ -187,7 +187,7 @@ Column {
 
                     width: parent.width - Theme.dp(110)
                     enabled: detail.has("kdeconnect_share")
-                    placeholder: "Type a message or paste a link…"
+                    placeholder: I18n.tr("Type a message or paste a link…")
                     onEdited: (v) => {
                         return detail.draft = v;
                     }
@@ -201,7 +201,7 @@ Column {
 
                     anchors.verticalCenter: parent.verticalCenter
                     variant: "tonal"
-                    text: "Send"
+                    text: I18n.tr("Send")
                     enabled: detail.draft.trim() !== ""
                     onClicked: {
                         const v = detail.draft.trim();
@@ -224,11 +224,11 @@ Column {
     }
 
     SettingCard {
-        title: "THINGS TO DO WITH IT"
+        title: I18n.tr("THINGS TO DO WITH IT")
 
         SettingRow {
-            title: "Right now"
-            description: detail.sftp && detail.sftp.mounted && detail.sftp.point !== "" ? "The phone's storage is mounted at " + detail.sftp.point + "." : "Ring it if you have lost it, or mount its storage to browse the files."
+            title: I18n.tr("Right now")
+            description: detail.sftp && detail.sftp.mounted && detail.sftp.point !== "" ? I18n.tr("The phone's storage is mounted at %1.", detail.sftp.point) : I18n.tr("Ring it if you have lost it, or mount its storage to browse the files.")
             stacked: true
             showDivider: false
 
@@ -239,28 +239,28 @@ Column {
                 M3Button {
                     variant: "tonal"
                     visible: detail.has("kdeconnect_findmyphone")
-                    text: "Ring it"
+                    text: I18n.tr("Ring it")
                     onClicked: KdeConnect.ring(detail.dev.id)
                 }
 
                 M3Button {
                     variant: "tonal"
                     visible: detail.has("kdeconnect_clipboard")
-                    text: "Send my clipboard"
+                    text: I18n.tr("Send my clipboard")
                     onClicked: KdeConnect.sendClipboard(detail.dev.id)
                 }
 
                 M3Button {
                     variant: "tonal"
                     visible: detail.has("kdeconnect_lockdevice")
-                    text: detail.dev.locked ? "Unlock it" : "Lock it"
+                    text: detail.dev.locked ? I18n.tr("Unlock it") : I18n.tr("Lock it")
                     onClicked: KdeConnect.setLocked(detail.dev.id, !detail.dev.locked)
                 }
 
                 M3Button {
                     variant: "tonal"
                     visible: detail.has("kdeconnect_sftp")
-                    text: detail.sftp && detail.sftp.mounted ? "Browse its files" : "Mount its storage"
+                    text: detail.sftp && detail.sftp.mounted ? I18n.tr("Browse its files") : I18n.tr("Mount its storage")
                     onClicked: {
                         if (detail.sftp && detail.sftp.mounted)
                             KdeConnect.browse(detail.dev.id);
@@ -272,22 +272,22 @@ Column {
                 M3Button {
                     variant: "text"
                     visible: !!(detail.sftp && detail.sftp.mounted)
-                    text: "Unmount"
+                    text: I18n.tr("Unmount")
                     onClicked: KdeConnect.unmount(detail.dev.id)
                 }
 
                 M3Button {
                     variant: "tonal"
                     visible: detail.has("kdeconnect_sms")
-                    text: "Text messages"
+                    text: I18n.tr("Text messages")
                     onClicked: KdeConnect.openSms(detail.dev.id)
                 }
 
                 M3Button {
                     variant: "text"
                     visible: detail.has("kdeconnect_ping")
-                    text: "Ping"
-                    onClicked: KdeConnect.ping(detail.dev.id, "Hello from Lucid")
+                    text: I18n.tr("Ping")
+                    onClicked: KdeConnect.ping(detail.dev.id, I18n.tr("Hello from Lucid"))
                 }
 
             }
@@ -321,12 +321,12 @@ Column {
     }
 
     SettingCard {
-        title: "COMMANDS ON THE DEVICE"
+        title: I18n.tr("COMMANDS ON THE DEVICE")
         visible: (detail.dev.commands || []).length > 0
 
         SettingRow {
-            title: "Run one"
-            description: "These are the commands you have set up on the device itself."
+            title: I18n.tr("Run one")
+            description: I18n.tr("These are the commands you have set up on the device itself.")
             stacked: true
             showDivider: false
 
@@ -354,11 +354,11 @@ Column {
     }
 
     SettingCard {
-        title: "FEATURES"
+        title: I18n.tr("FEATURES")
 
         SettingRow {
-            title: "What this device is allowed to do"
-            description: "Turn off anything you would rather it did not do. The change reaches the other side straight away."
+            title: I18n.tr("What this device is allowed to do")
+            description: I18n.tr("Turn off anything you would rather it did not do. The change reaches the other side straight away.")
             stacked: true
             showDivider: false
 
@@ -386,11 +386,11 @@ Column {
     }
 
     SettingCard {
-        title: "PAIRING"
+        title: I18n.tr("PAIRING")
 
         SettingRow {
-            title: "Verification key"
-            description: "Both devices show the same key while they trust each other."
+            title: I18n.tr("Verification key")
+            description: I18n.tr("Both devices show the same key while they trust each other.")
             monoTitle: false
             showDivider: false
 
@@ -413,8 +413,8 @@ Column {
                     anchors.verticalCenter: parent.verticalCenter
                     variant: "text"
                     destructive: true
-                    text: "Unpair"
-                    onClicked: Prefs.askConfirm("Unpair " + detail.dev.name + "?", "This machine and that device stop trusting each other. Nothing on either is deleted, and you can pair them again whenever you like.", "Unpair", "kde-unpair:" + detail.dev.id)
+                    text: I18n.tr("Unpair")
+                    onClicked: Prefs.askConfirm(I18n.tr("Unpair %1?", detail.dev.name), I18n.tr("This machine and that device stop trusting each other. Nothing on either is deleted, and you can pair them again whenever you like."), I18n.tr("Unpair"), "kde-unpair:" + detail.dev.id)
                 }
 
             }

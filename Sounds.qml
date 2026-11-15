@@ -13,14 +13,14 @@ Singleton {
     readonly property string dir: Quickshell.shellPath("assets/sounds")
     // the notification picker's choices, in its order
     readonly property var notifSounds: [
-        { "key": "glint", "label": "Glint" },
-        { "key": "pulse", "label": "Pulse" },
-        { "key": "chime", "label": "Chime" },
-        { "key": "tap", "label": "Tap" },
-        { "key": "orbit", "label": "Orbit" },
-        { "key": "halo", "label": "Halo" },
-        { "key": "beacon", "label": "Beacon" },
-        { "key": "alert", "label": "Alert" }
+        { "key": "glint", "label": I18n.tr("Glint") },
+        { "key": "pulse", "label": I18n.tr("Pulse") },
+        { "key": "chime", "label": I18n.tr("Chime") },
+        { "key": "tap", "label": I18n.tr("Tap") },
+        { "key": "orbit", "label": I18n.tr("Orbit") },
+        { "key": "halo", "label": I18n.tr("Halo") },
+        { "key": "beacon", "label": I18n.tr("Beacon") },
+        { "key": "alert", "label": I18n.tr("Alert") }
     ]
     readonly property var systemSounds: ["usb-in", "usb-out", "bt-in", "bt-out", "power-in", "power-out", "charged", "battery-low", "battery-critical", "camera-on", "camera-off", "capture", "alarm", "reminder", "volume", "brightness", "caps-on", "caps-off", "mic-on", "mic-off"]
     // the freedesktop names a saved setting can still hold, carried across

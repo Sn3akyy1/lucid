@@ -82,7 +82,7 @@ Item {
                 return ;
             }
             Quickshell.execDetached(["wl-copy", picker.hex]);
-            picker.win.say("Copied " + picker.hex.toUpperCase());
+            picker.win.say(I18n.tr("Copied %1", picker.hex.toUpperCase()));
             picker.win.picking = false;
         }
     }
@@ -138,7 +138,7 @@ Item {
 
             anchors.centerIn: parent
             role: "labelLarge"
-            text: "Click to copy a colour  ·  Esc to stop"
+            text: I18n.tr("Click to copy a colour  ·  Esc to stop")
         }
 
     }

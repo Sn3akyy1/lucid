@@ -28,8 +28,8 @@ Item {
     readonly property real radius: Theme.rad(28)
 
     readonly property var mod: Prefs.barModuleById[sheet.moduleId] || null
-    readonly property string title: sheet.kind === "bar" ? "Bar" : (sheet.kind === "dock" ? "Dock" : (sheet.mod ? sheet.mod.name : ""))
-    readonly property string blurb: sheet.kind === "bar" ? "Its style, its size and how its modules open" : (sheet.kind === "dock" ? "Its style, its size and how it behaves" : (sheet.mod ? sheet.mod.desc : ""))
+    readonly property string title: sheet.kind === "bar" ? I18n.tr("Bar") : (sheet.kind === "dock" ? I18n.tr("Dock") : (sheet.mod ? sheet.mod.name : ""))
+    readonly property string blurb: sheet.kind === "bar" ? I18n.tr("Its style, its size and how its modules open") : (sheet.kind === "dock" ? I18n.tr("Its style, its size and how it behaves") : (sheet.mod ? sheet.mod.desc : ""))
     readonly property string glyph: sheet.kind === "bar" ? "toolbar" : (sheet.kind === "dock" ? "dock_to_bottom" : (sheet.mod && sheet.mod.icon ? sheet.mod.icon : "tune"))
 
     function latch() {

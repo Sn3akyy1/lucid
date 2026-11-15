@@ -56,10 +56,10 @@ BarPill {
         return list.length > 0 ? list[0] : null;
     }
     readonly property bool isPlaying: root.player ? root.player.isPlaying : false
-    readonly property string title: root.player ? (root.player.trackTitle || "Unknown") : "Nothing playing"
+    readonly property string title: root.player ? (root.player.trackTitle || I18n.tr("Unknown")) : I18n.tr("Nothing playing")
     readonly property string artist: root.player ? root.player.trackArtist : ""
     readonly property string artUrl: root.player ? root.player.trackArtUrl : ""
-    readonly property string sourceName: root.player ? (root.player.identity || "Media player") : ""
+    readonly property string sourceName: root.player ? (root.player.identity || I18n.tr("Media player")) : ""
     // the cover across the top, or the record: either way the track goes under it
     readonly property bool heroLayout: (root.coverPanel || root.vinylPanel) && root.player !== null
     // concentric with the panel's own corner
@@ -279,15 +279,15 @@ BarPill {
     function agoText(ts, now) {
         const diff = Math.max(0, now - ts) / 1000;
         if (diff < 60)
-            return "just now";
+            return I18n.tr("just now");
 
         if (diff < 3600)
-            return Math.floor(diff / 60) + "m ago";
+            return I18n.tr("%1m ago", Math.floor(diff / 60));
 
         if (diff < 86400)
-            return Math.floor(diff / 3600) + "h ago";
+            return I18n.tr("%1h ago", Math.floor(diff / 3600));
 
-        return Math.floor(diff / 86400) + "d ago";
+        return I18n.tr("%1d ago", Math.floor(diff / 86400));
     }
 
     function volumeGlyphFor(vol) {
@@ -492,11 +492,11 @@ BarPill {
         const images = track.images || {};
         const result = {
             "key": track.key || "",
-            "title": track.title || "Unknown",
+            "title": track.title || I18n.tr("Unknown"),
             "artist": track.subtitle || "",
             "album": root.metaValue(track, "Album"),
             "year": root.metaValue(track, "Released"),
-            "label": root.metaValue(track, "Label"),
+            "label": root.metaValue(track, I18n.tr("Label")),
             "genre": (track.genres && track.genres.primary) || "",
             "art": images.coverarthq || images.coverart || "",
             "url": track.url || (track.share && track.share.href) || "",
@@ -1730,7 +1730,7 @@ BarPill {
                     Marquee {
                         width: parent.width
                         visible: content !== ""
-                        content: root.player !== null ? root.artist : "Start something and it lands here"
+                        content: root.player !== null ? root.artist : I18n.tr("Start something and it lands here")
                         scrolling: root.isPlaying
                         textColor: Theme.subtext
                         pixelSize: Theme.typeSize("bodyMedium")
@@ -2163,7 +2163,7 @@ BarPill {
                         role: "labelMedium"
                         tabular: true
                         color: Theme.subtext
-                        text: "Live  ·  " + root.fmt(root.livePosSec)
+                        text: I18n.tr("Live  ·  %1", root.fmt(root.livePosSec))
                     }
 
                 }
@@ -2296,7 +2296,7 @@ BarPill {
 
                 Button {
                     anchors.centerIn: parent
-                    text: "Identify what's playing"
+                    text: I18n.tr("Identify what's playing")
                     icon: root.identifyGlyph
                     onClicked: root.openPanel("shazam")
                 }
@@ -2356,7 +2356,7 @@ BarPill {
                     anchors.verticalCenter: parent.verticalCenter
                     role: "titleMedium"
                     color: Theme.text
-                    text: "Identify"
+                    text: I18n.tr("Identify")
                 }
 
                 // what it listens to: this computer's own sound, or the microphone
@@ -2533,11 +2533,11 @@ BarPill {
                                 case "listening":
                                     return "Listening…";
                                 case "nomatch":
-                                    return "No match";
+                                    return I18n.tr("No match");
                                 case "error":
-                                    return "Couldn't listen";
+                                    return I18n.tr("Couldn't listen");
                                 default:
-                                    return root.listenSource === "mic" ? "Identify what's in the room" : "Identify what's playing here";
+                                    return root.listenSource === "mic" ? I18n.tr("Identify what's in the room") : I18n.tr("Identify what's playing here");
                                 }
                             }
                         }
@@ -2550,20 +2550,20 @@ BarPill {
                             elide: Text.ElideRight
                             text: {
                                 if (root.micQuiet)
-                                    return root.shazamState === "nomatch" ? "The microphone was too quiet to hear it" : root.listenElapsed + "s  ·  the microphone barely hears it";
+                                    return root.shazamState === "nomatch" ? I18n.tr("The microphone was too quiet to hear it") : I18n.tr("%1s  ·  the microphone barely hears it", root.listenElapsed);
 
                                 switch (root.shazamState) {
                                 case "listening":
-                                    return root.listenElapsed + "s  ·  tap to stop";
+                                    return I18n.tr("%1s  ·  tap to stop", root.listenElapsed);
                                 case "nomatch":
-                                    return "Nothing recognisable in the last " + root.listenLimit + "s, tap to try again";
+                                    return I18n.tr("Nothing recognisable in the last %1s, tap to try again", root.listenLimit);
                                 case "error":
-                                    return "songrec couldn't reach the mic, the device or Shazam";
+                                    return I18n.tr("songrec couldn't reach the mic, the device or Shazam");
                                 default:
                                     if (root.listenSource === "mic")
-                                        return "via songrec  ·  microphone at " + root.micVolume + "%";
+                                        return I18n.tr("via songrec  ·  microphone at %1%", root.micVolume);
 
-                                    return "via songrec  ·  " + (root.listenDevice === "" ? "default device" : "takes about 10s");
+                                    return I18n.tr("via songrec  ·  ") + (root.listenDevice === "" ? I18n.tr("default device") : I18n.tr("takes about 10s"));
                                 }
                             }
                         }
@@ -2577,7 +2577,7 @@ BarPill {
                                 anchors.centerIn: parent
                                 variant: "text"
                                 size: "xs"
-                                text: "Turn the mic up"
+                                text: I18n.tr("Turn the mic up")
                                 icon: root.micGlyph
                                 onClicked: Audio.setVolume(Audio.source, 100)
                             }
@@ -2660,7 +2660,7 @@ BarPill {
                             Button {
                                 anchors.verticalCenter: parent.verticalCenter
                                 size: "xs"
-                                text: "Shazam"
+                                text: I18n.tr("Shazam")
                                 icon: root.openGlyph
                                 containerOverride: Theme.accent
                                 contentOverride: Theme.fgAccent
@@ -2727,7 +2727,7 @@ BarPill {
                         anchors.verticalCenter: parent.verticalCenter
                         role: "titleSmall"
                         color: Theme.accent
-                        text: "Recent"
+                        text: I18n.tr("Recent")
                     }
 
                     IconButton {
@@ -3079,15 +3079,15 @@ BarPill {
                         text: {
                             switch (panelLyrics.status) {
                             case "loading":
-                                return "Looking for the words";
+                                return I18n.tr("Looking for the words");
                             case "instrumental":
-                                return "Instrumental";
+                                return I18n.tr("Instrumental");
                             case "none":
-                                return "No lyrics for this track";
+                                return I18n.tr("No lyrics for this track");
                             case "offline":
-                                return "Couldn't reach lrclib.net";
+                                return I18n.tr("Couldn't reach lrclib.net");
                             }
-                            return "Nothing playing";
+                            return I18n.tr("Nothing playing");
                         }
                     }
 

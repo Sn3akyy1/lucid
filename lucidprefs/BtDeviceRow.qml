@@ -36,12 +36,12 @@ Column {
             return "Connecting…";
 
         if (dev.isConnected)
-            return dev.modelData.trusted ? "Connected · reconnects on its own" : "Connected";
+            return dev.modelData.trusted ? I18n.tr("Connected · reconnects on its own") : I18n.tr("Connected");
 
         if (dev.isPaired)
-            return dev.modelData.blocked ? "Paired · blocked" : (dev.modelData.trusted ? "Paired · reconnects on its own" : "Paired");
+            return dev.modelData.blocked ? I18n.tr("Paired · blocked") : (dev.modelData.trusted ? I18n.tr("Paired · reconnects on its own") : I18n.tr("Paired"));
 
-        return "Not paired yet";
+        return I18n.tr("Not paired yet");
     }
 
     signal expandRequested()
@@ -276,9 +276,9 @@ Column {
                             return "Connecting…";
 
                         if (dev.group === "nearby")
-                            return "Pair";
+                            return I18n.tr("Pair");
 
-                        return dev.isConnected ? "Disconnect" : "Connect";
+                        return dev.isConnected ? I18n.tr("Disconnect") : I18n.tr("Connect");
                     }
                     onClicked: {
                         dev.actionFailed = false;
@@ -294,21 +294,21 @@ Column {
                 M3Button {
                     variant: "text"
                     visible: dev.isPairing
-                    text: "Cancel"
+                    text: I18n.tr("Cancel")
                     onClicked: dev.modelData.cancelPair()
                 }
 
                 M3Button {
                     variant: "tonal"
                     visible: dev.isPaired && Bt.canReceiveFiles(dev.modelData.address)
-                    text: "Send files"
+                    text: I18n.tr("Send files")
                     onClicked: Bt.sendFiles(dev.modelData.address, dev.modelData.name, [])
                 }
 
                 M3Button {
                     variant: "tonal"
                     visible: dev.isPaired && !dev.renaming
-                    text: "Rename"
+                    text: I18n.tr("Rename")
                     onClicked: dev.renaming = true
                 }
 
@@ -316,8 +316,8 @@ Column {
                     variant: "text"
                     destructive: true
                     visible: dev.isPaired
-                    text: "Forget"
-                    onClicked: Prefs.askConfirm("Forget " + dev.modelData.name + "?", "The pairing is removed from this machine. You will have to pair the device again to use it.", "Forget", "bt-forget:" + dev.modelData.address)
+                    text: I18n.tr("Forget")
+                    onClicked: Prefs.askConfirm(I18n.tr("Forget %1?", dev.modelData.name), I18n.tr("The pairing is removed from this machine. You will have to pair the device again to use it."), I18n.tr("Forget"), "bt-forget:" + dev.modelData.address)
                 }
 
             }
@@ -338,7 +338,7 @@ Column {
             Text {
                 width: parent.width - Theme.dp(79)
                 visible: dev.actionFailed && !dev.busy && !dev.isConnected
-                text: dev.group === "nearby" ? "Pairing failed. Bring the device closer, make sure it is in pairing mode, and try again." : "Could not connect. The device may be off or out of range."
+                text: dev.group === "nearby" ? I18n.tr("Pairing failed. Bring the device closer, make sure it is in pairing mode, and try again.") : I18n.tr("Could not connect. The device may be off or out of range.")
                 color: Theme.error
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabel
@@ -352,7 +352,7 @@ Column {
                 spacing: Theme.dp(7)
 
                 Text {
-                    text: "Audio mode"
+                    text: I18n.tr("Audio mode")
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabelLg
@@ -420,20 +420,20 @@ Column {
                 spacing: Theme.dp(18)
 
                 CheckLine {
-                    label: "Reconnect on its own"
+                    label: I18n.tr("Reconnect on its own")
                     checked: dev.modelData.trusted
                     onToggled: dev.modelData.trusted = !dev.modelData.trusted
                 }
 
                 CheckLine {
-                    label: "Allow it to wake this machine"
+                    label: I18n.tr("Allow it to wake this machine")
                     visible: dev.isConnected
                     checked: dev.modelData.wakeAllowed
                     onToggled: dev.modelData.wakeAllowed = !dev.modelData.wakeAllowed
                 }
 
                 CheckLine {
-                    label: "Block"
+                    label: I18n.tr("Block")
                     danger: true
                     checked: dev.modelData.blocked
                     onToggled: dev.modelData.blocked = !dev.modelData.blocked

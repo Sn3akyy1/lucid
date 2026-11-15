@@ -20,42 +20,42 @@ PanelWindow {
     property real reveal: ses.open ? 1 : 0
     readonly property var actions: [{
         "id": "lock",
-        "label": "Lock",
+        "label": I18n.tr("Lock"),
         "icon": "lock",
         "shape": "cookie4",
         "key": Qt.Key_L,
-        "hint": "L"
+        "hint": I18n.tr("L")
     }, {
         "id": "suspend",
-        "label": "Sleep",
+        "label": I18n.tr("Sleep"),
         "icon": "bedtime",
         "shape": "clover4",
         "key": Qt.Key_S,
-        "hint": "S"
+        "hint": I18n.tr("S")
     }, {
         "id": "logout",
-        "label": "Log out",
+        "label": I18n.tr("Log out"),
         "icon": "logout",
         "shape": "pill",
         "key": Qt.Key_E,
-        "hint": "E",
-        "ask": "Log out and close everything?"
+        "hint": I18n.tr("E"),
+        "ask": I18n.tr("Log out and close everything?")
     }, {
         "id": "reboot",
-        "label": "Restart",
+        "label": I18n.tr("Restart"),
         "icon": "restart_alt",
         "shape": "cookie9",
         "key": Qt.Key_R,
-        "hint": "R",
-        "ask": "Restart now?"
+        "hint": I18n.tr("R"),
+        "ask": I18n.tr("Restart now?")
     }, {
         "id": "shutdown",
-        "label": "Shut down",
+        "label": I18n.tr("Shut down"),
         "icon": "power_settings_new",
         "shape": "sunny",
         "key": Qt.Key_P,
-        "hint": "P",
-        "ask": "Shut down now?"
+        "hint": I18n.tr("P"),
+        "ask": I18n.tr("Shut down now?")
     }]
     readonly property string who: Users.me ? Users.displayName(Users.me).split(" ")[0] : Quickshell.env("USER")
 
@@ -228,14 +228,14 @@ PanelWindow {
                     color: "white"
                     text: ses.armed !== "" ? ses.actions.find((a) => {
                         return a.id === ses.armed;
-                    }).ask : "See you soon, " + ses.who
+                    }).ask : I18n.tr("See you soon, %1", ses.who)
                 }
 
                 LText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     role: "titleMedium"
                     color: Qt.rgba(1, 1, 1, 0.72)
-                    text: ses.armed !== "" ? "Press it again to go ahead, Esc to stay" : (Sys.uptime > 0 ? "Up for " + Sys.duration(Sys.uptime) : " ")
+                    text: ses.armed !== "" ? I18n.tr("Press it again to go ahead, Esc to stay") : (Sys.uptime > 0 ? I18n.tr("Up for %1", Sys.duration(Sys.uptime)) : " ")
                 }
 
             }
@@ -417,7 +417,7 @@ PanelWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 role: "labelLarge"
                 color: Qt.rgba(1, 1, 1, 0.5)
-                text: "← → to choose  ·  Enter to go  ·  Esc to stay"
+                text: I18n.tr("← → to choose  ·  Enter to go  ·  Esc to stay")
             }
 
         }

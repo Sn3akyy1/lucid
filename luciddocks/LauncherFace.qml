@@ -41,15 +41,15 @@ Item {
     // how many rows can actually be picked, set by the dock as it builds them
     property int resultCount: 0
     readonly property string placeholder: ({
-        "clipboard": "Search clipboard history",
-        "web": "Search the web",
-        "run": "Type a command line",
-        "emoji": "Find an emoji",
-        "commands": "Search commands",
-        "theme": "Search themes",
-        "wallpaper": "Search wallpapers",
-        "live": "Search live wallpapers"
-    })[face.displayMode] || "Search apps and settings"
+        "clipboard": I18n.tr("Search clipboard history"),
+        "web": I18n.tr("Search the web"),
+        "run": I18n.tr("Type a command line"),
+        "emoji": I18n.tr("Find an emoji"),
+        "commands": I18n.tr("Search commands"),
+        "theme": I18n.tr("Search themes"),
+        "wallpaper": I18n.tr("Search wallpapers"),
+        "live": I18n.tr("Search live wallpapers")
+    })[face.displayMode] || I18n.tr("Search apps and settings")
     readonly property string modeIcon: ({
         "commands": "keyboard_command_key",
         "clipboard": "content_paste",
@@ -66,9 +66,9 @@ Item {
             return "";
 
         if (face.displayMode === "apps" && face.highlightQuery === "")
-            return face.resultCount + (face.resultCount === 1 ? " app" : " apps");
+            return face.resultCount + (face.resultCount === 1 ? I18n.tr(" app") : I18n.tr(" apps"));
 
-        return face.resultCount + (face.resultCount === 1 ? " result" : " results");
+        return face.resultCount + (face.resultCount === 1 ? I18n.tr(" result") : I18n.tr(" results"));
     }
     property real targetWidth: width
     property real targetHeight: height
@@ -83,27 +83,27 @@ Item {
     // the launcher's modes, reachable by prefix, by pill or by Ctrl and a digit
     readonly property var modes: [{
         "key": "apps",
-        "label": "Apps",
+        "label": I18n.tr("Apps"),
         "icon": "apps"
     }, {
         "key": "commands",
-        "label": "Commands",
+        "label": I18n.tr("Commands"),
         "icon": "keyboard_command_key"
     }, {
         "key": "clipboard",
-        "label": "Clipboard",
+        "label": I18n.tr("Clipboard"),
         "icon": "content_paste"
     }, {
         "key": "wallpaper",
-        "label": "Wallpapers",
+        "label": I18n.tr("Wallpapers"),
         "icon": "wallpaper"
     }, {
         "key": "theme",
-        "label": "Themes",
+        "label": I18n.tr("Themes"),
         "icon": "palette"
     }, {
         "key": "power",
-        "label": "Power",
+        "label": I18n.tr("Power"),
         "icon": "power_settings_new",
         "leaves": true
     }]
@@ -350,25 +350,25 @@ Item {
             stableHeight: face.stableContentHeight
             emptyLabel: {
                 if (face.displayMode === "commands")
-                    return "No commands found";
+                    return I18n.tr("No commands found");
 
                 if (face.displayMode === "theme")
-                    return "No themes found";
+                    return I18n.tr("No themes found");
 
                 if (face.displayMode === "emoji")
-                    return "No emoji match";
+                    return I18n.tr("No emoji match");
 
                 if (face.displayMode === "clipboard")
-                    return Clip.available ? "Nothing copied yet" : "Clipboard history is off";
+                    return Clip.available ? I18n.tr("Nothing copied yet") : I18n.tr("Clipboard history is off");
 
-                return "Nothing matches that";
+                return I18n.tr("Nothing matches that");
             }
             emptyHint: {
                 if (face.displayMode === "clipboard")
-                    return Clip.available ? "Anything you copy from here on shows up in this list." : "Install cliphist and what you copy is kept for you.";
+                    return Clip.available ? I18n.tr("Anything you copy from here on shows up in this list.") : I18n.tr("Install cliphist and what you copy is kept for you.");
 
                 if (face.displayMode === "apps")
-                    return "Try a shorter word, or start with one of these:";
+                    return I18n.tr("Try a shorter word, or start with one of these:");
 
                 return "";
             }
@@ -414,11 +414,11 @@ Item {
             Repeater {
                 model: [{
                     "key": "wallpaper",
-                    "label": "Pictures",
+                    "label": I18n.tr("Pictures"),
                     "icon": "wallpaper"
                 }, {
                     "key": "live",
-                    "label": "Live",
+                    "label": I18n.tr("Live"),
                     "icon": "movie"
                 }]
 

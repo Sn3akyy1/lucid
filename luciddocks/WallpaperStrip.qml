@@ -429,7 +429,7 @@ Item {
 
                     anchors.centerIn: parent
                     role: "labelSmall"
-                    text: "On the desktop"
+                    text: I18n.tr("On the desktop")
                     color: Theme.fgAccent
                 }
 
@@ -475,14 +475,14 @@ Item {
         LText {
             anchors.horizontalCenter: parent.horizontalCenter
             role: "titleMedium"
-            text: strip.live ? "No videos in this folder" : "No wallpapers in this folder"
+            text: strip.live ? I18n.tr("No videos in this folder") : I18n.tr("No wallpapers in this folder")
             color: Theme.text
         }
 
         LText {
             anchors.horizontalCenter: parent.horizontalCenter
             role: "bodyMedium"
-            text: strip.live ? "Drop mp4, webm or mkv files into the theme's wallpaper folder and they show up here." : "Drop images into the theme's wallpaper folder and they show up here."
+            text: strip.live ? I18n.tr("Drop mp4, webm or mkv files into the theme's wallpaper folder and they show up here.") : I18n.tr("Drop images into the theme's wallpaper folder and they show up here.")
             color: Theme.subtextDim
         }
 

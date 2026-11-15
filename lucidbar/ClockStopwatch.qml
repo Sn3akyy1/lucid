@@ -113,7 +113,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 variant: "tonal"
                 icon: "flag"
-                text: "Lap"
+                text: I18n.tr("Lap")
                 disabled: !Chrono.swRunning
                 onClicked: Chrono.swLap()
             }
@@ -162,7 +162,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 variant: "tonal"
                 icon: "replay"
-                text: "Reset"
+                text: I18n.tr("Reset")
                 disabled: !Chrono.swActive
                 onClicked: Chrono.swReset()
             }
@@ -185,7 +185,7 @@ Item {
             x: Theme.dp(20)
             y: Theme.dp(16)
             role: "titleSmall"
-            text: page.splits.length ? page.splits.length + (page.splits.length === 1 ? " lap" : " laps") : "Laps"
+            text: page.splits.length ? page.splits.length + (page.splits.length === 1 ? I18n.tr(" lap") : I18n.tr(" laps")) : I18n.tr("Laps")
         }
 
         Column {
@@ -204,7 +204,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 role: "bodyMedium"
                 color: Theme.subtext
-                text: "Laps you take land here"
+                text: I18n.tr("Laps you take land here")
             }
 
         }
@@ -241,7 +241,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     role: "labelLarge"
                     color: Theme.subtext
-                    text: "Lap " + lap.modelData.n
+                    text: I18n.tr("Lap %1", lap.modelData.n)
                 }
 
                 Row {

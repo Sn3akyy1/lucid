@@ -115,7 +115,7 @@ Scope {
 
                     const name = kb.active_keymap || "";
                     if (root.layoutName !== "" && name !== root.layoutName && Prefs.toastOnLayout)
-                        root.send("layout", root.glyphPath("keyboard"), name, "Keyboard layout");
+                        root.send("layout", root.glyphPath("keyboard"), name, I18n.tr("Keyboard layout"));
 
                     root.layoutName = name;
                 } catch (e) {
@@ -136,7 +136,7 @@ Scope {
         if (!Prefs.toastOnDisplays)
             return ;
 
-        root.send("display-" + name, root.glyphPath("desktop"), root.displayDescriptions[name] || name, added ? "Display connected" : "Display disconnected");
+        root.send("display-" + name, root.glyphPath("desktop"), root.displayDescriptions[name] || name, added ? I18n.tr("Display connected") : I18n.tr("Display disconnected"));
     }
 
     Connections {
@@ -176,7 +176,7 @@ Scope {
 
         root.gameModeAt = Date.now();
         if (Prefs.toastOnGameMode)
-            root.send("gamemode", "game", on ? "Game mode on" : "Game mode off", "");
+            root.send("gamemode", "game", on ? I18n.tr("Game mode on") : I18n.tr("Game mode off"), "");
 
     }
 
@@ -210,7 +210,7 @@ Scope {
 
             root.profile = p;
             if (Prefs.toastOnPower && Date.now() - root.gameModeAt > 5000)
-                root.send("power", Power.symbol(p), Power.name(p), "Power profile");
+                root.send("power", Power.symbol(p), Power.name(p), I18n.tr("Power profile"));
 
         }
     }
@@ -253,8 +253,8 @@ Scope {
         if (!Prefs.toastOnBattery)
             return ;
 
-        const title = t === 5 ? "Battery critical" : (t === 10 ? "Battery very low" : "Battery low");
-        root.send("battery-low", "battery_alert", title, root.batteryPct + "% left", true, t === 5 ? 6000 : 4000);
+        const title = t === 5 ? I18n.tr("Battery critical") : (t === 10 ? I18n.tr("Battery very low") : I18n.tr("Battery low"));
+        root.send("battery-low", "battery_alert", title, I18n.tr("%1% left", root.batteryPct), true, t === 5 ? 6000 : 4000);
     }
 
     onBatteryPctChanged: root.checkLow()
@@ -266,7 +266,7 @@ Scope {
         root.fullAnnounced = true;
         root.sound("charged", Prefs.soundOnCharger);
         if (Prefs.toastOnBattery)
-            root.send("charger", root.batterySymbol(100), "Fully charged", root.batteryPct + "%");
+            root.send("charger", root.batterySymbol(100), I18n.tr("Fully charged"), root.batteryPct + "%");
 
     }
 
@@ -294,9 +294,9 @@ Scope {
             root.sound(s === 1 ? "power-in" : "power-out", Prefs.soundOnCharger);
             if (Prefs.toastOnBattery) {
                 if (s === 0)
-                    root.send("charger", root.batterySymbol(root.batteryPct), "On battery", root.batteryPct + "%");
+                    root.send("charger", root.batterySymbol(root.batteryPct), I18n.tr("On battery"), root.batteryPct + "%");
                 else
-                    root.send("charger", "battery_charging_full", full ? "Plugged in" : "Charging", full ? "Fully charged" : root.batteryPct + "%");
+                    root.send("charger", "battery_charging_full", full ? I18n.tr("Plugged in") : I18n.tr("Charging"), full ? I18n.tr("Fully charged") : root.batteryPct + "%");
             }
             root.checkLow();
         }
@@ -338,7 +338,7 @@ Scope {
             "name": address,
             "icon": ""
         };
-        let detail = connected ? "Connected" : "Disconnected";
+        let detail = connected ? I18n.tr("Connected") : I18n.tr("Disconnected");
         const dev = connected ? Bt.deviceAt(address) : null;
         if (dev && dev.batteryAvailable && dev.battery > 0)
             detail += " · " + (dev.battery <= 1 ? Math.round(dev.battery * 100) : Math.round(dev.battery)) + "%";
@@ -457,7 +457,7 @@ Scope {
             const ifaces = ":" + Object.values(d.ifaces).map((i) => {
                 return (i.bInterfaceClass || "") + (i.bInterfaceSubClass || "") + (i.bInterfaceProtocol || "");
             }).join(":") + ":";
-            const name = d.name || d.maker || "USB device";
+            const name = d.name || d.maker || I18n.tr("USB device");
             root.usbKnown[sys] = {
                 "name": name,
                 "icon": root.usbSymbol(name, ifaces),
@@ -506,7 +506,7 @@ Scope {
         for (const sys in net) {
             const e = net[sys];
             const info = e.added ? root.usbKnown[sys] : (e.info || {
-                "name": "USB device",
+                "name": I18n.tr("USB device"),
                 "icon": "usb",
                 "fixed": false,
                 "hub": false
@@ -536,9 +536,9 @@ Scope {
         });
         const shown = devices.length > 0 ? devices : list;
         if (shown.length === 1)
-            root.send("usb-" + shown[0].sys, shown[0].icon, shown[0].name, connected ? "USB connected" : "USB disconnected");
+            root.send("usb-" + shown[0].sys, shown[0].icon, shown[0].name, connected ? I18n.tr("USB connected") : I18n.tr("USB disconnected"));
         else if (shown.length > 1)
-            root.send("usb", "usb", shown.length + " USB devices", connected ? "Connected" : "Disconnected");
+            root.send("usb", "usb", I18n.tr("%1 USB devices", shown.length), connected ? I18n.tr("Connected") : I18n.tr("Disconnected"));
     }
 
     Timer {
@@ -746,9 +746,9 @@ Scope {
                 return ;
 
             if (name !== "")
-                root.send("wifi", "wifi", name, "Wi-Fi connected");
+                root.send("wifi", "wifi", name, I18n.tr("Wi-Fi connected"));
             else
-                root.send("wifi", "wifi_off", Networking.wifiEnabled ? "Wi-Fi disconnected" : "Wi-Fi off", "");
+                root.send("wifi", "wifi_off", Networking.wifiEnabled ? I18n.tr("Wi-Fi disconnected") : I18n.tr("Wi-Fi off"), "");
         }
     }
 
@@ -786,19 +786,19 @@ Scope {
             return {
                 "key": "toggle-capslock",
                 "icon": "keyboard_capslock",
-                "label": on ? "Caps Lock on" : "Caps Lock off"
+                "label": on ? I18n.tr("Caps Lock on") : I18n.tr("Caps Lock off")
             };
         case "numlock":
             return {
                 "key": "toggle-numlock",
                 "icon": "dialpad",
-                "label": on ? "Num Lock on" : "Num Lock off"
+                "label": on ? I18n.tr("Num Lock on") : I18n.tr("Num Lock off")
             };
         default:
             return {
                 "key": "toggle-mic",
                 "icon": on ? "mic" : "mic_off",
-                "label": on ? "Microphone on" : "Microphone muted"
+                "label": on ? I18n.tr("Microphone on") : I18n.tr("Microphone muted")
             };
         }
     }
@@ -825,23 +825,23 @@ Scope {
             root.armed = true;
             // one of each is more than a real burst may hold
             root.toast.queueCap = 16;
-            root.send("preview-layout", root.glyphPath("keyboard"), root.layoutName || "English (US)", "Keyboard layout");
+            root.send("preview-layout", root.glyphPath("keyboard"), root.layoutName || I18n.tr("English (US)"), I18n.tr("Keyboard layout"));
             if (Prefs.osdTogglesToast) {
                 const caps = root.toggleEntry("capslock", true);
                 const mic = root.toggleEntry("mic", false);
                 root.send("preview-caps", caps.icon, caps.label, "");
                 root.send("preview-mic", mic.icon, mic.label, "");
             }
-            root.send("preview-game", "game", "Game mode on", "");
-            root.send("preview-charger", "battery_charging_full", "Charging", pct + "%");
-            root.send("preview-low", "battery_alert", "Battery low", "20% left", true);
-            root.send("preview-bt", root.glyphPath("headphones"), "Headphones", "Connected · 80%");
-            root.send("preview-usb", "usb", "USB drive", "USB connected");
-            root.send("preview-camera", "videocam", "Camera on", "Firefox");
-            root.send("preview-wifi", "wifi", root.wifiName || "Home network", "Wi-Fi connected");
-            root.send("preview-sink", root.glyphPath("speaker"), "Speakers", "Sound output");
-            root.send("preview-display", root.glyphPath("desktop"), "HDMI-A-1", "Display connected");
-            root.send("preview-power", Power.symbol(PowerProfile.Performance), Power.name(PowerProfile.Performance), "Power profile");
+            root.send("preview-game", "game", I18n.tr("Game mode on"), "");
+            root.send("preview-charger", "battery_charging_full", I18n.tr("Charging"), pct + "%");
+            root.send("preview-low", "battery_alert", I18n.tr("Battery low"), I18n.tr("20% left"), true);
+            root.send("preview-bt", root.glyphPath("headphones"), I18n.tr("Headphones"), I18n.tr("Connected · 80%"));
+            root.send("preview-usb", "usb", I18n.tr("USB drive"), I18n.tr("USB connected"));
+            root.send("preview-camera", "videocam", I18n.tr("Camera on"), I18n.tr("Firefox"));
+            root.send("preview-wifi", "wifi", root.wifiName || I18n.tr("Home network"), I18n.tr("Wi-Fi connected"));
+            root.send("preview-sink", root.glyphPath("speaker"), I18n.tr("Speakers"), I18n.tr("Sound output"));
+            root.send("preview-display", root.glyphPath("desktop"), "HDMI-A-1", I18n.tr("Display connected"));
+            root.send("preview-power", Power.symbol(PowerProfile.Performance), Power.name(PowerProfile.Performance), I18n.tr("Power profile"));
             root.toast.queueCap = cap;
             root.armed = was;
         }

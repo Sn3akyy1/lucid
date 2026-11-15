@@ -307,13 +307,13 @@ Item {
                 LText {
                     role: "titleLarge"
                     weight: 560
-                    text: page.selectedDate.toLocaleDateString(Qt.locale(), "dddd")
+                    text: page.selectedDate.toLocaleDateString(I18n.locale, I18n.tr("dddd"))
                 }
 
                 LText {
                     role: "bodyMedium"
                     color: Theme.subtext
-                    text: page.selectedDate.toLocaleDateString(Qt.locale(), "d MMMM yyyy") + (page.dayItems.length ? "  ·  " + page.dayItems.length + (page.dayItems.length === 1 ? " reminder" : " reminders") : "")
+                    text: page.selectedDate.toLocaleDateString(I18n.locale, I18n.tr("d MMMM yyyy")) + (page.dayItems.length ? "  ·  " + page.dayItems.length + (page.dayItems.length === 1 ? I18n.tr(" reminder") : I18n.tr(" reminders")) : "")
                 }
 
             }
@@ -384,7 +384,7 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         role: "bodyMedium"
                         color: Theme.subtext
-                        text: "A free day"
+                        text: I18n.tr("A free day")
                     }
 
                 }
@@ -402,9 +402,9 @@ Item {
                     id: nameField
 
                     width: parent.width
-                    label: "New reminder"
-                    placeholder: "What should it say?"
-                    supporting: page.past && nameField.text.trim() !== "" ? (page.gone(0, 0) && !page.gone(23, 59) ? Agenda.timeText({ "hour": page.newHour, "minute": page.newMinute }) + " has already gone by today" : "That day has already gone by") : ""
+                    label: I18n.tr("New reminder")
+                    placeholder: I18n.tr("What should it say?")
+                    supporting: page.past && nameField.text.trim() !== "" ? (page.gone(0, 0) && !page.gone(23, 59) ? I18n.tr("%1 has already gone by today", Agenda.timeText({ "hour": page.newHour, "minute": page.newMinute })) : I18n.tr("That day has already gone by")) : ""
                     containerColor: Theme.withBlur(Theme.surfaceHighest)
                     onAccepted: page.submit()
                 }
@@ -487,7 +487,7 @@ Item {
                                     role: "labelMedium"
                                     weight: 640
                                     color: Theme.primary
-                                    text: page.pm ? "PM" : "AM"
+                                    text: page.pm ? I18n.tr("PM") : I18n.tr("AM")
                                 }
 
                                 StateLayer {
@@ -519,7 +519,7 @@ Item {
                         variant: "filled"
                         size: "xs"
                         icon: "add"
-                        text: "Add"
+                        text: I18n.tr("Add")
                         disabled: nameField.text.trim() === "" || page.past
                         onClicked: page.submit()
                     }

@@ -75,7 +75,7 @@ Item {
         property string tint: ""
         // the material symbol for a row the icon theme has no glyph for
         property string icon: "folder"
-        property string ejectTip: "Eject"
+        property string ejectTip: I18n.tr("Eject")
         readonly property bool on: place.target !== "" && side.here === place.target
         property bool hovering: false
 
@@ -737,20 +737,20 @@ Item {
             }
 
             Place {
-                label: "Home"
+                label: I18n.tr("Home")
                 slot: "folder-home"
                 target: side.app.home
             }
 
             Place {
-                label: "Recent"
+                label: I18n.tr("Recent")
                 slot: "recent"
                 target: "recent:///"
                 drop: false
             }
 
             Place {
-                label: "Trash"
+                label: I18n.tr("Trash")
                 slot: side.app.trashCount > 0 ? "trash-full" : "trash"
                 target: "trash:///"
                 trailing: side.app.trashCount > 0 ? String(side.app.trashCount) : ""
@@ -760,7 +760,7 @@ Item {
             }
 
             Heading {
-                text: "Folders"
+                text: I18n.tr("Folders")
                 visible: side.app.places.length > 0
             }
 
@@ -778,7 +778,7 @@ Item {
             }
 
             Heading {
-                text: "Bookmarks"
+                text: I18n.tr("Bookmarks")
             }
 
             // none yet: how to make one
@@ -791,7 +791,7 @@ Item {
                 bottomPadding: Theme.dp(6)
                 role: "bodySmall"
                 wrapMode: Text.WordWrap
-                text: "Ctrl+D keeps the folder you're in here"
+                text: I18n.tr("Ctrl+D keeps the folder you're in here")
                 color: Theme.subtext
             }
 
@@ -815,7 +815,7 @@ Item {
             }
 
             Heading {
-                text: "Devices"
+                text: I18n.tr("Devices")
             }
 
             // the system's own drive first, then other disks, then what's plugged in
@@ -830,7 +830,7 @@ Item {
                     slot: modelData.slot || "drive"
                     target: modelData.mounted ? (modelData.path || modelData.uri) : ""
                     usage: space && space.total > 0 ? 1 - space.free / space.total : -1
-                    free: space && space.total > 0 ? side.app.sizeText(space.free) + " free" : ""
+                    free: space && space.total > 0 ? I18n.tr("%1 free", side.app.sizeText(space.free)) : ""
                     ejectable: modelData.mounted && (modelData.canEject || modelData.canUnmount)
                     onEject: side.win.unmount(modelData)
                     onMenu: (x, y) => {
@@ -847,7 +847,7 @@ Item {
             }
 
             Heading {
-                text: "Network"
+                text: I18n.tr("Network")
             }
 
             // shares connected to, then the computers nearby, then a new one
@@ -862,9 +862,9 @@ Item {
                     slot: modelData.slot || "network"
                     target: modelData.path || modelData.uri
                     usage: space && space.total > 0 ? 1 - space.free / space.total : -1
-                    free: space && space.total > 0 ? side.app.sizeText(space.free) + " free" : ""
+                    free: space && space.total > 0 ? I18n.tr("%1 free", side.app.sizeText(space.free)) : ""
                     ejectable: modelData.canUnmount || modelData.canEject
-                    ejectTip: "Disconnect"
+                    ejectTip: I18n.tr("Disconnect")
                     onEject: side.win.unmount(modelData)
                     onMenu: (x, y) => {
                         return side.win.driveMenu(modelData, x, y);
@@ -876,14 +876,14 @@ Item {
             // hidden, it must not hold the pill: an unseen row still sits under it
             Place {
                 visible: side.app.canDiscover
-                label: "Nearby"
+                label: I18n.tr("Nearby")
                 slot: "network"
                 target: side.app.canDiscover ? "network:///" : ""
                 drop: false
             }
 
             Place {
-                label: "Connect to server"
+                label: I18n.tr("Connect to server")
                 slot: "connect"
                 icon: "add_link"
                 drop: false

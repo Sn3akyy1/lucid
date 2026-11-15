@@ -51,7 +51,7 @@ SettingCard {
         }
     }
 
-    title: "USE THIS MACHINE AS A REMOTE"
+    title: I18n.tr("USE THIS MACHINE AS A REMOTE")
 
     // one packet per frame instead of one per mouse event
     Timer {
@@ -69,8 +69,8 @@ SettingCard {
     }
 
     SettingRow {
-        title: "Touchpad"
-        description: "Drag inside the panel to move the phone's pointer. A tap is a click."
+        title: I18n.tr("Touchpad")
+        description: I18n.tr("Drag inside the panel to move the phone's pointer. A tap is a click.")
         stacked: true
 
         Column {
@@ -101,7 +101,7 @@ SettingCard {
 
                 Text {
                     anchors.centerIn: parent
-                    text: card.tracking ? "" : "Drag here"
+                    text: card.tracking ? "" : I18n.tr("Drag here")
                     color: Theme.subtextDim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBody
@@ -158,25 +158,25 @@ SettingCard {
 
                 M3Button {
                     variant: "tonal"
-                    text: "Left click"
+                    text: I18n.tr("Left click")
                     onClicked: KdeConnect.click(card.dev.id, "singleclick")
                 }
 
                 M3Button {
                     variant: "tonal"
-                    text: "Middle"
+                    text: I18n.tr("Middle")
                     onClicked: KdeConnect.click(card.dev.id, "middleclick")
                 }
 
                 M3Button {
                     variant: "tonal"
-                    text: "Right click"
+                    text: I18n.tr("Right click")
                     onClicked: KdeConnect.click(card.dev.id, "rightclick")
                 }
 
                 M3Button {
                     variant: "text"
-                    text: "Double click"
+                    text: I18n.tr("Double click")
                     onClicked: KdeConnect.click(card.dev.id, "doubleclick")
                 }
 
@@ -187,10 +187,10 @@ SettingCard {
     }
 
     SettingRow {
-        title: "Keyboard"
+        title: I18n.tr("Keyboard")
         enabled: card.canType
-        disabledReason: "The phone is not showing a text field, so there is nowhere for the keys to go."
-        description: card.typing ? "Every key you press now goes to the phone. Click away to stop." : "Click the box, then type. What you type lands in whatever the phone has open."
+        disabledReason: I18n.tr("The phone is not showing a text field, so there is nowhere for the keys to go.")
+        description: card.typing ? I18n.tr("Every key you press now goes to the phone. Click away to stop.") : I18n.tr("Click the box, then type. What you type lands in whatever the phone has open.")
         stacked: true
         showDivider: false
 
@@ -213,7 +213,7 @@ SettingCard {
                 anchors.left: parent.left
                 anchors.leftMargin: Theme.dp(14)
                 anchors.verticalCenter: parent.verticalCenter
-                text: card.typing ? "Listening — type away" : "Click to send keys to the phone"
+                text: card.typing ? I18n.tr("Listening — type away") : I18n.tr("Click to send keys to the phone")
                 color: card.typing ? Theme.accent : Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBody

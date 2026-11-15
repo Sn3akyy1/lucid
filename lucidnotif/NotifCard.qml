@@ -40,7 +40,7 @@ Item {
         if (!n || n.summary === undefined)
             return ;
 
-        card.appName = n.appName || "Unknown";
+        card.appName = n.appName || I18n.tr("Unknown");
         card.summary = n.summary;
         card.body = n.body;
         card.urgency = n.urgency;

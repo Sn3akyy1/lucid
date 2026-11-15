@@ -31,13 +31,13 @@ Item {
         var arr = [];
         arr.push(menu.isPinned ? {
             "id": "unpin",
-            "label": "Unpin from Dock",
+            "label": I18n.tr("Unpin from Dock"),
             "glyph": DockIcons.unpin,
             "danger": false,
             "divider": false
         } : {
             "id": "pin",
-            "label": "Pin to Dock",
+            "label": I18n.tr("Pin to Dock"),
             "glyph": DockIcons.pin,
             "danger": false,
             "divider": false
@@ -45,7 +45,7 @@ Item {
         if (menu.command !== "")
             arr.push({
             "id": "newWindow",
-            "label": "New Window",
+            "label": I18n.tr("New Window"),
             "glyph": DockIcons.newWindow,
             "danger": false,
             "divider": false
@@ -54,7 +54,7 @@ Item {
         if (menu.windowCount > 0)
             arr.push({
             "id": "close",
-            "label": "Close Window",
+            "label": I18n.tr("Close Window"),
             "glyph": DockIcons.closeWindow,
             "danger": true,
             "divider": true
@@ -63,7 +63,7 @@ Item {
         if (menu.windowCount > 1)
             arr.push({
             "id": "closeAll",
-            "label": "Close All (" + menu.windowCount + ")",
+            "label": I18n.tr("Close All (%1)", menu.windowCount),
             "glyph": DockIcons.closeWindow,
             "danger": true,
             "divider": false

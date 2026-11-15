@@ -43,8 +43,8 @@ FloatingWindow {
     readonly property var pages: Prefs.settingsPages.concat([{
         "key": "search",
         "group": "",
-        "label": "Search",
-        "title": "Search",
+        "label": I18n.tr("Search"),
+        "title": I18n.tr("Search"),
         "blurb": "",
         "hidden": true
     }])
@@ -76,9 +76,9 @@ FloatingWindow {
     readonly property string searchSummary: {
         const n = win.searchRowCount;
         if (win.searchResults.length === 0)
-            return win.searchReady ? "Nothing matches “" + win.searchQuery + "”" : "";
+            return win.searchReady ? I18n.tr("Nothing matches “%1”", win.searchQuery) : "";
 
-        return n === 0 ? "Pages matching “" + win.searchQuery + "”" : (n === 1 ? "1 setting" : n + " settings") + " matching “" + win.searchQuery + "”";
+        return n === 0 ? I18n.tr("Pages matching “%1”", win.searchQuery) : (n === 1 ? I18n.tr("1 setting") : I18n.tr("%1 settings", n)) + I18n.tr(" matching “%1”", win.searchQuery);
     }
     property int searchSel: 0
     property string searchReturn: "general"
@@ -254,22 +254,22 @@ FloatingWindow {
     function openEnvPicker(kind) {
         win.envPickKind = kind;
         if (kind === "cursor")
-            envPicker.open("Cursor theme", "cursor themes", Env.cursorThemes, Prefs.envCursorTheme, false);
+            envPicker.open(I18n.tr("Cursor theme"), I18n.tr("cursor themes"), Env.cursorThemes, Prefs.envCursorTheme, false);
         else if (kind === "icon") {
             Env.loadPreviews();
-            envPicker.open("Icon theme", "icon themes", Env.iconThemes, Prefs.envIconTheme, true);
+            envPicker.open(I18n.tr("Icon theme"), I18n.tr("icon themes"), Env.iconThemes, Prefs.envIconTheme, true);
         } else if (kind === "iconSet")
-            envPicker.openSets("Icon theme", LucidIcons.sets, Prefs.envIconSet);
+            envPicker.openSets(I18n.tr("Icon theme"), LucidIcons.sets, Prefs.envIconSet);
         else if (kind === "gtk")
-            envPicker.open("Application theme", "GTK themes", Env.gtkThemes, Prefs.envGtkTheme, false);
+            envPicker.open(I18n.tr("Application theme"), I18n.tr("GTK themes"), Env.gtkThemes, Prefs.envGtkTheme, false);
         else if (kind === "qtStyle")
-            envPicker.open("Qt style", "Qt styles", Env.qtStyles, Prefs.envQtStyle, false);
+            envPicker.open(I18n.tr("Qt style"), I18n.tr("Qt styles"), Env.qtStyles, Prefs.envQtStyle, false);
         else if (kind === "appFont")
-            envPicker.open("Application font", "fonts", Qt.fontFamilies(), Env.appFont, false);
+            envPicker.open(I18n.tr("Application font"), "fonts", Qt.fontFamilies(), Env.appFont, false);
         else if (kind === "docFont")
-            envPicker.open("Document font", "fonts", Qt.fontFamilies(), Prefs.envDocumentFont, false);
+            envPicker.open(I18n.tr("Document font"), "fonts", Qt.fontFamilies(), Prefs.envDocumentFont, false);
         else if (kind === "monoFont")
-            envPicker.open("Monospace font", "fonts", Qt.fontFamilies(), Prefs.envMonoFont, false);
+            envPicker.open(I18n.tr("Monospace font"), "fonts", Qt.fontFamilies(), Prefs.envMonoFont, false);
     }
 
     // a rescan can finish while a list is open; keep it showing what is installed
@@ -328,7 +328,7 @@ FloatingWindow {
     onClosed: win.visible = false
 
     visible: false
-    title: "Lucid Settings"
+    title: I18n.tr("Lucid Settings")
     // a surface created fully opaque keeps qtwayland's opaque region for the life
     // of the process and hyprland never blurs it, so stay one step under solid
     color: Theme.alpha(Theme.bg, Math.min(Theme.bg.a, 254 / 255))
@@ -733,7 +733,7 @@ FloatingWindow {
                         spacing: -1
 
                         Text {
-                            text: "Lucid"
+                            text: I18n.tr("Lucid")
                             color: Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontTitleMd
@@ -742,7 +742,7 @@ FloatingWindow {
                         }
 
                         Text {
-                            text: "Settings"
+                            text: I18n.tr("Settings")
                             color: Theme.subtext
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabelMd
@@ -1112,10 +1112,10 @@ FloatingWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     variant: "text"
                     destructive: true
-                    text: "Reset all"
+                    text: I18n.tr("Reset all")
                     opacity: Math.max(0, (win.railT - 0.6) / 0.4)
                     visible: opacity > 0.01
-                    onClicked: Prefs.askReset("Reset every setting?", "Every setting on every page goes back to the value it ships with. Your theme, wallpaper, pinned applications and placed widgets are not touched.", Prefs.resetAllToken)
+                    onClicked: Prefs.askReset(I18n.tr("Reset every setting?"), I18n.tr("Every setting on every page goes back to the value it ships with. Your theme, wallpaper, pinned applications and placed widgets are not touched."), Prefs.resetAllToken)
                 }
 
                 M3IconButton {
@@ -1127,7 +1127,7 @@ FloatingWindow {
                     opacity: 1 - Math.min(1, win.railT * 2)
                     visible: opacity > 0.01
                     iconPath: "refresh"
-                    onClicked: Prefs.askReset("Reset every setting?", "Every setting on every page goes back to the value it ships with. Your theme, wallpaper, pinned applications and placed widgets are not touched.", Prefs.resetAllToken)
+                    onClicked: Prefs.askReset(I18n.tr("Reset every setting?"), I18n.tr("Every setting on every page goes back to the value it ships with. Your theme, wallpaper, pinned applications and placed widgets are not touched."), Prefs.resetAllToken)
                 }
 
             }
@@ -1299,6 +1299,8 @@ FloatingWindow {
                                 return "InputPage.qml";
                             case "startup":
                                 return "StartupPage.qml";
+                            case "language":
+                                return "LanguagePage.qml";
                             case "bar":
                                 return "BarPage.qml";
                             case "dock":

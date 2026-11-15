@@ -19,43 +19,43 @@ ShellRoot {
     readonly property var choices: [{
         "flag": "--no-hypr",
         "icon": "keyboard",
-        "label": "Hyprland config",
-        "sub": "Binds, window rules, blur and autostart"
+        "label": I18n.tr("Hyprland config"),
+        "sub": I18n.tr("Binds, window rules, blur and autostart")
     }, {
         "flag": "--no-theming",
         "icon": "palette",
-        "label": "Colours from your wallpaper",
-        "sub": "Palettes, and the hook that recolours it all"
+        "label": I18n.tr("Colours from your wallpaper"),
+        "sub": I18n.tr("Palettes, and the hook that recolours it all")
     }, {
         "flag": "--no-look",
         "icon": "terminal",
-        "label": "The Lucid look",
-        "sub": "kitty, starship, fastfetch, VSCode and GTK"
+        "label": I18n.tr("The Lucid look"),
+        "sub": I18n.tr("kitty, starship, fastfetch, VSCode and GTK")
     }, {
         "flag": "--no-apps",
         "icon": "dock",
-        "label": "Dock apps",
-        "sub": "Zen, VSCodium, Spotify, Steam… several GB"
+        "label": I18n.tr("Dock apps"),
+        "sub": I18n.tr("Zen, VSCodium, Spotify, Steam… several GB")
     }, {
         "flag": "--no-wallpapers",
         "icon": "wallpaper",
-        "label": "Wallpapers",
+        "label": I18n.tr("Wallpapers"),
         "sub": "Copied to ~/Pictures/wallpapers"
     }, {
         "flag": "--no-plugins",
         "icon": "mouse",
-        "label": "Tilting cursor",
-        "sub": "Builds hypr-dynamic-cursors, about a minute",
+        "label": I18n.tr("Tilting cursor"),
+        "sub": I18n.tr("Builds hypr-dynamic-cursors, about a minute"),
         "needs": "--no-hypr",
-        "needsText": "Comes with the Hyprland config"
+        "needsText": I18n.tr("Comes with the Hyprland config")
     }, {
         "flag": "--no-sddm",
         "onFlag": "--login-screen",
         "icon": "login",
-        "label": "Login screen",
-        "sub": "The SDDM theme, from your next login",
+        "label": I18n.tr("Login screen"),
+        "sub": I18n.tr("The SDDM theme, from your next login"),
         "needs": "--no-theming",
-        "needsText": "Comes with the colours from your wallpaper"
+        "needsText": I18n.tr("Comes with the colours from your wallpaper")
     }]
     // what install.sh was given besides --gui
     readonly property var given: (Quickshell.env("LUCID_INSTALL_ARGS") || "").split(" ").filter((a) => {
@@ -76,8 +76,8 @@ ShellRoot {
         "lxdm": "LXDM",
         "xdm": "XDM",
         "lightdm": "LightDM",
-        "plasmalogin": "Plasma Login",
-        "ly": "Ly"
+        "plasmalogin": I18n.tr("Plasma Login"),
+        "ly": I18n.tr("Ly")
     })[root.dm] || root.dm
     // the Hyprland config already in place: "" none, "lucid" from an earlier
     // install (refreshed without asking), "lua" or "conf" someone else's
@@ -109,14 +109,14 @@ ShellRoot {
         if (c.flag === "--no-sddm" && root.dm !== "sddm") {
             var other = root.dmName;
             if (root.sddmThere)
-                return (other !== "" ? "Swaps " + other + " for SDDM" : "Makes SDDM your login screen") + ", asked first";
+                return (other !== "" ? I18n.tr("Swaps %1 for SDDM", other) : I18n.tr("Makes SDDM your login screen")) + I18n.tr(", asked first");
 
-            return (other !== "" ? "Installs SDDM over " + other : "Installs SDDM as your login screen") + ", asked first";
+            return (other !== "" ? I18n.tr("Installs SDDM over %1", other) : I18n.tr("Installs SDDM as your login screen")) + I18n.tr(", asked first");
         }
         if (c.flag !== "--no-hypr" || root.hyprNow === "")
             return c.sub;
 
-        return root.hyprNow === "lucid" ? "Refreshed from your last install, backed up" : "Yours is backed up, and you are asked first";
+        return root.hyprNow === "lucid" ? I18n.tr("Refreshed from your last install, backed up") : I18n.tr("Yours is backed up, and you are asked first");
     }
 
     function isOn(c) {
@@ -212,7 +212,7 @@ ShellRoot {
     FloatingWindow {
         id: win
 
-        title: "Install Lucid"
+        title: I18n.tr("Install Lucid")
         // as tall as the choices, and as wide as a 16:9 picture that tall, up to the screen
         implicitHeight: welcome.implicitHeight + Theme.dp(64)
         implicitWidth: Math.min(side.width + Theme.dp(44) + Math.round((win.implicitHeight - Theme.dp(32) - tour.footHeight) * 16 / 9), (win.screen ? win.screen.width : 1920) - Theme.dp(80))
@@ -256,7 +256,7 @@ ShellRoot {
                 anchors.margins: Theme.dp(28)
                 z: 1
                 icon: Theme.isLight ? "dark_mode" : "light_mode"
-                tooltip: Theme.isLight ? "Dark mode" : "Light mode"
+                tooltip: Theme.isLight ? I18n.tr("Dark mode") : I18n.tr("Light mode")
                 onClicked: root.mode = Theme.isLight ? "dark" : "light"
             }
 
@@ -293,7 +293,7 @@ ShellRoot {
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: "Welcome to Lucid"
+                        text: I18n.tr("Welcome to Lucid")
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontHeadlineLg
@@ -310,7 +310,7 @@ ShellRoot {
 
                 Text {
                     width: parent.width
-                    text: (Updates.current !== "" ? "v" + Updates.current + " · " : "") + "Pick what comes with it. The installer asks before anything big, and all of it can be changed later in Settings."
+                    text: I18n.tr("%1Pick what comes with it. The installer asks before anything big, and all of it can be changed later in Settings.", (Updates.current !== "" ? "v" + Updates.current + " · " : ""))
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodyMd
@@ -417,13 +417,13 @@ ShellRoot {
                         spacing: Theme.dp(8)
 
                         M3Button {
-                            text: "Quit"
+                            text: I18n.tr("Quit")
                             variant: "text"
                             onClicked: Qt.quit()
                         }
 
                         M3Button {
-                            text: "Install"
+                            text: I18n.tr("Install")
                             variant: "filled"
                             iconPath: "download"
                             onClicked: root.install()
@@ -446,7 +446,7 @@ ShellRoot {
                 color: "transparent"
                 shown: root.running
                 elsewhere: root.elsewhere
-                note: !root.hyprKept ? "" : root.hyprNow === "conf" ? "exec-once = " + root.launcher : "hl.on(\"hyprland.start\", function () hl.exec_cmd(\"" + root.launcher + "\") end)"
+                note: !root.hyprKept ? "" : root.hyprNow === "conf" ? "exec-once = " + root.launcher : I18n.tr("hl.on(\"hyprland.start\", function () hl.exec_cmd(\"%1\") end)", root.launcher)
                 visible: opacity > 0.01
                 onLeave: (start) => {
                     return root.leave(start);

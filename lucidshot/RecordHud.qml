@@ -120,7 +120,7 @@ PanelWindow {
         value: Capture.countdown
         fill: Theme.primary
         ink: Theme.fgPrimary
-        caption: "Recording starts  ·  click to cancel"
+        caption: I18n.tr("Recording starts  ·  click to cancel")
         x: Math.round((hud.area ? hud.area.x + hud.area.w / 2 : hud.width / 2) - width / 2)
         y: Math.round((hud.area ? hud.area.y + hud.area.h / 2 : hud.height / 2) - Theme.dp(88))
         onTapped: Capture.cancel()

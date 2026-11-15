@@ -10,11 +10,11 @@ SettingCard {
 
     readonly property var list: card.dev.notifications || []
 
-    title: "NOTIFICATIONS ON THE PHONE"
+    title: I18n.tr("NOTIFICATIONS ON THE PHONE")
 
     SettingRow {
-        title: card.list.length === 0 ? "Nothing waiting" : (card.list.length === 1 ? "1 notification" : card.list.length + " notifications")
-        description: card.list.length === 0 ? "Anything that arrives on the phone shows up here while it is connected." : "Dismissing one here dismisses it on the phone too."
+        title: card.list.length === 0 ? I18n.tr("Nothing waiting") : (card.list.length === 1 ? I18n.tr("1 notification") : I18n.tr("%1 notifications", card.list.length))
+        description: card.list.length === 0 ? I18n.tr("Anything that arrives on the phone shows up here while it is connected.") : I18n.tr("Dismissing one here dismisses it on the phone too.")
         showDivider: card.list.length > 0
     }
 
@@ -110,7 +110,7 @@ SettingCard {
 
                             M3Button {
                                 variant: "tonal"
-                                text: "Reply"
+                                text: I18n.tr("Reply")
                                 onClicked: card.replyingTo = note.modelData.id
                             }
 
@@ -126,7 +126,7 @@ SettingCard {
                                 id: replyField
 
                                 width: parent.width - Theme.dp(100)
-                                placeholder: "Type a reply…"
+                                placeholder: I18n.tr("Type a reply…")
                                 onAccepted: (v) => {
                                     if (v.trim() === "")
                                         return ;
@@ -140,7 +140,7 @@ SettingCard {
                             M3Button {
                                 anchors.verticalCenter: parent.verticalCenter
                                 variant: "text"
-                                text: "Cancel"
+                                text: I18n.tr("Cancel")
                                 onClicked: card.replyingTo = ""
                             }
 

@@ -43,14 +43,14 @@ WidgetBody {
     }
     readonly property var gpuStats: {
         var out = [{
-            "label": "LOAD",
+            "label": I18n.tr("LOAD"),
             "value": Math.round(w.gpuLoad * 100) + "%",
             "level": w.gpuLoad,
             "tint": Theme.accent
         }];
         if (w.vramTotal > 0)
             out.push({
-                "label": "MEMORY",
+                "label": I18n.tr("MEMORY"),
                 "value": (w.vramUsed / 1024).toFixed(1) + " / " + (w.vramTotal / 1024).toFixed(1) + " GB",
                 "level": w.vramUsed / w.vramTotal,
                 "tint": Theme.accentMuted
@@ -58,7 +58,7 @@ WidgetBody {
 
         if (w.cpuTemp >= 0)
             out.push({
-                "label": "CPU",
+                "label": I18n.tr("CPU"),
                 "value": Units.deg(w.cpuTemp),
                 "level": w.cpuTemp / 100,
                 "tint": w.tempTint(w.cpuTemp)
@@ -69,7 +69,7 @@ WidgetBody {
     readonly property var fanStats: w.fans.slice(0, 3).map((f) => {
         return ({
             "label": f.label.toUpperCase(),
-            "value": f.rpm + " rpm",
+            "value": I18n.tr("%1 rpm", f.rpm),
             "level": f.level,
             "tint": w.fanTint
         });
@@ -193,7 +193,7 @@ WidgetBody {
                     w.gpuState = "on";
                     w.lastGpuRead = Date.now();
                 } else if (p[0] === "amd") {
-                    w.gpuName = "Radeon";
+                    w.gpuName = I18n.tr("Radeon");
                     var milli = w.num(p[1], -1);
                     w.gpuTemp = milli >= 0 ? milli / 1000 : -1;
                     w.gpuLoad = Math.max(0, Math.min(1, w.num(p[2], 0) / 100));
@@ -263,7 +263,7 @@ WidgetBody {
             var top = r.max > 0 ? Math.max(r.max, r.rpm) : Math.max(peaks[id] || 0, r.rpm, 4000);
             peaks[id] = top;
             return ({
-                "label": r.label !== "" ? r.label : "Fan " + (n + 1),
+                "label": r.label !== "" ? r.label : I18n.tr("Fan %1", (n + 1)),
                 "rpm": r.rpm,
                 "level": top > 0 ? r.rpm / top : 0
             });
@@ -299,7 +299,7 @@ WidgetBody {
             return ;
 
         w.gpuState = "on";
-        w.gpuName = "NVIDIA GeForce RTX 4060 Laptop GPU";
+        w.gpuName = I18n.tr("NVIDIA GeForce RTX 4060 Laptop GPU");
         w.gpuTemp = 58;
         w.gpuLoad = 0.41;
         w.vramUsed = 2310;
@@ -307,11 +307,11 @@ WidgetBody {
         w.gpuPower = 32.4;
         w.cpuTemp = 64;
         w.fans = [{
-            "label": "CPU Fan",
+            "label": I18n.tr("CPU Fan"),
             "rpm": 3120,
             "level": 0.62
         }, {
-            "label": "GPU Fan",
+            "label": I18n.tr("GPU Fan"),
             "rpm": 3380,
             "level": 0.68
         }];
@@ -413,7 +413,7 @@ WidgetBody {
                 spacing: 1
 
                 Text {
-                    text: w.hasGpu ? "GRAPHICS" : "PROCESSOR"
+                    text: w.hasGpu ? I18n.tr("GRAPHICS") : I18n.tr("PROCESSOR")
                     color: Theme.accent
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.dp(10)
@@ -423,7 +423,7 @@ WidgetBody {
 
                 Text {
                     width: parent.width
-                    text: w.hasGpu ? (w.gpuAwake ? w.gpuShort : "Asleep, left undisturbed") : "Temperature"
+                    text: w.hasGpu ? (w.gpuAwake ? w.gpuShort : I18n.tr("Asleep, left undisturbed")) : I18n.tr("Temperature")
                     color: w.gpuAwake || !w.hasGpu ? Theme.text : Theme.subtextDim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.dp(13)
@@ -442,7 +442,7 @@ WidgetBody {
 
                 Text {
                     anchors.right: parent.right
-                    text: "DRAW"
+                    text: I18n.tr("DRAW")
                     color: Theme.subtextDim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.dp(9)
@@ -452,7 +452,7 @@ WidgetBody {
 
                 Text {
                     anchors.right: parent.right
-                    text: w.gpuPower.toFixed(w.gpuPower < 10 ? 1 : 0) + " W"
+                    text: I18n.tr("%1 W", w.gpuPower.toFixed(w.gpuPower < 10 ? 1 : 0))
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.dp(13)
@@ -492,7 +492,7 @@ WidgetBody {
             Chip {
                 visible: w.gameModeConfigured || w.preview
                 icon: "games"
-                label: "Game mode"
+                label: I18n.tr("Game mode")
                 on: w.gameModeOn
                 busy: w.gameModeBusy
                 onClicked: w.setGameMode(!w.gameModeOn)

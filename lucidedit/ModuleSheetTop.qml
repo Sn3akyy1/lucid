@@ -23,14 +23,14 @@ SettingCard {
     }
 
     SettingRow {
-        title: "Try it"
-        description: modTop.moduleId === "start" ? "Opens the launcher, as a click on it does." : "Opens it the way a click on the bar does, so you can see the looks you pick below."
+        title: I18n.tr("Try it")
+        description: modTop.moduleId === "start" ? I18n.tr("Opens the launcher, as a click on it does.") : I18n.tr("Opens it the way a click on the bar does, so you can see the looks you pick below.")
         enabled: modTop.inBar
-        disabledReason: "It is not in the bar. Switch it on below to try it."
+        disabledReason: I18n.tr("It is not in the bar. Switch it on below to try it.")
         showDivider: false
 
         M3Button {
-            text: "Open"
+            text: I18n.tr("Open")
             variant: "tonal"
             enabled: modTop.inBar
             onClicked: Edit.moduleOpenRequested(modTop.moduleId, Monitors.barEverywhere ? Edit.sheetScreen : "")
@@ -40,8 +40,8 @@ SettingCard {
 
     SettingRow {
         visible: modTop.leftKey !== ""
-        title: "Join to " + modTop.nameOf(modTop.leftKey)
-        description: Prefs.barFull ? "The full bar already joins every module on one strip." : "The two share one island, the way the link between them on the bar joins them."
+        title: I18n.tr("Join to %1", modTop.nameOf(modTop.leftKey))
+        description: Prefs.barFull ? I18n.tr("The full bar already joins every module on one strip.") : I18n.tr("The two share one island, the way the link between them on the bar joins them.")
         enabled: !Prefs.barFull
         showDivider: false
 
@@ -57,8 +57,8 @@ SettingCard {
 
     SettingRow {
         visible: modTop.rightKey !== ""
-        title: "Join to " + modTop.nameOf(modTop.rightKey)
-        description: Prefs.barFull ? "The full bar already joins every module on one strip." : "The two share one island, the way the link between them on the bar joins them."
+        title: I18n.tr("Join to %1", modTop.nameOf(modTop.rightKey))
+        description: Prefs.barFull ? I18n.tr("The full bar already joins every module on one strip.") : I18n.tr("The two share one island, the way the link between them on the bar joins them.")
         enabled: !Prefs.barFull
         showDivider: false
 

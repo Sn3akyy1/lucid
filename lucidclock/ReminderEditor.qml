@@ -90,7 +90,7 @@ Item {
         });
         else
             ed.app.send("rem.add", f);
-        ed.win.toast(ed.item ? "Reminder changed" : "Reminder set for " + CM.dayWord(ed.when.getTime(), ed.app.nowMs()).replace("Today", "today").replace("Tomorrow", "tomorrow") + ", " + ed.app.time(ed.hour, ed.minute));
+        ed.win.toast(ed.item ? I18n.tr("Reminder changed") : I18n.tr("Reminder set for %1, %2", I18n.tr(CM.dayWord(ed.when.getTime(), ed.app.nowMs())).toLowerCase(), ed.app.time(ed.hour, ed.minute))); // i18n-dynamic
         ed.close();
     }
 
@@ -145,16 +145,16 @@ Item {
 
             LText {
                 role: "headlineSmall"
-                text: ed.item ? "Change reminder" : "New reminder"
+                text: ed.item ? I18n.tr("Change reminder") : I18n.tr("New reminder")
             }
 
             TextField {
                 id: nameField
 
                 width: parent.width
-                label: "Reminder"
-                placeholder: "What should it say?"
-                supporting: ed.past ? (ed.when.toDateString() === ed.app.now().toDateString() ? ed.app.time(ed.hour, ed.minute) + " has already gone by today" : "That day has already gone by") : ""
+                label: I18n.tr("Reminder")
+                placeholder: I18n.tr("What should it say?")
+                supporting: ed.past ? (ed.when.toDateString() === ed.app.now().toDateString() ? I18n.tr("%1 has already gone by today", ed.app.time(ed.hour, ed.minute)) : I18n.tr("That day has already gone by")) : ""
                 error: ed.past && nameField.text.trim() !== ""
                 onAccepted: ed.save()
                 onEscaped: ed.close()
@@ -181,8 +181,8 @@ Item {
                         role: "bodyLarge"
                         text: {
                             const w = ed.app ? CM.dayWord(new Date(ed.year, ed.month, ed.day).getTime(), ed.app.nowMs()) : "";
-                            const full = new Date(ed.year, ed.month, ed.day).toLocaleDateString(Qt.locale(), "ddd d MMMM yyyy");
-                            return w === "Today" || w === "Tomorrow" ? w + ", " + new Date(ed.year, ed.month, ed.day).toLocaleDateString(Qt.locale(), "d MMMM") : full;
+                            const full = new Date(ed.year, ed.month, ed.day).toLocaleDateString(I18n.locale, "ddd d MMMM yyyy");
+                            return w === "Today" || w === "Tomorrow" ? I18n.tr(w) + ", " + new Date(ed.year, ed.month, ed.day).toLocaleDateString(I18n.locale, "d MMMM") : full; // i18n-dynamic
                         }
                     }
 
@@ -195,14 +195,14 @@ Item {
                     IconButton {
                         icon: "chevron_left"
                         size: "xs"
-                        tooltip: "The day before"
+                        tooltip: I18n.tr("The day before")
                         onClicked: ed.stepDay(-1)
                     }
 
                     IconButton {
                         icon: "chevron_right"
                         size: "xs"
-                        tooltip: "The day after"
+                        tooltip: I18n.tr("The day after")
                         onClicked: ed.stepDay(1)
                     }
 
@@ -211,7 +211,7 @@ Item {
                         size: "xs"
                         checkable: true
                         checked: ed.calendarOpen
-                        tooltip: "Pick on the calendar"
+                        tooltip: I18n.tr("Pick on the calendar")
                         onClicked: ed.calendarOpen = !ed.calendarOpen
                     }
 
@@ -284,8 +284,8 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     variant: "tonal"
                     size: "s"
-                    text: "Change time"
-                    onClicked: ed.win.pickTime(ed.hour, ed.minute, "Reminder time", (h, m) => {
+                    text: I18n.tr("Change time")
+                    onClicked: ed.win.pickTime(ed.hour, ed.minute, I18n.tr("Reminder time"), (h, m) => {
                         ed.hour = h;
                         ed.minute = m;
                     })
@@ -298,16 +298,16 @@ Item {
                 size: "s"
                 options: [{
                     "key": "",
-                    "label": "Once"
+                    "label": I18n.tr("Once")
                 }, {
                     "key": "daily",
-                    "label": "Daily"
+                    "label": I18n.tr("Daily")
                 }, {
                     "key": "weekdays",
-                    "label": "Weekdays"
+                    "label": I18n.tr("Weekdays")
                 }, {
                     "key": "weekly",
-                    "label": "Weekly"
+                    "label": I18n.tr("Weekly")
                 }]
                 current: ed.repeat
                 onPicked: (k) => {
@@ -325,14 +325,14 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     variant: "text"
                     icon: "delete"
-                    text: "Delete"
+                    text: I18n.tr("Delete")
                     onClicked: {
                         const r = ed.item;
                         ed.close();
                         ed.app.send("rem.remove", {
                             "id": r.id
                         });
-                        ed.win.toast("Reminder deleted", "Undo", {
+                        ed.win.toast(I18n.tr("Reminder deleted"), I18n.tr("Undo"), {
                             "undo": () => {
                                 return ed.app.send("rem.add", r);
                             }
@@ -347,13 +347,13 @@ Item {
 
                     Button {
                         variant: "text"
-                        text: "Cancel"
+                        text: I18n.tr("Cancel")
                         onClicked: ed.close()
                     }
 
                     Button {
                         variant: "filled"
-                        text: ed.item ? "Save" : "Add"
+                        text: ed.item ? I18n.tr("Save") : I18n.tr("Add")
                         disabled: !ed.canSave
                         onClicked: ed.save()
                     }

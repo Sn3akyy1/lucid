@@ -2,6 +2,16 @@
 
 All notable changes to Lucid are recorded here, newest first.
 
+## Unreleased
+
+- **Language.** Every text in the shell goes through `I18n.tr`, keyed by the
+  English text, so English needs no file. Settings > Language picks a language
+  (Automatic follows `LANG`), imports a translation into
+  `~/.config/lucid/i18n/` and exports a template or the current language. Spanish
+  comes with it, and a language is one `i18n/<code>.json`. Dates and numbers
+  follow the language too. `support/i18n-check.py` keeps the code and the
+  catalogues in step.
+
 ## v1.21 — 2026-11-13
 
 **Lucid is an ecosystem.** It began as a shell around your windows; now it is
