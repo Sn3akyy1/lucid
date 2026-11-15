@@ -29,6 +29,17 @@ TestCase {
         compare(Core.trn({}, "%1 update", "%1 updates", 2, []), "2 updates");
     }
 
+    function test_plural_russian() {
+        var s = { "%1 word": { "one": "%1 слово", "few": "%1 слова", "many": "%1 слов", "other": "%1 слов" } };
+        compare(Core.trn(s, "%1 word", "%1 words", 1, []), "1 слово");
+        compare(Core.trn(s, "%1 word", "%1 words", 21, []), "21 слово");
+        compare(Core.trn(s, "%1 word", "%1 words", 3, []), "3 слова");
+        compare(Core.trn(s, "%1 word", "%1 words", 12, []), "12 слов");
+        compare(Core.trn(s, "%1 word", "%1 words", 112, []), "112 слов");
+        compare(Core.trn(s, "%1 word", "%1 words", 114, []), "114 слов");
+        compare(Core.trn(s, "%1 word", "%1 words", 5, []), "5 слов");
+    }
+
     function test_context() {
         compare(Core.trc({ "verb|Open": "Abrir" }, "verb", "Open", []), "Abrir");
         compare(Core.trc({}, "verb", "Open", []), "Open");

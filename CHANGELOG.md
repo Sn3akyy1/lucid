@@ -8,8 +8,8 @@ All notable changes to Lucid are recorded here, newest first.
   English text, so English needs no file. Settings > Language picks a language
   (Automatic follows `LANG`), imports a translation into
   `~/.config/lucid/i18n/` and exports a template or the current language. Spanish
-  comes with it, and a language is one `i18n/<code>.json`. Dates and numbers
-  follow the language too. `support/i18n-check.py` keeps the code and the
+  and Russian come with it, and a language is one `i18n/<code>.json`. Dates and numbers
+  follow the language too, and Russian plurals (one, few, many) are right. `support/i18n-check.py` keeps the code and the
   catalogues in step.
 
 ## v1.21 — 2026-11-13

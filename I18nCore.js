@@ -27,12 +27,26 @@ function trc(strings, ctx, text, args) {
     return format(typeof v === "string" ? v : text, args);
 }
 
-// English and Spanish share the rule: one for 1, other for the rest. a language
-// with more forms would grow it here
+// one for 1, other for the rest, unless the entry has a "few" form: then the
+// Russian rule (1, 2-4 and the rest, the teens always many) picks the form
+function pluralForm(v, n) {
+    if (v.few === undefined)
+        return n === 1 ? "one" : "other";
+
+    var t = Math.abs(n) % 100, u = t % 10;
+    if (u === 1 && t !== 11)
+        return "one";
+
+    if (u >= 2 && u <= 4 && (t < 12 || t > 14))
+        return "few";
+
+    return "many";
+}
+
 function trn(strings, singular, plural, n, args) {
     var a = args && args.length ? args : [n];
     var v = lookup(strings, singular);
-    var form = n === 1 ? "one" : "other";
+    var form = v && typeof v === "object" ? pluralForm(v, n) : (n === 1 ? "one" : "other");
     if (v && typeof v === "object" && typeof v[form] === "string" && v[form] !== "")
         return format(v[form], a);
 
