@@ -29,7 +29,7 @@ SettingCard {
         card.editing = true;
     }
 
-    title: (card.info.type === "wifi" ? "WI-FI" : (card.info.type === "ethernet" ? "WIRED" : card.info.type.toUpperCase())) + "  ·  " + card.info.name
+    title: (card.info.type === "wifi" ? I18n.tr("WI-FI") : (card.info.type === "ethernet" ? I18n.tr("WIRED") : card.info.type.toUpperCase())) + "  ·  " + card.info.name
 
     onUuidChanged: {
         if (card.uuid !== "")
@@ -44,8 +44,8 @@ SettingCard {
     }
 
     SettingRow {
-        title: "Addresses"
-        description: card.info.connection !== "" ? "On “" + card.info.connection + "”, " + card.info.state + "." : "Not carrying a connection."
+        title: I18n.tr("Addresses")
+        description: card.info.connection !== "" ? I18n.tr("On “%1”, %2.", card.info.connection, card.info.state) : I18n.tr("Not carrying a connection.")
         stacked: true
 
         Grid {
@@ -60,7 +60,7 @@ SettingCard {
             }
 
             InfoPair {
-                name: "Gateway"
+                name: I18n.tr("Gateway")
                 value: card.label(card.info.gw4)
             }
 
@@ -70,7 +70,7 @@ SettingCard {
             }
 
             InfoPair {
-                name: "Hardware address"
+                name: I18n.tr("Hardware address")
                 value: card.label(card.info.mac)
             }
 
@@ -80,7 +80,7 @@ SettingCard {
             }
 
             InfoPair {
-                name: card.info.type === "wifi" ? "Link rate" : "Link speed"
+                name: card.info.type === "wifi" ? I18n.tr("Link rate") : I18n.tr("Link speed")
                 value: card.info.type === "wifi" ? card.label(card.info.rate) : (card.info.speed > 0 ? card.info.speed + " Mbit/s" : "—")
             }
 
@@ -94,10 +94,10 @@ SettingCard {
     }
 
     SettingRow {
-        title: "How this connection gets its address"
+        title: I18n.tr("How this connection gets its address")
         visible: card.uuid !== ""
         enabled: !Net.busy
-        description: card.manual ? "Set by hand. The values below are what NetworkManager will use next time it connects." : "From the router, over DHCP. Switch to By hand to pin an address."
+        description: card.manual ? I18n.tr("Set by hand. The values below are what NetworkManager will use next time it connects.") : I18n.tr("From the router, over DHCP. Switch to By hand to pin an address.")
         warning: Net.lastError
         stacked: true
         showDivider: false
@@ -112,10 +112,10 @@ SettingCard {
                 current: card.manual ? "manual" : "auto"
                 options: [{
                     "key": "auto",
-                    "label": "Automatic"
+                    "label": I18n.tr("Automatic")
                 }, {
                     "key": "manual",
-                    "label": "By hand"
+                    "label": I18n.tr("By hand")
                 }]
                 onChosen: (k) => {
                     if (k === "auto") {
@@ -137,7 +137,7 @@ SettingCard {
                     spacing: Theme.dp(12)
 
                     FieldPair {
-                        name: "Address and prefix"
+                        name: I18n.tr("Address and prefix")
                         hint: "192.168.1.50/24"
                         value: card.address
                         onEdited: (v) => {
@@ -146,7 +146,7 @@ SettingCard {
                     }
 
                     FieldPair {
-                        name: "Gateway"
+                        name: I18n.tr("Gateway")
                         hint: "192.168.1.1"
                         value: card.gateway
                         onEdited: (v) => {
@@ -158,7 +158,7 @@ SettingCard {
 
                 FieldPair {
                     width: parent.width
-                    name: "DNS servers, comma separated"
+                    name: I18n.tr("DNS servers, comma separated")
                     hint: "1.1.1.1,9.9.9.9"
                     value: card.dns
                     onEdited: (v) => {
@@ -171,7 +171,7 @@ SettingCard {
 
                     M3Button {
                         variant: "filled"
-                        text: Net.busy ? "Applying…" : "Apply and reconnect"
+                        text: Net.busy ? I18n.tr("Applying…") : I18n.tr("Apply and reconnect")
                         enabled: !Net.busy && card.address.trim() !== ""
                         onClicked: {
                             Net.setManual(card.uuid, card.address.trim(), card.gateway.trim(), card.dns.trim());
@@ -182,7 +182,7 @@ SettingCard {
 
                     M3Button {
                         variant: "text"
-                        text: "Cancel"
+                        text: I18n.tr("Cancel")
                         visible: card.editing && !card.manual
                         onClicked: card.editing = false
                     }
@@ -197,8 +197,8 @@ SettingCard {
 
                 FieldPair {
                     width: Theme.dp(340)
-                    name: "Use these DNS servers instead of the router's"
-                    hint: "leave empty to use the router's"
+                    name: I18n.tr("Use these DNS servers instead of the router's")
+                    hint: I18n.tr("leave empty to use the router's")
                     value: Net.detail["ipv4.dns"] || ""
                     onAccepted: (v) => {
                         return Net.setDns(card.uuid, v.trim());

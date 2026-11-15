@@ -35,7 +35,7 @@ Rectangle {
             return panel.videoRows(c, i);
 
         var mp = i && i.w ? (i.w * i.h / 1e+06) : 0;
-        return [panel.row("Kind", (c.desc || c.mime || "Picture") + (i && i.frames > 1 ? ", " + i.frames + " frames" : "")), panel.row("Size", i && i.w ? i.w + " × " + i.h + " pixels" + (mp >= 0.1 ? " (" + (mp >= 10 ? Math.round(mp) : mp.toFixed(1)) + " MP)" : "") : ""), panel.row("File", panel.app.sizeText(c.size || 0)), panel.row("Modified", panel.app.dateText(c.mtime)), panel.row("Colour", i ? [i.depth && i.depth !== 8 ? i.depth + "-bit" : "", i.alpha ? "see-through" : "", i.profile || ""].filter(function(s) {
+        return [panel.row(I18n.tr("Kind"), (c.desc || c.mime || "Picture") + (i && i.frames > 1 ? ", " + i.frames + " frames" : "")), panel.row(I18n.tr("Size"), i && i.w ? i.w + " × " + i.h + " pixels" + (mp >= 0.1 ? " (" + (mp >= 10 ? Math.round(mp) : mp.toFixed(1)) + " MP)" : "") : ""), panel.row(I18n.tr("File"), panel.app.sizeText(c.size || 0)), panel.row(I18n.tr("Modified"), panel.app.dateText(c.mtime)), panel.row(I18n.tr("Colour"), i ? [i.depth && i.depth !== 8 ? i.depth + "-bit" : "", i.alpha ? "see-through" : "", i.profile || ""].filter(function(s) {
             return s !== "";
         }).join(", ") : "")].filter(function(r) {
             return r !== null;
@@ -45,11 +45,11 @@ Rectangle {
         var picture = [i.vcodec, i.fps ? Math.round(i.fps * 100) / 100 + " fps" : "", i.depth > 8 ? i.depth + "-bit" : "", i.hdr ? "HDR" : ""].filter(function(s) {
             return s;
         }).join(", ");
-        var sound = !i.acodec ? "None" : [i.acodec, i.channels === 1 ? "mono" : i.channels === 2 ? "stereo" : i.channels ? i.channels + " channels" : "", i.arate ? i.arate / 1000 + " kHz" : ""].filter(function(s) {
+        var sound = !i.acodec ? "None" : [i.acodec, i.channels === 1 ? "mono" : i.channels === 2 ? "stereo" : i.channels ? I18n.tr("%1 channels", i.channels) : "", i.arate ? I18n.tr("%1 kHz", i.arate / 1000) : ""].filter(function(s) {
             return s;
         }).join(", ");
         var rate = i.bitrate >= 1e+06 ? (i.bitrate / 1e+06).toFixed(1) + " Mb/s" : i.bitrate > 0 ? Math.round(i.bitrate / 1000) + " kb/s" : "";
-        return [panel.row("Kind", c.desc || c.mime || "Video"), panel.row("Size", i.w ? i.w + " × " + i.h + " pixels" : ""), panel.row("Length", i.duration > 0 ? panel.app.timeText(i.duration * 1000) : ""), panel.row("Picture", picture), panel.row("Sound", sound), panel.row("Bit rate", rate), panel.row("File", panel.app.sizeText(c.size || 0)), panel.row("Modified", panel.app.dateText(c.mtime))].filter(function(r) {
+        return [panel.row(I18n.tr("Kind"), c.desc || c.mime || I18n.tr("Video")), panel.row(I18n.tr("Size"), i.w ? I18n.tr("%1 × %2 pixels", i.w, i.h) : ""), panel.row(I18n.tr("Length"), i.duration > 0 ? panel.app.timeText(i.duration * 1000) : ""), panel.row(I18n.tr("Picture"), picture), panel.row(I18n.tr("Sound"), sound), panel.row(I18n.tr("Bit rate"), rate), panel.row(I18n.tr("File"), panel.app.sizeText(c.size || 0)), panel.row(I18n.tr("Modified"), panel.app.dateText(c.mtime))].filter(function(r) {
             return r !== null;
         });
     }
@@ -59,7 +59,7 @@ Rectangle {
         var shot = [e.aperture, e.shutter, e.iso, e.bias].filter(function(s) {
             return s;
         }).join("  ·  ");
-        return [panel.row("Taken", e.taken ? panel.app.takenText(e.taken) : ""), panel.row("Camera", e.camera), panel.row("Lens", e.lens), panel.row("Exposure", shot), panel.row("Focal length", e.focal), panel.row("Flash", e.flash), panel.row("Software", e.software), panel.row("By", e.artist), panel.row("Caption", e.caption), panel.row("Copyright", e.copyright)].filter(function(r) {
+        return [panel.row(I18n.tr("Taken"), e.taken ? panel.app.takenText(e.taken) : ""), panel.row(I18n.tr("Camera"), e.camera), panel.row(I18n.tr("Lens"), e.lens), panel.row(I18n.tr("Exposure"), shot), panel.row(I18n.tr("Focal length"), e.focal), panel.row(I18n.tr("Flash"), e.flash), panel.row(I18n.tr("Software"), e.software), panel.row(I18n.tr("By"), e.artist), panel.row(I18n.tr("Caption"), e.caption), panel.row(I18n.tr("Copyright"), e.copyright)].filter(function(r) {
             return r !== null;
         });
     }
@@ -145,7 +145,7 @@ Rectangle {
                 LText {
                     role: "labelLarge"
                     color: Theme.accent
-                    text: "Original"
+                    text: I18n.tr("Original")
                 }
 
                 Rectangle {
@@ -170,7 +170,7 @@ Rectangle {
                     }
 
                     Tip {
-                        text: "Hold to compare"
+                        text: I18n.tr("Hold to compare")
                     }
 
                     ClippingRectangle {
@@ -205,7 +205,7 @@ Rectangle {
                         LText {
                             width: parent.width
                             role: "titleSmall"
-                            text: "Before your edits"
+                            text: I18n.tr("Before your edits")
                             elide: Text.ElideRight
                         }
 
@@ -213,7 +213,7 @@ Rectangle {
                             width: parent.width
                             role: "bodySmall"
                             color: Theme.subtext
-                            text: panel.kept ? "Kept " + panel.app.whenText(panel.kept.at) : ""
+                            text: panel.kept ? I18n.tr("Kept %1", panel.app.whenText(panel.kept.at)) : ""
                             elide: Text.ElideRight
                         }
 
@@ -235,7 +235,7 @@ Rectangle {
                         anchors.rightMargin: Theme.dp(6)
                         anchors.verticalCenter: parent.verticalCenter
                         icon: "delete"
-                        tooltip: "Delete the original"
+                        tooltip: I18n.tr("Delete the original")
 
                         Tip {
                         }
@@ -248,7 +248,7 @@ Rectangle {
                 Button {
                     variant: "tonal"
                     icon: "history"
-                    text: "Revert to original"
+                    text: I18n.tr("Revert to original")
                     disabled: panel.win.busy
                     onClicked: panel.win.revertOriginal()
                 }
@@ -335,12 +335,12 @@ Rectangle {
             }
 
             Section {
-                title: "File"
+                title: I18n.tr("File")
                 rows: panel.fileRows
             }
 
             Section {
-                title: "Camera"
+                title: I18n.tr("Camera")
                 rows: panel.cameraRows
                 visible: panel.cameraRows.length > 0
             }
@@ -354,7 +354,7 @@ Rectangle {
                 LText {
                     role: "labelLarge"
                     color: Theme.accent
-                    text: "Place"
+                    text: I18n.tr("Place")
                 }
 
                 Rectangle {
@@ -381,7 +381,7 @@ Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                         role: "bodyMedium"
                         tabular: true
-                        text: panel.ex.gps ? panel.ex.gps.lat.toFixed(5) + ", " + panel.ex.gps.lon.toFixed(5) + (panel.ex.gps.alt !== null ? "  ·  " + panel.ex.gps.alt + " m" : "") : ""
+                        text: panel.ex.gps ? panel.ex.gps.lat.toFixed(5) + ", " + panel.ex.gps.lon.toFixed(5) + (panel.ex.gps.alt !== null ? I18n.tr("  ·  %1 m", panel.ex.gps.alt) : "") : ""
                         elide: Text.ElideRight
                     }
 
@@ -411,7 +411,7 @@ Rectangle {
                 LText {
                     role: "labelLarge"
                     color: Theme.accent
-                    text: "Colours"
+                    text: I18n.tr("Colours")
                 }
 
                 Flow {
@@ -470,7 +470,7 @@ Rectangle {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     Quickshell.execDetached(["wl-copy", sw.modelData.hex]);
-                                    panel.win.say("Copied " + sw.modelData.hex.toUpperCase());
+                                    panel.win.say(I18n.tr("Copied %1", sw.modelData.hex.toUpperCase()));
                                 }
                             }
 
@@ -489,7 +489,7 @@ Rectangle {
                 Button {
                     variant: "tonal"
                     icon: "wallpaper"
-                    text: "Set as wallpaper"
+                    text: I18n.tr("Set as wallpaper")
                     visible: panel.app.caps.wallpaper === true && panel.cur !== null && (!panel.cur.video || panel.app.liveKind(panel.cur.path))
                     onClicked: panel.win.setWallpaper()
                 }
@@ -497,7 +497,7 @@ Rectangle {
                 Button {
                     variant: "outlined"
                     icon: "folder_open"
-                    text: "Show in Lumen"
+                    text: I18n.tr("Show in Lumen")
                     visible: (panel.app.caps.lumen || "") !== "" && !panel.win.pasted
                     onClicked: panel.win.reveal(panel.cur.path)
                 }

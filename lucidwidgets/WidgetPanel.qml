@@ -27,15 +27,15 @@ Item {
     property string tab: "add"
     readonly property var tabs: [{
         "key": "add",
-        "label": "Add",
+        "label": I18n.tr("Add"),
         "icon": "add"
     }, {
         "key": "placed",
-        "label": "On desktop",
+        "label": I18n.tr("On desktop"),
         "icon": "desktop_windows"
     }, {
         "key": "layouts",
-        "label": "Layouts",
+        "label": I18n.tr("Layouts"),
         "icon": "dashboard"
     }]
     readonly property int tabIndex: Math.max(0, ["add", "placed", "layouts"].indexOf(wp.tab))
@@ -116,31 +116,31 @@ Item {
 
     // the words people search for that the catalogue's own names and blurbs never use
     readonly property var keywords: ({
-        "clock": "time watch hours",
-        "calendar": "date month week day agenda reminders",
-        "system": "cpu ram memory disk processor usage performance monitor",
-        "thermal": "temperature heat gpu fan cooling",
-        "network": "internet wifi ethernet speed download upload bandwidth",
-        "battery": "power charge laptop",
-        "media": "music song player spotify mpris audio album",
-        "visualiser": "visualizer audio music sound cava spectrum bars",
-        "lyrics": "lyrics words karaoke song letra captions sing",
-        "games": "steam play gaming library",
+        "clock": I18n.tr("time watch hours"),
+        "calendar": I18n.tr("date month week day agenda reminders"),
+        "system": I18n.tr("cpu ram memory disk processor usage performance monitor"),
+        "thermal": I18n.tr("temperature heat gpu fan cooling"),
+        "network": I18n.tr("internet wifi ethernet speed download upload bandwidth"),
+        "battery": I18n.tr("power charge laptop"),
+        "media": I18n.tr("music song player spotify mpris audio album"),
+        "visualiser": I18n.tr("visualizer audio music sound cava spectrum bars"),
+        "lyrics": I18n.tr("lyrics words karaoke song letra captions sing"),
+        "games": I18n.tr("steam play gaming library"),
         "github": "git contributions commits code streak heatmap",
-        "weather": "forecast temperature rain sun",
-        "notes": "sticky memo text note write",
-        "todo": "tasks checklist list reminders",
-        "palette": "colours colors theme swatches material",
-        "kdeconnect": "phone android mobile kde connect",
-        "timer": "pomodoro stopwatch countdown alarm focus",
-        "glance": "summary date weather next",
-        "photo": "pictures images gallery slideshow frame",
-        "fetch": "neofetch fastfetch system info terminal",
-        "progress": "day week month year percent time left remaining countdown",
-        "toggles": "quick settings switches wifi bluetooth do not disturb dnd dark mode night light caffeine keep awake mute microphone",
-        "shortcuts": "apps launcher favourites favorites pinned dock icons open",
-        "search": "launcher find search bar web emoji clipboard wallpapers commands",
-        "sun": "sunrise sunset daylight dawn dusk day length"
+        "weather": I18n.tr("forecast temperature rain sun"),
+        "notes": I18n.tr("sticky memo text note write"),
+        "todo": I18n.tr("tasks checklist list reminders"),
+        "palette": I18n.tr("colours colors theme swatches material"),
+        "kdeconnect": I18n.tr("phone android mobile kde connect"),
+        "timer": I18n.tr("pomodoro stopwatch countdown alarm focus"),
+        "glance": I18n.tr("summary date weather next"),
+        "photo": I18n.tr("pictures images gallery slideshow frame"),
+        "fetch": I18n.tr("neofetch fastfetch system info terminal"),
+        "progress": I18n.tr("day week month year percent time left remaining countdown"),
+        "toggles": I18n.tr("quick settings switches wifi bluetooth do not disturb dnd dark mode night light caffeine keep awake mute microphone"),
+        "shortcuts": I18n.tr("apps launcher favourites favorites pinned dock icons open"),
+        "search": I18n.tr("launcher find search bar web emoji clipboard wallpapers commands"),
+        "sun": I18n.tr("sunrise sunset daylight dawn dusk day length")
     })
 
     // every word has to turn up somewhere in the widget's names, blurbs and keywords
@@ -593,7 +593,7 @@ Item {
                     LText {
                         width: parent.width
                         role: "titleLarge"
-                        text: "Widgets"
+                        text: I18n.tr("Widgets")
                         elide: Text.ElideRight
                     }
 
@@ -603,15 +603,15 @@ Item {
                         color: Widgets.full ? Theme.error : Theme.subtext
                         text: {
                             if (Widgets.full)
-                                return "The desktop is full. Take one off to make room.";
+                                return I18n.tr("The desktop is full. Take one off to make room.");
 
                             if (wp.tab === "placed")
-                                return wp.liveCards + " of " + Widgets.capacity + " on the desktop";
+                                return I18n.tr("%1 of %2 on the desktop", wp.liveCards, Widgets.capacity);
 
                             if (wp.tab === "layouts")
-                                return "Rearrange everything in one go";
+                                return I18n.tr("Rearrange everything in one go");
 
-                            return "Drag one onto the desktop, or click to add it";
+                            return I18n.tr("Drag one onto the desktop, or click to add it");
                         }
                         elide: Text.ElideRight
                     }
@@ -637,7 +637,7 @@ Item {
                 width: wp.innerW
                 variant: "search"
                 containerColor: Theme.withBlur(Theme.surfaceHigh)
-                placeholder: wp.tab === "placed" ? "Search your desktop" : (wp.tab === "layouts" ? "Search layouts" : "Search widgets")
+                placeholder: wp.tab === "placed" ? I18n.tr("Search your desktop") : (wp.tab === "layouts" ? I18n.tr("Search layouts") : I18n.tr("Search widgets"))
                 onTextEdited: typing.restart()
                 onEscaped: {
                     if (search.text !== "") {
@@ -733,7 +733,7 @@ Item {
                                 Repeater {
                                     model: [{
                                         "id": "all",
-                                        "name": "All"
+                                        "name": I18n.tr("All")
                                     }].concat(Widgets.catalogue)
 
                                     Chip {
@@ -850,7 +850,7 @@ Item {
                                             anchors.verticalCenter: parent.verticalCenter
                                             role: "labelMedium"
                                             color: Theme.subtext
-                                            text: group.placed > 0 ? group.placed + " on the desktop" : ""
+                                            text: group.placed > 0 ? I18n.tr("%1 on the desktop", group.placed) : ""
                                         }
 
                                     }
@@ -897,7 +897,7 @@ Item {
                             LText {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 role: "titleMedium"
-                                text: "No widgets match"
+                                text: I18n.tr("No widgets match")
                             }
 
                             LText {
@@ -906,7 +906,7 @@ Item {
                                 role: "bodyMedium"
                                 color: Theme.subtext
                                 wrapMode: Text.WordWrap
-                                text: wp.category !== "all" ? "Nothing in this category fits the search. Try All." : "Try another word, such as clock, music or notes."
+                                text: wp.category !== "all" ? I18n.tr("Nothing in this category fits the search. Try All.") : I18n.tr("Try another word, such as clock, music or notes.")
                             }
 
                         }
@@ -962,7 +962,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     role: "labelLarge"
                                     color: Theme.primary
-                                    text: "Hover one to find it, click it for its options"
+                                    text: I18n.tr("Hover one to find it, click it for its options")
                                     width: parent.width - clearBtn.width - Theme.dp(12)
                                     elide: Text.ElideRight
                                 }
@@ -976,7 +976,7 @@ Item {
                                     danger: true
                                     size: "xs"
                                     icon: "delete_sweep"
-                                    text: wp.clearArmed ? "Remove all?" : "Remove all"
+                                    text: wp.clearArmed ? I18n.tr("Remove all?") : I18n.tr("Remove all")
                                     onClicked: {
                                         if (wp.clearArmed) {
                                             wp.clearArmed = false;
@@ -1016,7 +1016,7 @@ Item {
                                 topPadding: Theme.dp(12)
                                 role: "bodyMedium"
                                 color: Theme.subtext
-                                text: "None of your widgets match the search."
+                                text: I18n.tr("None of your widgets match the search.")
                             }
 
                             // nothing out yet
@@ -1046,7 +1046,7 @@ Item {
                                 LText {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     role: "titleMedium"
-                                    text: "Nothing on the desktop yet"
+                                    text: I18n.tr("Nothing on the desktop yet")
                                 }
 
                                 LText {
@@ -1055,7 +1055,7 @@ Item {
                                     role: "bodyMedium"
                                     color: Theme.subtext
                                     wrapMode: Text.WordWrap
-                                    text: Widgets.canRestore ? "Drag one out of Add, or bring back the last layout from Layouts." : "Drag one out of Add, or start from a ready-made layout."
+                                    text: Widgets.canRestore ? I18n.tr("Drag one out of Add, or bring back the last layout from Layouts.") : I18n.tr("Drag one out of Add, or start from a ready-made layout.")
                                 }
 
                             }
@@ -1068,7 +1068,7 @@ Item {
                                     leftPadding: Theme.dp(4)
                                     role: "labelLarge"
                                     color: Theme.primary
-                                    text: "Behaviour"
+                                    text: I18n.tr("Behaviour")
                                 }
 
                                 Column {
@@ -1078,20 +1078,20 @@ Item {
                                     Repeater {
                                         model: [{
                                             "key": "widgetSnap",
-                                            "label": "Snap while dragging",
-                                            "blurb": "Catch on edges, centres and each other"
+                                            "label": I18n.tr("Snap while dragging"),
+                                            "blurb": I18n.tr("Catch on edges, centres and each other")
                                         }, {
                                             "key": "widgetLockAll",
-                                            "label": "Pin everything",
-                                            "blurb": "Nothing moves until you turn this off"
+                                            "label": I18n.tr("Pin everything"),
+                                            "blurb": I18n.tr("Nothing moves until you turn this off")
                                         }, {
                                             "key": "widgetOnTop",
-                                            "label": "Keep above windows",
-                                            "blurb": "Float over everything, not just the desktop"
+                                            "label": I18n.tr("Keep above windows"),
+                                            "blurb": I18n.tr("Float over everything, not just the desktop")
                                         }, {
                                             "key": "widgetHideFullscreen",
-                                            "label": "Hide for fullscreen windows",
-                                            "blurb": "Step aside while something runs fullscreen"
+                                            "label": I18n.tr("Hide for fullscreen windows"),
+                                            "blurb": I18n.tr("Step aside while something runs fullscreen")
                                         }]
 
                                         Rectangle {
@@ -1193,7 +1193,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     variant: "text"
                     icon: "settings"
-                    text: "Settings"
+                    text: I18n.tr("Settings")
                     onClicked: {
                         wp.close();
                         Prefs.settingsRequested("widgets");
@@ -1206,7 +1206,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     variant: "filled"
                     icon: "check"
-                    text: "Done"
+                    text: I18n.tr("Done")
                     onClicked: wp.close()
                 }
 
@@ -1269,7 +1269,7 @@ Item {
                     leftPadding: Theme.dp(4)
                     role: "labelLarge"
                     color: Theme.primary
-                    text: "Yours"
+                    text: I18n.tr("Yours")
                 }
 
                 Grid {
@@ -1286,8 +1286,8 @@ Item {
                     LP.PresetTile {
                         width: wp.tileW
                         visible: Widgets.canRestore && wp.query === ""
-                        title: "Last layout"
-                        blurb: "Not saved"
+                        title: I18n.tr("Last layout")
+                        blurb: I18n.tr("Not saved")
                         cards: Widgets.lastLayout
                         wallpaper: layouts.wallpaper
                         mark: "refresh"
@@ -1304,7 +1304,7 @@ Item {
 
                             width: wp.tileW
                             title: modelData.name
-                            blurb: "Saved " + Qt.formatDate(new Date(modelData.saved || 0), "d MMM yyyy")
+                            blurb: I18n.tr("Saved %1", Qt.formatDate(new Date(modelData.saved || 0), I18n.tr("d MMM yyyy")))
                             cards: Widgets.presetLayout(modelData.id)
                             wallpaper: layouts.wallpaper
                             selected: Widgets.presetId === modelData.id
@@ -1336,7 +1336,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         role: "bodyMedium"
                         color: Theme.fgErrorContainer
-                        text: layouts.doomed ? "Delete “" + layouts.doomed.name + "”?" : ""
+                        text: layouts.doomed ? I18n.tr("Delete “%1”?", layouts.doomed.name) : ""
                         elide: Text.ElideRight
                     }
 
@@ -1348,7 +1348,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         variant: "text"
                         size: "xs"
-                        text: "Keep"
+                        text: I18n.tr("Keep")
                         contentOverride: Theme.fgErrorContainer
                         onClicked: layouts.doomed = null
                     }
@@ -1362,7 +1362,7 @@ Item {
                         variant: "filled"
                         danger: true
                         size: "xs"
-                        text: "Delete"
+                        text: I18n.tr("Delete")
                         onClicked: {
                             if (layouts.doomed)
                                 Widgets.deletePreset(layouts.doomed.id);
@@ -1382,7 +1382,7 @@ Item {
                     leftPadding: Theme.dp(4)
                     role: "labelLarge"
                     color: Theme.primary
-                    text: "Ready-made"
+                    text: I18n.tr("Ready-made")
                 }
 
                 Grid {

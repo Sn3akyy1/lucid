@@ -259,7 +259,7 @@ Rectangle {
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "Caps Lock"
+                            text: I18n.tr("Caps Lock")
                             color: Theme.warning
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabelSm

@@ -15,7 +15,7 @@ Item {
     property int currentIndex: 0
     // what to embolden in each title
     property string query: ""
-    property string emptyLabel: "No results"
+    property string emptyLabel: I18n.tr("No results")
     property string emptyHint: ""
     // an empty apps search is where the prefixes are worth teaching
     property bool showPrefixes: false
@@ -116,22 +116,22 @@ Item {
         switch (kind) {
         case "app":
         case "action":
-            return "Open";
+            return I18n.tr("Open");
         case "window":
-            return "Switch";
+            return I18n.tr("Switch");
         case "power":
-            return "Run";
+            return I18n.tr("Run");
         case "setting":
-            return "Settings";
+            return I18n.tr("Settings");
         case "web":
-            return "Browser";
+            return I18n.tr("Browser");
         case "run":
-            return "Run";
+            return I18n.tr("Run");
         case "runterm":
-            return "Terminal";
+            return I18n.tr("Terminal");
         case "calc":
         case "emoji":
-            return "Copy";
+            return I18n.tr("Copy");
         }
         return "";
     }
@@ -554,7 +554,7 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         role: "labelSmall"
                         size: list.ts("labelSmall")
-                        text: "Return"
+                        text: I18n.tr("Return")
                         color: list.mix(Theme.subtextDim, Theme.alpha(Theme.fgPrimaryContainer, 0.7), rowItem.lit)
                     }
 
@@ -996,16 +996,16 @@ Item {
             Repeater {
                 model: [{
                     "prefix": ">",
-                    "label": "Commands"
+                    "label": I18n.tr("Commands")
                 }, {
                     "prefix": "?",
-                    "label": "Web"
+                    "label": I18n.tr("Web")
                 }, {
                     "prefix": "$",
-                    "label": "Run"
+                    "label": I18n.tr("Run")
                 }, {
                     "prefix": ":",
-                    "label": "Emoji"
+                    "label": I18n.tr("Emoji")
                 }]
 
                 Item {

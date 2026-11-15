@@ -56,14 +56,14 @@ Singleton {
     // what the tile and the panel say under the name
     readonly property string status: {
         if (!root.available)
-            return "Install hyprsunset";
+            return I18n.tr("Install hyprsunset");
 
         // held by hand or not, on lasts to the window's end and off to its
         // start: a hold only ever runs up to the edge where the two agree
         if (root.schedule === "sun" || root.schedule === "custom")
-            return root.active ? "On until " + root.clock(root.toMin) : "Off until " + root.clock(root.fromMin);
+            return root.active ? I18n.tr("On until %1", root.clock(root.toMin)) : I18n.tr("Off until %1", root.clock(root.fromMin));
 
-        return root.active ? "On" : "Off";
+        return root.active ? I18n.tr("On") : I18n.tr("Off");
     }
 
     // how far the screen is warmed right now, 0 to 1. it chases active

@@ -44,7 +44,7 @@ Item {
             var show = DesktopIcons.showRows();
             if (show.length > 0)
                 arr.push({
-                "label": "View",
+                "label": I18n.tr("View"),
                 "glyph": "grid_view",
                 "submenu": show
             });
@@ -53,35 +53,35 @@ Item {
         var lead = arr.length > 0;
         arr.push({
             "id": "wallpaper",
-            "label": "Change Wallpaper",
+            "label": I18n.tr("Change Wallpaper"),
             "glyph": DockIcons.wallpaper,
             "divider": lead
         });
         arr.push({
             "id": "theme",
-            "label": "Change Theme",
+            "label": I18n.tr("Change Theme"),
             "glyph": DockIcons.palette
         });
         arr.push({
             "id": "editMode",
-            "label": Edit.active ? "Done Editing" : "Edit Desktop",
+            "label": Edit.active ? I18n.tr("Done Editing") : I18n.tr("Edit Desktop"),
             "glyph": Edit.active ? "check" : "edit",
             "divider": true
         });
         arr.push({
             "id": "screenshot",
-            "label": "Take a Screenshot",
+            "label": I18n.tr("Take a Screenshot"),
             "glyph": DockIcons.camera,
             "divider": true
         });
         arr.push({
             "id": "keyboard",
-            "label": "On-Screen Keyboard",
+            "label": I18n.tr("On-Screen Keyboard"),
             "glyph": DockIcons.keyboard
         });
         arr.push({
             "id": "settings",
-            "label": "Settings",
+            "label": I18n.tr("Settings"),
             "glyph": DockIcons.settings,
             "divider": true
         });

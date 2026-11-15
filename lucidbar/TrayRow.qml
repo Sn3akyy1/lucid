@@ -292,7 +292,7 @@ Item {
                 }
 
                 LText {
-                    readonly property string line: row.detail !== "" ? row.detail : (row.wants ? "Wants your attention" : "")
+                    readonly property string line: row.detail !== "" ? row.detail : (row.wants ? I18n.tr("Wants your attention") : "")
 
                     width: parent.width
                     visible: line !== ""

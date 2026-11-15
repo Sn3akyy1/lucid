@@ -441,7 +441,7 @@ Item {
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: strip.live ? "No videos in this folder" : "No wallpapers in this folder"
+            text: strip.live ? I18n.tr("No videos in this folder") : I18n.tr("No wallpapers in this folder")
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBody

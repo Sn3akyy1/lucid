@@ -74,7 +74,7 @@ Column {
     property string exportFormat: "lucid"
     property string exportState: "idle"
     property string exportMessage: ""
-    readonly property string exportName: paletteEditor.editing ? paletteEditor.themeName : (page.themeLabel || "My palette")
+    readonly property string exportName: paletteEditor.editing ? paletteEditor.themeName : (page.themeLabel || I18n.tr("My palette"))
 
     function applyTheme(id) {
         if (id !== page.currentTheme)
@@ -160,7 +160,7 @@ Column {
                 } catch (e) {
                 }
                 page.galleryState = r && r.ok ? "idle" : "error";
-                page.galleryError = r && !r.ok ? r.error : (r ? "" : "The gallery could not be read.");
+                page.galleryError = r && !r.ok ? r.error : (r ? "" : I18n.tr("The gallery could not be read."));
                 indexFile.reload();
             }
         }
@@ -179,7 +179,7 @@ Column {
                 }
                 page.busyScheme = "";
                 if (!r || !r.ok) {
-                    page.galleryError = r && r.error ? r.error : "That scheme could not be added.";
+                    page.galleryError = r && r.error ? r.error : I18n.tr("That scheme could not be added.");
                     return ;
                 }
                 Prefs.rescanThemes();
@@ -207,7 +207,7 @@ Column {
                 if (!r) {
                     page.addState = "error";
                     // a crash leaves stdout empty, so the traceback is the only clue
-                    page.addMessage = themeImport.errText.trim().split("\n").pop() || "Import failed.";
+                    page.addMessage = themeImport.errText.trim().split("\n").pop() || I18n.tr("Import failed.");
                     return ;
                 }
                 if (!r.ok) {
@@ -218,7 +218,7 @@ Column {
                 page.addState = "done";
                 page.addResult = r;
                 // the generated description is the point; the wallpaper count is an aside
-                page.addMessage = r.desc + (r.wallpapers > 0 ? "  \u00b7  " + r.wallpapers + " wallpapers" : "");
+                page.addMessage = r.desc + (r.wallpapers > 0 ? I18n.tr("  ·  %1 wallpapers", r.wallpapers) : "");
                 Prefs.rescanThemes();
             }
         }
@@ -279,15 +279,15 @@ Column {
     }
 
     SettingCard {
-        title: "GALLERY"
-        subtitle: "Colour schemes from tinted-theming, base16 and base24, each drawn in its own colours. Add one to your themes, or use it straight away."
+        title: I18n.tr("GALLERY")
+        subtitle: I18n.tr("Colour schemes from tinted-theming, base16 and base24, each drawn in its own colours. Add one to your themes, or use it straight away.")
 
         SettingRow {
-            title: page.schemes.length > 0 ? page.schemes.length + " schemes" : "Not downloaded yet"
-            description: page.galleryState === "working" ? "Downloading..." : (page.galleryState === "error" ? page.galleryError : (page.schemes.length > 0 ? "Downloaded " + new Date(page.galleryUpdated * 1000).toLocaleDateString(Qt.locale(), Locale.ShortFormat) + " from github.com/tinted-theming/schemes." : "About half a megabyte from github.com/tinted-theming/schemes, kept in ~/.cache/lucid/schemes."))
+            title: page.schemes.length > 0 ? I18n.tr("%1 schemes", page.schemes.length) : I18n.tr("Not downloaded yet")
+            description: page.galleryState === "working" ? I18n.tr("Downloading...") : (page.galleryState === "error" ? page.galleryError : (page.schemes.length > 0 ? I18n.tr("Downloaded %1 from github.com/tinted-theming/schemes.", new Date(page.galleryUpdated * 1000).toLocaleDateString(I18n.locale, Locale.ShortFormat)) : I18n.tr("About half a megabyte from github.com/tinted-theming/schemes, kept in ~/.cache/lucid/schemes.")))
 
             M3Button {
-                text: page.galleryState === "working" ? "Downloading..." : (page.schemes.length > 0 ? "Update" : "Download")
+                text: page.galleryState === "working" ? I18n.tr("Downloading...") : (page.schemes.length > 0 ? I18n.tr("Update") : I18n.tr("Download"))
                 variant: page.schemes.length > 0 ? "tonal" : "filled"
                 enabled: page.galleryState !== "working"
                 onClicked: page.updateGallery()
@@ -296,8 +296,8 @@ Column {
         }
 
         SettingRow {
-            title: "Browse"
-            description: page.filtered.length === page.schemes.length ? "Hover a scheme to add it or use it." : page.filtered.length + " of " + page.schemes.length + " match."
+            title: I18n.tr("Browse")
+            description: page.filtered.length === page.schemes.length ? I18n.tr("Hover a scheme to add it or use it.") : I18n.tr("%1 of %2 match.", page.filtered.length, page.schemes.length)
             visible: page.schemes.length > 0
             showDivider: false
             stacked: true
@@ -314,7 +314,7 @@ Column {
 
                     M3TextField {
                         width: galleryBar.width - galleryFilter.width - galleryBar.spacing
-                        placeholder: "Search by name or author"
+                        placeholder: I18n.tr("Search by name or author")
                         onEdited: (v) => {
                             return page.query = v;
                         }
@@ -328,13 +328,13 @@ Column {
                         current: page.variant
                         options: [{
                             "key": "all",
-                            "label": "All"
+                            "label": I18n.tr("All")
                         }, {
                             "key": "dark",
-                            "label": "Dark"
+                            "label": I18n.tr("Dark")
                         }, {
                             "key": "light",
-                            "label": "Light"
+                            "label": I18n.tr("Light")
                         }]
                         onChosen: (key) => {
                             return page.variant = key;
@@ -366,7 +366,7 @@ Column {
 
                 M3Button {
                     visible: page.filtered.length > page.shown
-                    text: "Show more (" + (page.filtered.length - page.shown) + " left)"
+                    text: I18n.tr("Show more (%1 left)", (page.filtered.length - page.shown))
                     onClicked: page.shown += 48
                 }
 
@@ -377,11 +377,11 @@ Column {
     }
 
     SettingCard {
-        title: "IMPORT"
+        title: I18n.tr("IMPORT")
 
         SettingRow {
-            title: "Import a scheme"
-            description: "From a colour-scheme repo, or a file you have. base16 and base24 YAML, name-keyed JSON (Catppuccin and friends) and palettes Lucid exported are read exactly; anything else gives up its hex codes, sorted by tone. A repo's wallpapers come along with it."
+            title: I18n.tr("Import a scheme")
+            description: I18n.tr("From a colour-scheme repo, or a file you have. base16 and base24 YAML, name-keyed JSON (Catppuccin and friends) and palettes Lucid exported are read exactly; anything else gives up its hex codes, sorted by tone. A repo's wallpapers come along with it.")
             showDivider: false
             stacked: true
 
@@ -401,7 +401,7 @@ Column {
                         id: repoField
 
                         width: importRows.fieldWidth
-                        placeholder: "https://github.com/catppuccin/palette"
+                        placeholder: I18n.tr("https://github.com/catppuccin/palette")
                         enabled: page.addState !== "working"
                         onEdited: (v) => {
                             return page.repoUrl = v;
@@ -414,7 +414,7 @@ Column {
 
                     M3Button {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: "Import repo"
+                        text: I18n.tr("Import repo")
                         variant: "filled"
                         enabled: page.repoUrl.trim() !== "" && page.addState !== "working"
                         iconPath: "add"
@@ -430,7 +430,7 @@ Column {
                         id: fileField
 
                         width: importRows.fieldWidth
-                        placeholder: "A scheme file, like ~/Downloads/nord.yaml"
+                        placeholder: I18n.tr("A scheme file, like ~/Downloads/nord.yaml")
                         enabled: page.addState !== "working"
                         onEdited: (v) => {
                             return page.filePath = v;
@@ -445,7 +445,7 @@ Column {
                         id: chooseButton
 
                         anchors.verticalCenter: parent.verticalCenter
-                        text: "Choose..."
+                        text: I18n.tr("Choose...")
                         enabled: page.addState !== "working"
                         onClicked: {
                             filePicker.command = ["python3", Qt.resolvedUrl("pickfile.py").toString().replace("file://", ""), "--title", "Choose a colour scheme"];
@@ -457,7 +457,7 @@ Column {
                         id: importFileButton
 
                         anchors.verticalCenter: parent.verticalCenter
-                        text: "Import file"
+                        text: I18n.tr("Import file")
                         variant: "filled"
                         enabled: page.filePath.trim() !== "" && page.addState !== "working"
                         iconPath: "add"
@@ -554,7 +554,7 @@ Column {
                         }
 
                         M3Button {
-                            text: "Apply"
+                            text: I18n.tr("Apply")
                             variant: "filled"
                             anchors.verticalCenter: parent.verticalCenter
                             visible: page.addState === "done" && page.addResult !== null
@@ -577,12 +577,12 @@ Column {
     }
 
     SettingCard {
-        title: "EDITOR"
-        subtitle: "The palette on screen, one colour at a time. The shell wears the draft while you work on it."
+        title: I18n.tr("EDITOR")
+        subtitle: I18n.tr("The palette on screen, one colour at a time. The shell wears the draft while you work on it.")
 
         SettingRow {
-            title: "Edit the palette"
-            description: "Pick a key colour and change it: the rest of the palette is built again from the six, the way an imported scheme is, and a colour that would not read against the background is moved to one that does. Any other role can be set by itself. Nothing is kept until you save it as a theme."
+            title: I18n.tr("Edit the palette")
+            description: I18n.tr("Pick a key colour and change it: the rest of the palette is built again from the six, the way an imported scheme is, and a colour that would not read against the background is moved to one that does. Any other role can be set by itself. Nothing is kept until you save it as a theme.")
             showDivider: false
             stacked: true
 
@@ -598,11 +598,11 @@ Column {
     }
 
     SettingCard {
-        title: "EXPORT"
+        title: I18n.tr("EXPORT")
 
         SettingRow {
-            title: "Save the palette to a file"
-            description: "The palette on screen, draft included. A Lucid palette keeps every role and imports back exactly as it is; base16 YAML works with tinted-theming's tools and templates, and anything else that reads base16."
+            title: I18n.tr("Save the palette to a file")
+            description: I18n.tr("The palette on screen, draft included. A Lucid palette keeps every role and imports back exactly as it is; base16 YAML works with tinted-theming's tools and templates, and anything else that reads base16.")
             showDivider: false
             stacked: true
 
@@ -619,10 +619,10 @@ Column {
                         current: page.exportFormat
                         options: [{
                             "key": "lucid",
-                            "label": "Lucid palette"
+                            "label": I18n.tr("Lucid palette")
                         }, {
                             "key": "base16",
-                            "label": "base16 YAML"
+                            "label": I18n.tr("base16 YAML")
                         }]
                         onChosen: (key) => {
                             return page.exportFormat = key;
@@ -631,7 +631,7 @@ Column {
 
                     M3Button {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: page.exportState === "working" ? "Saving..." : "Save as..."
+                        text: page.exportState === "working" ? I18n.tr("Saving...") : I18n.tr("Save as...")
                         variant: "filled"
                         enabled: page.exportState !== "working"
                         onClicked: {

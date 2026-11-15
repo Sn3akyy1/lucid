@@ -52,7 +52,7 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             // a change that needs an administrator waits on the polkit agent,
             // so say what the wait is for rather than just spinning
-            text: Users.busy ? "Applying — confirm the prompt if one appears." : Users.lastError
+            text: Users.busy ? I18n.tr("Applying — confirm the prompt if one appears.") : Users.lastError
             color: Users.busy || Users.lastErrorKind === "cancelled" ? Theme.subtext : Theme.fgErrorContainer
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyMd
@@ -141,36 +141,36 @@ Column {
                         var out = [];
                         if (u.accountType === Users.admin)
                             out.push({
-                                "label": "Administrator",
+                                "label": I18n.tr("Administrator"),
                                 "tone": "accent"
                             });
 
                         if (u.isMe)
                             out.push({
-                                "label": "This is you",
+                                "label": I18n.tr("This is you"),
                                 "tone": "plain"
                             });
                         else if (u.online)
                             out.push({
-                                "label": "Signed in",
+                                "label": I18n.tr("Signed in"),
                                 "tone": "good"
                             });
 
                         if (u.locked)
                             out.push({
-                                "label": "Locked",
+                                "label": I18n.tr("Locked"),
                                 "tone": "bad"
                             });
 
                         if (u.autoLogin)
                             out.push({
-                                "label": "Signs in automatically",
+                                "label": I18n.tr("Signs in automatically"),
                                 "tone": "plain"
                             });
 
                         if (u.passwordMode === Users.pwSetAtLogin)
                             out.push({
-                                "label": "Must set a password",
+                                "label": I18n.tr("Must set a password"),
                                 "tone": "warn"
                             });
 
@@ -245,14 +245,14 @@ Column {
             spacing: Theme.dp(8)
 
             M3Button {
-                text: "Change picture…"
+                text: I18n.tr("Change picture…")
                 variant: "tonal"
                 enabled: page.canEdit
                 onClicked: Users.avatarRequested(page.sel.uid)
             }
 
             M3Button {
-                text: "Remove account…"
+                text: I18n.tr("Remove account…")
                 variant: "text"
                 destructive: true
                 visible: !page.isMe && Users.canAdmin
@@ -265,8 +265,8 @@ Column {
 
     // every account on the machine; picking one points the page at it
     SettingCard {
-        title: "ACCOUNTS"
-        subtitle: Users.users.length === 1 ? "Only your account exists on this machine." : "Pick an account to see and change its settings."
+        title: I18n.tr("ACCOUNTS")
+        subtitle: Users.users.length === 1 ? I18n.tr("Only your account exists on this machine.") : I18n.tr("Pick an account to see and change its settings.")
 
         SettingRow {
             showDivider: false
@@ -406,7 +406,7 @@ Column {
 
                         Text {
                             width: Theme.dp(84)
-                            text: "Add"
+                            text: I18n.tr("Add")
                             color: Theme.subtext
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabelMd
@@ -434,13 +434,13 @@ Column {
     }
 
     SettingCard {
-        title: "PROFILE"
+        title: I18n.tr("PROFILE")
 
         SettingRow {
-            title: "Full name"
-            description: "Shown on the lock screen and wherever this machine greets you by name."
+            title: I18n.tr("Full name")
+            description: I18n.tr("Shown on the lock screen and wherever this machine greets you by name.")
             enabled: page.canEdit
-            disabledReason: "Only an administrator can change another account's name."
+            disabledReason: I18n.tr("Only an administrator can change another account's name.")
 
             M3TextField {
                 width: Theme.dp(260)
@@ -457,11 +457,11 @@ Column {
         }
 
         SettingRow {
-            title: "Username"
-            description: "The name this account signs in with. The home folder keeps its old name, so anything pointing at it still works."
-            warning: page.isMe ? "Renaming the account you are signed in to takes effect at your next sign-in." : ""
+            title: I18n.tr("Username")
+            description: I18n.tr("The name this account signs in with. The home folder keeps its old name, so anything pointing at it still works.")
+            warning: page.isMe ? I18n.tr("Renaming the account you are signed in to takes effect at your next sign-in.") : ""
             enabled: Users.canAdmin && page.hasSel && !page.sel.online
-            disabledReason: page.sel && page.sel.online ? "This account is signed in; sign it out before renaming it." : "Only an administrator can rename an account."
+            disabledReason: page.sel && page.sel.online ? I18n.tr("This account is signed in; sign it out before renaming it.") : I18n.tr("Only an administrator can rename an account.")
 
             M3TextField {
                 width: Theme.dp(260)
@@ -481,10 +481,10 @@ Column {
         }
 
         SettingRow {
-            title: "Account type"
-            description: "Administrators can install software, change settings for everyone and manage other accounts."
+            title: I18n.tr("Account type")
+            description: I18n.tr("Administrators can install software, change settings for everyone and manage other accounts.")
             enabled: Users.canAdmin && !page.lastAdmin
-            disabledReason: page.lastAdmin ? "This is the only administrator on the machine. Make another account an administrator first." : "Only an administrator can change this."
+            disabledReason: page.lastAdmin ? I18n.tr("This is the only administrator on the machine. Make another account an administrator first.") : I18n.tr("Only an administrator can change this.")
 
             M3Segmented {
                 width: Theme.dp(260)
@@ -492,10 +492,10 @@ Column {
                 current: page.sel ? page.sel.accountType : Users.standard
                 options: [{
                     "key": Users.standard,
-                    "label": "Standard"
+                    "label": I18n.tr("Standard")
                 }, {
                     "key": Users.admin,
-                    "label": "Administrator"
+                    "label": I18n.tr("Administrator")
                 }]
                 onChosen: (key) => {
                     return page.patch({
@@ -507,8 +507,8 @@ Column {
         }
 
         SettingRow {
-            title: "Login shell"
-            description: "What runs when this account opens a terminal or signs in to a console."
+            title: I18n.tr("Login shell")
+            description: I18n.tr("What runs when this account opens a terminal or signs in to a console.")
             enabled: page.canEdit
             stacked: true
 
@@ -551,15 +551,15 @@ Column {
         }
 
         SettingRow {
-            title: "Email"
-            description: "Kept with the account. Some applications read it to fill in your details."
+            title: I18n.tr("Email")
+            description: I18n.tr("Kept with the account. Some applications read it to fill in your details.")
             enabled: page.canEdit
 
             M3TextField {
                 width: Theme.dp(260)
                 enabled: page.canEdit
                 text: page.sel ? page.sel.email : ""
-                placeholder: "name@example.com"
+                placeholder: I18n.tr("name@example.com")
                 onAccepted: (v) => {
                     return page.patch({
                         "email": v.trim()
@@ -570,8 +570,8 @@ Column {
         }
 
         SettingRow {
-            title: "Location"
-            description: "Where this account is, for anything that asks."
+            title: I18n.tr("Location")
+            description: I18n.tr("Where this account is, for anything that asks.")
             showDivider: false
             enabled: page.canEdit
 
@@ -579,7 +579,7 @@ Column {
                 width: Theme.dp(260)
                 enabled: page.canEdit
                 text: page.sel ? page.sel.location : ""
-                placeholder: "Optional"
+                placeholder: I18n.tr("Optional")
                 onAccepted: (v) => {
                     return page.patch({
                         "location": v.trim()
@@ -592,32 +592,32 @@ Column {
     }
 
     SettingCard {
-        title: "PASSWORD"
+        title: I18n.tr("PASSWORD")
 
         SettingRow {
-            title: "Password"
-            description: page.sel && page.sel.passwordMode === Users.pwSetAtLogin ? "This account has no password yet and will be asked to choose one at its next sign-in." : "Changing a password asks an administrator to confirm before it is written."
+            title: I18n.tr("Password")
+            description: page.sel && page.sel.passwordMode === Users.pwSetAtLogin ? I18n.tr("This account has no password yet and will be asked to choose one at its next sign-in.") : I18n.tr("Changing a password asks an administrator to confirm before it is written.")
             enabled: page.canEdit
 
             M3Button {
-                text: "Change…"
+                text: I18n.tr("Change…")
                 variant: "tonal"
                 enabled: page.canEdit
-                onClicked: Users.passwordRequested(page.sel.uid, page.isMe ? "Change your password" : "Set a password for " + Users.displayName(page.sel), page.isMe ? "You will use this the next time you sign in or unlock the screen." : "Tell them what you chose, or have them set their own at first sign-in.", page.sel.passwordHint)
+                onClicked: Users.passwordRequested(page.sel.uid, page.isMe ? I18n.tr("Change your password") : I18n.tr("Set a password for %1", Users.displayName(page.sel)), page.isMe ? I18n.tr("You will use this the next time you sign in or unlock the screen.") : I18n.tr("Tell them what you chose, or have them set their own at first sign-in."), page.sel.passwordHint)
             }
 
         }
 
         SettingRow {
-            title: "Password hint"
-            description: "Shown after a failed sign-in. Anyone at the machine can read it, so keep it away from the password itself."
+            title: I18n.tr("Password hint")
+            description: I18n.tr("Shown after a failed sign-in. Anyone at the machine can read it, so keep it away from the password itself.")
             enabled: page.canEdit
 
             M3TextField {
                 width: Theme.dp(260)
                 enabled: page.canEdit
                 text: page.sel ? page.sel.passwordHint : ""
-                placeholder: "Optional"
+                placeholder: I18n.tr("Optional")
                 onAccepted: (v) => {
                     return page.patch({
                         "passwordHint": v.trim()
@@ -628,10 +628,10 @@ Column {
         }
 
         SettingRow {
-            title: "Ask for a new password at next sign-in"
-            description: "Clears the current password and makes this account choose one before it can get in."
+            title: I18n.tr("Ask for a new password at next sign-in")
+            description: I18n.tr("Clears the current password and makes this account choose one before it can get in.")
             enabled: Users.canAdmin && !page.isMe
-            disabledReason: page.isMe ? "You cannot clear your own password this way. Change it above instead." : "Only an administrator can change this."
+            disabledReason: page.isMe ? I18n.tr("You cannot clear your own password this way. Change it above instead.") : I18n.tr("Only an administrator can change this.")
 
             M3Switch {
                 checked: page.sel ? page.sel.passwordMode === Users.pwSetAtLogin : false
@@ -646,11 +646,11 @@ Column {
         }
 
         SettingRow {
-            title: "Lock the account"
-            description: "Keeps the account and its files but refuses every sign-in until it is unlocked again."
+            title: I18n.tr("Lock the account")
+            description: I18n.tr("Keeps the account and its files but refuses every sign-in until it is unlocked again.")
             showDivider: false
             enabled: Users.canAdmin && !page.isMe
-            disabledReason: page.isMe ? "You cannot lock the account you are signed in to." : "Only an administrator can change this."
+            disabledReason: page.isMe ? I18n.tr("You cannot lock the account you are signed in to.") : I18n.tr("Only an administrator can change this.")
 
             M3Switch {
                 checked: page.sel ? page.sel.locked : false
@@ -667,15 +667,15 @@ Column {
     }
 
     SettingCard {
-        title: "SIGNING IN"
+        title: I18n.tr("SIGNING IN")
 
         SettingRow {
-            title: "Sign in automatically"
-            description: "Goes straight to the desktop at start-up without asking for a password. Only one account on a machine can do this."
-            warning: page.sel && page.sel.autoLogin ? "Anyone who can switch this machine on gets into this account." : ""
+            title: I18n.tr("Sign in automatically")
+            description: I18n.tr("Goes straight to the desktop at start-up without asking for a password. Only one account on a machine can do this.")
+            warning: page.sel && page.sel.autoLogin ? I18n.tr("Anyone who can switch this machine on gets into this account.") : ""
             showDivider: false
             enabled: Users.canAdmin && page.hasSel && !page.sel.locked
-            disabledReason: page.sel && page.sel.locked ? "A locked account cannot sign in at all." : "Only an administrator can change this."
+            disabledReason: page.sel && page.sel.locked ? I18n.tr("A locked account cannot sign in at all.") : I18n.tr("Only an administrator can change this.")
 
             M3Switch {
                 checked: page.sel ? page.sel.autoLogin : false
@@ -692,14 +692,14 @@ Column {
     }
 
     SettingCard {
-        title: "GROUPS"
-        subtitle: "What this account is allowed to reach beyond its own files — sound devices, printers, virtual machines and the like. Administrator rights are set by the account type above, not here."
+        title: I18n.tr("GROUPS")
+        subtitle: I18n.tr("What this account is allowed to reach beyond its own files — sound devices, printers, virtual machines and the like. Administrator rights are set by the account type above, not here.")
 
         SettingRow {
             showDivider: false
             stacked: true
             enabled: Users.canAdmin
-            disabledReason: "Only an administrator can change group membership."
+            disabledReason: I18n.tr("Only an administrator can change group membership.")
 
             Column {
                 width: parent.width
@@ -739,7 +739,7 @@ Column {
 
                 Text {
                     width: parent.width
-                    text: page.sel && page.sel.groups.length > 0 ? "In: " + page.sel.groups.join(", ") : ""
+                    text: page.sel && page.sel.groups.length > 0 ? I18n.tr("In: %1", page.sel.groups.join(", ")) : ""
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodySm
@@ -756,16 +756,16 @@ Column {
     }
 
     SettingCard {
-        title: "HISTORY"
+        title: I18n.tr("HISTORY")
 
         SettingRow {
-            title: "Last signed in"
-            description: page.sel && page.sel.lastLogin > 0 ? Qt.formatDateTime(new Date(page.sel.lastLogin * 1000), "dddd d MMMM yyyy, HH:mm") : "This account has never signed in."
+            title: I18n.tr("Last signed in")
+            description: page.sel && page.sel.lastLogin > 0 ? Qt.formatDateTime(new Date(page.sel.lastLogin * 1000), I18n.tr("dddd d MMMM yyyy, HH:mm")) : I18n.tr("This account has never signed in.")
         }
 
         SettingRow {
-            title: "Sign-ins recorded"
-            description: page.sel ? page.sel.logins + (page.sel.logins === 1 ? " time" : " times") : ""
+            title: I18n.tr("Sign-ins recorded")
+            description: page.sel ? page.sel.logins + (page.sel.logins === 1 ? I18n.tr(" time") : I18n.tr(" times")) : ""
             showDivider: false
         }
 

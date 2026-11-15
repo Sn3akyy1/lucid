@@ -479,7 +479,7 @@ Item {
                 LText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     role: "titleMedium"
-                    text: slot.isVideo ? "Can't play this video" : "Can't show this picture"
+                    text: slot.isVideo ? I18n.tr("Can't play this video") : I18n.tr("Can't show this picture")
                     color: Theme.text
                 }
 

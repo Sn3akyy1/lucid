@@ -100,7 +100,7 @@ Singleton {
     }
 
     function typeLabel(t) {
-        return t === root.admin ? "Administrator" : "Standard";
+        return t === root.admin ? I18n.tr("Administrator") : I18n.tr("Standard");
     }
 
     function isOnlyAdmin(uid) {
@@ -156,7 +156,7 @@ Singleton {
     function send(mode, cmd, label) {
         // one at a time: two polkit prompts at once help nobody
         if (root.busy) {
-            root.lastError = "Still applying the last change — try that again in a moment.";
+            root.lastError = I18n.tr("Still applying the last change — try that again in a moment.");
             root.lastErrorKind = "busy";
             return ;
         }
@@ -202,12 +202,12 @@ Singleton {
                 try {
                     d = JSON.parse(this.text.trim() || "{}");
                 } catch (e) {
-                    root.lastError = "could not read this machine's accounts";
+                    root.lastError = I18n.tr("could not read this machine's accounts");
                     root.probed = true;
                     return ;
                 }
                 if (d.ok === false) {
-                    root.lastError = d.error || "could not read this machine's accounts";
+                    root.lastError = d.error || I18n.tr("could not read this machine's accounts");
                     root.lastErrorKind = d.kind || "error";
                     root.probed = true;
                     return ;
@@ -306,13 +306,13 @@ Singleton {
                 try {
                     r = JSON.parse(this.text.trim() || "{}");
                 } catch (e) {
-                    root.lastError = "that change could not be made";
+                    root.lastError = I18n.tr("that change could not be made");
                     root.lastErrorKind = "error";
                     root.failed(root.lastError, "error");
                     return ;
                 }
                 if (r.ok === false) {
-                    root.lastError = r.error || "that change could not be made";
+                    root.lastError = r.error || I18n.tr("that change could not be made");
                     root.lastErrorKind = r.kind || "error";
                     root.failed(root.lastError, root.lastErrorKind);
                     return ;

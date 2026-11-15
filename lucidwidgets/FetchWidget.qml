@@ -9,16 +9,16 @@ WidgetBody {
     id: w
 
     readonly property var sample: ({
-        "os": "Arch Linux",
+        "os": I18n.tr("Arch Linux"),
         "kernel": "6.12.1-arch1-1",
         "host": "lucid",
         "user": "you",
         "shell": "fish",
-        "cpuModel": "Intel Core i5-1135G7",
+        "cpuModel": I18n.tr("Intel Core i5-1135G7"),
         "cores": "8",
-        "gpuModel": "Intel Iris Xe Graphics",
+        "gpuModel": I18n.tr("Intel Iris Xe Graphics"),
         "packages": "1042",
-        "model": "Laptop"
+        "model": I18n.tr("Laptop")
     })
     readonly property var info: w.preview ? w.sample : Sys.info
     readonly property real up: w.preview ? 186000 : Sys.uptime
@@ -36,14 +36,14 @@ WidgetBody {
 
         }
         add("computer", "OS", i.os);
-        add("deployed_code", "Kernel", i.kernel);
-        add("schedule", "Uptime", Sys.duration(w.up));
-        add("inventory_2", "Packages", i.packages ? i.packages + " (pacman)" : "");
-        add("terminal", "Shell", i.shell);
-        add("dashboard", "WM", "Hyprland");
+        add("deployed_code", I18n.tr("Kernel"), i.kernel);
+        add("schedule", I18n.tr("Uptime"), Sys.duration(w.up));
+        add("inventory_2", I18n.tr("Packages"), i.packages ? I18n.tr("%1 (pacman)", i.packages) : "");
+        add("terminal", I18n.tr("Shell"), i.shell);
+        add("dashboard", "WM", I18n.tr("Hyprland"));
         add("memory", "CPU", i.cpuModel ? i.cpuModel + (i.cores ? " ×" + i.cores : "") : "");
         add("developer_board", "GPU", i.gpuModel);
-        add("memory_alt", "Memory", w.memText);
+        add("memory_alt", I18n.tr("Memory"), w.memText);
         return out;
     }
     readonly property var swatches: [Theme.primary, Theme.secondary, Theme.tertiary, Theme.error, Theme.primaryContainer, Theme.secondaryContainer, Theme.tertiaryContainer, Theme.surfaceHighest]
@@ -90,7 +90,7 @@ WidgetBody {
                 LText {
                     role: "labelMedium"
                     color: w.inkDim
-                    text: "Lucid on " + (w.info.os || "Linux")
+                    text: I18n.tr("Lucid on ") + (w.info.os || I18n.tr("Linux"))
                 }
 
             }
@@ -193,7 +193,7 @@ WidgetBody {
                 font.pixelSize: Theme.dp(13)
                 color: w.inkDim
                 textFormat: Text.StyledText
-                text: "<font color='" + Theme.toHex(w.inkAccent) + "'>❯</font> lucidfetch"
+                text: "<font color='" + Theme.toHex(w.inkAccent) + "'>❯</font> lucidfetch" // i18n-skip: markup
             }
 
             Item {
@@ -228,7 +228,7 @@ WidgetBody {
                     color: w.ink
                     elide: Text.ElideRight
                     textFormat: Text.StyledText
-                    text: "<font color='" + Theme.toHex(w.inkAccent) + "'><b>" + modelData.key + "</b></font>: " + String(modelData.value).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                    text: "<font color='" + Theme.toHex(w.inkAccent) + "'><b>" + modelData.key + "</b></font>: " + String(modelData.value).replace(/&/g, I18n.tr("&amp;")).replace(/</g, I18n.tr("&lt;")) // i18n-skip: markup
                 }
 
             }

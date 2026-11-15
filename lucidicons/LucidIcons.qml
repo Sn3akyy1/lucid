@@ -16,12 +16,12 @@ Singleton {
     // every set, in the order a picker lists them; each file is themes/<id>.json
     readonly property var sets: [{
         "id": "gravity",
-        "name": "Gravity",
-        "blurb": "Soft, top-lit gradients"
+        "name": I18n.tr("Gravity"),
+        "blurb": I18n.tr("Soft, top-lit gradients")
     }, {
         "id": "gravity-simplified",
-        "name": "Gravity (Simplified)",
-        "blurb": "The same icons in flat tones"
+        "name": I18n.tr("Gravity (Simplified)"),
+        "blurb": I18n.tr("The same icons in flat tones")
     }]
     // the set in use: the shell keeps it on Prefs.envIconSet, lumen on what prefs.json says
     property string set: "gravity"

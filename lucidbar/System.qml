@@ -415,10 +415,10 @@ BarPill {
         switch (root.tipViewKind) {
         case "wifi":
             if (wifiPanel.primaryIsEthernet)
-                return "Wired connection";
+                return I18n.tr("Wired connection");
 
             if (!Networking.wifiEnabled)
-                return "Wi-Fi off";
+                return I18n.tr("Wi-Fi off");
 
             if (wifiPanel.connecting)
                 return "Connecting…";
@@ -426,27 +426,27 @@ BarPill {
             if (wifiPanel.wifiConnected && wifiPanel.activeNetwork)
                 return wifiPanel.activeNetwork.name;
 
-            return "Not connected";
+            return I18n.tr("Not connected");
         case "bluetooth":
             if (!root.btEnabled)
-                return "Bluetooth off";
+                return I18n.tr("Bluetooth off");
 
             if (btPanel.connectedDevices.length === 1)
                 return btPanel.connectedDevices[0].name;
 
             if (btPanel.connectedDevices.length > 1)
-                return btPanel.connectedDevices.length + " devices";
+                return I18n.tr("%1 devices", btPanel.connectedDevices.length);
 
             if (btPanel.anyConnecting)
                 return "Connecting…";
 
-            return "Not connected";
+            return I18n.tr("Not connected");
         case "volume":
-            return root.volMuted ? "Muted" : root.volumePercent + "%";
+            return root.volMuted ? I18n.tr("Muted") : root.volumePercent + "%";
         case "mic":
-            return root.micMuted ? "Muted" : "Active";
+            return root.micMuted ? I18n.tr("Muted") : I18n.tr("Active");
         case "battery":
-            return root.batteryPresent ? root.batteryPercent + "%" : "No battery";
+            return root.batteryPresent ? root.batteryPercent + "%" : I18n.tr("No battery");
         }
         return "";
     }
@@ -454,13 +454,13 @@ BarPill {
         switch (root.tipViewKind) {
         case "wifi":
             if (wifiPanel.primaryIsEthernet)
-                return wifiPanel.wiredDevice ? wifiPanel.wiredDevice.name : "Wired";
+                return wifiPanel.wiredDevice ? wifiPanel.wiredDevice.name : I18n.tr("Wired");
 
             if (!Networking.wifiEnabled)
-                return "Radio disabled";
+                return I18n.tr("Radio disabled");
 
             if (!wifiPanel.wifiConnected)
-                return wifiPanel.nearbyNetworks.length + " networks nearby";
+                return I18n.tr("%1 networks nearby", wifiPanel.nearbyNetworks.length);
 
             const warn = wifiPanel.connectivityLabel();
             const sig = wifiPanel.strengthLabel(wifiPanel.signalStrength) + " · " + Math.round(wifiPanel.signalStrength) + "%";
@@ -471,7 +471,7 @@ BarPill {
 
             if (btPanel.connectedDevices.length === 1) {
                 const b = btPanel.getBatteryText(btPanel.connectedDevices[0]);
-                return b !== "" ? "Connected · " + b + " battery" : "Connected";
+                return b !== "" ? I18n.tr("Connected · %1 battery", b) : I18n.tr("Connected");
             }
             if (btPanel.connectedDevices.length > 1)
                 return btPanel.connectedDevices.map((d) => {
@@ -481,7 +481,7 @@ BarPill {
             if (btPanel.discovering)
                 return "Scanning…";
 
-            return btPanel.pairedDevices.length + " paired";
+            return I18n.tr("%1 paired", btPanel.pairedDevices.length);
         case "volume":
             return root.deviceLabel(root.sink);
         case "mic":
@@ -499,9 +499,9 @@ BarPill {
             return "";
 
         if (root.battery.state === UPowerDeviceState.FullyCharged)
-            return "Fully charged";
+            return I18n.tr("Fully charged");
 
-        return root.batteryCharging ? "Charging" : "On battery";
+        return root.batteryCharging ? I18n.tr("Charging") : I18n.tr("On battery");
     }
     readonly property string tipBatteryTime: {
         if (!root.battery)
@@ -514,13 +514,13 @@ BarPill {
         const h = Math.floor(secs / 3600);
         const m = Math.round((secs % 3600) / 60);
         const body = h > 0 ? h + "h " + m + "m" : m + "m";
-        return root.batteryCharging ? body + " to full" : body + " left";
+        return root.batteryCharging ? I18n.tr("%1 to full", body) : I18n.tr("%1 left", body);
     }
 
     // the stat card's second line: draw while discharging, else time
     readonly property string batteryDetail: {
         if (!root.batteryPresent)
-            return "no battery";
+            return I18n.tr("no battery");
 
         const rate = root.battery ? root.battery.changeRate : 0;
         if (!root.batteryCharging && rate > 0.05)
@@ -532,7 +532,7 @@ BarPill {
         if (root.batteryCharging && root.battery && root.battery.state === UPowerDeviceState.FullyCharged)
             return "full";
 
-        return root.batteryCharging ? "charging" : "on battery";
+        return root.batteryCharging ? "charging" : I18n.tr("on battery");
     }
 
     onTipWantedChanged: {
@@ -1170,21 +1170,21 @@ BarPill {
     function tileLabel(key) {
         switch (key) {
         case "wifi":
-            return wifiPanel.primaryIsEthernet ? "Ethernet" : "Wi-Fi";
+            return wifiPanel.primaryIsEthernet ? I18n.tr("Ethernet") : "Wi-Fi";
         case "location":
-            return Prefs.gpsEnabled && Loc.busy ? "Locating" : "Location";
+            return Prefs.gpsEnabled && Loc.busy ? I18n.tr("Locating") : I18n.tr("Location");
         case "record":
-            return Capture.active ? Capture.clock(Capture.seconds) : "Record";
+            return Capture.active ? Capture.clock(Capture.seconds) : I18n.tr("Record");
         case "timer":
-            return Chrono.headline ? Chrono.countdown(Chrono.headline.left) : "Timer";
+            return Chrono.headline ? Chrono.countdown(Chrono.headline.left) : I18n.tr("Timer");
         case "gamemode":
             if (root.gameModeBusy)
-                return root.gameModeOn ? "Starting" : "Stopping";
+                return root.gameModeOn ? I18n.tr("Starting") : I18n.tr("Stopping");
 
-            return root.gameModeFailed ? "Failed" : "Game";
+            return root.gameModeFailed ? I18n.tr("Failed") : I18n.tr("Game");
         }
         if (root.ownFailed[key])
-            return "Failed";
+            return I18n.tr("Failed");
 
         const t = Prefs.systemTileAt(key);
         return t ? t.name : "";
@@ -1590,7 +1590,7 @@ BarPill {
     }
 
     readonly property var mprisPlayer: root.mprisMod ? root.mprisMod.player : null
-    readonly property string mediaTitle: root.mprisMod ? root.mprisMod.title : "Nothing playing"
+    readonly property string mediaTitle: root.mprisMod ? root.mprisMod.title : I18n.tr("Nothing playing")
     readonly property string mediaArtist: root.mprisMod ? root.mprisMod.artist : ""
     readonly property string mediaArt: root.mprisMod ? root.mprisMod.artSource : ""
     readonly property real mediaProgress: (root.mprisMod && root.mprisMod.lenSec > 0) ? Math.max(0, Math.min(1, root.mprisMod.livePosSec / root.mprisMod.lenSec)) : 0
@@ -1649,7 +1649,7 @@ BarPill {
             return {
                 "value": root.cpuPercent / 100,
                 "center": root.cpuHistory.length > 0 ? Math.round(root.cpuPercent) + "" : "—",
-                "label": "CPU",
+                "label": I18n.tr("CPU"),
                 "detail": root.cpuTemp > 0 ? Units.degUnit(root.cpuTemp) : "",
                 "tone": root.cpuTemp >= 85 ? Theme.error : Theme.accent,
                 "icon": "",
@@ -1661,7 +1661,7 @@ BarPill {
             return {
                 "value": root.ramPercent / 100,
                 "center": root.ramHistory.length > 0 ? Math.round(root.ramPercent) + "" : "—",
-                "label": "Memory",
+                "label": I18n.tr("Memory"),
                 "detail": root.ramTotalGB > 0 ? root.ramUsedGB.toFixed(1) + " GB" : "",
                 "tone": Theme.accent,
                 "icon": "",
@@ -1673,7 +1673,7 @@ BarPill {
             return {
                 "value": root.diskPct,
                 "center": root.selectedDiskInfo && root.selectedDiskInfo.mounted ? Math.round(root.diskPct * 100) + "" : "—",
-                "label": root.selectedDisk || "Disk",
+                "label": root.selectedDisk || I18n.tr("Disk"),
                 "detail": root.selectedDiskInfo ? (root.selectedDiskInfo.mounted ? Math.round(root.selectedDiskInfo.avail / 1.07374e+09) + " GB free" : "not mounted") : "",
                 "tone": root.diskPct * 100 > 100 - Prefs.storageLowPercent ? Theme.error : Theme.accent,
                 "icon": "",
@@ -1683,7 +1683,7 @@ BarPill {
         return {
             "value": root.batteryPresent ? root.batteryPercent / 100 : 0,
             "center": root.batteryPresent ? root.batteryPercent + "" : "—",
-            "label": "Battery",
+            "label": I18n.tr("Battery"),
             "detail": root.batteryDetail,
             "tone": root.batteryPercent <= 20 && !root.batteryCharging ? Theme.error : Theme.accent,
             "icon": root.batteryCharging ? "bolt" : ""
@@ -1720,17 +1720,17 @@ BarPill {
     function bigName(key) {
         switch (key) {
         case "dnd":
-            return "Do not disturb";
+            return I18n.tr("Do not disturb");
         case "awake":
-            return "Stay awake";
+            return I18n.tr("Stay awake");
         case "dark":
-            return "Dark mode";
+            return I18n.tr("Dark mode");
         case "mic":
-            return "Microphone";
+            return I18n.tr("Microphone");
         case "gamemode":
-            return "Game mode";
+            return I18n.tr("Game mode");
         case "profile":
-            return "Power profile";
+            return I18n.tr("Power profile");
         }
         return root.tileLabel(key);
     }
@@ -1743,27 +1743,27 @@ BarPill {
         case "bluetooth":
             return btPanel.label;
         case "airplane":
-            return on ? "Radios off" : "Off";
+            return on ? I18n.tr("Radios off") : I18n.tr("Off");
         case "dnd":
-            return on ? "Silenced" : "Off";
+            return on ? I18n.tr("Silenced") : I18n.tr("Off");
         case "awake":
-            return on ? "Staying awake" : "Idle allowed";
+            return on ? I18n.tr("Staying awake") : I18n.tr("Idle allowed");
         case "location":
-            return !on ? "Off" : (Loc.busy ? "Locating" : "On");
+            return !on ? I18n.tr("Off") : (Loc.busy ? I18n.tr("Locating") : I18n.tr("On"));
         case "mic":
-            return on ? "On" : "Muted";
+            return on ? I18n.tr("On") : I18n.tr("Muted");
         case "gamemode":
             if (root.gameModeBusy)
-                return root.gameModeOn ? "Starting" : "Stopping";
+                return root.gameModeOn ? I18n.tr("Starting") : I18n.tr("Stopping");
 
             if (root.gameModeFailed)
-                return "Failed";
+                return I18n.tr("Failed");
 
-            return !root.gameModeConfigured ? "Set it up" : (on ? "On" : "Off");
+            return !root.gameModeConfigured ? I18n.tr("Set it up") : (on ? I18n.tr("On") : I18n.tr("Off"));
         case "profile":
             return Power.name(Power.profile);
         case "vpn":
-            return Net.activeVpn ? Net.activeVpn.name : (Net.vpns.length > 0 ? "Off" : "None set up");
+            return Net.activeVpn ? Net.activeVpn.name : (Net.vpns.length > 0 ? I18n.tr("Off") : I18n.tr("None set up"));
         case "record":
         case "timer":
             return root.tileLabel(key);
@@ -1771,17 +1771,17 @@ BarPill {
         const own = Prefs.systemOwnTile(key);
         if (own) {
             if (root.ownBusy[key])
-                return on ? "Starting" : "Stopping";
+                return on ? I18n.tr("Starting") : I18n.tr("Stopping");
 
             if (root.ownFailed[key])
-                return "Failed";
+                return I18n.tr("Failed");
 
             if (own.on.trim() === "")
-                return "Set it up";
+                return I18n.tr("Set it up");
 
-            return own.off.trim() === "" ? "" : (on ? "On" : "Off");
+            return own.off.trim() === "" ? "" : (on ? I18n.tr("On") : I18n.tr("Off"));
         }
-        return root.tileChecked(key) ? "On" : "";
+        return root.tileChecked(key) ? I18n.tr("On") : "";
     }
 
     // the tiles with a page of their own: a right click on a small one, the
@@ -1998,7 +1998,7 @@ BarPill {
                         LText {
                             role: "titleMedium"
                             weight: 600
-                            text: Qt.formatDate(root.nowDate, "dddd, d MMMM")
+                            text: Qt.formatDate(root.nowDate, I18n.tr("dddd, d MMMM"))
                         }
 
                         LText {
@@ -2170,17 +2170,17 @@ BarPill {
                         text: {
                             switch (root.view) {
                             case "wifi":
-                                return "Internet";
+                                return I18n.tr("Internet");
                             case "bluetooth":
-                                return "Bluetooth";
+                                return I18n.tr("Bluetooth");
                             case "output":
-                                return "Sound output";
+                                return I18n.tr("Sound output");
                             case "power":
-                                return "Power";
+                                return I18n.tr("Power");
                             case "profile":
-                                return "Power profile";
+                                return I18n.tr("Power profile");
                             case "nightlight":
-                                return "Night light";
+                                return I18n.tr("Night light");
                             }
                             return "";
                         }
@@ -2296,7 +2296,7 @@ BarPill {
                                 disabled: !devOpt.usable
                                 icon: devOpt.lower.indexOf("head") >= 0 || devOpt.lower.indexOf("bluez") >= 0 ? "headphones" : (devOpt.lower.indexOf("hdmi") >= 0 ? "tv" : "speaker")
                                 headline: root.deviceLabel(devOpt.modelData)
-                                supporting: devOpt.isCurrent ? "Playing here" : (devOpt.usable ? "" : "Not connected")
+                                supporting: devOpt.isCurrent ? I18n.tr("Playing here") : (devOpt.usable ? "" : I18n.tr("Not connected"))
                                 onClicked: {
                                     if (devOpt.usable)
                                         Pipewire.preferredDefaultAudioSink = devOpt.modelData;
@@ -2319,7 +2319,7 @@ BarPill {
                             horizontalAlignment: Text.AlignHCenter
                             role: "bodyMedium"
                             color: Theme.subtext
-                            text: "No output devices"
+                            text: I18n.tr("No output devices")
                             topPadding: root.sp5
                             bottomPadding: root.sp5
                         }
@@ -2341,7 +2341,7 @@ BarPill {
                                 leftPadding: Theme.dp(6)
                                 role: "titleSmall"
                                 color: Theme.primary
-                                text: "App volume"
+                                text: I18n.tr("App volume")
                             }
 
                         }
@@ -2425,7 +2425,7 @@ BarPill {
                                 containerColor: pw.armed ? Theme.errorContainer : Theme.withBlur(Theme.surfaceHigh)
                                 icon: pw.modelData.icon
                                 iconColor: pw.armed ? Theme.fgErrorContainer : Theme.subtext
-                                headline: pw.armed ? "Click again to " + pw.modelData.label.toLowerCase() : pw.modelData.label
+                                headline: pw.armed ? I18n.tr("Click again to %1", pw.modelData.label.toLowerCase()) : pw.modelData.label
                                 onClicked: root.powerPick(pw.modelData.id)
                             }
 

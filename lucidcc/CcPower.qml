@@ -47,7 +47,7 @@ Item {
             role: "bodySmall"
             color: Theme.subtext
             elide: Text.ElideRight
-            text: Power.degradation !== "" && Power.profile === PowerProfile.Performance ? "Held back" : Power.description(Power.profile)
+            text: Power.degradation !== "" && Power.profile === PowerProfile.Performance ? I18n.tr("Held back") : Power.description(Power.profile)
         }
 
     }
@@ -129,7 +129,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         role: "labelLarge"
                         color: seg.on ? Theme.fgPrimary : Theme.text
-                        text: seg.modelData === PowerProfile.PowerSaver ? "Saver" : Power.name(seg.modelData)
+                        text: seg.modelData === PowerProfile.PowerSaver ? I18n.tr("Saver") : Power.name(seg.modelData)
                     }
 
                 }

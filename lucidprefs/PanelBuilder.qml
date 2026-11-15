@@ -220,10 +220,10 @@ Item {
     signal editOwnTile(string key)
 
     readonly property var shelfTabs: [
-        { "key": "blocks", "label": "Blocks" },
-        { "key": "tiles", "label": "Tiles" },
-        { "key": "sliders", "label": "Sliders" },
-        { "key": "gauges", "label": "Gauges" }
+        { "key": "blocks", "label": I18n.tr("Blocks") },
+        { "key": "tiles", "label": I18n.tr("Tiles") },
+        { "key": "sliders", "label": I18n.tr("Sliders") },
+        { "key": "gauges", "label": I18n.tr("Gauges") }
     ]
     // what the shelf offers on a page: every block, shown or not, and the
     // pieces not on the panel yet
@@ -538,7 +538,7 @@ Item {
         if (builder.selected === key)
             builder.selected = "";
 
-        builder.tell(builder.blockName(key) + " is off the panel");
+        builder.tell(I18n.tr("%1 is off the panel", builder.blockName(key)));
     }
 
     function removePiece(block, key) {
@@ -546,7 +546,7 @@ Item {
         builder.setKeys(block, builder.keysOf(block).filter((k) => {
             return k !== key;
         }));
-        builder.tell((e ? e.name : key) + " is off the panel");
+        builder.tell(I18n.tr("%1 is off the panel", (e ? e.name : key)));
     }
 
     // a change is kept once the prefs settle, so a drag, or a turn that
@@ -721,26 +721,26 @@ Item {
                 items.push({
                 "act": "big",
                 "icon": "dashboard",
-                "label": "Make it big"
+                "label": I18n.tr("Make it big")
             });
             else if (block === "bigtiles")
                 items.push({
                 "act": "small",
                 "icon": "apps",
-                "label": "Make it small"
+                "label": I18n.tr("Make it small")
             });
             if (Prefs.systemOwnTile(key))
                 items.push({
                 "act": "edit",
                 "icon": "edit",
-                "label": "Edit this tile"
+                "label": I18n.tr("Edit this tile")
             });
 
             if (builder.isTiles(block) || card.order.length > 1)
                 items.push({
                 "act": "off",
                 "icon": "close",
-                "label": "Take it off"
+                "label": I18n.tr("Take it off")
             });
 
             if (items.length > 0)
@@ -753,19 +753,19 @@ Item {
             items.push({
             "act": "turn",
             "icon": builder.slidersStand ? "width" : "height",
-            "label": builder.slidersStand ? "Lay them down" : "Stand them up"
+            "label": builder.slidersStand ? I18n.tr("Lay them down") : I18n.tr("Stand them up")
         });
 
         items.push({
             "act": "size",
             "icon": "restart_alt",
-            "label": "Reset its size"
+            "label": I18n.tr("Reset its size")
         });
         if (Prefs.systemBlockKeys.length > 1)
             items.push({
             "act": "hide",
             "icon": "visibility_off",
-            "label": "Hide " + builder.blockName(block)
+            "label": I18n.tr("Hide %1", builder.blockName(block))
         });
 
         // and the looks it can take, the one it has ticked
@@ -773,7 +773,7 @@ Item {
         if (looks.length > 1) {
             items.push({
                 "act": "",
-                "label": "Look"
+                "label": I18n.tr("Look")
             });
             for (const l of looks)
                 items.push({
@@ -969,8 +969,8 @@ Item {
         // the blocks that read the shell's own sources show them live here too
         readonly property bool sampling: true
         readonly property var tilePages: ["wifi", "bluetooth", "profile", "nightlight"]
-        readonly property string mediaTitle: "Song title"
-        readonly property string mediaArtist: "Artist"
+        readonly property string mediaTitle: I18n.tr("Song title")
+        readonly property string mediaArtist: I18n.tr("Artist")
         readonly property string mediaArt: ""
         readonly property real mediaProgress: 0.4
         readonly property bool mediaPlaying: false
@@ -997,7 +997,7 @@ Item {
         }
 
         function bigSub(k) {
-            return k === "wifi" ? "Connected" : (sample.tileChecked(k) ? "On" : "Off");
+            return k === "wifi" ? I18n.tr("Connected") : (sample.tileChecked(k) ? I18n.tr("On") : I18n.tr("Off"));
         }
 
         // the radios on, and every third tile of either kind, so a look shows both states
@@ -1050,8 +1050,8 @@ Item {
             const v = {
                 "cpu": [0.28, "62 °C"],
                 "ram": [0.62, "9.4 GB"],
-                "disk": [0.38, "297 GB free"],
-                "battery": [0.8, "Full"]
+                "disk": [0.38, I18n.tr("297 GB free")],
+                "battery": [0.8, I18n.tr("Full")]
             }[k] || [0.5, ""];
             // a made-up minute for what keeps its last readings
             const wave = (base, a, f) => {
@@ -1159,7 +1159,7 @@ Item {
                     role: "titleMedium"
                     weight: 600
                     elide: Text.ElideRight
-                    text: Qt.formatDate(new Date(), "dddd, d MMMM")
+                    text: Qt.formatDate(new Date(), I18n.tr("dddd, d MMMM"))
                 }
 
                 LText {
@@ -1167,7 +1167,7 @@ Item {
                     role: "bodySmall"
                     color: builder.notice !== "" ? Theme.accent : Theme.subtext
                     elide: Text.ElideRight
-                    text: builder.resizingGrid ? builder.boardCols + " columns × " + builder.boardRows + " rows" : (builder.notice !== "" ? builder.notice + " · Ctrl+Z puts it back" : (builder.selected !== "" ? "Drag it, stretch it by an edge, or pick its look" : "Drag blocks to arrange them"))
+                    text: builder.resizingGrid ? I18n.tr("%1 columns × %2 rows", builder.boardCols, builder.boardRows) : (builder.notice !== "" ? I18n.tr("%1 · Ctrl+Z puts it back", builder.notice) : (builder.selected !== "" ? I18n.tr("Drag it, stretch it by an edge, or pick its look") : I18n.tr("Drag blocks to arrange them")))
                 }
 
             }
@@ -1280,7 +1280,7 @@ Item {
                 LText {
                     role: "titleSmall"
                     weight: 600
-                    text: builder.overShelf ? "Let go to take it off the panel" : "Add to the panel"
+                    text: builder.overShelf ? I18n.tr("Let go to take it off the panel") : I18n.tr("Add to the panel")
                     color: builder.overShelf ? Theme.error : Theme.text
                 }
 
@@ -1289,7 +1289,7 @@ Item {
                     role: "bodySmall"
                     color: Theme.subtext
                     wrapMode: Text.WordWrap
-                    text: "Click one to add it, or drag it onto the grid: a tile, a slider or a gauge into its block, a whole block onto any spot. To take something off, drag it back here."
+                    text: I18n.tr("Click one to add it, or drag it onto the grid: a tile, a slider or a gauge into its block, a whole block onto any spot. To take something off, drag it back here.")
                 }
 
             }
@@ -1325,7 +1325,7 @@ Item {
 
                 visible: builder.tab === "tiles"
                 width: Math.min(parent.width, Theme.dp(320))
-                placeholder: "Search the tiles"
+                placeholder: I18n.tr("Search the tiles")
                 commitOnBlur: false
                 onEdited: (v) => {
                     return builder.query = v;
@@ -1361,7 +1361,7 @@ Item {
                 visible: shelfFlow.items.length === 0
                 role: "bodySmall"
                 color: Theme.subtextDim
-                text: builder.tab === "tiles" && builder.query.trim() !== "" ? "No tile left to add goes by “" + builder.query.trim() + "”." : "All of them are on the panel already."
+                text: builder.tab === "tiles" && builder.query.trim() !== "" ? I18n.tr("No tile left to add goes by “%1”.", builder.query.trim()) : I18n.tr("All of them are on the panel already.")
             }
 
         }
@@ -1416,7 +1416,7 @@ Item {
 
                     x: Theme.dp(4)
                     variant: "tonal"
-                    text: "Tidy up"
+                    text: I18n.tr("Tidy up")
                     iconPath: "vertical_align_top"
                     opacity: builder.tidied !== null ? 1 : 0
                     onClicked: builder.tidy()
@@ -1461,7 +1461,7 @@ Item {
             M3Button {
                 anchors.verticalCenter: parent.verticalCenter
                 variant: "text"
-                text: "Undo"
+                text: I18n.tr("Undo")
                 onClicked: builder.undo()
             }
 
@@ -1508,7 +1508,7 @@ Item {
                         width: parent.width
                         role: "titleSmall"
                         weight: 600
-                        text: looksBar.block === "" ? "Looks" : builder.blockName(looksBar.block) + ": its look"
+                        text: looksBar.block === "" ? I18n.tr("Looks") : I18n.tr("%1: its look", builder.blockName(looksBar.block))
                         elide: Text.ElideRight
                     }
 
@@ -1516,7 +1516,7 @@ Item {
                         width: parent.width
                         role: "bodySmall"
                         color: Theme.subtext
-                        text: looksBar.block === "" ? "Every block can be drawn more than one way. Pick one here, or click it on the grid, for its looks." : "Click one to use it; Ctrl+Z goes back."
+                        text: looksBar.block === "" ? I18n.tr("Every block can be drawn more than one way. Pick one here, or click it on the grid, for its looks.") : I18n.tr("Click one to use it; Ctrl+Z goes back.")
                         elide: Text.ElideRight
                     }
 
@@ -1529,7 +1529,7 @@ Item {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     variant: "text"
-                    text: "All blocks"
+                    text: I18n.tr("All blocks")
                     onClicked: builder.selected = ""
                 }
 
@@ -1730,7 +1730,7 @@ Item {
                     id: sizeText
 
                     anchors.centerIn: parent
-                    text: builder.target ? builder.target.w + (builder.target.w === 1 ? " column" : " columns") + " × " + builder.target.h + (builder.target.h === 1 ? " row" : " rows") : ""
+                    text: builder.target ? builder.target.w + (builder.target.w === 1 ? I18n.tr(" column") : I18n.tr(" columns")) + " × " + builder.target.h + (builder.target.h === 1 ? I18n.tr(" row") : I18n.tr(" rows")) : ""
                     color: Theme.fgAccent
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabelLg
@@ -2789,7 +2789,7 @@ Item {
                     role: "bodySmall"
                     color: Theme.subtext
                     elide: Text.ElideRight
-                    text: ins.cell ? ins.cell.w + " columns wide" + (ins.looks.length > 1 ? " · " + ins.looks.length + " looks" : "") : ""
+                    text: ins.cell ? I18n.tr("%1 columns wide", ins.cell.w) + (ins.looks.length > 1 ? I18n.tr(" · %1 looks", ins.looks.length) : "") : ""
                 }
 
             }
@@ -2824,7 +2824,7 @@ Item {
             spacing: Theme.dp(10)
 
             Heading {
-                text: "Look"
+                text: I18n.tr("Look")
             }
 
             Grid {
@@ -2854,7 +2854,7 @@ Item {
             spacing: Theme.dp(10)
 
             Heading {
-                text: "Size"
+                text: I18n.tr("Size")
             }
 
             Row {
@@ -2864,7 +2864,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: Theme.dp(80)
                     role: "bodyMedium"
-                    text: "Width"
+                    text: I18n.tr("Width")
                 }
 
                 M3IconButton {
@@ -2898,7 +2898,7 @@ Item {
                 M3Button {
                     anchors.verticalCenter: parent.verticalCenter
                     variant: "text"
-                    text: "Fit"
+                    text: I18n.tr("Fit")
                     iconPath: "restart_alt"
                     onClicked: builder.resetSize(ins.block)
                 }
@@ -2911,10 +2911,10 @@ Item {
                 current: builder.slidersStand ? "stand" : "lie"
                 options: [{
                     "key": "lie",
-                    "label": "Lying down"
+                    "label": I18n.tr("Lying down")
                 }, {
                     "key": "stand",
-                    "label": "Standing up"
+                    "label": I18n.tr("Standing up")
                 }]
                 onChosen: (key) => {
                     if ((key === "stand") !== builder.slidersStand)
@@ -2932,7 +2932,7 @@ Item {
             spacing: Theme.dp(10)
 
             Heading {
-                text: "Holds"
+                text: I18n.tr("Holds")
             }
 
             Flow {
@@ -2962,7 +2962,7 @@ Item {
                 role: "bodySmall"
                 color: Theme.subtextDim
                 wrapMode: Text.WordWrap
-                text: "Drag more in from the library, or drag one out of the block to take it off."
+                text: I18n.tr("Drag more in from the library, or drag one out of the block to take it off.")
             }
 
         }
@@ -2977,7 +2977,7 @@ Item {
                 width: parent.width
                 role: "titleMedium"
                 weight: 600
-                text: "Control centre"
+                text: I18n.tr("Control centre")
             }
 
             LText {
@@ -2985,7 +2985,7 @@ Item {
                 role: "bodySmall"
                 color: Theme.subtext
                 wrapMode: Text.WordWrap
-                text: "Drag anything from the library onto the panel, and back to take it off. Click a block for its looks and size."
+                text: I18n.tr("Drag anything from the library onto the panel, and back to take it off. Click a block for its looks and size.")
             }
 
         }
@@ -2996,7 +2996,7 @@ Item {
             spacing: Theme.dp(10)
 
             Heading {
-                text: "Start from a layout"
+                text: I18n.tr("Start from a layout")
             }
 
             PanelLayouts {
@@ -3012,7 +3012,7 @@ Item {
             spacing: Theme.dp(10)
 
             Heading {
-                text: "Every block"
+                text: I18n.tr("Every block")
             }
 
             Item {
@@ -3024,7 +3024,7 @@ Item {
                     anchors.right: cardsSwitch.left
                     anchors.verticalCenter: parent.verticalCenter
                     role: "bodyMedium"
-                    text: "A card behind each block"
+                    text: I18n.tr("A card behind each block")
                 }
 
                 M3Switch {
@@ -3048,11 +3048,11 @@ Item {
             spacing: Theme.dp(6)
 
             Heading {
-                text: "Keys"
+                text: I18n.tr("Keys")
             }
 
             Repeater {
-                model: [["Tab", "pick the next block"], ["Arrows", "move it"], ["Shift + arrows", "stretch it"], ["Delete", "take it off"], ["Ctrl + Z", "undo"], ["Esc", "let go, then leave"]]
+                model: [["Tab", I18n.tr("pick the next block")], [I18n.tr("Arrows"), I18n.tr("move it")], [I18n.tr("Shift + arrows"), I18n.tr("stretch it")], [I18n.tr("Delete"), I18n.tr("take it off")], [I18n.tr("Ctrl + Z"), I18n.tr("undo")], ["Esc", I18n.tr("let go, then leave")]]
 
                 Row {
                     required property var modelData

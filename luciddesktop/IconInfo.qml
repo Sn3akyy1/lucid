@@ -33,11 +33,11 @@ Item {
         else if (sheet.isDir && !d.counted)
             size = "Counting…";
         else if (sheet.isDir)
-            size = (d.partial ? "At least " : "") + DesktopIcons.human(d.size) + "  ·  " + (d.items === 1 ? "1 item" : d.items + " items");
+            size = (d.partial ? I18n.tr("At least ") : "") + DesktopIcons.human(d.size) + "  ·  " + (d.items === 1 ? I18n.tr("1 item") : I18n.tr("%1 items", d.items));
         else
             size = DesktopIcons.human(it.size || (d ? d.size : 0));
         if (it.kind !== "drive")
-            out.push(["Size", size]);
+            out.push([I18n.tr("Size"), size]);
 
         if (d && d.where)
             out.push(["Where", d.where.replace(DesktopIcons.home, "~")]);
@@ -46,22 +46,22 @@ Item {
             out.push(["Links to", d.target.replace(DesktopIcons.home, "~")]);
 
         if (d && d.app)
-            out.push([sheet.isDir ? "Opens in" : "Opens with", d.app]);
+            out.push([sheet.isDir ? I18n.tr("Opens in") : I18n.tr("Opens with"), d.app]);
 
         if (d && d.created)
-            out.push(["Created", DesktopIcons.when(d.created)]);
+            out.push([I18n.tr("Created"), DesktopIcons.when(d.created)]);
 
         if (d && d.modified)
-            out.push(["Modified", DesktopIcons.when(d.modified)]);
+            out.push([I18n.tr("Modified"), DesktopIcons.when(d.modified)]);
 
         if (d && d.accessed)
-            out.push(["Opened", DesktopIcons.when(d.accessed)]);
+            out.push([I18n.tr("Opened"), DesktopIcons.when(d.accessed)]);
 
         if (d && d.owner)
-            out.push(["Owner", d.owner + (d.group && d.group !== d.owner ? " (" + d.group + ")" : "")]);
+            out.push([I18n.tr("Owner"), d.owner + (d.group && d.group !== d.owner ? " (" + d.group + ")" : "")]);
 
         if (d && d.mode)
-            out.push(["Permissions", d.mode]);
+            out.push([I18n.tr("Permissions"), d.mode]);
 
         return out;
     }
@@ -281,7 +281,7 @@ Item {
                 }
 
                 Text {
-                    text: sheet.hasDisk ? DesktopIcons.human(sheet.d.fsFree) + " free of " + DesktopIcons.human(sheet.d.fsSize) + (sheet.d.fsType ? "  ·  " + sheet.d.fsType : "") : ""
+                    text: sheet.hasDisk ? I18n.tr("%1 free of %2", DesktopIcons.human(sheet.d.fsFree), DesktopIcons.human(sheet.d.fsSize)) + (sheet.d.fsType ? "  ·  " + sheet.d.fsType : "") : ""
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabelLg
@@ -325,7 +325,7 @@ Item {
                                 width: details.width - Theme.dp(108)
                                 text: parent.modelData[1]
                                 color: Theme.text
-                                font.family: parent.modelData[0] === "Permissions" ? (Prefs.envMonoFont !== "" ? Prefs.envMonoFont : "monospace") : Theme.fontFamily
+                                font.family: parent.modelData[0] === I18n.tr("Permissions") ? (Prefs.envMonoFont !== "" ? Prefs.envMonoFont : "monospace") : Theme.fontFamily
                                 font.pixelSize: Theme.fontLabelLg
                                 font.weight: Font.Medium
                                 wrapMode: Text.WrapAnywhere
@@ -352,7 +352,7 @@ Item {
                     anchors.right: execSwitch.left
                     anchors.rightMargin: Theme.dp(12)
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "Allow running as a program"
+                    text: I18n.tr("Allow running as a program")
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodyMd
@@ -378,13 +378,13 @@ Item {
 
                 Button {
                     variant: "text"
-                    text: "Close"
+                    text: I18n.tr("Close")
                     onClicked: DesktopIcons.closeInfo()
                 }
 
                 Button {
                     variant: "tonal"
-                    text: "Open"
+                    text: I18n.tr("Open")
                     icon: "open_in_new"
                     onClicked: {
                         var k = sheet.shown ? sheet.shown.key : "";

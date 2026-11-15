@@ -25,7 +25,7 @@ Singleton {
     }
 
     function wind(kmh, mph) {
-        return root.imperial ? mph + " mph" : kmh + " km/h";
+        return root.imperial ? I18n.tr("%1 mph", mph) : kmh + " km/h";
     }
 
 }

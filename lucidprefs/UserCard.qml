@@ -70,7 +70,7 @@ Item {
 
         Text {
             width: parent.width
-            text: Users.displayName(card.user) || "Account"
+            text: Users.displayName(card.user) || I18n.tr("Account")
             color: card.fg
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyLg
@@ -93,7 +93,7 @@ Item {
             text: {
                 var u = card.user;
                 if (!u)
-                    return "Users and accounts";
+                    return I18n.tr("Users and accounts");
 
                 return u.realName && u.realName !== "" ? u.name : Users.typeLabel(u.accountType);
             }

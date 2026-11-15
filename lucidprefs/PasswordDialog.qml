@@ -50,7 +50,7 @@ Item {
 
         return Math.max(1, score);
     }
-    readonly property string strengthLabel: ["", "Weak", "Fair", "Good", "Strong"][dialog.strength]
+    readonly property string strengthLabel: ["", I18n.tr("Weak"), I18n.tr("Fair"), I18n.tr("Good"), I18n.tr("Strong")][dialog.strength]
     readonly property color strengthColor: dialog.strength <= 1 ? Theme.error : (dialog.strength === 2 ? Theme.warning : Theme.success)
     readonly property bool tooShort: dialog.pw.length > 0 && dialog.pw.length < 4
     readonly property bool mismatch: dialog.confirm.length > 0 && dialog.confirm !== dialog.pw
@@ -166,7 +166,7 @@ Item {
                 width: parent.width
                 password: true
                 commitOnBlur: false
-                placeholder: "New password"
+                placeholder: I18n.tr("New password")
                 error: dialog.tooShort
                 onEdited: (v) => {
                     return dialog.pw = v;
@@ -214,7 +214,7 @@ Item {
 
             Text {
                 width: parent.width
-                text: dialog.tooShort ? "Use at least four characters." : dialog.strengthLabel
+                text: dialog.tooShort ? I18n.tr("Use at least four characters.") : dialog.strengthLabel
                 color: dialog.tooShort ? Theme.error : Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodySm
@@ -228,7 +228,7 @@ Item {
                 width: parent.width
                 password: true
                 commitOnBlur: false
-                placeholder: "Confirm password"
+                placeholder: I18n.tr("Confirm password")
                 error: dialog.mismatch
                 onEdited: (v) => {
                     return dialog.confirm = v;
@@ -238,7 +238,7 @@ Item {
 
             Text {
                 width: parent.width
-                text: "Those two do not match."
+                text: I18n.tr("Those two do not match.")
                 color: Theme.error
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodySm
@@ -251,14 +251,14 @@ Item {
 
                 width: parent.width
                 commitOnBlur: false
-                placeholder: "Password hint (optional)"
+                placeholder: I18n.tr("Password hint (optional)")
                 visible: dialog.askHint
                 onAccepted: dialog.submit()
             }
 
             Text {
                 width: parent.width
-                text: "A hint is shown to anyone who fails to sign in, so keep it away from the password itself."
+                text: I18n.tr("A hint is shown to anyone who fails to sign in, so keep it away from the password itself.")
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodySm
@@ -278,13 +278,13 @@ Item {
                 spacing: Theme.dp(8)
 
                 M3Button {
-                    text: "Cancel"
+                    text: I18n.tr("Cancel")
                     variant: "text"
                     onClicked: dialog.dismiss()
                 }
 
                 M3Button {
-                    text: "Set password"
+                    text: I18n.tr("Set password")
                     variant: "filled"
                     enabled: dialog.valid
                     onClicked: dialog.submit()

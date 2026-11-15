@@ -27,6 +27,7 @@ Item {
         "launcher": "app menu start",
         "widgets": "desktop cards",
         "workspaces": "scratchpad special",
+        "language": "idioma translation translate locale español spanish json import export",
         "startup": "autostart login boot launch run open env variable variables environment export",
         "keybinds": "shortcuts hotkeys keys keyboard desktop icons copy cut paste undo rename delete",
         "capture": "print screen snip snipping grab lucidshot ocr qr code colour color picker eyedropper hex record recording video gif pin markup annotate draw arrow redact",

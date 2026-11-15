@@ -23,15 +23,15 @@ SettingRow {
 
         switch (row.t.state) {
         case "ok":
-            return "Coloured on the last change";
+            return I18n.tr("Coloured on the last change");
         case "skipped":
-            return "Written by Lucid itself under this palette";
+            return I18n.tr("Written by Lucid itself under this palette");
         case "failed":
-            return "Did not render on the last change";
+            return I18n.tr("Did not render on the last change");
         case "off":
-            return "Off, its file keeps the colours it last had";
+            return I18n.tr("Off, its file keeps the colours it last had");
         default:
-            return "Not rendered yet";
+            return I18n.tr("Not rendered yet");
         }
     }
 

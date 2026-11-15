@@ -15,13 +15,13 @@ Singleton {
     readonly property string themeDir: (Quickshell.env("XDG_DATA_HOME") || Quickshell.env("HOME") + "/.local/share") + "/icons/" + root.themeName
     readonly property var styles: [{
         "key": "dark",
-        "label": "Dark"
+        "label": I18n.tr("Dark")
     }, {
         "key": "light",
-        "label": "Light"
+        "label": I18n.tr("Light")
     }, {
         "key": "accent",
-        "label": "Accent"
+        "label": I18n.tr("Accent")
     }]
     // legacy cursors hand the pointer back to a theme installed on the machine
     readonly property bool active: !Prefs.envLegacyCursor
@@ -244,7 +244,7 @@ Singleton {
                     root.shown = r.stamp.colours;
                     root.revision++;
                 } else if (r.ok === false) {
-                    root.error = r.error || "could not draw the pointer";
+                    root.error = r.error || I18n.tr("could not draw the pointer");
                 }
             }
         }

@@ -33,10 +33,10 @@ Singleton {
     }
 
     readonly property var repeatOptions: [
-        { "key": "", "label": "Once" },
-        { "key": "daily", "label": "Daily" },
-        { "key": "weekdays", "label": "Weekdays" },
-        { "key": "weekly", "label": "Weekly" }
+        { "key": "", "label": I18n.tr("Once") },
+        { "key": "daily", "label": I18n.tr("Daily") },
+        { "key": "weekdays", "label": I18n.tr("Weekdays") },
+        { "key": "weekly", "label": I18n.tr("Weekly") }
     ]
 
     function dayStart(y, m, d) {
@@ -199,24 +199,24 @@ Singleton {
             return "now";
 
         if (mins < 60)
-            return "in " + mins + " min";
+            return I18n.tr("in %1 min", mins);
 
         var hrs = Math.round(mins / 60);
         if (hrs < 24)
-            return "in " + hrs + (hrs === 1 ? " hour" : " hours");
+            return "in " + hrs + (hrs === 1 ? I18n.tr(" hour") : I18n.tr(" hours"));
 
         var days = Math.round(hrs / 24);
-        return days === 1 ? "tomorrow" : "in " + days + " days";
+        return days === 1 ? "tomorrow" : I18n.tr("in %1 days", days);
     }
 
     function repeatText(r) {
         switch (r.repeat || "") {
         case "daily":
-            return "Every day";
+            return I18n.tr("Every day");
         case "weekdays":
-            return "Weekdays";
+            return I18n.tr("Weekdays");
         case "weekly":
-            return "Every " + root.dayStart(r.year, r.month, r.day).toLocaleDateString(Qt.locale(), "dddd");
+            return "Every " + root.dayStart(r.year, r.month, r.day).toLocaleDateString(I18n.locale, "dddd");
         }
         return "";
     }

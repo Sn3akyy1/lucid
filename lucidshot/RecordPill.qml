@@ -96,7 +96,7 @@ Item {
                     role: "labelLarge"
                     tabular: true
                     color: Theme.fgErrorContainer
-                    text: pill.paused ? "Paused  " + Capture.clock(Capture.seconds) : Capture.clock(Capture.seconds)
+                    text: pill.paused ? I18n.tr("Paused  %1", Capture.clock(Capture.seconds)) : Capture.clock(Capture.seconds)
                 }
 
             }
@@ -110,7 +110,7 @@ Item {
         ShotButton {
             anchors.verticalCenter: parent.verticalCenter
             icon: pill.paused ? "play_arrow" : "pause"
-            tip: pill.paused ? "Carry on" : "Pause"
+            tip: pill.paused ? I18n.tr("Carry on") : I18n.tr("Pause")
             tipAbove: pill.tipAbove
             onClicked: Capture.togglePause()
         }
@@ -118,7 +118,7 @@ Item {
         ShotButton {
             anchors.verticalCenter: parent.verticalCenter
             icon: Capture.mic ? "mic" : "mic_off"
-            tip: Capture.mic ? "The microphone is in it" : "The microphone is left out"
+            tip: Capture.mic ? I18n.tr("The microphone is in it") : I18n.tr("The microphone is left out")
             tipAbove: pill.tipAbove
             checked: Capture.mic
             onClicked: Capture.setMic(!Capture.mic)
@@ -127,7 +127,7 @@ Item {
         ShotButton {
             anchors.verticalCenter: parent.verticalCenter
             icon: Capture.system ? "volume_up" : "volume_off"
-            tip: Capture.system ? "What is playing is in it" : "What is playing is left out"
+            tip: Capture.system ? I18n.tr("What is playing is in it") : I18n.tr("What is playing is left out")
             tipAbove: pill.tipAbove
             checked: Capture.system
             onClicked: Capture.setSystem(!Capture.system)
@@ -139,14 +139,14 @@ Item {
             danger: true
             size: "s"
             icon: "stop"
-            text: "Stop"
+            text: I18n.tr("Stop")
             onClicked: Capture.stop()
         }
 
         ShotButton {
             anchors.verticalCenter: parent.verticalCenter
             icon: "expand_more"
-            tip: "Tuck it into the bar"
+            tip: I18n.tr("Tuck it into the bar")
             tipAbove: pill.tipAbove
             onClicked: Capture.hidden = true
         }
@@ -171,7 +171,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             role: "labelLarge"
             color: Theme.text
-            text: "Saving the recording…"
+            text: I18n.tr("Saving the recording…")
         }
 
         Item {

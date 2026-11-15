@@ -78,7 +78,7 @@ Item {
     function go(text) {
         var u = dlg.address(text);
         if (u === "") {
-            dlg.problem = "Type the address of a server";
+            dlg.problem = I18n.tr("Type the address of a server");
             return ;
         }
         dlg.uri = u;
@@ -107,7 +107,7 @@ Item {
             return ;
         }
         dlg.mode = "address";
-        dlg.problem = r.error || "Could not connect";
+        dlg.problem = r.error || I18n.tr("Could not connect");
         field.text = dlg.uri;
         Qt.callLater(function() {
             field.input.forceActiveFocus();
@@ -295,7 +295,7 @@ Item {
             LText {
                 width: parent.width
                 role: "headlineSmall"
-                text: dlg.mode === "address" ? "Connect to server" : dlg.mode === "connecting" ? "Connecting to " + dlg.host : dlg.mode === "login" ? "Sign in to " + dlg.host : (dlg.lines[0] || "A question from " + dlg.host)
+                text: dlg.mode === "address" ? I18n.tr("Connect to server") : dlg.mode === "connecting" ? I18n.tr("Connecting to %1", dlg.host) : dlg.mode === "login" ? I18n.tr("Sign in to %1", dlg.host) : (dlg.lines[0] || I18n.tr("A question from %1", dlg.host))
                 color: Theme.text
                 wrapMode: Text.Wrap
                 maximumLineCount: 3
@@ -308,7 +308,7 @@ Item {
                 role: "bodyMedium"
                 text: {
                     if (dlg.mode === "address")
-                        return "Open a shared folder on another computer, a NAS or a server.";
+                        return I18n.tr("Open a shared folder on another computer, a NAS or a server.");
 
                     if (dlg.mode === "connecting")
                         return dlg.uri;
@@ -330,12 +330,12 @@ Item {
                 width: parent.width
                 visible: dlg.mode === "address"
                 variant: "filled"
-                label: "Server address"
-                placeholder: dlg.kinds.indexOf("smb") !== -1 ? "smb://nas.local/share" : "sftp://user@server"
+                label: I18n.tr("Server address")
+                placeholder: dlg.kinds.indexOf("smb") !== -1 ? I18n.tr("smb://nas.local/share") : I18n.tr("sftp://user@server")
                 error: dlg.problem !== ""
-                supporting: dlg.problem !== "" ? dlg.problem : "Like " + dlg.kinds.slice(0, 3).map(function(k) {
+                supporting: dlg.problem !== "" ? dlg.problem : I18n.tr("Like %1", dlg.kinds.slice(0, 3).map(function(k) {
                     return k === "smb" ? "smb://server/share" : k === "sftp" ? "sftp://user@server" : k + "://server";
-                }).join(", ")
+                }).join(", "))
                 onAccepted: dlg.accept()
                 onEscaped: dlg.cancel()
                 onTextEdited: dlg.problem = ""
@@ -346,7 +346,7 @@ Item {
                 width: parent.width
                 visible: dlg.mode === "address" && dlg.problem === "" && dlg.app.schemes.length > 0 && dlg.kinds.indexOf("smb") === -1
                 role: "bodySmall"
-                text: "Windows shares and most NAS drives (smb://) need the gvfs-smb package."
+                text: I18n.tr("Windows shares and most NAS drives (smb://) need the gvfs-smb package.")
                 color: Theme.subtext
                 wrapMode: Text.Wrap
             }
@@ -360,7 +360,7 @@ Item {
                     width: parent.width
                     bottomPadding: Theme.dp(6)
                     role: "labelLarge"
-                    text: "Recent"
+                    text: I18n.tr("Recent")
                     color: Theme.subtext
                 }
 
@@ -436,7 +436,7 @@ Item {
                             onClicked: dlg.app.forgetServer(row.modelData.uri)
 
                             Tip {
-                                text: "Forget"
+                                text: I18n.tr("Forget")
                             }
 
                         }
@@ -468,11 +468,11 @@ Item {
                 visible: dlg.mode === "login" && dlg.ev.anonymous === true
                 options: [{
                     "key": "user",
-                    "label": "Registered user",
+                    "label": I18n.tr("Registered user"),
                     "icon": "person"
                 }, {
                     "key": "anon",
-                    "label": "Anonymous",
+                    "label": I18n.tr("Anonymous"),
                     "icon": "public"
                 }]
                 current: dlg.anonymous ? "anon" : "user"
@@ -487,7 +487,7 @@ Item {
                 width: parent.width
                 visible: dlg.mode === "login" && dlg.ev.needUser === true && !dlg.anonymous
                 variant: "filled"
-                label: "User name"
+                label: I18n.tr("User name")
                 icon: "person"
                 onAccepted: password.visible ? password.input.forceActiveFocus() : dlg.accept()
                 onEscaped: dlg.cancel()
@@ -499,7 +499,7 @@ Item {
                 width: parent.width
                 visible: dlg.mode === "login" && dlg.ev.needDomain === true && !dlg.anonymous
                 variant: "filled"
-                label: "Domain"
+                label: I18n.tr("Domain")
                 icon: "lan"
                 onAccepted: dlg.accept()
                 onEscaped: dlg.cancel()
@@ -511,7 +511,7 @@ Item {
                 width: parent.width
                 visible: dlg.mode === "login" && dlg.ev.needPassword === true && !dlg.anonymous
                 variant: "filled"
-                label: "Password"
+                label: I18n.tr("Password")
                 icon: "key"
                 password: !dlg.reveal
                 onAccepted: dlg.accept()
@@ -522,7 +522,7 @@ Item {
                     onClicked: dlg.reveal = !dlg.reveal
 
                     Tip {
-                        text: dlg.reveal ? "Hide the password" : "Show the password"
+                        text: dlg.reveal ? I18n.tr("Hide the password") : I18n.tr("Show the password")
                     }
 
                 }
@@ -561,7 +561,7 @@ Item {
                     anchors.leftMargin: Theme.dp(12)
                     anchors.verticalCenter: parent.verticalCenter
                     role: "bodyMedium"
-                    text: "Remember the password"
+                    text: I18n.tr("Remember the password")
                     color: Theme.text
                 }
 
@@ -581,14 +581,14 @@ Item {
                 Button {
                     visible: dlg.mode !== "question"
                     variant: "text"
-                    text: "Cancel"
+                    text: I18n.tr("Cancel")
                     onClicked: dlg.cancel()
                 }
 
                 Button {
                     visible: dlg.mode === "address" || dlg.mode === "login"
                     variant: "filled"
-                    text: dlg.mode === "login" ? "Sign in" : "Connect"
+                    text: dlg.mode === "login" ? I18n.tr("Sign in") : I18n.tr("Connect")
                     disabled: dlg.mode === "address" && field.text.trim() === ""
                     onClicked: dlg.accept()
                 }

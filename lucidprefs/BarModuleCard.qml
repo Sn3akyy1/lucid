@@ -22,33 +22,33 @@ SettingCard {
         return g.center.indexOf(card.moduleId) !== -1 ? "centre" : "right";
     }
     readonly property var pageNames: ({
-        "bar": "Bar",
-        "workspaces": "Workspaces",
-        "datetime": "Date & Time",
-        "notifications": "Notifications"
+        "bar": I18n.tr("Bar"),
+        "workspaces": I18n.tr("Workspaces"),
+        "datetime": I18n.tr("Date & Time"),
+        "notifications": I18n.tr("Notifications")
     })
     readonly property bool barOn: Prefs.barEnabled
     readonly property bool away: !!card.mod && !!card.mod.when && Prefs.barModulesAway.indexOf(card.moduleId) !== -1
     // the power module's actions: the picked ones in their order, then the rest
     readonly property var powerCatalogue: [{
         "id": "lock",
-        "label": "Lock"
+        "label": I18n.tr("Lock")
     }, {
         "id": "suspend",
-        "label": "Suspend"
+        "label": I18n.tr("Suspend")
     }, {
         "id": "hibernate",
-        "label": "Hibernate",
-        "note": "only where the machine can"
+        "label": I18n.tr("Hibernate"),
+        "note": I18n.tr("only where the machine can")
     }, {
         "id": "logout",
-        "label": "Log out"
+        "label": I18n.tr("Log out")
     }, {
         "id": "reboot",
-        "label": "Restart"
+        "label": I18n.tr("Restart")
     }, {
         "id": "shutdown",
-        "label": "Shut down"
+        "label": I18n.tr("Shut down")
     }]
     readonly property var powerOn: String(Prefs.powerModuleActions || "").split(",").filter((id) => {
         return card.powerCatalogue.some((a) => {
@@ -151,10 +151,10 @@ SettingCard {
     SettingRow {
         id: showRow
 
-        title: "Show in the bar"
-        description: (Prefs[card.mod ? card.mod.key : ""] === true ? "In the " + card.groupName + " group. Drag it along the bar to move it, or down off the bar to take it out." : "Switched on, it goes back where it was.") + (card.away ? " Not in the bar right now: it shows " + card.mod.when + "." : "")
+        title: I18n.tr("Show in the bar")
+        description: (Prefs[card.mod ? card.mod.key : ""] === true ? I18n.tr("In the %1 group. Drag it along the bar to move it, or down off the bar to take it out.", card.groupName) : I18n.tr("Switched on, it goes back where it was.")) + (card.away ? I18n.tr(" Not in the bar right now: it shows %1.", card.mod.when) : "")
         enabled: card.barOn
-        disabledReason: "The bar is switched off, so this module has nothing to appear in."
+        disabledReason: I18n.tr("The bar is switched off, so this module has nothing to appear in.")
         showDivider: false
 
         M3Switch {
@@ -172,8 +172,8 @@ SettingCard {
     // how it looks, closed in the bar and opened; the bar changes as you pick
     SettingRow {
         visible: !!card.mod && !!card.mod.styles
-        title: "In the bar"
-        description: "How it looks until you open it."
+        title: I18n.tr("In the bar")
+        description: I18n.tr("How it looks until you open it.")
         stacked: true
         showDivider: false
 
@@ -210,8 +210,8 @@ SettingCard {
 
     SettingRow {
         visible: !!card.mod && !!card.mod.panelStyles
-        title: "Opened"
-        description: "How its panel looks."
+        title: I18n.tr("Opened")
+        description: I18n.tr("How its panel looks.")
         stacked: true
         showDivider: false
 
@@ -240,9 +240,9 @@ SettingCard {
     // workspaces
     SettingRow {
         visible: card.moduleId === "workspaces"
-        title: "How many"
+        title: I18n.tr("How many")
         resetKey: "workspacesShown"
-        description: "The ones it always shows. A workspace past them still shows up while it exists."
+        description: I18n.tr("The ones it always shows. A workspace past them still shows up while it exists.")
         stacked: true
         showDivider: false
 
@@ -261,9 +261,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "workspaces"
-        title: "Wheel to switch"
+        title: I18n.tr("Wheel to switch")
         resetKey: "workspacesWheel"
-        description: "The wheel over it moves to the next or the previous workspace."
+        description: I18n.tr("The wheel over it moves to the next or the previous workspace.")
         showDivider: false
 
         M3Switch {
@@ -280,11 +280,11 @@ SettingCard {
         id: clockDate
 
         visible: card.moduleId === "clock"
-        title: "Date"
+        title: I18n.tr("Date")
         resetKey: "clockDateFormat"
-        description: "How the date reads beside or under the time."
+        description: I18n.tr("How the date reads beside or under the time.")
         enabled: Prefs.clockShowDate
-        disabledReason: "The date is switched off on the Date & Time page."
+        disabledReason: I18n.tr("The date is switched off on the Date & Time page.")
         stacked: true
         showDivider: false
 
@@ -294,16 +294,16 @@ SettingCard {
             current: Prefs.clockDateFormat
             options: [{
                 "key": "dayMonth",
-                "label": Loc.now().toLocaleDateString(Qt.locale(), "ddd, dd/MM")
+                "label": Loc.now().toLocaleDateString(I18n.locale, I18n.tr("ddd, dd/MM"))
             }, {
                 "key": "short",
-                "label": Loc.now().toLocaleDateString(Qt.locale(), "ddd d")
+                "label": Loc.now().toLocaleDateString(I18n.locale, I18n.tr("ddd d"))
             }, {
                 "key": "long",
-                "label": Loc.now().toLocaleDateString(Qt.locale(), "ddd d MMM")
+                "label": Loc.now().toLocaleDateString(I18n.locale, I18n.tr("ddd d MMM"))
             }, {
                 "key": "numeric",
-                "label": Loc.now().toLocaleDateString(Qt.locale(), Qt.locale().dateFormat(Locale.ShortFormat))
+                "label": Loc.now().toLocaleDateString(I18n.locale, I18n.locale.dateFormat(Locale.ShortFormat))
             }]
             onChosen: (key) => {
                 return Prefs.clockDateFormat = key;
@@ -315,9 +315,9 @@ SettingCard {
     // media
     SettingRow {
         visible: card.moduleId === "media"
-        title: "Hide it when nothing plays"
+        title: I18n.tr("Hide it when nothing plays")
         resetKey: "mediaHideIdle"
-        description: "Off, it says Nothing playing; on, it leaves the bar until a player starts."
+        description: I18n.tr("Off, it says Nothing playing; on, it leaves the bar until a player starts.")
         showDivider: false
 
         M3Switch {
@@ -331,9 +331,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "media"
-        title: "Artist before the title"
+        title: I18n.tr("Artist before the title")
         resetKey: "mediaArtist"
-        description: "The panel always names both."
+        description: I18n.tr("The panel always names both.")
         showDivider: false
 
         M3Switch {
@@ -347,11 +347,11 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "media"
-        title: "Longest the track gets"
+        title: I18n.tr("Longest the track gets")
         resetKey: "mediaTitleWidth"
-        description: "A longer one scrolls while it plays."
+        description: I18n.tr("A longer one scrolls while it plays.")
         enabled: Prefs.mediaStyle !== "compact"
-        disabledReason: "Compact shows no track."
+        disabledReason: I18n.tr("Compact shows no track.")
         stacked: true
         showDivider: false
 
@@ -372,9 +372,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "media"
-        title: "Play button"
+        title: I18n.tr("Play button")
         resetKey: "mediaPlayButton"
-        description: "Off, a click opens the player and the panel has the buttons."
+        description: I18n.tr("Off, a click opens the player and the panel has the buttons.")
         showDivider: false
 
         M3Switch {
@@ -388,9 +388,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "media"
-        title: "Wheel for the volume"
+        title: I18n.tr("Wheel for the volume")
         resetKey: "mediaWheelVolume"
-        description: "The wheel over it turns the player's own volume up or down."
+        description: I18n.tr("The wheel over it turns the player's own volume up or down.")
         showDivider: false
 
         M3Switch {
@@ -404,9 +404,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "media"
-        title: "Lyrics button"
+        title: I18n.tr("Lyrics button")
         resetKey: "mediaLyrics"
-        description: "In the panel, beside Identify: the words of the song, from lrclib.net, looked up only while the page is open."
+        description: I18n.tr("In the panel, beside Identify: the words of the song, from lrclib.net, looked up only while the page is open.")
         showDivider: false
 
         M3Switch {
@@ -424,16 +424,16 @@ SettingCard {
         id: layoutRow
 
         visible: card.moduleId === "system"
-        title: "Layout"
+        title: I18n.tr("Layout")
         resetKey: "systemBlocks"
         resetVisible: Prefs.isModified("systemBlocks") || Prefs.isModified("systemGrid") || Prefs.isModified("systemBlockStyles")
         resetAction: "prefs:systemBlocks,systemGrid,systemBlockStyles"
-        description: "The control centre stays one column until you lay it out as a bento grid in its own editor: the panel lifts off the bar to the middle of the display, with everything you can add on its left and each block's looks, size and contents on its right. A reset brings the column back."
+        description: I18n.tr("The control centre stays one column until you lay it out as a bento grid in its own editor: the panel lifts off the bar to the middle of the display, with everything you can add on its left and each block's looks, size and contents on its right. A reset brings the column back.")
         stacked: true
         showDivider: false
 
         M3Button {
-            text: "Open the editor"
+            text: I18n.tr("Open the editor")
             iconPath: "edit"
             variant: "filled"
             onClicked: Edit.requestStudio("system", Edit.sheetScreen)
@@ -443,9 +443,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "system"
-        title: "Cards behind every block"
+        title: I18n.tr("Cards behind every block")
         resetKey: "systemBlockCards"
-        description: "Media and the gauges always sit on a card; on, the tiles and the sliders get one too, for an even bento look."
+        description: I18n.tr("Media and the gauges always sit on a card; on, the tiles and the sliders get one too, for an even bento look.")
         showDivider: false
 
         M3Switch {
@@ -461,9 +461,9 @@ SettingCard {
         id: ownTilesRow
 
         visible: card.moduleId === "system"
-        title: "Your own tiles"
+        title: I18n.tr("Your own tiles")
         resetKey: "systemOwnTiles"
-        description: "Tiles that run commands of yours, for what Lucid has no tile for: a VPN, a server, a script. With only the first command a tap runs it; give one to turn it off too and it is a switch, kept right by the check when something else changes it. They run through bash, so pipes and && work. A new one goes onto the panel with the small tiles, and the shelf above holds it when it is off."
+        description: I18n.tr("Tiles that run commands of yours, for what Lucid has no tile for: a VPN, a server, a script. With only the first command a tap runs it; give one to turn it off too and it is a switch, kept right by the check when something else changes it. They run through bash, so pipes and && work. A new one goes onto the panel with the small tiles, and the shelf above holds it when it is off.")
         stacked: true
         showDivider: false
 
@@ -485,7 +485,7 @@ SettingCard {
             }
 
             M3Button {
-                text: "Add a tile"
+                text: I18n.tr("Add a tile")
                 iconPath: "add"
                 variant: "tonal"
                 onClicked: Prefs.addSystemOwnTile()
@@ -497,9 +497,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "system"
-        title: "Header buttons"
+        title: I18n.tr("Header buttons")
         resetKey: "systemHeaderButtons"
-        description: "Beside the date, in this order."
+        description: I18n.tr("Beside the date, in this order.")
         stacked: true
         showDivider: false
 
@@ -508,18 +508,18 @@ SettingCard {
             value: Prefs.systemHeaderButtons
             catalogue: [{
                 "id": "edit",
-                "label": "Edit",
-                "note": "opens the layout editor"
+                "label": I18n.tr("Edit"),
+                "note": I18n.tr("opens the layout editor")
             }, {
                 "id": "settings",
-                "label": "Settings"
+                "label": I18n.tr("Settings")
             }, {
                 "id": "lock",
-                "label": "Lock"
+                "label": I18n.tr("Lock")
             }, {
                 "id": "power",
-                "label": "Power",
-                "note": "suspend, restart, shut down"
+                "label": I18n.tr("Power"),
+                "note": I18n.tr("suspend, restart, shut down")
             }]
             onPicked: (v) => {
                 return Prefs.systemHeaderButtons = v;
@@ -531,9 +531,9 @@ SettingCard {
     // system tray
     SettingRow {
         visible: card.moduleId === "tray"
-        title: "Icon colours"
+        title: I18n.tr("Icon colours")
         resetKey: "trayIconColor"
-        description: "As each app draws them, or in the shell's colours: grey from the text, or one of the palette's colours. Their light and shade stay either way. An app Lucid has its own icon for shows that instead, unless legacy icons are on."
+        description: I18n.tr("As each app draws them, or in the shell's colours: grey from the text, or one of the palette's colours. Their light and shade stay either way. An app Lucid has its own icon for shows that instead, unless legacy icons are on.")
         stacked: true
         showDivider: false
 
@@ -542,19 +542,19 @@ SettingCard {
             current: Prefs.trayIconColor
             options: [{
                 "key": "original",
-                "label": "Original"
+                "label": I18n.tr("Original")
             }, {
                 "key": "grey",
-                "label": "Grey"
+                "label": I18n.tr("Grey")
             }, {
                 "key": "secondary",
-                "label": "Secondary"
+                "label": I18n.tr("Secondary")
             }, {
                 "key": "tertiary",
-                "label": "Tertiary"
+                "label": I18n.tr("Tertiary")
             }, {
                 "key": "accent",
-                "label": "Accent"
+                "label": I18n.tr("Accent")
             }]
             onChosen: (key) => {
                 return Prefs.trayIconColor = key;
@@ -565,9 +565,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "tray"
-        title: "Apps in the tray"
+        title: I18n.tr("Apps in the tray")
         resetKey: "trayHidden"
-        description: SystemTray.items.values.length > 0 ? "The ones running now. One switched off stays out of the bar and the panel until you switch it back on." : "Nothing is in the tray right now. Apps show up here while they run."
+        description: SystemTray.items.values.length > 0 ? I18n.tr("The ones running now. One switched off stays out of the bar and the panel until you switch it back on.") : I18n.tr("Nothing is in the tray right now. Apps show up here while they run.")
         stacked: true
         showDivider: false
 
@@ -650,7 +650,7 @@ SettingCard {
                         Text {
                             width: parent.width
                             visible: trayRow.builtin
-                            text: "In the system module instead"
+                            text: I18n.tr("In the system module instead")
                             color: Theme.subtextDim
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabel
@@ -683,9 +683,9 @@ SettingCard {
     // privacy
     SettingRow {
         visible: card.moduleId === "privacy"
-        title: "Watch"
+        title: I18n.tr("Watch")
         resetKey: "privacyWatch"
-        description: "What makes the module show up. At least one stays on."
+        description: I18n.tr("What makes the module show up. At least one stays on.")
         stacked: true
         showDivider: false
 
@@ -697,13 +697,13 @@ SettingCard {
             })
             options: [{
                 "key": "mic",
-                "label": "Microphone"
+                "label": I18n.tr("Microphone")
             }, {
                 "key": "camera",
-                "label": "Camera"
+                "label": I18n.tr("Camera")
             }, {
                 "key": "screen",
-                "label": "Screen"
+                "label": I18n.tr("Screen")
             }]
             onChosen: (key) => {
                 const list = String(Prefs.privacyWatch).split(",").filter((k) => {
@@ -724,9 +724,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "privacy"
-        title: "Tell me when something starts"
+        title: I18n.tr("Tell me when something starts")
         resetKey: "privacyToast"
-        description: "A toast names the app the moment it starts using the microphone, the camera or the screen. Lucid's own recording, which you start yourself, is left out."
+        description: I18n.tr("A toast names the app the moment it starts using the microphone, the camera or the screen. Lucid's own recording, which you start yourself, is left out.")
         showDivider: false
 
         M3Switch {
@@ -740,9 +740,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "privacy"
-        title: "Keep its place in the bar"
+        title: I18n.tr("Keep its place in the bar")
         resetKey: "privacyAlwaysShown"
-        description: "A quiet shield stays when nothing is in use, so the modules beside it never shift."
+        description: I18n.tr("A quiet shield stays when nothing is in use, so the modules beside it never shift.")
         showDivider: false
 
         M3Switch {
@@ -757,9 +757,9 @@ SettingCard {
     // power
     SettingRow {
         visible: card.moduleId === "power"
-        title: "Actions"
+        title: I18n.tr("Actions")
         resetKey: "powerModuleActions"
-        description: "The ones switched on show in the panel, top to bottom in this order. At least one stays."
+        description: I18n.tr("The ones switched on show in the panel, top to bottom in this order. At least one stays.")
         stacked: true
         showDivider: false
 
@@ -875,9 +875,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "power"
-        title: "Ask twice"
+        title: I18n.tr("Ask twice")
         resetKey: "powerModuleConfirm"
-        description: "Log out, restart and shut down wait for a second click within three seconds, so a stray one does nothing."
+        description: I18n.tr("Log out, restart and shut down wait for a second click within three seconds, so a stray one does nothing.")
         showDivider: false
 
         M3Switch {
@@ -891,9 +891,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "power"
-        title: "Show how long it has been up"
+        title: I18n.tr("Show how long it has been up")
         resetKey: "powerModuleUptime"
-        description: "The time since the machine started, at the top of the panel."
+        description: I18n.tr("The time since the machine started, at the top of the panel.")
         showDivider: false
 
         M3Switch {
@@ -910,9 +910,9 @@ SettingCard {
         id: windowText
 
         visible: card.moduleId === "window"
-        title: "Shows"
+        title: I18n.tr("Shows")
         resetKey: "windowModuleText"
-        description: "What the pill reads in the bar, or only the app's icon. The panel always has both."
+        description: I18n.tr("What the pill reads in the bar, or only the app's icon. The panel always has both.")
         stacked: true
         showDivider: false
 
@@ -921,16 +921,16 @@ SettingCard {
             current: Prefs.windowModuleText
             options: [{
                 "key": "title",
-                "label": "Title"
+                "label": I18n.tr("Title")
             }, {
                 "key": "app",
-                "label": "App name"
+                "label": I18n.tr("App name")
             }, {
                 "key": "both",
-                "label": "Both"
+                "label": I18n.tr("Both")
             }, {
                 "key": "icon",
-                "label": "Icon only"
+                "label": I18n.tr("Icon only")
             }]
             onChosen: (key) => {
                 return Prefs.windowModuleText = key;
@@ -941,11 +941,11 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "window"
-        title: "Longest it gets"
+        title: I18n.tr("Longest it gets")
         resetKey: "windowModuleWidth"
-        description: "A longer title is cut short with an ellipsis."
+        description: I18n.tr("A longer title is cut short with an ellipsis.")
         enabled: Prefs.windowModuleText !== "icon"
-        disabledReason: "It shows only the icon."
+        disabledReason: I18n.tr("It shows only the icon.")
         stacked: true
         showDivider: false
 
@@ -966,9 +966,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "apps"
-        title: "Show running applications"
+        title: I18n.tr("Show running applications")
         resetKey: "dockShowRunning"
-        description: "Apps open but not pinned follow the pinned ones. The same setting as the dock's."
+        description: I18n.tr("Apps open but not pinned follow the pinned ones. The same setting as the dock's.")
         showDivider: false
 
         M3Switch {
@@ -982,9 +982,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "apps"
-        title: "Running indicator"
+        title: I18n.tr("Running indicator")
         resetKey: "dockShowIndicators"
-        description: "A dot under an open app, stretched into a bar for the one in focus. The same setting as the dock's."
+        description: I18n.tr("A dot under an open app, stretched into a bar for the one in focus. The same setting as the dock's.")
         showDivider: false
 
         M3Switch {
@@ -998,9 +998,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "apps"
-        title: "Tooltips"
+        title: I18n.tr("Tooltips")
         resetKey: "dockShowTooltips"
-        description: "The app's name, and how many windows it has, over its icon. The same setting as the dock's."
+        description: I18n.tr("The app's name, and how many windows it has, over its icon. The same setting as the dock's.")
         showDivider: false
 
         M3Switch {
@@ -1014,9 +1014,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "apps"
-        title: "Icon tiles"
+        title: I18n.tr("Icon tiles")
         resetKey: "dockIconTiles"
-        description: "Each icon on a tile of its own. The same setting as the dock's."
+        description: I18n.tr("Each icon on a tile of its own. The same setting as the dock's.")
         showDivider: false
 
         M3Switch {
@@ -1030,9 +1030,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "window"
-        title: "Scroll to switch windows"
+        title: I18n.tr("Scroll to switch windows")
         resetKey: "windowModuleScroll"
-        description: "The wheel over the pill moves the focus through the windows on the workspace."
+        description: I18n.tr("The wheel over the pill moves the focus through the windows on the workspace.")
         showDivider: false
 
         M3Switch {
@@ -1046,9 +1046,9 @@ SettingCard {
 
     SettingRow {
         visible: card.moduleId === "window"
-        title: "Middle click closes it"
+        title: I18n.tr("Middle click closes it")
         resetKey: "windowModuleMiddleClose"
-        description: "Like closing a browser tab: the window in focus closes on a middle click on the pill."
+        description: I18n.tr("Like closing a browser tab: the window in focus closes on a middle click on the pill.")
         showDivider: false
 
         M3Switch {
@@ -1064,13 +1064,13 @@ SettingCard {
         id: moreRow
 
         visible: !!card.mod && !!card.mod.more
-        title: "More settings"
+        title: I18n.tr("More settings")
         description: card.mod && card.mod.more ? card.mod.more : ""
         showDivider: false
 
         M3Button {
             visible: !!card.mod && !!card.mod.page
-            text: card.mod && card.pageNames[card.mod.page] ? "Open " + card.pageNames[card.mod.page] : "Open"
+            text: card.mod && card.pageNames[card.mod.page] ? I18n.tr("Open %1", card.pageNames[card.mod.page]) : I18n.tr("Open")
             variant: "tonal"
             onClicked: Prefs.settingsRequested(card.mod.page)
         }
@@ -1079,12 +1079,12 @@ SettingCard {
 
     SettingRow {
         visible: card.options.length > 0
-        title: "Reset this module"
-        description: "Its options above go back to how they ship. Whether it shows and where it sits stay as they are."
+        title: I18n.tr("Reset this module")
+        description: I18n.tr("Its options above go back to how they ship. Whether it shows and where it sits stay as they are.")
         showDivider: false
 
         M3Button {
-            text: "Reset"
+            text: I18n.tr("Reset")
             variant: "text"
             destructive: true
             enabled: card.options.some((k) => {

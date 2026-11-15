@@ -15,7 +15,7 @@ SettingCard {
     readonly property int position: Math.max(0, Math.min(card.length, (card.mpris ? card.mpris.position : 0) + card.drift))
     readonly property string nowPlaying: {
         if (!card.mpris || card.mpris.title === "")
-            return "Nothing playing";
+            return I18n.tr("Nothing playing");
 
         return card.mpris.title;
     }
@@ -29,7 +29,7 @@ SettingCard {
         return m + ":" + String(total % 60).padStart(2, "0");
     }
 
-    title: "PLAYING ON THE PHONE"
+    title: I18n.tr("PLAYING ON THE PHONE")
 
     // the phone only reports position when something moves it, so run the clock here
     Timer {

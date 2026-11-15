@@ -54,37 +54,37 @@ Singleton {
     function descFor(code) {
         const c = parseInt(code);
         if (c === 0)
-            return "Clear";
+            return I18n.trc("weather", "Clear");
 
         if (c === 1)
-            return "Mostly Clear";
+            return I18n.tr("Mostly Clear");
 
         if (c === 2)
-            return "Partly Cloudy";
+            return I18n.tr("Partly Cloudy");
 
         if (c === 3)
-            return "Overcast";
+            return I18n.tr("Overcast");
 
         if (c <= 48)
-            return "Fog";
+            return I18n.tr("Fog");
 
         if (c <= 57)
-            return "Drizzle";
+            return I18n.tr("Drizzle");
 
         if (c <= 67)
-            return "Rain";
+            return I18n.tr("Rain");
 
         if (c <= 77)
-            return "Snow";
+            return I18n.tr("Snow");
 
         if (c <= 82)
-            return "Rain Showers";
+            return I18n.tr("Rain Showers");
 
         if (c <= 86)
-            return "Snow Showers";
+            return I18n.tr("Snow Showers");
 
         if (c <= 99)
-            return "Thunderstorm";
+            return I18n.tr("Thunderstorm");
 
         return "—";
     }
@@ -175,7 +175,7 @@ Singleton {
         onExited: (code) => {
             src.busy = false;
             if (code !== 0)
-                src.lastError = "could not reach the forecast service";
+                src.lastError = I18n.tr("could not reach the forecast service");
 
         }
 
@@ -189,9 +189,9 @@ Singleton {
                     if (data && data.current && data.daily)
                         src.store(data);
                     else
-                        src.lastError = "no forecast for that position";
+                        src.lastError = I18n.tr("no forecast for that position");
                 } catch (e) {
-                    src.lastError = "could not read the forecast";
+                    src.lastError = I18n.tr("could not read the forecast");
                 }
             }
         }

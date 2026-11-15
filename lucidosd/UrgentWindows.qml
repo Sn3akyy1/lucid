@@ -88,7 +88,7 @@ Scope {
 
         const m = root.monitorOf(o.monitor === undefined ? -1 : o.monitor);
         if (!m)
-            return "no monitor";
+            return I18n.tr("no monitor");
 
         if (!m.activeWorkspace || !o.workspace || m.activeWorkspace.id !== o.workspace.id)
             return "workspace";
@@ -327,7 +327,7 @@ Scope {
 
                         y: tab.faceY - implicitHeight / 2
                         x: root.cornerRight ? Theme.dp(10) : tabWindow.bs + tabWindow.size - Theme.dp(2)
-                        text: "Show"
+                        text: I18n.tr("Show")
                         color: root.ink
                         opacity: tab.open ? 1 : 0
                         visible: opacity > 0

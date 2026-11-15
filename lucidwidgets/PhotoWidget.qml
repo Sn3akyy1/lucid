@@ -28,7 +28,7 @@ WidgetBody {
             return "";
 
         var d = files.get(w.pick % w.count, "fileModified");
-        return d ? new Date(d).toLocaleDateString(Qt.locale(), "d MMMM yyyy") : "";
+        return d ? new Date(d).toLocaleDateString(I18n.locale, "d MMMM yyyy") : "";
     }
     readonly property string frameShape: w.opt("shape") || "cookie12"
 
@@ -190,7 +190,7 @@ WidgetBody {
             role: "bodySmall"
             color: w.inkDim
             wrapMode: Text.Wrap
-            text: "No pictures in " + w.folder.replace(w.home, "~")
+            text: I18n.tr("No pictures in %1", w.folder.replace(w.home, "~"))
         }
 
     }

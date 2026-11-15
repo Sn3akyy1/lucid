@@ -183,7 +183,7 @@ Scope {
         const s = list.find((x) => {
             return x.key === key;
         });
-        return s ? s.label : "Alarm";
+        return s ? s.label : I18n.tr("Alarm");
     }
 
     // ---- the window

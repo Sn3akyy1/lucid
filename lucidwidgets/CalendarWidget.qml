@@ -67,7 +67,7 @@ WidgetBody {
         LText {
             role: "titleSmall"
             color: w.inkAccent
-            text: w.now.toLocaleDateString(Qt.locale(), "MMMM yyyy")
+            text: w.now.toLocaleDateString(I18n.locale, I18n.tr("MMMM yyyy"))
         }
 
         Row {
@@ -98,7 +98,7 @@ WidgetBody {
                             anchors.horizontalCenter: parent.horizontalCenter
                             role: "labelSmall"
                             color: modelData.today ? Theme.alpha(w.fgInkAccent, 0.8) : w.inkDim
-                            text: modelData.d.toLocaleDateString(Qt.locale(), "ddd").slice(0, 2)
+                            text: modelData.d.toLocaleDateString(I18n.locale, I18n.tr("ddd")).slice(0, 2)
                         }
 
                         LText {
@@ -140,7 +140,7 @@ WidgetBody {
             role: "titleMedium"
             weight: 600
             color: w.inkAccent
-            text: w.now.toLocaleDateString(Qt.locale(), "dddd")
+            text: w.now.toLocaleDateString(I18n.locale, I18n.tr("dddd"))
         }
 
         LText {
@@ -163,7 +163,7 @@ WidgetBody {
                 anchors.verticalCenter: parent.verticalCenter
                 role: "labelLarge"
                 color: w.inkDim
-                text: w.now.toLocaleDateString(Qt.locale(), "MMMM")
+                text: w.now.toLocaleDateString(I18n.locale, I18n.tr("MMMM"))
             }
 
             Repeater {
@@ -199,14 +199,14 @@ WidgetBody {
                 role: "titleMedium"
                 weight: 600
                 color: w.inkAccent
-                text: "Coming up"
+                text: I18n.tr("Coming up")
             }
 
             LText {
                 anchors.verticalCenter: parent.verticalCenter
                 role: "labelMedium"
                 color: w.inkDim
-                text: w.now.toLocaleDateString(Qt.locale(), "ddd d MMM")
+                text: w.now.toLocaleDateString(I18n.locale, I18n.tr("ddd d MMM"))
             }
 
         }
@@ -249,7 +249,7 @@ WidgetBody {
                         LText {
                             role: "labelSmall"
                             color: w.inkAccent
-                            text: ev.modelData.at.toLocaleDateString(Qt.locale(), ev.soon ? "ddd" : "MMM").toUpperCase()
+                            text: ev.modelData.at.toLocaleDateString(I18n.locale, ev.soon ? I18n.tr("ddd") : I18n.tr("MMM")).toUpperCase()
                         }
 
                         LText {
@@ -305,7 +305,7 @@ WidgetBody {
                     anchors.horizontalCenter: parent.horizontalCenter
                     role: "bodyMedium"
                     color: w.inkDim
-                    text: "Nothing coming up"
+                    text: I18n.tr("Nothing coming up")
                 }
 
             }

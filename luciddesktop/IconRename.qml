@@ -19,14 +19,14 @@ PanelWindow {
             return "";
 
         if (ed.typed === "." || ed.typed === "..")
-            return "That name is reserved";
+            return I18n.tr("That name is reserved");
 
         if (ed.item.kind !== "app" && ed.typed !== ed.item.label && DesktopIcons.byKey[ed.typed] !== undefined)
-            return "Something here is already called that";
+            return I18n.tr("Something here is already called that");
 
         return "";
     }
-    readonly property string note: ed.item && ed.item.kind !== "app" && ed.typed.charAt(0) === "." && ed.item.label.charAt(0) !== "." ? "A name starting with a dot hides it" : ""
+    readonly property string note: ed.item && ed.item.kind !== "app" && ed.typed.charAt(0) === "." && ed.item.label.charAt(0) !== "." ? I18n.tr("A name starting with a dot hides it") : ""
     // the name's own spot under the icon, in screen coordinates
     readonly property real centreX: ed.spot ? DesktopIcons.tileX(ed.spot.c) + DesktopIcons.tileW / 2 : 0
     readonly property real labelY: ed.spot ? DesktopIcons.tileY(ed.spot.r) + DesktopIcons.labelTop : 0
@@ -96,7 +96,7 @@ PanelWindow {
         id: natural
 
         font: field.font
-        text: field.text === "" ? "M" : field.text
+        text: field.text === "" ? I18n.tr("M") : field.text
     }
 
     Item {

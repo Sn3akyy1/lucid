@@ -8,7 +8,7 @@ SettingCard {
 
     readonly property var sinks: card.dev.sinks || []
 
-    title: "SOUND ON THE PHONE"
+    title: I18n.tr("SOUND ON THE PHONE")
 
     Repeater {
         model: card.sinks
@@ -22,7 +22,7 @@ SettingCard {
             readonly property int maxVol: sinkRow.modelData.maxVolume > 0 ? sinkRow.modelData.maxVolume : 100
 
             title: sinkRow.modelData.description || sinkRow.modelData.name
-            description: sinkRow.modelData.muted ? "Muted" : Math.round((sinkRow.modelData.volume / sinkRow.maxVol) * 100) + "%"
+            description: sinkRow.modelData.muted ? I18n.tr("Muted") : Math.round((sinkRow.modelData.volume / sinkRow.maxVol) * 100) + "%"
             stacked: true
             showDivider: sinkRow.index < card.sinks.length - 1
 
@@ -45,7 +45,7 @@ SettingCard {
 
                 CheckLine {
                     anchors.verticalCenter: parent.verticalCenter
-                    label: "Mute"
+                    label: I18n.tr("Mute")
                     checked: !!sinkRow.modelData.muted
                     onToggled: KdeConnect.sinkMute(card.dev.id, sinkRow.modelData.name, !sinkRow.modelData.muted)
                 }

@@ -56,28 +56,28 @@ Singleton {
     // the sounds an alarm can ring with, all lucid's own
     readonly property var soundChoices: [{
         "key": "alarm",
-        "label": "Alarm"
+        "label": I18n.tr("Alarm")
     }, {
         "key": "beacon",
-        "label": "Beacon"
+        "label": I18n.tr("Beacon")
     }, {
         "key": "chime",
-        "label": "Chime"
+        "label": I18n.tr("Chime")
     }, {
         "key": "halo",
-        "label": "Halo"
+        "label": I18n.tr("Halo")
     }, {
         "key": "reminder",
-        "label": "Reminder"
+        "label": I18n.tr("Reminder")
     }, {
         "key": "pulse",
-        "label": "Pulse"
+        "label": I18n.tr("Pulse")
     }, {
         "key": "glint",
-        "label": "Glint"
+        "label": I18n.tr("Glint")
     }, {
         "key": "orbit",
-        "label": "Orbit"
+        "label": I18n.tr("Orbit")
     }]
     // the notification that stands in for the bar's clock, while it is up
     property int noticeId: -1
@@ -104,7 +104,7 @@ Singleton {
         const s = root.soundChoices.find((x) => {
             return x.key === key;
         });
-        return s ? s.label : "Alarm";
+        return s ? s.label : I18n.tr("Alarm");
     }
 
     // anything that arrives over ipc or the clock app's line is checked here
@@ -459,7 +459,7 @@ Singleton {
             changed = true;
         }
         for (const p of rings) root.startRing(p[0], p[1])
-        for (const p of missed) root.say("Missed alarm", root.timeText(p[0]) + (p[0].label !== "" ? "  ·  " + p[0].label : ""), false)
+        for (const p of missed) root.say(I18n.tr("Missed alarm"), root.timeText(p[0]) + (p[0].label !== "" ? "  ·  " + p[0].label : ""), false)
         // a ring nobody answers stops in the end
         const limit = root.silenceMinutes * 60000;
         const gone = root.ringing.filter((r) => {
@@ -467,7 +467,7 @@ Singleton {
         });
         for (const r of gone) {
             root.quiet(r.id);
-            root.say("Alarm went unanswered", root.timeText(r) + (r.label !== "" ? "  ·  " + r.label : "") + " rang for " + root.silenceMinutes + " min", false);
+            root.say(I18n.tr("Alarm went unanswered"), root.timeText(r) + (r.label !== "" ? "  ·  " + r.label : "") + I18n.tr(" rang for %1 min", root.silenceMinutes), false);
             changed = true;
         }
         if (changed)
@@ -568,10 +568,10 @@ Singleton {
 
         function status(): string {
             if (root.firing)
-                return "ringing " + root.timeText(root.firing) + (root.firing.label !== "" ? " " + root.firing.label : "");
+                return I18n.tr("ringing %1", root.timeText(root.firing)) + (root.firing.label !== "" ? " " + root.firing.label : "");
 
             const n = root.next;
-            return n ? "next " + new Date(n.at).toLocaleString(Qt.locale(), "ddd HH:mm") + " " + CM.untilText(n.at - Loc.nowMs()) : "none";
+            return n ? "next " + new Date(n.at).toLocaleString(I18n.locale, "ddd HH:mm") + " " + CM.untilText(n.at - Loc.nowMs()) : "none";
         }
 
         target: "alarm"

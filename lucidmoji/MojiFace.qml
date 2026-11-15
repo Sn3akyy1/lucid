@@ -52,10 +52,10 @@ Item {
     readonly property var rail: {
         var out = [{
             "symbol": "schedule",
-            "name": "Recent"
+            "name": I18n.tr("Recent")
         }, {
             "symbol": "star",
-            "name": "Favourites"
+            "name": I18n.tr("Favourites")
         }];
         if (!face.host)
             return out;
@@ -112,7 +112,7 @@ Item {
             return "";
 
         if (face.searching)
-            return face.entries.length + (face.entries.length === 1 ? " result" : " results");
+            return face.entries.length + (face.entries.length === 1 ? I18n.tr(" result") : I18n.tr(" results"));
 
         var name = face.catIndex < face.rail.length ? face.rail[face.catIndex].name : "";
         if (face.catIndex <= 1 && face.entries.length === 0)
@@ -296,13 +296,13 @@ Item {
                 Repeater {
                     model: [{
                         "id": "emoji",
-                        "label": "Emoji"
+                        "label": I18n.tr("Emoji")
                     }, {
                         "id": "kaomoji",
-                        "label": "Kaomoji"
+                        "label": I18n.tr("Kaomoji")
                     }, {
                         "id": "gif",
-                        "label": "GIFs"
+                        "label": I18n.tr("GIFs")
                     }]
 
                     delegate: Item {
@@ -452,7 +452,7 @@ Item {
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         x: Theme.dp(2)
-                        text: face.isGif ? "Search GIFs…" : (face.isKaomoji ? "Search text faces…" : "Search emoji…")
+                        text: face.isGif ? I18n.tr("Search GIFs…") : (face.isKaomoji ? I18n.tr("Search text faces…") : I18n.tr("Search emoji…"))
                         color: Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBody
@@ -785,12 +785,12 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: {
                         if (face.searching)
-                            return "Nothing matches “" + face.query.trim() + "”";
+                            return I18n.tr("Nothing matches “%1”", face.query.trim());
 
                         if (face.catIndex === 0)
-                            return "Nothing used yet";
+                            return I18n.tr("Nothing used yet");
 
-                        return "Right-click anything to favourite it";
+                        return I18n.tr("Right-click anything to favourite it");
                     }
                     color: Theme.subtext
                     font.family: Theme.fontFamily
@@ -868,7 +868,7 @@ Item {
 
                     Text {
                         width: parent.width
-                        text: face.current ? (face.current.n !== "" ? face.current.n : "unnamed") : (face.host && face.host.wtypeAvailable ? "Click to type it into the focused window" : "Click to copy · stays open")
+                        text: face.current ? (face.current.n !== "" ? face.current.n : I18n.tr("unnamed")) : (face.host && face.host.wtypeAvailable ? I18n.tr("Click to type it into the focused window") : I18n.tr("Click to copy · stays open"))
                         color: face.current ? Theme.text : Theme.subtext
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBody
@@ -879,7 +879,7 @@ Item {
 
                     Text {
                         width: parent.width
-                        text: face.current && face.current.k !== "" ? face.current.k : "Right-click to favourite · Esc to close"
+                        text: face.current && face.current.k !== "" ? face.current.k : I18n.tr("Right-click to favourite · Esc to close")
                         color: Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fs(10)

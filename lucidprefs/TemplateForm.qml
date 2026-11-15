@@ -33,7 +33,7 @@ Column {
             if (r.ok) {
                 form.phase = "tried";
                 form.preview = r.text;
-                form.message = r.truncated ? "The first part of what it writes:" : "What it writes with your colours:";
+                form.message = r.truncated ? I18n.tr("The first part of what it writes:") : I18n.tr("What it writes with your colours:");
             } else {
                 form.phase = "error";
                 form.message = r.error;
@@ -50,7 +50,7 @@ Column {
         Templates.add(form.name.trim(), form.input.trim(), form.output.trim(), form.hook, (r) => {
             if (r.ok) {
                 form.phase = "added";
-                form.message = r.name + " is in the list above, coloured with the current palette.";
+                form.message = I18n.tr("%1 is in the list above, coloured with the current palette.", r.name);
                 form.preview = "";
                 nameField.set("");
                 inputField.set("");
@@ -73,7 +73,7 @@ Column {
 
             width: Theme.dp(200)
             text: form.name
-            placeholder: "Name, like myapp"
+            placeholder: I18n.tr("Name, like myapp")
             onEdited: (v) => {
                 return form.name = v;
             }
@@ -84,7 +84,7 @@ Column {
 
             width: form.width - nameField.width - Theme.dp(10)
             text: form.hook
-            placeholder: "Command that reloads the app (optional)"
+            placeholder: I18n.tr("Command that reloads the app (optional)")
             onEdited: (v) => {
                 return form.hook = v;
             }
@@ -100,7 +100,7 @@ Column {
 
             width: form.width - chooseButton.width - Theme.dp(10)
             text: form.input
-            placeholder: "Template file, or an https:// link to one"
+            placeholder: I18n.tr("Template file, or an https:// link to one")
             onEdited: (v) => {
                 return form.input = v;
             }
@@ -114,7 +114,7 @@ Column {
             id: chooseButton
 
             anchors.verticalCenter: parent.verticalCenter
-            text: "Choose..."
+            text: I18n.tr("Choose...")
             onClicked: {
                 picker.command = ["python3", Qt.resolvedUrl("pickfile.py").toString().replace("file://", ""), "--title", "Choose a template"];
                 picker.running = true;
@@ -128,7 +128,7 @@ Column {
 
         width: form.width
         text: form.output
-        placeholder: "File it writes, like ~/.config/myapp/colors.css"
+        placeholder: I18n.tr("File it writes, like ~/.config/myapp/colors.css")
         onEdited: (v) => {
             return form.output = v;
         }
@@ -138,7 +138,7 @@ Column {
         spacing: Theme.dp(10)
 
         M3Button {
-            text: form.phase === "trying" ? "Trying..." : "Try it"
+            text: form.phase === "trying" ? I18n.tr("Trying...") : I18n.tr("Try it")
             enabled: form.input.trim() !== "" && !form.working
             // play
             iconPath: "play_arrow"
@@ -146,7 +146,7 @@ Column {
         }
 
         M3Button {
-            text: form.phase === "adding" ? "Adding..." : "Add"
+            text: form.phase === "adding" ? I18n.tr("Adding...") : I18n.tr("Add")
             variant: "filled"
             enabled: form.ready && !form.working
             iconPath: "add"

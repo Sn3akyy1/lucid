@@ -134,7 +134,7 @@ Singleton {
     property var rows: []
 
     function groupKey(n) {
-        return (n.appName || n.desktopEntry || "Unknown").toLowerCase();
+        return (n.appName || n.desktopEntry || I18n.tr("Unknown")).toLowerCase();
     }
 
     function isExpanded(key) {
@@ -190,7 +190,7 @@ Singleton {
         return 3;
     }
 
-    readonly property var sectionNames: ["New", "Earlier today", "Yesterday", "Older"]
+    readonly property var sectionNames: [I18n.tr("New"), I18n.tr("Earlier today"), I18n.tr("Yesterday"), I18n.tr("Older")]
 
     function regroup() {
         root.timeTick;
@@ -206,7 +206,7 @@ Singleton {
                     groups.push({
                         "kind": "group",
                         "key": k,
-                        "appName": n.appName || "Unknown",
+                        "appName": n.appName || I18n.tr("Unknown"),
                         "items": [n],
                         "newestMs": root.arrivals[n.id] || 0
                     });
@@ -220,7 +220,7 @@ Singleton {
                 groups.push({
                     "kind": "group",
                     "key": "n" + e.id,
-                    "appName": e.appName || "Unknown",
+                    "appName": e.appName || I18n.tr("Unknown"),
                     "items": [e],
                     "newestMs": root.arrivals[e.id] || 0
                 });
@@ -279,7 +279,7 @@ Singleton {
     // muting an app also clears what it has already put up
     function muteApp(name) {
         Prefs.setMuted(name, true);
-        root.clearGroup((name || "Unknown").toLowerCase());
+        root.clearGroup((name || I18n.tr("Unknown")).toLowerCase());
     }
 
     function relLabel(id) {
@@ -301,7 +301,7 @@ Singleton {
         if (s < 604800)
             return Math.floor(s / 86400) + "d";
 
-        return new Date(t).toLocaleDateString(Qt.locale(), Locale.ShortFormat);
+        return new Date(t).toLocaleDateString(I18n.locale, Locale.ShortFormat);
     }
 
     // freedesktop progress lives in a hint, under two spellings

@@ -26,7 +26,7 @@ Item {
     readonly property real wantWidth: tm.page ? tm.page.wantWidth : tm.minW
     readonly property int entryCount: tm.page ? tm.page.count : 0
     // what the one row says when the app has no menu, or one with nothing in it
-    property string openLabel: "Open"
+    property string openLabel: I18n.tr("Open")
     // an app's menu arrives a moment after it is asked for; only one still empty
     // after that is taken for none
     property bool graceOver: false

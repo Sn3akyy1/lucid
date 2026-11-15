@@ -68,7 +68,7 @@ Item {
                         if (!wx.report || !wx.report.days || wx.report.days.length === 0)
                             return Loc.place;
 
-                        return "H " + Units.deg(wx.report.days[0].maxC, wx.report.days[0].maxF) + "  L " + Units.deg(wx.report.days[0].minC, wx.report.days[0].minF) + "  ·  feels " + Units.deg(wx.report.feelsC, wx.report.feelsF);
+                        return I18n.tr("H %1  L %2  ·  feels %3", Units.deg(wx.report.days[0].maxC, wx.report.days[0].maxF), Units.deg(wx.report.days[0].minC, wx.report.days[0].minF), Units.deg(wx.report.feelsC, wx.report.feelsF));
                     }
                     color: Theme.subtextDim
                     font.family: Theme.fontFamily

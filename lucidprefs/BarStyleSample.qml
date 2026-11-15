@@ -61,11 +61,11 @@ Item {
     readonly property string timeText: {
         const now = Loc.now();
         if (Prefs.clock24h)
-            return now.toLocaleTimeString(Qt.locale(), "HH:mm");
+            return now.toLocaleTimeString(I18n.locale, "HH:mm");
 
         // h only counts to 12 next to AP; the bar leaves the AM/PM out
-        const t = now.toLocaleTimeString(Qt.locale(), "h:mm AP");
-        return t.replace(now.toLocaleTimeString(Qt.locale(), "AP"), "").trim();
+        const t = now.toLocaleTimeString(I18n.locale, "h:mm AP");
+        return t.replace(now.toLocaleTimeString(I18n.locale, "AP"), "").trim();
     }
     // the day's name and the date, apart, as the clock shows them
     readonly property var dateParts: {
@@ -73,21 +73,21 @@ Item {
         case "short":
             return ["ddd", "d"];
         case "long":
-            return ["ddd", "d MMM"];
+            return ["ddd", I18n.tr("d MMM")];
         case "numeric":
-            return ["", Qt.locale().dateFormat(Locale.ShortFormat)];
+            return ["", I18n.locale.dateFormat(Locale.ShortFormat)];
         default:
             return ["ddd,", "dd/MM"];
         }
     }
-    readonly property string dayText: sample.dateParts[0] === "" ? "" : Loc.now().toLocaleDateString(Qt.locale(), sample.dateParts[0])
-    readonly property string dayDateText: Loc.now().toLocaleDateString(Qt.locale(), sample.dateParts[1])
+    readonly property string dayText: sample.dateParts[0] === "" ? "" : Loc.now().toLocaleDateString(I18n.locale, sample.dateParts[0])
+    readonly property string dayDateText: Loc.now().toLocaleDateString(I18n.locale, sample.dateParts[1])
 
     // the strip of bar behind it, and how far the module's own pill pads it
     readonly property int stripHeight: Math.min(Theme.dp(34), Theme.dp(Prefs.barHeight))
     readonly property int pad: loader.item && loader.item.pad !== undefined ? loader.item.pad : Theme.dp(12)
     // the media samples' track, as the bar's title shows it
-    readonly property string mediaTitle: Prefs.mediaArtist ? "Artist  -  Song" : "Song"
+    readonly property string mediaTitle: Prefs.mediaArtist ? I18n.tr("Artist  -  Song") : I18n.tr("Song")
 
     implicitWidth: loader.item ? loader.item.implicitWidth : 0
     implicitHeight: loader.item ? loader.item.implicitHeight : 0
@@ -352,7 +352,7 @@ Item {
             }
 
             BarText {
-                text: "Artist  -  Song"
+                text: I18n.tr("Artist  -  Song")
             }
 
             MiniPlay {
@@ -999,7 +999,7 @@ Item {
 
             BarText {
                 visible: values
-                text: "On"
+                text: I18n.tr("On")
                 font.pixelSize: Theme.fontLabelLg
             }
 
@@ -1481,7 +1481,7 @@ Item {
                     id: startLabelText
 
                     anchors.centerIn: parent
-                    text: "Start"
+                    text: I18n.tr("Start")
                     color: Theme.fgAccent
                     font.pixelSize: Theme.fs(12)
                 }

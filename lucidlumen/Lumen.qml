@@ -19,7 +19,7 @@ Scope {
     property var volumeSpace: ({})
     property string volumesShape: ""
     // the os's name, for the drive it runs from
-    property string systemName: "System"
+    property string systemName: I18n.tr("System")
     property int trashCount: 0
     property bool ready: false
     // settings -> environment -> use legacy icons: the gtk theme's icons, not lucid's
@@ -176,7 +176,7 @@ Scope {
             app.user = r.user || "";
             app.places = r.places || [];
             app.bookmarks = r.bookmarks || [];
-            app.systemName = r.system || "System";
+            app.systemName = r.system || I18n.tr("System");
             app.setVolumes(r.volumes || []);
             app.trashCount = r.trash || 0;
             app.desktopDir = r.desktop || app.desktopDir;
@@ -241,35 +241,35 @@ Scope {
     // the wallpaper's own palette uses, so they sit right in light and dark
     readonly property var colours: [{
         "id": "red",
-        "name": "Red",
+        "name": I18n.tr("Red"),
         "seed": "#e53935"
     }, {
         "id": "orange",
-        "name": "Orange",
+        "name": I18n.tr("Orange"),
         "seed": "#fb8c00"
     }, {
         "id": "yellow",
-        "name": "Yellow",
+        "name": I18n.tr("Yellow"),
         "seed": "#fdd835"
     }, {
         "id": "green",
-        "name": "Green",
+        "name": I18n.tr("Green"),
         "seed": "#43a047"
     }, {
         "id": "teal",
-        "name": "Teal",
+        "name": I18n.tr("Teal"),
         "seed": "#00897b"
     }, {
         "id": "blue",
-        "name": "Blue",
+        "name": I18n.tr("Blue"),
         "seed": "#1e88e5"
     }, {
         "id": "purple",
-        "name": "Purple",
+        "name": I18n.tr("Purple"),
         "seed": "#8e24aa"
     }, {
         "id": "grey",
-        "name": "Grey",
+        "name": I18n.tr("Grey"),
         "seed": "#8d8f99"
     }]
 
@@ -343,7 +343,7 @@ Scope {
     // the server an address is on, as people say it
     function hostOf(uri) {
         if (uri.indexOf("network:") === 0)
-            return "the network";
+            return I18n.tr("the network");
 
         var m = /^[a-z0-9+.-]+:\/\/(?:[^@\/]*@)?(\[[^\]]+\]|[^:\/]+)/i.exec(uri);
         return m ? decodeURIComponent(m[1]) : uri;
@@ -538,19 +538,19 @@ Scope {
 
     function titleFor(p) {
         if (p.indexOf("trash:") === 0)
-            return "Trash";
+            return I18n.tr("Trash");
 
         if (p.indexOf("recent:") === 0)
-            return "Recent";
+            return I18n.tr("Recent");
 
         if (p === app.home)
-            return "Home";
+            return I18n.tr("Home");
 
         if (p === "/")
             return app.systemName;
 
         if (p.indexOf("network:") === 0)
-            return "Network";
+            return I18n.tr("Network");
 
         // an address by its folder, or by its server at the top
         if (p.indexOf("://") !== -1) {
@@ -633,17 +633,17 @@ Scope {
         var d = new Date(secs * 1000), now = new Date();
         var day = 86400000;
         var start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-        var time = d.toLocaleTimeString(Qt.locale(), "hh:mm");
+        var time = d.toLocaleTimeString(I18n.locale, "hh:mm");
         if (d.getTime() >= start)
-            return "Today " + time;
+            return I18n.tr("Today %1", time);
 
         if (d.getTime() >= start - day)
-            return "Yesterday " + time;
+            return I18n.tr("Yesterday %1", time);
 
         if (d.getFullYear() === now.getFullYear())
-            return d.toLocaleDateString(Qt.locale(), "d MMM");
+            return d.toLocaleDateString(I18n.locale, "d MMM");
 
-        return d.toLocaleDateString(Qt.locale(), "d MMM yyyy");
+        return d.toLocaleDateString(I18n.locale, "d MMM yyyy");
     }
 
     // the trash keeps local wall-clock time with no zone: 2026-10-11T18:01:22
@@ -701,13 +701,13 @@ Scope {
             app.jobFinished(Object.assign({}, cur));
             var made = m.made || [];
             var moved = m.moved || [], copied = m.copied || [];
-            var verb = moved.length === 0 && (copied.length > 0 || cur.mode === "copy") ? "Copied" : "Moved";
+            var verb = moved.length === 0 && (copied.length > 0 || cur.mode === "copy") ? I18n.tr("Copied") : I18n.tr("Moved");
             if (m.tag === "undo" && m.state === "done" && (m.errors || []).length === 0)
                 app.notice("Put back " + (made.length === 1 ? "“" + made[0].split("/").pop() + "”" : made.length + " items"), "", null);
             else if (m.state === "cancelled")
                 app.notice(verb.replace("ed", "ing") + " stopped", "", null);
             else if ((m.errors || []).length > 0)
-                app.notice((m.errors.length === 1 ? m.errors[0].error : m.errors.length + " items could not be " + verb.toLowerCase()), "", null);
+                app.notice((m.errors.length === 1 ? m.errors[0].error : I18n.tr("%1 items could not be %2", m.errors.length, verb.toLowerCase())), "", null);
             else if (made.length > 0) {
                 var entry = {
                     "kind": "transfer",
@@ -739,7 +739,7 @@ Scope {
 
     function undo() {
         if (app.undoList.length === 0) {
-            app.notice("Nothing to undo", "", null);
+            app.notice(I18n.tr("Nothing to undo"), "", null);
             return ;
         }
         var e = app.undoList[app.undoList.length - 1];

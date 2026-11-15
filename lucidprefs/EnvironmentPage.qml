@@ -7,24 +7,24 @@ Column {
 
     readonly property var schemeOptions: [{
         "key": "dark",
-        "label": "Dark"
+        "label": I18n.tr("Dark")
     }, {
         "key": "light",
-        "label": "Light"
+        "label": I18n.tr("Light")
     }, {
         "key": "auto",
-        "label": "Auto"
+        "label": I18n.tr("Auto")
     }]
 
     readonly property var responseOptions: [{
         "key": "negative_quadratic",
-        "label": "Eager"
+        "label": I18n.tr("Eager")
     }, {
         "key": "linear",
-        "label": "Even"
+        "label": I18n.tr("Even")
     }, {
         "key": "quadratic",
-        "label": "Lazy"
+        "label": I18n.tr("Lazy")
     }]
     // unset is modules/plugins.lua's own, which tilts
     readonly property bool tiltOn: HyprConfig.mine["lucid.cursor_tilt"] !== false
@@ -38,26 +38,26 @@ Column {
             return "Your Hyprland config does not read ~/.config/hypr/lucid-settings.lua, where these go. Run the installer with --with-hypr, or add Lucid's modules/settings.lua and require it in hyprland.lua.";
 
         if (!HyprConfig.cursorPlugin)
-            return "The pointer moves through hypr-dynamic-cursors, a Hyprland plugin that is not loaded right now.";
+            return I18n.tr("The pointer moves through hypr-dynamic-cursors, a Hyprland plugin that is not loaded right now.");
 
         return "";
     }
 
     function orUnset(v) {
-        return v === "" ? "Not set" : v;
+        return v === "" ? I18n.tr("Not set") : v;
     }
 
     spacing: Theme.dp(26)
     Component.onCompleted: HyprConfig.refresh()
 
     SettingCard {
-        title: "POINTER"
-        subtitle: Env.probed ? "" : "Reading what this machine has installed…"
+        title: I18n.tr("POINTER")
+        subtitle: Env.probed ? "" : I18n.tr("Reading what this machine has installed…")
 
         SettingRow {
-            title: "Use legacy cursor theme"
+            title: I18n.tr("Use legacy cursor theme")
             resetKey: "envLegacyCursor"
-            description: "Turns off Lucid's own pointer, Bibata Modern drawn in your palette's colours, and uses a cursor theme installed on this machine instead."
+            description: I18n.tr("Turns off Lucid's own pointer, Bibata Modern drawn in your palette's colours, and uses a cursor theme installed on this machine instead.")
 
             M3Switch {
                 checked: Prefs.envLegacyCursor
@@ -71,9 +71,9 @@ Column {
         // lucid's own pointer: how it takes the palette, and what that looks like
         SettingRow {
             visible: !Prefs.envLegacyCursor
-            title: "Pointer colour"
+            title: I18n.tr("Pointer colour")
             resetKey: "envCursorStyle"
-            description: "Dark is Bibata's classic look, a dark pointer with a light outline, and Light turns it over; both keep one look in light and dark mode. Accent is your palette's own colour and turns deep in light mode, the way a filled button does. When the palette changes, the pointer fades across to its new colours along with the rest of the shell."
+            description: I18n.tr("Dark is Bibata's classic look, a dark pointer with a light outline, and Light turns it over; both keep one look in light and dark mode. Accent is your palette's own colour and turns deep in light mode, the way a filled button does. When the palette changes, the pointer fades across to its new colours along with the rest of the shell.")
             warning: Pointer.error
             stacked: true
 
@@ -120,9 +120,9 @@ Column {
 
         SettingRow {
             visible: Prefs.envLegacyCursor
-            title: "Cursor theme"
-            description: "Applied to GTK, Qt, XWayland and Hyprland at once. The pointer on screen changes as soon as you pick one; applications you open later pick it up from the environment."
-            warning: Env.cursorMissing ? "“" + Prefs.envCursorTheme + "” is not installed on this machine any more." : ""
+            title: I18n.tr("Cursor theme")
+            description: I18n.tr("Applied to GTK, Qt, XWayland and Hyprland at once. The pointer on screen changes as soon as you pick one; applications you open later pick it up from the environment.")
+            warning: Env.cursorMissing ? I18n.tr("“%1” is not installed on this machine any more.", Prefs.envCursorTheme) : ""
 
             M3Button {
                 text: page.orUnset(Prefs.envCursorTheme)
@@ -134,11 +134,11 @@ Column {
         }
 
         SettingRow {
-            title: "Pointer shadow"
+            title: I18n.tr("Pointer shadow")
             resetKey: "envCursorShadow"
             enabled: !Prefs.envLegacyCursor || (Env.shadowCapable && !Env.shadowBuilding)
-            disabledReason: Env.shadowBuilding ? "Rendering the pointer without its shadow\u2026 this takes a few seconds." : (Env.shadowReason !== "" ? "\u201c" + Prefs.envCursorTheme + "\u201d " + Env.shadowReason + "." : "Reading the theme\u2019s sources\u2026")
-            description: Prefs.envLegacyCursor ? "The soft shade behind the pointer. Hyprland has no switch for it \u2014 it is painted into the theme itself \u2014 so turning it off renders the theme again from its vector sources and points everything at that copy. The pointer keeps its exact shape, sizes and hotspots." : "A soft shade under the pointer, which lifts it off whatever it passes over. Bibata draws none of its own."
+            disabledReason: Env.shadowBuilding ? I18n.tr("Rendering the pointer without its shadow\u2026 this takes a few seconds.") : (Env.shadowReason !== "" ? "\u201c" + Prefs.envCursorTheme + "\u201d " + Env.shadowReason + "." : I18n.tr("Reading the theme\u2019s sources\u2026"))
+            description: Prefs.envLegacyCursor ? I18n.tr("The soft shade behind the pointer. Hyprland has no switch for it \u2014 it is painted into the theme itself \u2014 so turning it off renders the theme again from its vector sources and points everything at that copy. The pointer keeps its exact shape, sizes and hotspots.") : I18n.tr("A soft shade under the pointer, which lifts it off whatever it passes over. Bibata draws none of its own.")
             warning: Prefs.envLegacyCursor ? Env.shadowError : ""
 
             M3Switch {
@@ -151,9 +151,9 @@ Column {
         }
 
         SettingRow {
-            title: "Cursor size"
+            title: I18n.tr("Cursor size")
             resetKey: "envCursorSize"
-            description: "In pixels. GTK, Qt and Hyprland are all told the same number, which is what stops the pointer changing size as you move between applications."
+            description: I18n.tr("In pixels. GTK, Qt and Hyprland are all told the same number, which is what stops the pointer changing size as you move between applications.")
             showDivider: false
             stacked: true
 
@@ -176,15 +176,15 @@ Column {
     // hypr-dynamic-cursors does the moving; modules/plugins.lua names the
     // pointers that lean, and modules/settings.lua applies what is set here
     SettingCard {
-        title: "POINTER MOTION"
+        title: I18n.tr("POINTER MOTION")
         subtitle: page.motionReason
 
         HyprRow {
             id: tiltRow
 
-            title: "Tilt as it moves"
+            title: I18n.tr("Tilt as it moves")
             option: "lucid.cursor_tilt"
-            description: "The arrow, the busy and help pointers drawn on it, and the pointing hand lean into the way you move, as if they had a little weight. Text, resizing, moving, the crosshair and every other pointer stay upright."
+            description: I18n.tr("The arrow, the busy and help pointers drawn on it, and the pointing hand lean into the way you move, as if they had a little weight. Text, resizing, moving, the crosshair and every other pointer stay upright.")
             available: page.motionReady
             unavailableReason: page.motionReason
 
@@ -201,11 +201,11 @@ Column {
         HyprRow {
             id: appsRow
 
-            title: "Also in apps that draw their own pointer"
+            title: I18n.tr("Also in apps that draw their own pointer")
             option: "lucid.cursor_tilt_apps"
-            description: "Zen and Firefox, GTK 3 and X11 applications draw their pointer themselves and never tell Hyprland which one it is, so in them every pointer leans, the text one included, or none does."
+            description: I18n.tr("Zen and Firefox, GTK 3 and X11 applications draw their pointer themselves and never tell Hyprland which one it is, so in them every pointer leans, the text one included, or none does.")
             available: page.motionReady && page.tiltOn
-            unavailableReason: page.motionReady ? "Turn tilting on to choose this." : page.motionReason
+            unavailableReason: page.motionReady ? I18n.tr("Turn tilting on to choose this.") : page.motionReason
 
             M3Switch {
                 enabled: appsRow.enabled
@@ -220,11 +220,11 @@ Column {
         HyprRow {
             id: leanRow
 
-            title: "How far it leans"
+            title: I18n.tr("How far it leans")
             option: "plugin.dynamic_cursors.tilt.full"
-            description: "The furthest it tips to either side, when you move fast."
+            description: I18n.tr("The furthest it tips to either side, when you move fast.")
             available: page.motionReady && page.tiltOn
-            unavailableReason: page.motionReady ? "Turn tilting on to set how it leans." : page.motionReason
+            unavailableReason: page.motionReady ? I18n.tr("Turn tilting on to set how it leans.") : page.motionReason
             stacked: true
 
             M3Slider {
@@ -245,11 +245,11 @@ Column {
         HyprRow {
             id: speedRow
 
-            title: "Speed for a full lean"
+            title: I18n.tr("Speed for a full lean")
             option: "plugin.dynamic_cursors.tilt.limit"
-            description: "How fast the pointer has to travel to lean all the way, in pixels a second. Lower leans sooner."
+            description: I18n.tr("How fast the pointer has to travel to lean all the way, in pixels a second. Lower leans sooner.")
             available: page.motionReady && page.tiltOn
-            unavailableReason: page.motionReady ? "Turn tilting on to set how it leans." : page.motionReason
+            unavailableReason: page.motionReady ? I18n.tr("Turn tilting on to set how it leans.") : page.motionReason
             stacked: true
 
             M3Slider {
@@ -270,11 +270,11 @@ Column {
         HyprRow {
             id: responseRow
 
-            title: "How it picks up"
+            title: I18n.tr("How it picks up")
             option: "plugin.dynamic_cursors.tilt.activation"
-            description: "Eager leans early and eases into the rest, Even keeps step with your speed, and Lazy waits for a quick flick."
+            description: I18n.tr("Eager leans early and eases into the rest, Even keeps step with your speed, and Lazy waits for a quick flick.")
             available: page.motionReady && page.tiltOn
-            unavailableReason: page.motionReady ? "Turn tilting on to set how it leans." : page.motionReason
+            unavailableReason: page.motionReady ? I18n.tr("Turn tilting on to set how it leans.") : page.motionReason
             stacked: true
 
             M3Segmented {
@@ -292,11 +292,11 @@ Column {
         HyprRow {
             id: smoothRow
 
-            title: "Smoothing"
+            title: I18n.tr("Smoothing")
             option: "plugin.dynamic_cursors.tilt.window"
-            description: "How much of your last movement it weighs. Higher is steadier, but trails your hand a little."
+            description: I18n.tr("How much of your last movement it weighs. Higher is steadier, but trails your hand a little.")
             available: page.motionReady && page.tiltOn
-            unavailableReason: page.motionReady ? "Turn tilting on to set how it leans." : page.motionReason
+            unavailableReason: page.motionReady ? I18n.tr("Turn tilting on to set how it leans.") : page.motionReason
             stacked: true
 
             M3Slider {
@@ -317,13 +317,13 @@ Column {
         // the plugin is a compile away on a machine that skipped it at install
         SettingRow {
             visible: HyprConfig.liveRead && !HyprConfig.cursorPlugin && HyprConfig.pluginScriptFound
-            title: "Cursor plugin"
-            description: HyprConfig.pluginBuilding ? "Building it for the Hyprland on this machine\u2026 this takes about a minute." : "Tilting and shake to find come from hypr-dynamic-cursors, a Hyprland plugin Lucid builds here for the exact Hyprland you have. It needs git and base-devel, and no password."
+            title: I18n.tr("Cursor plugin")
+            description: HyprConfig.pluginBuilding ? I18n.tr("Building it for the Hyprland on this machine\u2026 this takes about a minute.") : I18n.tr("Tilting and shake to find come from hypr-dynamic-cursors, a Hyprland plugin Lucid builds here for the exact Hyprland you have. It needs git and base-devel, and no password.")
             warning: HyprConfig.pluginError
             showDivider: false
 
             M3Button {
-                text: HyprConfig.pluginBuilding ? "Building\u2026" : "Build and load"
+                text: HyprConfig.pluginBuilding ? I18n.tr("Building\u2026") : I18n.tr("Build and load")
                 variant: "tonal"
                 enabled: !HyprConfig.pluginBuilding
                 onClicked: HyprConfig.buildCursorPlugin()
@@ -334,15 +334,15 @@ Column {
     // the same plugin grows the pointer when it is shaken, drawn sharp from a
     // large copy of the theme it keeps
     SettingCard {
-        title: "SHAKE TO FIND"
+        title: I18n.tr("SHAKE TO FIND")
         subtitle: page.motionReason
 
         HyprRow {
             id: shakeRow
 
-            title: "Grow the pointer when you shake it"
+            title: I18n.tr("Grow the pointer when you shake it")
             option: "plugin.dynamic_cursors.shake.enabled"
-            description: "Shake the pointer and it grows for a moment, so it is easy to find on a busy screen. It stays sharp however large it gets."
+            description: I18n.tr("Shake the pointer and it grows for a moment, so it is easy to find on a busy screen. It stays sharp however large it gets.")
             available: page.motionReady
             unavailableReason: page.motionReason
 
@@ -359,11 +359,11 @@ Column {
         HyprRow {
             id: shakeSize
 
-            title: "How big it grows"
+            title: I18n.tr("How big it grows")
             option: "plugin.dynamic_cursors.shake.base"
-            description: "Its size the moment a shake is noticed, as a multiple of the pointer's own. Keep shaking and it grows a little more."
+            description: I18n.tr("Its size the moment a shake is noticed, as a multiple of the pointer's own. Keep shaking and it grows a little more.")
             available: page.motionReady && page.shakeOn
-            unavailableReason: page.motionReady ? "Turn growing on to set how it grows." : page.motionReason
+            unavailableReason: page.motionReady ? I18n.tr("Turn growing on to set how it grows.") : page.motionReason
             stacked: true
 
             M3Slider {
@@ -385,11 +385,11 @@ Column {
         HyprRow {
             id: shakeHard
 
-            title: "How hard to shake"
+            title: I18n.tr("How hard to shake")
             option: "plugin.dynamic_cursors.shake.threshold"
-            description: "Lower grows on a small shake, higher waits for a big one, so it never grows by accident."
+            description: I18n.tr("Lower grows on a small shake, higher waits for a big one, so it never grows by accident.")
             available: page.motionReady && page.shakeOn
-            unavailableReason: page.motionReady ? "Turn growing on to set how it grows." : page.motionReason
+            unavailableReason: page.motionReady ? I18n.tr("Turn growing on to set how it grows.") : page.motionReason
             stacked: true
 
             M3Slider {
@@ -410,11 +410,11 @@ Column {
         HyprRow {
             id: shakeLong
 
-            title: "Stays big for"
+            title: I18n.tr("Stays big for")
             option: "plugin.dynamic_cursors.shake.timeout"
-            description: "How long it stays grown once you stop shaking."
+            description: I18n.tr("How long it stays grown once you stop shaking.")
             available: page.motionReady && page.shakeOn
-            unavailableReason: page.motionReady ? "Turn growing on to set how it grows." : page.motionReason
+            unavailableReason: page.motionReady ? I18n.tr("Turn growing on to set how it grows.") : page.motionReason
             showDivider: false
             stacked: true
 
@@ -438,12 +438,12 @@ Column {
     }
 
     SettingCard {
-        title: "THEMES"
+        title: I18n.tr("THEMES")
 
         SettingRow {
-            title: "Use legacy icons"
+            title: I18n.tr("Use legacy icons")
             resetKey: "envLegacyIcons"
-            description: "Turns off Lucid's own icons, coloured by Matugen from your wallpaper, and uses your GTK icon theme instead: on the desktop, the dock, the launcher, the tray and in Lumen."
+            description: I18n.tr("Turns off Lucid's own icons, coloured by Matugen from your wallpaper, and uses your GTK icon theme instead: on the desktop, the dock, the launcher, the tray and in Lumen.")
 
             M3Switch {
                 checked: Prefs.envLegacyIcons
@@ -456,10 +456,10 @@ Column {
 
         // lucid's sets while its own icons are on, the gtk themes once they are off
         SettingRow {
-            title: "Icon theme"
+            title: I18n.tr("Icon theme")
             resetKey: Prefs.envLegacyIcons ? "" : "envIconSet"
-            description: Prefs.envLegacyIcons ? "Used by application menus, file managers and the shell's own dock. The dock follows a change straight away; open applications repaint when they next redraw." : "How Lucid draws files, folders and apps, in your wallpaper's colours. Gravity is lit softly from above; Gravity (Simplified) is the same set in flat tones."
-            warning: Prefs.envLegacyIcons && Env.iconMissing ? "“" + Prefs.envIconTheme + "” is not installed on this machine any more." : ""
+            description: Prefs.envLegacyIcons ? I18n.tr("Used by application menus, file managers and the shell's own dock. The dock follows a change straight away; open applications repaint when they next redraw.") : I18n.tr("How Lucid draws files, folders and apps, in your wallpaper's colours. Gravity is lit softly from above; Gravity (Simplified) is the same set in flat tones.")
+            warning: Prefs.envLegacyIcons && Env.iconMissing ? I18n.tr("“%1” is not installed on this machine any more.", Prefs.envIconTheme) : ""
 
             M3Button {
                 text: Prefs.envLegacyIcons ? page.orUnset(Prefs.envIconTheme) : LucidIcons.nameOf(Prefs.envIconSet)
@@ -471,9 +471,9 @@ Column {
         }
 
         SettingRow {
-            title: "Application theme"
-            description: "The GTK theme applications draw their own windows with. It has no effect on the shell, which follows the palette on the Theme page."
-            warning: Env.gtkMissing ? "“" + Prefs.envGtkTheme + "” is not installed on this machine any more." : ""
+            title: I18n.tr("Application theme")
+            description: I18n.tr("The GTK theme applications draw their own windows with. It has no effect on the shell, which follows the palette on the Theme page.")
+            warning: Env.gtkMissing ? I18n.tr("“%1” is not installed on this machine any more.", Prefs.envGtkTheme) : ""
 
             M3Button {
                 text: page.orUnset(Prefs.envGtkTheme)
@@ -485,9 +485,9 @@ Column {
         }
 
         SettingRow {
-            title: "Light or dark"
+            title: I18n.tr("Light or dark")
             resetKey: "envColorScheme"
-            description: "What applications are asked to prefer. Auto leaves the choice to each application."
+            description: I18n.tr("What applications are asked to prefer. Auto leaves the choice to each application.")
             showDivider: false
 
             M3Segmented {
@@ -504,13 +504,13 @@ Column {
     }
 
     SettingCard {
-        title: "TYPE"
-        subtitle: "The shell's own font, and the one applications draw with."
+        title: I18n.tr("TYPE")
+        subtitle: I18n.tr("The shell's own font, and the one applications draw with.")
 
         SettingRow {
-            title: "Interface font"
+            title: I18n.tr("Interface font")
             resetKey: "fontFamily"
-            description: "Applied everywhere the shell draws text. Chosen from the fonts installed on this machine."
+            description: I18n.tr("Applied everywhere the shell draws text. Chosen from the fonts installed on this machine.")
 
             M3Button {
                 text: Prefs.fontFamily
@@ -521,9 +521,9 @@ Column {
         }
 
         SettingRow {
-            title: "Text size"
+            title: I18n.tr("Text size")
             resetKey: "fontScale"
-            description: "Scales the shell's whole type ramp at once. Applications are not affected."
+            description: I18n.tr("Scales the shell's whole type ramp at once. Applications are not affected.")
             stacked: true
 
             M3Slider {
@@ -542,9 +542,9 @@ Column {
         }
 
         SettingRow {
-            title: "Applications use the same font"
+            title: I18n.tr("Applications use the same font")
             resetKey: "envFontSync"
-            description: "GTK and Qt are given the shell's interface font. Turn this off to set a separate one for them."
+            description: I18n.tr("GTK and Qt are given the shell's interface font. Turn this off to set a separate one for them.")
 
             M3Switch {
                 checked: Prefs.envFontSync
@@ -556,10 +556,10 @@ Column {
         }
 
         SettingRow {
-            title: "Application font"
+            title: I18n.tr("Application font")
             enabled: !Prefs.envFontSync
-            disabledReason: "Following the interface font above."
-            description: "What GTK and Qt applications draw their menus and labels with."
+            disabledReason: I18n.tr("Following the interface font above.")
+            description: I18n.tr("What GTK and Qt applications draw their menus and labels with.")
 
             M3Button {
                 text: page.orUnset(Prefs.envAppFont)
@@ -570,9 +570,9 @@ Column {
         }
 
         SettingRow {
-            title: "Application text size"
+            title: I18n.tr("Application text size")
             resetKey: "envAppFontSize"
-            description: "In points, the unit GTK and Qt both measure type in."
+            description: I18n.tr("In points, the unit GTK and Qt both measure type in.")
             stacked: true
 
             M3Slider {
@@ -590,8 +590,8 @@ Column {
         }
 
         SettingRow {
-            title: "Document font"
-            description: "Used by applications that lay out pages rather than interfaces."
+            title: I18n.tr("Document font")
+            description: I18n.tr("Used by applications that lay out pages rather than interfaces.")
 
             M3Button {
                 text: page.orUnset(Prefs.envDocumentFont)
@@ -602,8 +602,8 @@ Column {
         }
 
         SettingRow {
-            title: "Monospace font"
-            description: "Terminals, editors and anything else asking for a fixed-width face."
+            title: I18n.tr("Monospace font")
+            description: I18n.tr("Terminals, editors and anything else asking for a fixed-width face.")
             showDivider: false
 
             M3Button {
@@ -617,13 +617,13 @@ Column {
     }
 
     SettingCard {
-        title: "TOOLKITS"
+        title: I18n.tr("TOOLKITS")
         subtitle: Env.summary
 
         SettingRow {
-            title: "GTK applications"
+            title: I18n.tr("GTK applications")
             resetKey: "envApplyGtk"
-            description: "Writes the settings above into GTK 2, 3 and 4, and into gsettings, which is what makes running applications follow along."
+            description: I18n.tr("Writes the settings above into GTK 2, 3 and 4, and into gsettings, which is what makes running applications follow along.")
             enabled: Env.targets.gsettings !== false
 
             M3Switch {
@@ -636,9 +636,9 @@ Column {
         }
 
         SettingRow {
-            title: "Qt applications"
+            title: I18n.tr("Qt applications")
             resetKey: "envApplyQt"
-            description: Env.targets.qt6ct === false && Env.targets.qt5ct === false ? "Neither qt5ct nor qt6ct is configured on this machine, so there is nothing to write." : "Writes into the qt5ct and qt6ct configurations this machine already has."
+            description: Env.targets.qt6ct === false && Env.targets.qt5ct === false ? I18n.tr("Neither qt5ct nor qt6ct is configured on this machine, so there is nothing to write.") : I18n.tr("Writes into the qt5ct and qt6ct configurations this machine already has.")
             enabled: Env.targets.qt6ct === true || Env.targets.qt5ct === true
 
             M3Switch {
@@ -651,10 +651,10 @@ Column {
         }
 
         SettingRow {
-            title: "Qt style"
+            title: I18n.tr("Qt style")
             enabled: Prefs.envApplyQt && (Env.targets.qt6ct === true || Env.targets.qt5ct === true)
-            disabledReason: "Turn Qt applications on to choose a style."
-            description: "How Qt draws its own widgets. Fusion is the one every machine has."
+            disabledReason: I18n.tr("Turn Qt applications on to choose a style.")
+            description: I18n.tr("How Qt draws its own widgets. Fusion is the one every machine has.")
 
             M3Button {
                 text: page.orUnset(Prefs.envQtStyle)
@@ -665,11 +665,11 @@ Column {
         }
 
         SettingRow {
-            title: "Hyprland environment"
+            title: I18n.tr("Hyprland environment")
             resetKey: "envApplyHypr"
-            description: "Keeps XCURSOR_THEME, XCURSOR_SIZE and the icon theme in Hyprland's env module, so applications started later inherit them."
+            description: I18n.tr("Keeps XCURSOR_THEME, XCURSOR_SIZE and the icon theme in Hyprland's env module, so applications started later inherit them.")
             enabled: Env.targets.hyprland !== false
-            disabledReason: "No Hyprland env module on this machine to write to."
+            disabledReason: I18n.tr("No Hyprland env module on this machine to write to.")
             showDivider: false
 
             M3Switch {
@@ -684,18 +684,18 @@ Column {
     }
 
     SettingCard {
-        title: "THIS MACHINE"
+        title: I18n.tr("THIS MACHINE")
 
         SettingRow {
-            title: "Re-read from the system"
-            description: Env.lastError !== "" ? Env.lastError : "Loads whatever the machine's own configuration files currently say, discarding what is set here. Useful after changing appearance with another tool."
+            title: I18n.tr("Re-read from the system")
+            description: Env.lastError !== "" ? Env.lastError : I18n.tr("Loads whatever the machine's own configuration files currently say, discarding what is set here. Useful after changing appearance with another tool.")
             showDivider: false
 
             M3Button {
-                text: Env.busy ? "Working…" : "Re-read"
+                text: Env.busy ? I18n.tr("Working…") : I18n.tr("Re-read")
                 variant: "tonal"
                 enabled: !Env.busy
-                onClicked: Prefs.askConfirm("Re-read appearance from this machine?", "Every setting on this page is replaced by what the machine's GTK, Qt and Hyprland configuration currently says. Nothing else is touched.", "Re-read", Prefs.resetEnvToken)
+                onClicked: Prefs.askConfirm(I18n.tr("Re-read appearance from this machine?"), I18n.tr("Every setting on this page is replaced by what the machine's GTK, Qt and Hyprland configuration currently says. Nothing else is touched."), "Re-read", Prefs.resetEnvToken)
             }
 
         }

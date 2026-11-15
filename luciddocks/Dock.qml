@@ -846,58 +846,58 @@ PanelWindow {
 
     readonly property var allCommands: [{
         "id": "wallpaper",
-        "name": "Choose Wallpaper",
-        "desc": "Browse and set a new desktop wallpaper",
+        "name": I18n.tr("Choose Wallpaper"),
+        "desc": I18n.tr("Browse and set a new desktop wallpaper"),
         "glyph": DockIcons.wallpaper
     }, {
         "id": "shuffle",
-        "name": "Shuffle Wallpaper",
-        "desc": "Pick a random wallpaper from this theme's folder",
+        "name": I18n.tr("Shuffle Wallpaper"),
+        "desc": I18n.tr("Pick a random wallpaper from this theme's folder"),
         "glyph": DockIcons.shuffle
     }, {
         "id": "theme",
-        "name": "Switch Theme",
-        "desc": "Change the colour scheme",
+        "name": I18n.tr("Switch Theme"),
+        "desc": I18n.tr("Change the colour scheme"),
         "glyph": DockIcons.palette
     }, {
         "id": "clipboard",
-        "name": "Clipboard History",
-        "desc": "Copy something you copied earlier",
+        "name": I18n.tr("Clipboard History"),
+        "desc": I18n.tr("Copy something you copied earlier"),
         "glyph": DockIcons.clipboard
     }, {
         "id": "power",
-        "name": "Power",
-        "desc": "The full-screen way out: lock, sleep, log out, restart",
+        "name": I18n.tr("Power"),
+        "desc": I18n.tr("The full-screen way out: lock, sleep, log out, restart"),
         "glyph": DockIcons.power
     }, {
         "id": "keyboard",
-        "name": "On-Screen Keyboard",
-        "desc": "Type with the pointer when there is no keyboard",
+        "name": I18n.tr("On-Screen Keyboard"),
+        "desc": I18n.tr("Type with the pointer when there is no keyboard"),
         "glyph": DockIcons.keyboard
     }, {
         "id": "emoji",
-        "name": "Emoji",
-        "desc": "Type : and a word, Return copies it",
+        "name": I18n.tr("Emoji"),
+        "desc": I18n.tr("Type : and a word, Return copies it"),
         "glyph": "mood"
     }, {
         "id": "run",
-        "name": "Run a Command",
-        "desc": "Type $ and a command line",
+        "name": I18n.tr("Run a Command"),
+        "desc": I18n.tr("Type $ and a command line"),
         "glyph": "terminal_2"
     }, {
         "id": "web",
-        "name": "Search the Web",
-        "desc": "Type ? and what you are looking for",
+        "name": I18n.tr("Search the Web"),
+        "desc": I18n.tr("Type ? and what you are looking for"),
         "glyph": "travel_explore"
     }, {
         "id": "edit",
-        "name": "Edit Desktop",
-        "desc": "Move the bar's modules, restyle the bar and the dock, right on the desktop",
+        "name": I18n.tr("Edit Desktop"),
+        "desc": I18n.tr("Move the bar's modules, restyle the bar and the dock, right on the desktop"),
         "glyph": "edit"
     }, {
         "id": "settings",
-        "name": "Settings",
-        "desc": "Open Lucid's settings",
+        "name": I18n.tr("Settings"),
+        "desc": I18n.tr("Open Lucid's settings"),
         "glyph": DockIcons.settings
     }]
     readonly property var searchEngines: ({
@@ -906,19 +906,19 @@ PanelWindow {
             "url": "https://duckduckgo.com/?q="
         },
         "google": {
-            "name": "Google",
+            "name": I18n.tr("Google"),
             "url": "https://www.google.com/search?q="
         },
         "brave": {
-            "name": "Brave Search",
+            "name": I18n.tr("Brave Search"),
             "url": "https://search.brave.com/search?q="
         },
         "startpage": {
-            "name": "Startpage",
+            "name": I18n.tr("Startpage"),
             "url": "https://www.startpage.com/do/search?q="
         },
         "kagi": {
-            "name": "Kagi",
+            "name": I18n.tr("Kagi"),
             "url": "https://kagi.com/search?q="
         }
     })
@@ -1253,7 +1253,7 @@ PanelWindow {
     }
 
     function urlRow(q) {
-        return dockWindow.makeRow("web", "web-url", "Open " + q, "In your browser", {
+        return dockWindow.makeRow("web", "web-url", I18n.tr("Open %1", q), I18n.tr("In your browser"), {
             "glyph": "open_in_new",
             "payload": /^https?:/.test(q) ? q : "https://" + q
         });
@@ -1261,12 +1261,12 @@ PanelWindow {
 
     function webRow(q, searchOnly) {
         if (dockWindow.looksUrl(q) && !searchOnly)
-            return dockWindow.makeRow("web", "web-url", "Open " + q, "In your browser", {
+            return dockWindow.makeRow("web", "web-url", I18n.tr("Open %1", q), I18n.tr("In your browser"), {
             "glyph": "open_in_new",
             "payload": /^https?:/.test(q) ? q : "https://" + q
         });
 
-        return dockWindow.makeRow("web", "web-search", "Search " + dockWindow.engine.name + " for \u201c" + q + "\u201d", "Opens in your browser", {
+        return dockWindow.makeRow("web", "web-search", I18n.tr("Search %1 for “%2”", dockWindow.engine.name, q), I18n.tr("Opens in your browser"), {
             "glyph": "travel_explore",
             "payload": dockWindow.engine.url + encodeURIComponent(q)
         });
@@ -1276,11 +1276,11 @@ PanelWindow {
     // want a second Return, as on the session screen
     readonly property var powerCommands: Power.actions.map((a) => {
         const more = {
-            "lock": ["Lock the session", "screen", ""],
-            "suspend": ["Sleep, keeping the session in memory", "sleep", ""],
-            "logout": ["End the session", "sign out exit", "log out"],
-            "reboot": ["Reboot the computer", "reboot", "restart"],
-            "shutdown": ["Power the computer off", "shutdown poweroff power off", "shut down"]
+            "lock": [I18n.tr("Lock the session"), "screen", ""],
+            "suspend": [I18n.tr("Sleep, keeping the session in memory"), "sleep", ""],
+            "logout": [I18n.tr("End the session"), I18n.tr("sign out exit"), I18n.tr("log out")],
+            "reboot": [I18n.tr("Reboot the computer"), "reboot", "restart"],
+            "shutdown": [I18n.tr("Power the computer off"), I18n.tr("shutdown poweroff power off"), I18n.tr("shut down")]
         }[a.id] || ["", "", ""];
         return {
             "id": a.id,
@@ -1384,7 +1384,7 @@ PanelWindow {
         var ws = client.workspace ? client.workspace.name : "";
         // special workspaces keep their own name, numbered ones read as words
         if (ws !== "" && client.workspace.id > 0)
-            ws = "Workspace " + ws;
+            ws = I18n.tr("Workspace %1", ws);
         else if (ws.indexOf("special:") === 0)
             ws = ws.substring(8);
         return dockWindow.makeRow("window", "win-" + client.address, client.title && client.title !== "" ? client.title : name, ws !== "" ? name + " · " + ws : name, {
@@ -1626,9 +1626,9 @@ PanelWindow {
                     often = [];
 
                 if (often.length > 0) {
-                    rows.push(dockWindow.headerRow("Frequent"));
+                    rows.push(dockWindow.headerRow(I18n.tr("Frequent")));
                     for (var f = 0; f < often.length; f++) rows.push(dockWindow.rowForApp(often[f].app));
-                    rows.push(dockWindow.headerRow("All apps"));
+                    rows.push(dockWindow.headerRow(I18n.tr("All apps")));
                 }
                 for (var r = 0; r < rest.length; r++) rows.push(dockWindow.rowForApp(rest[r].app));
             } else {
@@ -1636,11 +1636,11 @@ PanelWindow {
                 var addressUp = rows.length > 0 && rows[0].key === "web-url";
                 var pages = Prefs.launcherSettingsResults ? dockWindow.settingRows(q, 3) : [];
                 if (pages.length > 0) {
-                    rows.push(dockWindow.headerRow("Settings"));
+                    rows.push(dockWindow.headerRow(I18n.tr("Settings")));
                     rows = rows.concat(pages);
                 }
                 if (Prefs.launcherWebRow && calc === "") {
-                    rows.push(dockWindow.headerRow("Web"));
+                    rows.push(dockWindow.headerRow(I18n.tr("Web")));
                     rows.push(dockWindow.webRow(dockWindow.queryFor(raw), addressUp));
                 }
             }
@@ -1657,7 +1657,7 @@ PanelWindow {
             if (q !== "") {
                 var found = Prefs.launcherSettingsResults ? dockWindow.settingRows(q, 6) : [];
                 if (found.length > 0) {
-                    rows.push(dockWindow.headerRow("Settings"));
+                    rows.push(dockWindow.headerRow(I18n.tr("Settings")));
                     rows = rows.concat(found);
                 }
             }
@@ -1666,20 +1666,20 @@ PanelWindow {
             if (wq !== "")
                 rows.push(dockWindow.webRow(wq));
             else
-                rows.push(dockWindow.headerRow("Type what to search " + dockWindow.engine.name + " for"));
+                rows.push(dockWindow.headerRow(I18n.tr("Type what to search %1 for", dockWindow.engine.name)));
         } else if (mode === "run") {
             var line = dockWindow.queryFor(raw);
             if (line !== "") {
-                rows.push(dockWindow.makeRow("run", "run-bg", "Run  " + line, "In the background", {
+                rows.push(dockWindow.makeRow("run", "run-bg", I18n.tr("Run  %1", line), I18n.tr("In the background"), {
                     "glyph": "play_arrow",
                     "payload": line
                 }));
-                rows.push(dockWindow.makeRow("runterm", "run-term", "Run in a terminal", "Keeps the window open to read the output", {
+                rows.push(dockWindow.makeRow("runterm", "run-term", I18n.tr("Run in a terminal"), I18n.tr("Keeps the window open to read the output"), {
                     "glyph": "terminal_2",
                     "payload": line
                 }));
             } else {
-                rows.push(dockWindow.headerRow("Type a command line to run"));
+                rows.push(dockWindow.headerRow(I18n.tr("Type a command line to run")));
             }
         } else if (mode === "emoji") {
             dockWindow.emojiWanted = true;
@@ -2463,7 +2463,7 @@ PanelWindow {
                 return "usage: hide <desktop-file-id>";
 
             Prefs.setLauncherHidden(id, true);
-            return "hidden: " + id;
+            return I18n.tr("hidden: %1", id);
         }
 
         function unhide(id: string): string {
@@ -2471,7 +2471,7 @@ PanelWindow {
                 return "usage: unhide <desktop-file-id>";
 
             Prefs.setLauncherHidden(id, false);
-            return "shown: " + id;
+            return I18n.tr("shown: %1", id);
         }
 
         function hidden(): string {
@@ -2795,13 +2795,13 @@ PanelWindow {
                 "iconName": "system-file-manager",
                 "command": "xdg-open " + Quickshell.env("HOME"),
                 "appId": "files",
-                "name": "Files"
+                "name": I18n.tr("Files")
             }, {
                 "appKey": "terminal",
                 "iconName": "utilities-terminal",
                 "command": "xdg-terminal-exec",
                 "appId": "terminal",
-                "name": "Terminal"
+                "name": I18n.tr("Terminal")
             }]
         }
 
@@ -3460,7 +3460,7 @@ PanelWindow {
                 DockItem {
                     id: launcherItem
 
-                    displayName: "Launcher"
+                    displayName: I18n.tr("Launcher")
                     isToggle: true
                     pointerInside: dockWindow.pointerOnDock
                     toggleActive: dockWindow.menuInDock
@@ -3744,7 +3744,7 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: Theme.dp(8)
-            text: "dock surface headroom - " + Math.round(parent.width) + " x " + Math.round(parent.height) + " transparent" + (dockWindow.dragging ? " (INPUT LIVE: dragging)" : ", input masked out")
+            text: I18n.tr("dock surface headroom - %1 x %2 transparent", Math.round(parent.width), Math.round(parent.height)) + (dockWindow.dragging ? I18n.tr(" (INPUT LIVE: dragging)") : I18n.tr(", input masked out"))
             color: "#cc80d8ff"
             font.pixelSize: Theme.dp(12)
             font.variableAxes: Theme.axes(12, 420, 0)

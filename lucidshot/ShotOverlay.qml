@@ -452,7 +452,7 @@ PanelWindow {
                 const f = this.text.trim().split(/\s+/);
                 const w = parseInt(f[0]), h = parseInt(f[1]);
                 if (!(w > 0 && h > 0)) {
-                    overlay.notify("broken_image", "That picture could not be opened", true);
+                    overlay.notify("broken_image", I18n.tr("That picture could not be opened"), true);
                     return ;
                 }
                 stage.editing = true;
@@ -485,7 +485,7 @@ PanelWindow {
         interval: 100
         onTriggered: {
             overlay.wantWhole = false;
-            const why = freeze.lastError !== "" ? freeze.lastError : "grim exited with " + freeze.lastExit;
+            const why = freeze.lastError !== "" ? freeze.lastError : I18n.tr("grim exited with %1", freeze.lastExit);
             console.warn("lucidshot: could not freeze the screen: " + why);
             overlay.freezeFailed(why);
         }

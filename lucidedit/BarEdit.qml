@@ -697,7 +697,7 @@ Item {
 
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: "Let go to take it off the bar"
+                                text: I18n.tr("Let go to take it off the bar")
                                 color: Theme.fgErrorContainer
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontLabelLg

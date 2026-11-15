@@ -11,19 +11,19 @@ Column {
     property string copied: ""
     readonly property var formats: [{
         "key": "hex",
-        "label": "#rrggbb"
+        "label": I18n.tr("#rrggbb")
     }, {
         "key": "hex_stripped",
-        "label": "rrggbb"
+        "label": I18n.tr("rrggbb")
     }, {
         "key": "rgb",
-        "label": "rgb()"
+        "label": I18n.tr("rgb()")
     }, {
         "key": "rgba",
-        "label": "rgba()"
+        "label": I18n.tr("rgba()")
     }, {
         "key": "hsl",
-        "label": "hsl()"
+        "label": I18n.tr("hsl()")
     }]
 
     function variable(role) {
@@ -43,7 +43,7 @@ Column {
 
     Text {
         width: tokens.width
-        text: Templates.roles.length === 0 ? "There are no colours yet. They come with the next change of theme or wallpaper." : (tokens.copied !== "" ? "Copied " + tokens.copied : "Click a colour to copy its variable.")
+        text: Templates.roles.length === 0 ? I18n.tr("There are no colours yet. They come with the next change of theme or wallpaper.") : (tokens.copied !== "" ? I18n.tr("Copied %1", tokens.copied) : I18n.tr("Click a colour to copy its variable."))
         color: tokens.copied !== "" ? Theme.accent : Theme.subtext
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBody

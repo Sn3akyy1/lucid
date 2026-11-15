@@ -9,32 +9,32 @@ WidgetBody {
     readonly property bool showHex: w.opt("showHex") !== false
     // each role wears its own expressive shape
     readonly property var roles: [{
-        "name": "Primary",
+        "name": I18n.tr("Primary"),
         "color": Theme.primary,
         "on": Theme.fgPrimary,
         "shape": "cookie9"
     }, {
-        "name": "Secondary",
+        "name": I18n.tr("Secondary"),
         "color": Theme.secondaryContainer,
         "on": Theme.fgSecondaryContainer,
         "shape": "clover4"
     }, {
-        "name": "Tertiary",
+        "name": I18n.tr("Tertiary"),
         "color": Theme.tertiaryContainer,
         "on": Theme.fgTertiaryContainer,
         "shape": "sunny"
     }, {
-        "name": "Container",
+        "name": I18n.tr("Container"),
         "color": Theme.primaryContainer,
         "on": Theme.fgPrimaryContainer,
         "shape": "pentagon"
     }, {
-        "name": "Surface",
+        "name": I18n.tr("Surface"),
         "color": Theme.surfaceHighest,
         "on": Theme.text,
         "shape": "square"
     }, {
-        "name": "Error",
+        "name": I18n.tr("Error"),
         "color": Theme.error,
         "on": Theme.fgError,
         "shape": "gem"
@@ -43,16 +43,16 @@ WidgetBody {
     // the roles the shell actually paints with, each a step apart on the wheel
     // but all inside the pinks
     readonly property var families: [{
-        "name": "Primary",
+        "name": I18n.tr("Primary"),
         "seed": Theme.primary
     }, {
-        "name": "Secondary",
+        "name": I18n.tr("Secondary"),
         "seed": Theme.secondary
     }, {
-        "name": "Tertiary",
+        "name": I18n.tr("Tertiary"),
         "seed": Theme.tertiary
     }, {
-        "name": "Error",
+        "name": I18n.tr("Error"),
         "seed": Theme.error
     }]
     property string copied: ""
@@ -90,7 +90,7 @@ WidgetBody {
             anchors.verticalCenter: parent.verticalCenter
             role: "titleSmall"
             color: w.ink
-            text: w.copied !== "" ? "Copied " + w.copied.toUpperCase() : Prefs.currentTheme.charAt(0).toUpperCase() + Prefs.currentTheme.slice(1).replace("-", " ")
+            text: w.copied !== "" ? I18n.tr("Copied %1", w.copied.toUpperCase()) : Prefs.currentTheme.charAt(0).toUpperCase() + Prefs.currentTheme.slice(1).replace("-", " ")
         }
 
     }
@@ -157,7 +157,7 @@ WidgetBody {
                         role: "labelSmall"
                         weight: 640
                         color: sw.modelData.on
-                        text: "Aa"
+                        text: I18n.tr("Aa")
                     }
 
                 }

@@ -197,7 +197,7 @@ Item {
                         rounded: 100
                         tabular: true
                         color: card.ink
-                        text: card.there.toLocaleTimeString(Qt.locale(), Prefs.clock24h ? "HH:mm" : "h:mm AP")
+                        text: card.there.toLocaleTimeString(I18n.locale, Prefs.clock24h ? I18n.tr("HH:mm") : I18n.tr("h:mm AP"))
                     }
 
                     LText {
@@ -255,7 +255,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             role: "titleMedium"
             weight: 560
-            text: "No cities yet"
+            text: I18n.tr("No cities yet")
         }
 
         LText {
@@ -264,7 +264,7 @@ Item {
             role: "bodyMedium"
             color: Theme.subtext
             wrapMode: Text.Wrap
-            text: "Search below for a city and it lands here with its time and how far ahead or behind it is."
+            text: I18n.tr("Search below for a city and it lands here with its time and how far ahead or behind it is.")
         }
 
     }
@@ -282,7 +282,7 @@ Item {
             width: parent.width
             variant: "search"
             icon: "travel_explore"
-            placeholder: "Add a city — Lisbon, Tokyo, Sao Paulo…"
+            placeholder: I18n.tr("Add a city — Lisbon, Tokyo, Sao Paulo…")
             containerColor: Theme.withBlur(Theme.surfaceHigh)
             onAccepted: {
                 if (page.results.length > 0) {

@@ -6,17 +6,17 @@ Column {
     id: page
 
     readonly property var blurbs: ({
-        "special": "shows it, and puts away any other workspace that is up. " + Specials.keysText(Specials.stashKeys) + " parks the window you are in here, and sends it back out again.",
-        "music": "puts your player over whatever you are doing.",
-        "comms": "brings up chat and mail, out of the way until you want them.",
-        "todo": "brings up your list, wherever you are.",
-        "sysmon": "shows what the machine is up to."
+        "special": I18n.tr("shows it, and puts away any other workspace that is up. %1 parks the window you are in here, and sends it back out again.", Specials.keysText(Specials.stashKeys)),
+        "music": I18n.tr("puts your player over whatever you are doing."),
+        "comms": I18n.tr("brings up chat and mail, out of the way until you want them."),
+        "todo": I18n.tr("brings up your list, wherever you are."),
+        "sysmon": I18n.tr("shows what the machine is up to.")
     })
     readonly property var kinds: ({
-        "music": "music players",
-        "comms": "chat and mail apps",
-        "todo": "to-do apps",
-        "sysmon": "system monitors"
+        "music": I18n.tr("music players"),
+        "comms": I18n.tr("chat and mail apps"),
+        "todo": I18n.tr("to-do apps"),
+        "sysmon": I18n.tr("system monitors")
     })
 
     // the marks offered for a workspace you make, in the order they are shown
@@ -65,7 +65,7 @@ Column {
 
     function keyLine(key) {
         const keys = Specials.keysOf(key);
-        return (keys.length > 0 ? Specials.keysText(keys) : "No key yet. Its key") + " " + page.blurb(key);
+        return (keys.length > 0 ? Specials.keysText(keys) : I18n.tr("No key yet. Its key")) + " " + page.blurb(key);
     }
 
     function known(key) {
@@ -84,16 +84,16 @@ Column {
         visible: Specials.moduleProbed && !Specials.moduleInstalled
 
         SettingRow {
-            title: "The keys are not set up"
-            warning: "These workspaces come with Lucid's Hyprland config, and yours does not load it. Run the installer with --with-hypr, or copy modules/specials.lua and the special workspace binds from Lucid's modules/binds.lua into your own."
+            title: I18n.tr("The keys are not set up")
+            warning: I18n.tr("These workspaces come with Lucid's Hyprland config, and yours does not load it. Run the installer with --with-hypr, or copy modules/specials.lua and the special workspace binds from Lucid's modules/binds.lua into your own.")
             showDivider: false
         }
 
     }
 
     SettingCard {
-        title: "WORKSPACES"
-        subtitle: "Each one slides over the workspace you are on, and the same keys put it away again."
+        title: I18n.tr("WORKSPACES")
+        subtitle: I18n.tr("Each one slides over the workspace you are on, and the same keys put it away again.")
 
         Repeater {
             model: Specials.spaces.map((s) => {
@@ -123,7 +123,7 @@ Column {
                     M3Button {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: Specials.keysOf(spaceRow.modelData).length === 0 && Keybinds.loaded && !Keybinds.missing
-                        text: spaceRow.bind ? "Edit key" : "Set a key"
+                        text: spaceRow.bind ? I18n.tr("Edit key") : I18n.tr("Set a key")
                         variant: "text"
                         onClicked: {
                             if (spaceRow.bind)
@@ -164,12 +164,12 @@ Column {
 
         SettingRow {
             visible: page.formKey === ""
-            title: "Make your own"
-            description: "A workspace of your own, with its own key, mark and apps."
+            title: I18n.tr("Make your own")
+            description: I18n.tr("A workspace of your own, with its own key, mark and apps.")
             showDivider: false
 
             M3Button {
-                text: "New workspace"
+                text: I18n.tr("New workspace")
                 variant: "tonal"
                 iconPath: "add"
                 onClicked: page.openForm("+")
@@ -179,10 +179,10 @@ Column {
 
         SettingRow {
             visible: page.formKey !== ""
-            title: page.formNew ? "New workspace" : "Edit " + (Specials.space(page.formKey) || {
+            title: page.formNew ? I18n.tr("New workspace") : I18n.tr("Edit %1", (Specials.space(page.formKey) || {
                 "label": ""
-            }).label
-            description: page.formNew ? "A name, and the mark it shows in the bar. Its key comes next, and its apps are added below." : "A name, and the mark it shows in the bar."
+            }).label)
+            description: page.formNew ? I18n.tr("A name, and the mark it shows in the bar. Its key comes next, and its apps are added below.") : I18n.tr("A name, and the mark it shows in the bar.")
             stacked: true
             showDivider: false
 
@@ -194,7 +194,7 @@ Column {
                     id: nameField
 
                     width: Math.min(parent.width, Theme.dp(360))
-                    placeholder: "Notes"
+                    placeholder: I18n.tr("Notes")
                     text: page.formName
                     commitOnBlur: false
                     error: page.formName.length > 0 && page.formName.trim() === ""
@@ -253,14 +253,14 @@ Column {
                     spacing: Theme.dp(8)
 
                     M3Button {
-                        text: page.formNew ? "Create" : "Save"
+                        text: page.formNew ? I18n.tr("Create") : I18n.tr("Save")
                         variant: "filled"
                         enabled: page.formName.trim() !== ""
                         onClicked: page.submitForm()
                     }
 
                     M3Button {
-                        text: "Cancel"
+                        text: I18n.tr("Cancel")
                         variant: "text"
                         onClicked: page.formKey = ""
                     }
@@ -274,8 +274,8 @@ Column {
     }
 
     SettingCard {
-        title: "APPS"
-        subtitle: "The key starts whichever of these is not running yet. Anything else you open while a workspace is up stays in it too."
+        title: I18n.tr("APPS")
+        subtitle: I18n.tr("The key starts whichever of these is not running yet. Anything else you open while a workspace is up stays in it too.")
 
         Repeater {
             model: ["music", "comms", "todo", "sysmon"].concat(Specials.ownSpaces.map((s) => {
@@ -310,8 +310,8 @@ Column {
                 resetKey: space.own ? "" : space.apps
                 stacked: true
                 enabled: Specials.isOn(modelData)
-                disabledReason: space.label + " is switched off above, so its key does nothing."
-                description: apps.length > 0 ? "" : (space.own ? "Nothing yet. Add the apps its key should bring up." : "None of the " + page.kinds[modelData] + " Lucid knows are installed: " + page.known(modelData) + ".")
+                disabledReason: I18n.tr("%1 is switched off above, so its key does nothing.", space.label)
+                description: apps.length > 0 ? "" : (space.own ? I18n.tr("Nothing yet. Add the apps its key should bring up.") : I18n.tr("None of the %1 Lucid knows are installed: %2.", page.kinds[modelData], page.known(modelData)))
 
                 Column {
                     width: parent.width
@@ -334,7 +334,7 @@ Column {
                     }
 
                     M3Button {
-                        text: "Add an app"
+                        text: I18n.tr("Add an app")
                         variant: "text"
                         iconPath: "add"
                         enabled: appsRow.enabled
@@ -350,12 +350,12 @@ Column {
     }
 
     SettingCard {
-        title: "BEHAVIOUR"
+        title: I18n.tr("BEHAVIOUR")
 
         SettingRow {
-            title: "Keep apps in their workspace"
+            title: I18n.tr("Keep apps in their workspace")
             resetKey: "specialKeepApps"
-            description: "The apps picked above always open inside their workspace, from the launcher and the dock too, and the key pulls them back in if you moved them out."
+            description: I18n.tr("The apps picked above always open inside their workspace, from the launcher and the dock too, and the key pulls them back in if you moved them out.")
 
             M3Switch {
                 checked: Prefs.specialKeepApps
@@ -367,9 +367,9 @@ Column {
         }
 
         SettingRow {
-            title: "Put away on workspace change"
+            title: I18n.tr("Put away on workspace change")
             resetKey: "specialHideOnSwitch"
-            description: "Switching to another workspace hides whatever is up, instead of carrying it along over the next one."
+            description: I18n.tr("Switching to another workspace hides whatever is up, instead of carrying it along over the next one.")
 
             M3Switch {
                 checked: Prefs.specialHideOnSwitch
@@ -381,9 +381,9 @@ Column {
         }
 
         SettingRow {
-            title: "Dim behind"
+            title: I18n.tr("Dim behind")
             resetKey: "specialDim"
-            description: "How far the workspace underneath darkens while one is up."
+            description: I18n.tr("How far the workspace underneath darkens while one is up.")
             stacked: true
 
             M3Slider {
@@ -401,9 +401,9 @@ Column {
         }
 
         SettingRow {
-            title: "Blur behind"
+            title: I18n.tr("Blur behind")
             resetKey: "specialBlur"
-            description: "Blur the workspace underneath as well. It is redrawn blurred on every frame while one is up, so it costs more than dimming alone."
+            description: I18n.tr("Blur the workspace underneath as well. It is redrawn blurred on every frame while one is up, so it costs more than dimming alone.")
 
             M3Switch {
                 checked: Prefs.specialBlur
@@ -415,9 +415,9 @@ Column {
         }
 
         SettingRow {
-            title: "Margin around"
+            title: I18n.tr("Margin around")
             resetKey: "specialGaps"
-            description: "Room between the windows and the edges of the screen, so what is underneath shows around them like a card. At 0 they keep the gaps of any other workspace."
+            description: I18n.tr("Room between the windows and the edges of the screen, so what is underneath shows around them like a card. At 0 they keep the gaps of any other workspace.")
             stacked: true
             showDivider: false
 
@@ -438,18 +438,18 @@ Column {
     }
 
     SettingCard {
-        title: "RESET"
+        title: I18n.tr("RESET")
 
         SettingRow {
-            title: "Reset special workspaces"
-            description: "Every workspace back on, each one back to the first of its apps that is installed, and the behaviour above back to how it ships. The workspaces you made stay as they are."
+            title: I18n.tr("Reset special workspaces")
+            description: I18n.tr("Every workspace back on, each one back to the first of its apps that is installed, and the behaviour above back to how it ships. The workspaces you made stay as they are.")
             showDivider: false
 
             M3Button {
-                text: "Reset"
+                text: I18n.tr("Reset")
                 variant: "text"
                 destructive: true
-                onClicked: Prefs.askReset("Reset special workspaces?", "Every workspace goes back on, each one back to the first of its apps that is installed, and the behaviour settings back to how they ship.", Prefs.resetSpecialsToken)
+                onClicked: Prefs.askReset(I18n.tr("Reset special workspaces?"), I18n.tr("Every workspace goes back on, each one back to the first of its apps that is installed, and the behaviour settings back to how they ship."), Prefs.resetSpecialsToken)
             }
 
         }

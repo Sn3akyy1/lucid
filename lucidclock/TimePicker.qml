@@ -11,7 +11,7 @@ Item {
 
     property var app: null
     property bool shown: false
-    property string title: "Select time"
+    property string title: I18n.tr("Select time")
     property int hour: 7
     property int minute: 0
     // "hour" | "minute"
@@ -32,7 +32,7 @@ Item {
     function ask(h, m, title, cb) {
         tp.hour = h;
         tp.minute = m;
-        tp.title = title || "Select time";
+        tp.title = title || I18n.tr("Select time");
         tp.callback = cb;
         tp.mode = "hour";
         tp.typing = false;
@@ -208,7 +208,7 @@ Item {
             LText {
                 role: "labelMedium"
                 color: Theme.subtext
-                text: tp.typing ? "Enter time" : tp.title
+                text: tp.typing ? I18n.tr("Enter time") : tp.title
             }
 
             // the time, as two tiles to pick which the dial sets
@@ -221,7 +221,7 @@ Item {
                 TimeTile {
                     on: tp.mode === "hour"
                     text: CM.hourText(tp.hour, tp.h24)
-                    hint: "Hour"
+                    hint: I18n.tr("Hour")
                     onPicked: tp.mode = "hour"
                     onTyped: (t) => {
                         return tp.typedHour(t);
@@ -241,7 +241,7 @@ Item {
                 TimeTile {
                     on: tp.mode === "minute"
                     text: CM.pad(tp.minute)
-                    hint: "Minute"
+                    hint: I18n.tr("Minute")
                     onPicked: tp.mode = "minute"
                     onTyped: (t) => {
                         const v = parseInt(t, 10);
@@ -461,7 +461,7 @@ Item {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     icon: tp.typing ? "schedule" : "keyboard"
-                    tooltip: tp.typing ? "Pick on the dial" : "Type the time"
+                    tooltip: tp.typing ? I18n.tr("Pick on the dial") : I18n.tr("Type the time")
                     onClicked: tp.typing = !tp.typing
                 }
 
@@ -472,14 +472,14 @@ Item {
 
                     Button {
                         variant: "text"
-                        text: "Cancel"
+                        text: I18n.tr("Cancel")
                         onClicked: tp.finish(false)
                     }
 
                     Button {
                         objectName: "pickerOk"
                         variant: "text"
-                        text: "OK"
+                        text: I18n.tr("OK")
                         onClicked: tp.finish(true)
                     }
 

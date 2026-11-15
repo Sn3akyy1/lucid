@@ -22,7 +22,7 @@ Rectangle {
         return media.players.length > 0 ? media.players[0] : null;
     }
     readonly property bool playing: !!media.player && media.player.playbackState === MprisPlaybackState.Playing
-    readonly property string title: media.player ? (media.player.trackTitle || "Unknown track") : ""
+    readonly property string title: media.player ? (media.player.trackTitle || I18n.tr("Unknown track")) : ""
     readonly property string artist: media.player ? (media.player.trackArtist || media.player.identity || "") : ""
     readonly property real length: media.player ? media.player.length : 0
     // a remote cover through the cache, never straight into the Image: Qt's

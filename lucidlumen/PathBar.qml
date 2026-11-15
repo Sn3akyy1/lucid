@@ -23,14 +23,14 @@ Rectangle {
 
         if (t.isTrash)
             return [{
-                "label": "Trash",
+                "label": I18n.tr("Trash"),
                 "path": "trash:///",
                 "glyph": "delete"
             }];
 
         if (t.isRecent)
             return [{
-                "label": "Recent",
+                "label": I18n.tr("Recent"),
                 "path": "recent:///",
                 "glyph": "schedule"
             }];
@@ -66,7 +66,7 @@ Rectangle {
         var rest;
         if (p === home || p.indexOf(home + "/") === 0) {
             out.push({
-                "label": "Home",
+                "label": I18n.tr("Home"),
                 "path": home,
                 "glyph": "home"
             });
@@ -431,7 +431,7 @@ Rectangle {
             anchors.rightMargin: Theme.dp(8)
             anchors.verticalCenter: parent.verticalCenter
             role: "titleSmall"
-            text: bar.searching ? "“" + bar.tab.searchQuery + "” everywhere" + (bar.tab.searchDone ? "" : "…") : ""
+            text: bar.searching ? I18n.tr("“%1” everywhere", bar.tab.searchQuery) + (bar.tab.searchDone ? "" : "…") : ""
             color: Theme.text
             elide: Text.ElideRight
         }
@@ -444,7 +444,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             size: "xs"
             icon: "close"
-            tooltip: "End search"
+            tooltip: I18n.tr("End search")
             onClicked: bar.win.endSearch()
 
             Tip {
@@ -463,7 +463,7 @@ Rectangle {
         icon: bar.typedPath ? "folder_open" : "search"
         clearable: true
         containerColor: Theme.surfaceHigh
-        placeholder: "Go to a folder, or search everything"
+        placeholder: I18n.tr("Go to a folder, or search everything")
         onTextEdited: bar.typed()
         onAccepted: bar.accept()
         onEscaped: bar.cancel()

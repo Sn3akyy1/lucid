@@ -128,7 +128,7 @@ Item {
                 role: "titleMedium"
                 weight: 600
                 color: month.accent
-                text: new Date(month.year, month.monthIndex, 1).toLocaleDateString(Qt.locale(), "MMMM")
+                text: new Date(month.year, month.monthIndex, 1).toLocaleDateString(I18n.locale, I18n.tr("MMMM"))
             }
 
             LText {

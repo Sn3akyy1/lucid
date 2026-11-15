@@ -71,7 +71,7 @@ Item {
         // reply leads, because it is the one that needs no reading
         NotifChip {
             visible: actions.canReply
-            label: actions.notification && actions.notification.inlineReplyPlaceholder ? actions.notification.inlineReplyPlaceholder : "Reply"
+            label: actions.notification && actions.notification.inlineReplyPlaceholder ? actions.notification.inlineReplyPlaceholder : I18n.tr("Reply")
             iconPath: Notifs.icons.reply
             onClicked: actions.replyOpen = true
         }
@@ -120,7 +120,7 @@ Item {
                 anchors.leftMargin: Theme.dp(12)
                 anchors.verticalCenter: parent.verticalCenter
                 visible: replyInput.text.length === 0
-                text: "Message…"
+                text: I18n.tr("Message…")
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(11)
