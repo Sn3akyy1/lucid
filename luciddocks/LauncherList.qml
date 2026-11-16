@@ -48,14 +48,15 @@ Item {
         for (var i = 0; i < list.model.count; i++) h += list.rowHeight(i) + list.rowSpacing
         return h - list.rowSpacing + list.bottomPad;
     }
-    readonly property real maxScroll: Math.max(0, list.contentExtent - list.viewport)
     // reading view.contentHeight here fed rowWidth back into the layout and looped
     readonly property bool needsScrollbar: list.contentExtent > list.viewport
     // only give up the gutter when the scrollbar is actually there
     readonly property int rowWidth: Math.max(0, view.width - (list.needsScrollbar ? Theme.dp(14) : 0))
     // the head only earns its rule once something is hidden above
-    readonly property bool scrolled: view.contentY > 1
-    readonly property real selectionY: list.rowY(list.currentIndex)
+    readonly property bool scrolled: view.contentY > view.originY + 1
+    // the view's own row, not rowY(): with rows of mixed heights ListView only
+    // estimates where unbuilt rows sit, so its content can start above 0
+    readonly property real selectionY: view.currentItem ? view.currentItem.y : list.rowY(list.currentIndex)
     readonly property real selectionHeight: list.rowHeight(list.currentIndex)
     readonly property int hoveredIndex: {
         if (!listHover.hovered)
@@ -176,7 +177,7 @@ Item {
     function resetSelection() {
         list.currentIndex = list.firstSelectable();
         scrollAnim.stop();
-        view.contentY = 0;
+        view.positionViewAtBeginning();
     }
 
     function ensureSelectable() {
@@ -185,8 +186,14 @@ Item {
 
     }
 
+    // the view's bounds, which move with its estimate (see selectionY)
+    function clampScroll(y) {
+        var end = view.originY + view.contentHeight + view.bottomMargin - list.viewport;
+        return Math.max(view.originY, Math.min(end, y));
+    }
+
     function scrollToCurrent() {
-        var top = list.rowY(list.currentIndex);
+        var top = list.selectionY;
         var bottom = top + list.rowHeight(list.currentIndex);
         var cur = scrollAnim.running ? scrollAnim.to : view.contentY;
         var target = cur;
@@ -196,7 +203,7 @@ Item {
             target = bottom - list.viewport;
         else
             return ;
-        target = Math.max(0, Math.min(list.maxScroll, target));
+        target = list.clampScroll(target);
         if (Math.abs(target - cur) < 0.5)
             return ;
 
@@ -292,7 +299,7 @@ Item {
             onWheel: (event) => {
                 event.accepted = true;
                 var base = scrollAnim.running ? scrollAnim.to : view.contentY;
-                var target = Math.max(0, Math.min(list.maxScroll, base - (event.angleDelta.y / 120) * 60));
+                var target = list.clampScroll(base - (event.angleDelta.y / 120) * 60);
                 if (target === base)
                     return ;
 
