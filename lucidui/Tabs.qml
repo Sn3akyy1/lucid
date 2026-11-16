@@ -47,7 +47,11 @@ Item {
                 width: row.width / Math.max(1, rep.count)
                 height: row.height
 
+                // a rounded shape inside the tab, on the corner dial like every
+                // other hover, and clear of the indicator
                 StateLayer {
+                    anchors.margins: Theme.dp(4)
+                    radius: Theme.shapeMd
                     tint: tab.on ? Theme.primary : Theme.text
                     onClicked: tabs.picked(tab.modelData.key)
                 }
