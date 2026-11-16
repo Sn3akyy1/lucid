@@ -94,7 +94,8 @@ Singleton {
         root.busy = true;
         root.lastError = "";
         geocodeProc.running = false;
-        geocodeProc.command = ["sh", "-c", "curl -sf --max-time 10 'https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name=" + encodeURIComponent(q) + "'"];
+        // no shell: an apostrophe in the name (Xi'an) closed the quoted url
+        geocodeProc.command = ["curl", "-sf", "--max-time", "10", "https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name=" + encodeURIComponent(q)];
         geocodeProc.running = true;
     }
 
