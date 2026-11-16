@@ -71,6 +71,9 @@ Item {
     signal hideRequested(int index)
     signal prefixChosen(string prefix)
 
+    // the view follows by hand: see the view's onCurrentIndexChanged
+    onCurrentIndexChanged: view.currentIndex = list.currentIndex
+
     // a type role at the launcher's own size
     function ts(role) {
         return Math.round(Theme.typeSize(role) * list.cs);
@@ -279,6 +282,10 @@ Item {
         bottomMargin: list.bottomPad
         model: list.model
         currentIndex: list.currentIndex
+        // rows coming and going above it move the view's own index (a search
+        // dropping the row above put the pill on the next one); the pill reads
+        // currentItem, so the list's index is the one that counts
+        onCurrentIndexChanged: if (view.currentIndex !== list.currentIndex) view.currentIndex = list.currentIndex
         onCountChanged: list.ensureSelectable()
         highlightFollowsCurrentItem: false
         interactive: true
