@@ -69,6 +69,25 @@ local function fill(s, n, key)
     return (string.gsub(string.gsub(s, "{n}", tostring(n)), "{key}", tostring(key)))
 end
 
+-- a Lucid sheet holding the keyboard (exclusive layer) sits over the focused
+-- window, so the close bind meant the sheet: close it, never the window behind
+local SHEETS = {
+    lucidkeybinds = "keybinds", lucidwhatsnew = "whatsnew", ["lucid-session"] = "session",
+    ["lucid-switcher"] = "switcher", lucidpolkit = "polkit",
+}
+local function close_over_sheet(close)
+    return function()
+        for _, l in ipairs(hl.get_layers()) do
+            if l.mapped and l.keyboard_interactivity == 1 then
+                local target = SHEETS[l.namespace]
+                if target then hl.dispatch(hl.dsp.exec_cmd("qs ipc call " .. target .. " close")) end
+                return
+            end
+        end
+        if type(close) == "function" then close() else hl.dispatch(close) end
+    end
+end
+
 local function bind_one(entry, n, key)
     local keys = fill(entry.keys, n, key)
     if type(keys) ~= "string" or keys == "" then error("no keys", 0) end
@@ -82,6 +101,7 @@ local function bind_one(entry, n, key)
         action = hl.dsp.exec_cmd(cmd)
     end
 
+    if entry.id == "close" then action = close_over_sheet(action) end
     local opts = {}
     if type(entry.opts) == "table" then
         for k, v in pairs(entry.opts) do opts[k] = v end
