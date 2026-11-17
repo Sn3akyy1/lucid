@@ -211,7 +211,7 @@
 
   /* -------------------------------------------------------------- the bar */
 
-  // Theme.curveDefaultSpatial, as an easing function
+  // Theme.curveDefaultSpatial and curveStandard, as easing functions
   function bezier(x1, y1, x2, y2) {
     return function (t) {
       if (t <= 0) return 0;
@@ -226,19 +226,21 @@
     };
   }
 
-  var spatial = bezier(0.38, 1.21, 0.22, 1);
+  var spatial = bezier(0.38, 1.21, 0.22, 1), standard = bezier(0.2, 0, 0, 1);
 
-  // the pages by name, the one you are on in the bar's accent pill. arriving, the pill
-  // comes over from the last page as the active workspace does: from where it was, the
-  // leading edge first and the trailing one after, so it stretches
+  // the pages by name, the one you are on in the bar's accent pill, moving as lucidbar's
+  // Workspaces does: the pill rides the lit name's own geometry, and a change starts it
+  // from where it was and brings each edge back, the leading one first and the trailing
+  // one after, so it stretches. hovered, the pill follows the pointer on the quick curve,
+  // the lit name widens, and the page you are on keeps the accent while the pill is away
   function pagePill() {
-    var row = $(".pg-row");
-    if (!row) return;
-    var lit = $(".pg-lit", row), links = $$(".pg-row > .pg");
+    var nav = $(".pill.pages"), row = $(".pg-row");
+    if (!nav || !row) return;
+    var lit = $(".pg-lit", row), links = $$(".pg-row > .pg"), inks = $$(".pg-ink > .pg", row);
     var cur = -1;
     links.forEach(function (a, i) { if (a.classList.contains("on")) cur = i; });
 
-    var target = -1, left = 0, right = 0, edges = null, frame = 0;
+    var target = -1, left = 0, right = 0, edges = null, frame = 0, settleUntil = 0;
 
     function geom(i) {
       return { x: links[i].offsetLeft, w: links[i].offsetWidth };
@@ -250,22 +252,28 @@
     }
 
     function offset(e, now) {
-      return e.from * (1 - spatial(Math.min(1, (now - e.t0) / e.dur)));
+      return e.from * (1 - e.ease(Math.min(1, (now - e.t0) / e.dur)));
     }
 
     function tick(now) {
       frame = 0;
       if (target < 0) return;
-      var g = geom(target), oL = 0, oR = 0, busy = false;
+      var g = geom(target), oL = 0, oR = 0, busy = now < settleUntil;
       if (edges) {
         oL = offset(edges.l, now);
         oR = offset(edges.r, now);
-        busy = now - edges.l.t0 < edges.l.dur || now - edges.r.t0 < edges.r.dur;
+        busy = busy || now - edges.l.t0 < edges.l.dur || now - edges.r.t0 < edges.r.dur;
       }
       left = g.x + oL;
       right = Math.max(left, g.x + g.w + oR);
       draw();
       if (busy) frame = requestAnimationFrame(tick);
+    }
+
+    // keeps drawing while the names' own widths move under the pill
+    function run(ms) {
+      settleUntil = Math.max(settleUntil, performance.now() + ms);
+      if (!frame) frame = requestAnimationFrame(tick);
     }
 
     function place(i) {
@@ -278,24 +286,74 @@
       lit.classList.add("ready");
     }
 
-    function glide(i) {
+    // a hover takes 160ms on the standard curve, a switch the long stretch on the spatial one
+    function retarget(i, hover) {
+      if (i === target || i < 0) return;
+      if (target < 0 || reduce) {
+        place(i);
+        return;
+      }
       var g = geom(i), now = performance.now(), forward = g.x >= left;
+      var lead = hover ? 160 : 400, trail = Math.round(lead * 1.5), ease = hover ? standard : spatial;
       edges = {
-        l: { from: left - g.x, t0: now, dur: forward ? 600 : 400 },
-        r: { from: right - (g.x + g.w), t0: now, dur: forward ? 400 : 600 }
+        l: { from: left - g.x, t0: now, dur: forward ? trail : lead, ease: ease },
+        r: { from: right - (g.x + g.w), t0: now, dur: forward ? lead : trail, ease: ease }
       };
       target = i;
-      if (!frame) frame = requestAnimationFrame(tick);
+      run(trail);
     }
 
+    // lit: the hovered name while the row is hovered, else the page you are on
+    var hovered = -1;
+    function light(i, hover) {
+      links.forEach(function (a, n) {
+        a.classList.toggle("lit", n === i);
+        inks[n].classList.toggle("lit", n === i);
+      });
+      retarget(i, hover);
+      run(340);
+    }
+
+    function enter(i) {
+      hovered = i;
+      row.classList.add("hovering");
+      light(i, true);
+    }
+
+    function leave() {
+      hovered = -1;
+      row.classList.remove("hovering");
+      if (cur >= 0) {
+        light(cur, false);
+      } else {
+        links.forEach(function (a, n) { a.classList.remove("lit"); inks[n].classList.remove("lit"); });
+        target = -1;
+        edges = null;
+        lit.classList.remove("ready");
+      }
+    }
+
+    links.forEach(function (a, i) {
+      a.addEventListener("pointerenter", function (e) { if (e.pointerType !== "touch") enter(i); });
+      a.addEventListener("focus", function () { enter(i); });
+    });
+    nav.addEventListener("pointerleave", function () {
+      if (hovered >= 0 && !nav.contains(document.activeElement)) leave();
+    });
+    nav.addEventListener("focusout", function (e) {
+      if (hovered >= 0 && !nav.contains(e.relatedTarget) && !nav.matches(":hover")) leave();
+    });
+
+    // arriving, the pill comes over from the page before
     if (cur >= 0) {
       var last = null;
       try { last = JSON.parse(sessionStorage.getItem("lucid-page") || "null"); } catch (e) {}
       if (last && typeof last.i === "number" && last.i !== cur && last.i >= 0 && last.i < links.length && !reduce) {
         place(last.i);
-        glide(cur);
+        light(cur, false);
       } else {
         place(cur);
+        light(cur, false);
       }
     }
 

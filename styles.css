@@ -966,8 +966,9 @@ h3 {
   height: 25px;
 }
 
-/* the pages: each name a state layer, the one you are on in the accent pill, and what
-   the pill covers in on-accent exactly to its edges while it glides */
+/* the pages: the one you are on in the accent pill, which follows the pointer the way
+   the workspaces' does; the lit name widens by the bar's litGrow, and what the pill
+   covers turns on-accent exactly to its edges */
 .pages {
   padding-inline: 4px;
 }
@@ -1015,12 +1016,11 @@ h3 {
   white-space: nowrap;
   outline-offset: -2px;
   text-decoration: none !important;
-  transition: background-color var(--d-quick) var(--ease-std), color var(--d-quick) var(--ease-std);
+  transition: padding 300ms var(--ease-std), color 200ms var(--ease-std);
 }
 
-.pg:not(.on):hover {
-  background: var(--hover);
-  color: var(--text);
+.hovering .pg.lit {
+  padding-inline: 24px;
 }
 
 .pg.on {
