@@ -141,7 +141,7 @@ Item {
                 anchors.baseline: big.baseline
                 role: "headlineMedium"
                 color: Theme.subtext
-                text: face.r.hour < 12 ? "AM" : "PM"
+                text: face.r.hour < 12 ? I18n.tr("AM") : I18n.tr("PM")
             }
 
         }
@@ -150,7 +150,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             role: "headlineSmall"
             color: Theme.subtext
-            text: (face.r.label !== "" ? face.r.label : "Alarm") + (ov.app && ov.app.ringing.length > 1 ? "  ·  " + (ov.app.ringing.length - 1) + " more ringing" : "")
+            text: (face.r.label !== "" ? face.r.label : I18n.tr("Alarm")) + (ov.app && ov.app.ringing.length > 1 ? I18n.tr("  ·  %1 more ringing", (ov.app.ringing.length - 1)) : "")
         }
 
         Item {
@@ -183,7 +183,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         role: "titleMedium"
                         color: Theme.fgSecondaryContainer
-                        text: "Snooze " + (ov.app ? ov.app.alarmState.snoozeMinutes : 10) + " min"
+                        text: I18n.tr("Snooze %1 min", (ov.app ? ov.app.alarmState.snoozeMinutes : 10))
                     }
 
                 }
@@ -224,7 +224,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         role: "titleMedium"
                         color: Theme.fgPrimary
-                        text: "Stop"
+                        text: I18n.tr("Stop")
                     }
 
                 }
@@ -305,7 +305,7 @@ Item {
             LText {
                 role: "bodyMedium"
                 color: Theme.alpha(Theme.fgTertiaryContainer, 0.8)
-                text: banner.r && ov.app ? "Reminder · " + ov.app.time(banner.r.hour, banner.r.minute) : ""
+                text: banner.r && ov.app ? I18n.tr("Reminder · %1", ov.app.time(banner.r.hour, banner.r.minute)) : ""
             }
 
         }
@@ -321,7 +321,7 @@ Item {
             Button {
                 variant: "text"
                 icon: "snooze"
-                text: "10 min"
+                text: I18n.tr("10 min")
                 contentOverride: Theme.fgTertiaryContainer
                 onClicked: {
                     if (banner.r)
@@ -336,7 +336,7 @@ Item {
             Button {
                 variant: "filled"
                 icon: "check"
-                text: "Done"
+                text: I18n.tr("Done")
                 onClicked: {
                     if (banner.r)
                         ov.app.send("rem.dismiss", {

@@ -30,7 +30,7 @@ Item {
     readonly property var results: page.search(page.query)
     readonly property bool digital: page.app && page.app.prefs.face === "digital"
     readonly property string primaryIcon: "add"
-    readonly property string primaryLabel: "Add a city"
+    readonly property string primaryLabel: I18n.tr("Add a city")
 
     function primaryAction() {
         page.searching = true;
@@ -77,7 +77,7 @@ Item {
         });
         field.text = "";
         page.searching = false;
-        page.win.toast(CM.cityOf(tz) + " added");
+        page.win.toast(I18n.tr("%1 added", CM.cityOf(tz)));
     }
 
     function offsetOf(tz) {
@@ -91,19 +91,19 @@ Item {
         const p = anchor.mapToItem(page.win.contentItem, 0, anchor.height);
         page.win.openMenu([{
             "id": "up",
-            "label": "Move up",
+            "label": I18n.tr("Move up"),
             "icon": "arrow_upward",
             "disabled": i <= 0
         }, {
             "id": "down",
-            "label": "Move down",
+            "label": I18n.tr("Move down"),
             "icon": "arrow_downward",
             "disabled": i < 0 || i >= list.length - 1
         }, {
             "sep": true
         }, {
             "id": "remove",
-            "label": "Remove",
+            "label": I18n.tr("Remove"),
             "icon": "delete",
             "danger": true
         }], p.x - Theme.dp(160), p.y, (id) => {
@@ -116,7 +116,7 @@ Item {
                 page.app.send("zone.remove", {
                     "tz": tz
                 });
-                page.win.toast(CM.cityOf(tz) + " removed", "Undo", {
+                page.win.toast(I18n.tr("%1 removed", CM.cityOf(tz)), I18n.tr("Undo"), {
                     "undo": () => {
                         return page.app.send("zone.add", {
                             "tz": tz
@@ -193,17 +193,17 @@ Item {
 
         x: page.edge
         width: parent.width - page.edge * 2
-        title: "Clock"
+        title: I18n.tr("Clock")
         subtitle: {
             const zone = page.app ? page.app.hereZone : "";
-            return (zone !== "" ? CM.cityOf(zone) + "  ·  " : "") + CM.utcText(page.app ? page.app.hereOffset : 0) + (page.app && page.app.cities.length ? "  ·  " + page.app.cities.length + (page.app.cities.length === 1 ? " city" : " cities") : "");
+            return (zone !== "" ? CM.cityOf(zone) + "  ·  " : "") + CM.utcText(page.app ? page.app.hereOffset : 0) + (page.app && page.app.cities.length ? "  ·  " + page.app.cities.length + (page.app.cities.length === 1 ? I18n.tr(" city") : I18n.tr(" cities")) : "");
         }
 
         IconButton {
             icon: "schedule"
             checkable: true
             checked: !page.digital
-            tooltip: checked ? "Digits only" : "Show the dial"
+            tooltip: checked ? I18n.tr("Digits only") : I18n.tr("Show the dial")
             onClicked: page.app.prefs.face = page.digital ? "analog" : "digital"
         }
 
@@ -274,7 +274,7 @@ Item {
                         size: Math.round(hm.size * 0.3)
                         weight: 560
                         color: Theme.subtext
-                        text: page.here.getHours() < 12 ? "AM" : "PM"
+                        text: page.here.getHours() < 12 ? I18n.tr("AM") : I18n.tr("PM")
                     }
 
                 }
@@ -283,7 +283,7 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     role: "titleMedium"
                     color: page.scrub === 0 ? Theme.subtext : Theme.primary
-                    text: page.scrub === 0 ? page.here.toLocaleDateString(Qt.locale(), "dddd, d MMMM") : (page.scrub > 0 ? "+" : "−") + CM.span(Math.abs(page.scrub) * 60000) + (page.scrub > 0 ? " from now" : " ago") + "  ·  " + page.here.toLocaleDateString(Qt.locale(), "ddd d MMM")
+                    text: page.scrub === 0 ? page.here.toLocaleDateString(I18n.locale, I18n.tr("dddd, d MMMM")) : (page.scrub > 0 ? "+" : "−") + CM.span(Math.abs(page.scrub) * 60000) + (page.scrub > 0 ? I18n.tr(" from now") : I18n.tr(" ago")) + "  ·  " + page.here.toLocaleDateString(I18n.locale, I18n.tr("ddd d MMM"))
                 }
 
             }
@@ -363,7 +363,7 @@ Item {
                             role: "bodyMedium"
                             color: Theme.subtext
                             elide: Text.ElideRight
-                            text: row.there ? CM.relDay(row.there, page.here) + "  ·  " + CM.offsetText(row.diff) : "Looking it up…"
+                            text: row.there ? CM.relDay(row.there, page.here) + "  ·  " + CM.offsetText(row.diff) : I18n.tr("Looking it up…")
                         }
 
                     }
@@ -399,7 +399,7 @@ Item {
                             anchors.baseline: rt.baseline
                             role: "labelLarge"
                             color: Theme.subtext
-                            text: row.there && row.there.getHours() < 12 ? "AM" : "PM"
+                            text: row.there && row.there.getHours() < 12 ? I18n.tr("AM") : I18n.tr("PM")
                         }
 
                     }
@@ -411,7 +411,7 @@ Item {
                         anchors.rightMargin: Theme.dp(10)
                         anchors.verticalCenter: parent.verticalCenter
                         icon: "more_vert"
-                        tooltip: "Move or remove"
+                        tooltip: I18n.tr("Move or remove")
                         onClicked: page.cityMenu(row.modelData, more)
                     }
 
@@ -435,7 +435,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: parent.width - Theme.dp(20)
                     variant: "search"
-                    placeholder: "Search for a city"
+                    placeholder: I18n.tr("Search for a city")
                     containerColor: Theme.withBlur(Theme.bgHigh)
                     onTextEdited: {
                         if (page.allZones.length === 0)
@@ -470,7 +470,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         role: "titleSmall"
                         color: Theme.primary
-                        text: page.app && page.app.cities.length === 0 ? "Add a city to keep its time here" : "Add a city"
+                        text: page.app && page.app.cities.length === 0 ? I18n.tr("Add a city to keep its time here") : I18n.tr("Add a city")
                     }
 
                 }
@@ -565,13 +565,13 @@ Item {
 
                             LText {
                                 role: "titleSmall"
-                                text: "Compare times"
+                                text: I18n.tr("Compare times")
                             }
 
                             LText {
                                 role: "bodySmall"
                                 color: Theme.subtext
-                                text: "Slide to see the time everywhere then"
+                                text: I18n.tr("Slide to see the time everywhere then")
                             }
 
                         }
@@ -585,14 +585,14 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 role: "labelLarge"
                                 color: page.scrub === 0 ? Theme.subtext : Theme.primary
-                                text: page.scrub === 0 ? "Now" : (page.scrub > 0 ? "+" : "−") + CM.span(Math.abs(page.scrub) * 60000)
+                                text: page.scrub === 0 ? I18n.tr("Now") : (page.scrub > 0 ? "+" : "−") + CM.span(Math.abs(page.scrub) * 60000)
                             }
 
                             IconButton {
                                 visible: page.scrub !== 0
                                 size: "xs"
                                 icon: "replay"
-                                tooltip: "Back to now"
+                                tooltip: I18n.tr("Back to now")
                                 onClicked: page.scrub = 0
                             }
 
@@ -619,21 +619,21 @@ Item {
                         LText {
                             role: "labelSmall"
                             color: Theme.subtextDim
-                            text: "−12 h"
+                            text: I18n.tr("−12 h")
                         }
 
                         LText {
                             anchors.horizontalCenter: parent.horizontalCenter
                             role: "labelSmall"
                             color: Theme.subtextDim
-                            text: "now"
+                            text: I18n.tr("now")
                         }
 
                         LText {
                             anchors.right: parent.right
                             role: "labelSmall"
                             color: Theme.subtextDim
-                            text: "+12 h"
+                            text: I18n.tr("+12 h")
                         }
 
                     }

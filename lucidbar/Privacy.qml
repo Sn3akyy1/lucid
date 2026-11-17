@@ -23,9 +23,9 @@ BarPill {
         "shield": "shield"
     })
     readonly property var nouns: ({
-        "mic": "the microphone",
-        "camera": "the camera",
-        "screen": "the screen"
+        "mic": I18n.tr("the microphone"),
+        "camera": I18n.tr("the camera"),
+        "screen": I18n.tr("the screen")
     })
     readonly property var watched: String(Prefs.privacyWatch || "").split(",")
 
@@ -53,28 +53,28 @@ BarPill {
     readonly property var cameraApps: root.names(root.consumersOf(root.cameraNodes).concat(root.cameraHolders.filter((c) => {
         return c !== "pipewire" && c !== "wireplumber";
     })).concat(root.cameraHolders.indexOf("pipewire") !== -1 && root.consumersOf(root.cameraNodes).length === 0 ? ["An app through PipeWire"] : []))
-    readonly property var screenApps: root.names(root.screenNodes.length > 0 ? root.consumersOf(root.screenNodes).concat(root.consumersOf(root.screenNodes).length === 0 ? ["An app"] : []) : [])
+    readonly property var screenApps: root.names(root.screenNodes.length > 0 ? root.consumersOf(root.screenNodes).concat(root.consumersOf(root.screenNodes).length === 0 ? [I18n.tr("An app")] : []) : [])
     readonly property var rows: {
         const out = [];
         if (root.watched.indexOf("mic") !== -1 && root.micApps.length > 0)
             out.push({
             "kind": "mic",
-            "title": "Microphone",
+            "title": I18n.tr("Microphone"),
             "apps": root.micApps
         });
 
         if (root.watched.indexOf("camera") !== -1 && root.cameraApps.length > 0)
             out.push({
             "kind": "camera",
-            "title": "Camera",
+            "title": I18n.tr("Camera"),
             "apps": root.cameraApps
         });
 
         if (root.watched.indexOf("screen") !== -1 && (root.screenApps.length > 0 || root.recording))
             out.push({
             "kind": "screen",
-            "title": "Screen",
-            "apps": root.recording ? ["Lucid is recording"].concat(root.screenApps) : root.screenApps
+            "title": I18n.tr("Screen"),
+            "apps": root.recording ? [I18n.tr("Lucid is recording")].concat(root.screenApps) : root.screenApps
         });
 
         return out;
@@ -97,7 +97,7 @@ BarPill {
     // the microphone is its own
     function micLabel(stream) {
         if (/^input\.loopback/.test(stream.name || ""))
-            return root.recording ? "Lucid's recording" : "An audio loopback";
+            return root.recording ? I18n.tr("Lucid's recording") : I18n.tr("An audio loopback");
 
         return Audio.appLabel(stream);
     }
@@ -160,12 +160,12 @@ BarPill {
             for (const kind in now) {
                 const before = root.seen[kind] || [];
                 for (const app of now[kind]) {
-                    if (before.indexOf(app) !== -1 || app === "Lucid is recording" || app === "Lucid's recording")
+                    if (before.indexOf(app) !== -1 || app === I18n.tr("Lucid is recording") || app === I18n.tr("Lucid's recording"))
                         continue;
 
                     root.toast.enqueue({
                         "icon": root.icons[kind],
-                        "label": app + " is using " + root.nouns[kind],
+                        "label": I18n.tr("%1 is using %2", app, root.nouns[kind]),
                         "key": "privacy-" + kind
                     });
                 }
@@ -333,7 +333,7 @@ BarPill {
             spacing: Theme.dp(10)
 
             Text {
-                text: root.rows.length > 0 ? "In use now" : "Nothing in use"
+                text: root.rows.length > 0 ? I18n.tr("In use now") : I18n.tr("Nothing in use")
                 color: Theme.accent
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelLg
@@ -343,7 +343,7 @@ BarPill {
             Text {
                 visible: root.rows.length === 0
                 width: parent.width
-                text: "No app is using the microphone, the camera or the screen."
+                text: I18n.tr("No app is using the microphone, the camera or the screen.")
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyMd
@@ -432,7 +432,7 @@ BarPill {
                             id: stopLabel
 
                             anchors.centerIn: parent
-                            text: "Stop"
+                            text: I18n.tr("Stop")
                             color: Theme.fgError
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabelLg

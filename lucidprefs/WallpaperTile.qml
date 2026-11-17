@@ -140,7 +140,7 @@ Rectangle {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: Prefs.askConfirm(tile.live ? "Delete this live wallpaper?" : "Delete this wallpaper?", "\"" + tile.name + "\" is moved to the trash, so it can be restored from there if you change your mind.", "Delete", "wallpaper:" + tile.path)
+            onClicked: Prefs.askConfirm(tile.live ? I18n.tr("Delete this live wallpaper?") : I18n.tr("Delete this wallpaper?"), I18n.tr("\"%1\" is moved to the trash, so it can be restored from there if you change your mind.", tile.name), I18n.tr("Delete"), "wallpaper:" + tile.path)
         }
 
     }

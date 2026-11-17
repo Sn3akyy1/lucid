@@ -88,7 +88,7 @@ Singleton {
 
         }
         if (raw === "")
-            return "Unknown";
+            return I18n.tr("Unknown");
 
         return raw === raw.toLowerCase() ? raw.charAt(0).toUpperCase() + raw.slice(1) : raw;
     }

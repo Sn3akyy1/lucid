@@ -83,7 +83,7 @@ Scope {
         engine.run(["sh", "-c", engine.cutScript, "sh", src, save ? engine.shotDir : engine.copyDir, o.base || engine.baseName(), geom, String(r), String(pw - 1), String(ph - 1)], (code, out) => {
             const f = out.trim();
             if (code !== 0 || f === "") {
-                engine.failed(id, "The capture could not be saved");
+                engine.failed(id, I18n.tr("The capture could not be saved"));
                 return ;
             }
             engine.landed({
@@ -109,7 +109,7 @@ Scope {
         engine.run(["sh", "-c", engine.adoptScript, "sh", grabbed, save ? (o.dir || engine.shotDir) : engine.copyDir, o.base || engine.baseName()], (code, out) => {
             const f = out.trim();
             if (code !== 0 || f === "") {
-                engine.failed(id, "The capture could not be saved");
+                engine.failed(id, I18n.tr("The capture could not be saved"));
                 return ;
             }
             engine.landed({
@@ -139,7 +139,7 @@ Scope {
             engine.run(["sh", "-c", engine.liveScript, "sh", out, save ? engine.shotDir : engine.copyDir, engine.baseName(), geom || "", String(o.round > 0 ? Math.round(o.round) : 0), o.address || ""], (code, text) => {
                 const f = text.trim().split("\t");
                 if (code !== 0 || f.length < 3) {
-                    engine.failed(id, "The screen could not be captured");
+                    engine.failed(id, I18n.tr("The screen could not be captured"));
                     return ;
                 }
                 engine.landed({

@@ -159,10 +159,10 @@ Item {
                 Repeater {
                     model: [{
                         "id": "letters",
-                        "label": "Letters"
+                        "label": I18n.tr("Letters")
                     }, {
                         "id": "function",
-                        "label": "Function"
+                        "label": I18n.tr("Function")
                     }]
 
                     Item {

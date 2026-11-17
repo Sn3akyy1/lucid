@@ -16,11 +16,11 @@ BarPill {
     readonly property var headline: Chrono.headline
     readonly property var wx: WeatherSource.report
     readonly property var tabs: [
-        { "key": "today", "label": "Today", "icon": "wb_sunny" },
-        { "key": "calendar", "label": "Calendar", "icon": "calendar_month" },
-        { "key": "timer", "label": "Timer", "icon": "hourglass_top" },
-        { "key": "stopwatch", "label": "Stopwatch", "icon": "timer" },
-        { "key": "world", "label": "World", "icon": "public" }
+        { "key": "today", "label": I18n.tr("Today"), "icon": "wb_sunny" },
+        { "key": "calendar", "label": I18n.tr("Calendar"), "icon": "calendar_month" },
+        { "key": "timer", "label": I18n.tr("Timer"), "icon": "hourglass_top" },
+        { "key": "stopwatch", "label": I18n.tr("Stopwatch"), "icon": "timer" },
+        { "key": "world", "label": I18n.tr("World"), "icon": "public" }
     ]
     readonly property int tabIndex: {
         for (var i = 0; i < root.tabs.length; i++) {
@@ -46,15 +46,15 @@ BarPill {
         case "short":
             return ["ddd", "d"];
         case "long":
-            return ["ddd", "d MMM"];
+            return ["ddd", I18n.tr("d MMM")];
         case "numeric":
-            return ["", Qt.locale().dateFormat(Locale.ShortFormat)];
+            return ["", I18n.locale.dateFormat(Locale.ShortFormat)];
         default:
             return ["ddd,", "dd/MM"];
         }
     }
-    readonly property string dayText: root.dateParts[0] === "" ? "" : root.now.toLocaleDateString(Qt.locale(), root.dateParts[0])
-    readonly property string dayDateText: root.now.toLocaleDateString(Qt.locale(), root.dateParts[1])
+    readonly property string dayText: root.dateParts[0] === "" ? "" : root.now.toLocaleDateString(I18n.locale, root.dateParts[0])
+    readonly property string dayDateText: root.now.toLocaleDateString(I18n.locale, root.dateParts[1])
 
     function showTab(t) {
         if (t === root.tab)
@@ -175,7 +175,7 @@ BarPill {
                         weight: 660
                         tabular: true
                         color: Theme.fgErrorContainer
-                        text: Capture.state === "paused" ? "Paused" : Capture.clock(Capture.seconds)
+                        text: Capture.state === "paused" ? I18n.tr("Paused") : Capture.clock(Capture.seconds)
                     }
 
                 }
@@ -373,7 +373,7 @@ BarPill {
                             weight: 600
                             color: Theme.alpha(root.timeInk, 0.7)
                             // the locale's own meridiem ("PM", "P.M.", "午後")
-                            text: root.now.toLocaleTimeString(Qt.locale(), "AP")
+                            text: root.now.toLocaleTimeString(I18n.locale, I18n.tr("AP"))
                         }
 
                     }
@@ -594,7 +594,7 @@ BarPill {
                 LText {
                     role: "bodySmall"
                     color: Theme.subtext
-                    text: Agenda.firing ? Agenda.timeText(Agenda.firing) + (Agenda.ringing.length > 1 ? "  ·  +" + (Agenda.ringing.length - 1) + " more" : "") : ""
+                    text: Agenda.firing ? Agenda.timeText(Agenda.firing) + (Agenda.ringing.length > 1 ? I18n.tr("  ·  +%1 more", (Agenda.ringing.length - 1)) : "") : ""
                 }
 
             }
@@ -610,7 +610,7 @@ BarPill {
                 Button {
                     variant: "tonal"
                     size: "xs"
-                    text: "10 min"
+                    text: I18n.tr("10 min")
                     icon: "snooze"
                     onClicked: {
                         if (Agenda.firing)

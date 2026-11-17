@@ -466,7 +466,7 @@ Singleton {
             if (root._scanDone)
                 root.reload(m);
             else if (!root._scanCancelled)
-                root.scanError = "The scan stopped before it finished.";
+                root.scanError = I18n.tr("The scan stopped before it finished.");
 
         }
 
@@ -566,7 +566,7 @@ Singleton {
                     j = {
                         "id": root.cleaning,
                         "ok": false,
-                        "error": "no answer",
+                        "error": I18n.tr("no answer"),
                         "freed": 0
                     };
                 }
@@ -600,7 +600,7 @@ Singleton {
             if (code === 0)
                 root.forget(p);
             else
-                root.lastError = "That could not be moved to the trash.";
+                root.lastError = I18n.tr("That could not be moved to the trash.");
             root.trashed(p, code === 0);
             root.measure();
             root.refreshVolumes();
@@ -618,7 +618,7 @@ Singleton {
                 } catch (e) {
                     h[root.checking] = {
                         "ok": false,
-                        "error": "no answer"
+                        "error": I18n.tr("no answer")
                     };
                 }
                 root.health = h;

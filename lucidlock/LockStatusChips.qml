@@ -90,7 +90,7 @@ Row {
     Chip {
         tail: true
         glyph: "bellOff"
-        label: "Do not disturb"
+        label: I18n.tr("Do not disturb")
         tone: Theme.warning
         visible: chips.dndShown
     }

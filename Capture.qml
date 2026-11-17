@@ -378,7 +378,7 @@ Singleton {
             return ;
         }
         root.banked += Math.max(0, ran);
-        root.lastError = ran < 2500 ? "The recorder stopped straight away" : "The recorder stopped on its own";
+        root.lastError = ran < 2500 ? I18n.tr("The recorder stopped straight away") : I18n.tr("The recorder stopped on its own");
         root.state = "saving";
         root.finish();
     }
@@ -565,7 +565,7 @@ Singleton {
                 root.file = out;
                 root.saved(out, secs);
             } else {
-                root.failed(code === 2 ? (why || "Nothing was recorded") : "The recording could not be put together");
+                root.failed(code === 2 ? (why || I18n.tr("Nothing was recorded")) : I18n.tr("The recording could not be put together"));
             }
         }
     }

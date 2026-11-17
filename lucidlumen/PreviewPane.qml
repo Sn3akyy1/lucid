@@ -69,7 +69,7 @@ Item {
     property real duration: 0
 
     function when(t) {
-        return t > 0 ? new Date(t * 1000).toLocaleString(Qt.locale(), "d MMMM yyyy, hh:mm") : "";
+        return t > 0 ? new Date(t * 1000).toLocaleString(I18n.locale, "d MMMM yyyy, hh:mm") : "";
     }
 
     function rows() {
@@ -85,42 +85,42 @@ Item {
                     bytes += prev.items[k].size;
                 }
             }
-            out.push(["Items", (files > 0 ? files + (files === 1 ? " file" : " files") : "") + (files > 0 && dirs > 0 ? ", " : "") + (dirs > 0 ? dirs + (dirs === 1 ? " folder" : " folders") : "")]);
+            out.push([I18n.tr("Items"), (files > 0 ? files + (files === 1 ? I18n.tr(" file") : I18n.tr(" files")) : "") + (files > 0 && dirs > 0 ? ", " : "") + (dirs > 0 ? dirs + (dirs === 1 ? I18n.tr(" folder") : I18n.tr(" folders")) : "")]);
             if (files > 0)
-                out.push(["Size", prev.app.sizeText(bytes)]);
+                out.push([I18n.tr("Size"), prev.app.sizeText(bytes)]);
 
             return out;
         }
         if (prev.kind === "folder") {
             if (i && i.files !== undefined)
-                out.push(["Contains", (i.files + i.dirs === 0 ? "Nothing" : (i.dirs > 0 ? i.dirs + (i.dirs === 1 ? " folder" : " folders") : "") + (i.dirs > 0 && i.files > 0 ? ", " : "") + (i.files > 0 ? i.files + (i.files === 1 ? " file" : " files") : "")) + (i.more ? " or more" : "")]);
+                out.push([I18n.tr("Contains"), (i.files + i.dirs === 0 ? I18n.tr("Nothing") : (i.dirs > 0 ? i.dirs + (i.dirs === 1 ? I18n.tr(" folder") : I18n.tr(" folders")) : "") + (i.dirs > 0 && i.files > 0 ? ", " : "") + (i.files > 0 ? i.files + (i.files === 1 ? I18n.tr(" file") : I18n.tr(" files")) : "")) + (i.more ? I18n.tr(" or more") : "")]);
 
             if (i)
-                out.push(["Modified", prev.when(i.mtime)]);
+                out.push([I18n.tr("Modified"), prev.when(i.mtime)]);
 
             return out;
         }
         if (!prev.one)
             return out;
 
-        out.push(["Kind", (i && i.desc) || prev.one.desc || prev.one.mime]);
-        out.push(["Size", prev.app.sizeText(prev.one.size)]);
+        out.push([I18n.tr("Kind"), (i && i.desc) || prev.one.desc || prev.one.mime]);
+        out.push([I18n.tr("Size"), prev.app.sizeText(prev.one.size)]);
         if (i && i.width)
-            out.push(["Dimensions", i.width + " × " + i.height]);
+            out.push([I18n.tr("Dimensions"), i.width + " × " + i.height]);
 
         if (prev.kind === "pdf" && prev.pages > 0)
-            out.push(["Pages", String(prev.pages)]);
+            out.push([I18n.tr("Pages"), String(prev.pages)]);
 
         if ((prev.kind === "video" || prev.kind === "audio") && prev.duration > 0) {
             var s = Math.round(prev.duration / 1000);
             out.push(["Length", (s >= 3600 ? Math.floor(s / 3600) + ":" + ("0" + Math.floor(s % 3600 / 60)).slice(-2) : Math.floor(s / 60)) + ":" + ("0" + s % 60).slice(-2)]);
         }
-        out.push(["Modified", prev.when(prev.one.mtime)]);
+        out.push([I18n.tr("Modified"), prev.when(prev.one.mtime)]);
         if (i && i.ctime > 0 && i.ctime !== prev.one.mtime)
-            out.push(["Created", prev.when(i.ctime)]);
+            out.push([I18n.tr("Created"), prev.when(i.ctime)]);
 
         if (prev.tab && (prev.tab.searching || prev.tab.isRecent) && i)
-            out.push(["Where", i.where]);
+            out.push([I18n.tr("Where"), i.where]);
 
         return out;
     }
@@ -266,7 +266,7 @@ Item {
                     LText {
                         width: parent.width
                         role: "titleMedium"
-                        text: prev.kind === "many" ? prev.items.length + " items" : prev.one ? prev.one.label : prev.folderSelf ? prev.tab.title : "Nothing to preview"
+                        text: prev.kind === "many" ? I18n.tr("%1 items", prev.items.length) : prev.one ? prev.one.label : prev.folderSelf ? prev.tab.title : I18n.tr("Nothing to preview")
                         color: Theme.text
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         maximumLineCount: 3
@@ -277,7 +277,7 @@ Item {
                         width: parent.width
                         visible: text !== ""
                         role: "bodyMedium"
-                        text: prev.kind === "none" ? "Pick something to see it here" : prev.kind === "many" ? "Selected" : prev.folderSelf ? "This folder" : ""
+                        text: prev.kind === "none" ? I18n.tr("Pick something to see it here") : prev.kind === "many" ? I18n.tr("Selected") : prev.folderSelf ? I18n.tr("This folder") : ""
                         color: Theme.subtext
                     }
 
@@ -324,7 +324,7 @@ Item {
 
                     Button {
                         variant: "tonal"
-                        text: "Open"
+                        text: I18n.tr("Open")
                         icon: "open_in_new"
                         onClicked: prev.win.openSelection(false)
                     }
@@ -332,7 +332,7 @@ Item {
                     IconButton {
                         visible: prev.one !== null && prev.one.kind !== "dir"
                         icon: "apps"
-                        tooltip: "Open with…"
+                        tooltip: I18n.tr("Open with…")
                         onClicked: prev.win.runItem("openWith", prev.one, prev.items)
 
                         Tip {
@@ -342,7 +342,7 @@ Item {
 
                     IconButton {
                         icon: "info"
-                        tooltip: "Properties"
+                        tooltip: I18n.tr("Properties")
                         onClicked: prev.win.runItem("properties", prev.one, prev.items)
 
                         Tip {
@@ -603,7 +603,7 @@ Item {
                 variant: "filled"
                 size: "m"
                 icon: "play_arrow"
-                tooltip: "Play"
+                tooltip: I18n.tr("Play")
                 onClicked: vv.playing = true
             }
 
@@ -619,7 +619,7 @@ Item {
                 checkable: true
                 checked: true
                 icon: checked ? "volume_off" : "volume_up"
-                tooltip: checked ? "Sound on" : "Mute"
+                tooltip: checked ? I18n.tr("Sound on") : I18n.tr("Mute")
                 onClicked: checked = !checked
             }
 
@@ -668,7 +668,7 @@ Item {
                 anchors.bottomMargin: Theme.dp(12)
                 variant: "filled"
                 icon: sound.item && sound.item.playbackState === MediaPlayer.PlayingState ? "pause" : "play_arrow"
-                tooltip: sound.item && sound.item.playbackState === MediaPlayer.PlayingState ? "Pause" : "Play"
+                tooltip: sound.item && sound.item.playbackState === MediaPlayer.PlayingState ? I18n.tr("Pause") : I18n.tr("Play")
                 onClicked: {
                     if (!av.started)
                         av.started = true;

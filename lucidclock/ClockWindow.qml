@@ -14,31 +14,31 @@ FloatingWindow {
     required property var app
     readonly property var pages: [{
         "key": "alarms",
-        "label": "Alarm",
+        "label": I18n.tr("Alarm"),
         "icon": "alarm"
     }, {
         "key": "clock",
-        "label": "Clock",
+        "label": I18n.tr("Clock"),
         "icon": "schedule"
     }, {
         "key": "timer",
-        "label": "Timer",
+        "label": I18n.tr("Timer"),
         "icon": "hourglass_top"
     }, {
         "key": "stopwatch",
-        "label": "Stopwatch",
+        "label": I18n.tr("Stopwatch"),
         "icon": "timer"
     }, {
         "key": "focus",
-        "label": "Focus",
+        "label": I18n.tr("Focus"),
         "icon": "psychiatry"
     }, {
         "key": "reminders",
-        "label": "Reminders",
+        "label": I18n.tr("Reminders"),
         "icon": "event"
     }, {
         "key": "settings",
-        "label": "Settings",
+        "label": I18n.tr("Settings"),
         "icon": "settings"
     }]
     property string page: clockWin.indexOf(clockWin.app.prefs.page) >= 0 ? clockWin.app.prefs.page : "alarms"
@@ -106,7 +106,7 @@ FloatingWindow {
         reminderEditor.ask(item, day);
     }
 
-    title: "Clock"
+    title: I18n.tr("Clock")
     visible: true
     // a surface created fully opaque keeps qtwayland's opaque region for the life
     // of the process and hyprland never blurs it, so stay one step under solid
@@ -201,7 +201,7 @@ FloatingWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     role: "titleLarge"
                     weight: 560
-                    text: "Clock"
+                    text: I18n.tr("Clock")
                 }
 
             }
@@ -537,7 +537,7 @@ FloatingWindow {
                         width: parent.width
                         horizontalAlignment: Text.AlignHCenter
                         role: "titleLarge"
-                        text: "Waiting for Lucid"
+                        text: I18n.tr("Waiting for Lucid")
                     }
 
                     LText {
@@ -546,7 +546,7 @@ FloatingWindow {
                         wrapMode: Text.WordWrap
                         role: "bodyMedium"
                         color: Theme.subtext
-                        text: "Alarms, timers and reminders run in the shell, so they keep time with this window closed. This connects by itself once the shell is up."
+                        text: I18n.tr("Alarms, timers and reminders run in the shell, so they keep time with this window closed. This connects by itself once the shell is up.")
                     }
 
                 }

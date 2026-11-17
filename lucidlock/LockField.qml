@@ -161,7 +161,7 @@ Item {
         anchors.rightMargin: Theme.dp(12)
         anchors.verticalCenter: parent.verticalCenter
         transformOrigin: Item.Left
-        text: Lockscreen.lockedOut ? "Locked" : (Lockscreen.phase === "prompting" && Lockscreen.prompt !== "" ? Lockscreen.prompt : "Password")
+        text: Lockscreen.lockedOut ? I18n.tr("Locked") : (Lockscreen.phase === "prompting" && Lockscreen.prompt !== "" ? Lockscreen.prompt : I18n.tr("Password"))
         color: Lockscreen.focused ? Theme.subtext : Theme.subtextDim
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg
@@ -298,7 +298,7 @@ Item {
             glyphSize: Theme.dp(19)
             glyph: field.reveal ? "eyeOff" : "eye"
             glyphColor: Theme.subtext
-            tooltip: field.reveal ? "Hide" : "Show"
+            tooltip: field.reveal ? I18n.tr("Hide") : I18n.tr("Show")
             visible: Lockscreen.secret && input.text.length > 0 && !Lockscreen.busy
             onClicked: {
                 field.reveal = !field.reveal;

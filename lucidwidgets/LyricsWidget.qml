@@ -52,41 +52,41 @@ WidgetBody {
     readonly property color fgFaint: w.cardOn ? w.inkFaint : Qt.rgba(1, 1, 1, 0.5)
     readonly property string waiting: {
         if (!w.player)
-            return "Nothing playing";
+            return I18n.tr("Nothing playing");
 
         switch (lyr.status) {
         case "loading":
-            return "Looking for the words";
+            return I18n.tr("Looking for the words");
         case "instrumental":
-            return "Instrumental";
+            return I18n.tr("Instrumental");
         case "offline":
-            return "Couldn't reach lrclib.net";
+            return I18n.tr("Couldn't reach lrclib.net");
         case "found":
-            return "No timed lyrics for this track";
+            return I18n.tr("No timed lyrics for this track");
         }
-        return "No lyrics for this track";
+        return I18n.tr("No lyrics for this track");
     }
     // a gallery tile's verse, on a loop
     property real demoPos: 0
     readonly property var demoLines: Lyrics.finish([{
         "t": 0,
         "end": -1,
-        "text": "City lights calling",
+        "text": I18n.tr("City lights calling"),
         "words": []
     }, {
         "t": 3.2,
         "end": -1,
-        "text": "Every street a song",
+        "text": I18n.tr("Every street a song"),
         "words": []
     }, {
         "t": 6.4,
         "end": -1,
-        "text": "Hold the night",
+        "text": I18n.tr("Hold the night"),
         "words": []
     }, {
         "t": 9.4,
         "end": -1,
-        "text": "Till the morning",
+        "text": I18n.tr("Till the morning"),
         "words": []
     }], 12.4)
 

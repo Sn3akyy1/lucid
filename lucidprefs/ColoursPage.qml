@@ -19,40 +19,40 @@ Column {
     readonly property bool generated: page.currentTheme === "matugen" || page.currentTheme === "colour"
     readonly property var styles: [{
         "key": "scheme-tonal-spot",
-        "label": "Tonal",
-        "hint": "Calm tones of one hue. Material's default."
+        "label": I18n.tr("Tonal"),
+        "hint": I18n.tr("Calm tones of one hue. Material's default.")
     }, {
         "key": "scheme-vibrant",
-        "label": "Vibrant",
-        "hint": "The most colourful take on it."
+        "label": I18n.tr("Vibrant"),
+        "hint": I18n.tr("The most colourful take on it.")
     }, {
         "key": "scheme-expressive",
-        "label": "Expressive",
-        "hint": "Turns the hues around the wheel for livelier, less expected pairings."
+        "label": I18n.tr("Expressive"),
+        "hint": I18n.tr("Turns the hues around the wheel for livelier, less expected pairings.")
     }, {
         "key": "scheme-fidelity",
-        "label": "Fidelity",
-        "hint": "Keeps the accent as close to the colour itself as it can."
+        "label": I18n.tr("Fidelity"),
+        "hint": I18n.tr("Keeps the accent as close to the colour itself as it can.")
     }, {
         "key": "scheme-content",
-        "label": "Content",
-        "hint": "Like Fidelity, with the accent taken straight from the colour."
+        "label": I18n.tr("Content"),
+        "hint": I18n.tr("Like Fidelity, with the accent taken straight from the colour.")
     }, {
         "key": "scheme-rainbow",
-        "label": "Rainbow",
-        "hint": "Playful accents over neutral surfaces; the colour's own hue steps aside."
+        "label": I18n.tr("Rainbow"),
+        "hint": I18n.tr("Playful accents over neutral surfaces; the colour's own hue steps aside.")
     }, {
         "key": "scheme-fruit-salad",
-        "label": "Fruit salad",
-        "hint": "A playful mix of hues; the colour's own hue steps aside."
+        "label": I18n.tr("Fruit salad"),
+        "hint": I18n.tr("A playful mix of hues; the colour's own hue steps aside.")
     }, {
         "key": "scheme-neutral",
-        "label": "Neutral",
-        "hint": "Nearly grey, with a trace of the colour."
+        "label": I18n.tr("Neutral"),
+        "hint": I18n.tr("Nearly grey, with a trace of the colour.")
     }, {
         "key": "scheme-monochrome",
-        "label": "Monochrome",
-        "hint": "Greys only."
+        "label": I18n.tr("Monochrome"),
+        "hint": I18n.tr("Greys only.")
     }]
     readonly property string styleHint: {
         for (var i = 0; i < page.styles.length; i++) {
@@ -85,7 +85,7 @@ Column {
     readonly property string templatesSummary: {
         var rec = Templates.record;
         if (rec.time === undefined)
-            return "Nothing rendered yet. The templates render on the next change of theme or wallpaper.";
+            return I18n.tr("Nothing rendered yet. The templates render on the next change of theme or wallpaper.");
 
         var source = rec.source;
         var themes = Prefs.themeCatalogue;
@@ -96,9 +96,9 @@ Column {
         }
         var mins = Math.max(0, Math.round((page.now / 1000 - rec.time) / 60));
         var when = mins < 1 ? "just now" : (mins < 60 ? mins + " min ago" : (mins < 1440 ? Math.round(mins / 60) + " h ago" : Math.round(mins / 1440) + " d ago"));
-        var parts = [Templates.renderedCount + " rendered"];
+        var parts = [I18n.tr("%1 rendered", Templates.renderedCount)];
         if (Templates.failedCount > 0)
-            parts.push(Templates.failedCount + " failed");
+            parts.push(I18n.tr("%1 failed", Templates.failedCount));
 
         return parts.join(", ") + " · " + source + ", " + rec.mode + ", " + when;
     }
@@ -138,12 +138,12 @@ Column {
     }
 
     SettingCard {
-        title: "GENERATED PALETTES"
-        subtitle: "How Matugen builds a palette from your wallpaper, and Your colour from one colour you pick."
+        title: I18n.tr("GENERATED PALETTES")
+        subtitle: I18n.tr("How Matugen builds a palette from your wallpaper, and Your colour from one colour you pick.")
 
         SettingRow {
-            title: "Your colour"
-            description: "What the Your colour theme is built from. Pick it from anywhere on screen, type it, or start from one of these."
+            title: I18n.tr("Your colour")
+            description: I18n.tr("What the Your colour theme is built from. Pick it from anywhere on screen, type it, or start from one of these.")
             stacked: true
 
             ThemeColourPicker {
@@ -159,10 +159,10 @@ Column {
         }
 
         SettingRow {
-            title: "Style"
+            title: I18n.tr("Style")
             description: page.styleHint
             enabled: page.generated
-            disabledReason: "Only for Matugen and Your colour, which matugen builds; Pywal and the fixed themes bring their own palette."
+            disabledReason: I18n.tr("Only for Matugen and Your colour, which matugen builds; Pywal and the fixed themes bring their own palette.")
             stacked: true
 
             M3Chips {
@@ -178,10 +178,10 @@ Column {
         }
 
         SettingRow {
-            title: "Contrast"
-            description: "How far apart text and surfaces sit. 0 is the design as specified."
+            title: I18n.tr("Contrast")
+            description: I18n.tr("How far apart text and surfaces sit. 0 is the design as specified.")
             enabled: page.generated
-            disabledReason: "Only for Matugen and Your colour, which matugen builds; Pywal and the fixed themes bring their own palette."
+            disabledReason: I18n.tr("Only for Matugen and Your colour, which matugen builds; Pywal and the fixed themes bring their own palette.")
             stacked: true
 
             M3Slider {
@@ -201,10 +201,10 @@ Column {
         }
 
         SettingRow {
-            title: "Colour from the wallpaper"
-            description: "The colours Matugen finds in the wallpaper, most dominant first, each shown as the accent it gives. The pick holds for this wallpaper; another one starts from its most dominant."
+            title: I18n.tr("Colour from the wallpaper")
+            description: I18n.tr("The colours Matugen finds in the wallpaper, most dominant first, each shown as the accent it gives. The pick holds for this wallpaper; another one starts from its most dominant.")
             enabled: page.currentTheme === "matugen"
-            disabledReason: "Only for Matugen, which builds the palette from the wallpaper."
+            disabledReason: I18n.tr("Only for Matugen, which builds the palette from the wallpaper.")
             showDivider: false
             stacked: true
 
@@ -226,15 +226,15 @@ Column {
     SettingCard {
         id: templatesCard
 
-        title: "APP TEMPLATES"
-        subtitle: "Each template writes the palette into an application's own config whenever the theme or the wallpaper changes, the fixed themes included."
+        title: I18n.tr("APP TEMPLATES")
+        subtitle: I18n.tr("Each template writes the palette into an application's own config whenever the theme or the wallpaper changes, the fixed themes included.")
 
         SettingRow {
-            title: "Last change"
+            title: I18n.tr("Last change")
             description: page.templatesSummary
 
             M3Button {
-                text: Templates.busy === "*" ? "Rendering..." : "Render again"
+                text: Templates.busy === "*" ? I18n.tr("Rendering...") : I18n.tr("Render again")
                 enabled: Templates.busy === "" && Templates.record.time !== undefined
                 // refresh
                 iconPath: "refresh"
@@ -258,8 +258,8 @@ Column {
     SettingCard {
         id: catalogCard
 
-        title: "ADD AN APP"
-        subtitle: "Installed applications Lucid has a template for that aren't wired up yet."
+        title: I18n.tr("ADD AN APP")
+        subtitle: I18n.tr("Installed applications Lucid has a template for that aren't wired up yet.")
         visible: Templates.catalog.length > 0
 
         Repeater {
@@ -276,7 +276,7 @@ Column {
                 description: offer.modelData.name + " · " + offer.modelData.output
 
                 M3Button {
-                    text: Templates.busy === offer.modelData.name ? "Adding..." : "Add"
+                    text: Templates.busy === offer.modelData.name ? I18n.tr("Adding...") : I18n.tr("Add")
                     enabled: Templates.busy === ""
                     iconPath: "add"
                     onClicked: Templates.addFromCatalog(offer.modelData)
@@ -289,11 +289,11 @@ Column {
     }
 
     SettingCard {
-        title: "YOUR OWN TEMPLATE"
+        title: I18n.tr("YOUR OWN TEMPLATE")
 
         SettingRow {
-            title: "Add a template"
-            description: "Any text file with matugen's variables where the colours go, like {{colors.primary.default.hex}}. Try it to see what it writes with your colours before adding it."
+            title: I18n.tr("Add a template")
+            description: I18n.tr("Any text file with matugen's variables where the colours go, like {{colors.primary.default.hex}}. Try it to see what it writes with your colours before adding it.")
             stacked: true
 
             TemplateForm {
@@ -303,8 +303,8 @@ Column {
         }
 
         SettingRow {
-            title: "Colour variables"
-            description: "The roles of the current palette. Click one to copy the variable that writes it."
+            title: I18n.tr("Colour variables")
+            description: I18n.tr("The roles of the current palette. Click one to copy the variable that writes it.")
             showDivider: false
             stacked: true
 
@@ -315,11 +315,11 @@ Column {
         }
 
         SettingRow {
-            title: "Configuration file"
-            description: "The templates live in ~/.config/matugen/config.toml. Switching one off keeps its block there, commented out."
+            title: I18n.tr("Configuration file")
+            description: I18n.tr("The templates live in ~/.config/matugen/config.toml. Switching one off keeps its block there, commented out.")
 
             M3Button {
-                text: "Open"
+                text: I18n.tr("Open")
                 onClicked: Templates.openFile(Templates.configPath)
             }
 

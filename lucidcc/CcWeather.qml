@@ -34,7 +34,7 @@ Item {
             const h = wc.wx.hours || [];
             for (let i = 0; i < h.length && out.length < wc.slots; i += 3)
                 out.push({
-                "top": i === 0 ? "Now" : new Date(h[i].time).toLocaleTimeString(Qt.locale(), Prefs.clock24h ? "HH" : "h AP").replace(":00", ""),
+                "top": i === 0 ? "Now" : new Date(h[i].time).toLocaleTimeString(I18n.locale, Prefs.clock24h ? "HH" : "h AP").replace(":00", ""),
                 "kind": WeatherSource.kindFor(h[i].code, !h[i].day),
                 "temp": Units.deg(h[i].tempC, h[i].tempF),
                 "low": ""
@@ -43,7 +43,7 @@ Item {
             const d = wc.wx.days || [];
             for (let i = 1; i < d.length && out.length < wc.slots; i++)
                 out.push({
-                "top": new Date(d[i].date + "T12:00").toLocaleDateString(Qt.locale(), "ddd"),
+                "top": new Date(d[i].date + "T12:00").toLocaleDateString(I18n.locale, "ddd"),
                 "kind": WeatherSource.kindFor(d[i].code, false),
                 "temp": Units.deg(d[i].maxC, d[i].maxF),
                 "low": Units.deg(d[i].minC, d[i].minF)
@@ -116,7 +116,7 @@ Item {
             role: wc.line ? "bodyMedium" : "bodySmall"
             color: Theme.subtext
             elide: Text.ElideRight
-            text: wc.wx ? WeatherSource.descFor(wc.wx.code) + (!wc.line && WeatherSource.place !== "" ? " · " + WeatherSource.place : "") : (WeatherSource.lastError !== "" ? "No forecast yet" : "Looking outside")
+            text: wc.wx ? WeatherSource.descFor(wc.wx.code) + (!wc.line && WeatherSource.place !== "" ? " · " + WeatherSource.place : "") : (WeatherSource.lastError !== "" ? I18n.tr("No forecast yet") : I18n.tr("Looking outside"))
         }
 
         // the day's high over its low

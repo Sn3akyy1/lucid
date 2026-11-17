@@ -101,9 +101,9 @@ ShellRoot {
 
         const where = String(entry.file).replace(Quickshell.env("HOME"), "~");
         if (entry.kind === "video")
-            Quickshell.execDetached(["notify-send", "-a", "LucidShot", "-i", "media-record", "Recording saved", where]);
+            Quickshell.execDetached(["notify-send", "-a", "LucidShot", "-i", "media-record", I18n.tr("Recording saved"), where]);
         else
-            Quickshell.execDetached(["sh", "-c", "a=$(notify-send -a LucidShot -i \"$1\" -A 'edit=Mark up' -A 'open=Open' --wait \"$2\" \"$3\"); case \"$a\" in edit) qs ipc call snap edit \"$1\" ;; open) xdg-open \"$1\" ;; esac; true", "sh", entry.file, entry.temp ? "Screenshot copied" : "Screenshot saved", entry.temp ? "It is on the clipboard only" : where]);
+            Quickshell.execDetached(["sh", "-c", "a=$(notify-send -a LucidShot -i \"$1\" -A \"edit=$4\" -A \"open=$5\" --wait \"$2\" \"$3\"); case \"$a\" in edit) qs ipc call snap edit \"$1\" ;; open) xdg-open \"$1\" ;; esac; true", "sh", entry.file, entry.temp ? I18n.tr("Screenshot copied") : I18n.tr("Screenshot saved"), entry.temp ? I18n.tr("It is on the clipboard only") : where, I18n.tr("Mark up"), I18n.tr("Open")]);
     }
 
     // the bar that speaks for the shell, of however many there are
@@ -2101,11 +2101,11 @@ ShellRoot {
                     "screen": Monitors.focusedScreen ? Monitors.focusedScreen.name : ""
                 });
                 else
-                    toastMod.popup("copy", "Text copied", false);
+                    toastMod.popup("copy", I18n.tr("Text copied"), false);
             } else if (r.status === "notool") {
-                toastMod.popup("alert", "Install tesseract to copy text", true);
+                toastMod.popup("alert", I18n.tr("Install tesseract to copy text"), true);
             } else {
-                toastMod.popup("alert", "No text found", true);
+                toastMod.popup("alert", I18n.tr("No text found"), true);
             }
         }
     }
@@ -2123,7 +2123,7 @@ ShellRoot {
             return toastMod.popupSwatch(hex, text);
         }
         onFreezeFailed: (why) => {
-            return toastMod.popup("alert", "Couldn't capture the screen", true);
+            return toastMod.popup("alert", I18n.tr("Couldn't capture the screen"), true);
         }
     }
 

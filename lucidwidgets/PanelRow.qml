@@ -139,7 +139,7 @@ Item {
             width: parent.width
             role: "bodySmall"
             color: Theme.subtext
-            text: [row.variantInfo ? row.variantInfo.name : "", row.pinned ? "Locked" : "", row.where].filter((s) => {
+            text: [row.variantInfo ? row.variantInfo.name : "", row.pinned ? I18n.tr("Locked") : "", row.where].filter((s) => {
                 return s !== "";
             }).join("  ·  ")
             elide: Text.ElideRight

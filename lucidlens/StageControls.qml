@@ -52,7 +52,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         x: ctl.shown ? Theme.dp(16) : -Theme.dp(12)
         icon: "chevron_left"
-        tooltip: "Previous (←)"
+        tooltip: I18n.tr("Previous (←)")
         opacity: ctl.shown ? 1 : 0
         visible: opacity > 0.01 && ctl.win.items.length > 1
 
@@ -85,7 +85,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         x: ctl.shown ? ctl.width - width - Theme.dp(16) : ctl.width - width + Theme.dp(12)
         icon: "chevron_right"
-        tooltip: "Next (→)"
+        tooltip: I18n.tr("Next (→)")
         opacity: ctl.shown ? 1 : 0
         visible: opacity > 0.01 && ctl.win.items.length > 1
 
@@ -285,7 +285,7 @@ Item {
             IconButton {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "skip_previous"
-                tooltip: "Previous frame"
+                tooltip: I18n.tr("Previous frame")
 
                 Tip {
                 }
@@ -299,7 +299,7 @@ Item {
             IconButton {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: ctl.stage.playing ? "pause" : "play_arrow"
-                tooltip: ctl.stage.playing ? "Pause" : "Play"
+                tooltip: ctl.stage.playing ? I18n.tr("Pause") : I18n.tr("Play")
 
                 Tip {
                 }
@@ -310,7 +310,7 @@ Item {
             IconButton {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "skip_next"
-                tooltip: "Next frame"
+                tooltip: I18n.tr("Next frame")
 
                 Tip {
                 }
@@ -460,14 +460,14 @@ Item {
         LText {
             anchors.horizontalCenter: parent.horizontalCenter
             role: "titleMedium"
-            text: ctl.win.app.prefs.videos && (ctl.win.app.caps.videos || []).length > 0 ? "No pictures or videos here" : "No pictures here"
+            text: ctl.win.app.prefs.videos && (ctl.win.app.caps.videos || []).length > 0 ? I18n.tr("No pictures or videos here") : I18n.tr("No pictures here")
         }
 
         LText {
             anchors.horizontalCenter: parent.horizontalCenter
             role: "bodyMedium"
             color: Theme.subtext
-            text: "Drop one on the window, or open one with Ctrl+O"
+            text: I18n.tr("Drop one on the window, or open one with Ctrl+O")
         }
 
     }

@@ -22,8 +22,8 @@ WidgetBody {
     }
     readonly property bool has: w.player !== null
     readonly property bool playing: w.has ? w.player.isPlaying : false
-    readonly property string title: w.has ? (w.player.trackTitle || "Unknown track") : "Nothing playing"
-    readonly property string artist: w.has ? (w.player.trackArtist || w.player.identity || "") : "Start something and it lands here"
+    readonly property string title: w.has ? (w.player.trackTitle || I18n.tr("Unknown track")) : I18n.tr("Nothing playing")
+    readonly property string artist: w.has ? (w.player.trackArtist || w.player.identity || "") : I18n.tr("Start something and it lands here")
     readonly property string source: w.has ? (w.player.identity || "") : ""
     readonly property string artUrl: w.has ? (w.player.trackArtUrl || "") : ""
     readonly property real length: w.has ? w.player.length : 0

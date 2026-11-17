@@ -49,7 +49,7 @@ Item {
         if (!ov.vol)
             return "";
 
-        var bits = [Storage.size(ov.vol.avail) + " free"];
+        var bits = [I18n.tr("%1 free", Storage.size(ov.vol.avail))];
         if (ov.drive && ov.drive.model)
             bits.push(ov.drive.model);
 
@@ -108,7 +108,7 @@ Item {
 
                     Text {
                         anchors.baseline: usedText.baseline
-                        text: ov.vol ? "of " + Storage.size(ov.capacity) : ""
+                        text: ov.vol ? I18n.tr("of %1", Storage.size(ov.capacity)) : ""
                         color: Theme.subtext
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBodyLg
@@ -306,17 +306,17 @@ Item {
                     width: parent.width
                     text: {
                         if (ov.scanning)
-                            return Storage.scanFiles > 0 ? "Looking through " + Storage.scanFiles.toLocaleString(Qt.locale(), "f", 0) + " files, " + Storage.size(Storage.scanBytes) + " so far" : "Starting to look…";
+                            return Storage.scanFiles > 0 ? "Looking through " + Storage.scanFiles.toLocaleString(I18n.locale, "f", 0) + " files, " + Storage.size(Storage.scanBytes) + " so far" : "Starting to look…";
 
                         if (Storage.scanError !== "" && !ov.scan)
                             return Storage.scanError;
 
                         if (!ov.scan)
-                            return "Scan this drive to see what is filling it, folder by folder.";
+                            return I18n.tr("Scan this drive to see what is filling it, folder by folder.");
 
-                        var bits = ["Looked through " + ov.scan.files.toLocaleString(Qt.locale(), "f", 0) + " files " + (ov.pal ? ov.pal.ago(ov.scan.time) : "")];
+                        var bits = [I18n.tr("Looked through %1 files %2", ov.scan.files.toLocaleString(I18n.locale, "f", 0), ov.pal ? ov.pal.ago(ov.scan.time) : "")];
                         if (ov.scan.root === ov.scan.mount && ov.scan.used > ov.scan.scanned)
-                            bits.push(Storage.size(ov.scan.used - ov.scan.scanned) + " only the system can read");
+                            bits.push(I18n.tr("%1 only the system can read", Storage.size(ov.scan.used - ov.scan.scanned)));
 
                         return bits.join("  ·  ");
                     }
@@ -334,7 +334,7 @@ Item {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 variant: ov.scanning ? "text" : (ov.scan ? "tonal" : "filled")
-                text: ov.scanning ? "Stop" : (ov.scan ? "Scan again" : "Scan")
+                text: ov.scanning ? I18n.tr("Stop") : (ov.scan ? I18n.tr("Scan again") : I18n.tr("Scan"))
                 iconPath: ov.scanning ? "close" : "refresh"
                 enabled: ov.vol !== null && (ov.scanning || !Storage.scanning)
                 onClicked: ov.scanning ? Storage.cancelScan() : Storage.scan(ov.vol.mount)

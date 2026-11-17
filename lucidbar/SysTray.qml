@@ -368,7 +368,7 @@ BarPill {
     readonly property point tipLiveAt: root.tipLive ? (menuLayer.width, menuLayer.height, menuLayer.mapFromItem(root.tipCell, root.tipCell.width / 2, root.tipAbove ? -Theme.dp(8) : root.tipCell.height + Theme.dp(8))) : Qt.point(0, 0)
     readonly property string tipLiveName: root.tipLive ? Tray.nameOf(root.tipItem) : ""
     readonly property bool tipLiveWants: root.tipLive && Tray.wantsYou(root.tipItem)
-    readonly property string tipLiveDetail: root.tipLive ? (Tray.detailOf(root.tipItem) || (root.tipLiveWants ? "Wants your attention" : "")) : ""
+    readonly property string tipLiveDetail: root.tipLive ? (Tray.detailOf(root.tipItem) || (root.tipLiveWants ? I18n.tr("Wants your attention") : "")) : ""
 
     onTipLiveAtChanged: {
         if (root.tipLive)
@@ -590,7 +590,7 @@ BarPill {
                         anchors.verticalCenter: parent.verticalCenter
                         role: "titleMedium"
                         weight: 600
-                        text: "Tray"
+                        text: I18n.tr("Tray")
                         color: Theme.text
                     }
 
@@ -599,7 +599,7 @@ BarPill {
                         anchors.rightMargin: Theme.dp(4)
                         anchors.verticalCenter: parent.verticalCenter
                         role: "labelMedium"
-                        text: root.attentionCount > 0 ? (root.attentionCount === 1 ? "1 wants attention" : root.attentionCount + " want attention") : (root.trayCount === 1 ? "1 app" : root.trayCount + " apps")
+                        text: root.attentionCount > 0 ? (root.attentionCount === 1 ? I18n.tr("1 wants attention") : I18n.tr("%1 want attention", root.attentionCount)) : (root.trayCount === 1 ? I18n.tr("1 app") : I18n.tr("%1 apps", root.trayCount))
                         color: root.attentionCount > 0 ? Theme.error : Theme.subtext
                     }
 
@@ -677,7 +677,7 @@ BarPill {
                         LText {
                             anchors.verticalCenter: parent.verticalCenter
                             role: "bodyMedium"
-                            text: root.hiddenCount === 1 ? "1 app hidden" : root.hiddenCount + " apps hidden"
+                            text: root.hiddenCount === 1 ? I18n.tr("1 app hidden") : I18n.tr("%1 apps hidden", root.hiddenCount)
                             color: Theme.subtext
                         }
 
@@ -689,7 +689,7 @@ BarPill {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.verticalCenterOffset: Theme.dp(3)
                         role: "labelLarge"
-                        text: "Manage"
+                        text: I18n.tr("Manage")
                         color: Theme.primary
                     }
 
@@ -809,7 +809,7 @@ BarPill {
                             width: parent.width
                             visible: text !== ""
                             role: "bodySmall"
-                            text: root.menuItem ? (Tray.detailOf(root.menuItem) || (cardDetail.wants ? "Wants your attention" : "")) : ""
+                            text: root.menuItem ? (Tray.detailOf(root.menuItem) || (cardDetail.wants ? I18n.tr("Wants your attention") : "")) : ""
                             color: cardDetail.wants ? Theme.error : Theme.subtext
                             elide: Text.ElideRight
                         }

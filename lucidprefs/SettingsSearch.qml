@@ -106,7 +106,7 @@ Item {
         anchors.right: parent.right
         anchors.rightMargin: Theme.dp(18)
         anchors.verticalCenter: parent.verticalCenter
-        text: "Search settings"
+        text: I18n.tr("Search settings")
         color: Theme.subtextDim
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg

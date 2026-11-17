@@ -9,44 +9,44 @@ Item {
 
     readonly property var slides: [{
         "file": "desktop",
-        "title": "Your desktop",
-        "blurb": "The bar along the top, widgets on the desktop and the dock below"
+        "title": I18n.tr("Your desktop"),
+        "blurb": I18n.tr("The bar along the top, widgets on the desktop and the dock below")
     }, {
         "file": "edit-mode",
-        "title": "Edit mode",
-        "blurb": "Move the bar, the dock and your widgets right on the desktop"
+        "title": I18n.tr("Edit mode"),
+        "blurb": I18n.tr("Move the bar, the dock and your widgets right on the desktop")
     }, {
         "file": "control-centre-editor",
-        "title": "Control centre",
-        "blurb": "Your quick settings laid out on a grid, block by block"
+        "title": I18n.tr("Control centre"),
+        "blurb": I18n.tr("Your quick settings laid out on a grid, block by block")
     }, {
         "file": "lumen",
-        "title": "Lumen",
-        "blurb": "A file manager of Lucid's own, and every app's file dialog"
+        "title": I18n.tr("Lumen"),
+        "blurb": I18n.tr("A file manager of Lucid's own, and every app's file dialog")
     }, {
         "file": "apps",
-        "title": "Lucid's own apps",
-        "blurb": "Settings, Lumen and Lens, all in the colours of your wallpaper"
+        "title": I18n.tr("Lucid's own apps"),
+        "blurb": I18n.tr("Settings, Lumen and Lens, all in the colours of your wallpaper")
     }, {
         "file": "lyrics-widget",
-        "title": "Lyrics",
-        "blurb": "The words of what is playing, sung along on the desktop"
+        "title": I18n.tr("Lyrics"),
+        "blurb": I18n.tr("The words of what is playing, sung along on the desktop")
     }, {
         "file": "lyrics-panel",
-        "title": "Music",
-        "blurb": "Covers, controls and lyrics, one click away in the bar"
+        "title": I18n.tr("Music"),
+        "blurb": I18n.tr("Covers, controls and lyrics, one click away in the bar")
     }, {
         "file": "bottom-bar",
-        "title": "Your bar, your way",
-        "blurb": "Islands, notches or one full bar, along the top or the bottom"
+        "title": I18n.tr("Your bar, your way"),
+        "blurb": I18n.tr("Islands, notches or one full bar, along the top or the bottom")
     }, {
         "file": "lucidshot",
-        "title": "Screenshots",
-        "blurb": "Photos, recordings, text and colours from any part of the screen"
+        "title": I18n.tr("Screenshots"),
+        "blurb": I18n.tr("Photos, recordings, text and colours from any part of the screen")
     }, {
         "file": "desktop-icons",
-        "title": "Desktop icons",
-        "blurb": "Your Desktop folder on the wallpaper, beside the widgets"
+        "title": I18n.tr("Desktop icons"),
+        "blurb": I18n.tr("Your Desktop folder on the wallpaper, beside the widgets")
     }]
     property int index: 0
     // the caption and the gap above it: the window sizes the picture round it

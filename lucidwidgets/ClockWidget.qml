@@ -102,7 +102,7 @@ WidgetBody {
             role: "titleSmall"
             weight: 520
             color: w.inkDim
-            text: w.now.toLocaleDateString(Qt.locale(), "dddd, d MMMM")
+            text: w.now.toLocaleDateString(I18n.locale, I18n.tr("dddd, d MMMM"))
         }
 
     }
@@ -180,7 +180,7 @@ WidgetBody {
                 size: stack.dateSize
                 weight: 640
                 color: w.ink
-                text: w.now.toLocaleDateString(Qt.locale(), "ddd d MMM") + (w.seconds ? "  ·  " + w.two(w.now.getSeconds()) : "")
+                text: w.now.toLocaleDateString(I18n.locale, I18n.tr("ddd d MMM")) + (w.seconds ? "  ·  " + w.two(w.now.getSeconds()) : "")
             }
 
         }
@@ -337,7 +337,7 @@ WidgetBody {
                 anchors.horizontalCenter: parent.horizontalCenter
                 role: "labelLarge"
                 color: Theme.alpha(w.fgInkAccent, 0.8)
-                text: w.now.toLocaleDateString(Qt.locale(), "ddd d MMM")
+                text: w.now.toLocaleDateString(I18n.locale, I18n.tr("ddd d MMM"))
             }
 
         }
@@ -389,7 +389,7 @@ WidgetBody {
             role: "titleSmall"
             weight: 600
             color: w.ink
-            text: w.now.toLocaleDateString(Qt.locale(), "dddd")
+            text: w.now.toLocaleDateString(I18n.locale, I18n.tr("dddd"))
         }
 
         LText {
@@ -400,7 +400,7 @@ WidgetBody {
             role: "titleSmall"
             weight: 600
             color: w.ink
-            text: w.now.toLocaleDateString(Qt.locale(), "d MMMM")
+            text: w.now.toLocaleDateString(I18n.locale, I18n.tr("d MMMM"))
         }
 
         // the seconds as a dot running round the rim
@@ -563,7 +563,7 @@ WidgetBody {
 
         ShadowText {
             visible: w.showDate
-            text: w.now.toLocaleDateString(Qt.locale(), "dddd, d MMMM")
+            text: w.now.toLocaleDateString(I18n.locale, I18n.tr("dddd, d MMMM"))
             color: "white"
             opacity: 0.85
             shadow: true

@@ -22,39 +22,39 @@ Item {
     readonly property var tools: [{
         "key": "move",
         "icon": "crop_free",
-        "tip": "Move and resize the selection (M)"
+        "tip": I18n.tr("Move and resize the selection (M)")
     }, {
         "key": "pen",
         "icon": "draw",
-        "tip": "Pen (P)"
+        "tip": I18n.tr("Pen (P)")
     }, {
         "key": "hl",
         "icon": "ink_highlighter",
-        "tip": "Highlighter (H)"
+        "tip": I18n.tr("Highlighter (H)")
     }, {
         "key": "arrow",
         "icon": "arrow_outward",
-        "tip": "Arrow (A)"
+        "tip": I18n.tr("Arrow (A)")
     }, {
         "key": "rect",
         "icon": "rectangle",
-        "tip": "Box (B)"
+        "tip": I18n.tr("Box (B)")
     }, {
         "key": "oval",
         "icon": "circle",
-        "tip": "Ellipse (O)"
+        "tip": I18n.tr("Ellipse (O)")
     }, {
         "key": "text",
         "icon": "title",
-        "tip": "Text (T)"
+        "tip": I18n.tr("Text (T)")
     }, {
         "key": "step",
         "icon": "123",
-        "tip": "Numbered steps (N)"
+        "tip": I18n.tr("Numbered steps (N)")
     }, {
         "key": "redact",
         "icon": "blur_on",
-        "tip": "Redact (X)"
+        "tip": I18n.tr("Redact (X)")
     }]
 
     // room round the toolbar for its shadow, inside the item: drawn as one
@@ -100,8 +100,8 @@ Item {
             ShotModeButton {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "screenshot_region"
-                label: "Screenshot"
-                tip: "Screenshot (S)"
+                label: I18n.tr("Screenshot")
+                tip: I18n.tr("Screenshot (S)")
                 tipAbove: bar.tipAbove
                 selected: bar.mode === "shot"
                 onClicked: bar.stage.setMode("shot")
@@ -110,7 +110,7 @@ Item {
             ShotModeButton {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: bar.recording ? "stop_circle" : "screen_record"
-                label: bar.recording ? "Recording" : "Record"
+                label: bar.recording ? I18n.tr("Recording") : I18n.tr("Record")
                 tip: bar.recording ? "A recording is running" : "Record the screen (R)"
                 tipAbove: bar.tipAbove
                 selected: bar.mode === "record"
@@ -123,8 +123,8 @@ Item {
             ShotModeButton {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "text_fields"
-                label: "Text"
-                tip: "Copy the text in it (T)"
+                label: I18n.tr("Text")
+                tip: I18n.tr("Copy the text in it (T)")
                 tipAbove: bar.tipAbove
                 selected: bar.mode === "text"
                 onClicked: bar.stage.setMode("text")
@@ -133,8 +133,8 @@ Item {
             ShotModeButton {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "colorize"
-                label: "Colour"
-                tip: "Pick a colour (C)"
+                label: I18n.tr("Colour")
+                tip: I18n.tr("Pick a colour (C)")
                 tipAbove: bar.tipAbove
                 selected: bar.mode === "colour"
                 onClicked: bar.stage.setMode("colour")
@@ -155,11 +155,11 @@ Item {
                 options: [{
                     "key": "region",
                     "icon": "screenshot_region",
-                    "tip": "A region, or a window you click (Tab)"
+                    "tip": I18n.tr("A region, or a window you click (Tab)")
                 }, {
                     "key": "window",
                     "icon": "select_window",
-                    "tip": "A window (W)"
+                    "tip": I18n.tr("A window (W)")
                 }]
                 onPicked: (key) => {
                     return bar.stage.setTarget(key);
@@ -173,16 +173,16 @@ Item {
                 current: bar.stage ? bar.stage.format : "hex"
                 options: [{
                     "key": "hex",
-                    "label": "HEX",
+                    "label": I18n.tr("HEX"),
                     "tip": "#3a7bd5"
                 }, {
                     "key": "rgb",
-                    "label": "RGB",
-                    "tip": "rgb(58, 123, 213)"
+                    "label": I18n.tr("RGB"),
+                    "tip": I18n.tr("rgb(58, 123, 213)")
                 }, {
                     "key": "hsl",
-                    "label": "HSL",
-                    "tip": "hsl(215, 65%, 53%)"
+                    "label": I18n.tr("HSL"),
+                    "tip": I18n.tr("hsl(215, 65%, 53%)")
                 }]
                 onPicked: (key) => {
                     bar.stage.format = key;
@@ -201,7 +201,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: bar.mode === "shot"
                 icon: "edit"
-                tip: bar.stage && bar.stage.markup ? "Mark up before saving: on (E)" : "Mark up before saving (E)"
+                tip: bar.stage && bar.stage.markup ? I18n.tr("Mark up before saving: on (E)") : I18n.tr("Mark up before saving (E)")
                 tipAbove: bar.tipAbove
                 checked: bar.stage ? bar.stage.markup : false
                 onClicked: bar.stage.markup = !bar.stage.markup
@@ -211,7 +211,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: bar.mode === "record"
                 icon: bar.stage && bar.stage.mic ? "mic" : "mic_off"
-                tip: bar.stage && bar.stage.mic ? "Recording the microphone" : "Not recording the microphone"
+                tip: bar.stage && bar.stage.mic ? I18n.tr("Recording the microphone") : I18n.tr("Not recording the microphone")
                 tipAbove: bar.tipAbove
                 checked: bar.stage ? bar.stage.mic : false
                 onClicked: bar.stage.mic = !bar.stage.mic
@@ -221,7 +221,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: bar.mode === "record"
                 icon: bar.stage && bar.stage.system ? "volume_up" : "volume_off"
-                tip: bar.stage && bar.stage.system ? "Recording what is playing" : "Not recording what is playing"
+                tip: bar.stage && bar.stage.system ? I18n.tr("Recording what is playing") : I18n.tr("Not recording what is playing")
                 tipAbove: bar.tipAbove
                 checked: bar.stage ? bar.stage.system : false
                 onClicked: bar.stage.system = !bar.stage.system
@@ -234,7 +234,7 @@ Item {
                 visible: bar.mode === "shot" || bar.mode === "record"
                 icon: "timer"
                 badge: secs > 0 ? String(secs) : ""
-                tip: bar.mode === "record" ? (secs > 0 ? "Counts down " + secs + " s before recording" : "Starts recording straight away") : (secs > 0 ? "Self-timer: " + secs + " s" : "Self-timer")
+                tip: bar.mode === "record" ? (secs > 0 ? I18n.tr("Counts down %1 s before recording", secs) : I18n.tr("Starts recording straight away")) : (secs > 0 ? I18n.tr("Self-timer: %1 s", secs) : "Self-timer")
                 tipAbove: bar.tipAbove
                 checked: secs > 0
                 onClicked: bar.stage.cycleTimer()
@@ -250,7 +250,7 @@ Item {
             ShotButton {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "settings"
-                tip: "Screenshot settings"
+                tip: I18n.tr("Screenshot settings")
                 tipAbove: bar.tipAbove
                 onClicked: bar.stage.openSettings()
             }
@@ -258,7 +258,7 @@ Item {
             ShotButton {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "close"
-                tip: "Close (Esc)"
+                tip: I18n.tr("Close (Esc)")
                 tipAbove: bar.tipAbove
                 onClicked: bar.stage.close()
             }
@@ -278,7 +278,7 @@ Item {
             ShotButton {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "arrow_back"
-                tip: bar.stage && bar.stage.editing ? "Discard the changes" : "Back to choosing"
+                tip: bar.stage && bar.stage.editing ? I18n.tr("Discard the changes") : I18n.tr("Back to choosing")
                 tipAbove: bar.tipAbove
                 onClicked: bar.stage.leaveMarkup()
             }
@@ -318,7 +318,7 @@ Item {
 
                 anchors.verticalCenter: parent.verticalCenter
                 dot: bar.stage ? bar.stage.ink : "transparent"
-                tip: "Colour and size"
+                tip: I18n.tr("Colour and size")
                 tipAbove: bar.tipAbove
                 checked: bar.stylesOpen
                 onClicked: bar.stylesOpen = !bar.stylesOpen
@@ -327,7 +327,7 @@ Item {
             ShotButton {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "undo"
-                tip: "Undo (Ctrl+Z)"
+                tip: I18n.tr("Undo (Ctrl+Z)")
                 tipAbove: bar.tipAbove
                 disabled: !bar.stage || !bar.stage.canUndo
                 onClicked: bar.stage.undo()
@@ -336,7 +336,7 @@ Item {
             ShotButton {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "redo"
-                tip: "Redo (Ctrl+Shift+Z)"
+                tip: I18n.tr("Redo (Ctrl+Shift+Z)")
                 tipAbove: bar.tipAbove
                 disabled: !bar.stage || !bar.stage.canRedo
                 onClicked: bar.stage.redo()
@@ -352,7 +352,7 @@ Item {
             ShotButton {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "content_copy"
-                tip: "Copy without saving (Ctrl+C)"
+                tip: I18n.tr("Copy without saving (Ctrl+C)")
                 tipAbove: bar.tipAbove
                 onClicked: bar.stage.finishMarkup("copy")
             }
@@ -360,7 +360,7 @@ Item {
             ShotButton {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "keep"
-                tip: "Pin it to the screen"
+                tip: I18n.tr("Pin it to the screen")
                 tipAbove: bar.tipAbove
                 onClicked: bar.stage.finishMarkup("pin")
             }
@@ -369,7 +369,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: bar.stage && !bar.stage.editing
                 icon: "document_scanner"
-                tip: "Copy the text in it"
+                tip: I18n.tr("Copy the text in it")
                 tipAbove: bar.tipAbove
                 onClicked: bar.stage.readSelection()
             }

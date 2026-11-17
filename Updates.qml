@@ -103,17 +103,17 @@ Singleton {
     function ago(ts) {
         var m = Math.max(0, Math.round((Date.now() - ts) / 60000));
         if (m < 2)
-            return "just now";
+            return I18n.tr("just now");
 
         if (m < 60)
-            return m + " minutes ago";
+            return I18n.tr("%1 minutes ago", m);
 
         var h = Math.round(m / 60);
         if (h < 24)
-            return h === 1 ? "an hour ago" : h + " hours ago";
+            return h === 1 ? I18n.tr("an hour ago") : I18n.tr("%1 hours ago", h);
 
         var d = Math.round(h / 24);
-        return d === 1 ? "yesterday" : d + " days ago";
+        return d === 1 ? I18n.tr("yesterday") : I18n.tr("%1 days ago", d);
     }
 
     readonly property string status: {
@@ -124,52 +124,52 @@ Singleton {
             return root.flowLabel + ": " + root.phaseText + (root.progressKnown ? " — " + Math.round(root.progress * 100) + "%" : "");
 
         if (root.restartPending)
-            return root.flowLabel + " is installed. Restart Lucid to finish.";
+            return I18n.tr("%1 is installed. Restart Lucid to finish.", root.flowLabel);
 
         if (root.busy)
-            return "Asking GitHub…";
+            return I18n.tr("Asking GitHub…");
 
         if (root.problem === "offline")
-            return "Could not reach GitHub. Lucid tries again later.";
+            return I18n.tr("Could not reach GitHub. Lucid tries again later.");
 
         if (root.problem === "ratelimited")
-            return "GitHub is rate-limiting this address. Lucid tries again later.";
+            return I18n.tr("GitHub is rate-limiting this address. Lucid tries again later.");
 
         if (root.problem === "norelease")
-            return "No release has been published yet.";
+            return I18n.tr("No release has been published yet.");
 
         if (root.problem === "unreadable")
-            return "GitHub answered with something Lucid could not read.";
+            return I18n.tr("GitHub answered with something Lucid could not read.");
 
         if (root.available)
-            return (root.latestName !== "" ? root.latestName + ". " : "") + "Update installs it from the release.";
+            return (root.latestName !== "" ? root.latestName + ". " : "") + I18n.tr("Update installs it from the release.");
 
         // a saved timestamp outlives the reason for it, so an empty latest after
         // a real check means nothing is published rather than up to date
         if (root.checkedAt > 0 && root.latest === "")
-            return "No release has been published yet.";
+            return I18n.tr("No release has been published yet.");
 
         if (root.checkedAt > 0)
-            return "Up to date — checked " + root.ago(root.checkedAt) + ".";
+            return I18n.tr("Up to date — checked %1.", root.ago(root.checkedAt));
 
-        return Prefs.updateCheck ? "Not checked yet." : "The daily check is off.";
+        return Prefs.updateCheck ? I18n.tr("Not checked yet.") : I18n.tr("The daily check is off.");
     }
 
     readonly property string betaStatus: {
         if (root.betaBusy)
-            return "Asking GitHub…";
+            return I18n.tr("Asking GitHub…");
 
         if (root.betaProblem !== "")
             return root.betaProblem;
 
         if (root.betaSha === "")
-            return "Not checked yet.";
+            return I18n.tr("Not checked yet.");
 
         var what = root.betaShort + (root.betaTitle !== "" ? " — " + root.betaTitle : "") + (root.betaDate > 0 ? ", " + root.ago(root.betaDate) : "");
         if (!root.betaAvailable)
-            return "You are on the newest beta build, " + what + ".";
+            return I18n.tr("You are on the newest beta build, %1.", what);
 
-        return "Newest build: " + what + ".";
+        return I18n.tr("Newest build: %1.", what);
     }
 
     function check() {
@@ -224,7 +224,7 @@ Singleton {
 
         root.notified = root.latest;
         root.save();
-        var body = "You have v" + root.current + ". Update installs it from the release.";
+        var body = I18n.tr("You have v%1. Update installs it from the release.", root.current);
         if (root.latestName !== "" && root.latestName.trim().replace(/^v/i, "") !== root.latest)
             body = root.latestName + "\n" + body;
 
@@ -256,7 +256,7 @@ Singleton {
         var d = JSON.parse(body);
         var sha = String(d.sha || "");
         if (!/^[0-9a-f]{40}$/.test(sha)) {
-            root.betaProblem = "GitHub answered with something Lucid could not read.";
+            root.betaProblem = I18n.tr("GitHub answered with something Lucid could not read.");
             return ;
         }
         var c = d.commit || {
@@ -301,7 +301,7 @@ Singleton {
             return ;
 
         root.flowChannel = channel;
-        root.flowLabel = channel === "beta" ? "Beta " + root.betaShort : "Lucid v" + root.latest;
+        root.flowLabel = channel === "beta" ? I18n.tr("Beta %1", root.betaShort) : I18n.tr("Lucid v%1", root.latest);
         root.flow = "confirm";
         root.sheetOpen = true;
     }
@@ -323,7 +323,7 @@ Singleton {
             return ;
 
         root.flowChannel = "local";
-        root.flowLabel = "Lucid" + (root.current !== "" ? " v" + root.current : "");
+        root.flowLabel = I18n.tr("Lucid") + (root.current !== "" ? " v" + root.current : "");
         root.sheetOpen = true;
         root.launch(["--src", Quickshell.shellDir.replace(/\/$/, ""), "--"].concat(args || []));
     }
@@ -408,7 +408,7 @@ Singleton {
             root.send({
                 "cancel": true
             });
-            root.phaseText = "Stopping";
+            root.phaseText = I18n.tr("Stopping");
         }
     }
 
@@ -671,7 +671,7 @@ Singleton {
         onExited: (code) => {
             root.betaBusy = false;
             if (code !== 0 && root.betaProblem === "")
-                root.betaProblem = "Could not reach GitHub. Lucid tries again later.";
+                root.betaProblem = I18n.tr("Could not reach GitHub. Lucid tries again later.");
 
         }
 
@@ -684,12 +684,12 @@ Singleton {
                     try {
                         root.takeBeta(t.slice(0, cut));
                     } catch (e) {
-                        root.betaProblem = "GitHub answered with something Lucid could not read.";
+                        root.betaProblem = I18n.tr("GitHub answered with something Lucid could not read.");
                     }
                 } else if (code === 403 || code === 429) {
-                    root.betaProblem = "GitHub is rate-limiting this address. Lucid tries again later.";
+                    root.betaProblem = I18n.tr("GitHub is rate-limiting this address. Lucid tries again later.");
                 } else {
-                    root.betaProblem = "Could not reach GitHub. Lucid tries again later.";
+                    root.betaProblem = I18n.tr("Could not reach GitHub. Lucid tries again later.");
                 }
             }
         }
@@ -733,7 +733,7 @@ Singleton {
             root.result = {
                 "ok": false,
                 "reason": "crash",
-                "text": "The updater stopped before it finished."
+                "text": I18n.tr("The updater stopped before it finished.")
             };
             follower.running = false;
             writer.running = false;

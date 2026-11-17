@@ -10,12 +10,12 @@ Column {
     // where a module sits, in words
     function placeOf(m) {
         if (Prefs[m.key] !== true)
-            return "Not in the bar.";
+            return I18n.tr("Not in the bar.");
 
         const zone = Prefs.barZoneOf(m.id);
-        const where = zone === "centre" ? "In the middle." : (zone === "right" ? "On the right." : "On the left.");
+        const where = zone === "centre" ? I18n.tr("In the middle.") : (zone === "right" ? I18n.tr("On the right.") : I18n.tr("On the left."));
         if (m.when && Prefs.barModulesAway.indexOf(m.id) !== -1)
-            return where + " Hidden for now: it shows " + m.when + ".";
+            return I18n.tr("%1 Hidden for now: it shows %2.", where, m.when);
 
         return where;
     }
@@ -26,8 +26,8 @@ Column {
         width: parent.width
 
         SettingRow {
-            title: "Show the bar"
-            description: Prefs.barEnabled ? "Off, the bar and everything on it goes, and windows take its space." : "The bar is switched off."
+            title: I18n.tr("Show the bar")
+            description: Prefs.barEnabled ? I18n.tr("Off, the bar and everything on it goes, and windows take its space.") : I18n.tr("The bar is switched off.")
             showDivider: false
 
             M3Switch {
@@ -43,8 +43,8 @@ Column {
 
     SettingCard {
         width: parent.width
-        title: "MODULES"
-        subtitle: "On the bar itself, drag a module to move it, or pull it down off the bar to take it out. The link between two neighbours joins them."
+        title: I18n.tr("MODULES")
+        subtitle: I18n.tr("On the bar itself, drag a module to move it, or pull it down off the bar to take it out. The link between two neighbours joins them.")
         visible: Prefs.barEnabled
 
         Repeater {
@@ -84,12 +84,12 @@ Column {
         }
 
         SettingRow {
-            title: "Start over"
-            description: "Every module goes back where it ships, switched on or off the way it ships, and every join comes apart. Undo on the toolbar takes it back."
+            title: I18n.tr("Start over")
+            description: I18n.tr("Every module goes back where it ships, switched on or off the way it ships, and every join comes apart. Undo on the toolbar takes it back.")
             showDivider: false
 
             M3Button {
-                text: "Reset"
+                text: I18n.tr("Reset")
                 variant: "text"
                 destructive: true
                 onClicked: Prefs.setBarDefaults()

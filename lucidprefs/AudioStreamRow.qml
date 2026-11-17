@@ -29,7 +29,7 @@ Column {
         // a recording stream may be on a monitor, which is a device pipewire
         // keeps no node for and this page therefore cannot offer
         const on = stream.target ? Audio.label(stream.target) : Audio.targetLabel(stream.modelData);
-        const where = on !== "" ? (stream.playback ? "on " : "from ") + on : "";
+        const where = on !== "" ? (stream.playback ? "on " : I18n.tr("from ")) + on : "";
         if (media !== "" && where !== "")
             return media + " · " + where;
 
@@ -171,7 +171,7 @@ Column {
             opacity: stream.expanded ? 1 : 0
 
             Text {
-                text: stream.playback ? "Play this on" : "Listen through"
+                text: stream.playback ? I18n.tr("Play this on") : I18n.tr("Listen through")
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelLg
@@ -184,7 +184,7 @@ Column {
                 current: (stream.pinned || !stream.canFollow) && stream.target ? stream.target.name : ""
                 options: (stream.canFollow ? [{
                     "key": "",
-                    "label": "Default device"
+                    "label": I18n.tr("Default device")
                 }] : []).concat(stream.devices.map((d) => {
                     return {
                         "key": d.name,

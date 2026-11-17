@@ -119,7 +119,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 size: Theme.dp(40)
                 icon: "delete_sweep"
-                tip: "Clear the palette"
+                tip: I18n.tr("Clear the palette")
                 tipAbove: pal.tipAbove
                 onClicked: pal.stage.palette = []
             }

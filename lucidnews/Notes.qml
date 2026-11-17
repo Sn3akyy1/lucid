@@ -1,4 +1,5 @@
 import QtQuick
+import qs
 
 // what the What's new sheet says about this release: the version's own section
 // of CHANGELOG.md, written out by support/whatsnew/build-notes.py so the two
@@ -9,13 +10,13 @@ QtObject {
     // the sheet opens by itself once, on the first start of a shell whose
     // VERSION file says this
     readonly property string version: "1.21"
-    readonly property string name: "An ecosystem"
-    readonly property string date: "13 November 2026"
+    readonly property string name: I18n.tr("An ecosystem")
+    readonly property string date: I18n.tr("13 November 2026")
     readonly property bool placeholders: false
     readonly property var heroes: [
         {
             "src": "assets/desktop.webp",
-            "alt": "The Lucid desktop in blue: a clock, a calendar, the song playing and the weather on the left, battery, system and to-do widgets on the right, and the visualiser along the bottom"
+            "alt": I18n.tr("The Lucid desktop in blue: a clock, a calendar, the song playing and the weather on the left, battery, system and to-do widgets on the right, and the visualiser along the bottom")
         }
     ]
     readonly property string intro: "<b>Lucid is an ecosystem.</b> It began as a shell around your windows; now it is everything between logging in and logging out, made to belong together. It has apps of its own: Lumen for your files and every app's file dialog, Lens for pictures and videos, and a rebuilt LucidShot. Its own icons and its own pointer are drawn in your palette, and the login screen matches the lock. The desktop is arranged in edit mode right where it stands, the bar can take the bottom edge and open its panels as one shape with it, the control centre is laid out on a grid of your own, whatever plays comes with its lyrics, and everything moves on springs.<br><br>Twenty-three of the pull requests in this one are <b>Ciro Rivera</b>'s, the entries marked with a number below unless someone else is named. Thank you, Ciro, and thank you @SKetU-l and @naevui."
@@ -23,16 +24,16 @@ QtObject {
         {
             "level": 1,
             "icon": "apps",
-            "title": "Apps of Lucid's own",
+            "title": I18n.tr("Apps of Lucid's own"),
             "intro": "",
             "images": [
                 {
                     "src": "assets/apps.webp",
-                    "alt": "Settings, Lumen and Lens open together in a red palette, with the desktop's icons on the right"
+                    "alt": I18n.tr("Settings, Lumen and Lens open together in a red palette, with the desktop's icons on the right")
                 },
                 {
                     "src": "assets/lumen.webp",
-                    "alt": "Lumen in a green palette over a bamboo wallpaper: places on the left, folders in the middle and the Home folder's details on the right"
+                    "alt": I18n.tr("Lumen in a green palette over a bamboo wallpaper: places on the left, folders in the middle and the Home folder's details on the right")
                 }
             ],
             "items": [
@@ -57,12 +58,12 @@ QtObject {
         {
             "level": 1,
             "icon": "edit",
-            "title": "Edit mode",
+            "title": I18n.tr("Edit mode"),
             "intro": "",
             "images": [
                 {
                     "src": "assets/edit-mode.webp",
-                    "alt": "Edit mode: the widget panel on the left with its clock, calendar and progress galleries, widgets on the shaded desktop, and the edit toolbar above the dock"
+                    "alt": I18n.tr("Edit mode: the widget panel on the left with its clock, calendar and progress galleries, widgets on the shaded desktop, and the edit toolbar above the dock")
                 }
             ],
             "items": [
@@ -79,12 +80,12 @@ QtObject {
         {
             "level": 1,
             "icon": "toolbar",
-            "title": "The bar",
+            "title": I18n.tr("The bar"),
             "intro": "",
             "images": [
                 {
                     "src": "assets/bottom-bar.webp",
-                    "alt": "The bar as one full strip along the bottom edge, with workspaces, the song playing and the clock on the left, the dock's apps in the middle and the system tray on the right"
+                    "alt": I18n.tr("The bar as one full strip along the bottom edge, with workspaces, the song playing and the clock on the left, the dock's apps in the middle and the system tray on the right")
                 }
             ],
             "items": [
@@ -133,16 +134,16 @@ QtObject {
         {
             "level": 1,
             "icon": "music_note",
-            "title": "Music",
+            "title": I18n.tr("Music"),
             "intro": "",
             "images": [
                 {
                     "src": "assets/lyrics-widget.webp",
-                    "alt": "The Lyrics widget singing along word by word over a red and grey wallpaper, beside a clock, a calendar, a to-do list and a note"
+                    "alt": I18n.tr("The Lyrics widget singing along word by word over a red and grey wallpaper, beside a clock, a calendar, a to-do list and a note")
                 },
                 {
                     "src": "assets/lyrics-panel.webp",
-                    "alt": "The media panel's Lyrics page for Skyfall by Adele, the line being sung lit and the ones around it fainter"
+                    "alt": I18n.tr("The media panel's Lyrics page for Skyfall by Adele, the line being sung lit and the ones around it fainter")
                 }
             ],
             "items": [
@@ -163,12 +164,12 @@ QtObject {
         {
             "level": 1,
             "icon": "tune",
-            "title": "Control centre",
+            "title": I18n.tr("Control centre"),
             "intro": "",
             "images": [
                 {
                     "src": "assets/control-centre-editor.webp",
-                    "alt": "The control centre's editor in edit mode: the blocks to add on the left, the panel being laid out in the middle, and layouts to start from on the right"
+                    "alt": I18n.tr("The control centre's editor in edit mode: the blocks to add on the left, the panel being laid out in the middle, and layouts to start from on the right")
                 }
             ],
             "items": [
@@ -185,12 +186,12 @@ QtObject {
         {
             "level": 1,
             "icon": "wallpaper",
-            "title": "The desktop",
+            "title": I18n.tr("The desktop"),
             "intro": "",
             "images": [
                 {
                     "src": "assets/desktop-icons.webp",
-                    "alt": "Desktop icons down the left of an evening city wallpaper, and on the right a shaped clock, the song playing, today's date and how much of the day has gone"
+                    "alt": I18n.tr("Desktop icons down the left of an evening city wallpaper, and on the right a shaped clock, the song playing, today's date and how much of the day has gone")
                 }
             ],
             "items": [
@@ -211,12 +212,12 @@ QtObject {
         {
             "level": 1,
             "icon": "screenshot_region",
-            "title": "LucidShot",
+            "title": I18n.tr("LucidShot"),
             "intro": "",
             "images": [
                 {
                     "src": "assets/lucidshot.webp",
-                    "alt": "LucidShot over a frozen screen: the hint to drag a region or click a window at the top, crosshairs, and the toolbar above the dock"
+                    "alt": I18n.tr("LucidShot over a frozen screen: the hint to drag a region or click a window at the top, crosshairs, and the toolbar above the dock")
                 }
             ],
             "items": [
@@ -237,7 +238,7 @@ QtObject {
         {
             "level": 1,
             "icon": "palette",
-            "title": "Look and feel",
+            "title": I18n.tr("Look and feel"),
             "intro": "",
             "images": [],
             "items": [
@@ -274,7 +275,7 @@ QtObject {
         {
             "level": 1,
             "icon": "volume_up",
-            "title": "Sound",
+            "title": I18n.tr("Sound"),
             "intro": "",
             "images": [],
             "items": [
@@ -287,7 +288,7 @@ QtObject {
         {
             "level": 1,
             "icon": "lock",
-            "title": "Login and lock screen",
+            "title": I18n.tr("Login and lock screen"),
             "intro": "",
             "images": [],
             "items": [
@@ -300,7 +301,7 @@ QtObject {
         {
             "level": 1,
             "icon": "update",
-            "title": "Updates",
+            "title": I18n.tr("Updates"),
             "intro": "",
             "images": [],
             "items": [
@@ -317,7 +318,7 @@ QtObject {
         {
             "level": 1,
             "icon": "computer",
-            "title": "Displays",
+            "title": I18n.tr("Displays"),
             "intro": "",
             "images": [],
             "items": [
@@ -330,7 +331,7 @@ QtObject {
         {
             "level": 1,
             "icon": "download",
-            "title": "Installer",
+            "title": I18n.tr("Installer"),
             "intro": "",
             "images": [],
             "items": [
@@ -351,7 +352,7 @@ QtObject {
         {
             "level": 1,
             "icon": "speed",
-            "title": "Performance",
+            "title": I18n.tr("Performance"),
             "intro": "",
             "images": [],
             "items": [
@@ -364,7 +365,7 @@ QtObject {
         {
             "level": 1,
             "icon": "build",
-            "title": "Fixed",
+            "title": I18n.tr("Fixed"),
             "intro": "",
             "images": [],
             "items": [

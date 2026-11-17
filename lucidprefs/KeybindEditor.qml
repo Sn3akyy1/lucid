@@ -24,19 +24,19 @@ Item {
     property string heldMods: ""
     readonly property var optionList: [{
         "key": "locked",
-        "label": "Works on the lock screen"
+        "label": I18n.tr("Works on the lock screen")
     }, {
         "key": "repeating",
-        "label": "Repeats while held"
+        "label": I18n.tr("Repeats while held")
     }, {
         "key": "release",
-        "label": "Fires on release"
+        "label": I18n.tr("Fires on release")
     }, {
         "key": "mouse",
-        "label": "Mouse drag"
+        "label": I18n.tr("Mouse drag")
     }, {
         "key": "non_consuming",
-        "label": "Key still reaches the app"
+        "label": I18n.tr("Key still reaches the app")
     }]
     readonly property string actionText: editor.kind === "lua" ? editor.lua : editor.cmd
     readonly property bool canSave: editor.keys.trim() !== "" && editor.actionText.trim() !== "" && Keybinds.parseError === ""
@@ -298,7 +298,7 @@ Item {
                 x: card.pad
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: Theme.dp(12)
-                text: editor.editingId === "" ? "New keybind" : "Edit keybind"
+                text: editor.editingId === "" ? I18n.tr("New keybind") : I18n.tr("Edit keybind")
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontHeadlineSm
@@ -327,7 +327,7 @@ Item {
                 spacing: Theme.dp(10)
 
                 SectionLabel {
-                    text: "Keys"
+                    text: I18n.tr("Keys")
                 }
 
                 Rectangle {
@@ -353,7 +353,7 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         visible: keysPreview.shownKeys === ""
-                        text: editor.recording ? "Press the keys you want · Esc cancels" : "No keys yet"
+                        text: editor.recording ? I18n.tr("Press the keys you want · Esc cancels") : I18n.tr("No keys yet")
                         color: editor.recording ? Theme.accent : Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBodyLg
@@ -370,7 +370,7 @@ Item {
                         anchors.right: recordBtn.left
                         anchors.rightMargin: Theme.dp(10)
                         anchors.verticalCenter: parent.verticalCenter
-                        placeholder: editor.each ? "SUPER + {key}" : "SUPER + SHIFT + T"
+                        placeholder: editor.each ? I18n.tr("SUPER + {key}") : I18n.tr("SUPER + SHIFT + T")
                         text: editor.keys
                         enabled: !editor.recording
                         onEdited: (v) => {
@@ -383,7 +383,7 @@ Item {
 
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        text: editor.recording ? "Stop" : "Record"
+                        text: editor.recording ? I18n.tr("Stop") : I18n.tr("Record")
                         variant: editor.recording ? "filled" : "tonal"
                         iconPath: "keyboard"
                         onClicked: editor.recording ? editor.stopRecording() : editor.startRecording()
@@ -426,7 +426,7 @@ Item {
                         spacing: Theme.dp(2)
 
                         Text {
-                            text: "Repeat for workspaces 1–10"
+                            text: I18n.tr("Repeat for workspaces 1–10")
                             color: Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontBodyLg
@@ -448,12 +448,12 @@ Item {
                 }
 
                 SectionLabel {
-                    text: "Description"
+                    text: I18n.tr("Description")
                 }
 
                 M3TextField {
                     width: body.width
-                    placeholder: "What it does, the way the cheatsheet should say it"
+                    placeholder: I18n.tr("What it does, the way the cheatsheet should say it")
                     text: editor.desc
                     onEdited: (v) => {
                         editor.desc = v;
@@ -461,12 +461,12 @@ Item {
                 }
 
                 SectionLabel {
-                    text: "Category"
+                    text: I18n.tr("Category")
                 }
 
                 M3TextField {
                     width: body.width
-                    placeholder: "One of these, or a new one"
+                    placeholder: I18n.tr("One of these, or a new one")
                     text: editor.category
                     onEdited: (v) => {
                         editor.category = v;
@@ -493,7 +493,7 @@ Item {
                 }
 
                 SectionLabel {
-                    text: "Action"
+                    text: I18n.tr("Action")
                 }
 
                 M3Segmented {
@@ -501,10 +501,10 @@ Item {
                     current: editor.kind
                     options: [{
                         "key": "exec",
-                        "label": "Command"
+                        "label": I18n.tr("Command")
                     }, {
                         "key": "lua",
-                        "label": "Lua"
+                        "label": I18n.tr("Lua")
                     }]
                     onChosen: (key) => {
                         editor.kind = key;
@@ -514,7 +514,7 @@ Item {
                 M3TextField {
                     width: body.width
                     visible: editor.kind === "exec"
-                    placeholder: "kitty, or anything you would run in a terminal"
+                    placeholder: I18n.tr("kitty, or anything you would run in a terminal")
                     text: editor.cmd
                     onEdited: (v) => {
                         editor.cmd = v;
@@ -576,7 +576,7 @@ Item {
                         x: Theme.dp(14)
                         y: Theme.dp(14)
                         visible: luaEdit.text === ""
-                        text: "hl.dsp.window.close()"
+                        text: I18n.tr("hl.dsp.window.close()")
                         color: Theme.subtextDim
                         font.family: "monospace"
                         font.pixelSize: Theme.fontBodyMd
@@ -586,7 +586,7 @@ Item {
 
                 Text {
                     width: body.width
-                    text: editor.kind === "lua" ? "An expression giving a Hyprland dispatcher — hl.dsp.window.close(), hl.dsp.focus({ workspace = 3 }) — or function() … end, run on every press. fn (utils/functions.lua) and seq(a, b) are in scope." : "Runs through the shell, pipes and all."
+                    text: editor.kind === "lua" ? I18n.tr("An expression giving a Hyprland dispatcher — hl.dsp.window.close(), hl.dsp.focus({ workspace = 3 }) — or function() … end, run on every press. fn (utils/functions.lua) and seq(a, b) are in scope.") : I18n.tr("Runs through the shell, pipes and all.")
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodyMd
@@ -594,7 +594,7 @@ Item {
                 }
 
                 SectionLabel {
-                    text: "Options"
+                    text: I18n.tr("Options")
                 }
 
                 Flow {
@@ -633,7 +633,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: editor.editingId !== ""
                 enabled: Keybinds.parseError === ""
-                text: "Delete"
+                text: I18n.tr("Delete")
                 variant: "text"
                 destructive: true
                 onClicked: editor.askDelete()
@@ -646,13 +646,13 @@ Item {
                 spacing: Theme.dp(8)
 
                 M3Button {
-                    text: "Cancel"
+                    text: I18n.tr("Cancel")
                     variant: "text"
                     onClicked: editor.dismiss()
                 }
 
                 M3Button {
-                    text: "Save"
+                    text: I18n.tr("Save")
                     variant: "filled"
                     enabled: editor.canSave
                     onClicked: editor.save()

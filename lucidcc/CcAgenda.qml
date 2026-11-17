@@ -26,7 +26,7 @@ Item {
         if (h)
             out.push({
             "icon": h.kind === "stopwatch" ? "timer" : (h.kind === "pomodoro" ? "schedule" : "hourglass_top"),
-            "name": h.label || (h.kind === "stopwatch" ? "Stopwatch" : "Timer"),
+            "name": h.label || (h.kind === "stopwatch" ? I18n.tr("Stopwatch") : I18n.tr("Timer")),
             "when": h.kind === "stopwatch" ? Chrono.clock(h.left, false) : Chrono.countdown(h.left),
             "sub": h.running ? (h.kind === "stopwatch" ? "running" : "left") : "paused",
             "live": true
@@ -37,7 +37,7 @@ Item {
 
             out.push({
                 "icon": "alarm",
-                "name": u.item.name || "Reminder",
+                "name": u.item.name || I18n.tr("Reminder"),
                 "when": Agenda.timeText(u.item),
                 "sub": Agenda.untilText(u.at),
                 "live": false
@@ -60,7 +60,7 @@ Item {
     LText {
         role: "labelLarge"
         color: Theme.subtext
-        text: "Up next"
+        text: I18n.tr("Up next")
     }
 
     Column {
@@ -173,7 +173,7 @@ Item {
                     width: parent.width
                     role: "labelLarge"
                     elide: Text.ElideRight
-                    text: "Nothing coming up"
+                    text: I18n.tr("Nothing coming up")
                 }
 
                 LText {
@@ -181,7 +181,7 @@ Item {
                     role: "bodySmall"
                     color: Theme.subtext
                     elide: Text.ElideRight
-                    text: "Reminders set in the clock show here"
+                    text: I18n.tr("Reminders set in the clock show here")
                 }
 
             }

@@ -42,58 +42,58 @@ WidgetBody {
         case "wifi":
             return {
                 "icon": Networking.wifiEnabled ? "wifi" : "wifi_off",
-                "label": "Wi-Fi",
+                "label": I18n.tr("Wi-Fi"),
                 "on": Networking.wifiEnabled,
-                "state": !Networking.wifiEnabled ? "Off" : (w.ssid !== "" ? w.ssid : "On")
+                "state": !Networking.wifiEnabled ? I18n.tr("Off") : (w.ssid !== "" ? w.ssid : I18n.tr("On"))
             };
         case "bluetooth":
             return {
                 "icon": !Bt.on ? "bluetooth_disabled" : (w.btDevice !== "" ? "bluetooth_connected" : "bluetooth"),
-                "label": "Bluetooth",
+                "label": I18n.tr("Bluetooth"),
                 "on": Bt.on,
-                "state": !Bt.present ? "No adapter" : (!Bt.on ? "Off" : (w.btDevice !== "" ? w.btDevice : "On"))
+                "state": !Bt.present ? I18n.tr("No adapter") : (!Bt.on ? I18n.tr("Off") : (w.btDevice !== "" ? w.btDevice : I18n.tr("On")))
             };
         case "dnd":
             return {
                 "icon": "do_not_disturb_on",
-                "label": "Do not disturb",
+                "label": I18n.tr("Do not disturb"),
                 "on": Notifs.dnd,
-                "state": Notifs.dnd ? "On" : "Off"
+                "state": Notifs.dnd ? I18n.tr("On") : I18n.tr("Off")
             };
         case "awake":
             return {
                 "icon": "coffee",
-                "label": "Keep awake",
+                "label": I18n.tr("Keep awake"),
                 "on": Prefs.idleKeepAwake,
-                "state": Prefs.idleKeepAwake ? "On" : "Off"
+                "state": Prefs.idleKeepAwake ? I18n.tr("On") : I18n.tr("Off")
             };
         case "dark":
             return {
                 "icon": Prefs.colorMode === "dark" ? "dark_mode" : "light_mode",
-                "label": "Dark theme",
+                "label": I18n.tr("Dark theme"),
                 "on": Prefs.colorMode === "dark",
-                "state": Prefs.colorMode === "dark" ? "On" : "Off"
+                "state": Prefs.colorMode === "dark" ? I18n.tr("On") : I18n.tr("Off")
             };
         case "nightlight":
             return {
                 "icon": "nightlight",
-                "label": "Night light",
+                "label": I18n.tr("Night light"),
                 "on": NightLight.active,
                 "state": NightLight.status
             };
         case "sound":
             return {
                 "icon": Audio.mutedOf(Audio.sink) ? "volume_off" : "volume_up",
-                "label": "Sound",
+                "label": I18n.tr("Sound"),
                 "on": !Audio.mutedOf(Audio.sink),
-                "state": Audio.mutedOf(Audio.sink) ? "Muted" : Audio.volumeOf(Audio.sink) + "%"
+                "state": Audio.mutedOf(Audio.sink) ? I18n.tr("Muted") : Audio.volumeOf(Audio.sink) + "%"
             };
         case "mic":
             return {
                 "icon": Audio.mutedOf(Audio.source) ? "mic_off" : "mic",
-                "label": "Microphone",
+                "label": I18n.tr("Microphone"),
                 "on": !Audio.mutedOf(Audio.source),
-                "state": Audio.mutedOf(Audio.source) ? "Muted" : "On"
+                "state": Audio.mutedOf(Audio.source) ? I18n.tr("Muted") : I18n.tr("On")
             };
         }
         return {

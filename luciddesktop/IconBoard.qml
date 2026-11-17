@@ -333,7 +333,7 @@ Item {
                 id: bandCount
 
                 anchors.centerIn: parent
-                text: band.count + " selected"
+                text: I18n.tr("%1 selected", band.count)
                 color: Theme.fgAccentContainer
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelMd
@@ -420,7 +420,7 @@ Item {
                 parts.push(DesktopIcons.human(it.size));
 
             if (it.kind === "dir" || it.kind === "home")
-                parts.push(tip.peek ? (tip.peek.count === 0 ? "Empty folder" : (tip.peek.count === 1 ? "1 item" : tip.peek.count + " items")) : "Folder");
+                parts.push(tip.peek ? (tip.peek.count === 0 ? I18n.tr("Empty folder") : (tip.peek.count === 1 ? I18n.tr("1 item") : I18n.tr("%1 items", tip.peek.count))) : I18n.tr("Folder"));
 
             if (it.kind === "trash" || it.kind === "drive")
                 parts.push(it.desc);
@@ -508,7 +508,7 @@ Item {
 
                 visible: text !== ""
                 width: Math.min(implicitWidth, parent.width)
-                text: tip.it && tip.it.mtime ? "Modified " + DesktopIcons.when(tip.it.mtime) : ""
+                text: tip.it && tip.it.mtime ? I18n.tr("Modified %1", DesktopIcons.when(tip.it.mtime)) : ""
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelMd

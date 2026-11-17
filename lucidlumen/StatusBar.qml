@@ -42,12 +42,12 @@ Item {
                     files++;
                 }
             }
-            return t.selCount + " of " + n + " selected" + (files > 0 ? " · " + foot.app.sizeText(bytes) : "");
+            return I18n.tr("%1 of %2 selected", t.selCount, n) + (files > 0 ? " · " + foot.app.sizeText(bytes) : "");
         }
         if (t.searching)
-            return n + (n === 1 ? " result" : " results") + (t.searchDone ? (t.searchTruncated ? " (stopped at " + n + ")" : "") : " so far…");
+            return n + (n === 1 ? I18n.tr(" result") : I18n.tr(" results")) + (t.searchDone ? (t.searchTruncated ? I18n.tr(" (stopped at %1)", n) : "") : I18n.tr(" so far…"));
 
-        return n + (n === 1 ? " item" : " items") + (t.filter !== "" ? " match “" + t.filter + "”" : "") + (t.asAdmin ? " · As administrator" : "");
+        return n + (n === 1 ? I18n.tr(" item") : I18n.tr(" items")) + (t.filter !== "" ? I18n.tr(" match “%1”", t.filter) : "") + (t.asAdmin ? I18n.tr(" · As administrator") : "");
     }
 
     implicitHeight: Theme.dp(36) + jobsCol.implicitHeight
@@ -89,7 +89,7 @@ Item {
                     anchors.topMargin: Theme.dp(3)
                     width: parent.width - Theme.dp(80)
                     role: "labelMedium"
-                    text: (modelData.mode === "copy" ? "Copying " : "Moving ") + (modelData.count === 1 && modelData.name ? "“" + modelData.name + "”" : modelData.count + " items") + " to " + foot.app.titleFor(modelData.dest) + (modelData.total > 0 ? " · " + foot.app.sizeText(modelData.done) + " of " + foot.app.sizeText(modelData.total) : "")
+                    text: (modelData.mode === "copy" ? I18n.tr("Copying ") : I18n.tr("Moving ")) + (modelData.count === 1 && modelData.name ? "“" + modelData.name + "”" : I18n.tr("%1 items", modelData.count)) + I18n.tr(" to %1", foot.app.titleFor(modelData.dest)) + (modelData.total > 0 ? I18n.tr(" · %1 of %2", foot.app.sizeText(modelData.done), foot.app.sizeText(modelData.total)) : "")
                     color: Theme.text
                     elide: Text.ElideRight
                 }
@@ -110,7 +110,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     size: "xs"
                     icon: "close"
-                    tooltip: "Stop"
+                    tooltip: I18n.tr("Stop")
 
                     Tip {
                     }
@@ -141,7 +141,7 @@ Item {
         anchors.bottomMargin: Theme.dp(10)
         role: "labelMedium"
         visible: foot.tab !== null && !foot.tab.isSpecial && foot.tab.free.total > 0
-        text: foot.tab ? foot.app.sizeText(foot.tab.free.free) + " free" : ""
+        text: foot.tab ? I18n.tr("%1 free", foot.app.sizeText(foot.tab.free.free)) : ""
         color: Theme.subtext
     }
 

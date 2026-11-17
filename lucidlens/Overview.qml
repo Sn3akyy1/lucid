@@ -118,7 +118,7 @@ Item {
                 width: Math.min(Theme.dp(420), head.width - count.implicitWidth - Theme.dp(12))
                 height: Theme.dp(48)
                 variant: "search"
-                placeholder: "Find a picture in " + ov.app.titleOf(ov.win.folder)
+                placeholder: I18n.tr("Find a picture in %1", ov.app.titleOf(ov.win.folder))
                 onAccepted: ov.open(ov.cursor)
                 onEscaped: ov.win.overview = false
                 input.Keys.onPressed: (event) => {
@@ -139,7 +139,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 role: "bodyMedium"
                 color: Theme.subtext
-                text: ov.query === "" ? ov.hits.length + (ov.hits.length === 1 ? " picture" : " pictures") : ov.hits.length + " of " + ov.model.count
+                text: ov.query === "" ? ov.hits.length + (ov.hits.length === 1 ? I18n.tr(" picture") : I18n.tr(" pictures")) : I18n.tr("%1 of %2", ov.hits.length, ov.model.count)
             }
 
         }

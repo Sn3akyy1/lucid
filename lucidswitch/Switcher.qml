@@ -719,7 +719,7 @@ PanelWindow {
                                             role: "labelSmall"
                                             tabular: true
                                             color: tile.here ? Theme.fgPrimary : Theme.text
-                                            text: tile.special ? Specials.label(tile.wsName) : (tile.ws ? "Workspace " + tile.ws.id : "")
+                                            text: tile.special ? Specials.label(tile.wsName) : (tile.ws ? I18n.tr("Workspace %1", tile.ws.id) : "")
                                         }
 
                                     }
@@ -873,7 +873,7 @@ PanelWindow {
                     anchors.horizontalCenter: parent.horizontalCenter
                     role: "titleMedium"
                     color: Theme.subtext
-                    text: "No windows open"
+                    text: I18n.tr("No windows open")
                 }
 
             }
@@ -905,7 +905,7 @@ PanelWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         role: "labelMedium"
                         color: Theme.subtext
-                        text: sw.count === 1 ? "1 window" : sw.count + " windows"
+                        text: sw.count === 1 ? I18n.tr("1 window") : I18n.tr("%1 windows", sw.count)
                     }
 
                 }
@@ -919,7 +919,7 @@ PanelWindow {
                     elide: Text.ElideLeft
                     role: "labelMedium"
                     color: Theme.subtextDim
-                    text: sw.count > 0 ? "Tab to move  ·  Enter to switch  ·  Del to close  ·  Esc to cancel" : "Esc to close"
+                    text: sw.count > 0 ? I18n.tr("Tab to move  ·  Enter to switch  ·  Del to close  ·  Esc to cancel") : I18n.tr("Esc to close")
                 }
 
             }

@@ -35,10 +35,10 @@ Singleton {
     property alias pomoFocusMs: store.pomoFocusMs
     property string today: root.dayKey()
     readonly property var pomoPresets: [
-        { "key": "classic", "name": "Classic", "label": "25 / 5", "focus": 25, "short": 5, "long": 15, "rounds": 4 },
-        { "key": "deep", "name": "Deep work", "label": "50 / 10", "focus": 50, "short": 10, "long": 30, "rounds": 3 },
-        { "key": "sprint", "name": "Sprint", "label": "15 / 3", "focus": 15, "short": 3, "long": 10, "rounds": 4 },
-        { "key": "long", "name": "Long haul", "label": "90 / 20", "focus": 90, "short": 20, "long": 30, "rounds": 2 }
+        { "key": "classic", "name": I18n.tr("Classic"), "label": "25 / 5", "focus": 25, "short": 5, "long": 15, "rounds": 4 },
+        { "key": "deep", "name": I18n.tr("Deep work"), "label": "50 / 10", "focus": 50, "short": 10, "long": 30, "rounds": 3 },
+        { "key": "sprint", "name": I18n.tr("Sprint"), "label": "15 / 3", "focus": 15, "short": 3, "long": 10, "rounds": 4 },
+        { "key": "long", "name": I18n.tr("Long haul"), "label": "90 / 20", "focus": 90, "short": 20, "long": 30, "rounds": 2 }
     ]
 
     readonly property bool anyTimerRunning: root.timers.some((t) => {
@@ -90,7 +90,7 @@ Singleton {
 
         }
         if (root.swActive)
-            return { "kind": "stopwatch", "left": root.swElapsed, "total": 0, "running": root.swRunning, "label": "Stopwatch" };
+            return { "kind": "stopwatch", "left": root.swElapsed, "total": 0, "running": root.swRunning, "label": I18n.tr("Stopwatch") };
 
         return null;
     }
@@ -131,7 +131,7 @@ Singleton {
     }
 
     function phaseLabel(phase) {
-        return phase === "short" ? "Short break" : (phase === "long" ? "Long break" : (phase === "focus" ? "Focus" : ""));
+        return phase === "short" ? I18n.tr("Short break") : (phase === "long" ? I18n.tr("Long break") : (phase === "focus" ? I18n.tr("Focus") : ""));
     }
 
     function uid() {
@@ -379,22 +379,22 @@ Singleton {
     function pomoAdvance(announce) {
         var was = root.pomoPhase;
         var next = "focus";
-        var title = "Break's over";
+        var title = I18n.tr("Break's over");
         if (was === "focus") {
             root.pomoRound = root.pomoRound + 1;
             next = root.pomoRound % Math.max(1, Prefs.pomodoroRounds) === 0 ? "long" : "short";
-            title = "Focus session done";
+            title = I18n.tr("Focus session done");
             if (announce) {
                 root.pomoLog(root.pomoTotal);
                 if (Prefs.pomodoroGoal > 0 && root.pomoToday === Prefs.pomodoroGoal)
-                    title = "Daily goal reached";
+                    title = I18n.tr("Daily goal reached");
 
             }
         }
         if (was === "long" && !Prefs.pomodoroRepeat) {
             root.pomoStop();
             if (announce)
-                root.finished("Pomodoro set done", "Start another when you are ready");
+                root.finished(I18n.tr("Pomodoro set done"), I18n.tr("Start another when you are ready"));
 
             return ;
         }
@@ -408,7 +408,7 @@ Singleton {
         }
         // after the phase change, so a focus that held do not disturb has let go
         if (announce)
-            root.finished(title, next === "focus" ? "Time to focus for " + Prefs.pomodoroFocus + " minutes" : root.phaseLabel(next) + " — " + root.phaseMinutes(next) + " minutes");
+            root.finished(title, next === "focus" ? I18n.tr("Time to focus for %1 minutes", Prefs.pomodoroFocus) : I18n.tr("%1 — %2 minutes", root.phaseLabel(next), root.phaseMinutes(next)));
 
     }
 
@@ -447,7 +447,7 @@ Singleton {
                 x.left = 0;
                 x.running = false;
             });
-            root.finished("Time's up", t2 ? t2.label : "Timer");
+            root.finished(I18n.tr("Time's up"), t2 ? t2.label : I18n.tr("Timer"));
         }
         if (root.pomoRunning && root.pomoEndsAt <= root.now)
             root.pomoAdvance(true);

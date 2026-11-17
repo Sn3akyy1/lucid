@@ -36,8 +36,8 @@ Item {
 
         x: page.edge
         width: parent.width - page.edge * 2
-        title: "Settings"
-        subtitle: "The time format and the week are shared with Lucid's settings"
+        title: I18n.tr("Settings")
+        subtitle: I18n.tr("The time format and the week are shared with Lucid's settings")
     }
 
     Scroller {
@@ -54,13 +54,13 @@ Item {
             spacing: Theme.dp(3)
 
             Section {
-                text: "Alarms"
+                text: I18n.tr("Alarms")
             }
 
             SetRow {
                 first: true
-                title: "Sound"
-                note: "Every alarm rings with this unless it has its own"
+                title: I18n.tr("Sound")
+                note: I18n.tr("Every alarm rings with this unless it has its own")
                 stacked: true
 
                 Flow {
@@ -91,8 +91,8 @@ Item {
             }
 
             SetRow {
-                title: "Volume"
-                note: "Alarms ring through do not disturb"
+                title: I18n.tr("Volume")
+                note: I18n.tr("Alarms ring through do not disturb")
                 stacked: true
 
                 Row {
@@ -122,7 +122,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         variant: "tonal"
                         icon: "play_arrow"
-                        tooltip: "Hear it"
+                        tooltip: I18n.tr("Hear it")
                         onClicked: page.app.send("alarm.preview", {
                             "sound": page.al.sound
                         })
@@ -133,8 +133,8 @@ Item {
             }
 
             SetRow {
-                title: "Swell in"
-                note: "Start quiet and grow to full volume over a minute"
+                title: I18n.tr("Swell in")
+                note: I18n.tr("Start quiet and grow to full volume over a minute")
 
                 Switch {
                     checked: page.al.gradual === true
@@ -146,7 +146,7 @@ Item {
             }
 
             SetRow {
-                title: "Snooze for"
+                title: I18n.tr("Snooze for")
                 stacked: true
 
                 Flow {
@@ -160,7 +160,7 @@ Item {
                             required property int modelData
 
                             kind: "filter"
-                            text: modelData + " min"
+                            text: I18n.tr("%1 min", modelData)
                             selected: page.al.snoozeMinutes === modelData
                             onClicked: page.setAlarm("snoozeMinutes", modelData)
                         }
@@ -173,8 +173,8 @@ Item {
 
             SetRow {
                 last: true
-                title: "Stop ringing after"
-                note: "An alarm nobody answers goes quiet and leaves a notification"
+                title: I18n.tr("Stop ringing after")
+                note: I18n.tr("An alarm nobody answers goes quiet and leaves a notification")
                 stacked: true
 
                 Flow {
@@ -188,7 +188,7 @@ Item {
                             required property int modelData
 
                             kind: "filter"
-                            text: modelData + " min"
+                            text: I18n.tr("%1 min", modelData)
                             selected: page.al.silenceMinutes === modelData
                             onClicked: page.setAlarm("silenceMinutes", modelData)
                         }
@@ -200,13 +200,13 @@ Item {
             }
 
             Section {
-                text: "Timers and reminders"
+                text: I18n.tr("Timers and reminders")
             }
 
             SetRow {
                 first: true
-                title: "Sound when a timer ends"
-                note: "And at the end of each focus session and break"
+                title: I18n.tr("Sound when a timer ends")
+                note: I18n.tr("And at the end of each focus session and break")
 
                 Switch {
                     checked: page.sp.timerSound === true
@@ -219,8 +219,8 @@ Item {
 
             SetRow {
                 last: true
-                title: "Chime for reminders"
-                note: "As a reminder comes due on the bar's clock"
+                title: I18n.tr("Chime for reminders")
+                note: I18n.tr("As a reminder comes due on the bar's clock")
 
                 Switch {
                     checked: page.sp.reminderSound === true
@@ -232,13 +232,13 @@ Item {
             }
 
             Section {
-                text: "Time"
+                text: I18n.tr("Time")
             }
 
             SetRow {
                 first: true
-                title: "24-hour clock"
-                note: "For the bar, the lock screen and the widgets too"
+                title: I18n.tr("24-hour clock")
+                note: I18n.tr("For the bar, the lock screen and the widgets too")
 
                 Switch {
                     checked: page.sp.clock24h === true
@@ -251,7 +251,7 @@ Item {
 
             SetRow {
                 last: true
-                title: "Weeks start on Monday"
+                title: I18n.tr("Weeks start on Monday")
 
                 Switch {
                     checked: page.sp.weekStartMonday !== false
@@ -263,14 +263,14 @@ Item {
             }
 
             Section {
-                text: "About"
+                text: I18n.tr("About")
             }
 
             SetRow {
                 first: true
                 last: true
-                title: "Clock keeps time in the shell"
-                note: "Alarms, timers, the stopwatch and reminders all run in Lucid itself, so they ring with this window closed, and the bar's clock shows them too."
+                title: I18n.tr("Clock keeps time in the shell")
+                note: I18n.tr("Alarms, timers, the stopwatch and reminders all run in Lucid itself, so they ring with this window closed, and the bar's clock shows them too.")
                 stacked: true
 
                 Grid {
@@ -279,7 +279,7 @@ Item {
                     rowSpacing: Theme.dp(6)
 
                     Repeater {
-                        model: ["Ctrl 1 – 7", "Go to a page", "N", "Something new on the page", "Space", "Start or pause", "L", "Lap", "Ctrl W", "Close the window"]
+                        model: [I18n.tr("Ctrl 1 – 7"), I18n.tr("Go to a page"), "N", I18n.tr("Something new on the page"), I18n.tr("Space"), I18n.tr("Start or pause"), "L", I18n.tr("Lap"), I18n.tr("Ctrl W"), I18n.tr("Close the window")]
 
                         LText {
                             required property string modelData

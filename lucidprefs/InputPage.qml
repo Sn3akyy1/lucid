@@ -16,22 +16,22 @@ Column {
     readonly property var switchChoices: {
         const out = [{
             "key": "",
-            "label": "No key"
+            "label": I18n.tr("No key")
         }, {
             "key": "grp:alt_shift_toggle",
-            "label": "Alt + Shift"
+            "label": I18n.tr("Alt + Shift")
         }, {
             "key": "grp:win_space_toggle",
-            "label": "Super + Space"
+            "label": I18n.tr("Super + Space")
         }, {
             "key": "grp:ctrl_shift_toggle",
-            "label": "Ctrl + Shift"
+            "label": I18n.tr("Ctrl + Shift")
         }, {
             "key": "grp:caps_toggle",
-            "label": "Caps Lock"
+            "label": I18n.tr("Caps Lock")
         }, {
             "key": "grp:toggle",
-            "label": "Right Alt"
+            "label": I18n.tr("Right Alt")
         }];
         const now = HyprConfig.kbOption("grp");
         if (now !== "" && !out.some((c) => {
@@ -47,16 +47,16 @@ Column {
     readonly property var capsChoices: {
         const out = [{
             "key": "",
-            "label": "Caps Lock"
+            "label": I18n.tr("Caps Lock")
         }, {
             "key": "ctrl:nocaps",
-            "label": "Ctrl"
+            "label": I18n.tr("Ctrl")
         }, {
             "key": "caps:escape",
-            "label": "Escape"
+            "label": I18n.tr("Escape")
         }, {
             "key": "caps:none",
-            "label": "Nothing"
+            "label": I18n.tr("Nothing")
         }];
         const now = HyprConfig.kbOption("caps");
         if (now !== "" && !out.some((c) => {
@@ -117,24 +117,24 @@ Column {
         visible: HyprConfig.moduleProbed && !HyprConfig.moduleInstalled
 
         SettingRow {
-            title: "Not set up"
-            warning: "This page writes ~/.config/hypr/lucid-settings.lua, and your Hyprland config does not read it. Run the installer with --with-hypr, or copy Lucid's modules/settings.lua into ~/.config/hypr/modules/ and add require(\"modules.settings\") to hyprland.lua, before anything of your own."
+            title: I18n.tr("Not set up")
+            warning: I18n.tr("This page writes ~/.config/hypr/lucid-settings.lua, and your Hyprland config does not read it. Run the installer with --with-hypr, or copy Lucid's modules/settings.lua into ~/.config/hypr/modules/ and add require(\"modules.settings\") to hyprland.lua, before anything of your own.")
             showDivider: false
         }
 
     }
 
     SettingCard {
-        title: "KEYBOARD"
-        subtitle: "Changes apply as you make them, to every keyboard. Anything you leave alone stays as your Hyprland config has it."
+        title: I18n.tr("KEYBOARD")
+        subtitle: I18n.tr("Changes apply as you make them, to every keyboard. Anything you leave alone stays as your Hyprland config has it.")
 
         HyprRow {
             id: layoutsRow
 
-            title: "Layouts"
+            title: I18n.tr("Layouts")
             option: "input.kb_layout"
             extraKeys: ["input.kb_variant"]
-            description: page.layouts.length > 1 ? "The first one is what every keyboard starts with; the key below moves through the rest in this order." : "Add another to switch between them."
+            description: page.layouts.length > 1 ? I18n.tr("The first one is what every keyboard starts with; the key below moves through the rest in this order.") : I18n.tr("Add another to switch between them.")
             stacked: true
 
             Column {
@@ -174,7 +174,7 @@ Column {
 
                             Text {
                                 width: parent.width
-                                text: HyprConfig.layoutId(layoutItem.modelData) + (layoutItem.index === 0 ? "  ·  starts with this one" : "")
+                                text: HyprConfig.layoutId(layoutItem.modelData) + (layoutItem.index === 0 ? I18n.tr("  ·  starts with this one") : "")
                                 color: Theme.subtextDim
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontLabelSm
@@ -220,7 +220,7 @@ Column {
                 }
 
                 M3Button {
-                    text: "Add a layout"
+                    text: I18n.tr("Add a layout")
                     variant: "text"
                     iconPath: "add"
                     enabled: layoutsRow.enabled && Xkb.loaded
@@ -234,11 +234,11 @@ Column {
         HyprRow {
             id: switchRow
 
-            title: "Switch layouts with"
+            title: I18n.tr("Switch layouts with")
             option: "input.kb_options"
-            description: HyprConfig.kbOption("grp") === "grp:win_space_toggle" ? "Super + Space may also be one of your keybinds; both then happen." : "The bar's layout indicator switches them with a click as well."
+            description: HyprConfig.kbOption("grp") === "grp:win_space_toggle" ? I18n.tr("Super + Space may also be one of your keybinds; both then happen.") : I18n.tr("The bar's layout indicator switches them with a click as well.")
             available: page.layouts.length > 1
-            unavailableReason: "There is only one layout to use."
+            unavailableReason: I18n.tr("There is only one layout to use.")
             stacked: true
 
             M3Chips {
@@ -256,9 +256,9 @@ Column {
         HyprRow {
             id: capsRow
 
-            title: "Caps Lock key"
+            title: I18n.tr("Caps Lock key")
             option: "input.kb_options"
-            description: "What the Caps Lock key does. The other keyboard options your config sets are kept."
+            description: I18n.tr("What the Caps Lock key does. The other keyboard options your config sets are kept.")
             stacked: true
 
             M3Chips {
@@ -276,9 +276,9 @@ Column {
         HyprRow {
             id: repeatDelay
 
-            title: "Repeat after"
+            title: I18n.tr("Repeat after")
             option: "input.repeat_delay"
-            description: "How long a key is held before it starts repeating."
+            description: I18n.tr("How long a key is held before it starts repeating.")
             stacked: true
 
             M3Slider {
@@ -299,9 +299,9 @@ Column {
         HyprRow {
             id: repeatRate
 
-            title: "Repeat speed"
+            title: I18n.tr("Repeat speed")
             option: "input.repeat_rate"
-            description: "How many times a second a held key repeats."
+            description: I18n.tr("How many times a second a held key repeats.")
             stacked: true
 
             M3Slider {
@@ -322,9 +322,9 @@ Column {
         HyprRow {
             id: numlock
 
-            title: "Num Lock on at start"
+            title: I18n.tr("Num Lock on at start")
             option: "input.numlock_by_default"
-            description: "The keypad types numbers from the moment you sign in."
+            description: I18n.tr("The keypad types numbers from the moment you sign in.")
 
             M3Switch {
                 enabled: numlock.enabled
@@ -337,14 +337,14 @@ Column {
         }
 
         SettingRow {
-            title: "Try it"
-            description: "Type here to feel the repeat and check the layout."
+            title: I18n.tr("Try it")
+            description: I18n.tr("Type here to feel the repeat and check the layout.")
             stacked: true
             showDivider: false
 
             M3TextField {
                 width: Math.min(parent.width, Theme.dp(420))
-                placeholder: "Type something"
+                placeholder: I18n.tr("Type something")
                 commitOnBlur: false
             }
 
@@ -353,14 +353,14 @@ Column {
     }
 
     SettingCard {
-        title: "MOUSE"
+        title: I18n.tr("MOUSE")
 
         HyprRow {
             id: sensitivity
 
-            title: "Pointer speed"
+            title: I18n.tr("Pointer speed")
             option: "input.sensitivity"
-            description: "Added to the speed of every mouse and touchpad. At 0 they move as the device reports."
+            description: I18n.tr("Added to the speed of every mouse and touchpad. At 0 they move as the device reports.")
             stacked: true
 
             M3Slider {
@@ -381,9 +381,9 @@ Column {
         HyprRow {
             id: accel
 
-            title: "Acceleration"
+            title: I18n.tr("Acceleration")
             option: "input.accel_profile"
-            description: String(HyprConfig.value("input.accel_profile") || "") === "flat" ? "Flat: the pointer covers the same distance however fast you move." : "Adaptive: the faster you move, the further the pointer goes. It is what each device does unless told otherwise."
+            description: String(HyprConfig.value("input.accel_profile") || "") === "flat" ? I18n.tr("Flat: the pointer covers the same distance however fast you move.") : I18n.tr("Adaptive: the faster you move, the further the pointer goes. It is what each device does unless told otherwise.")
             stacked: true
 
             M3Segmented {
@@ -392,10 +392,10 @@ Column {
                 current: String(HyprConfig.value("input.accel_profile") || "") === "flat" ? "flat" : "adaptive"
                 options: [{
                     "key": "adaptive",
-                    "label": "Adaptive"
+                    "label": I18n.tr("Adaptive")
                 }, {
                     "key": "flat",
-                    "label": "Flat"
+                    "label": I18n.tr("Flat")
                 }]
                 onChosen: (key) => {
                     return HyprConfig.set("input.accel_profile", key);
@@ -407,9 +407,9 @@ Column {
         HyprRow {
             id: mouseNatural
 
-            title: "Natural scrolling"
+            title: I18n.tr("Natural scrolling")
             option: "input.natural_scroll"
-            description: "The page follows the wheel, the way content follows a finger on a phone."
+            description: I18n.tr("The page follows the wheel, the way content follows a finger on a phone.")
 
             M3Switch {
                 enabled: mouseNatural.enabled
@@ -424,9 +424,9 @@ Column {
         HyprRow {
             id: mouseScroll
 
-            title: "Scroll speed"
+            title: I18n.tr("Scroll speed")
             option: "input.scroll_factor"
-            description: "How far one notch of the wheel scrolls, times the usual."
+            description: I18n.tr("How far one notch of the wheel scrolls, times the usual.")
             stacked: true
 
             M3Slider {
@@ -448,9 +448,9 @@ Column {
         HyprRow {
             id: leftHanded
 
-            title: "Left-handed"
+            title: I18n.tr("Left-handed")
             option: "input.left_handed"
-            description: "Swaps the left and right buttons."
+            description: I18n.tr("Swaps the left and right buttons.")
             showDivider: false
 
             M3Switch {
@@ -467,14 +467,14 @@ Column {
 
     SettingCard {
         visible: page.hasTouchpad
-        title: "TOUCHPAD"
+        title: I18n.tr("TOUCHPAD")
 
         HyprRow {
             id: tapClick
 
-            title: "Tap to click"
+            title: I18n.tr("Tap to click")
             option: "input.touchpad.tap-to-click"
-            description: "A light tap clicks; two fingers are a right click, three a middle click."
+            description: I18n.tr("A light tap clicks; two fingers are a right click, three a middle click.")
 
             M3Switch {
                 enabled: tapClick.enabled
@@ -489,11 +489,11 @@ Column {
         HyprRow {
             id: tapDrag
 
-            title: "Tap and drag"
+            title: I18n.tr("Tap and drag")
             option: "input.touchpad.tap-and-drag"
-            description: "Tap, then keep the finger down to drag."
+            description: I18n.tr("Tap, then keep the finger down to drag.")
             available: HyprConfig.bool("input.touchpad.tap-to-click", true)
-            unavailableReason: "Tap to click is off."
+            unavailableReason: I18n.tr("Tap to click is off.")
 
             M3Switch {
                 enabled: tapDrag.enabled
@@ -508,9 +508,9 @@ Column {
         HyprRow {
             id: padNatural
 
-            title: "Natural scrolling"
+            title: I18n.tr("Natural scrolling")
             option: "input.touchpad.natural_scroll"
-            description: "The page moves with your fingers."
+            description: I18n.tr("The page moves with your fingers.")
 
             M3Switch {
                 enabled: padNatural.enabled
@@ -525,9 +525,9 @@ Column {
         HyprRow {
             id: padScroll
 
-            title: "Scroll speed"
+            title: I18n.tr("Scroll speed")
             option: "input.touchpad.scroll_factor"
-            description: "How far a swipe of two fingers scrolls, times the usual."
+            description: I18n.tr("How far a swipe of two fingers scrolls, times the usual.")
             stacked: true
 
             M3Slider {
@@ -549,9 +549,9 @@ Column {
         HyprRow {
             id: typing
 
-            title: "Off while typing"
+            title: I18n.tr("Off while typing")
             option: "input.touchpad.disable_while_typing"
-            description: "A palm on the touchpad does nothing while you type."
+            description: I18n.tr("A palm on the touchpad does nothing while you type.")
 
             M3Switch {
                 enabled: typing.enabled
@@ -566,9 +566,9 @@ Column {
         HyprRow {
             id: clickfinger
 
-            title: "Right click with two fingers"
+            title: I18n.tr("Right click with two fingers")
             option: "input.touchpad.clickfinger_behavior"
-            description: "Pressing down with two fingers is a right click and with three a middle click, anywhere on the pad. Off, it depends on where you press: the bottom right corner is the right button."
+            description: I18n.tr("Pressing down with two fingers is a right click and with three a middle click, anywhere on the pad. Off, it depends on where you press: the bottom right corner is the right button.")
 
             M3Switch {
                 enabled: clickfinger.enabled
@@ -583,9 +583,9 @@ Column {
         HyprRow {
             id: middle
 
-            title: "Middle click from both buttons"
+            title: I18n.tr("Middle click from both buttons")
             option: "input.touchpad.middle_button_emulation"
-            description: "Pressing the left and right buttons together is a middle click."
+            description: I18n.tr("Pressing the left and right buttons together is a middle click.")
             showDivider: false
 
             M3Switch {
@@ -602,15 +602,15 @@ Column {
 
     SettingCard {
         visible: page.hasTouchpad
-        title: "SWIPING BETWEEN WORKSPACES"
-        subtitle: "How the touchpad swipe to another workspace feels. How many fingers it takes is set by the gestures in your Hyprland config."
+        title: I18n.tr("SWIPING BETWEEN WORKSPACES")
+        subtitle: I18n.tr("How the touchpad swipe to another workspace feels. How many fingers it takes is set by the gestures in your Hyprland config.")
 
         HyprRow {
             id: swipeDistance
 
-            title: "Swipe length"
+            title: I18n.tr("Swipe length")
             option: "gestures.workspace_swipe_distance"
-            description: "How far the fingers travel for a whole workspace. Shorter is quicker, longer is more precise."
+            description: I18n.tr("How far the fingers travel for a whole workspace. Shorter is quicker, longer is more precise.")
             stacked: true
 
             M3Slider {
@@ -631,9 +631,9 @@ Column {
         HyprRow {
             id: swipeCancel
 
-            title: "Switch once you are past"
+            title: I18n.tr("Switch once you are past")
             option: "gestures.workspace_swipe_cancel_ratio"
-            description: "How much of the way you need to get before letting go switches; short of it, the workspace slides back."
+            description: I18n.tr("How much of the way you need to get before letting go switches; short of it, the workspace slides back.")
             stacked: true
 
             M3Slider {
@@ -654,9 +654,9 @@ Column {
         HyprRow {
             id: swipeFlick
 
-            title: "A flick switches from"
+            title: I18n.tr("A flick switches from")
             option: "gestures.workspace_swipe_min_speed_to_force"
-            description: "How fast a short swipe has to be to switch anyway. At 0 only the distance counts."
+            description: I18n.tr("How fast a short swipe has to be to switch anyway. At 0 only the distance counts.")
             stacked: true
 
             M3Slider {
@@ -676,9 +676,9 @@ Column {
         HyprRow {
             id: swipeInvert
 
-            title: "Invert the swipe"
+            title: I18n.tr("Invert the swipe")
             option: "gestures.workspace_swipe_invert"
-            description: "Hyprland has this on unless told otherwise. If a swipe takes you the opposite way from the one you expect, flip it."
+            description: I18n.tr("Hyprland has this on unless told otherwise. If a swipe takes you the opposite way from the one you expect, flip it.")
 
             M3Switch {
                 enabled: swipeInvert.enabled
@@ -693,9 +693,9 @@ Column {
         HyprRow {
             id: swipeForever
 
-            title: "Keep going past the next one"
+            title: I18n.tr("Keep going past the next one")
             option: "gestures.workspace_swipe_forever"
-            description: "One long swipe can travel several workspaces instead of stopping at the neighbour."
+            description: I18n.tr("One long swipe can travel several workspaces instead of stopping at the neighbour.")
 
             M3Switch {
                 enabled: swipeForever.enabled
@@ -710,9 +710,9 @@ Column {
         HyprRow {
             id: swipeNew
 
-            title: "A new workspace at the end"
+            title: I18n.tr("A new workspace at the end")
             option: "gestures.workspace_swipe_create_new"
-            description: "Swiping past the last workspace makes a new, empty one."
+            description: I18n.tr("Swiping past the last workspace makes a new, empty one.")
             showDivider: false
 
             M3Switch {
@@ -728,15 +728,15 @@ Column {
     }
 
     SettingCard {
-        title: "RESET"
+        title: I18n.tr("RESET")
 
         SettingRow {
-            title: "Hand it all back to your config"
-            description: "Everything on this page goes back to whatever your Hyprland config sets, as if Settings had never touched it."
+            title: I18n.tr("Hand it all back to your config")
+            description: I18n.tr("Everything on this page goes back to whatever your Hyprland config sets, as if Settings had never touched it.")
             showDivider: false
 
             M3Button {
-                text: "Reset"
+                text: I18n.tr("Reset")
                 variant: "text"
                 destructive: true
                 enabled: page.pageKeys.some((k) => {

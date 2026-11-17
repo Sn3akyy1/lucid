@@ -19,19 +19,19 @@ Column {
 
     readonly property string status: {
         if (dev.asking)
-            return "Wants to pair with this machine";
+            return I18n.tr("Wants to pair with this machine");
 
         if (dev.waiting)
-            return "Waiting for the other device to accept…";
+            return I18n.tr("Waiting for the other device to accept…");
 
         if (!dev.paired)
-            return "Nearby, not paired";
+            return I18n.tr("Nearby, not paired");
 
         if (!dev.reachable)
-            return "Paired · offline";
+            return I18n.tr("Paired · offline");
 
         const via = dev.modelData.links.length > 0 ? dev.modelData.links.join(", ") : "";
-        return via !== "" ? "Connected over " + via : "Connected";
+        return via !== "" ? I18n.tr("Connected over %1", via) : I18n.tr("Connected");
     }
 
     signal opened()
@@ -238,15 +238,15 @@ Column {
                 width: parent.width - Theme.dp(79)
                 text: {
                     if (dev.asking)
-                        return "Check that " + dev.modelData.name + " is showing key " + dev.modelData.key + ", then accept.";
+                        return I18n.tr("Check that %1 is showing key %2, then accept.", dev.modelData.name, dev.modelData.key);
 
                     if (dev.waiting)
-                        return "Accept the request on " + dev.modelData.name + ". Both should be showing key " + dev.modelData.key + ".";
+                        return I18n.tr("Accept the request on %1. Both should be showing key %2.", dev.modelData.name, dev.modelData.key);
 
                     if (!dev.paired)
-                        return "Pairing asks the other device to confirm. Both will show the same key, and they must match.";
+                        return I18n.tr("Pairing asks the other device to confirm. Both will show the same key, and they must match.");
 
-                    return "This device is paired but not on the network right now. Open KDE Connect on it and make sure you are both on the same Wi-Fi.";
+                    return I18n.tr("This device is paired but not on the network right now. Open KDE Connect on it and make sure you are both on the same Wi-Fi.");
                 }
                 color: Theme.subtext
                 font.family: Theme.fontFamily
@@ -261,14 +261,14 @@ Column {
                 M3Button {
                     variant: "filled"
                     visible: dev.asking
-                    text: "Accept"
+                    text: I18n.tr("Accept")
                     onClicked: KdeConnect.accept(dev.devId)
                 }
 
                 M3Button {
                     variant: "filled"
                     visible: !dev.paired && !dev.asking && !dev.waiting
-                    text: "Pair"
+                    text: I18n.tr("Pair")
                     onClicked: KdeConnect.pair(dev.devId)
                 }
 
@@ -276,7 +276,7 @@ Column {
                     variant: "text"
                     destructive: true
                     visible: dev.asking || dev.waiting
-                    text: dev.asking ? "Reject" : "Cancel"
+                    text: dev.asking ? I18n.tr("Reject") : I18n.tr("Cancel")
                     onClicked: KdeConnect.cancel(dev.devId)
                 }
 
@@ -284,8 +284,8 @@ Column {
                     variant: "text"
                     destructive: true
                     visible: dev.paired && !dev.asking && !dev.waiting
-                    text: "Unpair"
-                    onClicked: Prefs.askConfirm("Unpair " + dev.modelData.name + "?", "This machine and that device stop trusting each other. Nothing on either is deleted, and you can pair them again whenever you like.", "Unpair", "kde-unpair:" + dev.devId)
+                    text: I18n.tr("Unpair")
+                    onClicked: Prefs.askConfirm(I18n.tr("Unpair %1?", dev.modelData.name), I18n.tr("This machine and that device stop trusting each other. Nothing on either is deleted, and you can pair them again whenever you like."), I18n.tr("Unpair"), "kde-unpair:" + dev.devId)
                 }
 
             }

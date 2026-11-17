@@ -30,7 +30,7 @@ FloatingWindow {
     property int chooserFilter: win.choosing && win.chooser.filters.length > 0 ? Math.max(0, win.chooser.current) : -1
     readonly property var chooserRules: win.chooserFilter >= 0 ? win.chooser.filters[win.chooserFilter][1] : null
     property bool answered: false
-    readonly property string chooserTitle: !win.choosing ? "" : (win.chooser.title || (win.chooser.mode === "open" ? (win.chooser.directory ? "Choose a folder" : "Open a file") : "Save a file"))
+    readonly property string chooserTitle: !win.choosing ? "" : (win.chooser.title || (win.chooser.mode === "open" ? (win.chooser.directory ? I18n.tr("Choose a folder") : I18n.tr("Open a file")) : I18n.tr("Save a file")))
     readonly property string acceptLabel: !win.choosing ? "" : (win.chooser.accept.replace(/_/g, "") || (win.chooser.mode === "open" ? (win.chooser.directory ? "Select" : "Open") : "Save"))
     readonly property bool canAccept: {
         var t = win.tab;
@@ -133,9 +133,9 @@ FloatingWindow {
         var uri = win.app.uriOf(t.path + "/" + name);
         if (hit) {
             dialog.ask({
-                "title": "Replace “" + name + "”?",
-                "text": "There is already a file with this name in " + t.title + ". Saving puts the new one in its place.",
-                "confirm": "Replace",
+                "title": I18n.tr("Replace “%1”?", name),
+                "text": I18n.tr("There is already a file with this name in %1. Saving puts the new one in its place.", t.title),
+                "confirm": I18n.tr("Replace"),
                 "danger": true
             }, function(ok) {
                 if (ok)
@@ -164,19 +164,19 @@ FloatingWindow {
             "image": "images",
             "video": "videos",
             "audio": "audio",
-            "text": "text files",
+            "text": I18n.tr("text files"),
             "font": "fonts"
         };
         for (var i = 0; i < rules.length; i++) {
             var kind = rules[i][0], pat = String(rules[i][1]);
             var say = "";
             if (pat === "*" || pat === "*.*" || pat === "*/*")
-                return "Every file";
+                return I18n.tr("Every file");
 
             if (kind === 1) {
                 var parts = pat.split("/");
                 if (parts[1] === "*")
-                    say = "All " + (kinds[parts[0]] || parts[0] + " files");
+                    say = I18n.tr("All ") + (kinds[parts[0]] || I18n.tr("%1 files", parts[0]));
                 else
                     say = (parts[1] || pat).replace(/^(x-|vnd\.)/, "");
             } else {
@@ -429,7 +429,7 @@ FloatingWindow {
             return ;
 
         if (t.pinned && !force) {
-            win.say("Pinned tabs stay open. Unpin it to close it");
+            win.say(I18n.tr("Pinned tabs stay open. Unpin it to close it"));
             return ;
         }
         if (t.pinned)
@@ -550,7 +550,7 @@ FloatingWindow {
         return [{
             "swatches": [{
                 "id": "colour:",
-                "tip": "No colour",
+                "tip": I18n.tr("No colour"),
                 "checked": current === ""
             }].concat(win.app.colours.map(function(c) {
                 return {
@@ -576,44 +576,44 @@ FloatingWindow {
         }
         menu.open(win.clean([{
             "id": "new",
-            "label": "New tab",
+            "label": I18n.tr("New tab"),
             "icon": "add",
-            "hint": "Ctrl+T"
+            "hint": I18n.tr("Ctrl+T")
         }, {
             "id": "duplicate",
-            "label": "Duplicate tab",
+            "label": I18n.tr("Duplicate tab"),
             "icon": "content_copy"
         }, !win.choosing ? {
             "id": "pin",
-            "label": t.pinned ? "Unpin tab" : "Pin tab",
+            "label": t.pinned ? I18n.tr("Unpin tab") : I18n.tr("Pin tab"),
             "icon": t.pinned ? "keep_off" : "keep"
         } : null, {
             "id": "colour",
-            "label": "Colour",
+            "label": I18n.tr("Colour"),
             "icon": "palette",
             "sub": win.colourRow(t.colour)
         }, {
             "sep": true
         }, {
             "id": "close",
-            "label": "Close tab",
+            "label": I18n.tr("Close tab"),
             "icon": "close",
-            "hint": t.pinned ? "" : "Ctrl+W"
+            "hint": t.pinned ? "" : I18n.tr("Ctrl+W")
         }, win.tabs.length - win.pinnedCount > (t.pinned ? 0 : 1) ? {
             "id": "others",
-            "label": "Close other tabs",
+            "label": I18n.tr("Close other tabs"),
             "icon": "tab"
         } : null, right > 0 ? {
             "id": "right",
-            "label": "Close tabs to the right",
+            "label": I18n.tr("Close tabs to the right"),
             "icon": "keyboard_tab"
         } : null, win.closedTabs.length > 0 ? {
             "sep": true
         } : null, win.closedTabs.length > 0 ? {
             "id": "reopen",
-            "label": "Reopen closed tab",
+            "label": I18n.tr("Reopen closed tab"),
             "icon": "undo",
-            "hint": "Ctrl+Shift+T"
+            "hint": I18n.tr("Ctrl+Shift+T")
         } : null]), x, y, function(id) {
             var at = win.tabs.indexOf(t);
             if (id.indexOf("colour:") === 0)
@@ -683,7 +683,7 @@ FloatingWindow {
             "uri": p.indexOf("://") !== -1 ? p : win.app.uriOf(p)
         }, function(r) {
             if (!r.ok) {
-                win.say("Can't find “" + text + "”");
+                win.say(I18n.tr("Can't find “%1”", text));
                 return ;
             }
             if (r.isDir) {
@@ -718,7 +718,7 @@ FloatingWindow {
             else
                 win.go(where);
         } else if (win.tab.isTrash) {
-            win.say("Restore it to open it");
+            win.say(I18n.tr("Restore it to open it"));
         } else {
             win.app.call("open", {
                 "uris": [it.uri]
@@ -742,7 +742,7 @@ FloatingWindow {
             return it.kind !== "dir";
         });
         if (win.tab.isTrash) {
-            win.say("Restore it to open it");
+            win.say(I18n.tr("Restore it to open it"));
             return ;
         }
         if (files.length > 0)
@@ -821,9 +821,9 @@ FloatingWindow {
             var failed = r.failed || [];
             if (failed.length > 0)
                 dialog.ask({
-                "title": "Delete permanently?",
+                "title": I18n.tr("Delete permanently?"),
                 "text": (failed.length === 1 ? "“" + decodeURIComponent(failed[0].uri.split("/").pop()) + "” can't go to the trash here" : failed.length + " items can't go to the trash here") + ". Deleting can't be undone.",
-                "confirm": "Delete",
+                "confirm": I18n.tr("Delete"),
                 "danger": true
             }, function(ok) {
                 if (ok)
@@ -845,7 +845,7 @@ FloatingWindow {
             return ;
         }
         if (win.tab.isRecent) {
-            win.say("Recent only lists files; open their folder to remove them");
+            win.say(I18n.tr("Recent only lists files; open their folder to remove them"));
             return ;
         }
         win.trashUris(win.selectionUris());
@@ -857,7 +857,7 @@ FloatingWindow {
         }, function(r) {
             var n = (r.done || []).length;
             if (n > 0)
-                win.say("Deleted " + (n === 1 ? "1 item" : n + " items"));
+                win.say(I18n.tr("Deleted ") + (n === 1 ? I18n.tr("1 item") : I18n.tr("%1 items", n)));
 
             if ((r.failed || []).length > 0)
                 win.say(r.failed[0].error);
@@ -871,9 +871,9 @@ FloatingWindow {
             return ;
 
         dialog.ask({
-            "title": sel.length === 1 ? "Delete “" + sel[0].label + "” for good?" : "Delete " + sel.length + " items for good?",
-            "text": "They won't go to the trash, and this can't be undone.",
-            "confirm": "Delete",
+            "title": sel.length === 1 ? I18n.tr("Delete “%1” for good?", sel[0].label) : I18n.tr("Delete %1 items for good?", sel.length),
+            "text": I18n.tr("They won't go to the trash, and this can't be undone."),
+            "confirm": I18n.tr("Delete"),
             "danger": true
         }, function(ok) {
             if (ok)
@@ -895,15 +895,15 @@ FloatingWindow {
 
     function emptyTrash() {
         dialog.ask({
-            "title": "Empty the trash?",
-            "text": "Everything in it (" + win.app.trashCount + (win.app.trashCount === 1 ? " item" : " items") + ") is deleted for good.",
-            "confirm": "Empty trash",
+            "title": I18n.tr("Empty the trash?"),
+            "text": I18n.tr("Everything in it (%1", win.app.trashCount) + (win.app.trashCount === 1 ? I18n.tr(" item") : I18n.tr(" items")) + I18n.tr(") is deleted for good."),
+            "confirm": I18n.tr("Empty trash"),
             "danger": true
         }, function(ok) {
             if (ok)
                 win.app.call("emptyTrash", {
             }, function() {
-                win.say("Trash emptied");
+                win.say(I18n.tr("Trash emptied"));
             });
 
         });
@@ -924,7 +924,7 @@ FloatingWindow {
 
         win.cutSet = s;
         win.cutRev++;
-        win.say((uris.length === 1 ? "1 item" : uris.length + " items") + (cut ? " ready to move" : " copied"));
+        win.say((uris.length === 1 ? I18n.tr("1 item") : I18n.tr("%1 items", uris.length)) + (cut ? I18n.tr(" ready to move") : I18n.tr(" copied")));
     }
 
     function paste(dest) {
@@ -952,7 +952,7 @@ FloatingWindow {
 
                 });
             } else {
-                win.say("Nothing to paste");
+                win.say(I18n.tr("Nothing to paste"));
             }
         });
     }
@@ -966,11 +966,11 @@ FloatingWindow {
         var dot = it.kind === "dir" ? -1 : it.name.lastIndexOf(".");
         dialog.ask({
             "mode": "input",
-            "title": "Rename",
+            "title": I18n.tr("Rename"),
             "input": it.name,
             "selectEnd": dot > 0 ? dot : it.name.length,
             "taken": win.namesHere(it.name),
-            "confirm": "Rename"
+            "confirm": I18n.tr("Rename")
         }, function(ok, name) {
             if (!ok || name === it.name)
                 return ;
@@ -980,7 +980,7 @@ FloatingWindow {
                 "name": name
             }, function(r) {
                 if (!r.ok) {
-                    win.say(r.error || "Could not rename");
+                    win.say(r.error || I18n.tr("Could not rename"));
                     return ;
                 }
                 win.app.pushUndo({
@@ -1000,10 +1000,10 @@ FloatingWindow {
         var dest = win.tab.path;
         dialog.ask({
             "mode": "input",
-            "title": "New folder",
-            "input": win.freeName("New Folder"),
+            "title": I18n.tr("New folder"),
+            "input": win.freeName(I18n.tr("New Folder")),
             "taken": win.namesHere(""),
-            "confirm": "Create"
+            "confirm": I18n.tr("Create")
         }, function(ok, name) {
             if (!ok)
                 return ;
@@ -1013,7 +1013,7 @@ FloatingWindow {
                 "name": name
             }, function(r) {
                 if (!r.ok) {
-                    win.say(r.error || "Could not make the folder");
+                    win.say(r.error || I18n.tr("Could not make the folder"));
                     return ;
                 }
                 win.app.pushUndo({
@@ -1035,11 +1035,11 @@ FloatingWindow {
         var dot = name.lastIndexOf(".");
         dialog.ask({
             "mode": "input",
-            "title": "New document",
+            "title": I18n.tr("New document"),
             "input": name,
             "selectEnd": dot > 0 ? dot : name.length,
             "taken": win.namesHere(""),
-            "confirm": "Create"
+            "confirm": I18n.tr("Create")
         }, function(ok, chosen) {
             if (!ok)
                 return ;
@@ -1053,7 +1053,7 @@ FloatingWindow {
                 "name": chosen
             }, function(r) {
                 if (!r.ok) {
-                    win.say(r.error || "Could not make the file");
+                    win.say(r.error || I18n.tr("Could not make the file"));
                     return ;
                 }
                 win.app.pushUndo({
@@ -1074,15 +1074,15 @@ FloatingWindow {
             "uri": sel[0].uri
         }, function(r) {
             if (!r.ok || (r.apps || []).length === 0) {
-                win.say("No app opens this kind of file");
+                win.say(I18n.tr("No app opens this kind of file"));
                 return ;
             }
             dialog.ask({
                 "mode": "apps",
-                "title": "Open with",
-                "text": sel.length === 1 ? "“" + sel[0].label + "”" : sel.length + " items",
+                "title": I18n.tr("Open with"),
+                "text": sel.length === 1 ? "“" + sel[0].label + "”" : I18n.tr("%1 items", sel.length),
                 "apps": r.apps,
-                "confirm": "Open"
+                "confirm": I18n.tr("Open")
             }, function(ok, v) {
                 if (!ok || !v.app)
                     return ;
@@ -1114,54 +1114,54 @@ FloatingWindow {
             "uri": uri
         }, function(r) {
             if (!r.ok) {
-                win.say(r.error || "Could not read it");
+                win.say(r.error || I18n.tr("Could not read it"));
                 return ;
             }
             var rows = [{
                 "key": "type",
-                "label": "Type",
-                "value": r.isDir ? "Folder" : (r.desc || r.mime)
+                "label": I18n.tr("Type"),
+                "value": r.isDir ? I18n.tr("Folder") : (r.desc || r.mime)
             }, {
                 "key": "size",
-                "label": "Size",
-                "value": r.isDir ? "Counting…" : win.app.sizeText(r.size) + " (" + r.size.toLocaleString(Qt.locale(), "f", 0) + " bytes)"
+                "label": I18n.tr("Size"),
+                "value": r.isDir ? "Counting…" : win.app.sizeText(r.size) + " (" + r.size.toLocaleString(I18n.locale, "f", 0) + " bytes)"
             }, {
                 "key": "where",
-                "label": "Location",
+                "label": I18n.tr("Location"),
                 "value": (r.where || "").replace(win.app.home, "~")
             }, {
                 "key": "modified",
-                "label": "Modified",
-                "value": new Date(r.mtime * 1000).toLocaleString(Qt.locale(), "d MMMM yyyy, hh:mm")
+                "label": I18n.tr("Modified"),
+                "value": new Date(r.mtime * 1000).toLocaleString(I18n.locale, "d MMMM yyyy, hh:mm")
             }];
             if (r.atime)
                 rows.push({
                 "key": "accessed",
-                "label": "Opened",
-                "value": new Date(r.atime * 1000).toLocaleString(Qt.locale(), "d MMMM yyyy, hh:mm")
+                "label": I18n.tr("Opened"),
+                "value": new Date(r.atime * 1000).toLocaleString(I18n.locale, "d MMMM yyyy, hh:mm")
             });
 
             if (r.target)
                 rows.push({
                 "key": "target",
-                "label": "Links to",
+                "label": I18n.tr("Links to"),
                 "value": r.target
             });
 
             rows.push({
                 "key": "perms",
-                "label": "Permissions",
+                "label": I18n.tr("Permissions"),
                 "value": r.mode + (r.octal ? "  (" + r.octal + ")" : "")
             });
             rows.push({
                 "key": "owner",
-                "label": "Owner",
+                "label": I18n.tr("Owner"),
                 "value": r.owner + (r.group && r.group !== r.owner ? " · " + r.group : "")
             });
             if (r.total > 0)
                 rows.push({
                 "key": "free",
-                "label": "Free space",
+                "label": I18n.tr("Free space"),
                 "value": win.app.sizeText(r.free) + " of " + win.app.sizeText(r.total)
             });
 
@@ -1199,27 +1199,27 @@ FloatingWindow {
         }
         var parts = [];
         if (dirs > 0)
-            parts.push(dirs + (dirs === 1 ? " folder" : " folders"));
+            parts.push(dirs + (dirs === 1 ? I18n.tr(" folder") : I18n.tr(" folders")));
 
         if (files > 0)
-            parts.push(files + (files === 1 ? " file" : " files"));
+            parts.push(files + (files === 1 ? I18n.tr(" file") : I18n.tr(" files")));
 
         var rows = [{
             "key": "type",
-            "label": "Contains",
+            "label": I18n.tr("Contains"),
             "value": parts.join(", ")
         }, {
             "key": "size",
-            "label": "Size",
-            "value": files > 0 ? win.app.sizeText(bytes) + (dirs > 0 ? ", not counting the folders" : "") : "Folders only"
+            "label": I18n.tr("Size"),
+            "value": files > 0 ? win.app.sizeText(bytes) + (dirs > 0 ? I18n.tr(", not counting the folders") : "") : I18n.tr("Folders only")
         }, {
             "key": "where",
-            "label": "Location",
+            "label": I18n.tr("Location"),
             "value": n === 1 ? Object.keys(wheres)[0].replace(win.app.home, "~") : n + " places"
         }];
         dialog.ask({
             "mode": "info",
-            "title": sel.length + " items",
+            "title": I18n.tr("%1 items", sel.length),
             "rows": rows,
             "glyph": {
                 "slot": dirs > 0 ? "folder" : "file",
@@ -1238,7 +1238,7 @@ FloatingWindow {
         win.app.call("clipText", {
             "text": paths.join("\n")
         });
-        win.say(paths.length === 1 ? "Path copied" : paths.length + " paths copied");
+        win.say(paths.length === 1 ? I18n.tr("Path copied") : I18n.tr("%1 paths copied", paths.length));
     }
 
     function unmount(v) {
@@ -1247,9 +1247,9 @@ FloatingWindow {
             "eject": v.canEject
         }, function(r) {
             if (v.remote)
-                win.say(r.ok ? "Disconnected from “" + v.label + "”" : (r.error || "Could not disconnect"));
+                win.say(r.ok ? I18n.tr("Disconnected from “%1”", v.label) : (r.error || I18n.tr("Could not disconnect")));
             else
-                win.say(r.ok ? "“" + v.label + "” can be removed" : (r.error || "Could not eject it"));
+                win.say(r.ok ? I18n.tr("“%1” can be removed", v.label) : (r.error || I18n.tr("Could not eject it")));
         });
     }
 
@@ -1271,7 +1271,7 @@ FloatingWindow {
 
             if (!r.ok) {
                 if (!opts.done && !r.cancelled)
-                    win.say(r.error || "Could not connect");
+                    win.say(r.error || I18n.tr("Could not connect"));
 
                 return ;
             }
@@ -1308,7 +1308,7 @@ FloatingWindow {
                 t.rememberNext = "";
                 if (!r.ok) {
                     t.connectUri = uri;
-                    t.error = r.cancelled ? (t.locked ? "An administrator's password opens it." : "Not connected to " + win.app.hostOf(uri)) : (r.error || "Could not connect");
+                    t.error = r.cancelled ? (t.locked ? I18n.tr("An administrator's password opens it.") : I18n.tr("Not connected to %1", win.app.hostOf(uri))) : (r.error || I18n.tr("Could not connect"));
                 }
             }
         });
@@ -1317,7 +1317,7 @@ FloatingWindow {
     // someone else's file, through admin://, opens as a copy nothing but lumen could fetch
     function opened(r) {
         if (r && r.copies > 0)
-            win.say(r.copies === 1 ? "Opened a copy: it's someone else's file, so changes stay in the copy" : "Opened copies: they're someone else's files, so changes stay in the copies");
+            win.say(r.copies === 1 ? I18n.tr("Opened a copy: it's someone else's file, so changes stay in the copy") : I18n.tr("Opened copies: they're someone else's files, so changes stay in the copies"));
         else if (r && r.error)
             win.say(r.error);
     }
@@ -1329,7 +1329,7 @@ FloatingWindow {
             if (r.ok && r.path)
                 win.go(r.path);
             else if (!r.ok)
-                win.say(r.error || "Could not mount it");
+                win.say(r.error || I18n.tr("Could not mount it"));
         });
     }
 
@@ -1359,7 +1359,7 @@ FloatingWindow {
             return ;
 
         var s = win.app.sortOf(t.path);
-        win.say("Every folder now sorts like “" + t.title + "”", "Undo", win.app.sortEverywhere(s.key, s.desc));
+        win.say(I18n.tr("Every folder now sorts like “%1”", t.title), I18n.tr("Undo"), win.app.sortEverywhere(s.key, s.desc));
     }
 
     readonly property var zoomSteps: [24, 32, 40, 48, 56, 64, 72, 80, 96, 112, 128, 160, 192, 256]
@@ -1432,108 +1432,108 @@ FloatingWindow {
         if (t.isTrash) {
             items = [{
                 "id": "restore",
-                "label": "Restore",
+                "label": I18n.tr("Restore"),
                 "icon": "undo"
             }, {
                 "sep": true
             }, {
                 "id": "delete",
-                "label": "Delete for good",
+                "label": I18n.tr("Delete for good"),
                 "icon": "delete_forever",
-                "hint": "Delete",
+                "hint": I18n.tr("Delete"),
                 "danger": true
             }];
         } else {
             items = [{
                 "id": "open",
-                "label": "Open",
+                "label": I18n.tr("Open"),
                 "icon": "open_in_new",
-                "hint": "Enter"
+                "hint": I18n.tr("Enter")
             }, dir ? {
                 "id": "openTab",
-                "label": "Open in new tab",
+                "label": I18n.tr("Open in new tab"),
                 "icon": "tab"
             } : null, !dir ? {
                 "id": "openWith",
-                "label": "Open with…",
+                "label": I18n.tr("Open with…"),
                 "icon": "apps"
             } : null, t.searching || t.isRecent ? {
                 "id": "reveal",
-                "label": "Show in folder",
+                "label": I18n.tr("Show in folder"),
                 "icon": "folder_open"
             } : null, {
                 "sep": true
             }, {
                 "id": "cut",
-                "label": "Cut",
+                "label": I18n.tr("Cut"),
                 "icon": "content_cut",
-                "hint": "Ctrl+X"
+                "hint": I18n.tr("Ctrl+X")
             }, {
                 "id": "copy",
-                "label": "Copy",
+                "label": I18n.tr("Copy"),
                 "icon": "content_copy",
-                "hint": "Ctrl+C"
+                "hint": I18n.tr("Ctrl+C")
             }, dir ? {
                 "id": "pasteInto",
-                "label": "Paste into folder",
+                "label": I18n.tr("Paste into folder"),
                 "icon": "content_paste"
             } : null, {
                 "sep": true
             }, one && !t.isRecent ? {
                 "id": "rename",
-                "label": "Rename…",
+                "label": I18n.tr("Rename…"),
                 "icon": "edit",
-                "hint": "F2"
+                "hint": I18n.tr("F2")
             } : null, !t.isRecent ? {
                 "id": "duplicate",
-                "label": "Duplicate",
+                "label": I18n.tr("Duplicate"),
                 "icon": "file_copy"
             } : null, !t.isRecent ? {
                 "id": "link",
-                "label": "Make link",
+                "label": I18n.tr("Make link"),
                 "icon": "link"
             } : null, {
                 "id": "compress",
-                "label": "Compress",
+                "label": I18n.tr("Compress"),
                 "icon": "archive"
             }, one && one.slot === "archive" ? {
                 "id": "extract",
-                "label": "Extract here",
+                "label": I18n.tr("Extract here"),
                 "icon": "unarchive"
             } : null, one && one.slot === "archive" ? {
                 "id": "extractInto",
-                "label": "Extract to folder",
+                "label": I18n.tr("Extract to folder"),
                 "icon": "folder_zip"
             } : null, {
                 "sep": true
             }, dir ? {
                 "id": "terminal",
-                "label": "Open in terminal",
+                "label": I18n.tr("Open in terminal"),
                 "icon": "terminal"
             } : null, dir ? {
                 "id": "bookmark",
-                "label": "Add to bookmarks",
+                "label": I18n.tr("Add to bookmarks"),
                 "icon": "bookmark_add"
             } : null, win.wallpaperable(one) && !t.isTrash ? {
                 "id": "wallpaper",
-                "label": "Set as wallpaper",
+                "label": I18n.tr("Set as wallpaper"),
                 "icon": "wallpaper"
             } : null, {
                 "id": "copyPath",
-                "label": sel.length > 1 ? "Copy paths" : "Copy path",
+                "label": sel.length > 1 ? I18n.tr("Copy paths") : I18n.tr("Copy path"),
                 "icon": "content_copy"
             }, {
                 "id": "properties",
-                "label": "Properties",
+                "label": I18n.tr("Properties"),
                 "icon": "info",
-                "hint": "Ctrl+I"
+                "hint": I18n.tr("Ctrl+I")
             }, {
                 "sep": true
             }, !t.isRecent ? {
                 "id": "trash",
-                "label": "Move to trash",
+                "label": I18n.tr("Move to trash"),
                 "icon": "delete",
-                "hint": "Delete",
+                "hint": I18n.tr("Delete"),
                 "danger": true
             } : null];
         }
@@ -1588,7 +1588,7 @@ FloatingWindow {
                 if (r.ok)
                     win.pendingSelect = r.name;
                 else
-                    win.say(r.error || "Could not compress");
+                    win.say(r.error || I18n.tr("Could not compress"));
             });
             break;
         case "extract":
@@ -1600,7 +1600,7 @@ FloatingWindow {
                 if (r.ok)
                     win.pendingSelect = r.name;
                 else
-                    win.say(r.error || "Could not extract it");
+                    win.say(r.error || I18n.tr("Could not extract it"));
             });
             break;
         case "terminal":
@@ -1612,7 +1612,7 @@ FloatingWindow {
             win.app.call("bookmarkAdd", {
                 "path": one.path
             });
-            win.say("Added “" + one.label + "” to bookmarks");
+            win.say(I18n.tr("Added “%1” to bookmarks", one.label));
             break;
         case "wallpaper":
             win.setWallpaper(one);
@@ -1639,8 +1639,8 @@ FloatingWindow {
     function sortChoices() {
         var t = win.tab;
         var date = t && t.isTrash ? "deleted" : "modified";
-        var kind = t && (t.isTrash || t.searching) ? "Location" : "Type";
-        return [["name", false, "Name, A to Z"], ["name", true, "Name, Z to A"], [date, true, "Newest to oldest"], [date, false, "Oldest to newest"], ["size", true, "Largest to smallest"], ["size", false, "Smallest to largest"], ["type", false, kind + ", A to Z"], ["type", true, kind + ", Z to A"]];
+        var kind = t && (t.isTrash || t.searching) ? I18n.tr("Location") : I18n.tr("Type");
+        return [["name", false, I18n.tr("Name, A to Z")], ["name", true, I18n.tr("Name, Z to A")], [date, true, I18n.tr("Newest to oldest")], [date, false, I18n.tr("Oldest to newest")], ["size", true, I18n.tr("Largest to smallest")], ["size", false, I18n.tr("Smallest to largest")], ["type", false, kind + ", A to Z"], ["type", true, kind + ", Z to A"]];
     }
 
     function sortLabel() {
@@ -1667,7 +1667,7 @@ FloatingWindow {
         var s = win.app.sortOf(t.path), all = win.sortChoices(), out = [];
         if (heading)
             out.push({
-            "heading": t.searching ? "Sort results" : "Sort " + t.title
+            "heading": t.searching ? I18n.tr("Sort results") : I18n.tr("Sort %1", t.title)
         });
 
         for (var i = 0; i < all.length; i++) {
@@ -1688,7 +1688,7 @@ FloatingWindow {
         });
         out.push({
             "id": "sort:dirs",
-            "label": "Folders first",
+            "label": I18n.tr("Folders first"),
             "icon": "folder",
             "checked": p.foldersFirst
         });
@@ -1697,7 +1697,7 @@ FloatingWindow {
             var base = win.app.baseSort(t.path);
             out.push({
                 "id": "sort:all",
-                "label": "Use for all folders",
+                "label": I18n.tr("Use for all folders"),
                 "icon": "done_all",
                 "disabled": base.key === s.key && base.desc === s.desc && win.app.ownSorts() === 0
             });
@@ -1718,11 +1718,11 @@ FloatingWindow {
         });
         var docs = [{
             "id": "doc:text",
-            "label": "Text document",
+            "label": I18n.tr("Text document"),
             "icon": "description"
         }, {
             "id": "doc:empty",
-            "label": "Empty file",
+            "label": I18n.tr("Empty file"),
             "icon": "note_add"
         }];
         if (win.templates.length > 0) {
@@ -1738,7 +1738,7 @@ FloatingWindow {
         var grid = win.app.prefs.view === "grid";
         var items = t.isTrash ? [{
             "id": "empty",
-            "label": "Empty trash",
+            "label": I18n.tr("Empty trash"),
             "icon": "delete_forever",
             "danger": true,
             "disabled": win.app.trashCount === 0
@@ -1746,67 +1746,67 @@ FloatingWindow {
             "sep": true
         }, {
             "id": "selectAll",
-            "label": "Select all",
+            "label": I18n.tr("Select all"),
             "icon": "select_all",
-            "hint": "Ctrl+A"
+            "hint": I18n.tr("Ctrl+A")
         }, {
             "id": "sort",
-            "label": "Sort by",
+            "label": I18n.tr("Sort by"),
             "icon": "sort",
             "sub": win.sortItems()
         }] : [!t.isSpecial && !t.searching ? {
             "id": "newFolder",
-            "label": "New folder",
+            "label": I18n.tr("New folder"),
             "icon": "create_new_folder",
-            "hint": "Ctrl+Shift+N"
+            "hint": I18n.tr("Ctrl+Shift+N")
         } : null, !t.isSpecial && !t.searching ? {
             "id": "newDoc",
-            "label": "New document",
+            "label": I18n.tr("New document"),
             "icon": "note_add",
             "sub": docs
         } : null, {
             "sep": true
         }, !t.isSpecial && !t.searching ? {
             "id": "paste",
-            "label": "Paste",
+            "label": I18n.tr("Paste"),
             "icon": "content_paste",
-            "hint": "Ctrl+V"
+            "hint": I18n.tr("Ctrl+V")
         } : null, {
             "id": "selectAll",
-            "label": "Select all",
+            "label": I18n.tr("Select all"),
             "icon": "select_all",
-            "hint": "Ctrl+A"
+            "hint": I18n.tr("Ctrl+A")
         }, {
             "sep": true
         }, {
             "id": "sort",
-            "label": "Sort by",
+            "label": I18n.tr("Sort by"),
             "icon": "sort",
             "sub": win.sortItems()
         }, {
             "id": "view",
-            "label": grid ? "Show as list" : "Show as grid",
+            "label": grid ? I18n.tr("Show as list") : I18n.tr("Show as grid"),
             "icon": grid ? "view_list" : "grid_view",
-            "hint": grid ? "Ctrl+2" : "Ctrl+1"
+            "hint": grid ? I18n.tr("Ctrl+2") : I18n.tr("Ctrl+1")
         }, {
             "id": "hidden",
-            "label": "Show hidden files",
+            "label": I18n.tr("Show hidden files"),
             "icon": "visibility",
             "checked": win.app.prefs.hidden,
-            "hint": "Ctrl+H"
+            "hint": I18n.tr("Ctrl+H")
         }, {
             "sep": true
         }, !t.isSpecial ? {
             "id": "terminalHere",
-            "label": "Open in terminal",
+            "label": I18n.tr("Open in terminal"),
             "icon": "terminal"
         } : null, !t.isSpecial ? {
             "id": "bookmarkHere",
-            "label": "Add to bookmarks",
+            "label": I18n.tr("Add to bookmarks"),
             "icon": "bookmark_add"
         } : null, !t.isSpecial ? {
             "id": "propsHere",
-            "label": "Properties",
+            "label": I18n.tr("Properties"),
             "icon": "info"
         } : null];
         menu.open(win.clean(items), x, y, function(id) {
@@ -1838,7 +1838,7 @@ FloatingWindow {
             win.newDocument("");
             break;
         case "doc:empty":
-            var name = win.freeName("New File");
+            var name = win.freeName(I18n.tr("New File"));
             win.app.call("newFile", {
                 "dest": t.path,
                 "name": name
@@ -1873,7 +1873,7 @@ FloatingWindow {
             win.app.call("bookmarkAdd", {
                 "path": t.path
             });
-            win.say("Added “" + t.title + "” to bookmarks");
+            win.say(I18n.tr("Added “%1” to bookmarks", t.title));
             break;
         case "propsHere":
             win.properties(null);
@@ -1903,13 +1903,13 @@ FloatingWindow {
     function trashMenu(x, y) {
         menu.open([{
             "id": "open",
-            "label": "Open trash",
+            "label": I18n.tr("Open trash"),
             "icon": "delete"
         }, {
             "sep": true
         }, {
             "id": "empty",
-            "label": "Empty trash",
+            "label": I18n.tr("Empty trash"),
             "icon": "delete_forever",
             "danger": true,
             "disabled": win.app.trashCount === 0
@@ -1924,28 +1924,28 @@ FloatingWindow {
     function bookmarkMenu(b, x, y) {
         menu.open([{
             "id": "open",
-            "label": "Open",
+            "label": I18n.tr("Open"),
             "icon": "open_in_new"
         }, {
             "id": "tab",
-            "label": "Open in new tab",
+            "label": I18n.tr("Open in new tab"),
             "icon": "tab"
         }, {
             "sep": true
         }, {
             "id": "colour",
-            "label": "Colour",
+            "label": I18n.tr("Colour"),
             "icon": "palette",
             "sub": win.colourRow(win.app.bookmarkColour(b.uri))
         }, {
             "id": "rename",
-            "label": "Rename…",
+            "label": I18n.tr("Rename…"),
             "icon": "edit"
         }, {
             "sep": true
         }, {
             "id": "remove",
-            "label": "Remove bookmark",
+            "label": I18n.tr("Remove bookmark"),
             "icon": "close"
         }], x, y, function(id) {
             if (id.indexOf("colour:") === 0)
@@ -1964,10 +1964,10 @@ FloatingWindow {
     function renameBookmark(b) {
         dialog.ask({
             "mode": "input",
-            "title": "Rename bookmark",
-            "text": "An empty name goes back to the folder's own.",
+            "title": I18n.tr("Rename bookmark"),
+            "text": I18n.tr("An empty name goes back to the folder's own."),
             "input": b.label,
-            "confirm": "Rename"
+            "confirm": I18n.tr("Rename")
         }, function(ok, name) {
             if (ok)
                 win.app.call("bookmarkRename", {
@@ -1983,7 +1983,7 @@ FloatingWindow {
             "uri": b.uri
         });
         win.app.setBookmarkColour(b.uri, "");
-        win.say("Removed “" + b.label + "” from bookmarks");
+        win.say(I18n.tr("Removed “%1” from bookmarks", b.label));
     }
 
     // ctrl+d: the folder you are in, in the bookmarks or out of them again
@@ -2001,13 +2001,13 @@ FloatingWindow {
         if (t.path === win.app.home || win.app.places.some(function(p) {
             return p.path === t.path;
         })) {
-            win.say("“" + t.title + "” is in the sidebar already");
+            win.say(I18n.tr("“%1” is in the sidebar already", t.title));
             return ;
         }
         win.app.call("bookmarkAdd", {
             "path": t.path
         });
-        win.say("Added “" + t.title + "” to bookmarks");
+        win.say(I18n.tr("Added “%1” to bookmarks", t.title));
     }
 
     // a picture or a video the wallpaper strip could show
@@ -2017,7 +2017,7 @@ FloatingWindow {
 
     function setWallpaper(it) {
         Quickshell.execDetached([win.app.home + "/.config/hypr/scripts/wallpaper/set-wallpaper.sh", it.path]);
-        win.say("“" + it.label + "” is your wallpaper");
+        win.say(I18n.tr("“%1” is your wallpaper", it.label));
     }
 
     function driveMenu(v, x, y) {
@@ -2027,21 +2027,21 @@ FloatingWindow {
         }
         menu.open(win.clean([v.mounted ? {
             "id": "open",
-            "label": "Open",
+            "label": I18n.tr("Open"),
             "icon": "open_in_new"
         } : {
             "id": "mount",
-            "label": "Mount",
+            "label": I18n.tr("Mount"),
             "icon": "hard_drive"
         }, v.mounted ? {
             "id": "tab",
-            "label": "Open in new tab",
+            "label": I18n.tr("Open in new tab"),
             "icon": "tab"
         } : null, {
             "sep": true
         }, v.mounted && (v.canEject || v.canUnmount) ? {
             "id": "eject",
-            "label": v.canEject ? "Eject" : "Unmount",
+            "label": v.canEject ? I18n.tr("Eject") : I18n.tr("Unmount"),
             "icon": "eject"
         } : null]), x, y, function(id) {
             if (id === "open")
@@ -2059,21 +2059,21 @@ FloatingWindow {
     function shareMenu(v, x, y) {
         menu.open(win.clean([{
             "id": "open",
-            "label": "Open",
+            "label": I18n.tr("Open"),
             "icon": "open_in_new"
         }, {
             "id": "tab",
-            "label": "Open in new tab",
+            "label": I18n.tr("Open in new tab"),
             "icon": "tab"
         }, {
             "id": "address",
-            "label": "Copy address",
+            "label": I18n.tr("Copy address"),
             "icon": "content_copy"
         }, {
             "sep": true
         }, v.canUnmount || v.canEject ? {
             "id": "eject",
-            "label": "Disconnect",
+            "label": I18n.tr("Disconnect"),
             "icon": "eject"
         } : null]), x, y, function(id) {
             if (id === "open")
@@ -2084,7 +2084,7 @@ FloatingWindow {
                 win.app.call("clipText", {
                     "text": v.uri
                 });
-                win.say("Address copied");
+                win.say(I18n.tr("Address copied"));
             } else if (id === "eject")
                 win.unmount(v);
         });
@@ -2094,35 +2094,35 @@ FloatingWindow {
         var p = win.app.prefs;
         menu.open([{
             "id": "window",
-            "label": "New window",
+            "label": I18n.tr("New window"),
             "icon": "open_in_new",
-            "hint": "Ctrl+N"
+            "hint": I18n.tr("Ctrl+N")
         }, {
             "id": "tab",
-            "label": "New tab",
+            "label": I18n.tr("New tab"),
             "icon": "tab",
-            "hint": "Ctrl+T"
+            "hint": I18n.tr("Ctrl+T")
         }, {
             "id": "connect",
-            "label": "Connect to server…",
+            "label": I18n.tr("Connect to server…"),
             "icon": "add_link",
-            "hint": "Ctrl+K"
+            "hint": I18n.tr("Ctrl+K")
         }, {
             "sep": true
         }, {
             // the size steps in place: the menu stays open while you look
-            "label": "Icon size",
+            "label": I18n.tr("Icon size"),
             "buttons": [{
                 "id": "zoomOut",
                 "icon": "zoom_out",
-                "tip": "Zoom out",
+                "tip": I18n.tr("Zoom out"),
                 "off": function() {
                     return win.app.prefs.view === "grid" && win.app.prefs.iconSize <= win.zoomSteps[0];
                 }
             }, {
                 "id": "zoomIn",
                 "icon": "zoom_in",
-                "tip": "Zoom in",
+                "tip": I18n.tr("Zoom in"),
                 "off": function() {
                     return win.app.prefs.view === "grid" && win.app.prefs.iconSize >= win.zoomSteps[win.zoomSteps.length - 1];
                 }
@@ -2131,34 +2131,34 @@ FloatingWindow {
             "sep": true
         }, {
             "id": "hidden",
-            "label": "Show hidden files",
+            "label": I18n.tr("Show hidden files"),
             "icon": "visibility",
             "checked": p.hidden,
-            "hint": "Ctrl+H"
+            "hint": I18n.tr("Ctrl+H")
         }, {
             "id": "sidebar",
-            "label": "Show sidebar",
+            "label": I18n.tr("Show sidebar"),
             "icon": "menu",
             "checked": p.sidebar,
-            "hint": "Ctrl+B"
+            "hint": I18n.tr("Ctrl+B")
         }, {
             "id": "preview",
-            "label": "Show preview",
+            "label": I18n.tr("Show preview"),
             "icon": "preview",
             "checked": p.preview,
-            "hint": "Alt+P"
+            "hint": I18n.tr("Alt+P")
         }, {
             "id": "single",
-            "label": "Open with one click",
+            "label": I18n.tr("Open with one click"),
             "icon": "touch_app",
             "checked": p.singleClick
         }, {
             "sep": true
         }, {
             "id": "undo",
-            "label": "Undo",
+            "label": I18n.tr("Undo"),
             "icon": "undo",
-            "hint": "Ctrl+Z",
+            "hint": I18n.tr("Ctrl+Z"),
             "disabled": win.app.undoList.length === 0
         }], x, y, function(id) {
             switch (id) {
@@ -2198,7 +2198,7 @@ FloatingWindow {
 
     visible: true
     // a dialog's title ends in " — Lumen": the window rule that floats it looks for that
-    title: win.choosing ? win.chooserTitle + " — Lumen" : (win.tab ? win.tab.title : "Lumen")
+    title: win.choosing ? I18n.tr("%1 — Lumen", win.chooserTitle) : (win.tab ? win.tab.title : I18n.tr("Lumen"))
     // one step under solid, so hyprland can still blur it (see Settings.qml)
     color: Theme.alpha(Theme.bg, Math.min(Theme.bg.a, 254 / 255))
     // a dialog gets room to look around, up to most of the smallest screen
@@ -2371,7 +2371,7 @@ FloatingWindow {
 
         function onInfoSizeEvent(ev) {
             if (ev.req === win.infoReq && dialog.shown && dialog.mode === "info")
-                dialog.setRow("size", win.app.sizeText(ev.size) + " · " + ev.files + (ev.files === 1 ? " file" : " files") + (ev.dirs > 0 ? ", " + ev.dirs + (ev.dirs === 1 ? " folder" : " folders") : ""));
+                dialog.setRow("size", win.app.sizeText(ev.size) + " · " + ev.files + (ev.files === 1 ? I18n.tr(" file") : I18n.tr(" files")) + (ev.dirs > 0 ? ", " + ev.dirs + (ev.dirs === 1 ? I18n.tr(" folder") : I18n.tr(" folders")) : ""));
 
         }
 
@@ -2528,12 +2528,12 @@ FloatingWindow {
     }
 
     Shortcut {
-        sequences: ["Alt+Left", "Back"]
+        sequences: ["Alt+Left", I18n.tr("Back")]
         onActivated: win.tab.goBack()
     }
 
     Shortcut {
-        sequences: ["Alt+Right", "Forward"]
+        sequences: ["Alt+Right", I18n.tr("Forward")]
         onActivated: win.tab.goForward()
     }
 
@@ -2683,7 +2683,7 @@ FloatingWindow {
 
                 IconButton {
                     icon: "menu"
-                    tooltip: "Sidebar"
+                    tooltip: I18n.tr("Sidebar")
 
                     Tip {
                     }
@@ -2703,7 +2703,7 @@ FloatingWindow {
 
                 IconButton {
                     icon: "arrow_back"
-                    tooltip: "Back"
+                    tooltip: I18n.tr("Back")
 
                     Tip {
                     }
@@ -2714,7 +2714,7 @@ FloatingWindow {
 
                 IconButton {
                     icon: "arrow_forward"
-                    tooltip: "Forward"
+                    tooltip: I18n.tr("Forward")
 
                     Tip {
                     }
@@ -2725,7 +2725,7 @@ FloatingWindow {
 
                 IconButton {
                     icon: "arrow_upward"
-                    tooltip: "Up"
+                    tooltip: I18n.tr("Up")
 
                     Tip {
                     }
@@ -2761,7 +2761,7 @@ FloatingWindow {
                     icon: "preview"
                     checkable: true
                     checked: win.app.prefs.preview
-                    tooltip: win.app.prefs.preview ? "Hide preview (Alt+P)" : "Show preview (Alt+P)"
+                    tooltip: win.app.prefs.preview ? I18n.tr("Hide preview (Alt+P)") : I18n.tr("Show preview (Alt+P)")
 
                     Tip {
                     }
@@ -2771,7 +2771,7 @@ FloatingWindow {
 
                 IconButton {
                     icon: win.app.prefs.view === "grid" ? "view_list" : "grid_view"
-                    tooltip: win.app.prefs.view === "grid" ? "Show as list" : "Show as grid"
+                    tooltip: win.app.prefs.view === "grid" ? I18n.tr("Show as list") : I18n.tr("Show as grid")
 
                     Tip {
                     }
@@ -2783,7 +2783,7 @@ FloatingWindow {
                     id: sortBtn
 
                     icon: "sort"
-                    tooltip: win.sortLabel() !== "" ? "Sort · " + win.sortLabel() : "Sort"
+                    tooltip: win.sortLabel() !== "" ? I18n.tr("Sort · %1", win.sortLabel()) : I18n.tr("Sort")
 
                     Tip {
                     }
@@ -2800,7 +2800,7 @@ FloatingWindow {
                     id: moreBtn
 
                     icon: "more_vert"
-                    tooltip: "More"
+                    tooltip: I18n.tr("More")
 
                     Tip {
                     }
@@ -3289,7 +3289,7 @@ FloatingWindow {
                             anchors.verticalCenter: parent.verticalCenter
                             size: "xs"
                             icon: "close"
-                            tooltip: "Close tab"
+                            tooltip: I18n.tr("Close tab")
 
                             Tip {
                             }
@@ -3379,7 +3379,7 @@ FloatingWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 size: "xs"
                 icon: "add"
-                tooltip: "New tab"
+                tooltip: I18n.tr("New tab")
 
                 Tip {
                 }
@@ -3592,7 +3592,7 @@ FloatingWindow {
                     width: Math.min(Theme.dp(380), chooserBar.width * 0.42)
                     height: Theme.dp(44)
                     variant: "filled"
-                    label: "Name"
+                    label: I18n.tr("Name")
                     text: win.choosing ? win.chooser.name : ""
                     onAccepted: win.acceptChooser()
                     onEscaped: win.cancelChooser()
@@ -3612,7 +3612,7 @@ FloatingWindow {
                     visible: win.choosing && win.chooser.mode === "saveFiles"
                     anchors.verticalCenter: parent.verticalCenter
                     role: "bodyMedium"
-                    text: win.choosing && win.chooser.files.length > 0 ? (win.chooser.files.length === 1 ? "“" + win.chooser.files[0] + "” goes in the open folder" : win.chooser.files.length + " files go in the open folder") : ""
+                    text: win.choosing && win.chooser.files.length > 0 ? (win.chooser.files.length === 1 ? I18n.tr("“%1” goes in the open folder", win.chooser.files[0]) : I18n.tr("%1 files go in the open folder", win.chooser.files.length)) : ""
                     color: Theme.subtext
                 }
 
@@ -3622,7 +3622,7 @@ FloatingWindow {
 
                     visible: win.chooserFilter >= 0
                     host: root
-                    label: "File type"
+                    label: I18n.tr("File type")
                     options: !win.choosing ? [] : win.chooser.filters.map(function(f) {
                         return {
                             "label": f[0],
@@ -3646,7 +3646,7 @@ FloatingWindow {
 
                 Button {
                     variant: "text"
-                    text: "Cancel"
+                    text: I18n.tr("Cancel")
                     onClicked: win.cancelChooser()
                 }
 

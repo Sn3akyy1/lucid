@@ -38,7 +38,7 @@ Rectangle {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Notifications"
+                text: I18n.tr("Notifications")
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontTitleSm
@@ -78,7 +78,7 @@ Rectangle {
             glyphSize: Theme.dp(18)
             glyph: "close"
             glyphColor: Theme.subtext
-            tooltip: "Clear all"
+            tooltip: I18n.tr("Clear all")
             visible: !panel.empty
             onClicked: Notifs.clearAll()
         }
@@ -101,7 +101,7 @@ Rectangle {
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: Notifs.dnd ? "Notifications are paused" : "You are all caught up"
+            text: Notifs.dnd ? I18n.tr("Notifications are paused") : I18n.tr("You are all caught up")
             color: Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodySm

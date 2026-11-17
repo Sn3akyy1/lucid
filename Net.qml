@@ -47,15 +47,15 @@ Singleton {
     readonly property string connectivityLabel: {
         switch (Networking.connectivity) {
         case NetworkConnectivity.Full:
-            return "Connected to the internet";
+            return I18n.tr("Connected to the internet");
         case NetworkConnectivity.Portal:
-            return "Behind a sign-in page";
+            return I18n.tr("Behind a sign-in page");
         case NetworkConnectivity.Limited:
-            return "Connected, but no internet";
+            return I18n.tr("Connected, but no internet");
         case NetworkConnectivity.None:
-            return "No internet";
+            return I18n.tr("No internet");
         default:
-            return "Not checked";
+            return I18n.tr("Not checked");
         }
     }
 
@@ -68,9 +68,9 @@ Singleton {
     function securityLabel(sec) {
         switch (sec) {
         case WifiSecurityType.Open:
-            return "Open";
+            return I18n.tr("Open");
         case WifiSecurityType.Owe:
-            return "Open (encrypted)";
+            return I18n.tr("Open (encrypted)");
         case WifiSecurityType.StaticWep:
         case WifiSecurityType.DynamicWep:
             return "WEP";
@@ -81,10 +81,10 @@ Singleton {
         case WifiSecurityType.Sae:
             return "WPA3";
         case WifiSecurityType.Wpa3SuiteB192:
-            return "WPA3 Enterprise";
+            return I18n.tr("WPA3 Enterprise");
         case WifiSecurityType.WpaEap:
         case WifiSecurityType.Wpa2Eap:
-            return "Enterprise";
+            return I18n.tr("Enterprise");
         case WifiSecurityType.Leap:
             return "LEAP";
         default:
@@ -108,15 +108,15 @@ Singleton {
 
     function strengthLabel(s) {
         if (s >= 75)
-            return "Excellent";
+            return I18n.tr("Excellent");
 
         if (s >= 50)
-            return "Good";
+            return I18n.tr("Good");
 
         if (s >= 25)
-            return "Fair";
+            return I18n.tr("Fair");
 
-        return "Weak";
+        return I18n.tr("Weak");
     }
 
     // the confirm dialog carries only a token, so these come back by name
@@ -256,7 +256,7 @@ Singleton {
 
         function list(): string {
             if (!root.wifiDevice || !root.wifiDevice.networks)
-                return "no wifi device";
+                return I18n.tr("no wifi device");
 
             const seen = [];
             for (const n of root.wifiDevice.networks.values) {

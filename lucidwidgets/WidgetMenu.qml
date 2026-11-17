@@ -44,27 +44,27 @@ Item {
     }
     readonly property var tones: [{
         "key": "auto",
-        "label": "Auto",
+        "label": I18n.tr("Auto"),
         "fill": Theme.surfaceHighest,
         "dot": Theme.primary
     }, {
         "key": "surface",
-        "label": "Surface",
+        "label": I18n.tr("Surface"),
         "fill": Theme.surfaceContainer,
         "dot": Theme.text
     }, {
         "key": "primary",
-        "label": "Primary",
+        "label": I18n.tr("Primary"),
         "fill": Theme.primaryContainer,
         "dot": Theme.primary
     }, {
         "key": "secondary",
-        "label": "Secondary",
+        "label": I18n.tr("Secondary"),
         "fill": Theme.secondaryContainer,
         "dot": Theme.secondary
     }, {
         "key": "tertiary",
-        "label": "Tertiary",
+        "label": I18n.tr("Tertiary"),
         "fill": Theme.tertiaryContainer,
         "dot": Theme.tertiary
     }]
@@ -201,7 +201,7 @@ Item {
                             width: parent.width
                             role: "bodySmall"
                             color: Theme.subtext
-                            text: (menu.variantInfo ? menu.variantInfo.name : "") + (menu.frame && menu.frame.pinned ? "  ·  locked" : "")
+                            text: (menu.variantInfo ? menu.variantInfo.name : "") + (menu.frame && menu.frame.pinned ? I18n.tr("  ·  locked") : "")
                             elide: Text.ElideRight
                         }
 
@@ -221,7 +221,7 @@ Item {
                             size: "xs"
                             icon: "keep"
                             iconFill: checked ? 1 : 0
-                            tooltip: checked ? "Unlock" : "Lock in place"
+                            tooltip: checked ? I18n.tr("Unlock") : I18n.tr("Lock in place")
                             onClicked: {
                                 if (menu.frame)
                                     Widgets.togglePinned(menu.frame.uid);
@@ -242,7 +242,7 @@ Item {
                 // style: every face of this card, drawn small and live
                 Section {
                     visible: menu.typeInfo !== null && menu.typeInfo.variants.length > 1
-                    title: "Style"
+                    title: I18n.tr("Style")
 
                     Flow {
                         width: body.width
@@ -342,7 +342,7 @@ Item {
                 // colour: the m3 container the card sits on
                 Section {
                     visible: menu.frame !== null && !menu.frame.bare
-                    title: "Colour"
+                    title: I18n.tr("Colour")
 
                     Row {
                         width: body.width
@@ -447,7 +447,7 @@ Item {
 
                 // size: a zoom step, or for a stretchable card its numbers and two shortcuts
                 Section {
-                    title: "Size"
+                    title: I18n.tr("Size")
 
                     ButtonGroup {
                         visible: !menu.resizable
@@ -456,16 +456,16 @@ Item {
                         current: menu.frame ? String(menu.frame.zoom) : "1"
                         options: [{
                             "key": "0.75",
-                            "label": "S"
+                            "label": I18n.tr("S")
                         }, {
                             "key": "1",
-                            "label": "M"
+                            "label": I18n.tr("M")
                         }, {
                             "key": "1.25",
-                            "label": "L"
+                            "label": I18n.tr("L")
                         }, {
                             "key": "1.5",
-                            "label": "XL"
+                            "label": I18n.tr("XL")
                         }]
                         onPicked: (key) => {
                             if (menu.frame)
@@ -479,7 +479,7 @@ Item {
                         leftPadding: Theme.dp(4)
                         role: "bodySmall"
                         color: Theme.subtext
-                        text: menu.frame ? Math.round(menu.frame.bodyW) + " × " + Math.round(menu.frame.bodyH) + "  ·  drag any edge" : ""
+                        text: menu.frame ? I18n.tr("%1 × %2  ·  drag any edge", Math.round(menu.frame.bodyW), Math.round(menu.frame.bodyH)) : ""
                     }
 
                     Row {
@@ -490,7 +490,7 @@ Item {
                             variant: "tonal"
                             size: "xs"
                             icon: "width_full"
-                            text: "Full width"
+                            text: I18n.tr("Full width")
                             onClicked: {
                                 if (menu.frame)
                                     menu.frame.fillWidth();
@@ -502,7 +502,7 @@ Item {
                             variant: "tonal"
                             size: "xs"
                             icon: "restart_alt"
-                            text: "Reset"
+                            text: I18n.tr("Reset")
                             onClicked: {
                                 if (menu.frame)
                                     Widgets.resetSize(menu.frame.uid);
@@ -517,7 +517,7 @@ Item {
                 // options: switches as one grouped list, choices under their labels
                 Section {
                     visible: menu.optionList.length > 0
-                    title: "Options"
+                    title: I18n.tr("Options")
 
                     Column {
                         visible: menu.boolOptions.length > 0
@@ -613,7 +613,7 @@ Item {
                 // screen: only once there is more than one
                 Section {
                     visible: menu.screens.length > 1
-                    title: "Screen"
+                    title: I18n.tr("Screen")
 
                     ButtonGroup {
                         width: body.width
@@ -643,7 +643,7 @@ Item {
                         variant: "tonal"
                         size: "s"
                         icon: "content_copy"
-                        text: "Duplicate"
+                        text: I18n.tr("Duplicate")
                         disabled: Widgets.full
                         onClicked: {
                             if (!menu.frame)
@@ -660,7 +660,7 @@ Item {
                         danger: true
                         size: "s"
                         icon: "delete"
-                        text: "Remove"
+                        text: I18n.tr("Remove")
                         onClicked: {
                             if (!menu.frame)
                                 return ;

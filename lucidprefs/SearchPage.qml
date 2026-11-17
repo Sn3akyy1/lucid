@@ -85,7 +85,7 @@ Column {
     Text {
         width: parent.width
         visible: page.results.length === 0
-        text: !win.searchReady ? "Reading the pages…" : "Nothing in Settings matches “" + win.searchQuery + "”. Search looks through the name and the description of every option, on every page."
+        text: !win.searchReady ? I18n.tr("Reading the pages…") : I18n.tr("Nothing in Settings matches “%1”. Search looks through the name and the description of every option, on every page.", win.searchQuery)
         color: Theme.subtext
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBodyLg
@@ -197,7 +197,7 @@ Column {
                     anchors.right: parent.right
                     anchors.rightMargin: Theme.dp(20)
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "Open page"
+                    text: I18n.tr("Open page")
                     color: item.selected ? item.fg : Theme.subtextDim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontLabelMd

@@ -32,9 +32,9 @@ Item {
 
         out.push(bar.app.sizeText(c.size || 0));
         if (bar.win.dirty)
-            out.push("Unsaved edits");
+            out.push(I18n.tr("Unsaved edits"));
         else if (bar.win.kept)
-            out.push("Original kept");
+            out.push(I18n.tr("Original kept"));
 
         return out.join("  ·  ");
     }
@@ -49,7 +49,7 @@ Item {
         IconButton {
             anchors.verticalCenter: parent.verticalCenter
             icon: bar.editing ? "close" : "grid_view"
-            tooltip: bar.editing ? "Done editing (Esc)" : "All pictures (G)"
+            tooltip: bar.editing ? I18n.tr("Done editing (Esc)") : I18n.tr("All pictures (G)")
             checkable: !bar.editing
             checked: bar.win.overview
 
@@ -72,7 +72,7 @@ Item {
             LText {
                 width: parent.width
                 role: "titleMedium"
-                text: bar.editing ? "Edit" : (bar.cur ? bar.cur.name : "Lens")
+                text: bar.editing ? I18n.tr("Edit") : (bar.cur ? bar.cur.name : I18n.tr("Lens"))
                 elide: Text.ElideMiddle
             }
 
@@ -80,7 +80,7 @@ Item {
                 width: parent.width
                 role: "bodySmall"
                 color: Theme.subtext
-                text: bar.editing ? (bar.cur ? bar.cur.name : "") : (bar.win.pasted ? "Pasted from the clipboard  ·  save a copy to keep it" : bar.facts)
+                text: bar.editing ? (bar.cur ? bar.cur.name : "") : (bar.win.pasted ? I18n.tr("Pasted from the clipboard  ·  save a copy to keep it") : bar.facts)
                 elide: Text.ElideMiddle
                 visible: text !== ""
                 tabular: true
@@ -109,7 +109,7 @@ Item {
                 visible: bar.win.dirty
                 variant: "text"
                 size: "s"
-                text: "Discard"
+                text: I18n.tr("Discard")
                 onClicked: bar.win.revert()
             }
 
@@ -117,7 +117,7 @@ Item {
                 variant: "tonal"
                 size: "s"
                 icon: "save"
-                text: bar.win.busy ? "Saving…" : bar.win.pasted ? "Save a copy" : "Save"
+                text: bar.win.busy ? I18n.tr("Saving…") : bar.win.pasted ? I18n.tr("Save a copy") : I18n.tr("Save")
                 disabled: bar.win.busy
                 onClicked: bar.win.save(bar.win.pasted)
             }
@@ -136,7 +136,7 @@ Item {
 
             IconButton {
                 icon: "zoom_out"
-                tooltip: "Zoom out (−)"
+                tooltip: I18n.tr("Zoom out (−)")
                 disabled: !bar.stage.zoomed
 
                 Tip {
@@ -184,7 +184,7 @@ Item {
 
             IconButton {
                 icon: "zoom_in"
-                tooltip: "Zoom in (+)"
+                tooltip: I18n.tr("Zoom in (+)")
 
                 Tip {
                 }
@@ -202,7 +202,7 @@ Item {
         IconButton {
             visible: !bar.editing && wide.ok
             icon: "rotate_left"
-            tooltip: "Rotate left (Shift+R)"
+            tooltip: I18n.tr("Rotate left (Shift+R)")
             disabled: !bar.win.canTurn
 
             Tip {
@@ -214,7 +214,7 @@ Item {
         IconButton {
             visible: !bar.editing && wide.ok
             icon: "rotate_right"
-            tooltip: "Rotate right (R)"
+            tooltip: I18n.tr("Rotate right (R)")
             disabled: !bar.win.canTurn
 
             Tip {
@@ -233,7 +233,7 @@ Item {
         IconButton {
             visible: !bar.editing && bar.win.isVideo
             icon: "content_cut"
-            tooltip: "Trim (E)"
+            tooltip: I18n.tr("Trim (E)")
             checkable: true
             checked: bar.win.trimming
             disabled: bar.cur !== null && bar.cur.broken === true
@@ -247,7 +247,7 @@ Item {
         IconButton {
             visible: !bar.editing && !bar.win.isVideo
             icon: "crop"
-            tooltip: "Crop (C)"
+            tooltip: I18n.tr("Crop (C)")
             disabled: !bar.win.canEdit
 
             Tip {
@@ -259,7 +259,7 @@ Item {
         IconButton {
             visible: !bar.editing && !bar.win.isVideo
             icon: "tune"
-            tooltip: "Edit (E)"
+            tooltip: I18n.tr("Edit (E)")
             disabled: !bar.win.canEdit
 
             Tip {
@@ -271,7 +271,7 @@ Item {
         IconButton {
             visible: !bar.editing && !bar.win.isVideo
             icon: "draw"
-            tooltip: "Draw (D)"
+            tooltip: I18n.tr("Draw (D)")
             disabled: !bar.win.canEdit
 
             Tip {
@@ -283,7 +283,7 @@ Item {
         IconButton {
             visible: !bar.editing
             icon: "info"
-            tooltip: bar.win.showInfo ? "Hide details (I)" : "Details (I)"
+            tooltip: bar.win.showInfo ? I18n.tr("Hide details (I)") : I18n.tr("Details (I)")
             checkable: true
             checked: bar.win.showInfo
 
@@ -298,7 +298,7 @@ Item {
 
             visible: !bar.editing
             icon: "more_vert"
-            tooltip: "More"
+            tooltip: I18n.tr("More")
 
             Tip {
             }
@@ -313,7 +313,7 @@ Item {
         IconButton {
             visible: bar.editing
             icon: "undo"
-            tooltip: "Undo (Ctrl+Z)"
+            tooltip: I18n.tr("Undo (Ctrl+Z)")
             disabled: bar.win.stepsHere.past.length === 0
 
             Tip {
@@ -325,7 +325,7 @@ Item {
         IconButton {
             visible: bar.editing
             icon: "redo"
-            tooltip: "Redo (Ctrl+Y)"
+            tooltip: I18n.tr("Redo (Ctrl+Y)")
             disabled: bar.win.stepsHere.future.length === 0
 
             Tip {
@@ -339,7 +339,7 @@ Item {
 
             visible: bar.editing
             icon: "compare"
-            tooltip: bar.win.dirty ? "Hold to see it without these edits (\\)" : "Hold to see the original (\\)"
+            tooltip: bar.win.dirty ? I18n.tr("Hold to see it without these edits (\\)") : I18n.tr("Hold to see the original (\\)")
             checkable: true
             checked: bar.win.comparing
             disabled: !bar.win.dirty && !bar.win.kept
@@ -368,7 +368,7 @@ Item {
             visible: bar.editing && !bar.win.narrow
             anchors.verticalCenter: parent.verticalCenter
             variant: "text"
-            text: !bar.win.dirty && bar.win.kept ? "Revert to original" : "Reset"
+            text: !bar.win.dirty && bar.win.kept ? I18n.tr("Revert to original") : I18n.tr("Reset")
             disabled: bar.win.busy || (!bar.win.dirty && !bar.win.kept)
             onClicked: bar.win.dirty ? bar.win.revert() : bar.win.revertOriginal()
         }
@@ -377,7 +377,7 @@ Item {
             visible: bar.editing
             anchors.verticalCenter: parent.verticalCenter
             variant: "tonal"
-            text: "Save copy"
+            text: I18n.tr("Save copy")
             disabled: !bar.win.dirty || bar.win.busy
             onClicked: bar.win.save(true)
         }
@@ -393,7 +393,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             variant: "filled"
             icon: "save"
-            text: bar.win.busy ? "Saving…" : "Save"
+            text: bar.win.busy ? I18n.tr("Saving…") : I18n.tr("Save")
             disabled: !bar.win.dirty || bar.win.busy || bar.win.pasted
             onClicked: bar.win.save(false)
         }

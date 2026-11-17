@@ -26,7 +26,7 @@ Item {
     readonly property bool isCurrent: month.year === month.today.getFullYear() && month.monthIndex === month.today.getMonth()
     readonly property var weekdays: {
         const out = [];
-        for (let i = 0; i < 7; i++) out.push(new Date(2023, 0, (month.mondayFirst ? 2 : 1) + i).toLocaleDateString(Qt.locale(), "ddd").charAt(0))
+        for (let i = 0; i < 7; i++) out.push(new Date(2023, 0, (month.mondayFirst ? 2 : 1) + i).toLocaleDateString(I18n.locale, "ddd").charAt(0))
         return out;
     }
     readonly property var cells: {
@@ -125,7 +125,7 @@ Item {
                 role: "titleLarge"
                 weight: 600
                 color: Theme.primary
-                text: new Date(month.year, month.monthIndex, 1).toLocaleDateString(Qt.locale(), "MMMM")
+                text: new Date(month.year, month.monthIndex, 1).toLocaleDateString(I18n.locale, I18n.tr("MMMM"))
             }
 
             LText {
@@ -146,21 +146,21 @@ Item {
                 visible: !month.isCurrent
                 icon: "today"
                 size: "xs"
-                tooltip: "This month"
+                tooltip: I18n.tr("This month")
                 onClicked: month.goToday()
             }
 
             IconButton {
                 icon: "chevron_left"
                 size: "xs"
-                tooltip: "Last month"
+                tooltip: I18n.tr("Last month")
                 onClicked: month.page(-1)
             }
 
             IconButton {
                 icon: "chevron_right"
                 size: "xs"
-                tooltip: "Next month"
+                tooltip: I18n.tr("Next month")
                 onClicked: month.page(1)
             }
 

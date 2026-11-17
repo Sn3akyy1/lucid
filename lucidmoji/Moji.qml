@@ -23,7 +23,7 @@ PanelWindow {
     // "emoji" | "kaomoji" | "gif"
     property string tab: "emoji"
     property string lastCopied: ""
-    property string lastAction: "Copied"
+    property string lastAction: I18n.tr("Copied")
     property bool wtypeAvailable: false
     property bool handingOff: false
     property var typeQueue: []
@@ -177,7 +177,7 @@ PanelWindow {
 
         Quickshell.execDetached(["wl-copy", "--", t]);
         mojiWindow.lastCopied = t;
-        mojiWindow.lastAction = "Copied";
+        mojiWindow.lastAction = I18n.tr("Copied");
         copiedTimer.restart();
     }
 
@@ -193,7 +193,7 @@ PanelWindow {
         q.push(t);
         mojiWindow.typeQueue = q;
         mojiWindow.lastCopied = t;
-        mojiWindow.lastAction = "Inserted";
+        mojiWindow.lastAction = I18n.tr("Inserted");
         copiedTimer.restart();
         if (mojiWindow.handingOff)
             return ;

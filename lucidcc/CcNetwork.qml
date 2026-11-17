@@ -106,7 +106,7 @@ Item {
             spacing: Theme.dp(16)
 
             Repeater {
-                model: [["arrow_downward", Sys.netDown, Theme.primary, "Down"], ["arrow_upward", Sys.netUp, Theme.tertiary, "Up"]]
+                model: [["arrow_downward", Sys.netDown, Theme.primary, I18n.tr("Down")], ["arrow_upward", Sys.netUp, Theme.tertiary, I18n.tr("Up")]]
 
                 Column {
                     required property var modelData
@@ -175,7 +175,7 @@ Item {
         spacing: Theme.dp(10)
 
         Repeater {
-            model: [["arrow_downward", Sys.netDown, Theme.primary, "Down", Sys.downHistory], ["arrow_upward", Sys.netUp, Theme.tertiary, "Up", Sys.upHistory]]
+            model: [["arrow_downward", Sys.netDown, Theme.primary, I18n.tr("Down"), Sys.downHistory], ["arrow_upward", Sys.netUp, Theme.tertiary, I18n.tr("Up"), Sys.upHistory]]
 
             Rectangle {
                 required property var modelData

@@ -31,7 +31,7 @@ WidgetBody {
         if (w.preview)
             return {
             "icon": "event",
-            "text": "Team call · in 25 min"
+            "text": I18n.tr("Team call · in 25 min")
         };
 
         var h = Chrono.headline;
@@ -69,27 +69,27 @@ WidgetBody {
             if (w.now < rise && rise - w.now < 6 * 3600000)
                 return {
                 "icon": "wb_twilight",
-                "text": "Sunrise " + w.clock(rise)
+                "text": I18n.tr("Sunrise %1", w.clock(rise))
             };
 
             if (w.now < set)
                 return {
                 "icon": "wb_twilight",
-                "text": "Sunset " + w.clock(set)
+                "text": I18n.tr("Sunset %1", w.clock(set))
             };
 
         }
         if (w.report && w.report.pop >= 40)
             return {
             "icon": "umbrella",
-            "text": w.report.pop + "% chance of rain today"
+            "text": I18n.tr("%1% chance of rain today", w.report.pop)
         };
 
         return null;
     }
 
     function clock(d) {
-        return d.toLocaleTimeString(Qt.locale(), Prefs.clock24h ? "HH:mm" : "h:mm AP");
+        return d.toLocaleTimeString(I18n.locale, Prefs.clock24h ? "HH:mm" : "h:mm AP");
     }
 
     defaultTone: "secondary"
@@ -125,7 +125,7 @@ WidgetBody {
                 weight: 560
                 rounded: 60
                 color: w.fg
-                text: w.now.toLocaleDateString(Qt.locale(), "dddd, d MMM")
+                text: w.now.toLocaleDateString(I18n.locale, I18n.tr("dddd, d MMM"))
             }
 
             Rectangle {

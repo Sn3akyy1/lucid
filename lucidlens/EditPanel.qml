@@ -17,30 +17,30 @@ Rectangle {
     readonly property real fullW: Theme.dp(336)
     readonly property var tabs: [{
         "key": "crop",
-        "label": "Crop",
+        "label": I18n.tr("Crop"),
         "icon": "crop"
     }, {
         "key": "adjust",
-        "label": "Adjust",
+        "label": I18n.tr("Adjust"),
         "icon": "tune"
     }, {
         "key": "filters",
-        "label": "Filters",
+        "label": I18n.tr("Filters"),
         "icon": "photo_filter"
     }, {
         "key": "markup",
-        "label": "Draw",
+        "label": I18n.tr("Draw"),
         "icon": "draw"
     }]
     readonly property int tabIndex: Math.max(0, ["crop", "adjust", "filters", "markup"].indexOf(panel.win.tab))
     // the looks, as adjustments from -100 to 100
     readonly property var looks: [{
         "id": "",
-        "name": "Original",
+        "name": I18n.tr("Original"),
         "a": {}
     }, {
         "id": "vivid",
-        "name": "Vivid",
+        "name": I18n.tr("Vivid"),
         "a": {
             "contrast": 15,
             "saturation": 22,
@@ -48,7 +48,7 @@ Rectangle {
         }
     }, {
         "id": "warm",
-        "name": "Warm",
+        "name": I18n.tr("Warm"),
         "a": {
             "warmth": 35,
             "saturation": 8,
@@ -56,7 +56,7 @@ Rectangle {
         }
     }, {
         "id": "cool",
-        "name": "Cool",
+        "name": I18n.tr("Cool"),
         "a": {
             "warmth": -32,
             "tint": 4,
@@ -64,7 +64,7 @@ Rectangle {
         }
     }, {
         "id": "golden",
-        "name": "Golden",
+        "name": I18n.tr("Golden"),
         "a": {
             "warmth": 48,
             "highlights": 15,
@@ -73,7 +73,7 @@ Rectangle {
         }
     }, {
         "id": "fresh",
-        "name": "Fresh",
+        "name": I18n.tr("Fresh"),
         "a": {
             "exposure": 7,
             "vibrance": 34,
@@ -83,7 +83,7 @@ Rectangle {
         }
     }, {
         "id": "matte",
-        "name": "Matte",
+        "name": I18n.tr("Matte"),
         "a": {
             "fade": 55,
             "contrast": -14,
@@ -91,7 +91,7 @@ Rectangle {
         }
     }, {
         "id": "vintage",
-        "name": "Vintage",
+        "name": I18n.tr("Vintage"),
         "a": {
             "warmth": 24,
             "fade": 42,
@@ -101,7 +101,7 @@ Rectangle {
         }
     }, {
         "id": "drama",
-        "name": "Drama",
+        "name": I18n.tr("Drama"),
         "a": {
             "contrast": 42,
             "highlights": -28,
@@ -111,14 +111,14 @@ Rectangle {
         }
     }, {
         "id": "mono",
-        "name": "Mono",
+        "name": I18n.tr("Mono"),
         "a": {
             "mono": 100,
             "contrast": 8
         }
     }, {
         "id": "noir",
-        "name": "Noir",
+        "name": I18n.tr("Noir"),
         "a": {
             "mono": 100,
             "contrast": 50,
@@ -127,7 +127,7 @@ Rectangle {
         }
     }, {
         "id": "silver",
-        "name": "Silver",
+        "name": I18n.tr("Silver"),
         "a": {
             "mono": 100,
             "fade": 35,
@@ -165,50 +165,50 @@ Rectangle {
     }]
     readonly property var tools: [{
         "id": "pen",
-        "label": "Pen",
+        "label": I18n.tr("Pen"),
         "icon": "ink_pen"
     }, {
         "id": "marker",
-        "label": "Highlight",
+        "label": I18n.tr("Highlight"),
         "icon": "ink_highlighter"
     }, {
         "id": "arrow",
-        "label": "Arrow",
+        "label": I18n.tr("Arrow"),
         "icon": "arrow_outward"
     }, {
         "id": "line",
-        "label": "Line",
+        "label": I18n.tr("Line"),
         "icon": "pen_size_2"
     }, {
         "id": "rect",
-        "label": "Box",
+        "label": I18n.tr("Box"),
         "icon": "rectangle"
     }, {
         "id": "ellipse",
-        "label": "Ring",
+        "label": I18n.tr("Ring"),
         "icon": "circle"
     }, {
         "id": "text",
-        "label": "Text",
+        "label": I18n.tr("Text"),
         "icon": "text_fields"
     }, {
         "id": "redact",
-        "label": "Hide",
+        "label": I18n.tr("Hide"),
         "icon": "blur_on"
     }, {
         "id": "eraser",
-        "label": "Erase",
+        "label": I18n.tr("Erase"),
         "icon": "ink_eraser"
     }]
     readonly property var ratios: [{
         "id": "free",
-        "label": "Free"
+        "label": I18n.tr("Free")
     }, {
         "id": "original",
-        "label": "Original"
+        "label": I18n.tr("Original")
     }, {
         "id": "1:1",
-        "label": "Square"
+        "label": I18n.tr("Square")
     }, {
         "id": "4:3",
         "label": "4:3"
@@ -220,7 +220,7 @@ Rectangle {
         "label": "16:9"
     }, {
         "id": "screen",
-        "label": "Screen"
+        "label": I18n.tr("Screen")
     }]
 
     function lookOf(id) {
@@ -275,7 +275,7 @@ Rectangle {
     function auto() {
         var st = panel.win.info && panel.win.info.histogram ? panel.win.info.histogram.stats : null;
         if (!st) {
-            panel.win.say("Still looking at the picture…");
+            panel.win.say(I18n.tr("Still looking at the picture…"));
             return ;
         }
         var spread = st.hi - st.lo;
@@ -362,7 +362,7 @@ Rectangle {
                         spacing: Theme.dp(18)
 
                         Heading {
-                            text: "Shape"
+                            text: I18n.tr("Shape")
                         }
 
                         Flow {
@@ -385,7 +385,7 @@ Rectangle {
 
                             IconButton {
                                 icon: "crop_rotate"
-                                tooltip: panel.win.cropPortrait ? "Make it wide" : "Make it tall"
+                                tooltip: panel.win.cropPortrait ? I18n.tr("Make it wide") : I18n.tr("Make it tall")
                                 variant: "tonal"
                                 checkable: true
                                 checked: panel.win.cropPortrait
@@ -400,7 +400,7 @@ Rectangle {
                         }
 
                         Heading {
-                            text: "Turn"
+                            text: I18n.tr("Turn")
                         }
 
                         Row {
@@ -410,7 +410,7 @@ Rectangle {
                                 variant: "tonal"
                                 size: "m"
                                 icon: "rotate_left"
-                                tooltip: "Rotate left"
+                                tooltip: I18n.tr("Rotate left")
 
                                 Tip {
                                 }
@@ -422,7 +422,7 @@ Rectangle {
                                 variant: "tonal"
                                 size: "m"
                                 icon: "rotate_right"
-                                tooltip: "Rotate right"
+                                tooltip: I18n.tr("Rotate right")
 
                                 Tip {
                                 }
@@ -434,7 +434,7 @@ Rectangle {
                                 variant: "tonal"
                                 size: "m"
                                 icon: "flip"
-                                tooltip: "Flip side to side"
+                                tooltip: I18n.tr("Flip side to side")
 
                                 Tip {
                                 }
@@ -447,7 +447,7 @@ Rectangle {
                                 size: "m"
                                 icon: "flip"
                                 rotation: 90
-                                tooltip: "Flip upside down"
+                                tooltip: I18n.tr("Flip upside down")
 
                                 Tip {
                                 }
@@ -459,7 +459,7 @@ Rectangle {
 
                         AdjustSlider {
                             width: parent.width
-                            label: "Straighten"
+                            label: I18n.tr("Straighten")
                             from: -45
                             to: 45
                             stepSize: 0.5
@@ -485,13 +485,13 @@ Rectangle {
                             role: "bodyMedium"
                             color: Theme.subtext
                             wrapMode: Text.Wrap
-                            text: "Drag the corners or the edges to crop, or drag inside to move the crop. Shift keeps its shape."
+                            text: I18n.tr("Drag the corners or the edges to crop, or drag inside to move the crop. Shift keeps its shape.")
                         }
 
                         Button {
                             variant: "outlined"
                             icon: "restart_alt"
-                            text: "Reset the crop"
+                            text: I18n.tr("Reset the crop")
                             disabled: !panel.e.crop && !panel.e.angle && !panel.e.turns && !panel.e.flipH && !panel.e.flipV
                             onClicked: panel.win.change({
                                 "crop": null,
@@ -515,76 +515,76 @@ Rectangle {
                         Button {
                             variant: "tonal"
                             icon: "auto_fix_high"
-                            text: "Auto"
+                            text: I18n.tr("Auto")
                             onClicked: panel.auto()
                         }
 
                         Heading {
-                            text: "Light"
+                            text: I18n.tr("Light")
                         }
 
                         Adjuster {
                             key: "exposure"
-                            label: "Exposure"
+                            label: I18n.tr("Exposure")
                         }
 
                         Adjuster {
                             key: "contrast"
-                            label: "Contrast"
+                            label: I18n.tr("Contrast")
                         }
 
                         Adjuster {
                             key: "highlights"
-                            label: "Highlights"
+                            label: I18n.tr("Highlights")
                         }
 
                         Adjuster {
                             key: "shadows"
-                            label: "Shadows"
+                            label: I18n.tr("Shadows")
                         }
 
                         Heading {
-                            text: "Colour"
+                            text: I18n.tr("Colour")
                         }
 
                         Adjuster {
                             key: "saturation"
-                            label: "Saturation"
+                            label: I18n.tr("Saturation")
                         }
 
                         Adjuster {
                             key: "vibrance"
-                            label: "Vibrance"
+                            label: I18n.tr("Vibrance")
                         }
 
                         Adjuster {
                             key: "warmth"
-                            label: "Warmth"
+                            label: I18n.tr("Warmth")
                         }
 
                         Adjuster {
                             key: "tint"
-                            label: "Tint"
+                            label: I18n.tr("Tint")
                         }
 
                         Heading {
-                            text: "Finish"
+                            text: I18n.tr("Finish")
                         }
 
                         Adjuster {
                             key: "fade"
-                            label: "Fade"
+                            label: I18n.tr("Fade")
                             from: 0
                         }
 
                         Adjuster {
                             key: "vignette"
-                            label: "Vignette"
+                            label: I18n.tr("Vignette")
                         }
 
                         Adjuster {
                             key: "mono"
-                            label: "Black and white"
+                            label: I18n.tr("Black and white")
                             from: 0
                         }
 
@@ -707,7 +707,7 @@ Rectangle {
                         AdjustSlider {
                             width: parent.width
                             visible: (panel.e.filter || "") !== ""
-                            label: "Strength"
+                            label: I18n.tr("Strength")
                             from: 0
                             to: 100
                             origin: 0
@@ -726,7 +726,7 @@ Rectangle {
                             role: "bodyMedium"
                             color: Theme.subtext
                             wrapMode: Text.Wrap
-                            text: "A look sets the adjustments; fine-tune it under Adjust."
+                            text: I18n.tr("A look sets the adjustments; fine-tune it under Adjust.")
                         }
 
                     }
@@ -820,7 +820,7 @@ Rectangle {
                         }
 
                         Heading {
-                            text: "Colour"
+                            text: I18n.tr("Colour")
                             visible: ["redact", "eraser"].indexOf(panel.app.prefs.tool) < 0
                         }
 
@@ -897,7 +897,7 @@ Rectangle {
                         }
 
                         Heading {
-                            text: "Size"
+                            text: I18n.tr("Size")
                             visible: panel.app.prefs.tool !== "eraser"
                         }
 
@@ -956,7 +956,7 @@ Rectangle {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: parent.width - fillSwitch.width - Theme.dp(12)
                                 role: "bodyLarge"
-                                text: panel.app.prefs.tool === "text" ? "Put the words on a label" : "Fill the shape"
+                                text: panel.app.prefs.tool === "text" ? I18n.tr("Put the words on a label") : I18n.tr("Fill the shape")
                             }
 
                             Switch {
@@ -976,13 +976,13 @@ Rectangle {
                             role: "bodyMedium"
                             color: Theme.subtext
                             wrapMode: Text.Wrap
-                            text: panel.app.prefs.tool === "text" ? "Click where the words go, type, then press Enter." : panel.app.prefs.tool === "redact" ? "Drag over what should be hidden: it is drawn back in blocks too coarse to read." : panel.app.prefs.tool === "eraser" ? "Click a drawing to take it away." : "Draw on the picture. Ctrl+Z takes the last mark back. Shift keeps a line straight and a shape even."
+                            text: panel.app.prefs.tool === "text" ? I18n.tr("Click where the words go, type, then press Enter.") : panel.app.prefs.tool === "redact" ? I18n.tr("Drag over what should be hidden: it is drawn back in blocks too coarse to read.") : panel.app.prefs.tool === "eraser" ? I18n.tr("Click a drawing to take it away.") : I18n.tr("Draw on the picture. Ctrl+Z takes the last mark back. Shift keeps a line straight and a shape even.")
                         }
 
                         Button {
                             variant: "outlined"
                             icon: "delete"
-                            text: "Clear the drawings"
+                            text: I18n.tr("Clear the drawings")
                             disabled: !panel.e.marks || panel.e.marks.length === 0
                             onClicked: panel.win.change({
                                 "marks": []
