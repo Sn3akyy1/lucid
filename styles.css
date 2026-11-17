@@ -2465,36 +2465,71 @@ html:not(.js) .pg-row > .pg.on {
   font-weight: 650;
 }
 
+/* Settings' rail and Lumen's sidebar: a row's words and glyph take the pill's colour by
+   how much of the row it covers right now (--lit, set by script.js each frame), so they
+   light as it arrives and the rows it passes only flicker; the row it stops on turns
+   its glyph filled and its words a weight up */
 .rail-nav a {
+  --lit: 0;
   position: relative;
   z-index: 1;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 14px;
+  column-gap: 14px;
   height: 48px;
   padding: 0 16px;
   border-radius: 999px;
-  color: var(--text);
-  font-weight: 560;
+  color: color-mix(in oklab, var(--on-accent-c) calc(var(--lit) * 100%), var(--text-2));
+  font-weight: 500;
   text-decoration: none !important;
-  transition: color var(--d-medium) var(--ease-std), background-color var(--d-quick) var(--ease-std);
+  transition: background-color var(--d-quick) var(--ease-std);
 }
 
 .rail-nav a:hover {
   background: var(--hover);
 }
 
-.rail-nav a.on {
-  color: var(--on-accent-c);
-  background: transparent;
+.rail-nav a.on:hover {
+  background: color-mix(in oklab, var(--on-accent-c) 8%, transparent);
 }
 
-.rail-nav a .i {
-  transition: scale var(--d-spring-fast) var(--spring-fast);
+.rail-nav a.arrived {
+  font-weight: 600;
 }
 
-.rail-nav a.on .i {
+/* the glyph swells under the pointer and gives under a press, on the spatial curve */
+.rail-nav a > .i {
+  grid-row: 1;
+  grid-column: 1;
+  transition: scale 500ms cubic-bezier(0.38, 1.21, 0.22, 1), opacity var(--d-short) var(--ease-std);
+}
+
+.rail-nav a:hover > .i {
   scale: 1.12;
+}
+
+.rail-nav a:active > .i {
+  scale: 0.92;
+}
+
+.rail-nav a > .i:nth-of-type(2),
+.rail-nav a.arrived > .i:nth-of-type(1) {
+  opacity: 0;
+}
+
+.rail-nav a.arrived > .i:nth-of-type(2) {
+  opacity: 1;
+}
+
+.rail-nav a > span {
+  grid-column: 2;
+}
+
+/* before script.js, or without it, the section you are on is still lit */
+html:not(.js) .rail-nav a.on {
+  --lit: 1;
+  background: var(--accent-c);
 }
 
 .rail-pill {
@@ -2506,11 +2541,14 @@ html:not(.js) .pg-row > .pg.on {
   border-radius: 999px;
   background: var(--accent-c);
   opacity: 0;
+  scale: 0.94;
   pointer-events: none;
+  transition: opacity var(--d-short) var(--ease-std), scale var(--d-short) cubic-bezier(0.2, 0, 0, 1);
 }
 
-.rail-pill.glide {
-  transition: translate var(--d-spring) var(--spring), opacity var(--d-short) var(--ease-std);
+.rail-pill.shown {
+  opacity: 1;
+  scale: 1;
 }
 
 .rail-nav a span {
@@ -3574,6 +3612,11 @@ main,
   .rail-nav a {
     height: 40px;
     background: var(--s3);
+  }
+
+  /* chips here, no pill to glide: the one you are on is filled */
+  .rail-nav a.on {
+    background: var(--accent-c);
   }
 
   .support,

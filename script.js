@@ -211,7 +211,7 @@
 
   /* -------------------------------------------------------------- the bar */
 
-  // Theme.curveDefaultSpatial and curveStandard, as easing functions
+  // Theme.curveDefaultSpatial, curveStandard and easeEmphasizedDecel, as easing functions
   function bezier(x1, y1, x2, y2) {
     return function (t) {
       if (t <= 0) return 0;
@@ -226,7 +226,7 @@
     };
   }
 
-  var spatial = bezier(0.38, 1.21, 0.22, 1), standard = bezier(0.2, 0, 0, 1);
+  var spatial = bezier(0.38, 1.21, 0.22, 1), standard = bezier(0.2, 0, 0, 1), emphDecel = bezier(0.05, 0.7, 0.1, 1);
 
   // the pages by name, the one you are on in the bar's accent pill, moving as lucidbar's
   // Workspaces does: the pill rides the lit name's own geometry, and a change starts it
@@ -838,18 +838,78 @@
     var targets = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
     var cur = -1, locked = false, unlock = 0, lockCap = 0;
 
-    function setOn(i) {
-      if (i === cur) return;
-      var first = cur < 0;
+    // the pill for the section you are in, as Settings' rail and Lumen's sidebar draw
+    // it. going to another row it stretches: the edge on the way leads (200ms,
+    // emphasized decelerate), the other follows and closes up behind it (330ms,
+    // standard), with nothing overshooting the row. from no row at all it appears in place
+    var upper = 0, lower = 0, settled = false, edges = null, frame = 0;
+
+    // each row lights by how much of it the pill covers; the one it stops on arrives
+    function lightRows() {
+      var shown = pill && pill.offsetParent !== null;
+      links.forEach(function (a, k) {
+        var lit = 0;
+        if (!shown) {
+          lit = k === cur ? 1 : 0;
+        } else if (settled) {
+          var t = a.offsetTop, b = t + a.offsetHeight;
+          lit = Math.max(0, Math.min(1, (Math.min(b, lower) - Math.max(t, upper)) / Math.max(1, a.offsetHeight)));
+        }
+        a.style.setProperty("--lit", lit.toFixed(3));
+        a.classList.toggle("arrived", k === cur && lit > 0.5);
+      });
+    }
+
+    function drawPill() {
+      pill.style.translate = "0 " + upper.toFixed(2) + "px";
+      pill.style.height = Math.max(0, lower - upper).toFixed(2) + "px";
+      lightRows();
+    }
+
+    function step(now) {
+      frame = 0;
+      if (!edges) return;
+      var e = edges, tu = Math.min(1, (now - e.t0) / e.du), tl = Math.min(1, (now - e.t0) / e.dl);
+      upper = e.u0 + (e.u1 - e.u0) * e.eu(tu);
+      lower = e.l0 + (e.l1 - e.l0) * e.el(tl);
+      drawPill();
+      if (tu < 1 || tl < 1) frame = requestAnimationFrame(step);
+      else edges = null;
+    }
+
+    function follow(i, jump) {
+      var a = links[i];
+      if (!pill) return lightRows();
+      if (!a || pill.offsetParent === null || a.offsetParent === null) {
+        settled = false;
+        edges = null;
+        pill.classList.remove("shown");
+        return lightRows();
+      }
+      var t = a.offsetTop, b = t + a.offsetHeight;
+      if (!settled || jump || reduce) {
+        edges = null;
+        upper = t;
+        lower = b;
+        settled = true;
+        pill.classList.add("shown");
+        return drawPill();
+      }
+      if (Math.abs(t - upper) < 0.5 && Math.abs(b - lower) < 0.5) return;
+      var down = t > upper;
+      edges = {
+        t0: performance.now(), u0: upper, l0: lower, u1: t, l1: b,
+        du: down ? 330 : 200, dl: down ? 200 : 330,
+        eu: down ? standard : emphDecel, el: down ? emphDecel : standard
+      };
+      if (!frame) frame = requestAnimationFrame(step);
+    }
+
+    function setOn(i, jump) {
+      if (i === cur && !jump) return;
       cur = i;
       links.forEach(function (a, k) { a.classList.toggle("on", k === i); });
-      if (pill && links[i]) {
-        if (!first) pill.classList.add("glide");
-        pill.style.translate = "0 " + links[i].offsetTop + "px";
-        pill.style.height = links[i].offsetHeight + "px";
-        pill.style.opacity = links[i].offsetParent ? 1 : 0;
-        if (!first) setTimeout(function () { jelly(pill, 0.05, 0.2); }, 200);
-      }
+      follow(i, jump);
       // the rail keeps the lit row in sight when it scrolls itself
       var r = $("[data-rail]");
       if (r && links[i] && r.scrollHeight > r.clientHeight) {
@@ -906,11 +966,7 @@
         mark();
       });
     }, { passive: true });
-    addEventListener("resize", function () {
-      var i = cur;
-      cur = -1;
-      setOn(Math.max(0, i));
-    });
+    addEventListener("resize", function () { setOn(Math.max(0, cur), true); });
     mark();
 
     // search: what doesn't match folds away, part by part, the way Settings filters
