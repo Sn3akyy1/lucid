@@ -211,37 +211,226 @@
 
   /* -------------------------------------------------------------- the bar */
 
-  // the page's underline, gliding over from the page you came from
-  function under(on) {
-    var label = on.querySelector(".ws-label") || on;
-    return { x: on.offsetLeft + label.offsetLeft, w: label.offsetWidth };
+  // Theme.curveDefaultSpatial and curveStandard, as easing functions
+  function bezier(x1, y1, x2, y2) {
+    return function (t) {
+      if (t <= 0) return 0;
+      if (t >= 1) return 1;
+      var lo = 0, hi = 1, u = t;
+      for (var i = 0; i < 26; i++) {
+        u = (lo + hi) / 2;
+        var x = 3 * (1 - u) * (1 - u) * u * x1 + 3 * (1 - u) * u * u * x2 + u * u * u;
+        if (x < t) lo = u; else hi = u;
+      }
+      return 3 * (1 - u) * (1 - u) * u * y1 + 3 * (1 - u) * u * u * y2 + u * u * u;
+    };
   }
 
-  function placePill(animate) {
-    var pill = $(".ws-pill"), on = $(".ws.on"), box = $(".workspaces");
-    if (!pill || !on || !box || !box.offsetParent) return;
-    var u = under(on), x = u.x, w = u.w;
-    if (animate) {
-      var from = null;
-      try { from = JSON.parse(sessionStorage.getItem("lucid-ws") || "null"); } catch (e) {}
-      if (from && !reduce && (from.x !== x || from.w !== w)) {
-        pill.style.translate = from.x + "px 0";
-        pill.style.width = from.w + "px";
-        pill.classList.add("ready");
-        pill.getBoundingClientRect();
-        pill.classList.add("glide");
-        setTimeout(function () { jelly(pill, 0.12, 0.15); }, 260);
+  var spatial = bezier(0.38, 1.21, 0.22, 1), standard = bezier(0.2, 0, 0, 1);
+
+  // the shapes a workspace may wear while it is the one in focus (Workspaces.focusShapes)
+  var FOCUS = ["slanted", "oval", "pill", "triangle", "arrow", "diamond", "pentagon", "gem", "verySunny",
+    "sunny", "cookie4", "cookie6", "cookie7", "cookie9", "cookie12", "clover4", "softBurst", "ghostish"];
+
+  // lucidbar's Workspaces with a page for each workspace. the accent pill rides the lit
+  // cell's own geometry; a switch starts it from where it was and brings each edge back,
+  // the leading one first and the trailing one after, so it stretches
+  function workspaces() {
+    var box = $(".workspaces");
+    if (!box) return;
+    var row = $(".ws-row", box), lit = $(".ws-lit", box), win = $(".pill.window");
+    var cells = $$(".ws-row > .ws", box), inks = $$(".ws-ink > .ws", box);
+    var S = window.LUCID_SHAPES || {};
+    var cur = -1;
+    cells.forEach(function (c, i) { if (c.classList.contains("on")) cur = i; });
+    if (win) win.setAttribute("data-at", cur);
+
+    var target = -1, left = 0, right = 0, edges = null, frame = 0, settleUntil = 0;
+
+    function unit() {
+      return (parseFloat(getComputedStyle(box).getPropertyValue("--cell")) || 32) / 3;
+    }
+
+    function geom(i) {
+      return { x: cells[i].offsetLeft, w: cells[i].offsetWidth };
+    }
+
+    function draw() {
+      row.style.setProperty("--l", left.toFixed(2) + "px");
+      row.style.setProperty("--r", right.toFixed(2) + "px");
+    }
+
+    function offset(e, now) {
+      return e.from * (1 - e.ease(Math.min(1, (now - e.t0) / e.dur)));
+    }
+
+    function tick(now) {
+      frame = 0;
+      if (target < 0) return;
+      var g = geom(target), oL = 0, oR = 0, busy = now < settleUntil;
+      if (edges) {
+        oL = offset(edges.l, now);
+        oR = offset(edges.r, now);
+        busy = busy || now - edges.l.t0 < edges.l.dur || now - edges.r.t0 < edges.r.dur;
+      }
+      left = g.x + oL;
+      right = Math.max(left, g.x + g.w + oR);
+      draw();
+      if (busy) frame = requestAnimationFrame(tick);
+    }
+
+    // keeps drawing while the cells' own widths move under the pill
+    function run(ms) {
+      settleUntil = Math.max(settleUntil, performance.now() + ms);
+      if (!frame) frame = requestAnimationFrame(tick);
+    }
+
+    function place(i) {
+      target = i;
+      edges = null;
+      var g = geom(i);
+      left = g.x;
+      right = g.x + g.w;
+      draw();
+      lit.classList.add("ready");
+    }
+
+    function retarget(i, hover) {
+      if (i === target || i < 0) return;
+      if (target < 0 || reduce) {
+        place(i);
+        run(320);
+        return;
+      }
+      var g = geom(i), now = performance.now();
+      var lead = hover ? 160 : 400, trail = Math.round(lead * 1.5), forward = g.x >= left;
+      var ease = hover ? standard : spatial;
+      edges = {
+        l: { from: left - g.x, t0: now, dur: forward ? trail : lead, ease: ease },
+        r: { from: right - (g.x + g.w), t0: now, dur: forward ? lead : trail, ease: ease }
+      };
+      target = i;
+      run(Math.max(trail, 320));
+    }
+
+    // a mark is drawn twice: plain, and in on-accent where the pill covers it
+    function radii(name) {
+      return S[name] || S.circle;
+    }
+
+    function setMark(i, r, size) {
+      if (!r) return;
+      [cells[i], inks[i]].forEach(function (c) {
+        var svg = c && c.querySelector(".ws-mark");
+        if (!svg) return;
+        svg.style.width = svg.style.height = size.toFixed(2) + "px";
+        svg.firstElementChild.setAttribute("d", shapePath(r, 100));
+      });
+    }
+
+    // each change morphs over 500ms on the spatial curve, as the dots do
+    function morphMark(i, from, to, a, b) {
+      var ra = radii(from), rb = radii(to), t0 = performance.now();
+      if (!ra || !rb) return;
+      if (reduce) return setMark(i, rb, b);
+      (function step(now) {
+        var k = spatial(Math.min(1, (now - t0) / 500));
+        setMark(i, ra.map(function (x, n) { return x + (rb[n] - x) * k; }), a + (b - a) * k);
+        if (now - t0 < 500) requestAnimationFrame(step);
+      })(t0);
+    }
+
+    // the window pill names the lit page, its width following the words
+    function title(i) {
+      if (!win || i < 0 || String(i) === win.getAttribute("data-at")) return;
+      win.setAttribute("data-at", i);
+      var c = cells[i], wr = $(".win-row", win), from = win.offsetWidth;
+      wr.innerHTML = c.querySelector(".i").outerHTML + '<span class="win-title">' + c.getAttribute("data-label") +
+        '<span class="win-sub">&ensp;·&ensp;' + c.getAttribute("data-title") + "</span></span>";
+      wr.classList.remove("swap");
+      void wr.offsetWidth;
+      wr.classList.add("swap");
+      win.style.width = "auto";
+      var to = win.offsetWidth;
+      win.style.width = from + "px";
+      void win.offsetWidth;
+      win.style.width = to + "px";
+    }
+
+    // lit: the hovered cell while the row is hovered, else the page you are on
+    var hovered = -1;
+    function light(i, hover) {
+      cells.forEach(function (c, n) {
+        c.classList.toggle("lit", n === i);
+        inks[n].classList.toggle("lit", n === i);
+      });
+      // a page outside the six (the 404) has no cell to come back to
+      if (i < 0) {
+        target = -1;
+        edges = null;
+        lit.classList.remove("ready");
+        return;
+      }
+      retarget(i, hover);
+      title(i);
+    }
+
+    function enter(i) {
+      hovered = i;
+      box.classList.add("hovering");
+      light(i, true);
+    }
+
+    function leave() {
+      hovered = -1;
+      box.classList.remove("hovering");
+      light(cur, false);
+    }
+
+    cells.forEach(function (c, i) {
+      c.addEventListener("pointerenter", function (e) { if (e.pointerType !== "touch") enter(i); });
+      c.addEventListener("focus", function () { enter(i); });
+    });
+    box.addEventListener("pointerleave", function () {
+      if (hovered >= 0 && !box.contains(document.activeElement)) leave();
+    });
+    box.addEventListener("focusout", function (e) {
+      if (hovered >= 0 && !box.contains(e.relatedTarget) && !box.matches(":hover")) leave();
+    });
+
+    // a new shape each visit, and the pill comes over from the page before
+    var last = null, shape = "cookie9";
+    try { last = JSON.parse(sessionStorage.getItem("lucid-ws") || "null"); } catch (e) {}
+    if (cur >= 0) {
+      if (last && last.i === cur && FOCUS.indexOf(last.shape) >= 0) {
+        shape = last.shape;
+      } else {
+        var pool = FOCUS.filter(function (s) { return !last || s !== last.shape; });
+        shape = pool[Math.floor(Math.random() * pool.length)];
+      }
+      var u = unit();
+      if (last && last.i !== cur && last.i >= 0 && last.i < cells.length && S[last.shape] && !reduce) {
+        setMark(last.i, radii(last.shape), u * 2);
+        morphMark(last.i, last.shape, "square", u * 2, u);
+        morphMark(cur, "square", shape, u, u * 2);
+        place(last.i);
+        light(cur, false);
+      } else {
+        setMark(cur, radii(shape), u * 2);
+        place(cur);
+        light(cur, false);
       }
     }
-    pill.style.translate = x + "px 0";
-    pill.style.width = w + "px";
-    pill.classList.add("ready");
-  }
 
-  addEventListener("pagehide", function () {
-    var on = $(".ws.on");
-    if (on) try { sessionStorage.setItem("lucid-ws", JSON.stringify(under(on))); } catch (e) {}
-  });
+    addEventListener("pagehide", function () {
+      try { sessionStorage.setItem("lucid-ws", JSON.stringify({ i: cur, shape: shape })); } catch (e) {}
+    });
+    addEventListener("resize", function () {
+      var u = unit();
+      cells.forEach(function (c, n) { setMark(n, radii(n === cur ? shape : "square"), n === cur ? u * 2 : u); });
+      if (target >= 0) place(target);
+    });
+  }
 
   function panels() {
     var openOne = null;
@@ -956,7 +1145,7 @@
     splitWords();
     repaint();
     panels();
-    placePill(true);
+    workspaces();
     widgets();
     drawRing(0);
     cycle();
@@ -972,7 +1161,6 @@
     leaving();
 
     setInterval(function () { widgets(); if (!ringOn) drawRing(); }, 10000);
-    addEventListener("resize", function () { placePill(false); });
 
     var ring = $(".wave-ring");
     if (ring && !reduce && "IntersectionObserver" in window) {

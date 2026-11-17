@@ -395,13 +395,14 @@ class Page:
         return '<svg class="sprite" aria-hidden="true" focusable="false">%s</svg>' % "".join(out)
 
 
+# key, file, label, icon, and the title its window pill shows
 NAV = [
-    ("home", "index.html", "Home", "home"),
-    ("tour", "tour.html", "Tour", "photo_library"),
-    ("docs", "docs.html", "Docs", "description"),
-    ("changelog", "changelog.html", "Changelog", "history"),
-    ("support", "support.html", "Support", "chat"),
-    ("creator", "creator.html", "About", "person"),
+    ("home", "index.html", "Home", "home", "Lucid is an ecosystem"),
+    ("tour", "tour.html", "Tour", "photo_library", "Lucid, as it looks"),
+    ("docs", "docs.html", "Docs", "description", "How Lucid works"),
+    ("changelog", "changelog.html", "Changelog", "history", "What changed, and when"),
+    ("support", "support.html", "Support", "chat", "Something off? Say so"),
+    ("creator", "creator.html", "About", "person", "Who makes Lucid"),
 ]
 
 MARK = ('<svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g class="mark-orbit">'
@@ -450,21 +451,43 @@ HEAD = """<!doctype html>
 
 
 def bar(page, active):
-    links = []
-    for key, href, label, ico in NAV:
-        cur = ' aria-current="page"' if key == active else ""
-        links.append('<a class="ws%s" href="%s"%s><span class="ws-label">%s</span></a>'
-                     % (" on" if key == active else "", href, cur, label))
+    # lucidbar's Workspaces: every page is a workspace in use (a square on one run),
+    # the one you are on is the accent cell; script.js deals it a new shape each visit
+    square, focus = page.shell.shape("square"), page.shell.shape("cookie9")
+    cells, inks, window = [], [], ""
+    for key, href, label, ico, title in NAV:
+        on = key == active
+        mark = ('<svg class="ws-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><path d="%s"/></svg>'
+                % (focus if on else square))
+        cls = "ws on" if on else "ws"
+        cells.append('<a class="%s" href="%s" aria-label="%s" data-label="%s" data-title="%s"%s>%s%s</a>'
+                     % (cls, href, label, label, title, ' aria-current="page"' if on else "", mark, page.icon(ico)))
+        inks.append('<span class="%s">%s%s</span>' % (cls, mark, page.icon(ico)))
+        if on:
+            window = ('<div class="pill window" aria-hidden="true"><span class="win-row">%s<span class="win-title">%s'
+                      '<span class="win-sub">&ensp;·&ensp;%s</span></span></span></div>' % (page.icon(ico), label, title))
     sheet = "".join('<a class="sheet-row%s" href="%s">%s<span>%s</span></a>'
-                    % (" on" if k == active else "", h, page.icon(i), l) for k, h, l, i in NAV)
+                    % (" on" if k == active else "", h, page.icon(i), l) for k, h, l, i, _ in NAV)
     return """<header class="bar" id="bar">
-  <a class="island brand" href="index.html" aria-label="Lucid home">{mark}<span class="brand-name">Lucid</span><span class="brand-ver">v{ver}</span></a>
-  <nav class="island centre workspaces" aria-label="Pages"><span class="ws-pill" aria-hidden="true"></span>{links}</nav>
-  <div class="island right">
-    <a class="sys stars" href="{gh}/stargazers" aria-label="Stars on GitHub">{star}<span data-stars>332</span></a>
-    <button class="sys" type="button" data-panel="palette" aria-expanded="false" aria-controls="palette-panel" aria-label="Palette">{palette}</button>
-    <button class="sys" type="button" data-mode aria-label="Light or dark">{dark}</button>
-    <button class="sys menu-btn" type="button" aria-expanded="false" aria-controls="sheet" aria-label="Pages">{grid}</button>
+  <div class="zone">
+    <a class="pill start grows" href="index.html" aria-label="Lucid home"><span class="face">{mark}</span></a>
+    <nav class="pill workspaces" aria-label="Pages">
+      <div class="ws-row">
+        <span class="ws-run" aria-hidden="true"></span><span class="ws-lit" aria-hidden="true"></span>{cells}
+        <span class="ws-ink" aria-hidden="true">{inks}</span>
+      </div>
+    </nav>
+    {window}
+  </div>
+  <div class="zone">
+    <div class="pill system grows"><span class="face">
+      <a class="sys stars" href="{gh}/stargazers" aria-label="Stars on GitHub">{star}<span data-stars>332</span></a>
+      <span class="sys-sep" aria-hidden="true"></span>
+      <button class="sys" type="button" data-panel="palette" aria-expanded="false" aria-controls="palette-panel" aria-label="Palette">{palette}</button>
+      <button class="sys" type="button" data-mode aria-label="Light or dark">{dark}</button>
+      <a class="bar-ver" href="changelog.html" aria-label="Lucid {ver}: what changed">{ver}</a>
+      <button class="sys menu-btn" type="button" aria-expanded="false" aria-controls="sheet" aria-label="Pages">{grid}</button>
+    </span></div>
   </div>
   <div class="bar-panel" id="palette-panel" hidden>
     <p class="panel-title">Palette</p>
@@ -475,8 +498,9 @@ def bar(page, active):
     <div class="palettes" data-palettes></div>
   </div>
   <div class="sheet" id="sheet" hidden><p class="panel-title">Lucid</p>{sheet}</div>
-</header>""".format(mark=MARK, links="".join(links), grid=page.icon("apps"), gh=GH, star=page.icon("star", True),
-                    palette=page.icon("palette"), dark=page.icon("dark_mode") + page.icon("light_mode").replace('class="i"', 'class="i" hidden'),
+</header>""".format(mark=MARK, cells="".join(cells), inks="".join(inks), window=window, grid=page.icon("apps"), gh=GH,
+                    star=page.icon("star", True), palette=page.icon("palette"),
+                    dark=page.icon("dark_mode") + page.icon("light_mode").replace('class="i"', 'class="i" hidden'),
                     check=page.icon("check"), sheet=sheet, ver=page.shell.version)
 
 

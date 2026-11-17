@@ -880,65 +880,319 @@ h3 {
 
 /* ------------------------------------------------------------------ bar */
 
-/* the shell's bar in islands: flat dark pills, no outline. the brand on the left, the
-   pages in the middle with an underline that glides to the one you are on (the tabs the
-   media panel uses), the tray-like system icons on the right */
+/* lucidbar, ported at 1.2x: flat pills floating over the page, barSpacing apart. the
+   Start pill, the workspaces (a page is a workspace), the focused window's title, and
+   the System pill with the version where the battery sits */
 .bar {
+  --bh: 42px;
+  --cell: 32px;
+  --grow: 4px;
   position: sticky;
   top: 0;
   z-index: 50;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   padding: 12px var(--gutter);
   view-transition-name: lucid-bar;
 }
 
-.island {
+.zone {
   display: flex;
   align-items: center;
-  gap: 2px;
-  height: 48px;
-  padding: 4px;
-  border-radius: 999px;
-  background: var(--s2);
+  gap: 10px;
+  min-width: 0;
 }
 
-.island.brand {
-  justify-self: start;
-  gap: 10px;
-  padding: 4px 16px 4px 10px;
+.pill {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: var(--bh);
+  border-radius: calc(var(--bh) / 2);
   color: var(--text);
+}
+
+/* the surface is apart from what it holds, so a hover can grow it sideways and down
+   the way BarPill does, while the content swells a little on OutBack */
+.pill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--s2);
+  transition: inset 200ms var(--ease-std);
+}
+
+.pill > .face {
+  display: flex;
+  align-items: center;
+  transition: scale var(--d-medium) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (hover: hover) {
+  .pill.grows:hover::before {
+    inset: 0 calc(var(--grow) * -1) calc(var(--grow) * -1);
+  }
+
+  .pill.grows:hover > .face {
+    scale: 1.04;
+  }
+}
+
+/* Start: Lucid's mark in a circle as wide as the bar is tall; pressed, it squashes */
+.pill.start {
+  justify-content: center;
+  width: var(--bh);
+  text-decoration: none !important;
+}
+
+.pill.start:active > .face {
+  scale: 0.9;
+  transition-timing-function: cubic-bezier(0.34, 1.8, 0.64, 1);
+}
+
+.pill.start .mark {
+  width: 25px;
+  height: 25px;
+}
+
+/* Workspaces: square cells with no gap, the pages in use on one run of
+   surfaceHighest, the accent pill under the lit cell */
+.workspaces {
+  padding-inline: calc((var(--bh) - var(--cell)) / 2);
+}
+
+.ws-row {
+  --l: 0px;
+  --r: 0px;
+  position: relative;
+  display: flex;
+  height: var(--cell);
+}
+
+.ws-run,
+.ws-lit,
+.ws-ink {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--cell) / 2);
+  pointer-events: none;
+}
+
+.ws-run {
+  background: var(--s4);
+}
+
+.ws-lit {
+  right: auto;
+  left: var(--l);
+  width: calc(var(--r) - var(--l));
+  background: var(--accent);
+}
+
+.js .ws-lit:not(.ready) {
+  opacity: 0;
+}
+
+/* before script.js, or without it, the page you are on still gets its accent cell */
+html:not(.js) .ws.on {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.ws {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--cell);
+  height: var(--cell);
+  border-radius: calc(var(--cell) / 2);
+  color: var(--text);
+  outline-offset: -2px;
+  text-decoration: none !important;
+  transition: width 300ms var(--ease-std), color 200ms var(--ease-std);
+}
+
+.ws > * {
+  grid-area: 1 / 1;
+}
+
+/* the mark: a square a third of the cell, the lit one's shape two thirds */
+.ws-mark {
+  width: calc(var(--cell) / 3);
+  height: calc(var(--cell) / 3);
+  overflow: visible;
+  fill: currentColor;
+  transition: opacity 200ms var(--ease-std), scale 300ms var(--ease-std);
+}
+
+.ws.on .ws-mark {
+  width: calc(var(--cell) * 2 / 3);
+  height: calc(var(--cell) * 2 / 3);
+}
+
+/* hovered, the pages' icons take the shapes' place (the bar shows numbers), the lit
+   cell widens and the pill follows the pointer */
+.ws .i {
+  width: 18px;
+  height: 18px;
+  opacity: 0;
+  scale: 0.6;
+  transition: opacity 300ms var(--ease-std), scale 300ms var(--ease-std);
+}
+
+.hovering .ws-mark {
+  opacity: 0;
+  scale: 0.5;
+}
+
+.hovering .ws .i {
+  opacity: 1;
+  scale: 1;
+}
+
+.hovering .ws.lit {
+  width: calc(var(--cell) + 17px);
+}
+
+.hovering .ws.on:not(.lit) {
+  color: var(--accent);
+}
+
+/* what sits under the pill turns on-accent, exactly to its edges */
+.ws-ink {
+  z-index: 2;
+  display: flex;
+  color: var(--on-accent);
+  clip-path: inset(0 calc(100% - var(--r)) 0 var(--l) round calc(var(--cell) / 2));
+}
+
+.ws-ink .ws {
+  color: inherit;
+}
+
+/* the window in focus: its icon and its title */
+.pill.window {
+  gap: 10px;
+  padding-inline: 14px 18px;
+  overflow: hidden;
+  transition: width 300ms var(--ease-std);
+}
+
+.win-row {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+.win-row .i {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}
+
+.win-row.swap {
+  animation: win-swap 200ms var(--ease-std) both;
+}
+
+@keyframes win-swap {
+  from {
+    opacity: 0;
+  }
+}
+
+.win-title {
+  font-size: 15px;
+  font-weight: 640;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* System: glyphs a state layer apart, a rule, and the version on a battery's body */
+.pill.system {
+  padding-inline: 4px;
+}
+
+.pill.system > .face {
+  gap: 2px;
+}
+
+.sys {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: calc(var(--bh) - 8px);
+  min-width: calc(var(--bh) - 8px);
+  padding: 0 8px;
+  border: 0;
+  border-radius: calc((var(--bh) - 8px) / 2);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 640;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
   text-decoration: none !important;
   transition: background-color var(--d-quick) var(--ease-std);
 }
 
-.island.brand:hover {
-  background: color-mix(in oklab, var(--s2) 100%, var(--text) 6%);
+.sys:hover,
+.sys[aria-expanded="true"] {
+  background: var(--hover);
 }
 
-.brand-name {
-  font-weight: 650;
-  font-size: 1.05rem;
-  letter-spacing: -0.01em;
+.sys .i {
+  width: 20px;
+  height: 20px;
 }
 
-.brand-ver {
+.stars .i {
+  color: var(--accent);
+}
+
+.sys-sep {
+  flex: none;
+  width: 1.5px;
+  height: 16px;
+  margin-inline: 4px;
+  border-radius: 1px;
+  background: color-mix(in oklab, var(--text) 22%, transparent);
+}
+
+.sys.menu-btn {
+  display: none;
+}
+
+.bar-ver {
   display: inline-flex;
+  flex: none;
   align-items: center;
-  height: 22px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--s3);
-  color: var(--text-2);
-  font-size: 0.75rem;
-  font-weight: 650;
+  height: 20px;
+  margin-inline: 6px 10px;
+  padding: 0 7px;
+  border-radius: 5.4px;
+  background: var(--accent);
+  color: var(--s2);
+  font-size: 12.5px;
+  font-weight: 760;
   font-variant-numeric: tabular-nums;
+  text-decoration: none !important;
+  transition: background-color var(--d-quick) var(--ease-std);
 }
 
-.island.right {
-  justify-self: end;
+.bar-ver:hover {
+  background: var(--accent-hover);
 }
 
 .mark {
@@ -967,106 +1221,17 @@ h3 {
   transition: rotate var(--d-spring-slow) var(--spring);
 }
 
-.island.brand:hover .mark-orbit,
+.pill.start:hover .mark-orbit,
 .launcher:hover .mark-orbit,
 .mark-big:hover .mark-orbit {
   rotate: 60deg;
-}
-
-.workspaces {
-  position: relative;
-  padding-inline: 6px;
-}
-
-.ws {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 999px;
-  color: var(--text-2);
-  font-size: 0.95rem;
-  font-weight: 560;
-  text-decoration: none !important;
-  transition: color var(--d-medium) var(--ease-std), background-color var(--d-quick) var(--ease-std);
-}
-
-.ws:hover {
-  background: var(--hover);
-  color: var(--text);
-}
-
-.ws.on {
-  color: var(--accent);
-  font-weight: 650;
-}
-
-/* the indicator: a short accent bar under the page you are on */
-.ws-pill {
-  position: absolute;
-  left: 0;
-  bottom: 6px;
-  width: 0;
-  height: 3px;
-  border-radius: 999px;
-  background: var(--accent);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.ws-pill.ready {
-  opacity: 1;
-}
-
-.ws-pill.glide {
-  transition: translate var(--d-spring) var(--spring), width var(--d-spring) var(--spring);
-}
-
-.sys.menu-btn {
-  display: none;
-}
-
-.sys {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 40px;
-  min-width: 40px;
-  padding: 0 10px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  justify-content: center;
-  cursor: pointer;
-  text-decoration: none !important;
-  transition: background-color var(--d-quick) var(--ease-std);
-}
-
-.sys:hover,
-.sys[aria-expanded="true"] {
-  background: var(--hover);
-}
-
-.sys .i {
-  width: 20px;
-  height: 20px;
-}
-
-.stars .i {
-  color: var(--accent);
 }
 
 /* a panel grows out of the pill that opened it, on the expressive spring */
 .bar-panel,
 .sheet {
   position: absolute;
-  top: 64px;
+  top: calc(var(--bh) + 20px);
   z-index: 60;
   padding: 18px;
   border-radius: var(--r-xl);
@@ -1082,9 +1247,8 @@ h3 {
 }
 
 .sheet {
-  left: var(--gutter);
+  right: var(--gutter);
   width: min(320px, calc(100vw - 32px));
-  transform-origin: top left;
   display: grid;
   gap: 2px;
 }
@@ -3277,17 +3441,15 @@ main,
   }
 }
 
-@media (max-width: 900px) {
-  .bar {
-    grid-template-columns: 1fr auto;
-  }
-
-  .workspaces {
+@media (max-width: 1100px) {
+  .win-sub {
     display: none;
   }
+}
 
-  .sys.menu-btn {
-    display: inline-flex;
+@media (max-width: 900px) {
+  .pill.window {
+    display: none;
   }
 
   .feature,
@@ -3335,15 +3497,36 @@ main,
   }
 }
 
+@media (max-width: 440px) {
+  .sys.stars,
+  .sys-sep {
+    display: none;
+  }
+}
+
 @media (max-width: 640px) {
   .bar {
+    --bh: 38px;
+    --cell: 28px;
     padding-inline: 12px;
     gap: 6px;
   }
 
-  .brand-ver,
+  .zone {
+    gap: 6px;
+  }
+
+  .bar-ver,
   .stars span {
     display: none;
+  }
+
+  .sys.menu-btn {
+    display: inline-flex;
+  }
+
+  .sys {
+    padding-inline: 6px;
   }
 
   .eco,
