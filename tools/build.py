@@ -18,6 +18,7 @@ styles.css or script.js need no build.
 
 import argparse
 import html
+import importlib.util
 import json
 import math
 import os
@@ -56,6 +57,46 @@ class Shell:
                     p["d"] = shared.get(p["ref"], "")
             self.slots[name] = parts
         self.version = open(os.path.join(repo, "VERSION"), encoding="utf-8").read().strip()
+        self._kit = None
+
+    # gravity's own compiler (support/icons/kit/build-theme.py, which loads tonal.py), so a
+    # tile made here is drawn and moves exactly as the shell's icon set does
+    def kit(self):
+        if self._kit is None:
+            sys.dont_write_bytecode = True
+            path = os.path.join(self.repo, "support", "icons", "kit", "build-theme.py")
+            spec = importlib.util.spec_from_file_location("build_theme", path)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            self._kit = mod
+        return self._kit
+
+    # a glyph app (tonal.GLYPH_APPS) on one of the shell's shapes instead of the squircle:
+    # a base one tone down, the body lit from the top, a filled symbol in the look's ink
+    def gravity(self, shape, sym, look):
+        bt = self.kit()
+        t = bt.tonal
+        fam, tone, ink = GRAVITY_LOOKS[look]
+        raw = [("lift", t.m3_shape(shape, 44, 2, 3.2), t.k(fam, tone - 10)),
+               ("tile", t.m3_shape(shape, 44, 2, 2), t.grad(t.k(fam, min(99, tone + 10)), t.k(fam, tone), 2, 46, 12, 36)),
+               ("glyph", t.symbol(sym, 11, 11, 26), t.k(*ink))]
+        parts = []
+        for name, d, fill in raw:
+            q = {"part": name, "d": d}
+            if isinstance(fill, str):
+                q["fill"] = fill
+            else:
+                _, x1, y1, x2, y2, stops = fill
+                q["grad"] = [round(x1, 2), round(y1, 2), round(x2, 2), round(y2, 2)]
+                q["stops"] = [[o, key] for o, key in stops]
+            parts.append(q)
+        moves = t.motion("app-gravity", [q["part"] for q in parts])
+        boxes = {q["part"]: bt.bounds(q["d"]) for q in parts}
+        for q in parts:
+            spec = moves.get(q["part"])
+            if spec:
+                q["hover"] = bt.hover_of(spec, boxes.get(spec.get("box", q["part"]), boxes[q["part"]]))
+        return parts
 
     # the shell's catmull-rom through the sampled radii (lucidui/Shapes.js)
     def shape(self, name, size=100, rot=0.0, step=2):
@@ -123,6 +164,11 @@ def at_tone(hexc, t):
         w = 0 if yb >= 1 else max(0, min(1, (target - yb) / (1 - yb)))
         lr, lg, lb = lr + (1 - lr) * w, lg + (1 - lg) * w, lb + (1 - lb) * w
     return _hex([_gam(lr), _gam(lg), _gam(lb)])
+
+
+# gravity's three tile looks (tonal.look): family, tone, and the mark's family and tone. the
+# dark one sits on primary 20, the logo's plate, where the set's card tone would sink to black
+GRAVITY_LOOKS = {"accent": ("p", 60, ("n", 99)), "dark": ("p", 20, ("p", 80)), "light": ("n", 90, ("p", 50))}
 
 
 # the brand palette in the dark, for icons drawn before script.js runs
@@ -344,6 +390,16 @@ class Page:
         parts = self.shell.slots.get(slot)
         if parts is None:
             sys.exit("no icon %r in the gravity set" % slot)
+        return self.draw(parts, cls)
+
+    # {{gravity shape symbol look [class] [move]}}: the move is the symbol's own, on hover
+    # and while a pad plays (the weather icons' idea, one motion for the whole glyph)
+    def gravity(self, shape, sym, look, cls="", move=""):
+        if shape not in self.shell.radii:
+            sys.exit("no shape %r in the shell's table" % shape)
+        return self.draw(self.shell.gravity(shape, sym, look), cls + " gravity", move, shape)
+
+    def draw(self, parts, cls="", move="", shape=""):
         self.uid += 1
         defs, body = [], []
         for n, p in enumerate(parts):
@@ -370,9 +426,13 @@ class Page:
             if h:
                 style.append("--dx:%s;--dy:%s;--sx:%s;--sy:%s;--rot:%sdeg;transform-origin:%spx %spx"
                              % (h["dx"], h["dy"], h["sx"], h["sy"], h["rot"], h["ox"], h["oy"]))
-            body.append('<path class="pt" d="%s" style="%s"/>' % (d, ";".join(style)))
-        return ('<svg class="app %s" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><defs>%s</defs>%s</svg>'
-                % (cls, "".join(defs), "".join(body)))
+            path = '<path class="pt" data-part="%s" d="%s" style="%s"/>' % (p.get("part", ""), d, ";".join(style))
+            if move and p.get("part") == "glyph":
+                path = '<g class="gm" data-move="%s">%s</g>' % (move, path)
+            body.append(path)
+        extra = ' data-shape="%s"' % shape if shape else ""
+        return ('<svg class="app %s" viewBox="0 0 48 48" aria-hidden="true" focusable="false"%s><defs>%s</defs>%s</svg>'
+                % (cls.strip(), extra, "".join(defs), "".join(body)))
 
     def expand(self, src):
         src = src.replace("{{changelog}}", self.changes)
@@ -380,6 +440,8 @@ class Page:
         src = src.replace("{{version}}", self.shell.version)
         for _ in range(2):
             src = re.sub(r"\{\{icon ([a-z0-9_]+)( fill)?\}\}", lambda m: self.icon(m.group(1), bool(m.group(2))), src)
+            src = re.sub(r"\{\{gravity ([a-zA-Z0-9]+) ([a-z0-9_]+) (accent|dark|light)(?: ([a-z0-9-]+))?(?: ([a-z]+))?\}\}",
+                         lambda m: self.gravity(m.group(1), m.group(2), m.group(3), m.group(4) or "", m.group(5) or ""), src)
             src = re.sub(r"\{\{shape ([a-zA-Z0-9]+)(?: ([a-z0-9 _-]*?))?(?: (-?\d+))?\}\}",
                          lambda m: self.shape(m.group(1), m.group(2) or "", m.group(3) or 0), src)
             src = re.sub(r"\{\{app ([a-z0-9-]+)(?: ([a-z0-9 _-]+))?\}\}", lambda m: self.app(m.group(1), m.group(2) or ""), src)

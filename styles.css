@@ -1721,11 +1721,8 @@ html:not(.js) .ws.on {
   background: var(--hover);
 }
 
-.row > .shape,
-.row > .glyph,
 .row > .app,
-.link-card > .shape,
-.link-card > .glyph {
+.link-card > .app {
   grid-column: 1;
   grid-row: 1;
   justify-self: center;
@@ -1753,30 +1750,6 @@ html:not(.js) .ws.on {
   overflow: visible;
 }
 
-.shape.tile {
-  width: 56px;
-  height: 56px;
-  fill: var(--accent-c);
-  transition: rotate var(--d-spring-slow) var(--spring), scale var(--d-spring-fast) var(--spring-fast);
-}
-
-.row:hover .shape.tile,
-.link-card:hover .shape.tile {
-  rotate: 45deg;
-  scale: 1.06;
-}
-
-.glyph {
-  display: grid;
-  place-items: center;
-  color: var(--on-accent-c);
-}
-
-.glyph .i {
-  width: 24px;
-  height: 24px;
-}
-
 /* the gravity icons, with each part's own hover motion from the set */
 .app {
   width: 48px;
@@ -1790,6 +1763,9 @@ html:not(.js) .ws.on {
 }
 
 .row:hover .app .pt,
+.link-card:hover .app .pt,
+.pad:hover .app .pt,
+.pad.playing .app .pt,
 .feature:hover .feature-icon .app .pt,
 .dock-item:hover .app .pt {
   transform: translate(calc(var(--dx) * 1px), calc(var(--dy) * 1px)) rotate(var(--rot)) scale(var(--sx), var(--sy));
@@ -1800,9 +1776,201 @@ html:not(.js) .ws.on {
   height: 50px;
 }
 
+.app.icon52 {
+  width: 54px;
+  height: 54px;
+}
+
 .app.icon64 {
   width: 72px;
   height: 72px;
+}
+
+/* a gravity tile on one of the shell's shapes: the set's hover lifts the tile off its
+   base and grows the symbol; on top, the symbol moves the way what it shows would, as
+   the weather icons do. once per hover, and each time a pad plays */
+.gm {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation-duration: 860ms;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: both;
+}
+
+.gm:is([data-move="ring"], [data-move="alarm"], [data-move="jiggle"]) {
+  transform-origin: 50% 8%;
+}
+
+.gm[data-move="write"] {
+  transform-origin: 12% 88%;
+}
+
+.gm[data-move="point"] {
+  transform-origin: 22% 12%;
+}
+
+.gm[data-move="fill"] {
+  transform-origin: 50% 100%;
+}
+
+.gm[data-move="spin"] {
+  animation-duration: 900ms;
+  animation-timing-function: cubic-bezier(0.34, 1.32, 0.5, 1);
+}
+
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="drop"] { animation-name: mv-drop; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="rise"] { animation-name: mv-rise; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="slide"] { animation-name: mv-slide; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="beat"] { animation-name: mv-beat; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="write"] { animation-name: mv-write; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="jiggle"] { animation-name: mv-jiggle; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="tilt"] { animation-name: mv-tilt; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="point"] { animation-name: mv-point; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="jelly"] { animation-name: mv-jelly; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="twinkle"] { animation-name: mv-twinkle; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="ring"] { animation-name: mv-ring; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="alarm"] { animation-name: mv-alarm; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="tap"] { animation-name: mv-tap; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="spin"] { animation-name: mv-spin; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="glow"] { animation-name: mv-glow; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="plug"] { animation-name: mv-plug; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="jolt"] { animation-name: mv-jolt; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="fill"] { animation-name: mv-fill; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="snap"] { animation-name: mv-snap; }
+:is(.row:hover, .link-card:hover, .pad.playing) .gm[data-move="nudge"] { animation-name: mv-nudge; }
+
+/* a bar coming in from the top; a dock coming up from below */
+@keyframes mv-drop {
+  30% { translate: 0 -3px; }
+  60% { translate: 0 1.4px; }
+  82% { translate: 0 -0.5px; }
+}
+
+@keyframes mv-rise {
+  25% { translate: 0 2.6px; }
+  55% { translate: 0 -1.8px; }
+  80% { translate: 0 0.6px; }
+}
+
+/* sliders and code pushed side to side */
+@keyframes mv-slide {
+  25% { translate: -2.4px 0; }
+  55% { translate: 2px 0; }
+  80% { translate: -0.7px 0; }
+}
+
+@keyframes mv-beat {
+  20% { scale: 1.18; }
+  45% { scale: 0.94; }
+  70% { scale: 1.05; }
+}
+
+/* a pencil writing from its tip */
+@keyframes mv-write {
+  20% { rotate: -14deg; }
+  45% { rotate: 9deg; }
+  70% { rotate: -4deg; }
+}
+
+@keyframes mv-jiggle {
+  15% { rotate: 9deg; }
+  35% { rotate: -8deg; }
+  55% { rotate: 5deg; }
+  75% { rotate: -2deg; }
+}
+
+@keyframes mv-tilt {
+  30% { rotate: -18deg; }
+  60% { rotate: 8deg; }
+  85% { rotate: -3deg; }
+}
+
+/* lucid's pointer, tilting as it moves */
+@keyframes mv-point {
+  30% { translate: 2px 2px; rotate: -14deg; }
+  65% { translate: -0.6px -0.6px; rotate: 5deg; }
+}
+
+/* motion on springs: the jelly's stretch, wide then tall */
+@keyframes mv-jelly {
+  20% { scale: 1.16 0.86; }
+  45% { scale: 0.9 1.1; }
+  70% { scale: 1.05 0.96; }
+}
+
+@keyframes mv-twinkle {
+  25% { rotate: 18deg; scale: 1.22; }
+  55% { rotate: -6deg; scale: 0.94; }
+}
+
+/* a bell swinging from its top */
+@keyframes mv-ring {
+  10% { rotate: 16deg; }
+  25% { rotate: -14deg; }
+  40% { rotate: 10deg; }
+  55% { rotate: -7deg; }
+  70% { rotate: 4deg; }
+  85% { rotate: -2deg; }
+}
+
+@keyframes mv-alarm {
+  8% { rotate: 12deg; scale: 1.08; }
+  16% { rotate: -12deg; }
+  24% { rotate: 10deg; }
+  32% { rotate: -10deg; }
+  40% { rotate: 7deg; }
+  48% { rotate: -7deg; scale: 1.04; }
+  60% { rotate: 3deg; }
+  75% { rotate: -1deg; scale: 1; }
+}
+
+@keyframes mv-tap {
+  25% { translate: 0 2.4px; scale: 0.9; }
+  55% { translate: 0 -1px; scale: 1.05; }
+}
+
+@keyframes mv-spin {
+  to { rotate: 360deg; }
+}
+
+/* a sun: its rays turn a step and it brightens */
+@keyframes mv-glow {
+  35% { rotate: 30deg; scale: 1.16; }
+  70% { rotate: 48deg; scale: 0.97; }
+  to { rotate: 45deg; }
+}
+
+/* a plug pulled back and pushed home */
+@keyframes mv-plug {
+  25% { translate: 0 -4px; }
+  60% { translate: 0 1px; }
+  80% { translate: 0 -0.4px; }
+}
+
+@keyframes mv-jolt {
+  12% { translate: -1.5px 0; scale: 1.14; opacity: 0.55; }
+  26% { translate: 1.5px 0; opacity: 1; }
+  40% { translate: -1px 0; opacity: 0.7; }
+  55% { translate: 0.6px 0; scale: 1.04; opacity: 1; }
+}
+
+/* a battery filling from its foot */
+@keyframes mv-fill {
+  20% { scale: 1 0.8; }
+  50% { scale: 1 1.08; }
+  75% { scale: 1 0.97; }
+}
+
+@keyframes mv-snap {
+  25% { scale: 0.8; }
+  55% { scale: 1.12; }
+  80% { scale: 0.97; }
+}
+
+@keyframes mv-nudge {
+  25% { translate: 2px 0; }
+  50% { translate: -1px 0; }
+  75% { translate: 0.5px 0; }
 }
 
 /* the apps, a picture beside each */
@@ -1916,39 +2084,16 @@ html:not(.js) .ws.on {
   background: var(--hover);
 }
 
-.pad-shape {
+.app.pad-art {
   grid-row: 1;
   grid-column: 1;
-  width: 84px;
-  height: 84px;
-  fill: var(--accent-c);
-  transition: fill var(--d-short) var(--ease-std), scale var(--d-spring-fast) var(--spring-fast);
+  width: 90px;
+  height: 90px;
+  transition: scale var(--d-spring-fast) var(--spring-fast);
 }
 
-.pad-glyph {
-  grid-row: 1;
-  grid-column: 1;
-  display: grid;
-  place-items: center;
-  color: var(--on-accent-c);
-  transition: color var(--d-short) var(--ease-std);
-}
-
-.pad-glyph .i {
-  width: 28px;
-  height: 28px;
-}
-
-.pad:active .pad-shape {
+.pad:active .app.pad-art {
   scale: 0.9;
-}
-
-.pad.playing .pad-shape {
-  fill: var(--accent);
-}
-
-.pad.playing .pad-glyph {
-  color: var(--on-accent);
 }
 
 /* colour: the palettes, and the roles of the one on screen */
@@ -3276,32 +3421,38 @@ td code {
   }
 }
 
-/* a pad rings as it plays */
+/* a pad rings as it plays, in its own outline */
 .pad {
   overflow: visible;
 }
 
 .ring {
-  position: absolute;
-  left: 50%;
-  top: 46px;
-  width: 84px;
-  height: 84px;
-  margin: -42px 0 0 -42px;
-  border-radius: 999px;
-  border: 3px solid var(--accent);
+  grid-row: 1;
+  grid-column: 1;
+  width: 90px;
+  height: 90px;
+  overflow: visible;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
   pointer-events: none;
-  animation: ring 900ms var(--ease-in) forwards;
+  animation: ring 950ms var(--ease-in) forwards;
+}
+
+.ring path {
+  stroke-width: 3px;
+  vector-effect: non-scaling-stroke;
 }
 
 @keyframes ring {
   from {
-    scale: 0.7;
+    scale: 0.9;
     opacity: 0.9;
   }
 
   to {
-    scale: 1.9;
+    scale: 1.7;
     opacity: 0;
   }
 }

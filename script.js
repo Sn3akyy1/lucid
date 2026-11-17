@@ -372,6 +372,9 @@
         return;
       }
       retarget(i, hover);
+      // the lit cell widens or narrows on its own transition, the pill riding it even
+      // when the lit cell has not changed (the page you are on, hovered)
+      run(340);
       title(i);
     }
 
@@ -638,11 +641,13 @@
 
   /* --------------------------------------------- shapes (lucidui/Shapes.js) */
 
-  function shapePath(r, size) {
+  function shapePath(r, size, ox, oy) {
     var N = r.length, c = size / 2, pts = [];
+    ox = ox || 0;
+    oy = oy || 0;
     for (var i = 0; i < N; i++) {
       var th = i / N * 2 * Math.PI;
-      pts.push([c + c * r[i] * Math.cos(th), c + c * r[i] * Math.sin(th)]);
+      pts.push([ox + c + c * r[i] * Math.cos(th), oy + c + c * r[i] * Math.sin(th)]);
     }
     var d = "M" + pts[0][0].toFixed(2) + " " + pts[0][1].toFixed(2);
     for (var j = 0; j < N; j++) {
@@ -654,30 +659,32 @@
     return d + "Z";
   }
 
-  function half(r) {
-    return r.filter(function (_, i) { return i % 2 === 0; });
-  }
-
-  // a shape morphs to another and back, the way the session screen's shapes do
+  // a gravity tile's shape morphs to another and back, its base going with it, the
+  // way the session screen's shapes do; the paths come home to the set's own
   function morph(svg, from, to, ms) {
     var S = window.LUCID_SHAPES;
-    if (!S || !S[from] || reduce) return;
-    var a = half(S[from]), b = half(S[to] || S.circle);
-    var path = svg.querySelector("path.live");
-    if (!path) {
-      path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("class", "live");
-      svg.textContent = "";
-      svg.appendChild(path);
+    var lift = svg.querySelector('[data-part="lift"]'), tile = svg.querySelector('[data-part="tile"]');
+    if (!S || !S[from] || !lift || !tile || reduce) return;
+    if (!tile.hasAttribute("data-d")) {
+      tile.setAttribute("data-d", tile.getAttribute("d"));
+      lift.setAttribute("data-d", lift.getAttribute("d"));
     }
-    var t0 = performance.now();
+    var a = S[from], b = S[to] || S.circle, t0 = performance.now(), run = {};
+    svg.__morph = run;
     // there and back: out fast, a little past, home
     function step(now) {
+      if (svg.__morph !== run) return;
       var t = Math.min(1, (now - t0) / ms);
+      if (t >= 1) {
+        tile.setAttribute("d", tile.getAttribute("data-d"));
+        lift.setAttribute("d", lift.getAttribute("data-d"));
+        return;
+      }
       var k = Math.sin(Math.PI * t) * (1 + 0.15 * Math.sin(Math.PI * 2 * t));
       var r = a.map(function (x, i) { return x + (b[i] - x) * k; });
-      path.setAttribute("d", shapePath(r, 100));
-      if (t < 1) requestAnimationFrame(step);
+      tile.setAttribute("d", shapePath(r, 44, 2, 2));
+      lift.setAttribute("d", shapePath(r, 44, 2, 3.2));
+      requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
   }
@@ -694,19 +701,30 @@
       pad.addEventListener("click", function () {
         var a = new Audio("assets/sounds/" + pad.getAttribute("data-sound") + "." + ext);
         a.volume = 0.7;
+        // a play again restarts the symbol's move; only the newest play may end it
+        var turn = {};
+        pad.__turn = turn;
+        pad.classList.remove("playing");
+        void pad.offsetWidth;
         pad.classList.add("playing");
         a.play().catch(function () {});
-        var stop = function () { pad.classList.remove("playing"); };
+        var stop = function () { if (pad.__turn === turn) pad.classList.remove("playing"); };
         a.addEventListener("ended", stop);
         setTimeout(stop, 2600);
-        var svg = pad.querySelector(".pad-shape");
-        if (svg) morph(svg, pad.getAttribute("data-shape"), "circle", 620);
+        var art = pad.querySelector(".app[data-shape]"), shape = art && art.getAttribute("data-shape");
+        if (art) morph(art, shape, "circle", 640);
         jelly(pad, 0.12, 0.6);
-        if (!reduce) {
-          var ring = document.createElement("span");
-          ring.className = "ring";
+        // a ripple in the pad's own outline
+        if (!reduce && art && window.LUCID_SHAPES && window.LUCID_SHAPES[shape]) {
+          var ns = "http://www.w3.org/2000/svg";
+          var ring = document.createElementNS(ns, "svg"), path = document.createElementNS(ns, "path");
+          ring.setAttribute("class", "ring");
+          ring.setAttribute("viewBox", "0 0 48 48");
+          ring.setAttribute("aria-hidden", "true");
+          path.setAttribute("d", shapePath(window.LUCID_SHAPES[shape], 44, 2, 2));
+          ring.appendChild(path);
           pad.appendChild(ring);
-          setTimeout(function () { ring.remove(); }, 950);
+          setTimeout(function () { ring.remove(); }, 1000);
         }
       });
     });
