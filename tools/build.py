@@ -513,36 +513,28 @@ HEAD = """<!doctype html>
 
 
 def bar(page, active):
-    # lucidbar's Workspaces: every page is a workspace in use (a square on one run),
-    # the one you are on is the accent cell; script.js deals it a new shape each visit
-    square, focus = page.shell.shape("square"), page.shell.shape("cookie9")
-    cells, inks, window = [], [], ""
+    # the pages by name in one pill, the one you are on in the bar's accent pill (which
+    # glides over from the last page, as the active workspace does)
+    links, inks = [], []
     for key, href, label, ico, title in NAV:
         on = key == active
-        mark = ('<svg class="ws-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><path d="%s"/></svg>'
-                % (focus if on else square))
-        cls = "ws on" if on else "ws"
-        cells.append('<a class="%s" href="%s" aria-label="%s" data-label="%s" data-title="%s"%s>%s%s</a>'
-                     % (cls, href, label, label, title, ' aria-current="page"' if on else "", mark, page.icon(ico)))
-        inks.append('<span class="%s">%s%s</span>' % (cls, mark, page.icon(ico)))
-        if on:
-            window = ('<div class="pill window" aria-hidden="true"><span class="win-row">%s<span class="win-title">%s'
-                      '<span class="win-sub">&ensp;·&ensp;%s</span></span></span></div>' % (page.icon(ico), label, title))
+        cls = "pg on" if on else "pg"
+        links.append('<a class="%s" href="%s"%s>%s</a>' % (cls, href, ' aria-current="page"' if on else "", label))
+        inks.append('<span class="%s">%s</span>' % (cls, label))
     sheet = "".join('<a class="sheet-row%s" href="%s">%s<span>%s</span></a>'
                     % (" on" if k == active else "", h, page.icon(i), l) for k, h, l, i, _ in NAV)
     return """<header class="bar" id="bar">
   <div class="zone">
     <a class="pill start grows" href="index.html" aria-label="Lucid home"><span class="face">{mark}</span></a>
-    <nav class="pill workspaces" aria-label="Pages">
-      <div class="ws-row">
-        <span class="ws-run" aria-hidden="true"></span><span class="ws-lit" aria-hidden="true"></span>{cells}
-        <span class="ws-ink" aria-hidden="true">{inks}</span>
-      </div>
-    </nav>
-    {window}
   </div>
-  <div class="zone">
-    <div class="pill system grows"><span class="face">
+  <nav class="pill pages" aria-label="Pages">
+    <div class="pg-row">
+      <span class="pg-lit" aria-hidden="true"></span>{links}
+      <span class="pg-ink" aria-hidden="true">{inks}</span>
+    </div>
+  </nav>
+  <div class="zone end">
+    <div class="pill system"><span class="face">
       <a class="sys stars" href="{gh}/stargazers" aria-label="Stars on GitHub">{star}<span data-stars>332</span></a>
       <span class="sys-sep" aria-hidden="true"></span>
       <button class="sys" type="button" data-panel="palette" aria-expanded="false" aria-controls="palette-panel" aria-label="Palette">{palette}</button>
@@ -560,7 +552,7 @@ def bar(page, active):
     <div class="palettes" data-palettes></div>
   </div>
   <div class="sheet" id="sheet" hidden><p class="panel-title">Lucid</p>{sheet}</div>
-</header>""".format(mark=MARK, cells="".join(cells), inks="".join(inks), window=window, grid=page.icon("apps"), gh=GH,
+</header>""".format(mark=MARK, links="".join(links), inks="".join(inks), grid=page.icon("apps"), gh=GH,
                     star=page.icon("star", True), palette=page.icon("palette"),
                     dark=page.icon("dark_mode") + page.icon("light_mode").replace('class="i"', 'class="i" hidden'),
                     check=page.icon("check"), sheet=sheet, ver=page.shell.version)

@@ -880,9 +880,9 @@ h3 {
 
 /* ------------------------------------------------------------------ bar */
 
-/* lucidbar, ported at 1.2x: flat pills floating over the page, barSpacing apart. the
-   Start pill, the workspaces (a page is a workspace), the focused window's title, and
-   the System pill with the version where the battery sits */
+/* lucidbar's look at 1.2x: flat pills floating over the page in its three zones. the
+   Start pill, the pages by name with the accent pill under the one you are on, and the
+   System pill with the version where the battery sits */
 .bar {
   --bh: 42px;
   --cell: 32px;
@@ -890,12 +890,16 @@ h3 {
   position: sticky;
   top: 0;
   z-index: 50;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   padding: 12px var(--gutter);
   view-transition-name: lucid-bar;
+}
+
+.zone.end {
+  justify-self: end;
 }
 
 .zone {
@@ -935,8 +939,9 @@ h3 {
 }
 
 @media (hover: hover) {
+  /* evenly on every side: a page has no screen edge above the bar to stop it */
   .pill.grows:hover::before {
-    inset: 0 calc(var(--grow) * -1) calc(var(--grow) * -1);
+    inset: calc(var(--grow) * -1);
   }
 
   .pill.grows:hover > .face {
@@ -961,169 +966,89 @@ h3 {
   height: 25px;
 }
 
-/* Workspaces: square cells with no gap, the pages in use on one run of
-   surfaceHighest, the accent pill under the lit cell */
-.workspaces {
-  padding-inline: calc((var(--bh) - var(--cell)) / 2);
+/* the pages: each name a state layer, the one you are on in the accent pill, and what
+   the pill covers in on-accent exactly to its edges while it glides */
+.pages {
+  padding-inline: 4px;
 }
 
-.ws-row {
+.pg-row {
   --l: 0px;
   --r: 0px;
   position: relative;
   display: flex;
-  height: var(--cell);
+  height: calc(var(--bh) - 8px);
 }
 
-.ws-run,
-.ws-lit,
-.ws-ink {
+.pg-lit,
+.pg-ink {
   position: absolute;
   inset: 0;
-  border-radius: calc(var(--cell) / 2);
+  border-radius: calc((var(--bh) - 8px) / 2);
   pointer-events: none;
 }
 
-.ws-run {
-  background: var(--s4);
-}
-
-.ws-lit {
+.pg-lit {
   right: auto;
   left: var(--l);
   width: calc(var(--r) - var(--l));
   background: var(--accent);
 }
 
-.js .ws-lit:not(.ready) {
+.js .pg-lit:not(.ready) {
   opacity: 0;
 }
 
-/* before script.js, or without it, the page you are on still gets its accent cell */
-html:not(.js) .ws.on {
+.pg {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 100%;
+  padding: 0 16px;
+  border-radius: calc((var(--bh) - 8px) / 2);
+  color: var(--text-2);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  outline-offset: -2px;
+  text-decoration: none !important;
+  transition: background-color var(--d-quick) var(--ease-std), color var(--d-quick) var(--ease-std);
+}
+
+.pg:not(.on):hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.pg.on {
+  color: var(--accent);
+}
+
+.pg-ink {
+  z-index: 2;
+  display: flex;
+  color: var(--on-accent);
+  clip-path: inset(0 calc(100% - var(--r)) 0 var(--l) round calc((var(--bh) - 8px) / 2));
+}
+
+.pg-ink .pg {
+  color: inherit;
+}
+
+/* before script.js, or without it, the page you are on still gets its accent pill */
+html:not(.js) .pg-row > .pg.on {
   background: var(--accent);
   color: var(--on-accent);
 }
 
-.ws {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: var(--cell);
-  height: var(--cell);
-  border-radius: calc(var(--cell) / 2);
-  color: var(--text);
-  outline-offset: -2px;
-  text-decoration: none !important;
-  transition: width 300ms var(--ease-std), color 200ms var(--ease-std);
-}
-
-.ws > * {
-  grid-area: 1 / 1;
-}
-
-/* the mark: a square a third of the cell, the lit one's shape two thirds */
-.ws-mark {
-  width: calc(var(--cell) / 3);
-  height: calc(var(--cell) / 3);
-  overflow: visible;
-  fill: currentColor;
-  transition: opacity 200ms var(--ease-std), scale 300ms var(--ease-std);
-}
-
-.ws.on .ws-mark {
-  width: calc(var(--cell) * 2 / 3);
-  height: calc(var(--cell) * 2 / 3);
-}
-
-/* hovered, the pages' icons take the shapes' place (the bar shows numbers), the lit
-   cell widens and the pill follows the pointer */
-.ws .i {
-  width: 18px;
-  height: 18px;
-  opacity: 0;
-  scale: 0.6;
-  transition: opacity 300ms var(--ease-std), scale 300ms var(--ease-std);
-}
-
-.hovering .ws-mark {
-  opacity: 0;
-  scale: 0.5;
-}
-
-.hovering .ws .i {
-  opacity: 1;
-  scale: 1;
-}
-
-.hovering .ws.lit {
-  width: calc(var(--cell) + 17px);
-}
-
-.hovering .ws.on:not(.lit) {
-  color: var(--accent);
-}
-
-/* what sits under the pill turns on-accent, exactly to its edges */
-.ws-ink {
-  z-index: 2;
-  display: flex;
-  color: var(--on-accent);
-  clip-path: inset(0 calc(100% - var(--r)) 0 var(--l) round calc(var(--cell) / 2));
-}
-
-.ws-ink .ws {
-  color: inherit;
-}
-
-/* the window in focus: its icon and its title */
-.pill.window {
-  gap: 10px;
-  padding-inline: 14px 18px;
-  overflow: hidden;
-  transition: width 300ms var(--ease-std);
-}
-
-.win-row {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 10px;
-}
-
-.win-row .i {
-  flex: none;
-  width: 20px;
-  height: 20px;
-  color: var(--accent);
-}
-
-.win-row.swap {
-  animation: win-swap 200ms var(--ease-std) both;
-}
-
-@keyframes win-swap {
-  from {
-    opacity: 0;
-  }
-}
-
-.win-title {
-  font-size: 15px;
-  font-weight: 640;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-/* System: glyphs a state layer apart, a rule, and the version on a battery's body */
+/* System: glyphs a state layer apart, a rule, and the version on a battery's body. every
+   mark sits about 16px from the next and 14px from either end, measured on the ink; the
+   state layers sit 4px inside */
 .pill.system {
   padding-inline: 4px;
-}
-
-.pill.system > .face {
-  gap: 2px;
 }
 
 .sys {
@@ -1133,7 +1058,7 @@ html:not(.js) .ws.on {
   gap: 6px;
   height: calc(var(--bh) - 8px);
   min-width: calc(var(--bh) - 8px);
-  padding: 0 8px;
+  padding: 0 7px;
   border: 0;
   border-radius: calc((var(--bh) - 8px) / 2);
   background: transparent;
@@ -1165,7 +1090,7 @@ html:not(.js) .ws.on {
   flex: none;
   width: 1.5px;
   height: 16px;
-  margin-inline: 4px;
+  margin-inline: 8px 7px;
   border-radius: 1px;
   background: color-mix(in oklab, var(--text) 22%, transparent);
 }
@@ -1179,13 +1104,14 @@ html:not(.js) .ws.on {
   flex: none;
   align-items: center;
   height: 20px;
-  margin-inline: 6px 10px;
+  margin-inline: 8px 10px;
   padding: 0 7px;
   border-radius: 5.4px;
   background: var(--accent);
   color: var(--s2);
   font-size: 12.5px;
   font-weight: 760;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
   text-decoration: none !important;
   transition: background-color var(--d-quick) var(--ease-std);
@@ -3592,15 +3518,28 @@ main,
   }
 }
 
-@media (max-width: 1100px) {
-  .win-sub {
-    display: none;
+/* too narrow to centre the pages on the page: centre them between the side pills */
+@media (max-width: 1080px) {
+  .bar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .pill.pages {
+    justify-self: center;
   }
 }
 
 @media (max-width: 900px) {
-  .pill.window {
+  .bar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .pill.pages {
     display: none;
+  }
+
+  .sys.menu-btn {
+    display: inline-flex;
   }
 
   .feature,
@@ -3670,10 +3609,6 @@ main,
   .bar-ver,
   .stars span {
     display: none;
-  }
-
-  .sys.menu-btn {
-    display: inline-flex;
   }
 
   .sys {
