@@ -14,7 +14,7 @@
   /* ------------------------------------------------------------ palettes */
 
   var PALETTES = [
-    { id: "lucid", name: "Lucid", dark: ["#050a0b", "#80d4dc", "#181e1e"], light: ["#e6eced", "#006970", "#ceddde"] },
+    { id: "lucid", name: "Lucid", dark: ["#0e1415", "#80d4dc", "#1a2121"], light: ["#e6eced", "#006970", "#ceddde"] },
     { id: "catppuccin-mocha", name: "Catppuccin", dark: ["#11111b", "#89b4fa", "#1e1e2e"], light: ["#ecf1ff", "#475f86", "#d1d7ec"] },
     { id: "gruvbox", name: "Gruvbox", dark: ["#1d2021", "#83a598", "#32302f"], light: ["#fff0ca", "#4d635b", "#e6d6ae"] },
     { id: "nightfox", name: "Nightfox", dark: ["#131a24", "#719cd6", "#29394f"], light: ["#f0f1f2", "#446085", "#d6d7d8"] },

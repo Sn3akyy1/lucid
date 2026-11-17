@@ -4,8 +4,8 @@
   "description": "Lucid is an ecosystem: a Material 3 Expressive desktop for Hyprland, built on Quickshell.",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#050a0b",
-  "theme_color": "#050a0b",
+  "background_color": "#0e1415",
+  "theme_color": "#0e1415",
   "icons": [
     {
       "src": "assets/images/icon-192.png",

@@ -126,7 +126,7 @@ def at_tone(hexc, t):
 
 
 # the brand palette in the dark, for icons drawn before script.js runs
-BRAND = {"primary": "#80d4dc", "error": "#ffb4ab", "neutral": "#dee4e4", "container": "#181e1e", "raised": "#212829"}
+BRAND = {"primary": "#80d4dc", "error": "#ffb4ab", "neutral": "#dee4e4", "container": "#1a2121", "raised": "#252b2c"}
 
 
 def tone_fallback(key):
@@ -417,7 +417,7 @@ HEAD = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{title}</title>
 <meta name="description" content="{desc}">
-<meta name="theme-color" content="#050a0b" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#0e1415" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#e6eced" media="(prefers-color-scheme: light)">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Lucid">
