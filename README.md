@@ -18,16 +18,16 @@ The shell, its own apps, its own icons, pointer and login screen, all coloured b
 **[Changelog](CHANGELOG.md)**
 
 <p>
-  <a href="https://github.com/Sn3akyy1/lucid/releases"><img alt="Version" src="https://img.shields.io/badge/VERSION-v1.21-00F0FF?style=for-the-badge&labelColor=0C1213"></a>
-  <a href="https://github.com/Sn3akyy1/lucid/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Sn3akyy1/lucid?style=for-the-badge&label=STARS&labelColor=0C1213&color=B7C7EA"></a>
-  <a href="https://github.com/Sn3akyy1/lucid/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Sn3akyy1/lucid?style=for-the-badge&label=LAST%20COMMIT&labelColor=0C1213&color=80D4DC"></a>
-  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-80CBC4?style=for-the-badge&labelColor=0C1213"></a>
+  <a href="https://github.com/Sn3akyy1/lucid/releases"><img alt="Version" src="https://img.shields.io/badge/VERSION-v1.21-00F0FF?style=for-the-badge&labelColor=00363A"></a>
+  <a href="https://github.com/Sn3akyy1/lucid/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Sn3akyy1/lucid?style=for-the-badge&label=STARS&labelColor=00363A&color=B7C7EA"></a>
+  <a href="https://github.com/Sn3akyy1/lucid/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Sn3akyy1/lucid?style=for-the-badge&label=LAST%20COMMIT&labelColor=00363A&color=80D4DC"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-80CBC4?style=for-the-badge&labelColor=00363A"></a>
 </p>
 <p>
-  <img alt="Arch Linux" src="https://img.shields.io/badge/ARCH%20LINUX-80D4DC?style=for-the-badge&logo=archlinux&logoColor=0C1213">
-  <img alt="Hyprland" src="https://img.shields.io/badge/HYPRLAND%200.55%2B-80CBC4?style=for-the-badge&labelColor=0C1213">
-  <a href="https://quickshell.org"><img alt="Built on Quickshell" src="https://img.shields.io/badge/BUILT%20ON-QUICKSHELL-B7C7EA?style=for-the-badge&labelColor=0C1213"></a>
-  <a href="https://sn3akyy1.github.io/lucid/"><img alt="Website" src="https://img.shields.io/badge/WEBSITE-SN3AKYY1.GITHUB.IO%2FLUCID-00F0FF?style=for-the-badge&labelColor=0C1213"></a>
+  <img alt="Arch Linux" src="https://img.shields.io/badge/ARCH%20LINUX-80D4DC?style=for-the-badge&logo=archlinux&logoColor=00363A">
+  <img alt="Hyprland" src="https://img.shields.io/badge/HYPRLAND%200.55%2B-80CBC4?style=for-the-badge&labelColor=00363A">
+  <a href="https://quickshell.org"><img alt="Built on Quickshell" src="https://img.shields.io/badge/BUILT%20ON-QUICKSHELL-B7C7EA?style=for-the-badge&labelColor=00363A"></a>
+  <a href="https://sn3akyy1.github.io/lucid/"><img alt="Website" src="https://img.shields.io/badge/WEBSITE-SN3AKYY1.GITHUB.IO%2FLUCID-00F0FF?style=for-the-badge&labelColor=00363A"></a>
 </p>
 
 <img src="assets/desktop.webp" alt="The Lucid desktop in blue: a clock, a calendar, the song playing and the weather on the left, battery, system and to-do widgets on the right, and the visualiser along the bottom">

@@ -26,7 +26,7 @@ def main():
     tonal = load("tonal", "tonal.py")
     sheet = load("build_sheet", "build-sheet.py")
 
-    brand = {"plate": "#0c1213", "cyan": "#00f0ff", "sparkle": "#eff5f5"}
+    brand = {"plate": "#00363a", "cyan": "#00f0ff", "sparkle": "#eff5f5"}
 
     def hexof(key):
         if key in brand:
