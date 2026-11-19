@@ -11,27 +11,27 @@ WidgetBody {
     readonly property var modes: [{
         "key": "web",
         "icon": "public",
-        "label": "Web",
+        "label": I18n.tr("Web"),
         "shape": "cookie4"
     }, {
         "key": "emoji",
         "icon": "mood",
-        "label": "Emoji",
+        "label": I18n.tr("Emoji"),
         "shape": "clover4"
     }, {
         "key": "clipboard",
         "icon": "content_paste",
-        "label": "Clipboard",
+        "label": I18n.tr("Clipboard"),
         "shape": "sunny"
     }, {
         "key": "wallpaper",
         "icon": "wallpaper",
-        "label": "Wallpapers",
+        "label": I18n.tr("Wallpapers"),
         "shape": "pentagon"
     }, {
         "key": "command",
         "icon": "terminal",
-        "label": "Commands",
+        "label": I18n.tr("Commands"),
         "shape": "gem"
     }]
 
@@ -89,7 +89,7 @@ WidgetBody {
             anchors.verticalCenter: parent.verticalCenter
             role: "titleMedium"
             color: w.inkDim
-            text: "Search"
+            text: I18n.tr("Search")
         }
 
         Row {
@@ -219,7 +219,7 @@ WidgetBody {
                 elide: Text.ElideRight
                 role: "titleMedium"
                 color: w.inkDim
-                text: "Search apps, files and the web"
+                text: I18n.tr("Search apps, files and the web")
             }
 
             WidgetTap {

@@ -32,11 +32,11 @@ Item {
 
     function suggestion() {
         for (let n = Prefs.systemLayoutList.length + 1; n < 1000; n++) {
-            if (Prefs.systemLayoutNamed("Layout " + n) === null)
-                return "Layout " + n;
+            if (Prefs.systemLayoutNamed(I18n.tr("Layout %1", n)) === null)
+                return I18n.tr("Layout %1", n);
 
         }
-        return "Layout";
+        return I18n.tr("Layout");
     }
 
     function begin() {
@@ -90,13 +90,13 @@ Item {
                 readonly property var shown: Prefs.prefList(modelData.layout.systemBlocks, Prefs.systemBlockCatalog)
 
                 title: modelData.name
-                blurb: "Saved " + Qt.formatDate(new Date(Number(modelData.saved) || 0), "d MMMM yyyy")
+                blurb: I18n.tr("Saved %1", Qt.formatDate(new Date(Number(modelData.saved) || 0), I18n.tr("d MMMM yyyy")))
                 keys: shown
                 place: Prefs.systemGridPlace(shown, layouts.needsFor(grid), grid)
                 current: Prefs.systemLayoutSame(Prefs.systemLayoutNow(), modelData.layout)
                 removable: true
                 onChosen: Prefs.applySystemLayout(modelData.id)
-                onRemoveRequested: Prefs.askConfirm("Delete “" + modelData.name + "”?", "The saved layout goes. The control centre stays as it is now.", "Delete", "cc-layout:" + modelData.id)
+                onRemoveRequested: Prefs.askConfirm(I18n.tr("Delete “%1”?", modelData.name), I18n.tr("The saved layout goes. The control centre stays as it is now."), I18n.tr("Delete"), "cc-layout:" + modelData.id)
             }
 
         }
@@ -105,8 +105,8 @@ Item {
         LayoutTile {
             id: saveTile
 
-            title: "Save this layout"
-            blurb: "Keep the control centre as it is now, to come back to."
+            title: I18n.tr("Save this layout")
+            blurb: I18n.tr("Keep the control centre as it is now, to come back to.")
             keys: Prefs.systemBlockKeys
             place: Prefs.systemGridPlace(Prefs.systemBlockKeys, layouts.needs)
             mark: "add"
@@ -127,7 +127,7 @@ Item {
 
                     width: parent.width - save.width - parent.spacing
                     height: Theme.dp(42)
-                    placeholder: "Name it"
+                    placeholder: I18n.tr("Name it")
                     commitOnBlur: false
                     onEdited: (v) => {
                         return layouts.draft = v;
@@ -167,7 +167,7 @@ Item {
                     id: hint
 
                     anchors.centerIn: parent
-                    text: layouts.clash !== null ? "Updates “" + layouts.clash.name + "”" : "Enter to save · Esc to cancel"
+                    text: layouts.clash !== null ? I18n.tr("Updates “%1”", layouts.clash.name) : I18n.tr("Enter to save · Esc to cancel")
                     color: layouts.clash !== null ? Theme.accent : Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fs(10)

@@ -127,32 +127,32 @@ Item {
         switch (stage.phase) {
         case "select":
             if (stage.mode === "colour")
-                return "Click to copy a colour  ·  Shift-click to collect a few";
+                return I18n.tr("Click to copy a colour  ·  Shift-click to collect a few");
 
             if (stage.target === "window")
-                return "Click a window";
+                return I18n.tr("Click a window");
 
-            return stage.mode === "record" ? "Drag over what to record, or click a window" : (stage.mode === "text" ? "Drag over the text, or click a window" : "Drag to select, or click a window");
+            return stage.mode === "record" ? I18n.tr("Drag over what to record, or click a window") : (stage.mode === "text" ? I18n.tr("Drag over the text, or click a window") : I18n.tr("Drag to select, or click a window"));
         case "adjust":
-            return "Drag the handles to adjust  ·  Enter starts recording";
+            return I18n.tr("Drag the handles to adjust  ·  Enter starts recording");
         case "read":
-            return "Reading the text…";
+            return I18n.tr("Reading the text…");
         }
         return "";
     }
     readonly property string fabTip: {
         if (stage.phase === "mark")
-            return stage.editing ? "Save an edited copy (Enter)" : "Save and copy (Enter)";
+            return stage.editing ? I18n.tr("Save an edited copy (Enter)") : I18n.tr("Save and copy (Enter)");
 
         switch (stage.mode) {
         case "record":
-            return stage.hasSel ? "Record the selection (Enter)" : "Record the whole screen (Enter)";
+            return stage.hasSel ? I18n.tr("Record the selection (Enter)") : I18n.tr("Record the whole screen (Enter)");
         case "text":
-            return stage.hasSel ? "Copy the text in the selection" : "Copy all the text on the screen";
+            return stage.hasSel ? I18n.tr("Copy the text in the selection") : I18n.tr("Copy all the text on the screen");
         case "colour":
-            return "Copy every colour collected";
+            return I18n.tr("Copy every colour collected");
         }
-        return (stage.timer > 0 ? "Take it in " + stage.timer + " s" : "Take it") + (stage.hasSel ? ", just the selection" : ", the whole screen") + " (Enter)";
+        return (stage.timer > 0 ? I18n.tr("Take it in %1 s", stage.timer) : I18n.tr("Take it")) + (stage.hasSel ? I18n.tr(", just the selection") : I18n.tr(", the whole screen")) + I18n.tr(" (Enter)");
     }
 
     signal closeRequested()
@@ -686,17 +686,17 @@ Item {
                     "codes": r.codes
                 });
             } else {
-                stage.notify("content_copy", r.text !== "" ? "Text copied" : "Code copied", false);
+                stage.notify("content_copy", r.text !== "" ? I18n.tr("Text copied") : I18n.tr("Code copied"), false);
                 stage.closeRequested();
             }
             return ;
         }
         if (r.status === "notool") {
-            stage.notify("warning", "Install tesseract to copy text", true);
+            stage.notify("warning", I18n.tr("Install tesseract to copy text"), true);
             stage.closeRequested();
             return ;
         }
-        stage.notify(r.status === "empty" ? "search_off" : "warning", r.status === "empty" ? "No text found there" : "The text could not be read", r.status !== "empty");
+        stage.notify(r.status === "empty" ? "search_off" : "warning", r.status === "empty" ? I18n.tr("No text found there") : I18n.tr("The text could not be read"), r.status !== "empty");
         if (stage.readFrom === "mark") {
             stage.phase = "mark";
         } else {
@@ -812,7 +812,7 @@ Item {
         stage.engine.copyText(stage.palette.map((e) => {
             return e.value;
         }).join("\n"));
-        stage.notify("palette", stage.palette.length === 1 ? "Colour copied" : stage.palette.length + " colours copied", false);
+        stage.notify("palette", stage.palette.length === 1 ? I18n.tr("Colour copied") : I18n.tr("%1 colours copied", stage.palette.length), false);
         stage.closeRequested();
     }
 
@@ -907,7 +907,7 @@ Item {
                         "base": stage.editing ? src.substring(slash + 1, dot > slash ? dot : src.length) + "-edited" : ""
                     });
                 } else {
-                    stage.notify("warning", "The capture could not be saved", true);
+                    stage.notify("warning", I18n.tr("The capture could not be saved"), true);
                 }
                 done();
             }, Qt.size(j.pw, j.ph));
@@ -1643,7 +1643,7 @@ Item {
 
         visible: stage.phase === "timer"
         value: stage.ticks
-        caption: "Click to cancel"
+        caption: I18n.tr("Click to cancel")
         x: Math.round(stage.selX + stage.selW / 2 - width / 2)
         y: Math.round(stage.selY + stage.selH / 2 - Theme.dp(88))
         onTapped: stage.cancelTimer()

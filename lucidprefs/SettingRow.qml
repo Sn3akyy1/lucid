@@ -22,7 +22,7 @@ Item {
     property string resetAction: row.resetKey
     property bool resetVisible: row.resetKey !== "" && Prefs.isModified(row.resetKey)
     property string resetTitle: row.title
-    property string resetBody: "This puts \"" + row.resetTitle + "\" back to the value it ships with."
+    property string resetBody: I18n.tr("This puts \"%1\" back to the value it ships with.", row.resetTitle)
     property string warning: ""
     default property alias control: holder.data
     readonly property string activeDescription: (!row.enabled && row.disabledReason !== "") ? row.disabledReason : row.description
@@ -223,7 +223,7 @@ Item {
                     if (row.inSheet && Prefs.defaults[row.resetAction] !== undefined)
                         Prefs.set(row.resetAction, Prefs.defaults[row.resetAction]);
                     else
-                        Prefs.askReset("Reset " + row.resetTitle.toLowerCase() + "?", row.resetBody, row.resetAction);
+                        Prefs.askReset(I18n.tr("Reset %1?", row.resetTitle.toLowerCase()), row.resetBody, row.resetAction);
                 }
 
                 Behavior on width {

@@ -12,7 +12,7 @@ Item {
     property string title: ""
     property string text: ""
     property string confirmLabel: "OK"
-    property string cancelLabel: "Cancel"
+    property string cancelLabel: I18n.tr("Cancel")
     property bool danger: false
     property var taken: []
     property var apps: []
@@ -33,10 +33,10 @@ Item {
             return "A name can't contain “/”";
 
         if (t === "." || t === "..")
-            return "That name is reserved";
+            return I18n.tr("That name is reserved");
 
         if (dlg.taken.indexOf(t) !== -1)
-            return "Something here already has that name";
+            return I18n.tr("Something here already has that name");
 
         return "";
     }
@@ -46,7 +46,7 @@ Item {
         dlg.title = opts.title || "";
         dlg.text = opts.text || "";
         dlg.confirmLabel = opts.confirm || "OK";
-        dlg.cancelLabel = opts.cancel || "Cancel";
+        dlg.cancelLabel = opts.cancel || I18n.tr("Cancel");
         dlg.danger = opts.danger === true;
         dlg.taken = opts.taken || [];
         dlg.apps = opts.apps || [];
@@ -256,7 +256,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             visible: modelData.default === true
                             role: "labelSmall"
-                            text: "Default"
+                            text: I18n.tr("Default")
                             color: on ? Theme.fgAccentContainer : Theme.subtext
                         }
 
@@ -305,7 +305,7 @@ Item {
                         anchors.leftMargin: Theme.dp(12)
                         anchors.verticalCenter: parent.verticalCenter
                         role: "bodyMedium"
-                        text: "Always use it for this kind of file"
+                        text: I18n.tr("Always use it for this kind of file")
                         color: Theme.text
                     }
 
@@ -371,7 +371,7 @@ Item {
                     variant: dlg.mode === "info" ? "tonal" : "filled"
                     danger: dlg.danger
                     disabled: dlg.problem !== "" || (dlg.mode === "apps" && dlg.appPick < 0)
-                    text: dlg.mode === "info" ? "Close" : dlg.confirmLabel
+                    text: dlg.mode === "info" ? I18n.tr("Close") : dlg.confirmLabel
                     onClicked: dlg.finish(dlg.mode !== "info")
                 }
 

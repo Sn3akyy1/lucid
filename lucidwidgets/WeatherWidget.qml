@@ -38,19 +38,19 @@ WidgetBody {
     }
 
     readonly property var facts: !w.report ? [] : [{
-        "label": "Feels like",
+        "label": I18n.tr("Feels like"),
         "value": w.t(w.report.feelsC, w.report.feelsF)
     }, {
-        "label": "High · Low",
+        "label": I18n.tr("High · Low"),
         "value": w.days.length ? w.t(w.days[0].maxC, w.days[0].maxF) + " · " + w.t(w.days[0].minC, w.days[0].minF) : "–"
     }, {
-        "label": "Rain",
+        "label": I18n.tr("Rain"),
         "value": (w.report.pop || 0) + "%"
     }, {
-        "label": "Humidity",
+        "label": I18n.tr("Humidity"),
         "value": w.report.humidity + "%"
     }, {
-        "label": "Wind",
+        "label": I18n.tr("Wind"),
         "value": Units.wind(w.report.windKmph, w.report.windMph) + (w.report.windDir ? " " + w.report.windDir : "")
     }]
 
@@ -62,19 +62,19 @@ WidgetBody {
         if (!d || !d.date) {
             const fake = Loc.now();
             fake.setDate(fake.getDate() + i);
-            return i === 0 ? "Today" : fake.toLocaleDateString(Qt.locale(), "ddd");
+            return i === 0 ? "Today" : fake.toLocaleDateString(I18n.locale, "ddd");
         }
-        return i === 0 ? "Today" : new Date(d.date + "T12:00").toLocaleDateString(Qt.locale(), "ddd");
+        return i === 0 ? "Today" : new Date(d.date + "T12:00").toLocaleDateString(I18n.locale, "ddd");
     }
 
     function hourName(h, i) {
         if (i === 0)
-            return "Now";
+            return I18n.tr("Now");
 
         if (!h.time)
             return (i * 3) + "h";
 
-        return new Date(h.time).toLocaleTimeString(Qt.locale(), Prefs.clock24h ? "HH:00" : "h AP");
+        return new Date(h.time).toLocaleTimeString(I18n.locale, Prefs.clock24h ? "HH:00" : "h AP");
     }
 
     Component.onCompleted: {
@@ -98,7 +98,7 @@ WidgetBody {
             anchors.horizontalCenter: parent.horizontalCenter
             role: "labelLarge"
             color: w.inkDim
-            text: WeatherSource.lastError !== "" ? "Weather unavailable" : "Fetching weather"
+            text: WeatherSource.lastError !== "" ? I18n.tr("Weather unavailable") : I18n.tr("Fetching weather")
         }
 
     }
@@ -177,7 +177,7 @@ WidgetBody {
             LText {
                 role: "bodySmall"
                 color: w.inkDim
-                text: w.days.length ? "High " + w.t(w.days[0].maxC, w.days[0].maxF) + " · Low " + w.t(w.days[0].minC, w.days[0].minF) : ""
+                text: w.days.length ? I18n.tr("High %1 · Low %2", w.t(w.days[0].maxC, w.days[0].maxF), w.t(w.days[0].minC, w.days[0].minF)) : ""
             }
 
         }

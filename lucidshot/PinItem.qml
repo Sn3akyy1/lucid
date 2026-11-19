@@ -148,7 +148,7 @@ Item {
             ShotButton {
                 size: Theme.dp(32)
                 icon: "content_copy"
-                tip: "Copy it"
+                tip: I18n.tr("Copy it")
                 tipAbove: false
                 onClicked: pin.host.copy(pin.file)
             }
@@ -156,7 +156,7 @@ Item {
             ShotButton {
                 size: Theme.dp(32)
                 icon: "close"
-                tip: "Unpin"
+                tip: I18n.tr("Unpin")
                 tipAbove: false
                 onClicked: pin.host.remove(pin.pid)
             }
@@ -185,7 +185,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: Theme.dp(10)
-        text: Math.round(pin.zoom * 100) + "%" + (pin.see < 1 ? "  ·  " + Math.round(pin.see * 100) + "% opaque" : "")
+        text: Math.round(pin.zoom * 100) + "%" + (pin.see < 1 ? I18n.tr("  ·  %1% opaque", Math.round(pin.see * 100)) : "")
         opacity: sizeChip.on ? 1 : 0
         visible: opacity > 0.01
 

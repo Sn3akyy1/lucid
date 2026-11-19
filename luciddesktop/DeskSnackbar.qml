@@ -132,7 +132,7 @@ PanelWindow {
                 id: undoText
 
                 anchors.centerIn: parent
-                text: "Undo"
+                text: I18n.tr("Undo")
                 color: Theme.accent
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontLabelLg

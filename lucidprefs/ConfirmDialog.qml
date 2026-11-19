@@ -10,7 +10,7 @@ Item {
     property string title: ""
     property string body: ""
     property string action: ""
-    property string confirmLabel: "Reset"
+    property string confirmLabel: I18n.tr("Reset")
 
     signal confirmed(string action)
 
@@ -117,7 +117,7 @@ Item {
                 spacing: Theme.dp(8)
 
                 M3Button {
-                    text: "Cancel"
+                    text: I18n.tr("Cancel")
                     variant: "text"
                     onClicked: dialog.dismiss()
                 }

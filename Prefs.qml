@@ -232,7 +232,7 @@ Singleton {
             return {
                 "key": "own" + Math.round(Number(t.id)),
                 "id": Math.round(Number(t.id)),
-                "name": String(t.name || "").trim() || "My tile",
+                "name": String(t.name || "").trim() || I18n.tr("My tile"),
                 "icon": String(t.icon || "").trim() || "star",
                 "on": String(t.on || ""),
                 "off": String(t.off || ""),
@@ -267,7 +267,7 @@ Singleton {
         }, 0) + 1;
         root.setSystemOwnTiles(root.systemOwnTileList.concat([{
             "id": id,
-            "name": "My tile",
+            "name": I18n.tr("My tile"),
             "icon": "star",
             "on": "",
             "off": "",
@@ -663,15 +663,15 @@ Singleton {
 
     // the looks each block can take; the first is the one it always had
     readonly property var systemStyleCatalog: ({
-        "sliders": [{ "key": "plain", "name": "Plain" }, { "key": "bold", "name": "Bold" }, { "key": "thin", "name": "Thin" }, { "key": "wavy", "name": "Wavy" }],
-        "bigtiles": [{ "key": "pill", "name": "Pill" }, { "key": "shapes", "name": "Shapes" }, { "key": "compact", "name": "Compact" }, { "key": "outline", "name": "Outline" }],
-        "tiles": [{ "key": "round", "name": "Round" }, { "key": "shapes", "name": "Shapes" }, { "key": "icons", "name": "Icons only" }, { "key": "square", "name": "Square" }],
-        "media": [{ "key": "card", "name": "Card" }, { "key": "disc", "name": "Disc" }, { "key": "backdrop", "name": "Backdrop" }, { "key": "mini", "name": "Mini" }, { "key": "wave", "name": "Wave" }, { "key": "cover", "name": "Cover" }],
-        "gauges": [{ "key": "rings", "name": "Rings" }, { "key": "bars", "name": "Bars" }, { "key": "tiles", "name": "Tiles" }, { "key": "compact", "name": "Compact" }, { "key": "graph", "name": "Graph" }, { "key": "dial", "name": "Dial" }],
-        "weather": [{ "key": "card", "name": "Card" }, { "key": "hours", "name": "Hours" }, { "key": "days", "name": "Days" }, { "key": "line", "name": "One line" }],
-        "network": [{ "key": "graph", "name": "Graph" }, { "key": "split", "name": "Side by side" }, { "key": "line", "name": "One line" }],
-        "power": [{ "key": "buttons", "name": "Buttons" }, { "key": "icons", "name": "Icons only" }, { "key": "list", "name": "List" }],
-        "agenda": [{ "key": "list", "name": "List" }, { "key": "next", "name": "Next only" }]
+        "sliders": [{ "key": "plain", "name": I18n.tr("Plain") }, { "key": "bold", "name": I18n.tr("Bold") }, { "key": "thin", "name": I18n.tr("Thin") }, { "key": "wavy", "name": I18n.tr("Wavy") }],
+        "bigtiles": [{ "key": "pill", "name": I18n.tr("Pill") }, { "key": "shapes", "name": I18n.tr("Shapes") }, { "key": "compact", "name": I18n.tr("Compact") }, { "key": "outline", "name": I18n.tr("Outline") }],
+        "tiles": [{ "key": "round", "name": I18n.tr("Round") }, { "key": "shapes", "name": I18n.tr("Shapes") }, { "key": "icons", "name": I18n.tr("Icons only") }, { "key": "square", "name": I18n.tr("Square") }],
+        "media": [{ "key": "card", "name": I18n.tr("Card") }, { "key": "disc", "name": I18n.tr("Disc") }, { "key": "backdrop", "name": I18n.tr("Backdrop") }, { "key": "mini", "name": I18n.tr("Mini") }, { "key": "wave", "name": I18n.tr("Wave") }, { "key": "cover", "name": I18n.tr("Cover") }],
+        "gauges": [{ "key": "rings", "name": I18n.tr("Rings") }, { "key": "bars", "name": I18n.tr("Bars") }, { "key": "tiles", "name": I18n.tr("Tiles") }, { "key": "compact", "name": I18n.tr("Compact") }, { "key": "graph", "name": I18n.tr("Graph") }, { "key": "dial", "name": I18n.tr("Dial") }],
+        "weather": [{ "key": "card", "name": I18n.tr("Card") }, { "key": "hours", "name": I18n.tr("Hours") }, { "key": "days", "name": I18n.tr("Days") }, { "key": "line", "name": I18n.tr("One line") }],
+        "network": [{ "key": "graph", "name": I18n.tr("Graph") }, { "key": "split", "name": I18n.tr("Side by side") }, { "key": "line", "name": I18n.tr("One line") }],
+        "power": [{ "key": "buttons", "name": I18n.tr("Buttons") }, { "key": "icons", "name": I18n.tr("Icons only") }, { "key": "list", "name": I18n.tr("List") }],
+        "agenda": [{ "key": "list", "name": I18n.tr("List") }, { "key": "next", "name": I18n.tr("Next only") }]
     })
     // systemBlockStyles as JSON { block: look }, only the looks the catalogue knows
     readonly property var systemStyleMap: {
@@ -798,9 +798,9 @@ Singleton {
 
     // ready-made arrangements of the blocks that are on: what each holds is left alone
     readonly property var systemLayoutPresets: [
-        { "id": "column", "name": "Column", "blurb": "One under another, six tiles wide" },
-        { "id": "pair", "name": "Two columns", "blurb": "Sliders and tiles, then media and gauges beside them" },
-        { "id": "wide", "name": "Wide", "blurb": "Standing sliders, the tiles, then media and gauges" }
+        { "id": "column", "name": I18n.tr("Column"), "blurb": I18n.tr("One under another, six tiles wide") },
+        { "id": "pair", "name": I18n.tr("Two columns"), "blurb": I18n.tr("Sliders and tiles, then media and gauges beside them") },
+        { "id": "wide", "name": I18n.tr("Wide"), "blurb": I18n.tr("Standing sliders, the tiles, then media and gauges") }
     ]
 
     function systemPresetGrid(id) {
@@ -858,15 +858,15 @@ Singleton {
         "icon": "workspaces",
         "key": "showWorkspaces",
         "home": "left",
-        "name": "Workspaces",
-        "desc": "Workspace pills and the expanded overview",
-        "more": "Special workspaces, which it shows as well, have a page of their own.",
+        "name": I18n.tr("Workspaces"),
+        "desc": I18n.tr("Workspace pills and the expanded overview"),
+        "more": I18n.tr("Special workspaces, which it shows as well, have a page of their own."),
         "page": "workspaces",
         "options": ["workspacesShown", "workspacesWheel"],
         "style": "workspacesStyle",
         "styles": [
-            {"key": "dots", "name": "Shapes", "blurb": "A dot while empty, a square in use, a new shape on the one you are on"},
-            {"key": "numbers", "name": "Numbers", "blurb": "Each one's number, the empty ones quieter"}
+            {"key": "dots", "name": I18n.tr("Shapes"), "blurb": I18n.tr("A dot while empty, a square in use, a new shape on the one you are on")},
+            {"key": "numbers", "name": I18n.tr("Numbers"), "blurb": I18n.tr("Each one's number, the empty ones quieter")}
         ]
     },
     {
@@ -874,25 +874,25 @@ Singleton {
         "icon": "music_note",
         "key": "showMedia",
         "home": "left",
-        "name": "Media",
-        "desc": "Now-playing pill and player controls",
-        "when": "while something plays",
+        "name": I18n.tr("Media"),
+        "desc": I18n.tr("Now-playing pill and player controls"),
+        "when": I18n.tr("while something plays"),
         "options": ["mediaHideIdle", "mediaArtist", "mediaTitleWidth", "mediaPlayButton", "mediaWheelVolume", "mediaLyrics"],
         "style": "mediaStyle",
         "styles": [
-            {"key": "disc", "name": "Disc", "blurb": "The cover turning in a ring that fills as it plays"},
-            {"key": "cover", "name": "Cover", "blurb": "The album's cover standing still, then the track"},
-            {"key": "compact", "name": "Compact", "blurb": "Only the moving bars and the play button"},
-            {"key": "progress", "name": "Progress", "blurb": "The pill fills as the song goes"},
-            {"key": "controls", "name": "Controls", "blurb": "Previous, play and next, then the track"}
+            {"key": "disc", "name": I18n.tr("Disc"), "blurb": I18n.tr("The cover turning in a ring that fills as it plays")},
+            {"key": "cover", "name": I18n.tr("Cover"), "blurb": I18n.tr("The album's cover standing still, then the track")},
+            {"key": "compact", "name": I18n.tr("Compact"), "blurb": I18n.tr("Only the moving bars and the play button")},
+            {"key": "progress", "name": I18n.tr("Progress"), "blurb": I18n.tr("The pill fills as the song goes")},
+            {"key": "controls", "name": I18n.tr("Controls"), "blurb": I18n.tr("Previous, play and next, then the track")}
         ],
         "panelStyle": "mediaPanelStyle",
         "panelStyles": [
-            {"key": "side", "name": "Side by side", "blurb": "The cover beside the track"},
-            {"key": "cover", "name": "Large cover", "blurb": "The cover across the panel, the track under it"},
-            {"key": "vinyl", "name": "Vinyl", "blurb": "The cover as a record that turns while it plays"},
-            {"key": "backdrop", "name": "Backdrop", "blurb": "Side by side, over the cover blurred across the panel"},
-            {"key": "mini", "name": "Mini", "blurb": "No cover: the track, its progress and the controls"}
+            {"key": "side", "name": I18n.tr("Side by side"), "blurb": I18n.tr("The cover beside the track")},
+            {"key": "cover", "name": I18n.tr("Large cover"), "blurb": I18n.tr("The cover across the panel, the track under it")},
+            {"key": "vinyl", "name": I18n.tr("Vinyl"), "blurb": I18n.tr("The cover as a record that turns while it plays")},
+            {"key": "backdrop", "name": I18n.tr("Backdrop"), "blurb": I18n.tr("Side by side, over the cover blurred across the panel")},
+            {"key": "mini", "name": I18n.tr("Mini"), "blurb": I18n.tr("No cover: the track, its progress and the controls")}
         ]
     },
     {
@@ -900,14 +900,14 @@ Singleton {
         "icon": "inventory_2",
         "key": "showTray",
         "home": "left",
-        "name": "Tray",
-        "desc": "Status icons from running applications",
-        "when": "while an app has an icon in the tray",
+        "name": I18n.tr("Tray"),
+        "desc": I18n.tr("Status icons from running applications"),
+        "when": I18n.tr("while an app has an icon in the tray"),
         "options": ["trayHidden", "trayIconColor"],
         "style": "trayStyle",
         "styles": [
-            {"key": "collapsed", "name": "Collapsed", "blurb": "The first three apps stacked, then how many more"},
-            {"key": "icons", "name": "Icons", "blurb": "Each app in a slot of its own, named when you point at it"}
+            {"key": "collapsed", "name": I18n.tr("Collapsed"), "blurb": I18n.tr("The first three apps stacked, then how many more")},
+            {"key": "icons", "name": I18n.tr("Icons"), "blurb": I18n.tr("Each app in a slot of its own, named when you point at it")}
         ]
     },
     {
@@ -915,16 +915,16 @@ Singleton {
         "icon": "schedule",
         "key": "showClock",
         "home": "center",
-        "name": "Clock",
-        "desc": "Time, date and the calendar panel",
-        "more": "The time format, seconds, the temperature, whether the date shows and the time zone are on the Date & Time page.",
+        "name": I18n.tr("Clock"),
+        "desc": I18n.tr("Time, date and the calendar panel"),
+        "more": I18n.tr("The time format, seconds, the temperature, whether the date shows and the time zone are on the Date & Time page."),
         "page": "datetime",
         "options": ["clockDateFormat"],
         "style": "clockStyle",
         "styles": [
-            {"key": "accent", "name": "Accent", "blurb": "The date, then the time on an accent chip"},
-            {"key": "inline", "name": "One line", "blurb": "The time, then the date"},
-            {"key": "stacked", "name": "Two lines", "blurb": "The date small under the time"}
+            {"key": "accent", "name": I18n.tr("Accent"), "blurb": I18n.tr("The date, then the time on an accent chip")},
+            {"key": "inline", "name": I18n.tr("One line"), "blurb": I18n.tr("The time, then the date")},
+            {"key": "stacked", "name": I18n.tr("Two lines"), "blurb": I18n.tr("The date small under the time")}
         ]
     },
     {
@@ -932,15 +932,15 @@ Singleton {
         "icon": "notifications",
         "key": "showNotifications",
         "home": "right",
-        "name": "Notifications",
-        "desc": "Toasts and the notification list",
-        "when": "while a notification is waiting",
-        "more": "Do not disturb, popups, sounds and quiet hours are on the Notifications page.",
+        "name": I18n.tr("Notifications"),
+        "desc": I18n.tr("Toasts and the notification list"),
+        "when": I18n.tr("while a notification is waiting"),
+        "more": I18n.tr("Do not disturb, popups, sounds and quiet hours are on the Notifications page."),
         "page": "notifications",
         "style": "notificationsStyle",
         "styles": [
-            {"key": "badge", "name": "Count", "blurb": "The bell and how many are waiting"},
-            {"key": "dot", "name": "Dot", "blurb": "The bell with a dot while any are waiting"}
+            {"key": "badge", "name": I18n.tr("Count"), "blurb": I18n.tr("The bell and how many are waiting")},
+            {"key": "dot", "name": I18n.tr("Dot"), "blurb": I18n.tr("The bell with a dot while any are waiting")}
         ]
     },
     {
@@ -948,9 +948,9 @@ Singleton {
         "icon": "tune",
         "key": "showSystem",
         "home": "right",
-        "name": "System",
-        "desc": "Battery, volume, brightness and quick settings",
-        "more": "What it shows in the bar and game mode are on the Bar page in Settings.",
+        "name": I18n.tr("System"),
+        "desc": I18n.tr("Battery, volume, brightness and quick settings"),
+        "more": I18n.tr("What it shows in the bar and game mode are on the Bar page in Settings."),
         "page": "bar",
         "options": ["systemTiles", "systemTilesRadios", "systemBigTiles", "systemBlocks", "systemGrid", "systemBlockCards", "systemBlockStyles", "systemOwnTiles", "systemSliders", "systemInfo", "systemHeaderButtons"]
     },
@@ -959,14 +959,14 @@ Singleton {
         "icon": "privacy",
         "key": "showPrivacy",
         "home": "right",
-        "name": "Privacy",
-        "desc": "Shows up only while an app uses the microphone, the camera or the screen, and says which",
-        "when": "while an app uses the microphone, the camera or the screen",
+        "name": I18n.tr("Privacy"),
+        "desc": I18n.tr("Shows up only while an app uses the microphone, the camera or the screen, and says which"),
+        "when": I18n.tr("while an app uses the microphone, the camera or the screen"),
         "options": ["privacyWatch", "privacyToast", "privacyAlwaysShown"],
         "style": "privacyStyle",
         "styles": [
-            {"key": "marks", "name": "Marks", "blurb": "A tinted mark for each thing in use"},
-            {"key": "dot", "name": "Dot", "blurb": "One small dot, red while the screen is shared"}
+            {"key": "marks", "name": I18n.tr("Marks"), "blurb": I18n.tr("A tinted mark for each thing in use")},
+            {"key": "dot", "name": I18n.tr("Dot"), "blurb": I18n.tr("One small dot, red while the screen is shared")}
         ]
     },
     {
@@ -974,18 +974,18 @@ Singleton {
         "icon": "power_settings_new",
         "key": "showPower",
         "home": "right",
-        "name": "Power",
-        "desc": "Lock, suspend, log out, restart or shut down, the ones you pick in the order you pick",
+        "name": I18n.tr("Power"),
+        "desc": I18n.tr("Lock, suspend, log out, restart or shut down, the ones you pick in the order you pick"),
         "options": ["powerModuleActions", "powerModuleConfirm", "powerModuleUptime"],
         "style": "powerModuleStyle",
         "styles": [
-            {"key": "icon", "name": "Icon", "blurb": "The power symbol"},
-            {"key": "accent", "name": "Accent", "blurb": "The symbol on a circle in the accent"}
+            {"key": "icon", "name": "Icon", "blurb": I18n.tr("The power symbol")},
+            {"key": "accent", "name": I18n.tr("Accent"), "blurb": I18n.tr("The symbol on a circle in the accent")}
         ],
         "panelStyle": "powerModulePanelStyle",
         "panelStyles": [
-            {"key": "list", "name": "List", "blurb": "One action to a row"},
-            {"key": "grid", "name": "Grid", "blurb": "Three to a row, the name under each"}
+            {"key": "list", "name": I18n.tr("List"), "blurb": I18n.tr("One action to a row")},
+            {"key": "grid", "name": I18n.tr("Grid"), "blurb": I18n.tr("Three to a row, the name under each")}
         ]
     },
     {
@@ -994,9 +994,9 @@ Singleton {
         "key": "showWindow",
         "home": "right",
         "first": true,
-        "name": "Active window",
-        "desc": "The focused window's icon and title; open it to float, pin, fullscreen, move or close it, or switch to another window on the workspace",
-        "when": "while a window on this workspace has the focus",
+        "name": I18n.tr("Active window"),
+        "desc": I18n.tr("The focused window's icon and title; open it to float, pin, fullscreen, move or close it, or switch to another window on the workspace"),
+        "when": I18n.tr("while a window on this workspace has the focus"),
         "options": ["windowModuleText", "windowModuleWidth", "windowModuleScroll", "windowModuleMiddleClose"]
     },
     {
@@ -1005,24 +1005,24 @@ Singleton {
         "key": "showStart",
         "home": "left",
         "first": true,
-        "name": "Start",
-        "desc": "A button for the launcher, at the start of the bar: a click opens it or puts it away",
+        "name": I18n.tr("Start"),
+        "desc": I18n.tr("A button for the launcher, at the start of the bar: a click opens it or puts it away"),
         "style": "startModuleStyle",
         "styles": [
-            {"key": "grid", "name": "Launcher", "blurb": "The dock's launcher button, its squares rounding while the launcher is open"},
-            {"key": "logo", "name": "Logo", "blurb": "Lucid's mark, as at the top of the launcher"},
-            {"key": "distro", "name": "Distro", "blurb": "Your distribution's logo, in the accent"},
-            {"key": "avatar", "name": "Avatar", "blurb": "Your profile picture"},
-            {"key": "label", "name": "Label", "blurb": "The word Start on a chip in the accent"}
+            {"key": "grid", "name": I18n.tr("Launcher"), "blurb": I18n.tr("The dock's launcher button, its squares rounding while the launcher is open")},
+            {"key": "logo", "name": I18n.tr("Logo"), "blurb": I18n.tr("Lucid's mark, as at the top of the launcher")},
+            {"key": "distro", "name": I18n.tr("Distro"), "blurb": I18n.tr("Your distribution's logo, in the accent")},
+            {"key": "avatar", "name": I18n.tr("Avatar"), "blurb": I18n.tr("Your profile picture")},
+            {"key": "label", "name": I18n.tr("Label"), "blurb": I18n.tr("The word Start on a chip in the accent")}
         ]
     },
     {
         "id": "apps",
         "key": "showApps",
         "home": "center",
-        "name": "Apps",
-        "desc": "The dock's pinned apps and the ones open, on the bar: a click opens an app or brings it up; with several windows, or on a right click, a panel lists them",
-        "when": "while there is an app pinned or open",
+        "name": I18n.tr("Apps"),
+        "desc": I18n.tr("The dock's pinned apps and the ones open, on the bar: a click opens an app or brings it up; with several windows, or on a right click, a panel lists them"),
+        "when": I18n.tr("while there is an app pinned or open"),
         "options": ["dockShowRunning", "dockShowIndicators", "dockShowTooltips", "dockIconTiles"]
     }
     ]
@@ -1082,6 +1082,7 @@ Singleton {
     property alias fontFamily: s.fontFamily
     property alias fontScale: s.fontScale
     property alias uiScale: s.uiScale
+    property alias language: s.language
     property alias cornerScale: s.cornerScale
     // room the bar and dock keep clear of windows, past their own size: added to
     // their exclusive zones, in real pixels like hyprland's gaps
@@ -1571,33 +1572,34 @@ Singleton {
 
     // every settings page, for the app's rail and for the launcher's search
     readonly property var settingsPages: [
-        { "key": "users", "icon": "account_circle", "keys": "user account password avatar login admin sudo", "group": "Account", "label": "Account", "title": "Users and Accounts", "blurb": "Who may sign in to this machine, what they are called and what they are allowed to do", "hidden": true },
-        { "key": "general", "icon": "tune", "keys": "style islands notches osd accent darkness surface tint motion animation speed font scale typography interface size zoom smaller bigger density", "group": "Appearance", "label": "General", "title": "General", "blurb": "Size, shape, colour and motion across the whole shell" },
-        { "key": "glass", "icon": "blur_on", "keys": "blur transparency opacity translucent frosted kitty terminal windows", "group": "Appearance", "label": "Glass", "title": "Glass", "blurb": "How far the desktop shows through the shell, the terminal and your windows" },
-        { "key": "theme", "icon": "palette", "keys": "colour color scheme wallpaper picker arrow keys live video animated mp4 decoder matugen pywal catppuccin gruvbox nord dark light mode import", "group": "Appearance", "label": "Theme", "title": "Theme and Appearance", "blurb": "Colour schemes, wallpapers and themes you import" },
-        { "key": "colours", "icon": "format_color_fill", "keys": "matugen style scheme contrast your colour hex picker templates apps render variables", "group": "Appearance", "label": "Colours", "title": "Colours", "blurb": "How Matugen and Your colour build a palette, the applications that follow it, and templates of your own" },
-        { "key": "palettes", "icon": "colors", "keys": "gallery schemes base16 base24 tinted import repo file editor export", "group": "Appearance", "label": "Palettes", "title": "Palettes", "blurb": "A gallery of colour schemes, and themes from a repo or a file" },
-        { "key": "environment", "icon": "format_paint", "keys": "cursor icons icon set gravity simplified flat legacy gtk qt fonts application theme", "group": "Appearance", "label": "Environment", "title": "Environment", "blurb": "Cursors, icons, fonts and application themes, across GTK, Qt and Hyprland alike" },
-        { "key": "bar", "icon": "toolbar", "keys": "status height margin spacing modules workspaces clock media tray system popup full hover auto-hide autohide corners edit mode arrange move drag join", "group": "Desktop", "label": "Bar", "title": "Bar", "blurb": "The status bar, its modules and how they open", "toggle": "barEnabled" },
-        { "key": "dock", "icon": "dock_to_bottom", "keys": "icons size magnify autohide dynamic hiding pinned running indicators tooltips windows notch radius corners rounding padding inset edit mode move handle", "group": "Desktop", "label": "Dock", "title": "Dock", "blurb": "The dock, its icons and how it behaves", "toggle": "dockEnabled" },
-        { "key": "launcher", "icon": "search", "keys": "launcher search spotlight apps results width density rows chips modes prefix engine web emoji run clipboard calculator frequent recent", "group": "Desktop", "label": "Launcher", "title": "Launcher", "blurb": "The search panel the dock opens into: how wide it is, how its results read, and what it looks through" },
-        { "key": "widgets", "icon": "widgets", "keys": "desktop cards clock calendar weather presets layouts panel edit mode", "group": "Desktop", "label": "Widgets", "title": "Widgets", "blurb": "Cards you place on the desktop and arrange yourself", "toggle": "widgetsEnabled" },
-        { "key": "windows", "icon": "select_window", "keys": "hyprland gaps exclusive zone reserved distance shell bar dock borders border colour rounding corners shadow dim tiling layout dwindle master scrolling focus follow mouse cursor resize snap animations", "group": "Desktop", "label": "Windows", "title": "Windows", "blurb": "How Hyprland draws your windows, tiles them and hands them the focus" },
-        { "key": "workspaces", "icon": "workspaces", "keys": "special scratchpad music chat todo sysmon", "group": "Desktop", "label": "Workspaces", "title": "Special Workspaces", "blurb": "Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key" },
-        { "key": "capture", "icon": "screenshot_region", "keys": "screenshot screen capture lucidshot print region window record recording video gif ocr text colour color picker pin pinned markup annotate edit folder clipboard countdown encoder frame rate", "group": "Desktop", "label": "Screenshots", "title": "Screenshots and Recording", "blurb": "What a capture leaves behind, where it goes, and how the screen recorder works" },
-        { "key": "keybinds", "icon": "keyboard", "keys": "shortcuts hotkeys keys bindings hyprland super binds", "group": "Desktop", "label": "Keybinds", "title": "Keybinds", "blurb": "Every Hyprland shortcut: change one, switch it off or add your own" },
-        { "key": "input", "icon": "mouse", "keys": "keyboard layout layouts xkb caps lock repeat numlock mouse pointer speed acceleration touchpad tap natural scroll gestures swipe", "group": "Devices", "label": "Input", "title": "Input", "blurb": "Keyboard layouts and key repeat, the mouse, the touchpad and its gestures" },
-        { "key": "displays", "icon": "desktop_windows", "keys": "monitor screen resolution refresh rate scale vrr arrangement", "group": "Devices", "label": "Displays", "title": "Displays", "blurb": "Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on" },
-        { "key": "sound", "icon": "volume_up", "keys": "audio volume speakers microphone output input devices combined several multiple outputs at once system sounds chime usb bluetooth charger battery screenshot camera", "group": "Devices", "label": "Sound", "title": "Sound", "blurb": "Which speakers play and which microphone listens, what each application is using, and how loud any of it is" },
-        { "key": "network", "icon": "wifi", "keys": "wifi ethernet vpn dns ip proxy internet", "group": "Devices", "label": "Network", "title": "Network", "blurb": "Wi-Fi, wired, VPN and how this machine gets its address" },
-        { "key": "bluetooth", "icon": "bluetooth", "keys": "devices pair headphones", "group": "Devices", "label": "Bluetooth", "title": "Bluetooth and Devices", "blurb": "The radio, what it is paired with, and the phone you connect to it" },
-        { "key": "kdeconnect", "icon": "smartphone", "keys": "phone kde connect files notifications clipboard", "group": "Devices", "label": "Phone", "title": "Phone", "blurb": "Your phone on this machine over KDE Connect: files, notifications, clipboard and a remote", "toggle": "kdeConnectEnabled" },
-        { "key": "startup", "icon": "start", "keys": "autostart login apps open at login run startup environment variables env xdg session", "group": "System", "label": "Startup", "title": "Startup", "blurb": "Apps opened when you log in, system autostart and environment variables" },
-        { "key": "notifications", "icon": "notifications", "keys": "popups toasts do not disturb dnd quiet hours sound muted apps caps lock num lock microphone", "group": "System", "label": "Notifications", "title": "Notifications", "blurb": "Popups, quiet hours, sound and which applications may interrupt you", "toggle": "barNotifications" },
-        { "key": "idle", "icon": "bedtime", "keys": "sleep suspend lock dim screen off hypridle caffeine", "group": "System", "label": "Idle", "title": "Idle and Sleep", "blurb": "What happens when you walk away: dimming, locking, screen off and suspend", "toggle": "idleEnabled" },
-        { "key": "datetime", "icon": "schedule", "keys": "clock time zone location 24 hour seconds week monday sunday units metric imperial celsius fahrenheit temperature wind mph timer pomodoro focus break alarm world", "group": "System", "label": "Date & Time", "title": "Date and Time", "blurb": "Where you are, the clock, and its timers" },
-        { "key": "storage", "icon": "hard_drive", "keys": "disk space storage usage free full clean cleanup cache trash duplicates large files drives ssd health smart trim mount", "group": "System", "label": "Storage", "title": "Storage", "blurb": "What fills your drives, what could go, and the drives themselves" },
-        { "key": "about", "icon": "info", "keys": "version update upgrade install release beta restart lucid", "group": "System", "label": "About", "title": "About", "blurb": "Lucid" }
+        { "key": "users", "icon": "account_circle", "keys": "user account password avatar login admin sudo", "group": I18n.tr("Account"), "label": I18n.tr("Account"), "title": I18n.tr("Users and Accounts"), "blurb": I18n.tr("Who may sign in to this machine, what they are called and what they are allowed to do"), "hidden": true },
+        { "key": "general", "icon": "tune", "keys": "style islands notches osd accent darkness surface tint motion animation speed font scale typography interface size zoom smaller bigger density", "group": I18n.tr("Appearance"), "label": I18n.tr("General"), "title": I18n.tr("General"), "blurb": I18n.tr("Size, shape, colour and motion across the whole shell") },
+        { "key": "glass", "icon": "blur_on", "keys": "blur transparency opacity translucent frosted kitty terminal windows", "group": I18n.tr("Appearance"), "label": I18n.tr("Glass"), "title": I18n.tr("Glass"), "blurb": I18n.tr("How far the desktop shows through the shell, the terminal and your windows") },
+        { "key": "theme", "icon": "palette", "keys": "colour color scheme wallpaper picker arrow keys live video animated mp4 decoder matugen pywal catppuccin gruvbox nord dark light mode import", "group": I18n.tr("Appearance"), "label": I18n.tr("Theme"), "title": I18n.tr("Theme and Appearance"), "blurb": I18n.tr("Colour schemes, wallpapers and themes you import") },
+        { "key": "colours", "icon": "format_color_fill", "keys": "matugen style scheme contrast your colour hex picker templates apps render variables", "group": I18n.tr("Appearance"), "label": I18n.tr("Colours"), "title": I18n.tr("Colours"), "blurb": I18n.tr("How Matugen and Your colour build a palette, the applications that follow it, and templates of your own") },
+        { "key": "palettes", "icon": "colors", "keys": "gallery schemes base16 base24 tinted import repo file editor export", "group": I18n.tr("Appearance"), "label": I18n.tr("Palettes"), "title": I18n.tr("Palettes"), "blurb": I18n.tr("A gallery of colour schemes, and themes from a repo or a file") },
+        { "key": "environment", "icon": "format_paint", "keys": "cursor icons icon set gravity simplified flat legacy gtk qt fonts application theme", "group": I18n.tr("Appearance"), "label": I18n.tr("Environment"), "title": I18n.tr("Environment"), "blurb": I18n.tr("Cursors, icons, fonts and application themes, across GTK, Qt and Hyprland alike") },
+        { "key": "bar", "icon": "toolbar", "keys": "status height margin spacing modules workspaces clock media tray system popup full hover auto-hide autohide corners edit mode arrange move drag join", "group": I18n.tr("Desktop"), "label": I18n.tr("Bar"), "title": I18n.tr("Bar"), "blurb": I18n.tr("The status bar, its modules and how they open"), "toggle": "barEnabled" },
+        { "key": "dock", "icon": "dock_to_bottom", "keys": "icons size magnify autohide dynamic hiding pinned running indicators tooltips windows notch radius corners rounding padding inset edit mode move handle", "group": I18n.tr("Desktop"), "label": I18n.tr("Dock"), "title": I18n.tr("Dock"), "blurb": I18n.tr("The dock, its icons and how it behaves"), "toggle": "dockEnabled" },
+        { "key": "launcher", "icon": "search", "keys": "launcher search spotlight apps results width density rows chips modes prefix engine web emoji run clipboard calculator frequent recent", "group": I18n.tr("Desktop"), "label": I18n.tr("Launcher"), "title": I18n.tr("Launcher"), "blurb": I18n.tr("The search panel the dock opens into: how wide it is, how its results read, and what it looks through") },
+        { "key": "widgets", "icon": "widgets", "keys": "desktop cards clock calendar weather presets layouts panel edit mode", "group": I18n.tr("Desktop"), "label": I18n.tr("Widgets"), "title": I18n.tr("Widgets"), "blurb": I18n.tr("Cards you place on the desktop and arrange yourself"), "toggle": "widgetsEnabled" },
+        { "key": "windows", "icon": "select_window", "keys": "hyprland gaps exclusive zone reserved distance shell bar dock borders border colour rounding corners shadow dim tiling layout dwindle master scrolling focus follow mouse cursor resize snap animations", "group": I18n.tr("Desktop"), "label": I18n.tr("Windows"), "title": I18n.tr("Windows"), "blurb": I18n.tr("How Hyprland draws your windows, tiles them and hands them the focus") },
+        { "key": "workspaces", "icon": "workspaces", "keys": "special scratchpad music chat todo sysmon", "group": I18n.tr("Desktop"), "label": I18n.tr("Workspaces"), "title": I18n.tr("Special Workspaces"), "blurb": I18n.tr("Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key") },
+        { "key": "capture", "icon": "screenshot_region", "keys": "screenshot screen capture lucidshot print region window record recording video gif ocr text colour color picker pin pinned markup annotate edit folder clipboard countdown encoder frame rate", "group": I18n.tr("Desktop"), "label": I18n.tr("Screenshots"), "title": I18n.tr("Screenshots and Recording"), "blurb": I18n.tr("What a capture leaves behind, where it goes, and how the screen recorder works") },
+        { "key": "keybinds", "icon": "keyboard", "keys": "shortcuts hotkeys keys bindings hyprland super binds", "group": I18n.tr("Desktop"), "label": I18n.tr("Keybinds"), "title": I18n.tr("Keybinds"), "blurb": I18n.tr("Every Hyprland shortcut: change one, switch it off or add your own") },
+        { "key": "input", "icon": "mouse", "keys": "keyboard layout layouts xkb caps lock repeat numlock mouse pointer speed acceleration touchpad tap natural scroll gestures swipe", "group": I18n.tr("Devices"), "label": I18n.tr("Input"), "title": I18n.tr("Input"), "blurb": I18n.tr("Keyboard layouts and key repeat, the mouse, the touchpad and its gestures") },
+        { "key": "displays", "icon": "desktop_windows", "keys": "monitor screen resolution refresh rate scale vrr arrangement", "group": I18n.tr("Devices"), "label": I18n.tr("Displays"), "title": I18n.tr("Displays"), "blurb": I18n.tr("Every screen this machine has: resolution, refresh rate, scale, how they are arranged and which one the shell sits on") },
+        { "key": "sound", "icon": "volume_up", "keys": "audio volume speakers microphone output input devices combined several multiple outputs at once system sounds chime usb bluetooth charger battery screenshot camera", "group": I18n.tr("Devices"), "label": I18n.tr("Sound"), "title": I18n.tr("Sound"), "blurb": I18n.tr("Which speakers play and which microphone listens, what each application is using, and how loud any of it is") },
+        { "key": "network", "icon": "wifi", "keys": "wifi ethernet vpn dns ip proxy internet", "group": I18n.tr("Devices"), "label": I18n.tr("Network"), "title": I18n.tr("Network"), "blurb": I18n.tr("Wi-Fi, wired, VPN and how this machine gets its address") },
+        { "key": "bluetooth", "icon": "bluetooth", "keys": "devices pair headphones", "group": I18n.tr("Devices"), "label": I18n.tr("Bluetooth"), "title": I18n.tr("Bluetooth and Devices"), "blurb": I18n.tr("The radio, what it is paired with, and the phone you connect to it") },
+        { "key": "kdeconnect", "icon": "smartphone", "keys": "phone kde connect files notifications clipboard", "group": I18n.tr("Devices"), "label": I18n.tr("Phone"), "title": I18n.tr("Phone"), "blurb": I18n.tr("Your phone on this machine over KDE Connect: files, notifications, clipboard and a remote"), "toggle": "kdeConnectEnabled" },
+        { "key": "startup", "icon": "start", "keys": "autostart login apps open at login run startup environment variables env xdg session", "group": I18n.tr("System"), "label": I18n.tr("Startup"), "title": I18n.tr("Startup"), "blurb": I18n.tr("Apps opened when you log in, system autostart and environment variables") },
+        { "key": "language", "icon": "language", "keys": "language idioma translation translate locale import export json español spanish", "group": I18n.tr("System"), "label": I18n.tr("Language"), "title": I18n.tr("Language"), "blurb": I18n.tr("The language of the shell, and adding or sharing a translation") },
+        { "key": "notifications", "icon": "notifications", "keys": "popups toasts do not disturb dnd quiet hours sound muted apps caps lock num lock microphone", "group": I18n.tr("System"), "label": I18n.tr("Notifications"), "title": I18n.tr("Notifications"), "blurb": I18n.tr("Popups, quiet hours, sound and which applications may interrupt you"), "toggle": "barNotifications" },
+        { "key": "idle", "icon": "bedtime", "keys": "sleep suspend lock dim screen off hypridle caffeine", "group": I18n.tr("System"), "label": I18n.tr("Idle"), "title": I18n.tr("Idle and Sleep"), "blurb": I18n.tr("What happens when you walk away: dimming, locking, screen off and suspend"), "toggle": "idleEnabled" },
+        { "key": "datetime", "icon": "schedule", "keys": "clock time zone location 24 hour seconds week monday sunday units metric imperial celsius fahrenheit temperature wind mph timer pomodoro focus break alarm world", "group": I18n.tr("System"), "label": I18n.tr("Date & Time"), "title": I18n.tr("Date and Time"), "blurb": I18n.tr("Where you are, the clock, and its timers") },
+        { "key": "storage", "icon": "hard_drive", "keys": "disk space storage usage free full clean cleanup cache trash duplicates large files drives ssd health smart trim mount", "group": I18n.tr("System"), "label": I18n.tr("Storage"), "title": I18n.tr("Storage"), "blurb": I18n.tr("What fills your drives, what could go, and the drives themselves") },
+        { "key": "about", "icon": "info", "keys": "version update upgrade install release beta restart lucid", "group": I18n.tr("System"), "label": I18n.tr("About"), "title": I18n.tr("About"), "blurb": I18n.tr("Lucid") }
     ]
 
     function settingsPage(key) {
@@ -1610,14 +1612,14 @@ Singleton {
     }
 
     readonly property var builtinThemes: [
-        { "id": "matugen", "name": "Matugen", "desc": "Colors generated from your wallpaper", "swatchBg": "#12171a", "swatchAccent": "#8ad0ee" },
-        { "id": "pywal", "name": "Pywal", "desc": "Wallpaper colors via pywal's classic palette", "swatchBg": "#1a1e24", "swatchAccent": "#c9a1a9" },
-        { "id": "catppuccin-mocha", "name": "Catppuccin Mocha", "desc": "Soothing pastel dark theme", "swatchBg": "#1e1e2e", "swatchAccent": "#89b4fa" },
-        { "id": "gruvbox", "name": "Gruvbox", "desc": "Retro groove warm palette", "swatchBg": "#282828", "swatchAccent": "#83a598" },
-        { "id": "nightfox", "name": "Nightfox", "desc": "Deep navy with muted blue accents", "swatchBg": "#192330", "swatchAccent": "#719cd6" },
-        { "id": "nord", "name": "Nord", "desc": "Arctic blue-grey palette", "swatchBg": "#232831", "swatchAccent": "#88c0d0" },
-        { "id": "tokyo-night", "name": "Tokyo Night", "desc": "Dark blues and violets", "swatchBg": "#1a1b26", "swatchAccent": "#7aa2f7" },
-        { "id": "colour", "name": "Your colour", "desc": "A palette built from one colour you pick", "swatchBg": "#14121a", "swatchAccent": root.themeColour, "removable": true }
+        { "id": "matugen", "name": I18n.tr("Matugen"), "desc": I18n.tr("Colors generated from your wallpaper"), "swatchBg": "#12171a", "swatchAccent": "#8ad0ee" },
+        { "id": "pywal", "name": I18n.tr("Pywal"), "desc": I18n.tr("Wallpaper colors via pywal's classic palette"), "swatchBg": "#1a1e24", "swatchAccent": "#c9a1a9" },
+        { "id": "catppuccin-mocha", "name": I18n.tr("Catppuccin Mocha"), "desc": I18n.tr("Soothing pastel dark theme"), "swatchBg": "#1e1e2e", "swatchAccent": "#89b4fa" },
+        { "id": "gruvbox", "name": I18n.tr("Gruvbox"), "desc": I18n.tr("Retro groove warm palette"), "swatchBg": "#282828", "swatchAccent": "#83a598" },
+        { "id": "nightfox", "name": I18n.tr("Nightfox"), "desc": I18n.tr("Deep navy with muted blue accents"), "swatchBg": "#192330", "swatchAccent": "#719cd6" },
+        { "id": "nord", "name": I18n.tr("Nord"), "desc": I18n.tr("Arctic blue-grey palette"), "swatchBg": "#232831", "swatchAccent": "#88c0d0" },
+        { "id": "tokyo-night", "name": I18n.tr("Tokyo Night"), "desc": I18n.tr("Dark blues and violets"), "swatchBg": "#1a1b26", "swatchAccent": "#7aa2f7" },
+        { "id": "colour", "name": I18n.tr("Your colour"), "desc": I18n.tr("A palette built from one colour you pick"), "swatchBg": "#14121a", "swatchAccent": root.themeColour, "removable": true }
     ]
     // themes imported from a scheme repo, read back from their meta.json
     property var userThemes: []
@@ -1695,6 +1697,7 @@ Singleton {
         "fontFamily": "Google Sans",
         "fontScale": 1,
         "uiScale": 1,
+        "language": "auto",
         "cornerScale": 1,
         "shellGap": 0,
         "wallpaperFolder": "",
@@ -1969,7 +1972,7 @@ Singleton {
         "envLegacyIcons": false,
         "envIconSet": "gravity",
         "envGtkTheme": "",
-        "envQtStyle": "Fusion",
+        "envQtStyle": I18n.tr("Fusion"),
         "envQtPlatformTheme": "",
         "envColorScheme": "auto",
         "envFontSync": false,
@@ -2237,7 +2240,7 @@ Singleton {
     }
 
     function askReset(title, body, action) {
-        root.resetConfirmRequested(title, body, "Reset", action);
+        root.resetConfirmRequested(title, body, I18n.tr("Reset"), action);
     }
 
     // same dialog, different verb
@@ -2467,6 +2470,7 @@ Singleton {
             property string fontFamily: "Google Sans"
             property real fontScale: 1
             property real uiScale: 1
+            property string language: "auto"
             property real cornerScale: 1
             property int shellGap: 0
             property string wallpaperFolder: ""
@@ -2764,7 +2768,7 @@ Singleton {
             property bool envLegacyIcons: false
             property string envIconSet: "gravity"
             property string envGtkTheme: ""
-            property string envQtStyle: "Fusion"
+            property string envQtStyle: I18n.tr("Fusion")
             property string envQtPlatformTheme: ""
             property string envColorScheme: "auto"
             property bool envFontSync: false

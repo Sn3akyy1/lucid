@@ -18,7 +18,7 @@ SettingRow {
         return HyprConfig.isMine(k);
     })
     resetAction: "hypr:" + [row.option].concat(row.extraKeys).join(",")
-    resetBody: "\"" + row.resetTitle + "\" goes back to whatever your Hyprland config sets."
+    resetBody: I18n.tr("\"%1\" goes back to whatever your Hyprland config sets.", row.resetTitle)
     enabled: row.available && !row.overridden
     disabledReason: row.overridden ? HyprConfig.overrideText(row.option) : row.unavailableReason
     warning: HyprConfig.failedText(row.option)

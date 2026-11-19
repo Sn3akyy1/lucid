@@ -52,7 +52,7 @@ Item {
 
             anchors.centerIn: parent
             role: "labelLarge"
-            text: "Original"
+            text: I18n.tr("Original")
         }
 
     }

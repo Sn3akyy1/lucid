@@ -195,9 +195,9 @@ QtObject {
         tab.connectUri = ev.connect || "";
         tab.lockedOwner = ev.owner || "";
         if (tab.locked)
-            tab.error = "An administrator's password opens it.";
+            tab.error = I18n.tr("An administrator's password opens it.");
         else if (ev.connect)
-            tab.error = "Not connected to " + tab.app.hostOf(ev.connect);
+            tab.error = I18n.tr("Not connected to %1", tab.app.hostOf(ev.connect));
         else if (ev.error)
             tab.error = ev.error;
         tab.apply();

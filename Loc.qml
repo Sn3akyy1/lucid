@@ -85,7 +85,7 @@ Singleton {
     function lookup(name) {
         const q = (name || "").trim();
         if (q === "") {
-            root.lastError = "type a town or city first";
+            root.lastError = I18n.tr("type a town or city first");
             return ;
         }
         if (root.busy)
@@ -129,7 +129,7 @@ Singleton {
         onExited: (code) => {
             root.busy = false;
             if (code !== 0)
-                root.lastError = "could not reach the lookup service";
+                root.lastError = I18n.tr("could not reach the lookup service");
 
         }
 
@@ -140,14 +140,14 @@ Singleton {
                     const lat = d.latitude !== undefined ? d.latitude : d.lat;
                     const lon = d.longitude !== undefined ? d.longitude : d.lon;
                     if (typeof lat !== "number" || typeof lon !== "number") {
-                        root.lastError = "the lookup service did not return a position";
+                        root.lastError = I18n.tr("the lookup service did not return a position");
                         return ;
                     }
                     const city = d.city || "";
                     const country = d.country_name || d.country || "";
                     root.apply(lat, lon, city !== "" ? (country !== "" ? city + ", " + country : city) : country, d.timezone || "");
                 } catch (e) {
-                    root.lastError = "could not read the lookup service reply";
+                    root.lastError = I18n.tr("could not read the lookup service reply");
                 }
             }
         }
@@ -160,7 +160,7 @@ Singleton {
         onExited: (code) => {
             root.busy = false;
             if (code !== 0)
-                root.lastError = "could not reach the place lookup";
+                root.lastError = I18n.tr("could not reach the place lookup");
 
         }
 
@@ -170,7 +170,7 @@ Singleton {
                     const d = JSON.parse(this.text);
                     const r = (d.results && d.results.length > 0) ? d.results[0] : null;
                     if (!r) {
-                        root.lastError = "no place by that name";
+                        root.lastError = I18n.tr("no place by that name");
                         return ;
                     }
                     const parts = [r.name];
@@ -182,7 +182,7 @@ Singleton {
 
                     root.apply(r.latitude, r.longitude, parts.join(", "), r.timezone || "");
                 } catch (e) {
-                    root.lastError = "could not read the place lookup reply";
+                    root.lastError = I18n.tr("could not read the place lookup reply");
                 }
             }
         }

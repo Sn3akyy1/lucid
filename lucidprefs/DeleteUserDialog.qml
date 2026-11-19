@@ -80,7 +80,7 @@ Item {
 
             Text {
                 width: parent.width
-                text: "Remove " + Users.displayName(dialog.user) + "?"
+                text: I18n.tr("Remove %1?", Users.displayName(dialog.user))
                 color: Theme.text
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontHeadlineSm
@@ -92,7 +92,7 @@ Item {
 
             Text {
                 width: parent.width
-                text: "They will no longer be able to sign in to this machine."
+                text: I18n.tr("They will no longer be able to sign in to this machine.")
                 color: Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyLg
@@ -131,7 +131,7 @@ Item {
                     spacing: Theme.dp(8)
 
                     CheckLine {
-                        label: "Delete their home folder as well"
+                        label: I18n.tr("Delete their home folder as well")
                         checked: dialog.removeFiles
                         danger: true
                         onToggled: dialog.removeFiles = !dialog.removeFiles
@@ -139,7 +139,7 @@ Item {
 
                     Text {
                         width: parent.width
-                        text: dialog.removeFiles ? "Everything in " + (dialog.user ? dialog.user.home : "") + " is erased. There is no undoing this." : "Their files stay in " + (dialog.user ? dialog.user.home : "") + " for you to keep or clear out later."
+                        text: dialog.removeFiles ? I18n.tr("Everything in ") + (dialog.user ? dialog.user.home : "") + I18n.tr(" is erased. There is no undoing this.") : I18n.tr("Their files stay in ") + (dialog.user ? dialog.user.home : "") + I18n.tr(" for you to keep or clear out later.")
                         color: dialog.removeFiles ? Theme.fgErrorContainer : Theme.subtext
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBodySm
@@ -162,13 +162,13 @@ Item {
                 spacing: Theme.dp(8)
 
                 M3Button {
-                    text: "Cancel"
+                    text: I18n.tr("Cancel")
                     variant: "text"
                     onClicked: dialog.dismiss()
                 }
 
                 M3Button {
-                    text: dialog.removeFiles ? "Remove and erase" : "Remove"
+                    text: dialog.removeFiles ? I18n.tr("Remove and erase") : I18n.tr("Remove")
                     variant: "filled"
                     destructive: true
                     onClicked: dialog.submit()

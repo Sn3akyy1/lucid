@@ -43,26 +43,26 @@ Item {
         opacity: page.detailed ? 0 : 1
 
         SettingCard {
-            title: "THIS MACHINE"
+            title: I18n.tr("THIS MACHINE")
 
             SettingRow {
-                title: "Status"
-                description: KdeConnect.installed ? "Links this machine to a phone or tablet on the same network: files both ways, a shared clipboard, its notifications here, and a remote for whatever it is playing. " + KdeConnect.summary + "." : "KDE Connect is not installed. Install the kdeconnect package and this page comes to life."
+                title: I18n.tr("Status")
+                description: KdeConnect.installed ? I18n.tr("Links this machine to a phone or tablet on the same network: files both ways, a shared clipboard, its notifications here, and a remote for whatever it is playing. %1.", KdeConnect.summary) : I18n.tr("KDE Connect is not installed. Install the kdeconnect package and this page comes to life.")
                 enabled: KdeConnect.installed
-                disabledReason: "KDE Connect is not installed. Install the kdeconnect package and this page comes to life."
+                disabledReason: I18n.tr("KDE Connect is not installed. Install the kdeconnect package and this page comes to life.")
                 warning: KdeConnect.lastError
             }
 
             SettingRow {
-                title: "Name your phone sees"
+                title: I18n.tr("Name your phone sees")
                 visible: KdeConnect.active
                 enabled: KdeConnect.running
-                description: KdeConnect.selfId !== "" ? "This machine's KDE Connect ID is " + KdeConnect.selfId + "." : "Waiting for the KDE Connect daemon…"
+                description: KdeConnect.selfId !== "" ? I18n.tr("This machine's KDE Connect ID is %1.", KdeConnect.selfId) : I18n.tr("Waiting for the KDE Connect daemon…")
 
                 M3TextField {
                     width: Theme.dp(260)
                     enabled: KdeConnect.running
-                    placeholder: "archlinux"
+                    placeholder: I18n.tr("archlinux")
                     text: KdeConnect.selfName
                     onAccepted: (v) => {
                         if (v.trim() !== "")
@@ -74,10 +74,10 @@ Item {
             }
 
             SettingRow {
-                title: "Connect over"
+                title: I18n.tr("Connect over")
                 visible: KdeConnect.active && KdeConnect.backends.length > 0
                 enabled: KdeConnect.running
-                description: "The network is the fast path. Bluetooth is a fallback for when the two are not on the same Wi-Fi."
+                description: I18n.tr("The network is the fast path. Bluetooth is a fallback for when the two are not on the same Wi-Fi.")
                 stacked: true
                 showDivider: false
 
@@ -91,7 +91,7 @@ Item {
                         CheckLine {
                             required property var modelData
 
-                            label: modelData.name === "LAN" ? "This network" : modelData.name
+                            label: modelData.name === "LAN" ? I18n.tr("This network") : modelData.name
                             checked: modelData.enabled
                             onToggled: KdeConnect.setBackend(modelData.name, !modelData.enabled)
                         }
@@ -105,20 +105,20 @@ Item {
         }
 
         SettingCard {
-            title: "DEVICES"
+            title: I18n.tr("DEVICES")
             visible: KdeConnect.active
 
             SettingRow {
-                title: "Your devices"
+                title: I18n.tr("Your devices")
                 enabled: KdeConnect.running
-                description: KdeConnect.running ? "Open KDE Connect on the phone and it turns up here. Pick a connected one to open it." : "The KDE Connect daemon is not answering. It normally starts itself the moment something asks for it."
+                description: KdeConnect.running ? I18n.tr("Open KDE Connect on the phone and it turns up here. Pick a connected one to open it.") : I18n.tr("The KDE Connect daemon is not answering. It normally starts itself the moment something asks for it.")
                 stacked: true
                 showDivider: KdeConnect.devices.length > 0
 
                 M3Button {
                     variant: "tonal"
                     enabled: KdeConnect.running
-                    text: "Look again"
+                    text: I18n.tr("Look again")
                     onClicked: KdeConnect.rescan()
                 }
 
@@ -131,7 +131,7 @@ Item {
                 spacing: Theme.dp(2)
 
                 GroupLabel {
-                    text: "Wants to pair"
+                    text: I18n.tr("Wants to pair")
                     visible: page.asking.length > 0
                 }
 
@@ -145,7 +145,7 @@ Item {
                 }
 
                 GroupLabel {
-                    text: "Connected"
+                    text: I18n.tr("Connected")
                     visible: KdeConnect.reachable.length > 0
                 }
 
@@ -161,7 +161,7 @@ Item {
                 }
 
                 GroupLabel {
-                    text: "Paired, offline"
+                    text: I18n.tr("Paired, offline")
                     visible: KdeConnect.offline.length > 0
                 }
 
@@ -176,7 +176,7 @@ Item {
                 }
 
                 GroupLabel {
-                    text: "Nearby"
+                    text: I18n.tr("Nearby")
                     visible: page.nearby.length > 0
                 }
 
@@ -196,7 +196,7 @@ Item {
                     horizontalAlignment: Text.AlignHCenter
                     topPadding: Theme.dp(18)
                     bottomPadding: Theme.dp(18)
-                    text: "No devices yet. Install KDE Connect on your phone, open it, and it will appear here."
+                    text: I18n.tr("No devices yet. Install KDE Connect on your phone, open it, and it will appear here.")
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBody

@@ -27,7 +27,7 @@ WidgetBody {
         const m = w.now.getMonth();
         const d = w.now.getDate();
         // days since the locale's first day of the week
-        const back = (w.now.getDay() - Qt.locale().firstDayOfWeek + 7) % 7;
+        const back = (w.now.getDay() - I18n.locale.firstDayOfWeek + 7) % 7;
         switch (kind) {
         case "week":
             return [new Date(y, m, d - back), new Date(y, m, d - back + 7)];
@@ -51,37 +51,37 @@ WidgetBody {
     function title(kind) {
         switch (kind) {
         case "week":
-            return "This week";
+            return I18n.tr("This week");
         case "month":
-            return w.now.toLocaleDateString(Qt.locale(), "MMMM");
+            return w.now.toLocaleDateString(I18n.locale, "MMMM");
         case "year":
             return String(w.year);
         }
-        return "Today";
+        return I18n.tr("Today");
     }
 
     function of(kind) {
         switch (kind) {
         case "week":
-            return "of the week";
+            return I18n.tr("of the week");
         case "month":
-            return "of " + w.now.toLocaleDateString(Qt.locale(), "MMMM");
+            return "of " + w.now.toLocaleDateString(I18n.locale, "MMMM");
         case "year":
             return "of " + w.year;
         }
-        return "of the day";
+        return I18n.tr("of the day");
     }
 
     function remaining(kind) {
         const mins = Math.floor(Math.max(0, w.bounds(kind)[1] - w.now) / 60000);
         if (mins < 60)
-            return mins + " min left";
+            return I18n.tr("%1 min left", mins);
 
         if (mins < 1440)
             return Math.floor(mins / 60) + " h " + (mins % 60 > 0 ? mins % 60 + " min " : "") + "left";
 
         const d = Math.floor(mins / 1440);
-        return d === 1 ? "1 day left" : d + " days left";
+        return d === 1 ? I18n.tr("1 day left") : I18n.tr("%1 days left", d);
     }
 
     defaultTone: w.variant === "ring" ? "primary" : "surface"
@@ -244,7 +244,7 @@ WidgetBody {
             LText {
                 role: "bodySmall"
                 color: w.inkDim
-                text: "Day " + (w.doy + 1) + " · " + w.remaining("year")
+                text: I18n.tr("Day %1 · %2", (w.doy + 1), w.remaining("year"))
             }
 
         }

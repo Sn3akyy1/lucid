@@ -41,7 +41,7 @@ GroupRow {
             return CM.daysText(card.a.days, card.app ? card.app.mondayFirst : true);
 
         if (!card.on || !card.nextAt)
-            return "Not scheduled";
+            return I18n.tr("Not scheduled");
 
         return CM.dayWord(card.nextAt, card.app.nowMs());
     }
@@ -49,14 +49,14 @@ GroupRow {
     readonly property string status: {
         card.tick;
         if (card.ringingNow)
-            return "Ringing";
+            return I18n.tr("Ringing");
 
         if (card.snoozedTo > 0)
-            return "Snoozed until " + CM.time(new Date(card.snoozedTo).getHours(), new Date(card.snoozedTo).getMinutes(), card.app.h24);
+            return I18n.tr("Snoozed until %1", CM.time(new Date(card.snoozedTo).getHours(), new Date(card.snoozedTo).getMinutes(), card.app.h24));
 
         if (card.on && card.a.skip && card.a.skip > card.app.nowMs()) {
             const w = CM.dayWord(card.a.skip, card.app.nowMs());
-            return "Skipping " + (w === "Today" || w === "Tomorrow" ? w.toLowerCase() : w);
+            return I18n.tr("Skipping ") + (w === "Today" || w === "Tomorrow" ? I18n.tr(w).toLowerCase() : w) // i18n-dynamic;
         }
         return "";
     }
@@ -104,10 +104,10 @@ GroupRow {
         const sounds = card.app.alarmState.sounds || [];
         const mine = card.a.sound || "";
         const items = [{
-            "heading": "Rings with"
+            "heading": I18n.tr("Rings with")
         }, {
             "id": "",
-            "label": "Default (" + card.app.soundLabel(card.app.alarmState.sound) + ")",
+            "label": I18n.tr("Default (%1)", card.app.soundLabel(card.app.alarmState.sound)),
             "radio": true,
             "checked": mine === ""
         }, {
@@ -186,7 +186,7 @@ GroupRow {
                     role: "titleMedium"
                     weight: 560
                     color: card.on ? Theme.text : Theme.subtext
-                    text: card.a.hour < 12 ? "AM" : "PM"
+                    text: card.a.hour < 12 ? I18n.tr("AM") : I18n.tr("PM")
                 }
 
             }
@@ -196,7 +196,7 @@ GroupRow {
                 width: timeRow.width
                 height: timeRow.height
                 cursorShape: Qt.PointingHandCursor
-                onClicked: card.win.pickTime(card.a.hour, card.a.minute, "Change alarm", (h, m) => {
+                onClicked: card.win.pickTime(card.a.hour, card.a.minute, I18n.tr("Change alarm"), (h, m) => {
                     card.send("alarm.update", {
                         "fields": {
                             "hour": h,
@@ -290,7 +290,7 @@ GroupRow {
                 size: "xs"
                 icon: "expand_more"
                 rotation: card.expanded ? 180 : 0
-                tooltip: card.expanded ? "Fewer options" : "More options"
+                tooltip: card.expanded ? I18n.tr("Fewer options") : I18n.tr("More options")
                 onClicked: card.expandRequested()
 
                 Behavior on rotation {
@@ -345,7 +345,7 @@ GroupRow {
                                 role: "labelLarge"
                                 weight: 650
                                 color: parent.picked ? Theme.fgAccent : Theme.subtext
-                                text: CM.dayName(parent.modelData, "ddd").charAt(0)
+                                text: CM.dayName(parent.modelData, I18n.tr("ddd")).charAt(0)
                             }
 
                             StateLayer {
@@ -355,7 +355,7 @@ GroupRow {
                             }
 
                             Tip {
-                                text: CM.dayName(parent.modelData, "dddd")
+                                text: CM.dayName(parent.modelData, I18n.tr("dddd"))
                             }
 
                             Behavior on color {
@@ -378,28 +378,28 @@ GroupRow {
 
                     Chip {
                         kind: "filter"
-                        text: "Once"
+                        text: I18n.tr("Once")
                         selected: card.once
                         onClicked: card.setDays([])
                     }
 
                     Chip {
                         kind: "filter"
-                        text: "Weekdays"
+                        text: I18n.tr("Weekdays")
                         selected: CM.sameDays(card.a.days, CM.WEEKDAYS)
                         onClicked: card.setDays(CM.WEEKDAYS)
                     }
 
                     Chip {
                         kind: "filter"
-                        text: "Weekends"
+                        text: I18n.tr("Weekends")
                         selected: CM.sameDays(card.a.days, CM.WEEKEND)
                         onClicked: card.setDays(CM.WEEKEND)
                     }
 
                     Chip {
                         kind: "filter"
-                        text: "Every day"
+                        text: I18n.tr("Every day")
                         selected: CM.sameDays(card.a.days, CM.EVERY_DAY)
                         onClicked: card.setDays(CM.EVERY_DAY)
                     }
@@ -410,8 +410,8 @@ GroupRow {
                     id: labelField
 
                     width: Math.min(parent.width, Theme.dp(420))
-                    label: "Name"
-                    placeholder: "Wake up, gym, the bus…"
+                    label: I18n.tr("Name")
+                    placeholder: I18n.tr("Wake up, gym, the bus…")
                     icon: "label"
                     containerColor: Theme.withBlur(Theme.bgTile)
                     text: card.a.label
@@ -457,7 +457,7 @@ GroupRow {
                             visible: !card.once && card.on
                             kind: "filter"
                             icon: card.a.skip ? "" : "skip_next"
-                            text: "Skip next"
+                            text: I18n.tr("Skip next")
                             selected: !!card.a.skip && card.a.skip > card.app.nowMs()
                             onClicked: card.send("alarm.skip", {
                                 "yes": !selected
@@ -471,7 +471,7 @@ GroupRow {
                         anchors.verticalCenter: parent.verticalCenter
                         variant: "text"
                         icon: "delete"
-                        text: "Delete"
+                        text: I18n.tr("Delete")
                         onClicked: card.removeRequested()
                     }
 

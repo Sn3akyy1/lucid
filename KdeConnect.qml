@@ -35,10 +35,10 @@ Singleton {
 
     readonly property string summary: {
         if (!root.installed)
-            return "Not installed";
+            return I18n.tr("Not installed");
 
         if (!Prefs.kdeConnectEnabled)
-            return "Turned off";
+            return I18n.tr("Turned off");
 
         if (!root.running)
             return root.everAnswered ? "Daemon not running" : "Starting…";
@@ -47,12 +47,12 @@ Singleton {
             return root.reachable[0].name;
 
         if (root.reachable.length > 1)
-            return root.reachable.length + " devices connected";
+            return I18n.tr("%1 devices connected", root.reachable.length);
 
         if (root.pairedCount > 0)
-            return root.pairedCount === 1 ? "1 paired device, offline" : root.pairedCount + " paired devices, offline";
+            return root.pairedCount === 1 ? I18n.tr("1 paired device, offline") : I18n.tr("%1 paired devices, offline", root.pairedCount);
 
-        return "No devices paired";
+        return I18n.tr("No devices paired");
     }
 
     function device(id) {
@@ -334,33 +334,33 @@ Singleton {
     // a friendlier name than the raw kdeconnect_* plugin id
     function pluginLabel(name) {
         const map = {
-            "kdeconnect_battery": "Battery report",
-            "kdeconnect_clipboard": "Shared clipboard",
-            "kdeconnect_connectivity_report": "Signal strength",
-            "kdeconnect_contacts": "Contacts",
-            "kdeconnect_findmyphone": "Ring my phone",
-            "kdeconnect_findthisdevice": "Ring this machine",
-            "kdeconnect_lockdevice": "Lock the phone remotely",
-            "kdeconnect_mousepad": "Use the phone as a touchpad",
-            "kdeconnect_mpriscontrol": "Control this machine's media",
-            "kdeconnect_mprisremote": "Control the phone's media",
-            "kdeconnect_notifications": "Receive phone notifications",
-            "kdeconnect_pausemusic": "Pause music on a call",
-            "kdeconnect_ping": "Ping",
-            "kdeconnect_presenter": "Slide remote",
-            "kdeconnect_remotecommands": "Run commands here from the phone",
-            "kdeconnect_remotecontrol": "Remote input",
-            "kdeconnect_remotekeyboard": "Type from the phone",
-            "kdeconnect_remotesystemvolume": "Control the phone's volume",
-            "kdeconnect_runcommand": "Run commands on the phone",
-            "kdeconnect_screensaver_inhibit": "Keep the screen awake",
-            "kdeconnect_sendnotifications": "Send my notifications to the phone",
-            "kdeconnect_sftp": "Browse the phone's files",
-            "kdeconnect_share": "Share files and links",
-            "kdeconnect_sms": "Send text messages",
-            "kdeconnect_systemvolume": "Control this machine's volume",
-            "kdeconnect_telephony": "Call notifications",
-            "kdeconnect_virtualmonitor": "Use the phone as a second screen"
+            "kdeconnect_battery": I18n.tr("Battery report"),
+            "kdeconnect_clipboard": I18n.tr("Shared clipboard"),
+            "kdeconnect_connectivity_report": I18n.tr("Signal strength"),
+            "kdeconnect_contacts": I18n.tr("Contacts"),
+            "kdeconnect_findmyphone": I18n.tr("Ring my phone"),
+            "kdeconnect_findthisdevice": I18n.tr("Ring this machine"),
+            "kdeconnect_lockdevice": I18n.tr("Lock the phone remotely"),
+            "kdeconnect_mousepad": I18n.tr("Use the phone as a touchpad"),
+            "kdeconnect_mpriscontrol": I18n.tr("Control this machine's media"),
+            "kdeconnect_mprisremote": I18n.tr("Control the phone's media"),
+            "kdeconnect_notifications": I18n.tr("Receive phone notifications"),
+            "kdeconnect_pausemusic": I18n.tr("Pause music on a call"),
+            "kdeconnect_ping": I18n.tr("Ping"),
+            "kdeconnect_presenter": I18n.tr("Slide remote"),
+            "kdeconnect_remotecommands": I18n.tr("Run commands here from the phone"),
+            "kdeconnect_remotecontrol": I18n.tr("Remote input"),
+            "kdeconnect_remotekeyboard": I18n.tr("Type from the phone"),
+            "kdeconnect_remotesystemvolume": I18n.tr("Control the phone's volume"),
+            "kdeconnect_runcommand": I18n.tr("Run commands on the phone"),
+            "kdeconnect_screensaver_inhibit": I18n.tr("Keep the screen awake"),
+            "kdeconnect_sendnotifications": I18n.tr("Send my notifications to the phone"),
+            "kdeconnect_sftp": I18n.tr("Browse the phone's files"),
+            "kdeconnect_share": I18n.tr("Share files and links"),
+            "kdeconnect_sms": I18n.tr("Send text messages"),
+            "kdeconnect_systemvolume": I18n.tr("Control this machine's volume"),
+            "kdeconnect_telephony": I18n.tr("Call notifications"),
+            "kdeconnect_virtualmonitor": I18n.tr("Use the phone as a second screen")
         };
         return map[name] || name.replace("kdeconnect_", "").replace(/_/g, " ");
     }
@@ -372,20 +372,20 @@ Singleton {
 
         function status(): string {
             if (!root.installed)
-                return "kdeconnect is not installed";
+                return I18n.tr("kdeconnect is not installed");
 
             if (!Prefs.kdeConnectEnabled)
-                return "turned off in settings";
+                return I18n.tr("turned off in settings");
 
             return (root.running ? "daemon up" : "daemon down") + ", as \"" + root.selfName + "\" (" + root.selfId + ") — " + root.summary;
         }
 
         function list(): string {
             if (root.devices.length === 0)
-                return "no devices";
+                return I18n.tr("no devices");
 
             return root.devices.map((d) => {
-                const state = d.pairRequestedByPeer ? "wants to pair" : (!d.paired ? "unpaired" : (d.reachable ? "connected" : "offline"));
+                const state = d.pairRequestedByPeer ? I18n.tr("wants to pair") : (!d.paired ? "unpaired" : (d.reachable ? "connected" : "offline"));
                 const batt = d.battery && d.battery.charge >= 0 ? "  " + d.battery.charge + "%" : "";
                 return d.id + "  " + d.name + "  [" + state + "]" + batt;
             }).join("\n");
@@ -400,7 +400,7 @@ Singleton {
         }
 
         function ping(id: string): void {
-            root.ping(id, "Ping from Lucid");
+            root.ping(id, I18n.tr("Ping from Lucid"));
         }
 
         function clipboard(id: string): void {
@@ -408,7 +408,7 @@ Singleton {
         }
 
         function files(id: string): void {
-            root.pickFiles(id, "Send files");
+            root.pickFiles(id, I18n.tr("Send files"));
         }
 
         function send(id: string, path: string): void {
@@ -457,7 +457,7 @@ Singleton {
         onExited: (code) => {
             root.running = false;
             if (root.active && code !== 0)
-                root.lastError = "the KDE Connect bridge stopped (code " + code + ")";
+                root.lastError = I18n.tr("the KDE Connect bridge stopped (code %1)", code);
 
         }
 
@@ -489,7 +489,7 @@ Singleton {
                     root.devices = d.devices || [];
                     root.lastError = "";
                 } catch (e) {
-                    root.lastError = "could not read the bridge reply";
+                    root.lastError = I18n.tr("could not read the bridge reply");
                 }
             }
         }
@@ -497,7 +497,7 @@ Singleton {
         stderr: SplitParser {
             onRead: (line) => {
                 if (line.indexOf("ModuleNotFoundError") >= 0 || line.indexOf("No module named") >= 0)
-                    root.lastError = "python-gobject is missing, so KDE Connect cannot be reached";
+                    root.lastError = I18n.tr("python-gobject is missing, so KDE Connect cannot be reached");
 
             }
         }

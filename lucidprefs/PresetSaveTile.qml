@@ -16,11 +16,11 @@ Item {
     // the first free "Layout n", so enter alone is enough to save
     function suggestion() {
         for (var n = Widgets.userPresets.length + 1; n < 1000; n++) {
-            if (Widgets.userPresetNamed("Layout " + n) === null)
-                return "Layout " + n;
+            if (Widgets.userPresetNamed(I18n.tr("Layout %1", n)) === null)
+                return I18n.tr("Layout %1", n);
 
         }
-        return "Layout";
+        return I18n.tr("Layout");
     }
 
     function begin() {
@@ -144,7 +144,7 @@ Item {
                 id: hint
 
                 anchors.centerIn: parent
-                text: tile.clash !== null ? "Updates “" + tile.clash.name + "”" : "Enter to save · Esc to cancel"
+                text: tile.clash !== null ? I18n.tr("Updates “%1”", tile.clash.name) : I18n.tr("Enter to save · Esc to cancel")
                 color: tile.clash !== null ? Theme.accent : Theme.subtext
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fs(10)
@@ -170,7 +170,7 @@ Item {
             anchors.leftMargin: Theme.dp(14)
             anchors.rightMargin: Theme.dp(14)
             anchors.topMargin: Theme.dp(10)
-            text: "Save this layout"
+            text: I18n.tr("Save this layout")
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBody
@@ -188,7 +188,7 @@ Item {
             anchors.rightMargin: Theme.dp(14)
             anchors.topMargin: Theme.dp(3)
             height: Theme.dp(30)
-            text: tile.empty ? "Place a widget or two first, then keep the arrangement here." : "Keep what is on your desktop now as a preset of your own."
+            text: tile.empty ? I18n.tr("Place a widget or two first, then keep the arrangement here.") : I18n.tr("Keep what is on your desktop now as a preset of your own.")
             color: Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(10)
@@ -224,7 +224,7 @@ Item {
 
             width: parent.width - save.width - parent.spacing
             height: Theme.dp(42)
-            placeholder: "Name it"
+            placeholder: I18n.tr("Name it")
             commitOnBlur: false
             onEdited: (v) => {
                 return tile.draft = v;

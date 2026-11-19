@@ -49,7 +49,7 @@ Singleton {
             }
             root.status = "error";
             if (root.detail === "")
-                root.detail = "The helper stopped (code " + code + ").";
+                root.detail = I18n.tr("The helper stopped (code %1).", code);
 
             // a helper that keeps dying is left down rather than spun forever
             if (root.restarts < 5) {
@@ -80,7 +80,7 @@ Singleton {
         stderr: SplitParser {
             onRead: (line) => {
                 if (line.indexOf("No module named") >= 0)
-                    root.detail = "python-gobject is missing, so bluez cannot be answered.";
+                    root.detail = I18n.tr("python-gobject is missing, so bluez cannot be answered.");
 
             }
         }

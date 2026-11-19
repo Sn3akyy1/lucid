@@ -60,7 +60,7 @@ Item {
     }
 
     function phaseName(ph) {
-        return ph === "short" ? "Short break" : (ph === "long" ? "Long break" : (ph === "focus" ? "Focus" : "Ready to focus"));
+        return ph === "short" ? I18n.tr("Short break") : (ph === "long" ? I18n.tr("Long break") : (ph === "focus" ? I18n.tr("Focus") : I18n.tr("Ready to focus")));
     }
 
     function setPref(key, value) {
@@ -95,17 +95,17 @@ Item {
 
         x: page.edge
         width: parent.width - page.edge * 2
-        title: "Focus"
+        title: I18n.tr("Focus")
         subtitle: {
             const bits = [];
             if (page.doneToday > 0)
-                bits.push(page.doneToday + (page.doneToday === 1 ? " session" : " sessions") + " today");
+                bits.push(page.doneToday + (page.doneToday === 1 ? I18n.tr(" session") : I18n.tr(" sessions")) + I18n.tr(" today"));
 
             if (page.focusedToday > 0)
-                bits.push(CM.span(page.focusedToday) + " focused");
+                bits.push(I18n.tr("%1 focused", CM.span(page.focusedToday)));
 
             if ((page.p.pomodoroGoal || 0) > 0)
-                bits.push(page.doneToday >= page.p.pomodoroGoal ? "goal reached" : "goal " + page.p.pomodoroGoal);
+                bits.push(page.doneToday >= page.p.pomodoroGoal ? I18n.tr("goal reached") : I18n.tr("goal %1", page.p.pomodoroGoal));
 
             return bits.length ? bits.join("  ·  ") : "Work in rounds, with breaks between";
         }
@@ -240,7 +240,7 @@ Item {
                     variant: "tonal"
                     size: "m"
                     icon: "stop"
-                    tooltip: "Stop"
+                    tooltip: I18n.tr("Stop")
                     disabled: !page.active
                     onClicked: page.app.send("pomo.stop")
                 }
@@ -279,7 +279,7 @@ Item {
                     variant: "tonal"
                     size: "m"
                     icon: "skip_next"
-                    tooltip: page.phase === "focus" ? "Skip to the break" : "Skip to focus"
+                    tooltip: page.phase === "focus" ? I18n.tr("Skip to the break") : I18n.tr("Skip to focus")
                     disabled: !page.active
                     onClicked: page.app.send("pomo.skip")
                 }
@@ -289,7 +289,7 @@ Item {
                     variant: "tonal"
                     size: "m"
                     icon: "more_time"
-                    tooltip: "A minute more"
+                    tooltip: I18n.tr("A minute more")
                     disabled: !page.active
                     onClicked: page.app.send("pomo.extend", {
                         "sec": 60
@@ -308,7 +308,7 @@ Item {
                 LText {
                     role: "labelLarge"
                     color: page.doneToday >= page.p.pomodoroGoal ? Theme.success : Theme.subtext
-                    text: page.doneToday >= page.p.pomodoroGoal ? "Daily goal reached" : page.doneToday + " of " + page.p.pomodoroGoal + " sessions today"
+                    text: page.doneToday >= page.p.pomodoroGoal ? I18n.tr("Daily goal reached") : I18n.tr("%1 of %2 sessions today", page.doneToday, page.p.pomodoroGoal)
                 }
 
                 LinearProgress {
@@ -342,7 +342,7 @@ Item {
             spacing: Theme.dp(3)
 
             Section {
-                text: "Rhythm"
+                text: I18n.tr("Rhythm")
             }
 
             GroupRow {
@@ -381,8 +381,8 @@ Item {
             }
 
             Stepper {
-                label: "Focus"
-                note: "One session"
+                label: I18n.tr("Focus")
+                note: I18n.tr("One session")
                 value: page.p.pomodoroFocus || 25
                 unit: "min"
                 lo: 5
@@ -392,7 +392,7 @@ Item {
             }
 
             Stepper {
-                label: "Short break"
+                label: I18n.tr("Short break")
                 value: page.p.pomodoroShort || 5
                 unit: "min"
                 lo: 1
@@ -402,7 +402,7 @@ Item {
             }
 
             Stepper {
-                label: "Long break"
+                label: I18n.tr("Long break")
                 value: page.p.pomodoroLong || 15
                 unit: "min"
                 lo: 5
@@ -412,7 +412,7 @@ Item {
             }
 
             Stepper {
-                label: "Rounds before a long break"
+                label: I18n.tr("Rounds before a long break")
                 value: page.p.pomodoroRounds || 4
                 unit: ""
                 lo: 1
@@ -422,11 +422,11 @@ Item {
             }
 
             Stepper {
-                label: "Daily goal"
-                note: "Sessions to aim for each day"
+                label: I18n.tr("Daily goal")
+                note: I18n.tr("Sessions to aim for each day")
                 value: page.p.pomodoroGoal || 0
                 unit: (page.p.pomodoroGoal || 0) === 0 ? "" : "sessions"
-                zeroText: "None"
+                zeroText: I18n.tr("None")
                 lo: 0
                 hi: 24
                 step: 1
@@ -435,28 +435,28 @@ Item {
             }
 
             Section {
-                text: "Going on by itself"
+                text: I18n.tr("Going on by itself")
             }
 
             Toggle {
-                label: "Start breaks by themselves"
+                label: I18n.tr("Start breaks by themselves")
                 key: "pomodoroAutoStart"
                 isFirst: true
             }
 
             Toggle {
-                label: "Start focus again after a break"
+                label: I18n.tr("Start focus again after a break")
                 key: "pomodoroAutoFocus"
             }
 
             Toggle {
-                label: "Start a new set after the long break"
+                label: I18n.tr("Start a new set after the long break")
                 key: "pomodoroRepeat"
             }
 
             Toggle {
-                label: "Do not disturb while focusing"
-                note: "Notifications wait until the break"
+                label: I18n.tr("Do not disturb while focusing")
+                note: I18n.tr("Notifications wait until the break")
                 key: "pomodoroSilence"
                 isLast: true
             }

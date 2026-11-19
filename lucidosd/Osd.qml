@@ -120,17 +120,17 @@ PanelWindow {
     readonly property string currentLabel: {
         switch (osdWindow.oscType) {
         case "volume":
-            return "Volume";
+            return I18n.tr("Volume");
         case "brightness":
-            return "Brightness";
+            return I18n.tr("Brightness");
         case "kbdbacklight":
-            return "Keyboard light";
+            return I18n.tr("Keyboard light");
         case "mic":
-            return "Microphone";
+            return I18n.tr("Microphone");
         case "capslock":
-            return "Caps Lock";
+            return I18n.tr("Caps Lock");
         case "numlock":
-            return "Num Lock";
+            return I18n.tr("Num Lock");
         default:
             return "";
         }
@@ -139,13 +139,13 @@ PanelWindow {
     readonly property string toggleOnText: {
         switch (osdWindow.oscType) {
         case "mic":
-            return "Unmuted";
+            return I18n.tr("Unmuted");
         case "capslock":
             return "ABC";
         case "numlock":
             return "123";
         case "kbdbacklight":
-            return "On";
+            return I18n.tr("On");
         default:
             return "";
         }
@@ -153,13 +153,13 @@ PanelWindow {
     readonly property string toggleOffText: {
         switch (osdWindow.oscType) {
         case "mic":
-            return "Muted";
+            return I18n.tr("Muted");
         case "capslock":
             return "abc";
         case "numlock":
-            return "Arrows";
+            return I18n.tr("Arrows");
         case "kbdbacklight":
-            return "Off";
+            return I18n.tr("Off");
         default:
             return "";
         }

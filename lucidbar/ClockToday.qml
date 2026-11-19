@@ -73,13 +73,13 @@ Item {
                 role: "titleMedium"
                 weight: 600
                 color: Theme.fgPrimaryContainer
-                text: page.now.toLocaleDateString(Qt.locale(), "dddd")
+                text: page.now.toLocaleDateString(I18n.locale, I18n.tr("dddd"))
             }
 
             LText {
                 role: "bodyMedium"
                 color: Theme.alpha(Theme.fgPrimaryContainer, 0.75)
-                text: page.now.toLocaleDateString(Qt.locale(), "d MMMM")
+                text: page.now.toLocaleDateString(I18n.locale, I18n.tr("d MMMM"))
             }
 
         }
@@ -150,7 +150,7 @@ Item {
                     anchors.centerIn: parent
                     role: "labelMedium"
                     color: Theme.fgPrimaryContainer
-                    text: page.now.getHours() < 12 ? "AM" : "PM"
+                    text: page.now.getHours() < 12 ? I18n.tr("AM") : I18n.tr("PM")
                 }
 
             }
@@ -190,7 +190,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 role: "bodyMedium"
                 color: Theme.subtext
-                text: WeatherSource.lastError !== "" ? "Weather is unavailable — " + WeatherSource.lastError : "Fetching the forecast"
+                text: WeatherSource.lastError !== "" ? I18n.tr("Weather is unavailable — %1", WeatherSource.lastError) : I18n.tr("Fetching the forecast")
             }
 
         }
@@ -272,7 +272,7 @@ Item {
                 spacing: Theme.dp(6)
 
                 Repeater {
-                    model: page.wx ? [["thermostat", "Feels " + Units.deg(page.wx.feelsC, page.wx.feelsF)], ["water_drop", page.wx.humidity + "%"], ["air", Units.wind(page.wx.windKmph, page.wx.windMph) + " " + (page.wx.windDir || "")], ["umbrella", (page.wx.pop || 0) + "%"], ["light_mode", "UV " + page.wx.uv]] : []
+                    model: page.wx ? [["thermostat", I18n.tr("Feels %1", Units.deg(page.wx.feelsC, page.wx.feelsF))], ["water_drop", page.wx.humidity + "%"], ["air", Units.wind(page.wx.windKmph, page.wx.windMph) + " " + (page.wx.windDir || "")], ["umbrella", (page.wx.pop || 0) + "%"], ["light_mode", "UV " + page.wx.uv]] : []
 
                     Rectangle {
                         required property var modelData
@@ -331,7 +331,7 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             role: "labelSmall"
                             color: index === 0 ? Theme.primary : Theme.subtext
-                            text: index === 0 ? "Now" : new Date(modelData.time).toLocaleTimeString(Qt.locale(), Prefs.clock24h ? "HH" : "h AP").replace(":00", "")
+                            text: index === 0 ? I18n.tr("Now") : new Date(modelData.time).toLocaleTimeString(I18n.locale, Prefs.clock24h ? I18n.tr("HH") : I18n.tr("h AP")).replace(":00", "")
                         }
 
                         WeatherIcon {
@@ -387,7 +387,7 @@ Item {
 
                             LText {
                                 role: "labelMedium"
-                                text: new Date(modelData.date + "T12:00").toLocaleDateString(Qt.locale(), "ddd")
+                                text: new Date(modelData.date + "T12:00").toLocaleDateString(I18n.locale, I18n.tr("ddd")) // i18n-skip: a time suffix, not text
                             }
 
                             LText {
@@ -460,13 +460,13 @@ Item {
 
                 LText {
                     role: "titleSmall"
-                    text: Agenda.next ? Agenda.next.item.name : "Nothing coming up"
+                    text: Agenda.next ? Agenda.next.item.name : I18n.tr("Nothing coming up")
                 }
 
                 LText {
                     role: "bodySmall"
                     color: Theme.subtext
-                    text: Agenda.next ? Agenda.next.at.toLocaleDateString(Qt.locale(), "ddd d MMM") + " · " + Agenda.timeText(Agenda.next.item) + " · " + Agenda.untilText(Agenda.next.at) : "Reminders you add show up here"
+                    text: Agenda.next ? Agenda.next.at.toLocaleDateString(I18n.locale, I18n.tr("ddd d MMM")) + " · " + Agenda.timeText(Agenda.next.item) + " · " + Agenda.untilText(Agenda.next.at) : I18n.tr("Reminders you add show up here")
                 }
 
             }
@@ -479,7 +479,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             variant: "tonal"
             icon: "add"
-            text: "Reminder"
+            text: I18n.tr("Reminder")
             onClicked: page.addRequested()
         }
 

@@ -94,34 +94,34 @@ Singleton {
     }
     readonly property string statusText: {
         if (root.granted)
-            return "Welcome back";
+            return I18n.tr("Welcome back");
 
         if (root.lockedOut)
-            return "Too many attempts — try again in " + root.humanSecs(root.lockoutLeft);
+            return I18n.tr("Too many attempts — try again in %1", root.humanSecs(root.lockoutLeft));
 
         if (root.phase === "checking")
             return "Checking…";
 
         if (root.phase === "error")
-            return root.pamText !== "" ? root.pamText : "Authentication is unavailable right now";
+            return root.pamText !== "" ? root.pamText : I18n.tr("Authentication is unavailable right now");
 
         if (root.phase === "failed") {
             if (root.pamText !== "")
                 return root.pamText;
 
             if (root.triesLeft === 1)
-                return "Incorrect password — one try left";
+                return I18n.tr("Incorrect password — one try left");
 
             if (root.triesLeft > 1)
-                return "Incorrect password — " + root.triesLeft + " tries left";
+                return I18n.tr("Incorrect password — %1 tries left", root.triesLeft);
 
-            return "Incorrect password";
+            return I18n.tr("Incorrect password");
         }
         if (root.phase === "prompting" && root.prompt !== "")
             return root.prompt;
 
         if (root.fingerOn)
-            return root.fingerFailed && root.fingerText !== "" ? root.fingerText : "Touch the fingerprint sensor or type your password";
+            return root.fingerFailed && root.fingerText !== "" ? root.fingerText : I18n.tr("Touch the fingerprint sensor or type your password");
 
         return "";
     }
@@ -131,7 +131,7 @@ Singleton {
             return Math.round(s / 60) + " minutes";
 
         if (s > 45)
-            return "a minute";
+            return I18n.tr("a minute");
 
         return Math.max(1, s) + " seconds";
     }
@@ -427,13 +427,13 @@ Singleton {
             if (result === PamResult.Success)
                 root.grant();
             else if (result === PamResult.MaxTries)
-                root.fail("Too many attempts — the account is locked");
+                root.fail(I18n.tr("Too many attempts — the account is locked"));
             else if (result === PamResult.Error)
-                root.error("PAM could not complete the check");
+                root.error(I18n.tr("PAM could not complete the check"));
             else
                 root.fail(root.pamText);
         }
-        onError: (e) => root.error(PamError.toString(e) === "StartFailed" ? "PAM refused to start a session" : "PAM failed: " + PamError.toString(e))
+        onError: (e) => root.error(PamError.toString(e) === "StartFailed" ? I18n.tr("PAM refused to start a session") : I18n.tr("PAM failed: %1", PamError.toString(e)))
     }
 
     function error(text) {
@@ -521,7 +521,7 @@ Singleton {
         interval: 20000
         onTriggered: {
             pam.abort();
-            root.error("The check timed out");
+            root.error(I18n.tr("The check timed out"));
         }
     }
 
@@ -677,7 +677,7 @@ Singleton {
     readonly property string netGlyph: root.ethernet ? "ethernet" : (root.wifiUp ? "wifi" : "wifiOff")
     readonly property string netLabel: {
         if (root.ethernet)
-            return "Ethernet";
+            return I18n.tr("Ethernet");
 
         if (root.wifiUp && root.activeNetwork)
             return root.activeNetwork.name;
@@ -685,7 +685,7 @@ Singleton {
         if (root.wifiUp)
             return "Wi-Fi";
 
-        return "Offline";
+        return I18n.tr("Offline");
     }
 
     function refreshNetwork() {
@@ -718,18 +718,18 @@ Singleton {
     }) : []
     readonly property string btLabel: {
         if (!root.btAdapter)
-            return "No adapter";
+            return I18n.tr("No adapter");
 
         if (!root.btOn)
-            return "Bluetooth off";
+            return I18n.tr("Bluetooth off");
 
         if (root.btDevices.length === 1)
             return root.btDevices[0].name;
 
         if (root.btDevices.length > 1)
-            return root.btDevices.length + " devices";
+            return I18n.tr("%1 devices", root.btDevices.length);
 
-        return "Bluetooth on";
+        return I18n.tr("Bluetooth on");
     }
 
     // ── the day ────────────────────────────────────────────────────────────
@@ -757,22 +757,22 @@ Singleton {
     readonly property string hourText: root.timeText.split(":")[0]
     readonly property string minuteText: root.timeText.split(":")[1]
     readonly property string meridiem: Prefs.clock24h ? "" : (root.now.getHours() < 12 ? "AM" : "PM")
-    readonly property string dateText: root.now.toLocaleDateString(Qt.locale(), "dddd, d MMMM")
+    readonly property string dateText: root.now.toLocaleDateString(I18n.locale, "dddd, d MMMM")
     readonly property string greeting: {
         var h = root.now.getHours();
         if (h < 5)
-            return "Still up?";
+            return I18n.tr("Still up?");
 
         if (h < 12)
-            return "Good morning";
+            return I18n.tr("Good morning");
 
         if (h < 18)
-            return "Good afternoon";
+            return I18n.tr("Good afternoon");
 
         if (h < 22)
-            return "Good evening";
+            return I18n.tr("Good evening");
 
-        return "Good night";
+        return I18n.tr("Good night");
     }
 
     // ── wallpaper ──────────────────────────────────────────────────────────
@@ -794,31 +794,31 @@ Singleton {
     readonly property var powerActions: [
         {
             "id": "suspend",
-            "label": "Suspend",
+            "label": I18n.tr("Suspend"),
             "glyph": "suspend",
             "confirm": false
         },
         {
             "id": "hibernate",
-            "label": "Hibernate",
+            "label": I18n.tr("Hibernate"),
             "glyph": "hibernate",
             "confirm": false
         },
         {
             "id": "logout",
-            "label": "Log out",
+            "label": I18n.tr("Log out"),
             "glyph": "logout",
             "confirm": true
         },
         {
             "id": "reboot",
-            "label": "Restart",
+            "label": I18n.tr("Restart"),
             "glyph": "restart",
             "confirm": true
         },
         {
             "id": "shutdown",
-            "label": "Shut down",
+            "label": I18n.tr("Shut down"),
             "glyph": "power",
             "confirm": true
         }

@@ -120,7 +120,7 @@ Singleton {
             var text = info === null ? root.textKind(preview) : null;
             out.push({
                 "id": id,
-                "preview": isImage ? "Image" : (info !== null ? "Binary data" : preview),
+                "preview": isImage ? I18n.tr("Image") : (info !== null ? I18n.tr("Binary data") : preview),
                 "isImage": isImage,
                 "meta": isImage ? root.imageMeta(info) : (info !== null ? (info.format !== "" ? info.format + " · " : "") + info.size : ""),
                 "kind": isImage ? "image" : (info !== null ? "binary" : text.kind),

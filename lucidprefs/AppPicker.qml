@@ -34,7 +34,7 @@ Item {
         picker.workspace = ws;
         // "::desktop" adds a desktop launcher, Startup.pickerKey an app at login; any other key is a workspace
         const startup = ws === Startup.pickerKey;
-        picker.heading = ws === "::desktop" ? "Add an app to the desktop" : startup ? "Open an app at login" : "Add an app to " + Specials.label(ws);
+        picker.heading = ws === "::desktop" ? I18n.tr("Add an app to the desktop") : startup ? I18n.tr("Open an app at login") : I18n.tr("Add an app to %1", Specials.label(ws));
         picker.items = ws === "::desktop" ? DesktopIcons.installedApps() : startup ? Startup.installedApps() : Specials.installedApps(ws);
         picker.filter = "";
         searchInput.text = "";
@@ -149,7 +149,7 @@ Item {
                 anchors.left: parent.left
                 anchors.leftMargin: Theme.dp(12)
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Search " + picker.items.length + " installed apps"
+                text: I18n.tr("Search %1 installed apps", picker.items.length)
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyLg
@@ -162,7 +162,7 @@ Item {
         Text {
             anchors.centerIn: parent
             width: card.width - Theme.dp(60)
-            text: picker.items.length === 0 ? "Nothing left to add" : "No apps match “" + picker.filter + "”"
+            text: picker.items.length === 0 ? I18n.tr("Nothing left to add") : I18n.tr("No apps match “%1”", picker.filter)
             color: Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyLg

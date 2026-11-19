@@ -53,10 +53,10 @@ PanelWindow {
             return "keybinds.json does not parse: " + Keybinds.parseError;
 
         if (Keybinds.emergency)
-            return "Emergency binds active — " + (Keybinds.status.error || "keybinds.json could not be used");
+            return I18n.tr("Emergency binds active — ") + (Keybinds.status.error || "keybinds.json could not be used");
 
         var n = Object.keys(Keybinds.failed).length;
-        return n > 0 ? n + (n === 1 ? " keybind" : " keybinds") + " did not apply — shown in red" : "";
+        return n > 0 ? n + (n === 1 ? I18n.tr(" keybind") : I18n.tr(" keybinds")) + I18n.tr(" did not apply — shown in red") : "";
     }
 
     function show() {
@@ -195,7 +195,7 @@ PanelWindow {
                 spacing: Theme.dp(3)
 
                 Text {
-                    text: "Keybinds"
+                    text: I18n.tr("Keybinds")
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontHeadlineSm
@@ -204,7 +204,7 @@ PanelWindow {
 
                 Text {
                     width: parent.width
-                    text: sheet.problem !== "" ? sheet.problem : sheet.shownBinds.length + (sheet.shownBinds.length === 1 ? " keybind" : " keybinds") + " · click one to change it · " + (Keybinds.sheetKeys !== "" ? Keybinds.sheetKeys + " or " : "") + "Esc to close"
+                    text: sheet.problem !== "" ? sheet.problem : sheet.shownBinds.length + (sheet.shownBinds.length === 1 ? I18n.tr(" keybind") : I18n.tr(" keybinds")) + I18n.tr(" · click one to change it · ") + (Keybinds.sheetKeys !== "" ? I18n.tr("%1 or ", Keybinds.sheetKeys) : "") + I18n.tr("Esc to close")
                     color: sheet.problem !== "" ? Theme.error : Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodyMd
@@ -267,7 +267,7 @@ PanelWindow {
                         anchors.left: searchInput.left
                         anchors.verticalCenter: parent.verticalCenter
                         visible: searchInput.text === ""
-                        text: "Type to search"
+                        text: I18n.tr("Type to search")
                         color: Theme.subtextDim
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBodyLg
@@ -277,7 +277,7 @@ PanelWindow {
 
                 M3Button {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "Edit keybinds"
+                    text: I18n.tr("Edit keybinds")
                     variant: "filled"
                     iconPath: "edit"
                     onClicked: sheet.edit()
@@ -433,7 +433,7 @@ PanelWindow {
         Text {
             anchors.centerIn: body
             visible: sheet.shownBinds.length === 0
-            text: Keybinds.binds.length === 0 ? "No keybinds yet — add some in Settings" : "Nothing matches “" + sheet.query.trim() + "”"
+            text: Keybinds.binds.length === 0 ? I18n.tr("No keybinds yet — add some in Settings") : I18n.tr("Nothing matches “%1”", sheet.query.trim())
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyLg

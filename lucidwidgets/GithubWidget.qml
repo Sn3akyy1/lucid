@@ -65,13 +65,13 @@ WidgetBody {
 
         switch (a.error) {
         case "invalid":
-            return "That isn't a GitHub username";
+            return I18n.tr("That isn't a GitHub username");
         case "notfound":
-            return "No GitHub user called " + w.user;
+            return I18n.tr("No GitHub user called %1", w.user);
         case "offline":
-            return "Can't reach GitHub right now";
+            return I18n.tr("Can't reach GitHub right now");
         }
-        return "GitHub didn't answer the way it should";
+        return I18n.tr("GitHub didn't answer the way it should");
     }
 
     function fetch() {
@@ -94,8 +94,8 @@ WidgetBody {
 
     function dayText(day) {
         var d = new Date(day[0] + "T12:00:00");
-        var when = d.toLocaleDateString(Qt.locale(), "ddd d MMM");
-        return (day[1] === 0 ? "No contributions" : w.plural(day[1], "contribution", "contributions")) + " on " + when;
+        var when = d.toLocaleDateString(I18n.locale, "ddd d MMM");
+        return (day[1] === 0 ? I18n.tr("No contributions") : w.plural(day[1], I18n.tr("contribution"), I18n.tr("contributions"))) + I18n.tr(" on %1", when);
     }
 
     // GitHub's own five steps, drawn in the card's accent
@@ -169,7 +169,7 @@ WidgetBody {
             horizontalAlignment: Text.AlignHCenter
             role: "titleSmall"
             color: w.ink
-            text: "Your GitHub username"
+            text: I18n.tr("Your GitHub username")
         }
 
         Rectangle {
@@ -232,7 +232,7 @@ WidgetBody {
                 anchors.centerIn: parent
                 role: "bodyMedium"
                 color: w.inkFaint
-                text: "octocat"
+                text: I18n.tr("octocat")
                 visible: nameInput.text === ""
             }
 
@@ -243,7 +243,7 @@ WidgetBody {
             horizontalAlignment: Text.AlignHCenter
             role: "bodySmall"
             color: w.inkFaint
-            text: w.user === "" ? "Public contributions, no token needed" : "Enter to save · Esc to keep " + w.user
+            text: w.user === "" ? I18n.tr("Public contributions, no token needed") : I18n.tr("Enter to save · Esc to keep %1", w.user)
             wrapMode: Text.WordWrap
         }
 
@@ -276,7 +276,7 @@ WidgetBody {
                 anchors.verticalCenter: parent.verticalCenter
                 role: "labelLarge"
                 color: whoArea.containsMouse ? w.inkAccent : w.ink
-                text: w.preview ? "octocat" : w.user
+                text: w.preview ? I18n.tr("octocat") : w.user
                 elide: Text.ElideRight
                 width: Math.min(implicitWidth, head.width - total.implicitWidth - Theme.dp(40))
             }
@@ -302,7 +302,7 @@ WidgetBody {
             role: "labelMedium"
             tabular: true
             color: w.inkDim
-            text: !w.report ? "" : (w.streakOnly ? (w.report.stale ? "offline" : "") : w.plural(w.report.total, "contribution", "contributions") + (w.report.stale ? " · offline" : ""))
+            text: !w.report ? "" : (w.streakOnly ? (w.report.stale ? I18n.tr("offline") : "") : w.plural(w.report.total, I18n.tr("contribution"), I18n.tr("contributions")) + (w.report.stale ? I18n.tr(" · offline") : ""))
         }
 
     }
@@ -315,7 +315,7 @@ WidgetBody {
         wrapMode: Text.WordWrap
         role: "bodyMedium"
         color: w.inkFaint
-        text: w.problem !== "" ? w.problem : "Asking GitHub…"
+        text: w.problem !== "" ? w.problem : I18n.tr("Asking GitHub…")
     }
 
     // ------------------------------------------------------------ year
@@ -385,7 +385,7 @@ WidgetBody {
                     anchors.verticalCenter: parent.verticalCenter
                     role: "labelSmall"
                     color: w.inkFaint
-                    text: Qt.locale().standaloneMonthName(modelData.month - 1, Locale.ShortFormat)
+                    text: I18n.locale.standaloneMonthName(modelData.month - 1, Locale.ShortFormat)
                 }
 
             }
@@ -458,7 +458,7 @@ WidgetBody {
                 if (!w.report)
                     return "";
 
-                return w.report.streak > 0 ? w.plural(w.report.streak, "day", "days") + " in a row · best " + w.report.longest : "Longest run this year: " + w.plural(w.report.longest, "day", "days");
+                return w.report.streak > 0 ? I18n.tr("%1 in a row · best %2", w.plural(w.report.streak, I18n.tr("day"), I18n.tr("days")), w.report.longest) : I18n.tr("Longest run this year: %1", w.plural(w.report.longest, I18n.tr("day"), I18n.tr("days")));
             }
         }
 
@@ -496,7 +496,7 @@ WidgetBody {
             LText {
                 role: "labelMedium"
                 color: w.inkDim
-                text: w.report && w.report.streak === 1 ? "day in a row" : "days in a row"
+                text: w.report && w.report.streak === 1 ? I18n.tr("day in a row") : I18n.tr("days in a row")
             }
 
         }
@@ -507,7 +507,7 @@ WidgetBody {
             spacing: Theme.dp(4)
 
             Repeater {
-                model: w.report ? [["Today", w.today], ["Best run", w.report.longest], ["This year", w.report.total]] : []
+                model: w.report ? [[I18n.tr("Today"), w.today], [I18n.tr("Best run"), w.report.longest], [I18n.tr("This year"), w.report.total]] : []
 
                 Row {
                     required property var modelData

@@ -69,7 +69,7 @@ Column {
         width: colours.width
         // only while there is nothing to show: a re-read just dims the swatches
         visible: colours.active && colours.candidates.length === 0
-        text: colours.loading ? "Reading the wallpaper..." : "No wallpaper to read colours from."
+        text: colours.loading ? I18n.tr("Reading the wallpaper...") : I18n.tr("No wallpaper to read colours from.")
         color: Theme.subtext
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontBody

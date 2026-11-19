@@ -131,15 +131,15 @@ Scope {
 
     function titleOf(p) {
         if (!p)
-            return "this folder";
+            return I18n.tr("this folder");
 
-        return p === app.home ? "Home" : app.nameOf(p);
+        return p === app.home ? I18n.tr("Home") : app.nameOf(p);
     }
 
     // where a folder sits, said short: ~/Pictures/trips
     function placeOf(p) {
         if (p === app.home)
-            return "Home";
+            return I18n.tr("Home");
 
         return p.indexOf(app.home + "/") === 0 ? "~" + p.slice(app.home.length) : p;
     }
@@ -242,12 +242,12 @@ Scope {
     function sortLabel(folder) {
         var s = app.sortOf(folder);
         var names = {
-            "name": "Name",
-            "size": "Size",
-            "modified": "Date modified",
-            "type": "Type"
+            "name": I18n.tr("Name"),
+            "size": I18n.tr("Size"),
+            "modified": I18n.tr("Date modified"),
+            "type": I18n.tr("Type")
         };
-        return (names[s.key] || "Name") + (s.desc ? ", descending" : "");
+        return (names[s.key] || I18n.tr("Name")) + (s.desc ? I18n.tr(", descending") : "");
     }
 
     // ---- sizes and dates, as people read them
@@ -271,17 +271,17 @@ Scope {
         var d = new Date(secs * 1000), now = new Date();
         var day = 86400000;
         var start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-        var time = d.toLocaleTimeString(Qt.locale(), "hh:mm");
+        var time = d.toLocaleTimeString(I18n.locale, "hh:mm");
         if (d.getTime() >= start)
-            return "Today " + time;
+            return I18n.tr("Today %1", time);
 
         if (d.getTime() >= start - day)
-            return "Yesterday " + time;
+            return I18n.tr("Yesterday %1", time);
 
         if (d.getFullYear() === now.getFullYear())
-            return d.toLocaleDateString(Qt.locale(), "d MMM") + ", " + time;
+            return d.toLocaleDateString(I18n.locale, "d MMM") + ", " + time;
 
-        return d.toLocaleDateString(Qt.locale(), "d MMM yyyy") + ", " + time;
+        return d.toLocaleDateString(I18n.locale, "d MMM yyyy") + ", " + time;
     }
 
     // the same inside a sentence: today at 19:32, on 28 Oct
@@ -291,14 +291,14 @@ Scope {
 
         var d = new Date(secs * 1000), now = new Date();
         var start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-        var time = d.toLocaleTimeString(Qt.locale(), "hh:mm");
+        var time = d.toLocaleTimeString(I18n.locale, "hh:mm");
         if (d.getTime() >= start)
-            return "today at " + time;
+            return I18n.tr("today at %1", time);
 
         if (d.getTime() >= start - 86400000)
-            return "yesterday at " + time;
+            return I18n.tr("yesterday at %1", time);
 
-        return "on " + d.toLocaleDateString(Qt.locale(), d.getFullYear() === now.getFullYear() ? "d MMM" : "d MMM yyyy");
+        return "on " + d.toLocaleDateString(I18n.locale, d.getFullYear() === now.getFullYear() ? "d MMM" : "d MMM yyyy");
     }
 
     // a time into a video: 0:07, 12:40, 1:02:03

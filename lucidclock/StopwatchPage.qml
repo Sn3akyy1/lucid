@@ -69,11 +69,11 @@ Item {
 
     function copyLaps() {
         const lines = page.laps.slice().reverse().map((l) => {
-            return "Lap " + l.n + "\t" + CM.clock(l.split, true) + "\t" + CM.clock(l.total, true);
+            return I18n.tr("Lap %1\t%2\t%3", l.n, CM.clock(l.split, true), CM.clock(l.total, true));
         });
         lines.push("Total\t" + CM.clock(page.elapsed, true));
         Quickshell.execDetached(["wl-copy", "--", lines.join("\n")]);
-        page.win.toast("Laps copied");
+        page.win.toast(I18n.tr("Laps copied"));
     }
 
     // hundredths run smoothly only on screen; the shell keeps the real time
@@ -94,8 +94,8 @@ Item {
 
         x: page.edge
         width: parent.width - page.edge * 2
-        title: "Stopwatch"
-        subtitle: page.running ? "Running" + (page.laps.length ? ", lap " + (page.laps.length + 1) : "") : (page.active ? "Paused at " + CM.clock(page.elapsed, true) : "Space starts it, L takes a lap")
+        title: I18n.tr("Stopwatch")
+        subtitle: page.running ? I18n.tr("Running") + (page.laps.length ? I18n.tr(", lap %1", (page.laps.length + 1)) : "") : (page.active ? I18n.tr("Paused at %1", CM.clock(page.elapsed, true)) : I18n.tr("Space starts it, L takes a lap"))
     }
 
     // ---- the ring, as big as the room it has
@@ -185,7 +185,7 @@ Item {
                         role: ring.size > Theme.dp(320) ? "titleMedium" : "bodyMedium"
                         tabular: true
                         color: Theme.subtext
-                        text: "Lap " + (page.laps.length + 1) + "  " + CM.clock(page.elapsed - page.lastLap, true)
+                        text: I18n.tr("Lap %1  %2", (page.laps.length + 1), CM.clock(page.elapsed - page.lastLap, true))
                     }
 
                 }
@@ -201,7 +201,7 @@ Item {
                     variant: "tonal"
                     size: "m"
                     icon: "replay"
-                    tooltip: "Reset"
+                    tooltip: I18n.tr("Reset")
                     disabled: page.running || !page.active
                     onClicked: page.app.send("sw.reset")
                 }
@@ -250,7 +250,7 @@ Item {
                     variant: "tonal"
                     size: "m"
                     icon: "flag"
-                    tooltip: "Lap"
+                    tooltip: I18n.tr("Lap")
                     disabled: !page.running
                     onClicked: page.app.send("sw.lap")
                 }
@@ -279,7 +279,7 @@ Item {
             LText {
                 anchors.verticalCenter: parent.verticalCenter
                 role: "titleMedium"
-                text: page.laps.length ? page.laps.length + (page.laps.length === 1 ? " lap" : " laps") : "Laps"
+                text: page.laps.length ? page.laps.length + (page.laps.length === 1 ? I18n.tr(" lap") : I18n.tr(" laps")) : I18n.tr("Laps")
             }
 
             Button {
@@ -288,7 +288,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 variant: "text"
                 icon: "content_copy"
-                text: "Copy"
+                text: I18n.tr("Copy")
                 onClicked: page.copyLaps()
             }
 
@@ -327,7 +327,7 @@ Item {
                             x: Theme.dp(24)
                             anchors.verticalCenter: parent.verticalCenter
                             role: "titleSmall"
-                            text: "Lap " + lap.modelData.n
+                            text: I18n.tr("Lap %1", lap.modelData.n)
                         }
 
                         Rectangle {
@@ -345,7 +345,7 @@ Item {
                                 anchors.centerIn: parent
                                 role: "labelMedium"
                                 color: lap.quick ? Theme.success : Theme.error
-                                text: lap.quick ? "Fastest" : "Slowest"
+                                text: lap.quick ? I18n.tr("Fastest") : I18n.tr("Slowest")
                             }
 
                         }
@@ -399,7 +399,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             role: "bodyMedium"
                             color: Theme.subtext
-                            text: "Laps you take land here, the quickest and the slowest marked"
+                            text: I18n.tr("Laps you take land here, the quickest and the slowest marked")
                         }
 
                     }

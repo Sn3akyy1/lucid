@@ -41,7 +41,7 @@ Singleton {
 
         var diff = (root.offsets[tz] - Loc.trueOffsetMin) / 60;
         if (Math.abs(diff) < 0.01)
-            return "Same time";
+            return I18n.tr("Same time");
 
         var abs = Math.abs(diff);
         var whole = Math.floor(abs);
@@ -53,7 +53,7 @@ Singleton {
         var there = root.timeIn(tz);
         var here = Loc.now();
         var d = Math.round((new Date(there.getFullYear(), there.getMonth(), there.getDate()) - new Date(here.getFullYear(), here.getMonth(), here.getDate())) / 86400000);
-        return d === 0 ? "Today" : (d > 0 ? "Tomorrow" : "Yesterday");
+        return d === 0 ? I18n.tr("Today") : (d > 0 ? I18n.tr("Tomorrow") : I18n.tr("Yesterday"));
     }
 
     // ask for zones beyond the configured ones, e.g. a widget's own set

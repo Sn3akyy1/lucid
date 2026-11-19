@@ -25,7 +25,7 @@ Item {
         return parseInt(d.slice(0, 2), 10) * 3600 + parseInt(d.slice(2, 4), 10) * 60 + parseInt(d.slice(4, 6), 10);
     }
     readonly property string primaryIcon: page.listing ? "add" : ""
-    readonly property string primaryLabel: "New timer"
+    readonly property string primaryLabel: I18n.tr("New timer")
     readonly property var presets: [60, 180, 300, 600, 900, 1800, 3600]
     readonly property bool anyRunning: page.timers.some((t) => {
         return t.running;
@@ -63,7 +63,7 @@ Item {
         // an unnamed one is called by its length, to the second: "2:30 timer"
         page.app.send("timer.add", {
             "sec": s,
-            "name": nameField.text.trim() !== "" ? nameField.text.trim() : page.lengthText(s) + " timer"
+            "name": nameField.text.trim() !== "" ? nameField.text.trim() : I18n.tr("%1 timer", page.lengthText(s))
         });
         // the last few lengths, for one tap next time
         const recent = [s].concat((page.app.prefs.recentTimers || []).filter((x) => {
@@ -118,7 +118,7 @@ Item {
             return Math.floor(sec / 3600) + " h " + Math.round((sec % 3600) / 60) + " min";
 
         if (sec % 60 === 0)
-            return sec / 60 + " min";
+            return I18n.tr("%1 min", sec / 60);
 
         return CM.clock(sec * 1000, false);
     }
@@ -139,10 +139,10 @@ Item {
 
         x: page.edge
         width: parent.width - page.edge * 2
-        title: "Timer"
+        title: I18n.tr("Timer")
         subtitle: {
             if (!page.listing)
-                return page.timers.length ? "A new timer, beside the " + page.timers.length + " you have" : "Type a length, or pick one";
+                return page.timers.length ? I18n.tr("A new timer, beside the %1 you have", page.timers.length) : I18n.tr("Type a length, or pick one");
 
             const run = page.timers.filter((t) => {
                 return t.running;
@@ -156,14 +156,14 @@ Item {
             })
             variant: "text"
             icon: "done_all"
-            text: "Clear finished"
+            text: I18n.tr("Clear finished")
             onClicked: page.app.send("timer.clear")
         }
 
         Button {
             visible: !page.listing && page.timers.length > 0
             variant: "text"
-            text: "Cancel"
+            text: I18n.tr("Cancel")
             onClicked: page.composing = false
         }
 
@@ -344,8 +344,8 @@ Item {
 
                     anchors.verticalCenter: parent.verticalCenter
                     width: Theme.dp(280)
-                    label: "Name"
-                    placeholder: "Tea, the oven…"
+                    label: I18n.tr("Name")
+                    placeholder: I18n.tr("Tea, the oven…")
                     icon: "label"
                     containerColor: Theme.withBlur(Theme.bgTile)
                     onAccepted: page.start()
@@ -456,7 +456,7 @@ Item {
             anchors.rightMargin: Theme.dp(10)
             y: Theme.dp(12)
             icon: "close"
-            tooltip: "Remove"
+            tooltip: I18n.tr("Remove")
             onClicked: page.app.send("timer.remove", {
                 "id": card.t.id
             })
@@ -490,7 +490,7 @@ Item {
                     rounded: 100
                     tabular: true
                     color: card.done ? Theme.fgErrorContainer : Theme.text
-                    text: card.done ? "Time's up" : CM.countdown(card.rem)
+                    text: card.done ? I18n.tr("Time's up") : CM.countdown(card.rem)
 
                     SequentialAnimation on opacity {
                         running: card.done && page.shown
@@ -515,7 +515,7 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     role: card.ringD > Theme.dp(300) ? "titleMedium" : "bodyMedium"
                     color: card.done ? Theme.fgErrorContainer : Theme.subtext
-                    text: card.done ? CM.clock(Math.max(0, page.nowMs - card.t.endsAt), false) + " ago" : (card.paused ? "Paused · " : "") + "of " + CM.countdown(card.t.total)
+                    text: card.done ? I18n.tr("%1 ago", CM.clock(Math.max(0, page.nowMs - card.t.endsAt), false)) : (card.paused ? I18n.tr("Paused · ") : "") + I18n.tr("of %1", CM.countdown(card.t.total))
                 }
 
             }
@@ -576,7 +576,7 @@ Item {
                 visible: !card.done
                 variant: "tonal"
                 icon: "replay"
-                tooltip: "Reset"
+                tooltip: I18n.tr("Reset")
                 disabled: card.t.running || card.t.left === card.t.total
                 onClicked: page.app.send("timer.reset", {
                     "id": card.t.id
@@ -587,7 +587,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: card.done
                 variant: "tonal"
-                text: "Done"
+                text: I18n.tr("Done")
                 onClicked: page.app.send("timer.remove", {
                     "id": card.t.id
                 })

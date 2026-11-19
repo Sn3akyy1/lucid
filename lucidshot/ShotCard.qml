@@ -39,23 +39,23 @@ Item {
     }
     readonly property string title: {
         if (card.armed)
-            return "Click again to delete";
+            return I18n.tr("Click again to delete");
 
         if (card.done !== "")
             return card.done;
 
         switch (card.kind) {
         case "video":
-            return "Recording saved";
+            return I18n.tr("Recording saved");
         case "gif":
-            return "GIF made";
+            return I18n.tr("GIF made");
         case "text":
-            return card.entry && card.entry.text ? "Text copied" : "Code copied";
+            return card.entry && card.entry.text ? I18n.tr("Text copied") : I18n.tr("Code copied");
         }
         if (card.temp)
-            return "Copied, not saved";
+            return I18n.tr("Copied, not saved");
 
-        return card.entry && card.entry.edited ? "Edited copy saved" : "Screenshot copied";
+        return card.entry && card.entry.edited ? I18n.tr("Edited copy saved") : I18n.tr("Screenshot copied");
     }
     readonly property string meta: {
         const e = card.entry;
@@ -68,10 +68,10 @@ Item {
             }).length;
             const parts = [];
             if (words > 0)
-                parts.push(words === 1 ? "1 word" : words + " words");
+                parts.push(I18n.trn("%1 word", "%1 words", words));
 
             if ((e.codes || []).length > 0)
-                parts.push(e.codes.length === 1 ? "1 code" : e.codes.length + " codes");
+                parts.push(I18n.trn("%1 code", "%1 codes", e.codes.length));
 
             return parts.join("  ·  ");
         }
@@ -117,7 +117,7 @@ Item {
                 s.engine.copyImage(f);
             else
                 s.engine.copyFile(f);
-            card.say("Copied");
+            card.say(I18n.tr("Copied"));
             return ;
         case "open":
             s.engine.view(f);
@@ -131,14 +131,14 @@ Item {
             return ;
         case "text":
             s.readText(card.entry);
-            card.say("Reading the text…");
+            card.say(I18n.tr("Reading the text…"));
             return ;
         case "folder":
             s.engine.reveal(f);
             return ;
         case "save":
             s.keep(card.entry);
-            card.say("Saved");
+            card.say(I18n.tr("Saved"));
             return ;
         case "gif":
             s.makeGif(card.entry);
@@ -320,7 +320,7 @@ Item {
         height: thumb.height
 
         ShotTip {
-            text: card.kind === "image" ? "Open it in Lens, or drag it into an app" : (card.kind === "text" ? "" : "Play it in Lens, or drag it into an app")
+            text: card.kind === "image" ? I18n.tr("Open it in Lens, or drag it into an app") : (card.kind === "text" ? "" : I18n.tr("Play it in Lens, or drag it into an app"))
             hovered: thumbArea.containsMouse && !thumbArea.pressed
             above: true
         }
@@ -384,7 +384,7 @@ Item {
                 anchors.centerIn: parent
                 size: Theme.dp(32)
                 icon: "close"
-                tip: "Dismiss"
+                tip: I18n.tr("Dismiss")
                 onClicked: card.stack.dismiss(card.entry.id)
             }
 
@@ -430,7 +430,7 @@ Item {
             size: "s"
             disabled: !card.ready && card.kind !== "text"
             icon: card.kind === "image" ? "edit" : (card.kind === "video" ? "play_arrow" : (card.kind === "gif" ? "open_in_new" : "content_copy"))
-            text: card.kind === "image" ? "Mark up" : (card.kind === "video" ? "Play" : (card.kind === "gif" ? "Open" : "Copy"))
+            text: card.kind === "image" ? I18n.tr("Mark up") : (card.kind === "video" ? I18n.tr("Play") : (card.kind === "gif" ? I18n.tr("Open") : I18n.tr("Copy")))
             onClicked: card.act(card.kind === "image" ? "markup" : (card.kind === "text" ? "copy" : "open"))
         }
 
@@ -444,7 +444,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             size: Theme.dp(40)
             icon: "content_copy"
-            tip: card.kind === "image" ? "Copy the picture" : "Copy the file"
+            tip: card.kind === "image" ? I18n.tr("Copy the picture") : I18n.tr("Copy the file")
             disabled: !card.ready
             onClicked: card.act("copy")
         }
@@ -454,7 +454,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             size: Theme.dp(40)
             icon: "keep"
-            tip: "Pin it to the screen"
+            tip: I18n.tr("Pin it to the screen")
             disabled: !card.ready
             onClicked: card.act("pin")
         }
@@ -464,7 +464,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             size: Theme.dp(40)
             icon: "document_scanner"
-            tip: "Copy the text in it"
+            tip: I18n.tr("Copy the text in it")
             disabled: !card.ready
             onClicked: card.act("text")
         }
@@ -474,7 +474,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             size: Theme.dp(40)
             icon: "gif"
-            tip: card.entry && card.entry.busy ? "Making a GIF…" : "Make a GIF of it"
+            tip: card.entry && card.entry.busy ? I18n.tr("Making a GIF…") : I18n.tr("Make a GIF of it")
             disabled: !card.ready || (card.entry && card.entry.busy === true)
             onClicked: card.act("gif")
         }
@@ -484,7 +484,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             size: Theme.dp(40)
             icon: "search"
-            tip: "Search the web for it"
+            tip: I18n.tr("Search the web for it")
             onClicked: card.act("search")
         }
 
@@ -493,7 +493,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             size: Theme.dp(40)
             icon: "open_in_new"
-            tip: "Open " + card.link
+            tip: I18n.tr("Open %1", card.link)
             onClicked: card.act("link")
         }
 
@@ -502,7 +502,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             size: Theme.dp(40)
             icon: card.temp ? "save" : "folder_open"
-            tip: card.temp ? "Save it to the screenshots folder" : "Show it in its folder"
+            tip: card.temp ? I18n.tr("Save it to the screenshots folder") : I18n.tr("Show it in its folder")
             disabled: !card.ready
             onClicked: card.act(card.temp ? "save" : "folder")
         }
@@ -512,7 +512,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             size: Theme.dp(40)
             icon: card.armed ? "delete_forever" : "delete"
-            tip: card.armed ? "Click again to delete" : "Delete"
+            tip: card.armed ? I18n.tr("Click again to delete") : I18n.tr("Delete")
             checked: card.armed
             activeFill: Theme.errorContainer
             activeInk: Theme.fgErrorContainer

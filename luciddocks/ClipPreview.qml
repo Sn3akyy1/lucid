@@ -30,19 +30,19 @@ Item {
             return e.meta;
 
         if (e.kind === "binary")
-            return "Binary data · " + e.meta;
+            return I18n.tr("Binary data · %1", e.meta);
 
         if (e.kind === "color")
-            return "Colour · " + e.preview.trim();
+            return I18n.tr("Colour · %1", e.preview.trim());
 
-        const what = e.kind === "url" ? "Link" : (e.kind === "email" ? "Email address" : "Text");
+        const what = e.kind === "url" ? I18n.tr("Link") : (e.kind === "email" ? I18n.tr("Email address") : I18n.tr("Text"));
         if (!preview.textReady)
             return what;
 
         const t = Clip.textBody;
         const lines = t.replace(/\n$/, "").split("\n").length;
         const more = Clip.textTruncated ? "+" : "";
-        return what + " · " + lines + more + (lines === 1 && more === "" ? " line · " : " lines · ") + t.length + more + " characters";
+        return what + " · " + lines + more + (lines === 1 && more === "" ? I18n.tr(" line · ") : I18n.tr(" lines · ")) + I18n.tr("%1%2 characters", t.length, more);
     }
 
     onEntryChanged: {
@@ -195,7 +195,7 @@ Item {
             LText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 role: "bodyMedium"
-                text: preview.kind === "image" ? (holder.imageBroken ? "Couldn't load image" : "Loading image…") : (preview.kind === "binary" ? "No preview for binary data" : "Nothing selected")
+                text: preview.kind === "image" ? (holder.imageBroken ? I18n.tr("Couldn't load image") : I18n.tr("Loading image…")) : (preview.kind === "binary" ? I18n.tr("No preview for binary data") : I18n.tr("Nothing selected"))
                 color: Theme.subtext
             }
 
@@ -225,7 +225,7 @@ Item {
             width: parent.width
             elide: Text.ElideRight
             role: "labelSmall"
-            text: "Press Ctrl+Shift+Del again to clear everything"
+            text: I18n.tr("Press Ctrl+Shift+Del again to clear everything")
             color: Theme.error
             visible: preview.clearArmed
         }
@@ -240,13 +240,13 @@ Item {
                 model: [{
                     "symbol": "keyboard_return",
                     "key": "",
-                    "label": "Copy"
+                    "label": I18n.tr("Copy")
                 }, {
                     "key": "Del",
-                    "label": "Delete"
+                    "label": I18n.tr("Delete")
                 }, {
                     "key": "Ctrl+Shift+Del",
-                    "label": "Clear"
+                    "label": I18n.tr("Clear")
                 }]
 
                 Row {

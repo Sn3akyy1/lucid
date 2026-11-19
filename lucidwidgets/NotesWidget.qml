@@ -38,15 +38,15 @@ WidgetBody {
 
         var s = (Date.now() - ms) / 1000;
         if (s < 60)
-            return "edited just now";
+            return I18n.tr("edited just now");
 
         if (s < 3600)
-            return "edited " + Math.floor(s / 60) + " min ago";
+            return I18n.tr("edited %1 min ago", Math.floor(s / 60));
 
         if (s < 86400)
-            return "edited " + Math.floor(s / 3600) + " h ago";
+            return I18n.tr("edited %1 h ago", Math.floor(s / 3600));
 
-        return "edited " + new Date(ms).toLocaleDateString(Qt.locale(), "d MMM");
+        return I18n.tr("edited %1", new Date(ms).toLocaleDateString(I18n.locale, "d MMM"));
     }
 
     defaultTone: w.legacyTint === "accent" ? "primary" : (w.legacyTint === "tertiary" ? "tertiary" : (w.variant === "sticky" ? "secondary" : (w.headline ? "primary" : "surface")))
@@ -90,7 +90,7 @@ WidgetBody {
             anchors.verticalCenter: parent.verticalCenter
             role: "titleSmall"
             color: w.ink
-            text: "Note"
+            text: I18n.tr("Note")
         }
 
         LText {
@@ -98,7 +98,7 @@ WidgetBody {
             anchors.verticalCenter: parent.verticalCenter
             role: "labelSmall"
             color: w.inkFaint
-            text: w.words > 0 ? w.words + (w.words === 1 ? " word" : " words") : ""
+            text: w.words > 0 ? w.words + (w.words === 1 ? I18n.tr(" word") : I18n.tr(" words")) : ""
         }
 
     }
@@ -243,7 +243,7 @@ WidgetBody {
             horizontalAlignment: w.headline ? Text.AlignHCenter : Text.AlignLeft
             verticalAlignment: w.headline ? Text.AlignVCenter : Text.AlignTop
             wrapMode: Text.Wrap
-            text: w.headline ? "One line, big" : (w.lined ? "Type here. It stays put across reboots." : "Write something…")
+            text: w.headline ? I18n.tr("One line, big") : (w.lined ? I18n.tr("Type here. It stays put across reboots.") : I18n.tr("Write something…"))
         }
 
     }
@@ -256,7 +256,7 @@ WidgetBody {
         anchors.bottomMargin: Theme.dp(10)
         role: "labelSmall"
         color: w.inkFaint
-        text: w.editing ? "Esc to finish" : w.ago(w.edited)
+        text: w.editing ? I18n.tr("Esc to finish") : w.ago(w.edited)
     }
 
     // while the note is closed the whole card is a drag surface: a click opens the
@@ -321,7 +321,7 @@ WidgetBody {
         anchors.margins: Theme.dp(10)
         role: "labelSmall"
         color: Theme.alpha(w.ink, 0.45)
-        text: "Esc to finish"
+        text: I18n.tr("Esc to finish")
     }
 
 }

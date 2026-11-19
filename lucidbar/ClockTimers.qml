@@ -135,7 +135,7 @@ Item {
             y: Theme.dp(18)
             role: "titleMedium"
             weight: 600
-            text: page.focused ? page.focused.label : "New timer"
+            text: page.focused ? page.focused.label : I18n.tr("New timer")
         }
 
         Item {
@@ -191,16 +191,16 @@ Item {
                     color: Theme.subtext
                     text: {
                         if (!page.focused)
-                            return "Scroll to set";
+                            return I18n.tr("Scroll to set");
 
                         if (page.remainMs <= 0)
-                            return "Done";
+                            return I18n.tr("Done");
 
                         if (!page.focused.running)
-                            return "Paused";
+                            return I18n.tr("Paused");
 
                         const end = new Date(Loc.nowMs() + page.remainMs);
-                        return "Ends " + end.toLocaleTimeString(Qt.locale(), Prefs.clock24h ? "HH:mm" : "h:mm AP");
+                        return "Ends " + end.toLocaleTimeString(I18n.locale, Prefs.clock24h ? "HH:mm" : "h:mm AP");
                     }
                 }
 
@@ -241,7 +241,7 @@ Item {
 
                         kind: "filter"
                         selected: page.setup === modelData
-                        text: modelData >= 3600 ? "1 h" : Math.round(modelData / 60) + " min"
+                        text: modelData >= 3600 ? I18n.tr("1 h") : I18n.tr("%1 min", Math.round(modelData / 60))
                         onClicked: page.setup = modelData
                     }
 
@@ -351,7 +351,7 @@ Item {
                     role: "titleMedium"
                     weight: 600
                     color: pomo.ink
-                    text: Chrono.pomoActive ? Chrono.phaseLabel(Chrono.pomoPhase) : "Pomodoro"
+                    text: Chrono.pomoActive ? Chrono.phaseLabel(Chrono.pomoPhase) : I18n.tr("Pomodoro")
                 }
 
             }
@@ -359,7 +359,7 @@ Item {
             LText {
                 role: "bodySmall"
                 color: Theme.alpha(pomo.ink, 0.75)
-                text: Prefs.pomodoroFocus + " min focus · " + Prefs.pomodoroShort + " min break · long break every " + Prefs.pomodoroRounds
+                text: I18n.tr("%1 min focus · %2 min break · long break every %3", Prefs.pomodoroFocus, Prefs.pomodoroShort, Prefs.pomodoroRounds)
             }
 
             LText {
@@ -369,9 +369,9 @@ Item {
                 color: Theme.alpha(pomo.ink, Chrono.pomoGoalMet ? 1 : 0.75)
                 text: {
                     const n = Chrono.pomoToday;
-                    const bits = [Prefs.pomodoroGoal > 0 ? n + " of " + Prefs.pomodoroGoal + " today" : n + (n === 1 ? " session today" : " sessions today")];
+                    const bits = [Prefs.pomodoroGoal > 0 ? I18n.tr("%1 of %2 today", n, Prefs.pomodoroGoal) : n + (n === 1 ? I18n.tr(" session today") : I18n.tr(" sessions today"))];
                     if (Chrono.pomoTodayMs > 0)
-                        bits.push(page.spanText(Chrono.pomoTodayMs) + " focused");
+                        bits.push(I18n.tr("%1 focused", page.spanText(Chrono.pomoTodayMs)));
 
                     return bits.join(" · ");
                 }
@@ -435,7 +435,7 @@ Item {
 
                     Stepper {
                         width: lengths.cell
-                        label: "Focus"
+                        label: I18n.tr("Focus")
                         from: 5
                         to: 90
                         step: 5
@@ -447,7 +447,7 @@ Item {
 
                     Stepper {
                         width: lengths.cell
-                        label: "Rounds"
+                        label: I18n.tr("Rounds")
                         from: 2
                         to: 8
                         value: Prefs.pomodoroRounds
@@ -458,7 +458,7 @@ Item {
 
                     Stepper {
                         width: lengths.cell
-                        label: "Break"
+                        label: I18n.tr("Break")
                         from: 1
                         to: 30
                         value: Prefs.pomodoroShort
@@ -469,7 +469,7 @@ Item {
 
                     Stepper {
                         width: lengths.cell
-                        label: "Long break"
+                        label: I18n.tr("Long break")
                         from: 5
                         to: 60
                         step: 5
@@ -481,9 +481,9 @@ Item {
 
                     Stepper {
                         width: lengths.cell
-                        label: "Daily goal"
+                        label: I18n.tr("Daily goal")
                         to: 16
-                        zeroText: "Off"
+                        zeroText: I18n.tr("Off")
                         value: Prefs.pomodoroGoal
                         onMoved: (v) => {
                             return Prefs.pomodoroGoal = v;
@@ -497,25 +497,25 @@ Item {
                     spacing: Theme.dp(6)
 
                     Chip {
-                        text: "Auto breaks"
+                        text: I18n.tr("Auto breaks")
                         selected: Prefs.pomodoroAutoStart
                         onClicked: Prefs.pomodoroAutoStart = !Prefs.pomodoroAutoStart
                     }
 
                     Chip {
-                        text: "Auto focus"
+                        text: I18n.tr("Auto focus")
                         selected: Prefs.pomodoroAutoFocus
                         onClicked: Prefs.pomodoroAutoFocus = !Prefs.pomodoroAutoFocus
                     }
 
                     Chip {
-                        text: "Repeat sets"
+                        text: I18n.tr("Repeat sets")
                         selected: Prefs.pomodoroRepeat
                         onClicked: Prefs.pomodoroRepeat = !Prefs.pomodoroRepeat
                     }
 
                     Chip {
-                        text: "Do not disturb"
+                        text: I18n.tr("Do not disturb")
                         selected: Prefs.pomodoroSilence
                         onClicked: Prefs.pomodoroSilence = !Prefs.pomodoroSilence
                     }
@@ -655,7 +655,7 @@ Item {
             x: Theme.dp(20)
             y: Theme.dp(16)
             role: "titleSmall"
-            text: Chrono.timers.length ? "Timers" : "No timers running"
+            text: Chrono.timers.length ? I18n.tr("Timers") : I18n.tr("No timers running")
             color: Chrono.timers.length ? Theme.text : Theme.subtext
         }
 
@@ -668,7 +668,7 @@ Item {
             anchors.verticalCenter: listHead.verticalCenter
             variant: "text"
             size: "xs"
-            text: "Clear done"
+            text: I18n.tr("Clear done")
             onClicked: Chrono.clearFinished()
         }
 
@@ -739,7 +739,7 @@ Item {
                             LText {
                                 role: "bodySmall"
                                 color: trow.isFocus ? Theme.alpha(Theme.fgSecondaryContainer, 0.75) : Theme.subtext
-                                text: trow.modelData.label + (trow.rem <= 0 ? " · done" : (trow.modelData.running ? "" : " · paused"))
+                                text: trow.modelData.label + (trow.rem <= 0 ? I18n.tr(" · done") : (trow.modelData.running ? "" : I18n.tr(" · paused")))
                             }
 
                         }

@@ -731,19 +731,19 @@ FocusScope {
             Repeater {
                 model: [{
                     "key": "name",
-                    "label": "Name",
+                    "label": I18n.tr("Name"),
                     "w": heads.width - pane.colSize - pane.colDate - pane.colType - 3 * heads.spacing
                 }, {
                     "key": "size",
-                    "label": "Size",
+                    "label": I18n.tr("Size"),
                     "w": pane.colSize
                 }, {
                     "key": pane.tab && pane.tab.isTrash ? "deleted" : "modified",
-                    "label": pane.tab && pane.tab.isTrash ? "Deleted" : "Modified",
+                    "label": pane.tab && pane.tab.isTrash ? I18n.tr("Deleted") : I18n.tr("Modified"),
                     "w": pane.colDate
                 }, {
                     "key": "type",
-                    "label": pane.tab && pane.tab.isTrash ? "From" : pane.tab && pane.tab.searching ? "Where" : "Type",
+                    "label": pane.tab && pane.tab.isTrash ? I18n.tr("From") : pane.tab && pane.tab.searching ? I18n.tr("Where") : I18n.tr("Type"),
                     "w": pane.colType
                 }]
 
@@ -930,7 +930,7 @@ FocusScope {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             role: "titleMedium"
-            text: !pane.tab ? "" : pane.tab.locked ? (pane.tab.lockedOwner !== "" ? "This folder belongs to " + pane.tab.lockedOwner : "You can't open this folder") : pane.tab.connectUri !== "" ? "This share isn't connected" : pane.tab.error !== "" ? "This folder can't be opened" : pane.tab.isNetwork ? "No computers found nearby" : pane.tab.searching ? "Nothing matches “" + pane.tab.searchQuery + "”" : pane.tab.filter !== "" ? "Nothing here matches “" + pane.tab.filter + "”" : pane.tab.isTrash ? "Trash is empty" : pane.tab.isRecent ? "No recent files" : "This folder is empty"
+            text: !pane.tab ? "" : pane.tab.locked ? (pane.tab.lockedOwner !== "" ? I18n.tr("This folder belongs to %1", pane.tab.lockedOwner) : I18n.tr("You can't open this folder")) : pane.tab.connectUri !== "" ? I18n.tr("This share isn't connected") : pane.tab.error !== "" ? I18n.tr("This folder can't be opened") : pane.tab.isNetwork ? I18n.tr("No computers found nearby") : pane.tab.searching ? I18n.tr("Nothing matches “%1”", pane.tab.searchQuery) : pane.tab.filter !== "" ? I18n.tr("Nothing here matches “%1”", pane.tab.filter) : pane.tab.isTrash ? I18n.tr("Trash is empty") : pane.tab.isRecent ? I18n.tr("No recent files") : I18n.tr("This folder is empty")
             color: Theme.text
             wrapMode: Text.Wrap
         }
@@ -940,7 +940,7 @@ FocusScope {
             horizontalAlignment: Text.AlignHCenter
             role: "bodySmall"
             visible: text !== ""
-            text: !pane.tab ? "" : pane.tab.error !== "" ? pane.tab.error : pane.tab.isNetwork ? (pane.app.canDiscover ? "Computers sharing folders show up here as they're found." : "Finding them needs gvfs-dnssd with Avahi running, or gvfs-wsdd for Windows computers.") : pane.tab.searching ? "Searched every folder below " + pane.app.titleFor(pane.tab.path) + "." : pane.tab.isSpecial || pane.tab.filter !== "" ? "" : "Drop files here, or right-click to make something."
+            text: !pane.tab ? "" : pane.tab.error !== "" ? pane.tab.error : pane.tab.isNetwork ? (pane.app.canDiscover ? I18n.tr("Computers sharing folders show up here as they're found.") : I18n.tr("Finding them needs gvfs-dnssd with Avahi running, or gvfs-wsdd for Windows computers.")) : pane.tab.searching ? I18n.tr("Searched every folder below %1.", pane.app.titleFor(pane.tab.path)) : pane.tab.isSpecial || pane.tab.filter !== "" ? "" : I18n.tr("Drop files here, or right-click to make something.")
             color: Theme.subtext
             wrapMode: Text.Wrap
         }
@@ -950,7 +950,7 @@ FocusScope {
             visible: pane.tab !== null && pane.tab.connectUri !== ""
             variant: "tonal"
             icon: pane.tab && pane.tab.locked ? "lock_open" : "login"
-            text: pane.tab && pane.tab.locked ? "Unlock" : "Connect"
+            text: pane.tab && pane.tab.locked ? I18n.tr("Unlock") : I18n.tr("Connect")
             onClicked: pane.win.reconnect(pane.tab)
         }
 
@@ -970,7 +970,7 @@ FocusScope {
         anchors.horizontalCenter: parent.horizontalCenter
         visible: waiting.visible && pane.tab.connecting
         role: "bodyMedium"
-        text: !pane.tab ? "" : pane.tab.locked ? "Waiting for the password…" : "Connecting to " + pane.app.hostOf(pane.tab.connectUri || pane.tab.path) + "…"
+        text: !pane.tab ? "" : pane.tab.locked ? I18n.tr("Waiting for the password…") : I18n.tr("Connecting to %1…", pane.app.hostOf(pane.tab.connectUri || pane.tab.path))
         color: Theme.subtext
     }
 

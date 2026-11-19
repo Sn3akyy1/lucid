@@ -36,7 +36,7 @@ Singleton {
     property string vendor: ""
 
     readonly property bool prompting: root.flowRef !== null && root.flowRef.isResponseRequired
-    readonly property string prompt: root.flowRef ? root.flowRef.inputPrompt : "Password"
+    readonly property string prompt: root.flowRef ? root.flowRef.inputPrompt : I18n.tr("Password")
     readonly property bool secret: root.flowRef ? !root.flowRef.responseVisible : true
     readonly property bool multiUser: root.identities.length > 1
     readonly property string glyph: root.glyphFor(root.actionId, root.iconHint)
@@ -146,7 +146,7 @@ Singleton {
 
     function submit(value) {
         if (root.preview) {
-            root.errorText = value === "" ? "Type something to see the error state." : "";
+            root.errorText = value === "" ? I18n.tr("Type something to see the error state.") : "";
             root.checking = false;
             return ;
         }
@@ -226,7 +226,7 @@ Singleton {
 
             root.submitted = false;
             if (root.errorText === "")
-                root.errorText = "That password was not accepted.";
+                root.errorText = I18n.tr("That password was not accepted.");
 
             root.failed();
         }
@@ -336,7 +336,7 @@ Singleton {
         }
 
         function fail(): string {
-            root.errorText = "That password was not accepted.";
+            root.errorText = I18n.tr("That password was not accepted.");
             root.checking = false;
             root.failed();
             return "failed";
@@ -354,7 +354,7 @@ Singleton {
         }
 
         function status(): string {
-            return (root.registered ? "registered" : "not registered") + ", " + (root.open ? "prompting for " + root.actionId : "idle");
+            return (root.registered ? "registered" : I18n.tr("not registered")) + ", " + (root.open ? I18n.tr("prompting for %1", root.actionId) : "idle");
         }
 
         target: "polkit"

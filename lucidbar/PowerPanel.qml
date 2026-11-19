@@ -161,8 +161,8 @@ Item {
                 if (!h)
                     return "";
 
-                const extra = Power.holds.length > 1 ? " (and " + (Power.holds.length - 1) + " more)" : "";
-                return (h.applicationId || "An application") + " is holding " + Power.name(h.profile) + (h.reason ? " - " + h.reason : "") + extra + ".";
+                const extra = Power.holds.length > 1 ? I18n.tr(" (and %1 more)", (Power.holds.length - 1)) : "";
+                return (h.applicationId || I18n.tr("An application")) + I18n.tr(" is holding %1", Power.name(h.profile)) + (h.reason ? " - " + h.reason : "") + extra + ".";
             }
             color: Theme.subtext
             font.family: Theme.fontFamily
@@ -176,7 +176,7 @@ Item {
             leftPadding: Theme.dp(4)
             rightPadding: Theme.dp(4)
             topPadding: Theme.dp(4)
-            text: "Game mode is on, and may set a profile of its own when it turns off."
+            text: I18n.tr("Game mode is on, and may set a profile of its own when it turns off.")
             color: Theme.subtext
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fs(10)

@@ -114,7 +114,7 @@ Item {
             role: "labelLarge"
             tabular: true
             color: face.osd.kbdLevel > 0 ? Theme.text : Theme.subtextDim
-            text: face.osd.kbdLevel > 0 ? face.osd.kbdLevel + "/" + segmentRow.steps : "Off"
+            text: face.osd.kbdLevel > 0 ? face.osd.kbdLevel + "/" + segmentRow.steps : I18n.tr("Off")
         }
 
         Row {

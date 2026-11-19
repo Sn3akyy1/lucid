@@ -30,8 +30,8 @@ Column {
         visible: HyprConfig.moduleProbed && !HyprConfig.moduleInstalled
 
         SettingRow {
-            title: "Not set up"
-            warning: "This page writes ~/.config/hypr/lucid-settings.lua, and your Hyprland config does not read it. Run the installer with --with-hypr, or copy Lucid's modules/settings.lua into ~/.config/hypr/modules/ and add require(\"modules.settings\") to hyprland.lua, before anything of your own."
+            title: I18n.tr("Not set up")
+            warning: I18n.tr("This page writes ~/.config/hypr/lucid-settings.lua, and your Hyprland config does not read it. Run the installer with --with-hypr, or copy Lucid's modules/settings.lua into ~/.config/hypr/modules/ and add require(\"modules.settings\") to hyprland.lua, before anything of your own.")
             showDivider: false
         }
 
@@ -42,15 +42,15 @@ Column {
     }
 
     SettingCard {
-        title: "GAPS"
-        subtitle: "Changes apply as you make them. Anything you leave alone stays as your Hyprland config has it."
+        title: I18n.tr("GAPS")
+        subtitle: I18n.tr("Changes apply as you make them. Anything you leave alone stays as your Hyprland config has it.")
 
         HyprRow {
             id: gapsIn
 
-            title: "Between windows"
+            title: I18n.tr("Between windows")
             option: "general.gaps_in"
-            description: "Each window keeps this much room on every side, so two neighbours sit twice this far apart."
+            description: I18n.tr("Each window keeps this much room on every side, so two neighbours sit twice this far apart.")
             stacked: true
 
             M3Slider {
@@ -71,9 +71,9 @@ Column {
         HyprRow {
             id: gapsOut
 
-            title: "Around the edges"
+            title: I18n.tr("Around the edges")
             option: "general.gaps_out"
-            description: "Room between the windows and the edges of the screen."
+            description: I18n.tr("Room between the windows and the edges of the screen.")
             stacked: true
 
             M3Slider {
@@ -92,9 +92,9 @@ Column {
         }
 
         SettingRow {
-            title: "From the bar and dock"
+            title: I18n.tr("From the bar and dock")
             resetKey: "shellGap"
-            description: "Extra room the bar and dock keep clear of windows, on top of the gap around the edges."
+            description: I18n.tr("Extra room the bar and dock keep clear of windows, on top of the gap around the edges.")
             stacked: true
             showDivider: false
 
@@ -115,14 +115,14 @@ Column {
     }
 
     SettingCard {
-        title: "BORDERS"
+        title: I18n.tr("BORDERS")
 
         HyprRow {
             id: borderSize
 
-            title: "Border width"
+            title: I18n.tr("Border width")
             option: "general.border_size"
-            description: "The line around each window. At 0 there is none."
+            description: I18n.tr("The line around each window. At 0 there is none.")
             stacked: true
 
             M3Slider {
@@ -143,12 +143,12 @@ Column {
         HyprRow {
             id: borderColour
 
-            title: "Border colour"
+            title: I18n.tr("Border colour")
             option: "general.col.active_border"
             extraKeys: ["lucid.border"]
-            description: HyprConfig.borderMode() === "" ?"The window you are in. Right now your Hyprland config picks the colour; these follow your palette and change with it." : "The window you are in. Accent is your palette's main colour, and the gradient runs through three of its colours."
+            description: HyprConfig.borderMode() === "" ? I18n.tr("The window you are in. Right now your Hyprland config picks the colour; these follow your palette and change with it.") : I18n.tr("The window you are in. Accent is your palette's main colour, and the gradient runs through three of its colours.")
             available: HyprConfig.num("general.border_size", 2) > 0
-            unavailableReason: "There is no border to colour at 0 px."
+            unavailableReason: I18n.tr("There is no border to colour at 0 px.")
             stacked: true
 
             M3Segmented {
@@ -166,12 +166,12 @@ Column {
         HyprRow {
             id: inactiveBorder
 
-            title: "Border on other windows"
+            title: I18n.tr("Border on other windows")
             option: "general.col.inactive_border"
             extraKeys: ["lucid.inactive_border"]
-            description: "A faint line, in your palette's outline colour, around the windows you are not in."
+            description: I18n.tr("A faint line, in your palette's outline colour, around the windows you are not in.")
             available: HyprConfig.num("general.border_size", 2) > 0
-            unavailableReason: "There is no border to colour at 0 px."
+            unavailableReason: I18n.tr("There is no border to colour at 0 px.")
             showDivider: false
 
             M3Switch {
@@ -187,12 +187,12 @@ Column {
     }
 
     SettingCard {
-        title: "PINNED WINDOWS"
-        subtitle: "A pinned window floats over the rest and follows you to every workspace. These make it easy to tell which one it is."
+        title: I18n.tr("PINNED WINDOWS")
+        subtitle: I18n.tr("A pinned window floats over the rest and follows you to every workspace. These make it easy to tell which one it is.")
 
         SettingRow {
-            title: "Border"
-            description: Prefs.pinBorder === "off" ? "A pinned window wears the same border as any other." : "A border of its own, from your palette, so it reads as pinned even when you are in another window."
+            title: I18n.tr("Border")
+            description: Prefs.pinBorder === "off" ? I18n.tr("A pinned window wears the same border as any other.") : I18n.tr("A border of its own, from your palette, so it reads as pinned even when you are in another window.")
             resetKey: "pinBorder"
             stacked: true
 
@@ -208,8 +208,8 @@ Column {
         }
 
         SettingRow {
-            title: "Pin badge"
-            description: Prefs.pinBadge === "off" ? "No badge." : "A small tab with a pin, tucked into that corner of the window in the border's colour. Click it to unpin. It steps away while the window moves and comes back once it stops."
+            title: I18n.tr("Pin badge")
+            description: Prefs.pinBadge === "off" ? I18n.tr("No badge.") : I18n.tr("A small tab with a pin, tucked into that corner of the window in the border's colour. Click it to unpin. It steps away while the window moves and comes back once it stops.")
             resetKey: "pinBadge"
             stacked: true
 
@@ -218,19 +218,19 @@ Column {
                 current: Prefs.pinBadge
                 options: [{
                     "key": "off",
-                    "label": "Off"
+                    "label": I18n.tr("Off")
                 }, {
                     "key": "top-left",
-                    "label": "Top left"
+                    "label": I18n.tr("Top left")
                 }, {
                     "key": "top-right",
-                    "label": "Top right"
+                    "label": I18n.tr("Top right")
                 }, {
                     "key": "bottom-left",
-                    "label": "Bottom left"
+                    "label": I18n.tr("Bottom left")
                 }, {
                     "key": "bottom-right",
-                    "label": "Bottom right"
+                    "label": I18n.tr("Bottom right")
                 }]
                 onChosen: (key) => {
                     Prefs.pinBadge = key;
@@ -240,8 +240,8 @@ Column {
         }
 
         SettingRow {
-            title: "Ripple when pinned"
-            description: "A ring spreads out from the window the moment you pin it."
+            title: I18n.tr("Ripple when pinned")
+            description: I18n.tr("A ring spreads out from the window the moment you pin it.")
             resetKey: "pinPulse"
             showDivider: false
 
@@ -257,12 +257,12 @@ Column {
     }
 
     SettingCard {
-        title: "WINDOWS ASKING FOR ATTENTION"
-        subtitle: "A window that wants you (a message come in, a download done, a terminal's bell) lights its workspace up in the bar. These mark the window itself once you are there."
+        title: I18n.tr("WINDOWS ASKING FOR ATTENTION")
+        subtitle: I18n.tr("A window that wants you (a message come in, a download done, a terminal's bell) lights its workspace up in the bar. These mark the window itself once you are there.")
 
         SettingRow {
-            title: "Attention tab"
-            description: Prefs.urgentBadge === "off" ? "No tab." : "A tab with a bell in that corner of the window, in the colour the bar gives it. Click it to go to the window; it goes away once you do."
+            title: I18n.tr("Attention tab")
+            description: Prefs.urgentBadge === "off" ? I18n.tr("No tab.") : I18n.tr("A tab with a bell in that corner of the window, in the colour the bar gives it. Click it to go to the window; it goes away once you do.")
             resetKey: "urgentBadge"
             stacked: true
 
@@ -271,19 +271,19 @@ Column {
                 current: Prefs.urgentBadge
                 options: [{
                     "key": "off",
-                    "label": "Off"
+                    "label": I18n.tr("Off")
                 }, {
                     "key": "top-left",
-                    "label": "Top left"
+                    "label": I18n.tr("Top left")
                 }, {
                     "key": "top-right",
-                    "label": "Top right"
+                    "label": I18n.tr("Top right")
                 }, {
                     "key": "bottom-left",
-                    "label": "Bottom left"
+                    "label": I18n.tr("Bottom left")
                 }, {
                     "key": "bottom-right",
-                    "label": "Bottom right"
+                    "label": I18n.tr("Bottom right")
                 }]
                 onChosen: (key) => {
                     Prefs.urgentBadge = key;
@@ -293,8 +293,8 @@ Column {
         }
 
         SettingRow {
-            title: "Ripple when it asks"
-            description: "Rings spread out from the window the first time you see it asking."
+            title: I18n.tr("Ripple when it asks")
+            description: I18n.tr("Rings spread out from the window the first time you see it asking.")
             resetKey: "urgentPulse"
             showDivider: false
 
@@ -310,14 +310,14 @@ Column {
     }
 
     SettingCard {
-        title: "CORNERS"
+        title: I18n.tr("CORNERS")
 
         HyprRow {
             id: rounding
 
-            title: "Window corners"
+            title: I18n.tr("Window corners")
             option: "decoration.rounding"
-            description: "How round each window's corners are. This is the windows only; the shell has its own on the General page."
+            description: I18n.tr("How round each window's corners are. This is the windows only; the shell has its own on the General page.")
             stacked: true
 
             M3Slider {
@@ -338,11 +338,11 @@ Column {
         HyprRow {
             id: roundingPower
 
-            title: "Corner shape"
+            title: I18n.tr("Corner shape")
             option: "decoration.rounding_power"
-            description: "2 is a plain round corner. Higher flattens it into the smoother curve of a squircle."
+            description: I18n.tr("2 is a plain round corner. Higher flattens it into the smoother curve of a squircle.")
             available: HyprConfig.num("decoration.rounding", 10) > 0
-            unavailableReason: "The corners are square at 0 px."
+            unavailableReason: I18n.tr("The corners are square at 0 px.")
             stacked: true
             showDivider: false
 
@@ -364,14 +364,14 @@ Column {
     }
 
     SettingCard {
-        title: "SHADOW"
+        title: I18n.tr("SHADOW")
 
         HyprRow {
             id: shadowOn
 
-            title: "Shadow"
+            title: I18n.tr("Shadow")
             option: "decoration.shadow.enabled"
-            description: "A soft shadow under each window."
+            description: I18n.tr("A soft shadow under each window.")
 
             M3Switch {
                 enabled: shadowOn.enabled
@@ -386,11 +386,11 @@ Column {
         HyprRow {
             id: shadowRange
 
-            title: "Shadow size"
+            title: I18n.tr("Shadow size")
             option: "decoration.shadow.range"
-            description: "How far it spreads from the window."
+            description: I18n.tr("How far it spreads from the window.")
             available: HyprConfig.bool("decoration.shadow.enabled", false)
-            unavailableReason: "The shadow is off."
+            unavailableReason: I18n.tr("The shadow is off.")
             stacked: true
 
             M3Slider {
@@ -411,11 +411,11 @@ Column {
         HyprRow {
             id: shadowPower
 
-            title: "Shadow falloff"
+            title: I18n.tr("Shadow falloff")
             option: "decoration.shadow.render_power"
-            description: "1 fades out slowly and reads soft; 4 stays dark close to the window and ends sharply."
+            description: I18n.tr("1 fades out slowly and reads soft; 4 stays dark close to the window and ends sharply.")
             available: HyprConfig.bool("decoration.shadow.enabled", false)
-            unavailableReason: "The shadow is off."
+            unavailableReason: I18n.tr("The shadow is off.")
             stacked: true
             showDivider: false
 
@@ -436,14 +436,14 @@ Column {
     }
 
     SettingCard {
-        title: "DIMMING"
+        title: I18n.tr("DIMMING")
 
         HyprRow {
             id: dimOn
 
-            title: "Dim other windows"
+            title: I18n.tr("Dim other windows")
             option: "decoration.dim_inactive"
-            description: "Darken every window but the one you are in, so it stands out."
+            description: I18n.tr("Darken every window but the one you are in, so it stands out.")
 
             M3Switch {
                 enabled: dimOn.enabled
@@ -458,11 +458,11 @@ Column {
         HyprRow {
             id: dimStrength
 
-            title: "How much"
+            title: I18n.tr("How much")
             option: "decoration.dim_strength"
-            description: "How dark the other windows get."
+            description: I18n.tr("How dark the other windows get.")
             available: HyprConfig.bool("decoration.dim_inactive", false)
-            unavailableReason: "Dimming is off."
+            unavailableReason: I18n.tr("Dimming is off.")
             stacked: true
             showDivider: false
 
@@ -484,12 +484,12 @@ Column {
     }
 
     SettingCard {
-        title: "TILING"
-        subtitle: "Where a new window goes and how the space is shared out."
+        title: I18n.tr("TILING")
+        subtitle: I18n.tr("Where a new window goes and how the space is shared out.")
 
         SettingRow {
-            title: "Preview"
-            description: "Your layout with this many windows open, each new one opened from the one before."
+            title: I18n.tr("Preview")
+            description: I18n.tr("Your layout with this many windows open, each new one opened from the one before.")
             stacked: true
 
             Column {
@@ -524,9 +524,9 @@ Column {
         HyprRow {
             id: layoutRow
 
-            title: "Layout"
+            title: I18n.tr("Layout")
             option: "general.layout"
-            description: page.layout === "master" ? "Master: one main window, and the rest in a stack beside it." : (page.layout === "scrolling" ? "Scrolling: windows as columns on a strip that scrolls sideways, so opening one never squeezes the rest." : "Dwindle: every new window splits the one you are in, in half.")
+            description: page.layout === "master" ? I18n.tr("Master: one main window, and the rest in a stack beside it.") : (page.layout === "scrolling" ? I18n.tr("Scrolling: windows as columns on a strip that scrolls sideways, so opening one never squeezes the rest.") : I18n.tr("Dwindle: every new window splits the one you are in, in half."))
             stacked: true
 
             M3Segmented {
@@ -535,13 +535,13 @@ Column {
                 current: page.layout
                 options: [{
                     "key": "dwindle",
-                    "label": "Dwindle"
+                    "label": I18n.tr("Dwindle")
                 }, {
                     "key": "master",
-                    "label": "Master"
+                    "label": I18n.tr("Master")
                 }, {
                     "key": "scrolling",
-                    "label": "Scrolling"
+                    "label": I18n.tr("Scrolling")
                 }]
                 onChosen: (key) => {
                     return HyprConfig.set("general.layout", key);
@@ -554,9 +554,9 @@ Column {
             id: splitWidth
 
             visible: page.layout === "dwindle"
-            title: "Split direction"
+            title: I18n.tr("Split direction")
             option: "dwindle.split_width_multiplier"
-            description: "A space is split side by side while it is wider than its height times this, and top to bottom otherwise. At 1 a wide screen splits into halves and each half into landscape quarters; lower keeps splitting side by side, higher stacks sooner."
+            description: I18n.tr("A space is split side by side while it is wider than its height times this, and top to bottom otherwise. At 1 a wide screen splits into halves and each half into landscape quarters; lower keeps splitting side by side, higher stacks sooner.")
             stacked: true
 
             M3Slider {
@@ -578,9 +578,9 @@ Column {
             id: forceSplit
 
             visible: page.layout === "dwindle"
-            title: "New windows go"
+            title: I18n.tr("New windows go")
             option: "dwindle.force_split"
-            description: "Which side of the split a new window takes."
+            description: I18n.tr("Which side of the split a new window takes.")
             stacked: true
 
             M3Segmented {
@@ -589,13 +589,13 @@ Column {
                 current: HyprConfig.num("dwindle.force_split", 0)
                 options: [{
                     "key": 0,
-                    "label": "By the cursor"
+                    "label": I18n.tr("By the cursor")
                 }, {
                     "key": 1,
-                    "label": "Left or top"
+                    "label": I18n.tr("Left or top")
                 }, {
                     "key": 2,
-                    "label": "Right or bottom"
+                    "label": I18n.tr("Right or bottom")
                 }]
                 onChosen: (key) => {
                     return HyprConfig.set("dwindle.force_split", key);
@@ -608,9 +608,9 @@ Column {
             id: splitRatio
 
             visible: page.layout === "dwindle"
-            title: "Split size"
+            title: I18n.tr("Split size")
             option: "dwindle.default_split_ratio"
-            description: "How much of a split the first window keeps. At 50% both halves are even."
+            description: I18n.tr("How much of a split the first window keeps. At 50% both halves are even.")
             stacked: true
 
             M3Slider {
@@ -632,9 +632,9 @@ Column {
             id: preserveSplit
 
             visible: page.layout === "dwindle"
-            title: "Keep splits"
+            title: I18n.tr("Keep splits")
             option: "dwindle.preserve_split"
-            description: "A split keeps its direction when the windows around it change, instead of being worked out again from its shape."
+            description: I18n.tr("A split keeps its direction when the windows around it change, instead of being worked out again from its shape.")
 
             M3Switch {
                 enabled: preserveSplit.enabled
@@ -650,9 +650,9 @@ Column {
             id: masterSide
 
             visible: page.layout === "master"
-            title: "Master side"
+            title: I18n.tr("Master side")
             option: "master.orientation"
-            description: "Where the main window sits. In the centre the stack is shared out to both sides."
+            description: I18n.tr("Where the main window sits. In the centre the stack is shared out to both sides.")
             stacked: true
 
             M3Segmented {
@@ -661,19 +661,19 @@ Column {
                 current: String(HyprConfig.value("master.orientation") || "left")
                 options: [{
                     "key": "left",
-                    "label": "Left"
+                    "label": I18n.tr("Left")
                 }, {
                     "key": "right",
-                    "label": "Right"
+                    "label": I18n.tr("Right")
                 }, {
                     "key": "top",
-                    "label": "Top"
+                    "label": I18n.tr("Top")
                 }, {
                     "key": "bottom",
-                    "label": "Bottom"
+                    "label": I18n.tr("Bottom")
                 }, {
                     "key": "center",
-                    "label": "Centre"
+                    "label": I18n.tr("Centre")
                 }]
                 onChosen: (key) => {
                     return HyprConfig.set("master.orientation", key);
@@ -686,9 +686,9 @@ Column {
             id: masterSize
 
             visible: page.layout === "master"
-            title: "Master size"
+            title: I18n.tr("Master size")
             option: "master.mfact"
-            description: "How much of the screen the main window takes."
+            description: I18n.tr("How much of the screen the main window takes.")
             stacked: true
 
             M3Slider {
@@ -710,9 +710,9 @@ Column {
             id: newStatus
 
             visible: page.layout === "master"
-            title: "A new window"
+            title: I18n.tr("A new window")
             option: "master.new_status"
-            description: "Takes over as the main window, joins the stack, or does what the window you are in does."
+            description: I18n.tr("Takes over as the main window, joins the stack, or does what the window you are in does.")
             stacked: true
 
             M3Segmented {
@@ -721,13 +721,13 @@ Column {
                 current: String(HyprConfig.value("master.new_status") || "slave")
                 options: [{
                     "key": "master",
-                    "label": "Becomes main"
+                    "label": I18n.tr("Becomes main")
                 }, {
                     "key": "slave",
-                    "label": "Joins the stack"
+                    "label": I18n.tr("Joins the stack")
                 }, {
                     "key": "inherit",
-                    "label": "Like this one"
+                    "label": I18n.tr("Like this one")
                 }]
                 onChosen: (key) => {
                     return HyprConfig.set("master.new_status", key);
@@ -740,9 +740,9 @@ Column {
             id: newOnTop
 
             visible: page.layout === "master"
-            title: "New at the top of the stack"
+            title: I18n.tr("New at the top of the stack")
             option: "master.new_on_top"
-            description: "A window joining the stack goes first instead of last."
+            description: I18n.tr("A window joining the stack goes first instead of last.")
 
             M3Switch {
                 enabled: newOnTop.enabled
@@ -758,9 +758,9 @@ Column {
             id: columnWidth
 
             visible: page.layout === "scrolling"
-            title: "Column width"
+            title: I18n.tr("Column width")
             option: "scrolling.column_width"
-            description: "How much of the screen a new column takes."
+            description: I18n.tr("How much of the screen a new column takes.")
             stacked: true
 
             M3Slider {
@@ -782,9 +782,9 @@ Column {
             id: oneColumn
 
             visible: page.layout === "scrolling"
-            title: "A single column fills the screen"
+            title: I18n.tr("A single column fills the screen")
             option: "scrolling.fullscreen_on_one_column"
-            description: "With only one window open, it takes the whole width."
+            description: I18n.tr("With only one window open, it takes the whole width.")
 
             M3Switch {
                 enabled: oneColumn.enabled
@@ -799,9 +799,9 @@ Column {
         HyprRow {
             id: solo
 
-            title: "A lone window goes edge to edge"
+            title: I18n.tr("A lone window goes edge to edge")
             option: "lucid.solo"
-            description: "When a window is the only one on its workspace, or maximised, it drops the gaps, the border and the rounded corners."
+            description: I18n.tr("When a window is the only one on its workspace, or maximised, it drops the gaps, the border and the rounded corners.")
             showDivider: false
 
             M3Switch {
@@ -820,14 +820,14 @@ Column {
     }
 
     SettingCard {
-        title: "FOCUS"
+        title: I18n.tr("FOCUS")
 
         HyprRow {
             id: followMouse
 
-            title: "A window takes the focus"
+            title: I18n.tr("A window takes the focus")
             option: "input.follow_mouse"
-            description: HyprConfig.num("input.follow_mouse", 1) === 2 ? "The window under the cursor scrolls and takes clicks, but your typing stays where you clicked last." : (HyprConfig.num("input.follow_mouse", 1) === 0 ? "Moving the cursor changes nothing; a window takes the focus when you click it." : "Moving the cursor onto a window gives it the focus.")
+            description: HyprConfig.num("input.follow_mouse", 1) === 2 ? I18n.tr("The window under the cursor scrolls and takes clicks, but your typing stays where you clicked last.") : (HyprConfig.num("input.follow_mouse", 1) === 0 ? I18n.tr("Moving the cursor changes nothing; a window takes the focus when you click it.") : I18n.tr("Moving the cursor onto a window gives it the focus."))
             stacked: true
 
             M3Segmented {
@@ -836,13 +836,13 @@ Column {
                 current: HyprConfig.num("input.follow_mouse", 1)
                 options: [{
                     "key": 0,
-                    "label": "On click"
+                    "label": I18n.tr("On click")
                 }, {
                     "key": 1,
-                    "label": "On hover"
+                    "label": I18n.tr("On hover")
                 }, {
                     "key": 2,
-                    "label": "Hover, typing on click"
+                    "label": I18n.tr("Hover, typing on click")
                 }]
                 onChosen: (key) => {
                     return HyprConfig.set("input.follow_mouse", key);
@@ -854,9 +854,9 @@ Column {
         HyprRow {
             id: focusOnActivate
 
-            title: "Apps can take the focus"
+            title: I18n.tr("Apps can take the focus")
             option: "misc.focus_on_activate"
-            description: "When an app asks to be brought forward — a link opened in the browser, say — it gets the focus. Off, it only asks for your attention."
+            description: I18n.tr("When an app asks to be brought forward — a link opened in the browser, say — it gets the focus. Off, it only asks for your attention.")
 
             M3Switch {
                 enabled: focusOnActivate.enabled
@@ -871,9 +871,9 @@ Column {
         HyprRow {
             id: warps
 
-            title: "The cursor follows the focus"
+            title: I18n.tr("The cursor follows the focus")
             option: "cursor.no_warps"
-            description: "When a key moves the focus to another window, the cursor jumps into it."
+            description: I18n.tr("When a key moves the focus to another window, the cursor jumps into it.")
 
             M3Switch {
                 enabled: warps.enabled
@@ -888,11 +888,11 @@ Column {
         HyprRow {
             id: warpWorkspace
 
-            title: "Also when switching workspace"
+            title: I18n.tr("Also when switching workspace")
             option: "cursor.warp_on_change_workspace"
-            description: "Switching workspace puts the cursor back on the window you were last in there."
+            description: I18n.tr("Switching workspace puts the cursor back on the window you were last in there.")
             available: !HyprConfig.bool("cursor.no_warps", false)
-            unavailableReason: "The cursor stays put while it does not follow the focus."
+            unavailableReason: I18n.tr("The cursor stays put while it does not follow the focus.")
             showDivider: false
 
             M3Switch {
@@ -908,14 +908,14 @@ Column {
     }
 
     SettingCard {
-        title: "MOVING AND RESIZING"
+        title: I18n.tr("MOVING AND RESIZING")
 
         HyprRow {
             id: resizeBorder
 
-            title: "Resize by the edges"
+            title: I18n.tr("Resize by the edges")
             option: "general.resize_on_border"
-            description: "Drag a window's edge or corner to resize it, with no key held."
+            description: I18n.tr("Drag a window's edge or corner to resize it, with no key held.")
 
             M3Switch {
                 enabled: resizeBorder.enabled
@@ -930,11 +930,11 @@ Column {
         HyprRow {
             id: grabArea
 
-            title: "Grab area"
+            title: I18n.tr("Grab area")
             option: "general.extend_border_grab_area"
-            description: "How far outside the window an edge can still be caught."
+            description: I18n.tr("How far outside the window an edge can still be caught.")
             available: HyprConfig.bool("general.resize_on_border", false)
-            unavailableReason: "Resizing by the edges is off."
+            unavailableReason: I18n.tr("Resizing by the edges is off.")
             stacked: true
 
             M3Slider {
@@ -955,9 +955,9 @@ Column {
         HyprRow {
             id: snapOn
 
-            title: "Snap floating windows"
+            title: I18n.tr("Snap floating windows")
             option: "general.snap.enabled"
-            description: "A floating window you drag clicks into place against the other windows and the edges of the screen."
+            description: I18n.tr("A floating window you drag clicks into place against the other windows and the edges of the screen.")
 
             M3Switch {
                 enabled: snapOn.enabled
@@ -972,11 +972,11 @@ Column {
         HyprRow {
             id: snapWindows
 
-            title: "Snap to windows from"
+            title: I18n.tr("Snap to windows from")
             option: "general.snap.window_gap"
             available: HyprConfig.bool("general.snap.enabled", false)
-            unavailableReason: "Snapping is off."
-            description: "How close to another window it has to come."
+            unavailableReason: I18n.tr("Snapping is off.")
+            description: I18n.tr("How close to another window it has to come.")
             stacked: true
 
             M3Slider {
@@ -997,11 +997,11 @@ Column {
         HyprRow {
             id: snapScreen
 
-            title: "Snap to the screen from"
+            title: I18n.tr("Snap to the screen from")
             option: "general.snap.monitor_gap"
             available: HyprConfig.bool("general.snap.enabled", false)
-            unavailableReason: "Snapping is off."
-            description: "How close to an edge of the screen it has to come."
+            unavailableReason: I18n.tr("Snapping is off.")
+            description: I18n.tr("How close to an edge of the screen it has to come.")
             stacked: true
             showDivider: false
 
@@ -1023,14 +1023,14 @@ Column {
     }
 
     SettingCard {
-        title: "CURSOR AND MOTION"
+        title: I18n.tr("CURSOR AND MOTION")
 
         HyprRow {
             id: hideTyping
 
-            title: "Hide the cursor while typing"
+            title: I18n.tr("Hide the cursor while typing")
             option: "cursor.hide_on_key_press"
-            description: "It comes back as soon as the mouse moves."
+            description: I18n.tr("It comes back as soon as the mouse moves.")
 
             M3Switch {
                 enabled: hideTyping.enabled
@@ -1045,9 +1045,9 @@ Column {
         HyprRow {
             id: idleCursor
 
-            title: "Hide an idle cursor after"
+            title: I18n.tr("Hide an idle cursor after")
             option: "cursor.inactive_timeout"
-            description: "A cursor left still disappears after this long. At 0 it never does."
+            description: I18n.tr("A cursor left still disappears after this long. At 0 it never does.")
             stacked: true
 
             M3Slider {
@@ -1068,9 +1068,9 @@ Column {
         HyprRow {
             id: animationsOn
 
-            title: "Window animations"
+            title: I18n.tr("Window animations")
             option: "animations.enabled"
-            description: "Windows and workspaces slide and fade as they open, close and change. Off, everything is instant. The shell's own motion is on the General page."
+            description: I18n.tr("Windows and workspaces slide and fade as they open, close and change. Off, everything is instant. The shell's own motion is on the General page.")
             showDivider: false
 
             M3Switch {
@@ -1086,15 +1086,15 @@ Column {
     }
 
     SettingCard {
-        title: "RESET"
+        title: I18n.tr("RESET")
 
         SettingRow {
-            title: "Hand it all back to your config"
-            description: "Everything on this page goes back to whatever your Hyprland config sets, as if Settings had never touched it."
+            title: I18n.tr("Hand it all back to your config")
+            description: I18n.tr("Everything on this page goes back to whatever your Hyprland config sets, as if Settings had never touched it.")
             showDivider: false
 
             M3Button {
-                text: "Reset"
+                text: I18n.tr("Reset")
                 variant: "text"
                 destructive: true
                 enabled: page.pageKeys.some((k) => {

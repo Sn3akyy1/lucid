@@ -20,7 +20,7 @@ WidgetBody {
     readonly property var sampleDev: ({
         "name": "wlan0",
         "type": "wifi",
-        "connection": "Home",
+        "connection": I18n.tr("Home"),
         "ip4": ["192.168.1.24/24"],
         "gw4": "192.168.1.1",
         "rate": "866 Mbit/s",
@@ -30,7 +30,7 @@ WidgetBody {
     readonly property var dev: w.preview ? w.sampleDev : Net.deviceInfo(w.iface)
     readonly property bool online: w.dev !== null && (w.dev.connection || "") !== ""
     readonly property bool wifi: w.dev !== null && w.dev.type === "wifi"
-    readonly property string title: w.online ? w.dev.connection : "Offline"
+    readonly property string title: w.online ? w.dev.connection : I18n.tr("Offline")
     readonly property int signal: {
         if (w.preview)
             return 78;
@@ -65,13 +65,13 @@ WidgetBody {
     readonly property string internet: {
         switch (w.preview ? "full" : Net.connectivity) {
         case "full":
-            return "Reachable";
+            return I18n.tr("Reachable");
         case "portal":
-            return "Sign-in page";
+            return I18n.tr("Sign-in page");
         case "limited":
-            return "Limited";
+            return I18n.tr("Limited");
         case "none":
-            return "Unreachable";
+            return I18n.tr("Unreachable");
         default:
             return "";
         }
@@ -81,34 +81,34 @@ WidgetBody {
         if (w.opt("showAddress") !== false) {
             if (w.address !== "")
                 out.push({
-                    "label": "Address",
+                    "label": I18n.tr("Address"),
                     "value": w.address
                 });
 
             if (w.gateway !== "")
                 out.push({
-                    "label": "Gateway",
+                    "label": I18n.tr("Gateway"),
                     "value": w.gateway
                 });
 
         }
         if (w.signal >= 0)
             out.push({
-                "label": "Signal",
+                "label": I18n.tr("Signal"),
                 "value": w.signal + "%" + (w.link !== "" ? " · " + w.link : "")
             });
         else if (w.link !== "")
             out.push({
-                "label": "Link",
+                "label": I18n.tr("Link"),
                 "value": w.link
             });
         out.push({
-            "label": "VPN",
-            "value": w.vpn !== "" ? w.vpn : "Off"
+            "label": I18n.tr("VPN"),
+            "value": w.vpn !== "" ? w.vpn : I18n.tr("Off")
         });
         if (w.internet !== "")
             out.push({
-                "label": "Internet",
+                "label": I18n.tr("Internet"),
                 "value": w.internet
             });
 
@@ -244,14 +244,14 @@ WidgetBody {
 
             RateCell {
                 icon: "down"
-                label: "DOWN"
+                label: I18n.tr("DOWN")
                 value: w.rate(w.down)
                 tint: Theme.accent
             }
 
             RateCell {
                 icon: "up"
-                label: "UP"
+                label: I18n.tr("UP")
                 value: w.rate(w.up)
                 tint: w.upTint
             }
@@ -404,7 +404,7 @@ WidgetBody {
         RateCell {
             width: compact.width / 2
             icon: "down"
-            label: "DOWN"
+            label: I18n.tr("DOWN")
             value: w.rate(w.down)
             tint: Theme.accent
             big: Theme.dp(20)
@@ -413,7 +413,7 @@ WidgetBody {
         RateCell {
             width: compact.width / 2
             icon: "up"
-            label: "UP"
+            label: I18n.tr("UP")
             value: w.rate(w.up)
             tint: w.upTint
             big: Theme.dp(20)

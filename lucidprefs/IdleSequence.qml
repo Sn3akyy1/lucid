@@ -6,7 +6,7 @@ Rectangle {
 
     // the start node plus whatever steps are turned on
     readonly property var nodes: [{
-        "name": "You stop typing",
+        "name": I18n.tr("You stop typing"),
         "time": "",
         "start": true
     }].concat(Idle.stages.map((s) => {
@@ -19,13 +19,13 @@ Rectangle {
     readonly property bool empty: Idle.stages.length === 0
     readonly property string note: {
         if (rail.empty)
-            return "Nothing happens when you walk away. Turn a step on below.";
+            return I18n.tr("Nothing happens when you walk away. Turn a step on below.");
 
         if (!Prefs.idleEnabled)
-            return "Idle management is off, so none of this runs.";
+            return I18n.tr("Idle management is off, so none of this runs.");
 
         if (Idle.paused)
-            return "Paused. This machine will not dim, lock or sleep on its own.";
+            return I18n.tr("Paused. This machine will not dim, lock or sleep on its own.");
 
         return "";
     }

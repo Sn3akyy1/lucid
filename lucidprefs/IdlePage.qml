@@ -6,14 +6,14 @@ Column {
 
     property bool showConf: false
 
-    readonly property string installHint: "hypridle is not installed. Install the hypridle package and this page comes to life."
+    readonly property string installHint: I18n.tr("hypridle is not installed. Install the hypridle package and this page comes to life.")
 
     // a step set earlier than the one before it still fires, just out of turn
     function orderWarning(key) {
         var st = Idle.stages;
         for (var i = 1; i < st.length; i++) {
             if (st[i].key === key && st[i].after <= st[i - 1].after)
-                return "This runs before “" + st[i - 1].name + "” above it, so the steps happen out of order.";
+                return I18n.tr("This runs before “%1” above it, so the steps happen out of order.", st[i - 1].name);
 
         }
         return "";
@@ -28,18 +28,18 @@ Column {
     }
 
     SettingCard {
-        title: "IDLE DAEMON"
+        title: I18n.tr("IDLE DAEMON")
 
         SettingRow {
-            title: "Status"
+            title: I18n.tr("Status")
             enabled: Idle.installed
             disabledReason: page.installHint
-            description: Idle.summary + (Idle.installed ? ". Lucid writes hypridle's config for you and restarts it whenever something here changes." : "")
+            description: Idle.summary + (Idle.installed ? I18n.tr(". Lucid writes hypridle's config for you and restarts it whenever something here changes.") : "")
             warning: Idle.lastError
 
             M3Button {
                 variant: "tonal"
-                text: "Restart"
+                text: I18n.tr("Restart")
                 enabled: Idle.installed && Prefs.idleEnabled
                 onClicked: Idle.restart()
             }
@@ -47,11 +47,11 @@ Column {
         }
 
         SettingRow {
-            title: "Start at login"
+            title: I18n.tr("Start at login")
             resetKey: "idleAutostart"
             enabled: Idle.installed
             disabledReason: page.installHint
-            description: Idle.startsAtLogin ? "hypridle comes up with your session, whether or not Lucid is running." : "hypridle only runs while Lucid starts it."
+            description: Idle.startsAtLogin ? I18n.tr("hypridle comes up with your session, whether or not Lucid is running.") : I18n.tr("hypridle only runs while Lucid starts it.")
 
             M3Switch {
                 checked: Prefs.idleAutostart
@@ -64,11 +64,11 @@ Column {
         }
 
         SettingRow {
-            title: "Keep this machine awake"
+            title: I18n.tr("Keep this machine awake")
             resetKey: "idleKeepAwake"
             enabled: Idle.installed
             disabledReason: page.installHint
-            description: "Holds every step below until you turn this off — through a reboot too. For a presentation, a long download, or a film."
+            description: I18n.tr("Holds every step below until you turn this off — through a reboot too. For a presentation, a long download, or a film.")
             showDivider: false
 
             M3Switch {
@@ -84,13 +84,13 @@ Column {
     }
 
     SettingCard {
-        title: "WHEN YOU WALK AWAY"
+        title: I18n.tr("WHEN YOU WALK AWAY")
 
         SettingRow {
-            title: "Dim the screen"
+            title: I18n.tr("Dim the screen")
             resetKey: "idleDim"
             visible: Idle.hasBacklight
-            description: "Turns the backlight down first, as a warning that the rest is coming. Moving the mouse puts it straight back."
+            description: I18n.tr("Turns the backlight down first, as a warning that the rest is coming. Moving the mouse puts it straight back.")
 
             M3Switch {
                 checked: Prefs.idleDim
@@ -102,11 +102,11 @@ Column {
         }
 
         SettingRow {
-            title: "Dim after"
+            title: I18n.tr("Dim after")
             resetKey: "idleDimAfter"
             visible: Idle.hasBacklight
             enabled: Prefs.idleDim
-            disabledReason: "Dimming is off."
+            disabledReason: I18n.tr("Dimming is off.")
             stacked: true
 
             M3Slider {
@@ -125,12 +125,12 @@ Column {
         }
 
         SettingRow {
-            title: "Dim to"
+            title: I18n.tr("Dim to")
             resetKey: "idleDimLevel"
             visible: Idle.hasBacklight
             enabled: Prefs.idleDim
-            disabledReason: "Dimming is off."
-            description: "How far down the backlight goes. Never all the way to nothing — a black OLED panel looks broken."
+            disabledReason: I18n.tr("Dimming is off.")
+            description: I18n.tr("How far down the backlight goes. Never all the way to nothing — a black OLED panel looks broken.")
             stacked: true
 
             M3Slider {
@@ -149,12 +149,12 @@ Column {
         }
 
         SettingRow {
-            title: "Turn the keyboard backlight off too"
+            title: I18n.tr("Turn the keyboard backlight off too")
             resetKey: "idleDimKeyboard"
             visible: Idle.hasBacklight && Idle.hasKbdBacklight
             enabled: Prefs.idleDim
-            disabledReason: "Dimming is off."
-            description: "Uses " + Idle.kbdBacklight + ", and restores it on the way back."
+            disabledReason: I18n.tr("Dimming is off.")
+            description: I18n.tr("Uses %1, and restores it on the way back.", Idle.kbdBacklight)
 
             M3Switch {
                 checked: Prefs.idleDimKeyboard
@@ -167,9 +167,9 @@ Column {
         }
 
         SettingRow {
-            title: "Lock the screen"
+            title: I18n.tr("Lock the screen")
             resetKey: "idleLock"
-            description: "Runs Lucid's own lock screen. Your password gets you back in."
+            description: I18n.tr("Runs Lucid's own lock screen. Your password gets you back in.")
 
             M3Switch {
                 checked: Prefs.idleLock
@@ -181,10 +181,10 @@ Column {
         }
 
         SettingRow {
-            title: "Lock after"
+            title: I18n.tr("Lock after")
             resetKey: "idleLockAfter"
             enabled: Prefs.idleLock
-            disabledReason: "Locking is off."
+            disabledReason: I18n.tr("Locking is off.")
             warning: page.orderWarning("lock")
             stacked: true
 
@@ -204,9 +204,9 @@ Column {
         }
 
         SettingRow {
-            title: "Turn the screen off"
+            title: I18n.tr("Turn the screen off")
             resetKey: "idleScreenOff"
-            description: "Puts the monitors to sleep. The machine keeps running, so anything downloading carries on."
+            description: I18n.tr("Puts the monitors to sleep. The machine keeps running, so anything downloading carries on.")
 
             M3Switch {
                 checked: Prefs.idleScreenOff
@@ -218,10 +218,10 @@ Column {
         }
 
         SettingRow {
-            title: "Screen off after"
+            title: I18n.tr("Screen off after")
             resetKey: "idleScreenOffAfter"
             enabled: Prefs.idleScreenOff
-            disabledReason: "Turning the screen off is off."
+            disabledReason: I18n.tr("Turning the screen off is off.")
             warning: page.orderWarning("screen")
             stacked: true
 
@@ -241,9 +241,9 @@ Column {
         }
 
         SettingRow {
-            title: "Suspend"
+            title: I18n.tr("Suspend")
             resetKey: "idleSuspend"
-            description: "Sleeps the whole machine. Everything stops until you press a key."
+            description: I18n.tr("Sleeps the whole machine. Everything stops until you press a key.")
 
             M3Switch {
                 checked: Prefs.idleSuspend
@@ -255,10 +255,10 @@ Column {
         }
 
         SettingRow {
-            title: "Suspend after"
+            title: I18n.tr("Suspend after")
             resetKey: "idleSuspendAfter"
             enabled: Prefs.idleSuspend
-            disabledReason: "Suspending is off."
+            disabledReason: I18n.tr("Suspending is off.")
             warning: page.orderWarning("suspend")
             stacked: true
             showDivider: Idle.hasBattery && Idle.acOnline !== ""
@@ -279,12 +279,12 @@ Column {
         }
 
         SettingRow {
-            title: "Suspend on mains power too"
+            title: I18n.tr("Suspend on mains power too")
             resetKey: "idleSuspendOnAc"
             visible: Idle.hasBattery && Idle.acOnline !== ""
             enabled: Prefs.idleSuspend
-            disabledReason: "Suspending is off."
-            description: "Off means the machine only sleeps on battery. Lucid reads " + Idle.acOnline + " to tell."
+            disabledReason: I18n.tr("Suspending is off.")
+            description: I18n.tr("Off means the machine only sleeps on battery. Lucid reads %1 to tell.", Idle.acOnline)
             showDivider: false
 
             M3Switch {
@@ -300,12 +300,12 @@ Column {
     }
 
     SettingCard {
-        title: "SLEEP AND WAKE"
+        title: I18n.tr("SLEEP AND WAKE")
 
         SettingRow {
-            title: "Lock before sleeping"
+            title: I18n.tr("Lock before sleeping")
             resetKey: "idleLockBeforeSleep"
-            description: "Whenever the machine suspends — from here, the power menu, or a closed lid — the lock screen goes up first, so it is already there when you open it again."
+            description: I18n.tr("Whenever the machine suspends — from here, the power menu, or a closed lid — the lock screen goes up first, so it is already there when you open it again.")
 
             M3Switch {
                 checked: Prefs.idleLockBeforeSleep
@@ -317,9 +317,9 @@ Column {
         }
 
         SettingRow {
-            title: "Wake the screen on resume"
+            title: I18n.tr("Wake the screen on resume")
             resetKey: "idleWakeAfterSleep"
-            description: "Turns the monitors back on the moment the machine wakes, instead of waiting for a key press."
+            description: I18n.tr("Turns the monitors back on the moment the machine wakes, instead of waiting for a key press.")
             showDivider: false
 
             M3Switch {
@@ -334,12 +334,12 @@ Column {
     }
 
     SettingCard {
-        title: "EXCEPTIONS"
+        title: I18n.tr("EXCEPTIONS")
 
         SettingRow {
-            title: "Let applications keep the screen on"
+            title: I18n.tr("Let applications keep the screen on")
             resetKey: "idleRespectInhibitors"
-            description: "A video player or a browser playing full screen can ask the system to stay awake. Off means Lucid ignores every one of those requests."
+            description: I18n.tr("A video player or a browser playing full screen can ask the system to stay awake. Off means Lucid ignores every one of those requests.")
 
             M3Switch {
                 checked: Prefs.idleRespectInhibitors
@@ -351,9 +351,9 @@ Column {
         }
 
         SettingRow {
-            title: "Never interrupt something playing"
+            title: I18n.tr("Never interrupt something playing")
             resetKey: "idleWhileMedia"
-            description: "Checks with playerctl before each step, and skips it if a player is playing. The check happens once, when that timer runs out — stopping the music later does not start the countdown again."
+            description: I18n.tr("Checks with playerctl before each step, and skips it if a player is playing. The check happens once, when that timer runs out — stopping the music later does not start the countdown again.")
             showDivider: false
 
             M3Switch {
@@ -368,16 +368,16 @@ Column {
     }
 
     SettingCard {
-        title: "THE CONFIG FILE"
+        title: I18n.tr("THE CONFIG FILE")
 
         SettingRow {
-            title: "Written to"
+            title: I18n.tr("Written to")
             monoTitle: true
-            description: "Lucid owns this file while idle management is on. Anything that was in it first was copied to hypridle.conf.pre-lucid."
+            description: I18n.tr("Lucid owns this file while idle management is on. Anything that was in it first was copied to hypridle.conf.pre-lucid.")
 
             M3Button {
                 variant: "text"
-                text: page.showConf ? "Hide" : "Show"
+                text: page.showConf ? I18n.tr("Hide") : I18n.tr("Show")
                 onClicked: page.showConf = !page.showConf
             }
 
@@ -418,15 +418,15 @@ Column {
         }
 
         SettingRow {
-            title: "Reset the idle steps"
-            description: "Puts every timing and switch on this page back to the value it ships with. The daemon switch and keep-awake are left alone."
+            title: I18n.tr("Reset the idle steps")
+            description: I18n.tr("Puts every timing and switch on this page back to the value it ships with. The daemon switch and keep-awake are left alone.")
             showDivider: false
 
             M3Button {
                 variant: "text"
                 destructive: true
-                text: "Reset"
-                onClicked: Prefs.askReset("Reset the idle steps?", "Every timing and switch on this page goes back to the value it ships with.", Prefs.resetIdleToken)
+                text: I18n.tr("Reset")
+                onClicked: Prefs.askReset(I18n.tr("Reset the idle steps?"), I18n.tr("Every timing and switch on this page goes back to the value it ships with."), Prefs.resetIdleToken)
             }
 
         }

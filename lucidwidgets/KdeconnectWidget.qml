@@ -7,7 +7,7 @@ WidgetBody {
 
     readonly property var sampleDev: ({
         "id": "sample-phone-001",
-        "name": "Pixel 8 Pro",
+        "name": I18n.tr("Pixel 8 Pro"),
         "type": "phone",
         "paired": true,
         "reachable": true,
@@ -15,8 +15,8 @@ WidgetBody {
         "signal": { "type": "5G", "strength": 4 },
         "locked": false,
         "mpris": {
-            "title": "Blinding Lights",
-            "artist": "The Weeknd",
+            "title": I18n.tr("Blinding Lights"),
+            "artist": I18n.tr("The Weeknd"),
             "playing": true
         }
     })
@@ -42,7 +42,7 @@ WidgetBody {
     }
 
     readonly property bool connected: w.dev ? (w.dev.reachable === true) : false
-    readonly property string phoneName: w.dev ? (w.dev.name || "Phone") : "No phone"
+    readonly property string phoneName: w.dev ? (w.dev.name || I18n.tr("Phone")) : I18n.tr("No phone")
     readonly property var batt: w.dev ? w.dev.battery : null
     readonly property int chargePct: w.batt ? (w.batt.charge !== undefined ? w.batt.charge : -1) : -1
     readonly property bool charging: w.batt ? !!w.batt.charging : false
@@ -72,7 +72,7 @@ WidgetBody {
         if (w.flash !== "")
             return w.flash;
 
-        var bits = ["Connected"];
+        var bits = [I18n.tr("Connected")];
         if (w.netType !== "")
             bits.push(w.netType);
 
@@ -86,51 +86,51 @@ WidgetBody {
         if (w.showShare)
             out.push({
             "icon": "upload_file",
-            "tip": "Send a file",
+            "tip": I18n.tr("Send a file"),
             "run": "share",
             "plugin": "kdeconnect_share",
-            "off": "Sharing is off on the phone"
+            "off": I18n.tr("Sharing is off on the phone")
         });
 
         if (w.showRing)
             out.push({
             "icon": "ring_volume",
-            "tip": "Ring it",
+            "tip": I18n.tr("Ring it"),
             "run": "ring",
             "plugin": "kdeconnect_findmyphone",
-            "off": "Find my phone is off on the phone"
+            "off": I18n.tr("Find my phone is off on the phone")
         });
 
         if (w.showClipboard)
             out.push({
             "icon": "content_paste_go",
-            "tip": "Send the clipboard",
+            "tip": I18n.tr("Send the clipboard"),
             "run": "clip",
             "plugin": "kdeconnect_clipboard",
-            "off": "Clipboard sharing is off on the phone"
+            "off": I18n.tr("Clipboard sharing is off on the phone")
         });
 
         if (w.showBrowse && w.variant !== "compact")
             out.push({
             "icon": "folder_open",
-            "tip": "Browse its files",
+            "tip": I18n.tr("Browse its files"),
             "run": "browse",
             "plugin": "kdeconnect_sftp",
-            "off": "File browsing is off on the phone"
+            "off": I18n.tr("File browsing is off on the phone")
         });
 
         out.push({
             "icon": "notifications_active",
-            "tip": "Ping",
+            "tip": I18n.tr("Ping"),
             "run": "ping",
             "plugin": "kdeconnect_ping",
-            "off": "Ping is off on the phone"
+            "off": I18n.tr("Ping is off on the phone")
         });
         // only worth a button when there is somewhere else to go
         if (w.manyPhones)
             out.push({
             "icon": "swap_horiz",
-            "tip": "Another phone",
+            "tip": I18n.tr("Another phone"),
             "run": "next",
             "plugin": ""
         });
@@ -165,19 +165,19 @@ WidgetBody {
             return ;
 
         if (what === "share") {
-            KdeConnect.pickFiles(w.dev.id, "Send to " + w.dev.name);
+            KdeConnect.pickFiles(w.dev.id, I18n.tr("Send to %1", w.dev.name));
         } else if (what === "ring") {
             KdeConnect.ring(w.dev.id);
-            w.say("Ringing " + w.dev.name);
+            w.say(I18n.tr("Ringing %1", w.dev.name));
         } else if (what === "clip") {
             KdeConnect.sendClipboard(w.dev.id);
-            w.say("Clipboard sent");
+            w.say(I18n.tr("Clipboard sent"));
         } else if (what === "browse") {
             KdeConnect.browse(w.dev.id);
-            w.say("Opening its files");
+            w.say(I18n.tr("Opening its files"));
         } else if (what === "ping") {
-            KdeConnect.ping(w.dev.id, "Ping from Lucid");
-            w.say("Pinged");
+            KdeConnect.ping(w.dev.id, I18n.tr("Ping from Lucid"));
+            w.say(I18n.tr("Pinged"));
         } else if (what === "next") {
             w.nextDevice();
         }
@@ -310,7 +310,7 @@ WidgetBody {
             horizontalAlignment: Text.AlignHCenter
             role: "titleSmall"
             color: w.ink
-            text: KdeConnect.installed ? "No phone nearby" : "KDE Connect isn't installed"
+            text: KdeConnect.installed ? I18n.tr("No phone nearby") : I18n.tr("KDE Connect isn't installed")
         }
 
         LText {
@@ -320,7 +320,7 @@ WidgetBody {
             role: "bodySmall"
             color: w.inkDim
             wrapMode: Text.Wrap
-            text: KdeConnect.installed ? "Open KDE Connect on your phone, or pair one in Settings" : "Install kdeconnect to link a phone"
+            text: KdeConnect.installed ? I18n.tr("Open KDE Connect on your phone, or pair one in Settings") : I18n.tr("Install kdeconnect to link a phone")
         }
 
         Button {
@@ -329,7 +329,7 @@ WidgetBody {
             variant: "tonal"
             size: "xs"
             icon: "refresh"
-            text: "Look again"
+            text: I18n.tr("Look again")
             onClicked: KdeConnect.rescan()
         }
 
@@ -451,7 +451,7 @@ WidgetBody {
                     width: parent.width
                     role: "titleSmall"
                     color: w.ink
-                    text: w.hasMedia ? w.trackTitle : "Nothing playing"
+                    text: w.hasMedia ? w.trackTitle : I18n.tr("Nothing playing")
                     elide: Text.ElideRight
                 }
 
@@ -565,7 +565,7 @@ WidgetBody {
                 role: "labelMedium"
                 tabular: true
                 color: w.inkDim
-                text: (w.chargePct >= 0 ? w.chargePct + "%" : "") + (w.charging ? " · charging" : "")
+                text: (w.chargePct >= 0 ? w.chargePct + "%" : "") + (w.charging ? I18n.tr(" · charging") : "")
             }
 
         }
@@ -581,7 +581,7 @@ WidgetBody {
             containerOverride: Theme.alpha(w.ink, 0.1)
             tintOverride: w.ink
             disabled: !w.can("kdeconnect_findmyphone")
-            tooltip: cRing.disabled ? "Find my phone is off on the phone" : "Ring it"
+            tooltip: cRing.disabled ? I18n.tr("Find my phone is off on the phone") : I18n.tr("Ring it")
             onClicked: w.run("ring")
         }
 

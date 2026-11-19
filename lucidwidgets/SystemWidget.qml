@@ -51,18 +51,18 @@ WidgetBody {
         if (w.opt("showCpu") !== false)
             out.push({
             "key": "cpu",
-            "label": "Processor",
+            "label": I18n.tr("Processor"),
             "short": "CPU",
             "icon": "memory",
             "value": w.cpu,
             "text": Math.round(w.cpu * 100) + "%",
-            "detail": w.preview ? "3.1 GHz" : (Sys.cpuMhz > 0 ? (Sys.cpuMhz / 1000).toFixed(1) + " GHz" : "")
+            "detail": w.preview ? I18n.tr("3.1 GHz") : (Sys.cpuMhz > 0 ? I18n.tr("%1 GHz", (Sys.cpuMhz / 1000).toFixed(1)) : "")
         });
 
         if (w.opt("showRam") !== false)
             out.push({
             "key": "ram",
-            "label": "Memory",
+            "label": I18n.tr("Memory"),
             "short": "RAM",
             "icon": "memory_alt",
             "value": w.ram,
@@ -73,8 +73,8 @@ WidgetBody {
         if (w.opt("showDisk") !== false)
             out.push({
             "key": "disk",
-            "label": "Disk",
-            "short": "Disk",
+            "label": I18n.tr("Disk"),
+            "short": I18n.tr("Disk"),
             "icon": "hard_drive",
             "value": w.disk,
             "text": Math.round(w.disk * 100) + "%",
@@ -84,18 +84,18 @@ WidgetBody {
         if (w.opt("showTemp") === true && w.temp >= 0)
             out.push({
             "key": "temp",
-            "label": "Temperature",
-            "short": "Temp",
+            "label": I18n.tr("Temperature"),
+            "short": I18n.tr("Temp"),
             "icon": "thermostat",
             "value": Math.min(1, w.temp / 100),
             "text": Units.deg(w.temp),
-            "detail": w.temp > 80 ? "Running hot" : "CPU package"
+            "detail": w.temp > 80 ? I18n.tr("Running hot") : I18n.tr("CPU package")
         });
 
         if (w.opt("showGpu") === true && w.gpu >= 0)
             out.push({
             "key": "gpu",
-            "label": "Graphics",
+            "label": I18n.tr("Graphics"),
             "short": "GPU",
             "icon": "developer_board",
             "value": w.gpu,
@@ -299,7 +299,7 @@ WidgetBody {
             LText {
                 role: "labelLarge"
                 color: w.inkDim
-                text: "Processor"
+                text: I18n.tr("Processor")
             }
 
             LText {
@@ -318,7 +318,7 @@ WidgetBody {
             anchors.top: parent.top
             role: "labelMedium"
             color: w.inkFaint
-            text: w.preview ? "load 1.2" : "load " + Sys.load1.toFixed(1)
+            text: w.preview ? I18n.tr("load 1.2") : I18n.tr("load %1", Sys.load1.toFixed(1))
         }
 
         Spark {
@@ -488,12 +488,12 @@ WidgetBody {
             Repeater {
                 model: [{
                     "icon": "arrow_downward",
-                    "label": "Down",
+                    "label": I18n.tr("Down"),
                     "v": w.down,
                     "c": w.inkAccent
                 }, {
                     "icon": "arrow_upward",
-                    "label": "Up",
+                    "label": I18n.tr("Up"),
                     "v": w.up,
                     "c": w.tonal ? w.inkDim : Theme.tertiary
                 }]

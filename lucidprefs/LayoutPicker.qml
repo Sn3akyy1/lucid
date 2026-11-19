@@ -8,7 +8,7 @@ Item {
 
     readonly property int wheelStep: 190
     property bool shown: false
-    property string heading: "Add a keyboard layout"
+    property string heading: I18n.tr("Add a keyboard layout")
     // ids already in use, left out of the list
     property var taken: []
     readonly property var items: Xkb.entries.filter((e) => {
@@ -151,7 +151,7 @@ Item {
                 anchors.left: parent.left
                 anchors.leftMargin: Theme.dp(12)
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Search " + picker.items.length + " layouts and variants"
+                text: I18n.tr("Search %1 layouts and variants", picker.items.length)
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontBodyLg
@@ -163,7 +163,7 @@ Item {
         Text {
             anchors.centerIn: parent
             width: card.width - Theme.dp(60)
-            text: picker.items.length === 0 ? "The layout list could not be read" : "No layouts match “" + picker.filter + "”"
+            text: picker.items.length === 0 ? I18n.tr("The layout list could not be read") : I18n.tr("No layouts match “%1”", picker.filter)
             color: Theme.subtextDim
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontBodyLg

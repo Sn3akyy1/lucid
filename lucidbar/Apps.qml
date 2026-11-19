@@ -236,10 +236,10 @@ BarPill {
 
         const name = String(ws.name || "");
         if (name.indexOf("special:") !== 0)
-            return "Workspace " + ws.id;
+            return I18n.tr("Workspace %1", ws.id);
 
         const s = name.slice(8);
-        return s === "" || s === "special" ? "Scratchpad" : "Scratchpad · " + s;
+        return s === "" || s === "special" ? I18n.tr("Scratchpad") : I18n.tr("Scratchpad · %1", s);
     }
 
     // the dock's icon for the app, or a plain one for an app with none
@@ -910,7 +910,7 @@ BarPill {
 
                         anchors.horizontalCenter: parent.horizontalCenter
                         visible: text !== ""
-                        text: tip.count > 1 ? tip.count + " windows" : (tip.count === 1 ? "1 window" : "")
+                        text: tip.count > 1 ? I18n.tr("%1 windows", tip.count) : (tip.count === 1 ? I18n.tr("1 window") : "")
                         color: Theme.subtext
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontLabel
@@ -1058,7 +1058,7 @@ BarPill {
 
                     Text {
                         width: parent.width
-                        text: root.chosenWindows.length === 0 ? "Not open" : (root.chosenWindows.length === 1 ? "1 window" : root.chosenWindows.length + " windows")
+                        text: root.chosenWindows.length === 0 ? I18n.tr("Not open") : (root.chosenWindows.length === 1 ? I18n.tr("1 window") : I18n.tr("%1 windows", root.chosenWindows.length))
                         color: Theme.subtext
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBodySm
@@ -1228,7 +1228,7 @@ BarPill {
 
                 ActionButton {
                     visible: !!root.chosenItem && root.chosenItem.command !== ""
-                    label: root.chosenWindows.length === 0 ? "Open" : "New window"
+                    label: root.chosenWindows.length === 0 ? I18n.tr("Open") : I18n.tr("New window")
                     onClicked: {
                         root.launch(root.chosenItem);
                         root.expanded = false;
@@ -1237,7 +1237,7 @@ BarPill {
 
                 ActionButton {
                     visible: !!root.chosenItem
-                    label: root.chosenItem && root.chosenItem.pinned ? "Unpin" : "Pin"
+                    label: root.chosenItem && root.chosenItem.pinned ? I18n.tr("Unpin") : I18n.tr("Pin")
                     onClicked: {
                         if (root.chosenItem.pinned)
                             root.dockMod.unpinApp(root.chosen);
@@ -1250,7 +1250,7 @@ BarPill {
                 ActionButton {
                     visible: root.chosenWindows.length > 0
                     danger: true
-                    label: root.chosenWindows.length > 1 ? "Close all" : "Close"
+                    label: root.chosenWindows.length > 1 ? I18n.tr("Close all") : I18n.tr("Close")
                     onClicked: {
                         root.closeAll(root.chosen);
                         root.expanded = false;

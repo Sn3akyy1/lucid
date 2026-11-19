@@ -38,7 +38,7 @@ Item {
 
         var parts = [];
         if (ql.isDir)
-            parts.push(ql.peek ? (ql.peek.count === 1 ? "1 item" : ql.peek.count + " items") : "Folder");
+            parts.push(ql.peek ? (ql.peek.count === 1 ? I18n.tr("1 item") : I18n.tr("%1 items", ql.peek.count)) : I18n.tr("Folder"));
         else
             parts.push(s.desc, DesktopIcons.human(s.size));
         if (s.mtime)
@@ -220,7 +220,7 @@ Item {
                 Button {
                     anchors.verticalCenter: parent.verticalCenter
                     variant: "tonal"
-                    text: "Open"
+                    text: I18n.tr("Open")
                     icon: "open_in_new"
                     onClicked: {
                         DesktopIcons.openSelection();
@@ -360,7 +360,7 @@ Item {
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
                     visible: ql.isDir
-                    text: ql.peek && ql.peek.count === 0 ? "This folder is empty" : ""
+                    text: ql.peek && ql.peek.count === 0 ? I18n.tr("This folder is empty") : ""
                     color: Theme.subtext
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodyMd
@@ -396,15 +396,15 @@ Item {
             Repeater {
                 model: [{
                     "icons": ["chevron_left", "chevron_right"],
-                    "text": "Browse"
+                    "text": I18n.tr("Browse")
                 }, {
                     "icons": [],
-                    "key": "Enter",
-                    "text": "Open"
+                    "key": I18n.tr("Enter"),
+                    "text": I18n.tr("Open")
                 }, {
                     "icons": [],
-                    "key": "Space",
-                    "text": "Close"
+                    "key": I18n.tr("Space"),
+                    "text": I18n.tr("Close")
                 }]
 
                 Row {

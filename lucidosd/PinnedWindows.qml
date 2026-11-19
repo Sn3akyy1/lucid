@@ -305,7 +305,7 @@ Scope {
 
                         y: badge.faceY - implicitHeight / 2
                         x: root.cornerRight ? Theme.dp(10) : badgeWindow.bs + badgeWindow.size - Theme.dp(2)
-                        text: "Unpin"
+                        text: I18n.tr("Unpin")
                         color: root.pinInk
                         opacity: badge.open ? 1 : 0
                         visible: opacity > 0
