@@ -82,8 +82,8 @@ Item {
     readonly property string iconSource: IconTheme.resolve(dockItem.iconName)
     // the app's tile in lucid's icons, "" for legacy icons or an app it lacks
     readonly property string lucidSlot: Prefs.envLegacyIcons || dockItem.iconContent !== null ? "" : LucidIcons.slotFor(dockItem.appId, dockItem.iconName, dockItem.displayName)
-    // the built-in pins are stored in English and shown in the shell's language
-    readonly property string shownName: dockItem.appId === "files" ? I18n.tr("Files") : (dockItem.appId === "terminal" ? I18n.tr("Terminal") : dockItem.displayName)
+    // lucid's own apps and the built-in pins are stored in English and shown in the shell's language
+    readonly property string shownName: OwnApps.shown(dockItem.appId, dockItem.displayName)
     readonly property string monogram: dockItem.shownName !== "" ? dockItem.shownName.charAt(0).toUpperCase() : "?"
 
     readonly property real hoverSwell: (dockItem.active ? 0.12 : 0.08) * Prefs.dockHoverEffect

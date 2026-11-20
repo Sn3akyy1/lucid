@@ -183,5 +183,42 @@ class WindowRules(unittest.TestCase):
             self.assertNotIn(f'title: I18n.tr("{t}")', code)
 
 
+
+class OwnApps(unittest.TestCase):
+    """OwnApps.qml translates lucid's own launcher entries by their English text,
+    so that text has to be what the scripts write into the .desktop files"""
+
+    writers = {
+        "lucid.clock": "lucidclock/clock",
+        "lucid.lumen": "lucidlumen/lumen",
+        "lucid.lens": "lucidlens/lens",
+        "org.quickshell": "install.sh",
+    }
+
+    def table(self):
+        src = read("OwnApps.qml")
+        out = {}
+        for m in re.finditer(r'"([\w.]+)": \{(.*?)\n        \}', src, re.S):
+            out[m.group(1)] = re.findall(r'"((?:[^"\\]|\\.)*)": I18n\.tr\("\1"\)', m.group(2))
+        return out
+
+    def test_words_are_what_the_desktop_files_say(self):
+        table = self.table()
+        for app, script in self.writers.items():
+            self.assertIn(app, table)
+            text = read(script)
+            for word in table[app]:
+                self.assertRegex(text, r"(?m)^(Name|Comment)=" + re.escape(word) + "$", f"{app}: {word!r} is not in {script}")
+
+    def test_every_entry_has_its_name(self):
+        table = self.table()
+        for app, script in self.writers.items():
+            if app == "org.quickshell":
+                name = re.search(r"(?m)^Name=(Lucid .*)$", read(script)).group(1)
+            else:
+                name = re.search(r"(?m)^Name=(.*)$", read(script)).group(1)
+            self.assertIn(name, table[app])
+
+
 if __name__ == "__main__":
     unittest.main()

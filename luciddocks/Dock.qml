@@ -1138,7 +1138,21 @@ PanelWindow {
     }
 
     function matchScore(app, q) {
-        var n = app.name.toLowerCase();
+        var s = dockWindow.nameScore(app.name, app.search, app.initials, q);
+        // lucid's own apps answer to their name in the shell's language too
+        var shown = OwnApps.shown(app.base, app.name);
+        var desc = OwnApps.shown(app.base, app.desc);
+        if (shown !== app.name || desc !== app.desc) {
+            const initials = shown.split(/[\s\-_]+/).map(function(w) {
+                return w.charAt(0);
+            }).join("").toLowerCase();
+            s = Math.max(s, dockWindow.nameScore(shown, (shown + " " + desc).toLowerCase(), initials, q));
+        }
+        return s;
+    }
+
+    function nameScore(name, search, initials, q) {
+        var n = name.toLowerCase();
         if (n.indexOf(q) === 0)
             return 100;
 
@@ -1149,11 +1163,11 @@ PanelWindow {
         if (n.indexOf(q) !== -1)
             return 80;
 
-        if (app.search.indexOf(q) !== -1)
+        if (search.indexOf(q) !== -1)
             return 50;
 
         // initials: "vsc" finds "Visual Studio Code"
-        if (app.initials.indexOf(q) === 0)
+        if (initials.indexOf(q) === 0)
             return 70;
 
         var i = 0;
@@ -1190,7 +1204,7 @@ PanelWindow {
             if (a.uses !== b.uses)
                 return b.uses - a.uses;
 
-            return a.app.name.toLowerCase() < b.app.name.toLowerCase() ? -1 : 1;
+            return OwnApps.shown(a.app.base, a.app.name).toLowerCase() < OwnApps.shown(b.app.base, b.app.name).toLowerCase() ? -1 : 1;
         });
         return scored;
     }
@@ -1233,6 +1247,17 @@ PanelWindow {
         return out;
     }
 
+    // the rows carry text made when they were built
+    Connections {
+        function onStringsChanged() {
+            if (dockWindow.menuOpen)
+                dockWindow.rebuildResults();
+
+        }
+
+        target: I18n
+    }
+
     onRunningAppNamesChanged: {
         if (dockWindow.menuOpen)
             dockWindow.rebuildResults();
@@ -1240,7 +1265,7 @@ PanelWindow {
     }
 
     function rowForApp(app) {
-        return dockWindow.makeRow("app", "app-" + app.name, app.name, Prefs.launcherAppDescriptions ? (app.desc || "") : "", {
+        return dockWindow.makeRow("app", "app-" + app.name, OwnApps.shown(app.base, app.name), Prefs.launcherAppDescriptions ? OwnApps.shown(app.base, app.desc) : "", {
             "iconName": app.iconName,
             "appSlot": dockWindow.slotOfApp(app),
             "payload": app.command,
@@ -1380,7 +1405,7 @@ PanelWindow {
     }
 
     function rowForWindow(client, app) {
-        var name = app ? app.name : client.class;
+        var name = app ? OwnApps.shown(app.base, app.name) : client.class;
         var ws = client.workspace ? client.workspace.name : "";
         // special workspaces keep their own name, numbered ones read as words
         if (ws !== "" && client.workspace.id > 0)
@@ -1396,7 +1421,7 @@ PanelWindow {
 
     // nested rows sit under their app, so they drop the icon and the app name
     function rowForAction(app, action, nested) {
-        return dockWindow.makeRow("action", "act-" + app.name + "-" + action.name, action.name, nested ? "" : app.name, {
+        return dockWindow.makeRow("action", "act-" + app.name + "-" + action.name, OwnApps.shown(app.base, action.name), nested ? "" : OwnApps.shown(app.base, app.name), {
             "iconName": nested ? "" : app.iconName,
             "appSlot": nested ? "" : dockWindow.slotOfApp(app),
             "glyph": nested ? "chevron_right" : "",
@@ -1487,9 +1512,10 @@ PanelWindow {
 
                 for (var x = 0; x < host.actions.length; x++) {
                     var act = host.actions[x];
-                    var actScore = dockWindow.textScore(act.name.toLowerCase(), q);
+                    const actShown = OwnApps.shown(host.base, act.name);
+                    var actScore = Math.max(dockWindow.textScore(act.name.toLowerCase(), q), actShown !== act.name ? dockWindow.textScore(actShown.toLowerCase(), q) : -1);
                     // "zen private" finds Zen's New Private Window
-                    if (actScore < 0 && dockWindow.wordsIn((host.name + " " + act.name).toLowerCase(), q))
+                    if (actScore < 0 && (dockWindow.wordsIn((host.name + " " + act.name).toLowerCase(), q) || dockWindow.wordsIn((OwnApps.shown(host.base, host.name) + " " + actShown).toLowerCase(), q)))
                         actScore = 65;
 
                     // below the apps: "new" is mostly a way to find an app
@@ -1614,7 +1640,7 @@ PanelWindow {
             var scored = dockWindow.appRows(q);
             if (q === "") {
                 var rest = scored.slice().sort(function(a, b) {
-                    return a.app.name.toLowerCase() < b.app.name.toLowerCase() ? -1 : 1;
+                    return OwnApps.shown(a.app.base, a.app.name).toLowerCase() < OwnApps.shown(b.app.base, b.app.name).toLowerCase() ? -1 : 1;
                 });
                 var often = Prefs.launcherFrequentFirst ? scored.filter(function(x) {
                     return x.uses > 0;
@@ -1791,7 +1817,7 @@ PanelWindow {
 
         var app = null;
         for (var i = 0; i < dockWindow.scannedApps.length; i++) {
-            if (dockWindow.scannedApps[i].name === row.title) {
+            if ("app-" + dockWindow.scannedApps[i].name === row.key) {
                 app = dockWindow.scannedApps[i];
                 break;
             }
@@ -1808,7 +1834,8 @@ PanelWindow {
 
         if (row.kind === "app") {
             Quickshell.execDetached(["sh", "-c", row.payload]);
-            dockWindow.recordLaunch(row.title);
+            // counted by the English name: the title may be a translation
+            dockWindow.recordLaunch(row.key.substring(4));
             dockWindow.menuOpen = false;
         } else if (row.kind === "setting") {
             dockWindow.menuOpen = false;

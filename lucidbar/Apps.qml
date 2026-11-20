@@ -38,7 +38,7 @@ BarPill {
             seen[id.toLowerCase()] = true;
             out.push({
                 "appId": id,
-                "name": id === "files" ? I18n.tr("Files") : (id === "terminal" ? I18n.tr("Terminal") : (p.name || id)),
+                "name": OwnApps.shown(id, p.name || id),
                 "icon": p.iconName || id,
                 "command": p.command || "",
                 "pinned": true
@@ -53,7 +53,7 @@ BarPill {
             const entry = root.dockMod.entryForClass(id);
             out.push({
                 "appId": id,
-                "name": entry && entry.name ? entry.name : id,
+                "name": OwnApps.shown(id, entry && entry.name ? entry.name : id),
                 "icon": entry && entry.iconName ? entry.iconName : id,
                 "command": entry && entry.command ? entry.command : "",
                 "pinned": false
