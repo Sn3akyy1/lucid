@@ -2312,8 +2312,7 @@ Singleton {
             if (t.kind === "app")
                 return I18n.tr("Open with %1", t.label);
 
-            var verb = root.dropAction === "copy" ? I18n.tr("Copy") : (root.dropAction === "link" ? I18n.tr("Link") : I18n.tr("Move"));
-            return verb + " to " + t.label;
+            return root.dropAction === "copy" ? I18n.tr("Copy to %1", t.label) : (root.dropAction === "link" ? I18n.tr("Link to %1", t.label) : I18n.tr("Move to %1", t.label));
         }
         if (root.dragKey === "")
             return root.dropAction === "link" ? I18n.tr("Link here") : I18n.tr("Drop on the Desktop");
@@ -2670,7 +2669,7 @@ Singleton {
                 "shortcut": apps[i]["default"] ? I18n.tr("Default") : ""
             }));
         if (apps.length === 0)
-            rows.push(root.row("", root.openWithBusy ? "Looking…" : I18n.tr("No apps for this file"), "", {
+            rows.push(root.row("", root.openWithBusy ? I18n.tr("Looking…") : I18n.tr("No apps for this file"), "", {
                 "disabled": true
             }));
 
@@ -3247,8 +3246,8 @@ Singleton {
                     }
                     if (!proc.intoDesktop) {
                         var n = proc.moved.length;
-                        var verb = proc.mode === "copy" ? I18n.tr("Copied") : (proc.mode === "link" ? I18n.tr("Linked") : I18n.tr("Moved"));
-                        root.notify(verb + " " + (n === 1 ? "“" + root.baseOf(proc.moved[0][0]) + "”" : I18n.tr("%1 items", n)) + " to " + proc.destLabel, true);
+                        var what = n === 1 ? "“" + root.baseOf(proc.moved[0][0]) + "”" : I18n.tr("%1 items", n);
+                        root.notify(proc.mode === "copy" ? I18n.tr("Copied %1 to %2", what, proc.destLabel) : (proc.mode === "link" ? I18n.tr("Linked %1 to %2", what, proc.destLabel) : I18n.tr("Moved %1 to %2", what, proc.destLabel)), true);
                         if (proc.destKey !== "") {
                             root.received = proc.destKey;
                             root.receiveTick++;

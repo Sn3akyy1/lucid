@@ -38,7 +38,7 @@ BarPill {
             seen[id.toLowerCase()] = true;
             out.push({
                 "appId": id,
-                "name": p.name || id,
+                "name": id === "files" ? I18n.tr("Files") : (id === "terminal" ? I18n.tr("Terminal") : (p.name || id)),
                 "icon": p.iconName || id,
                 "command": p.command || "",
                 "pinned": true

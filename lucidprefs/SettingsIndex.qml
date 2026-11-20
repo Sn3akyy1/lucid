@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs
 
 // what Settings search looks through: every page's rows, read out of the page
 // files themselves so a row added to a page is found without anyone listing it.
@@ -63,7 +64,13 @@ Item {
     }
 
     // a quoted string and nothing else, as JSON reads it; anything else is live
+    // a plain string, or the English inside I18n.tr("…") with nothing handed to
+    // it: a title filled in from live state is not a setting to look for
     function literal(v) {
+        var t = /^I18n\.tr\(("(?:[^"\\]|\\.)*")\)$/.exec(v);
+        if (t)
+            v = t[1];
+
         if (v.charAt(0) !== "\"" || v.charAt(v.length - 1) !== "\"")
             return null;
 
@@ -218,16 +225,21 @@ Item {
             if (!grp)
                 continue;
 
+            // the rows are indexed in English and shown in the shell's language;
+            // a word from either finds them
+            var title = I18n.tr(row.title); // i18n-dynamic
+            var card = row.card !== "" ? I18n.tr(row.card) : ""; // i18n-dynamic
+            var desc = row.description !== "" ? I18n.tr(row.description) : ""; // i18n-dynamic
             // the page's name helps a row that matched on its own, but does not
             // list every row of a page that is already a result by itself
             var rs = index.score([{
-                "text": row.title,
+                "text": index.both(title, row.title),
                 "weight": 100
             }, {
-                "text": row.card,
+                "text": index.both(card, row.card),
                 "weight": 40
             }, {
-                "text": row.description,
+                "text": index.both(desc, row.description),
                 "weight": 20
             }, {
                 "text": grp.title,
@@ -236,16 +248,17 @@ Item {
             if (rs === 0)
                 continue;
 
-            if (index.norm(row.title).indexOf(whole) === 0)
+            if (index.norm(title).indexOf(whole) === 0 || index.norm(row.title).indexOf(whole) === 0)
                 rs += 50;
 
+            // Settings finds the row on its page by these, as the page shows them
             grp.rows.push({
                 "kind": "row",
                 "key": row.key,
-                "card": row.card,
-                "cardLabel": index.pretty(row.card),
-                "title": row.title,
-                "description": row.description,
+                "card": card,
+                "cardLabel": index.pretty(card),
+                "title": title,
+                "description": desc,
                 "score": rs,
                 "order": r
             });
@@ -273,6 +286,10 @@ Item {
             out = out.concat(gr.rows.slice(0, 12));
         }
         return out;
+    }
+
+    function both(shown, english) {
+        return shown === english ? shown : shown + " " + english;
     }
 
     // a card's title the way SettingCard prints it

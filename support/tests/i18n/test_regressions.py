@@ -79,5 +79,109 @@ class PresetNames(unittest.TestCase):
         self.assertNotIn('"Layout " + n', src)
 
 
+
+def shell_qml():
+    """(path, text) of every QML file of the shell itself"""
+    for d, dirs, names in os.walk(ROOT):
+        rel = os.path.relpath(d, ROOT)
+        if rel.startswith((".git", "support", "docs", "i18n")):
+            dirs[:] = []
+            continue
+        for n in names:
+            if n.endswith(".qml"):
+                path = os.path.normpath(os.path.join(rel, n))
+                yield path, read(path)
+
+
+# a Qt date or time format: runs of one code letter, outside 'quoted' text
+FORMAT_TOKEN = re.compile(r"'[^']*'|AP|ap|d+|M+|y+|H+|h+|m+|s+|z+|t")
+
+
+def format_tokens(fmt):
+    return sorted(t for t in FORMAT_TOKEN.findall(fmt) if not t.startswith("'"))
+
+
+class DateFormats(unittest.TestCase):
+    """a format handed to toLocaleDateString and the like is codes Qt reads, not
+    words: ru.json once had "ЧЧ:мм" for HH:mm and "PM" for AP, and the clocks
+    printed them as they were"""
+
+    def test_translations_keep_the_codes(self):
+        call = re.compile(r"toLocale(Date|Time)?String|formatDate|formatTime|formatDateTime|\.toString\(")
+        used = set()
+        for _path, text in shell_qml():
+            for line in text.split("\n"):
+                if call.search(line):
+                    used.update(re.findall(r'I18n\.tr\("((?:[^"\\]|\\.)*)"\)', line))
+        formats = {k for k in used if re.fullmatch(r"[dMyHhmsztAPap :,./\-]+", k) and re.search(r"[dMyHhm]", k)}
+        self.assertTrue(formats)
+        for code in ("es", "ru"):
+            cat = json.loads(read(f"i18n/{code}.json"))
+            for k in sorted(formats):
+                v = cat.get(k, "")
+                if v:
+                    self.assertEqual(format_tokens(v), format_tokens(k), f"{code}: {k!r} -> {v!r}")
+
+
+class SavedDefaults(unittest.TestCase):
+    """a JsonAdapter default that calls I18n is a binding: a language change
+    re-runs it and the FileView saves it over what the file held (the dock lost
+    every pin that way)"""
+
+    def test_no_translated_defaults(self):
+        left = []
+        for path, text in shell_qml():
+            for m in re.finditer(r"JsonAdapter\s*\{", text):
+                i, depth = m.end(), 1
+                while i < len(text) and depth:
+                    depth += {"{": 1, "}": -1}.get(text[i], 0)
+                    i += 1
+                if "I18n." in text[m.start():i]:
+                    left.append(path)
+        self.assertEqual(left, [])
+
+
+class SettingsSearch(unittest.TestCase):
+    """SettingsIndex reads the rows out of the page files; it has to see a title
+    through I18n.tr, or search finds no row at all"""
+
+    def test_rows_are_found(self):
+        lit = re.compile(r'^(?:I18n\.tr\(("(?:[^"\\]|\\.)*")\)|("(?:[^"\\]|\\.)*"))$')
+        rows = 0
+        for n in os.listdir(os.path.join(ROOT, "lucidprefs")):
+            if not n.endswith("Page.qml"):
+                continue
+            lines = read(os.path.join("lucidprefs", n)).split("\n")
+            for i, line in enumerate(lines):
+                m = re.match(r"^( *)SettingRow \{$", line)
+                if not m:
+                    continue
+                inner = m.group(1) + "    "
+                for later in lines[i + 1:]:
+                    if later == m.group(1) + "}":
+                        break
+                    t = re.match("^" + inner + r"title: (.*)$", later)
+                    if t and lit.match(t.group(1)):
+                        rows += 1
+                        break
+        # 397 rows on 2026-11-20; a parser that misses I18n.tr finds none
+        self.assertGreater(rows, 300)
+        self.assertIn('/^I18n\\.tr\\(', read("lucidprefs/SettingsIndex.qml"))
+
+
+class WindowRules(unittest.TestCase):
+    """hyprland floats some of the shell's windows by their title, so those
+    titles stay in English"""
+
+    def test_matched_titles_are_not_translated(self):
+        rules = read("support/hypr/modules/windowrules.lua")
+        titles = re.findall(r'class = "org\.quickshell", title = "([^"^$\\()|.*+?]+)"', rules)
+        self.assertTrue(titles)
+        code = "\n".join(text for _p, text in shell_qml())
+        for t in titles:
+            self.assertIn(f'title: "{t}"', code)
+            self.assertNotIn(f'title: I18n.tr("{t}")', code)
+
+
 if __name__ == "__main__":
     unittest.main()

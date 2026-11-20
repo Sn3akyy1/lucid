@@ -120,7 +120,8 @@ BarPill {
                     const d = Math.floor(s / 86400);
                     const h = Math.floor(s % 86400 / 3600);
                     const m = Math.floor(s % 3600 / 60);
-                    root.uptime = "Up " + (d > 0 ? d + (d === 1 ? I18n.tr(" day ") : I18n.tr(" days ")) : "") + (d > 0 || h > 0 ? h + " h " : "") + I18n.tr("%1 min", m);
+                    const t = (d > 0 ? I18n.trn("%1 day", "%1 days", d) + " " : "") + (d > 0 || h > 0 ? I18n.tr("%1 h", h) + " " : "") + I18n.tr("%1 min", m);
+                    root.uptime = I18n.tr("Up %1", t);
                 }
                 root.canHibernate = /"yes"/.test(lines[1] || "");
             }

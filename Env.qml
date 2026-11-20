@@ -189,7 +189,7 @@ Singleton {
         Prefs.set("envCursorShadow", cur.cursorShadow !== false);
         Prefs.set("envIconTheme", cur.iconTheme || "");
         Prefs.set("envGtkTheme", cur.gtkTheme || "");
-        Prefs.set("envQtStyle", cur.qtStyle || I18n.tr("Fusion"));
+        Prefs.set("envQtStyle", cur.qtStyle || "Fusion"); // i18n-skip: a style name qt reads back
         Prefs.set("envQtPlatformTheme", cur.qtPlatformTheme || "");
         Prefs.set("envColorScheme", cur.colorScheme || "auto");
         Prefs.set("envAppFont", cur.appFont || Prefs.fontFamily);

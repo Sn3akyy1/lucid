@@ -2035,6 +2035,12 @@ PanelWindow {
         Quickshell.execDetached(["qs", "ipc", "call", "session", "open"]);
     }
 
+    // the two built-in pins are stored under their English names and shown in
+    // the shell's language, so a language change never rewrites the pins
+    function builtinName(key) {
+        return key === "files" ? "Files" : (key === "terminal" ? "Terminal" : "");
+    }
+
     function loadAppsFromDisk() {
         var apps = null;
         try {
@@ -2057,7 +2063,7 @@ PanelWindow {
                 "iconName": a.iconName,
                 "command": a.command,
                 "appId": a.appId,
-                "displayName": a.name || a.appId || a.appKey,
+                "displayName": dockWindow.builtinName(a.appKey) || a.name || a.appId || a.appKey,
                 "justAdded": false
             });
         }
@@ -2426,7 +2432,7 @@ PanelWindow {
                     "iconName": a.iconName,
                     "command": a.command,
                     "appId": a.appId,
-                    "displayName": a.name || a.appId || a.appKey,
+                    "displayName": dockWindow.builtinName(a.appKey) || a.name || a.appId || a.appKey,
                     "justAdded": false
                 });
             }
@@ -2789,19 +2795,21 @@ PanelWindow {
 
             // last-resort fallback only — the installer writes pinned.json from
             // what is actually installed. keep this generic: no absolute paths,
-            // nothing that is not on a stock system.
+            // nothing that is not on a stock system. no I18n here either: a
+            // default that reads anything is a binding, and a language change
+            // would re-run it and save these two over the pins
             property var pinnedApps: [{
                 "appKey": "files",
                 "iconName": "system-file-manager",
                 "command": "xdg-open " + Quickshell.env("HOME"),
                 "appId": "files",
-                "name": I18n.tr("Files")
+                "name": "Files" // i18n-skip: DockItem shows it translated
             }, {
                 "appKey": "terminal",
                 "iconName": "utilities-terminal",
                 "command": "xdg-terminal-exec",
                 "appId": "terminal",
-                "name": I18n.tr("Terminal")
+                "name": "Terminal" // i18n-skip: DockItem shows it translated
             }]
         }
 

@@ -2198,7 +2198,7 @@ FloatingWindow {
 
     visible: true
     // a dialog's title ends in " — Lumen": the window rule that floats it looks for that
-    title: win.choosing ? I18n.tr("%1 — Lumen", win.chooserTitle) : (win.tab ? win.tab.title : I18n.tr("Lumen"))
+    title: win.choosing ? win.chooserTitle + " — Lumen" : (win.tab ? win.tab.title : I18n.tr("Lumen")) // i18n-skip: the suffix is what the rule matches
     // one step under solid, so hyprland can still blur it (see Settings.qml)
     color: Theme.alpha(Theme.bg, Math.min(Theme.bg.a, 254 / 255))
     // a dialog gets room to look around, up to most of the smallest screen

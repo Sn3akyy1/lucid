@@ -328,7 +328,8 @@ FloatingWindow {
     onClosed: win.visible = false
 
     visible: false
-    title: I18n.tr("Lucid Settings")
+    // not translated: hyprland's float-lucid-settings rule (modules/windowrules.lua) matches this title
+    title: "Lucid Settings" // i18n-skip
     // a surface created fully opaque keeps qtwayland's opaque region for the life
     // of the process and hyprland never blurs it, so stay one step under solid
     color: Theme.alpha(Theme.bg, Math.min(Theme.bg.a, 254 / 255))

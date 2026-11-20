@@ -1972,7 +1972,7 @@ Singleton {
         "envLegacyIcons": false,
         "envIconSet": "gravity",
         "envGtkTheme": "",
-        "envQtStyle": I18n.tr("Fusion"),
+        "envQtStyle": "Fusion", // i18n-skip
         "envQtPlatformTheme": "",
         "envColorScheme": "auto",
         "envFontSync": false,
@@ -2768,7 +2768,7 @@ Singleton {
             property bool envLegacyIcons: false
             property string envIconSet: "gravity"
             property string envGtkTheme: ""
-            property string envQtStyle: I18n.tr("Fusion")
+            property string envQtStyle: "Fusion" // i18n-skip: qt reads it back; a binding would also reset it on a language change
             property string envQtPlatformTheme: ""
             property string envColorScheme: "auto"
             property bool envFontSync: false
