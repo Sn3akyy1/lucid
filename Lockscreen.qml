@@ -20,6 +20,18 @@ Singleton {
     property bool leaving: false
     // glance shows the day; focus shows the field. typing crosses over
     property bool focused: false
+    // settings' preview draws the lock without locking anything. while one is
+    // up, the clock ticks and the glance data is read as if locked
+    property int previews: 0
+    readonly property bool live: root.locked || root.previews > 0
+
+    function holdPreview() {
+        root.previews += 1;
+    }
+
+    function releasePreview() {
+        root.previews = Math.max(0, root.previews - 1);
+    }
     // ── surfaces ───────────────────────────────────────────────────────────
     // solid m3 containers, so a busy wallpaper never reads through a card
     readonly property color card: Theme.surfaceContainer
@@ -29,7 +41,7 @@ Singleton {
     // ── who is being asked ─────────────────────────────────────────────────
     // read lazily: touching Users spawns its probe, and nothing wants that
     // at shell start — only once a lock is actually up
-    readonly property var account: root.locked ? Users.me : null
+    readonly property var account: root.live ? Users.me : null
     readonly property string userName: root.account ? root.account.name : (Quickshell.env("USER") || "")
     readonly property string displayName: root.account ? Users.displayName(root.account) : root.userName
     readonly property string initials: root.account ? Users.initials(root.account) : (root.userName !== "" ? root.userName.substring(0, 2).toUpperCase() : "?")
@@ -155,6 +167,7 @@ Singleton {
         root.reset();
         root.leaving = false;
         root.focused = false;
+        root.keysOpen = false;
         root.lockedAt = Date.now();
         root.locked = true;
         Users.probe();
@@ -181,6 +194,11 @@ Singleton {
         id: settleWait
 
         onTriggered: {
+            // switched off in settings: no photograph, the lock simply arrives
+            if (!Prefs.lockDive) {
+                root.armed(true);
+                return ;
+            }
             var names = [];
             for (var i = 0; i < Quickshell.screens.length; i++)
                 names.push(Quickshell.screens[i].name);
@@ -331,6 +349,49 @@ Singleton {
             root.focused = true;
 
         idleBack.restart();
+    }
+
+    // the shell's floating keyboard, drawn on the lock (lucidlock/parts/
+    // OnScreenKeys.qml): opened by its chip or a finger on the field, gone
+    // again with the focus. it opens at the size and tab the desktop's has
+    property bool keysOpen: false
+    property real keysSize: 0
+    property string keysLayer: "letters"
+
+    onFocusedChanged: {
+        if (!root.focused)
+            root.keysOpen = false;
+
+    }
+
+    function openKeys() {
+        if (!root.keysOpen) {
+            keysState.reload();
+            try {
+                var s = JSON.parse(keysState.text());
+                root.keysSize = Number(s.keySize) || 0;
+                root.keysLayer = s.keyLayer === "function" ? "function" : "letters";
+            } catch (e) {
+            }
+        }
+        root.keysOpen = true;
+        root.engage();
+    }
+
+    // read only: the lock never moves or resizes the desktop's keyboard
+    FileView {
+        id: keysState
+
+        path: Qt.resolvedUrl("lucidkeys/state.json")
+        blockLoading: true
+        printErrors: false
+    }
+
+    function toggleKeys() {
+        if (root.keysOpen)
+            root.keysOpen = false;
+        else
+            root.openKeys();
     }
 
     function disengage() {
@@ -529,8 +590,12 @@ Singleton {
     Timer {
         id: idleBack
 
-        interval: 25000
+        // 0 in settings keeps the field up until it is dismissed
+        interval: Math.max(1, Prefs.lockIdleBack) * 1000
         onTriggered: {
+            if (Prefs.lockIdleBack <= 0)
+                return ;
+
             if (root.locked && !root.busy && root.phase !== "prompting")
                 root.focused = false;
 
@@ -605,6 +670,13 @@ Singleton {
         repeat: true
         triggeredOnStart: true
         onTriggered: kbProc.running = true
+    }
+
+    // the layout shows in the status widget at rest too, so read it once on arrival
+    onLiveChanged: {
+        if (root.live)
+            kbProc.running = true;
+
     }
 
     Process {
@@ -704,7 +776,7 @@ Singleton {
     }
 
     Timer {
-        running: root.locked
+        running: root.live
         interval: 5000
         repeat: true
         triggeredOnStart: true
@@ -737,7 +809,7 @@ Singleton {
     property int tick: 0
 
     Timer {
-        running: root.locked
+        running: root.live
         interval: 1000
         repeat: true
         triggeredOnStart: true
@@ -773,6 +845,94 @@ Singleton {
             return I18n.tr("Good evening");
 
         return I18n.tr("Good night");
+    }
+
+    // ── what the shared parts read (lucidlock/parts) ──────────────────────
+    // the login screen's Lock offers the same names, filled its own way
+    readonly property string lockedWord: I18n.tr("Locked")
+    // the lock's parts are drawn by the login screen too, which has no
+    // catalogues: they ask the lock they are handed for their words
+    readonly property var locale: I18n.locale
+
+    function tr(text, ...args) {
+        return I18n.tr(text, ...args); // i18n-dynamic
+    }
+
+    readonly property var weather: {
+        var r = WeatherSource.report;
+        if (!r)
+            return ({
+                "ok": false
+            });
+
+        var today = r.days && r.days.length > 0 ? r.days[0] : null;
+        return {
+            "ok": true,
+            "kind": WeatherSource.kindFor(r.code, r.isDay === false),
+            "temp": Units.deg(r.tempC, r.tempF),
+            "desc": WeatherSource.descFor(r.code),
+            "hi": today ? Units.deg(today.maxC, today.maxF) : "",
+            "lo": today ? Units.deg(today.minC, today.minF) : "",
+            "feels": Units.deg(r.feelsC, r.feelsF),
+            "at": ""
+        };
+    }
+    // the battery symbol that matches the level, in eighths like the bar's
+    readonly property string batteryGlyph: {
+        if (root.charging)
+            return "battery_charging_full";
+
+        const steps = ["battery_0_bar", "battery_1_bar", "battery_2_bar", "battery_3_bar", "battery_4_bar", "battery_5_bar", "battery_6_bar", "battery_full"];
+        return steps[Math.max(0, Math.min(7, Math.floor(root.batteryPercent / 100 * 8)))];
+    }
+    // {key, glyph, label, short, tone, interactive}; tone is a role the part resolves
+    readonly property var statusItems: {
+        var out = [];
+        if (root.hasBattery)
+            out.push({
+                "key": "battery",
+                "glyph": root.batteryGlyph,
+                "label": root.batteryPercent + "%",
+                "short": root.batteryPercent + "%",
+                "tone": root.batteryLow ? "error" : (root.charging ? "success" : "normal")
+            });
+
+        out.push({
+            "key": "network",
+            "glyph": root.netGlyph,
+            "label": root.netLabel,
+            "tone": (root.ethernet || root.wifiUp) ? "accent" : "dim"
+        });
+        if (root.btAdapter)
+            out.push({
+                "key": "bluetooth",
+                "glyph": root.btOn ? "bluetooth" : "bluetoothOff",
+                "label": root.btLabel,
+                "tone": root.btDevices.length > 0 ? "accent" : "dim"
+            });
+
+        if (Notifs.dnd)
+            out.push({
+                "key": "dnd",
+                "glyph": "bellOff",
+                "label": I18n.tr("Do not disturb"),
+                "tone": "warning"
+            });
+
+        if (root.layoutShort !== "")
+            out.push({
+                "key": "keyboard",
+                "glyph": "keyboard",
+                "label": root.layoutShort,
+                "short": root.layoutShort,
+                "tone": "dim"
+            });
+
+        return out;
+    }
+
+    // nothing on the lock's status is a button
+    function activateStatus(key) {
     }
 
     // ── wallpaper ──────────────────────────────────────────────────────────

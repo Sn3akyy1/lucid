@@ -15,14 +15,14 @@ Column {
         SettingRow {
             title: I18n.tr("Language")
             description: I18n.tr("Automatic follows the system language, here %1. Text the translation doesn't cover stays in English.", I18n.autoName)
-            stacked: true
 
-            M3Segmented {
-                width: parent.width
+            // a menu, so the row keeps its size however many languages there are
+            M3Dropdown {
                 current: Prefs.language
                 options: [{
                     "key": "auto",
-                    "label": I18n.tr("Automatic")
+                    "label": I18n.tr("Automatic"),
+                    "hint": I18n.autoName
                 }].concat(I18n.languages.map((l) => {
                     return {
                         "key": l.code,

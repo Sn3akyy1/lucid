@@ -18,10 +18,13 @@ Item {
     property var previews: ({
     })
     property bool showPreviews: false
-    // lucid's own icon sets rather than installed themes: each row draws a few of its icons
+    // lucid's own sets rather than installed themes: each row draws a few of its icons
+    // ("icons") or its pointers ("pointers")
     property bool tonal: false
+    property string setKind: "icons"
     property var tonalSets: []
     readonly property var tonalSlots: ["folder", "document", "image", "app-settings", "trash"]
+    readonly property var pointerSamples: ["left_ptr", "hand2", "xterm", "wait", "crossed_circle"]
     property string filter: ""
     readonly property var matches: {
         var q = picker.filter.trim().toLowerCase();
@@ -54,16 +57,21 @@ Item {
         list.positionViewAtIndex(idx < 0 ? 0 : idx, ListView.Center);
     }
 
-    // sets is LucidIcons.sets; the answer is a set's name, its id through LucidIcons.idOf
-    function openSets(heading, sets, currentId) {
+    // sets is LucidIcons.sets or Pointer.sets, kind "icons" or "pointers"; the
+    // answer is a set's name, its id through LucidIcons.idOf / Pointer.idOf
+    function openSets(heading, sets, currentId, kind) {
         picker.tonal = true;
+        picker.setKind = kind || "icons";
         picker.tonalSets = sets;
         picker.heading = heading;
-        picker.noun = I18n.tr("icon sets");
+        picker.noun = picker.setKind === "pointers" ? I18n.tr("pointer sets") : I18n.tr("icon sets");
         picker.items = sets.map((t) => {
             return t.name;
         });
-        picker.current = LucidIcons.nameOf(currentId);
+        const cur = sets.find((t) => {
+            return t.id === currentId;
+        }) || sets[0];
+        picker.current = cur ? cur.name : "";
         picker.showPreviews = false;
         picker.filter = "";
         searchInput.text = "";
@@ -353,7 +361,7 @@ Item {
                     visible: themeRow.set !== null
 
                     Repeater {
-                        model: themeRow.set ? picker.tonalSlots : []
+                        model: themeRow.set && picker.setKind === "icons" ? picker.tonalSlots : []
 
                         TonalIcon {
                             required property string modelData
@@ -362,6 +370,24 @@ Item {
                             set: themeRow.set ? themeRow.set.id : ""
                             size: Theme.dp(34)
                             hovered: rowLayer.active
+                        }
+
+                    }
+
+                    // the pointers as the theme on disk draws them, so only for the set drawn now
+                    Repeater {
+                        model: themeRow.set && picker.setKind === "pointers" && Pointer.drawn && Pointer.stamp.set === themeRow.set.id ? picker.pointerSamples : []
+
+                        Image {
+                            required property string modelData
+
+                            width: Theme.dp(30)
+                            height: Theme.dp(30)
+                            source: "file://" + Pointer.themeDir + "/preview/" + modelData + ".png?" + Pointer.revision
+                            sourceSize: Qt.size(96, 96)
+                            cache: false
+                            smooth: true
+                            mipmap: true
                         }
 
                     }

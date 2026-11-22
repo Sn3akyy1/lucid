@@ -317,6 +317,11 @@ Item {
         stage.close();
     }
 
+    // a window's corner radius: hyprland's, unless the target brings its own
+    function roundOf(w) {
+        return w && w.round !== undefined ? w.round : stage.rounding;
+    }
+
     function windowAt(x, y) {
         if (stage.editing || stage.mode === "colour")
             return -1;
@@ -493,7 +498,7 @@ Item {
             "h": w.h,
             "kind": "window",
             "win": w,
-            "round": whole && !w.fullscreen && Prefs.shotRoundWindows ? stage.rounding : 0
+            "round": whole && !w.fullscreen && Prefs.shotRoundWindows ? stage.roundOf(w) : 0
         });
     }
 
@@ -1528,7 +1533,7 @@ Item {
         y: win ? win.y - 1 : 0
         width: win ? win.w + 2 : 0
         height: win ? win.h + 2 : 0
-        radius: stage.rounding + 1
+        radius: stage.roundOf(win) + 1
         color: "transparent"
         border.width: Theme.dp(2)
         border.color: Theme.alpha(Theme.primary, 0.6)
@@ -1545,7 +1550,7 @@ Item {
         height: shade.hh
         sizeText: win ? Math.round(win.w * stage.ratio) + " × " + Math.round(win.h * stage.ratio) : ""
         caption: win ? (win.title || win.cls || "") : ""
-        radius: win && !win.fullscreen ? stage.rounding : 0
+        radius: win && !win.fullscreen ? stage.roundOf(win) : 0
         roomBelow: stage.height - shade.hy - shade.hh
     }
 

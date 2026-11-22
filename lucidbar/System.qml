@@ -901,45 +901,88 @@ BarPill {
     }
 
     // keyboard layout: the main keyboard's active xkb layout, re-read whenever
-    // hyprland reports a switch (the event only carries the long name)
+    // hyprland reports a switch (the event only carries the long name) or reloads
+    // its config, where Settings > Input adds layouts. a read that finds no
+    // keyboard, as at login before hyprland answers, tries again a few times;
+    // with one layout there is never a switch to read it again
     property string kbLayout: ""
     property string kbLayoutName: ""
+    property int kbLayoutTries: 0
+    // an event that came in while a read was running reads again after it
+    property bool kbLayoutAgain: false
+
+    function readKbLayout() {
+        kbLayoutRetry.stop();
+        if (kbLayoutProc.running)
+            root.kbLayoutAgain = true;
+        else
+            kbLayoutProc.running = true;
+    }
 
     Process {
         id: kbLayoutProc
 
         command: ["hyprctl", "devices", "-j"]
         running: true
+        onExited: {
+            if (root.kbLayoutAgain) {
+                root.kbLayoutAgain = false;
+                kbLayoutProc.running = true;
+            }
+        }
 
         stdout: StdioCollector {
             onStreamFinished: {
+                let kb = null;
                 try {
                     const kbs = JSON.parse(this.text).keyboards || [];
-                    const kb = kbs.find((k) => {
+                    kb = kbs.find((k) => {
                         return k.main;
-                    }) || kbs[0];
-                    if (!kb)
-                        return ;
-
-                    const codes = String(kb.layout).split(",");
-                    const code = (codes[kb.active_layout_index] || codes[0] || "").trim();
-                    root.kbLayout = (code.length <= 3 ? code : code.slice(0, 2)).toUpperCase();
-                    root.kbLayoutName = kb.active_keymap || "";
+                    }) || kbs[0] || null;
                 } catch (e) {
                 }
+                if (!kb) {
+                    if (root.kbLayoutTries < 5) {
+                        root.kbLayoutTries++;
+                        kbLayoutRetry.restart();
+                    }
+                    return ;
+                }
+                root.kbLayoutTries = 0;
+                const codes = String(kb.layout).split(",");
+                const code = (codes[kb.active_layout_index] || codes[0] || "").trim();
+                root.kbLayout = (code.length <= 3 ? code : code.slice(0, 2)).toUpperCase();
+                root.kbLayoutName = kb.active_keymap || "";
             }
         }
 
     }
 
+    Timer {
+        id: kbLayoutRetry
+
+        interval: 2000
+        onTriggered: root.readKbLayout()
+    }
+
     Connections {
         function onRawEvent(event) {
-            if (event.name === "activelayout")
-                kbLayoutProc.running = true;
+            if (event.name === "activelayout" || event.name === "configreloaded")
+                root.readKbLayout();
 
         }
 
         target: Hyprland
+    }
+
+    Connections {
+        function onShowKbLayoutChanged() {
+            if (Prefs.showKbLayout)
+                root.readKbLayout();
+
+        }
+
+        target: Prefs
     }
 
     Process {
@@ -1309,7 +1352,7 @@ BarPill {
         case "gamemode":
             if (!root.gameModeConfigured) {
                 root.expanded = false;
-                Prefs.settingsRequested("bar");
+                Prefs.openBarModule("system", "gamemode");
             } else {
                 root.setGameMode(!root.gameModeOn);
             }

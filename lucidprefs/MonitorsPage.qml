@@ -350,8 +350,10 @@ Column {
                     title: I18n.tr("Scale")
                     description: {
                         const room = scaleRow.room !== "" ? I18n.tr("%1 of room for windows", scaleRow.room) : "";
-                        if (!Monitors.isCleanScale(unit.key, scaleRow.scale))
-                            return I18n.tr("%1. This scale does not divide the panel evenly, so edges and small text may look soft.", room);
+                        const wanted = Monitors.wantedScale(unit.key);
+                        // the one picked does not fit this resolution, so another runs
+                        if (Math.abs(wanted - scaleRow.scale) > 0.001)
+                            return I18n.tr("%1. %2% does not divide this resolution evenly, so it runs at %3% here.", room, Math.round(wanted * 100), Math.round(scaleRow.scale * 100));
 
                         return room + ".";
                     }

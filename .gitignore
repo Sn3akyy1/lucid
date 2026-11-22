@@ -17,6 +17,9 @@ luciddesktop/icons.json
 .claude/
 *.qmlc
 *.jsc
+# a merge's leftovers
+*.orig
+*.rej
 
 # screenshot originals — the committed .webp versions are what the README uses
 assets/*.png

@@ -12,6 +12,7 @@ Item {
     property bool inGroup: false
     // false on the lock screen, where a card must not be able to start anything
     property bool interactive: true
+    property bool redacted: false
 
     property real arrivalGlow: 0
     readonly property real throwLimit: Math.max(Theme.dp(56), item.width * 0.3)
@@ -46,6 +47,7 @@ Item {
             anchors.topMargin: Theme.dp(11)
             notification: item.notification
             interactive: item.interactive
+            redacted: item.redacted
             bodyLines: 6
             showAppName: !item.inGroup
             showAvatar: !item.inGroup

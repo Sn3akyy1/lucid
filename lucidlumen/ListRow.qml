@@ -31,7 +31,6 @@ Item {
     readonly property bool joinUp: row.selected && row.neighbourSelected(-1)
     readonly property bool joinDown: row.selected && row.neighbourSelected(1)
     property bool dropping: false
-    property url dragImage
 
     function neighbourSelected(d) {
         var t = row.tab, i = row.index + d;
@@ -202,7 +201,7 @@ Item {
             if (Math.abs(mouse.x - area.pressAt.x) + Math.abs(mouse.y - area.pressAt.y) < Theme.dp(8))
                 return ;
 
-            row.pane.startDrag(row.pane.dragUris(row.uri), row.dragImage);
+            row.pane.startDrag(row.pane.dragUris(row.uri), glyph, area);
         }
         onPressed: (mouse) => {
             area.pressAt = Qt.point(mouse.x, mouse.y);
@@ -211,9 +210,6 @@ Item {
                 if (!row.selected && !(mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)))
                     row.tab.selectOnly(row.index);
 
-                glyph.grabToImage(function(r) {
-                    row.dragImage = r.url;
-                });
             }
         }
         onClicked: (mouse) => {

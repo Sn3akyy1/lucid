@@ -209,6 +209,27 @@ PanelWindow {
     // the way they are stacked: special workspace, floating, tiled, each by
     // how recently it had the focus
     function adoptWindows(text) {
+        // the lock screen's style editor covers every window on its display:
+        // what can be taken there is the editor's own, the lock it is editing
+        if (LockStyle.editorShown && LockStyle.editorScreen === overlay.outputName()) {
+            stage.windows = LockStyle.shotTargets.map((t) => {
+                return {
+                    "x": t.x,
+                    "y": t.y,
+                    "w": t.w,
+                    "h": t.h,
+                    "title": t.title,
+                    "cls": I18n.tr("Lock screen style"),
+                    "address": "",
+                    "floating": true,
+                    "fullscreen": false,
+                    "special": false,
+                    "focus": 0,
+                    "round": t.round
+                };
+            });
+            return ;
+        }
         let data = null;
         try {
             data = JSON.parse(text);

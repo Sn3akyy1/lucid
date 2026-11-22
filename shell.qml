@@ -68,6 +68,8 @@ ShellRoot {
         void Agenda.tick;
         void Alarms.tick;
         void ClockLink.peerCount;
+        // sends this account's lock layout to the login screen once settled
+        void LockStyle.preset;
         void Zones.offsets;
         void Capture.state;
         void NightLight.active;
@@ -605,7 +607,7 @@ ShellRoot {
                             plan.bridges.push({ "x": left ? 0 : Math.floor(m.x + m.width), "y": m.y, "w": left ? Math.ceil(m.x) : bar.width - Math.floor(m.x + m.width), "h": h, "mod": m });
 
                         // where the curve starts, for edit mode's outline
-                        (plan.meets[m.modId] || (plan.meets[m.modId] = ({})))[left ? "left" : "right"] = ({ "y": y, "size": most });
+                        (plan.meets[m.modId] || (plan.meets[m.modId] = ({})))[left ? "left" : "right"] = ({ "y": y, "size": r });
                     };
                     // the overview's seat closing up at a side: the module sliding in behind
                     // fuses with it, its facing corner matching the seat's as that narrows
@@ -831,7 +833,7 @@ ShellRoot {
                 return plan;
             }
 
-            property real wsCollapse: (workspacesMod.expanded && !Prefs.barPopupMode) ? 0 : 1
+            property real wsCollapse: (workspacesMod.expanded && !workspacesMod.apart) ? 0 : 1
 
             // the modules are addressed by their id in Prefs.barModules; the
             // groups in Prefs.barLayout decide which slot each one lands in
@@ -2073,6 +2075,11 @@ ShellRoot {
 
     // edit mode's toolbar and its sheet of options, over everything
     EditLayer {
+    }
+
+    // the lock screen's style editor, full screen, the way edit mode is
+    LockStyleWindow {
+        shotUp: shotOverlay.visible
     }
 
     // lucidshot: the engine that saves and copies captures, the overlay they

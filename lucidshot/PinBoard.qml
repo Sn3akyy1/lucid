@@ -95,7 +95,9 @@ Scope {
             visible: pinWin.mine > 0 && Monitors.surfacesUp
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
-            WlrLayershell.layer: WlrLayer.Top
+            // over windows, and over the lock screen's style editor while it is
+            // up: a pin taken of a style, to hold beside the next, stays in sight
+            WlrLayershell.layer: LockStyle.editorSettled ? WlrLayer.Overlay : WlrLayer.Top
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
             WlrLayershell.namespace: "lucid-shot-pin"
 

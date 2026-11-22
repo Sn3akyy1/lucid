@@ -9,10 +9,12 @@ Column {
     property bool pageShown: false
     readonly property var info: Sys.info || ({})
     readonly property string fallback: page.info.ready ? I18n.tr("Not reported") : I18n.tr("Reading…")
-    readonly property string hardwareModel: [page.info.vendor || "", page.info.model || ""].filter((v) => {
+    // lenovo keeps the name people know in product_version; product_name is its type code
+    readonly property string modelName: String(page.info.vendor || "").toUpperCase() === "LENOVO" && page.info.version ? page.info.version : (page.info.model || "")
+    readonly property string hardwareModel: [page.info.vendor || "", page.modelName, page.modelName !== (page.info.model || "") ? page.info.model : ""].filter((v) => {
         return v !== "";
     }).join(" · ")
-    readonly property string machineName: page.info.model || page.info.host || I18n.tr("This computer")
+    readonly property string machineName: page.modelName || page.info.host || I18n.tr("This computer")
     readonly property string machineDetail: [page.info.vendor || "", page.info.os || ""].filter((v) => {
         return v !== "";
     }).join(" · ")

@@ -1,10 +1,13 @@
 import QtQuick
 import QtQuick.Effects
+import Quickshell
 import Quickshell.Widgets
 import qs
+import "parts"
 
 // one screen's worth of lock. the desktop it covers frosts over and sinks away
-// on the way in, and comes back up through the frost on the way out
+// on the way in, and comes back up through the frost on the way out. what sits
+// on top is the shared Stage, laid out by the user's preset (LockStyle)
 Item {
     id: surface
 
@@ -12,15 +15,38 @@ Item {
     property bool primary: true
     // the desktop a moment before the lock
     property string capture: ""
+    // settings' preview: drawn, never locked. no capture, no pam, and the face
+    // it shows is the preview's to choose
+    property bool preview: false
+    property bool previewFocus: false
+    // the preview of the login screen: its data and its sign-in
+    property bool greeterLook: false
+    property bool editing: false
+    property string selected: ""
+    property real chromeScale: 1
+    // a layout other than the saved one, for a preview of a preset not yet picked
+    property var layoutOverride: null
+    readonly property var layout: surface.layoutOverride || LockStyle.layout
+    readonly property bool focusedNow: surface.preview ? surface.previewFocus : Lockscreen.focused
+
+    signal picked(string type)
+    signal slotPicked(string slot)
+    // the editor's drag and drop, passed straight through from the stage
+    signal dropped(string type, string slot, int index)
+    signal dragMoved(string type, point at)
+
+    readonly property alias stage: stage
+    property alias dropOutside: stage.dropOutside
+
     // a surface rebuilt mid-lock (a reload) must not show the desktop again
-    readonly property bool fresh: Date.now() - Lockscreen.lockedAt < 1500
+    readonly property bool fresh: !surface.preview && Date.now() - Lockscreen.lockedAt < 1500
     readonly property bool dive: surface.capture !== "" && surface.fresh
     readonly property bool desk: deskImage.status === Image.Ready
     // the arrival driver, linear in time so each block can ease its own slice
     property real t: 0
     property real u: 0
     // 0 glance, 1 focus. the day steps back so the field can step forward
-    property real focusK: Lockscreen.focused ? 1 : 0
+    property real focusK: surface.focusedNow ? 1 : 0
     readonly property real e: surface.ease(surface.t)
     // the cards wait for the desktop to sink
     readonly property real lead: surface.dive ? 0.16 : 0
@@ -49,9 +75,10 @@ Item {
     readonly property real clear: Lockscreen.seeThrough ? (surface.desk ? surface.smooth(surface.clamp01((surface.u - 0.74) / 0.26)) : surface.smooth(surface.clamp01((surface.u - 0.4) / 0.6))) : 0
     // while the field has the screen, everything that steps back also stops
     // taking clicks. a click out there only buys the focus back
-    readonly property bool glanceLive: !Lockscreen.focused
-    readonly property int pad: Math.round(Math.max(Theme.dp(36), Math.min(Theme.dp(76), surface.height * 0.062)))
-    readonly property int rightWidth: Math.round(Math.max(Theme.dp(340), Math.min(Theme.dp(440), surface.width * 0.25)))
+    readonly property bool glanceLive: !surface.focusedNow
+    // the backdrop, as the layout asks: blur and dim 0..100, an accent wash
+    readonly property real blurK: surface.layout.blur / 100
+    readonly property real dimK: surface.layout.dim / 100
 
     // a long tail, so a block lands rather than stops
     function ease(x) {
@@ -96,9 +123,17 @@ Item {
     }
 
     function focusInput() {
-        if (surface.primary)
-            auth.focusInput();
+        if (surface.primary && !surface.preview)
+            stage.focusInput();
 
+    }
+
+    // the preview plays the arrival again when it comes back on screen
+    function replay() {
+        enterAnim.stop();
+        surface.u = 0;
+        surface.t = 0;
+        enterAnim.start();
     }
 
     // flattened, or the layers show through one another
@@ -142,7 +177,7 @@ Item {
         }
 
         onFinished: {
-            if (surface.primary)
+            if (surface.primary && !surface.preview)
                 Lockscreen.release();
 
         }
@@ -150,7 +185,7 @@ Item {
 
     Connections {
         function onLeavingChanged() {
-            if (Lockscreen.leaving)
+            if (Lockscreen.leaving && !surface.preview)
                 exitAnim.restart();
 
         }
@@ -192,7 +227,7 @@ Item {
             // a live wallpaper keeps moving behind the blur
             Loader {
                 anchors.fill: parent
-                active: LiveWall.wanted && LiveWall.lockVideo !== ""
+                active: !surface.preview && LiveWall.wanted && LiveWall.lockVideo !== ""
                 source: Qt.resolvedUrl("LockLive.qml")
                 onLoaded: item.source = Qt.binding(() => {
                     return LiveWall.lockVideo;
@@ -210,7 +245,7 @@ Item {
         autoPaddingEnabled: false
         blurEnabled: true
         blurMax: 64
-        blur: (surface.dive ? 1 : surface.e) * (surface.desk ? 1 : surface.out) * (0.5 + surface.focusK * 0.32)
+        blur: (surface.dive ? 1 : surface.e) * (surface.desk ? 1 : surface.out) * Math.min(1, surface.blurK + surface.focusK * 0.32)
     }
 
     // ── the desktop it grew out of ─────────────────────────────────────────
@@ -253,7 +288,8 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        opacity: surface.shade * (0.34 + surface.focusK * 0.14)
+        // the layout's dim, 40 being the lock's old 0.34
+        opacity: surface.shade * Math.min(1, surface.dimK * 0.85 + surface.focusK * 0.14)
 
         gradient: Gradient {
             GradientStop {
@@ -279,12 +315,12 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: Theme.accent
-        opacity: surface.shade * 0.07
+        opacity: surface.layout.tint ? surface.shade * 0.07 : 0
     }
 
     // everything drawn on top leaves together
     Item {
-        id: stage
+        id: stageBox
 
         anchors.fill: parent
         opacity: surface.out
@@ -292,189 +328,116 @@ Item {
         // flattened, or the cards fade through one another
         layer.enabled: surface.u > 0 && surface.out > 0
 
-        // a click anywhere off the card puts the lock back to its resting face
-        // and forgets whatever was half-typed. declared first, so every control
-        // above it still gets its own clicks
+        // a click anywhere off the sign-in puts the lock back to its resting
+        // face and forgets whatever was half-typed. declared first, so every
+        // control above it still gets its own clicks
         MouseArea {
             anchors.fill: parent
+            enabled: !surface.preview
             onClicked: {
-                auth.discard();
+                stage.discard();
                 Lockscreen.disengage();
             }
         }
 
-        // ── the day, top left ──────────────────────────────────────────────
-        LockWeather {
-            anchors.left: parent.left
-            anchors.leftMargin: surface.pad + Theme.dp(14)
-            anchors.top: parent.top
-            anchors.topMargin: surface.pad
-            visible: surface.primary
-            opacity: surface.rv(0) * (1 - surface.focusK * 0.6)
-            enabled: surface.glanceLive
+        Stage {
+            id: stage
 
-            transform: Translate {
-                y: (1 - surface.rv(0)) * -Theme.dp(24)
+            anchors.fill: parent
+            theme: tokens
+            lock: surface.greeterLook ? loginData : Lockscreen
+            layout: surface.layout
+            greeter: surface.greeterLook
+            preview: surface.preview
+            editing: surface.editing
+            selected: surface.selected
+            chromeScale: surface.chromeScale
+            primary: surface.primary
+            t: surface.t
+            lead: surface.lead
+            focusK: surface.focusK
+            glanceLive: surface.glanceLive
+            auth: authC
+            extra: ({
+                "media": mediaC,
+                "notifications": notifsC,
+                "agenda": agendaC
+            })
+            onPicked: (type) => {
+                return surface.picked(type);
             }
-
+            onSlotPicked: (slot) => {
+                return surface.slotPicked(slot);
+            }
+            onDropped: (type, slot, index) => {
+                return surface.dropped(type, slot, index);
+            }
+            onDragMoved: (type, at) => {
+                return surface.dragMoved(type, at);
+            }
         }
 
-        // ── glance chips, top right ────────────────────────────────────────
-        LockStatusChips {
-            id: chips
+    }
 
-            anchors.right: parent.right
-            anchors.rightMargin: surface.pad
-            anchors.top: parent.top
-            anchors.topMargin: surface.pad
-            visible: surface.primary
-            opacity: surface.rv(0.06) * (1 - surface.focusK * 0.6)
-            enabled: surface.glanceLive
+    // only where the field is, and never in the settings' preview
+    OnScreenKeys {
+        id: keys
 
-            transform: Translate {
-                y: (1 - surface.rv(0.06)) * -Theme.dp(24)
-            }
+        anchors.fill: parent
+        theme: tokens
+        lock: Lockscreen
+        stage: stage
+        open: Lockscreen.keysOpen && surface.primary && !surface.preview && !Lockscreen.granted
+        keySize: Lockscreen.keysSize > 0 ? Lockscreen.keysSize : tokens.dp(46)
+        keyLayer: Lockscreen.keysLayer
+        opacity: surface.out
+        onCloseRequested: Lockscreen.keysOpen = false
+        onFocusWanted: surface.focusInput()
+        // media, volume and brightness reach hyprland's locked binds, as from the desktop's
+        onNamed: (key, shift) => {
+            return Quickshell.execDetached(shift ? ["wtype", "-M", "shift", "-k", key, "-m", "shift"] : ["wtype", "-k", key]);
+        }
+    }
 
+    LockTokens {
+        id: tokens
+    }
+
+    // what the login screen knows, for the preview of it
+    LockLoginData {
+        id: loginData
+    }
+
+    Component {
+        id: authC
+
+        LockAuthCard {
+            greeterLook: surface.greeterLook
+            keyTokens: tokens
         }
 
-        // ── the clock, left ────────────────────────────────────────────────
-        LockClock {
-            anchors.left: parent.left
-            anchors.leftMargin: surface.pad + Theme.dp(14)
-            anchors.verticalCenter: parent.verticalCenter
-            unit: surface.primary ? Math.round(Math.min(Theme.dp(178), surface.height * 0.155)) : Math.round(Math.min(Theme.dp(220), surface.height * 0.19))
-            visible: surface.primary
-            opacity: surface.rv(0.1)
+    }
 
-            transform: Translate {
-                x: (1 - surface.rv(0.1)) * -Theme.dp(30)
-                y: (1 - surface.rv(0.1)) * 22
-            }
+    Component {
+        id: mediaC
 
+        LockMedia {
         }
 
-        // ── the column that asks, right ────────────────────────────────────
-        Item {
-            id: rightCol
+    }
 
-            anchors.right: parent.right
-            anchors.rightMargin: surface.pad
-            anchors.top: chips.bottom
-            anchors.topMargin: Theme.dp(26)
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: surface.pad + Theme.dp(64)
-            width: surface.rightWidth
-            visible: surface.primary
+    Component {
+        id: notifsC
 
-            Column {
-                id: cards
-
-                width: parent.width
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: Theme.dp(18)
-
-                LockAuthCard {
-                    id: auth
-
-                    width: parent.width
-                    opacity: surface.rv(0.16)
-                    transformOrigin: Item.Right
-                    scale: 0.96 + 0.04 * surface.rv(0.16)
-
-                    transform: Translate {
-                        x: (1 - surface.rv(0.16)) * 44
-                    }
-
-                }
-
-                LockMedia {
-                    id: player
-
-                    width: parent.width
-                    opacity: surface.rv(0.32) * (1 - surface.focusK * 0.5)
-                    enabled: surface.glanceLive
-                    transformOrigin: Item.Right
-                    scale: 0.96 + 0.04 * surface.rv(0.32)
-
-                    transform: Translate {
-                        x: (1 - surface.rv(0.32)) * 44
-                    }
-
-                }
-
-                LockNotifs {
-                    width: parent.width
-                    maxHeight: Math.max(Theme.dp(120), rightCol.height - auth.height - (player.visible ? player.height + cards.spacing : 0) - cards.spacing)
-                    opacity: surface.rv(0.42) * (1 - surface.focusK * 0.5)
-                    enabled: surface.glanceLive
-                    transformOrigin: Item.Right
-                    scale: 0.96 + 0.04 * surface.rv(0.42)
-
-                    transform: Translate {
-                        x: (1 - surface.rv(0.42)) * 44
-                    }
-
-                }
-
-            }
-
+        LockNotifs {
         }
 
-        // ── the ways out, bottom left ──────────────────────────────────────
-        LockPower {
-            anchors.left: parent.left
-            anchors.leftMargin: surface.pad + Theme.dp(14)
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: surface.pad
-            visible: surface.primary
-            opacity: surface.rv(0.5) * (1 - surface.focusK * 0.6)
-            enabled: surface.glanceLive
+    }
 
-            transform: Translate {
-                y: (1 - surface.rv(0.5)) * 30
-            }
+    Component {
+        id: agendaC
 
-        }
-
-        // ── every other screen: the time, and nothing to type into ─────────
-        Column {
-            anchors.centerIn: parent
-            spacing: Theme.dp(10)
-            visible: !surface.primary
-            opacity: surface.rv(0.08)
-
-            transform: Translate {
-                y: (1 - surface.rv(0.08)) * 24
-            }
-
-            LockClock {
-                anchors.horizontalCenter: parent.horizontalCenter
-                unit: Math.round(Math.min(Theme.dp(200), surface.height * 0.17))
-            }
-
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: Theme.dp(8)
-                topPadding: Theme.dp(18)
-
-                LockGlyph {
-                    anchors.verticalCenter: parent.verticalCenter
-                    name: "lock"
-                    size: Theme.dp(17)
-                    color: Theme.subtextDim
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: I18n.tr("Locked")
-                    color: Theme.subtextDim
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontBodyMd
-                    font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
-                }
-
-            }
-
+        LockAgenda {
         }
 
     }

@@ -10,6 +10,8 @@ Item {
 
     property var notification: null
     property int size: Theme.dp(28)
+    // the app's own icon only, never the picture it sent (a face, a photo)
+    property bool iconOnly: false
     readonly property string img: avatar.notification ? (avatar.notification.image || "") : ""
     readonly property string themeIconName: {
         if (!avatar.notification)
@@ -17,7 +19,7 @@ Item {
 
         return avatar.notification.appIcon || (avatar.img.indexOf("image://icon/") === 0 ? avatar.img.slice(13) : "");
     }
-    readonly property string directImage: avatar.img.indexOf("image://icon/") === 0 ? "" : avatar.img
+    readonly property string directImage: avatar.iconOnly || avatar.img.indexOf("image://icon/") === 0 ? "" : avatar.img
     readonly property string source: avatar.directImage || (avatar.themeIconName ? Quickshell.iconPath(avatar.themeIconName, true) : "")
     property bool ready: false
     readonly property bool critical: avatar.notification && avatar.notification.urgency === NotificationUrgency.Critical

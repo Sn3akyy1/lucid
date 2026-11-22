@@ -1,10 +1,11 @@
 import QtQuick
 import QtQuick.Effects
 import "components"
+import "parts" as Parts
 
-// lucid's lock screen, wearing sddm's auth instead of pam. the composition is
-// the shell's LockSurface: the day on the left, the one thing to answer on the
-// right, and the ways out underneath
+// lucid's lock screen, wearing sddm's auth instead of pam. what sits over the
+// wallpaper is the lock's own Stage (parts/, copied from lucidlock/parts), laid
+// out by the picked account's own layout (users/<name>/lock.conf)
 Item {
     id: surface
 
@@ -20,8 +21,10 @@ Item {
     // taking clicks and hover. a click out there only buys the focus back
     readonly property bool glanceLive: !Lock.focused
     readonly property real e: surface.ease(surface.t)
-    readonly property int pad: Math.round(Math.max(Theme.dp(36), Math.min(Theme.dp(76), surface.height * 0.062)))
-    readonly property int rightWidth: Math.round(Math.max(Theme.dp(340), Math.min(Theme.dp(440), surface.width * 0.25)))
+    // the backdrop, as the account's layout asks: blur and dim 0..100, a wash
+    readonly property var layout: Lock.layout
+    readonly property real blurK: surface.layout.blur / 100
+    readonly property real dimK: surface.layout.dim / 100
 
     width: 1920
     height: 1080
@@ -168,8 +171,10 @@ Item {
         surface.t = 0;
         surface.out = 1;
         enterAnim.start();
-        if (surface.primary)
-            Qt.callLater(auth.focusInput);
+        if (surface.primary) {
+            Lock.sys = sysState;
+            Qt.callLater(stage.focusInput);
+        }
 
     }
 
@@ -320,13 +325,13 @@ Item {
         autoPaddingEnabled: false
         blurEnabled: true
         blurMax: 64
-        blur: surface.e * surface.out * (Theme.backgroundSharp ? 0.5 + surface.focusK * 0.32 : surface.focusK * 0.7)
+        blur: surface.e * surface.out * (Theme.backgroundSharp ? Math.min(1, surface.blurK + surface.focusK * 0.32) : surface.focusK * 0.7)
         visible: Theme.backgroundSharp || surface.focusK > 0.01
     }
 
     Rectangle {
         anchors.fill: parent
-        opacity: surface.e * surface.out * (0.34 + surface.focusK * 0.14)
+        opacity: surface.e * surface.out * Math.min(1, surface.dimK * 0.85 + surface.focusK * 0.14)
 
         gradient: Gradient {
             GradientStop {
@@ -352,148 +357,78 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: Theme.accent
-        opacity: surface.e * surface.out * 0.07
+        opacity: surface.layout.tint ? surface.e * surface.out * 0.07 : 0
     }
 
     // everything drawn on top leaves together
     Item {
-        id: stage
+        id: stageBox
 
         anchors.fill: parent
         opacity: surface.out
         scale: 1 + (1 - surface.out) * 0.05
 
-        // a click anywhere off the card puts the greeter back to its resting
+        // a click anywhere off the sign-in puts the greeter back to its resting
         // face and forgets whatever was half-typed
         MouseArea {
             anchors.fill: parent
             onClicked: {
-                auth.discard();
+                stage.discard();
                 Lock.disengage();
             }
         }
 
-        // ── glance chips, top right ────────────────────────────────────────
-        Chips {
-            id: chips
+        Parts.Stage {
+            id: stage
 
-            anchors.right: parent.right
-            anchors.rightMargin: surface.pad
-            anchors.top: parent.top
-            anchors.topMargin: surface.pad
-            visible: surface.primary
-            opacity: surface.rv(0.06) * (1 - surface.focusK * 0.6)
-            enabled: surface.glanceLive
-
-            transform: Translate {
-                y: (1 - surface.rv(0.06)) * -Theme.dp(24)
-            }
-
+            anchors.fill: parent
+            theme: Theme
+            lock: Lock
+            layout: surface.layout
+            greeter: true
+            primary: surface.primary
+            t: surface.t
+            focusK: surface.focusK
+            glanceLive: surface.glanceLive
+            auth: authC
         }
 
-        // ── the clock, left ────────────────────────────────────────────────
-        Clock {
-            anchors.left: parent.left
-            anchors.leftMargin: surface.pad + Theme.dp(14)
-            anchors.verticalCenter: parent.verticalCenter
-            unit: surface.primary ? Math.round(Math.min(Theme.dp(178), surface.height * 0.155)) : Math.round(Math.min(Theme.dp(220), surface.height * 0.19))
-            visible: surface.primary
-            opacity: surface.rv(0.1)
+    }
 
-            transform: Translate {
-                x: (1 - surface.rv(0.1)) * -Theme.dp(30)
-                y: (1 - surface.rv(0.1)) * 22
-            }
+    Parts.OnScreenKeys {
+        id: keys
 
+        anchors.fill: parent
+        theme: Theme
+        lock: Lock
+        stage: stage
+        open: Lock.keysOpen && surface.primary && !Lock.granted
+        opacity: surface.out
+        onCloseRequested: Lock.keysOpen = false
+        onFocusWanted: stage.focusInput()
+    }
+
+    // whose account and which session: over everything, beside what asked
+    Picker {
+        anchors.fill: parent
+        live: surface.primary
+        opacity: surface.out
+        onClosed: stage.focusInput()
+    }
+
+    Component {
+        id: authC
+
+        AuthCard {
         }
 
-        // ── the column that asks, right ────────────────────────────────────
-        Item {
-            id: rightCol
+    }
 
-            anchors.right: parent.right
-            anchors.rightMargin: surface.pad
-            anchors.top: chips.bottom
-            anchors.topMargin: Theme.dp(26)
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: surface.pad + Theme.dp(64)
-            width: surface.rightWidth
-            visible: surface.primary
+    // battery, network and the radio, read off sysfs by the one screen that asks
+    SysState {
+        id: sysState
 
-            AuthCard {
-                id: auth
-
-                width: parent.width
-                anchors.verticalCenter: parent.verticalCenter
-                opacity: surface.rv(0.16)
-                transformOrigin: Item.Right
-                scale: 0.96 + 0.04 * surface.rv(0.16)
-
-                transform: Translate {
-                    x: (1 - surface.rv(0.16)) * 44
-                }
-
-            }
-
-        }
-
-        // ── the ways out, bottom left ──────────────────────────────────────
-        PowerBar {
-            anchors.left: parent.left
-            anchors.leftMargin: surface.pad + Theme.dp(14)
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: surface.pad
-            visible: surface.primary
-            opacity: surface.rv(0.5) * (1 - surface.focusK * 0.6)
-            enabled: surface.glanceLive
-
-            transform: Translate {
-                y: (1 - surface.rv(0.5)) * 30
-            }
-
-        }
-
-        // ── every other screen: the time, and nothing to type into ─────────
-        Column {
-            anchors.centerIn: parent
-            spacing: Theme.dp(10)
-            visible: !surface.primary
-            opacity: surface.rv(0.08)
-
-            transform: Translate {
-                y: (1 - surface.rv(0.08)) * 24
-            }
-
-            Clock {
-                anchors.horizontalCenter: parent.horizontalCenter
-                unit: Math.round(Math.min(Theme.dp(200), surface.height * 0.17))
-            }
-
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: Theme.dp(8)
-                topPadding: Theme.dp(18)
-
-                Glyph {
-                    anchors.verticalCenter: parent.verticalCenter
-                    name: "lock"
-                    size: Theme.dp(17)
-                    color: Theme.subtextDim
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: sddm.hostName
-                    color: Theme.subtextDim
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontBodyMd
-                    font.variableAxes: Theme.axes(Theme.fontBodyMd, 420, 0)
-                }
-
-            }
-
-        }
-
+        readable: surface.primary
     }
 
 }

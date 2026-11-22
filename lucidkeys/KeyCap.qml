@@ -9,6 +9,8 @@ Item {
     property real unit: Theme.dp(46)
     property real gap: Theme.dp(5)
     property bool shifted: false
+    // AltGr held: a layout key shows its third or fourth level
+    property bool level3: false
     // 0 off, 1 one-shot, 2 locked
     property int modState: 0
     property bool pressedDown: false
@@ -20,6 +22,12 @@ Item {
         if (!cap.entry)
             return "";
 
+        // a key of the layout's board shows the level it would type, falling back as xkb does
+        if (cap.entry.lv) {
+            var lv = cap.entry.lv;
+            var x = lv[(cap.level3 ? 2 : 0) + (cap.shifted ? 1 : 0)] || lv[cap.shifted ? 1 : 0] || lv[0];
+            return x ? x.c : "";
+        }
         if (cap.shifted && cap.entry.s !== undefined)
             return cap.entry.s;
 
@@ -40,7 +48,8 @@ Item {
     }
     readonly property real restRadius: Math.max(Theme.shapeSm, Math.round(cap.unit * 0.26))
 
-    signal fired()
+    // repeated: the press is being held, not made again
+    signal fired(bool repeated)
 
     implicitWidth: cap.unit * cap.units + cap.gap * (cap.units - 1)
     implicitHeight: cap.unit
@@ -144,7 +153,7 @@ Item {
         anchors.fill: parent
         onPressed: {
             cap.pressedDown = true;
-            cap.fired();
+            cap.fired(false);
             repeatDelay.restart();
         }
         onReleased: {
@@ -177,7 +186,7 @@ Item {
 
         interval: 40
         repeat: true
-        onTriggered: cap.fired()
+        onTriggered: cap.fired(true)
     }
 
 }

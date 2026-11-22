@@ -207,6 +207,23 @@ Singleton {
     readonly property color success: root.isGreenish(root.cTertiary) ? root.cTertiary : root.statusHue(145)
     readonly property color fgSuccess: root.fgOnFill
     readonly property color warning: root.statusHue(45)
+    // a refusal (a wrong password) in the palette's own voice: the stock error
+    // hue drawn toward the accent's by half the gap, at most 15 degrees (m3's
+    // harmonize), then given the lightness and colourfulness of the accent's own
+    // roles, so the rose sits beside the accent family at its strength, never
+    // louder. (by tone it came back full red: red clips first as it brightens)
+    readonly property real wrongHue: {
+        var a = root.accent;
+        var h = root.cError.hslHue < 0 ? 0 : root.cError.hslHue * 360;
+        if (a.hslHue >= 0) {
+            var d = ((a.hslHue * 360 - h + 540) % 360) - 180;
+            h += (d < 0 ? -1 : 1) * Math.min(Math.abs(d) * 0.5, 15);
+        }
+        return ((h % 360) + 360) % 360;
+    }
+    readonly property color wrong: Qt.hsla(root.wrongHue / 360, Math.max(0.3, Math.min(0.55, root.accent.hslSaturation)), root.accent.hslLightness, 1)
+    readonly property color wrongContainer: Qt.hsla(root.wrongHue / 360, root.accentContainer.hslSaturation * 0.8, root.accentContainer.hslLightness, 1)
+    readonly property color fgWrongContainer: Qt.hsla(root.wrongHue / 360, Math.min(0.6, root.fgAccentContainer.hslSaturation), root.fgAccentContainer.hslLightness, 1)
     readonly property color fgWarning: root.fgOnFill
     readonly property color shadow: root.cShadow
     readonly property color scrim: root.alpha(root.cScrim, 0.5)

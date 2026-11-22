@@ -21,6 +21,13 @@ Item {
     property bool showPrefixes: false
     // the settled view height; view.height is mid-animation while the panel resizes
     property real stableHeight: 0
+    // set by the face while one mode's rows trade for another's, out of sight:
+    // rows neither fade nor glide, and the pill lands where it is going. the
+    // view applies the change at its next polish, so this outlasts the swap
+    property bool swapping: false
+    // the pill's one feel, which a keyboard scroll shares: on different clocks
+    // the pill dipped past the last row and came back
+    readonly property int pillMs: Theme.ms(180)
     // the model's count, not the view's: the view only announces a count that
     // differs from its last layout, so 11 rows to none to 11 never reached us
     readonly property int count: list.model ? list.model.count : 0
@@ -211,6 +218,7 @@ Item {
             return ;
 
         scrollAnim.stop();
+        scrollAnim.duration = list.pillMs;
         scrollAnim.from = view.contentY;
         scrollAnim.to = target;
         scrollAnim.start();
@@ -256,16 +264,20 @@ Item {
         z: 0
 
         Behavior on slot {
+            enabled: !list.swapping
+
             NumberAnimation {
-                duration: Theme.ms(180)
+                duration: list.pillMs
                 easing.type: Easing.OutCubic
             }
 
         }
 
         Behavior on slotHeight {
+            enabled: !list.swapping
+
             NumberAnimation {
-                duration: Theme.ms(180)
+                duration: list.pillMs
                 easing.type: Easing.OutCubic
             }
 
@@ -311,6 +323,7 @@ Item {
                     return ;
 
                 scrollAnim.stop();
+                scrollAnim.duration = Theme.ms(220);
                 scrollAnim.from = view.contentY;
                 scrollAnim.to = target;
                 scrollAnim.start();
@@ -318,6 +331,8 @@ Item {
         }
 
         add: Transition {
+            enabled: !list.swapping
+
             NumberAnimation {
                 property: "opacity"
                 from: 0
@@ -358,6 +373,8 @@ Item {
         }
 
         remove: Transition {
+            enabled: !list.swapping
+
             NumberAnimation {
                 property: "opacity"
                 from: 1
@@ -369,6 +386,8 @@ Item {
         }
 
         displaced: Transition {
+            enabled: !list.swapping
+
             NumberAnimation {
                 properties: "y"
                 duration: Theme.durShort

@@ -16,6 +16,8 @@ Item {
     property real size: Theme.dp(64)
     property bool legacy: false
     property bool hovered: false
+    // no fade-in: a grab of it is taken the frame its picture lands
+    property bool still: false
     readonly property bool rig: (Quickshell.env("LUMEN_SHOT") || "") !== ""
     readonly property bool showThumb: glyph.thumb !== "" && thumbImg.status !== Image.Error
     // an app the theme has a tile for wears it; any other app keeps its own icon
@@ -66,6 +68,8 @@ Item {
         color: Theme.surfaceHigh
 
         Behavior on opacity {
+            enabled: !glyph.still
+
             NumberAnimation {
                 duration: Theme.durMedium
             }

@@ -1,6 +1,7 @@
 pragma Singleton
 
 import QtQuick
+import "../parts/Catalog.js" as Catalog
 
 // the greeter's brain, the same shape as the shell's Lockscreen.qml. sddm
 // hands us the auth instead of pam, and there is no session to read media or
@@ -86,23 +87,51 @@ QtObject {
         root.closeSheet();
     }
 
-    // ── the card's sheets ──────────────────────────────────────────────────
-    // "" | "users" | "sessions": what the card has turned over to show
+    // ── the pickers ────────────────────────────────────────────────────────
+    // "" | "users" | "sessions": the picker open over the greeter (Picker.qml)
     property string sheet: ""
+    // what asked for it, so the picker opens beside it
+    property var sheetFrom: null
 
-    function openSheet(kind) {
+    // the layout is left as it is: opening a list is not typing, so the clock
+    // and the field stay where they are under it. it closes on its own the
+    // way the focus does, when nothing happens for a while
+    function openSheet(kind, from) {
         if (!root.acceptsInput)
             return ;
 
-        root.engage();
+        root.sheetFrom = from || null;
         root.sheet = kind;
+        idleBack.restart();
     }
 
     function closeSheet() {
         root.sheet = "";
     }
 
+    // the on-screen keyboard (parts/OnScreenKeys.qml): opened by its chip or
+    // a finger on a field, gone again with the focus
+    property bool keysOpen: false
+
+    function openKeys() {
+        root.keysOpen = true;
+        root.engage();
+    }
+
+    function toggleKeys() {
+        if (root.keysOpen)
+            root.keysOpen = false;
+        else
+            root.openKeys();
+    }
+
     property bool focused: false
+
+    onFocusedChanged: {
+        if (!root.focused)
+            root.keysOpen = false;
+
+    }
 
     // ── auth ───────────────────────────────────────────────────────────────
     // idle | checking | failed | granted
@@ -277,6 +306,141 @@ QtObject {
             return "Good evening";
 
         return "Good night";
+    }
+
+    // ── what the shared parts read (parts/, the lock's own files) ─────────
+    // the picked account's lock layout, checked against the catalogue: a
+    // layout is data, and whatever an account wrote can only choose among
+    // the presets and widgets the theme already has
+    readonly property var layout: {
+        var b = Theme.lockValue("layout");
+        var obj = null;
+        if (b !== "") {
+            try {
+                obj = JSON.parse(Qt.atob(b));
+            } catch (e) {
+                obj = null;
+            }
+        }
+        return Catalog.rebuild(obj);
+    }
+    // the last reading the account's shell took, if it was allowed to send
+    // one. six hours on, it says nothing rather than something stale
+    // decoded once per file, not once per tick
+    readonly property var weatherData: {
+        var b = Theme.lockValue("weather");
+        if (b === "")
+            return null;
+
+        try {
+            var w = JSON.parse(Qt.atob(b));
+            return (w && typeof w === "object") ? w : null;
+        } catch (e) {
+            return null;
+        }
+    }
+    readonly property var weather: {
+        void root.tick;
+        var w = root.weatherData;
+        if (!w)
+            return ({
+                "ok": false
+            });
+
+        try {
+            var age = Date.now() / 1000 - Number(w.at || 0);
+            if (!(age >= 0 && age < 6 * 3600))
+                return ({
+                    "ok": false
+                });
+
+            var at = age > 45 * 60 ? new Date(Number(w.at) * 1000).toLocaleTimeString(Qt.locale(), root.clock24h ? "HH:mm" : "h:mm AP") : "";
+            return {
+                "ok": true,
+                "kind": String(w.kind || "cloud"),
+                "temp": String(w.temp || ""),
+                "desc": String(w.desc || ""),
+                "hi": String(w.hi || ""),
+                "lo": String(w.lo || ""),
+                "feels": String(w.feels || ""),
+                "at": at
+            };
+        } catch (e) {
+            return ({
+                "ok": false
+            });
+        }
+    }
+    readonly property string lockedWord: sddm.hostName !== "" ? sddm.hostName : "Locked"
+    // the shell's catalogues do not reach the login screen: the parts ask
+    // here for their words and get the English, and the machine's locale
+    readonly property var locale: Qt.locale()
+
+    function tr(text, ...args) {
+        return String(text).replace(/%([1-9])/g, (m, n) => {
+            return Number(n) <= args.length ? String(args[Number(n) - 1]) : m;
+        });
+    }
+
+    // the machine as sysfs shows it, handed over by Main.qml
+    property var sys: null
+    readonly property var statusItems: {
+        var s = root.sys;
+        var out = [];
+        if (s && s.hasBattery) {
+            const steps = ["battery_0_bar", "battery_1_bar", "battery_2_bar", "battery_3_bar", "battery_4_bar", "battery_5_bar", "battery_6_bar", "battery_full"];
+            out.push({
+                "key": "battery",
+                "glyph": s.charging ? "battery_charging_full" : steps[Math.max(0, Math.min(7, Math.floor(s.batteryPercent / 100 * 8)))],
+                "label": s.batteryPercent + "%",
+                "short": s.batteryPercent + "%",
+                "tone": s.batteryLow ? "error" : (s.charging ? "success" : "normal")
+            });
+        }
+        // sysfs has no network name, so wi-fi is only ever "Wi-Fi"
+        if (s && s.netKnown)
+            out.push({
+                "key": "network",
+                "glyph": s.ethernet ? "ethernet" : (s.wifiUp ? "wifi" : "wifiOff"),
+                "label": s.ethernet ? "Ethernet" : (s.wifiUp ? "Wi-Fi" : "Offline"),
+                "tone": (s.ethernet || s.wifiUp) ? "accent" : "dim"
+            });
+
+        // rfkill: whether the radio is on, not what is paired to it
+        if (s && s.btState >= 0)
+            out.push({
+                "key": "bluetooth",
+                "glyph": s.btState === 1 ? "bluetooth" : "bluetoothOff",
+                "label": s.btState === 1 ? "Bluetooth on" : "Bluetooth off",
+                "tone": "dim"
+            });
+
+        if (out.length === 0 && sddm.hostName !== "")
+            out.push({
+                "key": "host",
+                "glyph": "host",
+                "label": sddm.hostName,
+                "tone": "dim"
+            });
+
+        // one tap per layout, round and round
+        if (s && s.canCycle)
+            out.push({
+                "key": "keyboard",
+                "glyph": "keyboard",
+                "label": s.layoutName,
+                "short": s.layoutName,
+                "tone": "dim",
+                "interactive": true
+            });
+
+        return out;
+    }
+
+    function activateStatus(key) {
+        if (key === "keyboard" && root.sys && root.sys.canCycle)
+            keyboard.currentLayout = (keyboard.currentLayout + 1) % root.sys.layouts.length;
+
     }
 
     // ── the ways out ───────────────────────────────────────────────────────

@@ -25,5 +25,6 @@ this folder.
 
 **Add a text in the code:** wrap it in `I18n.tr`, then
 `python3 support/i18n-check.py --lang es --write` adds the empty key to the
-catalogue. `--strict` fails on empty ones. `// i18n-skip` marks a string that is
+catalogue; run it for every shipped language (es, ru, de, tr) and fill them
+in. `--strict` fails on empty ones. `// i18n-skip` marks a string that is
 not text to read; `// i18n-dynamic` a first argument that is not a literal.

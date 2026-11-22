@@ -84,7 +84,8 @@ SettingCard {
     function partItem(name) {
         return ({
             "layout": layoutRow,
-            "owntiles": ownTilesRow
+            "owntiles": ownTilesRow,
+            "gamemode": gameModeRow
         })[name] || null;
     }
 
@@ -275,6 +276,22 @@ SettingCard {
 
     }
 
+    SettingRow {
+        visible: card.moduleId === "workspaces"
+        title: I18n.tr("Use legacy workspace")
+        resetKey: "workspacesLegacy"
+        description: I18n.tr("The overview grows out of the module in the middle of the screen, instead of sliding down from the top.")
+        showDivider: false
+
+        M3Switch {
+            checked: Prefs.workspacesLegacy
+            onToggled: (v) => {
+                return Prefs.workspacesLegacy = v;
+            }
+        }
+
+    }
+
     // clock
     SettingRow {
         id: clockDate
@@ -419,7 +436,68 @@ SettingCard {
     }
 
     // notifications
-    // system
+    // system: what its pill shows, then the panel
+    SettingRow {
+        visible: card.moduleId === "system"
+        title: I18n.tr("In the bar")
+        resetKey: "systemBarItems"
+        description: I18n.tr("What the module shows before it is opened. A click on the keyboard layout switches to the next one. At least one stays on.")
+        stacked: true
+        showDivider: false
+
+        M3Chips {
+            id: barItemChips
+
+            // the keyboard layout predates the list and keeps its own pref
+            readonly property var items: String(Prefs.systemBarItems).split(",").filter((k) => {
+                return k !== "";
+            })
+
+            width: parent.width
+            multi: true
+            selectedKeys: (Prefs.showKbLayout ? ["kb"] : []).concat(barItemChips.items)
+            options: [{
+                "key": "kb",
+                "label": I18n.tr("Keyboard layout")
+            }, {
+                "key": "wifi",
+                "label": I18n.tr("Network")
+            }, {
+                "key": "bluetooth",
+                "label": I18n.tr("Bluetooth")
+            }, {
+                "key": "volume",
+                "label": I18n.tr("Volume")
+            }, {
+                "key": "level",
+                "label": I18n.tr("Volume level")
+            }, {
+                "key": "mic",
+                "label": I18n.tr("Microphone")
+            }, {
+                "key": "battery",
+                "label": I18n.tr("Battery")
+            }]
+            onChosen: (key) => {
+                const on = barItemChips.selectedKeys.indexOf(key) !== -1;
+                if (on && barItemChips.selectedKeys.length === 1)
+                    return ;
+
+                if (key === "kb") {
+                    Prefs.showKbLayout = !on;
+                    return ;
+                }
+                const list = on ? barItemChips.items.filter((k) => {
+                    return k !== key;
+                }) : barItemChips.items.concat([key]);
+                Prefs.systemBarItems = ["wifi", "bluetooth", "volume", "level", "mic", "battery"].filter((k) => {
+                    return list.indexOf(k) !== -1;
+                }).join(",");
+            }
+        }
+
+    }
+
     SettingRow {
         id: layoutRow
 
@@ -523,6 +601,65 @@ SettingCard {
             }]
             onPicked: (v) => {
                 return Prefs.systemHeaderButtons = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        id: gameModeRow
+
+        visible: card.moduleId === "system"
+        title: I18n.tr("Game mode: turn on")
+        resetKey: "gameModeOnCmd"
+        description: I18n.tr("Left empty, with the command below, game mode is Lucid's own: animations, blur, shadows, rounded corners and gaps go off, and come back as they were. Or give a shell command of your own for the Game mode tile (add it from the shelf in the System module's layout); it runs through bash, so pipes and && work.")
+        stacked: true
+        showDivider: false
+
+        M3TextField {
+            width: parent.width
+            placeholder: I18n.tr("Lucid's own, or e.g. sudo -n g15-gamemode on")
+            text: Prefs.gameModeOnCmd
+            onAccepted: (v) => {
+                return Prefs.gameModeOnCmd = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "system"
+        title: I18n.tr("Game mode: turn off")
+        resetKey: "gameModeOffCmd"
+        description: I18n.tr("The command that switches your own game mode off again. Leave both empty for Lucid's.")
+        stacked: true
+        showDivider: false
+
+        M3TextField {
+            width: parent.width
+            placeholder: I18n.tr("Lucid's own, or e.g. sudo -n g15-gamemode off")
+            text: Prefs.gameModeOffCmd
+            onAccepted: (v) => {
+                return Prefs.gameModeOffCmd = v;
+            }
+        }
+
+    }
+
+    SettingRow {
+        visible: card.moduleId === "system"
+        title: I18n.tr("Game mode: status check")
+        resetKey: "gameModeStatusCmd"
+        description: I18n.tr("Optional, and not needed for Lucid's own. Exits 0 while your game mode is on, so the toggle stays right when something else (a keybind, a script) changes it. Checked whenever the panel opens.")
+        showDivider: false
+        stacked: true
+
+        M3TextField {
+            width: parent.width
+            placeholder: I18n.tr("e.g. test -f /run/g15-gamemode.state")
+            text: Prefs.gameModeStatusCmd
+            onAccepted: (v) => {
+                return Prefs.gameModeStatusCmd = v;
             }
         }
 

@@ -17,6 +17,9 @@ Item {
     readonly property bool hasTrailing: trailingHolder.children.length > 0
     property int bodyLines: 0
     property bool interactive: true
+    // the lock screen can keep what a notification says to itself: who sent
+    // it shows, the words do not
+    property bool redacted: false
 
     // mirrored, because the notification object dies the moment it is dismissed
     property string appName: ""
@@ -128,6 +131,7 @@ Item {
                 visible: Prefs.notifShowIcons && card.showAvatar
                 size: Theme.dp(28)
                 notification: card.notification
+                iconOnly: card.redacted
             }
 
             // app name, a middot, and how long it has been sitting there
@@ -208,8 +212,8 @@ Item {
         Text {
             width: parent.width - card.textLeft
             x: card.textLeft
-            visible: card.summary !== ""
-            text: card.summary
+            visible: card.summary !== "" || card.redacted
+            text: card.redacted ? I18n.tr("New notification") : card.summary
             color: Theme.text
             font.family: Theme.fontFamily
             font.weight: Font.DemiBold
@@ -223,7 +227,7 @@ Item {
         Text {
             width: parent.width - card.textLeft
             x: card.textLeft
-            visible: card.body !== "" && Prefs.toastShowBody
+            visible: card.body !== "" && Prefs.toastShowBody && !card.redacted
             text: card.body
             color: Theme.subtext
             font.family: Theme.fontFamily

@@ -862,7 +862,7 @@ Singleton {
         "desc": I18n.tr("Workspace pills and the expanded overview"),
         "more": I18n.tr("Special workspaces, which it shows as well, have a page of their own."),
         "page": "workspaces",
-        "options": ["workspacesShown", "workspacesWheel"],
+        "options": ["workspacesShown", "workspacesWheel", "workspacesLegacy"],
         "style": "workspacesStyle",
         "styles": [
             {"key": "dots", "name": I18n.tr("Shapes"), "blurb": I18n.tr("A dot while empty, a square in use, a new shape on the one you are on")},
@@ -950,9 +950,7 @@ Singleton {
         "home": "right",
         "name": I18n.tr("System"),
         "desc": I18n.tr("Battery, volume, brightness and quick settings"),
-        "more": I18n.tr("What it shows in the bar and game mode are on the Bar page in Settings."),
-        "page": "bar",
-        "options": ["systemTiles", "systemTilesRadios", "systemBigTiles", "systemBlocks", "systemGrid", "systemBlockCards", "systemBlockStyles", "systemOwnTiles", "systemSliders", "systemInfo", "systemHeaderButtons"]
+        "options": ["systemBarItems", "showKbLayout", "gameModeOnCmd", "gameModeOffCmd", "gameModeStatusCmd", "systemTiles", "systemTilesRadios", "systemBigTiles", "systemBlocks", "systemGrid", "systemBlockCards", "systemBlockStyles", "systemOwnTiles", "systemSliders", "systemInfo", "systemHeaderButtons"]
     },
     {
         "id": "privacy",
@@ -1063,8 +1061,9 @@ Singleton {
     }
     readonly property var barLayoutGroups: root.parseBarLayout(root.barLayout)
     readonly property var widgetKeys: ["widgetsEnabled", "widgetSnap", "widgetLockAll", "widgetHideFullscreen", "widgetOnTop"]
+    readonly property var lockKeys: ["lockPreset", "lockSlots", "lockWidgetOpts", "lockBlur", "lockDim", "lockTint", "lockDive", "lockIdleBack", "lockOtherScreens", "lockLoginWeather", "lockLoginSync"]
     readonly property var idleKeys: ["idleDim", "idleDimAfter", "idleDimLevel", "idleDimKeyboard", "idleLock", "idleLockAfter", "idleScreenOff", "idleScreenOffAfter", "idleSuspend", "idleSuspendAfter", "idleSuspendOnAc", "idleLockBeforeSleep", "idleWakeAfterSleep", "idleRespectInhibitors", "idleWhileMedia"]
-    readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envCursorShadow", "envLegacyCursor", "envCursorStyle", "envIconTheme", "envLegacyIcons", "envIconSet", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
+    readonly property var envKeys: ["envCursorTheme", "envCursorSize", "envCursorShadow", "envLegacyCursor", "envCursorStyle", "envCursorSet", "envIconTheme", "envLegacyIcons", "envIconSet", "envGtkTheme", "envQtStyle", "envQtPlatformTheme", "envColorScheme", "envFontSync", "envAppFont", "envAppFontSize", "envDocumentFont", "envDocumentFontSize", "envMonoFont", "envMonoFontSize", "envApplyGtk", "envApplyQt", "envApplyHypr", "envAdopted"]
     readonly property var specialKeys: ["specialScratchpad", "specialMusic", "specialComms", "specialTodo", "specialSysmon", "specialMusicApps", "specialCommsApps", "specialTodoApps", "specialSysmonApps", "specialKeepApps", "specialHideOnSwitch", "specialDim", "specialBlur", "specialGaps"]
     readonly property var glassKeys: ["glassApps", "glassValues"]
     readonly property var monitorKeys: ["monitorSetups", "monitorShellScreen", "monitorBarScreen", "monitorDockScreen", "monitorWorkspaces"]
@@ -1255,11 +1254,23 @@ Singleton {
     property alias workspacesStyle: s.workspacesStyle
     property alias workspacesShown: s.workspacesShown
     property alias workspacesWheel: s.workspacesWheel
+    property alias workspacesLegacy: s.workspacesLegacy
     property alias notificationsStyle: s.notificationsStyle
     property alias trayStyle: s.trayStyle
     property alias trayIconColor: s.trayIconColor
     property alias trayHidden: s.trayHidden
     property alias clock24h: s.clock24h
+    property alias lockPreset: s.lockPreset
+    property alias lockSlots: s.lockSlots
+    property alias lockWidgetOpts: s.lockWidgetOpts
+    property alias lockBlur: s.lockBlur
+    property alias lockDim: s.lockDim
+    property alias lockTint: s.lockTint
+    property alias lockDive: s.lockDive
+    property alias lockIdleBack: s.lockIdleBack
+    property alias lockOtherScreens: s.lockOtherScreens
+    property alias lockLoginWeather: s.lockLoginWeather
+    property alias lockLoginSync: s.lockLoginSync
     property alias clockShowDate: s.clockShowDate
     property alias gpsEnabled: s.gpsEnabled
     property alias locationName: s.locationName
@@ -1486,6 +1497,8 @@ Singleton {
     property alias envLegacyCursor: s.envLegacyCursor
     // how lucid's own pointer takes the palette: an id from Pointer.styles
     property alias envCursorStyle: s.envCursorStyle
+    // lucid's own pointer set while legacy cursors are off: an id from Pointer.sets
+    property alias envCursorSet: s.envCursorSet
     property alias envIconTheme: s.envIconTheme
     property alias envLegacyIcons: s.envLegacyIcons
     // lucid's own icon set while legacy icons are off: an id from LucidIcons.sets
@@ -1583,6 +1596,7 @@ Singleton {
         { "key": "dock", "icon": "dock_to_bottom", "keys": "icons size magnify autohide dynamic hiding pinned running indicators tooltips windows notch radius corners rounding padding inset edit mode move handle", "group": I18n.tr("Desktop"), "label": I18n.tr("Dock"), "title": I18n.tr("Dock"), "blurb": I18n.tr("The dock, its icons and how it behaves"), "toggle": "dockEnabled" },
         { "key": "launcher", "icon": "search", "keys": "launcher search spotlight apps results width density rows chips modes prefix engine web emoji run clipboard calculator frequent recent", "group": I18n.tr("Desktop"), "label": I18n.tr("Launcher"), "title": I18n.tr("Launcher"), "blurb": I18n.tr("The search panel the dock opens into: how wide it is, how its results read, and what it looks through") },
         { "key": "widgets", "icon": "widgets", "keys": "desktop cards clock calendar weather presets layouts panel edit mode", "group": I18n.tr("Desktop"), "label": I18n.tr("Widgets"), "title": I18n.tr("Widgets"), "blurb": I18n.tr("Cards you place on the desktop and arrange yourself"), "toggle": "widgetsEnabled" },
+        { "key": "lockscreen", "icon": "lock", "keys": "lock screen login sddm greeter sign in password clock layout preset widgets weather blur dim backdrop notifications media power message wallpaper", "group": I18n.tr("Desktop"), "label": I18n.tr("Lock screen"), "title": I18n.tr("Lock Screen"), "blurb": I18n.tr("How the lock screen and the login screen look: their layout, their widgets and the backdrop under them") },
         { "key": "windows", "icon": "select_window", "keys": "hyprland gaps exclusive zone reserved distance shell bar dock borders border colour rounding corners shadow dim tiling layout dwindle master scrolling focus follow mouse cursor resize snap animations", "group": I18n.tr("Desktop"), "label": I18n.tr("Windows"), "title": I18n.tr("Windows"), "blurb": I18n.tr("How Hyprland draws your windows, tiles them and hands them the focus") },
         { "key": "workspaces", "icon": "workspaces", "keys": "special scratchpad music chat todo sysmon", "group": I18n.tr("Desktop"), "label": I18n.tr("Workspaces"), "title": I18n.tr("Special Workspaces"), "blurb": I18n.tr("Your music, chat, to-do list and a scratchpad, each one key away and gone again with the same key") },
         { "key": "capture", "icon": "screenshot_region", "keys": "screenshot screen capture lucidshot print region window record recording video gif ocr text colour color picker pin pinned markup annotate edit folder clipboard countdown encoder frame rate", "group": I18n.tr("Desktop"), "label": I18n.tr("Screenshots"), "title": I18n.tr("Screenshots and Recording"), "blurb": I18n.tr("What a capture leaves behind, where it goes, and how the screen recorder works") },
@@ -1801,11 +1815,23 @@ Singleton {
         "workspacesStyle": "dots",
         "workspacesShown": 6,
         "workspacesWheel": true,
+        "workspacesLegacy": false,
         "notificationsStyle": "badge",
         "trayStyle": "collapsed",
         "trayIconColor": "original",
         "trayHidden": "",
         "clock24h": false,
+        "lockPreset": "centre",
+        "lockSlots": "",
+        "lockWidgetOpts": "",
+        "lockBlur": 50,
+        "lockDim": 40,
+        "lockTint": true,
+        "lockDive": true,
+        "lockIdleBack": 25,
+        "lockOtherScreens": "clock",
+        "lockLoginWeather": true,
+        "lockLoginSync": true,
         "clockShowDate": true,
         "gpsEnabled": false,
         "locationName": "",
@@ -1969,6 +1995,7 @@ Singleton {
         "envCursorShadow": true,
         "envLegacyCursor": false,
         "envCursorStyle": "dark",
+        "envCursorSet": "nimbus",
         "envIconTheme": "",
         "envLegacyIcons": false,
         "envIconSet": "gravity",
@@ -2089,6 +2116,8 @@ Singleton {
     signal themeDeleteRequested(string id)
 
     signal fontPickerRequested()
+    // the lock screen page's preview, asking the window to grow it into the editor
+    signal lockEditorRequested(var preview)
 
     // "cursor" | "icon" | "gtk" | "qtStyle" | "appFont" | "docFont" | "monoFont"
     signal envPickerRequested(string kind)
@@ -2590,11 +2619,24 @@ Singleton {
             property string workspacesStyle: "dots"
             property int workspacesShown: 6
             property bool workspacesWheel: true
+            // the overview grows out of the module, as it did before it slid down from the top
+            property bool workspacesLegacy: false
             property string notificationsStyle: "badge"
             property string trayStyle: "collapsed"
             property string trayIconColor: "original"
             property string trayHidden: ""
             property bool clock24h: false
+            property string lockPreset: "centre"
+            property string lockSlots: ""
+            property string lockWidgetOpts: ""
+            property int lockBlur: 50
+            property int lockDim: 40
+            property bool lockTint: true
+            property bool lockDive: true
+            property int lockIdleBack: 25
+            property string lockOtherScreens: "clock"
+            property bool lockLoginWeather: true
+            property bool lockLoginSync: true
             property bool clockShowDate: true
             property bool gpsEnabled: false
             property string locationName: ""
@@ -2765,6 +2807,7 @@ Singleton {
             property bool envCursorShadow: true
             property bool envLegacyCursor: false
             property string envCursorStyle: "dark"
+            property string envCursorSet: "nimbus"
             property string envIconTheme: ""
             property bool envLegacyIcons: false
             property string envIconSet: "gravity"

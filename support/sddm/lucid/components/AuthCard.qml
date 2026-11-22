@@ -1,17 +1,29 @@
 import QtQuick
+import "../parts" as Parts
 
 // who is being asked, the field they answer in, and the one line that tells
-// them how it went. picking another account or session turns the card over to
-// a sheet that pushes in from the side, then pushes back out again
+// them how it went. the face, the name and the session chip open the pickers
+// (Picker.qml, over the whole greeter), so choosing never resizes the card or
+// moves the layout around it
 Rectangle {
     id: card
 
-    // 0 the question, 1 a sheet laid over it
-    property real k: Lock.sheet !== "" ? 1 : 0
-    // the sheet keeps its rows while it slides back out
-    property string shown: "users"
-    // the ring only follows the keyboard, never the pointer
-    property bool kbd: false
+    // card | bare | sheet | row, set by the preset's AuthHost (parts/AuthHost.qml):
+    // on a card of its own, straight on the wallpaper, inside the panel
+    // preset's sheet, or as one line, a small face beside the field.
+    // lucidlock/LockAuthCard.qml dresses the same four ways
+    property string authStyle: "card"
+    // 1 at rest where the preset keeps only a hint of the field
+    property real collapse: 0
+    // at rest the hint alone: the face and the name wait for typing
+    property bool quiet: false
+    readonly property bool boxed: card.authStyle === "card"
+    // the face beside the field, and no name: the deck preset's corner
+    readonly property bool inline: card.authStyle === "row"
+    readonly property real mini: Theme.dp(52)
+    readonly property real pad: card.boxed ? Theme.dp(24) : 0
+    readonly property real face: card.authStyle === "sheet" ? Theme.dp(96) : (card.authStyle === "bare" ? Theme.dp(76) : Theme.dp(88))
+    readonly property real who: card.quiet ? Math.max(0, 1 - card.collapse * 1.6) : 1
     readonly property string layoutShort: {
         if (!keyboard.layouts || keyboard.layouts.length === 0)
             return "";
@@ -23,9 +35,7 @@ Rectangle {
         var t = l.shortName !== undefined && l.shortName !== "" ? l.shortName : l.longName;
         return t === undefined ? "" : String(t).substring(0, 6).toUpperCase();
     }
-    readonly property bool hasStatus: Lock.statusText !== "" || card.layoutShort !== "" || keyboard.capsLock
-    readonly property int rows: card.shown === "users" ? Lock.accounts.length + 1 : Lock.sessions.length
-    readonly property int rowH: Theme.dp(60)
+    readonly property bool hasStatus: card.collapse < 0.5 && (Lock.statusText !== "" || card.layoutShort !== "" || keyboard.capsLock || Lock.focused)
 
     function focusInput() {
         if (Lock.sheet !== "")
@@ -43,49 +53,16 @@ Rectangle {
         Lock.closeSheet();
     }
 
-    function activate(i) {
-        if (card.shown === "sessions")
-            Lock.pickSession(i);
-        else if (i >= Lock.accounts.length)
-            Lock.pickOther();
-        else
-            Lock.pick(i);
-    }
-
-    function selectedRow() {
-        if (card.shown === "sessions")
-            return Lock.sessionIndex;
-
-        return Lock.manual ? Lock.accounts.length : Lock.index;
-    }
-
     radius: Theme.shapeXl
-    color: Theme.card
-    clip: true
-    // no Behavior: k is the one clock, and each face already eases its own
-    // height, so easing the sum again would only put the card out of step
-    implicitHeight: Theme.dp(48) + (1 - card.k) * face.implicitHeight + card.k * sheet.implicitHeight
-
-    Behavior on k {
-        NumberAnimation {
-            duration: Theme.ms(460)
-            easing.type: Easing.Bezier
-            easing.bezierCurve: Theme.easeEmphasizedDecel
-        }
-
-    }
+    color: card.boxed ? Theme.card : "transparent"
+    implicitHeight: card.pad * 2 + face.implicitHeight
 
     Connections {
+        // a picker closed: the keys come back to the field
         function onSheetChanged() {
-            if (Lock.sheet === "") {
+            if (Lock.sheet === "")
                 Qt.callLater(card.focusInput);
-                return ;
-            }
-            card.shown = Lock.sheet;
-            card.kbd = false;
-            list.currentIndex = card.selectedRow();
-            list.positionViewAtIndex(list.currentIndex, ListView.Contain);
-            list.forceActiveFocus();
+
         }
 
         function onSwitched() {
@@ -104,13 +81,10 @@ Rectangle {
         }
     }
 
-    // the push is cut to the card by a layer while it runs: the software
-    // renderer lets shapes and masks draw straight past an ancestor's clip
     Item {
         id: pages
 
         anchors.fill: parent
-        layer.enabled: card.k > 0.001 && card.k < 0.999
 
         // ── the question ───────────────────────────────────────────────────────
         Column {
@@ -119,11 +93,10 @@ Rectangle {
             // the scallops turn a little while the password is checked
             property real spin: Lock.phase === "checking" ? 30 : 0
 
-            x: Theme.dp(24) - card.k * card.width
-            y: Theme.dp(24)
-            width: card.width - Theme.dp(48)
+            x: card.pad
+            y: card.pad
+            width: card.width - card.pad * 2
             spacing: Theme.dp(14)
-            visible: card.k < 0.999
 
             Behavior on spin {
                 NumberAnimation {
@@ -136,9 +109,14 @@ Rectangle {
             Item {
                 id: avatarBox
 
+                visible: !card.inline
+                // faded out at rest (the quiet presets), it takes no clicks either
+                enabled: card.who > 0.5
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: Theme.dp(88)
-                height: Theme.dp(88)
+                width: card.face
+                height: card.face
+                opacity: card.who
+                scale: 0.85 + 0.15 * card.who
 
                 // a ring in the avatar's own shape: accent while typing, red on
                 // refusal. it sits behind the face, so the face cuts it to a rim
@@ -147,7 +125,7 @@ Rectangle {
                     width: parent.width + Theme.dp(10)
                     height: parent.height + Theme.dp(10)
                     spin: face.spin
-                    color: Lock.granted ? Theme.success : (Lock.phase === "failed" ? Theme.error : Theme.alpha(Theme.accent, 0.7))
+                    color: Lock.granted ? Theme.accent : (Lock.phase === "failed" ? Theme.wrong : Theme.alpha(Theme.accent, 0.7))
                     opacity: Lock.focused ? 1 : 0
 
                     Behavior on opacity {
@@ -192,7 +170,7 @@ Rectangle {
 
                 TapHandler {
                     enabled: Lock.canSwitchUser
-                    onTapped: Lock.openSheet("users")
+                    onTapped: Lock.openSheet("users", avatarBox)
                 }
 
                 HoverHandler {
@@ -204,12 +182,33 @@ Rectangle {
 
             // the name doubles as the way to someone else, once there is anyone
             Column {
+                visible: !card.inline
+                enabled: card.who > 0.5
                 anchors.horizontalCenter: parent.horizontalCenter
+                opacity: card.who
 
                 Item {
+                    id: nameChip
+
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: nameRow.implicitWidth + (Lock.canSwitchUser ? Theme.dp(30) : 0)
                     height: Theme.dp(40)
+
+                    // tonal while its menu is up
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Theme.pill(height)
+                        color: Theme.accentContainer
+                        opacity: Lock.sheet === "users" ? 1 : 0
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.ms(160)
+                            }
+
+                        }
+
+                    }
 
                     Rectangle {
                         anchors.fill: parent
@@ -236,7 +235,7 @@ Rectangle {
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             text: Lock.manual ? "Other account" : Lock.displayName
-                            color: Theme.text
+                            color: Lock.sheet === "users" ? Theme.fgAccentContainer : Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontHeadlineSm
                             font.variableAxes: Theme.axes(Theme.fontHeadlineSm, 520, 0)
@@ -247,8 +246,20 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             name: "expand"
                             size: Theme.dp(22)
-                            color: Theme.subtext
+                            color: Lock.sheet === "users" ? Theme.fgAccentContainer : Theme.subtext
                             visible: Lock.canSwitchUser
+                            // points the way the list went
+                            rotation: Lock.sheet === "users" ? 180 : 0
+
+                            Behavior on rotation {
+                                NumberAnimation {
+                                    duration: Theme.ms(320)
+                                    easing.type: Easing.BezierSpline
+                                    easing.bezierCurve: Theme.curveDefaultSpatial
+                                }
+
+                            }
+
                         }
 
                     }
@@ -264,7 +275,7 @@ Rectangle {
                         id: nameTap
 
                         enabled: Lock.canSwitchUser
-                        onTapped: Lock.openSheet("users")
+                        onTapped: Lock.openSheet("users", nameChip)
                     }
 
                 }
@@ -282,6 +293,7 @@ Rectangle {
             }
 
             Item {
+                visible: !card.inline
                 width: parent.width
                 height: Theme.dp(6)
             }
@@ -335,6 +347,9 @@ Rectangle {
                     font.variableAxes: Theme.axes(Theme.fontBodyLg, 420, 0)
                     readOnly: !Lock.acceptsInput
                     clip: true
+                    // as in Field: on, it opens the on-screen keyboard at every focus
+                    activeFocusOnPress: false
+                    activeFocusOnTab: true
                     onTextChanged: {
                         Lock.manualName = nameInput.text;
                         if (nameInput.text.length > 0)
@@ -346,12 +361,100 @@ Rectangle {
                     Keys.onDownPressed: pw.focusInput()
                 }
 
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: (mouse) => {
+                        Lock.engage();
+                        nameInput.forceActiveFocus();
+                        if (nameFinger.active)
+                            Lock.openKeys();
+
+                        mouse.accepted = false;
+                    }
+
+                    PointHandler {
+                        id: nameFinger
+
+                        acceptedDevices: PointerDevice.TouchScreen
+                    }
+
+                }
+
             }
 
-            Field {
-                id: pw
-
+            Item {
                 width: parent.width
+                height: Math.max(pw.height, card.inline ? card.mini : 0)
+
+                // the row's own face: a tap on it is the way to another account
+                Item {
+                    visible: card.inline
+                    y: (parent.height - height) / 2
+                    width: card.mini
+                    height: card.mini
+
+                    Cookie {
+                        anchors.centerIn: parent
+                        width: parent.width + Theme.dp(8)
+                        height: parent.height + Theme.dp(8)
+                        spin: face.spin
+                        color: Lock.granted ? Theme.accent : (Lock.phase === "failed" ? Theme.wrong : Theme.alpha(Theme.accent, 0.7))
+                        opacity: Lock.focused ? 1 : 0
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.ms(240)
+                                easing.type: Easing.OutCubic
+                            }
+
+                        }
+
+                    }
+
+                    Avatar {
+                        anchors.fill: parent
+                        source: card.inline ? Lock.avatar : ""
+                        initials: Lock.initials
+                        spin: face.spin
+                        visible: !Lock.manual
+                    }
+
+                    Cookie {
+                        anchors.fill: parent
+                        spin: face.spin
+                        color: Theme.cardHigh
+                        visible: Lock.manual
+
+                        Glyph {
+                            anchors.centerIn: parent
+                            name: "person"
+                            size: Theme.dp(24)
+                            color: Theme.subtext
+                        }
+
+                    }
+
+                    TapHandler {
+                        enabled: Lock.canSwitchUser
+                        onTapped: Lock.openSheet("users", parent)
+                    }
+
+                    HoverHandler {
+                        enabled: Lock.canSwitchUser
+                        cursorShape: Qt.PointingHandCursor
+                    }
+
+                }
+
+                Field {
+                    id: pw
+
+                    x: card.inline ? card.mini + Theme.dp(12) : 0
+                    y: (parent.height - height) / 2
+                    width: parent.width - x
+                    collapse: card.collapse
+                }
+
             }
 
             // the status line: sddm's verdict, the keyboard's warnings, or nothing
@@ -381,9 +484,9 @@ Rectangle {
                     color: {
                         switch (Lock.statusKind) {
                         case "error":
-                            return Theme.error;
+                            return Theme.wrong;
                         case "good":
-                            return Theme.success;
+                            return Theme.accent;
                         case "info":
                             return Theme.subtext;
                         }
@@ -496,6 +599,15 @@ Rectangle {
 
                     }
 
+                    Parts.KeysChip {
+                        anchors.verticalCenter: parent.verticalCenter
+                        theme: Theme
+                        base: Theme.cardHigh
+                        on: Lock.keysOpen
+                        visible: Lock.focused
+                        onToggled: Lock.toggleKeys()
+                    }
+
                 }
 
             }
@@ -505,17 +617,44 @@ Rectangle {
                 width: parent.width
                 height: Theme.dp(40)
                 visible: Lock.sessions.length > 1
+                opacity: 1 - card.collapse
+                // folded away with the field it takes no clicks either
+                enabled: card.collapse < 0.5
 
+                // the session, as an m3 chip: 32dp, 8dp corners, an outline, the
+                // name and a chevron; filled with the tonal container while its
+                // menu is up
                 Rectangle {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: sessionRow.implicitWidth + Theme.dp(32)
-                    height: parent.height
-                    radius: Theme.pill(height)
-                    color: Theme.alpha(Theme.text, sessionTap.pressed ? 0.14 : (sessionHover.hovered ? 0.1 : 0.05))
+                    id: sessionChip
+
+                    readonly property bool open: Lock.sheet === "sessions"
+
+                    anchors.centerIn: parent
+                    width: Math.min(face.width, sessionRow.implicitWidth + Theme.dp(16) + Theme.dp(8))
+                    height: Theme.dp(32)
+                    radius: Theme.shapeSm
+                    color: sessionChip.open ? Theme.accentContainer : "transparent"
+                    border.width: sessionChip.open ? 0 : 1
+                    border.color: Theme.outline
 
                     Behavior on color {
                         ColorAnimation {
-                            duration: Theme.ms(120)
+                            duration: Theme.ms(160)
+                        }
+
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: parent.radius
+                        color: sessionChip.open ? Theme.fgAccentContainer : Theme.text
+                        opacity: sessionTap.pressed ? Theme.statePressed : (sessionHover.hovered ? Theme.stateHover : 0)
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.ms(120)
+                            }
+
                         }
 
                     }
@@ -523,38 +662,29 @@ Rectangle {
                     Row {
                         id: sessionRow
 
-                        anchors.centerIn: parent
+                        x: Theme.dp(16)
+                        anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.dp(8)
 
-                        Glyph {
-                            anchors.verticalCenter: parent.verticalCenter
-                            name: "session"
-                            size: Theme.dp(17)
-                            color: Theme.accent
-                        }
-
-                        // an eliding Text reports its elided width, so the full one
-                        // is read off an unelided twin
-                        Text {
+                        // an eliding Text reports its elided width: the full one is measured
+                        TextMetrics {
                             id: sessionMeasure
 
-                            visible: false
+                            font: sessionText.font
                             text: Lock.sessionName
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontLabelLg
-                            font.variableAxes: Theme.axes(Theme.fontLabelLg, 520, 0)
-                            font.weight: Font.Medium
                         }
 
                         Text {
+                            id: sessionText
+
                             anchors.verticalCenter: parent.verticalCenter
-                            width: Math.min(Math.ceil(sessionMeasure.implicitWidth), face.width - Theme.dp(110))
+                            width: Math.min(Math.ceil(sessionMeasure.advanceWidth) + 1, face.width - Theme.dp(50))
                             text: Lock.sessionName
                             elide: Text.ElideRight
-                            color: Theme.text
+                            color: sessionChip.open ? Theme.fgAccentContainer : Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabelLg
-                            font.variableAxes: Theme.axes(Theme.fontLabelLg, 520, 0)
+                            font.variableAxes: Theme.axes(Theme.fontLabelLg, 500, 0)
                             font.weight: Font.Medium
                         }
 
@@ -562,7 +692,18 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             name: "expand"
                             size: Theme.dp(18)
-                            color: Theme.subtext
+                            color: sessionChip.open ? Theme.fgAccentContainer : Theme.subtext
+                            rotation: sessionChip.open ? 180 : 0
+
+                            Behavior on rotation {
+                                NumberAnimation {
+                                    duration: Theme.ms(320)
+                                    easing.type: Easing.BezierSpline
+                                    easing.bezierCurve: Theme.curveDefaultSpatial
+                                }
+
+                            }
+
                         }
 
                     }
@@ -576,236 +717,7 @@ Rectangle {
                     TapHandler {
                         id: sessionTap
 
-                        onTapped: Lock.openSheet("sessions")
-                    }
-
-                }
-
-            }
-
-        }
-
-        // ── the sheet ──────────────────────────────────────────────────────────
-        Item {
-            id: sheet
-
-            x: Theme.dp(24) + (1 - card.k) * card.width
-            y: Theme.dp(24)
-            width: card.width - Theme.dp(48)
-            implicitHeight: head.height + Theme.dp(10) + list.height
-            visible: card.k > 0.001
-
-            Item {
-                id: head
-
-                width: parent.width
-                height: Theme.dp(44)
-
-                IconButton {
-                    id: back
-
-                    anchors.left: parent.left
-                    anchors.leftMargin: -Theme.dp(6)
-                    anchors.verticalCenter: parent.verticalCenter
-                    diameter: Theme.dp(44)
-                    glyph: "back"
-                    glyphSize: Theme.dp(22)
-                    glyphColor: Theme.text
-                    onClicked: Lock.closeSheet()
-                }
-
-                Text {
-                    anchors.left: back.right
-                    anchors.leftMargin: Theme.dp(6)
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: card.shown === "sessions" ? "Choose a session" : "Choose an account"
-                    color: Theme.text
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontTitleMd
-                    font.variableAxes: Theme.axes(Theme.fontTitleMd, 520, 0)
-                    font.weight: Font.Medium
-                }
-
-            }
-
-            ListView {
-                id: list
-
-                anchors.top: head.bottom
-                anchors.topMargin: Theme.dp(10)
-                width: parent.width
-                // five and a half rows show there is more without a scrollbar
-                height: Math.min(card.rows, 5.5) * (card.rowH + list.spacing) - list.spacing
-                spacing: Theme.dp(4)
-                clip: true
-                model: card.rows
-                boundsBehavior: Flickable.StopAtBounds
-                keyNavigationEnabled: true
-                Keys.onUpPressed: (event) => {
-                    card.kbd = true;
-                    event.accepted = false;
-                }
-                Keys.onDownPressed: (event) => {
-                    card.kbd = true;
-                    event.accepted = false;
-                }
-                Keys.onReturnPressed: card.activate(list.currentIndex)
-                Keys.onEnterPressed: card.activate(list.currentIndex)
-                Keys.onSpacePressed: card.activate(list.currentIndex)
-                Keys.onEscapePressed: Lock.closeSheet()
-                Keys.onLeftPressed: Lock.closeSheet()
-                Keys.onPressed: (event) => {
-                    if (event.key === Qt.Key_Backspace) {
-                        Lock.closeSheet();
-                        event.accepted = true;
-                    }
-                }
-
-                delegate: Item {
-                    id: row
-
-                    required property int index
-                    readonly property bool isUser: card.shown === "users"
-                    readonly property bool other: row.isUser && row.index >= Lock.accounts.length
-                    readonly property var acct: row.isUser && !row.other ? Lock.accounts[row.index] : null
-                    readonly property var sess: !row.isUser ? Lock.sessions[row.index] : null
-                    readonly property bool picked: card.selectedRow() === row.index
-                    readonly property string title: row.other ? "Other account" : (row.acct ? Lock.nameOf(row.acct) : (row.sess ? row.sess.name : ""))
-                    readonly property string subtitle: {
-                        if (row.other)
-                            return "Sign in with a username";
-
-                        if (row.acct)
-                            return row.acct.name !== row.title ? row.acct.name : "";
-
-                        return row.sess ? row.sess.comment : "";
-                    }
-
-                    width: ListView.view.width
-                    height: card.rowH
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: Theme.shapeLg
-                        color: row.picked ? Theme.cardHigh : "transparent"
-                    }
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: Theme.shapeLg
-                        color: Theme.text
-                        opacity: rowTap.pressed ? Theme.statePressed : (rowHover.hovered ? Theme.stateHover : 0)
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Theme.ms(120)
-                            }
-
-                        }
-
-                    }
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: Theme.shapeLg
-                        color: "transparent"
-                        border.width: 2
-                        border.color: Theme.accent
-                        visible: card.kbd && row.ListView.isCurrentItem
-                    }
-
-                    Item {
-                        id: lead
-
-                        anchors.left: parent.left
-                        anchors.leftMargin: Theme.dp(10)
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Theme.dp(40)
-                        height: Theme.dp(40)
-
-                        Avatar {
-                            anchors.fill: parent
-                            source: row.acct ? row.acct.icon : ""
-                            initials: row.acct ? Lock.initialsOf(Lock.nameOf(row.acct)) : ""
-                            visible: !!row.acct
-                        }
-
-                        Cookie {
-                            anchors.fill: parent
-                            shape: row.other ? "cookie12" : "circle"
-                            color: row.picked && !row.other ? Theme.accentContainer : Theme.cardHigh
-                            visible: !row.acct
-
-                            Glyph {
-                                anchors.centerIn: parent
-                                name: row.other ? "personAdd" : "session"
-                                size: Theme.dp(20)
-                                color: row.picked && !row.other ? Theme.fgAccentContainer : Theme.subtext
-                            }
-
-                        }
-
-                    }
-
-                    Column {
-                        anchors.left: lead.right
-                        anchors.leftMargin: Theme.dp(14)
-                        anchors.right: tick.left
-                        anchors.rightMargin: Theme.dp(10)
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: Theme.dp(1)
-
-                        Text {
-                            width: parent.width
-                            text: row.title
-                            elide: Text.ElideRight
-                            color: Theme.text
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontTitleSm
-                            font.variableAxes: Theme.axes(Theme.fontTitleSm, row.picked ? 600 : 500, 0)
-                            font.weight: row.picked ? Font.DemiBold : Font.Medium
-                        }
-
-                        Text {
-                            width: parent.width
-                            text: row.subtitle
-                            elide: Text.ElideRight
-                            color: Theme.subtextDim
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontBodySm
-                            font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
-                            visible: row.subtitle !== ""
-                        }
-
-                    }
-
-                    Glyph {
-                        id: tick
-
-                        anchors.right: parent.right
-                        anchors.rightMargin: Theme.dp(16)
-                        anchors.verticalCenter: parent.verticalCenter
-                        name: "check"
-                        size: Theme.dp(20)
-                        color: Theme.accent
-                        opacity: row.picked ? 1 : 0
-                    }
-
-                    HoverHandler {
-                        id: rowHover
-
-                        cursorShape: Qt.PointingHandCursor
-                        onHoveredChanged: {
-                            if (rowHover.hovered)
-                                card.kbd = false;
-
-                        }
-                    }
-
-                    TapHandler {
-                        id: rowTap
-
-                        onTapped: card.activate(row.index)
+                        onTapped: Lock.openSheet("sessions", sessionChip)
                     }
 
                 }

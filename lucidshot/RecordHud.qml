@@ -46,11 +46,30 @@ PanelWindow {
     visible: (hud.counting || (hud.running && !Capture.hidden)) && Monitors.surfacesUp
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: WlrLayer.Overlay
+    // a moment on the top layer and back puts the controls last in the overlay
+    // layer's stack, so a recording's stop stays reachable over the lock
+    // screen's style editor opened after it
+    WlrLayershell.layer: restack.running ? WlrLayer.Top : WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     WlrLayershell.namespace: "lucid-shot-rec"
     mask: hud.counting ? countRegion : pillRegion
     BackgroundEffect.blurRegion: Theme.blurAmount > 0 && hud.running && !Capture.hidden ? pillBlur : null
+    Connections {
+        function onEditorSettledChanged() {
+            if (LockStyle.editorSettled && hud.visible)
+                restack.restart();
+
+        }
+
+        target: LockStyle
+    }
+
+    Timer {
+        id: restack
+
+        interval: 80
+    }
+
     onRunningChanged: {
         if (!hud.running) {
             hud.dragX = -1;

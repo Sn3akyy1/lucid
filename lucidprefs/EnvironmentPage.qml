@@ -28,7 +28,8 @@ Column {
     }]
     // unset is modules/plugins.lua's own, which tilts
     readonly property bool tiltOn: HyprConfig.mine["lucid.cursor_tilt"] !== false
-    readonly property bool shakeOn: HyprConfig.bool("plugin.dynamic_cursors.shake.enabled", true)
+    // unset is modules/plugins.lua's own, which finds it
+    readonly property bool findOn: HyprConfig.mine["lucid.find_pointer"] !== false
     readonly property bool motionReady: HyprConfig.moduleInstalled && HyprConfig.cursorPlugin
     readonly property string motionReason: {
         if (!HyprConfig.liveRead)
@@ -57,13 +58,29 @@ Column {
         SettingRow {
             title: I18n.tr("Use legacy cursor theme")
             resetKey: "envLegacyCursor"
-            description: I18n.tr("Turns off Lucid's own pointer, Bibata Modern drawn in your palette's colours, and uses a cursor theme installed on this machine instead.")
+            description: I18n.tr("Turns off Lucid's own pointers, drawn in your palette's colours, and uses a cursor theme installed on this machine instead.")
 
             M3Switch {
                 checked: Prefs.envLegacyCursor
                 onToggled: (v) => {
                     return Prefs.envLegacyCursor = v;
                 }
+            }
+
+        }
+
+        // lucid's sets while its own pointer is on, the installed themes once it is off
+        SettingRow {
+            title: I18n.tr("Cursor theme")
+            resetKey: Prefs.envLegacyCursor ? "" : "envCursorSet"
+            description: Prefs.envLegacyCursor ? I18n.tr("Applied to GTK, Qt, XWayland and Hyprland at once. The pointer on screen changes as soon as you pick one; applications you open later pick it up from the environment.") : I18n.tr("How Lucid draws the pointer, in your palette's colours. Nimbus has Bibata Modern's soft, rounded shapes and a ring that spins while something loads.")
+            warning: Prefs.envLegacyCursor && Env.cursorMissing ? I18n.tr("“%1” is not installed on this machine any more.", Prefs.envCursorTheme) : ""
+
+            M3Button {
+                text: Prefs.envLegacyCursor ? page.orUnset(Prefs.envCursorTheme) : Pointer.nameOf(Prefs.envCursorSet)
+                variant: "tonal"
+                enabled: !Prefs.envLegacyCursor || Env.cursorThemes.length > 0
+                onClicked: Prefs.envPickerRequested(Prefs.envLegacyCursor ? "cursor" : "cursorSet")
             }
 
         }
@@ -119,26 +136,11 @@ Column {
         }
 
         SettingRow {
-            visible: Prefs.envLegacyCursor
-            title: I18n.tr("Cursor theme")
-            description: I18n.tr("Applied to GTK, Qt, XWayland and Hyprland at once. The pointer on screen changes as soon as you pick one; applications you open later pick it up from the environment.")
-            warning: Env.cursorMissing ? I18n.tr("“%1” is not installed on this machine any more.", Prefs.envCursorTheme) : ""
-
-            M3Button {
-                text: page.orUnset(Prefs.envCursorTheme)
-                variant: "tonal"
-                enabled: Env.cursorThemes.length > 0
-                onClicked: Prefs.envPickerRequested("cursor")
-            }
-
-        }
-
-        SettingRow {
             title: I18n.tr("Pointer shadow")
             resetKey: "envCursorShadow"
             enabled: !Prefs.envLegacyCursor || (Env.shadowCapable && !Env.shadowBuilding)
             disabledReason: Env.shadowBuilding ? I18n.tr("Rendering the pointer without its shadow\u2026 this takes a few seconds.") : (Env.shadowReason !== "" ? "\u201c" + Prefs.envCursorTheme + "\u201d " + Env.shadowReason + "." : I18n.tr("Reading the theme\u2019s sources\u2026"))
-            description: Prefs.envLegacyCursor ? I18n.tr("The soft shade behind the pointer. Hyprland has no switch for it \u2014 it is painted into the theme itself \u2014 so turning it off renders the theme again from its vector sources and points everything at that copy. The pointer keeps its exact shape, sizes and hotspots.") : I18n.tr("A soft shade under the pointer, which lifts it off whatever it passes over. Bibata draws none of its own.")
+            description: Prefs.envLegacyCursor ? I18n.tr("The soft shade behind the pointer. Hyprland has no switch for it \u2014 it is painted into the theme itself \u2014 so turning it off renders the theme again from its vector sources and points everything at that copy. The pointer keeps its exact shape, sizes and hotspots.") : I18n.tr("A soft shade under the pointer, which lifts it off whatever it passes over.")
             warning: Prefs.envLegacyCursor ? Env.shadowError : ""
 
             M3Switch {
@@ -318,12 +320,12 @@ Column {
         SettingRow {
             visible: HyprConfig.liveRead && !HyprConfig.cursorPlugin && HyprConfig.pluginScriptFound
             title: I18n.tr("Cursor plugin")
-            description: HyprConfig.pluginBuilding ? I18n.tr("Building it for the Hyprland on this machine\u2026 this takes about a minute.") : I18n.tr("Tilting and shake to find come from hypr-dynamic-cursors, a Hyprland plugin Lucid builds here for the exact Hyprland you have. It needs git and base-devel, and no password.")
+            description: HyprConfig.pluginBuilding ? I18n.tr("Building it for the Hyprland on this machine… this takes about a minute.") : I18n.tr("Tilting and finding the pointer come from hypr-dynamic-cursors, a Hyprland plugin Lucid builds here for the exact Hyprland you have. It needs git and base-devel, and no password.")
             warning: HyprConfig.pluginError
             showDivider: false
 
             M3Button {
-                text: HyprConfig.pluginBuilding ? I18n.tr("Building\u2026") : I18n.tr("Build and load")
+                text: HyprConfig.pluginBuilding ? I18n.tr("Building…") : I18n.tr("Build and load")
                 variant: "tonal"
                 enabled: !HyprConfig.pluginBuilding
                 onClicked: HyprConfig.buildCursorPlugin()
@@ -331,44 +333,46 @@ Column {
 
         }
 
-    // the same plugin grows the pointer when it is shaken, drawn sharp from a
-    // large copy of the theme it keeps
+    }
+
+    // a tap of ctrl and the same plugin grows the pointer for a moment, drawn
+    // sharp from a large copy of the theme it keeps. modules/plugins.lua binds it
     SettingCard {
-        title: I18n.tr("SHAKE TO FIND")
+        title: I18n.tr("FIND THE POINTER")
         subtitle: page.motionReason
 
         HyprRow {
-            id: shakeRow
+            id: findRow
 
-            title: I18n.tr("Grow the pointer when you shake it")
-            option: "plugin.dynamic_cursors.shake.enabled"
-            description: I18n.tr("Shake the pointer and it grows for a moment, so it is easy to find on a busy screen. It stays sharp however large it gets.")
+            title: I18n.tr("Tap Ctrl to find the pointer")
+            option: "lucid.find_pointer"
+            description: I18n.tr("Press either Ctrl key on its own and let go, and the pointer grows for a moment so it is easy to spot on a busy screen. Ctrl held with another key, a click or the scroll wheel never sets it off, and applications still get their Ctrl.")
             available: page.motionReady
             unavailableReason: page.motionReason
 
             M3Switch {
-                enabled: shakeRow.enabled
-                checked: page.shakeOn
+                enabled: findRow.enabled
+                checked: page.findOn
                 onToggled: (v) => {
-                    return HyprConfig.set("plugin.dynamic_cursors.shake.enabled", v);
+                    return HyprConfig.set("lucid.find_pointer", v);
                 }
             }
 
         }
 
         HyprRow {
-            id: shakeSize
+            id: findSize
 
             title: I18n.tr("How big it grows")
             option: "plugin.dynamic_cursors.shake.base"
-            description: I18n.tr("Its size the moment a shake is noticed, as a multiple of the pointer's own. Keep shaking and it grows a little more.")
-            available: page.motionReady && page.shakeOn
-            unavailableReason: page.motionReady ? I18n.tr("Turn growing on to set how it grows.") : page.motionReason
+            description: I18n.tr("As a multiple of the pointer's own size. It stays sharp however large it gets.")
+            available: page.motionReady && page.findOn
+            unavailableReason: page.motionReady ? I18n.tr("Turn the finder on to set how it grows.") : page.motionReason
             stacked: true
 
             M3Slider {
                 width: parent.width
-                enabled: shakeSize.enabled
+                enabled: findSize.enabled
                 from: 1.5
                 to: 6
                 stepSize: 0.5
@@ -383,57 +387,30 @@ Column {
         }
 
         HyprRow {
-            id: shakeHard
-
-            title: I18n.tr("How hard to shake")
-            option: "plugin.dynamic_cursors.shake.threshold"
-            description: I18n.tr("Lower grows on a small shake, higher waits for a big one, so it never grows by accident.")
-            available: page.motionReady && page.shakeOn
-            unavailableReason: page.motionReady ? I18n.tr("Turn growing on to set how it grows.") : page.motionReason
-            stacked: true
-
-            M3Slider {
-                width: parent.width
-                enabled: shakeHard.enabled
-                from: 2
-                to: 12
-                stepSize: 0.5
-                decimals: 1
-                value: HyprConfig.num("plugin.dynamic_cursors.shake.threshold", 6)
-                onMoved: (v) => {
-                    return HyprConfig.set("plugin.dynamic_cursors.shake.threshold", Math.round(v * 2) / 2);
-                }
-            }
-
-        }
-
-        HyprRow {
-            id: shakeLong
+            id: findLong
 
             title: I18n.tr("Stays big for")
             option: "plugin.dynamic_cursors.shake.timeout"
-            description: I18n.tr("How long it stays grown once you stop shaking.")
-            available: page.motionReady && page.shakeOn
-            unavailableReason: page.motionReady ? I18n.tr("Turn growing on to set how it grows.") : page.motionReason
+            description: I18n.tr("How long it stays grown before it shrinks back.")
+            available: page.motionReady && page.findOn
+            unavailableReason: page.motionReady ? I18n.tr("Turn the finder on to set how it grows.") : page.motionReason
             showDivider: false
             stacked: true
 
             M3Slider {
                 width: parent.width
-                enabled: shakeLong.enabled
+                enabled: findLong.enabled
                 from: 250
                 to: 5000
                 stepSize: 250
                 suffix: " ms"
-                value: HyprConfig.num("plugin.dynamic_cursors.shake.timeout", 2000)
+                value: HyprConfig.num("plugin.dynamic_cursors.shake.timeout", 1000)
                 onMoved: (v) => {
                     return HyprConfig.set("plugin.dynamic_cursors.shake.timeout", Math.round(v));
                 }
             }
 
         }
-
-    }
 
     }
 

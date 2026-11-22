@@ -18,7 +18,7 @@ Singleton {
     property bool moduleProbed: false
 
     // every option a page shows, read back in one hyprctl call
-    readonly property var keys: ["general.gaps_in", "general.gaps_out", "general.border_size", "general.col.active_border", "general.col.inactive_border", "decoration.rounding", "decoration.rounding_power", "decoration.shadow.enabled", "decoration.shadow.range", "decoration.shadow.render_power", "decoration.dim_inactive", "decoration.dim_strength", "general.layout", "dwindle.split_width_multiplier", "dwindle.force_split", "dwindle.default_split_ratio", "dwindle.preserve_split", "master.orientation", "master.mfact", "master.new_status", "master.new_on_top", "scrolling.column_width", "scrolling.fullscreen_on_one_column", "input.follow_mouse", "misc.focus_on_activate", "cursor.no_warps", "cursor.warp_on_change_workspace", "general.resize_on_border", "general.extend_border_grab_area", "general.snap.enabled", "general.snap.window_gap", "general.snap.monitor_gap", "cursor.hide_on_key_press", "cursor.inactive_timeout", "animations.enabled", "input.kb_layout", "input.kb_variant", "input.kb_options", "input.repeat_rate", "input.repeat_delay", "input.numlock_by_default", "input.sensitivity", "input.accel_profile", "input.natural_scroll", "input.scroll_factor", "input.left_handed", "input.touchpad.tap-to-click", "input.touchpad.natural_scroll", "input.touchpad.scroll_factor", "input.touchpad.disable_while_typing", "input.touchpad.clickfinger_behavior", "input.touchpad.tap-and-drag", "input.touchpad.middle_button_emulation", "gestures.workspace_swipe_distance", "gestures.workspace_swipe_invert", "gestures.workspace_swipe_cancel_ratio", "gestures.workspace_swipe_min_speed_to_force", "gestures.workspace_swipe_forever", "gestures.workspace_swipe_create_new", "plugin.dynamic_cursors.mode", "plugin.dynamic_cursors.tilt.limit", "plugin.dynamic_cursors.tilt.full", "plugin.dynamic_cursors.tilt.window", "plugin.dynamic_cursors.tilt.activation", "plugin.dynamic_cursors.shake.enabled", "plugin.dynamic_cursors.shake.base", "plugin.dynamic_cursors.shake.threshold", "plugin.dynamic_cursors.shake.timeout"]
+    readonly property var keys: ["general.gaps_in", "general.gaps_out", "general.border_size", "general.col.active_border", "general.col.inactive_border", "decoration.rounding", "decoration.rounding_power", "decoration.shadow.enabled", "decoration.shadow.range", "decoration.shadow.render_power", "decoration.dim_inactive", "decoration.dim_strength", "general.layout", "dwindle.split_width_multiplier", "dwindle.force_split", "dwindle.default_split_ratio", "dwindle.preserve_split", "master.orientation", "master.mfact", "master.new_status", "master.new_on_top", "scrolling.column_width", "scrolling.fullscreen_on_one_column", "input.follow_mouse", "misc.focus_on_activate", "cursor.no_warps", "cursor.warp_on_change_workspace", "general.resize_on_border", "general.extend_border_grab_area", "general.snap.enabled", "general.snap.window_gap", "general.snap.monitor_gap", "cursor.hide_on_key_press", "cursor.inactive_timeout", "animations.enabled", "input.kb_layout", "input.kb_variant", "input.kb_options", "input.repeat_rate", "input.repeat_delay", "input.numlock_by_default", "input.sensitivity", "input.accel_profile", "input.natural_scroll", "input.scroll_factor", "input.left_handed", "input.touchpad.tap-to-click", "input.touchpad.natural_scroll", "input.touchpad.scroll_factor", "input.touchpad.disable_while_typing", "input.touchpad.clickfinger_behavior", "input.touchpad.tap-and-drag", "input.touchpad.middle_button_emulation", "gestures.workspace_swipe_distance", "gestures.workspace_swipe_invert", "gestures.workspace_swipe_cancel_ratio", "gestures.workspace_swipe_min_speed_to_force", "gestures.workspace_swipe_forever", "gestures.workspace_swipe_create_new", "plugin.dynamic_cursors.mode", "plugin.dynamic_cursors.tilt.limit", "plugin.dynamic_cursors.tilt.full", "plugin.dynamic_cursors.tilt.window", "plugin.dynamic_cursors.tilt.activation", "plugin.dynamic_cursors.shake.base", "plugin.dynamic_cursors.shake.timeout"]
     // not Hyprland options but choices Lucid turns into some
     readonly property var borderModes: [{
         "key": "none",
@@ -149,8 +149,12 @@ Singleton {
     readonly property var choiceDefaults: ({
         "lucid.solo": false,
         "lucid.cursor_tilt": true,
-        "lucid.cursor_tilt_apps": true
+        "lucid.cursor_tilt_apps": true,
+        "lucid.find_pointer": true
     })
+    // shake to find is gone: tapping ctrl finds the pointer, and shaking stays
+    // off (modules/plugins.lua). what an older Settings set for it is dropped
+    readonly property var retired: ["plugin.dynamic_cursors.shake.enabled", "plugin.dynamic_cursors.shake.threshold"]
 
     // a value that changes nothing, so Settings need not keep it
     function isDefault(key, v) {
@@ -196,7 +200,7 @@ Singleton {
     readonly property var wanted: {
         const out = {};
         for (const k in root.mine) {
-            if (k.indexOf("lucid.") !== 0)
+            if (k.indexOf("lucid.") !== 0 && root.retired.indexOf(k) === -1)
                 out[k] = root.mine[k];
 
         }
@@ -269,6 +273,10 @@ Singleton {
         if (root.mine["lucid.cursor_tilt_apps"] !== undefined)
             out += "    cursor_tilt_apps = " + (root.mine["lucid.cursor_tilt_apps"] === true ? "true" : "false") + ",\n";
 
+        // whether a tap of ctrl grows the pointer, bound in modules/plugins.lua
+        if (root.mine["lucid.find_pointer"] !== undefined)
+            out += "    find_pointer = " + (root.mine["lucid.find_pointer"] === true ? "true" : "false") + ",\n";
+
         // one colour for every pinned window, in focus or not; a gradient only
         // on the focused one, as its own rule: given in one rule, Hyprland
         // keeps the out-of-focus colour but never draws it
@@ -289,7 +297,7 @@ Singleton {
     // options the cursor plugin reads once per config load, so a change to one
     // takes a reload rather than a live apply
     readonly property var reloadKeys: ["plugin.dynamic_cursors.tilt.activation"]
-    // the size shake to find grows to: the plugin loads its large copy of the
+    // the size the finder grows the pointer to: the plugin loads its large copy of the
     // theme again after it changes, which has to go through cursortheme.py's lock
     readonly property var nudgeKeys: ["plugin.dynamic_cursors.shake.base"]
 

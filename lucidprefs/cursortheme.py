@@ -16,17 +16,17 @@ kinds of reader find it:
   fade '<json>'    walk Hyprland's pointer from "from" to "colours" over
                    "duration" ms, then build in the new colours
   retire           legacy cursors are on: hide the theme from hyprcursor
-  nudge            shake to find's size changed: let the plugin load again now
+  nudge            the finder's size changed: let the plugin load again now
   settle           Hyprland read its config again: hold the next setcursor
   probe            what is on disk: its colours, sizes and shadow
 
-The json carries colours (see ROLES), size and shadow. Every command ends on
-one JSON object. Before it come a {"step"} line for each fade step and a
-{"swap"} line when Hyprland is pointed at the finished theme: Hyprland keeps
-drawing the image it has until the shape asked for changes, so those are the
-shell's cue to have its windows ask again. {"hires"} lines follow a reload of
-the plugin's copy for shake to find, which it only takes up when a shape is
-asked for, for the same cue.
+The json carries the set (see SETS), colours (see ROLES), size and shadow.
+Every command ends on one JSON object. Before it come a {"step"} line for each
+fade step and a {"swap"} line when Hyprland is pointed at the finished theme:
+Hyprland keeps drawing the image it has until the shape asked for changes, so
+those are the shell's cue to have its windows ask again. {"hires"} lines follow
+a reload of the plugin's large copy, which the pointer finder (tap ctrl) grows
+from and which it only takes up when a shape is asked for, for the same cue.
 """
 
 import hashlib
@@ -44,7 +44,10 @@ import zipfile
 NAME = "lucid-cursors"
 TITLE = "Lucid"
 # bump when the drawing changes, so a theme drawn by an older one is drawn again
-DESIGN = 8
+DESIGN = 9
+# lucid's own pointer sets, drawn into the one theme above. Pointer.qml names them;
+# the first is the default. only nimbus so far
+SETS = ("nimbus",)
 
 HOME = os.path.expanduser("~")
 DATA = os.environ.get("XDG_DATA_HOME") or os.path.join(HOME, ".local", "share")
@@ -92,8 +95,8 @@ OWN = {
                      '<rect x="26" y="116" width="204" height="24" rx="12" fill="#00FF00" stroke="#0000FF" stroke-width="17" paint-order="stroke"/></svg>',
 }
 # the busy pointers are lucid's own: windows' ring rather than bibata's pie,
-# an arc in the accent (bibata's ring blue, so it maps like the rest) inside
-# an edge of the body colour, running ahead and catching up as it turns
+# an arc in the body colour inside an outline, drawn like the arrow, running
+# ahead and catching up as it turns
 SPIN_FRAMES = 48
 SPIN_DELAY = 30
 SVG_OPEN = '<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">'
@@ -119,10 +122,20 @@ def _spin(t, smin=30.0, smax=260.0):
     return tail, head
 
 
+def _outlined(d, w):
+    """a path stroked w wide in the body colour, inside bibata's 17-unit outline"""
+    return ('<path d="%s" stroke="#0000FF" stroke-width="%g" stroke-linecap="round"/>'
+            '<path d="%s" stroke="#00FF00" stroke-width="%g" stroke-linecap="round"/>' % (d, w + 17, d, w))
+
+
 def ring(cx, cy, r, w, t):
-    d = _arc(cx, cy, r, *_spin(t))
-    return ('<path d="%s" stroke="#00FF00" stroke-width="%g" stroke-linecap="round"/>'
-            '<path d="%s" stroke="#32A0DA" stroke-width="%g" stroke-linecap="round"/>' % (d, w + 17, d, w))
+    return _outlined(_arc(cx, cy, r, *_spin(t)), w)
+
+
+# not-allowed is lucid's own too: a plain x, no circle, in the arrow's colours
+def cross(reach=62, w=40):
+    a, b = 128 - reach, 128 + reach
+    return SVG_OPEN + _outlined("M%g %gL%g %gM%g %gL%g %g" % (a, a, b, b, b, a, a, b), w) + "</svg>"
 
 
 def inner(src):
@@ -292,6 +305,10 @@ def shapes():
             "aliases": aliases,
             "delay": int(c.get("x11_delay", fallback.get("x11_delay", DELAY))),
         }
+    # bibata's x_cursor is black and white, outside the palette: the same x
+    for name in ("crossed_circle", "X_cursor"):
+        if name in S:
+            S[name]["frames"] = [cross()]
     steps = [i / SPIN_FRAMES for i in range(SPIN_FRAMES)]
     if "wait" in S:
         S["wait"].update(frames=[SVG_OPEN + ring(128, 128, 84, 38, t) + "</svg>" for t in steps], delay=SPIN_DELAY)
@@ -517,7 +534,7 @@ def write_previews(S, cols, shadow):
     for name in sorted(set(PREVIEW) | set(drawn(S).values())):
         if name in S:
             frames = S[name]["frames"]
-            # 192: the shell draws them as big as shake to find grows the pointer
+            # 192: the shell draws them as big as the finder grows the pointer
             write(os.path.join(d, name + ".png"), png(raster(svg(frames[len(frames) // 3], cols, shadow), 192)))
             keep.add(name + ".png")
     tidy(d, keep)
@@ -674,8 +691,8 @@ HIRES_POKES = (0.15, 0.5)
 
 
 def nudge():
-    """the size shake to find grows to has changed: the plugin loads its copy
-    again at the next setcursor, so make that one now, under the lock"""
+    """the size the finder grows the pointer to has changed: the plugin loads its
+    copy again at the next setcursor, so make that one now, under the lock"""
     try:
         with open(LAST, encoding="utf-8") as fh:
             name, size = fh.read().split()
@@ -720,6 +737,11 @@ def side_of(size, scale):
     return int(round(size * scale / NOMINAL))
 
 
+def set_of(spec):
+    s = str((spec or {}).get("set") or "")
+    return s if s in SETS else SETS[0]
+
+
 def say(**kw):
     print(json.dumps(kw), flush=True)
 
@@ -749,13 +771,13 @@ def build(spec, apply=True, settle=0.0, S=None):
     tidy(os.path.join(THEME, "cursors"), keep)
     write_previews(S, cols, shadow)
     write(os.path.join(THEME, "index.theme"), (
-        "[Icon Theme]\nName=%s\nComment=Bibata Modern (GPL-3.0, github.com/ful1e5/Bibata_Cursor), "
-        "drawn in the palette's colours\n" % TITLE).encode())
+        "[Icon Theme]\nName=%s\nComment=%s: Bibata Modern (GPL-3.0, github.com/ful1e5/Bibata_Cursor), "
+        "drawn in the palette's colours\n" % (TITLE, set_of(spec).capitalize())).encode())
     pics = drawn(S)
     # each drawn picture's hotspot, as a fraction of its side
     hot = {n: [round(S[n]["hot"][0] / GRID, 4), round(S[n]["hot"][1] / GRID, 4)] for n in set(pics.values())}
-    st = {"design": DESIGN, "colours": cols, "shadow": shadow, "size": size, "sizes": sizes, "pictures": pics,
-          "hotspots": hot}
+    st = {"design": DESIGN, "set": set_of(spec), "colours": cols, "shadow": shadow, "size": size, "sizes": sizes,
+          "pictures": pics, "hotspots": hot}
     write(STAMP, (json.dumps(st, indent=1) + "\n").encode())
     if live:
         nudge_gtk()
@@ -784,8 +806,8 @@ def fade(spec):
     ms = max(0, int(spec.get("duration", 1000)))
     shadow = spec.get("shadow", True) is not False
     size = max(8, min(256, int(spec.get("size") or 24)))
-    if (old is None or old.get("design") != DESIGN or not os.path.isfile(os.path.join(THEME, "manifest.hl"))
-            or ms == 0 or fr == to or not hyprland()):
+    if (old is None or old.get("design") != DESIGN or old.get("set") != set_of(spec)
+            or not os.path.isfile(os.path.join(THEME, "manifest.hl")) or ms == 0 or fr == to or not hyprland()):
         return build(spec)
     S = shapes()
     side = side_of(size, max_scale())

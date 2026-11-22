@@ -5,57 +5,64 @@ import Quickshell.Services.Mpris
 import Quickshell.Widgets
 import qs
 import qs.lucidui
+import "parts"
 
 // whatever is playing, with just enough control to skip a track without
-// unlocking the machine
-Rectangle {
-    id: media
+// unlocking the machine: a card, a compact pill, the cover up big, or the
+// deck, the deck preset's hero
+WidgetBase {
+    id: lm
+
+    readonly property string style: lm.opts.style || "card"
+    readonly property bool ownCard: !lm.carded
+    readonly property real cardW: lm.carded ? lm.avail : Math.min(lm.avail, Theme.dp(lm.style === "compact" ? 380 : 440))
 
     readonly property var players: Mpris.players.values
     // the one the user is most likely to mean
     readonly property var player: {
-        for (var i = 0; i < media.players.length; i++) {
-            if (media.players[i].playbackState === MprisPlaybackState.Playing)
-                return media.players[i];
+        for (var i = 0; i < lm.players.length; i++) {
+            if (lm.players[i].playbackState === MprisPlaybackState.Playing)
+                return lm.players[i];
 
         }
-        return media.players.length > 0 ? media.players[0] : null;
+        return lm.players.length > 0 ? lm.players[0] : null;
     }
-    readonly property bool playing: !!media.player && media.player.playbackState === MprisPlaybackState.Playing
-    readonly property string title: media.player ? (media.player.trackTitle || I18n.tr("Unknown track")) : ""
-    readonly property string artist: media.player ? (media.player.trackArtist || media.player.identity || "") : ""
-    readonly property real length: media.player ? media.player.length : 0
+    readonly property bool playing: !!lm.player && lm.player.playbackState === MprisPlaybackState.Playing
+    // the editor shows the card's empty state, so its place can be seen
+    readonly property string title: lm.player ? (lm.player.trackTitle || I18n.tr("Unknown track")) : I18n.tr("Nothing playing")
+    readonly property string artist: lm.player ? (lm.player.trackArtist || lm.player.identity || "") : I18n.tr("Music shows up here as it plays")
+    readonly property real length: lm.player ? lm.player.length : 0
     // a remote cover through the cache, never straight into the Image: Qt's
     // own http/2 client is what has been crashing the shell
-    readonly property string artUrl: media.player ? (media.player.trackArtUrl || "") : ""
-    readonly property bool remoteArt: /^https?:/.test(media.artUrl)
+    readonly property string artUrl: lm.player ? (lm.player.trackArtUrl || "") : ""
+    readonly property bool remoteArt: /^https?:/.test(lm.artUrl)
     readonly property string artFile: {
-        if (!media.remoteArt)
+        if (!lm.remoteArt)
             return "";
 
         var h = 5381;
-        for (var i = 0; i < media.artUrl.length; i++) h = ((h * 33) ^ media.artUrl.charCodeAt(i)) >>> 0
+        for (var i = 0; i < lm.artUrl.length; i++) h = ((h * 33) ^ lm.artUrl.charCodeAt(i)) >>> 0
         return Quickshell.env("HOME") + "/.cache/lucid/art/" + h.toString(16) + ".img";
     }
     property string localArt: ""
-    readonly property string artSource: media.remoteArt ? media.localArt : media.artUrl
+    readonly property string artSource: lm.remoteArt ? lm.localArt : lm.artUrl
 
     // the last cover stays up until the next one is on disk
     function fetchCover() {
-        if (media.artFile === "") {
-            media.localArt = "";
+        if (lm.artFile === "") {
+            lm.localArt = "";
             return ;
         }
         // handed over here: a command bound to artFile is still the old one in onArtFileChanged
         artFetch.superseded = artFetch.running;
-        artFetch.file = media.artFile;
+        artFetch.file = lm.artFile;
         artFetch.running = false;
-        artFetch.command = ["sh", "-c", artFetch.script, "sh", media.artFile, media.artUrl];
+        artFetch.command = ["sh", "-c", artFetch.script, "sh", lm.artFile, lm.artUrl];
         artFetch.running = true;
     }
 
-    onArtFileChanged: media.fetchCover()
-    Component.onCompleted: media.fetchCover()
+    onArtFileChanged: lm.fetchCover()
+    Component.onCompleted: lm.fetchCover()
 
     Process {
         id: artFetch
@@ -70,12 +77,12 @@ Rectangle {
                 artFetch.superseded = false;
                 return ;
             }
-            media.localArt = code === 0 ? "file://" + artFetch.file : "";
+            lm.localArt = code === 0 ? "file://" + artFetch.file : "";
         }
     }
     property real livePos: 0
     property double posStamp: 0
-    readonly property real progress: media.length > 0 ? Math.min(1, media.livePos / media.length) : 0
+    readonly property real progress: lm.length > 0 ? Math.min(1, lm.livePos / lm.length) : 0
 
     function fmt(sec) {
         var s = Math.max(0, Math.floor(sec));
@@ -84,184 +91,401 @@ Rectangle {
         return m + ":" + (r < 10 ? "0" : "") + r;
     }
 
-    visible: media.player !== null
-    radius: Theme.shapeXl
-    color: Lockscreen.card
-    implicitHeight: Theme.dp(124)
+    hasContent: lm.player !== null || lm.editing
+    implicitWidth: lm.style === "deck" ? deck.width : (lm.style === "cover" ? coverCard.width : (lm.style === "compact" ? pill.width : card.width))
+    implicitHeight: lm.style === "deck" ? deck.height : (lm.style === "cover" ? coverCard.height : (lm.style === "compact" ? pill.height : card.height))
 
     Connections {
         function onPositionChanged() {
-            media.posStamp = Date.now();
-            media.livePos = media.player.position;
+            lm.posStamp = Date.now();
+            lm.livePos = lm.player.position;
         }
 
-        target: media.player
+        target: lm.player
         ignoreUnknownSignals: true
     }
 
     // mpris only volunteers a position when asked, so ask, then coast between
     Timer {
-        running: Lockscreen.locked && media.playing
+        running: Lockscreen.live && lm.playing
         interval: 1000
         repeat: true
         onTriggered: {
-            if (media.player)
-                media.player.positionChanged();
+            if (lm.player)
+                lm.player.positionChanged();
 
         }
     }
 
     Timer {
-        running: Lockscreen.locked && media.playing
+        running: Lockscreen.live && lm.playing && lm.style !== "compact"
         interval: 50
         repeat: true
-        onTriggered: media.livePos = Math.min(media.length, media.player.position + (Date.now() - media.posStamp) / 1000)
+        onTriggered: lm.livePos = Math.min(lm.length, lm.player.position + (Date.now() - lm.posStamp) / 1000)
     }
 
-    ClippingRectangle {
-        id: art
+    // ── card ────────────────────────────────────────────────────────────────
+    Rectangle {
+        id: card
 
-        anchors.left: parent.left
-        anchors.leftMargin: Theme.dp(18)
-        anchors.verticalCenter: parent.verticalCenter
-        width: Theme.dp(80)
-        height: Theme.dp(80)
-        radius: Theme.shapeLg
-        color: Theme.accentContainer
+        readonly property real pad: lm.ownCard ? Theme.dp(18) : 0
 
-        LockGlyph {
-            anchors.centerIn: parent
-            name: "music"
-            size: Theme.dp(30)
-            color: Theme.fgAccentContainer
-            visible: cover.status !== Image.Ready
+        x: lm.xFor(width, lm.width)
+        visible: lm.style === "card"
+        width: lm.cardW
+        height: Theme.dp(lm.ownCard ? 124 : 92)
+        radius: Theme.shapeXl
+        color: lm.ownCard ? (lm.onCard ? Lockscreen.cardHigh : Lockscreen.card) : "transparent"
+
+        LockMediaArt {
+            media: lm
+            id: cardArt
+
+            x: card.pad
+            anchors.verticalCenter: parent.verticalCenter
+            size: Theme.dp(84)
+            radius: Theme.shapeLg
         }
 
-        Image {
-            id: cover
+        LockMediaTransport {
+            media: lm
+            id: cardTransport
 
-            anchors.fill: parent
-            source: media.artSource
-            fillMode: Image.PreserveAspectCrop
-            sourceSize.width: Theme.dp(160)
-            sourceSize.height: Theme.dp(160)
-            asynchronous: true
+            anchors.right: parent.right
+            anchors.rightMargin: card.pad > 0 ? Theme.dp(14) : 0
+            anchors.verticalCenter: parent.verticalCenter
+            big: Theme.dp(40)
         }
 
-    }
+        Column {
+            anchors.left: cardArt.right
+            anchors.leftMargin: Theme.dp(16)
+            anchors.right: cardTransport.left
+            anchors.rightMargin: Theme.dp(12)
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.dp(8)
 
-    Row {
-        id: transport
+            LockMediaTitles {
+                media: lm
+                width: parent.width
+            }
 
-        anchors.right: parent.right
-        anchors.rightMargin: Theme.dp(12)
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: 0
+            LockMediaSeek {
+                media: lm
+                width: parent.width
+            }
 
-        LockIconButton {
-            diameter: Theme.dp(36)
-            glyphSize: Theme.dp(19)
-            glyph: "prev"
-            glyphColor: Theme.subtext
-            actionable: !!media.player && media.player.canGoPrevious
-            onClicked: media.player.previous()
-        }
-
-        LockIconButton {
-            diameter: Theme.dp(40)
-            glyphSize: Theme.dp(22)
-            glyph: media.playing ? "pause" : "play"
-            glyphColor: Theme.accent
-            actionable: !!media.player && media.player.canTogglePlaying
-            onClicked: media.player.togglePlaying()
-        }
-
-        LockIconButton {
-            diameter: Theme.dp(36)
-            glyphSize: Theme.dp(19)
-            glyph: "next"
-            glyphColor: Theme.subtext
-            actionable: !!media.player && media.player.canGoNext
-            onClicked: media.player.next()
         }
 
     }
 
-    Column {
-        anchors.left: art.right
-        anchors.leftMargin: Theme.dp(16)
-        anchors.right: transport.left
-        anchors.rightMargin: Theme.dp(12)
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: Theme.dp(3)
+    // ── compact: a pill with the cover, the title and play ──────────────────
+    Rectangle {
+        id: pill
 
-        Text {
-            width: parent.width
-            text: media.title
-            color: Theme.text
-            elide: Text.ElideRight
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontTitleSm
-            font.variableAxes: Theme.axes(Theme.fontTitleSm, 520, 0)
-            font.weight: Font.Medium
+        x: lm.xFor(width, lm.width)
+        visible: lm.style === "compact"
+        width: lm.cardW
+        height: Theme.dp(64)
+        radius: height / 2
+        color: lm.ownCard ? (lm.onCard ? Lockscreen.cardHigh : Lockscreen.card) : "transparent"
+
+        LockMediaArt {
+            media: lm
+            id: pillArt
+
+            x: Theme.dp(10)
+            anchors.verticalCenter: parent.verticalCenter
+            size: Theme.dp(44)
+            radius: height / 2
         }
 
-        Text {
-            width: parent.width
-            text: media.artist
-            color: Theme.subtextDim
-            elide: Text.ElideRight
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontBodySm
-            font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
+        LockMediaTransport {
+            media: lm
+            id: pillTransport
+
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.dp(12)
+            anchors.verticalCenter: parent.verticalCenter
+            big: Theme.dp(34)
         }
+
+        LockMediaTitles {
+            media: lm
+            anchors.left: pillArt.right
+            anchors.leftMargin: Theme.dp(12)
+            anchors.right: pillTransport.left
+            anchors.rightMargin: Theme.dp(8)
+            anchors.verticalCenter: parent.verticalCenter
+            titleSize: Theme.fontLabelLg
+        }
+
+    }
+
+    // ── cover: the art up big, everything under it ──────────────────────────
+    Rectangle {
+        id: coverCard
+
+        readonly property real pad: lm.ownCard ? Theme.dp(18) : 0
+        readonly property real artSize: Math.min(Theme.dp(300), lm.cardW - coverCard.pad * 2)
+
+        x: lm.xFor(width, lm.width)
+        visible: lm.style === "cover"
+        width: coverCol.width + coverCard.pad * 2
+        height: coverCol.height + coverCard.pad * 2
+        radius: Theme.shapeXl
+        color: lm.ownCard ? (lm.onCard ? Lockscreen.cardHigh : Lockscreen.card) : "transparent"
+
+        Column {
+            id: coverCol
+
+            x: coverCard.pad
+            y: coverCard.pad
+            width: coverCard.artSize
+            spacing: Theme.dp(12)
+
+            LockMediaArt {
+                media: lm
+                size: coverCard.artSize
+                radius: Theme.shapeXl - coverCard.pad / 2
+            }
+
+            LockMediaTitles {
+                media: lm
+                width: parent.width
+                titleSize: Theme.fontTitleMd
+                align: Text.AlignHCenter
+            }
+
+            LockMediaSeek {
+                media: lm
+                width: parent.width
+            }
+
+            LockMediaTransport {
+                media: lm
+                anchors.horizontalCenter: parent.horizontalCenter
+                big: Theme.dp(44)
+            }
+
+        }
+
+    }
+
+
+    // ── deck: the cover cut to a cookie inside a ring of the track's progress,
+    // the title in display type beside it, and a play button of the same shape
+    Item {
+        id: deck
+
+        readonly property real art: Math.round(Math.min(Theme.dp(360), lm.avail * 0.4))
+        readonly property real ring: deck.art + Theme.dp(48)
+        readonly property real gap: Theme.dp(64)
+        readonly property real textW: Math.round(Math.max(Theme.dp(260), Math.min(Theme.dp(620), lm.avail - deck.ring - deck.gap)))
+        readonly property int titlePx: Math.round(Theme.fontDisplayLg * 1.75)
+        readonly property string source: lm.player ? (lm.player.identity || "") : ""
+
+        x: lm.xFor(width, lm.width)
+        visible: lm.style === "deck"
+        width: deck.ring + deck.gap + deck.textW
+        height: Math.max(deck.ring, deckText.height)
 
         Item {
-            width: parent.width
-            height: Theme.dp(6)
-            visible: media.length > 0
+            y: (deck.height - height) / 2
+            width: deck.ring
+            height: deck.ring
+
+            // only the played part waves, and only while it plays
+            CircularProgress {
+                anchors.fill: parent
+                value: lm.progress
+                thickness: Theme.dp(8)
+                color: Theme.accent
+                trackColor: Theme.alpha(Theme.text, 0.14)
+                // mpris hands over a fresh position many times a second: easing
+                // each one would only drag the ring behind the song
+                animated: false
+                wavy: lm.playing
+            }
+
+            ShapedImage {
+                id: deckArt
+
+                anchors.centerIn: parent
+                width: deck.art
+                height: deck.art
+                shape: "cookie9"
+                source: lm.artSource
+                fallbackColor: Theme.accentContainer
+                decode: 600
+
+                Glyph {
+                    anchors.centerIn: parent
+                    name: "music_note"
+                    size: deck.art * 0.34
+                    color: Theme.fgAccentContainer
+                }
+
+            }
+
+            // the scallops turn while it plays, a record on the platter: one
+            // scallop's turn is the whole shape again, so the loop has no seam
+            NumberAnimation {
+                target: deckArt
+                property: "spin"
+                from: 0
+                to: 40
+                duration: 9000
+                loops: Animation.Infinite
+                running: deck.visible && lm.playing && Lockscreen.live
+            }
+
         }
 
-        // m3 expressive: the played part rides a wave while the track plays
-        LinearProgress {
-            width: parent.width
-            value: media.progress
-            wavy: true
-            animated: media.playing
-            // livePos already arrives every 50 ms; easing it again only lags
-            valueAnimated: false
-            trackColor: Theme.alpha(Theme.subtext, 0.22)
-            visible: media.length > 0
-        }
+        Column {
+            id: deckText
 
-        Item {
-            width: parent.width
-            height: times.implicitHeight
-            visible: media.length > 0
+            x: deck.ring + deck.gap
+            y: (deck.height - height) / 2
+            width: deck.textW
+            spacing: Theme.dp(8)
 
             Text {
-                id: times
-
-                text: media.fmt(media.livePos)
-                color: Theme.subtextDim
+                width: parent.width
+                text: lm.player ? I18n.tr("NOW PLAYING") + (deck.source !== "" ? "  ·  " + deck.source.toUpperCase() : "") : I18n.tr("MEDIA")
+                color: Theme.accent
+                elide: Text.ElideRight
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontLabelSm
-                font.variableAxes: Theme.axes(Theme.fontLabelSm, 480, 0)
-                font.features: ({
-                    "tnum": 1
-                })
+                font.pixelSize: Theme.fontTitleSm
+                font.variableAxes: Theme.axes(Theme.fontTitleSm, 640, 0)
+                font.weight: Font.DemiBold
+                font.letterSpacing: Theme.dp(2.2)
             }
 
             Text {
-                anchors.right: parent.right
-                text: media.fmt(media.length)
+                width: parent.width
+                topPadding: Theme.dp(4)
+                text: lm.title
+                color: Theme.text
+                wrapMode: Text.Wrap
+                maximumLineCount: 2
+                elide: Text.ElideRight
+                lineHeight: 0.92
+                font.family: Theme.fontFamily
+                font.pixelSize: deck.titlePx
+                font.variableAxes: Theme.axes(deck.titlePx, 580, 0)
+                font.weight: Font.DemiBold
+            }
+
+            Text {
+                width: parent.width
+                text: lm.artist
+                color: Theme.subtext
+                elide: Text.ElideRight
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontHeadlineMd
+                font.variableAxes: Theme.axes(Theme.fontHeadlineMd, 440, 0)
+            }
+
+            Text {
+                text: lm.fmt(lm.livePos) + "  /  " + lm.fmt(lm.length)
+                visible: lm.length > 0
                 color: Theme.subtextDim
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontLabelSm
-                font.variableAxes: Theme.axes(Theme.fontLabelSm, 480, 0)
-                font.features: ({
+                font.pixelSize: Theme.fontTitleMd
+                font.variableAxes: Theme.axes(Theme.fontTitleMd, 460, 0)
+                font.features: {
                     "tnum": 1
-                })
+                }
+            }
+
+            Item {
+                width: 1
+                height: Theme.dp(14)
+            }
+
+            Row {
+                spacing: Theme.dp(16)
+
+                LockIconButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    diameter: Theme.dp(72)
+                    glyphSize: Theme.dp(32)
+                    glyph: "prev"
+                    glyphColor: Theme.text
+                    baseColor: Lockscreen.card
+                    actionable: !!lm.player && lm.player.canGoPrevious && !lm.editing
+                    onClicked: lm.player.previous()
+                }
+
+                // play on the cover's own shape; a pause rounds it to a circle
+                Item {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.dp(104)
+                    height: Theme.dp(104)
+                    scale: playTap.pressed ? 0.92 : (playHover.hovered ? 1.04 : 1)
+
+                    MaterialShape {
+                        anchors.fill: parent
+                        shape: "cookie9"
+                        to: "circle"
+                        morph: lm.playing ? 0 : 1
+                        spin: deckArt.spin
+                        color: playHover.hovered ? Theme.accentHover : Theme.accent
+
+                        Behavior on morph {
+                            NumberAnimation {
+                                duration: Theme.ms(420)
+                                easing.type: Easing.BezierSpline
+                                easing.bezierCurve: Theme.curveFastSpatial
+                            }
+
+                        }
+
+                    }
+
+                    LockGlyph {
+                        anchors.centerIn: parent
+                        name: lm.playing ? "pause" : "play"
+                        size: Theme.dp(44)
+                        color: Theme.fgAccent
+                    }
+
+                    HoverHandler {
+                        id: playHover
+
+                        enabled: !lm.editing
+                        cursorShape: Qt.PointingHandCursor
+                    }
+
+                    TapHandler {
+                        id: playTap
+
+                        enabled: !!lm.player && lm.player.canTogglePlaying && !lm.editing
+                        onTapped: lm.player.togglePlaying()
+                    }
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: Theme.ms(160)
+                            easing.type: Easing.OutCubic
+                        }
+
+                    }
+
+                }
+
+                LockIconButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    diameter: Theme.dp(72)
+                    glyphSize: Theme.dp(32)
+                    glyph: "next"
+                    glyphColor: Theme.text
+                    baseColor: Lockscreen.card
+                    actionable: !!lm.player && lm.player.canGoNext && !lm.editing
+                    onClicked: lm.player.next()
+                }
+
             }
 
         }

@@ -13,6 +13,13 @@ Singleton {
     readonly property string themeName: "lucid-cursors"
     readonly property string helper: Qt.resolvedUrl("lucidprefs/cursortheme.py").toString().replace("file://", "")
     readonly property string themeDir: (Quickshell.env("XDG_DATA_HOME") || Quickshell.env("HOME") + "/.local/share") + "/icons/" + root.themeName
+    // lucid's own pointer sets, which cursortheme.py draws into the theme above.
+    // the ids are its SETS
+    readonly property var sets: [{
+        "id": "nimbus",
+        "name": "Nimbus",
+        "blurb": I18n.tr("Soft, rounded pointers and a spinning ring")
+    }]
     readonly property var styles: [{
         "key": "dark",
         "label": I18n.tr("Dark")
@@ -50,6 +57,23 @@ Singleton {
 
     function poke() {
         root.poked();
+    }
+
+    function setOf(id) {
+        return root.sets.find((s) => {
+            return s.id === id;
+        }) || root.sets[0];
+    }
+
+    function nameOf(id) {
+        return root.setOf(id).name;
+    }
+
+    function idOf(name) {
+        const s = root.sets.find((x) => {
+            return x.name === name;
+        });
+        return s ? s.id : root.sets[0].id;
     }
 
     // a colour at a tone, at a saturation of its own
@@ -106,12 +130,14 @@ Singleton {
         };
     }
     readonly property var spec: ({
+        "set": root.setOf(Prefs.envCursorSet).id,
         "colours": root.colours,
         "shadow": Prefs.envCursorShadow,
         "size": Prefs.envCursorSize
     })
     readonly property string want: JSON.stringify(root.spec)
     readonly property string have: root.stamp ? JSON.stringify({
+        "set": root.stamp.set,
         "colours": root.stamp.colours,
         "shadow": root.stamp.shadow,
         "size": root.stamp.size
@@ -140,7 +166,7 @@ Singleton {
         const s = Object.assign({
         }, root.spec);
         // only the colours moved, on a theme that is up: that fades
-        const fades = root.ready && root.stamp.design === root.design && root.stamp.shadow === s.shadow && root.stamp.size === s.size && Theme.recolourMs > 0;
+        const fades = root.ready && root.stamp.design === root.design && root.stamp.set === s.set && root.stamp.shadow === s.shadow && root.stamp.size === s.size && Theme.recolourMs > 0;
         if (fades)
             s.from = root.shown || root.stamp.colours;
 
@@ -233,7 +259,7 @@ Singleton {
                     root.shown = r.colours;
                     root.poke();
                 } else if (r.swap || r.hires) {
-                    // hires: the plugin's copy for shake to find has loaded again
+                    // hires: the plugin's large copy, for the finder, has loaded again
                     root.poke();
                 } else if (r.ok === true && r.stamp) {
                     // the script that drew it says which design is current, even

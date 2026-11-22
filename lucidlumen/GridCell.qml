@@ -25,7 +25,6 @@ Item {
     readonly property bool isCurrent: cell.tab !== null && cell.tab.current === cell.index && cell.pane.keyboardFocus
     readonly property real iconSize: cell.pane ? cell.pane.iconSize : Theme.dp(64)
     property bool dropping: false
-    property url dragImage
 
     width: GridView.view ? GridView.view.cellWidth : Theme.dp(120)
     height: GridView.view ? GridView.view.cellHeight : Theme.dp(120)
@@ -79,10 +78,8 @@ Item {
 
     }
 
-    // Defer until the view has assigned the delegate's first position. A
-    // callLater closure outlived pooled delegates while changing folders fast,
-    // touched a null `cell`, and could take Qt down with it. This timer belongs
-    // to the delegate, so destroying the delegate cancels the pending callback.
+    // placed once the view has positioned it; the timer dies with the cell,
+    // where a callLater closure outlived it and touched a null cell
     Timer {
         interval: 0
         running: true
@@ -203,7 +200,7 @@ Item {
             if (Math.abs(mouse.x - area.pressAt.x) + Math.abs(mouse.y - area.pressAt.y) < Theme.dp(8))
                 return ;
 
-            cell.pane.startDrag(cell.pane.dragUris(cell.uri), cell.dragImage);
+            cell.pane.startDrag(cell.pane.dragUris(cell.uri), glyph, area);
         }
         onPressed: (mouse) => {
             area.pressAt = Qt.point(mouse.x, mouse.y);
@@ -212,9 +209,6 @@ Item {
                 if (!cell.selected && !(mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)))
                     cell.tab.selectOnly(cell.index);
 
-                glyph.grabToImage(function(r) {
-                    cell.dragImage = r.url;
-                });
             }
         }
         onClicked: (mouse) => {

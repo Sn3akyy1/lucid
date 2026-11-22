@@ -15,7 +15,12 @@ import "../lucidui/Shapes.js" as Shapes
 Item {
     id: root
 
-    readonly property int cornerRadius: root.popupMode ? Math.min(Theme.radiusLg, Math.round(shell.height / 2)) : (root.expanded ? Theme.radiusLg : Prefs.barPillRadius)
+    readonly property int cornerRadius: root.slides ? root.slideRadius : (root.popupMode ? Math.min(Theme.radiusLg, Math.round(shell.height / 2)) : (root.expanded ? Theme.radiusLg : Prefs.barPillRadius))
+    // the overview drops down from the top unless the legacy one is asked for,
+    // which grows out of the module (or flies out of it, in pop-up mode)
+    readonly property bool slides: !Prefs.workspacesLegacy
+    // the overview is a card of its own and the pill stays in the bar
+    readonly property bool apart: root.popupMode || root.slides
     property var hostWindow: null
     property var dockMod: null
     property bool expanded: false
@@ -188,7 +193,8 @@ Item {
     readonly property bool rowHovered: rowHover.hovered && !root.expanded
     // numbered keeps the numbers the hover shows; shapes trade them for marks
     readonly property bool numbered: Prefs.workspacesStyle === "numbers"
-    readonly property bool showNumbers: root.rowHovered || root.numbered
+    // and while the overview is down: its tiles carry no numbers, the pill does
+    readonly property bool showNumbers: root.rowHovered || root.numbered || (root.slides && root.expanded)
     // the shapes a workspace takes while it is the one in use, one dealt per visit
     readonly property var focusShapes: ["slanted", "oval", "pill", "triangle", "arrow", "diamond", "pentagon", "gem", "verySunny", "sunny", "cookie4", "cookie6", "cookie7", "cookie9", "cookie12", "clover4", "softBurst", "ghostish"]
     // runs of workspaces in use share one surface behind their cells
@@ -226,12 +232,28 @@ Item {
 
         return Math.max(0.5, Math.min(3.6, w / h));
     }
-    readonly property int basePreviewH: Theme.dp(130)
-    readonly property int baseTileSpacing: Theme.dp(16)
-    readonly property int baseCardPadding: Theme.dp(22)
+    // sliding, a tile is near a fifth of the screen across, the tiles sit close
+    // and each wears its number inside rather than a caption under it
+    readonly property int basePreviewH: root.slides ? Math.round(root.screenW * 0.175 / root.tileAspect) : Theme.dp(130)
+    readonly property int baseTileSpacing: root.slides ? Theme.dp(12) : Theme.dp(16)
+    readonly property int baseCardPadding: root.slides ? Theme.dp(14) : Theme.dp(22)
     readonly property int baseLabelGap: Theme.dp(6)
     readonly property int baseLabelHeight: Theme.dp(16)
-    readonly property int baseGroupGap: Theme.dp(40)
+    readonly property int baseGroupGap: root.slides ? Theme.dp(28) : Theme.dp(40)
+    readonly property bool captioned: !root.slides
+    // corners nest: the card's is a tile's plus the padding around them. the
+    // one in use rounds further, as its pill's mark turns a shape in the bar
+    readonly property int slideTileRadius: Theme.rad(14)
+    readonly property int slideActiveRadius: Theme.rad(24)
+    readonly property int slideRadius: root.slideTileRadius + root.cardPadding
+    // where the card stops under the bar
+    readonly property int slideGap: Theme.dp(Prefs.barPopupGap)
+    // where it hangs on screen: under a top bar, or near the top over a bottom one
+    readonly property real slideRestY: Prefs.barBottom || !root.hostWindow ? root.slideGap * 2 : root.hostWindow.margins.top + root.y + root.compactHeight + root.slideGap
+    // the overview's own surface, once the bar has made it
+    readonly property var overviewWin: overviewLoader.item
+    // the wallpaper each tile shows: a live one's still frame is fine here
+    property string wallpaper: ""
     // per display, every workspace has a home, so the overview shows them all,
     // made yet or not. shared, they open wherever you are, so it shows the ones
     // that exist and ends each display's block with a tile that opens a new one there
@@ -284,10 +306,12 @@ Item {
             return Math.max(1, g.slots.length + (g.plus ? 1 : 0));
         });
         const most = Math.max(1, ...sizes);
-        const availW = root.screenW * 0.86 - root.baseCardPadding * 2;
-        const availH = root.screenH * 0.78 - root.baseCardPadding * 2;
+        const availW = root.screenW * (root.slides ? 0.94 : 0.86) - root.baseCardPadding * 2;
+        const availH = root.screenH * (root.slides ? 0.62 : 0.78) - root.baseCardPadding * 2;
         const labelBlock = root.baseLabelGap + root.baseLabelHeight;
         const head = root.multiDisplay ? labelBlock : 0;
+        // the room a tile's caption takes under each row
+        const capBlock = root.captioned ? labelBlock : 0;
         const basePreviewW = root.basePreviewH * root.tileAspect;
         // the spacing between a block's own columns, and the wider gap between blocks
         const fixedWidth = (total) => {
@@ -313,16 +337,17 @@ Item {
                 rows = Math.max(rows, Math.ceil(sizes[g] / cols[g]));
             }
             const wLimit = (availW - fixedWidth(total)) / total;
-            const hLimit = (availH - head - (rows - 1) * root.baseTileSpacing) / rows - labelBlock;
+            const hLimit = (availH - head - (rows - 1) * root.baseTileSpacing) / rows - capBlock;
             if (wLimit <= 24 || hLimit <= 16)
                 continue;
 
             const previewW = Math.min(wLimit, hLimit * root.tileAspect, basePreviewW);
             const scale = previewW / basePreviewW;
             const gw = total * previewW + fixedWidth(total);
-            const gh = head + rows * (previewW / root.tileAspect + labelBlock) + (rows - 1) * root.baseTileSpacing;
+            const gh = head + rows * (previewW / root.tileAspect + capBlock) + (rows - 1) * root.baseTileSpacing;
             const shapePenalty = Math.abs(Math.log(gw / gh / root.tileAspect));
-            const score = scale - shapePenalty * 0.08;
+            // a strip under the bar: the biggest tiles, then the fewest rows
+            const score = root.slides ? Math.round(scale * 1000) - rows * 0.01 : scale - shapePenalty * 0.08;
             if (!best || score > best.score)
                 best = {
                 "groups": groups,
@@ -352,7 +377,7 @@ Item {
         if (root.specialCount > 0) {
             const rows = best.rows + Math.ceil(root.specialCount / best.total);
             const wLimit = (availW - fixedWidth(best.total)) / best.total;
-            const hLimit = (availH - head - (rows - 0.5) * root.baseTileSpacing - labelBlock) / rows - labelBlock;
+            const hLimit = (availH - head - (rows - 0.5) * root.baseTileSpacing - labelBlock) / rows - capBlock;
             const previewW = Math.min(wLimit, hLimit * root.tileAspect, basePreviewW);
             if (previewW > 24)
                 best = {
@@ -377,10 +402,10 @@ Item {
     readonly property int labelGap: Math.max(Theme.dp(3), Math.round(root.baseLabelGap * root.gridScale))
     readonly property int labelHeight: Math.max(Theme.dp(11), Math.round(root.baseLabelHeight * root.gridScale))
     readonly property int tileW: root.previewW
-    readonly property int tileH: root.previewH + root.labelGap + root.labelHeight
-    readonly property int tileSpacing: Math.max(Theme.dp(8), Math.round(root.baseTileSpacing * root.gridScale))
-    readonly property int cardPadding: Math.max(Theme.dp(12), Math.round(root.baseCardPadding * Math.min(1, root.gridScale + 0.25)))
-    readonly property int groupGap: Math.max(Theme.dp(16), Math.round(root.baseGroupGap * root.gridScale))
+    readonly property int tileH: root.previewH + (root.captioned ? root.labelGap + root.labelHeight : 0)
+    readonly property int tileSpacing: root.slides ? root.baseTileSpacing : Math.max(Theme.dp(8), Math.round(root.baseTileSpacing * root.gridScale))
+    readonly property int cardPadding: root.slides ? root.baseCardPadding : Math.max(Theme.dp(12), Math.round(root.baseCardPadding * Math.min(1, root.gridScale + 0.25)))
+    readonly property int groupGap: root.slides ? root.baseGroupGap : Math.max(Theme.dp(16), Math.round(root.baseGroupGap * root.gridScale))
     readonly property int groupHead: root.multiDisplay ? root.labelHeight + root.labelGap : 0
     // where each display's block starts, and how wide it runs
     readonly property var groupBoxes: {
@@ -452,6 +477,8 @@ Item {
     readonly property real labelFontSize: Math.max(Theme.dp(9), 12 * root.gridScale)
     readonly property real plusFontSize: Math.max(Theme.dp(16), 28 * root.gridScale)
     property int selectedIndex: -1
+    // the tile under the pointer, which the spotlight lights as well
+    property int pointedSlot: -1
     property bool dragging: false
     property int dropSlot: -1
     property string swapTarget: ""
@@ -660,6 +687,9 @@ Item {
     function cardRadius(index) {
         const w = root.wsAt(index);
         const active = index >= root.slotCount ? index === root.shownSpecialSlot : (w ? w.active : false);
+        if (root.slides)
+            return active ? root.slideActiveRadius : root.slideTileRadius;
+
         return active ? Theme.rad(18) : Theme.rad(12);
     }
 
@@ -697,6 +727,9 @@ Item {
 
     // tiles come in the order they are read, not by number
     function stagger(index, extra) {
+        if (root.slides)
+            return 1;
+
         const rank = root.visualRank[index];
         const start = 0.18 + (rank !== undefined ? rank : index) / Math.max(1, root.visualOrder.length) * 0.4 + extra;
         const t = (root.reveal - start) / 0.3;
@@ -1021,9 +1054,12 @@ Item {
 
     onExpandedChanged: {
         root.revealDuration = Theme.barMs(root.expanded ? 420 : 200);
+        root.slideDuration = root.expanded ? Theme.barDurEnter : Theme.barDurExit;
+        root.slideCurve = root.expanded ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel;
         root.compactFadePause = Theme.barMs(root.expanded ? 0 : 200);
         root.selectedIndex = -1;
         root.hoveredSlot = -1;
+        root.pointedSlot = -1;
         if (root.expanded) {
             root.everExpanded = true;
             Hyprland.refreshToplevels();
@@ -1150,20 +1186,25 @@ Item {
     property real detach: 0
     // a flush bar's square top rounds as the card comes off the edge, fully once
     // it is a radius clear of it, so it floats (and squares off again landing)
-    readonly property int topRadius: Prefs.barFlush && !root.popupMode ? Math.round(Math.min(root.cornerRadius, Math.max(0, root.y - root.restY))) : root.cornerRadius
+    readonly property int topRadius: Prefs.barFlush && !root.apart ? Math.round(Math.min(root.cornerRadius, Math.max(0, root.y - root.restY))) : root.cornerRadius
     readonly property int pillTopRadius: Prefs.barFlush ? 0 : Prefs.barPillRadius
     // on the full bar the strip behind already paints the resting pill
     readonly property color restingColor: Prefs.barFull ? Theme.alpha(Theme.bg, 0) : Theme.bg
     readonly property bool popupExpanding: root.popupMode && root.expanded
-    readonly property bool popupOpen: root.shown && root.popupMode && shell.y > 0.5
-    readonly property int barRadius: root.popupMode ? Prefs.barPillRadius : root.cornerRadius
-    readonly property int barTopRadius: root.popupMode ? root.pillTopRadius : root.topRadius
+    // sliding, the card is on a surface of its own, not the bar's
+    readonly property bool popupOpen: root.shown && !root.slides && root.popupMode && shell.y > 0.5
+    readonly property int barRadius: root.apart ? Prefs.barPillRadius : root.cornerRadius
+    readonly property int barTopRadius: root.apart ? root.pillTopRadius : root.topRadius
     // the corners ModuleRegion's mask and blur follow
-    readonly property real barTopLeftRadius: root.popupMode ? pillRect.topLeftRadius : shell.topLeftRadius
-    readonly property real barTopRightRadius: root.popupMode ? pillRect.topRightRadius : shell.topRightRadius
-    readonly property real barBottomLeftRadius: root.popupMode ? pillRect.bottomLeftRadius : shell.bottomLeftRadius
-    readonly property real barBottomRightRadius: root.popupMode ? pillRect.bottomRightRadius : shell.bottomRightRadius
+    readonly property real barTopLeftRadius: root.apart ? pillRect.topLeftRadius : shell.topLeftRadius
+    readonly property real barTopRightRadius: root.apart ? pillRect.topRightRadius : shell.topRightRadius
+    readonly property real barBottomLeftRadius: root.apart ? pillRect.bottomLeftRadius : shell.bottomLeftRadius
+    readonly property real barBottomRightRadius: root.apart ? pillRect.bottomRightRadius : shell.bottomRightRadius
     readonly property Item popupItem: shell
+    // sliding: 0 off the top of the screen, 1 hung under the bar
+    property real slideT: root.expanded ? 1 : 0
+    property int slideDuration: Theme.barDurEnter
+    property var slideCurve: Theme.easeEmphasizedDecel
 
     // leaving, as BarPill does it: the dots fade first, then the pill fades and
     // shrinks as the gap closes; set in onShownChanged, where it reads fresh
@@ -1260,14 +1301,155 @@ Item {
 
     HyprlandFocusGrab {
         active: root.expanded
-        windows: root.hostWindow ? [root.hostWindow].concat(Edit.active ? Edit.windows : []) : []
+        windows: root.hostWindow ? [root.hostWindow].concat(root.slides && root.overviewWin ? [root.overviewWin] : [], Edit.active ? Edit.windows : []) : []
         onCleared: root.expanded = false
+    }
+
+    // the workspaces the bar shows are kept in hyprland as well, so its swipes
+    // reach them: a swipe only steps through workspaces that exist, and only
+    // the first six were kept (modules/gestures.lua). the rules live in
+    // hyprland's own lua state, which a config reload clears, so they are put
+    // back then; fewer asked for switches the extra ones off
+    function keepWorkspaces() {
+        const n = Math.max(1, Math.min(10, Prefs.workspacesShown));
+        const lua = "lucid_ws_rules = lucid_ws_rules or {} "
+            + "for i = 1, " + n + " do local r = lucid_ws_rules[i] "
+            + "if r then r:set_enabled(true) else lucid_ws_rules[i] = hl.workspace_rule({ workspace = tostring(i), persistent = true }) end end "
+            + "for i, r in pairs(lucid_ws_rules) do if i > " + n + " then r:set_enabled(false) end end";
+        Quickshell.execDetached(["hyprctl", "eval", lua]);
+    }
+
+    // once prefs have settled, and on every change after
+    Timer {
+        id: keepTimer
+
+        interval: 800
+        running: !!root.hostWindow && root.hostWindow.primary
+        onTriggered: root.keepWorkspaces()
+    }
+
+    Connections {
+        function onWorkspacesShownChanged() {
+            if (root.hostWindow && root.hostWindow.primary)
+                keepTimer.restart();
+
+        }
+
+        target: Prefs
+    }
+
+    Connections {
+        function onRawEvent(event) {
+            if (event.name === "configreloaded" && root.hostWindow && root.hostWindow.primary)
+                keepTimer.restart();
+
+        }
+
+        target: Hyprland
+    }
+
+    // the wallpaper the tiles show, read as the dock reads it
+    FileView {
+        path: Quickshell.env("HOME") + "/.cache/current_wallpaper"
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: root.wallpaper = text().trim()
+    }
+
+    // sliding, the overview's own surface across the top of the screen, from its
+    // very edge, so the card comes down from there and goes back up to it.
+    // quickshell only makes a window it meets while loading or one made after,
+    // so this one is made once the bar has laid out
+    Loader {
+        id: overviewLoader
+
+        active: root.slides && !!root.hostWindow && root.hostWindow.laidOut
+
+        sourceComponent: PanelWindow {
+            id: overviewWin
+
+            // what of the card is on screen, which the mask and the blur follow
+            readonly property real cutY: Math.max(0, shell.y)
+            readonly property real cutH: shell.visible ? Math.max(0, shell.height + Math.min(0, shell.y)) : 0
+            // cut square along the screen's edge until its own top is in
+            readonly property real topR: shell.y < -0.5 ? 0 : root.cornerRadius
+            readonly property real botR: root.cornerRadius
+
+            visible: !!root.hostWindow && root.hostWindow.visible
+            color: "transparent"
+            // from the screen's own edge, over the bar's zone. no exclusiveZone
+            // here: writing it puts the mode back to Normal
+            exclusionMode: ExclusionMode.Ignore
+            implicitHeight: Math.ceil(root.slideRestY + root.cardHeight + Theme.dp(4))
+            // over a fullscreen window as the bar is
+            WlrLayershell.layer: root.hostWindow && root.hostWindow.fullscreenHere ? WlrLayer.Overlay : WlrLayer.Top
+            WlrLayershell.keyboardFocus: root.expanded ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+            BackgroundEffect.blurRegion: Theme.blurAmount > 0 && overviewWin.cutH > 0 ? overviewBlur : null
+
+            Binding {
+                target: overviewWin
+                property: "screen"
+                value: root.hostWindow ? root.hostWindow.screen : null
+                when: !!root.hostWindow && !!root.hostWindow.screen
+            }
+
+            anchors {
+                top: true
+                left: true
+                right: true
+            }
+
+            mask: Region {
+                x: Math.floor(shell.x)
+                y: Math.floor(overviewWin.cutY)
+                width: Math.ceil(shell.width)
+                height: Math.ceil(overviewWin.cutH)
+            }
+
+            // as ModuleRegion draws a blur: the rounded shape a pixel in, so its
+            // curves leave no pale rim, and bands that put the flat edges back
+            Region {
+                id: overviewBlur
+
+                Region {
+                    x: Math.ceil(shell.x + 1)
+                    y: Math.ceil(overviewWin.cutY + 1)
+                    width: Math.max(0, Math.floor(shell.width - 2))
+                    height: Math.max(0, Math.floor(overviewWin.cutH - 2))
+                    topLeftRadius: Math.max(0, overviewWin.topR - 1)
+                    topRightRadius: Math.max(0, overviewWin.topR - 1)
+                    bottomLeftRadius: Math.max(0, overviewWin.botR - 1)
+                    bottomRightRadius: Math.max(0, overviewWin.botR - 1)
+                }
+
+                Region {
+                    x: Math.ceil(shell.x + overviewWin.botR)
+                    y: Math.ceil(overviewWin.cutY)
+                    width: Math.max(0, Math.floor(shell.width - overviewWin.botR * 2))
+                    height: Math.floor(overviewWin.cutH)
+                }
+
+                Region {
+                    x: Math.ceil(shell.x)
+                    y: Math.ceil(overviewWin.cutY + overviewWin.topR)
+                    width: overviewWin.cutH > 0 ? Math.floor(shell.width) : 0
+                    height: Math.max(0, Math.floor(overviewWin.cutH - overviewWin.topR - overviewWin.botR))
+                }
+
+            }
+
+        }
+
     }
 
     HoverHandler {
         id: rowHover
 
-        enabled: !root.expanded
+        // the legacy card is this module, so it stops listening while that is up.
+        // a card apart leaves the pill where it was, and a handler switched off
+        // under the pointer kept its hover through the overview: closing it
+        // left the pill in its hover look, numbers and all
+        enabled: root.apart || !root.expanded
         onHoveredChanged: {
             if (!hovered)
                 root.hoveredSlot = -1;
@@ -1299,10 +1481,21 @@ Item {
 
     }
 
+    Behavior on slideT {
+        enabled: root.slides
+
+        NumberAnimation {
+            duration: root.slideDuration
+            easing.type: Easing.Bezier
+            easing.bezierCurve: root.slideCurve
+        }
+
+    }
+
     Rectangle {
         id: pillRect
 
-        visible: root.popupMode
+        visible: root.apart
         width: root.compactWidth
         height: root.compactHeight
         color: root.restingColor
@@ -1332,8 +1525,8 @@ Item {
         // under both faces: the pop-up keeps the dots in pillRect
         z: -1
         y: inset
-        width: root.popupMode ? root.compactWidth : root.width
-        height: (root.popupMode ? root.compactHeight : root.height) - inset * 2
+        width: root.apart ? root.compactWidth : root.width
+        height: (root.apart ? root.compactHeight : root.height) - inset * 2
         visible: Prefs.barFull && opacity > 0
         radius: height / 2
         color: Theme.alpha(Theme.surfaceHigh, Theme.bg.a)
@@ -1349,309 +1542,180 @@ Item {
 
     }
 
-    Rectangle {
-        id: shell
+    // sliding, the whole of the overview's own surface, which the card drops
+    // through from the top of the screen; otherwise the module's own box,
+    // which leaves the card as it was
+    Item {
+        id: stage
 
-        readonly property real cardX: root.hostWindow ? (root.hostWindow.screen.width - root.cardWidth) / 2 - root.hostWindow.margins.left : 0
-        readonly property real cardY: root.hostWindow ? (root.hostWindow.screen.height - root.cardHeight) / 2 - (Prefs.barBottom ? root.hostWindow.margins.bottom : root.hostWindow.margins.top) : 0
+        parent: root.slides && root.overviewWin ? root.overviewWin.contentItem : root
+        x: 0
+        y: 0
+        width: root.slides && root.overviewWin ? root.overviewWin.width : root.width
+        height: root.slides && root.overviewWin ? root.overviewWin.height : root.height
 
-        width: root.popupMode ? (root.expanded ? root.cardWidth : root.compactWidth) : root.width
-        height: root.popupMode ? (root.expanded ? root.cardHeight : root.compactHeight) : root.height
-        x: root.popupMode && root.expanded ? shell.cardX - root.x : 0
-        y: root.popupMode && root.expanded ? shell.cardY - root.y : 0
-        visible: !root.popupMode || shell.y > 0.5
-        // on the full bar the strip paints it in its slot (a fill of its own there
-        // doubled the tint), so the card's own fill comes in as it leaves the strip
-        color: Prefs.barFull && !root.popupMode ? Theme.alpha(Theme.bg, Theme.bg.a * root.detach) : (root.popupMode || root.expanded ? Theme.bg : root.restingColor)
-        radius: root.cornerRadius
-        topLeftRadius: root.joinLeft && !root.popupMode ? 0 : root.topRadius
-        topRightRadius: root.joinRight && !root.popupMode ? 0 : root.topRadius
-        bottomLeftRadius: root.joinLeft && !root.popupMode ? 0 : (root.popupMode || root.expanded ? root.cornerRadius : root.capped("bl", root.cornerRadius))
-        bottomRightRadius: root.joinRight && !root.popupMode ? 0 : (root.popupMode || root.expanded ? root.cornerRadius : root.capped("br", root.cornerRadius))
-        clip: !root.dragging
+        Rectangle {
+            id: shell
 
-        Behavior on x {
-            enabled: root.popupMode
+            readonly property real cardX: root.hostWindow ? (root.hostWindow.screen.width - root.cardWidth) / 2 - root.hostWindow.margins.left : 0
+            readonly property real cardY: root.hostWindow ? (root.hostWindow.screen.height - root.cardHeight) / 2 - (Prefs.barBottom ? root.hostWindow.margins.bottom : root.hostWindow.margins.top) : 0
 
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.barDurEnter : Theme.barDurExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
+            width: root.slides ? root.cardWidth : (root.popupMode ? (root.expanded ? root.cardWidth : root.compactWidth) : root.width)
+            height: root.slides ? root.cardHeight : (root.popupMode ? (root.expanded ? root.cardHeight : root.compactHeight) : root.height)
+            // sliding, the stage is the screen's width from its top edge
+            x: root.slides ? Math.round((stage.width - root.cardWidth) / 2) : (root.popupMode && root.expanded ? shell.cardX - root.x : 0)
+            y: root.slides ? root.slideRestY - (1 - root.slideT) * (root.slideRestY + root.cardHeight + Theme.dp(2)) : (root.popupMode && root.expanded ? shell.cardY - root.y : 0)
+            visible: root.slides ? root.slideT > 0.001 : (!root.popupMode || shell.y > 0.5)
+            // on the full bar the strip paints it in its slot (a fill of its own there
+            // doubled the tint), so the card's own fill comes in as it leaves the strip
+            color: root.slides ? Theme.bg : (Prefs.barFull && !root.popupMode ? Theme.alpha(Theme.bg, Theme.bg.a * root.detach) : (root.popupMode || root.expanded ? Theme.bg : root.restingColor))
+            radius: root.cornerRadius
+            topLeftRadius: root.joinLeft && !root.apart ? 0 : root.topRadius
+            topRightRadius: root.joinRight && !root.apart ? 0 : root.topRadius
+            bottomLeftRadius: root.joinLeft && !root.apart ? 0 : (root.apart || root.expanded ? root.cornerRadius : root.capped("bl", root.cornerRadius))
+            bottomRightRadius: root.joinRight && !root.apart ? 0 : (root.apart || root.expanded ? root.cornerRadius : root.capped("br", root.cornerRadius))
+            clip: !root.dragging
 
-        }
+            Behavior on x {
+                enabled: root.popupMode && !root.slides
 
-        Behavior on y {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.barDurEnter : Theme.barDurExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on width {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.barDurEnter : Theme.barDurExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Behavior on height {
-            enabled: root.popupMode
-
-            NumberAnimation {
-                duration: root.popupExpanding ? Theme.barDurEnter : Theme.barDurExit
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
-            }
-
-        }
-
-        Item {
-            id: compactFace
-
-            parent: root.popupMode ? pillRect : shell
-            anchors.fill: parent
-            opacity: root.popupMode || !root.expanded ? 1 : 0
-            scale: root.popupMode || !root.expanded ? 1 : 0.94
-            visible: opacity > 0.01
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                // the middle button opens the overview; the right one, this
-                // module's sheet in edit mode, as on the other modules
-                acceptedButtons: Qt.MiddleButton | Qt.RightButton
-                onClicked: (mouse) => {
-                    if (mouse.button === Qt.RightButton && root.hostWindow && root.hostWindow.editModule)
-                        root.hostWindow.editModule("workspaces");
-                    else if (mouse.button === Qt.RightButton)
-                        Prefs.openBarModule("workspaces");
-                    else
-                        root.expanded = !root.expanded;
+                NumberAnimation {
+                    duration: root.popupExpanding ? Theme.barDurEnter : Theme.barDurExit
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
                 }
-                // the wheel is taken here: a WheelHandler beside this never
-                // heard it past the MouseArea, so the wheel did nothing
-                onWheel: (event) => {
-                    if (root.expanded || !Prefs.workspacesWheel) {
-                        event.accepted = false;
-                        return ;
-                    }
-                    root.wheelAccum += event.angleDelta.y;
-                    while (root.wheelAccum >= 120) {
-                        root.wheelAccum -= 120;
-                        root.cycleWorkspace(-1);
-                    }
-                    while (root.wheelAccum <= -120) {
-                        root.wheelAccum += 120;
-                        root.cycleWorkspace(1);
-                    }
-                    wheelReset.restart();
+
+            }
+
+            Behavior on y {
+                enabled: root.popupMode && !root.slides
+
+                NumberAnimation {
+                    duration: root.popupExpanding ? Theme.barDurEnter : Theme.barDurExit
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
                 }
+
+            }
+
+            Behavior on width {
+                enabled: root.popupMode && !root.slides
+
+                NumberAnimation {
+                    duration: root.popupExpanding ? Theme.barDurEnter : Theme.barDurExit
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
+                }
+
+            }
+
+            Behavior on height {
+                enabled: root.popupMode && !root.slides
+
+                NumberAnimation {
+                    duration: root.popupExpanding ? Theme.barDurEnter : Theme.barDurExit
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: root.popupExpanding ? Theme.easeEmphasizedDecel : Theme.easeEmphasizedAccel
+                }
+
             }
 
             Item {
-                id: dotsRow
+                id: compactFace
 
-                anchors.centerIn: parent
-                width: root.dotsWidthAnim
-                height: root.cellHeight
+                parent: root.apart ? pillRect : shell
+                anchors.fill: parent
+                opacity: root.apart || !root.expanded ? 1 : 0
+                scale: root.apart || !root.expanded ? 1 : 0.94
+                visible: opacity > 0.01
 
-                // one surface under each run of workspaces in use, drawn solid and
-                // faded as a whole so the joins between cells leave no seam
-                Item {
+                MouseArea {
                     anchors.fill: parent
-                    opacity: root.runColor.a * root.sinkFade
-                    layer.enabled: opacity < 1
-
-                    Repeater {
-                        model: root.barCount
-
-                        Rectangle {
-                            id: run
-
-                            required property int index
-                            readonly property bool occupied: root.slotOccupied(run.index)
-                            readonly property bool joinL: run.occupied && root.joined(run.index - 1, run.index)
-                            readonly property bool joinR: run.occupied && root.joined(run.index, run.index + 1)
-                            readonly property real cap: Theme.pill(run.height)
-                            property real leftRadius: run.joinL ? 0 : run.cap
-                            property real rightRadius: run.joinR ? 0 : run.cap
-
-                            // a pixel into a joined neighbour, so the two edges meet
-                            x: root.slotX(run.index) - (run.joinL ? 1 : 0)
-                            y: (parent.height - height) / 2
-                            width: root.slotWidth(run.index) + (run.joinL ? 1 : 0) + (run.joinR ? 1 : 0)
-                            height: root.slotHeight(run.index)
-                            color: Theme.alpha(root.runColor, 1)
-                            topLeftRadius: run.leftRadius
-                            bottomLeftRadius: run.leftRadius
-                            topRightRadius: run.rightRadius
-                            bottomRightRadius: run.rightRadius
-                            opacity: run.occupied ? 1 : 0
-                            visible: opacity > 0.01
-
-                            Behavior on leftRadius {
-                                NumberAnimation {
-                                    duration: Theme.barMs(200)
-                                    easing.type: Easing.OutCubic
-                                }
-
-                            }
-
-                            Behavior on rightRadius {
-                                NumberAnimation {
-                                    duration: Theme.barMs(200)
-                                    easing.type: Easing.OutCubic
-                                }
-
-                            }
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Theme.barMs(200)
-                                    easing.type: Easing.OutCubic
-                                }
-
-                            }
-
-                            Behavior on x {
-                                NumberAnimation {
-                                    duration: Theme.barMs(300)
-                                    easing.type: Easing.OutCubic
-                                }
-
-                            }
-
-                            Behavior on width {
-                                NumberAnimation {
-                                    duration: Theme.barMs(300)
-                                    easing.type: Easing.OutCubic
-                                }
-
-                            }
-
-                            Behavior on height {
-                                NumberAnimation {
-                                    duration: Theme.barMs(300)
-                                    easing.type: Easing.OutCubic
-                                }
-
-                            }
-
-                        }
-
+                    cursorShape: Qt.PointingHandCursor
+                    // the middle button opens the overview; the right one, this
+                    // module's sheet in edit mode, as on the other modules
+                    acceptedButtons: Qt.MiddleButton | Qt.RightButton
+                    onClicked: (mouse) => {
+                        if (mouse.button === Qt.RightButton && root.hostWindow && root.hostWindow.editModule)
+                            root.hostWindow.editModule("workspaces");
+                        else if (mouse.button === Qt.RightButton)
+                            Prefs.openBarModule("workspaces");
+                        else
+                            root.expanded = !root.expanded;
                     }
-
+                    // the wheel is taken here: a WheelHandler beside this never
+                    // heard it past the MouseArea, so the wheel did nothing
+                    onWheel: (event) => {
+                        if (root.expanded || !Prefs.workspacesWheel) {
+                            event.accepted = false;
+                            return ;
+                        }
+                        root.wheelAccum += event.angleDelta.y;
+                        while (root.wheelAccum >= 120) {
+                            root.wheelAccum -= 120;
+                            root.cycleWorkspace(-1);
+                        }
+                        while (root.wheelAccum <= -120) {
+                            root.wheelAccum += 120;
+                            root.cycleWorkspace(1);
+                        }
+                        wheelReset.restart();
+                    }
                 }
 
                 Item {
-                    id: marks
+                    id: dotsRow
 
-                    anchors.fill: parent
+                    anchors.centerIn: parent
+                    width: root.dotsWidthAnim
+                    height: root.cellHeight
 
-                    Repeater {
-                        id: dotRepeater
+                    // one surface under each run of workspaces in use, drawn solid and
+                    // faded as a whole so the joins between cells leave no seam
+                    Item {
+                        anchors.fill: parent
+                        opacity: root.runColor.a * root.sinkFade
+                        layer.enabled: opacity < 1
 
-                        model: root.barCount
-                        onItemAdded: Qt.callLater(activePill.retarget)
+                        Repeater {
+                            model: root.barCount
 
-                        Item {
-                            id: dot
+                            Rectangle {
+                                id: run
 
-                            required property int index
-                            readonly property int wsId: dot.index + 1
-                            readonly property var wsObj: root.wsAt(dot.index)
-                            readonly property bool isFocused: dot.wsId === root.activeWsId
-                            readonly property bool isUrgent: dot.wsObj ? dot.wsObj.urgent : false
-                            readonly property bool occupied: root.slotOccupied(dot.index)
-                            // up on another display, as that display's own
-                            readonly property bool elsewhere: !dot.isFocused && dot.wsObj ? dot.wsObj.active : false
-                            readonly property string displayNumber: root.startsGroup(dot.index) ? root.displayNumber(dot.index) : ""
-                            property string focusShape: root.dealShape("")
-                            // a dot while empty, a square in use, a new shape each visit
-                            readonly property string shape: dot.isFocused ? dot.focusShape : (dot.occupied ? "square" : "circle")
-                            readonly property real markSize: root.cellSize * (dot.isFocused ? 2 / 3 : (dot.elsewhere ? 0.45 : (dot.occupied ? 1 / 3 : 1 / 4))) * (root.sunk ? root.sunkSize / root.cellSize : 1)
-                            property real drawnSize: dot.markSize
-                            property color ink: dot.isUrgent ? Theme.error : (dot.isFocused || dot.occupied ? Theme.text : (dot.elsewhere ? Theme.subtext : Theme.alpha(Theme.subtext, 0.5)))
-                            property var fromRadii: null
-                            property var toRadii: null
-                            property real morph: 1
-                            // until it is built the shape draws as named, unmorphed
-                            readonly property var radii: !dot.toRadii ? Shapes.radii(dot.shape) : (dot.morph >= 1 || !dot.fromRadii ? dot.toRadii : Shapes.mix(dot.fromRadii, dot.toRadii, dot.morph))
+                                required property int index
+                                readonly property bool occupied: root.slotOccupied(run.index)
+                                readonly property bool joinL: run.occupied && root.joined(run.index - 1, run.index)
+                                readonly property bool joinR: run.occupied && root.joined(run.index, run.index + 1)
+                                readonly property real cap: Theme.pill(run.height)
+                                property real leftRadius: run.joinL ? 0 : run.cap
+                                property real rightRadius: run.joinR ? 0 : run.cap
 
-                            onIsFocusedChanged: {
-                                if (dot.isFocused)
-                                    dot.focusShape = root.dealShape(dot.focusShape);
-
-                            }
-                            // each change morphs on from wherever the last one had got to
-                            onShapeChanged: {
-                                if (!dot.toRadii)
-                                    return ;
-
-                                dot.fromRadii = dot.morph >= 1 || !dot.fromRadii ? dot.toRadii : Shapes.mix(dot.fromRadii, dot.toRadii, dot.morph);
-                                dot.toRadii = Shapes.radii(dot.shape);
-                                dot.morph = 0;
-                                morphAnim.restart();
-                            }
-                            Component.onCompleted: dot.toRadii = Shapes.radii(dot.shape)
-                            x: root.slotX(dot.index)
-                            y: (parent.height - height) / 2
-                            width: root.slotWidth(dot.index)
-                            height: root.slotHeight(dot.index)
-                            opacity: root.sinkFade
-
-                            NumberAnimation {
-                                id: morphAnim
-
-                                target: dot
-                                property: "morph"
-                                from: 0
-                                to: 1
-                                duration: Theme.barMs(500)
-                                easing.type: Easing.Bezier
-                                easing.bezierCurve: Theme.curveDefaultSpatial
-                            }
-
-                            // too small for the curve renderer, so tessellated and multisampled
-                            Item {
-                                id: form
-
-                                x: Math.round((dot.width - root.cellSize) / 2)
-                                y: Math.round((dot.height - root.cellSize) / 2)
-                                width: root.cellSize
-                                height: root.cellSize
-                                opacity: root.showNumbers ? 0 : 1
-                                scale: root.showNumbers ? 0.5 : 1
+                                // a pixel into a joined neighbour, so the two edges meet
+                                x: root.slotX(run.index) - (run.joinL ? 1 : 0)
+                                y: (parent.height - height) / 2
+                                width: root.slotWidth(run.index) + (run.joinL ? 1 : 0) + (run.joinR ? 1 : 0)
+                                height: root.slotHeight(run.index)
+                                color: Theme.alpha(root.runColor, 1)
+                                topLeftRadius: run.leftRadius
+                                bottomLeftRadius: run.leftRadius
+                                topRightRadius: run.rightRadius
+                                bottomRightRadius: run.rightRadius
+                                opacity: run.occupied ? 1 : 0
                                 visible: opacity > 0.01
-                                layer.enabled: true
-                                layer.samples: 8
-                                layer.smooth: true
 
-                                Shape {
-                                    x: (form.width - dot.drawnSize) / 2
-                                    y: (form.height - dot.drawnSize) / 2
-                                    width: dot.drawnSize
-                                    height: dot.drawnSize
-                                    preferredRendererType: Shape.GeometryRenderer
+                                Behavior on leftRadius {
+                                    NumberAnimation {
+                                        duration: Theme.barMs(200)
+                                        easing.type: Easing.OutCubic
+                                    }
 
-                                    ShapePath {
-                                        fillColor: dot.ink
-                                        strokeColor: "transparent"
-                                        strokeWidth: 0
+                                }
 
-                                        PathSvg {
-                                            path: Shapes.svg(dot.radii, dot.drawnSize, 0)
-                                        }
-
+                                Behavior on rightRadius {
+                                    NumberAnimation {
+                                        duration: Theme.barMs(200)
+                                        easing.type: Easing.OutCubic
                                     }
 
                                 }
@@ -1664,7 +1728,23 @@ Item {
 
                                 }
 
-                                Behavior on scale {
+                                Behavior on x {
+                                    NumberAnimation {
+                                        duration: Theme.barMs(300)
+                                        easing.type: Easing.OutCubic
+                                    }
+
+                                }
+
+                                Behavior on width {
+                                    NumberAnimation {
+                                        duration: Theme.barMs(300)
+                                        easing.type: Easing.OutCubic
+                                    }
+
+                                }
+
+                                Behavior on height {
                                     NumberAnimation {
                                         duration: Theme.barMs(300)
                                         easing.type: Easing.OutCubic
@@ -1674,37 +1754,223 @@ Item {
 
                             }
 
-                            // numbered, an empty workspace's number is the quieter colour;
-                            // hovering elsewhere, the one in use keeps the accent
-                            Text {
-                                anchors.centerIn: parent
-                                text: dot.wsId
-                                opacity: root.showNumbers ? 1 : 0
-                                scale: root.showNumbers ? 1 : 0.6
-                                visible: opacity > 0.01
-                                color: dot.isUrgent ? Theme.error : (dot.isFocused && root.litSlot !== dot.index ? Theme.accent : (dot.isFocused || dot.occupied || dot.elsewhere ? Theme.text : Theme.alpha(Theme.subtext, 0.55)))
-                                font.family: Theme.fontFamily
-                                font.bold: true
-                                font.pixelSize: Theme.barFs(root.rowHovered ? 13 : 12)
-                                font.variableAxes: Theme.axes(Theme.barFs(root.rowHovered ? 13 : 12), 680, 100)
+                        }
 
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: Theme.barMs(300)
-                                        easing.type: Easing.OutCubic
+                    }
+
+                    Item {
+                        id: marks
+
+                        anchors.fill: parent
+
+                        Repeater {
+                            id: dotRepeater
+
+                            model: root.barCount
+                            onItemAdded: Qt.callLater(activePill.retarget)
+
+                            Item {
+                                id: dot
+
+                                required property int index
+                                readonly property int wsId: dot.index + 1
+                                readonly property var wsObj: root.wsAt(dot.index)
+                                readonly property bool isFocused: dot.wsId === root.activeWsId
+                                readonly property bool isUrgent: dot.wsObj ? dot.wsObj.urgent : false
+                                readonly property bool occupied: root.slotOccupied(dot.index)
+                                // up on another display, as that display's own
+                                readonly property bool elsewhere: !dot.isFocused && dot.wsObj ? dot.wsObj.active : false
+                                readonly property string displayNumber: root.startsGroup(dot.index) ? root.displayNumber(dot.index) : ""
+                                property string focusShape: root.dealShape("")
+                                // a dot while empty, a square in use, a new shape each visit
+                                readonly property string shape: dot.isFocused ? dot.focusShape : (dot.occupied ? "square" : "circle")
+                                readonly property real markSize: root.cellSize * (dot.isFocused ? 2 / 3 : (dot.elsewhere ? 0.45 : (dot.occupied ? 1 / 3 : 1 / 4))) * (root.sunk ? root.sunkSize / root.cellSize : 1)
+                                property real drawnSize: dot.markSize
+                                property color ink: dot.isUrgent ? Theme.error : (dot.isFocused || dot.occupied ? Theme.text : (dot.elsewhere ? Theme.subtext : Theme.alpha(Theme.subtext, 0.5)))
+                                property var fromRadii: null
+                                property var toRadii: null
+                                property real morph: 1
+                                // until it is built the shape draws as named, unmorphed
+                                readonly property var radii: !dot.toRadii ? Shapes.radii(dot.shape) : (dot.morph >= 1 || !dot.fromRadii ? dot.toRadii : Shapes.mix(dot.fromRadii, dot.toRadii, dot.morph))
+
+                                onIsFocusedChanged: {
+                                    if (dot.isFocused)
+                                        dot.focusShape = root.dealShape(dot.focusShape);
+
+                                }
+                                // each change morphs on from wherever the last one had got to
+                                onShapeChanged: {
+                                    if (!dot.toRadii)
+                                        return ;
+
+                                    dot.fromRadii = dot.morph >= 1 || !dot.fromRadii ? dot.toRadii : Shapes.mix(dot.fromRadii, dot.toRadii, dot.morph);
+                                    dot.toRadii = Shapes.radii(dot.shape);
+                                    dot.morph = 0;
+                                    morphAnim.restart();
+                                }
+                                Component.onCompleted: dot.toRadii = Shapes.radii(dot.shape)
+                                x: root.slotX(dot.index)
+                                y: (parent.height - height) / 2
+                                width: root.slotWidth(dot.index)
+                                height: root.slotHeight(dot.index)
+                                opacity: root.sinkFade
+
+                                NumberAnimation {
+                                    id: morphAnim
+
+                                    target: dot
+                                    property: "morph"
+                                    from: 0
+                                    to: 1
+                                    duration: Theme.barMs(500)
+                                    easing.type: Easing.Bezier
+                                    easing.bezierCurve: Theme.curveDefaultSpatial
+                                }
+
+                                // too small for the curve renderer, so tessellated and multisampled
+                                Item {
+                                    id: form
+
+                                    x: Math.round((dot.width - root.cellSize) / 2)
+                                    y: Math.round((dot.height - root.cellSize) / 2)
+                                    width: root.cellSize
+                                    height: root.cellSize
+                                    opacity: root.showNumbers ? 0 : 1
+                                    scale: root.showNumbers ? 0.5 : 1
+                                    visible: opacity > 0.01
+                                    layer.enabled: true
+                                    layer.samples: 8
+                                    layer.smooth: true
+
+                                    Shape {
+                                        x: (form.width - dot.drawnSize) / 2
+                                        y: (form.height - dot.drawnSize) / 2
+                                        width: dot.drawnSize
+                                        height: dot.drawnSize
+                                        preferredRendererType: Shape.GeometryRenderer
+
+                                        ShapePath {
+                                            fillColor: dot.ink
+                                            strokeColor: "transparent"
+                                            strokeWidth: 0
+
+                                            PathSvg {
+                                                path: Shapes.svg(dot.radii, dot.drawnSize, 0)
+                                            }
+
+                                        }
+
+                                    }
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: Theme.barMs(200)
+                                            easing.type: Easing.OutCubic
+                                        }
+
+                                    }
+
+                                    Behavior on scale {
+                                        NumberAnimation {
+                                            duration: Theme.barMs(300)
+                                            easing.type: Easing.OutCubic
+                                        }
+
                                     }
 
                                 }
 
-                                Behavior on scale {
-                                    NumberAnimation {
-                                        duration: Theme.barMs(300)
-                                        easing.type: Easing.OutCubic
+                                // numbered, an empty workspace's number is the quieter colour;
+                                // hovering elsewhere, the one in use keeps the accent
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: dot.wsId
+                                    opacity: root.showNumbers ? 1 : 0
+                                    scale: root.showNumbers ? 1 : 0.6
+                                    visible: opacity > 0.01
+                                    color: dot.isUrgent ? Theme.error : (dot.isFocused && root.litSlot !== dot.index ? Theme.accent : (dot.isFocused || dot.occupied || dot.elsewhere ? Theme.text : Theme.alpha(Theme.subtext, 0.55)))
+                                    font.family: Theme.fontFamily
+                                    font.bold: true
+                                    font.pixelSize: Theme.barFs(root.rowHovered ? 13 : 12)
+                                    font.variableAxes: Theme.axes(Theme.barFs(root.rowHovered ? 13 : 12), 680, 100)
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: Theme.barMs(300)
+                                            easing.type: Easing.OutCubic
+                                        }
+
+                                    }
+
+                                    Behavior on scale {
+                                        NumberAnimation {
+                                            duration: Theme.barMs(300)
+                                            easing.type: Easing.OutCubic
+                                        }
+
+                                    }
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: Theme.barMs(200)
+                                            easing.type: Easing.OutCubic
+                                        }
+
                                     }
 
                                 }
 
-                                Behavior on color {
+                                // the display this run is on, ahead of its first cell
+                                DisplayBadge {
+                                    x: -root.badgeSize - root.badgeGap
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    size: root.badgeSize
+                                    number: dot.displayNumber
+                                    visible: dot.displayNumber !== "" && opacity > 0.01
+                                    opacity: root.rowHovered ? 1 : 0
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: Theme.barMs(300)
+                                            easing.type: Easing.OutCubic
+                                        }
+
+                                    }
+
+                                }
+
+                                HoverHandler {
+                                    onHoveredChanged: {
+                                        if (hovered)
+                                            root.hoveredSlot = dot.index;
+
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (dot.isFocused && root.shownSpecial !== "")
+                                            root.hideSpecial();
+                                        else if (dot.isFocused)
+                                            // a card apart leaves the dots showing, so a second click shuts it
+                                            root.expanded = !(root.apart && root.expanded);
+                                        else
+                                            root.focusWorkspace(dot.wsId);
+                                    }
+                                }
+
+                                Behavior on drawnSize {
+                                    NumberAnimation {
+                                        duration: Theme.barMs(500)
+                                        easing.type: Easing.Bezier
+                                        easing.bezierCurve: Theme.curveDefaultSpatial
+                                    }
+
+                                }
+
+                                Behavior on ink {
                                     ColorAnimation {
                                         duration: Theme.barMs(200)
                                         easing.type: Easing.OutCubic
@@ -1712,18 +1978,23 @@ Item {
 
                                 }
 
-                            }
+                                Behavior on x {
+                                    NumberAnimation {
+                                        duration: Theme.barMs(300)
+                                        easing.type: Easing.OutCubic
+                                    }
 
-                            // the display this run is on, ahead of its first cell
-                            DisplayBadge {
-                                x: -root.badgeSize - root.badgeGap
-                                anchors.verticalCenter: parent.verticalCenter
-                                size: root.badgeSize
-                                number: dot.displayNumber
-                                visible: dot.displayNumber !== "" && opacity > 0.01
-                                opacity: root.rowHovered ? 1 : 0
+                                }
 
-                                Behavior on opacity {
+                                Behavior on width {
+                                    NumberAnimation {
+                                        duration: Theme.barMs(300)
+                                        easing.type: Easing.OutCubic
+                                    }
+
+                                }
+
+                                Behavior on height {
                                     NumberAnimation {
                                         duration: Theme.barMs(300)
                                         easing.type: Easing.OutCubic
@@ -1733,65 +2004,199 @@ Item {
 
                             }
 
-                            HoverHandler {
-                                onHoveredChanged: {
-                                    if (hovered)
-                                        root.hoveredSlot = dot.index;
+                        }
 
-                                }
-                            }
+                        Repeater {
+                            id: chipRepeater
 
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    if (dot.isFocused && root.shownSpecial !== "")
-                                        root.hideSpecial();
-                                    else if (dot.isFocused)
-                                        // a pop-up leaves the dots showing under it, so a second click shuts it
-                                        root.expanded = !(root.popupMode && root.expanded);
-                                    else
-                                        root.focusWorkspace(dot.wsId);
-                                }
-                            }
+                            model: root.specialCount
+                            onItemAdded: Qt.callLater(activePill.retarget)
 
-                            Behavior on drawnSize {
-                                NumberAnimation {
-                                    duration: Theme.barMs(500)
-                                    easing.type: Easing.Bezier
-                                    easing.bezierCurve: Theme.curveDefaultSpatial
-                                }
+                            Item {
+                                id: chip
 
-                            }
+                                required property int index
+                                readonly property int slot: root.slotCount + chip.index
+                                readonly property var wsObj: root.specialList[chip.index] || null
+                                readonly property var apps: root.specialApps[chip.index] || []
+                                readonly property int iconCount: Math.min(chip.apps.length, root.stashMax)
+                                readonly property bool open: root.chipOpen(chip.slot)
 
-                            Behavior on ink {
-                                ColorAnimation {
-                                    duration: Theme.barMs(200)
-                                    easing.type: Easing.OutCubic
-                                }
+                                x: root.slotX(chip.slot)
+                                y: (parent.height - height) / 2
+                                width: root.slotWidth(chip.slot)
+                                height: root.slotHeight(chip.slot)
+                                opacity: chip.open ? 1 : 0
+                                visible: opacity > 0.01
+                                enabled: chip.open
+                                // grows in from nothing, so nothing spills past it meanwhile
+                                clip: true
 
-                            }
+                                HoverHandler {
+                                    onHoveredChanged: {
+                                        if (hovered)
+                                            root.hoveredSlot = chip.slot;
 
-                            Behavior on x {
-                                NumberAnimation {
-                                    duration: Theme.barMs(300)
-                                    easing.type: Easing.OutCubic
+                                    }
                                 }
 
-                            }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (chip.wsObj)
+                                            root.toggleSpecial(chip.wsObj.name);
 
-                            Behavior on width {
-                                NumberAnimation {
-                                    duration: Theme.barMs(300)
-                                    easing.type: Easing.OutCubic
+                                    }
                                 }
 
-                            }
+                                Item {
+                                    id: stack
 
-                            Behavior on height {
-                                NumberAnimation {
-                                    duration: Theme.barMs(300)
-                                    easing.type: Easing.OutCubic
+                                    x: root.stashLead
+                                    y: Math.round((chip.height - root.stashIcon) / 2)
+                                    width: root.stashIcon + (chip.open ? Math.max(0, chip.iconCount - 1) * root.stashFan : 0)
+                                    height: root.stashIcon
+                                    opacity: chip.open ? 1 : 0.6
+
+                                    Repeater {
+                                        model: chip.iconCount
+
+                                        Item {
+                                            id: stashed
+
+                                            required property int index
+                                            readonly property var app: chip.apps[stashed.index] || null
+                                            // only the front one shows while tucked; the rest fan out on open
+                                            readonly property bool shown: chip.open || stashed.index === 0
+                                            readonly property string glyph: {
+                                                // desktop entries stream in over a few seconds
+                                                void Specials.entryCount;
+                                                if (!stashed.app || !chip.wsObj)
+                                                    return "apps";
+
+                                                return Specials.appGlyph(stashed.app.appClass, chip.wsObj.name);
+                                            }
+
+                                            x: chip.open ? stashed.index * root.stashFan : 0
+                                            z: -stashed.index
+                                            width: root.stashIcon
+                                            height: root.stashIcon
+                                            opacity: stashed.shown ? 1 : 0
+                                            scale: stashedArea.containsMouse ? 1.15 : 1
+
+                                            Icon {
+                                                anchors.centerIn: parent
+                                                name: Specials.glyphName(stashed.glyph)
+                                                size: root.stashIcon
+                                                fill: 1
+                                                color: Theme.text
+                                                animateColor: false
+                                            }
+
+                                            MouseArea {
+                                                id: stashedArea
+
+                                                anchors.fill: parent
+                                                enabled: chip.open && stashed.shown
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    if (stashed.app)
+                                                        root.openStashed(chip.slot, stashed.app);
+
+                                                }
+                                            }
+
+                                            Behavior on opacity {
+                                                NumberAnimation {
+                                                    duration: Theme.barMs(300)
+                                                    easing.type: Easing.OutCubic
+                                                }
+
+                                            }
+
+                                            Behavior on x {
+                                                NumberAnimation {
+                                                    duration: Theme.barMs(300)
+                                                    easing.type: Easing.OutCubic
+                                                }
+
+                                            }
+
+                                            Behavior on scale {
+                                                NumberAnimation {
+                                                    duration: Theme.barMs(150)
+                                                    easing.type: Easing.OutCubic
+                                                }
+
+                                            }
+
+                                        }
+
+                                    }
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: Theme.barMs(300)
+                                            easing.type: Easing.OutCubic
+                                        }
+
+                                    }
+
+                                }
+
+                                Text {
+                                    x: root.chipIconsEnd(chip.iconCount)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: root.chipLabel(chip.index)
+                                    opacity: chip.open ? 1 : 0
+                                    color: Theme.subtext
+                                    font.family: nameMetrics.font.family
+                                    font.pixelSize: nameMetrics.font.pixelSize
+                                    font.bold: true
+                                    font.variableAxes: nameMetrics.font.variableAxes
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: Theme.barMs(300)
+                                            easing.type: Easing.OutCubic
+                                        }
+
+                                    }
+
+                                }
+
+                                Behavior on x {
+                                    NumberAnimation {
+                                        duration: Theme.barMs(300)
+                                        easing.type: Easing.OutCubic
+                                    }
+
+                                }
+
+                                Behavior on width {
+                                    NumberAnimation {
+                                        duration: Theme.barMs(300)
+                                        easing.type: Easing.OutCubic
+                                    }
+
+                                }
+
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: Theme.barMs(300)
+                                        easing.type: Easing.OutCubic
+                                    }
+
+                                }
+
+                                Behavior on height {
+                                    NumberAnimation {
+                                        duration: Theme.barMs(300)
+                                        easing.type: Easing.OutCubic
+                                    }
+
                                 }
 
                             }
@@ -1800,327 +2205,171 @@ Item {
 
                     }
 
-                    Repeater {
-                        id: chipRepeater
+                    Rectangle {
+                        id: activePill
 
-                        model: root.specialCount
-                        onItemAdded: Qt.callLater(activePill.retarget)
+                        readonly property int litIndex: root.litSlot
+                        readonly property var litWs: root.litIndexValid ? root.wsAt(activePill.litIndex) : null
+                        // rides the lit slot's own geometry, so it cannot trail it. a switch
+                        // starts from where the pill was and brings each edge back onto it,
+                        // the leading one first and the trailing one after, so it stretches
+                        property Item target: null
+                        property real offL: 0
+                        property real offR: 0
+                        property real offH: 0
+                        property bool holding: false
 
-                        Item {
-                            id: chip
+                        function place() {
+                            const t = activePill.target;
+                            if (!t || activePill.holding)
+                                return ;
 
-                            required property int index
-                            readonly property int slot: root.slotCount + chip.index
-                            readonly property var wsObj: root.specialList[chip.index] || null
-                            readonly property var apps: root.specialApps[chip.index] || []
-                            readonly property int iconCount: Math.min(chip.apps.length, root.stashMax)
-                            readonly property bool open: root.chipOpen(chip.slot)
+                            const left = t.x + activePill.offL;
+                            activePill.x = left;
+                            activePill.width = Math.max(0, t.x + t.width + activePill.offR - left);
+                            activePill.height = t.height + activePill.offH;
+                        }
 
-                            x: root.slotX(chip.slot)
-                            y: (parent.height - height) / 2
-                            width: root.slotWidth(chip.slot)
-                            height: root.slotHeight(chip.slot)
-                            opacity: chip.open ? 1 : 0
-                            visible: opacity > 0.01
-                            enabled: chip.open
-                            // grows in from nothing, so nothing spills past it meanwhile
-                            clip: true
+                        function retarget() {
+                            // litIndexValid is a binding and can be stale inside onLitSlotChanged
+                            const i = root.litSlot;
+                            const next = i >= 0 && i < root.totalSlots ? root.slotItem(i) : null;
+                            if (!next || next === activePill.target)
+                                return ;
 
-                            HoverHandler {
-                                onHoveredChanged: {
-                                    if (hovered)
-                                        root.hoveredSlot = chip.slot;
+                            glide.stop();
+                            // a destroyed target nulls out, but the last drawn geometry still stands
+                            const fresh = activePill.width <= 0;
+                            const left = activePill.x;
+                            const right = activePill.x + activePill.width;
+                            activePill.holding = true;
+                            activePill.offL = fresh ? 0 : left - next.x;
+                            activePill.offR = fresh ? 0 : right - (next.x + next.width);
+                            activePill.offH = fresh ? 0 : activePill.height - next.height;
+                            activePill.target = next;
+                            activePill.holding = false;
+                            activePill.place();
+                            // hover follows the pointer; a switch takes the long stretch
+                            const hover = rowHover.hovered && !root.expanded;
+                            const lead = hover ? Theme.barMs(160) : Theme.barMs(400);
+                            const trail = Math.round(lead * 1.5);
+                            const forward = next.x >= left;
+                            glide.curve = hover ? Theme.curveStandard : Theme.curveDefaultSpatial;
+                            leftEdge.duration = forward ? trail : lead;
+                            rightEdge.duration = forward ? lead : trail;
+                            heightEdge.duration = lead;
+                            glide.restart();
+                        }
 
-                                }
+                        visible: root.litIndexValid
+                        x: 0
+                        y: (parent.height - height) / 2
+                        width: 0
+                        height: 0
+                        radius: Theme.pill(activePill.height)
+                        color: activePill.litWs && activePill.litWs.urgent ? Theme.error : Theme.accent
+                        onOffLChanged: activePill.place()
+                        onOffRChanged: activePill.place()
+                        onOffHChanged: activePill.place()
+
+                        Connections {
+                            function onXChanged() {
+                                activePill.place();
                             }
 
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    if (chip.wsObj)
-                                        root.toggleSpecial(chip.wsObj.name);
-
-                                }
+                            function onWidthChanged() {
+                                activePill.place();
                             }
 
-                            Item {
-                                id: stack
-
-                                x: root.stashLead
-                                y: Math.round((chip.height - root.stashIcon) / 2)
-                                width: root.stashIcon + (chip.open ? Math.max(0, chip.iconCount - 1) * root.stashFan : 0)
-                                height: root.stashIcon
-                                opacity: chip.open ? 1 : 0.6
-
-                                Repeater {
-                                    model: chip.iconCount
-
-                                    Item {
-                                        id: stashed
-
-                                        required property int index
-                                        readonly property var app: chip.apps[stashed.index] || null
-                                        // only the front one shows while tucked; the rest fan out on open
-                                        readonly property bool shown: chip.open || stashed.index === 0
-                                        readonly property string glyph: {
-                                            // desktop entries stream in over a few seconds
-                                            void Specials.entryCount;
-                                            if (!stashed.app || !chip.wsObj)
-                                                return "apps";
-
-                                            return Specials.appGlyph(stashed.app.appClass, chip.wsObj.name);
-                                        }
-
-                                        x: chip.open ? stashed.index * root.stashFan : 0
-                                        z: -stashed.index
-                                        width: root.stashIcon
-                                        height: root.stashIcon
-                                        opacity: stashed.shown ? 1 : 0
-                                        scale: stashedArea.containsMouse ? 1.15 : 1
-
-                                        Icon {
-                                            anchors.centerIn: parent
-                                            name: Specials.glyphName(stashed.glyph)
-                                            size: root.stashIcon
-                                            fill: 1
-                                            color: Theme.text
-                                            animateColor: false
-                                        }
-
-                                        MouseArea {
-                                            id: stashedArea
-
-                                            anchors.fill: parent
-                                            enabled: chip.open && stashed.shown
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                if (stashed.app)
-                                                    root.openStashed(chip.slot, stashed.app);
-
-                                            }
-                                        }
-
-                                        Behavior on opacity {
-                                            NumberAnimation {
-                                                duration: Theme.barMs(300)
-                                                easing.type: Easing.OutCubic
-                                            }
-
-                                        }
-
-                                        Behavior on x {
-                                            NumberAnimation {
-                                                duration: Theme.barMs(300)
-                                                easing.type: Easing.OutCubic
-                                            }
-
-                                        }
-
-                                        Behavior on scale {
-                                            NumberAnimation {
-                                                duration: Theme.barMs(150)
-                                                easing.type: Easing.OutCubic
-                                            }
-
-                                        }
-
-                                    }
-
-                                }
-
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: Theme.barMs(300)
-                                        easing.type: Easing.OutCubic
-                                    }
-
-                                }
-
+                            function onHeightChanged() {
+                                activePill.place();
                             }
 
-                            Text {
-                                x: root.chipIconsEnd(chip.iconCount)
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: root.chipLabel(chip.index)
-                                opacity: chip.open ? 1 : 0
-                                color: Theme.subtext
-                                font.family: nameMetrics.font.family
-                                font.pixelSize: nameMetrics.font.pixelSize
-                                font.bold: true
-                                font.variableAxes: nameMetrics.font.variableAxes
+                            target: activePill.target
+                        }
 
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: Theme.barMs(300)
-                                        easing.type: Easing.OutCubic
-                                    }
+                        ParallelAnimation {
+                            id: glide
 
-                                }
+                            property var curve: Theme.curveDefaultSpatial
 
+                            NumberAnimation {
+                                id: leftEdge
+
+                                target: activePill
+                                property: "offL"
+                                to: 0
+                                easing.type: Easing.Bezier
+                                easing.bezierCurve: glide.curve
                             }
 
-                            Behavior on x {
-                                NumberAnimation {
-                                    duration: Theme.barMs(300)
-                                    easing.type: Easing.OutCubic
-                                }
+                            NumberAnimation {
+                                id: rightEdge
 
+                                target: activePill
+                                property: "offR"
+                                to: 0
+                                easing.type: Easing.Bezier
+                                easing.bezierCurve: glide.curve
                             }
 
-                            Behavior on width {
-                                NumberAnimation {
-                                    duration: Theme.barMs(300)
-                                    easing.type: Easing.OutCubic
-                                }
+                            NumberAnimation {
+                                id: heightEdge
 
-                            }
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Theme.barMs(300)
-                                    easing.type: Easing.OutCubic
-                                }
-
-                            }
-
-                            Behavior on height {
-                                NumberAnimation {
-                                    duration: Theme.barMs(300)
-                                    easing.type: Easing.OutCubic
-                                }
-
+                                target: activePill
+                                property: "offH"
+                                to: 0
+                                easing.type: Easing.Bezier
+                                easing.bezierCurve: Theme.curveStandard
                             }
 
                         }
 
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.barMs(200)
+                                easing.type: Easing.OutCubic
+                            }
+
+                        }
+
+                    }
+
+                    // the pill's own outline in the colour that reads on it, kept to
+                    // whatever marks lie under it, so they turn as it passes over them
+                    Item {
+                        id: pillInk
+
+                        anchors.fill: parent
+                        visible: false
+
+                        Rectangle {
+                            x: activePill.x
+                            y: activePill.y
+                            width: activePill.width
+                            height: activePill.height
+                            radius: activePill.radius
+                            color: activePill.litWs && activePill.litWs.urgent ? Theme.fgError : Theme.fgPrimary
+                        }
+
+                    }
+
+                    OpacityMask {
+                        anchors.fill: parent
+                        visible: activePill.visible
+                        source: pillInk
+                        maskSource: marks
                     }
 
                 }
 
-                Rectangle {
-                    id: activePill
-
-                    readonly property int litIndex: root.litSlot
-                    readonly property var litWs: root.litIndexValid ? root.wsAt(activePill.litIndex) : null
-                    // rides the lit slot's own geometry, so it cannot trail it. a switch
-                    // starts from where the pill was and brings each edge back onto it,
-                    // the leading one first and the trailing one after, so it stretches
-                    property Item target: null
-                    property real offL: 0
-                    property real offR: 0
-                    property real offH: 0
-                    property bool holding: false
-
-                    function place() {
-                        const t = activePill.target;
-                        if (!t || activePill.holding)
-                            return ;
-
-                        const left = t.x + activePill.offL;
-                        activePill.x = left;
-                        activePill.width = Math.max(0, t.x + t.width + activePill.offR - left);
-                        activePill.height = t.height + activePill.offH;
-                    }
-
-                    function retarget() {
-                        // litIndexValid is a binding and can be stale inside onLitSlotChanged
-                        const i = root.litSlot;
-                        const next = i >= 0 && i < root.totalSlots ? root.slotItem(i) : null;
-                        if (!next || next === activePill.target)
-                            return ;
-
-                        glide.stop();
-                        // a destroyed target nulls out, but the last drawn geometry still stands
-                        const fresh = activePill.width <= 0;
-                        const left = activePill.x;
-                        const right = activePill.x + activePill.width;
-                        activePill.holding = true;
-                        activePill.offL = fresh ? 0 : left - next.x;
-                        activePill.offR = fresh ? 0 : right - (next.x + next.width);
-                        activePill.offH = fresh ? 0 : activePill.height - next.height;
-                        activePill.target = next;
-                        activePill.holding = false;
-                        activePill.place();
-                        // hover follows the pointer; a switch takes the long stretch
-                        const hover = rowHover.hovered && !root.expanded;
-                        const lead = hover ? Theme.barMs(160) : Theme.barMs(400);
-                        const trail = Math.round(lead * 1.5);
-                        const forward = next.x >= left;
-                        glide.curve = hover ? Theme.curveStandard : Theme.curveDefaultSpatial;
-                        leftEdge.duration = forward ? trail : lead;
-                        rightEdge.duration = forward ? lead : trail;
-                        heightEdge.duration = lead;
-                        glide.restart();
-                    }
-
-                    visible: root.litIndexValid
-                    x: 0
-                    y: (parent.height - height) / 2
-                    width: 0
-                    height: 0
-                    radius: Theme.pill(activePill.height)
-                    color: activePill.litWs && activePill.litWs.urgent ? Theme.error : Theme.accent
-                    onOffLChanged: activePill.place()
-                    onOffRChanged: activePill.place()
-                    onOffHChanged: activePill.place()
-
-                    Connections {
-                        function onXChanged() {
-                            activePill.place();
-                        }
-
-                        function onWidthChanged() {
-                            activePill.place();
-                        }
-
-                        function onHeightChanged() {
-                            activePill.place();
-                        }
-
-                        target: activePill.target
-                    }
-
-                    ParallelAnimation {
-                        id: glide
-
-                        property var curve: Theme.curveDefaultSpatial
-
-                        NumberAnimation {
-                            id: leftEdge
-
-                            target: activePill
-                            property: "offL"
-                            to: 0
-                            easing.type: Easing.Bezier
-                            easing.bezierCurve: glide.curve
+                Behavior on opacity {
+                    SequentialAnimation {
+                        PauseAnimation {
+                            duration: root.compactFadePause
                         }
 
                         NumberAnimation {
-                            id: rightEdge
-
-                            target: activePill
-                            property: "offR"
-                            to: 0
-                            easing.type: Easing.Bezier
-                            easing.bezierCurve: glide.curve
-                        }
-
-                        NumberAnimation {
-                            id: heightEdge
-
-                            target: activePill
-                            property: "offH"
-                            to: 0
-                            easing.type: Easing.Bezier
-                            easing.bezierCurve: Theme.curveStandard
-                        }
-
-                    }
-
-                    Behavior on color {
-                        ColorAnimation {
                             duration: Theme.barMs(200)
                             easing.type: Easing.OutCubic
                         }
@@ -2129,212 +2378,483 @@ Item {
 
                 }
 
-                // the pill's own outline in the colour that reads on it, kept to
-                // whatever marks lie under it, so they turn as it passes over them
-                Item {
-                    id: pillInk
-
-                    anchors.fill: parent
-                    visible: false
-
-                    Rectangle {
-                        x: activePill.x
-                        y: activePill.y
-                        width: activePill.width
-                        height: activePill.height
-                        radius: activePill.radius
-                        color: activePill.litWs && activePill.litWs.urgent ? Theme.fgError : Theme.fgPrimary
-                    }
-
-                }
-
-                OpacityMask {
-                    anchors.fill: parent
-                    visible: activePill.visible
-                    source: pillInk
-                    maskSource: marks
-                }
-
-            }
-
-            Behavior on opacity {
-                SequentialAnimation {
-                    PauseAnimation {
-                        duration: root.compactFadePause
-                    }
-
+                Behavior on scale {
                     NumberAnimation {
-                        duration: Theme.barMs(200)
+                        duration: Theme.barMs(220)
                         easing.type: Easing.OutCubic
                     }
 
                 }
 
-            }
-
-            Behavior on scale {
-                NumberAnimation {
-                    duration: Theme.barMs(220)
-                    easing.type: Easing.OutCubic
+                // the bar is mirrored on the bottom edge; the content stands upright
+                transform: Scale {
+                    origin.y: compactFace.height / 2
+                    yScale: Prefs.barBottom ? -1 : 1
                 }
 
             }
 
-            // the bar is mirrored on the bottom edge; the content stands upright
-            transform: Scale {
-                origin.y: compactFace.height / 2
-                yScale: Prefs.barBottom ? -1 : 1
-            }
-
-        }
-
-        Item {
-            id: expandedFace
-
-            anchors.fill: parent
-            visible: root.reveal > 0.001
-
             Item {
-                id: keyCatcher
+                id: expandedFace
 
                 anchors.fill: parent
-                focus: root.expanded
-                Keys.onEscapePressed: root.expanded = false
-                Keys.onLeftPressed: root.moveSelection(-1, 0)
-                Keys.onRightPressed: root.moveSelection(1, 0)
-                Keys.onUpPressed: root.moveSelection(0, -1)
-                Keys.onDownPressed: root.moveSelection(0, 1)
-                Keys.onReturnPressed: root.activateSelection()
-                Keys.onEnterPressed: root.activateSelection()
-                Keys.onTabPressed: root.moveSelection(1, 0)
-                Keys.onPressed: (event) => {
-                    if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
-                        const n = event.key - Qt.Key_0;
-                        if (n <= root.slotCount) {
-                            root.focusWorkspace(n);
-                            root.expanded = false;
-                            event.accepted = true;
+                visible: root.slides ? root.slideT > 0.001 : root.reveal > 0.001
+
+                Item {
+                    id: keyCatcher
+
+                    anchors.fill: parent
+                    focus: root.expanded
+                    Keys.onEscapePressed: root.expanded = false
+                    Keys.onLeftPressed: root.moveSelection(-1, 0)
+                    Keys.onRightPressed: root.moveSelection(1, 0)
+                    Keys.onUpPressed: root.moveSelection(0, -1)
+                    Keys.onDownPressed: root.moveSelection(0, 1)
+                    Keys.onReturnPressed: root.activateSelection()
+                    Keys.onEnterPressed: root.activateSelection()
+                    Keys.onTabPressed: root.moveSelection(1, 0)
+                    Keys.onPressed: (event) => {
+                        if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
+                            const n = event.key - Qt.Key_0;
+                            if (n <= root.slotCount) {
+                                root.focusWorkspace(n);
+                                root.expanded = false;
+                                event.accepted = true;
+                            }
                         }
                     }
                 }
-            }
 
-            MouseArea {
-                anchors.fill: parent
-                onClicked: root.expanded = false
-            }
-
-            Item {
-                id: grid
-
-                width: root.gridWidth
-                height: root.gridHeight
-                anchors.centerIn: parent
-                scale: 0.94 + 0.06 * (1 - Math.pow(1 - root.reveal, 3))
-
-                Text {
-                    y: root.captionY
-                    height: root.labelHeight
-                    visible: root.specialCount > 0
-                    opacity: root.stagger(root.slotCount, 0)
-                    verticalAlignment: Text.AlignVCenter
-                    text: root.specialCount > 1 ? I18n.tr("Scratchpads") : I18n.tr("Scratchpad")
-                    color: Theme.primary
-                    font.family: Theme.fontFamily
-                    font.bold: true
-                    font.pixelSize: Math.max(Theme.dp(10), 12 * root.gridScale)
-                    font.variableAxes: Theme.axes(Math.max(10, 12 * root.gridScale), 600, 0)
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.expanded = false
                 }
 
-                // each display's number and name over its block
-                Repeater {
-                    model: root.multiDisplay ? root.gridPlan.groups : []
+                Item {
+                    id: grid
 
-                    Item {
-                        id: groupHeading
+                    width: root.gridWidth
+                    height: root.gridHeight
+                    anchors.centerIn: parent
+                    scale: root.slides ? 1 : 0.94 + 0.06 * (1 - Math.pow(1 - root.reveal, 3))
 
-                        required property var modelData
-                        required property int index
-                        readonly property var box: root.groupBoxes[groupHeading.index] || null
-
-                        x: groupHeading.box ? groupHeading.box.x : 0
-                        width: groupHeading.box ? groupHeading.box.w : 0
+                    Text {
+                        y: root.captionY
                         height: root.labelHeight
-                        opacity: root.stagger(groupHeading.modelData.slots.length > 0 ? groupHeading.modelData.slots[0] : root.totalSlots + groupHeading.index, 0)
+                        visible: root.specialCount > 0
+                        opacity: root.stagger(root.slotCount, 0)
+                        verticalAlignment: Text.AlignVCenter
+                        text: root.specialCount > 1 ? I18n.tr("Scratchpads") : I18n.tr("Scratchpad")
+                        color: Theme.primary
+                        font.family: Theme.fontFamily
+                        font.bold: true
+                        font.pixelSize: Math.max(Theme.dp(10), 12 * root.gridScale)
+                        font.variableAxes: Theme.axes(Math.max(10, 12 * root.gridScale), 600, 0)
+                    }
 
-                        DisplayBadge {
-                            id: headingBadge
+                    // each display's number and name over its block
+                    Repeater {
+                        model: root.multiDisplay ? root.gridPlan.groups : []
 
-                            anchors.verticalCenter: parent.verticalCenter
-                            size: root.labelHeight
-                            number: Monitors.numberFor(groupHeading.modelData.key)
-                            tint: Theme.subtextDim
-                        }
+                        Item {
+                            id: groupHeading
 
-                        Text {
-                            anchors.left: headingBadge.right
-                            anchors.leftMargin: Math.round(root.labelHeight * 0.4)
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: root.displayTitle(groupHeading.modelData.key)
-                            elide: Text.ElideRight
-                            color: Theme.subtextDim
-                            font.family: Theme.fontFamily
-                            font.bold: true
-                            font.pixelSize: Math.max(Theme.dp(8), Theme.dp(10) * root.gridScale)
-                            font.letterSpacing: 1.2
-                            font.capitalization: Font.AllUppercase
+                            required property var modelData
+                            required property int index
+                            readonly property var box: root.groupBoxes[groupHeading.index] || null
+
+                            x: groupHeading.box ? groupHeading.box.x : 0
+                            width: groupHeading.box ? groupHeading.box.w : 0
+                            height: root.labelHeight
+                            opacity: root.stagger(groupHeading.modelData.slots.length > 0 ? groupHeading.modelData.slots[0] : root.totalSlots + groupHeading.index, 0)
+
+                            DisplayBadge {
+                                id: headingBadge
+
+                                anchors.verticalCenter: parent.verticalCenter
+                                size: root.labelHeight
+                                number: Monitors.numberFor(groupHeading.modelData.key)
+                                tint: Theme.subtextDim
+                            }
+
+                            Text {
+                                anchors.left: headingBadge.right
+                                anchors.leftMargin: Math.round(root.labelHeight * 0.4)
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: root.displayTitle(groupHeading.modelData.key)
+                                elide: Text.ElideRight
+                                color: Theme.subtextDim
+                                font.family: Theme.fontFamily
+                                font.bold: true
+                                font.pixelSize: Math.max(Theme.dp(8), Theme.dp(10) * root.gridScale)
+                                font.letterSpacing: 1.2
+                                font.capitalization: Font.AllUppercase
+                            }
+
                         }
 
                     }
 
-                }
+                    Repeater {
+                        id: tileRepeater
 
-                Repeater {
-                    id: tileRepeater
+                        model: root.totalSlots
 
-                    model: root.totalSlots
+                        Item {
+                            id: tile
 
-                    Item {
-                        id: tile
+                            required property int index
+                            readonly property var wsObj: root.wsAt(tile.index)
+                            readonly property bool isSpecial: tile.index >= root.slotCount
+                            readonly property bool isActive: tile.isSpecial ? tile.index === root.shownSpecialSlot : (tile.wsObj ? tile.wsObj.active : false)
+                            readonly property bool isUrgent: tile.wsObj ? tile.wsObj.urgent : false
+                            readonly property bool isDropTarget: root.dragging && root.dropSlot === tile.index
+                            readonly property bool highlighted: tileHover.hovered || root.selectedIndex === tile.index
+                            readonly property string label: {
+                                const w = tile.wsObj;
+                                if (tile.isSpecial)
+                                    return root.specialName(w ? w.name : "");
 
-                        required property int index
-                        readonly property var wsObj: root.wsAt(tile.index)
-                        readonly property bool isSpecial: tile.index >= root.slotCount
-                        readonly property bool isActive: tile.isSpecial ? tile.index === root.shownSpecialSlot : (tile.wsObj ? tile.wsObj.active : false)
-                        readonly property bool isUrgent: tile.wsObj ? tile.wsObj.urgent : false
-                        readonly property bool isDropTarget: root.dragging && root.dropSlot === tile.index
-                        readonly property bool highlighted: tileHover.hovered || root.selectedIndex === tile.index
-                        readonly property string label: {
-                            const w = tile.wsObj;
-                            if (tile.isSpecial)
-                                return root.specialName(w ? w.name : "");
+                                if (w && w.name && w.name !== String(tile.index + 1))
+                                    return w.name;
 
-                            if (w && w.name && w.name !== String(tile.index + 1))
-                                return w.name;
+                                return I18n.tr("Workspace %1", (tile.index + 1));
+                            }
 
-                            return I18n.tr("Workspace %1", (tile.index + 1));
+                            visible: !!root.slotPos[tile.index]
+                            x: root.slotPosX(tile.index)
+                            y: root.slotPosY(tile.index)
+                            width: root.tileW
+                            height: root.tileH
+                            opacity: root.stagger(tile.index, 0)
+
+                            Rectangle {
+                                id: card
+
+                                width: root.previewW
+                                height: root.previewH
+                                radius: root.cardRadius(tile.index)
+                                color: Theme.withBlur(tile.highlighted ? Theme.surfaceHighest : Theme.surfaceHigh)
+                                border.color: tile.isUrgent ? Theme.error : ((tile.isActive || tile.isDropTarget) ? Theme.primary : "transparent")
+                                // sliding, the outline is drawn over the wallpaper below
+                                border.width: root.slides ? 0 : ((tile.isActive || tile.isUrgent || tile.isDropTarget) ? 3 : 0)
+                                // sliding, the ones not made yet look like any other: the number says it all
+                                opacity: tile.wsObj || root.multiDisplay || root.slides ? 1 : 0.55
+
+                                Behavior on radius {
+                                    NumberAnimation {
+                                        duration: Theme.durDefaultSpatial
+                                        easing.type: Easing.Bezier
+                                        easing.bezierCurve: Theme.curveDefaultSpatial
+                                    }
+
+                                }
+                                // sliding, the windows stand on it unscaled, so it keeps still too
+                                scale: root.slides ? 1 : (tileClick.pressed ? 0.985 : (tile.highlighted ? 1.03 : 1))
+
+                                Icon {
+                                    anchors.centerIn: parent
+                                    visible: !tile.wsObj && !root.multiDisplay && !root.slides
+                                    name: "add"
+                                    size: Math.round(root.plusFontSize * 1.1)
+                                    color: Theme.accent
+                                }
+
+                                // sliding, a little desktop: the wallpaper, a touch shaded so
+                                // its windows stand off it
+                                ClippingRectangle {
+                                    anchors.fill: parent
+                                    visible: root.slides
+                                    radius: card.radius
+                                    color: "transparent"
+
+                                    Image {
+                                        anchors.fill: parent
+                                        visible: root.wallpaper !== ""
+                                        source: root.wallpaper !== "" ? "file://" + root.wallpaper : ""
+                                        sourceSize.width: root.previewW
+                                        fillMode: Image.PreserveAspectCrop
+                                        asynchronous: true
+                                        cache: true
+                                    }
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        color: Theme.alpha(Theme.bgSunken, 0.15)
+
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: Theme.barMs(150)
+                                            }
+
+                                        }
+
+                                    }
+
+                                }
+
+                                // only what needs saying: a window bound here, or one that wants you
+                                Rectangle {
+                                    anchors.fill: parent
+                                    visible: root.slides && (tile.isUrgent || tile.isDropTarget)
+                                    radius: card.radius
+                                    color: "transparent"
+                                    border.width: 2
+                                    border.color: tile.isUrgent ? Theme.error : Theme.primary
+                                }
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Theme.barMs(150)
+                                    }
+
+                                }
+
+                                Behavior on border.color {
+                                    ColorAnimation {
+                                        duration: Theme.barMs(150)
+                                    }
+
+                                }
+
+                                Behavior on scale {
+                                    NumberAnimation {
+                                        duration: Theme.barMs(150)
+                                        easing.type: Easing.OutCubic
+                                    }
+
+                                }
+
+                            }
+
+                            HoverHandler {
+                                id: tileHover
+
+                                onHoveredChanged: {
+                                    if (hovered) {
+                                        root.selectedIndex = -1;
+                                        root.pointedSlot = tile.index;
+                                    } else if (root.pointedSlot === tile.index) {
+                                        root.pointedSlot = -1;
+                                    }
+                                }
+                            }
+
+                            Text {
+                                anchors.top: card.bottom
+                                anchors.horizontalCenter: card.horizontalCenter
+                                anchors.topMargin: root.labelGap
+                                visible: root.captioned
+                                text: tile.label
+                                color: tile.isActive ? Theme.primary : (tile.highlighted ? Theme.text : Theme.subtext)
+                                font.family: Theme.fontFamily
+                                font.pixelSize: root.labelFontSize
+                                font.variableAxes: Theme.axes(root.labelFontSize, tile.isActive ? 620 : 480, 0)
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Theme.barMs(150)
+                                    }
+
+                                }
+
+                            }
+
+                            MouseArea {
+                                id: tileClick
+
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.activateSlot(tile.index)
+                            }
+
                         }
 
-                        visible: !!root.slotPos[tile.index]
-                        x: root.slotPosX(tile.index)
-                        y: root.slotPosY(tile.index)
-                        width: root.tileW
-                        height: root.tileH
-                        opacity: root.stagger(tile.index, 0)
+                    }
 
-                        Rectangle {
-                            id: card
+                    // shared mode: the last tile of each display's block opens a new workspace there
+                    Repeater {
+                        model: root.plusCount
 
-                            width: root.previewW
-                            height: root.previewH
-                            radius: tile.isActive ? Theme.rad(18) : Theme.rad(12)
-                            color: Theme.withBlur(tile.highlighted ? Theme.surfaceHighest : Theme.surfaceHigh)
-                            border.color: tile.isUrgent ? Theme.error : ((tile.isActive || tile.isDropTarget) ? Theme.primary : "transparent")
-                            border.width: (tile.isActive || tile.isUrgent || tile.isDropTarget) ? 3 : 0
-                            opacity: tile.wsObj || root.multiDisplay ? 1 : 0.55
+                        Item {
+                            id: plusTile
 
-                            Behavior on radius {
+                            required property int index
+                            readonly property int slot: root.totalSlots + plusTile.index
+                            readonly property bool isDropTarget: root.dragging && root.dropSlot === plusTile.slot
+                            readonly property bool highlighted: plusHover.hovered || root.selectedIndex === plusTile.slot
+
+                            x: root.slotPosX(plusTile.slot)
+                            y: root.slotPosY(plusTile.slot)
+                            width: root.tileW
+                            height: root.tileH
+                            opacity: root.stagger(plusTile.slot, 0)
+
+                            Rectangle {
+                                id: plusCard
+
+                                width: root.previewW
+                                height: root.previewH
+                                radius: root.slides ? root.slideTileRadius : Theme.rad(12)
+                                color: Theme.withBlur(plusTile.highlighted ? Theme.surfaceHighest : Theme.surfaceHigh)
+                                border.color: plusTile.isDropTarget ? Theme.primary : "transparent"
+                                border.width: plusTile.isDropTarget ? 3 : 0
+                                opacity: plusTile.highlighted || plusTile.isDropTarget ? 1 : 0.55
+                                scale: plusClick.pressed ? 0.985 : (plusTile.highlighted ? 1.03 : 1)
+
+                                Icon {
+                                    anchors.centerIn: parent
+                                    name: "add"
+                                    size: Math.round(root.plusFontSize * 1.1)
+                                    color: Theme.accent
+                                }
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Theme.barMs(150)
+                                    }
+
+                                }
+
+                                Behavior on border.color {
+                                    ColorAnimation {
+                                        duration: Theme.barMs(150)
+                                    }
+
+                                }
+
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: Theme.barMs(150)
+                                    }
+
+                                }
+
+                                Behavior on scale {
+                                    NumberAnimation {
+                                        duration: Theme.barMs(150)
+                                        easing.type: Easing.OutCubic
+                                    }
+
+                                }
+
+                            }
+
+                            HoverHandler {
+                                id: plusHover
+
+                                onHoveredChanged: {
+                                    if (hovered)
+                                        root.selectedIndex = -1;
+
+                                }
+                            }
+
+                            Text {
+                                anchors.top: plusCard.bottom
+                                anchors.horizontalCenter: plusCard.horizontalCenter
+                                anchors.topMargin: root.labelGap
+                                visible: root.captioned
+                                text: I18n.tr("New workspace")
+                                color: plusTile.highlighted ? Theme.text : Theme.subtext
+                                font.family: Theme.fontFamily
+                                font.pixelSize: root.labelFontSize
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Theme.barMs(150)
+                                    }
+
+                                }
+
+                            }
+
+                            MouseArea {
+                                id: plusClick
+
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.activateSlot(plusTile.slot)
+                            }
+
+                        }
+
+                    }
+
+                    Repeater {
+                        id: thumbRepeater
+
+                        model: windowModel
+
+                        ClippingRectangle {
+                            id: thumb
+
+                            required property string address
+                            required property int slotIndex
+                            required property int atX
+                            required property int atY
+                            required property int sizeW
+                            required property int sizeH
+                            required property int monitor
+                            required property string appClass
+                            required property bool focused
+                            readonly property var monitorObj: root.monById[thumb.monitor] || root.refMonitor
+                            readonly property real monScale: thumb.monitorObj && thumb.monitorObj.scale > 0 ? thumb.monitorObj.scale : 1
+                            readonly property var reserved: (thumb.monitorObj && thumb.monitorObj.lastIpcObject && thumb.monitorObj.lastIpcObject.reserved) || [0, 0, 0, 0]
+                            readonly property real usableMonX: thumb.monitorObj ? thumb.monitorObj.x + thumb.reserved[0] : 0
+                            readonly property real usableMonY: thumb.monitorObj ? thumb.monitorObj.y + thumb.reserved[1] : 0
+                            readonly property real usableMonW: thumb.monitorObj ? Math.max(1, thumb.monitorObj.width / thumb.monScale - thumb.reserved[0] - thumb.reserved[2]) : 1
+                            readonly property real usableMonH: thumb.monitorObj ? Math.max(1, thumb.monitorObj.height / thumb.monScale - thumb.reserved[1] - thumb.reserved[3]) : 1
+                            readonly property real fracX: Math.max(0, Math.min(1, (thumb.atX - thumb.usableMonX) / thumb.usableMonW))
+                            readonly property real fracY: Math.max(0, Math.min(1, (thumb.atY - thumb.usableMonY) / thumb.usableMonH))
+                            readonly property real fracW: Math.max(0, Math.min(1, thumb.sizeW / thumb.usableMonW))
+                            readonly property real fracH: Math.max(0, Math.min(1, thumb.sizeH / thumb.usableMonH))
+                            readonly property real insetPad: Theme.dp(3)
+                            readonly property real thumbGap: Theme.dp(4)
+                            readonly property real tileX: root.slotPosX(thumb.slotIndex)
+                            readonly property real tileY: root.slotPosY(thumb.slotIndex)
+                            readonly property real usableW: root.previewW - thumb.insetPad * 2
+                            readonly property real usableH: root.previewH - thumb.insetPad * 2
+                            readonly property real clampedW: Math.min(thumb.fracW * thumb.usableW, thumb.usableW)
+                            readonly property real clampedH: Math.min(thumb.fracH * thumb.usableH, thumb.usableH)
+                            readonly property real clampedX: Math.min(thumb.tileX + thumb.insetPad + thumb.fracX * thumb.usableW, thumb.tileX + thumb.insetPad + thumb.usableW - thumb.clampedW)
+                            readonly property real clampedY: Math.min(thumb.tileY + thumb.insetPad + thumb.fracY * thumb.usableH, thumb.tileY + thumb.insetPad + thumb.usableH - thumb.clampedH)
+                            readonly property real restX: thumb.clampedX + thumb.thumbGap / 2
+                            readonly property real restY: thumb.clampedY + thumb.thumbGap / 2
+                            readonly property real restW: Math.max(Theme.dp(2), thumb.clampedW - thumb.thumbGap)
+                            readonly property real restH: Math.max(Theme.dp(2), thumb.clampedH - thumb.thumbGap)
+                            readonly property var toplevel: root.tlByAddress[thumb.address] || null
+                            readonly property string iconSource: root.iconFor(thumb.appClass)
+                            readonly property bool hasPreview: thumb.everHadContent || preview.hasContent
+                            readonly property bool isSwapTarget: !dragHandler.active && root.swapTarget === thumb.address
+                            property bool everHadContent: false
+                            property real dragOriginX: 0
+                            property real dragOriginY: 0
+                            property int dragOriginSlot: 0
+
+                            // the card's corner less the inset, where the window reaches it
+                            readonly property real inset: thumb.insetPad + thumb.thumbGap / 2
+                            readonly property real edgeTol: Theme.dp(3)
+                            readonly property bool atLeft: thumb.restX - thumb.tileX - thumb.inset <= thumb.edgeTol
+                            readonly property bool atTop: thumb.restY - thumb.tileY - thumb.inset <= thumb.edgeTol
+                            readonly property bool atRight: thumb.tileX + root.previewW - thumb.inset - (thumb.restX + thumb.restW) <= thumb.edgeTol
+                            readonly property bool atBottom: thumb.tileY + root.previewH - thumb.inset - (thumb.restY + thumb.restH) <= thumb.edgeTol
+                            readonly property real innerR: Theme.dp(6)
+                            property real outerR: Math.max(thumb.innerR, root.cardRadius(thumb.slotIndex) - thumb.inset)
+
+                            x: dragHandler.active ? thumb.dragOriginX + dragHandler.translation.x : thumb.restX
+                            y: dragHandler.active ? thumb.dragOriginY + dragHandler.translation.y : thumb.restY
+                            width: thumb.restW
+                            height: thumb.restH
+                            radius: thumb.innerR
+                            topLeftRadius: !dragHandler.active && thumb.atLeft && thumb.atTop ? thumb.outerR : thumb.innerR
+                            topRightRadius: !dragHandler.active && thumb.atRight && thumb.atTop ? thumb.outerR : thumb.innerR
+                            bottomLeftRadius: !dragHandler.active && thumb.atLeft && thumb.atBottom ? thumb.outerR : thumb.innerR
+                            bottomRightRadius: !dragHandler.active && thumb.atRight && thumb.atBottom ? thumb.outerR : thumb.innerR
+
+                            // with the card's own corner as the workspace turns active
+                            Behavior on outerR {
                                 NumberAnimation {
                                     duration: Theme.durDefaultSpatial
                                     easing.type: Easing.Bezier
@@ -2342,26 +2862,194 @@ Item {
                                 }
 
                             }
-                            scale: tileClick.pressed ? 0.985 : (tile.highlighted ? 1.03 : 1)
+                            color: Theme.withBlur(Theme.bgSunken)
+                            // sliding, a window is its picture and its app's icon; the
+                            // outline is kept for a drag
+                            border.width: dragHandler.active || thumb.isSwapTarget || thumb.focused ? 2 : 1
+                            border.color: thumb.isSwapTarget || dragHandler.active || thumb.focused ? Theme.accent : Theme.alpha(Theme.text, root.slides ? 0.16 : 0.25)
+                            scale: dragHandler.active ? 1.06 : 1
+                            z: dragHandler.active ? 10 : 1
+                            opacity: dragHandler.active ? 0.94 : root.stagger(thumb.slotIndex, 0.08)
 
-                            Icon {
-                                anchors.centerIn: parent
-                                visible: !tile.wsObj && !root.multiDisplay
-                                name: "add"
-                                size: Math.round(root.plusFontSize * 1.1)
-                                color: Theme.accent
+                            HeldPointer {
+                                held: dragHandler.active
+                                cursor: Qt.PointingHandCursor
                             }
 
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Theme.barMs(150)
+                            DragHandler {
+                                id: dragHandler
+
+                                target: null
+                                onActiveChanged: {
+                                    if (active) {
+                                        root.dragging = true;
+                                        thumb.dragOriginSlot = thumb.slotIndex;
+                                        thumb.dragOriginX = thumb.x;
+                                        thumb.dragOriginY = thumb.y;
+                                        return ;
+                                    }
+                                    const targetSlot = root.dropSlot >= 0 ? root.dropSlot : thumb.dragOriginSlot;
+                                    const swapAddress = root.swapTarget;
+                                    root.dragging = false;
+                                    root.dropSlot = -1;
+                                    root.swapTarget = "";
+                                    if (targetSlot === thumb.dragOriginSlot) {
+                                        if (swapAddress !== "") {
+                                            const rowA = root.rowForAddress(thumb.address);
+                                            const rowB = root.rowForAddress(swapAddress);
+                                            if (rowA && rowB)
+                                                root.setPendingSwap(thumb.address, rowA, swapAddress, rowB);
+
+                                            root.swapWindows(thumb.address, swapAddress);
+                                        }
+                                        return ;
+                                    }
+                                    if (root.isPlus(targetSlot)) {
+                                        root.moveWindowToNew(thumb.address, root.plusMonitor(targetSlot));
+                                        return ;
+                                    }
+                                    root.setPendingMove(thumb.address, root.slotWsId(targetSlot));
+                                    root.moveWindowToSlot(thumb.address, targetSlot);
+                                }
+                                onCentroidChanged: {
+                                    if (!dragHandler.active)
+                                        return ;
+
+                                    const cx = thumb.x + thumb.width / 2;
+                                    const cy = thumb.y + thumb.height / 2;
+                                    const slot = root.slotAt(cx, cy);
+                                    root.dropSlot = slot;
+                                    root.swapTarget = root.findSwapTarget(thumb.address, slot, cx, cy);
+                                }
+                            }
+
+                            TapHandler {
+                                acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                                gesturePolicy: TapHandler.DragThreshold
+                                onSingleTapped: (eventPoint, button) => {
+                                    if (button === Qt.MiddleButton) {
+                                        root.closeWindow(thumb.address);
+                                        return ;
+                                    }
+                                    root.focusWindow(thumb.address);
+                                    root.expanded = false;
+                                }
+                            }
+
+                            ScreencopyView {
+                                id: preview
+
+                                anchors.centerIn: parent
+                                constraintSize.width: thumb.width
+                                constraintSize.height: thumb.height
+                                captureSource: root.everExpanded && thumb.toplevel ? thumb.toplevel.wayland : null
+                                live: root.expanded
+                                visible: thumb.everHadContent || hasContent
+                                onHasContentChanged: {
+                                    if (hasContent)
+                                        thumb.everHadContent = true;
+
+                                }
+
+                                transform: Scale {
+                                    id: fitScale
+
+                                    origin.x: preview.width / 2
+                                    origin.y: preview.height / 2
+                                    xScale: preview.width > 0 && preview.height > 0 ? Math.max(thumb.width / preview.width, thumb.height / preview.height) : 1
+                                    yScale: fitScale.xScale
                                 }
 
                             }
 
-                            Behavior on border.color {
-                                ColorAnimation {
-                                    duration: Theme.barMs(150)
+                            Text {
+                                anchors.centerIn: parent
+                                anchors.margins: Theme.dp(4)
+                                width: parent.width - Theme.dp(8)
+                                visible: !thumb.hasPreview && (thumb.iconSource === "" || badgeIcon.status !== Image.Ready)
+                                text: thumb.appClass
+                                color: Theme.subtext
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fs(10)
+                                font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
+                                elide: Text.ElideRight
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            // sliding, the pointer over a window lights it
+                            Rectangle {
+                                anchors.fill: parent
+                                visible: root.slides && thumbHover.hovered && !dragHandler.active
+                                color: Theme.alpha(Theme.text, Theme.stateHover)
+                            }
+
+                            HoverHandler {
+                                id: thumbHover
+
+                                enabled: root.slides
+                            }
+
+                            // sliding, every window wears its app's badge over the picture;
+                            // otherwise it stands in only while there is none
+                            Rectangle {
+                                id: appBadge
+
+                                readonly property real iconSize: root.slides ? Math.round(Math.max(Theme.dp(12), Math.min(Theme.dp(30), Math.min(thumb.restW, thumb.restH) * 0.3))) : Math.max(Theme.dp(10), Math.min(Theme.dp(22), Math.min(thumb.restW, thumb.restH) * 0.35))
+
+                                visible: (root.slides ? Math.min(thumb.restW, thumb.restH) >= Theme.dp(20) : !thumb.hasPreview) && thumb.iconSource !== "" && badgeIcon.status === Image.Ready
+                                anchors.centerIn: parent
+                                width: appBadge.iconSize
+                                height: appBadge.iconSize
+                                radius: appBadge.iconSize * 0.28
+                                color: Theme.alpha(Theme.bg, 0.85)
+
+                                IconImage {
+                                    id: badgeIcon
+
+                                    anchors.fill: parent
+                                    anchors.margins: Math.max(1, appBadge.iconSize * 0.1)
+                                    source: thumb.iconSource
+                                    asynchronous: true
+                                }
+
+                            }
+
+                            Behavior on x {
+                                enabled: !dragHandler.active
+
+                                NumberAnimation {
+                                    duration: Theme.barMs(root.trackEase)
+                                    easing.type: Easing.OutCubic
+                                }
+
+                            }
+
+                            Behavior on y {
+                                enabled: !dragHandler.active
+
+                                NumberAnimation {
+                                    duration: Theme.barMs(root.trackEase)
+                                    easing.type: Easing.OutCubic
+                                }
+
+                            }
+
+                            Behavior on width {
+                                enabled: !dragHandler.active
+
+                                NumberAnimation {
+                                    duration: Theme.barMs(root.trackEase)
+                                    easing.type: Easing.OutCubic
+                                }
+
+                            }
+
+                            Behavior on height {
+                                enabled: !dragHandler.active
+
+                                NumberAnimation {
+                                    duration: Theme.barMs(root.trackEase)
+                                    easing.type: Easing.OutCubic
                                 }
 
                             }
@@ -2374,29 +3062,7 @@ Item {
 
                             }
 
-                        }
-
-                        HoverHandler {
-                            id: tileHover
-
-                            onHoveredChanged: {
-                                if (hovered)
-                                    root.selectedIndex = -1;
-
-                            }
-                        }
-
-                        Text {
-                            anchors.top: card.bottom
-                            anchors.horizontalCenter: card.horizontalCenter
-                            anchors.topMargin: root.labelGap
-                            text: tile.label
-                            color: tile.isActive ? Theme.primary : (tile.highlighted ? Theme.text : Theme.subtext)
-                            font.family: Theme.fontFamily
-                            font.pixelSize: root.labelFontSize
-                            font.variableAxes: Theme.axes(root.labelFontSize, tile.isActive ? 620 : 480, 0)
-
-                            Behavior on color {
+                            Behavior on border.color {
                                 ColorAnimation {
                                     duration: Theme.barMs(150)
                                 }
@@ -2405,79 +3071,34 @@ Item {
 
                         }
 
-                        MouseArea {
-                            id: tileClick
-
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.activateSlot(tile.index)
-                        }
-
                     }
 
-                }
-
-                // shared mode: the last tile of each display's block opens a new workspace there
-                Repeater {
-                    model: root.plusCount
-
-                    Item {
-                        id: plusTile
-
-                        required property int index
-                        readonly property int slot: root.totalSlots + plusTile.index
-                        readonly property bool isDropTarget: root.dragging && root.dropSlot === plusTile.slot
-                        readonly property bool highlighted: plusHover.hovered || root.selectedIndex === plusTile.slot
-
-                        x: root.slotPosX(plusTile.slot)
-                        y: root.slotPosY(plusTile.slot)
-                        width: root.tileW
-                        height: root.tileH
-                        opacity: root.stagger(plusTile.slot, 0)
+                    // sliding, the spotlight: every workspace but the one in use is
+                    // shaded over, its windows too, and lights under the pointer,
+                    // the keys' selection or a window being dragged in
+                    Repeater {
+                        model: root.slides ? root.totalSlots : 0
 
                         Rectangle {
-                            id: plusCard
+                            id: shade
 
+                            required property int index
+                            readonly property var wsObj: root.wsAt(shade.index)
+                            readonly property bool isActive: shade.index >= root.slotCount ? shade.index === root.shownSpecialSlot : (shade.wsObj ? shade.wsObj.active : false)
+                            readonly property bool lit: shade.isActive || root.pointedSlot === shade.index || root.selectedIndex === shade.index || (root.dragging && root.dropSlot === shade.index)
+
+                            visible: !!root.slotPos[shade.index]
+                            x: root.slotPosX(shade.index)
+                            y: root.slotPosY(shade.index)
+                            z: 4
                             width: root.previewW
                             height: root.previewH
-                            radius: Theme.rad(12)
-                            color: Theme.withBlur(plusTile.highlighted ? Theme.surfaceHighest : Theme.surfaceHigh)
-                            border.color: plusTile.isDropTarget ? Theme.primary : "transparent"
-                            border.width: plusTile.isDropTarget ? 3 : 0
-                            opacity: plusTile.highlighted || plusTile.isDropTarget ? 1 : 0.55
-                            scale: plusClick.pressed ? 0.985 : (plusTile.highlighted ? 1.03 : 1)
-
-                            Icon {
-                                anchors.centerIn: parent
-                                name: "add"
-                                size: Math.round(root.plusFontSize * 1.1)
-                                color: Theme.accent
-                            }
+                            radius: root.cardRadius(shade.index)
+                            color: Theme.alpha(Theme.bgSunken, shade.lit ? 0 : 0.5)
 
                             Behavior on color {
                                 ColorAnimation {
-                                    duration: Theme.barMs(150)
-                                }
-
-                            }
-
-                            Behavior on border.color {
-                                ColorAnimation {
-                                    duration: Theme.barMs(150)
-                                }
-
-                            }
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Theme.barMs(150)
-                                }
-
-                            }
-
-                            Behavior on scale {
-                                NumberAnimation {
-                                    duration: Theme.barMs(150)
+                                    duration: Theme.barMs(180)
                                     easing.type: Easing.OutCubic
                                 }
 
@@ -2485,334 +3106,25 @@ Item {
 
                         }
 
-                        HoverHandler {
-                            id: plusHover
-
-                            onHoveredChanged: {
-                                if (hovered)
-                                    root.selectedIndex = -1;
-
-                            }
-                        }
-
-                        Text {
-                            anchors.top: plusCard.bottom
-                            anchors.horizontalCenter: plusCard.horizontalCenter
-                            anchors.topMargin: root.labelGap
-                            text: I18n.tr("New workspace")
-                            color: plusTile.highlighted ? Theme.text : Theme.subtext
-                            font.family: Theme.fontFamily
-                            font.pixelSize: root.labelFontSize
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Theme.barMs(150)
-                                }
-
-                            }
-
-                        }
-
-                        MouseArea {
-                            id: plusClick
-
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.activateSlot(plusTile.slot)
-                        }
-
                     }
 
                 }
 
-                Repeater {
-                    id: thumbRepeater
-
-                    model: windowModel
-
-                    ClippingRectangle {
-                        id: thumb
-
-                        required property string address
-                        required property int slotIndex
-                        required property int atX
-                        required property int atY
-                        required property int sizeW
-                        required property int sizeH
-                        required property int monitor
-                        required property string appClass
-                        required property bool focused
-                        readonly property var monitorObj: root.monById[thumb.monitor] || root.refMonitor
-                        readonly property real monScale: thumb.monitorObj && thumb.monitorObj.scale > 0 ? thumb.monitorObj.scale : 1
-                        readonly property var reserved: (thumb.monitorObj && thumb.monitorObj.lastIpcObject && thumb.monitorObj.lastIpcObject.reserved) || [0, 0, 0, 0]
-                        readonly property real usableMonX: thumb.monitorObj ? thumb.monitorObj.x + thumb.reserved[0] : 0
-                        readonly property real usableMonY: thumb.monitorObj ? thumb.monitorObj.y + thumb.reserved[1] : 0
-                        readonly property real usableMonW: thumb.monitorObj ? Math.max(1, thumb.monitorObj.width / thumb.monScale - thumb.reserved[0] - thumb.reserved[2]) : 1
-                        readonly property real usableMonH: thumb.monitorObj ? Math.max(1, thumb.monitorObj.height / thumb.monScale - thumb.reserved[1] - thumb.reserved[3]) : 1
-                        readonly property real fracX: Math.max(0, Math.min(1, (thumb.atX - thumb.usableMonX) / thumb.usableMonW))
-                        readonly property real fracY: Math.max(0, Math.min(1, (thumb.atY - thumb.usableMonY) / thumb.usableMonH))
-                        readonly property real fracW: Math.max(0, Math.min(1, thumb.sizeW / thumb.usableMonW))
-                        readonly property real fracH: Math.max(0, Math.min(1, thumb.sizeH / thumb.usableMonH))
-                        readonly property real insetPad: Theme.dp(3)
-                        readonly property real thumbGap: Theme.dp(4)
-                        readonly property real tileX: root.slotPosX(thumb.slotIndex)
-                        readonly property real tileY: root.slotPosY(thumb.slotIndex)
-                        readonly property real usableW: root.previewW - thumb.insetPad * 2
-                        readonly property real usableH: root.previewH - thumb.insetPad * 2
-                        readonly property real clampedW: Math.min(thumb.fracW * thumb.usableW, thumb.usableW)
-                        readonly property real clampedH: Math.min(thumb.fracH * thumb.usableH, thumb.usableH)
-                        readonly property real clampedX: Math.min(thumb.tileX + thumb.insetPad + thumb.fracX * thumb.usableW, thumb.tileX + thumb.insetPad + thumb.usableW - thumb.clampedW)
-                        readonly property real clampedY: Math.min(thumb.tileY + thumb.insetPad + thumb.fracY * thumb.usableH, thumb.tileY + thumb.insetPad + thumb.usableH - thumb.clampedH)
-                        readonly property real restX: thumb.clampedX + thumb.thumbGap / 2
-                        readonly property real restY: thumb.clampedY + thumb.thumbGap / 2
-                        readonly property real restW: Math.max(Theme.dp(2), thumb.clampedW - thumb.thumbGap)
-                        readonly property real restH: Math.max(Theme.dp(2), thumb.clampedH - thumb.thumbGap)
-                        readonly property var toplevel: root.tlByAddress[thumb.address] || null
-                        readonly property string iconSource: root.iconFor(thumb.appClass)
-                        readonly property bool hasPreview: thumb.everHadContent || preview.hasContent
-                        readonly property bool isSwapTarget: !dragHandler.active && root.swapTarget === thumb.address
-                        property bool everHadContent: false
-                        property real dragOriginX: 0
-                        property real dragOriginY: 0
-                        property int dragOriginSlot: 0
-
-                        // the card's corner less the inset, where the window reaches it
-                        readonly property real inset: thumb.insetPad + thumb.thumbGap / 2
-                        readonly property real edgeTol: Theme.dp(3)
-                        readonly property bool atLeft: thumb.restX - thumb.tileX - thumb.inset <= thumb.edgeTol
-                        readonly property bool atTop: thumb.restY - thumb.tileY - thumb.inset <= thumb.edgeTol
-                        readonly property bool atRight: thumb.tileX + root.previewW - thumb.inset - (thumb.restX + thumb.restW) <= thumb.edgeTol
-                        readonly property bool atBottom: thumb.tileY + root.previewH - thumb.inset - (thumb.restY + thumb.restH) <= thumb.edgeTol
-                        readonly property real innerR: Theme.dp(6)
-                        property real outerR: Math.max(thumb.innerR, root.cardRadius(thumb.slotIndex) - thumb.inset)
-
-                        x: dragHandler.active ? thumb.dragOriginX + dragHandler.translation.x : thumb.restX
-                        y: dragHandler.active ? thumb.dragOriginY + dragHandler.translation.y : thumb.restY
-                        width: thumb.restW
-                        height: thumb.restH
-                        radius: thumb.innerR
-                        topLeftRadius: !dragHandler.active && thumb.atLeft && thumb.atTop ? thumb.outerR : thumb.innerR
-                        topRightRadius: !dragHandler.active && thumb.atRight && thumb.atTop ? thumb.outerR : thumb.innerR
-                        bottomLeftRadius: !dragHandler.active && thumb.atLeft && thumb.atBottom ? thumb.outerR : thumb.innerR
-                        bottomRightRadius: !dragHandler.active && thumb.atRight && thumb.atBottom ? thumb.outerR : thumb.innerR
-
-                        // with the card's own corner as the workspace turns active
-                        Behavior on outerR {
-                            NumberAnimation {
-                                duration: Theme.durDefaultSpatial
-                                easing.type: Easing.Bezier
-                                easing.bezierCurve: Theme.curveDefaultSpatial
-                            }
-
-                        }
-                        color: Theme.withBlur(Theme.bgSunken)
-                        border.width: dragHandler.active || thumb.isSwapTarget || thumb.focused ? 2 : 1
-                        border.color: thumb.isSwapTarget || dragHandler.active || thumb.focused ? Theme.accent : Theme.alpha(Theme.text, 0.25)
-                        scale: dragHandler.active ? 1.06 : 1
-                        z: dragHandler.active ? 10 : 1
-                        opacity: dragHandler.active ? 0.94 : root.stagger(thumb.slotIndex, 0.08)
-
-                        HeldPointer {
-                            held: dragHandler.active
-                            cursor: Qt.PointingHandCursor
-                        }
-
-                        DragHandler {
-                            id: dragHandler
-
-                            target: null
-                            onActiveChanged: {
-                                if (active) {
-                                    root.dragging = true;
-                                    thumb.dragOriginSlot = thumb.slotIndex;
-                                    thumb.dragOriginX = thumb.x;
-                                    thumb.dragOriginY = thumb.y;
-                                    return ;
-                                }
-                                const targetSlot = root.dropSlot >= 0 ? root.dropSlot : thumb.dragOriginSlot;
-                                const swapAddress = root.swapTarget;
-                                root.dragging = false;
-                                root.dropSlot = -1;
-                                root.swapTarget = "";
-                                if (targetSlot === thumb.dragOriginSlot) {
-                                    if (swapAddress !== "") {
-                                        const rowA = root.rowForAddress(thumb.address);
-                                        const rowB = root.rowForAddress(swapAddress);
-                                        if (rowA && rowB)
-                                            root.setPendingSwap(thumb.address, rowA, swapAddress, rowB);
-
-                                        root.swapWindows(thumb.address, swapAddress);
-                                    }
-                                    return ;
-                                }
-                                if (root.isPlus(targetSlot)) {
-                                    root.moveWindowToNew(thumb.address, root.plusMonitor(targetSlot));
-                                    return ;
-                                }
-                                root.setPendingMove(thumb.address, root.slotWsId(targetSlot));
-                                root.moveWindowToSlot(thumb.address, targetSlot);
-                            }
-                            onCentroidChanged: {
-                                if (!dragHandler.active)
-                                    return ;
-
-                                const cx = thumb.x + thumb.width / 2;
-                                const cy = thumb.y + thumb.height / 2;
-                                const slot = root.slotAt(cx, cy);
-                                root.dropSlot = slot;
-                                root.swapTarget = root.findSwapTarget(thumb.address, slot, cx, cy);
-                            }
-                        }
-
-                        TapHandler {
-                            acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-                            gesturePolicy: TapHandler.DragThreshold
-                            onSingleTapped: (eventPoint, button) => {
-                                if (button === Qt.MiddleButton) {
-                                    root.closeWindow(thumb.address);
-                                    return ;
-                                }
-                                root.focusWindow(thumb.address);
-                                root.expanded = false;
-                            }
-                        }
-
-                        ScreencopyView {
-                            id: preview
-
-                            anchors.centerIn: parent
-                            constraintSize.width: thumb.width
-                            constraintSize.height: thumb.height
-                            captureSource: root.everExpanded && thumb.toplevel ? thumb.toplevel.wayland : null
-                            live: root.expanded
-                            visible: thumb.everHadContent || hasContent
-                            onHasContentChanged: {
-                                if (hasContent)
-                                    thumb.everHadContent = true;
-
-                            }
-
-                            transform: Scale {
-                                id: fitScale
-
-                                origin.x: preview.width / 2
-                                origin.y: preview.height / 2
-                                xScale: preview.width > 0 && preview.height > 0 ? Math.max(thumb.width / preview.width, thumb.height / preview.height) : 1
-                                yScale: fitScale.xScale
-                            }
-
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            anchors.margins: Theme.dp(4)
-                            width: parent.width - Theme.dp(8)
-                            visible: !thumb.hasPreview && (thumb.iconSource === "" || badgeIcon.status !== Image.Ready)
-                            text: thumb.appClass
-                            color: Theme.subtext
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fs(10)
-                            font.variableAxes: Theme.axes(Theme.fs(10), 420, 0)
-                            elide: Text.ElideRight
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-
-                        Rectangle {
-                            id: appBadge
-
-                            readonly property real iconSize: Math.max(Theme.dp(10), Math.min(Theme.dp(22), Math.min(thumb.restW, thumb.restH) * 0.35))
-
-                            visible: !thumb.hasPreview && thumb.iconSource !== "" && badgeIcon.status === Image.Ready
-                            anchors.centerIn: parent
-                            width: appBadge.iconSize
-                            height: appBadge.iconSize
-                            radius: appBadge.iconSize * 0.28
-                            color: Theme.alpha(Theme.bg, 0.85)
-
-                            IconImage {
-                                id: badgeIcon
-
-                                anchors.fill: parent
-                                anchors.margins: Math.max(1, appBadge.iconSize * 0.1)
-                                source: thumb.iconSource
-                                asynchronous: true
-                            }
-
-                        }
-
-                        Behavior on x {
-                            enabled: !dragHandler.active
-
-                            NumberAnimation {
-                                duration: Theme.barMs(root.trackEase)
-                                easing.type: Easing.OutCubic
-                            }
-
-                        }
-
-                        Behavior on y {
-                            enabled: !dragHandler.active
-
-                            NumberAnimation {
-                                duration: Theme.barMs(root.trackEase)
-                                easing.type: Easing.OutCubic
-                            }
-
-                        }
-
-                        Behavior on width {
-                            enabled: !dragHandler.active
-
-                            NumberAnimation {
-                                duration: Theme.barMs(root.trackEase)
-                                easing.type: Easing.OutCubic
-                            }
-
-                        }
-
-                        Behavior on height {
-                            enabled: !dragHandler.active
-
-                            NumberAnimation {
-                                duration: Theme.barMs(root.trackEase)
-                                easing.type: Easing.OutCubic
-                            }
-
-                        }
-
-                        Behavior on scale {
-                            NumberAnimation {
-                                duration: Theme.barMs(150)
-                                easing.type: Easing.OutCubic
-                            }
-
-                        }
-
-                        Behavior on border.color {
-                            ColorAnimation {
-                                duration: Theme.barMs(150)
-                            }
-
-                        }
-
-                    }
-
+                // the bar is mirrored on the bottom edge; the content stands upright.
+                // the sliding card's own surface is never mirrored
+                transform: Scale {
+                    origin.y: expandedFace.height / 2
+                    yScale: Prefs.barBottom && !root.slides ? -1 : 1
                 }
 
             }
 
-            // the bar is mirrored on the bottom edge; the content stands upright
-            transform: Scale {
-                origin.y: expandedFace.height / 2
-                yScale: Prefs.barBottom ? -1 : 1
-            }
+            Behavior on radius {
+                NumberAnimation {
+                    duration: Theme.barMs(340)
+                    easing.type: Easing.OutCubic
+                }
 
-        }
-
-        Behavior on radius {
-            NumberAnimation {
-                duration: Theme.barMs(340)
-                easing.type: Easing.OutCubic
             }
 
         }
@@ -2821,7 +3133,7 @@ Item {
 
     // the seam with a joined neighbour on the left, as BarPill draws it
     Rectangle {
-        visible: root.joinLeft && Prefs.barJoinDividers && !root.expanded
+        visible: root.joinLeft && Prefs.barJoinDividers && !(root.expanded && !root.apart)
         x: 0
         y: Math.round((root.compactHeight - height) / 2)
         z: 5
@@ -2833,7 +3145,7 @@ Item {
 
     states: State {
         name: "expanded"
-        when: root.expanded && !root.popupMode
+        when: root.expanded && !root.apart
 
         PropertyChanges {
             target: root

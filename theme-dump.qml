@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs
+import qs.lucidlock
 
 // prints the resolved Theme tokens as json, for anything outside the shell
 // that needs Lucid's colours - sddm, which runs before this config exists.
@@ -9,6 +10,12 @@ import qs
 //
 //   qs -p ~/.config/quickshell/theme-dump.qml
 ShellRoot {
+    // the shared lock parts' palette, as the lock itself reads it: the login
+    // screen gets every one of these under the same name
+    LockTokens {
+        id: tokens
+    }
+
     // builds Theme now rather than inside the print below: a singleton read for
     // the first time hands back its fallback colours, and the file it is waiting
     // on only lands on the next event loop turn
@@ -26,7 +33,7 @@ ShellRoot {
             if ((!Prefs.loaded || !Theme.paletteLoaded) && tries < 20)
                 return ;
 
-            console.log("LUCIDTOKENS " + JSON.stringify({
+            var out = {
                 "isLight": Theme.isLight,
                 "accent": Theme.accent.toString(),
                 "accentHover": Theme.accentHover.toString(),
@@ -55,7 +62,12 @@ ShellRoot {
                 "uiScale": Theme.uiScale,
                 "cornerScale": Theme.cornerScale,
                 "clock24h": Prefs.clock24h
-            }));
+            };
+            for (var i = 0; i < tokens.colourKeys.length; i++) {
+                var k = tokens.colourKeys[i];
+                out[k] = tokens[k].toString();
+            }
+            console.log("LUCIDTOKENS " + JSON.stringify(out));
             Qt.exit(0);
         }
     }

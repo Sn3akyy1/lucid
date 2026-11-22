@@ -220,5 +220,21 @@ class OwnApps(unittest.TestCase):
             self.assertIn(name, table[app])
 
 
+class LanguagePicker(unittest.TestCase):
+    """the language is picked from a menu: a row of segments ran out of room at five"""
+
+    def test_language_is_a_dropdown(self):
+        page = read("lucidprefs/LanguagePage.qml")
+        self.assertIn("M3Dropdown {", page)
+        self.assertNotIn("M3Segmented", page)
+
+    def test_every_shipped_catalogue_is_offered(self):
+        shipped = sorted(f[:-5] for f in os.listdir(os.path.join(ROOT, "i18n")) if f.endswith(".json"))
+        self.assertGreaterEqual(len(shipped), 4)
+        for code in shipped:
+            meta = json.loads(read(f"i18n/{code}.json"))["_meta"]
+            self.assertTrue(meta.get("name"), f"{code}.json has no _meta name to show in the menu")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -18,6 +18,10 @@ PanelWindow {
     property int ctrlState: 0
     property int altState: 0
     property int superState: 0
+    // the third and fourth levels, where a layout has them (AltGr+Q is @ on German)
+    property int altGrState: 0
+    // a dead key waiting for the letter it goes on: {pos, c, m, n}
+    property var deadKey: null
     property var targetToplevel: null
     property var queue: []
 
@@ -30,6 +34,15 @@ PanelWindow {
     // held while a drag is in flight; state.json is written once, on release
     property real liveX: -1
     property real liveY: -1
+    // the main keyboard's layouts as keymap.py read them, and the one in use;
+    // the board is drawn from it, and is the built-in US one until it answers
+    property var layouts: []
+    property int layoutIndex: 0
+    property string mainKeyboard: ""
+    property string keymapArgs: ""
+    property bool layoutAgain: false
+    readonly property var board: kbWindow.layouts.length > 0 ? kbWindow.layouts[Math.max(0, Math.min(kbWindow.layoutIndex, kbWindow.layouts.length - 1))] : null
+    readonly property string keymapHelper: Qt.resolvedUrl("keymap.py").toString().replace("file://", "")
 
     function clampX(v) {
         return Math.max(0, Math.min(Math.max(0, kbWindow.width - face.width), v));
@@ -64,7 +77,15 @@ PanelWindow {
         if (ToplevelManager.activeToplevel)
             kbWindow.targetToplevel = ToplevelManager.activeToplevel;
 
+        kbWindow.readLayout();
         kbWindow.open = true;
+    }
+
+    function readLayout() {
+        if (devProc.running)
+            kbWindow.layoutAgain = true;
+        else
+            devProc.running = true;
     }
 
     function modState(name) {
@@ -79,6 +100,8 @@ PanelWindow {
             return kbWindow.altState;
         case "super":
             return kbWindow.superState;
+        case "altgr":
+            return kbWindow.altGrState;
         }
         return 0;
     }
@@ -103,6 +126,9 @@ PanelWindow {
         case "super":
             kbWindow.superState = next;
             break;
+        case "altgr":
+            kbWindow.altGrState = next;
+            break;
         }
     }
 
@@ -119,6 +145,9 @@ PanelWindow {
         if (kbWindow.superState === 1)
             kbWindow.superState = 0;
 
+        if (kbWindow.altGrState === 1)
+            kbWindow.altGrState = 0;
+
     }
 
     function clearMods() {
@@ -126,6 +155,8 @@ PanelWindow {
         kbWindow.ctrlState = 0;
         kbWindow.altState = 0;
         kbWindow.superState = 0;
+        kbWindow.altGrState = 0;
+        kbWindow.deadKey = null;
     }
 
     // the layer never takes keyboard focus, so the target normally keeps it.
@@ -136,11 +167,46 @@ PanelWindow {
 
     }
 
-    function fire(entry) {
+    // what a key of the layout's board makes at the levels held: AltGr picks the
+    // third and fourth, and a level the key lacks falls back as xkb does
+    function levelOf(entry, shift, altgr) {
+        if (!entry.lv)
+            return null;
+
+        return entry.lv[(altgr ? 2 : 0) + (shift ? 1 : 0)] || entry.lv[shift ? 1 : 0] || entry.lv[0] || null;
+    }
+
+    // text with a waiting dead key worked in: on a letter it takes the mark
+    // (´ then e is é), else it goes out as itself first; a space is just the mark
+    function withDead(text) {
+        var d = kbWindow.deadKey;
+        kbWindow.deadKey = null;
+        if (!d)
+            return text;
+
+        if (text === " " || text === "")
+            return d.c;
+
+        var t = (text + d.m).normalize("NFC");
+        return t.length === 1 ? t : d.c + text;
+    }
+
+    function fire(entry, repeated) {
         if (entry.t === "mod") {
             kbWindow.cycleMod(entry.k);
             return ;
         }
+        // held, the layout key steps once
+        if (entry.t === "layout") {
+            if (!repeated) {
+                kbWindow.deadKey = null;
+                layoutSwitchProc.running = true;
+            }
+            return ;
+        }
+        if (entry.t === "blank")
+            return ;
+
         var mods = [];
         if (kbWindow.ctrlState > 0)
             mods.push("CTRL");
@@ -152,18 +218,48 @@ PanelWindow {
             mods.push("SUPER");
 
         var shift = kbWindow.shiftState > 0;
+        var altgr = kbWindow.altGrState > 0;
         kbWindow.reclaimFocus();
         if (mods.length > 0) {
             // a real chord. hyprland's own dispatcher is the one path every app
             // honours - wtype's ctrl combos are ignored by vscode and friends
+            kbWindow.deadKey = null;
             if (shift)
                 mods.push("SHIFT");
 
             Hyprland.dispatch("hl.dsp.send_shortcut{ mods = \"" + mods.join(" ") + "\", key = \"" + entry.k + "\" }");
         } else if (entry.t === "named") {
+            // backspace just drops a waiting dead key; anything else sends it first
+            if (kbWindow.deadKey && entry.k !== "BackSpace")
+                kbWindow.run(["wtype", "--", kbWindow.withDead("")]);
+
+            kbWindow.deadKey = null;
             kbWindow.run(shift ? ["wtype", "-M", "shift", "-k", entry.k, "-m", "shift"] : ["wtype", "-k", entry.k]);
         } else {
-            kbWindow.run(["wtype", "--", shift ? entry.s : entry.l]);
+            var sym = kbWindow.levelOf(entry, shift, altgr);
+            if (sym && sym.m) {
+                // a dead key waits for the next one; held, it does not repeat
+                if (repeated)
+                    return ;
+
+                var was = kbWindow.deadKey;
+                if (was)
+                    kbWindow.run(["wtype", "--", kbWindow.withDead("")]);
+
+                // the same dead key twice is its mark, as on the real keyboard
+                if (!was || was.n !== sym.n)
+                    kbWindow.deadKey = {
+                        "pos": entry.pos,
+                        "c": sym.c,
+                        "m": sym.m,
+                        "n": sym.n
+                    };
+
+                kbWindow.consumeOneShots();
+                return ;
+            }
+            var text = sym ? sym.c : (shift ? entry.s : entry.l);
+            kbWindow.run(["wtype", "--", kbWindow.withDead(text)]);
         }
         kbWindow.consumeOneShots();
     }
@@ -234,6 +330,83 @@ PanelWindow {
         id: typeProc
 
         onExited: kbWindow.pump()
+    }
+
+    // the main keyboard: which layouts it has and which one is in use
+    Process {
+        id: devProc
+
+        command: ["hyprctl", "devices", "-j"]
+        onExited: {
+            if (kbWindow.layoutAgain) {
+                kbWindow.layoutAgain = false;
+                devProc.running = true;
+            }
+        }
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let kb = null;
+                try {
+                    const kbs = JSON.parse(this.text).keyboards || [];
+                    kb = kbs.find((k) => {
+                        return k.main;
+                    }) || kbs[0] || null;
+                } catch (e) {
+                }
+                if (!kb)
+                    return ;
+
+                kbWindow.mainKeyboard = kb.name || "";
+                kbWindow.layoutIndex = kb.active_layout_index || 0;
+                const args = [kb.rules || "", kb.model || "", kb.layout || "", kb.variant || "", kb.options || ""];
+                if (JSON.stringify(args) === kbWindow.keymapArgs)
+                    return ;
+
+                kbWindow.keymapArgs = JSON.stringify(args);
+                keymapProc.command = ["python3", kbWindow.keymapHelper].concat(args);
+                keymapProc.running = true;
+            }
+        }
+
+    }
+
+    // the board for every layout, compiled the way hyprland compiles them
+    Process {
+        id: keymapProc
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    kbWindow.layouts = JSON.parse(this.text).layouts || [];
+                } catch (e) {
+                    kbWindow.layouts = [];
+                }
+            }
+        }
+
+    }
+
+    Process {
+        id: layoutSwitchProc
+
+        // every keyboard steps together, as the bar's layout chip does it
+        command: ["hyprctl", "switchxkblayout", "all", "next"]
+    }
+
+    // a switch on the main keyboard, or new layouts from Settings > Input. the
+    // virtual keyboards wtype makes report their own, so they are left out
+    Connections {
+        function onRawEvent(event) {
+            if (!kbWindow.open)
+                return ;
+
+            if (event.name === "configreloaded" || (event.name === "activelayout" && String(event.data).split(",")[0] === kbWindow.mainKeyboard))
+                kbWindow.readLayout();
+
+        }
+
+        target: Hyprland
     }
 
     Connections {

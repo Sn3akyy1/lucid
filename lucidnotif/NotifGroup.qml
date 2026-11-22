@@ -8,6 +8,7 @@ Item {
 
     property var row: null
     property bool interactive: true
+    property bool redacted: false
 
     readonly property var items: group.row ? group.row.items : []
     readonly property int count: group.row ? group.row.count : 0
@@ -162,6 +163,7 @@ Item {
                 groupKey: group.groupKey
                 inGroup: group.expanded
                 interactive: group.interactive
+                redacted: group.redacted
             }
 
         }

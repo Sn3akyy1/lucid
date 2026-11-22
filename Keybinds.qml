@@ -646,8 +646,9 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
+                    // the pointer finder's own binds (modules/plugins.lua) are lucid's, not extra
                     root.hyprCount = JSON.parse(text).filter((b) => {
-                        return !b.submap;
+                        return !b.submap && String(b.description || "").indexOf("Find the pointer") !== 0;
                     }).length;
                 } catch (e) {
                     root.hyprCount = -1;

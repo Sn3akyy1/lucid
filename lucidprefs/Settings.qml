@@ -255,11 +255,13 @@ FloatingWindow {
         win.envPickKind = kind;
         if (kind === "cursor")
             envPicker.open(I18n.tr("Cursor theme"), I18n.tr("cursor themes"), Env.cursorThemes, Prefs.envCursorTheme, false);
+        else if (kind === "cursorSet")
+            envPicker.openSets(I18n.tr("Cursor theme"), Pointer.sets, Prefs.envCursorSet, "pointers");
         else if (kind === "icon") {
             Env.loadPreviews();
             envPicker.open(I18n.tr("Icon theme"), I18n.tr("icon themes"), Env.iconThemes, Prefs.envIconTheme, true);
         } else if (kind === "iconSet")
-            envPicker.openSets(I18n.tr("Icon theme"), LucidIcons.sets, Prefs.envIconSet);
+            envPicker.openSets(I18n.tr("Icon theme"), LucidIcons.sets, Prefs.envIconSet, "icons");
         else if (kind === "gtk")
             envPicker.open(I18n.tr("Application theme"), I18n.tr("GTK themes"), Env.gtkThemes, Prefs.envGtkTheme, false);
         else if (kind === "qtStyle")
@@ -283,6 +285,8 @@ FloatingWindow {
         var k = win.envPickKind;
         if (k === "cursor")
             Prefs.envCursorTheme = name;
+        else if (k === "cursorSet")
+            Prefs.envCursorSet = Pointer.idOf(name);
         else if (k === "icon")
             Prefs.envIconTheme = name;
         else if (k === "iconSet")
@@ -1310,6 +1314,8 @@ FloatingWindow {
                                 return "LauncherPage.qml";
                             case "widgets":
                                 return "WidgetsPage.qml";
+                            case "lockscreen":
+                                return "LockscreenPage.qml";
                             case "windows":
                                 return "WindowsPage.qml";
                             case "workspaces":

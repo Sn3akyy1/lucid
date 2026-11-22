@@ -376,14 +376,19 @@ Singleton {
     readonly property var scaleOptions: [1, 1.25, 1.5, 1.75, 2, 2.5, 3]
 
     // scaling a 1080p panel past 200% leaves less room than any window wants,
-    // so the page only offers what this panel can actually carry. whatever is
-    // set now stays on the list either way
+    // so the page only offers what this panel can actually carry, each as the
+    // scale it really runs at here. whatever is set now stays on the list
     function scalesFor(key) {
-        const p = root.parseMode(root.currentRes(key) + "@60Hz");
+        const res = root.currentRes(key);
+        const p = root.parseMode(res + "@60Hz");
         const cur = root.scaleOf(key);
-        const out = root.scaleOptions.filter((v) => {
-            return !p || p.w / v >= 960 || v === cur;
-        });
+        const out = [];
+        for (const v of root.scaleOptions) {
+            const s = root.fitScale(res, v);
+            if ((!p || p.w / s >= 960) && out.indexOf(s) === -1)
+                out.push(s);
+
+        }
         if (out.indexOf(cur) === -1)
             out.push(cur);
 
@@ -434,7 +439,8 @@ Singleton {
         });
     }
 
-    function scaleOf(key) {
+    // the scale as set, before hyprland has had its say
+    function wantedScale(key) {
         const s = root.setupOf(key).scale;
         if (s !== undefined)
             return Number(s);
@@ -443,22 +449,50 @@ Singleton {
         return o ? o.scale : 1;
     }
 
+    // the scale the display actually runs at
+    function scaleOf(key) {
+        return root.fitScale(root.currentRes(key), root.wantedScale(key));
+    }
+
     function setScale(key, v) {
         root.tryOut(key, {
             "scale": Math.round(v * 100) / 100
         });
     }
 
-    // a scale that does not divide the panel evenly lands content on fractional
-    // pixels, so the page marks the ones that do
-    function isCleanScale(key, v) {
-        const p = root.parseMode(root.currentRes(key) + "@60Hz");
-        if (!p || v <= 0)
-            return true;
+    // hyprland only runs a scale that cuts the mode into whole logical pixels.
+    // any other it swaps for the nearest that does, in 1/120 steps, upward
+    // first (CMonitor::applyMonitorRule), with a red notice. so 125% on a
+    // 1366x768 mode runs at 100%: the page shows and writes that one instead
+    function fitScale(res, v) {
+        const p = root.parseMode(res + "@60Hz");
+        const want = Number(v);
+        if (!p || !(want > 0))
+            return want;
 
-        const w = p.w / v;
-        const h = p.h / v;
-        return Math.abs(w - Math.round(w)) < 0.01 && Math.abs(h - Math.round(h)) < 0.01;
+        const whole = (s) => {
+            const w = p.w / s;
+            const h = p.h / s;
+            return w === Math.round(w) && h === Math.round(h);
+        };
+        // hyprland holds it as a float
+        if (whole(Math.fround(want)))
+            return want;
+
+        const steps = Math.round(Math.fround(want) * 120);
+        if (whole(steps / 120))
+            return steps / 120;
+
+        for (let i = 1; i < 90; i++) {
+            if (whole((steps + i) / 120))
+                return (steps + i) / 120;
+
+            if (steps - i > 0 && whole((steps - i) / 120))
+                return (steps - i) / 120;
+
+        }
+        // nothing near divides it, and hyprland picks by itself
+        return want;
     }
 
     function transformOf(key) {
@@ -1068,7 +1102,8 @@ Singleton {
                 fields.push("mirror = " + root.luaStr(s.mirror));
             else
                 fields.push("position = " + root.luaStr(s.x !== undefined && s.y !== undefined ? s.x + "x" + s.y : "auto"));
-            fields.push("scale = " + root.luaStr(s.scale !== undefined ? String(s.scale) : "1"));
+            // the scale it will really get, so hyprland has nothing to correct
+            fields.push("scale = " + root.luaStr(s.scale !== undefined ? String(root.fitScale(root.currentRes(key), s.scale)) : "1"));
             fields.push("transform = " + (s.transform !== undefined ? s.transform : 0));
             fields.push("vrr = " + (s.vrr !== undefined ? s.vrr : 0));
             out += "        { " + fields.join(", ") + " },\n";

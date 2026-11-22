@@ -811,15 +811,25 @@ PanelWindow {
     }
 
     readonly property string mode: dockWindow.modeFor(dockWindow.rawQuery)
+    // the mode the panel is showing. it trails `mode` while the face fades the
+    // old one out, so the panel takes the new size along with the new rows
+    readonly property string shownMode: launcherLoader.item ? launcherLoader.item.displayMode : dockWindow.mode
+    readonly property bool shownPicker: dockWindow.shownMode === "wallpaper" || dockWindow.shownMode === "live"
     // pictures and videos share the picker: one tab each
     readonly property bool pickerMode: dockWindow.mode === "wallpaper" || dockWindow.mode === "live"
-    readonly property var pickerModel: dockWindow.pickerModelFor(dockWindow.mode)
+    // the cards on show: Pictures and Live trade theirs at the swap too
+    readonly property var pickerModel: dockWindow.pickerModelFor(dockWindow.shownMode)
     readonly property string filterQuery: dockWindow.queryFor(dockWindow.rawQuery)
 
     onRawQueryChanged: {
         // a new query never inherits an armed restart
         powerDisarm.stop();
         dockWindow.armedPower = "";
+        // another mode's rows wait for the face to fade the old ones out; it
+        // calls back on swapped(), and that rebuild reads the query as it is then
+        if (launcherLoader.item && launcherLoader.item.holdFor(dockWindow.modeFor(dockWindow.rawQuery)))
+            return ;
+
         dockWindow.rebuildResults();
         // the face already reset itself, but against the pre-rebuild rows
         if (launcherLoader.item)
@@ -831,8 +841,11 @@ PanelWindow {
         if (dockWindow.mode === "wallpaper" || dockWindow.mode === "live") {
             // the cards outlive the menu, so the strip is on the current picture
             // from the first frame rather than once the rescan lands; on the
-            // other tab (Pictures while a video plays) it starts at the first
-            dockWindow.syncStripToCurrent(true);
+            // other tab (Pictures while a video plays) it starts at the first.
+            // while the face fades the old mode out, that waits for the swap
+            if (!launcherLoader.item || !launcherLoader.item.holdFor(dockWindow.mode))
+                dockWindow.syncStripToCurrent(true);
+
             wallpaperScanner.scan();
             dockWindow.wallpaperArmed = false;
             wallpaperArmTimer.restart();
@@ -994,7 +1007,7 @@ PanelWindow {
     }
 
     readonly property real menuWidth: {
-        if (dockWindow.pickerMode) {
+        if (dockWindow.shownPicker) {
             if (dockWindow.wallIsTiles)
                 return Math.min(Math.max(Prefs.launcherPanelWidth, dockWindow.wallTilesWidth + dockWindow.wallKindRailWidth + dockWindow.panelPadding + dockWindow.wallHoverRoom), dockWindow.maxDockWidth - 48);
 
@@ -1005,7 +1018,7 @@ PanelWindow {
         }
 
         // the list plus its preview pane
-        if (dockWindow.mode === "clipboard")
+        if (dockWindow.shownMode === "clipboard")
             return Math.min(Math.round(Prefs.launcherPanelWidth * 1.4), dockWindow.maxDockWidth - 48);
 
         return Math.min(Prefs.launcherPanelWidth, dockWindow.maxDockWidth - 48);
@@ -1018,10 +1031,10 @@ PanelWindow {
     readonly property real menuContentMin: dockWindow.resultsHeight > 0 || !launcherLoader.item ? Theme.dp(70) : Math.max(Theme.dp(70), launcherLoader.item.emptyHeight)
     readonly property real menuHeight: {
         var content;
-        if (dockWindow.pickerMode)
+        if (dockWindow.shownPicker)
             content = dockWindow.wallIsTiles ? dockWindow.wallTilesRows * dockWindow.wallTilesTile + dockWindow.wallTilesChrome : dockWindow.wallHeroH + Theme.dp(70);
         // fixed, so deleting entries doesn't shrink the preview under the cursor
-        else if (dockWindow.mode === "clipboard")
+        else if (dockWindow.shownMode === "clipboard")
             content = dockWindow.menuContentMax;
         else
             content = Math.max(dockWindow.menuContentMin, dockWindow.resultsHeight);
@@ -1625,6 +1638,11 @@ PanelWindow {
     }
 
     function rebuildResults() {
+        // nothing lands under a fade-out (a clipboard refresh, a window opening):
+        // the swap rebuilds once it is out of sight
+        if (launcherLoader.item && launcherLoader.item.holding)
+            return ;
+
         var raw = dockWindow.rawQuery;
         var mode = dockWindow.modeFor(raw);
         var rows = [];
@@ -3683,6 +3701,17 @@ PanelWindow {
                 }
                 onDeleteRequested: (index) => dockWindow.deleteResult(index)
                 onHideRequested: (index) => dockWindow.hideResult(index)
+                onSwapped: {
+                    dockWindow.rebuildResults();
+                    launcherLoader.item.resetSelection();
+                    // the picker's cards came in with the swap: centre them now, and
+                    // keep that from reading as a scrub that previews a picture
+                    if (dockWindow.shownPicker) {
+                        dockWindow.syncStripToCurrent(true);
+                        dockWindow.wallpaperArmed = false;
+                        wallpaperArmTimer.restart();
+                    }
+                }
                 onClearRequested: Clip.wipe()
                 onWallpaperPreviewed: (path) => dockWindow.requestWallpaper(path)
                 onWallpaperChosen: (path) => {

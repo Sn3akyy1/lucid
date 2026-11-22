@@ -333,19 +333,16 @@ Column {
         SettingRow {
             title: I18n.tr("Animation speed")
             resetKey: "barMotionScale"
-            description: I18n.tr("Scales every transition in the bar - hovers, pills growing and shrinking, modules appearing and leaving - on top of the shell-wide Animation speed on the General page. Above 1.00x the bar moves more slowly than the rest of the shell.")
+            description: I18n.tr("How fast the bar moves - hovers, pills growing and shrinking, modules appearing and leaving - next to the Animation speed on the General page. As shipped it is a little slower than the rest of the shell; 1x keeps pace with it.")
             stacked: true
 
-            M3Slider {
+            SpeedSlider {
                 width: parent.width
-                from: 0
-                to: 2.5
-                stepSize: 0.05
-                decimals: 2
-                suffix: "x"
-                value: Prefs.barMotionScale
-                onMoved: (v) => {
-                    return Prefs.barMotionScale = v;
+                lengths: [2, 1.667, 1.35, 1, 0.8, 0.667, 0.5, 0]
+                stepLabels: ["0.5x", "0.6x", I18n.tr("As shipped"), "1x", "1.25x", "1.5x", "2x", I18n.tr("Instant")]
+                length: Prefs.barMotionScale
+                onPicked: (l) => {
+                    return Prefs.barMotionScale = l;
                 }
             }
 
@@ -462,123 +459,6 @@ Column {
                 text: I18n.tr("Notifications…")
                 variant: "tonal"
                 onClicked: Prefs.settingsRequested("notifications")
-            }
-
-        }
-
-    }
-
-    SettingCard {
-        title: I18n.tr("SYSTEM MODULE")
-        visible: !page.inSheet
-
-        SettingRow {
-            title: I18n.tr("In the bar")
-            resetKey: "systemBarItems"
-            description: I18n.tr("What the module shows before it is opened. A click on the keyboard layout switches to the next one. At least one stays on.")
-            stacked: true
-
-            M3Chips {
-                id: barItemChips
-
-                // the keyboard layout predates the list and keeps its own pref
-                readonly property var items: String(Prefs.systemBarItems).split(",").filter((k) => {
-                    return k !== "";
-                })
-
-                width: parent.width
-                multi: true
-                selectedKeys: (Prefs.showKbLayout ? ["kb"] : []).concat(barItemChips.items)
-                options: [{
-                    "key": "kb",
-                    "label": I18n.tr("Keyboard layout")
-                }, {
-                    "key": "wifi",
-                    "label": I18n.tr("Network")
-                }, {
-                    "key": "bluetooth",
-                    "label": I18n.tr("Bluetooth")
-                }, {
-                    "key": "volume",
-                    "label": I18n.tr("Volume")
-                }, {
-                    "key": "level",
-                    "label": I18n.tr("Volume level")
-                }, {
-                    "key": "mic",
-                    "label": I18n.tr("Microphone")
-                }, {
-                    "key": "battery",
-                    "label": I18n.tr("Battery")
-                }]
-                onChosen: (key) => {
-                    const on = barItemChips.selectedKeys.indexOf(key) !== -1;
-                    if (on && barItemChips.selectedKeys.length === 1)
-                        return ;
-
-                    if (key === "kb") {
-                        Prefs.showKbLayout = !on;
-                        return ;
-                    }
-                    const list = on ? barItemChips.items.filter((k) => {
-                        return k !== key;
-                    }) : barItemChips.items.concat([key]);
-                    Prefs.systemBarItems = ["wifi", "bluetooth", "volume", "level", "mic", "battery"].filter((k) => {
-                        return list.indexOf(k) !== -1;
-                    }).join(",");
-                }
-            }
-
-        }
-
-        SettingRow {
-            title: I18n.tr("Game mode: turn on")
-            resetKey: "gameModeOnCmd"
-            description: I18n.tr("Left empty, with the command below, game mode is Lucid's own: animations, blur, shadows, rounded corners and gaps go off, and come back as they were. Or give a shell command of your own for the Game mode tile (add it from the shelf in the System module's layout); it runs through bash, so pipes and && work.")
-            stacked: true
-
-            M3TextField {
-                width: parent.width
-                placeholder: I18n.tr("Lucid's own, or e.g. sudo -n g15-gamemode on")
-                text: Prefs.gameModeOnCmd
-                onAccepted: (v) => {
-                    return Prefs.gameModeOnCmd = v;
-                }
-            }
-
-        }
-
-        SettingRow {
-            title: I18n.tr("Game mode: turn off")
-            resetKey: "gameModeOffCmd"
-            description: I18n.tr("The command that switches your own game mode off again. Leave both empty for Lucid's.")
-            stacked: true
-
-            M3TextField {
-                width: parent.width
-                placeholder: I18n.tr("Lucid's own, or e.g. sudo -n g15-gamemode off")
-                text: Prefs.gameModeOffCmd
-                onAccepted: (v) => {
-                    return Prefs.gameModeOffCmd = v;
-                }
-            }
-
-        }
-
-        SettingRow {
-            title: I18n.tr("Game mode: status check")
-            resetKey: "gameModeStatusCmd"
-            description: I18n.tr("Optional, and not needed for Lucid's own. Exits 0 while your game mode is on, so the toggle stays right when something else (a keybind, a script) changes it. Checked whenever the panel opens.")
-            showDivider: false
-            stacked: true
-
-            M3TextField {
-                width: parent.width
-                placeholder: I18n.tr("e.g. test -f /run/g15-gamemode.state")
-                text: Prefs.gameModeStatusCmd
-                onAccepted: (v) => {
-                    return Prefs.gameModeStatusCmd = v;
-                }
             }
 
         }

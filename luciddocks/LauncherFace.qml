@@ -126,6 +126,9 @@ Item {
         return r && r.selectable && r.kind === "clip" ? r.payload : "";
     }
     property bool justOpened: false
+    // a new mode is on its way in: the old one's rows stay on show until they
+    // have faded out, and the dock rebuilds for the new one on swapped()
+    property bool holding: false
     // the power buttons at the end of the search field, while nothing is typed
     property bool showPowerChips: false
     property var powerButtons: []
@@ -145,6 +148,8 @@ Item {
     signal deleteRequested(int index)
     signal hideRequested(int index)
     signal clearRequested()
+    // the old mode is out of sight: the dock fills in the new one's rows now
+    signal swapped()
 
     Component.onCompleted: face.pickerStyle = Prefs.wallpaperPickerStyle
 
@@ -186,12 +191,35 @@ Item {
         face.resetSelection();
     }
 
-    function requestModeTransition() {
-        if (!face.visible || face.justOpened) {
-            face.syncDisplayMode();
-            return ;
-        }
+    // whether the rows for `next` wait for the fade. the dock asks as the query
+    // changes and so does onModeChanged, in whichever order they run; the first
+    // starts the fade, and a second asking while it fades out changes nothing
+    function holdFor(next) {
+        if (face.holding)
+            return true;
+
+        if (next === face.displayMode || !face.visible || face.justOpened)
+            return false;
+
+        face.holding = true;
+        modeSettle.stop();
+        modeIn.stop();
         modeFade.restart();
+        return true;
+    }
+
+    // the swap itself, out of sight: the rows trade at once and the pill lands
+    function swapNow() {
+        face.holding = false;
+        resultList.swapping = true;
+        face.syncDisplayMode();
+        face.swapped();
+    }
+
+    function requestModeTransition() {
+        if (!face.holdFor(face.mode))
+            face.syncDisplayMode();
+
     }
 
     // Tab walks the mode set, so every mode is one key away from the keyboard too.
@@ -200,9 +228,12 @@ Item {
         var stops = face.modes.filter((m) => {
             return m.leaves !== true;
         });
+        // the mode asked for, not the one on show: a second Tab inside the
+        // fade walks on rather than asking for the same mode again
+        var from = face.mode === "live" ? "wallpaper" : face.mode;
         var at = -1;
         for (var i = 0; i < stops.length; i++) {
-            if (stops[i].key === face.displayMode)
+            if (stops[i].key === from)
                 at = i;
 
         }
@@ -224,8 +255,21 @@ Item {
 
     onModeChanged: face.requestModeTransition()
     onVisibleChanged: {
-        if (!face.visible)
+        if (!face.visible) {
+            // put away mid-fade: finish the swap, so the next open starts whole
+            if (modeFade.running || modeSettle.running || modeIn.running || face.holding) {
+                modeFade.stop();
+                modeSettle.stop();
+                modeIn.stop();
+                if (face.holding)
+                    face.swapNow();
+
+                resultList.swapping = false;
+                contentArea.opacity = 1;
+                contentArea.scale = 1;
+            }
             return ;
+        }
 
         face.justOpened = true;
         face.syncDisplayMode();
@@ -242,7 +286,9 @@ Item {
     }
 
     // m3 fade through: the old mode leaves on the accelerating curve, the new
-    // one grows back in rather than cross-fading over it
+    // one grows back in rather than cross-fading over it. the old rows stay
+    // put while they leave (see holdFor); swapping them under the fade showed
+    // the new ones, took them away and brought them back
     SequentialAnimation {
         id: modeFade
 
@@ -258,9 +304,29 @@ Item {
         ScriptAction {
             script: {
                 contentArea.scale = 0.94;
-                face.syncDisplayMode();
+                face.swapNow();
+                modeSettle.restart();
             }
         }
+
+    }
+
+    // the new rows are built on the frame after the swap, and that frame runs
+    // long (60-80 ms for a full list). started with the swap, the way in had
+    // its first frame land halfway up; started a frame later, it starts at 0
+    FrameAnimation {
+        id: modeSettle
+
+        onTriggered: {
+            modeSettle.stop();
+            modeIn.restart();
+        }
+    }
+
+    // on the effects curve: the emphasized one put the rows at half strength
+    // in the first frame, which read as a pop rather than a fade
+    SequentialAnimation {
+        id: modeIn
 
         ParallelAnimation {
             NumberAnimation {
@@ -269,7 +335,7 @@ Item {
                 to: 1
                 duration: Theme.ms(210)
                 easing.type: Easing.Bezier
-                easing.bezierCurve: Theme.easeEmphasizedDecel
+                easing.bezierCurve: Theme.curveEffects
             }
 
             NumberAnimation {
@@ -278,9 +344,13 @@ Item {
                 to: 1
                 duration: Theme.ms(210)
                 easing.type: Easing.Bezier
-                easing.bezierCurve: Theme.easeEmphasizedDecel
+                easing.bezierCurve: Theme.curveEffects
             }
 
+        }
+
+        ScriptAction {
+            script: resultList.swapping = false
         }
 
     }
@@ -294,8 +364,9 @@ Item {
         height: face.headHeight
         visible: face.headOn
         modes: face.modes
-        // the Live tab is the wallpaper picker too
-        current: face.displayMode === "live" ? "wallpaper" : face.displayMode
+        // the Live tab is the wallpaper picker too. it follows the mode asked
+        // for, so it moves with the key or the tap while the rows fade through
+        current: face.mode === "live" ? "wallpaper" : face.mode
         countLabel: face.countLabel
         onChosen: (key) => {
             face.modeRequested(key);
@@ -426,7 +497,10 @@ Item {
                     id: kind
 
                     required property var modelData
-                    readonly property bool on: face.displayMode === kind.modelData.key
+                    // the tab asked for lights at once, as the head does; leaving the
+                    // picker, the one on show stays lit while it fades out
+                    readonly property string asked: face.mode === "wallpaper" || face.mode === "live" ? face.mode : face.displayMode
+                    readonly property bool on: kind.asked === kind.modelData.key
                     readonly property color content: kind.on ? Theme.fgAccent : Theme.subtext
 
                     width: kindRail.width
@@ -435,11 +509,21 @@ Item {
                     Rectangle {
                         anchors.fill: parent
                         radius: Theme.shapeXl
-                        color: kind.on ? Theme.accent : Theme.withBlur(Theme.surfaceHigh)
+                        color: Theme.withBlur(Theme.surfaceHigh)
 
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.durDefaultEffects
+                        // the accent fades over the tile: a colour animation from it to
+                        // the translucent tile passed through a muddy, darker middle
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: Theme.shapeXl
+                            color: Theme.accent
+                            opacity: kind.on ? 1 : 0
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Theme.durDefaultEffects
+                                }
+
                             }
 
                         }
@@ -648,7 +732,6 @@ Item {
             selectByMouse: true
             selectionColor: Theme.alpha(Theme.accent, 0.35)
             selectedTextColor: Theme.text
-            onTextChanged: face.resetSelection()
             // the picker takes one pair of arrows (Settings -> Theme -> Arrow keys)
             // and the search field keeps the other; Tiles is a grid and takes all four
             Keys.onUpPressed: {

@@ -299,13 +299,31 @@ PanelWindow {
     // compositor's fade-in, which would dim the card just as the capture lands
     visible: (stack.entries.length > 0 || stack.cleared || stack.leaving) && Monitors.surfacesUp
     exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: WlrLayer.Overlay
+    // a moment on the top layer and back puts the cards last in the overlay
+    // layer's stack, so a card already up stays over an editor opened after it
+    WlrLayershell.layer: restack.running ? WlrLayer.Top : WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     WlrLayershell.namespace: "lucid-shot-card"
     implicitWidth: stack.cardW + stack.margin * 2
     implicitHeight: frontCard.height + stack.margin * 2 + stack.peek * 2
     BackgroundEffect.blurRegion: Theme.blurAmount > 0 && stack.onScreen && !stack.leaving ? blurArea : null
     mask: stack.onScreen ? inputArea : emptyArea
+
+    Connections {
+        function onEditorSettledChanged() {
+            if (LockStyle.editorSettled && stack.visible)
+                restack.restart();
+
+        }
+
+        target: LockStyle
+    }
+
+    Timer {
+        id: restack
+
+        interval: 80
+    }
 
     anchors {
         bottom: true

@@ -19,7 +19,7 @@ import re
 import sys
 
 STR = re.compile(r'"(?:[^"\\\n]|\\.)*"')
-CALL = re.compile(r"\bI18n\.(trn|trc|tr)\(")
+CALL = re.compile(r"\b(?:I18n|lock)\.(trn|trc|tr)\(")
 PROP = re.compile(r'(?:^|[{;,])\s*(text|title|label|placeholderText|placeholder|subtitle|description|blurb|disabledReason|emptyText|tooltip|detailText|labelText|warning|unavailableReason|resetTitle|resetBody|heading|confirmLabel|"label"|"title"|"blurb"|"description"|"desc"|"hint"|"note"|"more"|"when"|"subtitle")\s*:')
 MARK = re.compile(r"%[1-9]")
 CMP = re.compile(r"[!=]==?\s*$")

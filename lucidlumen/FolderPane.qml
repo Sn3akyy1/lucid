@@ -276,18 +276,44 @@ FocusScope {
     readonly property Item dragSource: dragProxy
     property string dragList: ""
     property url dragImage
+    // the grab behind dragImage, kept so its url holds for the whole drag
+    property var dragGrab: null
+    property bool dragStarting: false
 
-    function startDrag(uris, image) {
-        if (dragProxy.Drag.active)
+    // the picture is the pane's own copy of the glyph, never the cell's: qt
+    // finishes a grab on its render thread, and a cell freed mid-grab (a
+    // double-click opens its folder at once) crashed lumen (issue #128)
+    function startDrag(uris, face, held) {
+        if (dragProxy.Drag.active || pane.dragStarting)
             return ;
 
+        pane.dragStarting = true;
         pane.dragList = uris;
+        dragFace.size = face.size;
+        dragFace.slot = face.slot;
+        dragFace.icon = face.icon;
+        dragFace.thumb = face.thumb;
+        dragFace.kind = face.kind;
+        dragFace.legacy = face.legacy;
+        var asked = dragFace.grabToImage(function(r) {
+            pane.dragGrab = r;
+            pane.liftDrag(r.url, held);
+        });
+        if (!asked)
+            pane.liftDrag("", held);
+
+    }
+
+    function liftDrag(image, held) {
         pane.dragImage = image;
         pane.app.dragImage = image;
-        // from the event loop, not inside the cell's own handler: a drag runs a
-        // loop of its own until the drop, and the cell may be gone before then
+        // from the event loop, not inside a handler: a drag runs a loop of its
+        // own until the drop. let go before the picture came, there is no drag
         Qt.callLater(function() {
-            dragProxy.Drag.active = true;
+            pane.dragStarting = false;
+            if (held && held.pressed === true)
+                dragProxy.Drag.active = true;
+
         });
     }
 
@@ -501,6 +527,20 @@ FocusScope {
             break;
         }
         event.accepted = true;
+    }
+
+    // what a drag's picture is drawn from, clipped out of sight
+    Item {
+        width: 0
+        height: 0
+        clip: true
+
+        FileGlyph {
+            id: dragFace
+
+            still: true
+        }
+
     }
 
     Item {

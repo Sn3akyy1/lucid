@@ -68,6 +68,20 @@ Item {
         location: root.lookDir + "theme.conf"
     }
 
+    // the lock screen's layout and the last weather reading, which the
+    // account's shell sends on its own (sync-sddm.sh --lock). base64 json,
+    // checked against parts/Catalog.js before anything is drawn from it
+    Settings {
+        id: lockConf
+
+        location: root.lookDir + "lock.conf"
+    }
+
+    function lockValue(key) {
+        void lockConf.location;
+        return root.look !== "" ? String(lockConf.value(key, "") || "") : "";
+    }
+
     function conf(key, fallback) {
         // read the location so every binding through here re-runs on a switch
         void lookConf.location;
@@ -96,6 +110,16 @@ Item {
 
     property color bgOpaque: root.conf("bgOpaque", "#0f080a")
     property color bgHigh: root.conf("bgHigh", "#3a3032")
+    // the shared lock parts' own names (lucidlock/LockTokens.qml), written by
+    // theme-dump.qml from that very file; older copies fall back to the above
+    property color card: root.conf("card", root.bgOpaque)
+    property color cardHigh: root.conf("cardHigh", root.bgHigh)
+    property color cardMid: root.conf("cardMid", Qt.tint(root.card, Qt.rgba(root.cardHigh.r, root.cardHigh.g, root.cardHigh.b, 0.5)))
+    property color cardLow: root.conf("cardLow", root.bgOpaque)
+    property color altContainer: root.conf("altContainer", root.accentContainer)
+    property color fgAltContainer: root.conf("fgAltContainer", root.fgAccentContainer)
+    property color altAccent: root.conf("altAccent", root.accent)
+    property color hairline: root.conf("hairline", Qt.rgba(root.outline.r, root.outline.g, root.outline.b, 0.45))
     property color text: root.conf("text", "#efdfe1")
     property color subtext: root.conf("subtext", "#d6c2c6")
     property color subtextDim: root.conf("subtextDim", "#aa9a9d")
@@ -107,6 +131,12 @@ Item {
     // the shell derives this in L* tone space; sync-sddm.sh reads it off the
     // running Theme rather than trying to redo that maths here
     property color errorHover: root.conf("errorHover", "#ffc2bb")
+    // a wrong password in the palette's own voice: the shell's Theme.wrong,
+    // dumped beside the rest. a dump from before it had none, so the same
+    // harmonize is done here off the accent, near enough
+    property color wrong: root.conf("wrong", Qt.hsla(root.wrongHue() / 360, Math.max(0.3, Math.min(0.55, root.accent.hslSaturation)), root.accent.hslLightness, 1))
+    property color wrongContainer: root.conf("wrongContainer", Qt.hsla(root.wrongHue() / 360, root.accentContainer.hslSaturation * 0.8, root.accentContainer.hslLightness, 1))
+    property color fgWrongContainer: root.conf("fgWrongContainer", Qt.hsla(root.wrongHue() / 360, Math.min(0.6, root.fgAccentContainer.hslSaturation), root.fgAccentContainer.hslLightness, 1))
     property color success: root.conf("success", "#36e27e")
     property color fgSuccess: root.conf("fgSuccess", "#06381b")
     property color warning: root.conf("warning", "#eec13a")
@@ -140,6 +170,27 @@ Item {
     Glide on bgHigh {
     }
 
+    Glide on card {
+    }
+
+    Glide on cardHigh {
+    }
+
+    Glide on cardMid {
+    }
+
+    Glide on altContainer {
+    }
+
+    Glide on fgAltContainer {
+    }
+
+    Glide on altAccent {
+    }
+
+    Glide on hairline {
+    }
+
     Glide on text {
     }
 
@@ -167,6 +218,15 @@ Item {
     Glide on success {
     }
 
+    Glide on wrong {
+    }
+
+    Glide on wrongContainer {
+    }
+
+    Glide on fgWrongContainer {
+    }
+
     Glide on fgSuccess {
     }
 
@@ -177,9 +237,6 @@ Item {
     }
 
 
-    // solid m3 containers, the same two Lockscreen.qml draws its cards with
-    readonly property color card: root.bgOpaque
-    readonly property color cardHigh: root.bgHigh
 
     // the flex cut the shell bundles, installed beside the theme. the shell
     // has called it both names, and the sddm user can read neither from ~
@@ -205,6 +262,7 @@ Item {
     readonly property int shapeLgInc: root.rad(20)
     readonly property int shapeXl: root.rad(28)
     readonly property int shapeXlInc: root.rad(32)
+    readonly property int shapeXxl: root.rad(48)
     readonly property real stateHover: 0.08
     readonly property real statePressed: 0.1
 
@@ -265,12 +323,18 @@ Item {
     readonly property int fontTitleMd: root.fs(16)
     readonly property int fontTitleLg: root.fs(19)
     readonly property int fontHeadlineSm: root.fs(22)
+    readonly property int fontHeadlineMd: root.fs(26)
+    readonly property int fontHeadlineLg: root.fs(30)
+    readonly property int fontDisplaySm: root.fs(32)
+    readonly property int fontDisplayMd: root.fs(42)
 
     readonly property var easeEmphasizedDecel: [0.05, 0.7, 0.1, 1, 1, 1]
     readonly property var easeEmphasizedAccel: [0.3, 0, 0.8, 0.15, 1, 1]
     readonly property int easeEmphasized: Easing.OutBack
     readonly property var curveFastSpatial: [0.42, 1.67, 0.21, 0.9, 1, 1]
     readonly property var curveEffects: [0.31, 0.94, 0.34, 1, 1, 1]
+    readonly property var curveStandard: [0.2, 0, 0, 1, 1, 1]
+    readonly property var curveDefaultSpatial: [0.38, 1.21, 0.22, 1, 1, 1]
     readonly property int durFastSpatial: root.ms(350)
     readonly property int durDefaultEffects: root.ms(200)
     readonly property int durShort: root.ms(180)
@@ -278,6 +342,21 @@ Item {
 
     function alpha(c, a) {
         return Qt.rgba(c.r, c.g, c.b, a);
+    }
+
+    // the error hue drawn toward the accent's by half the gap, at most 15 degrees
+    function wrongHue() {
+        var a = root.accent;
+        var h = root.error.hslHue < 0 ? 0 : root.error.hslHue * 360;
+        if (a.hslHue >= 0) {
+            var d = ((a.hslHue * 360 - h + 540) % 360) - 180;
+            h += (d < 0 ? -1 : 1) * Math.min(Math.abs(d) * 0.5, 15);
+        }
+        return ((h % 360) + 360) % 360;
+    }
+
+    function mix(a, b, t) {
+        return root._mix(a, b, t);
     }
 
     function _mix(a, b, t) {

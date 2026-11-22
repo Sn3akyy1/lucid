@@ -20,6 +20,30 @@ Item {
     // bumped by the face when the panel opens, so the set assembles rather
     // than simply being there
     property int entrance: 0
+    readonly property int activeIndex: {
+        for (var i = 0; i < head.modes.length; i++) {
+            if (head.modes[i].key === head.current)
+                return i;
+
+        }
+        return -1;
+    }
+    readonly property Item activeEntry: {
+        modeRep.count;
+        return head.activeIndex >= 0 ? modeRep.itemAt(head.activeIndex) : null;
+    }
+
+    // premultiplied, as the results blend theirs: a straight blend toward a
+    // translucent colour passes through one brighter than either end
+    function mix(a, b, t) {
+        var wa = a.a * (1 - t);
+        var wb = b.a * t;
+        var al = wa + wb;
+        if (al <= 0)
+            return Qt.rgba(0, 0, 0, 0);
+
+        return Qt.rgba((a.r * wa + b.r * wb) / al, (a.g * wa + b.g * wb) / al, (a.b * wa + b.b * wb) / al, al);
+    }
 
     signal chosen(string key)
     signal homeRequested()
@@ -88,6 +112,52 @@ Item {
 
     }
 
+    // one accent shape that slides to the mode, as the results' pill slides to
+    // a row, rather than one pill fading out while the next fades in. it is
+    // aimed at where the mode will sit once the widths settle, on the widths'
+    // own curve, so the two arrive together
+    Rectangle {
+        id: indicator
+
+        property real slot: Math.max(0, head.activeIndex) * (head.pill + head.gap)
+        property real span: head.activeEntry ? head.activeEntry.fullWidth : head.pill
+
+        x: modeRow.x + indicator.slot
+        y: modeRow.y
+        width: indicator.span
+        height: head.pill
+        radius: Theme.shapeFull
+        color: Theme.accent
+        visible: head.activeEntry !== null
+        // it arrives with its mode as the set assembles
+        opacity: head.activeEntry ? head.activeEntry.opacity : 0
+        scale: head.activeEntry ? head.activeEntry.scale : 1
+
+        // a panel opening on another mode starts with it there, not on its way
+        Behavior on slot {
+            enabled: head.visible
+
+            NumberAnimation {
+                duration: Theme.durFastSpatial
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.curveDefaultSpatial
+            }
+
+        }
+
+        Behavior on span {
+            enabled: head.visible
+
+            NumberAnimation {
+                duration: Theme.durFastSpatial
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.curveDefaultSpatial
+            }
+
+        }
+
+    }
+
     Row {
         id: modeRow
 
@@ -97,6 +167,8 @@ Item {
         spacing: head.gap
 
         Repeater {
+            id: modeRep
+
             model: head.modes
 
             Item {
@@ -104,13 +176,25 @@ Item {
 
                 required property var modelData
                 readonly property bool on: head.current === entry.modelData.key
-                readonly property color content: entry.on ? Theme.fgAccent : Theme.subtext
+                readonly property int fullWidth: Math.round(12 * head.cs) + head.glyph + Math.round(7 * head.cs) + label.implicitWidth + Math.round(14 * head.cs)
+                // how much of the indicator is over this entry this frame
+                readonly property real lit: {
+                    if (!indicator.visible)
+                        return 0;
+
+                    var left = indicator.x - modeRow.x;
+                    var under = Math.min(left + indicator.width, entry.x + entry.width) - Math.max(left, entry.x);
+                    return Math.max(0, Math.min(1, under / Math.max(1, entry.width)));
+                }
+                readonly property color content: head.mix(Theme.subtext, Theme.fgAccent, entry.lit)
 
                 required property int index
 
-                width: entry.on ? Math.round(12 * head.cs) + head.glyph + Math.round(7 * head.cs) + label.implicitWidth + Math.round(14 * head.cs) : head.pill
+                width: entry.on ? entry.fullWidth : head.pill
                 height: head.pill
                 transformOrigin: Item.Center
+                // the label is uncovered as the entry opens, never laid over the next icon
+                clip: true
 
                 Connections {
                     target: head
@@ -151,24 +235,12 @@ Item {
 
                 }
 
-                Rectangle {
+                // the fill is the indicator's; this only answers the pointer
+                StateLayer {
                     anchors.fill: parent
                     radius: Theme.shapeFull
-                    color: entry.on ? Theme.accent : "transparent"
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Theme.durDefaultEffects
-                        }
-
-                    }
-
-                    StateLayer {
-                        radius: Theme.shapeFull
-                        tint: entry.content
-                        onClicked: head.chosen(entry.modelData.key)
-                    }
-
+                    tint: entry.content
+                    onClicked: head.chosen(entry.modelData.key)
                 }
 
                 Icon {
@@ -178,8 +250,9 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     name: entry.modelData.icon
                     size: head.glyph
-                    fill: entry.on ? 1 : 0
+                    fill: entry.lit > 0.5 ? 1 : 0
                     color: entry.content
+                    animateColor: false
 
                     Behavior on x {
                         NumberAnimation {
@@ -202,16 +275,10 @@ Item {
                     size: Math.round(Theme.typeSize("labelLarge") * head.cs)
                     text: entry.modelData.label
                     color: entry.content
-                    opacity: entry.on ? 1 : 0
+                    // shown as the indicator settles over it, so the name comes and
+                    // goes with the accent rather than on a clock of its own
+                    opacity: Math.max(0, entry.lit * 2 - 1)
                     visible: label.opacity > 0.01
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Theme.durFastEffects
-                        }
-
-                    }
-
                 }
 
                 Behavior on width {

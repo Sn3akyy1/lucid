@@ -183,19 +183,16 @@ Column {
         SettingRow {
             title: I18n.tr("Animation speed")
             resetKey: "motionScale"
-            description: I18n.tr("Scales every transition in the shell. 1.00x is the shipped speed; drag to 0 for no animation at all.")
+            description: I18n.tr("How fast the shell moves: panels, menus, the dock and the launcher. Further right is faster; all the way right, nothing animates. Windows and workspaces move with Hyprland, on the Windows page.")
             stacked: true
 
-            M3Slider {
+            SpeedSlider {
                 width: parent.width
-                from: 0
-                to: 2
-                stepSize: 0.25
-                decimals: 2
-                suffix: "x"
-                value: Prefs.motionScale
-                onMoved: (v) => {
-                    return Prefs.motionScale = v;
+                lengths: [2, 1.333, 1, 0.8, 0.667, 0.5, 0.333, 0.25, 0]
+                stepLabels: ["0.5x", "0.75x", I18n.tr("As shipped"), "1.25x", "1.5x", "2x", "3x", "4x", I18n.tr("Instant")]
+                length: Prefs.motionScale
+                onPicked: (l) => {
+                    return Prefs.motionScale = l;
                 }
             }
 
@@ -205,7 +202,7 @@ Column {
             title: I18n.tr("Jelly motion")
             resetKey: "jellyMotion"
             enabled: Prefs.motionScale > 0
-            disabledReason: I18n.tr("Animation speed is at 0, so nothing moves.")
+            disabledReason: I18n.tr("Animation speed is set to Instant, so nothing moves.")
             description: I18n.tr("Panels, menus, the dock and the launcher wobble softly as they open and land, and dock icons, buttons and switches squish under the pointer.")
 
             M3Switch {
@@ -222,7 +219,7 @@ Column {
             title: I18n.tr("Wobble")
             resetKey: "jellyAmount"
             enabled: Prefs.jellyMotion && Prefs.motionScale > 0
-            disabledReason: Prefs.motionScale > 0 ? I18n.tr("Turn on Jelly motion first.") : I18n.tr("Animation speed is at 0, so nothing moves.")
+            disabledReason: Prefs.motionScale > 0 ? I18n.tr("Turn on Jelly motion first.") : I18n.tr("Animation speed is set to Instant, so nothing moves.")
             description: I18n.tr("How far things bend, and how long they keep wobbling.")
             showDivider: false
             stacked: true
