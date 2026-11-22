@@ -30,10 +30,10 @@ Column {
     }
     readonly property string status: {
         if (dev.isPairing)
-            return "Pairing…";
+            return I18n.tr("Pairing…");
 
         if (dev.isConnecting)
-            return "Connecting…";
+            return I18n.tr("Connecting…");
 
         if (dev.isConnected)
             return dev.modelData.trusted ? I18n.tr("Connected · reconnects on its own") : I18n.tr("Connected");
@@ -270,10 +270,10 @@ Column {
                     enabled: !dev.busy && !dev.modelData.blocked
                     text: {
                         if (dev.isPairing)
-                            return "Pairing…";
+                            return I18n.tr("Pairing…");
 
                         if (dev.isConnecting)
-                            return "Connecting…";
+                            return I18n.tr("Connecting…");
 
                         if (dev.group === "nearby")
                             return I18n.tr("Pair");

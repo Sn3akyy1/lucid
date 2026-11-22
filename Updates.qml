@@ -118,7 +118,7 @@ Singleton {
 
     readonly property string status: {
         if (root.current === "")
-            return "Lucid cannot tell which version it is — there is no VERSION file beside shell.qml.";
+            return I18n.tr("Lucid cannot tell which version it is — there is no VERSION file beside shell.qml.");
 
         if (root.installing)
             return root.flowLabel + ": " + root.phaseText + (root.progressKnown ? " — " + Math.round(root.progress * 100) + "%" : "");

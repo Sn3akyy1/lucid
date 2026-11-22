@@ -111,7 +111,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 icon: bar.recording ? "stop_circle" : "screen_record"
                 label: bar.recording ? I18n.tr("Recording") : I18n.tr("Record")
-                tip: bar.recording ? "A recording is running" : "Record the screen (R)"
+                tip: bar.recording ? I18n.tr("A recording is running") : I18n.tr("Record the screen (R)")
                 tipAbove: bar.tipAbove
                 selected: bar.mode === "record"
                 disabled: bar.recording

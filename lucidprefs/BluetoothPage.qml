@@ -239,7 +239,7 @@ Column {
                     return BtReceive.detail !== "" ? BtReceive.detail : I18n.tr("Something went wrong starting the receiver.");
 
                 if (BtReceive.status === "starting")
-                    return "Starting…";
+                    return I18n.tr("Starting…");
 
                 return I18n.tr("Each file asks first, in a notification. Devices that haven't paired can only find this machine while “Let other devices find this one” is on.");
             }

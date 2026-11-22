@@ -62,9 +62,9 @@ WidgetBody {
         if (!d || !d.date) {
             const fake = Loc.now();
             fake.setDate(fake.getDate() + i);
-            return i === 0 ? "Today" : fake.toLocaleDateString(I18n.locale, "ddd");
+            return i === 0 ? I18n.tr("Today") : fake.toLocaleDateString(I18n.locale, "ddd");
         }
-        return i === 0 ? "Today" : new Date(d.date + "T12:00").toLocaleDateString(I18n.locale, "ddd");
+        return i === 0 ? I18n.tr("Today") : new Date(d.date + "T12:00").toLocaleDateString(I18n.locale, "ddd");
     }
 
     function hourName(h, i) {

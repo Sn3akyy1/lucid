@@ -399,15 +399,15 @@ BarPill {
     readonly property string tipOverline: {
         switch (root.tipViewKind) {
         case "wifi":
-            return wifiPanel.primaryIsEthernet ? "ETHERNET" : "WI-FI";
+            return wifiPanel.primaryIsEthernet ? I18n.tr("ETHERNET") : I18n.tr("WI-FI");
         case "bluetooth":
-            return "BLUETOOTH";
+            return I18n.tr("BLUETOOTH");
         case "volume":
-            return "VOLUME";
+            return I18n.tr("VOLUME");
         case "mic":
-            return "MICROPHONE";
+            return I18n.tr("MICROPHONE");
         case "battery":
-            return "BATTERY";
+            return I18n.tr("BATTERY");
         }
         return "";
     }
@@ -421,7 +421,7 @@ BarPill {
                 return I18n.tr("Wi-Fi off");
 
             if (wifiPanel.connecting)
-                return "Connecting…";
+                return I18n.tr("Connecting…");
 
             if (wifiPanel.wifiConnected && wifiPanel.activeNetwork)
                 return wifiPanel.activeNetwork.name;
@@ -438,7 +438,7 @@ BarPill {
                 return I18n.tr("%1 devices", btPanel.connectedDevices.length);
 
             if (btPanel.anyConnecting)
-                return "Connecting…";
+                return I18n.tr("Connecting…");
 
             return I18n.tr("Not connected");
         case "volume":
@@ -479,7 +479,7 @@ BarPill {
                 }).join(", ");
 
             if (btPanel.discovering)
-                return "Scanning…";
+                return I18n.tr("Scanning…");
 
             return I18n.tr("%1 paired", btPanel.pairedDevices.length);
         case "volume":

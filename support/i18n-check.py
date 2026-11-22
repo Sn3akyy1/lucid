@@ -187,7 +187,8 @@ def compared_labels(root):
     out = []
     for path in files_under(root):
         rel = os.path.relpath(path, root)
-        raw = open(path, encoding="utf-8").readlines()
+        with open(path, encoding="utf-8") as f:
+            raw = f.readlines()
         lines = [code_part(l) for l in raw]
         mine = set()
         for line in lines:

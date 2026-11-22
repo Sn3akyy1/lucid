@@ -440,7 +440,7 @@ Rectangle {
                             return I18n.tr("That password did not work. Try again.");
 
                         if (card.ask !== null && Updates.askSent === card.ask.n)
-                            return "Checking…";
+                            return I18n.tr("Checking…");
 
                         return "";
                     }

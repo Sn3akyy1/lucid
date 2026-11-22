@@ -64,7 +64,7 @@ Item {
         showValue: false
         inlineValue: true
         valueText: (v) => {
-            return face.osd.levelMuted ? "Off" : Math.round(v) + "%";
+            return face.osd.levelMuted ? I18n.tr("Off") : Math.round(v) + "%";
         }
         activeColor: face.osd.levelMuted ? Theme.outlineStrong : Theme.primary
         inactiveColor: Theme.withBlur(Theme.surfaceHighest)

@@ -61,7 +61,7 @@ Item {
                 names.push("“" + Keybinds.displayDesc(b) + "”");
 
         }
-        return names.length ? "Already used by " + names.join(", ") + " — both would fire." : "";
+        return names.length ? I18n.tr("Already used by %1 — both would fire.", names.join(", ")) : "";
     }
     readonly property string eachHint: {
         var placeholders = /\{key\}|\{n\}/.test(editor.keys + editor.actionText + editor.desc);
@@ -69,9 +69,9 @@ Item {
             return placeholders ? "{key} and {n} only mean something with this on." : "";
 
         if (editor.keys.indexOf("{key}") === -1)
-            return "Put {key} where the number goes, as in SUPER + {key}.";
+            return I18n.tr("Put {key} where the number goes, as in SUPER + {key}.");
 
-        return "{key} becomes 1…9 and 0; {n} becomes 1…10 in the action and description.";
+        return I18n.tr("{key} becomes 1…9 and 0; {n} becomes 1…10 in the action and description.");
     }
 
     signal dismissed()

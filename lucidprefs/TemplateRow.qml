@@ -19,7 +19,7 @@ SettingRow {
 
     readonly property string stateText: {
         if (row.working)
-            return "Rendering...";
+            return I18n.tr("Rendering...");
 
         switch (row.t.state) {
         case "ok":

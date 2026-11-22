@@ -43,7 +43,7 @@ Item {
     }
     // the sidebar's button starts and pauses it too
     readonly property string primaryIcon: page.running ? "pause" : "play_arrow"
-    readonly property string primaryLabel: !page.active ? "Start focus" : (page.running ? "Pause" : "Resume")
+    readonly property string primaryLabel: !page.active ? I18n.tr("Start focus") : (page.running ? I18n.tr("Pause") : I18n.tr("Resume"))
 
     function primaryAction() {
         page.app.send("pomo.toggle");

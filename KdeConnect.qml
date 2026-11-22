@@ -41,7 +41,7 @@ Singleton {
             return I18n.tr("Turned off");
 
         if (!root.running)
-            return root.everAnswered ? "Daemon not running" : "Starting…";
+            return root.everAnswered ? I18n.tr("Daemon not running") : I18n.tr("Starting…");
 
         if (root.reachable.length === 1)
             return root.reachable[0].name;

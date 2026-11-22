@@ -8,6 +8,9 @@ All notable changes to Lucid are recorded here, newest first.
   its delayed placement callback ran, leaving a null QML object immediately
   before a native Qt crash. The delay now belongs to the cell and is cancelled
   with it.
+- **Translation checks.** The checker closes every source file after comparing
+  translated labels, instead of leaving a ResourceWarning per file in its test
+  run.
 - **Keybind conflict.** An older Region Screenshot default shared
   `SUPER`+`SHIFT`+`S` with the scratchpad. Untouched installs move capture to
   `Print`, while a shortcut changed by hand remains the user's.

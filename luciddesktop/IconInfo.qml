@@ -40,10 +40,10 @@ Item {
             out.push([I18n.tr("Size"), size]);
 
         if (d && d.where)
-            out.push(["Where", d.where.replace(DesktopIcons.home, "~")]);
+            out.push([I18n.tr("Where"), d.where.replace(DesktopIcons.home, "~")]);
 
         if (d && d.target)
-            out.push(["Links to", d.target.replace(DesktopIcons.home, "~")]);
+            out.push([I18n.tr("Links to"), d.target.replace(DesktopIcons.home, "~")]);
 
         if (d && d.app)
             out.push([sheet.isDir ? I18n.tr("Opens in") : I18n.tr("Opens with"), d.app]);

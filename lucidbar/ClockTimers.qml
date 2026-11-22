@@ -200,7 +200,7 @@ Item {
                             return I18n.tr("Paused");
 
                         const end = new Date(Loc.nowMs() + page.remainMs);
-                        return "Ends " + end.toLocaleTimeString(I18n.locale, Prefs.clock24h ? "HH:mm" : "h:mm AP");
+                        return I18n.tr("Ends %1", end.toLocaleTimeString(I18n.locale, Prefs.clock24h ? "HH:mm" : "h:mm AP"));
                     }
                 }
 
