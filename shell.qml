@@ -587,11 +587,20 @@ ShellRoot {
                         return p.x - q.x;
                     });
                     const meet = (m, left) => {
-                        const h = m === workspacesMod ? m.compactHeight : m.height;
-                        const y = m.y + h;
-                        cap(m.modId, left ? "bl" : "br", 0);
-                        fillet(left ? 0 : bar.width - most, y, most, left, false, m);
                         const gap = left ? m.x : bar.width - m.x - m.width;
+                        // an open panel stops short of the side: the wall stays at the bar's height
+                        const h = m === workspacesMod || gap > 0.5 ? m.compactHeight : m.height;
+                        const y = m.y + h;
+                        // and the panel keeps its own rounded corner, a curve joining it to the wall
+                        const apart = gap > 0.5 && m.height > h + 0.5;
+                        const r = apart ? Math.min(most, Math.floor(gap / 2)) : most;
+                        if (!apart)
+                            cap(m.modId, left ? "bl" : "br", 0);
+
+                        fillet(left ? 0 : bar.width - r, y, r, left, false, m);
+                        if (apart)
+                            fillet(left ? Math.ceil(m.x) - r : Math.floor(m.x + m.width), y, r, !left, false, m);
+
                         if (gap > 0.5)
                             plan.bridges.push({ "x": left ? 0 : Math.floor(m.x + m.width), "y": m.y, "w": left ? Math.ceil(m.x) : bar.width - Math.floor(m.x + m.width), "h": h, "mod": m });
 
