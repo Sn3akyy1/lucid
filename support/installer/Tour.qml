@@ -12,6 +12,10 @@ Item {
         "title": I18n.tr("Your desktop"),
         "blurb": I18n.tr("The bar along the top, widgets on the desktop and the dock below")
     }, {
+        "file": "lock-screen",
+        "title": I18n.tr("Lock screen"),
+        "blurb": I18n.tr("Six styles and widgets you place yourself, worn by the login screen too")
+    }, {
         "file": "edit-mode",
         "title": I18n.tr("Edit mode"),
         "blurb": I18n.tr("Move the bar, the dock and your widgets right on the desktop")
@@ -28,6 +32,10 @@ Item {
         "title": I18n.tr("Lucid's own apps"),
         "blurb": I18n.tr("Settings, Lumen and Lens, all in the colours of your wallpaper")
     }, {
+        "file": "language",
+        "title": I18n.tr("Your language"),
+        "blurb": I18n.tr("English, Spanish, Russian, German or Turkish, and a keyboard in your layout")
+    }, {
         "file": "lyrics-widget",
         "title": I18n.tr("Lyrics"),
         "blurb": I18n.tr("The words of what is playing, sung along on the desktop")
@@ -39,6 +47,10 @@ Item {
         "file": "bottom-bar",
         "title": I18n.tr("Your bar, your way"),
         "blurb": I18n.tr("Islands, notches or one full bar, along the top or the bottom")
+    }, {
+        "file": "workspaces-overview",
+        "title": I18n.tr("Workspaces"),
+        "blurb": I18n.tr("Every workspace at a glance, down from the top of the screen")
     }, {
         "file": "lucidshot",
         "title": I18n.tr("Screenshots"),

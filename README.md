@@ -18,7 +18,7 @@ The shell, its own apps, its own icons, pointer and login screen, all coloured b
 **[Changelog](CHANGELOG.md)**
 
 <p>
-  <a href="https://github.com/Sn3akyy1/lucid/releases"><img alt="Version" src="https://img.shields.io/badge/VERSION-v1.21-00F0FF?style=for-the-badge&labelColor=00363A"></a>
+  <a href="https://github.com/Sn3akyy1/lucid/releases"><img alt="Version" src="https://img.shields.io/badge/VERSION-v1.21.1-00F0FF?style=for-the-badge&labelColor=00363A"></a>
   <a href="https://github.com/Sn3akyy1/lucid/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Sn3akyy1/lucid?style=for-the-badge&label=STARS&labelColor=00363A&color=B7C7EA"></a>
   <a href="https://github.com/Sn3akyy1/lucid/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Sn3akyy1/lucid?style=for-the-badge&label=LAST%20COMMIT&labelColor=00363A&color=80D4DC"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-80CBC4?style=for-the-badge&labelColor=00363A"></a>
@@ -35,12 +35,13 @@ The shell, its own apps, its own icons, pointer and login screen, all coloured b
 </div>
 
 > [!TIP]
-> **New in v1.21: Lucid is an ecosystem.** Lumen for your files and every app's
-> file dialog, Lens for pictures and videos, LucidShot rebuilt, edit mode on the
-> desktop, a bar that can take the bottom edge, a control centre you lay out
-> yourself, lyrics for whatever plays, and icons and a pointer of Lucid's own.
-> The shell shows the highlights once after you update; everything is in the
-> [changelog](CHANGELOG.md#v121--2026-11-13).
+> **New in v1.21.1: the lock screen, made yours, and Lucid in your language.**
+> Six lock screen styles with widgets you place yourself, worn by the login
+> screen too; Spanish, Russian, German and Turkish, with an on-screen keyboard
+> that types in your layout; a workspace overview that comes down from the top;
+> and a tap of Ctrl to find the pointer. The shell shows the highlights once
+> after you update; everything is in the
+> [changelog](CHANGELOG.md#v1211--2026-11-22).
 
 > [!NOTE]
 > **Hear about new versions** with **Watch → Custom → Releases** at the top of
@@ -110,6 +111,13 @@ Google Sans Flex, built in
 <tr>
 <td><img src="assets/bottom-bar.webp" alt="The bar as one strip along the bottom edge"><br><sub><b>The bottom edge.</b> One full bar, the dock's apps in the middle of it.</sub></td>
 <td><img src="assets/lucidshot.webp" alt="LucidShot over a frozen screen"><br><sub><b>LucidShot.</b> Drag out a region or click a window on the frozen screen.</sub></td>
+</tr>
+<tr>
+<td><img src="assets/lock-screen.webp" alt="The lock screen with a big two-tone clock, the song playing and the weather"><br><sub><b>The lock screen.</b> Six styles and widgets you place yourself; the login screen wears it too.</sub></td>
+<td><img src="assets/language.webp" alt="Settings in German, with the on-screen keyboard in the German layout"><br><sub><b>Your language.</b> Settings in German, and the on-screen keyboard in your layout.</sub></td>
+</tr>
+<tr>
+<td colspan="2"><img src="assets/workspaces-overview.webp" alt="The workspace overview pulled down from the top of the screen"><br><sub><b>The workspace overview.</b> Down from the top: every workspace with live pictures of its windows, and the scratchpads beneath.</sub></td>
 </tr>
 <tr>
 <td colspan="2"><img src="assets/desktop-icons.webp" alt="Desktop icons beside a shaped clock, the song playing, today's date and the day's progress"><br><sub><b>Desktop icons and widgets.</b> Your Desktop folder on the wallpaper, a shaped clock, what is playing, today and how much of the day has gone.</sub></td>
@@ -489,9 +497,10 @@ while nothing plays.
 <summary><b>A lock screen, a matching login screen, and the session screen</b></summary>
 <br>
 
-- **Lock screen**: a real session lock checked through PAM, with an oversized
-  clock in the wallpaper's colour, the weather, battery, network and Bluetooth
-  at a glance, what is playing, notifications and a power bar. It counts your
+- **Lock screen**: a real session lock checked through PAM, laid out your way:
+  six styles to start from (one made for music) and widgets you place in a
+  full-screen editor, such as the clock, the weather, battery, network and
+  Bluetooth, what is playing, notifications and the power buttons. It counts your
   tries against faillock, warns about Caps Lock, plays a live wallpaper behind
   its blur, and takes a fingerprint (with `fprintd`) as well as the password.
 - **Login screen**: the lock ported to SDDM, painted from the shell's own

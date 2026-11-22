@@ -31,6 +31,7 @@ ICONS = {
     "performance": "speed",
     "installer": "download",
     "fixed": "build",
+    "fixes and tweaks": "build",
     "lock screen": "lock",
     "authentication": "lock",
     "users and accounts": "group",
@@ -45,8 +46,15 @@ ICONS = {
     "look and feel": "palette",
     "sound": "volume_up",
     "login and lock screen": "lock",
+    "lock and login screen": "lock",
+    "pointer": "mouse",
     "updates": "update",
     "displays": "computer",
+    "workspaces": "workspaces",
+    "your language": "language",
+    "launcher": "grid_view",
+    "keys and shortcuts": "keyboard",
+    "settings": "settings",
 }
 
 # top-level sections the changelog keeps for itself: how to update is no news
@@ -54,6 +62,17 @@ ICONS = {
 SKIP = {"upgrading"}
 
 IMG = re.compile(r"<img\s[^>]*>")
+# the sheet's name, date, headings and picture descriptions go through I18n.tr,
+# so i18n-check finds them for the catalogues; the entries themselves stay as
+# the changelog wrote them
+TR_FIELD = re.compile(r'("(?:alt|title)": )("(?:[^"\\]|\\.)+")')
+
+
+def tr(text):
+    """a QML expression for text, translated when there is any"""
+    return "I18n.tr(%s)" % json.dumps(text, ensure_ascii=False) if text else '""'
+
+
 ATTR = re.compile(r'(\w+)="([^"]*)"')
 
 
@@ -184,8 +203,9 @@ def main():
         date = "%d %s %d" % (day.day, day.strftime("%B"), day.year)
     heroes, intro, sections = parse(body)
 
-    js = lambda v: json.dumps(v, ensure_ascii=False, indent=4).replace("\n", "\n    ")
+    js = lambda v: TR_FIELD.sub(r"\1I18n.tr(\2)", json.dumps(v, ensure_ascii=False, indent=4).replace("\n", "\n    "))
     out = """import QtQuick
+import qs
 
 // what the What's new sheet says about this release: the version's own section
 // of CHANGELOG.md, written out by support/whatsnew/build-notes.py so the two
@@ -205,7 +225,7 @@ QtObject {
     // the whole history, every version
     readonly property string fullUrl: "https://github.com/Sn3akyy1/lucid/blob/main/CHANGELOG.md"
 }
-""" % (json.dumps(a.version), json.dumps(a.name, ensure_ascii=False), json.dumps(date),
+""" % (json.dumps(a.version), tr(a.name), tr(date),
        "false" if a.no_placeholders else "true", js(heroes),
        json.dumps(intro, ensure_ascii=False), js(sections))
     path = os.environ.get("NOTES_OUT") or os.path.join(ROOT, "lucidnews", "Notes.qml")
