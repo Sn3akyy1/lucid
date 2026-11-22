@@ -4,6 +4,9 @@ All notable changes to Lucid are recorded here, newest first.
 
 ## Unreleased
 
+- **Media keys.** Play/pause, previous and next now go through the same MPRIS
+  player Lucid shows instead of whichever name `playerctl` happens to list
+  first. A paused browser can no longer take the key away from Spotify.
 - **About system.** A page at the bottom of Settings reads the machine rather
   than naming one in the UI: device and hardware model, OS, kernel,
   architecture, CPU and every GPU, memory, root storage, uptime, session,
