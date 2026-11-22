@@ -31,7 +31,7 @@ FloatingWindow {
     readonly property var chooserRules: win.chooserFilter >= 0 ? win.chooser.filters[win.chooserFilter][1] : null
     property bool answered: false
     readonly property string chooserTitle: !win.choosing ? "" : (win.chooser.title || (win.chooser.mode === "open" ? (win.chooser.directory ? I18n.tr("Choose a folder") : I18n.tr("Open a file")) : I18n.tr("Save a file")))
-    readonly property string acceptLabel: !win.choosing ? "" : (win.chooser.accept.replace(/_/g, "") || (win.chooser.mode === "open" ? (win.chooser.directory ? "Select" : "Open") : "Save"))
+    readonly property string acceptLabel: !win.choosing ? "" : (win.chooser.accept.replace(/_/g, "") || (win.chooser.mode === "open" ? (win.chooser.directory ? I18n.tr("Select") : I18n.tr("Open")) : I18n.tr("Save")))
     readonly property bool canAccept: {
         var t = win.tab;
         if (!win.choosing || !t || (t.rev < 0))
@@ -816,7 +816,7 @@ FloatingWindow {
                     })
                 };
                 win.app.pushUndo(entry);
-                win.say("Moved " + (done.length === 1 ? "“" + done[0].path.split("/").pop() + "”" : done.length + " items") + " to Trash", "Undo", entry);
+                win.say(done.length === 1 ? I18n.tr("Moved “%1” to Trash", done[0].path.split("/").pop()) : I18n.tr("Moved %1 items to Trash", done.length), I18n.tr("Undo"), entry);
             }
             var failed = r.failed || [];
             if (failed.length > 0)
@@ -889,7 +889,7 @@ FloatingWindow {
             "uris": win.selectionUris()
         }, function(r) {
             var n = (r.restored || []).length;
-            win.say(r.ok ? "Restored " + (n === 1 ? "“" + r.restored[0].split("/").pop() + "”" : n + " items") : (r.error || "Could not restore"));
+            win.say(r.ok ? (n === 1 ? I18n.tr("Restored “%1”", r.restored[0].split("/").pop()) : I18n.tr("Restored %1 items", n)) : (r.error || I18n.tr("Could not restore")));
         });
     }
 

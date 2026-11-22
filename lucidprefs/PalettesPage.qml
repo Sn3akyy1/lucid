@@ -527,10 +527,10 @@ Column {
                             Text {
                                 text: {
                                     if (page.addState === "working")
-                                        return "Importing...";
+                                        return I18n.tr("Importing...");
 
                                     if (page.addState === "error")
-                                        return "Could not import it";
+                                        return I18n.tr("Could not import it");
 
                                     return page.addResult ? page.addResult.name : "";
                                 }

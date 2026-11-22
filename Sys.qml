@@ -60,6 +60,11 @@ Singleton {
         root.holders = next;
     }
 
+    function refreshInfo() {
+        infoProc.running = false;
+        infoProc.running = true;
+    }
+
     function push(arr, v) {
         var next = arr.concat([v]);
         while (next.length > root.historyLength) next.shift()
@@ -193,7 +198,7 @@ Singleton {
 
     onActiveChanged: {
         if (root.active && !root.info.os)
-            infoProc.running = true;
+            root.refreshInfo();
 
     }
 
@@ -220,7 +225,7 @@ Singleton {
     Process {
         id: infoProc
 
-        command: ["sh", "-c", ". /etc/os-release 2>/dev/null; echo \"os=${PRETTY_NAME:-Linux}\"; echo \"logo=${LOGO:-}\"; echo \"kernel=$(uname -r)\"; echo \"host=$(cat /proc/sys/kernel/hostname)\"; echo \"user=$USER\"; echo \"shell=$(basename \"${SHELL:-sh}\")\"; echo \"cpuModel=$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/(R)//g; s/(TM)//g; s/ CPU//; s/ @.*//; s/^ *//')\"; echo \"cores=$(nproc)\"; g=$(lspci 2>/dev/null | grep -iE 'vga|3d controller' | head -1 | sed 's/.*: //; s/Corporation //; s/ (rev.*//'); echo \"gpuModel=$g\"; command -v pacman >/dev/null && echo \"packages=$(pacman -Qq 2>/dev/null | wc -l)\"; nvidia-smi -L >/dev/null 2>&1 && echo nvidia=1; echo \"model=$(cat /sys/devices/virtual/dmi/id/product_name 2>/dev/null)\""]
+        command: ["sh", "-c", ". /etc/os-release 2>/dev/null; echo \"os=${PRETTY_NAME:-Linux}\"; echo \"logo=${LOGO:-}\"; echo \"kernel=$(uname -r)\"; echo \"architecture=$(uname -m)\"; echo \"host=$(cat /proc/sys/kernel/hostname)\"; echo \"user=$USER\"; echo \"shell=$(basename \"${SHELL:-sh}\")\"; echo \"desktop=${XDG_CURRENT_DESKTOP:-}\"; echo \"sessionType=${XDG_SESSION_TYPE:-}\"; echo \"cpuModel=$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/(R)//g; s/(TM)//g; s/ CPU//; s/ @.*//; s/^ *//')\"; echo \"cores=$(nproc)\"; g=$(lspci 2>/dev/null | grep -iE 'vga|3d controller' | sed 's/.*: //; s/Corporation //; s/ (rev.*//' | paste -sd '|' -); echo \"gpuModels=$g\"; echo \"gpuModel=${g%%|*}\"; echo \"memoryBytes=$(awk '/^MemTotal:/{print $2 * 1024; exit}' /proc/meminfo)\"; set -- $(df -B1 --output=size,avail / 2>/dev/null | tail -1); echo \"storageBytes=${1:-}\"; echo \"storageFreeBytes=${2:-}\"; echo \"uptimeSeconds=$(cut -d. -f1 /proc/uptime)\"; echo \"displays=$(hyprctl monitors all 2>/dev/null | grep -c '^Monitor ')\"; echo \"compositor=$(hyprctl version 2>/dev/null | head -1 | cut -d' ' -f2)\"; echo \"quickshell=$(quickshell --version 2>/dev/null | head -1 | sed 's/^Quickshell //')\"; command -v pacman >/dev/null && echo \"packages=$(pacman -Qq 2>/dev/null | wc -l)\"; nvidia-smi -L >/dev/null 2>&1 && echo nvidia=1; echo \"vendor=$(cat /sys/devices/virtual/dmi/id/sys_vendor 2>/dev/null | head -1)\"; echo \"model=$(cat /sys/devices/virtual/dmi/id/product_name 2>/dev/null | head -1)\""]
 
         stdout: StdioCollector {
             onStreamFinished: {
@@ -233,6 +238,7 @@ Singleton {
 
                 }
                 out.nvidia = out.nvidia === "1";
+                out.ready = true;
                 root.info = out;
             }
         }

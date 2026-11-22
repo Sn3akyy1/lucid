@@ -2531,7 +2531,7 @@ BarPill {
                             text: {
                                 switch (root.shazamState) {
                                 case "listening":
-                                    return "Listening…";
+                                    return I18n.tr("Listening…");
                                 case "nomatch":
                                     return I18n.tr("No match");
                                 case "error":

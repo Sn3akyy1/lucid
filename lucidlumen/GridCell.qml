@@ -77,10 +77,18 @@ Item {
         if (cell.pane && cell.pane.cascading)
             cell.arrive(cell.pane.beatsFor(cell.index));
 
-        Qt.callLater(function() {
-            cell.placed = true;
-        });
     }
+
+    // Defer until the view has assigned the delegate's first position. A
+    // callLater closure outlived pooled delegates while changing folders fast,
+    // touched a null `cell`, and could take Qt down with it. This timer belongs
+    // to the delegate, so destroying the delegate cancels the pending callback.
+    Timer {
+        interval: 0
+        running: true
+        onTriggered: cell.placed = true
+    }
+
     transform: Translate {
         id: slide
     }

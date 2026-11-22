@@ -30,21 +30,21 @@ Singleton {
 
     readonly property string summary: {
         if (!root.probed)
-            return "Looking for hypridle…";
+            return I18n.tr("Looking for hypridle…");
 
         if (!root.installed)
-            return "Not installed";
+            return I18n.tr("Not installed");
 
         if (!Prefs.idleEnabled)
-            return "Turned off — this machine never goes idle on its own";
+            return I18n.tr("Turned off — this machine never goes idle on its own");
 
         if (root.paused)
-            return "Paused — keep awake is on";
+            return I18n.tr("Paused — keep awake is on");
 
         if (!root.running)
-            return "Turned on, but hypridle is not answering";
+            return I18n.tr("Turned on, but hypridle is not answering");
 
-        return root.stages.length > 0 ? "Watching — " + root.stages.length + (root.stages.length === 1 ? " step" : " steps") : "Watching, but nothing is set to happen";
+        return root.stages.length > 0 ? I18n.trn("Watching — %1 step", "Watching — %1 steps", root.stages.length) : I18n.tr("Watching, but nothing is set to happen");
     }
 
     // 30 s to 2 h, coarse enough that the slider lands on round numbers

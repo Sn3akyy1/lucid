@@ -1112,6 +1112,79 @@ PY
             then
                 say "  floating a window now sets it to 1366x768, centred"
             fi
+            # Media keys used bare playerctl, whose implicit player is just the
+            # first MPRIS name. With a paused browser before Spotify, play/pause
+            # went to the browser even while Lucid showed Spotify. Still on those
+            # exact shipped commands they follow Lucid's selected player now; a
+            # media command the user changed themselves stays untouched.
+            if python3 - "$LUCID_DIR/keybinds.json" "$SRC/support/hypr/keybinds.json" <<'PY'
+import json, re, sys
+path, shipped = sys.argv[1:3]
+old = {
+    "xf86-next": "playerctl next",
+    "xf86-pause": "playerctl play-pause",
+    "xf86-play": "playerctl play-pause",
+    "xf86-prev": "playerctl previous",
+}
+new = {b["id"]: b["cmd"] for b in json.load(open(shipped, encoding="utf-8"))["binds"] if b.get("id") in old}
+text = open(path, encoding="utf-8").read()
+data = json.loads(text)
+binds = data.get("binds", []) if isinstance(data, dict) else data
+changed = [bind_id for bind_id, old_cmd in old.items()
+           if any(isinstance(b, dict) and b.get("id") == bind_id and b.get("cmd") == old_cmd for b in binds)]
+if not changed:
+    sys.exit(1)
+for bind_id in changed:
+    # Stop before another entry's id, so formatting and every other field stay
+    # byte-for-byte as they were even when an object spans several lines.
+    pattern = re.compile(r'("id"\s*:\s*' + re.escape(json.dumps(bind_id))
+                         + r'(?:(?!"id"\s*:).)*?"cmd"\s*:\s*)'
+                         + re.escape(json.dumps(old[bind_id])), re.S)
+    text, count = pattern.subn(lambda m: m.group(1) + json.dumps(new[bind_id]), text, count=1)
+    if count != 1:
+        sys.exit(1)
+data = json.loads(text)
+binds = data.get("binds", []) if isinstance(data, dict) else data
+for bind_id in changed:
+    if not any(isinstance(b, dict) and b.get("id") == bind_id and b.get("cmd") == new[bind_id] for b in binds):
+        sys.exit(1)
+open(path, "w", encoding="utf-8").write(text)
+PY
+            then
+                say "  media keys follow Lucid's active player now"
+            fi
+            # Region capture used SUPER+SHIFT+S before the scratchpad took that
+            # combination. If it is still the exact old capture default, move it
+            # to Print as the shipped list does; either bind changed by hand stays.
+            if python3 - "$LUCID_DIR/keybinds.json" "$SRC/support/hypr/keybinds.json" <<'PY'
+import json, re, sys
+path, shipped = sys.argv[1:3]
+text = open(path, encoding="utf-8").read()
+data = json.loads(text)
+binds = data.get("binds", []) if isinstance(data, dict) else data
+old_keys = "SUPER + SHIFT + S"
+old_cmd = "qs ipc call snap toggle"
+target = next(b for b in json.load(open(shipped, encoding="utf-8"))["binds"] if b.get("id") == "snap-region")
+old = next((b for b in binds if isinstance(b, dict) and b.get("id") == "snap-region"
+            and b.get("keys") == old_keys and b.get("cmd") == old_cmd), None)
+if old is None or not any(isinstance(b, dict) and b.get("id") == "scratchpad"
+                          and b.get("keys") == old_keys and b.get("enabled", True) for b in binds):
+    sys.exit(1)
+pattern = re.compile(r'("id"\s*:\s*"snap-region"(?:(?!"id"\s*:).)*?"keys"\s*:\s*)'
+                     + re.escape(json.dumps(old_keys)), re.S)
+text, count = pattern.subn(lambda m: m.group(1) + json.dumps(target["keys"]), text, count=1)
+if count != 1:
+    sys.exit(1)
+check = json.loads(text)
+check_binds = check.get("binds", []) if isinstance(check, dict) else check
+if not any(isinstance(b, dict) and b.get("id") == "snap-region"
+           and b.get("keys") == target["keys"] and b.get("cmd") == old_cmd for b in check_binds):
+    sys.exit(1)
+open(path, "w", encoding="utf-8").write(text)
+PY
+            then
+                say "  region capture moved from SUPER+SHIFT+S to Print; the scratchpad keeps SUPER+SHIFT+S"
+            fi
         else
             cp "$SRC/support/hypr/keybinds.json" "$LUCID_DIR/keybinds.json"
             say "  keybinds -> $LUCID_DIR/keybinds.json"

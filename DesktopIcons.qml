@@ -2394,11 +2394,11 @@ Singleton {
             });
 
         if (one && one.kind === "app" && !one.exec)
-            rows.push(root.row("icon:trust", "Allow Launching", "verified_user", {
+            rows.push(root.row("icon:trust", I18n.tr("Allow Launching"), "verified_user", {
                 "divider": rows.length > 0
             }));
         else
-            rows.push(root.row("icon:open", one ? (one.kind === "app" ? "Launch" : "Open") : "Open " + items.length + " Items", one && one.kind === "app" ? "play_arrow" : "open_in_new", {
+            rows.push(root.row("icon:open", one ? (one.kind === "app" ? I18n.tr("Launch") : I18n.tr("Open")) : I18n.trn("Open %1 item", "Open %1 items", items.length), one && one.kind === "app" ? "play_arrow" : "open_in_new", {
                 "shortcut": root.keyHint("open"),
                 "divider": rows.length > 0
             }));
@@ -2409,37 +2409,37 @@ Singleton {
             root.fetchApps(one.uri);
         }
         if (one && root.canLook(one))
-            rows.push(root.row("icon:look", "Quick Look", "visibility", {
+            rows.push(root.row("icon:look", I18n.tr("Quick Look"), "visibility", {
                 "shortcut": root.keyHint("look")
             }));
 
         if (one && one.kind !== "trash" && one.path !== "")
-            rows.push(root.row("icon:info", "Get Info", "info", {
+            rows.push(root.row("icon:info", I18n.tr("Get Info"), "info", {
                 "shortcut": root.keyHint("info")
             }));
 
         var group = [];
         var dirLike = one && (one.kind === "dir" || one.kind === "home" || one.kind === "drive");
         if (dirLike)
-            group.push(root.row("icon:terminal", "Open in Terminal", "terminal", {
+            group.push(root.row("icon:terminal", I18n.tr("Open in Terminal"), "terminal", {
                 "shortcut": root.keyHint("terminal")
             }));
 
         if (dirLike && root.canPaste)
-            group.push(root.row("icon:pasteInto", root.clip.uris.length === 0 ? "Paste Picture Into Folder" : "Paste Into Folder", "content_paste"));
+            group.push(root.row("icon:pasteInto", root.clip.uris.length === 0 ? I18n.tr("Paste Picture Into Folder") : I18n.tr("Paste Into Folder"), "content_paste"));
 
         if (files.length > 0) {
             if (one && root.isArchive(one))
-                group.push(root.row("icon:extract", "Extract Here", "unarchive"));
+                group.push(root.row("icon:extract", I18n.tr("Extract Here"), "unarchive"));
             else
-                group.push(root.row("icon:compress", files.length > 1 ? "Compress " + files.length + " Items" : "Compress", "folder_zip", {
+                group.push(root.row("icon:compress", files.length > 1 ? I18n.tr("Compress %1 items", files.length) : I18n.tr("Compress"), "folder_zip", {
                 "shortcut": root.keyHint("compress")
             }));
-            group.push(root.row("icon:duplicate", "Duplicate", "file_copy", {
+            group.push(root.row("icon:duplicate", I18n.tr("Duplicate"), "file_copy", {
                 "shortcut": root.keyHint("duplicate")
             }));
             if (one)
-                group.push(root.row("icon:link", "Make Link", "add_link"));
+                group.push(root.row("icon:link", I18n.tr("Make Link"), "add_link"));
 
             group.push(root.row("", I18n.tr("Send To"), "share", {
                 "submenu": root.sendRows()
@@ -2449,13 +2449,13 @@ Singleton {
             }));
         }
         if (one && one.kind === "trash")
-            group.push(root.row("icon:empty", "Empty Trash", "delete_sweep", {
+            group.push(root.row("icon:empty", I18n.tr("Empty Trash"), "delete_sweep", {
                 "danger": true,
                 "disabled": root.trashCount === 0
             }));
 
         if (one && one.kind === "drive" && (one.canEject || one.canUnmount))
-            group.push(root.row(one.canEject ? "icon:eject" : "icon:unmount", one.canEject ? "Eject" : "Unmount", "eject"));
+            group.push(root.row(one.canEject ? "icon:eject" : "icon:unmount", one.canEject ? I18n.tr("Eject") : I18n.tr("Unmount"), "eject"));
 
         for (var i = 0; i < group.length; i++) {
             if (i === 0)
@@ -2464,7 +2464,7 @@ Singleton {
             rows.push(group[i]);
         }
         if (files.length > 0)
-            rows.push(root.row("icon:path", files.length > 1 ? "Copy Paths" : "Copy Path", "link", {
+            rows.push(root.row("icon:path", files.length > 1 ? I18n.tr("Copy Paths") : I18n.tr("Copy Path"), "link", {
                 "shortcut": root.keyHint("copyPath"),
                 "divider": true
             }));

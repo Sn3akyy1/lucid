@@ -703,9 +703,9 @@ Scope {
             var moved = m.moved || [], copied = m.copied || [];
             var verb = moved.length === 0 && (copied.length > 0 || cur.mode === "copy") ? I18n.tr("Copied") : I18n.tr("Moved");
             if (m.tag === "undo" && m.state === "done" && (m.errors || []).length === 0)
-                app.notice("Put back " + (made.length === 1 ? "“" + made[0].split("/").pop() + "”" : made.length + " items"), "", null);
+                app.notice(made.length === 1 ? I18n.tr("Put back “%1”", made[0].split("/").pop()) : I18n.tr("Put back %1 items", made.length), "", null);
             else if (m.state === "cancelled")
-                app.notice(verb.replace("ed", "ing") + " stopped", "", null);
+                app.notice(moved.length === 0 && (copied.length > 0 || cur.mode === "copy") ? I18n.tr("Copying stopped") : I18n.tr("Moving stopped"), "", null);
             else if ((m.errors || []).length > 0)
                 app.notice((m.errors.length === 1 ? m.errors[0].error : I18n.tr("%1 items could not be %2", m.errors.length, verb.toLowerCase())), "", null);
             else if (made.length > 0) {
@@ -715,7 +715,7 @@ Scope {
                     "copied": copied
                 };
                 app.pushUndo(entry);
-                app.notice(verb + " " + (made.length === 1 ? "“" + made[0].split("/").pop() + "”" : made.length + " items") + " to " + app.titleFor(cur.dest), "Undo", entry);
+                app.notice(made.length === 1 ? I18n.tr("%1 “%2” to %3", verb, made[0].split("/").pop(), app.titleFor(cur.dest)) : I18n.tr("%1 %2 items to %3", verb, made.length, app.titleFor(cur.dest)), I18n.tr("Undo"), entry);
             }
         }
         app.jobs = j;
@@ -760,7 +760,7 @@ Scope {
             app.call("restore", {
                 "paths": e.paths
             }, function(r) {
-                app.notice(r.ok ? "Restored " + (r.restored.length === 1 ? "“" + r.restored[0].split("/").pop() + "”" : r.restored.length + " items") : (r.error || "Could not restore"), "", null);
+                app.notice(r.ok ? (r.restored.length === 1 ? I18n.tr("Restored “%1”", r.restored[0].split("/").pop()) : I18n.tr("Restored %1 items", r.restored.length)) : (r.error || I18n.tr("Could not restore")), "", null);
             });
         } else if (e.kind === "rename") {
             app.call("rename", {

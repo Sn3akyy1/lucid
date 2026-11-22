@@ -44,10 +44,10 @@ Item {
             return I18n.tr("%1 devices connected", root.connectedDevices.length);
 
         if (root.anyConnecting)
-            return "Connecting...";
+            return I18n.tr("Connecting...");
 
         if (root.discovering)
-            return "Scanning...";
+            return I18n.tr("Scanning...");
 
         return I18n.tr("Not connected");
     }
@@ -566,10 +566,10 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             text: {
                                 if (devItem.isPairing)
-                                    return "Pairing…";
+                                    return I18n.tr("Pairing…");
 
                                 if (devItem.isConnecting)
-                                    return "Connecting…";
+                                    return I18n.tr("Connecting…");
 
                                 if (devItem.isConnected) {
                                     let batt = root.getBatteryText(devItem.modelData);
@@ -691,10 +691,10 @@ Item {
                             anchors.centerIn: parent
                             text: {
                                 if (devItem.isPairing)
-                                    return "Pairing…";
+                                    return I18n.tr("Pairing…");
 
                                 if (devItem.isConnecting)
-                                    return "Connecting…";
+                                    return I18n.tr("Connecting…");
 
                                 if (devItem.group === "nearby")
                                     return I18n.tr("Pair");

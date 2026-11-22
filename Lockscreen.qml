@@ -100,7 +100,7 @@ Singleton {
             return I18n.tr("Too many attempts — try again in %1", root.humanSecs(root.lockoutLeft));
 
         if (root.phase === "checking")
-            return "Checking…";
+            return I18n.tr("Checking…");
 
         if (root.phase === "error")
             return root.pamText !== "" ? root.pamText : I18n.tr("Authentication is unavailable right now");

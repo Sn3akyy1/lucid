@@ -187,7 +187,7 @@ Singleton {
             return String(r.hour).padStart(2, "0") + ":" + String(r.minute).padStart(2, "0");
 
         var h = r.hour % 12 === 0 ? 12 : r.hour % 12;
-        return h + ":" + String(r.minute).padStart(2, "0") + " " + (r.hour < 12 ? "AM" : "PM");
+        return h + ":" + String(r.minute).padStart(2, "0") + " " + (r.hour < 12 ? I18n.tr("AM") : I18n.tr("PM"));
     }
 
     function untilText(at) {
@@ -196,17 +196,17 @@ Singleton {
 
         var mins = Math.round((at - Loc.now()) / 60000);
         if (mins < 1)
-            return "now";
+            return I18n.tr("now");
 
         if (mins < 60)
             return I18n.tr("in %1 min", mins);
 
         var hrs = Math.round(mins / 60);
         if (hrs < 24)
-            return "in " + hrs + (hrs === 1 ? I18n.tr(" hour") : I18n.tr(" hours"));
+            return I18n.trn("in %1 hour", "in %1 hours", hrs);
 
         var days = Math.round(hrs / 24);
-        return days === 1 ? "tomorrow" : I18n.tr("in %1 days", days);
+        return days === 1 ? I18n.tr("tomorrow") : I18n.tr("in %1 days", days);
     }
 
     function repeatText(r) {
@@ -216,7 +216,7 @@ Singleton {
         case "weekdays":
             return I18n.tr("Weekdays");
         case "weekly":
-            return "Every " + root.dayStart(r.year, r.month, r.day).toLocaleDateString(I18n.locale, "dddd");
+            return I18n.tr("Every %1", root.dayStart(r.year, r.month, r.day).toLocaleDateString(I18n.locale, "dddd"));
         }
         return "";
     }

@@ -64,7 +64,7 @@ Singleton {
         if (Prefs.envApplyHypr)
             parts.push(I18n.tr("Hyprland"));
 
-        return "Applied to " + parts.join(", ");
+        return I18n.tr("Applied to %1", parts.join(", "));
     }
     // everything envtool.py needs, in the shape it reads
     readonly property string payload: JSON.stringify({

@@ -35,7 +35,7 @@ Column {
             return "";
 
         if (HyprConfig.moduleProbed && !HyprConfig.moduleInstalled)
-            return "Your Hyprland config does not read ~/.config/hypr/lucid-settings.lua, where these go. Run the installer with --with-hypr, or add Lucid's modules/settings.lua and require it in hyprland.lua.";
+            return I18n.tr("Your Hyprland config does not read ~/.config/hypr/lucid-settings.lua, where these go. Run the installer with --with-hypr, or add Lucid's modules/settings.lua and require it in hyprland.lua.");
 
         if (!HyprConfig.cursorPlugin)
             return I18n.tr("The pointer moves through hypr-dynamic-cursors, a Hyprland plugin that is not loaded right now.");

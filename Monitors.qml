@@ -779,7 +779,7 @@ Singleton {
 
     // what a box on the map is called: "Built-in", or who made it
     function shortLabel(key) {
-        return root.isBuiltIn(key) ? "Built-in" : root.labelFor(key);
+        return root.isBuiltIn(key) ? I18n.tr("Built-in") : root.labelFor(key);
     }
 
     // the display the pointer is on in the map, which shows its number on the

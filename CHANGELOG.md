@@ -4,13 +4,34 @@ All notable changes to Lucid are recorded here, newest first.
 
 ## Unreleased
 
+- **Lumen.** Rapidly changing folders could destroy a pooled grid cell before
+  its delayed placement callback ran, leaving a null QML object immediately
+  before a native Qt crash. The delay now belongs to the cell and is cancelled
+  with it.
+- **Translation checks.** The checker closes every source file after comparing
+  translated labels, instead of leaving a ResourceWarning per file in its test
+  run.
+- **Keybind conflict.** An older Region Screenshot default shared
+  `SUPER`+`SHIFT`+`S` with the scratchpad. Untouched installs move capture to
+  `Print`, while a shortcut changed by hand remains the user's.
+- **Updater.** Installer questions may disappear between two QML binding
+  updates; every use now checks that the question still exists, instead of
+  leaving a transient null-object error in the shell log.
+- **Media keys.** Play/pause, previous and next now go through the same MPRIS
+  player Lucid shows instead of whichever name `playerctl` happens to list
+  first. A paused browser can no longer take the key away from Spotify.
+- **About system.** A page at the bottom of Settings reads the machine rather
+  than naming one in the UI: device and hardware model, OS, kernel,
+  architecture, CPU and every GPU, memory, root storage, uptime, session,
+  compositor, Quickshell, shell and installed package count.
 - **Language.** Every text in the shell goes through `I18n.tr`, keyed by the
   English text, so English needs no file. Settings > Language picks a language
   (Automatic follows `LANG`), imports a translation into
-  `~/.config/lucid/i18n/` and exports a template or the current language. Spanish
-  and Russian come with it, and a language is one `i18n/<code>.json`. Dates and numbers
-  follow the language too, and Russian plurals (one, few, many) are right. `support/i18n-check.py` keeps the code and the
-  catalogues in step.
+  `~/.config/lucid/i18n/` and exports a template or the current language.
+  Spanish, Russian, Turkish and German come with it, and a language is one
+  `i18n/<code>.json`. Dates and numbers follow the language too, and Russian
+  plurals (one, few, many) are right. `support/i18n-check.py` keeps the code and
+  the catalogues in step.
 
 ## v1.21 — 2026-11-13
 

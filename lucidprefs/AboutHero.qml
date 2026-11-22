@@ -84,7 +84,7 @@ Rectangle {
             return "";
 
         if (Updates.busy)
-            return "Checking…";
+            return I18n.tr("Checking…");
 
         if (Updates.available)
             return I18n.tr("v%1 is out", Updates.latest);

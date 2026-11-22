@@ -547,9 +547,11 @@ each update. Among the pages:
 - **Environment**: cursor, icons, GTK and Qt themes and fonts, set everywhere at
   once, Lucid's own pointer included
 - **Startup**: apps at login, system autostart and environment variables
-- **Language**: the shell in another language (Spanish and Russian come with it), and
-  adding, importing or exporting a translation as a `.json` file
-- **Keybinds**, **Users and Accounts**, **Screenshots** and **About**
+- **Language**: the shell in another language (Spanish, Russian, Turkish and
+  German come with it), and adding, importing or exporting a translation as a
+  `.json` file
+- **Keybinds**, **Users and Accounts**, **Screenshots**, **About** and
+  **About System**, populated from the machine itself
 
 </details>
 

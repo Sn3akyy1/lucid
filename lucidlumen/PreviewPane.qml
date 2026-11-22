@@ -113,7 +113,7 @@ Item {
 
         if ((prev.kind === "video" || prev.kind === "audio") && prev.duration > 0) {
             var s = Math.round(prev.duration / 1000);
-            out.push(["Length", (s >= 3600 ? Math.floor(s / 3600) + ":" + ("0" + Math.floor(s % 3600 / 60)).slice(-2) : Math.floor(s / 60)) + ":" + ("0" + s % 60).slice(-2)]);
+            out.push([I18n.tr("Length"), (s >= 3600 ? Math.floor(s / 3600) + ":" + ("0" + Math.floor(s % 3600 / 60)).slice(-2) : Math.floor(s / 60)) + ":" + ("0" + s % 60).slice(-2)]);
         }
         out.push([I18n.tr("Modified"), prev.when(prev.one.mtime)]);
         if (i && i.ctime > 0 && i.ctime !== prev.one.mtime)

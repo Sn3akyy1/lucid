@@ -25,7 +25,7 @@ Column {
 
     readonly property string status: {
         if (net.working)
-            return "Connecting…";
+            return I18n.tr("Connecting…");
 
         if (net.isConnected)
             return I18n.tr("Connected  ·  %1 signal", Net.strengthLabel(net.strength));
@@ -269,7 +269,7 @@ Column {
                     enabled: !net.working
                     text: {
                         if (net.working)
-                            return "Connecting…";
+                            return I18n.tr("Connecting…");
 
                         return net.isConnected ? I18n.tr("Disconnect") : I18n.tr("Connect");
                     }

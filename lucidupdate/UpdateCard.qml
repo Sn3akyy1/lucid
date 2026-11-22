@@ -26,9 +26,9 @@ Rectangle {
     readonly property bool fresh: Updates.flowChannel === "local"
     readonly property var ask: Updates.ask
     readonly property bool asking: card.ask !== null && Updates.askSent !== card.ask.n
-    readonly property bool authAsk: card.view === "auth" && card.asking && card.ask.kind === "password"
-    readonly property bool runAsk: card.view === "running" && card.asking
-    readonly property bool wantsKeys: card.view === "auth" || (card.runAsk && card.ask.kind !== "yesno")
+    readonly property bool authAsk: card.ask !== null && card.view === "auth" && card.asking && card.ask.kind === "password"
+    readonly property bool runAsk: card.ask !== null && card.view === "running" && card.asking
+    readonly property bool wantsKeys: card.view === "auth" || (card.ask !== null && card.runAsk && card.ask.kind !== "yesno")
     readonly property var res: Updates.result || ({
     })
     readonly property bool canRetry: card.view === "failed" && card.res.reason !== "nosudo" && !card.fresh
@@ -60,9 +60,9 @@ Rectangle {
     function focusInput() {
         if (card.view === "auth")
             authField.focusInput();
-        else if (card.runAsk && card.ask.kind === "password")
+        else if (card.ask !== null && card.runAsk && card.ask.kind === "password")
             askField.focusInput();
-        else if (card.runAsk && card.ask.kind === "text")
+        else if (card.ask !== null && card.runAsk && card.ask.kind === "text")
             askText.forceActiveFocus();
     }
 
@@ -74,7 +74,7 @@ Rectangle {
     }
 
     function submitAsk() {
-        if (!card.runAsk)
+        if (card.ask === null || !card.runAsk)
             return ;
 
         if (card.ask.kind === "password" && askField.text !== "")
@@ -427,7 +427,7 @@ Rectangle {
                     id: authField
 
                     width: parent.width
-                    error: card.authAsk && card.ask.retry && authField.text === ""
+                    error: card.ask !== null && card.authAsk && card.ask.retry && authField.text === ""
                     busy: !card.authAsk
                     placeholder: card.authAsk ? I18n.tr("Password for %1", Quickshell.env("USER")) : I18n.tr("Getting ready…")
                     onAccepted: card.submitAuth()
@@ -436,16 +436,16 @@ Rectangle {
                 Text {
                     width: parent.width
                     text: {
-                        if (card.authAsk && card.ask.retry)
+                        if (card.ask !== null && card.authAsk && card.ask.retry)
                             return I18n.tr("That password did not work. Try again.");
 
                         if (card.ask !== null && Updates.askSent === card.ask.n)
-                            return "Checking…";
+                            return I18n.tr("Checking…");
 
                         return "";
                     }
                     visible: text !== ""
-                    color: card.authAsk && card.ask.retry ? Theme.error : Theme.subtextDim
+                    color: card.ask !== null && card.authAsk && card.ask.retry ? Theme.error : Theme.subtextDim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontBodySm
                     font.variableAxes: Theme.axes(Theme.fontBodySm, 420, 0)
@@ -542,14 +542,14 @@ Rectangle {
 
                         Icon {
                             anchors.verticalCenter: parent.verticalCenter
-                            name: card.runAsk && card.ask.kind === "password" ? "key" : "help"
+                            name: card.ask !== null && card.runAsk && card.ask.kind === "password" ? "key" : "help"
                             size: Theme.dp(16)
                             color: Theme.accent
                         }
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: card.runAsk && card.ask.kind === "password" ? I18n.tr("sudo needs your password again") : I18n.tr("The installer asks")
+                            text: card.ask !== null && card.runAsk && card.ask.kind === "password" ? I18n.tr("sudo needs your password again") : I18n.tr("The installer asks")
                             color: Theme.accent
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontLabelMd
@@ -562,8 +562,8 @@ Rectangle {
                     // the lines above the question say what it is about
                     Text {
                         width: parent.width
-                        visible: card.runAsk && card.ask.kind !== "password" && text !== ""
-                        text: card.runAsk ? (card.ask.context || []).map((l) => {
+                        visible: card.ask !== null && card.runAsk && card.ask.kind !== "password" && text !== ""
+                        text: card.ask !== null && card.runAsk ? (card.ask.context || []).map((l) => {
                             return l.trim();
                         }).filter((l) => {
                             return l !== "";
@@ -578,8 +578,8 @@ Rectangle {
 
                     Text {
                         width: parent.width
-                        visible: card.runAsk && card.ask.kind !== "password"
-                        text: card.runAsk ? card.question(card.ask.text) : ""
+                        visible: card.ask !== null && card.runAsk && card.ask.kind !== "password"
+                        text: card.ask !== null && card.runAsk ? card.question(card.ask.text) : ""
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontBodyLg
@@ -591,9 +591,9 @@ Rectangle {
                         id: askField
 
                         width: parent.width
-                        visible: card.runAsk && card.ask.kind === "password"
-                        error: card.runAsk && card.ask.retry === true && askField.text === ""
-                        placeholder: card.runAsk && card.ask.retry ? I18n.tr("Wrong password, try again") : I18n.tr("Password for %1", Quickshell.env("USER"))
+                        visible: card.ask !== null && card.runAsk && card.ask.kind === "password"
+                        error: card.ask !== null && card.runAsk && card.ask.retry === true && askField.text === ""
+                        placeholder: card.ask !== null && card.runAsk && card.ask.retry ? I18n.tr("Wrong password, try again") : I18n.tr("Password for %1", Quickshell.env("USER"))
                         onAccepted: card.submitAsk()
                     }
 
@@ -602,7 +602,7 @@ Rectangle {
                         height: Theme.dp(44)
                         radius: Theme.dp(22)
                         color: askText.activeFocus ? Theme.bgHigh : Theme.bgSunken
-                        visible: card.runAsk && card.ask.kind === "text"
+                        visible: card.ask !== null && card.runAsk && card.ask.kind === "text"
 
                         TextInput {
                             id: askText
@@ -627,24 +627,24 @@ Rectangle {
                         spacing: Theme.dp(8)
 
                         M3Button {
-                            visible: card.runAsk && card.ask.kind === "yesno"
+                            visible: card.ask !== null && card.runAsk && card.ask.kind === "yesno"
                             text: I18n.tr("No")
-                            variant: card.runAsk && card.ask.def === "n" ? "filled" : "outlined"
+                            variant: card.ask !== null && card.runAsk && card.ask.def === "n" ? "filled" : "outlined"
                             onClicked: Updates.answer("n")
                         }
 
                         M3Button {
-                            visible: card.runAsk && card.ask.kind === "yesno"
+                            visible: card.ask !== null && card.runAsk && card.ask.kind === "yesno"
                             text: I18n.tr("Yes")
-                            variant: card.runAsk && card.ask.def === "n" ? "outlined" : "filled"
+                            variant: card.ask !== null && card.runAsk && card.ask.def === "n" ? "outlined" : "filled"
                             onClicked: Updates.answer("y")
                         }
 
                         M3Button {
-                            visible: card.runAsk && card.ask.kind !== "yesno"
+                            visible: card.ask !== null && card.runAsk && card.ask.kind !== "yesno"
                             text: I18n.tr("Send")
                             variant: "filled"
-                            enabled: card.runAsk && (card.ask.kind === "text" || askField.text !== "")
+                            enabled: card.ask !== null && card.runAsk && (card.ask.kind === "text" || askField.text !== "")
                             onClicked: card.submitAsk()
                         }
 
@@ -740,7 +740,7 @@ Rectangle {
                         visible: card.view === "auth"
                         text: I18n.tr("Continue")
                         variant: "filled"
-                        enabled: card.authAsk && authField.text !== ""
+                        enabled: card.ask !== null && card.authAsk && authField.text !== ""
                         onClicked: card.submitAuth()
                     }
 

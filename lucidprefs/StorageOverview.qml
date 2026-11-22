@@ -306,7 +306,7 @@ Item {
                     width: parent.width
                     text: {
                         if (ov.scanning)
-                            return Storage.scanFiles > 0 ? "Looking through " + Storage.scanFiles.toLocaleString(I18n.locale, "f", 0) + " files, " + Storage.size(Storage.scanBytes) + " so far" : "Starting to look…";
+                            return Storage.scanFiles > 0 ? I18n.tr("Looking through %1 files, %2 so far", Storage.scanFiles.toLocaleString(I18n.locale, "f", 0), Storage.size(Storage.scanBytes)) : I18n.tr("Starting to look…");
 
                         if (Storage.scanError !== "" && !ov.scan)
                             return Storage.scanError;

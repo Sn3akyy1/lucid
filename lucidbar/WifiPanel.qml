@@ -640,7 +640,7 @@ Item {
             return I18n.tr("Ethernet");
 
         if (root.connecting)
-            return "Connecting...";
+            return I18n.tr("Connecting...");
 
         if (root.wifiConnected && root.activeNetwork)
             return root.activeNetwork.name;

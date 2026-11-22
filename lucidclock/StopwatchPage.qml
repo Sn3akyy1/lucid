@@ -45,7 +45,7 @@ Item {
     readonly property real bodyH: page.height - head.height - Theme.dp(24)
     // the sidebar's button starts and stops it too
     readonly property string primaryIcon: page.running ? "pause" : "play_arrow"
-    readonly property string primaryLabel: page.running ? "Pause" : (page.active ? "Resume" : "Start")
+    readonly property string primaryLabel: page.running ? I18n.tr("Pause") : (page.active ? I18n.tr("Resume") : I18n.tr("Start"))
 
     function primaryAction() {
         page.app.send("sw.toggle");
