@@ -212,7 +212,7 @@ def link(href):
     if href.startswith("http") or href.startswith("#") or href.startswith("mailto:"):
         return href
     if href.startswith("CHANGELOG.md"):
-        return "changelog.html" + href[len("CHANGELOG.md"):].replace("#v121--2026-11-13", "#v1-21")
+        return "changelog.html" + href[len("CHANGELOG.md"):].replace("#v121--2026-11-13", "#v1-21").replace("#v1211--2026-11-22", "#v1-21-1")
     return GH + "/blob/main/" + href
 
 
