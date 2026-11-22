@@ -75,8 +75,18 @@ local SHEETS = {
     lucidkeybinds = "keybinds", lucidwhatsnew = "whatsnew", ["lucid-session"] = "session",
     ["lucid-switcher"] = "switcher", lucidpolkit = "polkit",
 }
+-- the lock screen's style editor covers the whole screen but takes the keyboard
+-- on demand (an exclusive layer would deny LucidShot the pointer over it), so it
+-- counts whenever it is up. its dismiss asks first when there are changes to drop
+local COVERS = { ["lucid-lockstyle"] = "lockstyle dismiss" }
 local function close_over_sheet(close)
     return function()
+        for _, l in ipairs(hl.get_layers()) do
+            if l.mapped and COVERS[l.namespace] then
+                hl.dispatch(hl.dsp.exec_cmd("qs ipc call " .. COVERS[l.namespace]))
+                return
+            end
+        end
         for _, l in ipairs(hl.get_layers()) do
             if l.mapped and l.keyboard_interactivity == 1 then
                 local target = SHEETS[l.namespace]

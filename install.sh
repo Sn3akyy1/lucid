@@ -441,7 +441,7 @@ else
     tar -C "$SRC" -cf - \
         --exclude='.git' --exclude='.github' --exclude='.claude' \
         --exclude='support' --exclude='defaults' --exclude='__pycache__' \
-        --exclude='wallpapers' \
+        --exclude='wallpapers' --exclude='*.orig' --exclude='*.rej' \
         --exclude='install.sh' --exclude='uninstall.sh' --exclude='installer.qml' \
         --exclude='README.md' --exclude='LICENSE' --exclude='.gitignore' \
         --exclude='./lucidprefs/prefs.json' \
@@ -817,7 +817,8 @@ add_hypr_module() {
 # you changed from one an older release shipped
 HYPR_SHIPPED="$HYPR_DIR/modules/.lucid-shipped"
 
-# the cursor that tilts as it moves is a Hyprland plugin (hypr-dynamic-cursors).
+# the cursor that tilts as it moves, and grows for a moment when ctrl is tapped
+# on its own to find it, is a Hyprland plugin (hypr-dynamic-cursors).
 # scripts/cursor-plugin.sh compiles it against the headers the hyprland package
 # itself installs, so the build always matches the Hyprland it is for, and
 # modules/autostart.lua runs the same script on login to load it - rebuilding
@@ -825,7 +826,7 @@ HYPR_SHIPPED="$HYPR_DIR/modules/.lucid-shipped"
 # copy of the headers, calls them current as long as the commit matches, and
 # after a library update under the same Hyprland builds plugins that are
 # refused with "version mismatch" until it is forced. none of this is fatal:
-# a failed build leaves a cursor that simply does not tilt
+# a failed build leaves a cursor that simply does not tilt or grow
 CURSOR_PLUGIN="$HYPR_DIR/scripts/cursor-plugin.sh"
 setup_cursor_plugin() {
     local so="${XDG_DATA_HOME:-$HOME/.local/share}/lucid/plugins/dynamic-cursors.so"
@@ -846,8 +847,9 @@ setup_cursor_plugin() {
         return 0
     fi
 
-    say "  modules/plugins.lua is set up for a cursor that tilts as it moves"
-    say "  (hypr-dynamic-cursors). it is compiled here, for your Hyprland."
+    say "  modules/plugins.lua is set up for a cursor that tilts as it moves and"
+    say "  grows when you tap Ctrl to find it (hypr-dynamic-cursors). it is compiled"
+    say "  here, for your Hyprland."
     ask "  Build it now (about a minute, no password needed)?" || {
         say "  ${dim}skipped — later: $CURSOR_PLUGIN build && $CURSOR_PLUGIN load${r}"
         return 0

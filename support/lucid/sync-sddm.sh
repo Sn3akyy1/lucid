@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # sync-sddm.sh [--check] [--missing] [palette.json]
+# sync-sddm.sh --lock <layout.json> [weather.json]
 #
 # paints the active SDDM theme from the palette Lucid last applied. sddm runs
 # before anyone logs in, so it cannot read a per-user palette - the colours
@@ -24,6 +25,12 @@
 # runs it at login, so an account shows up as itself without waiting for its
 # next wallpaper change.
 #
+# --lock sends the lock screen's layout (and, if given, the last weather
+# reading) to this account's users/<name>/lock.conf, and nothing else: no qs,
+# no wallpaper. the shell runs it a moment after every edit. it prints one of
+#   lock ok | lock old (the installed theme predates layouts) | lock readonly |
+#   lock notheme | lock notlucid | lock bad (the json would not parse)
+#
 # --check reports what would happen and writes nothing. it prints one of:
 #   ok lucid <theme>  the Lucid theme is installed and writable
 #   ok <theme>        another theme, writable, will follow the palette
@@ -35,14 +42,23 @@ set -euo pipefail
 
 CHECK=0
 MISSING=0
+LOCK=0
 while [[ "${1:-}" == --* ]]; do
     case "$1" in
         --check) CHECK=1 ;;
         --missing) MISSING=1 ;;
+        --lock) LOCK=1 ;;
         *) break ;;
     esac
     shift
 done
+if [[ $LOCK -eq 1 ]]; then
+    LOCK_LAYOUT="${1:-}"
+    LOCK_WEATHER="${2:-}"
+    set --
+fi
+# --lock speaks its own words, whether or not anything could be done
+lockreport() { echo "lock $1"; exit 0; }
 
 PALETTE="${1:-$HOME/.cache/quickshell/matugen.json}"
 CONFIG_DIR="${LUCID_CONFIG_DIR:-$HOME/.config/quickshell}"
@@ -66,12 +82,13 @@ THEME=$({ grep -rhE '^[[:space:]]*Current=' \
             /etc/sddm.conf.d/*.conf \
             /etc/sddm.conf 2>/dev/null || true; } \
         | tail -1 | cut -d= -f2- | tr -d '[:space:]')
-[[ -n "$THEME" ]] || report notheme
+[[ -n "$THEME" ]] || { [[ $LOCK -eq 1 ]] && lockreport notheme; report notheme; }
 
 # overridable so the per-account paths can be exercised off a real install
 DIR="${LUCID_SDDM_THEMES:-/usr/share/sddm/themes}/$THEME"
 CONF="$DIR/theme.conf"
-[[ -f "$CONF" ]] || report notheme
+[[ -f "$CONF" ]] || { [[ $LOCK -eq 1 ]] && lockreport notheme; report notheme; }
+[[ $LOCK -eq 1 ]] && ! grep -q '^Theme-Id=lucid$' "$DIR/metadata.desktop" 2>/dev/null && lockreport notlucid
 
 # ── lucid's own theme ────────────────────────────────────────────────────────
 # identified by its marker, not its directory name, so a renamed copy still works
@@ -84,14 +101,43 @@ if grep -q '^Theme-Id=lucid$' "$DIR/metadata.desktop" 2>/dev/null; then
         OUT="$DIR/users/$ME"
         if [[ -e "$OUT" || -L "$OUT" ]]; then
             # only ever write into a directory this account owns outright
-            [[ -d "$OUT" && ! -L "$OUT" && -O "$OUT" && -w "$OUT" ]] || report "readonly $OUT"
+            [[ -d "$OUT" && ! -L "$OUT" && -O "$OUT" && -w "$OUT" ]] || { [[ $LOCK -eq 1 ]] && lockreport readonly; report "readonly $OUT"; }
         else
-            [[ -w "$DIR/users" ]] || report "readonly $DIR/users"
+            [[ -w "$DIR/users" ]] || { [[ $LOCK -eq 1 ]] && lockreport readonly; report "readonly $DIR/users"; }
         fi
     else
         SHARED=1
         OUT="$DIR"
-        [[ -w "$CONF" && -w "$DIR" ]] || report "readonly $DIR"
+        [[ -w "$CONF" && -w "$DIR" ]] || { [[ $LOCK -eq 1 ]] && lockreport readonly; report "readonly $DIR"; }
+    fi
+
+    # ── the lock layout, on its own and quick ───────────────────────────────
+    # plain data the greeter checks against its own catalogue; base64 so a
+    # comma in it can never turn a QSettings value into a list
+    if [[ $LOCK -eq 1 ]]; then
+        (( ${#LOCK_LAYOUT} > 0 && ${#LOCK_LAYOUT} <= 65536 && ${#LOCK_WEATHER} <= 4096 )) || lockreport bad
+        python3 -c 'import json, sys
+for a in sys.argv[1:]:
+    if a and not isinstance(json.loads(a), dict):
+        raise SystemExit(1)' "$LOCK_LAYOUT" "$LOCK_WEATHER" 2>/dev/null || lockreport bad
+        if [[ $SHARED -eq 0 ]]; then
+            mkdir "$OUT" 2>/dev/null || true
+            [[ -d "$OUT" && ! -L "$OUT" && -O "$OUT" ]] || lockreport readonly
+            chmod 755 "$OUT"
+        fi
+        TMPL=$(mktemp "$OUT/.lock.conf.XXXXXX") || lockreport readonly
+        {
+            echo "[General]"
+            echo "# written by sync-sddm.sh --lock from $ME's shell. edits are overwritten."
+            echo "layout=$(printf '%s' "$LOCK_LAYOUT" | base64 -w0)"
+            [[ -n "$LOCK_WEATHER" ]] && echo "weather=$(printf '%s' "$LOCK_WEATHER" | base64 -w0)"
+            echo "stamp=$(date +%s)"
+        } > "$TMPL"
+        chmod 644 "$TMPL"
+        mv -f "$TMPL" "$OUT/lock.conf"
+        # a theme from before layouts has no parts/ to draw this with yet
+        [[ -f "$DIR/parts/Stage.qml" ]] || lockreport old
+        lockreport ok
     fi
     ok "ok lucid $THEME"
     [[ $MISSING -eq 1 && -s "$OUT/theme.conf" ]] && exit 0

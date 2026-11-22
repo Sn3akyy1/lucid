@@ -58,8 +58,16 @@ local failed = {}
 -- rules cannot be removed, only switched off, so each apply retires the last set
 local rules = {}
 -- whether the pointer leans as it moves, and in apps that draw their own, as
--- Settings last set them
+-- Settings last set them; and whether a tap of ctrl finds it
 local tilt, tiltApps = nil, nil
+local find = nil
+-- shake to find is gone: a tap of ctrl finds the pointer instead, and the
+-- shaking stays off (modules/plugins.lua). an older Settings' switch or
+-- threshold for it would bring the shaking back or stop the finder
+local RETIRED = {
+    ["plugin.dynamic_cursors.shake.enabled"] = true,
+    ["plugin.dynamic_cursors.shake.threshold"] = true,
+}
 
 -- a value as JSON for Settings: gaps as one number (or "t r b l"), colours as
 -- "aarrggbb,…@angle"
@@ -111,7 +119,9 @@ function M.apply(live)
     -- one option at a time, so a bad one does not take the rest with it
     for k, v in pairs(cfg.options) do
         local known, current = pcall(hl.get_config, k)
-        if type(k) ~= "string" or not known or current == nil then
+        if RETIRED[k] then
+            set[k] = nil
+        elseif type(k) ~= "string" or not known or current == nil then
             -- an option this Hyprland does not have would only add a config error
             failed[tostring(k)] = "this Hyprland has no such option"
         elseif not (live and skip[k]) then
@@ -172,6 +182,16 @@ function M.apply(live)
             if not ok then failed["lucid.cursor_tilt"] = tostring(err) end
         elseif tilt ~= nil or tiltApps ~= nil then
             failed["lucid.cursor_tilt"] = "the cursor plugin is not loaded"
+        end
+    end
+    -- the finder modules/plugins.lua binds to a tap of ctrl; unset is its own, on
+    if cfg.find_pointer ~= nil or find ~= nil then
+        find = cfg.find_pointer
+        if LucidCursor and LucidCursor.finder and hl.plugin.dynamic_cursors then
+            local ok, err = pcall(LucidCursor.finder, find ~= false)
+            if not ok then failed["lucid.find_pointer"] = tostring(err) end
+        elseif find ~= nil then
+            failed["lucid.find_pointer"] = "the cursor plugin is not loaded"
         end
     end
     write_status()

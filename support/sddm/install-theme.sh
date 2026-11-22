@@ -34,7 +34,12 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 install -d -m755 "$DEST"
+# the code is replaced whole, so a file a newer theme dropped does not linger
+rm -rf "$DEST/components" "$DEST/parts"
 cp -r "$SRC/support/sddm/lucid/." "$DEST/"
+# the lock screen's own layouts and widgets, drawn by the login screen too, so
+# the two can never look different. plain QtQuick, no shell imports
+cp -r "$SRC/lucidlock/parts" "$DEST/parts"
 # the greeter runs as its own user, so the font it draws in rides along with
 # the theme rather than in anyone's home
 install -Dm644 "$SRC/assets/fonts/GoogleSansFlex.ttf" "$DEST/fonts/GoogleSansFlex.ttf"
