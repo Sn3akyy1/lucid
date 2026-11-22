@@ -1599,7 +1599,8 @@ Singleton {
         { "key": "idle", "icon": "bedtime", "keys": "sleep suspend lock dim screen off hypridle caffeine", "group": I18n.tr("System"), "label": I18n.tr("Idle"), "title": I18n.tr("Idle and Sleep"), "blurb": I18n.tr("What happens when you walk away: dimming, locking, screen off and suspend"), "toggle": "idleEnabled" },
         { "key": "datetime", "icon": "schedule", "keys": "clock time zone location 24 hour seconds week monday sunday units metric imperial celsius fahrenheit temperature wind mph timer pomodoro focus break alarm world", "group": I18n.tr("System"), "label": I18n.tr("Date & Time"), "title": I18n.tr("Date and Time"), "blurb": I18n.tr("Where you are, the clock, and its timers") },
         { "key": "storage", "icon": "hard_drive", "keys": "disk space storage usage free full clean cleanup cache trash duplicates large files drives ssd health smart trim mount", "group": I18n.tr("System"), "label": I18n.tr("Storage"), "title": I18n.tr("Storage"), "blurb": I18n.tr("What fills your drives, what could go, and the drives themselves") },
-        { "key": "about", "icon": "info", "keys": "version update upgrade install release beta restart lucid", "group": I18n.tr("System"), "label": I18n.tr("About"), "title": I18n.tr("About"), "blurb": I18n.tr("Lucid") }
+        { "key": "about", "icon": "info", "keys": "version update upgrade install release beta restart lucid", "group": I18n.tr("System"), "label": I18n.tr("About"), "title": I18n.tr("About"), "blurb": I18n.tr("Lucid") },
+        { "key": "systeminfo", "icon": "computer", "keys": "system about device hardware software os operating kernel architecture cpu processor gpu graphics memory ram storage disk packages uptime host hostname session desktop compositor quickshell", "group": I18n.tr("System"), "label": I18n.tr("About system"), "title": I18n.tr("About system"), "blurb": I18n.tr("Hardware, operating system and session details") }
     ]
 
     function settingsPage(key) {

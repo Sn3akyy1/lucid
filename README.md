@@ -550,7 +550,8 @@ each update. Among the pages:
 - **Language**: the shell in another language (Spanish, Russian, Turkish and
   German come with it), and adding, importing or exporting a translation as a
   `.json` file
-- **Keybinds**, **Users and Accounts**, **Screenshots** and **About**
+- **Keybinds**, **Users and Accounts**, **Screenshots**, **About** and
+  **About System**, populated from the machine itself
 
 </details>
 

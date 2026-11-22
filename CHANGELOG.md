@@ -4,6 +4,10 @@ All notable changes to Lucid are recorded here, newest first.
 
 ## Unreleased
 
+- **About system.** A page at the bottom of Settings reads the machine rather
+  than naming one in the UI: device and hardware model, OS, kernel,
+  architecture, CPU and every GPU, memory, root storage, uptime, session,
+  compositor, Quickshell, shell and installed package count.
 - **Language.** Every text in the shell goes through `I18n.tr`, keyed by the
   English text, so English needs no file. Settings > Language picks a language
   (Automatic follows `LANG`), imports a translation into

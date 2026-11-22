@@ -40,7 +40,8 @@ Item {
         "idle": "lock suspend screen off timeout hypridle",
         "datetime": "clock timezone time zone units metric imperial celsius fahrenheit mph km/h",
         "storage": "disk space full free clean cleanup cache trash duplicates large files drive ssd health smart trim mount usb",
-        "about": "version update"
+        "about": "version update",
+        "systeminfo": "system about device hardware software os operating kernel architecture cpu processor gpu graphics memory ram storage disk packages uptime host hostname session desktop compositor quickshell"
     })
     // { key, card, title, description }, in page order
     property var rows: []

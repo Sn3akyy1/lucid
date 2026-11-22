@@ -1329,6 +1329,8 @@ FloatingWindow {
                                 return "DateTimePage.qml";
                             case "storage":
                                 return "StoragePage.qml";
+                            case "systeminfo":
+                                return "SystemInfoPage.qml";
                             case "search":
                                 return "SearchPage.qml";
                             default:
