@@ -4,6 +4,12 @@ All notable changes to Lucid are recorded here, newest first.
 
 ## Unreleased
 
+- **Keybind conflict.** An older Region Screenshot default shared
+  `SUPER`+`SHIFT`+`S` with the scratchpad. Untouched installs move capture to
+  `Print`, while a shortcut changed by hand remains the user's.
+- **Updater.** Installer questions may disappear between two QML binding
+  updates; every use now checks that the question still exists, instead of
+  leaving a transient null-object error in the shell log.
 - **Media keys.** Play/pause, previous and next now go through the same MPRIS
   player Lucid shows instead of whichever name `playerctl` happens to list
   first. A paused browser can no longer take the key away from Spotify.
