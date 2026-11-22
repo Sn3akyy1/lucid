@@ -92,6 +92,13 @@ class RuntimeGuards(unittest.TestCase):
         self.assertIn("card.ask !== null && card.authAsk && card.ask.retry", source)
         self.assertIn("card.ask !== null && card.runAsk && card.ask.kind", source)
 
+    def test_lumen_delegate_delay_dies_with_delegate(self):
+        with open(os.path.join(ROOT, "lucidlumen", "GridCell.qml"), encoding="utf-8") as f:
+            source = f.read()
+
+        self.assertNotIn("Qt.callLater(function() {\n            cell.placed = true", source)
+        self.assertIn("onTriggered: cell.placed = true", source)
+
 
 if __name__ == "__main__":
     unittest.main()
