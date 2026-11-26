@@ -11,6 +11,15 @@ Singleton {
     // [{ id, year, month, day, hour, minute, name, repeat }]; repeat is
     // "" | "daily" | "weekdays" | "weekly", counted from the stored date
     property alias items: store.items
+    // subscribed calendars, [{ id, name, url }]; the url is a private link, so
+    // it lives here with the reminders and not in prefs.json
+    property alias feeds: store.feeds
+    // their occurrences, written by lucidprefs/calfeeds.py: shaped like a
+    // one-off reminder plus { feed, cal, allDay }, shown but never rung or edited
+    readonly property var events: cacheStore.events || []
+    readonly property var feedStatus: cacheStore.status || ({})
+    readonly property var all: root.items.concat(root.events)
+    property bool feedsBusy: false
     property int tick: 0
     // reminders due and not yet dealt with, oldest first
     property var ringing: []
@@ -69,6 +78,10 @@ Singleton {
     function nextAt(r, from) {
         if (!r.repeat) {
             var at = new Date(r.year, r.month, r.day, r.hour, r.minute, 0, 0);
+            // an all-day event is still coming up for the whole of its day
+            if (r.allDay && at < from && at >= root.dayStart(from.getFullYear(), from.getMonth(), from.getDate()))
+                return at;
+
             return at >= from ? at : null;
         }
         var fromDay = root.dayStart(from.getFullYear(), from.getMonth(), from.getDate());
@@ -89,10 +102,10 @@ Singleton {
     function upcoming(limit) {
         var now = Loc.now();
         var out = [];
-        for (var i = 0; i < root.items.length; i++) {
-            var at = root.nextAt(root.items[i], now);
+        for (var i = 0; i < root.all.length; i++) {
+            var at = root.nextAt(root.all[i], now);
             if (at)
-                out.push({ "item": root.items[i], "at": at });
+                out.push({ "item": root.all[i], "at": at });
 
         }
         out.sort((a, b) => {
@@ -102,16 +115,16 @@ Singleton {
     }
 
     function forDay(y, m, d) {
-        return root.items.filter((r) => {
+        return root.all.filter((r) => {
             return root.occursOn(r, y, m, d);
         }).sort((a, b) => {
-            return (a.hour * 60 + a.minute) - (b.hour * 60 + b.minute);
+            return (a.allDay ? -1 : a.hour * 60 + a.minute) - (b.allDay ? -1 : b.hour * 60 + b.minute);
         });
     }
 
     function hasOn(y, m, d) {
-        for (var i = 0; i < root.items.length; i++) {
-            if (root.occursOn(root.items[i], y, m, d))
+        for (var i = 0; i < root.all.length; i++) {
+            if (root.occursOn(root.all[i], y, m, d))
                 return true;
 
         }
@@ -183,6 +196,9 @@ Singleton {
         if (!r)
             return "";
 
+        if (r.allDay)
+            return I18n.tr("All day");
+
         if (Prefs.clock24h)
             return String(r.hour).padStart(2, "0") + ":" + String(r.minute).padStart(2, "0");
 
@@ -195,6 +211,10 @@ Singleton {
             return "";
 
         var mins = Math.round((at - Loc.now()) / 60000);
+        // only an all-day event under way is behind the clock and still coming up
+        if (mins < 0)
+            return I18n.tr("today");
+
         if (mins < 1)
             return I18n.tr("now");
 
@@ -219,6 +239,37 @@ Singleton {
             return I18n.tr("Every %1", root.dayStart(r.year, r.month, r.day).toLocaleDateString(I18n.locale, "dddd"));
         }
         return "";
+    }
+
+    function addFeed(name, url) {
+        const link = String(url || "").trim();
+        if (!/^(https?|webcal):\/\//i.test(link))
+            return false;
+
+        root.feeds = root.feeds.concat([{
+            "id": Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+            "name": String(name || "").trim().slice(0, 60) || I18n.tr("Calendar"),
+            "url": link
+        }]);
+        root.refreshFeeds();
+        return true;
+    }
+
+    function removeFeed(id) {
+        root.feeds = root.feeds.filter((f) => {
+            return f.id !== id;
+        });
+        root.refreshFeeds();
+    }
+
+    function refreshFeeds() {
+        if (feedProc.running) {
+            feedAgain.restart();
+            return ;
+        }
+        feedProc.command = ["python3", Qt.resolvedUrl("lucidprefs/calfeeds.py").toString().replace("file://", ""), JSON.stringify(root.feeds), feedCache.path];
+        root.feedsBusy = true;
+        feedProc.running = true;
     }
 
     function snooze(id, minutes) {
@@ -336,6 +387,47 @@ Singleton {
             id: store
 
             property var items: []
+            property var feeds: []
+        }
+
+    }
+
+    // a calendar that changed while the last fetch ran gets one more
+    Timer {
+        id: feedAgain
+
+        interval: 1500
+        onTriggered: root.refreshFeeds()
+    }
+
+    Timer {
+        interval: 30 * 60000
+        repeat: true
+        running: root.feeds.length > 0
+        triggeredOnStart: true
+        onTriggered: root.refreshFeeds()
+    }
+
+    Process {
+        id: feedProc
+
+        onExited: {
+            root.feedsBusy = false;
+            feedCache.reload();
+        }
+    }
+
+    FileView {
+        id: feedCache
+
+        path: (Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache") + "/lucid/calendar-feeds.json"
+        printErrors: false
+
+        adapter: JsonAdapter {
+            id: cacheStore
+
+            property var events: []
+            property var status: ({})
         }
 
     }

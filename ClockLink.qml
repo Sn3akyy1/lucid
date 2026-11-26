@@ -73,6 +73,7 @@ Singleton {
         },
         "reminders": {
             "items": Agenda.items,
+            "events": Agenda.events,
             "ringing": Agenda.ringing.map((r) => {
                 return r.id;
             }),

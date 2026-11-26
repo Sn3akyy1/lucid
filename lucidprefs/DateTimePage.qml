@@ -495,6 +495,160 @@ Column {
     }
 
     SettingCard {
+        id: feedsCard
+
+        property string newName: ""
+        property string newUrl: ""
+        property bool bad: false
+
+        function add() {
+            feedsCard.bad = !Agenda.addFeed(feedsCard.newName, feedsCard.newUrl);
+            if (feedsCard.bad)
+                return ;
+
+            nameField.clear();
+            urlField.clear();
+            feedsCard.newName = "";
+            feedsCard.newUrl = "";
+        }
+
+        title: I18n.tr("CALENDARS")
+
+        Repeater {
+            model: Agenda.feeds
+
+            SettingRow {
+                id: feedRow
+
+                required property var modelData
+                readonly property var st: Agenda.feedStatus[feedRow.modelData.id] || null
+
+                title: feedRow.modelData.name
+                description: {
+                    const st = feedRow.st;
+                    if (!st)
+                        return Agenda.feedsBusy ? I18n.tr("Fetching…") : "";
+
+                    const n = I18n.trn("%1 event", "%1 events", st.count);
+                    return st.at ? n + "  ·  " + I18n.tr("updated %1", new Date(st.at).toLocaleString(I18n.locale, Locale.ShortFormat)) : n;
+                }
+                warning: feedRow.st && !feedRow.st.ok ? I18n.tr("Lucid could not fetch this calendar: %1", feedRow.st.error) : ""
+
+                M3IconButton {
+                    iconPath: "delete"
+                    destructive: true
+                    onClicked: Agenda.removeFeed(feedRow.modelData.id)
+                }
+
+            }
+
+        }
+
+        SettingRow {
+            title: I18n.tr("Subscribe to a calendar")
+            description: I18n.tr("Paste a calendar's private iCal link. Its events join your reminders in the bar, the clock, the lock screen and the widgets.")
+            warning: feedsCard.bad ? I18n.tr("That is not a web link. Calendar links start with https:// or webcal://.") : I18n.tr("Anyone with this link can read the calendar. Lucid keeps it with your reminders, not in prefs.json.")
+            stacked: true
+
+            Row {
+                spacing: Theme.dp(8)
+
+                M3TextField {
+                    id: nameField
+
+                    width: Theme.dp(150)
+                    placeholder: I18n.tr("Name")
+                    commitOnBlur: false
+                    onEdited: (v) => {
+                        return feedsCard.newName = v;
+                    }
+                    onAccepted: (v) => {
+                        return urlField.focusInput();
+                    }
+                }
+
+                M3TextField {
+                    id: urlField
+
+                    width: Theme.dp(300)
+                    placeholder: "https://…/basic.ics" // i18n-skip
+                    password: true
+                    commitOnBlur: false
+                    onEdited: (v) => {
+                        feedsCard.newUrl = v;
+                        feedsCard.bad = false;
+                    }
+                    onAccepted: (v) => {
+                        feedsCard.newUrl = v;
+                        feedsCard.add();
+                    }
+                }
+
+                M3Button {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: I18n.tr("Add")
+                    variant: "tonal"
+                    enabled: feedsCard.newUrl.trim() !== ""
+                    onClicked: feedsCard.add()
+                }
+
+            }
+
+        }
+
+        SettingRow {
+            id: whereRow
+
+            property string provider: "google"
+
+            title: I18n.tr("Where to find the link")
+            description: {
+                switch (whereRow.provider) {
+                case "google":
+                    return [I18n.tr("1. Open Google Calendar on the web and go to the calendar's Settings and sharing."), I18n.tr("2. Under Integrate calendar, copy \"Secret address in iCal format\".")].join("\n");
+                case "outlook":
+                    return [I18n.tr("1. In Outlook on the web, go to Settings, Calendar, Shared calendars."), I18n.tr("2. Under Publish a calendar, choose the calendar and Can view all details, then Publish."), I18n.tr("3. Copy the ICS link.")].join("\n");
+                }
+                return I18n.tr("iCloud, Proton, Nextcloud and most calendar apps can share a calendar as a link. Look for Share, Publish or Subscription link in the calendar's settings.");
+            }
+
+            M3Segmented {
+                width: Theme.dp(260)
+                options: [{
+                    "key": "google",
+                    "label": "Google" // i18n-skip
+                }, {
+                    "key": "outlook",
+                    "label": "Outlook" // i18n-skip
+                }, {
+                    "key": "other",
+                    "label": I18n.tr("Other")
+                }]
+                current: whereRow.provider
+                onChosen: (k) => {
+                    return whereRow.provider = k;
+                }
+            }
+
+        }
+
+        SettingRow {
+            visible: Agenda.feeds.length > 0
+            title: I18n.tr("Updates every 30 minutes")
+            description: I18n.tr("Lucid only reads the events, so change them in the calendar they come from. While you are offline, it keeps showing the events it last fetched.")
+
+            M3Button {
+                text: Agenda.feedsBusy ? I18n.tr("Fetching…") : I18n.tr("Refresh")
+                variant: "tonal"
+                enabled: !Agenda.feedsBusy
+                onClicked: Agenda.refreshFeeds()
+            }
+
+        }
+
+    }
+
+    SettingCard {
         title: I18n.tr("TIMERS")
 
         SettingRow {

@@ -82,7 +82,8 @@ Scope {
         "pomoFocusMs": 0,
         "presets": []
     })
-    readonly property var reminders: app.st ? (app.st.reminders.items || []) : []
+    // the app's own reminders, then the subscribed calendars' events, read-only
+    readonly property var reminders: app.st ? (app.st.reminders.items || []).concat(app.st.reminders.events || []) : []
     readonly property var remindersRinging: app.st ? (app.st.reminders.ringing || []) : []
     readonly property var cities: app.st ? (app.st.zones.cities || []) : []
     readonly property var offsets: app.st ? (app.st.zones.offsets || {}) : ({})

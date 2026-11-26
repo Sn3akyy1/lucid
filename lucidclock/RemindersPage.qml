@@ -201,6 +201,8 @@ Item {
 
                     MouseArea {
                         anchors.fill: parent
+                        // a subscribed calendar's event is changed where it comes from
+                        enabled: !row.modelData.feed
                         cursorShape: Qt.PointingHandCursor
                         onClicked: page.win.editReminder(row.modelData, null)
                     }
@@ -217,7 +219,7 @@ Item {
 
                         Icon {
                             anchors.centerIn: parent
-                            name: row.modelData.repeat ? "repeat" : "notifications"
+                            name: row.modelData.feed ? "event" : (row.modelData.repeat ? "repeat" : "notifications")
                             size: Theme.dp(22)
                             fill: 1
                             color: Theme.fgSecondaryContainer
@@ -244,7 +246,7 @@ Item {
                             role: "bodyMedium"
                             color: row.ringing ? Theme.fgTertiaryContainer : Theme.subtext
                             elide: Text.ElideRight
-                            text: page.app.time(row.modelData.hour, row.modelData.minute) + (row.modelData.repeat ? "  ·  " + CM.repeatText(row.modelData) : "") + (row.ringing ? I18n.tr("  ·  ringing now") : "")
+                            text: (row.modelData.allDay ? I18n.tr("All day") : page.app.time(row.modelData.hour, row.modelData.minute)) + (row.modelData.repeat ? "  ·  " + CM.repeatText(row.modelData) : "") + (row.modelData.feed ? "  ·  " + row.modelData.cal : "") + (row.ringing ? I18n.tr("  ·  ringing now") : "")
                         }
 
                     }
@@ -252,6 +254,7 @@ Item {
                     Row {
                         id: tools
 
+                        visible: !row.modelData.feed
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.dp(12)
                         anchors.verticalCenter: parent.verticalCenter
@@ -355,7 +358,7 @@ Item {
                         width: Theme.dp(170)
                         role: "labelLarge"
                         color: Theme.primary
-                        text: CM.dayWord(up.modelData.at.getTime(), page.today.getTime()) + ", " + page.app.time(up.modelData.at.getHours(), up.modelData.at.getMinutes())
+                        text: CM.dayWord(up.modelData.at.getTime(), page.today.getTime()) + (up.modelData.item.allDay ? "" : ", " + page.app.time(up.modelData.at.getHours(), up.modelData.at.getMinutes()))
                     }
 
                     LText {
