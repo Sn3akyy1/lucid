@@ -767,8 +767,11 @@ Singleton {
         stdout: SplitParser {
             onRead: (line) => {
                 // volume moves arrive as a change on the device itself and say
-                // nothing about profiles, ports or routing
-                if (line.indexOf("'change' on sink #") >= 0 || line.indexOf("'change' on source #") >= 0)
+                // nothing about profiles, ports or routing. clients say nothing
+                // refresh reads, and its own pactl calls are clients: without
+                // this, each refresh sets the next one off
+                if (line.indexOf("'change' on sink #") >= 0 || line.indexOf("'change' on source #") >= 0
+                        || line.indexOf(" on client #") >= 0)
                     return ;
 
                 settle.restart();
