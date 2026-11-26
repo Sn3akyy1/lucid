@@ -195,6 +195,8 @@ PKG_FEATURES=(
     python-pillow python-numpy python-fonttools
     cava songrec curl libnotify awww fastfetch
     python-pywal noto-fonts-emoji
+    # subscribed calendars: the repeats and time zones inside .ics files
+    python-dateutil
     # the shell is the session's own polkit agent; polkitd and its setuid
     # helper are the backend it drives
     xdg-utils zenity polkit

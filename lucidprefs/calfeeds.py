@@ -17,7 +17,10 @@ import time
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
 
-from dateutil import rrule, tz
+try:
+    from dateutil import rrule, tz
+except ImportError:  # each calendar then says what is missing
+    rrule = tz = None
 
 PAST_DAYS = 62
 AHEAD_DAYS = 366
@@ -230,6 +233,8 @@ def refresh(feeds, old, now, fetcher=fetch):
     for f in feeds:
         fid, name = str(f.get("id", "")), str(f.get("name", ""))
         try:
+            if tz is None:
+                raise RuntimeError("python-dateutil is not installed")
             evs, zones = parse(fetcher(str(f.get("url", ""))))
             got = occurrences(evs, zones, now)[:MAX_PER_FEED]
             status[fid] = {"ok": True, "at": int(time.time() * 1000), "count": len(got)}

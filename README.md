@@ -767,6 +767,7 @@ Lumen and Lens run as their own processes with launchers of their own:
 | `xdg-desktop-portal-hyprland` `xdg-desktop-portal-gtk` | Screen sharing and portals |
 | `smartmontools` `udisks2` `inotify-tools` | Drive health, mounting, the camera toast |
 | `curl` `libnotify` `xdg-utils` `noto-fonts-emoji` | Weather, lyrics, notifications, links, emoji |
+| `python-dateutil` | Subscribed calendars |
 
 **The Hyprland config and the look** (unless `--no-hypr` / `--no-look`): `kitty`
 · `fish` · `playerctl` · `gnome-calculator` · `starship` ·
