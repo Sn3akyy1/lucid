@@ -184,7 +184,7 @@ FloatingWindow {
         const kids = item.children;
         for (let i = 0; i < kids.length; i++) {
             const c = kids[i];
-            if (c.isGroupItem === true && c.title === r.title && c.visible && (c.group ? c.group.title === r.card : r.card === ""))
+            if (c.isGroupItem === true && c.title === r.title && c.visible && (r.card === undefined || (c.group ? c.group.title === r.card : r.card === "")))
                 return c;
 
             const deeper = win.findRow(c, r);
@@ -236,7 +236,14 @@ FloatingWindow {
         railSearch.focusInput();
     }
 
+    // "datetime#Subscribe to a calendar" opens the page scrolled to that row
     function show(p) {
+        const hash = p.indexOf("#");
+        if (hash > 0) {
+            revealTimer.target = { "key": p.slice(0, hash), "kind": "row", "title": p.slice(hash + 1) };
+            revealTimer.restart();
+            p = p.slice(0, hash);
+        }
         // the results page only exists while something is typed
         if (p !== "" && p !== "search")
             win.page = p;

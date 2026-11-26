@@ -298,10 +298,24 @@ Item {
             anchors.fill: parent
             anchors.margins: Theme.dp(18)
 
+            IconButton {
+                id: subscribe
+
+                anchors.right: parent.right
+                icon: "add_link"
+                tooltip: I18n.tr("Subscribe to a calendar")
+                onClicked: {
+                    if (page.host)
+                        page.host.expanded = false;
+
+                    Prefs.settingsRequested("datetime#" + I18n.tr("Subscribe to a calendar"));
+                }
+            }
+
             Column {
                 id: dayHead
 
-                width: parent.width
+                width: parent.width - subscribe.width
                 spacing: 0
 
                 LText {
@@ -351,11 +365,13 @@ Item {
                             containerColor: Theme.withBlur(Theme.surfaceHighest)
                             clickable: false
                             headline: row.modelData.name
-                            supporting: Agenda.timeText(row.modelData) + (row.modelData.repeat ? "  ·  " + Agenda.repeatText(row.modelData) : "")
-                            icon: row.modelData.repeat ? "repeat" : "notifications"
+                            supporting: Agenda.timeText(row.modelData) + (row.modelData.repeat ? "  ·  " + Agenda.repeatText(row.modelData) : "") + (row.modelData.feed ? "  ·  " + row.modelData.cal : "")
+                            icon: row.modelData.feed ? "event" : (row.modelData.repeat ? "repeat" : "notifications")
                             iconColor: Theme.primary
                             trailing: [
                                 IconButton {
+                                    // a subscribed calendar's event is changed where it comes from
+                                    visible: !row.modelData.feed
                                     icon: "delete"
                                     size: "xs"
                                     onClicked: Agenda.remove(row.modelData.id)

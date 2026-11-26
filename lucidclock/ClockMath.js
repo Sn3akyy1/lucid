@@ -225,7 +225,7 @@ function forDay(items, y, m, d) {
     return items.filter(function(r) {
         return occursOn(r, y, m, d);
     }).sort(function(a, b) {
-        return (a.hour * 60 + a.minute) - (b.hour * 60 + b.minute);
+        return (a.allDay ? -1 : a.hour * 60 + a.minute) - (b.allDay ? -1 : b.hour * 60 + b.minute);
     });
 }
 
@@ -233,6 +233,10 @@ function forDay(items, y, m, d) {
 function reminderNext(r, from) {
     if (!r.repeat) {
         var at = new Date(r.year, r.month, r.day, r.hour, r.minute, 0, 0);
+        // an all-day event is still coming up for the whole of its day
+        if (r.allDay && at < from && at >= dayStart(from.getFullYear(), from.getMonth(), from.getDate()))
+            return at;
+
         return at >= from ? at : null;
     }
     var fromDay = dayStart(from.getFullYear(), from.getMonth(), from.getDate());
