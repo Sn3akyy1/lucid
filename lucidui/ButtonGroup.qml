@@ -32,6 +32,20 @@ Item {
         return w;
     }
 
+    // equal widths only while every label fits in one; otherwise each takes what
+    // its label needs and the side padding shrinks to share out the rest
+    readonly property bool roomy: grp.widest * rep.count + grp.gap * (rep.count - 1) <= row.width + 0.5
+    readonly property real squeezedPad: {
+        var bare = 0;
+        for (var i = 0; i < rep.count; i++) {
+            var it = rep.itemAt(i);
+            if (it)
+                bare += it.natural - Theme.dp(32);
+
+        }
+        return Math.max(Theme.dp(8), Math.min(Theme.dp(32), (row.width - grp.gap * (rep.count - 1) - bare) / Math.max(1, rep.count)));
+    }
+
     property real widest: {
         var w = 0;
         for (var i = 0; i < rep.count; i++) {
@@ -67,7 +81,7 @@ Item {
                 readonly property real outer: Theme.pill(grp.h)
                 readonly property real press: area.pressed ? grp.inner * 0.6 : 0
 
-                width: grp.equalWidth ? (row.width - grp.gap * (rep.count - 1)) / Math.max(1, rep.count) : seg.natural
+                width: !grp.equalWidth ? seg.natural : (grp.roomy ? (row.width - grp.gap * (rep.count - 1)) / Math.max(1, rep.count) : seg.natural - Theme.dp(32) + grp.squeezedPad)
                 height: grp.h
 
                 Rectangle {
@@ -150,6 +164,9 @@ Item {
                         id: lbl
 
                         anchors.verticalCenter: parent.verticalCenter
+                        // still too narrow at the least padding: the label ends in an ellipsis
+                        width: Math.min(implicitWidth, seg.width - (seg.natural - lbl.implicitWidth - Theme.dp(32)) - Theme.dp(12))
+                        elide: Text.ElideRight
                         visible: text !== ""
                         text: seg.modelData.label || ""
                         role: "labelLarge"
